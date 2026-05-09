@@ -1,7 +1,17 @@
 import { useEffect, useState } from "react";
-import { ImageOff } from "lucide-react";
 
 const cache = new Map<string, string | null>();
+
+// Reject Wikipedia images that are clearly NOT a photo of the place
+// (maps, flags, coats of arms, location markers, SVG diagrams, etc.)
+const BAD_IMAGE_RE =
+  /(\.svg($|\?))|(map|mapa|locator|location|flag|bandera|coat[_-]?of[_-]?arms|escudo|escut|wappen|blason|seal|logo|icon)/i;
+
+function isLikelyPhoto(url: string | undefined | null): url is string {
+  if (!url) return false;
+  if (BAD_IMAGE_RE.test(url)) return false;
+  return true;
+}
 
 async function fetchWikiImage(title: string): Promise<string | null> {
   const langs = ["es", "en"];
@@ -14,27 +24,26 @@ async function fetchWikiImage(title: string): Promise<string | null> {
       if (direct.ok) {
         const data = await direct.json();
         const img = data.originalimage?.source || data.thumbnail?.source;
-        if (img) return img;
+        if (isLikelyPhoto(img)) return img;
       }
 
-      // 2) Fallback: search the wiki, then summary the top hit
+      // 2) Fallback: search the wiki, then try the top hits
       const search = await fetch(
-        `https://${lang}.wikipedia.org/w/api.php?action=query&list=search&format=json&origin=*&srlimit=1&srsearch=${encodeURIComponent(
+        `https://${lang}.wikipedia.org/w/api.php?action=query&list=search&format=json&origin=*&srlimit=3&srsearch=${encodeURIComponent(
           title,
         )}`,
       );
       if (search.ok) {
         const sd = await search.json();
-        const hit = sd.query?.search?.[0]?.title;
-        if (hit) {
+        const hits: { title: string }[] = sd.query?.search ?? [];
+        for (const hit of hits) {
           const sum = await fetch(
-            `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(hit)}?redirect=true`,
+            `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(hit.title)}?redirect=true`,
           );
-          if (sum.ok) {
-            const data = await sum.json();
-            const img = data.originalimage?.source || data.thumbnail?.source;
-            if (img) return img;
-          }
+          if (!sum.ok) continue;
+          const data = await sum.json();
+          const img = data.originalimage?.source || data.thumbnail?.source;
+          if (isLikelyPhoto(img)) return img;
         }
       }
     } catch {
@@ -72,12 +81,8 @@ export function PlaceImage({ name }: { name: string }) {
   }
 
   if (src === null) {
-    return (
-      <div className="my-1 flex h-24 w-full items-center justify-center gap-2 rounded-2xl bg-muted/40 text-xs text-muted-foreground">
-        <ImageOff className="h-4 w-4" />
-        No encontré una foto de {name}
-      </div>
-    );
+    // Prefer showing nothing over showing a wrong/irrelevant image
+    return null;
   }
 
   return (
