@@ -243,3 +243,47 @@ function Bubble({ role, content }: { role: "user" | "assistant"; content: string
     </div>
   );
 }
+
+const PLACE_RE = /\[\[place:\s*([^\]]+?)\]\]/i;
+
+function AssistantContent({ content }: { content: string }) {
+  const match = content.match(PLACE_RE);
+  const placeName = match?.[1]?.trim();
+  // Strip the marker (and any surrounding blank line) from the rendered text
+  const cleaned = content.replace(/\n?\[\[place:[^\]]+\]\]\n?/i, "").trim();
+
+  return (
+    <div className="space-y-2 [&>p]:m-0 [&_strong]:font-semibold">
+      {placeName && <PlaceImage name={placeName} />}
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          img: ({ src, alt }) => (
+            <img
+              src={src as string}
+              alt={alt || ""}
+              loading="lazy"
+              className="my-1 h-44 w-full rounded-2xl object-cover shadow-soft"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).style.display = "none";
+              }}
+            />
+          ),
+          a: ({ href, children }) => (
+            <a
+              href={href}
+              target="_blank"
+              rel="noreferrer"
+              className="text-primary underline underline-offset-2"
+            >
+              {children}
+            </a>
+          ),
+          p: ({ children }) => <p className="whitespace-pre-wrap">{children}</p>,
+        }}
+      >
+        {cleaned}
+      </ReactMarkdown>
+    </div>
+  );
+}
