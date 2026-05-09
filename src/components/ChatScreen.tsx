@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Send, Mic, MapPin } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import heroImg from "@/assets/alicante-hero.jpg";
 
 type Msg = { role: "user" | "assistant"; content: string };
