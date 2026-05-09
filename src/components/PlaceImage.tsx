@@ -82,12 +82,8 @@ export function PlaceImage({ name }: { name: string }) {
   }
 
   if (src === null) {
-    return (
-      <div className="my-1 flex h-24 w-full items-center justify-center gap-2 rounded-2xl bg-muted/40 text-xs text-muted-foreground">
-        <ImageOff className="h-4 w-4" />
-        No encontré una foto de {name}
-      </div>
-    );
+    // Prefer showing nothing over showing a wrong/irrelevant image
+    return null;
   }
 
   return (
