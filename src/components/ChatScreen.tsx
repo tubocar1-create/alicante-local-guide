@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Send, Mic, MapPin } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import heroImg from "@/assets/alicante-hero.jpg";
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -225,13 +227,47 @@ function Bubble({ role, content }: { role: "user" | "assistant"; content: string
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
         className={[
-          "max-w-[85%] whitespace-pre-wrap rounded-3xl px-4 py-2.5 text-[15px] leading-relaxed shadow-soft",
+          "max-w-[85%] rounded-3xl px-4 py-2.5 text-[15px] leading-relaxed shadow-soft",
           isUser
-            ? "rounded-br-md bg-bubble-user text-bubble-user-foreground"
+            ? "rounded-br-md bg-bubble-user text-bubble-user-foreground whitespace-pre-wrap"
             : "rounded-bl-md bg-bubble-friend text-bubble-friend-foreground",
         ].join(" ")}
       >
-        {content}
+        {isUser ? (
+          content
+        ) : (
+          <div className="space-y-2 [&>p]:m-0 [&_strong]:font-semibold">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                img: ({ src, alt }) => (
+                  <img
+                    src={src as string}
+                    alt={alt || ""}
+                    loading="lazy"
+                    className="my-1 h-44 w-full rounded-2xl object-cover shadow-soft"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).style.display = "none";
+                    }}
+                  />
+                ),
+                a: ({ href, children }) => (
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary underline underline-offset-2"
+                  >
+                    {children}
+                  </a>
+                ),
+                p: ({ children }) => <p className="whitespace-pre-wrap">{children}</p>,
+              }}
+            >
+              {content}
+            </ReactMarkdown>
+          </div>
+        )}
       </div>
     </div>
   );
