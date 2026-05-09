@@ -114,35 +114,72 @@ export function ChatScreen() {
     }
   }
 
+  const isWelcome = messages.length === 1 && !loading;
+
   return (
-    <div className="flex h-[100dvh] flex-col bg-background">
-      {/* Header */}
-      <header className="relative overflow-hidden border-b border-border">
+    <div className="relative flex h-[100dvh] flex-col bg-background">
+      {/* Persistent background photo of Puerto de Alicante */}
+      <div className="pointer-events-none absolute inset-0 -z-10">
         <img
           src={heroImg}
-          alt="Alicante coast at sunset"
-          width={1024}
-          height={512}
-          className="absolute inset-0 h-full w-full object-cover opacity-40"
+          alt=""
+          aria-hidden
+          className="h-full w-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/60 to-background" />
-        <div className="relative flex items-center gap-3 px-4 py-4">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full gradient-warm shadow-soft text-primary-foreground">
-            <MapPin className="h-5 w-5" />
-          </div>
-          <div className="flex-1">
-            <h1 className="text-lg font-semibold leading-tight">Alicante Friend</h1>
-            <p className="text-xs text-muted-foreground">
-              <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-emerald-500 align-middle" />
-              your local in Alicante
-            </p>
-          </div>
+        <div
+          className={[
+            "absolute inset-0 transition-colors duration-700",
+            isWelcome
+              ? "bg-gradient-to-b from-background/10 via-background/40 to-background/85"
+              : "bg-background/85 backdrop-blur-sm",
+          ].join(" ")}
+        />
+      </div>
+
+      {/* Compact header (always visible) */}
+      <header className="relative flex items-center gap-3 border-b border-border/60 bg-background/40 px-4 py-3 backdrop-blur">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full gradient-warm shadow-soft text-primary-foreground">
+          <MapPin className="h-5 w-5" />
+        </div>
+        <div className="flex-1">
+          <h1 className="text-base font-semibold leading-tight">Alicante Friend</h1>
+          <p className="text-xs text-muted-foreground">
+            <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-emerald-500 align-middle" />
+            your local in Alicante
+          </p>
         </div>
       </header>
 
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-5">
+      <div ref={scrollRef} className="relative flex-1 overflow-y-auto px-4 py-5">
         <div className="mx-auto flex max-w-2xl flex-col gap-3">
+          {/* Welcome hero — shows on first open, fades when chat starts */}
+          {isWelcome && (
+            <div className="mb-2 overflow-hidden rounded-3xl shadow-soft">
+              <div className="relative aspect-[16/10] w-full">
+                <img
+                  src={heroImg}
+                  alt="Puerto de Alicante al atardecer"
+                  width={1536}
+                  height={1024}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 p-4 text-white">
+                  <p className="text-xs uppercase tracking-widest opacity-90">
+                    Puerto de Alicante
+                  </p>
+                  <h2 className="mt-1 text-2xl font-semibold leading-tight drop-shadow">
+                    Bienvenido a Alicante 🌅
+                  </h2>
+                  <p className="mt-1 text-sm opacity-90">
+                    Soy tu amigo local. Cuéntame qué te apetece hoy.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {messages.map((m, i) => (
             <Bubble key={i} role={m.role} content={m.content} />
           ))}
@@ -163,13 +200,13 @@ export function ChatScreen() {
             </div>
           )}
 
-          {messages.length === 1 && !loading && (
+          {isWelcome && (
             <div className="mt-2 flex flex-wrap gap-2">
               {SUGGESTIONS.map((s) => (
                 <button
                   key={s}
                   onClick={() => send(s)}
-                  className="rounded-full border border-border bg-card px-3 py-2 text-sm text-card-foreground shadow-sm transition hover:bg-accent/40"
+                  className="rounded-full border border-border bg-card/90 px-3 py-2 text-sm text-card-foreground shadow-sm backdrop-blur transition hover:bg-accent/40"
                 >
                   {s}
                 </button>
@@ -180,9 +217,9 @@ export function ChatScreen() {
       </div>
 
       {/* Composer */}
-      <div className="border-t border-border bg-background/80 px-3 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="relative border-t border-border/60 bg-background/70 px-3 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/50">
         <div className="mx-auto flex max-w-2xl items-end gap-2">
-          <div className="flex flex-1 items-end gap-2 rounded-3xl border border-border bg-card px-3 py-2 shadow-sm">
+          <div className="flex flex-1 items-end gap-2 rounded-3xl border border-border bg-card/90 px-3 py-2 shadow-sm backdrop-blur">
             <textarea
               ref={inputRef}
               value={input}
