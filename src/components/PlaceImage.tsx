@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { ImageOff } from "lucide-react";
 
 const cache = new Map<string, string | null>();
 
