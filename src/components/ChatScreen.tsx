@@ -215,6 +215,51 @@ export function ChatScreen() {
           )}
         </div>
       </div>
+
+      {/* Composer */}
+      <div className="relative border-t border-border/60 bg-background/70 px-3 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/50">
+        <div className="mx-auto flex max-w-2xl items-end gap-2">
+          <div className="flex flex-1 items-end gap-2 rounded-3xl border border-border bg-card/90 px-3 py-2 shadow-sm backdrop-blur">
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  send(input);
+                }
+              }}
+              rows={1}
+              placeholder="Message your friend in Alicante…"
+              className="max-h-32 flex-1 resize-none bg-transparent py-1.5 text-[15px] outline-none placeholder:text-muted-foreground"
+            />
+          </div>
+          {input.trim() ? (
+            <button
+              onClick={() => send(input)}
+              disabled={loading}
+              aria-label="Send"
+              className="flex h-12 w-12 items-center justify-center rounded-full gradient-warm text-primary-foreground shadow-soft transition active:scale-95 disabled:opacity-60"
+            >
+              <Send className="h-5 w-5" />
+            </button>
+          ) : (
+            <button
+              onClick={() => alert("Voice messages coming soon 🎙️")}
+              aria-label="Voice"
+              className="flex h-12 w-12 items-center justify-center rounded-full gradient-warm text-primary-foreground shadow-soft transition active:scale-95"
+            >
+              <Mic className="h-5 w-5" />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Bubble({ role, content }: { role: "user" | "assistant"; content: string }) {
   const isUser = role === "user";
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
