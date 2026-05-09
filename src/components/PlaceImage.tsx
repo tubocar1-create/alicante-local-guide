@@ -1,0 +1,94 @@
+import { useEffect, useState } from "react";
+import { ImageOff } from "lucide-react";
+
+const cache = new Map<string, string | null>();
+
+async function fetchWikiImage(title: string): Promise<string | null> {
+  const langs = ["es", "en"];
+  for (const lang of langs) {
+    try {
+      // 1) Try direct page summary
+      const direct = await fetch(
+        `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}?redirect=true`,
+      );
+      if (direct.ok) {
+        const data = await direct.json();
+        const img = data.originalimage?.source || data.thumbnail?.source;
+        if (img) return img;
+      }
+
+      // 2) Fallback: search the wiki, then summary the top hit
+      const search = await fetch(
+        `https://${lang}.wikipedia.org/w/api.php?action=query&list=search&format=json&origin=*&srlimit=1&srsearch=${encodeURIComponent(
+          title,
+        )}`,
+      );
+      if (search.ok) {
+        const sd = await search.json();
+        const hit = sd.query?.search?.[0]?.title;
+        if (hit) {
+          const sum = await fetch(
+            `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(hit)}?redirect=true`,
+          );
+          if (sum.ok) {
+            const data = await sum.json();
+            const img = data.originalimage?.source || data.thumbnail?.source;
+            if (img) return img;
+          }
+        }
+      }
+    } catch {
+      // try next lang
+    }
+  }
+  return null;
+}
+
+export function PlaceImage({ name }: { name: string }) {
+  const key = name.trim().toLowerCase();
+  const [src, setSrc] = useState<string | null | undefined>(cache.get(key));
+
+  useEffect(() => {
+    if (cache.has(key)) {
+      setSrc(cache.get(key)!);
+      return;
+    }
+    let cancelled = false;
+    fetchWikiImage(name).then((url) => {
+      cache.set(key, url);
+      if (!cancelled) setSrc(url);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [key, name]);
+
+  if (src === undefined) {
+    return (
+      <div className="my-1 flex h-44 w-full animate-pulse items-center justify-center rounded-2xl bg-muted/60 text-xs text-muted-foreground">
+        Buscando una foto de {name}…
+      </div>
+    );
+  }
+
+  if (src === null) {
+    return (
+      <div className="my-1 flex h-24 w-full items-center justify-center gap-2 rounded-2xl bg-muted/40 text-xs text-muted-foreground">
+        <ImageOff className="h-4 w-4" />
+        No encontré una foto de {name}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={name}
+      loading="lazy"
+      className="my-1 h-44 w-full rounded-2xl object-cover shadow-soft"
+      onError={(e) => {
+        (e.currentTarget as HTMLImageElement).style.display = "none";
+      }}
+    />
+  );
+}
