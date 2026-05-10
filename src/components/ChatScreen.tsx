@@ -11,7 +11,7 @@ type Msg = { role: "user" | "assistant"; content: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 const SUGGESTIONS = [
-  "Where should we eat tonight? 🍤",
+  "🍽️ Comer cerca de mí",
   "Best beach near the centre?",
   "What to do tomorrow in Alicante?",
   "Nightlife tips please 🍹",
