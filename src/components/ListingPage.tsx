@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Navigation, Phone, Globe, MapPin, Star } from "lucide-react";
+import { Loader2, Navigation, Phone, Globe, MapPin, Star, Ticket, Sparkles } from "lucide-react";
 import { fetchListings, type Listing } from "@/lib/overpass-listings";
 import { useUserLocation, distanceKm, formatDistance } from "@/hooks/useUserLocation";
+import ReferralDialog from "@/components/ReferralDialog";
 
 export type FilterChip<K extends string> = { kind: K; label: string; emoji: string };
 
@@ -20,6 +21,7 @@ type Sort = "distance" | "rating" | "name";
 export function ListingPage<K extends string>(props: Props<K>) {
   const [active, setActive] = useState<Set<K>>(new Set(props.initial));
   const [items, setItems] = useState<Listing[]>([]);
+  const [referral, setReferral] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -202,6 +204,21 @@ export function ListingPage<K extends string>(props: Props<K>) {
                   >
                     <Navigation className="w-3 h-3" /> Cómo llegar
                   </a>
+                  <a
+                    href={`https://www.google.com/search?q=${encodeURIComponent(`${it.name} Alicante reseñas`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full bg-secondary text-secondary-foreground"
+                  >
+                    <Sparkles className="w-3 h-3" /> Reseñas
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => setReferral(it)}
+                    className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full gradient-warm text-primary-foreground shadow-soft active:scale-95"
+                  >
+                    <Ticket className="w-3 h-3" /> Quiero ir
+                  </button>
                   {it.phone && (
                     <a
                       href={`tel:${it.phone}`}
@@ -250,6 +267,13 @@ export function ListingPage<K extends string>(props: Props<K>) {
           Datos abiertos © OpenStreetMap contributors
         </p>
       </main>
+      {referral && (
+        <ReferralDialog
+          placeId={String(referral.id)}
+          placeName={referral.name}
+          onClose={() => setReferral(null)}
+        />
+      )}
     </div>
   );
 }
