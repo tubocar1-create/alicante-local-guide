@@ -73,37 +73,64 @@ export function useUserLocation(opts?: { watch?: boolean }) {
 
   function request() {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
-      setState({ status: "error", message: "Geolocalización no disponible" });
+      setState({ status: "error", message: "Geolocalización no disponible en este navegador" });
       return;
     }
+    // Detect blocked permission so we can give actionable instructions
+    const tryGet = () => {
+      setState({ status: "loading" });
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const c = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            accuracy: pos.coords.accuracy,
+          };
+          notify(c);
+          setState({ status: "ready", coords: c });
+          startWatch();
+        },
+        (err) => {
+          const message =
+            err.code === err.PERMISSION_DENIED
+              ? "Permiso bloqueado. Toca el candado 🔒 de la barra del navegador → Permisos → Ubicación → Permitir, y vuelve a intentarlo."
+              : err.code === err.POSITION_UNAVAILABLE
+                ? "No se pudo obtener tu ubicación (GPS sin señal). Sal al exterior o activa el GPS."
+                : err.code === err.TIMEOUT
+                  ? "Se agotó el tiempo buscando tu ubicación. Inténtalo de nuevo."
+                  : "No se pudo obtener tu ubicación";
+          setState({ status: "error", message });
+        },
+        { enableHighAccuracy: true, maximumAge: 60_000, timeout: 15_000 },
+      );
+    };
+
     if (cached) {
       setState({ status: "ready", coords: cached });
       startWatch();
       return;
     }
-    setState({ status: "loading" });
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const c = {
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          accuracy: pos.coords.accuracy,
-        };
-        notify(c);
-        setState({ status: "ready", coords: c });
-        startWatch();
-      },
-      (err) => {
-        setState({
-          status: "error",
-          message:
-            err.code === err.PERMISSION_DENIED
-              ? "Permiso denegado"
-              : "No se pudo obtener tu ubicación",
-        });
-      },
-      { enableHighAccuracy: true, maximumAge: 60_000, timeout: 15_000 },
-    );
+
+    // If the Permissions API is available, check current state first
+    const perms = (navigator as Navigator & { permissions?: Permissions }).permissions;
+    if (perms?.query) {
+      perms
+        .query({ name: "geolocation" as PermissionName })
+        .then((res) => {
+          if (res.state === "denied") {
+            setState({
+              status: "error",
+              message:
+                "Permiso bloqueado en el navegador. Toca el candado 🔒 de la barra de direcciones → Permisos → Ubicación → Permitir, y recarga la página.",
+            });
+            return;
+          }
+          tryGet();
+        })
+        .catch(() => tryGet());
+    } else {
+      tryGet();
+    }
   }
 
   return { state, request };
