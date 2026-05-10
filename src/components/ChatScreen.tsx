@@ -19,8 +19,27 @@ type GeoStatus = "idle" | "asking" | "ok" | "denied";
 const ALICANTE_CENTER = { lat: 38.3452, lng: -0.481 };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
-const SUGGESTIONS: { label: string; prompt: string }[] = [
-  { label: "🍽️ Comer", prompt: "¿Dónde puedo comer cerca?" },
+type Suggestion = {
+  label: string;
+  prompt?: string;
+  submenu?: { label: string; prompt: string }[];
+};
+const SUGGESTIONS: Suggestion[] = [
+  {
+    label: "🍽️ Comer",
+    submenu: [
+      { label: "🥘 Cocina típica", prompt: "Recomiéndame un sitio de cocina típica alicantina abierto ahora" },
+      { label: "🍤 Arroces y pescado", prompt: "Quiero un buen arroz o pescado fresco, ¿dónde voy ahora?" },
+      { label: "🍕 Italiano", prompt: "Apetece italiano, ¿dónde puedo ir ahora?" },
+      { label: "🍔 Hamburguesas", prompt: "Una buena hamburguesa abierta ahora, por favor" },
+      { label: "🍣 Japonés / Asiático", prompt: "Un japonés o asiático rico abierto ahora" },
+      { label: "🌱 Vegano / Saludable", prompt: "Un sitio vegano o saludable abierto ahora" },
+      { label: "🥐 Desayuno / Brunch", prompt: "Un buen desayuno o brunch abierto ahora" },
+      { label: "🍰 Postres / Cafetería", prompt: "Una cafetería con postres ricos abierta ahora" },
+      { label: "💸 Barato y rico", prompt: "Algo barato y rico para comer ya, abierto ahora" },
+      { label: "✨ Sorpréndeme", prompt: "Sorpréndeme con un sitio rico para comer abierto ahora" },
+    ],
+  },
   { label: "🏨 Dormir", prompt: "¿Dónde puedo dormir esta noche?" },
   { label: "🏖️ Playa", prompt: "¿Qué playa me recomiendas?" },
   { label: "🌳 Parque", prompt: "¿Qué parque o zona verde me recomiendas?" },
@@ -39,6 +58,7 @@ export function ChatScreen() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeSubmenu, setActiveSubmenu] = useState<Suggestion | null>(null);
   const [geo, setGeo] = useState<GeoInfo | null>(null);
   const [geoStatus, setGeoStatus] = useState<GeoStatus>("idle");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -277,20 +297,48 @@ export function ChatScreen() {
             </div>
           )}
 
-          {isWelcome && (
-            <>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {SUGGESTIONS.map((s) => (
+          {isWelcome && !activeSubmenu && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {SUGGESTIONS.map((s) => (
+                <button
+                  key={s.label}
+                  onClick={() => {
+                    if (s.submenu) setActiveSubmenu(s);
+                    else if (s.prompt) send(s.prompt);
+                  }}
+                  className="rounded-full border border-border bg-card/90 px-3 py-2 text-sm text-card-foreground shadow-sm backdrop-blur transition hover:bg-accent/40"
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {isWelcome && activeSubmenu && (
+            <div className="mt-2 rounded-2xl border border-border bg-card/90 p-3 shadow-sm backdrop-blur">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-sm font-medium">{activeSubmenu.label} — ¿qué te apetece?</p>
+                <button
+                  onClick={() => setActiveSubmenu(null)}
+                  className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+                >
+                  ← Volver
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {activeSubmenu.submenu?.map((opt) => (
                   <button
-                    key={s.label}
-                    onClick={() => send(s.prompt)}
-                    className="rounded-full border border-border bg-card/90 px-3 py-2 text-sm text-card-foreground shadow-sm backdrop-blur transition hover:bg-accent/40"
+                    key={opt.label}
+                    onClick={() => {
+                      setActiveSubmenu(null);
+                      send(opt.prompt);
+                    }}
+                    className="rounded-full border border-border bg-background/80 px-3 py-2 text-sm shadow-sm transition hover:bg-accent/40"
                   >
-                    {s.label}
+                    {opt.label}
                   </button>
                 ))}
               </div>
-            </>
+            </div>
           )}
         </div>
       </div>
