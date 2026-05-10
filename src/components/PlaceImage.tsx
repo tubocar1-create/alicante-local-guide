@@ -136,6 +136,28 @@ function mapsHref(query: string, mode: TravelMode = "walking") {
   return `https://www.google.com/maps/dir/?api=1&destination=${query}&travelmode=${tm}`;
 }
 
+function openMaps(e: React.MouseEvent, url: string) {
+  e.preventDefault();
+  // Try opening in the top window first (preview iframes often block target=_blank)
+  try {
+    const top = window.top ?? window;
+    const w = top.open(url, "_blank", "noopener,noreferrer");
+    if (w) return;
+  } catch {
+    // cross-origin top access can throw — fall through
+  }
+  const w2 = window.open(url, "_blank", "noopener,noreferrer");
+  if (!w2) {
+    // Last resort: navigate the top window
+    try {
+      if (window.top) window.top.location.href = url;
+      else window.location.href = url;
+    } catch {
+      window.location.href = url;
+    }
+  }
+}
+
 export function PlaceImage({ name }: { name: string }) {
   const key = name.trim().toLowerCase();
   const override = findPlaceOverride(name);
@@ -175,8 +197,9 @@ export function PlaceImage({ name }: { name: string }) {
           <TravelInfo target={override.coords ?? null} />
           <a
             href={mapsHref(query)}
+            onClick={(e) => openMaps(e, mapsHref(query))}
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-sm transition hover:opacity-90"
           >
             📍 Cómo llegar
@@ -211,8 +234,9 @@ export function PlaceImage({ name }: { name: string }) {
       <TravelInfo target={wiki.coords} />
       <a
         href={mapsHref(mapsQuery)}
+        onClick={(e) => openMaps(e, mapsHref(mapsQuery))}
         target="_blank"
-        rel="noreferrer"
+        rel="noopener noreferrer"
         className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-sm transition hover:opacity-90"
       >
         📍 Cómo llegar
