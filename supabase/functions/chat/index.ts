@@ -637,73 +637,117 @@ type MentionedPlace = {
 async function fetchMentionedPlaces(text: string): Promise<MentionedPlace[]> {
   const names = extractMentionedNames(text);
   if (names.length === 0) return [];
-  const escaped = (s: string) => s.replace(/["\\]/g, "\\$&");
-  const filters = names.map((n) => `nwr["name"~"${escaped(n)}",i](${ALICANTE_BBOX});`).join("\n");
-  const body = `[out:json][timeout:15];\n(\n${filters}\n);\nout tags center 60;`;
-  type OsmEl = {
-    tags?: Record<string, string>;
-    lat?: number;
-    lon?: number;
-    center?: { lat: number; lon: number };
-  };
-  let elements: OsmEl[] = [];
-  for (const url of OVERPASS_ENDPOINTS) {
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: "data=" + encodeURIComponent(body),
-      });
-      if (!res.ok) throw new Error(`Overpass ${res.status}`);
-      const json = await res.json();
-      elements = json.elements ?? [];
-      break;
-    } catch (e) {
-      console.error("mentioned places fetch failed:", e);
-    }
-  }
   const now = new Date();
   const results: MentionedPlace[] = [];
-  for (const query of names) {
-    const qNorm = normalized(query);
-    const matches = elements.filter((el) => {
-      const tags = el.tags ?? {};
-      const candidates = [tags.name, tags["name:es"], tags["name:en"], tags["alt_name"]]
-        .filter(Boolean)
-        .map((s: string) => normalized(s));
-      return candidates.some((c) => c.includes(qNorm) || qNorm.includes(c));
-    });
-    if (matches.length === 0) {
-      results.push({ query, name: query, kind: "unknown", status: "not_found" });
-      continue;
+
+  // 1) Try Google Places first for each name (real-time hours from Maps).
+  const googleResults = await Promise.all(
+    names.map((q) => googlePlacesTextSearch(`${q} Alicante`, ALICANTE_CENTER)),
+  );
+
+  const remaining: string[] = [];
+  names.forEach((query, i) => {
+    const g = googleResults[i];
+    if (!g) {
+      remaining.push(query);
+      return;
     }
-    const withHours = matches.find((el) => el.tags?.opening_hours) ?? matches[0];
-    const tags = withHours.tags ?? {};
-    const name = tags.name || tags["name:es"] || query;
-    const kind = tags.amenity || tags.tourism || tags.shop || tags.leisure || "place";
-    const openingHours = tags.opening_hours;
-    const info = getOpeningInfo(openingHours, now);
-    const address =
-      [tags["addr:street"], tags["addr:housenumber"], tags["addr:city"]]
-        .filter(Boolean)
-        .join(" ") || undefined;
-    if (info.status === "open") {
-      results.push({
-        query,
-        name,
-        kind,
-        openingHours,
-        status: "open",
-        closesAt: info.closesAt,
-        closesInMinutes: info.closesInMinutes,
-        address,
-      });
-    } else if (info.status === "closed") {
-      results.push({ query, name, kind, openingHours, status: "closed", address });
+    const name = g.displayName?.text ?? query;
+    const kind = g.primaryType ?? "place";
+    const address = g.formattedAddress;
+    const openNow = g.currentOpeningHours?.openNow ?? g.regularOpeningHours?.openNow;
+    if (openNow === true) {
+      const closes = googleClosesInfo(g, now);
+      if (closes) {
+        results.push({
+          query,
+          name,
+          kind,
+          status: "open",
+          closesAt: closes.closesAt,
+          closesInMinutes: closes.closesInMinutes,
+          address,
+        });
+      } else {
+        results.push({ query, name, kind, status: "open", closesAt: "", closesInMinutes: 0, address });
+      }
+    } else if (openNow === false) {
+      results.push({ query, name, kind, status: "closed", address });
     } else {
-      results.push({ query, name, kind, openingHours, status: "unknown", address });
+      // Google found place but no hours data → fall through to OSM
+      remaining.push(query);
+    }
+  });
+
+  // 2) Fallback to Overpass/OSM for whatever Google couldn't resolve.
+  if (remaining.length > 0) {
+    const escaped = (s: string) => s.replace(/["\\]/g, "\\$&");
+    const filters = remaining.map((n) => `nwr["name"~"${escaped(n)}",i](${ALICANTE_BBOX});`).join("\n");
+    const body = `[out:json][timeout:15];\n(\n${filters}\n);\nout tags center 60;`;
+    type OsmEl = {
+      tags?: Record<string, string>;
+      lat?: number;
+      lon?: number;
+      center?: { lat: number; lon: number };
+    };
+    let elements: OsmEl[] = [];
+    for (const url of OVERPASS_ENDPOINTS) {
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: "data=" + encodeURIComponent(body),
+        });
+        if (!res.ok) throw new Error(`Overpass ${res.status}`);
+        const json = await res.json();
+        elements = json.elements ?? [];
+        break;
+      } catch (e) {
+        console.error("mentioned places OSM fallback failed:", e);
+      }
+    }
+    for (const query of remaining) {
+      const qNorm = normalized(query);
+      const matches = elements.filter((el) => {
+        const tags = el.tags ?? {};
+        const candidates = [tags.name, tags["name:es"], tags["name:en"], tags["alt_name"]]
+          .filter(Boolean)
+          .map((s: string) => normalized(s));
+        return candidates.some((c) => c.includes(qNorm) || qNorm.includes(c));
+      });
+      if (matches.length === 0) {
+        results.push({ query, name: query, kind: "unknown", status: "not_found" });
+        continue;
+      }
+      const withHours = matches.find((el) => el.tags?.opening_hours) ?? matches[0];
+      const tags = withHours.tags ?? {};
+      const name = tags.name || tags["name:es"] || query;
+      const kind = tags.amenity || tags.tourism || tags.shop || tags.leisure || "place";
+      const openingHours = tags.opening_hours;
+      const info = getOpeningInfo(openingHours, now);
+      const address =
+        [tags["addr:street"], tags["addr:housenumber"], tags["addr:city"]]
+          .filter(Boolean)
+          .join(" ") || undefined;
+      if (info.status === "open") {
+        results.push({
+          query,
+          name,
+          kind,
+          openingHours,
+          status: "open",
+          closesAt: info.closesAt,
+          closesInMinutes: info.closesInMinutes,
+          address,
+        });
+      } else if (info.status === "closed") {
+        results.push({ query, name, kind, openingHours, status: "closed", address });
+      } else {
+        results.push({ query, name, kind, openingHours, status: "unknown", address });
+      }
     }
   }
+
   return results;
 }
 
