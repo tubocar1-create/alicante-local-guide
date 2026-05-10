@@ -401,7 +401,7 @@ export function ChatScreen() {
         </div>
       </div>
 
-      {eatOpen && <EatNearby onClose={() => setEatOpen(false)} initialQuery={eatQuery} />}
+      
     </div>
   );
 }
