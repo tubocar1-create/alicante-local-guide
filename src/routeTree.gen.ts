@@ -9,10 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as StayRouteImport } from './routes/stay'
 import { Route as RepoRouteImport } from './routes/repo'
 import { Route as ExploreRouteImport } from './routes/explore'
+import { Route as EatRouteImport } from './routes/eat'
 import { Route as IndexRouteImport } from './routes/index'
 
+const StayRoute = StayRouteImport.update({
+  id: '/stay',
+  path: '/stay',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RepoRoute = RepoRouteImport.update({
   id: '/repo',
   path: '/repo',
@@ -23,6 +30,11 @@ const ExploreRoute = ExploreRouteImport.update({
   path: '/explore',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EatRoute = EatRouteImport.update({
+  id: '/eat',
+  path: '/eat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -31,36 +43,51 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/eat': typeof EatRoute
   '/explore': typeof ExploreRoute
   '/repo': typeof RepoRoute
+  '/stay': typeof StayRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/eat': typeof EatRoute
   '/explore': typeof ExploreRoute
   '/repo': typeof RepoRoute
+  '/stay': typeof StayRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/eat': typeof EatRoute
   '/explore': typeof ExploreRoute
   '/repo': typeof RepoRoute
+  '/stay': typeof StayRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/explore' | '/repo'
+  fullPaths: '/' | '/eat' | '/explore' | '/repo' | '/stay'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/explore' | '/repo'
-  id: '__root__' | '/' | '/explore' | '/repo'
+  to: '/' | '/eat' | '/explore' | '/repo' | '/stay'
+  id: '__root__' | '/' | '/eat' | '/explore' | '/repo' | '/stay'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  EatRoute: typeof EatRoute
   ExploreRoute: typeof ExploreRoute
   RepoRoute: typeof RepoRoute
+  StayRoute: typeof StayRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/stay': {
+      id: '/stay'
+      path: '/stay'
+      fullPath: '/stay'
+      preLoaderRoute: typeof StayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/repo': {
       id: '/repo'
       path: '/repo'
@@ -75,6 +102,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExploreRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/eat': {
+      id: '/eat'
+      path: '/eat'
+      fullPath: '/eat'
+      preLoaderRoute: typeof EatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -87,9 +121,21 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  EatRoute: EatRoute,
   ExploreRoute: ExploreRoute,
   RepoRoute: RepoRoute,
+  StayRoute: StayRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
