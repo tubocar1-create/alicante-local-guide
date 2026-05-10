@@ -227,6 +227,61 @@ function shuffle<T>(items: T[]) {
   return copy;
 }
 
+function googleReviewsLink(name: string) {
+  const query = encodeURIComponent(`${name} Alicante`).replace(/%20/g, "+");
+  return `[⭐ ver reseñas](https://www.google.com/maps/search/?api=1&query=${query})`;
+}
+
+function previousAssistantPlaceNames(messages: Array<{ role: string; content: string }>) {
+  const names = new Set<string>();
+  for (const message of messages) {
+    if (message.role !== "assistant") continue;
+    for (const match of message.content.matchAll(/\*\*([^*]{3,80})\*\*/g)) {
+      names.add(normalized(match[1]));
+    }
+  }
+  return names;
+}
+
+function matchesFoodPreference(place: FoodPlace, latestText: string) {
+  const text = normalized(latestText);
+  const haystack = normalized(`${place.name} ${place.kind} ${place.cuisine ?? ""}`);
+  if (/\b(italiano|italiana|pizza|pasta)\b/.test(text)) return /italian|pizza|pasta/.test(haystack);
+  if (/\b(hamburguesa|burger)\b/.test(text)) return /burger|hamburger|fast_food/.test(haystack);
+  if (/\b(japones|japonesa|japon[eé]s|sushi|asiatico|asiatica|asi[aá]tico)\b/.test(text)) {
+    return /japanese|sushi|asian|thai|chinese|korean|vietnamese/.test(haystack);
+  }
+  if (/\b(vegano|vegana|vegetariano|vegetariana|saludable)\b/.test(text)) {
+    return /vegan|vegetarian|healthy|salad|juice/.test(haystack);
+  }
+  if (/\b(desayuno|brunch|caf[eé]|cafeteria|cafetería|postre|tarta|dulce)\b/.test(text)) {
+    return /cafe|coffee|bakery|ice_cream|dessert|pastry/.test(haystack);
+  }
+  if (/\b(arroz|arroces|pescado|marisco|paella)\b/.test(text)) {
+    return /seafood|mediterranean|spanish|regional|rice|paella/.test(haystack);
+  }
+  return true;
+}
+
+function streamChatText(text: string) {
+  const encoder = new TextEncoder();
+  const chunks = text.match(/[\s\S]{1,220}/g) ?? [text];
+  return new Response(
+    new ReadableStream({
+      start(controller) {
+        for (const chunk of chunks) {
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: chunk } }] })}\n\n`),
+          );
+        }
+        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+        controller.close();
+      },
+    }),
+    { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } },
+  );
+}
+
 const ALICANTE_BBOX = "37.84,-1.13,38.87,0.21";
 const NAME_STOPWORDS = new Set([
   "alicante",
