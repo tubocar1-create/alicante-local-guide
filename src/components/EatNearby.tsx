@@ -72,7 +72,7 @@ export function EatNearby({ onClose }: Props) {
     };
   }, [picked, me]);
 
-  const top10 = useMemo(() => {
+  const ranked = useMemo(() => {
     if (!me || !picked) return [];
     let arr = items;
     if (picked.match.length > 0) {
@@ -80,7 +80,6 @@ export function EatNearby({ onClose }: Props) {
         const c = (i.cuisine || "").toLowerCase();
         return picked.match.some((m) => c.includes(m));
       });
-      // If filtering gives too few, fallback to unfiltered amenity results
       if (arr.length < 6) arr = items;
     }
     return [...arr]
@@ -88,6 +87,7 @@ export function EatNearby({ onClose }: Props) {
       .sort((a, b) => a.d - b.d)
       .slice(0, 10);
   }, [items, me, picked]);
+  const shown = ranked.slice(0, visible);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4">
