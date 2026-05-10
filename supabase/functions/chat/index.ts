@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -6,6 +5,252 @@ const corsHeaders = {
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+type DayKey = "Mo" | "Tu" | "We" | "Th" | "Fr" | "Sa" | "Su";
+type FoodPlace = {
+  name: string;
+  kind: string;
+  lat: number;
+  lon: number;
+  openingHours: string;
+  closesAt: string;
+  closesInMinutes: number;
+  cuisine?: string;
+  address?: string;
+};
+type ChatContext = {
+  maxOptions?: number;
+  location?: {
+    lat?: number;
+    lng?: number;
+    area?: string;
+    city?: string;
+    distanceFromAlicanteKm?: number;
+  } | null;
+  locationStatus?: string;
+};
+
+const DAYS: DayKey[] = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+const WEEKDAY_TO_DAY: Record<string, DayKey> = {
+  mon: "Mo",
+  tue: "Tu",
+  wed: "We",
+  thu: "Th",
+  fri: "Fr",
+  sat: "Sa",
+  sun: "Su",
+};
+const OVERPASS_ENDPOINTS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+];
+const ALICANTE_CENTER = { lat: 38.3452, lng: -0.481 };
+
+function madridNow(date = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Madrid",
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+  return {
+    day: WEEKDAY_TO_DAY[get("weekday").slice(0, 3).toLowerCase()] ?? "Mo",
+    minutes: Number(get("hour")) * 60 + Number(get("minute")),
+  };
+}
+
+function previousDay(day: DayKey): DayKey {
+  return DAYS[(DAYS.indexOf(day) + 6) % 7];
+}
+
+function minutesToClock(minutes: number) {
+  const safe = ((minutes % 1440) + 1440) % 1440;
+  return `${String(Math.floor(safe / 60)).padStart(2, "0")}:${String(safe % 60).padStart(2, "0")}`;
+}
+
+function expandDayRange(start: DayKey, end: DayKey) {
+  const out: DayKey[] = [];
+  let i = DAYS.indexOf(start);
+  const stop = DAYS.indexOf(end);
+  for (let guard = 0; guard < 7; guard += 1) {
+    out.push(DAYS[i]);
+    if (i === stop) break;
+    i = (i + 1) % 7;
+  }
+  return out;
+}
+
+function ruleDays(rule: string): DayKey[] | null {
+  const expr = rule.match(
+    /\b(?:Mo|Tu|We|Th|Fr|Sa|Su)(?:\s*-\s*(?:Mo|Tu|We|Th|Fr|Sa|Su))?(?:\s*,\s*(?:Mo|Tu|We|Th|Fr|Sa|Su)(?:\s*-\s*(?:Mo|Tu|We|Th|Fr|Sa|Su))?)*/,
+  )?.[0];
+  if (!expr) return null;
+  return expr.split(/\s*,\s*/).flatMap((part) => {
+    const [start, end] = part.split(/\s*-\s*/) as [DayKey, DayKey | undefined];
+    return end ? expandDayRange(start, end) : [start];
+  });
+}
+
+function appliesToDay(rule: string, day: DayKey) {
+  const days = ruleDays(rule);
+  return !days || days.includes(day);
+}
+
+function parseRanges(rule: string) {
+  return [...rule.matchAll(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/g)].map((m) => ({
+    start: Number(m[1]) * 60 + Number(m[2]),
+    end: Number(m[3]) * 60 + Number(m[4]),
+  }));
+}
+
+function getOpenWindow(raw?: string, date = new Date()) {
+  if (!raw?.trim()) return null;
+  const clean = raw.replace(/"[^"]*"/g, "").trim();
+  if (/24\s*\/\s*7/.test(clean)) {
+    return { closesAt: "24:00", closesInMinutes: 24 * 60 };
+  }
+  const { day, minutes } = madridNow(date);
+  const yesterday = previousDay(day);
+
+  for (const rule of clean
+    .split(";")
+    .map((r) => r.trim())
+    .filter(Boolean)) {
+    const ranges = parseRanges(rule);
+    if (/\boff\b|\bclosed\b/i.test(rule) && ranges.length === 0 && appliesToDay(rule, day)) {
+      continue;
+    }
+
+    if (appliesToDay(rule, day)) {
+      for (const range of ranges) {
+        const end = range.end <= range.start ? range.end + 1440 : range.end;
+        if (minutes >= range.start && minutes < end) {
+          return { closesAt: minutesToClock(end), closesInMinutes: end - minutes };
+        }
+      }
+    }
+
+    if (appliesToDay(rule, yesterday)) {
+      for (const range of ranges) {
+        if (range.end > range.start) continue;
+        if (minutes < range.end) {
+          return { closesAt: minutesToClock(range.end), closesInMinutes: range.end - minutes };
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+  const R = 6371;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const lat1 = (a.lat * Math.PI) / 180;
+  const lat2 = (b.lat * Math.PI) / 180;
+  const h = Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+function normalized(text: string) {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function isFoodOrDrinkRequest(messages: Array<{ role: string; content: string }>) {
+  const latest = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
+  const text = normalized(latest);
+  return /\b(comer|cenar|almorzar|desayunar|restaurante|restaurantes|tapas|tapear|bar|bares|cafe|cafeteria|tomar algo|beber|copa|copas|cocktail|coctel|cerveza|vino|hamburguesa|pizza|arro(z|ces)|marisco|menu|menú)\b/.test(
+    text,
+  );
+}
+
+function shuffle<T>(items: T[]) {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+async function fetchConfirmedOpenFoodPlaces(context?: ChatContext): Promise<FoodPlace[]> {
+  const loc = context?.location;
+  const center =
+    typeof loc?.lat === "number" && typeof loc?.lng === "number"
+      ? { lat: loc.lat, lng: loc.lng }
+      : ALICANTE_CENTER;
+  const radius = loc ? 5500 : 8500;
+  const area = `(around:${radius},${center.lat},${center.lng})`;
+  const body = `[out:json][timeout:18];
+(
+  nwr["amenity"~"^(restaurant|bar|cafe|pub|fast_food|ice_cream)$"]["name"]["opening_hours"]${area};
+);
+out center 180;`;
+  let lastErr: unknown;
+
+  for (const url of OVERPASS_ENDPOINTS) {
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "data=" + encodeURIComponent(body),
+      });
+      if (!res.ok) throw new Error(`Overpass ${res.status}`);
+      const json = await res.json();
+      const seen = new Set<string>();
+      const now = new Date();
+      const places: FoodPlace[] = [];
+
+      for (const el of json.elements ?? []) {
+        const tags = el.tags ?? {};
+        const name = tags.name || tags["name:es"] || tags["name:en"];
+        const lat = el.lat ?? el.center?.lat;
+        const lon = el.lon ?? el.center?.lon;
+        const openingHours = tags.opening_hours;
+        if (!name || lat == null || lon == null || !openingHours) continue;
+        const open = getOpenWindow(openingHours, now);
+        if (!open || open.closesInMinutes <= 60) continue;
+        const key = normalized(`${name}|${lat.toFixed(4)}|${lon.toFixed(4)}`);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        places.push({
+          name,
+          kind: tags.amenity ?? "restaurant",
+          lat,
+          lon,
+          openingHours,
+          closesAt: open.closesAt,
+          closesInMinutes: open.closesInMinutes,
+          cuisine: tags.cuisine,
+          address:
+            [tags["addr:street"], tags["addr:housenumber"], tags["addr:city"]]
+              .filter(Boolean)
+              .join(" ") || undefined,
+        });
+      }
+
+      return shuffle(
+        places
+          .sort(
+            (a, b) =>
+              distanceKm(center, { lat: a.lat, lng: a.lon }) -
+              distanceKm(center, { lat: b.lat, lng: b.lon }),
+          )
+          .slice(0, 40),
+      ).slice(0, 16);
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+
+  console.error("open food places fetch failed:", lastErr);
+  return [];
+}
 
 const SYSTEM_PROMPT = `You are "Alicante Friend", a warm, caring local companion living in Alicante, Spain.
 You are NOT a travel website. You are NOT a chatbot. You are NOT an assistant.
@@ -84,14 +329,16 @@ I'd order the gilda and whatever the chef suggests today, you won't regret it. D
 
 TIME-AWARE RULES (CRÍTICO — son OBLIGATORIAS, no opcionales):
 El system message incluye TODAY (fecha + día de la semana + HORA ACTUAL en Alicante). Antes de nombrar CUALQUIER sitio, haz mentalmente este check:
-  1. ¿A esta hora está abierto con certeza? Si no estás 100% seguro → DESCÁRTALO y elige otro.
-  2. ¿Le queda MÁS de 1 hora hasta cerrar? Si cierra en ≤60 min → DESCÁRTALO también, no lo recomiendes (no sirve enviar a alguien a un sitio que cierra ya). Busca otro que esté abierto cómodamente al menos 1h más.
-  3. Si solo conoces el horario aproximado y la hora actual está cerca del cierre o de una pausa típica (siesta 16:00–20:00 en muchos restaurantes, cocinas que cierran a las 23:30/00:00), NO lo recomiendes salvo que tengas seguridad real.
+  1. Si el RUNTIME CONTEXT trae VERIFIED_OPEN_FOOD_PLACES, para restaurantes/bares/cafés SOLO puedes recomendar nombres de esa lista. Prohibido inventar o tirar de memoria.
+  2. ¿A esta hora está abierto con certeza? Si no estás 100% seguro → DESCÁRTALO y elige otro.
+  3. ¿Le queda MÁS de 1 hora hasta cerrar? Si cierra en ≤60 min → DESCÁRTALO también, no lo recomiendes (no sirve enviar a alguien a un sitio que cierra ya). Busca otro que esté abierto cómodamente al menos 1h más.
+  4. Si solo conoces el horario aproximado y la hora actual está cerca del cierre o de una pausa típica (siesta 16:00–20:00 en muchos restaurantes, cocinas que cierran a las 23:30/00:00), NO lo recomiendes salvo que tengas seguridad real.
 - Prefiere sitios con horarios amplios y conocidos a esa franja horaria (ej. de noche → bares de tapas del casco antiguo abiertos hasta tarde; media tarde → cafeterías y heladerías; mañana → desayunos y mercados).
 - El **Mercado Central de Alicante** está CERRADO los domingos y por la tarde entre semana (cierra ~14:30). NUNCA lo recomiendes fuera de su horario.
 - Playas, parques, miradores y calles cuentan como "abiertos" salvo de madrugada (00:00–07:00), entonces avisa que es mejor de día.
 - Si por casualidad mencionas un sitio que cierra en <90 min, DEBES añadir explícitamente "⏰ ojo, cierra a las HH:MM, ve ya" — pero recuerda: si cierra en ≤60 min, mejor no lo recomiendes.
 - Es PREFERIBLE dar 3 opciones seguras que 4 con una dudosa. Calidad > cantidad.
+- Si no hay 4 restaurantes/bares/cafés confirmados abiertos, da solo los confirmados y di con cariño que prefieres no inventar porque te acabo de pedir no mandar a nadie a sitios cerrados.
 
 UBICACIÓN (IMPORTANTE):
 - El RUNTIME CONTEXT puede incluir USER_LOCATION con la ubicación REAL del usuario (lat/lng + barrio + ciudad + distancia a Alicante centro). ESTA es la fuente de verdad, úsala silenciosamente.
@@ -102,7 +349,7 @@ UBICACIÓN (IMPORTANTE):
 - Si ya tienes ubicación (por GPS o por chat), no la vuelvas a pedir.
 
 NEARBY RECOMMENDATIONS:
-- Cuando el usuario pida "dónde comer/dormir/tomar algo/etc", responde SIEMPRE con EXACTAMENTE 4 opciones en lista numerada (no 3, no 5). Cada item: **Nombre** — 1 frase de por qué te encanta, y al final del mismo item añade un enlace de reseñas en Google Maps con este formato exacto: [⭐ ver reseñas](https://www.google.com/maps/search/?api=1&query=NOMBRE+DEL+SITIO+Alicante) — sustituye espacios por '+' en la URL. Las 4 deben cumplir las TIME-AWARE RULES (abiertas y con más de 1h hasta cerrar).
+- Cuando el usuario pida "dónde comer/dormir/tomar algo/etc", responde con hasta 4 opciones en lista numerada. Cada item: **Nombre** — 1 frase de por qué te encanta + "Abierto ahora, cierra a HH:MM" si ese dato viene en VERIFIED_OPEN_FOOD_PLACES, y al final del mismo item añade un enlace de reseñas en Google Maps con este formato exacto: [⭐ ver reseñas](https://www.google.com/maps/search/?api=1&query=NOMBRE+DEL+SITIO+Alicante) — sustituye espacios por '+' en la URL. Las opciones deben cumplir las TIME-AWARE RULES (abiertas y con más de 1h hasta cerrar).
 - Si el usuario pide más, dale 1 opción adicional cada vez (no 2, no 4), y así sucesivamente hasta agotar tu cartera de sitios cercanos válidos. El cliente manda: si pide otra, otra le das. Solo cuando ya no quede ninguno más cercano y abierto, dilo con cariño y propón ampliar zona o cambiar de plan.
 - No repitas sitios ya mencionados en la conversación.
 - ALEATORIEDAD (CRÍTICO): cuando el usuario NO especifica zona/barrio/tipo concreto, NUNCA tires siempre de los mismos "clásicos" (El Portal, Nou Manolín, Cervecería Sento, La Taberna del Gourmet… esos son tentación fácil pero suena a lista sesgada de guía turística). Cada vez que respondas a una petición genérica, haz una selección VARIADA y aleatoria de tu cartera mental: mezcla barrios distintos (casco antiguo, centro, playa Postiguet, San Juan, Mercado, Benalúa…), mezcla precios y estilos (clásico de toda la vida + moderno + de barrio + sorpresa local). Imagina que tiras un dado mental: si en otra conversación te hubieran preguntado lo mismo, las 4 respuestas serían DIFERENTES. Solo repite un "clásico" cuando encaje muy bien con el perfil específico del usuario o con la hora, no por defecto.
@@ -138,7 +385,20 @@ serve(async (req) => {
     const locationLine = loc
       ? `USER_LOCATION: lat=${loc.lat?.toFixed?.(5)}, lng=${loc.lng?.toFixed?.(5)}${loc.area ? `, area="${loc.area}"` : ""}${loc.city ? `, city="${loc.city}"` : ""}${typeof loc.distanceFromAlicanteKm === "number" ? `, distanceFromAlicanteKm=${loc.distanceFromAlicanteKm}` : ""}`
       : `USER_LOCATION: (no disponible) — locationStatus=${locStatus}`;
-    const runtimeContext = `RUNTIME CONTEXT (use this when relevant):\nTODAY: ${todayStr} (zona horaria Europe/Madrid)\nMAX_NEARBY_OPTIONS: ${context?.maxOptions ?? 4}\n${locationLine}`;
+    const openFoodPlaces = isFoodOrDrinkRequest(messages)
+      ? await fetchConfirmedOpenFoodPlaces(context)
+      : [];
+    const verifiedOpenLine = openFoodPlaces.length
+      ? `\nVERIFIED_OPEN_FOOD_PLACES (fuente de verdad para comer/beber: recomienda SOLO estos nombres; todos están abiertos ahora y cierran en más de 60 min):\n${openFoodPlaces
+          .map(
+            (p, i) =>
+              `${i + 1}. ${p.name} — tipo=${p.kind}${p.cuisine ? `, cocina=${p.cuisine}` : ""}${p.address ? `, dirección=${p.address}` : ""}, cierra=${p.closesAt}, horario_osm="${p.openingHours}"`,
+          )
+          .join("\n")}`
+      : isFoodOrDrinkRequest(messages)
+        ? "\nVERIFIED_OPEN_FOOD_PLACES: ninguna opción con horario confirmado abierto ahora y con más de 60 min hasta cerrar. No recomiendes restaurantes/bares/cafés concretos; pide zona o propone ampliar búsqueda."
+        : "";
+    const runtimeContext = `RUNTIME CONTEXT (use this when relevant):\nTODAY: ${todayStr} (zona horaria Europe/Madrid)\nMAX_NEARBY_OPTIONS: ${context?.maxOptions ?? 4}\n${locationLine}${verifiedOpenLine}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
