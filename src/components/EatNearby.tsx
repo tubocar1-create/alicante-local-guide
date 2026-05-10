@@ -185,6 +185,7 @@ export function EatNearby({ onClose, initialQuery }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [visible, setVisible] = useState(4);
+  const [referral, setReferral] = useState<Listing | null>(null);
 
   useEffect(() => {
     if (!picked || !me) return;
