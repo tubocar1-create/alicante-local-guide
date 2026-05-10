@@ -24,6 +24,13 @@ const GREETING: Msg = {
     "¡Hola! 👋 I'm your friend in Alicante. Tell me what you feel like — food, beach, a plan for today? I'll show you the spots locals actually love.",
 };
 
+const LOCATION_RECOMMENDATION_RE =
+  /\b(d[oó]nde|donde|cerca|near|around|nearby|comer|cenar|almorzar|desayunar|dormir|hotel|hostal|tomar el sol|playa|comprar|tienda|beber|copas|restaurante|restaurant|shop|sleep|eat|sunbathe)\b/i;
+
+function needsLocationForRecommendation(text: string) {
+  return LOCATION_RECOMMENDATION_RE.test(text.normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+}
+
 export function ChatScreen() {
   const [messages, setMessages] = useState<Msg[]>([GREETING]);
   const [input, setInput] = useState("");
@@ -43,6 +50,20 @@ export function ChatScreen() {
     if (!trimmed || loading) return;
     if (trimmed === "🍽️ Comer cerca de mí") {
       setEatOpen(true);
+      return;
+    }
+    if (needsLocationForRecommendation(trimmed) && locState.status !== "ready") {
+      requestLocation();
+      setMessages((prev) => [
+        ...prev,
+        { role: "user", content: trimmed },
+        {
+          role: "assistant",
+          content:
+            "Claro 💛 Antes de recomendarte sitios necesito tenerte geolocalizado para darte opciones cerca de donde estás. Pulsa **Mi ubicación** arriba o acepta el permiso que acaba de salir, y te doy 4 opciones abiertas ahora mismo.",
+        },
+      ]);
+      setInput("");
       return;
     }
     setError(null);
@@ -78,8 +99,9 @@ export function ChatScreen() {
           context: {
             location:
               locState.status === "ready"
-                ? { lat: locState.coords.lat, lng: locState.coords.lng }
+                ? { lat: locState.coords.lat, lng: locState.coords.lng, accuracy: locState.coords.accuracy }
                 : null,
+            maxOptions: 4,
           },
         }),
       });
