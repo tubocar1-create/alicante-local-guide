@@ -345,6 +345,168 @@ function buildFoodRecommendationsResponse(
 }
 
 const ALICANTE_BBOX = "37.84,-1.13,38.87,0.21";
+
+// ============================================================
+// Google Places (New) integration — PRIMARY source for hours
+// ============================================================
+const GOOGLE_PLACES_BASE = "https://places.googleapis.com/v1";
+
+type GooglePlace = {
+  displayName?: { text?: string };
+  formattedAddress?: string;
+  location?: { latitude: number; longitude: number };
+  primaryType?: string;
+  types?: string[];
+  regularOpeningHours?: {
+    openNow?: boolean;
+    periods?: Array<{
+      open?: { day: number; hour: number; minute: number };
+      close?: { day: number; hour: number; minute: number };
+    }>;
+  };
+  currentOpeningHours?: {
+    openNow?: boolean;
+    periods?: Array<{
+      open?: { day: number; hour: number; minute: number };
+      close?: { day: number; hour: number; minute: number };
+    }>;
+  };
+};
+
+// Compute "closes at" from Google Places periods using Madrid time.
+// Google days: 0 = Sunday, 1 = Monday, ..., 6 = Saturday.
+function googleClosesInfo(
+  place: GooglePlace,
+  date = new Date(),
+): { closesAt: string; closesInMinutes: number } | null {
+  const hours = place.currentOpeningHours ?? place.regularOpeningHours;
+  if (!hours?.periods?.length) return null;
+
+  // Madrid weekday (0=Sun..6=Sat) and minutes-of-day
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Europe/Madrid",
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  const wdMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  const today = wdMap[get("weekday")] ?? 0;
+  const nowMin = Number(get("hour")) * 60 + Number(get("minute"));
+
+  // Convert each period to absolute minute offsets from start-of-week (today as anchor).
+  // Look for a period covering "now".
+  for (const p of hours.periods) {
+    if (!p.open || !p.close) {
+      // 24h open period (Google encodes 24/7 as a single period without close on some accounts)
+      if (p.open && !p.close) {
+        return { closesAt: "24:00", closesInMinutes: 24 * 60 };
+      }
+      continue;
+    }
+    const openDayDelta = ((p.open.day - today) + 7) % 7;
+    // We only consider open today or yesterday-rolling-into-today
+    const openMin = openDayDelta * 1440 + p.open.hour * 60 + p.open.minute;
+    let closeDayDelta = ((p.close.day - today) + 7) % 7;
+    let closeMin = closeDayDelta * 1440 + p.close.hour * 60 + p.close.minute;
+    if (closeMin <= openMin) closeMin += 7 * 1440; // wraps
+    // Normalize to "today" frame: subtract days until openMin <= today end
+    // Try both today (delta=0) and yesterday (delta=-1)
+    for (const shift of [0, -1, -2]) {
+      const o = openMin + shift * 1440;
+      const c = closeMin + shift * 1440;
+      if (nowMin >= o && nowMin < c) {
+        const minsLeft = c - nowMin;
+        const closeHM = ((c % 1440) + 1440) % 1440;
+        return { closesAt: minutesToClock(closeHM), closesInMinutes: minsLeft };
+      }
+    }
+  }
+  return null;
+}
+
+async function googlePlacesTextSearch(
+  query: string,
+  center: { lat: number; lng: number },
+): Promise<GooglePlace | null> {
+  const apiKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
+  if (!apiKey) return null;
+  try {
+    const res = await fetch(`${GOOGLE_PLACES_BASE}/places:searchText`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask":
+          "places.displayName,places.formattedAddress,places.location,places.primaryType,places.types,places.regularOpeningHours,places.currentOpeningHours",
+      },
+      body: JSON.stringify({
+        textQuery: query,
+        languageCode: "es",
+        regionCode: "ES",
+        maxResultCount: 1,
+        locationBias: {
+          circle: {
+            center: { latitude: center.lat, longitude: center.lng },
+            radius: 15000,
+          },
+        },
+      }),
+    });
+    if (!res.ok) {
+      console.error("Google Places textSearch failed", res.status, await res.text());
+      return null;
+    }
+    const json = await res.json();
+    return (json.places?.[0] as GooglePlace) ?? null;
+  } catch (e) {
+    console.error("Google Places textSearch error:", e);
+    return null;
+  }
+}
+
+async function googlePlacesNearbyFood(
+  center: { lat: number; lng: number },
+  radius = 5500,
+): Promise<GooglePlace[]> {
+  const apiKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
+  if (!apiKey) return [];
+  try {
+    const res = await fetch(`${GOOGLE_PLACES_BASE}/places:searchNearby`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask":
+          "places.displayName,places.formattedAddress,places.location,places.primaryType,places.types,places.regularOpeningHours,places.currentOpeningHours",
+      },
+      body: JSON.stringify({
+        includedTypes: ["restaurant", "bar", "cafe", "bakery", "meal_takeaway", "ice_cream_shop"],
+        maxResultCount: 20,
+        languageCode: "es",
+        regionCode: "ES",
+        locationRestriction: {
+          circle: {
+            center: { latitude: center.lat, longitude: center.lng },
+            radius,
+          },
+        },
+      }),
+    });
+    if (!res.ok) {
+      console.error("Google Places nearby failed", res.status, await res.text());
+      return [];
+    }
+    const json = await res.json();
+    return (json.places ?? []) as GooglePlace[];
+  } catch (e) {
+    console.error("Google Places nearby error:", e);
+    return [];
+  }
+}
+
+
 const NAME_STOPWORDS = new Set([
   "alicante",
   "hola",
