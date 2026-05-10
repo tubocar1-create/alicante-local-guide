@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Loader2, Navigation, MapPin, Star, X, Phone, Globe } from "lucide-react";
 import { fetchListings, type Listing } from "@/lib/overpass-listings";
 import { useUserLocation, distanceKm, formatDistance } from "@/hooks/useUserLocation";
+import { formatOpeningStatus, getOpeningStatus, isClosingSoon, isMercadoCentralClosedSunday } from "@/lib/opening-hours";
 
 type Cuisine = {
   key: string;
@@ -107,13 +108,15 @@ export function EatNearby({ onClose, initialQuery }: Props) {
 
   const ranked = useMemo(() => {
     if (!me || !picked) return [];
-    let arr = items;
+    let arr = items.filter((i) => {
+      if (isMercadoCentralClosedSunday(i.name)) return false;
+      return getOpeningStatus(i.openingHours).status !== "closed";
+    });
     if (picked.match.length > 0) {
       arr = arr.filter((i) => {
         const c = (i.cuisine || "").toLowerCase();
         return picked.match.some((m) => c.includes(m));
       });
-      if (arr.length < 6) arr = items;
     }
     return [...arr]
       .map((i) => ({ i, d: distanceKm(me, { lat: i.lat, lng: i.lon }) }))
@@ -169,7 +172,7 @@ export function EatNearby({ onClose, initialQuery }: Props) {
           {me && !picked && (
             <div>
               <p className="text-sm">
-                ¡Genial, ya te tengo! 🙌 Cuéntame, <strong>¿qué te apetece comer ahora mismo?</strong>
+                ¡Genial, ya te tengo en el mapa! 🙌 Cuéntame, <strong>¿qué te apetece comer ahora mismo?</strong>
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 Elige lo que te tire más, no hace falta pensarlo mucho 😉
@@ -221,6 +224,7 @@ export function EatNearby({ onClose, initialQuery }: Props) {
 
               <ul className="flex flex-col gap-3">
                 {shown.map(({ i, d }: { i: Listing; d: number }, idx: number) => {
+                  const hours = getOpeningStatus(i.openingHours);
                   const mapsHref = `https://www.google.com/maps/dir/?api=1&destination=${i.lat},${i.lon}`;
                   const reviewsHref = `https://www.google.com/search?q=${encodeURIComponent(
                     `${i.name} Alicante reseñas`,
@@ -263,6 +267,15 @@ export function EatNearby({ onClose, initialQuery }: Props) {
                           <span className="text-muted-foreground">según OSM</span>
                         </div>
                       ) : null}
+
+                      <div className="text-xs text-muted-foreground">
+                        🕒 {formatOpeningStatus(hours)}
+                        {isClosingSoon(hours) ? (
+                          <span className="ml-1 font-medium text-destructive">
+                            Ojo, cierra pronto.
+                          </span>
+                        ) : null}
+                      </div>
 
                       <div className="flex flex-wrap gap-1.5 pt-1">
                         <button
