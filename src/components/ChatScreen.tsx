@@ -68,7 +68,7 @@ export function ChatScreen() {
         {
           role: "assistant",
           content:
-            "Claro 💛 Antes de recomendarte sitios necesito tenerte geolocalizado para darte opciones cerca de donde estás. Pulsa **Mi ubicación** arriba o acepta el permiso que acaba de salir, y te doy 4 opciones abiertas ahora mismo.",
+            "Oye, ¿qué te parece si me dices dónde estás? Así te recomiendo algo bien bueno y cerquita 💛 Pulsa **Mi ubicación** arriba o acepta el permiso del navegador y te doy 4 opciones abiertas ahora mismo.",
         },
       ]);
       setInput("");
