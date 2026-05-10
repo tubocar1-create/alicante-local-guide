@@ -75,6 +75,12 @@ export function ChatScreen() {
         },
         body: JSON.stringify({
           messages: next.map((m) => ({ role: m.role, content: m.content })),
+          context: {
+            location:
+              locState.status === "ready"
+                ? { lat: locState.coords.lat, lng: locState.coords.lng }
+                : null,
+          },
         }),
       });
 
@@ -189,6 +195,7 @@ export function ChatScreen() {
           <button
             onClick={() => setEatOpen(true)}
             className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full gradient-warm text-primary-foreground active:scale-95 shadow-soft"
+            title={input.trim() ? `Buscar cerca: "${input.trim()}"` : "Comer cerca de mí"}
           >
             🍽️ Comer cerca
           </button>
@@ -366,7 +373,7 @@ export function ChatScreen() {
         </div>
       </div>
 
-      {eatOpen && <EatNearby onClose={() => setEatOpen(false)} />}
+      {eatOpen && <EatNearby onClose={() => setEatOpen(false)} initialQuery={input} />}
     </div>
   );
 }

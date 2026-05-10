@@ -26,7 +26,38 @@ const CUISINES: Cuisine[] = [
   { key: "sweet", label: "Dulce / Helado", emoji: "🍦", match: ["ice_cream", "dessert", "cake"], amenities: ["ice_cream", "cafe"] },
 ];
 
-type Props = { onClose: () => void };
+type Props = { onClose: () => void; initialQuery?: string };
+
+// Keywords (lowercase, accent-insensitive) that map a free-text query to a cuisine key.
+const QUERY_KEYWORDS: Record<string, string[]> = {
+  spanish: ["tapa", "tapas", "español", "espanol", "paella alternativa", "tradicional", "mediterran"],
+  seafood: ["marisco", "mariscos", "pescado", "pescaito", "arroz", "arroces", "paella", "fideua"],
+  italian: ["italian", "pizza", "pizzer", "pasta", "lasagn"],
+  asian: ["asiat", "japon", "sushi", "ramen", "chino", "chinese", "thai", "tailand", "viet", "korean", "coreano", "wok", "poke"],
+  burger: ["burger", "hamburgues", "fast food", "americana"],
+  vegan: ["vegan", "vegetarian", "veggie", "sano", "saludable", "ensalad", "healthy"],
+  cafe: ["café", "cafe", "cafeter", "desayun", "brunch", "merien", "tarta", "panader", "boller"],
+  drinks: ["beber", "copas", "cerveza", "cervecer", "bar de copas", "vino", "coctel", "cóctel", "pub", "vermut"],
+  sweet: ["helad", "ice cream", "postre", "dulce", "chocolate", "gelato"],
+};
+
+function normalize(s: string) {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function matchCuisineFromQuery(q: string): Cuisine | null {
+  const text = normalize(q);
+  if (!text.trim()) return null;
+  for (const c of CUISINES) {
+    const keywords = QUERY_KEYWORDS[c.key];
+    if (!keywords) continue;
+    if (keywords.some((k) => text.includes(normalize(k)))) return c;
+  }
+  return null;
+}
 
 function openExternal(url: string) {
   try {
@@ -48,10 +79,12 @@ function openExternal(url: string) {
   alert("Tu navegador ha bloqueado la ventana nueva. Te he copiado el enlace para que lo pegues en otra pestaña 💛");
 }
 
-export function EatNearby({ onClose }: Props) {
+export function EatNearby({ onClose, initialQuery }: Props) {
   const { state, request } = useUserLocation();
   const me = state.status === "ready" ? state.coords : null;
-  const [picked, setPicked] = useState<Cuisine | null>(null);
+  const [picked, setPicked] = useState<Cuisine | null>(() =>
+    initialQuery ? matchCuisineFromQuery(initialQuery) : null,
+  );
   const [items, setItems] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
