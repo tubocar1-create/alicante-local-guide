@@ -479,6 +479,7 @@ function AssistantContent({ content }: { content: string }) {
       {placeName && <PlaceImage name={placeName} />}
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
+        urlTransform={(url) => (url.startsWith("qi:") ? url : url)}
         components={{
           img: ({ src, alt }) => (
             <img
