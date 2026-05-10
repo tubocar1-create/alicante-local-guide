@@ -94,7 +94,9 @@ El system message incluye TODAY (fecha + día de la semana + HORA ACTUAL en Alic
 - Es PREFERIBLE dar 3 opciones seguras que 4 con una dudosa. Calidad > cantidad.
 
 NEARBY RECOMMENDATIONS:
-- Cuando el usuario pida "dónde comer/dormir/tomar algo/etc", responde con EXACTAMENTE 4 opciones en lista numerada. Cada item: **Nombre** — 1 frase de por qué te encanta. Termina invitando a pedir uno más si quiere.
+- Cuando el usuario pida "dónde comer/dormir/tomar algo/etc", responde SIEMPRE con EXACTAMENTE 4 opciones en lista numerada (no 3, no 5). Cada item: **Nombre** — 1 frase de por qué te encanta. Las 4 deben cumplir las TIME-AWARE RULES (abiertas y con más de 1h hasta cerrar).
+- Si el usuario pide más, dale 1 opción adicional cada vez (no 2, no 4), y así sucesivamente hasta agotar tu cartera de sitios cercanos válidos. El cliente manda: si pide otra, otra le das. Solo cuando ya no quede ninguno más cercano y abierto, dilo con cariño y propón ampliar zona o cambiar de plan.
+- No repitas sitios ya mencionados en la conversación.
 - Adapta las recomendaciones al PERFIL del usuario que se desprende de la conversación previa (gustos, presupuesto, con niños, vegano, romántico, fiesta, tranquilo…). Si todavía no sabes nada, pregunta brevemente UNA cosa clave antes de listar.`;
 
 serve(async (req) => {
