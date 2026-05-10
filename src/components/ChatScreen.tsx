@@ -491,16 +491,35 @@ function AssistantContent({ content }: { content: string }) {
               }}
             />
           ),
-          a: ({ href, children }) => (
-            <a
-              href={href}
-              target="_blank"
-              rel="noreferrer"
-              className="text-primary underline underline-offset-2"
-            >
-              {children}
-            </a>
-          ),
+          a: ({ href, children }) => {
+            const url = String(href ?? "");
+            if (url.startsWith("qi:")) {
+              const name = decodeURIComponent(url.slice(3));
+              return (
+                <button
+                  type="button"
+                  onClick={() =>
+                    window.dispatchEvent(
+                      new CustomEvent("afp:wantgo", { detail: { name } }),
+                    )
+                  }
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full gradient-warm text-primary-foreground shadow-soft active:scale-95 align-middle ml-1"
+                >
+                  🎟️ Quiero ir
+                </button>
+              );
+            }
+            return (
+              <a
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary underline underline-offset-2"
+              >
+                {children}
+              </a>
+            );
+          },
           p: ({ children }) => <p className="whitespace-pre-wrap">{children}</p>,
         }}
       >
