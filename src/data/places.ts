@@ -7,6 +7,8 @@ export type PlaceOverride = {
   image: string;
   /** Short description (1-3 sentences) */
   description: string;
+  /** Full address used to build the Google Maps link */
+  address?: string;
   /** Aliases that should match this place (lowercased, no accents recommended) */
   aliases: string[];
 };
@@ -17,6 +19,7 @@ export const PLACE_OVERRIDES: PlaceOverride[] = [
     image: plastiahorroImg,
     description:
       "Tienda de envases, bolsas, servilletas, platos y vasos ubicada en la Calle Teulada nº 21, Alicante.",
+    address: "Calle Teulada 21, Alicante, España",
     aliases: ["plastiahorro", "plastiahorro distribuciones"],
   },
 ];
