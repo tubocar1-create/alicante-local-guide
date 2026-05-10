@@ -221,16 +221,12 @@ export function ChatScreen() {
             )}
             {locState.status === "ready" ? "Ubicación" : "Mi ubicación"}
           </button>
-          <button
-            onClick={() => {
-              setEatQuery(input);
-              setEatOpen(true);
-            }}
-            className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full gradient-warm text-primary-foreground active:scale-95 shadow-soft"
-            title={input.trim() ? `Buscar cerca: "${input.trim()}"` : "Comer cerca de mí"}
+          <Link
+            to="/explore"
+            className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full bg-secondary text-secondary-foreground active:scale-95"
           >
-            🍽️ Comer cerca
-          </button>
+            🗺️ Explorar
+          </Link>
           <Link
             to="/stay"
             className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full bg-secondary text-secondary-foreground active:scale-95"
