@@ -93,11 +93,6 @@ function ruleDays(rule: string): DayKey[] | null {
   });
 }
 
-function appliesToDay(rule: string, day: DayKey) {
-  const days = ruleDays(rule);
-  return !days || days.includes(day);
-}
-
 function ruleSpecificity(rule: string, day: DayKey) {
   const days = ruleDays(rule);
   if (!days) return 0;
@@ -136,14 +131,18 @@ function getOpeningInfo(
     .split(";")
     .map((r) => r.trim())
     .filter(Boolean);
-  if (rules.length === 0 || rules.some(hasUnsupportedOpeningSyntax)) return { status: "unknown", raw };
+  if (rules.length === 0 || rules.some(hasUnsupportedOpeningSyntax)) {
+    return { status: "unknown", raw };
+  }
 
   const todayCandidates = rules
     .map((rule) => ({ rule, specificity: ruleSpecificity(rule, day) }))
     .filter((r) => r.specificity >= 0);
   const bestTodaySpecificity = Math.max(-1, ...todayCandidates.map((r) => r.specificity));
-  const todayRules = todayCandidates.filter((r) => r.specificity === bestTodaySpecificity).map((r) => r.rule);
-  let matchedAny = todayRules.length > 0;
+  const todayRules = todayCandidates
+    .filter((r) => r.specificity === bestTodaySpecificity)
+    .map((r) => r.rule);
+  const matchedAny = todayRules.length > 0;
 
   for (const rule of todayRules) {
     const ranges = parseRanges(rule);
