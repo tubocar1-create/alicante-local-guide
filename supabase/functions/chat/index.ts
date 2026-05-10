@@ -459,7 +459,17 @@ async function googlePlacesTextSearch(
       return null;
     }
     const json = await res.json();
-    return (json.places?.[0] as GooglePlace) ?? null;
+    const place = (json.places?.[0] as GooglePlace) ?? null;
+    if (place) {
+      console.log("[GooglePlaces]", query, "->", JSON.stringify({
+        name: place.displayName?.text,
+        openNow: place.currentOpeningHours?.openNow ?? place.regularOpeningHours?.openNow,
+        currentPeriods: place.currentOpeningHours?.periods,
+        regularPeriods: place.regularOpeningHours?.periods,
+        weekday: (place.currentOpeningHours as any)?.weekdayDescriptions ?? (place.regularOpeningHours as any)?.weekdayDescriptions,
+      }));
+    }
+    return place;
   } catch (e) {
     console.error("Google Places textSearch error:", e);
     return null;
