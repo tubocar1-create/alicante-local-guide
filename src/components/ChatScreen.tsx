@@ -19,8 +19,27 @@ type GeoStatus = "idle" | "asking" | "ok" | "denied";
 const ALICANTE_CENTER = { lat: 38.3452, lng: -0.481 };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
-const SUGGESTIONS: { label: string; prompt: string }[] = [
-  { label: "🍽️ Comer", prompt: "¿Dónde puedo comer cerca?" },
+type Suggestion = {
+  label: string;
+  prompt?: string;
+  submenu?: { label: string; prompt: string }[];
+};
+const SUGGESTIONS: Suggestion[] = [
+  {
+    label: "🍽️ Comer",
+    submenu: [
+      { label: "🥘 Cocina típica", prompt: "Recomiéndame un sitio de cocina típica alicantina abierto ahora" },
+      { label: "🍤 Arroces y pescado", prompt: "Quiero un buen arroz o pescado fresco, ¿dónde voy ahora?" },
+      { label: "🍕 Italiano", prompt: "Apetece italiano, ¿dónde puedo ir ahora?" },
+      { label: "🍔 Hamburguesas", prompt: "Una buena hamburguesa abierta ahora, por favor" },
+      { label: "🍣 Japonés / Asiático", prompt: "Un japonés o asiático rico abierto ahora" },
+      { label: "🌱 Vegano / Saludable", prompt: "Un sitio vegano o saludable abierto ahora" },
+      { label: "🥐 Desayuno / Brunch", prompt: "Un buen desayuno o brunch abierto ahora" },
+      { label: "🍰 Postres / Cafetería", prompt: "Una cafetería con postres ricos abierta ahora" },
+      { label: "💸 Barato y rico", prompt: "Algo barato y rico para comer ya, abierto ahora" },
+      { label: "✨ Sorpréndeme", prompt: "Sorpréndeme con un sitio rico para comer abierto ahora" },
+    ],
+  },
   { label: "🏨 Dormir", prompt: "¿Dónde puedo dormir esta noche?" },
   { label: "🏖️ Playa", prompt: "¿Qué playa me recomiendas?" },
   { label: "🌳 Parque", prompt: "¿Qué parque o zona verde me recomiendas?" },
