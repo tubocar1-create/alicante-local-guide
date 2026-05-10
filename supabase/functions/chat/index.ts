@@ -762,12 +762,27 @@ serve(async (req) => {
     const latestUserText =
       [...messages].reverse().find((m: { role: string; content: string }) => m.role === "user")
         ?.content ?? "";
+    const foodRequest = isFoodOrDrinkRequest(messages);
+    const mayNeedFoodFallbacks = foodRequest || extractMentionedNames(latestUserText).length > 0;
     const [openFoodPlaces, mentionedPlaces] = await Promise.all([
-      isFoodOrDrinkRequest(messages)
+      mayNeedFoodFallbacks
         ? fetchConfirmedOpenFoodPlaces(context)
         : Promise.resolve([] as FoodPlace[]),
       fetchMentionedPlaces(latestUserText).catch(() => [] as MentionedPlace[]),
     ]);
+    if (mentionedPlaces.length > 0) {
+      return streamChatText(buildMentionedPlacesResponse(mentionedPlaces, openFoodPlaces));
+    }
+    if (foodRequest) {
+      return streamChatText(
+        buildFoodRecommendationsResponse(
+          messages,
+          latestUserText,
+          openFoodPlaces,
+          context?.maxOptions ?? 4,
+        ),
+      );
+    }
     const verifiedOpenLine = openFoodPlaces.length
       ? `\nVERIFIED_OPEN_FOOD_PLACES (fuente de verdad para comer/beber: recomienda SOLO estos nombres; todos están abiertos ahora y cierran en más de 60 min):\n${openFoodPlaces
           .map(
@@ -775,7 +790,7 @@ serve(async (req) => {
               `${i + 1}. ${p.name} — tipo=${p.kind}${p.cuisine ? `, cocina=${p.cuisine}` : ""}${p.address ? `, dirección=${p.address}` : ""}, cierra=${p.closesAt}, horario_osm="${p.openingHours}"`,
           )
           .join("\n")}`
-      : isFoodOrDrinkRequest(messages)
+      : foodRequest
         ? "\nVERIFIED_OPEN_FOOD_PLACES: ninguna opción con horario confirmado abierto ahora y con más de 60 min hasta cerrar. No recomiendes restaurantes/bares/cafés concretos; pide zona o propone ampliar búsqueda."
         : "";
     const mentionedLine = mentionedPlaces.length
