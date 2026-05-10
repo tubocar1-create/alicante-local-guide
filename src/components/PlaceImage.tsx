@@ -234,8 +234,9 @@ export function PlaceImage({ name }: { name: string }) {
       <TravelInfo target={wiki.coords} />
       <a
         href={mapsHref(mapsQuery)}
+        onClick={(e) => openMaps(e, mapsHref(mapsQuery))}
         target="_blank"
-        rel="noreferrer"
+        rel="noopener noreferrer"
         className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-sm transition hover:opacity-90"
       >
         📍 Cómo llegar
