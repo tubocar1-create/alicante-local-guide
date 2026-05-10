@@ -81,6 +81,7 @@ export function PlaceImage({ name }: { name: string }) {
   }, [key, name, override]);
 
   if (override) {
+    const query = encodeURIComponent(override.address || `${override.title}, Alicante`);
     return (
       <figure className="my-1 overflow-hidden rounded-2xl shadow-soft">
         <img
@@ -89,9 +90,17 @@ export function PlaceImage({ name }: { name: string }) {
           loading="lazy"
           className="h-44 w-full object-cover"
         />
-        <figcaption className="bg-card/95 px-3 py-2 text-sm">
+        <figcaption className="bg-card/95 px-3 py-2.5 text-sm">
           <span className="block font-semibold text-foreground">{override.title}</span>
           <span className="mt-0.5 block text-muted-foreground">{override.description}</span>
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${query}`}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-sm transition hover:opacity-90"
+          >
+            📍 Cómo llegar
+          </a>
         </figcaption>
       </figure>
     );
@@ -110,15 +119,26 @@ export function PlaceImage({ name }: { name: string }) {
     return null;
   }
 
+  const mapsQuery = encodeURIComponent(name);
   return (
-    <img
-      src={src}
-      alt={name}
-      loading="lazy"
-      className="my-1 h-44 w-full rounded-2xl object-cover shadow-soft"
-      onError={(e) => {
-        (e.currentTarget as HTMLImageElement).style.display = "none";
-      }}
-    />
+    <div className="my-1 space-y-2">
+      <img
+        src={src}
+        alt={name}
+        loading="lazy"
+        className="h-44 w-full rounded-2xl object-cover shadow-soft"
+        onError={(e) => {
+          (e.currentTarget as HTMLImageElement).style.display = "none";
+        }}
+      />
+      <a
+        href={`https://www.google.com/maps/search/?api=1&query=${mapsQuery}`}
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-sm transition hover:opacity-90"
+      >
+        📍 Cómo llegar
+      </a>
+    </div>
   );
 }
