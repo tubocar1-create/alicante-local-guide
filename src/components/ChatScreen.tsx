@@ -78,6 +78,16 @@ export function ChatScreen() {
   const setActiveSubmenu = (s: Suggestion | null) => setSubmenuStack(s ? [s] : []);
   const [geo, setGeo] = useState<GeoInfo | null>(null);
   const [geoStatus, setGeoStatus] = useState<GeoStatus>("idle");
+  const [referralName, setReferralName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { name?: string } | undefined;
+      if (detail?.name) setReferralName(detail.name);
+    };
+    window.addEventListener("afp:wantgo", handler);
+    return () => window.removeEventListener("afp:wantgo", handler);
+  }, []);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { state: locState, request: requestLocation } = useUserLocation();
