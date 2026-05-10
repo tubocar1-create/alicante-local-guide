@@ -1,22 +1,21 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Mic, MapPin, Map as MapIcon, Navigation, Loader2, CheckCircle2 } from "lucide-react";
+import { Send, Mic, MapPin, Map as MapIcon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { PlaceImage } from "@/components/PlaceImage";
-import { useUserLocation } from "@/hooks/useUserLocation";
 import heroImg from "@/assets/alicante-hero.jpg";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 const SUGGESTIONS: { label: string; prompt: string }[] = [
-  { label: "🍽️ Comer", prompt: "¿Dónde puedo comer cerca de mí ahora mismo?" },
-  { label: "🏨 Dormir", prompt: "¿Dónde puedo dormir cerca de mí esta noche?" },
-  { label: "🏖️ Playa", prompt: "¿Qué playa tengo cerca para ir ahora?" },
-  { label: "🌳 Parque", prompt: "¿Qué parque o zona verde tengo cerca?" },
-  { label: "🛍️ Comprar", prompt: "¿Dónde puedo ir de compras cerca de mí?" },
-  { label: "🍹 Tomar algo", prompt: "¿Dónde voy a tomar algo cerca abierto ahora?" },
+  { label: "🍽️ Comer", prompt: "¿Dónde puedo comer cerca?" },
+  { label: "🏨 Dormir", prompt: "¿Dónde puedo dormir esta noche?" },
+  { label: "🏖️ Playa", prompt: "¿Qué playa me recomiendas?" },
+  { label: "🌳 Parque", prompt: "¿Qué parque o zona verde me recomiendas?" },
+  { label: "🛍️ Comprar", prompt: "¿Dónde puedo ir de compras?" },
+  { label: "🍹 Tomar algo", prompt: "¿Dónde voy a tomar algo abierto ahora?" },
 ];
 
 const GREETING: Msg = {
@@ -25,33 +24,13 @@ const GREETING: Msg = {
     "¡Hola! 👋 I'm your friend in Alicante. Tell me what you feel like — food, beach, a plan for today? I'll show you the spots locals actually love.",
 };
 
-const LOCATION_RECOMMENDATION_RE =
-  /\b(d[oó]nde|donde|cerca|near|around|nearby|comer|cenar|almorzar|desayunar|dormir|hotel|hostal|tomar el sol|playa|comprar|tienda|beber|copas|restaurante|restaurant|shop|sleep|eat|sunbathe)\b/i;
-const FOOD_RECOMMENDATION_RE =
-  /\b(comer|cenar|almorzar|desayunar|restaurante|restaurant|tapas|pizza|sushi|marisco|arroz|cafe|cafeteria|hamburguesa|burger|vegano|vegetariano|eat|food)\b/i;
-
-function needsLocationForRecommendation(text: string) {
-  return LOCATION_RECOMMENDATION_RE.test(text.normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
-}
-
-function isFoodRecommendation(text: string) {
-  return FOOD_RECOMMENDATION_RE.test(text.normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
-}
-
 export function ChatScreen() {
   const [messages, setMessages] = useState<Msg[]>([GREETING]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { state: locState, request: requestLocation } = useUserLocation({ watch: true });
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  // Ask for location automatically as soon as the chat opens
-  useEffect(() => {
-    if (locState.status === "idle") requestLocation();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -60,20 +39,6 @@ export function ChatScreen() {
   async function send(text: string) {
     const trimmed = text.trim();
     if (!trimmed || loading) return;
-    if (needsLocationForRecommendation(trimmed) && locState.status !== "ready") {
-      requestLocation();
-      setMessages((prev) => [
-        ...prev,
-        { role: "user", content: trimmed },
-        {
-          role: "assistant",
-          content:
-            "Oye, ¿qué te parece si me dices dónde estás? Así te recomiendo algo bien bueno y cerquita 💛 Pulsa **Mi ubicación** arriba o acepta el permiso del navegador y te doy 4 opciones abiertas ahora mismo.",
-        },
-      ]);
-      setInput("");
-      return;
-    }
     setError(null);
     const userMsg: Msg = { role: "user", content: trimmed };
     const next = [...messages, userMsg];
@@ -104,17 +69,7 @@ export function ChatScreen() {
         },
         body: JSON.stringify({
           messages: next.map((m) => ({ role: m.role, content: m.content })),
-          context: {
-            location:
-              locState.status === "ready"
-                ? {
-                    lat: locState.coords.lat,
-                    lng: locState.coords.lng,
-                    accuracy: locState.coords.accuracy,
-                  }
-                : null,
-            maxOptions: 4,
-          },
+          context: { maxOptions: 4 },
         }),
       });
 
@@ -193,34 +148,6 @@ export function ChatScreen() {
           </p>
         </div>
         <nav className="flex items-center gap-1.5">
-          <button
-            onClick={requestLocation}
-            aria-label="Compartir mi ubicación"
-            title={
-              locState.status === "ready"
-                ? `Ubicación activa (${locState.coords.lat.toFixed(3)}, ${locState.coords.lng.toFixed(3)})`
-                : locState.status === "error"
-                  ? locState.message
-                  : "Compartir mi ubicación"
-            }
-            className={[
-              "inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full active:scale-95 transition",
-              locState.status === "ready"
-                ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500/30"
-                : locState.status === "error"
-                  ? "bg-destructive/15 text-destructive ring-1 ring-destructive/30"
-                  : "bg-secondary text-secondary-foreground",
-            ].join(" ")}
-          >
-            {locState.status === "loading" ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
-            ) : locState.status === "ready" ? (
-              <CheckCircle2 className="h-3 w-3" />
-            ) : (
-              <Navigation className="h-3 w-3" />
-            )}
-            {locState.status === "ready" ? "Ubicación" : "Mi ubicación"}
-          </button>
           <Link
             to="/explore"
             className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full bg-secondary text-secondary-foreground active:scale-95"
@@ -293,57 +220,6 @@ export function ChatScreen() {
 
           {isWelcome && (
             <>
-              <div
-                className={[
-                  "mt-2 flex items-center gap-3 rounded-2xl border p-3 shadow-soft backdrop-blur",
-                  locState.status === "ready"
-                    ? "border-emerald-500/30 bg-emerald-500/10"
-                    : "border-border bg-card/90",
-                ].join(" ")}
-              >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full gradient-warm text-primary-foreground shadow-soft">
-                  {locState.status === "loading" ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : locState.status === "ready" ? (
-                    <CheckCircle2 className="h-5 w-5" />
-                  ) : (
-                    <Navigation className="h-5 w-5" />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  {locState.status === "ready" ? (
-                    <>
-                      <p className="text-sm font-medium">¡Te tengo en el mapa! 📍</p>
-                      <p className="text-xs text-muted-foreground">
-                        Te recomendaré sitios cerquita de ti en tiempo real.
-                      </p>
-                    </>
-                  ) : locState.status === "error" ? (
-                    <>
-                      <p className="text-sm font-medium">Vaya, no pude verte 😅</p>
-                      <p className="text-xs text-muted-foreground">
-                        {locState.message}. Puedes intentarlo otra vez.
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-sm font-medium">¿Me compartes tu ubicación? 🙌</p>
-                      <p className="text-xs text-muted-foreground">
-                        Así te sugiero planes cerquita y todo se actualiza al moverte.
-                      </p>
-                    </>
-                  )}
-                </div>
-                {locState.status !== "ready" && (
-                  <button
-                    onClick={requestLocation}
-                    disabled={locState.status === "loading"}
-                    className="shrink-0 rounded-full gradient-warm px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-soft active:scale-95 disabled:opacity-60"
-                  >
-                    {locState.status === "loading" ? "Buscando…" : "Activar"}
-                  </button>
-                )}
-              </div>
 
               <div className="mt-2 flex flex-wrap gap-2">
                 {SUGGESTIONS.map((s) => (

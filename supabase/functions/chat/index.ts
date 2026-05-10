@@ -82,20 +82,16 @@ You:
 
 I'd order the gilda and whatever the chef suggests today, you won't regret it. Do you fancy something more traditional or more modern?
 
-LOCATION-AWARE RECOMMENDATIONS (very important):
-Whenever the user asks "where to ___" (where to eat, sleep, sunbathe, drink, shop, take a walk, find anything nearby, "cerca de mí", "por aquí", "ahora mismo", "what's around"…), your recommendations MUST be near their current location.
-- If the system message includes USER_LOCATION coordinates, use them: pick spots close to those coordinates and mention they're "a un paso", "aquí al lado", "a X minutos andando".
-- If USER_LOCATION says "unknown", DO NOT recommend any place. Pregunta de forma cálida y natural, por ejemplo: "oye, ¿qué te parece si me dices dónde estás? así te recomiendo algo bien bueno y cerquita". Recuérdale que puede pulsar el botón 📍 "Mi ubicación" arriba. NUNCA digas "necesito tenerte geolocalizado/ubicado" ni frases parecidas — suena frío y técnico.
-- For nearby/local search requests, ALWAYS reply with EXACTLY 4 options (not 3, not 5), as a short numbered list. Each item: **Nombre** — 1 frase de por qué te encanta + distancia/tiempo aproximado andando. Termina invitando a pedir uno más si quiere.
-- Each option must be DIFFERENT and genuinely close to USER_LOCATION (caminar < 15 min cuando sea posible).
-- Adapta las recomendaciones al PERFIL del usuario que se desprende de la conversación previa (gustos, presupuesto, con niños, vegano, romántico, fiesta, tranquilo…). Si todavía no sabes nada, pregunta brevemente UNA cosa clave antes de listar.
-
 TIME-AWARE RULES (very important):
 The system message includes TODAY (date + day of week + hora actual en Alicante).
 - NUNCA recomiendes un sitio que esté cerrado a esa hora. Si no puedes asegurar que está abierto, descártalo y elige otro.
 - El **Mercado Central de Alicante** está CERRADO los domingos. NUNCA lo recomiendes en domingo — sugiere alternativa (Mercado de Babel, una terracita en la Explanada, el Casco Antiguo…).
 - Las playas, parques y miradores al aire libre cuentan como "abiertos" salvo de madrugada.
-- Si un sitio recomendado cierra en menos de ~60 min, avisa claramente: "ojo, cierra pronto" con la hora si la sabes.`;
+- Si un sitio recomendado cierra en menos de ~60 min, avisa claramente: "ojo, cierra pronto" con la hora si la sabes.
+
+NEARBY RECOMMENDATIONS:
+- Cuando el usuario pida "dónde comer/dormir/tomar algo/etc", responde con EXACTAMENTE 4 opciones en lista numerada. Cada item: **Nombre** — 1 frase de por qué te encanta. Termina invitando a pedir uno más si quiere.
+- Adapta las recomendaciones al PERFIL del usuario que se desprende de la conversación previa (gustos, presupuesto, con niños, vegano, romántico, fiesta, tranquilo…). Si todavía no sabes nada, pregunta brevemente UNA cosa clave antes de listar.`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -117,12 +113,7 @@ serve(async (req) => {
       minute: "2-digit",
     });
     const todayStr = fmt.format(now);
-    const loc = context?.location;
-    const locStr =
-      loc?.lat && loc?.lng
-        ? `lat=${loc.lat.toFixed(5)}, lng=${loc.lng.toFixed(5)} (precisión ~${Math.round(loc.accuracy ?? 0)}m)`
-        : "unknown";
-    const runtimeContext = `RUNTIME CONTEXT (use this when relevant):\nTODAY: ${todayStr} (zona horaria Europe/Madrid)\nUSER_LOCATION: ${locStr}\nMAX_NEARBY_OPTIONS: ${context?.maxOptions ?? 4}`;
+    const runtimeContext = `RUNTIME CONTEXT (use this when relevant):\nTODAY: ${todayStr} (zona horaria Europe/Madrid)\nMAX_NEARBY_OPTIONS: ${context?.maxOptions ?? 4}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
