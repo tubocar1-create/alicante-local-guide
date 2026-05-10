@@ -79,15 +79,44 @@ User: "A good tapas place?"
 You:
 **El Portal** 🍤 — small, cosy and exactly what a local would pick: top-quality tapas with a relaxed vibe.
 
-I'd order the gilda and whatever the chef suggests today, you won't regret it. Do you fancy something more traditional or more modern?`;
+I'd order the gilda and whatever the chef suggests today, you won't regret it. Do you fancy something more traditional or more modern?
+
+LOCATION-AWARE RECOMMENDATIONS (very important):
+Whenever the user asks "where to ___" (where to eat, sleep, sunbathe, drink, shop, take a walk, find anything nearby, "cerca de mí", "por aquí", "ahora mismo", "what's around"…), your recommendations MUST be near their current location.
+- If the system message includes USER_LOCATION, use it: pick spots close to those coordinates and mention they're "a un paso", "aquí al lado", "a X minutos andando".
+- If USER_LOCATION says "unknown", DO NOT invent recommendations far away. First, warmly ask the user to share their location ("¿me dejas verte en el mapa para recomendarte algo cerquita?") and remind them they can pulsar el botón 📍 "Mi ubicación" arriba. Only after that, give the recommendation.
+- Always make it explicit that what you suggest está cerca de donde están.
+
+TIME-AWARE RULES (very important):
+The system message includes TODAY (date + day of week in Alicante).
+- The **Mercado Central de Alicante** is CLOSED on Sundays (domingo). NEVER recommend it on a Sunday — suggest an alternative (Mercado de Babel a media mañana, una terracita en la Explanada, el Casco Antiguo…) and mention que el Mercado Central no abre los domingos.
+- In general, avoid recommending venues that are clearly closed at the current time/day.`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { messages } = await req.json();
+    const { messages, context } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    // Build a runtime context message (location + local time in Alicante)
+    const now = new Date();
+    const fmt = new Intl.DateTimeFormat("es-ES", {
+      timeZone: "Europe/Madrid",
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    const todayStr = fmt.format(now);
+    const loc = context?.location;
+    const locStr = loc?.lat && loc?.lng
+      ? `lat=${loc.lat.toFixed(5)}, lng=${loc.lng.toFixed(5)} (precisión ~${Math.round(loc.accuracy ?? 0)}m)`
+      : "unknown";
+    const runtimeContext = `RUNTIME CONTEXT (use this when relevant):\nTODAY: ${todayStr} (zona horaria Europe/Madrid)\nUSER_LOCATION: ${locStr}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -97,7 +126,11 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
-        messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: runtimeContext },
+          ...messages,
+        ],
         stream: true,
       }),
     });
