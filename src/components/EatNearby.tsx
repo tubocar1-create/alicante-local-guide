@@ -55,12 +55,14 @@ export function EatNearby({ onClose }: Props) {
   const [items, setItems] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [visible, setVisible] = useState(4);
 
   useEffect(() => {
     if (!picked || !me) return;
     let cancelled = false;
     setLoading(true);
     setError(null);
+    setVisible(4);
     fetchListings(picked.amenities.map((a) => ({ tag: "amenity", value: a })))
       .then((d) => !cancelled && setItems(d))
       .catch((e) => !cancelled && setError(e instanceof Error ? e.message : "Error"))
@@ -70,7 +72,7 @@ export function EatNearby({ onClose }: Props) {
     };
   }, [picked, me]);
 
-  const top10 = useMemo(() => {
+  const ranked = useMemo(() => {
     if (!me || !picked) return [];
     let arr = items;
     if (picked.match.length > 0) {
@@ -78,7 +80,6 @@ export function EatNearby({ onClose }: Props) {
         const c = (i.cuisine || "").toLowerCase();
         return picked.match.some((m) => c.includes(m));
       });
-      // If filtering gives too few, fallback to unfiltered amenity results
       if (arr.length < 6) arr = items;
     }
     return [...arr]
@@ -86,6 +87,7 @@ export function EatNearby({ onClose }: Props) {
       .sort((a, b) => a.d - b.d)
       .slice(0, 10);
   }, [items, me, picked]);
+  const shown = ranked.slice(0, visible);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4">
@@ -178,14 +180,14 @@ export function EatNearby({ onClose }: Props) {
               {error && (
                 <div className="text-sm text-destructive py-4">No pude cargarlo: {error}</div>
               )}
-              {!loading && !error && top10.length === 0 && (
+              {!loading && !error && ranked.length === 0 && (
                 <div className="text-sm text-muted-foreground py-8 text-center">
                   Uy, no veo nada de eso aquí al lado. Prueba otra opción 🙃
                 </div>
               )}
 
               <ul className="flex flex-col gap-3">
-                {top10.map(({ i, d }, idx) => {
+                {shown.map(({ i, d }: { i: Listing; d: number }, idx: number) => {
                   const mapsHref = `https://www.google.com/maps/dir/?api=1&destination=${i.lat},${i.lon}`;
                   const reviewsHref = `https://www.google.com/search?q=${encodeURIComponent(
                     `${i.name} Alicante reseñas`,
@@ -273,6 +275,16 @@ export function EatNearby({ onClose }: Props) {
                   );
                 })}
               </ul>
+
+              {!loading && shown.length < ranked.length && (
+                <button
+                  type="button"
+                  onClick={() => setVisible((v) => Math.min(v + 1, ranked.length))}
+                  className="mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full border bg-background hover:bg-accent/40 active:scale-[0.98] text-sm font-medium"
+                >
+                  ➕ Enséñame uno más ({ranked.length - shown.length} por ver)
+                </button>
+              )}
             </div>
           )}
         </div>
