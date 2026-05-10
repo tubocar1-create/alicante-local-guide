@@ -43,6 +43,7 @@ export function ChatScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [eatOpen, setEatOpen] = useState(false);
+  const [eatQuery, setEatQuery] = useState("");
   const { state: locState, request: requestLocation } = useUserLocation({ watch: true });
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -55,6 +56,7 @@ export function ChatScreen() {
     const trimmed = text.trim();
     if (!trimmed || loading) return;
     if (trimmed === "🍽️ Comer cerca de mí") {
+      setEatQuery(trimmed);
       setEatOpen(true);
       return;
     }
@@ -83,6 +85,7 @@ export function ChatScreen() {
         },
       ]);
       setInput("");
+      setEatQuery(trimmed);
       setEatOpen(true);
       return;
     }
@@ -234,7 +237,10 @@ export function ChatScreen() {
             {locState.status === "ready" ? "Ubicación" : "Mi ubicación"}
           </button>
           <button
-            onClick={() => setEatOpen(true)}
+            onClick={() => {
+              setEatQuery(input);
+              setEatOpen(true);
+            }}
             className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full gradient-warm text-primary-foreground active:scale-95 shadow-soft"
             title={input.trim() ? `Buscar cerca: "${input.trim()}"` : "Comer cerca de mí"}
           >
@@ -414,7 +420,7 @@ export function ChatScreen() {
         </div>
       </div>
 
-      {eatOpen && <EatNearby onClose={() => setEatOpen(false)} initialQuery={input} />}
+      {eatOpen && <EatNearby onClose={() => setEatOpen(false)} initialQuery={eatQuery} />}
     </div>
   );
 }
