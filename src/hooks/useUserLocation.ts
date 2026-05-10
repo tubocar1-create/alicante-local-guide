@@ -76,14 +76,26 @@ export function formatDistance(km: number): string {
   return `${km.toFixed(1)} km`;
 }
 
-/** Rough walking time at 4.8 km/h, +20% for stops/turns */
-export function walkingMinutes(km: number): number {
-  return Math.max(1, Math.round((km / 4.8) * 60 * 1.2));
+export type TravelMode = "walking" | "driving" | "transit";
+
+/** Rough travel-time estimate from straight-line distance (no routing API). */
+export function estimateMinutes(km: number, mode: TravelMode): number {
+  switch (mode) {
+    case "walking":
+      // 4.8 km/h with +20% for stops/turns
+      return Math.max(1, Math.round((km / 4.8) * 60 * 1.2));
+    case "driving":
+      // 30 km/h urban with +30% for traffic + 2 min for parking/start
+      return Math.max(2, Math.round((km / 30) * 60 * 1.3) + 2);
+    case "transit":
+      // 18 km/h average with +40% for transfers + 5 min wait
+      return Math.max(5, Math.round((km / 18) * 60 * 1.4) + 5);
+  }
 }
 
-export function formatWalkTime(min: number): string {
-  if (min < 60) return `${min} min a pie`;
+export function formatTime(min: number): string {
+  if (min < 60) return `${min} min`;
   const h = Math.floor(min / 60);
   const m = min % 60;
-  return m === 0 ? `${h} h a pie` : `${h} h ${m} min a pie`;
+  return m === 0 ? `${h} h` : `${h} h ${m} min`;
 }
