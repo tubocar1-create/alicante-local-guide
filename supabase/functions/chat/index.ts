@@ -105,7 +105,49 @@ function parseRanges(rule: string) {
   }));
 }
 
+function getOpeningInfo(raw?: string, date = new Date()):
+  | { status: "open"; closesAt: string; closesInMinutes: number; raw: string }
+  | { status: "closed"; raw: string }
+  | { status: "unknown"; raw?: string } {
+  if (!raw?.trim()) return { status: "unknown" };
+  const clean = raw.replace(/"[^"]*"/g, "").trim();
+  if (/24\s*\/\s*7/.test(clean)) {
+    return { status: "open", closesAt: "24:00", closesInMinutes: 24 * 60, raw };
+  }
+  const { day, minutes } = madridNow(date);
+  const yesterday = previousDay(day);
+  let matchedAny = false;
+  for (const rule of clean.split(";").map((r) => r.trim()).filter(Boolean)) {
+    const ranges = parseRanges(rule);
+    if (appliesToDay(rule, day)) {
+      matchedAny = true;
+      if (/\boff\b|\bclosed\b/i.test(rule) && ranges.length === 0) continue;
+      for (const range of ranges) {
+        const end = range.end <= range.start ? range.end + 1440 : range.end;
+        if (minutes >= range.start && minutes < end) {
+          return { status: "open", closesAt: minutesToClock(end), closesInMinutes: end - minutes, raw };
+        }
+      }
+    }
+    if (appliesToDay(rule, yesterday)) {
+      for (const range of ranges) {
+        if (range.end > range.start) continue;
+        if (minutes < range.end) {
+          return { status: "open", closesAt: minutesToClock(range.end), closesInMinutes: range.end - minutes, raw };
+        }
+      }
+    }
+  }
+  return matchedAny ? { status: "closed", raw } : { status: "unknown", raw };
+}
+
 function getOpenWindow(raw?: string, date = new Date()) {
+  const info = getOpeningInfo(raw, date);
+  return info.status === "open" ? { closesAt: info.closesAt, closesInMinutes: info.closesInMinutes } : null;
+}
+
+// (legacy body kept below for reference, replaced by getOpeningInfo wrapper)
+function _legacyGetOpenWindow(raw?: string, date = new Date()) {
   if (!raw?.trim()) return null;
   const clean = raw.replace(/"[^"]*"/g, "").trim();
   if (/24\s*\/\s*7/.test(clean)) {
