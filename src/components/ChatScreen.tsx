@@ -22,7 +22,7 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 type Suggestion = {
   label: string;
   prompt?: string;
-  submenu?: { label: string; prompt: string }[];
+  submenu?: Suggestion[];
 };
 const SUGGESTIONS: Suggestion[] = [
   {
