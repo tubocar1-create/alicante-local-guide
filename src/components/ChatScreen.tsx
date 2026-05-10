@@ -43,11 +43,15 @@ export function ChatScreen() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [eatOpen, setEatOpen] = useState(false);
-  const [eatQuery, setEatQuery] = useState("");
   const { state: locState, request: requestLocation } = useUserLocation({ watch: true });
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Ask for location automatically as soon as the chat opens
+  useEffect(() => {
+    if (locState.status === "idle") requestLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -56,11 +60,6 @@ export function ChatScreen() {
   async function send(text: string) {
     const trimmed = text.trim();
     if (!trimmed || loading) return;
-    if (trimmed === "🍽️ Comer cerca de mí") {
-      setEatQuery(trimmed);
-      setEatOpen(true);
-      return;
-    }
     if (needsLocationForRecommendation(trimmed) && locState.status !== "ready") {
       requestLocation();
       setMessages((prev) => [
@@ -73,21 +72,6 @@ export function ChatScreen() {
         },
       ]);
       setInput("");
-      return;
-    }
-    if (isFoodRecommendation(trimmed) && locState.status === "ready") {
-      setMessages((prev) => [
-        ...prev,
-        { role: "user", content: trimmed },
-        {
-          role: "assistant",
-          content:
-            "Va 💛 Te abro 4 opciones cerca de donde estás, abiertas ahora mismo y con reseñas a mano. Si quieres más, las añado de una en una.",
-        },
-      ]);
-      setInput("");
-      setEatQuery(trimmed);
-      setEatOpen(true);
       return;
     }
     setError(null);
