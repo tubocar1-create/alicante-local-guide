@@ -94,11 +94,6 @@ export function ChatScreen() {
     }
   }, [locState]);
 
-  const activateLocation = () => {
-    setGeoStatus("asking");
-    requestLocation();
-  };
-
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, loading]);
