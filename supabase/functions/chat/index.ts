@@ -332,7 +332,8 @@ async function fetchMentionedPlaces(text: string): Promise<MentionedPlace[]> {
   const escaped = (s: string) => s.replace(/["\\]/g, "\\$&");
   const filters = names.map((n) => `nwr["name"~"${escaped(n)}",i](${ALICANTE_BBOX});`).join("\n");
   const body = `[out:json][timeout:15];\n(\n${filters}\n);\nout tags center 60;`;
-  let elements: any[] = [];
+  type OsmEl = { tags?: Record<string, string>; lat?: number; lon?: number; center?: { lat: number; lon: number } };
+  let elements: OsmEl[] = [];
   for (const url of OVERPASS_ENDPOINTS) {
     try {
       const res = await fetch(url, {
