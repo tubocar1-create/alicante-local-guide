@@ -279,7 +279,6 @@ export function ChatScreen() {
 
           {isWelcome && (
             <>
-
               <div className="mt-2 flex flex-wrap gap-2">
                 {SUGGESTIONS.map((s) => (
                   <button
@@ -361,8 +360,6 @@ export function ChatScreen() {
           )}
         </div>
       </div>
-
-      
     </div>
   );
 }
