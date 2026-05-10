@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Mic, MapPin, Map as MapIcon } from "lucide-react";
+import { Send, Mic, MapPin, Map as MapIcon, Navigation, Loader2, CheckCircle2 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { PlaceImage } from "@/components/PlaceImage";
 import { EatNearby } from "@/components/EatNearby";
+import { useUserLocation } from "@/hooks/useUserLocation";
 import heroImg from "@/assets/alicante-hero.jpg";
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -29,6 +30,7 @@ export function ChatScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [eatOpen, setEatOpen] = useState(false);
+  const { state: locState, request: requestLocation } = useUserLocation({ watch: true });
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -157,6 +159,34 @@ export function ChatScreen() {
         </div>
         <nav className="flex items-center gap-1.5">
           <button
+            onClick={requestLocation}
+            aria-label="Compartir mi ubicación"
+            title={
+              locState.status === "ready"
+                ? `Ubicación activa (${locState.coords.lat.toFixed(3)}, ${locState.coords.lng.toFixed(3)})`
+                : locState.status === "error"
+                  ? locState.message
+                  : "Compartir mi ubicación"
+            }
+            className={[
+              "inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full active:scale-95 transition",
+              locState.status === "ready"
+                ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500/30"
+                : locState.status === "error"
+                  ? "bg-destructive/15 text-destructive ring-1 ring-destructive/30"
+                  : "bg-secondary text-secondary-foreground",
+            ].join(" ")}
+          >
+            {locState.status === "loading" ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : locState.status === "ready" ? (
+              <CheckCircle2 className="h-3 w-3" />
+            ) : (
+              <Navigation className="h-3 w-3" />
+            )}
+            {locState.status === "ready" ? "Ubicación" : "Mi ubicación"}
+          </button>
+          <button
             onClick={() => setEatOpen(true)}
             className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full gradient-warm text-primary-foreground active:scale-95 shadow-soft"
           >
@@ -229,17 +259,69 @@ export function ChatScreen() {
           )}
 
           {isWelcome && (
-            <div className="mt-2 flex flex-wrap gap-2">
-              {SUGGESTIONS.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => send(s)}
-                  className="rounded-full border border-border bg-card/90 px-3 py-2 text-sm text-card-foreground shadow-sm backdrop-blur transition hover:bg-accent/40"
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
+            <>
+              <div
+                className={[
+                  "mt-2 flex items-center gap-3 rounded-2xl border p-3 shadow-soft backdrop-blur",
+                  locState.status === "ready"
+                    ? "border-emerald-500/30 bg-emerald-500/10"
+                    : "border-border bg-card/90",
+                ].join(" ")}
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full gradient-warm text-primary-foreground shadow-soft">
+                  {locState.status === "loading" ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : locState.status === "ready" ? (
+                    <CheckCircle2 className="h-5 w-5" />
+                  ) : (
+                    <Navigation className="h-5 w-5" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  {locState.status === "ready" ? (
+                    <>
+                      <p className="text-sm font-medium">¡Te tengo en el mapa! 📍</p>
+                      <p className="text-xs text-muted-foreground">
+                        Te recomendaré sitios cerquita de ti en tiempo real.
+                      </p>
+                    </>
+                  ) : locState.status === "error" ? (
+                    <>
+                      <p className="text-sm font-medium">Vaya, no pude verte 😅</p>
+                      <p className="text-xs text-muted-foreground">{locState.message}. Puedes intentarlo otra vez.</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm font-medium">¿Me compartes tu ubicación? 🙌</p>
+                      <p className="text-xs text-muted-foreground">
+                        Así te sugiero planes cerquita y todo se actualiza al moverte.
+                      </p>
+                    </>
+                  )}
+                </div>
+                {locState.status !== "ready" && (
+                  <button
+                    onClick={requestLocation}
+                    disabled={locState.status === "loading"}
+                    className="shrink-0 rounded-full gradient-warm px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-soft active:scale-95 disabled:opacity-60"
+                  >
+                    {locState.status === "loading" ? "Buscando…" : "Activar"}
+                  </button>
+                )}
+              </div>
+
+              <div className="mt-2 flex flex-wrap gap-2">
+                {SUGGESTIONS.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => send(s)}
+                    className="rounded-full border border-border bg-card/90 px-3 py-2 text-sm text-card-foreground shadow-sm backdrop-blur transition hover:bg-accent/40"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>
