@@ -84,7 +84,10 @@ function PerfilPage() {
             {level.emoji}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] uppercase tracking-widest opacity-90">Nivel {level.id}</p>
+            <p className="flex items-center gap-1.5 text-[11px] uppercase tracking-widest opacity-90">
+              Nivel {level.id}
+              <span className="rounded-full bg-white/25 px-1.5 py-0.5 text-[9px] font-bold tracking-wider">BETA</span>
+            </p>
             <h2 className="truncate text-lg font-semibold">{level.name}</h2>
           </div>
           <div className="text-right">
@@ -119,13 +122,13 @@ function PerfilPage() {
         </div>
       </section>
 
-      {/* Mensaje de transparencia */}
-      <div className="mt-4 flex items-start gap-2 rounded-2xl border border-border bg-card/80 p-3 text-xs text-card-foreground">
-        <Info className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+      {/* Mensaje de transparencia BETA */}
+      <div className="mt-4 flex items-start gap-2 rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100">
+        <Info className="mt-0.5 h-4 w-4 shrink-0" />
         <p>
-          <strong>Por ahora los puntos te dan mejor experiencia dentro de la app</strong> (recomendaciones más
-          potentes y exclusivas). Pronto, cuando tenga acuerdos con locales, podrás canjearlos por descuentos y
-          beneficios reales.
+          <strong>Estamos en versión Beta</strong>, así que los puntos y estadísticas son <strong>de prueba</strong>.
+          Cuando lancemos la <strong>Versión 1</strong> los puntos serán reales y podrás canjearlos por descuentos y
+          beneficios en locales partners 🔥. Mientras tanto, ¡testea todo lo que quieras!
         </p>
       </div>
 

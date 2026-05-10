@@ -19,6 +19,9 @@ export function PointsHud({ compact = false }: { compact?: boolean }) {
       </span>
       <span className="tabular-nums font-semibold">{points}</span>
       <span className="text-muted-foreground">AFP</span>
+      <span className="rounded-full bg-amber-500/15 px-1 py-0.5 text-[8px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
+        Beta
+      </span>
       {!compact && (
         <span className="ml-1 hidden items-center gap-1 sm:inline-flex">
           <span aria-hidden>•</span>
