@@ -138,24 +138,25 @@ function mapsHref(query: string, mode: TravelMode = "walking") {
 
 function openMaps(e: React.MouseEvent, url: string) {
   e.preventDefault();
-  // Try opening in the top window first (preview iframes often block target=_blank)
+  // Try the top window first (preview iframes often block popups from inside).
+  // NEVER navigate the iframe itself — Google Maps refuses to be framed and
+  // the user sees "esta página rechazó la conexión".
   try {
     const top = window.top ?? window;
     const w = top.open(url, "_blank", "noopener,noreferrer");
     if (w) return;
   } catch {
-    // cross-origin top access can throw — fall through
+    // cross-origin — ignore
   }
   const w2 = window.open(url, "_blank", "noopener,noreferrer");
-  if (!w2) {
-    // Last resort: navigate the top window
-    try {
-      if (window.top) window.top.location.href = url;
-      else window.location.href = url;
-    } catch {
-      window.location.href = url;
-    }
-  }
+  if (w2) return;
+  // Popups blocked: copy the URL so the user can paste it.
+  try {
+    navigator.clipboard?.writeText(url);
+  } catch {}
+  alert(
+    "Tu navegador bloqueó la ventana emergente. He copiado el enlace de Google Maps al portapapeles — pégalo en una pestaña nueva.",
+  );
 }
 
 export function PlaceImage({ name }: { name: string }) {
