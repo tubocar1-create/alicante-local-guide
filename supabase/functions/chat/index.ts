@@ -845,8 +845,8 @@ async function fetchConfirmedOpenFoodPlaces(context?: ChatContext): Promise<Food
               distanceKm(center, { lat: a.lat, lng: a.lon }) -
               distanceKm(center, { lat: b.lat, lng: b.lon }),
           )
-          .slice(0, 40),
-      ).slice(0, 16);
+          .slice(0, 80),
+      ).slice(0, 30);
     }
   }
 
