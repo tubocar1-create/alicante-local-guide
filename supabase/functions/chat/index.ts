@@ -243,22 +243,50 @@ function previousAssistantPlaceNames(messages: Array<{ role: string; content: st
   return names;
 }
 
+type FastFoodSub = "kebab" | "burger" | "chain" | "pizza" | "all" | null;
+
+function detectFastFoodSub(text: string): FastFoodSub {
+  const t = normalized(text);
+  const isFastFood = /\b(comida rapida|fast ?food|comer rapido|algo rapido|para llevar|takeaway|take away)\b/.test(t);
+  const isKebab = /\b(kebab|d[oö]ner|kebap|shawarma|durum|d[uü]rum|turco)\b/.test(t);
+  const isBurger = /\b(hamburguesa|hamburguesas|burger|burgers|smash|smashburger)\b/.test(t);
+  const isChain = /\b(cadena|cadenas|mcdonalds?|mac ?donalds?|kfc|burger ?king|tgb|the good burger|100 montaditos|cien montaditos|telepizza|dominos|pizza hut|popeyes|five guys|goiko|carls? jr)\b/.test(t);
+  const isPizza = /\b(pizza|pizzas|pizzeria|pizzería)\b/.test(t);
+  const isFriedChicken = /\b(pollo frito|fried chicken|alitas|wings)\b/.test(t);
+  const isHotDog = /\b(perrito|hot ?dog|frankfurt|bocadillo|bocadillos)\b/.test(t);
+  if (isKebab) return "kebab";
+  if (isChain) return "chain";
+  if (isBurger) return "burger";
+  if (isPizza) return "pizza";
+  if (isFriedChicken || isHotDog) return "all";
+  if (isFastFood) return "all";
+  return null;
+}
+
+const CHAIN_NAMES = /\b(mcdonalds?|mac ?donalds?|kfc|burger ?king|tgb|the good burger|100 montaditos|cien montaditos|telepizza|dominos|pizza hut|popeyes|five guys|goiko|carls? jr|subway|taco bell|starbucks|llaollao|foster ?s? hollywood)\b/;
+
 function matchesFoodPreference(place: FoodPlace, latestText: string) {
   const text = normalized(latestText);
   const haystack = normalized(`${place.name} ${place.kind} ${place.cuisine ?? ""}`);
 
   // "Tomar algo / beber / copas" → SOLO bares, pubs, cervecerías, vinotecas, discotecas.
-  // NUNCA restaurantes, kebabs, pizzerías, cafeterías diurnas, heladerías, fast food.
   if (/\b(tomar algo|beber|copa|copas|cocktail|coctel|cerveza|cervezas|cerveceria|vino|vinos|vinoteca|pub|pubs|discoteca|disco|club|clubs|bar|bares|terraceo|terraza)\b/.test(text)) {
-    const isDrinkSpot = /\b(bar|pub|wine_bar|wine|cocktail|brewery|biergarten|nightclub|night_club|cerveceria|vinoteca|taberna|taberna|coctel)\b/.test(haystack);
+    const isDrinkSpot = /\b(bar|pub|wine_bar|wine|cocktail|brewery|biergarten|nightclub|night_club|cerveceria|vinoteca|taberna|coctel)\b/.test(haystack);
     const isFoodOnly = /\b(restaurant|kebab|pizza|pasta|burger|hamburger|fast_food|ice_cream|bakery|cafe|coffee|sushi|sandwich|donut|heladeria|panaderia|cafeteria)\b/.test(haystack)
       && !isDrinkSpot;
     return isDrinkSpot && !isFoodOnly;
   }
 
-  // Comida rápida: kebab, hamburguesas, cadenas (McDonald's, KFC, Burger King, TGB, 100 Montaditos…).
-  if (/\b(comida rapida|fast ?food|kebab|d[oö]ner|kebap|hamburguesa|hamburguesas|burger|burgers|mcdonalds?|mac ?donalds?|kfc|burger ?king|tgb|the good burger|100 montaditos|cien montaditos|pollo frito|frankfurt|bocadillo|bocadillos|telepizza|dominos|pizza hut)\b/.test(text)) {
-    return /\b(fast_food|burger|hamburger|kebab|turkish|pizza|sandwich|chicken|fried_chicken|hot_dog|food_court|mcdonalds|kfc|burger king|tgb|100 montaditos|telepizza|dominos)\b/.test(haystack);
+  // Comida rápida con submenú: kebab / burger / cadenas / pizza / todo.
+  const sub = detectFastFoodSub(text);
+  if (sub) {
+    const isFastAny = /\b(fast_food|burger|hamburger|kebab|turkish|pizza|sandwich|chicken|fried_chicken|hot_dog|food_court|doner)\b/.test(haystack)
+      || CHAIN_NAMES.test(haystack);
+    if (sub === "kebab") return /\b(kebab|turkish|doner|shawarma)\b/.test(haystack);
+    if (sub === "burger") return /\b(burger|hamburger|smash)\b/.test(haystack);
+    if (sub === "pizza") return /\b(pizza|italian)\b/.test(haystack);
+    if (sub === "chain") return CHAIN_NAMES.test(haystack);
+    return isFastAny;
   }
 
   if (/\b(italiano|italiana|pizza|pasta)\b/.test(text)) return /italian|pizza|pasta/.test(haystack);
