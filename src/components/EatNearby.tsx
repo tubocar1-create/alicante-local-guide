@@ -191,10 +191,13 @@ export function EatNearby({ onClose, initialQuery }: Props) {
     setLoading(true);
     setError(null);
     setVisible(4);
-    fetchListings(picked.amenities.map((a) => ({ tag: "amenity", value: a })), {
-      center: me,
-      radiusMeters: 4500,
-    })
+    fetchListings(
+      picked.amenities.map((a) => ({ tag: "amenity", value: a })),
+      {
+        center: me,
+        radiusMeters: 4500,
+      },
+    )
       .then((d) => !cancelled && setItems(d))
       .catch((e) => !cancelled && setError(e instanceof Error ? e.message : "Error"))
       .finally(() => !cancelled && setLoading(false));

@@ -40,7 +40,10 @@ type FetchListingsOptions = {
   radiusMeters?: number;
 };
 
-function buildQuery(filters: { tag: string; value: string }[], opts?: FetchListingsOptions): string {
+function buildQuery(
+  filters: { tag: string; value: string }[],
+  opts?: FetchListingsOptions,
+): string {
   const area = opts?.center
     ? `(around:${opts.radiusMeters ?? 4500},${opts.center.lat},${opts.center.lng})`
     : `(${ALICANTE_BBOX})`;
