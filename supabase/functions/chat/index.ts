@@ -243,22 +243,27 @@ function previousAssistantPlaceNames(messages: Array<{ role: string; content: st
   return names;
 }
 
-type FastFoodSub = "kebab" | "burger" | "chain" | "pizza" | "all" | null;
+type FastFoodSub = "kebab" | "burger" | "chain" | "pizza" | "montaditos" | "chicken" | "mexican" | "all" | null;
 
 function detectFastFoodSub(text: string): FastFoodSub {
   const t = normalized(text);
   const isFastFood = /\b(comida rapida|fast ?food|comer rapido|algo rapido|para llevar|takeaway|take away)\b/.test(t);
   const isKebab = /\b(kebab|d[oö]ner|kebap|shawarma|durum|d[uü]rum|turco)\b/.test(t);
-  const isBurger = /\b(hamburguesa|hamburguesas|burger|burgers|smash|smashburger)\b/.test(t);
-  const isChain = /\b(cadena|cadenas|mcdonalds?|mac ?donalds?|kfc|burger ?king|tgb|the good burger|100 montaditos|cien montaditos|telepizza|dominos|pizza hut|popeyes|five guys|goiko|carls? jr)\b/.test(t);
-  const isPizza = /\b(pizza|pizzas|pizzeria|pizzería)\b/.test(t);
-  const isFriedChicken = /\b(pollo frito|fried chicken|alitas|wings)\b/.test(t);
-  const isHotDog = /\b(perrito|hot ?dog|frankfurt|bocadillo|bocadillos)\b/.test(t);
+  const isMontaditos = /\b(montadit[oa]s?|100 montaditos|cien montaditos|lizarran|lizarrán|bocadillos?|bocatas?)\b/.test(t);
+  const isChicken = /\b(pollo frito|pollos? asados?|fried chicken|kfc|popeyes|alitas|wings|asador de pollos?)\b/.test(t);
+  const isMexican = /\b(mexicano|mexicana|tacos?|burritos?|taco bell|tex ?mex|nachos|quesadilla)\b/.test(t);
+  const isBurger = /\b(hamburguesa|hamburguesas|burger|burgers|smash|smashburger|mcdonalds?|mac ?donalds?|burger ?king|tgb|the good burger|goiko|five guys|fosters? hollywood|carls? jr)\b/.test(t);
+  const isChain = /\b(cadena|cadenas)\b/.test(t);
+  const isPizza = /\b(pizza|pizzas|pizzeria|pizzería|telepizza|dominos?|pizza hut|papa johns?)\b/.test(t);
+  const isHotDog = /\b(perrito|hot ?dog|frankfurt)\b/.test(t);
   if (isKebab) return "kebab";
+  if (isMontaditos) return "montaditos";
+  if (isChicken) return "chicken";
+  if (isMexican) return "mexican";
   if (isChain) return "chain";
   if (isBurger) return "burger";
   if (isPizza) return "pizza";
-  if (isFriedChicken || isHotDog) return "all";
+  if (isHotDog) return "all";
   if (isFastFood) return "all";
   return null;
 }
@@ -283,8 +288,11 @@ function matchesFoodPreference(place: FoodPlace, latestText: string) {
     const isFastAny = /\b(fast_food|burger|hamburger|kebab|turkish|pizza|sandwich|chicken|fried_chicken|hot_dog|food_court|doner)\b/.test(haystack)
       || CHAIN_NAMES.test(haystack);
     if (sub === "kebab") return /\b(kebab|turkish|doner|shawarma)\b/.test(haystack);
-    if (sub === "burger") return /\b(burger|hamburger|smash)\b/.test(haystack);
-    if (sub === "pizza") return /\b(pizza|italian)\b/.test(haystack);
+    if (sub === "burger") return /\b(burger|hamburger|smash|mcdonald|burger ?king|tgb|good burger|goiko|five guys|foster|carls? jr)\b/.test(haystack);
+    if (sub === "pizza") return /\b(pizza|italian|telepizza|domino|pizza hut|papa john)\b/.test(haystack);
+    if (sub === "montaditos") return /\b(montadit|lizarran|bocadill|sandwich|100 montaditos|cien montaditos)\b/.test(haystack);
+    if (sub === "chicken") return /\b(kfc|popeyes|pollo|chicken|fried_chicken|asador|alitas|wings)\b/.test(haystack);
+    if (sub === "mexican") return /\b(mexican|taco|burrito|tex.?mex|nachos|quesadilla|taco bell)\b/.test(haystack);
     if (sub === "chain") return CHAIN_NAMES.test(haystack);
     return isFastAny;
   }
@@ -649,11 +657,19 @@ async function googlePlacesSearchTextMany(
 }
 
 function fastFoodSubQueries(sub: FastFoodSub): string[] {
-  if (sub === "burger") return ["hamburguesería", "burger", "smash burger"];
+  if (sub === "burger")
+    return ["hamburguesería", "burger", "smash burger", "McDonald's", "Burger King", "TGB", "Goiko", "Five Guys", "Foster's Hollywood", "Carl's Jr"];
   if (sub === "kebab") return ["kebab", "döner", "shawarma"];
-  if (sub === "pizza") return ["pizzería", "pizza"];
+  if (sub === "pizza")
+    return ["pizzería", "pizza", "Telepizza", "Domino's Pizza", "Pizza Hut", "Papa John's"];
+  if (sub === "montaditos")
+    return ["100 Montaditos", "Lizarrán", "montaditos", "bocadillos"];
+  if (sub === "chicken")
+    return ["KFC", "Popeyes", "pollo frito", "pollos asados", "asador de pollos", "alitas"];
+  if (sub === "mexican")
+    return ["Taco Bell", "restaurante mexicano", "tacos", "burritos", "tex mex"];
   if (sub === "chain")
-    return ["McDonald's", "KFC", "Burger King", "TGB", "100 Montaditos", "Telepizza", "Domino's", "Five Guys", "Goiko", "Popeyes", "Foster's Hollywood"];
+    return ["McDonald's", "KFC", "Burger King", "TGB", "100 Montaditos", "Telepizza", "Domino's", "Five Guys", "Goiko", "Popeyes", "Foster's Hollywood", "Taco Bell", "Lizarrán"];
   if (sub === "all") return ["comida rápida", "hamburguesería", "kebab", "pizzería"];
   return [];
 }
