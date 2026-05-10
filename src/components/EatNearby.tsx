@@ -228,14 +228,13 @@ export function EatNearby({ onClose }: Props) {
                         >
                           🦉 TripAdvisor
                         </button>
-                        <a
-                          href={mapsHref}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground"
+                        <button
+                          type="button"
+                          onClick={() => openExternal(mapsHref)}
+                          className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground active:scale-95"
                         >
                           <Navigation className="w-3 h-3" /> Cómo llegar
-                        </a>
+                        </button>
                         {i.phone && (
                           <a
                             href={`tel:${i.phone}`}
