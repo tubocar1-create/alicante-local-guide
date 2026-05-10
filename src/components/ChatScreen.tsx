@@ -58,6 +58,7 @@ export function ChatScreen() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeSubmenu, setActiveSubmenu] = useState<Suggestion | null>(null);
   const [geo, setGeo] = useState<GeoInfo | null>(null);
   const [geoStatus, setGeoStatus] = useState<GeoStatus>("idle");
   const scrollRef = useRef<HTMLDivElement>(null);
