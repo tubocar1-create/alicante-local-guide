@@ -11,6 +11,8 @@ export type PlaceOverride = {
   address?: string;
   /** Aliases that should match this place (lowercased, no accents recommended) */
   aliases: string[];
+  /** Coordinates for distance/maps */
+  coords?: { lat: number; lng: number };
 };
 
 export const PLACE_OVERRIDES: PlaceOverride[] = [
@@ -21,6 +23,7 @@ export const PLACE_OVERRIDES: PlaceOverride[] = [
       "Tienda de envases, bolsas, servilletas, platos y vasos ubicada en la Calle Teulada nº 21, Alicante.",
     address: "Calle Teulada 21, Alicante, España",
     aliases: ["plastiahorro", "plastiahorro distribuciones"],
+    coords: { lat: 38.3567, lng: -0.4915 },
   },
 ];
 
