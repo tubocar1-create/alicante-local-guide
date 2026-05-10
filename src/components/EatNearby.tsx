@@ -28,6 +28,26 @@ const CUISINES: Cuisine[] = [
 
 type Props = { onClose: () => void };
 
+function openExternal(url: string) {
+  try {
+    const topWindow = window.top ?? window;
+    const opened = topWindow.open(url, "_blank", "noopener,noreferrer");
+    if (opened) return;
+  } catch {
+    // If the preview frame blocks access to the top window, try the current one.
+  }
+
+  const opened = window.open(url, "_blank", "noopener,noreferrer");
+  if (opened) return;
+
+  try {
+    navigator.clipboard?.writeText(url);
+  } catch {
+    // Clipboard may be unavailable; the message below still explains what happened.
+  }
+  alert("Tu navegador ha bloqueado la ventana nueva. Te he copiado el enlace para que lo pegues en otra pestaña 💛");
+}
+
 export function EatNearby({ onClose }: Props) {
   const { state, request } = useUserLocation();
   const me = state.status === "ready" ? state.coords : null;
@@ -173,10 +193,6 @@ export function EatNearby({ onClose }: Props) {
                   const tripHref = `https://www.tripadvisor.es/Search?q=${encodeURIComponent(
                     `${i.name} Alicante`,
                   )}`;
-                  const openExternal = (url: string) => {
-                    const w = window.open(url, "_blank", "noopener,noreferrer");
-                    if (!w) window.top!.location.href = url;
-                  };
                   return (
                     <li
                       key={i.id}
@@ -244,14 +260,13 @@ export function EatNearby({ onClose }: Props) {
                           </a>
                         )}
                         {i.website && (
-                          <a
-                            href={i.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                          <button
+                            type="button"
+                            onClick={() => openExternal(i.website!)}
                             className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground"
                           >
                             <Globe className="w-3 h-3" /> Web
-                          </a>
+                          </button>
                         )}
                       </div>
                     </li>
