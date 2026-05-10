@@ -156,17 +156,17 @@ export function ChatScreen() {
           </p>
         </div>
         <nav className="flex items-center gap-1.5">
+          <button
+            onClick={() => setEatOpen(true)}
+            className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full gradient-warm text-primary-foreground active:scale-95 shadow-soft"
+          >
+            🍽️ Comer cerca
+          </button>
           <Link
             to="/stay"
             className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full bg-secondary text-secondary-foreground active:scale-95"
           >
             🏨 Dormir
-          </Link>
-          <Link
-            to="/eat"
-            className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full bg-secondary text-secondary-foreground active:scale-95"
-          >
-            🍽️ Comer
           </Link>
           <Link
             to="/explore"
