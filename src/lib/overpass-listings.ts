@@ -19,6 +19,7 @@ export type Listing = {
   website?: string;
   address?: string;
   wikipedia?: string;
+  openingHours?: string;
   tags: Record<string, string>;
 };
 
@@ -98,6 +99,7 @@ export async function fetchListings(
           website: tags.website || tags["contact:website"],
           address: addr || undefined,
           wikipedia: tags.wikipedia,
+          openingHours: tags.opening_hours,
           tags,
         });
       }
