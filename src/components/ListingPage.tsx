@@ -267,6 +267,13 @@ export function ListingPage<K extends string>(props: Props<K>) {
           Datos abiertos © OpenStreetMap contributors
         </p>
       </main>
+      {referral && (
+        <ReferralDialog
+          placeId={String(referral.id)}
+          placeName={referral.name}
+          onClose={() => setReferral(null)}
+        />
+      )}
     </div>
   );
 }
