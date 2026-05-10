@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Mic, MapPin } from "lucide-react";
+import { Send, Mic, MapPin, Map as MapIcon } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { PlaceImage } from "@/components/PlaceImage";
@@ -148,6 +149,13 @@ export function ChatScreen() {
             your local in Alicante
           </p>
         </div>
+        <Link
+          to="/explore"
+          className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-full bg-primary text-primary-foreground active:scale-95 transition shadow-soft"
+        >
+          <MapIcon className="h-3.5 w-3.5" />
+          Mapa
+        </Link>
       </header>
 
       {/* Messages */}
