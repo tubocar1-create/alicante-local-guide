@@ -75,6 +75,16 @@ export function ChatScreen() {
         },
         body: JSON.stringify({
           messages: next.map((m) => ({ role: m.role, content: m.content })),
+          context: {
+            location:
+              locState.status === "ready"
+                ? {
+                    lat: locState.coords.lat,
+                    lng: locState.coords.lng,
+                    accuracy: locState.coords.accuracy,
+                  }
+                : null,
+          },
         }),
       });
 
