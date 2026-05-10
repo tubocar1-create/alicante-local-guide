@@ -35,7 +35,7 @@ const SUGGESTIONS: Suggestion[] = [
         label: "🍔 Comida rápida",
         submenu: [
           { label: "🍔 Hamburguesas", prompt: "Una buena hamburguesería abierta ahora (McDonald's, Burger King, TGB, Goiko, Five Guys…)" },
-          { label: "🍕 Pizzas", prompt: "Una pizzería abierta ahora (Telepizza, Domino's, Pizza Hut…)" },
+          { label: "🍕 Pizzas", prompt: "Una pizzería abierta ahora (Telepizza, Domino's…)" },
           { label: "🥖 Montaditos", prompt: "Un sitio de montaditos abierto ahora (100 Montaditos, Lizarrán…)" },
           { label: "🌯 Kebaps", prompt: "Un buen kebap abierto ahora" },
           { label: "🍗 Pollo frito", prompt: "Un sitio de pollo frito o pollos asados abierto ahora (KFC, Popeyes…)" },
