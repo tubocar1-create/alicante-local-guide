@@ -482,38 +482,73 @@ async function googlePlacesNearbyFood(
 ): Promise<GooglePlace[]> {
   const apiKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
   if (!apiKey) return [];
-  try {
-    const res = await fetch(`${GOOGLE_PLACES_BASE}/places:searchNearby`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": apiKey,
-        "X-Goog-FieldMask":
-          "places.displayName,places.formattedAddress,places.location,places.primaryType,places.types,places.regularOpeningHours,places.currentOpeningHours",
-      },
-      body: JSON.stringify({
-        includedTypes: ["restaurant", "bar", "cafe", "bakery", "meal_takeaway", "ice_cream_shop"],
-        maxResultCount: 20,
-        languageCode: "es",
-        regionCode: "ES",
-        locationRestriction: {
-          circle: {
-            center: { latitude: center.lat, longitude: center.lng },
-            radius,
-          },
+
+  // Google's Nearby Search caps at 20 results per call. To get realistic
+  // coverage of "everything open near me", split by type and query in parallel,
+  // then merge + dedupe. Use rankPreference=DISTANCE so we get the closest
+  // 20 of each category, not the most "prominent" 20.
+  const TYPE_GROUPS: string[][] = [
+    ["restaurant"],
+    ["bar"],
+    ["cafe"],
+    ["bakery"],
+    ["meal_takeaway"],
+    ["ice_cream_shop"],
+    ["pub"],
+    ["wine_bar"],
+    ["sandwich_shop"],
+    ["pizza_restaurant"],
+  ];
+
+  const callOne = async (types: string[]): Promise<GooglePlace[]> => {
+    try {
+      const res = await fetch(`${GOOGLE_PLACES_BASE}/places:searchNearby`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": apiKey,
+          "X-Goog-FieldMask":
+            "places.id,places.displayName,places.formattedAddress,places.location,places.primaryType,places.types,places.regularOpeningHours,places.currentOpeningHours",
         },
-      }),
-    });
-    if (!res.ok) {
-      console.error("Google Places nearby failed", res.status, await res.text());
+        body: JSON.stringify({
+          includedTypes: types,
+          maxResultCount: 20,
+          rankPreference: "DISTANCE",
+          languageCode: "es",
+          regionCode: "ES",
+          locationRestriction: {
+            circle: {
+              center: { latitude: center.lat, longitude: center.lng },
+              radius,
+            },
+          },
+        }),
+      });
+      if (!res.ok) {
+        console.error("Google Places nearby failed", types.join(","), res.status, await res.text());
+        return [];
+      }
+      const json = await res.json();
+      return (json.places ?? []) as GooglePlace[];
+    } catch (e) {
+      console.error("Google Places nearby error:", types.join(","), e);
       return [];
     }
-    const json = await res.json();
-    return (json.places ?? []) as GooglePlace[];
-  } catch (e) {
-    console.error("Google Places nearby error:", e);
-    return [];
+  };
+
+  const groups = await Promise.all(TYPE_GROUPS.map(callOne));
+  const seen = new Set<string>();
+  const merged: GooglePlace[] = [];
+  for (const list of groups) {
+    for (const p of list) {
+      const id = (p as { id?: string }).id ??
+        `${p.displayName?.text}|${p.location?.latitude}|${p.location?.longitude}`;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      merged.push(p);
+    }
   }
+  return merged;
 }
 
 
