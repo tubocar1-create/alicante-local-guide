@@ -105,7 +105,10 @@ function parseRanges(rule: string) {
   }));
 }
 
-function getOpeningInfo(raw?: string, date = new Date()):
+function getOpeningInfo(
+  raw?: string,
+  date = new Date(),
+):
   | { status: "open"; closesAt: string; closesInMinutes: number; raw: string }
   | { status: "closed"; raw: string }
   | { status: "unknown"; raw?: string } {
@@ -117,7 +120,10 @@ function getOpeningInfo(raw?: string, date = new Date()):
   const { day, minutes } = madridNow(date);
   const yesterday = previousDay(day);
   let matchedAny = false;
-  for (const rule of clean.split(";").map((r) => r.trim()).filter(Boolean)) {
+  for (const rule of clean
+    .split(";")
+    .map((r) => r.trim())
+    .filter(Boolean)) {
     const ranges = parseRanges(rule);
     if (appliesToDay(rule, day)) {
       matchedAny = true;
@@ -125,7 +131,12 @@ function getOpeningInfo(raw?: string, date = new Date()):
       for (const range of ranges) {
         const end = range.end <= range.start ? range.end + 1440 : range.end;
         if (minutes >= range.start && minutes < end) {
-          return { status: "open", closesAt: minutesToClock(end), closesInMinutes: end - minutes, raw };
+          return {
+            status: "open",
+            closesAt: minutesToClock(end),
+            closesInMinutes: end - minutes,
+            raw,
+          };
         }
       }
     }
@@ -133,7 +144,12 @@ function getOpeningInfo(raw?: string, date = new Date()):
       for (const range of ranges) {
         if (range.end > range.start) continue;
         if (minutes < range.end) {
-          return { status: "open", closesAt: minutesToClock(range.end), closesInMinutes: range.end - minutes, raw };
+          return {
+            status: "open",
+            closesAt: minutesToClock(range.end),
+            closesInMinutes: range.end - minutes,
+            raw,
+          };
         }
       }
     }
@@ -143,9 +159,10 @@ function getOpeningInfo(raw?: string, date = new Date()):
 
 function getOpenWindow(raw?: string, date = new Date()) {
   const info = getOpeningInfo(raw, date);
-  return info.status === "open" ? { closesAt: info.closesAt, closesInMinutes: info.closesInMinutes } : null;
+  return info.status === "open"
+    ? { closesAt: info.closesAt, closesInMinutes: info.closesInMinutes }
+    : null;
 }
-
 
 function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
   const R = 6371;
@@ -183,22 +200,108 @@ function shuffle<T>(items: T[]) {
 
 const ALICANTE_BBOX = "37.84,-1.13,38.87,0.21";
 const NAME_STOPWORDS = new Set([
-  "alicante","hola","oye","mira","quiero","tengo","puedo","estoy","quería","queria",
-  "buenas","gracias","por","favor","quizás","quizas","tal","vez","ahora","luego","hoy",
-  "mañana","manana","ayer","cerca","centro","playa","casco","antiguo","ciudad","barrio",
-  "amigos","familia","novia","novio","pareja","niños","ninos","plan","planes",
-  "comer","cenar","desayunar","tomar","beber","ir","visitar","conocer","ver","quedar",
-  "restaurante","restaurantes","bar","bares","cafe","cafeteria","cafetería","tapas",
-  "donde","dónde","como","cómo","cuando","cuándo","que","qué","cual","cuál",
-  "lunes","martes","miercoles","miércoles","jueves","viernes","sabado","sábado","domingo",
-  "esta","este","estos","estas","abierto","abierta","cerrado","cerrada","horario","abre","cierra",
-  "the","and","for","you","your",
+  "alicante",
+  "hola",
+  "oye",
+  "mira",
+  "quiero",
+  "tengo",
+  "puedo",
+  "estoy",
+  "quería",
+  "queria",
+  "buenas",
+  "gracias",
+  "por",
+  "favor",
+  "quizás",
+  "quizas",
+  "tal",
+  "vez",
+  "ahora",
+  "luego",
+  "hoy",
+  "mañana",
+  "manana",
+  "ayer",
+  "cerca",
+  "centro",
+  "playa",
+  "casco",
+  "antiguo",
+  "ciudad",
+  "barrio",
+  "amigos",
+  "familia",
+  "novia",
+  "novio",
+  "pareja",
+  "niños",
+  "ninos",
+  "plan",
+  "planes",
+  "comer",
+  "cenar",
+  "desayunar",
+  "tomar",
+  "beber",
+  "ir",
+  "visitar",
+  "conocer",
+  "ver",
+  "quedar",
+  "restaurante",
+  "restaurantes",
+  "bar",
+  "bares",
+  "cafe",
+  "cafeteria",
+  "cafetería",
+  "tapas",
+  "donde",
+  "dónde",
+  "como",
+  "cómo",
+  "cuando",
+  "cuándo",
+  "que",
+  "qué",
+  "cual",
+  "cuál",
+  "lunes",
+  "martes",
+  "miercoles",
+  "miércoles",
+  "jueves",
+  "viernes",
+  "sabado",
+  "sábado",
+  "domingo",
+  "esta",
+  "este",
+  "estos",
+  "estas",
+  "abierto",
+  "abierta",
+  "cerrado",
+  "cerrada",
+  "horario",
+  "abre",
+  "cierra",
+  "the",
+  "and",
+  "for",
+  "you",
+  "your",
 ]);
 
 function extractMentionedNames(text: string): string[] {
   const out: string[] = [];
   const push = (raw: string) => {
-    const trimmed = raw.replace(/[.,;:!?¿¡()"'“”‘’]+$/g, "").replace(/^[.,;:!?¿¡()"'“”‘’]+/g, "").trim();
+    const trimmed = raw
+      .replace(/[.,;:!?¿¡()"'“”‘’]+$/g, "")
+      .replace(/^[.,;:!?¿¡()"'“”‘’]+/g, "")
+      .trim();
     if (trimmed.length < 4 || trimmed.length > 60) return;
     const tokens = trimmed.split(/\s+/);
     const meaningful = tokens.filter((t) => !NAME_STOPWORDS.has(normalized(t)));
@@ -206,7 +309,8 @@ function extractMentionedNames(text: string): string[] {
     if (!out.some((o) => normalized(o) === normalized(trimmed))) out.push(trimmed);
   };
   for (const m of text.matchAll(/["“'‘]([^"“”‘’]{3,60})["”'’]/g)) push(m[1]);
-  const re = /\b([A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ'’&-]+(?:\s+(?:de|del|la|el|los|las|y|al?)\s+[A-ZÁÉÍÓÚÑa-záéíóúñ][\wÁÉÍÓÚÑáéíóúñ'’&-]+|\s+[A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ'’&-]+)+)/g;
+  const re =
+    /\b([A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ'’&-]+(?:\s+(?:de|del|la|el|los|las|y|al?)\s+[A-ZÁÉÍÓÚÑa-záéíóúñ][\wÁÉÍÓÚÑáéíóúñ'’&-]+|\s+[A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ'’&-]+)+)/g;
   for (const m of text.matchAll(re)) push(m[1]);
   return out.slice(0, 4);
 }
@@ -226,9 +330,7 @@ async function fetchMentionedPlaces(text: string): Promise<MentionedPlace[]> {
   const names = extractMentionedNames(text);
   if (names.length === 0) return [];
   const escaped = (s: string) => s.replace(/["\\]/g, "\\$&");
-  const filters = names
-    .map((n) => `nwr["name"~"${escaped(n)}",i](${ALICANTE_BBOX});`)
-    .join("\n");
+  const filters = names.map((n) => `nwr["name"~"${escaped(n)}",i](${ALICANTE_BBOX});`).join("\n");
   const body = `[out:json][timeout:15];\n(\n${filters}\n);\nout tags center 60;`;
   let elements: any[] = [];
   for (const url of OVERPASS_ENDPOINTS) {
@@ -268,8 +370,9 @@ async function fetchMentionedPlaces(text: string): Promise<MentionedPlace[]> {
     const openingHours = tags.opening_hours;
     const info = getOpeningInfo(openingHours, now);
     const address =
-      [tags["addr:street"], tags["addr:housenumber"], tags["addr:city"]].filter(Boolean).join(" ") ||
-      undefined;
+      [tags["addr:street"], tags["addr:housenumber"], tags["addr:city"]]
+        .filter(Boolean)
+        .join(" ") || undefined;
     if (info.status === "open") {
       results.push({
         query,
@@ -503,9 +606,12 @@ serve(async (req) => {
     const locationLine = loc
       ? `USER_LOCATION: lat=${loc.lat?.toFixed?.(5)}, lng=${loc.lng?.toFixed?.(5)}${loc.area ? `, area="${loc.area}"` : ""}${loc.city ? `, city="${loc.city}"` : ""}${typeof loc.distanceFromAlicanteKm === "number" ? `, distanceFromAlicanteKm=${loc.distanceFromAlicanteKm}` : ""}`
       : `USER_LOCATION: (no disponible) — locationStatus=${locStatus}`;
-    const latestUserText = [...messages].reverse().find((m: any) => m.role === "user")?.content ?? "";
+    const latestUserText =
+      [...messages].reverse().find((m: any) => m.role === "user")?.content ?? "";
     const [openFoodPlaces, mentionedPlaces] = await Promise.all([
-      isFoodOrDrinkRequest(messages) ? fetchConfirmedOpenFoodPlaces(context) : Promise.resolve([] as FoodPlace[]),
+      isFoodOrDrinkRequest(messages)
+        ? fetchConfirmedOpenFoodPlaces(context)
+        : Promise.resolve([] as FoodPlace[]),
       fetchMentionedPlaces(latestUserText).catch(() => [] as MentionedPlace[]),
     ]);
     const verifiedOpenLine = openFoodPlaces.length
