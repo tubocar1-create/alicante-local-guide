@@ -353,7 +353,7 @@ async function fetchMentionedPlaces(text: string): Promise<MentionedPlace[]> {
   const results: MentionedPlace[] = [];
   for (const query of names) {
     const qNorm = normalized(query);
-    const matches = elements.filter((el: any) => {
+    const matches = elements.filter((el) => {
       const tags = el.tags ?? {};
       const candidates = [tags.name, tags["name:es"], tags["name:en"], tags["alt_name"]]
         .filter(Boolean)
