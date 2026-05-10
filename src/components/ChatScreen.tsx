@@ -4,13 +4,14 @@ import { Link } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { PlaceImage } from "@/components/PlaceImage";
+import { EatNearby } from "@/components/EatNearby";
 import heroImg from "@/assets/alicante-hero.jpg";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 const SUGGESTIONS = [
-  "Where should we eat tonight? 🍤",
+  "🍽️ Comer cerca de mí",
   "Best beach near the centre?",
   "What to do tomorrow in Alicante?",
   "Nightlife tips please 🍹",
@@ -27,6 +28,7 @@ export function ChatScreen() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [eatOpen, setEatOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -37,6 +39,10 @@ export function ChatScreen() {
   async function send(text: string) {
     const trimmed = text.trim();
     if (!trimmed || loading) return;
+    if (trimmed === "🍽️ Comer cerca de mí") {
+      setEatOpen(true);
+      return;
+    }
     setError(null);
     const userMsg: Msg = { role: "user", content: trimmed };
     const next = [...messages, userMsg];
@@ -150,17 +156,17 @@ export function ChatScreen() {
           </p>
         </div>
         <nav className="flex items-center gap-1.5">
+          <button
+            onClick={() => setEatOpen(true)}
+            className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full gradient-warm text-primary-foreground active:scale-95 shadow-soft"
+          >
+            🍽️ Comer cerca
+          </button>
           <Link
             to="/stay"
             className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full bg-secondary text-secondary-foreground active:scale-95"
           >
             🏨 Dormir
-          </Link>
-          <Link
-            to="/eat"
-            className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full bg-secondary text-secondary-foreground active:scale-95"
-          >
-            🍽️ Comer
           </Link>
           <Link
             to="/explore"
@@ -277,6 +283,8 @@ export function ChatScreen() {
           )}
         </div>
       </div>
+
+      {eatOpen && <EatNearby onClose={() => setEatOpen(false)} />}
     </div>
   );
 }
