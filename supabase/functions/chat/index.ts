@@ -497,9 +497,11 @@ serve(async (req) => {
     const locationLine = loc
       ? `USER_LOCATION: lat=${loc.lat?.toFixed?.(5)}, lng=${loc.lng?.toFixed?.(5)}${loc.area ? `, area="${loc.area}"` : ""}${loc.city ? `, city="${loc.city}"` : ""}${typeof loc.distanceFromAlicanteKm === "number" ? `, distanceFromAlicanteKm=${loc.distanceFromAlicanteKm}` : ""}`
       : `USER_LOCATION: (no disponible) — locationStatus=${locStatus}`;
-    const openFoodPlaces = isFoodOrDrinkRequest(messages)
-      ? await fetchConfirmedOpenFoodPlaces(context)
-      : [];
+    const latestUserText = [...messages].reverse().find((m: any) => m.role === "user")?.content ?? "";
+    const [openFoodPlaces, mentionedPlaces] = await Promise.all([
+      isFoodOrDrinkRequest(messages) ? fetchConfirmedOpenFoodPlaces(context) : Promise.resolve([] as FoodPlace[]),
+      fetchMentionedPlaces(latestUserText).catch(() => [] as MentionedPlace[]),
+    ]);
     const verifiedOpenLine = openFoodPlaces.length
       ? `\nVERIFIED_OPEN_FOOD_PLACES (fuente de verdad para comer/beber: recomienda SOLO estos nombres; todos están abiertos ahora y cierran en más de 60 min):\n${openFoodPlaces
           .map(
@@ -510,7 +512,20 @@ serve(async (req) => {
       : isFoodOrDrinkRequest(messages)
         ? "\nVERIFIED_OPEN_FOOD_PLACES: ninguna opción con horario confirmado abierto ahora y con más de 60 min hasta cerrar. No recomiendes restaurantes/bares/cafés concretos; pide zona o propone ampliar búsqueda."
         : "";
-    const runtimeContext = `RUNTIME CONTEXT (use this when relevant):\nTODAY: ${todayStr} (zona horaria Europe/Madrid)\nMAX_NEARBY_OPTIONS: ${context?.maxOptions ?? 4}\n${locationLine}${verifiedOpenLine}`;
+    const mentionedLine = mentionedPlaces.length
+      ? `\nUSER_MENTIONED_PLACES (el usuario nombró estos sitios — DEBES decirle si están abiertos o no usando EXACTAMENTE este estado, no inventes horarios):\n${mentionedPlaces
+          .map((p, i) => {
+            if (p.status === "open")
+              return `${i + 1}. "${p.query}" → ${p.name} (${p.kind}) — ABIERTO AHORA, cierra a las ${p.closesAt} (en ${p.closesInMinutes} min). Horario OSM="${p.openingHours}".`;
+            if (p.status === "closed")
+              return `${i + 1}. "${p.query}" → ${p.name} (${p.kind}) — CERRADO AHORA. Horario OSM="${p.openingHours}".`;
+            if (p.status === "unknown")
+              return `${i + 1}. "${p.query}" → ${p.name} (${p.kind}) — HORARIO NO CONFIRMADO en OSM${p.openingHours ? ` (raw="${p.openingHours}")` : ""}. Dilo con honestidad: "no tengo el horario confirmado, mejor confírmalo en Google Maps".`;
+            return `${i + 1}. "${p.query}" → no encontrado en OpenStreetMap dentro de Alicante. Dilo con honestidad: "no me sale en mi mapa, no te puedo confirmar el horario, mejor míralo en Google Maps".`;
+          })
+          .join("\n")}`
+      : "";
+    const runtimeContext = `RUNTIME CONTEXT (use this when relevant):\nTODAY: ${todayStr} (zona horaria Europe/Madrid)\nMAX_NEARBY_OPTIONS: ${context?.maxOptions ?? 4}\n${locationLine}${verifiedOpenLine}${mentionedLine}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
