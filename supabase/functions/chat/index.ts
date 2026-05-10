@@ -7,6 +7,239 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+type DayKey = "Mo" | "Tu" | "We" | "Th" | "Fr" | "Sa" | "Su";
+type FoodPlace = {
+  name: string;
+  kind: string;
+  lat: number;
+  lon: number;
+  openingHours: string;
+  closesAt: string;
+  closesInMinutes: number;
+  cuisine?: string;
+  address?: string;
+};
+
+const DAYS: DayKey[] = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+const WEEKDAY_TO_DAY: Record<string, DayKey> = {
+  mon: "Mo",
+  tue: "Tu",
+  wed: "We",
+  thu: "Th",
+  fri: "Fr",
+  sat: "Sa",
+  sun: "Su",
+};
+const OVERPASS_ENDPOINTS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+];
+const ALICANTE_CENTER = { lat: 38.3452, lng: -0.481 };
+
+function madridNow(date = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Madrid",
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
+  return {
+    day: WEEKDAY_TO_DAY[get("weekday").slice(0, 3).toLowerCase()] ?? "Mo",
+    minutes: Number(get("hour")) * 60 + Number(get("minute")),
+  };
+}
+
+function previousDay(day: DayKey): DayKey {
+  return DAYS[(DAYS.indexOf(day) + 6) % 7];
+}
+
+function minutesToClock(minutes: number) {
+  const safe = ((minutes % 1440) + 1440) % 1440;
+  return `${String(Math.floor(safe / 60)).padStart(2, "0")}:${String(safe % 60).padStart(2, "0")}`;
+}
+
+function expandDayRange(start: DayKey, end: DayKey) {
+  const out: DayKey[] = [];
+  let i = DAYS.indexOf(start);
+  const stop = DAYS.indexOf(end);
+  for (let guard = 0; guard < 7; guard += 1) {
+    out.push(DAYS[i]);
+    if (i === stop) break;
+    i = (i + 1) % 7;
+  }
+  return out;
+}
+
+function ruleDays(rule: string): DayKey[] | null {
+  const expr = rule.match(
+    /\b(?:Mo|Tu|We|Th|Fr|Sa|Su)(?:\s*-\s*(?:Mo|Tu|We|Th|Fr|Sa|Su))?(?:\s*,\s*(?:Mo|Tu|We|Th|Fr|Sa|Su)(?:\s*-\s*(?:Mo|Tu|We|Th|Fr|Sa|Su))?)*/,
+  )?.[0];
+  if (!expr) return null;
+  return expr.split(/\s*,\s*/).flatMap((part) => {
+    const [start, end] = part.split(/\s*-\s*/) as [DayKey, DayKey | undefined];
+    return end ? expandDayRange(start, end) : [start];
+  });
+}
+
+function appliesToDay(rule: string, day: DayKey) {
+  const days = ruleDays(rule);
+  return !days || days.includes(day);
+}
+
+function parseRanges(rule: string) {
+  return [...rule.matchAll(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/g)].map((m) => ({
+    start: Number(m[1]) * 60 + Number(m[2]),
+    end: Number(m[3]) * 60 + Number(m[4]),
+  }));
+}
+
+function getOpenWindow(raw?: string, date = new Date()) {
+  if (!raw?.trim()) return null;
+  const clean = raw.replace(/"[^"]*"/g, "").trim();
+  if (/24\s*\/\s*7/.test(clean)) {
+    return { closesAt: "24:00", closesInMinutes: 24 * 60 };
+  }
+  const { day, minutes } = madridNow(date);
+  const yesterday = previousDay(day);
+
+  for (const rule of clean
+    .split(";")
+    .map((r) => r.trim())
+    .filter(Boolean)) {
+    const ranges = parseRanges(rule);
+    if (/\boff\b|\bclosed\b/i.test(rule) && ranges.length === 0 && appliesToDay(rule, day)) {
+      continue;
+    }
+
+    if (appliesToDay(rule, day)) {
+      for (const range of ranges) {
+        const end = range.end <= range.start ? range.end + 1440 : range.end;
+        if (minutes >= range.start && minutes < end) {
+          return { closesAt: minutesToClock(end), closesInMinutes: end - minutes };
+        }
+      }
+    }
+
+    if (appliesToDay(rule, yesterday)) {
+      for (const range of ranges) {
+        if (range.end > range.start) continue;
+        if (minutes < range.end) {
+          return { closesAt: minutesToClock(range.end), closesInMinutes: range.end - minutes };
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+  const R = 6371;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const lat1 = (a.lat * Math.PI) / 180;
+  const lat2 = (b.lat * Math.PI) / 180;
+  const h =
+    Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+function normalized(text: string) {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function isFoodOrDrinkRequest(messages: Array<{ role: string; content: string }>) {
+  const latest = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
+  const text = normalized(latest);
+  return /\b(comer|cenar|almorzar|desayunar|restaurante|restaurantes|tapas|tapear|bar|bares|cafe|cafeteria|tomar algo|beber|copa|copas|cocktail|coctel|cerveza|vino|hamburguesa|pizza|arro(z|ces)|marisco|menu|menú)\b/.test(
+    text,
+  );
+}
+
+function shuffle<T>(items: T[]) {
+  const copy = [...items];
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+async function fetchConfirmedOpenFoodPlaces(context?: { location?: any }): Promise<FoodPlace[]> {
+  const loc = context?.location;
+  const center =
+    typeof loc?.lat === "number" && typeof loc?.lng === "number"
+      ? { lat: loc.lat, lng: loc.lng }
+      : ALICANTE_CENTER;
+  const radius = loc ? 5500 : 8500;
+  const area = `(around:${radius},${center.lat},${center.lng})`;
+  const body = `[out:json][timeout:18];
+(
+  nwr["amenity"~"^(restaurant|bar|cafe|pub|fast_food|ice_cream)$"]["name"]["opening_hours"]${area};
+);
+out center 180;`;
+  let lastErr: unknown;
+
+  for (const url of OVERPASS_ENDPOINTS) {
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "data=" + encodeURIComponent(body),
+      });
+      if (!res.ok) throw new Error(`Overpass ${res.status}`);
+      const json = await res.json();
+      const seen = new Set<string>();
+      const now = new Date();
+      const places: FoodPlace[] = [];
+
+      for (const el of json.elements ?? []) {
+        const tags = el.tags ?? {};
+        const name = tags.name || tags["name:es"] || tags["name:en"];
+        const lat = el.lat ?? el.center?.lat;
+        const lon = el.lon ?? el.center?.lon;
+        const openingHours = tags.opening_hours;
+        if (!name || lat == null || lon == null || !openingHours) continue;
+        const open = getOpenWindow(openingHours, now);
+        if (!open || open.closesInMinutes <= 60) continue;
+        const key = normalized(`${name}|${lat.toFixed(4)}|${lon.toFixed(4)}`);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        places.push({
+          name,
+          kind: tags.amenity ?? "restaurant",
+          lat,
+          lon,
+          openingHours,
+          closesAt: open.closesAt,
+          closesInMinutes: open.closesInMinutes,
+          cuisine: tags.cuisine,
+          address: [tags["addr:street"], tags["addr:housenumber"], tags["addr:city"]]
+            .filter(Boolean)
+            .join(" ") || undefined,
+        });
+      }
+
+      return shuffle(
+        places.sort(
+          (a, b) =>
+            distanceKm(center, { lat: a.lat, lng: a.lon }) -
+            distanceKm(center, { lat: b.lat, lng: b.lon }),
+        ).slice(0, 40),
+      ).slice(0, 16);
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+
+  console.error("open food places fetch failed:", lastErr);
+  return [];
+}
+
 const SYSTEM_PROMPT = `You are "Alicante Friend", a warm, caring local companion living in Alicante, Spain.
 You are NOT a travel website. You are NOT a chatbot. You are NOT an assistant.
 You are a close friend — someone who lives here and genuinely cares about how the visitor is feeling and what they need right now.
