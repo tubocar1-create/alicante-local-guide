@@ -289,6 +289,8 @@ async function fetchMentionedPlaces(text: string): Promise<MentionedPlace[]> {
   }
   return results;
 }
+
+async function fetchConfirmedOpenFoodPlaces(context?: ChatContext): Promise<FoodPlace[]> {
   const loc = context?.location;
   const center =
     typeof loc?.lat === "number" && typeof loc?.lng === "number"
