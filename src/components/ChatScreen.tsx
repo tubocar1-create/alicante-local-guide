@@ -22,7 +22,7 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 type Suggestion = {
   label: string;
   prompt?: string;
-  submenu?: { label: string; prompt: string }[];
+  submenu?: Suggestion[];
 };
 const SUGGESTIONS: Suggestion[] = [
   {
@@ -31,7 +31,17 @@ const SUGGESTIONS: Suggestion[] = [
       { label: "🥘 Cocina típica", prompt: "Recomiéndame un sitio de cocina típica alicantina abierto ahora" },
       { label: "🍤 Arroces y pescado", prompt: "Quiero un buen arroz o pescado fresco, ¿dónde voy ahora?" },
       { label: "🍕 Italiano", prompt: "Apetece italiano, ¿dónde puedo ir ahora?" },
-      { label: "🍔 Comida rápida", prompt: "Quiero comida rápida abierta ahora" },
+      {
+        label: "🍔 Comida rápida",
+        submenu: [
+          { label: "🍔 Hamburguesas", prompt: "Una buena hamburguesería abierta ahora" },
+          { label: "🍕 Pizzas", prompt: "Una pizzería abierta ahora" },
+          { label: "🥖 Montaditos", prompt: "Un sitio de montaditos o bocadillos abierto ahora" },
+          { label: "🌯 Kebaps", prompt: "Un buen kebap abierto ahora" },
+          { label: "🍗 Pollo frito", prompt: "Un sitio de pollo frito abierto ahora" },
+          { label: "🌮 Comida mexicana", prompt: "Un mexicano abierto ahora" },
+        ],
+      },
       { label: "🍣 Japonés / Asiático", prompt: "Un japonés o asiático rico abierto ahora" },
       { label: "🌱 Vegano / Saludable", prompt: "Un sitio vegano o saludable abierto ahora" },
       { label: "🥐 Desayuno / Brunch", prompt: "Un buen desayuno o brunch abierto ahora" },
@@ -58,7 +68,9 @@ export function ChatScreen() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeSubmenu, setActiveSubmenu] = useState<Suggestion | null>(null);
+  const [submenuStack, setSubmenuStack] = useState<Suggestion[]>([]);
+  const activeSubmenu = submenuStack[submenuStack.length - 1] ?? null;
+  const setActiveSubmenu = (s: Suggestion | null) => setSubmenuStack(s ? [s] : []);
   const [geo, setGeo] = useState<GeoInfo | null>(null);
   const [geoStatus, setGeoStatus] = useState<GeoStatus>("idle");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -332,7 +344,9 @@ export function ChatScreen() {
               <div className="mb-2 flex items-center justify-between">
                 <p className="text-sm font-medium">{activeSubmenu.label} — ¿qué te apetece?</p>
                 <button
-                  onClick={() => setActiveSubmenu(null)}
+                  onClick={() =>
+                    setSubmenuStack((stack) => stack.slice(0, -1))
+                  }
                   className="text-xs text-muted-foreground underline-offset-2 hover:underline"
                 >
                   ← Volver
@@ -343,8 +357,12 @@ export function ChatScreen() {
                   <button
                     key={opt.label}
                     onClick={() => {
-                      setActiveSubmenu(null);
-                      send(opt.prompt);
+                      if (opt.submenu) {
+                        setSubmenuStack((stack) => [...stack, opt]);
+                      } else if (opt.prompt) {
+                        setSubmenuStack([]);
+                        send(opt.prompt);
+                      }
                     }}
                     className="rounded-full border border-border bg-background/80 px-3 py-2 text-sm shadow-sm transition hover:bg-accent/40"
                   >
