@@ -38,8 +38,45 @@ export function ChatScreen() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [geo, setGeo] = useState<GeoInfo | null>(null);
+  const [geoStatus, setGeoStatus] = useState<"idle" | "asking" | "ok" | "denied">("idle");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const { state: locState, request: requestLocation } = useUserLocation();
+
+  // Ask for location automatically on mount (one-shot).
+  useEffect(() => {
+    setGeoStatus("asking");
+    requestLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // React to location state changes; reverse-geocode when we get coords.
+  useEffect(() => {
+    if (locState.status === "ready") {
+      const { lat, lng } = locState.coords;
+      const dKm = distanceKm({ lat, lng }, ALICANTE_CENTER);
+      setGeo({ lat, lng, distanceFromAlicanteKm: Math.round(dKm * 10) / 10 });
+      setGeoStatus("ok");
+      // Reverse geocode (Nominatim) — best-effort, no key required.
+      fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=16&accept-language=es`,
+      )
+        .then((r) => r.json())
+        .then((d) => {
+          const a = d?.address ?? {};
+          const area =
+            a.neighbourhood || a.suburb || a.quarter || a.city_district || a.village || a.town;
+          const city = a.city || a.town || a.village || a.municipality;
+          setGeo((prev) =>
+            prev ? { ...prev, area, city } : { lat, lng, area, city, distanceFromAlicanteKm: dKm },
+          );
+        })
+        .catch(() => {});
+    } else if (locState.status === "error") {
+      setGeoStatus("denied");
+    }
+  }, [locState]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
