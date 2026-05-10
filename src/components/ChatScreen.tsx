@@ -1,22 +1,21 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Mic, MapPin, Map as MapIcon, Navigation, Loader2, CheckCircle2 } from "lucide-react";
+import { Send, Mic, MapPin, Map as MapIcon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { PlaceImage } from "@/components/PlaceImage";
-import { useUserLocation } from "@/hooks/useUserLocation";
 import heroImg from "@/assets/alicante-hero.jpg";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 const SUGGESTIONS: { label: string; prompt: string }[] = [
-  { label: "🍽️ Comer", prompt: "¿Dónde puedo comer cerca de mí ahora mismo?" },
-  { label: "🏨 Dormir", prompt: "¿Dónde puedo dormir cerca de mí esta noche?" },
-  { label: "🏖️ Playa", prompt: "¿Qué playa tengo cerca para ir ahora?" },
-  { label: "🌳 Parque", prompt: "¿Qué parque o zona verde tengo cerca?" },
-  { label: "🛍️ Comprar", prompt: "¿Dónde puedo ir de compras cerca de mí?" },
-  { label: "🍹 Tomar algo", prompt: "¿Dónde voy a tomar algo cerca abierto ahora?" },
+  { label: "🍽️ Comer", prompt: "¿Dónde puedo comer cerca?" },
+  { label: "🏨 Dormir", prompt: "¿Dónde puedo dormir esta noche?" },
+  { label: "🏖️ Playa", prompt: "¿Qué playa me recomiendas?" },
+  { label: "🌳 Parque", prompt: "¿Qué parque o zona verde me recomiendas?" },
+  { label: "🛍️ Comprar", prompt: "¿Dónde puedo ir de compras?" },
+  { label: "🍹 Tomar algo", prompt: "¿Dónde voy a tomar algo abierto ahora?" },
 ];
 
 const GREETING: Msg = {
@@ -25,33 +24,13 @@ const GREETING: Msg = {
     "¡Hola! 👋 I'm your friend in Alicante. Tell me what you feel like — food, beach, a plan for today? I'll show you the spots locals actually love.",
 };
 
-const LOCATION_RECOMMENDATION_RE =
-  /\b(d[oó]nde|donde|cerca|near|around|nearby|comer|cenar|almorzar|desayunar|dormir|hotel|hostal|tomar el sol|playa|comprar|tienda|beber|copas|restaurante|restaurant|shop|sleep|eat|sunbathe)\b/i;
-const FOOD_RECOMMENDATION_RE =
-  /\b(comer|cenar|almorzar|desayunar|restaurante|restaurant|tapas|pizza|sushi|marisco|arroz|cafe|cafeteria|hamburguesa|burger|vegano|vegetariano|eat|food)\b/i;
-
-function needsLocationForRecommendation(text: string) {
-  return LOCATION_RECOMMENDATION_RE.test(text.normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
-}
-
-function isFoodRecommendation(text: string) {
-  return FOOD_RECOMMENDATION_RE.test(text.normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
-}
-
 export function ChatScreen() {
   const [messages, setMessages] = useState<Msg[]>([GREETING]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { state: locState, request: requestLocation } = useUserLocation({ watch: true });
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  // Ask for location automatically as soon as the chat opens
-  useEffect(() => {
-    if (locState.status === "idle") requestLocation();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -60,20 +39,6 @@ export function ChatScreen() {
   async function send(text: string) {
     const trimmed = text.trim();
     if (!trimmed || loading) return;
-    if (needsLocationForRecommendation(trimmed) && locState.status !== "ready") {
-      requestLocation();
-      setMessages((prev) => [
-        ...prev,
-        { role: "user", content: trimmed },
-        {
-          role: "assistant",
-          content:
-            "Oye, ¿qué te parece si me dices dónde estás? Así te recomiendo algo bien bueno y cerquita 💛 Pulsa **Mi ubicación** arriba o acepta el permiso del navegador y te doy 4 opciones abiertas ahora mismo.",
-        },
-      ]);
-      setInput("");
-      return;
-    }
     setError(null);
     const userMsg: Msg = { role: "user", content: trimmed };
     const next = [...messages, userMsg];
