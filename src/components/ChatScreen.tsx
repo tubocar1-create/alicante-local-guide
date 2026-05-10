@@ -222,6 +222,19 @@ export function ChatScreen() {
           </p>
         </div>
         <nav className="flex items-center gap-1.5">
+          <button
+            onClick={() => {
+              setMessages([GREETING]);
+              setActiveSubmenu(null);
+              setError(null);
+              setInput("");
+            }}
+            className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full bg-secondary text-secondary-foreground active:scale-95"
+            aria-label="Inicio"
+          >
+            <Home className="h-3 w-3" />
+            Inicio
+          </button>
           <Link
             to="/explore"
             className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full bg-secondary text-secondary-foreground active:scale-95"
