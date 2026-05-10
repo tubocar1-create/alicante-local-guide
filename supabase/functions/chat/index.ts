@@ -380,14 +380,17 @@ function buildFoodRecommendationsResponse(
     return "Uy, ahora mismo no se me ocurre ningún sitio así que te pueda recomendar con la cabeza tranquila 😅 ¿Probamos cambiando de zona o de tipo de comida?";
   }
 
+  const sub = detectFastFoodSub(latestUserText);
   const intro = selected.length >= 3
     ? `¡Marchando! Aquí van ${selected.length} opciones que te van a encantar 😋`
     : selected.length === 2
       ? "¡Marchando! Te dejo estas 2 opciones que me encantan 😋"
       : "¡Marchando! Aquí va una opción que te va a encantar 😋";
-  const outro = candidates.length > selected.length
-    ? "¿Quieres que te dé otra alternativa más? 🙌"
-    : "¿Probamos con otra zona o tipo de comida para ampliar opciones? 🙌";
+  const outro = sub === "all"
+    ? "¿Quieres que afine más? Dime: **kebab 🌯**, **hamburguesa 🍔**, **pizza 🍕** o **cadenas (McDonald's, KFC, BK, TGB, 100 Montaditos…) 🏪** 🙌"
+    : candidates.length > selected.length
+      ? "¿Quieres que te dé otra alternativa más? 🙌"
+      : "¿Probamos con otra zona o tipo de comida para ampliar opciones? 🙌";
   return [
     intro,
     ...selected.map((place, index) => formatFoodPlace(place, index + 1)),
