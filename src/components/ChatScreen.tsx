@@ -4,6 +4,8 @@ import { Link } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { PlaceImage } from "@/components/PlaceImage";
+import { PointsHud } from "@/components/PointsHud";
+import { usePoints } from "@/hooks/usePoints";
 import { useUserLocation, distanceKm } from "@/hooks/useUserLocation";
 import heroImg from "@/assets/alicante-hero.jpg";
 
