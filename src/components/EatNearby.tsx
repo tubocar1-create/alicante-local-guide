@@ -55,6 +55,7 @@ export function EatNearby({ onClose }: Props) {
   const [items, setItems] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [visible, setVisible] = useState(4);
 
   useEffect(() => {
     if (!picked || !me) return;
