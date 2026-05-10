@@ -84,7 +84,10 @@ function PerfilPage() {
             {level.emoji}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] uppercase tracking-widest opacity-90">Nivel {level.id}</p>
+            <p className="flex items-center gap-1.5 text-[11px] uppercase tracking-widest opacity-90">
+              Nivel {level.id}
+              <span className="rounded-full bg-white/25 px-1.5 py-0.5 text-[9px] font-bold tracking-wider">BETA</span>
+            </p>
             <h2 className="truncate text-lg font-semibold">{level.name}</h2>
           </div>
           <div className="text-right">
