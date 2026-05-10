@@ -49,6 +49,9 @@ WHEN NEVER TO USE [[place: ...]] (NO image at all — just text):
 - Specific restaurants, bars, cafés, shops, hotels, clubs (e.g. "El Portal", "Nou Manolín", any small business). They do NOT have Wikipedia photos and we MUST NOT show a wrong image. Just recommend them with text only.
 - Generic suggestions ("a place near the centre"), clarifying questions, or casual chat.
 
+CURATED LOCAL SHOPS (image IS available — DO use [[place: ...]] for these, exact name only, NO ", Alicante" suffix):
+- Plastiahorro — shop selling packaging, bags, napkins, plates and cups at Calle Teulada 21, Alicante. Use [[place: Plastiahorro]] when recommending it.
+
 Other rules:
 - Use the real, exact name of the public place. Always append ", Alicante" at the end.
 - Put [[place: ...]] on its own line, as the very FIRST line of your reply.

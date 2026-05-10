@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { findPlaceOverride } from "@/data/places";
 
 const cache = new Map<string, string | null>();
 
@@ -55,9 +56,16 @@ async function fetchWikiImage(title: string): Promise<string | null> {
 
 export function PlaceImage({ name }: { name: string }) {
   const key = name.trim().toLowerCase();
-  const [src, setSrc] = useState<string | null | undefined>(cache.get(key));
+  const override = findPlaceOverride(name);
+  const [src, setSrc] = useState<string | null | undefined>(
+    override ? override.image : cache.get(key),
+  );
 
   useEffect(() => {
+    if (override) {
+      setSrc(override.image);
+      return;
+    }
     if (cache.has(key)) {
       setSrc(cache.get(key)!);
       return;
@@ -70,7 +78,24 @@ export function PlaceImage({ name }: { name: string }) {
     return () => {
       cancelled = true;
     };
-  }, [key, name]);
+  }, [key, name, override]);
+
+  if (override) {
+    return (
+      <figure className="my-1 overflow-hidden rounded-2xl shadow-soft">
+        <img
+          src={override.image}
+          alt={override.title}
+          loading="lazy"
+          className="h-44 w-full object-cover"
+        />
+        <figcaption className="bg-card/95 px-3 py-2 text-sm">
+          <span className="block font-semibold text-foreground">{override.title}</span>
+          <span className="mt-0.5 block text-muted-foreground">{override.description}</span>
+        </figcaption>
+      </figure>
+    );
+  }
 
   if (src === undefined) {
     return (
