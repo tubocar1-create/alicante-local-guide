@@ -657,11 +657,19 @@ async function googlePlacesSearchTextMany(
 }
 
 function fastFoodSubQueries(sub: FastFoodSub): string[] {
-  if (sub === "burger") return ["hamburguesería", "burger", "smash burger"];
+  if (sub === "burger")
+    return ["hamburguesería", "burger", "smash burger", "McDonald's", "Burger King", "TGB", "Goiko", "Five Guys", "Foster's Hollywood", "Carl's Jr"];
   if (sub === "kebab") return ["kebab", "döner", "shawarma"];
-  if (sub === "pizza") return ["pizzería", "pizza"];
+  if (sub === "pizza")
+    return ["pizzería", "pizza", "Telepizza", "Domino's Pizza", "Pizza Hut", "Papa John's"];
+  if (sub === "montaditos")
+    return ["100 Montaditos", "Lizarrán", "montaditos", "bocadillos"];
+  if (sub === "chicken")
+    return ["KFC", "Popeyes", "pollo frito", "pollos asados", "asador de pollos", "alitas"];
+  if (sub === "mexican")
+    return ["Taco Bell", "restaurante mexicano", "tacos", "burritos", "tex mex"];
   if (sub === "chain")
-    return ["McDonald's", "KFC", "Burger King", "TGB", "100 Montaditos", "Telepizza", "Domino's", "Five Guys", "Goiko", "Popeyes", "Foster's Hollywood"];
+    return ["McDonald's", "KFC", "Burger King", "TGB", "100 Montaditos", "Telepizza", "Domino's", "Five Guys", "Goiko", "Popeyes", "Foster's Hollywood", "Taco Bell", "Lizarrán"];
   if (sub === "all") return ["comida rápida", "hamburguesería", "kebab", "pizzería"];
   return [];
 }
