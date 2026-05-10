@@ -254,7 +254,7 @@ function detectFastFoodSub(text: string): FastFoodSub {
   const isMexican = /\b(mexicano|mexicana|tacos?|burritos?|taco bell|tex ?mex|nachos|quesadilla)\b/.test(t);
   const isBurger = /\b(hamburguesa|hamburguesas|burger|burgers|smash|smashburger|mcdonalds?|mac ?donalds?|burger ?king|tgb|the good burger|goiko|five guys|fosters? hollywood|carls? jr)\b/.test(t);
   const isChain = /\b(cadena|cadenas)\b/.test(t);
-  const isPizza = /\b(pizza|pizzas|pizzeria|pizzería|telepizza|dominos?|pizza hut|papa johns?)\b/.test(t);
+  const isPizza = /\b(pizza|pizzas|pizzeria|pizzería|telepizza|dominos?|papa johns?)\b/.test(t);
   const isHotDog = /\b(perrito|hot ?dog|frankfurt)\b/.test(t);
   if (isKebab) return "kebab";
   if (isMontaditos) return "montaditos";
@@ -268,7 +268,7 @@ function detectFastFoodSub(text: string): FastFoodSub {
   return null;
 }
 
-const CHAIN_NAMES = /\b(mcdonalds?|mac ?donalds?|kfc|burger ?king|tgb|the good burger|100 montaditos|cien montaditos|telepizza|dominos|pizza hut|popeyes|five guys|goiko|carls? jr|subway|taco bell|starbucks|llaollao|foster ?s? hollywood)\b/;
+const CHAIN_NAMES = /\b(mcdonalds?|mac ?donalds?|kfc|burger ?king|tgb|the good burger|100 montaditos|cien montaditos|telepizza|dominos|popeyes|five guys|goiko|carls? jr|subway|taco bell|starbucks|llaollao|foster ?s? hollywood)\b/;
 
 function matchesFoodPreference(place: FoodPlace, latestText: string) {
   const text = normalized(latestText);
@@ -289,7 +289,7 @@ function matchesFoodPreference(place: FoodPlace, latestText: string) {
       || CHAIN_NAMES.test(haystack);
     if (sub === "kebab") return /\b(kebab|turkish|doner|shawarma)\b/.test(haystack);
     if (sub === "burger") return /\b(burger|hamburger|smash|mcdonald|burger ?king|tgb|good burger|goiko|five guys|foster|carls? jr)\b/.test(haystack);
-    if (sub === "pizza") return /\b(pizza|italian|telepizza|domino|pizza hut|papa john)\b/.test(haystack);
+    if (sub === "pizza") return /\b(pizza|italian|telepizza|domino|papa john)\b/.test(haystack);
     if (sub === "montaditos") return /\b(montadit|lizarran|bocadill|sandwich|100 montaditos|cien montaditos)\b/.test(haystack);
     if (sub === "chicken") return /\b(kfc|popeyes|pollo|chicken|fried_chicken|asador|alitas|wings)\b/.test(haystack);
     if (sub === "mexican") return /\b(mexican|taco|burrito|tex.?mex|nachos|quesadilla|taco bell)\b/.test(haystack);
@@ -661,7 +661,7 @@ function fastFoodSubQueries(sub: FastFoodSub): string[] {
     return ["hamburguesería", "burger", "smash burger", "McDonald's", "Burger King", "TGB", "Goiko", "Five Guys", "Foster's Hollywood", "Carl's Jr"];
   if (sub === "kebab") return ["kebab", "döner", "shawarma"];
   if (sub === "pizza")
-    return ["pizzería", "pizza", "Telepizza", "Domino's Pizza", "Pizza Hut", "Papa John's"];
+    return ["pizzería", "pizza", "Telepizza", "Domino's Pizza", "Papa John's"];
   if (sub === "montaditos")
     return ["100 Montaditos", "Lizarrán", "montaditos", "bocadillos"];
   if (sub === "chicken")
@@ -1104,6 +1104,8 @@ Si no estás 100% seguro de algo (horarios exactos, precios), di "según la últ
 Nunca des consejos ilegales, peligrosos o poco seguros. Mantén un tono positivo pero realista.
 
 ---
+
+REGLA IMPORTANTE: Pizza Hut ya NO existe en España. NUNCA lo recomiendes ni lo menciones.
 
 You are "Alicante Friend", a warm, caring local companion living in Alicante, Spain.
 You are NOT a travel website. You are NOT a chatbot. You are NOT an assistant.
