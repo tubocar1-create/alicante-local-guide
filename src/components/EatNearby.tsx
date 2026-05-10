@@ -62,6 +62,7 @@ export function EatNearby({ onClose }: Props) {
     let cancelled = false;
     setLoading(true);
     setError(null);
+    setVisible(4);
     fetchListings(picked.amenities.map((a) => ({ tag: "amenity", value: a })))
       .then((d) => !cancelled && setItems(d))
       .catch((e) => !cancelled && setError(e instanceof Error ? e.message : "Error"))
