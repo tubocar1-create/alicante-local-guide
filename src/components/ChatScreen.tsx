@@ -78,11 +78,7 @@ export function ChatScreen() {
           context: {
             location:
               locState.status === "ready"
-                ? {
-                    lat: locState.coords.lat,
-                    lng: locState.coords.lng,
-                    accuracy: locState.coords.accuracy,
-                  }
+                ? { lat: locState.coords.lat, lng: locState.coords.lng }
                 : null,
           },
         }),
