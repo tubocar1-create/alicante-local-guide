@@ -4,6 +4,8 @@ import { Link } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { PlaceImage } from "@/components/PlaceImage";
+import { PointsHud } from "@/components/PointsHud";
+import { usePoints } from "@/hooks/usePoints";
 import { useUserLocation, distanceKm } from "@/hooks/useUserLocation";
 import heroImg from "@/assets/alicante-hero.jpg";
 
@@ -64,6 +66,8 @@ const GREETING: Msg = {
 };
 
 export function ChatScreen() {
+  // Activa el sistema de puntos (también dispara el streak diario al montar).
+  usePoints();
   const [messages, setMessages] = useState<Msg[]>([GREETING]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -234,6 +238,7 @@ export function ChatScreen() {
           </p>
         </div>
         <nav className="flex items-center gap-1.5">
+          <PointsHud compact />
           <button
             onClick={() => {
               setMessages([GREETING]);
