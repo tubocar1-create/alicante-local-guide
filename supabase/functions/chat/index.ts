@@ -98,6 +98,19 @@ function appliesToDay(rule: string, day: DayKey) {
   return !days || days.includes(day);
 }
 
+function ruleSpecificity(rule: string, day: DayKey) {
+  const days = ruleDays(rule);
+  if (!days) return 0;
+  if (!days.includes(day)) return -1;
+  return 8 - days.length;
+}
+
+function hasUnsupportedOpeningSyntax(rule: string) {
+  return /\b(PH|SH|sunrise|sunset|dawn|dusk|week|easter|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b/i.test(
+    rule,
+  );
+}
+
 function parseRanges(rule: string) {
   return [...rule.matchAll(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/g)].map((m) => ({
     start: Number(m[1]) * 60 + Number(m[2]),
@@ -119,38 +132,55 @@ function getOpeningInfo(
   }
   const { day, minutes } = madridNow(date);
   const yesterday = previousDay(day);
-  let matchedAny = false;
-  for (const rule of clean
+  const rules = clean
     .split(";")
     .map((r) => r.trim())
-    .filter(Boolean)) {
+    .filter(Boolean);
+  if (rules.length === 0 || rules.some(hasUnsupportedOpeningSyntax)) return { status: "unknown", raw };
+
+  const todayCandidates = rules
+    .map((rule) => ({ rule, specificity: ruleSpecificity(rule, day) }))
+    .filter((r) => r.specificity >= 0);
+  const bestTodaySpecificity = Math.max(-1, ...todayCandidates.map((r) => r.specificity));
+  const todayRules = todayCandidates.filter((r) => r.specificity === bestTodaySpecificity).map((r) => r.rule);
+  let matchedAny = todayRules.length > 0;
+
+  for (const rule of todayRules) {
     const ranges = parseRanges(rule);
-    if (appliesToDay(rule, day)) {
-      matchedAny = true;
-      if (/\boff\b|\bclosed\b/i.test(rule) && ranges.length === 0) continue;
-      for (const range of ranges) {
-        const end = range.end <= range.start ? range.end + 1440 : range.end;
-        if (minutes >= range.start && minutes < end) {
-          return {
-            status: "open",
-            closesAt: minutesToClock(end),
-            closesInMinutes: end - minutes,
-            raw,
-          };
-        }
+    if (/\boff\b|\bclosed\b/i.test(rule)) return { status: "closed", raw };
+    if (ranges.length === 0) return { status: "unknown", raw };
+    for (const range of ranges) {
+      const end = range.end <= range.start ? range.end + 1440 : range.end;
+      if (minutes >= range.start && minutes < end) {
+        return {
+          status: "open",
+          closesAt: minutesToClock(end),
+          closesInMinutes: end - minutes,
+          raw,
+        };
       }
     }
-    if (appliesToDay(rule, yesterday)) {
-      for (const range of ranges) {
-        if (range.end > range.start) continue;
-        if (minutes < range.end) {
-          return {
-            status: "open",
-            closesAt: minutesToClock(range.end),
-            closesInMinutes: range.end - minutes,
-            raw,
-          };
-        }
+  }
+
+  const yesterdayCandidates = rules
+    .map((rule) => ({ rule, specificity: ruleSpecificity(rule, yesterday) }))
+    .filter((r) => r.specificity >= 0);
+  const bestYesterdaySpecificity = Math.max(-1, ...yesterdayCandidates.map((r) => r.specificity));
+  const yesterdayRules = yesterdayCandidates
+    .filter((r) => r.specificity === bestYesterdaySpecificity)
+    .map((r) => r.rule);
+  for (const rule of yesterdayRules) {
+    if (/\boff\b|\bclosed\b/i.test(rule)) continue;
+    const ranges = parseRanges(rule);
+    for (const range of ranges) {
+      if (range.end > range.start) continue;
+      if (minutes < range.end) {
+        return {
+          status: "open",
+          closesAt: minutesToClock(range.end),
+          closesInMinutes: range.end - minutes,
+          raw,
+        };
       }
     }
   }
