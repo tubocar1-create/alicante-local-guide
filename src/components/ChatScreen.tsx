@@ -30,6 +30,7 @@ export function ChatScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [eatOpen, setEatOpen] = useState(false);
+  const { state: locState, request: requestLocation } = useUserLocation({ watch: true });
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
