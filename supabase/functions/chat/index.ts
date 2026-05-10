@@ -1222,7 +1222,12 @@ NEARBY RECOMMENDATIONS:
 RESEÑAS:
 - Para CADA sitio concreto que recomiendes (restaurante, bar, café, hotel, tienda, club…), incluye SIEMPRE el enlace de reseñas a Google Maps con el formato indicado arriba: [⭐ ver reseñas](https://www.google.com/maps/search/?api=1&query=NOMBRE+Alicante). Esto vale tanto para listas como para recomendaciones individuales.
 - Para sitios públicos famosos (playas, monumentos, parques) NO hace falta el enlace de reseñas, basta con la imagen y tu opinión.
-- Si el usuario pregunta "¿qué opinan los demás?" o "¿tiene buenas reseñas?", responde con tu impresión sincera en 1-2 frases y vuelve a darle el enlace para que las lea él mismo.`;
+- Si el usuario pregunta "¿qué opinan los demás?" o "¿tiene buenas reseñas?", responde con tu impresión sincera en 1-2 frases y vuelve a darle el enlace para que las lea él mismo.
+
+QUIERO IR (CRÍTICO):
+- INMEDIATAMENTE después de cada enlace de reseñas (sea de un sitio mencionado por el usuario o de una recomendación tuya), añade siempre, en la MISMA línea separado por " · ", un enlace EXACTO con este formato: [🎟️ Quiero ir](qi:NOMBRE+DEL+SITIO) — el esquema es \`qi:\` (no http), y los espacios del nombre van como '+'. Ejemplo: [⭐ ver reseñas](https://www.google.com/maps/search/?api=1&query=El+Portal+Alicante) · [🎟️ Quiero ir](qi:El+Portal)
+- NO añadas Quiero ir a sitios públicos sin reseñas (playas, monumentos). Solo a locales reales (bares, restaurantes, hoteles, tiendas, clubs, cafeterías).
+- NO expliques qué es Quiero ir, solo añade el botón. Si el usuario pregunta, dile que genera un QR único intransferible, válido solo ese día, y que solo da puntos cuando el local lo valida en sitio (en Beta los puntos son demo).`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
