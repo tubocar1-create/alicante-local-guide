@@ -437,6 +437,13 @@ export function ChatScreen() {
           )}
         </div>
       </div>
+      {referralName && (
+        <ReferralDialog
+          placeId={referralName}
+          placeName={referralName}
+          onClose={() => setReferralName(null)}
+        />
+      )}
     </div>
   );
 }
