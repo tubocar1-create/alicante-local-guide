@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StayRouteImport } from './routes/stay'
 import { Route as RepoRouteImport } from './routes/repo'
+import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as EatRouteImport } from './routes/eat'
 import { Route as IndexRouteImport } from './routes/index'
@@ -23,6 +24,11 @@ const StayRoute = StayRouteImport.update({
 const RepoRoute = RepoRouteImport.update({
   id: '/repo',
   path: '/repo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PerfilRoute = PerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExploreRoute = ExploreRouteImport.update({
@@ -45,6 +51,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/eat': typeof EatRoute
   '/explore': typeof ExploreRoute
+  '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
   '/stay': typeof StayRoute
 }
@@ -52,6 +59,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/eat': typeof EatRoute
   '/explore': typeof ExploreRoute
+  '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
   '/stay': typeof StayRoute
 }
@@ -60,21 +68,23 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/eat': typeof EatRoute
   '/explore': typeof ExploreRoute
+  '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
   '/stay': typeof StayRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/eat' | '/explore' | '/repo' | '/stay'
+  fullPaths: '/' | '/eat' | '/explore' | '/perfil' | '/repo' | '/stay'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/eat' | '/explore' | '/repo' | '/stay'
-  id: '__root__' | '/' | '/eat' | '/explore' | '/repo' | '/stay'
+  to: '/' | '/eat' | '/explore' | '/perfil' | '/repo' | '/stay'
+  id: '__root__' | '/' | '/eat' | '/explore' | '/perfil' | '/repo' | '/stay'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   EatRoute: typeof EatRoute
   ExploreRoute: typeof ExploreRoute
+  PerfilRoute: typeof PerfilRoute
   RepoRoute: typeof RepoRoute
   StayRoute: typeof StayRoute
 }
@@ -93,6 +103,13 @@ declare module '@tanstack/react-router' {
       path: '/repo'
       fullPath: '/repo'
       preLoaderRoute: typeof RepoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/perfil': {
+      id: '/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof PerfilRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/explore': {
@@ -123,9 +140,20 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   EatRoute: EatRoute,
   ExploreRoute: ExploreRoute,
+  PerfilRoute: PerfilRoute,
   RepoRoute: RepoRoute,
   StayRoute: StayRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
