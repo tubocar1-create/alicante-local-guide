@@ -2,7 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { Loader2, Navigation, MapPin, Star, X, Phone, Globe } from "lucide-react";
 import { fetchListings, type Listing } from "@/lib/overpass-listings";
 import { useUserLocation, distanceKm, formatDistance } from "@/hooks/useUserLocation";
-import { formatOpeningStatus, getOpeningStatus, isClosingSoon, isMercadoCentralClosedSunday } from "@/lib/opening-hours";
+import {
+  formatOpeningStatus,
+  getOpeningStatus,
+  isClosingSoon,
+  isMercadoCentralClosedSunday,
+} from "@/lib/opening-hours";
 
 type Cuisine = {
   key: string;
@@ -15,30 +20,117 @@ type Cuisine = {
 };
 
 const CUISINES: Cuisine[] = [
-  { key: "any", label: "Lo que sea", emoji: "🤷", match: [], amenities: ["restaurant", "bar", "cafe"] },
-  { key: "spanish", label: "Española / Tapas", emoji: "🥘", match: ["spanish", "mediterranean", "tapas", "regional"], amenities: ["restaurant", "bar"] },
-  { key: "seafood", label: "Marisco / Arroces", emoji: "🦐", match: ["seafood", "fish", "paella", "rice"], amenities: ["restaurant"] },
-  { key: "italian", label: "Italiana / Pizza", emoji: "🍕", match: ["italian", "pizza", "pasta"], amenities: ["restaurant", "fast_food"] },
-  { key: "asian", label: "Asiática", emoji: "🍜", match: ["asian", "japanese", "sushi", "chinese", "thai", "vietnamese", "korean", "ramen"], amenities: ["restaurant"] },
-  { key: "burger", label: "Burgers / Fast", emoji: "🍔", match: ["burger", "american"], amenities: ["fast_food", "restaurant"] },
-  { key: "vegan", label: "Vegano / Sano", emoji: "🥗", match: ["vegan", "vegetarian", "healthy", "salad"], amenities: ["restaurant", "cafe"] },
-  { key: "cafe", label: "Café / Desayuno", emoji: "☕", match: ["coffee", "breakfast", "bakery", "cake"], amenities: ["cafe"] },
+  {
+    key: "any",
+    label: "Lo que sea",
+    emoji: "🤷",
+    match: [],
+    amenities: ["restaurant", "bar", "cafe"],
+  },
+  {
+    key: "spanish",
+    label: "Española / Tapas",
+    emoji: "🥘",
+    match: ["spanish", "mediterranean", "tapas", "regional"],
+    amenities: ["restaurant", "bar"],
+  },
+  {
+    key: "seafood",
+    label: "Marisco / Arroces",
+    emoji: "🦐",
+    match: ["seafood", "fish", "paella", "rice"],
+    amenities: ["restaurant"],
+  },
+  {
+    key: "italian",
+    label: "Italiana / Pizza",
+    emoji: "🍕",
+    match: ["italian", "pizza", "pasta"],
+    amenities: ["restaurant", "fast_food"],
+  },
+  {
+    key: "asian",
+    label: "Asiática",
+    emoji: "🍜",
+    match: ["asian", "japanese", "sushi", "chinese", "thai", "vietnamese", "korean", "ramen"],
+    amenities: ["restaurant"],
+  },
+  {
+    key: "burger",
+    label: "Burgers / Fast",
+    emoji: "🍔",
+    match: ["burger", "american"],
+    amenities: ["fast_food", "restaurant"],
+  },
+  {
+    key: "vegan",
+    label: "Vegano / Sano",
+    emoji: "🥗",
+    match: ["vegan", "vegetarian", "healthy", "salad"],
+    amenities: ["restaurant", "cafe"],
+  },
+  {
+    key: "cafe",
+    label: "Café / Desayuno",
+    emoji: "☕",
+    match: ["coffee", "breakfast", "bakery", "cake"],
+    amenities: ["cafe"],
+  },
   { key: "drinks", label: "Algo de beber", emoji: "🍻", match: [], amenities: ["bar", "pub"] },
-  { key: "sweet", label: "Dulce / Helado", emoji: "🍦", match: ["ice_cream", "dessert", "cake"], amenities: ["ice_cream", "cafe"] },
+  {
+    key: "sweet",
+    label: "Dulce / Helado",
+    emoji: "🍦",
+    match: ["ice_cream", "dessert", "cake"],
+    amenities: ["ice_cream", "cafe"],
+  },
 ];
 
 type Props = { onClose: () => void; initialQuery?: string };
 
 // Keywords (lowercase, accent-insensitive) that map a free-text query to a cuisine key.
 const QUERY_KEYWORDS: Record<string, string[]> = {
-  spanish: ["tapa", "tapas", "español", "espanol", "paella alternativa", "tradicional", "mediterran"],
+  spanish: [
+    "tapa",
+    "tapas",
+    "español",
+    "espanol",
+    "paella alternativa",
+    "tradicional",
+    "mediterran",
+  ],
   seafood: ["marisco", "mariscos", "pescado", "pescaito", "arroz", "arroces", "paella", "fideua"],
   italian: ["italian", "pizza", "pizzer", "pasta", "lasagn"],
-  asian: ["asiat", "japon", "sushi", "ramen", "chino", "chinese", "thai", "tailand", "viet", "korean", "coreano", "wok", "poke"],
+  asian: [
+    "asiat",
+    "japon",
+    "sushi",
+    "ramen",
+    "chino",
+    "chinese",
+    "thai",
+    "tailand",
+    "viet",
+    "korean",
+    "coreano",
+    "wok",
+    "poke",
+  ],
   burger: ["burger", "hamburgues", "fast food", "americana"],
   vegan: ["vegan", "vegetarian", "veggie", "sano", "saludable", "ensalad", "healthy"],
   cafe: ["café", "cafe", "cafeter", "desayun", "brunch", "merien", "tarta", "panader", "boller"],
-  drinks: ["beber", "copas", "cerveza", "cervecer", "bar de copas", "vino", "coctel", "cóctel", "pub", "vermut"],
+  drinks: [
+    "beber",
+    "copas",
+    "cerveza",
+    "cervecer",
+    "bar de copas",
+    "vino",
+    "coctel",
+    "cóctel",
+    "pub",
+    "vermut",
+  ],
   sweet: ["helad", "ice cream", "postre", "dulce", "chocolate", "gelato"],
 };
 
@@ -77,7 +169,9 @@ function openExternal(url: string) {
   } catch {
     // Clipboard may be unavailable; the message below still explains what happened.
   }
-  alert("Tu navegador ha bloqueado la ventana nueva. Te he copiado el enlace para que lo pegues en otra pestaña 💛");
+  alert(
+    "Tu navegador ha bloqueado la ventana nueva. Te he copiado el enlace para que lo pegues en otra pestaña 💛",
+  );
 }
 
 export function EatNearby({ onClose, initialQuery }: Props) {
@@ -131,9 +225,7 @@ export function EatNearby({ onClose, initialQuery }: Props) {
         <header className="flex items-center justify-between gap-3 px-4 py-3 border-b">
           <div>
             <h2 className="text-base font-semibold leading-tight">🍽️ Comer cerca de ti</h2>
-            <p className="text-xs text-muted-foreground">
-              Te enseño máximo 10 sitios a un paso
-            </p>
+            <p className="text-xs text-muted-foreground">Te enseño máximo 10 sitios a un paso</p>
           </div>
           <button
             onClick={onClose}
@@ -151,8 +243,8 @@ export function EatNearby({ onClose, initialQuery }: Props) {
               <div className="text-3xl mb-2">📍</div>
               <h3 className="font-semibold">Oye, ¿me dejas verte en el mapa?</h3>
               <p className="text-sm text-muted-foreground mt-1 px-4">
-                Solo así te puedo recomendar lo más rico que tengas al lado. Prometo no
-                guardar nada 💛
+                Solo así te puedo recomendar lo más rico que tengas al lado. Prometo no guardar nada
+                💛
               </p>
               <button
                 onClick={request}
@@ -172,7 +264,8 @@ export function EatNearby({ onClose, initialQuery }: Props) {
           {me && !picked && (
             <div>
               <p className="text-sm">
-                ¡Genial, ya te tengo en el mapa! 🙌 Cuéntame, <strong>¿qué te apetece comer ahora mismo?</strong>
+                ¡Genial, ya te tengo en el mapa! 🙌 Cuéntame,{" "}
+                <strong>¿qué te apetece comer ahora mismo?</strong>
               </p>
               <p className="text-xs text-muted-foreground mt-1">
                 Elige lo que te tire más, no hace falta pensarlo mucho 😉
@@ -197,8 +290,7 @@ export function EatNearby({ onClose, initialQuery }: Props) {
             <div>
               <div className="flex items-center justify-between gap-2 mb-3">
                 <p className="text-sm">
-                  Va, lo mejor de <strong>{picked.label.toLowerCase()}</strong> cerquita de ti
-                  ✨
+                  Va, lo mejor de <strong>{picked.label.toLowerCase()}</strong> cerquita de ti ✨
                 </p>
                 <button
                   onClick={() => setPicked(null)}
@@ -218,7 +310,8 @@ export function EatNearby({ onClose, initialQuery }: Props) {
               )}
               {!loading && !error && ranked.length === 0 && (
                 <div className="text-sm text-muted-foreground py-8 text-center">
-                  Uy, no veo nada abierto ahora con horario confirmado aquí al lado. Prueba otra opción 🙃
+                  Uy, no veo nada abierto ahora con horario confirmado aquí al lado. Prueba otra
+                  opción 🙃
                 </div>
               )}
 

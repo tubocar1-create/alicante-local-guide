@@ -53,7 +53,9 @@ function expandDayRange(start: DayKey, end: DayKey) {
 }
 
 function ruleDays(rule: string): DayKey[] | null {
-  const expr = rule.match(/\b(?:Mo|Tu|We|Th|Fr|Sa|Su)(?:\s*-\s*(?:Mo|Tu|We|Th|Fr|Sa|Su))?(?:\s*,\s*(?:Mo|Tu|We|Th|Fr|Sa|Su)(?:\s*-\s*(?:Mo|Tu|We|Th|Fr|Sa|Su))?)*/)?.[0];
+  const expr = rule.match(
+    /\b(?:Mo|Tu|We|Th|Fr|Sa|Su)(?:\s*-\s*(?:Mo|Tu|We|Th|Fr|Sa|Su))?(?:\s*,\s*(?:Mo|Tu|We|Th|Fr|Sa|Su)(?:\s*-\s*(?:Mo|Tu|We|Th|Fr|Sa|Su))?)*/,
+  )?.[0];
   if (!expr) return null;
   return expr.split(/\s*,\s*/).flatMap((part) => {
     const [start, end] = part.split(/\s*-\s*/) as [DayKey, DayKey | undefined];
@@ -85,7 +87,10 @@ export function getOpeningStatus(raw?: string, date = new Date()): OpeningStatus
   let matchedAnyRule = false;
   let matchedClosedRule = false;
 
-  for (const rule of clean.split(";").map((r) => r.trim()).filter(Boolean)) {
+  for (const rule of clean
+    .split(";")
+    .map((r) => r.trim())
+    .filter(Boolean)) {
     const ranges = parseRanges(rule);
     const isOff = /\boff\b|\bclosed\b/i.test(rule);
 
@@ -138,5 +143,7 @@ export function isClosingSoon(hours: OpeningStatus) {
 
 export function isMercadoCentralClosedSunday(name: string, date = new Date()) {
   const { day } = madridNow(date);
-  return day === "Su" && /mercado\s+central/i.test(name.normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+  return (
+    day === "Su" && /mercado\s+central/i.test(name.normalize("NFD").replace(/[\u0300-\u036f]/g, ""))
+  );
 }

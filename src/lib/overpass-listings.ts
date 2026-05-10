@@ -36,9 +36,7 @@ const STAY_TAG: Record<StayKind, string> = {
 const EAT_TAG = "amenity"; // all eat kinds use amenity=...
 
 function buildQuery(filters: { tag: string; value: string }[]): string {
-  const parts = filters
-    .map((f) => `nwr["${f.tag}"="${f.value}"](${ALICANTE_BBOX});`)
-    .join("\n");
+  const parts = filters.map((f) => `nwr["${f.tag}"="${f.value}"](${ALICANTE_BBOX});`).join("\n");
   return `[out:json][timeout:30];
 (
 ${parts}
@@ -46,9 +44,7 @@ ${parts}
 out center 600;`;
 }
 
-export async function fetchListings(
-  filters: { tag: string; value: string }[],
-): Promise<Listing[]> {
+export async function fetchListings(filters: { tag: string; value: string }[]): Promise<Listing[]> {
   if (filters.length === 0) return [];
   const body = buildQuery(filters);
   let lastErr: unknown;

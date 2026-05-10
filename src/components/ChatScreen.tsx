@@ -99,7 +99,11 @@ export function ChatScreen() {
           context: {
             location:
               locState.status === "ready"
-                ? { lat: locState.coords.lat, lng: locState.coords.lng, accuracy: locState.coords.accuracy }
+                ? {
+                    lat: locState.coords.lat,
+                    lng: locState.coords.lng,
+                    accuracy: locState.coords.accuracy,
+                  }
                 : null,
             maxOptions: 4,
           },
@@ -157,12 +161,7 @@ export function ChatScreen() {
     <div className="relative flex h-[100dvh] flex-col bg-background">
       {/* Persistent background photo of Puerto de Alicante */}
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <img
-          src={heroImg}
-          alt=""
-          aria-hidden
-          className="h-full w-full object-cover"
-        />
+        <img src={heroImg} alt="" aria-hidden className="h-full w-full object-cover" />
         <div
           className={[
             "absolute inset-0 transition-colors duration-700",
@@ -253,9 +252,7 @@ export function ChatScreen() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-4 text-white">
-                  <p className="text-xs uppercase tracking-widest opacity-90">
-                    Puerto de Alicante
-                  </p>
+                  <p className="text-xs uppercase tracking-widest opacity-90">Puerto de Alicante</p>
                   <h2 className="mt-1 text-2xl font-semibold leading-tight drop-shadow">
                     Bienvenido a Alicante 🌅
                   </h2>
@@ -317,7 +314,9 @@ export function ChatScreen() {
                   ) : locState.status === "error" ? (
                     <>
                       <p className="text-sm font-medium">Vaya, no pude verte 😅</p>
-                      <p className="text-xs text-muted-foreground">{locState.message}. Puedes intentarlo otra vez.</p>
+                      <p className="text-xs text-muted-foreground">
+                        {locState.message}. Puedes intentarlo otra vez.
+                      </p>
                     </>
                   ) : (
                     <>
@@ -412,11 +411,7 @@ function Bubble({ role, content }: { role: "user" | "assistant"; content: string
             : "rounded-bl-md bg-bubble-friend text-bubble-friend-foreground",
         ].join(" ")}
       >
-        {isUser ? (
-          content
-        ) : (
-          <AssistantContent content={content} />
-        )}
+        {isUser ? content : <AssistantContent content={content} />}
       </div>
     </div>
   );

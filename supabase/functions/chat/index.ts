@@ -116,9 +116,10 @@ serve(async (req) => {
     });
     const todayStr = fmt.format(now);
     const loc = context?.location;
-    const locStr = loc?.lat && loc?.lng
-      ? `lat=${loc.lat.toFixed(5)}, lng=${loc.lng.toFixed(5)} (precisión ~${Math.round(loc.accuracy ?? 0)}m)`
-      : "unknown";
+    const locStr =
+      loc?.lat && loc?.lng
+        ? `lat=${loc.lat.toFixed(5)}, lng=${loc.lng.toFixed(5)} (precisión ~${Math.round(loc.accuracy ?? 0)}m)`
+        : "unknown";
     const runtimeContext = `RUNTIME CONTEXT (use this when relevant):\nTODAY: ${todayStr} (zona horaria Europe/Madrid)\nUSER_LOCATION: ${locStr}\nMAX_NEARBY_OPTIONS: ${context?.maxOptions ?? 4}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {

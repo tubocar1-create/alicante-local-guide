@@ -29,7 +29,8 @@ function startWatch() {
         accuracy: pos.coords.accuracy,
       }),
     (err) => {
-      const message = err.code === err.PERMISSION_DENIED ? "Permiso denegado" : "No se pudo obtener tu ubicación";
+      const message =
+        err.code === err.PERMISSION_DENIED ? "Permiso denegado" : "No se pudo obtener tu ubicación";
       errorListeners.forEach((l) => l(message));
     },
     { enableHighAccuracy: true, maximumAge: 30_000, timeout: 20_000 },
@@ -51,7 +52,8 @@ export function useUserLocation(opts?: { watch?: boolean }) {
 
   useEffect(() => {
     const onUpdate = (c: Coords) => setState({ status: "ready", coords: c });
-    const onError = (message: string) => setState((prev) => (prev.status === "ready" ? prev : { status: "error", message }));
+    const onError = (message: string) =>
+      setState((prev) => (prev.status === "ready" ? prev : { status: "error", message }));
     listeners.add(onUpdate);
     errorListeners.add(onError);
     if (watch) {
@@ -82,7 +84,11 @@ export function useUserLocation(opts?: { watch?: boolean }) {
     setState({ status: "loading" });
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const c = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy };
+        const c = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+        };
         notify(c);
         setState({ status: "ready", coords: c });
         startWatch();
@@ -111,9 +117,7 @@ export function distanceKm(a: Coords, b: Coords): number {
   const dLng = toRad(b.lng - a.lng);
   const lat1 = toRad(a.lat);
   const lat2 = toRad(b.lat);
-  const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+  const h = Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
