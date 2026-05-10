@@ -181,7 +181,114 @@ function shuffle<T>(items: T[]) {
   return copy;
 }
 
-async function fetchConfirmedOpenFoodPlaces(context?: ChatContext): Promise<FoodPlace[]> {
+const ALICANTE_BBOX = "37.84,-1.13,38.87,0.21";
+const NAME_STOPWORDS = new Set([
+  "alicante","hola","oye","mira","quiero","tengo","puedo","estoy","quería","queria",
+  "buenas","gracias","por","favor","quizás","quizas","tal","vez","ahora","luego","hoy",
+  "mañana","manana","ayer","cerca","centro","playa","casco","antiguo","ciudad","barrio",
+  "amigos","familia","novia","novio","pareja","niños","ninos","plan","planes",
+  "comer","cenar","desayunar","tomar","beber","ir","visitar","conocer","ver","quedar",
+  "restaurante","restaurantes","bar","bares","cafe","cafeteria","cafetería","tapas",
+  "donde","dónde","como","cómo","cuando","cuándo","que","qué","cual","cuál",
+  "lunes","martes","miercoles","miércoles","jueves","viernes","sabado","sábado","domingo",
+  "esta","este","estos","estas","abierto","abierta","cerrado","cerrada","horario","abre","cierra",
+  "the","and","for","you","your",
+]);
+
+function extractMentionedNames(text: string): string[] {
+  const out: string[] = [];
+  const push = (raw: string) => {
+    const trimmed = raw.replace(/[.,;:!?¿¡()"'“”‘’]+$/g, "").replace(/^[.,;:!?¿¡()"'“”‘’]+/g, "").trim();
+    if (trimmed.length < 4 || trimmed.length > 60) return;
+    const tokens = trimmed.split(/\s+/);
+    const meaningful = tokens.filter((t) => !NAME_STOPWORDS.has(normalized(t)));
+    if (meaningful.length === 0) return;
+    if (!out.some((o) => normalized(o) === normalized(trimmed))) out.push(trimmed);
+  };
+  for (const m of text.matchAll(/["“'‘]([^"“”‘’]{3,60})["”'’]/g)) push(m[1]);
+  const re = /\b([A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ'’&-]+(?:\s+(?:de|del|la|el|los|las|y|al?)\s+[A-ZÁÉÍÓÚÑa-záéíóúñ][\wÁÉÍÓÚÑáéíóúñ'’&-]+|\s+[A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ'’&-]+)+)/g;
+  for (const m of text.matchAll(re)) push(m[1]);
+  return out.slice(0, 4);
+}
+
+type MentionedPlace = {
+  query: string;
+  name: string;
+  kind: string;
+  openingHours?: string;
+  status: "open" | "closed" | "unknown" | "not_found";
+  closesAt?: string;
+  closesInMinutes?: number;
+  address?: string;
+};
+
+async function fetchMentionedPlaces(text: string): Promise<MentionedPlace[]> {
+  const names = extractMentionedNames(text);
+  if (names.length === 0) return [];
+  const escaped = (s: string) => s.replace(/["\\]/g, "\\$&");
+  const filters = names
+    .map((n) => `nwr["name"~"${escaped(n)}",i](${ALICANTE_BBOX});`)
+    .join("\n");
+  const body = `[out:json][timeout:15];\n(\n${filters}\n);\nout tags center 60;`;
+  let elements: any[] = [];
+  for (const url of OVERPASS_ENDPOINTS) {
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "data=" + encodeURIComponent(body),
+      });
+      if (!res.ok) throw new Error(`Overpass ${res.status}`);
+      const json = await res.json();
+      elements = json.elements ?? [];
+      break;
+    } catch (e) {
+      console.error("mentioned places fetch failed:", e);
+    }
+  }
+  const now = new Date();
+  const results: MentionedPlace[] = [];
+  for (const query of names) {
+    const qNorm = normalized(query);
+    const matches = elements.filter((el: any) => {
+      const tags = el.tags ?? {};
+      const candidates = [tags.name, tags["name:es"], tags["name:en"], tags["alt_name"]]
+        .filter(Boolean)
+        .map((s: string) => normalized(s));
+      return candidates.some((c) => c.includes(qNorm) || qNorm.includes(c));
+    });
+    if (matches.length === 0) {
+      results.push({ query, name: query, kind: "unknown", status: "not_found" });
+      continue;
+    }
+    const withHours = matches.find((el: any) => el.tags?.opening_hours) ?? matches[0];
+    const tags = withHours.tags ?? {};
+    const name = tags.name || tags["name:es"] || query;
+    const kind = tags.amenity || tags.tourism || tags.shop || tags.leisure || "place";
+    const openingHours = tags.opening_hours;
+    const info = getOpeningInfo(openingHours, now);
+    const address =
+      [tags["addr:street"], tags["addr:housenumber"], tags["addr:city"]].filter(Boolean).join(" ") ||
+      undefined;
+    if (info.status === "open") {
+      results.push({
+        query,
+        name,
+        kind,
+        openingHours,
+        status: "open",
+        closesAt: info.closesAt,
+        closesInMinutes: info.closesInMinutes,
+        address,
+      });
+    } else if (info.status === "closed") {
+      results.push({ query, name, kind, openingHours, status: "closed", address });
+    } else {
+      results.push({ query, name, kind, openingHours, status: "unknown", address });
+    }
+  }
+  return results;
+}
   const loc = context?.location;
   const center =
     typeof loc?.lat === "number" && typeof loc?.lng === "number"
