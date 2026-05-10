@@ -926,9 +926,26 @@ async function fetchConfirmedOpenFoodPlaces(
       : ALICANTE_CENTER;
   const radius = loc ? 9000 : 12000;
 
-  // 1) PRIMARY: Google Places — real-time hours from Maps.
+  // 1) PRIMARY: Google Places — Nearby + targeted Text Searches.
   const nowDate = new Date();
-  const gPlaces = await googlePlacesNearbyFood(center, radius);
+  const sub = detectFastFoodSub(latestText);
+  const extraQueries = [...fastFoodSubQueries(sub), ...detectCuisineQueries(latestText)];
+  const [nearby, ...textGroups] = await Promise.all([
+    googlePlacesNearbyFood(center, radius),
+    ...extraQueries.map((q) => googlePlacesSearchTextMany(q, center, radius)),
+  ]);
+  const gPlaces: GooglePlace[] = [...nearby];
+  const mergedSeen = new Set<string>(
+    nearby.map((p) => (p as { id?: string }).id ?? `${p.displayName?.text}|${p.location?.latitude}|${p.location?.longitude}`),
+  );
+  for (const list of textGroups) {
+    for (const p of list) {
+      const id = (p as { id?: string }).id ?? `${p.displayName?.text}|${p.location?.latitude}|${p.location?.longitude}`;
+      if (mergedSeen.has(id)) continue;
+      mergedSeen.add(id);
+      gPlaces.push(p);
+    }
+  }
   if (gPlaces.length > 0) {
     const seen = new Set<string>();
     const out: FoodPlace[] = [];
