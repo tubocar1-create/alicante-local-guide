@@ -31,7 +31,7 @@ const SUGGESTIONS: Suggestion[] = [
       { label: "🥘 Cocina típica", prompt: "Recomiéndame un sitio de cocina típica alicantina abierto ahora" },
       { label: "🍤 Arroces y pescado", prompt: "Quiero un buen arroz o pescado fresco, ¿dónde voy ahora?" },
       { label: "🍕 Italiano", prompt: "Apetece italiano, ¿dónde puedo ir ahora?" },
-      { label: "🍔 Hamburguesas", prompt: "Una buena hamburguesa abierta ahora, por favor" },
+      { label: "🍔 Comida rápida", prompt: "Quiero comida rápida abierta ahora" },
       { label: "🍣 Japonés / Asiático", prompt: "Un japonés o asiático rico abierto ahora" },
       { label: "🌱 Vegano / Saludable", prompt: "Un sitio vegano o saludable abierto ahora" },
       { label: "🥐 Desayuno / Brunch", prompt: "Un buen desayuno o brunch abierto ahora" },
