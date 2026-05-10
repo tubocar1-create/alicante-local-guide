@@ -93,9 +93,17 @@ function ruleDays(rule: string): DayKey[] | null {
   });
 }
 
-function appliesToDay(rule: string, day: DayKey) {
+function ruleSpecificity(rule: string, day: DayKey) {
   const days = ruleDays(rule);
-  return !days || days.includes(day);
+  if (!days) return 0;
+  if (!days.includes(day)) return -1;
+  return 8 - days.length;
+}
+
+function hasUnsupportedOpeningSyntax(rule: string) {
+  return /\b(PH|SH|sunrise|sunset|dawn|dusk|week|easter|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b/i.test(
+    rule,
+  );
 }
 
 function parseRanges(rule: string) {
@@ -119,38 +127,59 @@ function getOpeningInfo(
   }
   const { day, minutes } = madridNow(date);
   const yesterday = previousDay(day);
-  let matchedAny = false;
-  for (const rule of clean
+  const rules = clean
     .split(";")
     .map((r) => r.trim())
-    .filter(Boolean)) {
+    .filter(Boolean);
+  if (rules.length === 0 || rules.some(hasUnsupportedOpeningSyntax)) {
+    return { status: "unknown", raw };
+  }
+
+  const todayCandidates = rules
+    .map((rule) => ({ rule, specificity: ruleSpecificity(rule, day) }))
+    .filter((r) => r.specificity >= 0);
+  const bestTodaySpecificity = Math.max(-1, ...todayCandidates.map((r) => r.specificity));
+  const todayRules = todayCandidates
+    .filter((r) => r.specificity === bestTodaySpecificity)
+    .map((r) => r.rule);
+  const matchedAny = todayRules.length > 0;
+
+  for (const rule of todayRules) {
     const ranges = parseRanges(rule);
-    if (appliesToDay(rule, day)) {
-      matchedAny = true;
-      if (/\boff\b|\bclosed\b/i.test(rule) && ranges.length === 0) continue;
-      for (const range of ranges) {
-        const end = range.end <= range.start ? range.end + 1440 : range.end;
-        if (minutes >= range.start && minutes < end) {
-          return {
-            status: "open",
-            closesAt: minutesToClock(end),
-            closesInMinutes: end - minutes,
-            raw,
-          };
-        }
+    if (/\boff\b|\bclosed\b/i.test(rule)) return { status: "closed", raw };
+    if (ranges.length === 0) return { status: "unknown", raw };
+    for (const range of ranges) {
+      const end = range.end <= range.start ? range.end + 1440 : range.end;
+      if (minutes >= range.start && minutes < end) {
+        return {
+          status: "open",
+          closesAt: minutesToClock(end),
+          closesInMinutes: end - minutes,
+          raw,
+        };
       }
     }
-    if (appliesToDay(rule, yesterday)) {
-      for (const range of ranges) {
-        if (range.end > range.start) continue;
-        if (minutes < range.end) {
-          return {
-            status: "open",
-            closesAt: minutesToClock(range.end),
-            closesInMinutes: range.end - minutes,
-            raw,
-          };
-        }
+  }
+
+  const yesterdayCandidates = rules
+    .map((rule) => ({ rule, specificity: ruleSpecificity(rule, yesterday) }))
+    .filter((r) => r.specificity >= 0);
+  const bestYesterdaySpecificity = Math.max(-1, ...yesterdayCandidates.map((r) => r.specificity));
+  const yesterdayRules = yesterdayCandidates
+    .filter((r) => r.specificity === bestYesterdaySpecificity)
+    .map((r) => r.rule);
+  for (const rule of yesterdayRules) {
+    if (/\boff\b|\bclosed\b/i.test(rule)) continue;
+    const ranges = parseRanges(rule);
+    for (const range of ranges) {
+      if (range.end > range.start) continue;
+      if (minutes < range.end) {
+        return {
+          status: "open",
+          closesAt: minutesToClock(range.end),
+          closesInMinutes: range.end - minutes,
+          raw,
+        };
       }
     }
   }
@@ -196,6 +225,123 @@ function shuffle<T>(items: T[]) {
     [copy[i], copy[j]] = [copy[j], copy[i]];
   }
   return copy;
+}
+
+function googleReviewsLink(name: string) {
+  const query = encodeURIComponent(`${name} Alicante`).replace(/%20/g, "+");
+  return `[⭐ ver reseñas](https://www.google.com/maps/search/?api=1&query=${query})`;
+}
+
+function previousAssistantPlaceNames(messages: Array<{ role: string; content: string }>) {
+  const names = new Set<string>();
+  for (const message of messages) {
+    if (message.role !== "assistant") continue;
+    for (const match of message.content.matchAll(/\*\*([^*]{3,80})\*\*/g)) {
+      names.add(normalized(match[1]));
+    }
+  }
+  return names;
+}
+
+function matchesFoodPreference(place: FoodPlace, latestText: string) {
+  const text = normalized(latestText);
+  const haystack = normalized(`${place.name} ${place.kind} ${place.cuisine ?? ""}`);
+  if (/\b(italiano|italiana|pizza|pasta)\b/.test(text)) return /italian|pizza|pasta/.test(haystack);
+  if (/\b(hamburguesa|burger)\b/.test(text)) return /burger|hamburger|fast_food/.test(haystack);
+  if (/\b(japones|japonesa|japon[eé]s|sushi|asiatico|asiatica|asi[aá]tico)\b/.test(text)) {
+    return /japanese|sushi|asian|thai|chinese|korean|vietnamese/.test(haystack);
+  }
+  if (/\b(vegano|vegana|vegetariano|vegetariana|saludable)\b/.test(text)) {
+    return /vegan|vegetarian|healthy|salad|juice/.test(haystack);
+  }
+  if (/\b(desayuno|brunch|caf[eé]|cafeteria|cafetería|postre|tarta|dulce)\b/.test(text)) {
+    return /cafe|coffee|bakery|ice_cream|dessert|pastry/.test(haystack);
+  }
+  if (/\b(arroz|arroces|pescado|marisco|paella)\b/.test(text)) {
+    return /seafood|mediterranean|spanish|regional|rice|paella/.test(haystack);
+  }
+  return true;
+}
+
+function streamChatText(text: string) {
+  const encoder = new TextEncoder();
+  const chunks = text.match(/[\s\S]{1,220}/g) ?? [text];
+  return new Response(
+    new ReadableStream({
+      start(controller) {
+        for (const chunk of chunks) {
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: chunk } }] })}\n\n`),
+          );
+        }
+        controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+        controller.close();
+      },
+    }),
+    { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } },
+  );
+}
+
+function formatFoodPlace(place: FoodPlace, index?: number) {
+  const prefix = typeof index === "number" ? `${index}. ` : "";
+  const cuisine = place.cuisine ? ` · ${place.cuisine}` : "";
+  const address = place.address ? ` · ${place.address}` : "";
+  return `${prefix}**${place.name}** — abierto ahora, cierra a las ${place.closesAt}${cuisine}${address}. ${googleReviewsLink(place.name)}`;
+}
+
+function buildMentionedPlacesResponse(mentionedPlaces: MentionedPlace[], openFoodPlaces: FoodPlace[]) {
+  const lines: string[] = [];
+  for (const place of mentionedPlaces) {
+    if (place.status === "open") {
+      lines.push(
+        `✅ Sí: **${place.name}** está abierto ahora y cierra a las ${place.closesAt}. ${googleReviewsLink(place.name)}`,
+      );
+      continue;
+    }
+
+    if (place.status === "closed") {
+      lines.push(`❌ **${place.name}** está cerrado ahora mismo. ${googleReviewsLink(place.name)}`);
+    } else if (place.status === "unknown") {
+      lines.push(
+        `🤔 No tengo el horario confirmado de **${place.name}**, así que no voy a decirte que está abierto. ${googleReviewsLink(place.name)}`,
+      );
+    } else {
+      lines.push(
+        `🤔 No me sale **${place.query}** con horario fiable en mi mapa, así que no puedo confirmarlo. ${googleReviewsLink(place.query)}`,
+      );
+    }
+
+    const alternatives = shuffle(
+      openFoodPlaces.filter((p) => normalized(p.name) !== normalized(place.name)),
+    ).slice(0, 2);
+    if (alternatives.length > 0) {
+      lines.push("Te dejo alternativas con horario confirmado:");
+      alternatives.forEach((alt, index) => lines.push(formatFoodPlace(alt, index + 1)));
+    }
+  }
+  return lines.join("\n\n");
+}
+
+function buildFoodRecommendationsResponse(
+  messages: Array<{ role: string; content: string }>,
+  latestUserText: string,
+  openFoodPlaces: FoodPlace[],
+  maxOptions: number,
+) {
+  const alreadyMentioned = previousAssistantPlaceNames(messages);
+  const candidates = openFoodPlaces
+    .filter((place) => !alreadyMentioned.has(normalized(place.name)))
+    .filter((place) => matchesFoodPreference(place, latestUserText));
+  const selected = shuffle(candidates).slice(0, Math.max(1, Math.min(4, maxOptions)));
+
+  if (selected.length === 0) {
+    return "Ahora mismo no tengo ningún sitio de ese tipo con horario confirmado y más de 1 hora antes de cerrar. Prefiero no inventar ni mandarte a un sitio cerrado; dime otra zona o cambiamos el tipo de comida.";
+  }
+
+  return [
+    "Tienes razón: aquí solo te doy sitios con horario confirmado ahora mismo:",
+    ...selected.map((place, index) => formatFoodPlace(place, index + 1)),
+  ].join("\n\n");
 }
 
 const ALICANTE_BBOX = "37.84,-1.13,38.87,0.21";
@@ -616,12 +762,27 @@ serve(async (req) => {
     const latestUserText =
       [...messages].reverse().find((m: { role: string; content: string }) => m.role === "user")
         ?.content ?? "";
+    const foodRequest = isFoodOrDrinkRequest(messages);
+    const mayNeedFoodFallbacks = foodRequest || extractMentionedNames(latestUserText).length > 0;
     const [openFoodPlaces, mentionedPlaces] = await Promise.all([
-      isFoodOrDrinkRequest(messages)
+      mayNeedFoodFallbacks
         ? fetchConfirmedOpenFoodPlaces(context)
         : Promise.resolve([] as FoodPlace[]),
       fetchMentionedPlaces(latestUserText).catch(() => [] as MentionedPlace[]),
     ]);
+    if (mentionedPlaces.length > 0) {
+      return streamChatText(buildMentionedPlacesResponse(mentionedPlaces, openFoodPlaces));
+    }
+    if (foodRequest) {
+      return streamChatText(
+        buildFoodRecommendationsResponse(
+          messages,
+          latestUserText,
+          openFoodPlaces,
+          context?.maxOptions ?? 4,
+        ),
+      );
+    }
     const verifiedOpenLine = openFoodPlaces.length
       ? `\nVERIFIED_OPEN_FOOD_PLACES (fuente de verdad para comer/beber: recomienda SOLO estos nombres; todos están abiertos ahora y cierran en más de 60 min):\n${openFoodPlaces
           .map(
@@ -629,7 +790,7 @@ serve(async (req) => {
               `${i + 1}. ${p.name} — tipo=${p.kind}${p.cuisine ? `, cocina=${p.cuisine}` : ""}${p.address ? `, dirección=${p.address}` : ""}, cierra=${p.closesAt}, horario_osm="${p.openingHours}"`,
           )
           .join("\n")}`
-      : isFoodOrDrinkRequest(messages)
+      : foodRequest
         ? "\nVERIFIED_OPEN_FOOD_PLACES: ninguna opción con horario confirmado abierto ahora y con más de 60 min hasta cerrar. No recomiendes restaurantes/bares/cafés concretos; pide zona o propone ampliar búsqueda."
         : "";
     const mentionedLine = mentionedPlaces.length
