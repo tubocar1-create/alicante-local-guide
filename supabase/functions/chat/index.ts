@@ -825,7 +825,7 @@ async function fetchConfirmedOpenFoodPlaces(context?: ChatContext): Promise<Food
     typeof loc?.lat === "number" && typeof loc?.lng === "number"
       ? { lat: loc.lat, lng: loc.lng }
       : ALICANTE_CENTER;
-  const radius = loc ? 5500 : 8500;
+  const radius = loc ? 9000 : 12000;
 
   // 1) PRIMARY: Google Places — real-time hours from Maps.
   const nowDate = new Date();
@@ -841,7 +841,7 @@ async function fetchConfirmedOpenFoodPlaces(context?: ChatContext): Promise<Food
       const openNow = g.currentOpeningHours?.openNow ?? g.regularOpeningHours?.openNow;
       if (openNow !== true) continue;
       const closes = googleClosesInfo(g, nowDate);
-      if (!closes || closes.closesInMinutes <= 60) continue;
+      if (!closes || closes.closesInMinutes <= 30) continue;
       const key = normalized(`${name}|${lat.toFixed(4)}|${lon.toFixed(4)}`);
       if (seen.has(key)) continue;
       seen.add(key);
@@ -903,7 +903,7 @@ out center 180;`;
         const openingHours = tags.opening_hours;
         if (!name || lat == null || lon == null || !openingHours) continue;
         const open = getOpenWindow(openingHours, now);
-        if (!open || open.closesInMinutes <= 60) continue;
+        if (!open || open.closesInMinutes <= 30) continue;
         const key = normalized(`${name}|${lat.toFixed(4)}|${lon.toFixed(4)}`);
         if (seen.has(key)) continue;
         seen.add(key);
