@@ -180,14 +180,14 @@ export function EatNearby({ onClose }: Props) {
               {error && (
                 <div className="text-sm text-destructive py-4">No pude cargarlo: {error}</div>
               )}
-              {!loading && !error && top10.length === 0 && (
+              {!loading && !error && ranked.length === 0 && (
                 <div className="text-sm text-muted-foreground py-8 text-center">
                   Uy, no veo nada de eso aquí al lado. Prueba otra opción 🙃
                 </div>
               )}
 
               <ul className="flex flex-col gap-3">
-                {top10.map(({ i, d }, idx) => {
+                {shown.map(({ i, d }: { i: Listing; d: number }, idx: number) => {
                   const mapsHref = `https://www.google.com/maps/dir/?api=1&destination=${i.lat},${i.lon}`;
                   const reviewsHref = `https://www.google.com/search?q=${encodeURIComponent(
                     `${i.name} Alicante reseñas`,
