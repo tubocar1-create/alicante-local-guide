@@ -243,22 +243,27 @@ function previousAssistantPlaceNames(messages: Array<{ role: string; content: st
   return names;
 }
 
-type FastFoodSub = "kebab" | "burger" | "chain" | "pizza" | "all" | null;
+type FastFoodSub = "kebab" | "burger" | "chain" | "pizza" | "montaditos" | "chicken" | "mexican" | "all" | null;
 
 function detectFastFoodSub(text: string): FastFoodSub {
   const t = normalized(text);
   const isFastFood = /\b(comida rapida|fast ?food|comer rapido|algo rapido|para llevar|takeaway|take away)\b/.test(t);
   const isKebab = /\b(kebab|d[oö]ner|kebap|shawarma|durum|d[uü]rum|turco)\b/.test(t);
-  const isBurger = /\b(hamburguesa|hamburguesas|burger|burgers|smash|smashburger)\b/.test(t);
-  const isChain = /\b(cadena|cadenas|mcdonalds?|mac ?donalds?|kfc|burger ?king|tgb|the good burger|100 montaditos|cien montaditos|telepizza|dominos|pizza hut|popeyes|five guys|goiko|carls? jr)\b/.test(t);
-  const isPizza = /\b(pizza|pizzas|pizzeria|pizzería)\b/.test(t);
-  const isFriedChicken = /\b(pollo frito|fried chicken|alitas|wings)\b/.test(t);
-  const isHotDog = /\b(perrito|hot ?dog|frankfurt|bocadillo|bocadillos)\b/.test(t);
+  const isMontaditos = /\b(montadit[oa]s?|100 montaditos|cien montaditos|lizarran|lizarrán|bocadillos?|bocatas?)\b/.test(t);
+  const isChicken = /\b(pollo frito|pollos? asados?|fried chicken|kfc|popeyes|alitas|wings|asador de pollos?)\b/.test(t);
+  const isMexican = /\b(mexicano|mexicana|tacos?|burritos?|taco bell|tex ?mex|nachos|quesadilla)\b/.test(t);
+  const isBurger = /\b(hamburguesa|hamburguesas|burger|burgers|smash|smashburger|mcdonalds?|mac ?donalds?|burger ?king|tgb|the good burger|goiko|five guys|fosters? hollywood|carls? jr)\b/.test(t);
+  const isChain = /\b(cadena|cadenas)\b/.test(t);
+  const isPizza = /\b(pizza|pizzas|pizzeria|pizzería|telepizza|dominos?|pizza hut|papa johns?)\b/.test(t);
+  const isHotDog = /\b(perrito|hot ?dog|frankfurt)\b/.test(t);
   if (isKebab) return "kebab";
+  if (isMontaditos) return "montaditos";
+  if (isChicken) return "chicken";
+  if (isMexican) return "mexican";
   if (isChain) return "chain";
   if (isBurger) return "burger";
   if (isPizza) return "pizza";
-  if (isFriedChicken || isHotDog) return "all";
+  if (isHotDog) return "all";
   if (isFastFood) return "all";
   return null;
 }
