@@ -94,11 +94,6 @@ export function ChatScreen() {
     }
   }, [locState]);
 
-  const activateLocation = () => {
-    setGeoStatus("asking");
-    requestLocation();
-  };
-
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, loading]);
@@ -345,25 +340,6 @@ export function ChatScreen() {
 
       {/* Composer */}
       <div className="relative border-t border-border/60 bg-background/70 px-3 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/50">
-        {(geoStatus === "idle" || geoStatus === "asking" || geoStatus === "denied") && (
-          <div className="mx-auto mb-2 flex max-w-2xl items-center justify-between gap-2 rounded-2xl border border-border bg-card/90 px-3 py-2 text-xs text-card-foreground shadow-sm">
-            <span className="flex items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5 text-primary" />
-              {geoStatus === "asking"
-                ? "Buscando tu ubicación… acepta el permiso si aparece 📍"
-                : locState.status === "error"
-                  ? locState.message
-                  : "Para clavar recomendaciones cerquita, activa tu ubicación 📍"}
-            </span>
-            <button
-              onClick={activateLocation}
-              disabled={geoStatus === "asking"}
-              className="rounded-full bg-primary px-3 py-1 text-[11px] font-medium text-primary-foreground active:scale-95"
-            >
-              {geoStatus === "asking" ? "Abriendo…" : "Activar"}
-            </button>
-          </div>
-        )}
         {geoStatus === "ok" && geo?.city && (
           <div className="mx-auto mb-2 max-w-2xl text-center text-[11px] text-muted-foreground">
             <MapPin className="mr-1 inline h-3 w-3 text-primary" />
