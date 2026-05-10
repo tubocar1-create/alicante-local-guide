@@ -167,12 +167,16 @@ export function EatNearby({ onClose }: Props) {
               <ul className="flex flex-col gap-3">
                 {top10.map(({ i, d }, idx) => {
                   const mapsHref = `https://www.google.com/maps/dir/?api=1&destination=${i.lat},${i.lon}`;
-                  const reviewsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                    `${i.name} Alicante`,
+                  const reviewsHref = `https://www.google.com/search?q=${encodeURIComponent(
+                    `${i.name} Alicante reseñas`,
                   )}`;
                   const tripHref = `https://www.tripadvisor.es/Search?q=${encodeURIComponent(
                     `${i.name} Alicante`,
                   )}`;
+                  const openExternal = (url: string) => {
+                    const w = window.open(url, "_blank", "noopener,noreferrer");
+                    if (!w) window.top!.location.href = url;
+                  };
                   return (
                     <li
                       key={i.id}
@@ -210,30 +214,27 @@ export function EatNearby({ onClose }: Props) {
                       ) : null}
 
                       <div className="flex flex-wrap gap-1.5 pt-1">
-                        <a
-                          href={reviewsHref}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-primary text-primary-foreground"
+                        <button
+                          type="button"
+                          onClick={() => openExternal(reviewsHref)}
+                          className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-primary text-primary-foreground active:scale-95"
                         >
                           ⭐ Reseñas Google
-                        </a>
-                        <a
-                          href={tripHref}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground"
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openExternal(tripHref)}
+                          className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground active:scale-95"
                         >
                           🦉 TripAdvisor
-                        </a>
-                        <a
-                          href={mapsHref}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground"
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openExternal(mapsHref)}
+                          className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground active:scale-95"
                         >
                           <Navigation className="w-3 h-3" /> Cómo llegar
-                        </a>
+                        </button>
                         {i.phone && (
                           <a
                             href={`tel:${i.phone}`}
