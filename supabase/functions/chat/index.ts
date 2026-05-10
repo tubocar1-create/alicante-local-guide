@@ -605,6 +605,71 @@ async function googlePlacesNearbyFood(
   return merged;
 }
 
+// Multi-result Text Search — broadens coverage for specific cuisines/keywords
+// (e.g. "hamburguesería", "kebab", "pizzería") that Nearby's type list misses.
+async function googlePlacesSearchTextMany(
+  query: string,
+  center: { lat: number; lng: number },
+  radius = 9000,
+): Promise<GooglePlace[]> {
+  const apiKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
+  if (!apiKey) return [];
+  try {
+    const res = await fetch(`${GOOGLE_PLACES_BASE}/places:searchText`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask":
+          "places.id,places.displayName,places.formattedAddress,places.location,places.primaryType,places.types,places.regularOpeningHours,places.currentOpeningHours",
+      },
+      body: JSON.stringify({
+        textQuery: query,
+        languageCode: "es",
+        regionCode: "ES",
+        maxResultCount: 20,
+        locationBias: {
+          circle: {
+            center: { latitude: center.lat, longitude: center.lng },
+            radius,
+          },
+        },
+      }),
+    });
+    if (!res.ok) {
+      console.error("Google Places searchTextMany failed", query, res.status, await res.text());
+      return [];
+    }
+    const json = await res.json();
+    return (json.places ?? []) as GooglePlace[];
+  } catch (e) {
+    console.error("Google Places searchTextMany error:", query, e);
+    return [];
+  }
+}
+
+function fastFoodSubQueries(sub: FastFoodSub): string[] {
+  if (sub === "burger") return ["hamburguesería", "burger", "smash burger"];
+  if (sub === "kebab") return ["kebab", "döner", "shawarma"];
+  if (sub === "pizza") return ["pizzería", "pizza"];
+  if (sub === "chain")
+    return ["McDonald's", "KFC", "Burger King", "TGB", "100 Montaditos", "Telepizza", "Domino's", "Five Guys", "Goiko", "Popeyes", "Foster's Hollywood"];
+  if (sub === "all") return ["comida rápida", "hamburguesería", "kebab", "pizzería"];
+  return [];
+}
+
+function detectCuisineQueries(text: string): string[] {
+  const t = normalized(text);
+  const out: string[] = [];
+  if (/\b(italiano|italiana|pasta)\b/.test(t)) out.push("restaurante italiano", "trattoria");
+  if (/\b(japones|japonesa|sushi)\b/.test(t)) out.push("restaurante japonés", "sushi");
+  if (/\b(asiatico|asiatica|chino|china|tailandes|tailandesa|vietnamita|coreano|coreana)\b/.test(t))
+    out.push("restaurante asiático", "wok");
+  if (/\b(vegano|vegana|vegetariano|vegetariana|saludable)\b/.test(t)) out.push("restaurante vegano", "vegetariano");
+  if (/\b(arroz|arroces|paella|marisco|marisqueria)\b/.test(t)) out.push("arrocería", "marisquería", "paella");
+  if (/\b(brunch|desayuno)\b/.test(t)) out.push("brunch", "desayunos");
+  return out;
+}
 
 const NAME_STOPWORDS = new Set([
   "alicante",
