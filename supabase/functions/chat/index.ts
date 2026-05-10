@@ -105,43 +105,63 @@ function parseRanges(rule: string) {
   }));
 }
 
-function getOpenWindow(raw?: string, date = new Date()) {
-  if (!raw?.trim()) return null;
+function getOpeningInfo(
+  raw?: string,
+  date = new Date(),
+):
+  | { status: "open"; closesAt: string; closesInMinutes: number; raw: string }
+  | { status: "closed"; raw: string }
+  | { status: "unknown"; raw?: string } {
+  if (!raw?.trim()) return { status: "unknown" };
   const clean = raw.replace(/"[^"]*"/g, "").trim();
   if (/24\s*\/\s*7/.test(clean)) {
-    return { closesAt: "24:00", closesInMinutes: 24 * 60 };
+    return { status: "open", closesAt: "24:00", closesInMinutes: 24 * 60, raw };
   }
   const { day, minutes } = madridNow(date);
   const yesterday = previousDay(day);
-
+  let matchedAny = false;
   for (const rule of clean
     .split(";")
     .map((r) => r.trim())
     .filter(Boolean)) {
     const ranges = parseRanges(rule);
-    if (/\boff\b|\bclosed\b/i.test(rule) && ranges.length === 0 && appliesToDay(rule, day)) {
-      continue;
-    }
-
     if (appliesToDay(rule, day)) {
+      matchedAny = true;
+      if (/\boff\b|\bclosed\b/i.test(rule) && ranges.length === 0) continue;
       for (const range of ranges) {
         const end = range.end <= range.start ? range.end + 1440 : range.end;
         if (minutes >= range.start && minutes < end) {
-          return { closesAt: minutesToClock(end), closesInMinutes: end - minutes };
+          return {
+            status: "open",
+            closesAt: minutesToClock(end),
+            closesInMinutes: end - minutes,
+            raw,
+          };
         }
       }
     }
-
     if (appliesToDay(rule, yesterday)) {
       for (const range of ranges) {
         if (range.end > range.start) continue;
         if (minutes < range.end) {
-          return { closesAt: minutesToClock(range.end), closesInMinutes: range.end - minutes };
+          return {
+            status: "open",
+            closesAt: minutesToClock(range.end),
+            closesInMinutes: range.end - minutes,
+            raw,
+          };
         }
       }
     }
   }
-  return null;
+  return matchedAny ? { status: "closed", raw } : { status: "unknown", raw };
+}
+
+function getOpenWindow(raw?: string, date = new Date()) {
+  const info = getOpeningInfo(raw, date);
+  return info.status === "open"
+    ? { closesAt: info.closesAt, closesInMinutes: info.closesInMinutes }
+    : null;
 }
 
 function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
@@ -176,6 +196,207 @@ function shuffle<T>(items: T[]) {
     [copy[i], copy[j]] = [copy[j], copy[i]];
   }
   return copy;
+}
+
+const ALICANTE_BBOX = "37.84,-1.13,38.87,0.21";
+const NAME_STOPWORDS = new Set([
+  "alicante",
+  "hola",
+  "oye",
+  "mira",
+  "quiero",
+  "tengo",
+  "puedo",
+  "estoy",
+  "quería",
+  "queria",
+  "buenas",
+  "gracias",
+  "por",
+  "favor",
+  "quizás",
+  "quizas",
+  "tal",
+  "vez",
+  "ahora",
+  "luego",
+  "hoy",
+  "mañana",
+  "manana",
+  "ayer",
+  "cerca",
+  "centro",
+  "playa",
+  "casco",
+  "antiguo",
+  "ciudad",
+  "barrio",
+  "amigos",
+  "familia",
+  "novia",
+  "novio",
+  "pareja",
+  "niños",
+  "ninos",
+  "plan",
+  "planes",
+  "comer",
+  "cenar",
+  "desayunar",
+  "tomar",
+  "beber",
+  "ir",
+  "visitar",
+  "conocer",
+  "ver",
+  "quedar",
+  "restaurante",
+  "restaurantes",
+  "bar",
+  "bares",
+  "cafe",
+  "cafeteria",
+  "cafetería",
+  "tapas",
+  "donde",
+  "dónde",
+  "como",
+  "cómo",
+  "cuando",
+  "cuándo",
+  "que",
+  "qué",
+  "cual",
+  "cuál",
+  "lunes",
+  "martes",
+  "miercoles",
+  "miércoles",
+  "jueves",
+  "viernes",
+  "sabado",
+  "sábado",
+  "domingo",
+  "esta",
+  "este",
+  "estos",
+  "estas",
+  "abierto",
+  "abierta",
+  "cerrado",
+  "cerrada",
+  "horario",
+  "abre",
+  "cierra",
+  "the",
+  "and",
+  "for",
+  "you",
+  "your",
+]);
+
+function extractMentionedNames(text: string): string[] {
+  const out: string[] = [];
+  const push = (raw: string) => {
+    const trimmed = raw
+      .replace(/[.,;:!?¿¡()"'“”‘’]+$/g, "")
+      .replace(/^[.,;:!?¿¡()"'“”‘’]+/g, "")
+      .trim();
+    if (trimmed.length < 4 || trimmed.length > 60) return;
+    const tokens = trimmed.split(/\s+/);
+    const meaningful = tokens.filter((t) => !NAME_STOPWORDS.has(normalized(t)));
+    if (meaningful.length === 0) return;
+    if (!out.some((o) => normalized(o) === normalized(trimmed))) out.push(trimmed);
+  };
+  for (const m of text.matchAll(/["“'‘]([^"“”‘’]{3,60})["”'’]/g)) push(m[1]);
+  const re =
+    /\b([A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ'’&-]+(?:\s+(?:de|del|la|el|los|las|y|al?)\s+[A-ZÁÉÍÓÚÑa-záéíóúñ][\wÁÉÍÓÚÑáéíóúñ'’&-]+|\s+[A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ'’&-]+)+)/g;
+  for (const m of text.matchAll(re)) push(m[1]);
+  return out.slice(0, 4);
+}
+
+type MentionedPlace = {
+  query: string;
+  name: string;
+  kind: string;
+  openingHours?: string;
+  status: "open" | "closed" | "unknown" | "not_found";
+  closesAt?: string;
+  closesInMinutes?: number;
+  address?: string;
+};
+
+async function fetchMentionedPlaces(text: string): Promise<MentionedPlace[]> {
+  const names = extractMentionedNames(text);
+  if (names.length === 0) return [];
+  const escaped = (s: string) => s.replace(/["\\]/g, "\\$&");
+  const filters = names.map((n) => `nwr["name"~"${escaped(n)}",i](${ALICANTE_BBOX});`).join("\n");
+  const body = `[out:json][timeout:15];\n(\n${filters}\n);\nout tags center 60;`;
+  type OsmEl = {
+    tags?: Record<string, string>;
+    lat?: number;
+    lon?: number;
+    center?: { lat: number; lon: number };
+  };
+  let elements: OsmEl[] = [];
+  for (const url of OVERPASS_ENDPOINTS) {
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "data=" + encodeURIComponent(body),
+      });
+      if (!res.ok) throw new Error(`Overpass ${res.status}`);
+      const json = await res.json();
+      elements = json.elements ?? [];
+      break;
+    } catch (e) {
+      console.error("mentioned places fetch failed:", e);
+    }
+  }
+  const now = new Date();
+  const results: MentionedPlace[] = [];
+  for (const query of names) {
+    const qNorm = normalized(query);
+    const matches = elements.filter((el) => {
+      const tags = el.tags ?? {};
+      const candidates = [tags.name, tags["name:es"], tags["name:en"], tags["alt_name"]]
+        .filter(Boolean)
+        .map((s: string) => normalized(s));
+      return candidates.some((c) => c.includes(qNorm) || qNorm.includes(c));
+    });
+    if (matches.length === 0) {
+      results.push({ query, name: query, kind: "unknown", status: "not_found" });
+      continue;
+    }
+    const withHours = matches.find((el) => el.tags?.opening_hours) ?? matches[0];
+    const tags = withHours.tags ?? {};
+    const name = tags.name || tags["name:es"] || query;
+    const kind = tags.amenity || tags.tourism || tags.shop || tags.leisure || "place";
+    const openingHours = tags.opening_hours;
+    const info = getOpeningInfo(openingHours, now);
+    const address =
+      [tags["addr:street"], tags["addr:housenumber"], tags["addr:city"]]
+        .filter(Boolean)
+        .join(" ") || undefined;
+    if (info.status === "open") {
+      results.push({
+        query,
+        name,
+        kind,
+        openingHours,
+        status: "open",
+        closesAt: info.closesAt,
+        closesInMinutes: info.closesInMinutes,
+        address,
+      });
+    } else if (info.status === "closed") {
+      results.push({ query, name, kind, openingHours, status: "closed", address });
+    } else {
+      results.push({ query, name, kind, openingHours, status: "unknown", address });
+    }
+  }
+  return results;
 }
 
 async function fetchConfirmedOpenFoodPlaces(context?: ChatContext): Promise<FoodPlace[]> {
@@ -340,6 +561,12 @@ El system message incluye TODAY (fecha + día de la semana + HORA ACTUAL en Alic
 - Es PREFERIBLE dar 3 opciones seguras que 4 con una dudosa. Calidad > cantidad.
 - Si no hay 4 restaurantes/bares/cafés confirmados abiertos, da solo los confirmados y di con cariño que prefieres no inventar porque te acabo de pedir no mandar a nadie a sitios cerrados.
 
+SITIOS NOMBRADOS POR EL USUARIO (CRÍTICO):
+- Si el usuario menciona un sitio concreto ("¿está abierto X?", "voy a Y", "qué tal Z?"), antes de cualquier opinión DEBES decirle si está abierto, cerrado o si no tienes el horario confirmado. Tu credibilidad depende de esto.
+- La fuente de verdad es el bloque USER_MENTIONED_PLACES del RUNTIME CONTEXT. Úsalo TAL CUAL. Nunca inventes horarios ni digas "creo que sí abre".
+- Formato: empieza con un check claro y cariñoso, ej. "✅ Sí, **Nombre** está abierto ahora, cierra a las HH:MM" / "❌ Uy, **Nombre** está cerrado ahora mismo" / "🤔 No tengo el horario confirmado de **Nombre**, mejor míralo en Google Maps por si acaso". Después ya das tu opinión o alternativa.
+- Si está CERRADO o no hay datos, ofrece 1-2 alternativas que SÍ estén abiertas (de VERIFIED_OPEN_FOOD_PLACES si aplica).
+
 UBICACIÓN (IMPORTANTE):
 - El RUNTIME CONTEXT puede incluir USER_LOCATION con la ubicación REAL del usuario (lat/lng + barrio + ciudad + distancia a Alicante centro). ESTA es la fuente de verdad, úsala silenciosamente.
 - Si USER_LOCATION existe y la persona está DENTRO de Alicante ciudad (distanceFromAlicanteKm ≤ 8): NO le preguntes dónde está, ya lo sabes. Recomienda cosas cercanas a su barrio. Como mucho confírmalo con naturalidad ("te pillo cerquita de la playa, ¿no?").
@@ -385,9 +612,15 @@ serve(async (req) => {
     const locationLine = loc
       ? `USER_LOCATION: lat=${loc.lat?.toFixed?.(5)}, lng=${loc.lng?.toFixed?.(5)}${loc.area ? `, area="${loc.area}"` : ""}${loc.city ? `, city="${loc.city}"` : ""}${typeof loc.distanceFromAlicanteKm === "number" ? `, distanceFromAlicanteKm=${loc.distanceFromAlicanteKm}` : ""}`
       : `USER_LOCATION: (no disponible) — locationStatus=${locStatus}`;
-    const openFoodPlaces = isFoodOrDrinkRequest(messages)
-      ? await fetchConfirmedOpenFoodPlaces(context)
-      : [];
+    const latestUserText =
+      [...messages].reverse().find((m: { role: string; content: string }) => m.role === "user")
+        ?.content ?? "";
+    const [openFoodPlaces, mentionedPlaces] = await Promise.all([
+      isFoodOrDrinkRequest(messages)
+        ? fetchConfirmedOpenFoodPlaces(context)
+        : Promise.resolve([] as FoodPlace[]),
+      fetchMentionedPlaces(latestUserText).catch(() => [] as MentionedPlace[]),
+    ]);
     const verifiedOpenLine = openFoodPlaces.length
       ? `\nVERIFIED_OPEN_FOOD_PLACES (fuente de verdad para comer/beber: recomienda SOLO estos nombres; todos están abiertos ahora y cierran en más de 60 min):\n${openFoodPlaces
           .map(
@@ -398,7 +631,20 @@ serve(async (req) => {
       : isFoodOrDrinkRequest(messages)
         ? "\nVERIFIED_OPEN_FOOD_PLACES: ninguna opción con horario confirmado abierto ahora y con más de 60 min hasta cerrar. No recomiendes restaurantes/bares/cafés concretos; pide zona o propone ampliar búsqueda."
         : "";
-    const runtimeContext = `RUNTIME CONTEXT (use this when relevant):\nTODAY: ${todayStr} (zona horaria Europe/Madrid)\nMAX_NEARBY_OPTIONS: ${context?.maxOptions ?? 4}\n${locationLine}${verifiedOpenLine}`;
+    const mentionedLine = mentionedPlaces.length
+      ? `\nUSER_MENTIONED_PLACES (el usuario nombró estos sitios — DEBES decirle si están abiertos o no usando EXACTAMENTE este estado, no inventes horarios):\n${mentionedPlaces
+          .map((p, i) => {
+            if (p.status === "open")
+              return `${i + 1}. "${p.query}" → ${p.name} (${p.kind}) — ABIERTO AHORA, cierra a las ${p.closesAt} (en ${p.closesInMinutes} min). Horario OSM="${p.openingHours}".`;
+            if (p.status === "closed")
+              return `${i + 1}. "${p.query}" → ${p.name} (${p.kind}) — CERRADO AHORA. Horario OSM="${p.openingHours}".`;
+            if (p.status === "unknown")
+              return `${i + 1}. "${p.query}" → ${p.name} (${p.kind}) — HORARIO NO CONFIRMADO en OSM${p.openingHours ? ` (raw="${p.openingHours}")` : ""}. Dilo con honestidad: "no tengo el horario confirmado, mejor confírmalo en Google Maps".`;
+            return `${i + 1}. "${p.query}" → no encontrado en OpenStreetMap dentro de Alicante. Dilo con honestidad: "no me sale en mi mapa, no te puedo confirmar el horario, mejor míralo en Google Maps".`;
+          })
+          .join("\n")}`
+      : "";
+    const runtimeContext = `RUNTIME CONTEXT (use this when relevant):\nTODAY: ${todayStr} (zona horaria Europe/Madrid)\nMAX_NEARBY_OPTIONS: ${context?.maxOptions ?? 4}\n${locationLine}${verifiedOpenLine}${mentionedLine}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
