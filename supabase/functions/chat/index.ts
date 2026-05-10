@@ -364,7 +364,7 @@ async function fetchMentionedPlaces(text: string): Promise<MentionedPlace[]> {
       results.push({ query, name: query, kind: "unknown", status: "not_found" });
       continue;
     }
-    const withHours = matches.find((el: any) => el.tags?.opening_hours) ?? matches[0];
+    const withHours = matches.find((el) => el.tags?.opening_hours) ?? matches[0];
     const tags = withHours.tags ?? {};
     const name = tags.name || tags["name:es"] || query;
     const kind = tags.amenity || tags.tourism || tags.shop || tags.leisure || "place";
