@@ -4,18 +4,19 @@ import { Link } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { PlaceImage } from "@/components/PlaceImage";
-import { EatNearby } from "@/components/EatNearby";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import heroImg from "@/assets/alicante-hero.jpg";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
-const SUGGESTIONS = [
-  "🍽️ Comer cerca de mí",
-  "Best beach near the centre?",
-  "What to do tomorrow in Alicante?",
-  "Nightlife tips please 🍹",
+const SUGGESTIONS: { label: string; prompt: string }[] = [
+  { label: "🍽️ Comer", prompt: "¿Dónde puedo comer cerca de mí ahora mismo?" },
+  { label: "🏨 Dormir", prompt: "¿Dónde puedo dormir cerca de mí esta noche?" },
+  { label: "🏖️ Playa", prompt: "¿Qué playa tengo cerca para ir ahora?" },
+  { label: "🌳 Parque", prompt: "¿Qué parque o zona verde tengo cerca?" },
+  { label: "🛍️ Comprar", prompt: "¿Dónde puedo ir de compras cerca de mí?" },
+  { label: "🍹 Tomar algo", prompt: "¿Dónde voy a tomar algo cerca abierto ahora?" },
 ];
 
 const GREETING: Msg = {
@@ -42,11 +43,15 @@ export function ChatScreen() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [eatOpen, setEatOpen] = useState(false);
-  const [eatQuery, setEatQuery] = useState("");
   const { state: locState, request: requestLocation } = useUserLocation({ watch: true });
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Ask for location automatically as soon as the chat opens
+  useEffect(() => {
+    if (locState.status === "idle") requestLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -55,11 +60,6 @@ export function ChatScreen() {
   async function send(text: string) {
     const trimmed = text.trim();
     if (!trimmed || loading) return;
-    if (trimmed === "🍽️ Comer cerca de mí") {
-      setEatQuery(trimmed);
-      setEatOpen(true);
-      return;
-    }
     if (needsLocationForRecommendation(trimmed) && locState.status !== "ready") {
       requestLocation();
       setMessages((prev) => [
@@ -72,21 +72,6 @@ export function ChatScreen() {
         },
       ]);
       setInput("");
-      return;
-    }
-    if (isFoodRecommendation(trimmed) && locState.status === "ready") {
-      setMessages((prev) => [
-        ...prev,
-        { role: "user", content: trimmed },
-        {
-          role: "assistant",
-          content:
-            "Va 💛 Te abro 4 opciones cerca de donde estás, abiertas ahora mismo y con reseñas a mano. Si quieres más, las añado de una en una.",
-        },
-      ]);
-      setInput("");
-      setEatQuery(trimmed);
-      setEatOpen(true);
       return;
     }
     setError(null);
@@ -236,16 +221,12 @@ export function ChatScreen() {
             )}
             {locState.status === "ready" ? "Ubicación" : "Mi ubicación"}
           </button>
-          <button
-            onClick={() => {
-              setEatQuery(input);
-              setEatOpen(true);
-            }}
-            className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full gradient-warm text-primary-foreground active:scale-95 shadow-soft"
-            title={input.trim() ? `Buscar cerca: "${input.trim()}"` : "Comer cerca de mí"}
+          <Link
+            to="/explore"
+            className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full bg-secondary text-secondary-foreground active:scale-95"
           >
-            🍽️ Comer cerca
-          </button>
+            🗺️ Explorar
+          </Link>
           <Link
             to="/stay"
             className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full bg-secondary text-secondary-foreground active:scale-95"
@@ -367,11 +348,11 @@ export function ChatScreen() {
               <div className="mt-2 flex flex-wrap gap-2">
                 {SUGGESTIONS.map((s) => (
                   <button
-                    key={s}
-                    onClick={() => send(s)}
+                    key={s.label}
+                    onClick={() => send(s.prompt)}
                     className="rounded-full border border-border bg-card/90 px-3 py-2 text-sm text-card-foreground shadow-sm backdrop-blur transition hover:bg-accent/40"
                   >
-                    {s}
+                    {s.label}
                   </button>
                 ))}
               </div>
@@ -420,7 +401,7 @@ export function ChatScreen() {
         </div>
       </div>
 
-      {eatOpen && <EatNearby onClose={() => setEatOpen(false)} initialQuery={eatQuery} />}
+      
     </div>
   );
 }
