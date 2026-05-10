@@ -374,7 +374,7 @@ function buildFoodRecommendationsResponse(
   const candidates = openFoodPlaces
     .filter((place) => !alreadyMentioned.has(normalized(place.name)))
     .filter((place) => matchesFoodPreference(place, latestUserText));
-  const selected = shuffle(candidates).slice(0, 4);
+  const selected = shuffle(candidates).slice(0, Math.max(maxOptions, 8));
 
   if (selected.length === 0) {
     return "Uy, ahora mismo no se me ocurre ningún sitio así que te pueda recomendar con la cabeza tranquila 😅 ¿Probamos cambiando de zona o de tipo de comida?";
