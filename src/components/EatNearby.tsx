@@ -443,6 +443,13 @@ export function EatNearby({ onClose, initialQuery }: Props) {
           )}
         </div>
       </div>
+      {referral && (
+        <ReferralDialog
+          placeId={String(referral.id)}
+          placeName={referral.name}
+          onClose={() => setReferral(null)}
+        />
+      )}
     </div>
   );
 }
