@@ -15,6 +15,7 @@ type GeoInfo = {
   city?: string;
   distanceFromAlicanteKm?: number;
 };
+type GeoStatus = "idle" | "asking" | "ok" | "denied";
 const ALICANTE_CENTER = { lat: 38.3452, lng: -0.481 };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
@@ -39,17 +40,10 @@ export function ChatScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [geo, setGeo] = useState<GeoInfo | null>(null);
-  const [geoStatus, setGeoStatus] = useState<"idle" | "asking" | "ok" | "denied">("idle");
+  const [geoStatus, setGeoStatus] = useState<GeoStatus>("idle");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { state: locState, request: requestLocation } = useUserLocation();
-
-  // Ask for location automatically on mount (one-shot).
-  useEffect(() => {
-    setGeoStatus("asking");
-    requestLocation();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // React to location state changes; reverse-geocode when we get coords.
   useEffect(() => {
@@ -75,8 +69,15 @@ export function ChatScreen() {
         .catch(() => {});
     } else if (locState.status === "error") {
       setGeoStatus("denied");
+    } else if (locState.status === "loading") {
+      setGeoStatus("asking");
     }
   }, [locState]);
+
+  const activateLocation = () => {
+    setGeoStatus("asking");
+    requestLocation();
+  };
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
