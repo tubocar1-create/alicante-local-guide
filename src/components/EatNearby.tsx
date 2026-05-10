@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Navigation, MapPin, Star, X, Phone, Globe } from "lucide-react";
+import { Loader2, Navigation, MapPin, Star, X, Phone, Globe, Ticket } from "lucide-react";
+import ReferralDialog from "@/components/ReferralDialog";
 import { fetchListings, type Listing } from "@/lib/overpass-listings";
 import { useUserLocation, distanceKm, formatDistance } from "@/hooks/useUserLocation";
 import {
