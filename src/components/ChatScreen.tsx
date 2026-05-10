@@ -348,11 +348,11 @@ export function ChatScreen() {
               <div className="mt-2 flex flex-wrap gap-2">
                 {SUGGESTIONS.map((s) => (
                   <button
-                    key={s}
-                    onClick={() => send(s)}
+                    key={s.label}
+                    onClick={() => send(s.prompt)}
                     className="rounded-full border border-border bg-card/90 px-3 py-2 text-sm text-card-foreground shadow-sm backdrop-blur transition hover:bg-accent/40"
                   >
-                    {s}
+                    {s.label}
                   </button>
                 ))}
               </div>
