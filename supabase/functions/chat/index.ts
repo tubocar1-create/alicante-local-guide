@@ -1204,7 +1204,7 @@ serve(async (req) => {
     const mayNeedFoodFallbacks = foodRequest || extractMentionedNames(latestUserText).length > 0;
     const [openFoodPlaces, mentionedPlaces] = await Promise.all([
       mayNeedFoodFallbacks
-        ? fetchConfirmedOpenFoodPlaces(context)
+        ? fetchConfirmedOpenFoodPlaces(context, latestUserText)
         : Promise.resolve([] as FoodPlace[]),
       fetchMentionedPlaces(latestUserText).catch(() => [] as MentionedPlace[]),
     ]);
