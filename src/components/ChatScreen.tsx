@@ -297,20 +297,48 @@ export function ChatScreen() {
             </div>
           )}
 
-          {isWelcome && (
-            <>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {SUGGESTIONS.map((s) => (
+          {isWelcome && !activeSubmenu && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {SUGGESTIONS.map((s) => (
+                <button
+                  key={s.label}
+                  onClick={() => {
+                    if (s.submenu) setActiveSubmenu(s);
+                    else if (s.prompt) send(s.prompt);
+                  }}
+                  className="rounded-full border border-border bg-card/90 px-3 py-2 text-sm text-card-foreground shadow-sm backdrop-blur transition hover:bg-accent/40"
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {isWelcome && activeSubmenu && (
+            <div className="mt-2 rounded-2xl border border-border bg-card/90 p-3 shadow-sm backdrop-blur">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-sm font-medium">{activeSubmenu.label} — ¿qué te apetece?</p>
+                <button
+                  onClick={() => setActiveSubmenu(null)}
+                  className="text-xs text-muted-foreground underline-offset-2 hover:underline"
+                >
+                  ← Volver
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {activeSubmenu.submenu?.map((opt) => (
                   <button
-                    key={s.label}
-                    onClick={() => send(s.prompt)}
-                    className="rounded-full border border-border bg-card/90 px-3 py-2 text-sm text-card-foreground shadow-sm backdrop-blur transition hover:bg-accent/40"
+                    key={opt.label}
+                    onClick={() => {
+                      setActiveSubmenu(null);
+                      send(opt.prompt);
+                    }}
+                    className="rounded-full border border-border bg-background/80 px-3 py-2 text-sm shadow-sm transition hover:bg-accent/40"
                   >
-                    {s.label}
+                    {opt.label}
                   </button>
                 ))}
               </div>
-            </>
+            </div>
           )}
         </div>
       </div>
