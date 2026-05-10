@@ -608,7 +608,8 @@ serve(async (req) => {
       ? `USER_LOCATION: lat=${loc.lat?.toFixed?.(5)}, lng=${loc.lng?.toFixed?.(5)}${loc.area ? `, area="${loc.area}"` : ""}${loc.city ? `, city="${loc.city}"` : ""}${typeof loc.distanceFromAlicanteKm === "number" ? `, distanceFromAlicanteKm=${loc.distanceFromAlicanteKm}` : ""}`
       : `USER_LOCATION: (no disponible) — locationStatus=${locStatus}`;
     const latestUserText =
-      [...messages].reverse().find((m: any) => m.role === "user")?.content ?? "";
+      [...messages].reverse().find((m: { role: string; content: string }) => m.role === "user")
+        ?.content ?? "";
     const [openFoodPlaces, mentionedPlaces] = await Promise.all([
       isFoodOrDrinkRequest(messages)
         ? fetchConfirmedOpenFoodPlaces(context)
