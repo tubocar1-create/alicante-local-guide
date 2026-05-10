@@ -4,9 +4,18 @@ import { Link } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { PlaceImage } from "@/components/PlaceImage";
+import { useUserLocation, distanceKm } from "@/hooks/useUserLocation";
 import heroImg from "@/assets/alicante-hero.jpg";
 
 type Msg = { role: "user" | "assistant"; content: string };
+type GeoInfo = {
+  lat: number;
+  lng: number;
+  area?: string;
+  city?: string;
+  distanceFromAlicanteKm?: number;
+};
+const ALICANTE_CENTER = { lat: 38.3452, lng: -0.481 };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 const SUGGESTIONS: { label: string; prompt: string }[] = [
@@ -29,8 +38,45 @@ export function ChatScreen() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [geo, setGeo] = useState<GeoInfo | null>(null);
+  const [geoStatus, setGeoStatus] = useState<"idle" | "asking" | "ok" | "denied">("idle");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const { state: locState, request: requestLocation } = useUserLocation();
+
+  // Ask for location automatically on mount (one-shot).
+  useEffect(() => {
+    setGeoStatus("asking");
+    requestLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // React to location state changes; reverse-geocode when we get coords.
+  useEffect(() => {
+    if (locState.status === "ready") {
+      const { lat, lng } = locState.coords;
+      const dKm = distanceKm({ lat, lng }, ALICANTE_CENTER);
+      setGeo({ lat, lng, distanceFromAlicanteKm: Math.round(dKm * 10) / 10 });
+      setGeoStatus("ok");
+      // Reverse geocode (Nominatim) — best-effort, no key required.
+      fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=16&accept-language=es`,
+      )
+        .then((r) => r.json())
+        .then((d) => {
+          const a = d?.address ?? {};
+          const area =
+            a.neighbourhood || a.suburb || a.quarter || a.city_district || a.village || a.town;
+          const city = a.city || a.town || a.village || a.municipality;
+          setGeo((prev) =>
+            prev ? { ...prev, area, city } : { lat, lng, area, city, distanceFromAlicanteKm: dKm },
+          );
+        })
+        .catch(() => {});
+    } else if (locState.status === "error") {
+      setGeoStatus("denied");
+    }
+  }, [locState]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -69,7 +115,19 @@ export function ChatScreen() {
         },
         body: JSON.stringify({
           messages: next.map((m) => ({ role: m.role, content: m.content })),
-          context: { maxOptions: 4 },
+          context: {
+            maxOptions: 4,
+            location: geo
+              ? {
+                  lat: geo.lat,
+                  lng: geo.lng,
+                  area: geo.area,
+                  city: geo.city,
+                  distanceFromAlicanteKm: geo.distanceFromAlicanteKm,
+                }
+              : null,
+            locationStatus: geoStatus,
+          },
         }),
       });
 
@@ -239,6 +297,30 @@ export function ChatScreen() {
 
       {/* Composer */}
       <div className="relative border-t border-border/60 bg-background/70 px-3 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/50">
+        {geoStatus === "denied" && (
+          <div className="mx-auto mb-2 flex max-w-2xl items-center justify-between gap-2 rounded-2xl border border-border bg-card/90 px-3 py-2 text-xs text-card-foreground shadow-sm">
+            <span className="flex items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5 text-primary" />
+              Para clavar recomendaciones cerquita, dame ubicación 📍
+            </span>
+            <button
+              onClick={() => {
+                setGeoStatus("asking");
+                requestLocation();
+              }}
+              className="rounded-full bg-primary px-3 py-1 text-[11px] font-medium text-primary-foreground active:scale-95"
+            >
+              Activar
+            </button>
+          </div>
+        )}
+        {geoStatus === "ok" && geo?.city && (
+          <div className="mx-auto mb-2 max-w-2xl text-center text-[11px] text-muted-foreground">
+            <MapPin className="mr-1 inline h-3 w-3 text-primary" />
+            Te tengo en {geo.area ? `${geo.area}, ` : ""}
+            {geo.city}
+          </div>
+        )}
         <div className="mx-auto flex max-w-2xl items-end gap-2">
           <div className="flex flex-1 items-end gap-2 rounded-3xl border border-border bg-card/90 px-3 py-2 shadow-sm backdrop-blur">
             <textarea
