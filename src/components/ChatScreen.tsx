@@ -149,13 +149,27 @@ export function ChatScreen() {
             your local in Alicante
           </p>
         </div>
-        <Link
-          to="/explore"
-          className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-full bg-primary text-primary-foreground active:scale-95 transition shadow-soft"
-        >
-          <MapIcon className="h-3.5 w-3.5" />
-          Mapa
-        </Link>
+        <nav className="flex items-center gap-1.5">
+          <Link
+            to="/stay"
+            className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full bg-secondary text-secondary-foreground active:scale-95"
+          >
+            🏨 Dormir
+          </Link>
+          <Link
+            to="/eat"
+            className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full bg-secondary text-secondary-foreground active:scale-95"
+          >
+            🍽️ Comer
+          </Link>
+          <Link
+            to="/explore"
+            className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full bg-primary text-primary-foreground active:scale-95 shadow-soft"
+          >
+            <MapIcon className="h-3 w-3" />
+            Mapa
+          </Link>
+        </nav>
       </header>
 
       {/* Messages */}
