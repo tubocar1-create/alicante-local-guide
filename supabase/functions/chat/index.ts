@@ -758,6 +758,54 @@ async function fetchConfirmedOpenFoodPlaces(context?: ChatContext): Promise<Food
       ? { lat: loc.lat, lng: loc.lng }
       : ALICANTE_CENTER;
   const radius = loc ? 5500 : 8500;
+
+  // 1) PRIMARY: Google Places — real-time hours from Maps.
+  const nowDate = new Date();
+  const gPlaces = await googlePlacesNearbyFood(center, radius);
+  if (gPlaces.length > 0) {
+    const seen = new Set<string>();
+    const out: FoodPlace[] = [];
+    for (const g of gPlaces) {
+      const name = g.displayName?.text;
+      const lat = g.location?.latitude;
+      const lon = g.location?.longitude;
+      if (!name || lat == null || lon == null) continue;
+      const openNow = g.currentOpeningHours?.openNow ?? g.regularOpeningHours?.openNow;
+      if (openNow !== true) continue;
+      const closes = googleClosesInfo(g, nowDate);
+      if (!closes || closes.closesInMinutes <= 60) continue;
+      const key = normalized(`${name}|${lat.toFixed(4)}|${lon.toFixed(4)}`);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const cuisine = (g.types ?? []).find((t) =>
+        /restaurant|bar|cafe|bakery|pizza|sushi|seafood|vegan|vegetarian|fast_food|ice_cream/.test(t),
+      );
+      out.push({
+        name,
+        kind: g.primaryType ?? "restaurant",
+        lat,
+        lon,
+        openingHours: "",
+        closesAt: closes.closesAt,
+        closesInMinutes: closes.closesInMinutes,
+        cuisine,
+        address: g.formattedAddress,
+      });
+    }
+    if (out.length > 0) {
+      return shuffle(
+        out
+          .sort(
+            (a, b) =>
+              distanceKm(center, { lat: a.lat, lng: a.lon }) -
+              distanceKm(center, { lat: b.lat, lng: b.lon }),
+          )
+          .slice(0, 40),
+      ).slice(0, 16);
+    }
+  }
+
+  // 2) FALLBACK: OpenStreetMap / Overpass.
   const area = `(around:${radius},${center.lat},${center.lng})`;
   const body = `[out:json][timeout:18];
 (
