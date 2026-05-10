@@ -26,9 +26,15 @@ const GREETING: Msg = {
 
 const LOCATION_RECOMMENDATION_RE =
   /\b(d[oó]nde|donde|cerca|near|around|nearby|comer|cenar|almorzar|desayunar|dormir|hotel|hostal|tomar el sol|playa|comprar|tienda|beber|copas|restaurante|restaurant|shop|sleep|eat|sunbathe)\b/i;
+const FOOD_RECOMMENDATION_RE =
+  /\b(comer|cenar|almorzar|desayunar|restaurante|restaurant|tapas|pizza|sushi|marisco|arroz|cafe|cafeteria|hamburguesa|burger|vegano|vegetariano|eat|food)\b/i;
 
 function needsLocationForRecommendation(text: string) {
   return LOCATION_RECOMMENDATION_RE.test(text.normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+}
+
+function isFoodRecommendation(text: string) {
+  return FOOD_RECOMMENDATION_RE.test(text.normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
 }
 
 export function ChatScreen() {
@@ -64,6 +70,20 @@ export function ChatScreen() {
         },
       ]);
       setInput("");
+      return;
+    }
+    if (isFoodRecommendation(trimmed) && locState.status === "ready") {
+      setMessages((prev) => [
+        ...prev,
+        { role: "user", content: trimmed },
+        {
+          role: "assistant",
+          content:
+            "Va 💛 Te abro 4 opciones cerca de donde estás, abiertas ahora mismo y con reseñas a mano. Si quieres más, las añado de una en una.",
+        },
+      ]);
+      setInput("");
+      setEatOpen(true);
       return;
     }
     setError(null);
