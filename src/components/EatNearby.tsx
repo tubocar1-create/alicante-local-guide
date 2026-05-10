@@ -275,6 +275,16 @@ export function EatNearby({ onClose }: Props) {
                   );
                 })}
               </ul>
+
+              {!loading && shown.length < ranked.length && (
+                <button
+                  type="button"
+                  onClick={() => setVisible((v) => Math.min(v + 1, ranked.length))}
+                  className="mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full border bg-background hover:bg-accent/40 active:scale-[0.98] text-sm font-medium"
+                >
+                  ➕ Enséñame uno más ({ranked.length - shown.length} por ver)
+                </button>
+              )}
             </div>
           )}
         </div>
