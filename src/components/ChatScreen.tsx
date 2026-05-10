@@ -15,6 +15,7 @@ type GeoInfo = {
   city?: string;
   distanceFromAlicanteKm?: number;
 };
+type GeoStatus = "idle" | "asking" | "ok" | "denied";
 const ALICANTE_CENTER = { lat: 38.3452, lng: -0.481 };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
@@ -39,17 +40,10 @@ export function ChatScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [geo, setGeo] = useState<GeoInfo | null>(null);
-  const [geoStatus, setGeoStatus] = useState<"idle" | "asking" | "ok" | "denied">("idle");
+  const [geoStatus, setGeoStatus] = useState<GeoStatus>("idle");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { state: locState, request: requestLocation } = useUserLocation();
-
-  // Ask for location automatically on mount (one-shot).
-  useEffect(() => {
-    setGeoStatus("asking");
-    requestLocation();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // React to location state changes; reverse-geocode when we get coords.
   useEffect(() => {
@@ -75,8 +69,15 @@ export function ChatScreen() {
         .catch(() => {});
     } else if (locState.status === "error") {
       setGeoStatus("denied");
+    } else if (locState.status === "loading") {
+      setGeoStatus("asking");
     }
   }, [locState]);
+
+  const activateLocation = () => {
+    setGeoStatus("asking");
+    requestLocation();
+  };
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -278,7 +279,6 @@ export function ChatScreen() {
 
           {isWelcome && (
             <>
-
               <div className="mt-2 flex flex-wrap gap-2">
                 {SUGGESTIONS.map((s) => (
                   <button
@@ -297,20 +297,22 @@ export function ChatScreen() {
 
       {/* Composer */}
       <div className="relative border-t border-border/60 bg-background/70 px-3 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/50">
-        {geoStatus === "denied" && (
+        {(geoStatus === "idle" || geoStatus === "asking" || geoStatus === "denied") && (
           <div className="mx-auto mb-2 flex max-w-2xl items-center justify-between gap-2 rounded-2xl border border-border bg-card/90 px-3 py-2 text-xs text-card-foreground shadow-sm">
             <span className="flex items-center gap-1.5">
               <MapPin className="h-3.5 w-3.5 text-primary" />
-              Para clavar recomendaciones cerquita, dame ubicación 📍
+              {geoStatus === "asking"
+                ? "Buscando tu ubicación… acepta el permiso si aparece 📍"
+                : locState.status === "error"
+                  ? locState.message
+                  : "Para clavar recomendaciones cerquita, activa tu ubicación 📍"}
             </span>
             <button
-              onClick={() => {
-                setGeoStatus("asking");
-                requestLocation();
-              }}
+              onClick={activateLocation}
+              disabled={geoStatus === "asking"}
               className="rounded-full bg-primary px-3 py-1 text-[11px] font-medium text-primary-foreground active:scale-95"
             >
-              Activar
+              {geoStatus === "asking" ? "Abriendo…" : "Activar"}
             </button>
           </div>
         )}
@@ -358,8 +360,6 @@ export function ChatScreen() {
           )}
         </div>
       </div>
-
-      
     </div>
   );
 }
