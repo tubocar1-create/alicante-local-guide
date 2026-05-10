@@ -4,18 +4,19 @@ import { Link } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { PlaceImage } from "@/components/PlaceImage";
-import { EatNearby } from "@/components/EatNearby";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import heroImg from "@/assets/alicante-hero.jpg";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
-const SUGGESTIONS = [
-  "🍽️ Comer cerca de mí",
-  "Best beach near the centre?",
-  "What to do tomorrow in Alicante?",
-  "Nightlife tips please 🍹",
+const SUGGESTIONS: { label: string; prompt: string }[] = [
+  { label: "🍽️ Comer", prompt: "¿Dónde puedo comer cerca de mí ahora mismo?" },
+  { label: "🏨 Dormir", prompt: "¿Dónde puedo dormir cerca de mí esta noche?" },
+  { label: "🏖️ Playa", prompt: "¿Qué playa tengo cerca para ir ahora?" },
+  { label: "🌳 Parque", prompt: "¿Qué parque o zona verde tengo cerca?" },
+  { label: "🛍️ Comprar", prompt: "¿Dónde puedo ir de compras cerca de mí?" },
+  { label: "🍹 Tomar algo", prompt: "¿Dónde voy a tomar algo cerca abierto ahora?" },
 ];
 
 const GREETING: Msg = {
