@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -18,6 +17,17 @@ type FoodPlace = {
   closesInMinutes: number;
   cuisine?: string;
   address?: string;
+};
+type ChatContext = {
+  maxOptions?: number;
+  location?: {
+    lat?: number;
+    lng?: number;
+    area?: string;
+    city?: string;
+    distanceFromAlicanteKm?: number;
+  } | null;
+  locationStatus?: string;
 };
 
 const DAYS: DayKey[] = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
@@ -140,8 +150,7 @@ function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: numb
   const dLng = ((b.lng - a.lng) * Math.PI) / 180;
   const lat1 = (a.lat * Math.PI) / 180;
   const lat2 = (b.lat * Math.PI) / 180;
-  const h =
-    Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+  const h = Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
@@ -169,7 +178,7 @@ function shuffle<T>(items: T[]) {
   return copy;
 }
 
-async function fetchConfirmedOpenFoodPlaces(context?: { location?: any }): Promise<FoodPlace[]> {
+async function fetchConfirmedOpenFoodPlaces(context?: ChatContext): Promise<FoodPlace[]> {
   const loc = context?.location;
   const center =
     typeof loc?.lat === "number" && typeof loc?.lng === "number"
@@ -218,18 +227,21 @@ out center 180;`;
           closesAt: open.closesAt,
           closesInMinutes: open.closesInMinutes,
           cuisine: tags.cuisine,
-          address: [tags["addr:street"], tags["addr:housenumber"], tags["addr:city"]]
-            .filter(Boolean)
-            .join(" ") || undefined,
+          address:
+            [tags["addr:street"], tags["addr:housenumber"], tags["addr:city"]]
+              .filter(Boolean)
+              .join(" ") || undefined,
         });
       }
 
       return shuffle(
-        places.sort(
-          (a, b) =>
-            distanceKm(center, { lat: a.lat, lng: a.lon }) -
-            distanceKm(center, { lat: b.lat, lng: b.lon }),
-        ).slice(0, 40),
+        places
+          .sort(
+            (a, b) =>
+              distanceKm(center, { lat: a.lat, lng: a.lon }) -
+              distanceKm(center, { lat: b.lat, lng: b.lon }),
+          )
+          .slice(0, 40),
       ).slice(0, 16);
     } catch (e) {
       lastErr = e;
