@@ -24,12 +24,26 @@ const GREETING: Msg = {
     "¡Hola! 👋 I'm your friend in Alicante. Tell me what you feel like — food, beach, a plan for today? I'll show you the spots locals actually love.",
 };
 
+const LOCATION_RECOMMENDATION_RE =
+  /\b(d[oó]nde|donde|cerca|near|around|nearby|comer|cenar|almorzar|desayunar|dormir|hotel|hostal|tomar el sol|playa|comprar|tienda|beber|copas|restaurante|restaurant|shop|sleep|eat|sunbathe)\b/i;
+const FOOD_RECOMMENDATION_RE =
+  /\b(comer|cenar|almorzar|desayunar|restaurante|restaurant|tapas|pizza|sushi|marisco|arroz|cafe|cafeteria|hamburguesa|burger|vegano|vegetariano|eat|food)\b/i;
+
+function needsLocationForRecommendation(text: string) {
+  return LOCATION_RECOMMENDATION_RE.test(text.normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+}
+
+function isFoodRecommendation(text: string) {
+  return FOOD_RECOMMENDATION_RE.test(text.normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+}
+
 export function ChatScreen() {
   const [messages, setMessages] = useState<Msg[]>([GREETING]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [eatOpen, setEatOpen] = useState(false);
+  const [eatQuery, setEatQuery] = useState("");
   const { state: locState, request: requestLocation } = useUserLocation({ watch: true });
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -42,6 +56,36 @@ export function ChatScreen() {
     const trimmed = text.trim();
     if (!trimmed || loading) return;
     if (trimmed === "🍽️ Comer cerca de mí") {
+      setEatQuery(trimmed);
+      setEatOpen(true);
+      return;
+    }
+    if (needsLocationForRecommendation(trimmed) && locState.status !== "ready") {
+      requestLocation();
+      setMessages((prev) => [
+        ...prev,
+        { role: "user", content: trimmed },
+        {
+          role: "assistant",
+          content:
+            "Claro 💛 Antes de recomendarte sitios necesito tenerte geolocalizado para darte opciones cerca de donde estás. Pulsa **Mi ubicación** arriba o acepta el permiso que acaba de salir, y te doy 4 opciones abiertas ahora mismo.",
+        },
+      ]);
+      setInput("");
+      return;
+    }
+    if (isFoodRecommendation(trimmed) && locState.status === "ready") {
+      setMessages((prev) => [
+        ...prev,
+        { role: "user", content: trimmed },
+        {
+          role: "assistant",
+          content:
+            "Va 💛 Te abro 4 opciones cerca de donde estás, abiertas ahora mismo y con reseñas a mano. Si quieres más, las añado de una en una.",
+        },
+      ]);
+      setInput("");
+      setEatQuery(trimmed);
       setEatOpen(true);
       return;
     }
@@ -78,8 +122,13 @@ export function ChatScreen() {
           context: {
             location:
               locState.status === "ready"
-                ? { lat: locState.coords.lat, lng: locState.coords.lng }
+                ? {
+                    lat: locState.coords.lat,
+                    lng: locState.coords.lng,
+                    accuracy: locState.coords.accuracy,
+                  }
                 : null,
+            maxOptions: 4,
           },
         }),
       });
@@ -135,12 +184,7 @@ export function ChatScreen() {
     <div className="relative flex h-[100dvh] flex-col bg-background">
       {/* Persistent background photo of Puerto de Alicante */}
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <img
-          src={heroImg}
-          alt=""
-          aria-hidden
-          className="h-full w-full object-cover"
-        />
+        <img src={heroImg} alt="" aria-hidden className="h-full w-full object-cover" />
         <div
           className={[
             "absolute inset-0 transition-colors duration-700",
@@ -193,7 +237,10 @@ export function ChatScreen() {
             {locState.status === "ready" ? "Ubicación" : "Mi ubicación"}
           </button>
           <button
-            onClick={() => setEatOpen(true)}
+            onClick={() => {
+              setEatQuery(input);
+              setEatOpen(true);
+            }}
             className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full gradient-warm text-primary-foreground active:scale-95 shadow-soft"
             title={input.trim() ? `Buscar cerca: "${input.trim()}"` : "Comer cerca de mí"}
           >
@@ -231,9 +278,7 @@ export function ChatScreen() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 p-4 text-white">
-                  <p className="text-xs uppercase tracking-widest opacity-90">
-                    Puerto de Alicante
-                  </p>
+                  <p className="text-xs uppercase tracking-widest opacity-90">Puerto de Alicante</p>
                   <h2 className="mt-1 text-2xl font-semibold leading-tight drop-shadow">
                     Bienvenido a Alicante 🌅
                   </h2>
@@ -295,7 +340,9 @@ export function ChatScreen() {
                   ) : locState.status === "error" ? (
                     <>
                       <p className="text-sm font-medium">Vaya, no pude verte 😅</p>
-                      <p className="text-xs text-muted-foreground">{locState.message}. Puedes intentarlo otra vez.</p>
+                      <p className="text-xs text-muted-foreground">
+                        {locState.message}. Puedes intentarlo otra vez.
+                      </p>
                     </>
                   ) : (
                     <>
@@ -373,7 +420,7 @@ export function ChatScreen() {
         </div>
       </div>
 
-      {eatOpen && <EatNearby onClose={() => setEatOpen(false)} initialQuery={input} />}
+      {eatOpen && <EatNearby onClose={() => setEatOpen(false)} initialQuery={eatQuery} />}
     </div>
   );
 }
@@ -390,11 +437,7 @@ function Bubble({ role, content }: { role: "user" | "assistant"; content: string
             : "rounded-bl-md bg-bubble-friend text-bubble-friend-foreground",
         ].join(" ")}
       >
-        {isUser ? (
-          content
-        ) : (
-          <AssistantContent content={content} />
-        )}
+        {isUser ? content : <AssistantContent content={content} />}
       </div>
     </div>
   );

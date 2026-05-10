@@ -19,6 +19,7 @@ export type Listing = {
   website?: string;
   address?: string;
   wikipedia?: string;
+  openingHours?: string;
   tags: Record<string, string>;
 };
 
@@ -34,10 +35,19 @@ const STAY_TAG: Record<StayKind, string> = {
 };
 const EAT_TAG = "amenity"; // all eat kinds use amenity=...
 
-function buildQuery(filters: { tag: string; value: string }[]): string {
-  const parts = filters
-    .map((f) => `nwr["${f.tag}"="${f.value}"](${ALICANTE_BBOX});`)
-    .join("\n");
+type FetchListingsOptions = {
+  center?: { lat: number; lng: number };
+  radiusMeters?: number;
+};
+
+function buildQuery(
+  filters: { tag: string; value: string }[],
+  opts?: FetchListingsOptions,
+): string {
+  const area = opts?.center
+    ? `(around:${opts.radiusMeters ?? 4500},${opts.center.lat},${opts.center.lng})`
+    : `(${ALICANTE_BBOX})`;
+  const parts = filters.map((f) => `nwr["${f.tag}"="${f.value}"]${area};`).join("\n");
   return `[out:json][timeout:30];
 (
 ${parts}
@@ -47,9 +57,10 @@ out center 600;`;
 
 export async function fetchListings(
   filters: { tag: string; value: string }[],
+  opts?: FetchListingsOptions,
 ): Promise<Listing[]> {
   if (filters.length === 0) return [];
-  const body = buildQuery(filters);
+  const body = buildQuery(filters, opts);
   let lastErr: unknown;
   for (const url of ENDPOINTS) {
     try {
@@ -98,6 +109,7 @@ export async function fetchListings(
           website: tags.website || tags["contact:website"],
           address: addr || undefined,
           wikipedia: tags.wikipedia,
+          openingHours: tags.opening_hours,
           tags,
         });
       }
