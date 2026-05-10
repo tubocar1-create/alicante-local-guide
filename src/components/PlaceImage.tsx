@@ -136,6 +136,28 @@ function mapsHref(query: string, mode: TravelMode = "walking") {
   return `https://www.google.com/maps/dir/?api=1&destination=${query}&travelmode=${tm}`;
 }
 
+function openMaps(e: React.MouseEvent, url: string) {
+  e.preventDefault();
+  // Try opening in the top window first (preview iframes often block target=_blank)
+  try {
+    const top = window.top ?? window;
+    const w = top.open(url, "_blank", "noopener,noreferrer");
+    if (w) return;
+  } catch {
+    // cross-origin top access can throw — fall through
+  }
+  const w2 = window.open(url, "_blank", "noopener,noreferrer");
+  if (!w2) {
+    // Last resort: navigate the top window
+    try {
+      if (window.top) window.top.location.href = url;
+      else window.location.href = url;
+    } catch {
+      window.location.href = url;
+    }
+  }
+}
+
 export function PlaceImage({ name }: { name: string }) {
   const key = name.trim().toLowerCase();
   const override = findPlaceOverride(name);
