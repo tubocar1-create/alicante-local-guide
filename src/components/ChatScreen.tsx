@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { PlaceImage } from "@/components/PlaceImage";
+import { EatNearby } from "@/components/EatNearby";
 import heroImg from "@/assets/alicante-hero.jpg";
 
 type Msg = { role: "user" | "assistant"; content: string };
