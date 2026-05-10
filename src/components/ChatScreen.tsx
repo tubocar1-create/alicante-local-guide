@@ -39,6 +39,10 @@ export function ChatScreen() {
   async function send(text: string) {
     const trimmed = text.trim();
     if (!trimmed || loading) return;
+    if (trimmed === "🍽️ Comer cerca de mí") {
+      setEatOpen(true);
+      return;
+    }
     setError(null);
     const userMsg: Msg = { role: "user", content: trimmed };
     const next = [...messages, userMsg];
