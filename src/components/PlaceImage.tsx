@@ -172,17 +172,15 @@ export function PlaceImage({ name }: { name: string }) {
         <figcaption className="bg-card/95 px-3 py-2.5 text-sm">
           <span className="block font-semibold text-foreground">{override.title}</span>
           <span className="mt-0.5 block text-muted-foreground">{override.description}</span>
-          <div className="mt-2 flex flex-wrap items-center gap-y-1.5">
-            <DistanceBadge target={override.coords ?? null} />
-            <a
-              href={`https://www.google.com/maps/search/?api=1&query=${query}`}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-sm transition hover:opacity-90"
-            >
-              📍 Cómo llegar
-            </a>
-          </div>
+          <TravelInfo target={override.coords ?? null} />
+          <a
+            href={mapsHref(query)}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-sm transition hover:opacity-90"
+          >
+            📍 Cómo llegar
+          </a>
         </figcaption>
       </figure>
     );
@@ -210,14 +208,15 @@ export function PlaceImage({ name }: { name: string }) {
           (e.currentTarget as HTMLImageElement).style.display = "none";
         }}
       />
-      <div className="flex flex-wrap items-center gap-y-1.5">
-        <DistanceBadge target={wiki.coords} />
-        <a
-          href={`https://www.google.com/maps/search/?api=1&query=${mapsQuery}`}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-sm transition hover:opacity-90"
-        >
+      <TravelInfo target={wiki.coords} />
+      <a
+        href={mapsHref(mapsQuery)}
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-sm transition hover:opacity-90"
+      >
+        📍 Cómo llegar
+      </a>
           📍 Cómo llegar
         </a>
       </div>
