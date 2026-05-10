@@ -7,6 +7,7 @@ import { PlaceImage } from "@/components/PlaceImage";
 import { PointsHud } from "@/components/PointsHud";
 import { usePoints } from "@/hooks/usePoints";
 import { useUserLocation, distanceKm } from "@/hooks/useUserLocation";
+import ReferralDialog from "@/components/ReferralDialog";
 import heroImg from "@/assets/alicante-hero.jpg";
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -77,6 +78,16 @@ export function ChatScreen() {
   const setActiveSubmenu = (s: Suggestion | null) => setSubmenuStack(s ? [s] : []);
   const [geo, setGeo] = useState<GeoInfo | null>(null);
   const [geoStatus, setGeoStatus] = useState<GeoStatus>("idle");
+  const [referralName, setReferralName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { name?: string } | undefined;
+      if (detail?.name) setReferralName(detail.name);
+    };
+    window.addEventListener("afp:wantgo", handler);
+    return () => window.removeEventListener("afp:wantgo", handler);
+  }, []);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { state: locState, request: requestLocation } = useUserLocation();
@@ -426,6 +437,13 @@ export function ChatScreen() {
           )}
         </div>
       </div>
+      {referralName && (
+        <ReferralDialog
+          placeId={referralName}
+          placeName={referralName}
+          onClose={() => setReferralName(null)}
+        />
+      )}
     </div>
   );
 }
@@ -461,6 +479,7 @@ function AssistantContent({ content }: { content: string }) {
       {placeName && <PlaceImage name={placeName} />}
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
+        urlTransform={(url) => (url.startsWith("qi:") ? url : url)}
         components={{
           img: ({ src, alt }) => (
             <img
@@ -473,16 +492,35 @@ function AssistantContent({ content }: { content: string }) {
               }}
             />
           ),
-          a: ({ href, children }) => (
-            <a
-              href={href}
-              target="_blank"
-              rel="noreferrer"
-              className="text-primary underline underline-offset-2"
-            >
-              {children}
-            </a>
-          ),
+          a: ({ href, children }) => {
+            const url = String(href ?? "");
+            if (url.startsWith("qi:")) {
+              const name = decodeURIComponent(url.slice(3));
+              return (
+                <button
+                  type="button"
+                  onClick={() =>
+                    window.dispatchEvent(
+                      new CustomEvent("afp:wantgo", { detail: { name } }),
+                    )
+                  }
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full gradient-warm text-primary-foreground shadow-soft active:scale-95 align-middle ml-1"
+                >
+                  🎟️ Quiero ir
+                </button>
+              );
+            }
+            return (
+              <a
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary underline underline-offset-2"
+              >
+                {children}
+              </a>
+            );
+          },
           p: ({ children }) => <p className="whitespace-pre-wrap">{children}</p>,
         }}
       >
