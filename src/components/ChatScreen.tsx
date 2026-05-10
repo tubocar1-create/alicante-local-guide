@@ -220,57 +220,6 @@ export function ChatScreen() {
 
           {isWelcome && (
             <>
-              <div
-                className={[
-                  "mt-2 flex items-center gap-3 rounded-2xl border p-3 shadow-soft backdrop-blur",
-                  locState.status === "ready"
-                    ? "border-emerald-500/30 bg-emerald-500/10"
-                    : "border-border bg-card/90",
-                ].join(" ")}
-              >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full gradient-warm text-primary-foreground shadow-soft">
-                  {locState.status === "loading" ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : locState.status === "ready" ? (
-                    <CheckCircle2 className="h-5 w-5" />
-                  ) : (
-                    <Navigation className="h-5 w-5" />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  {locState.status === "ready" ? (
-                    <>
-                      <p className="text-sm font-medium">¡Te tengo en el mapa! 📍</p>
-                      <p className="text-xs text-muted-foreground">
-                        Te recomendaré sitios cerquita de ti en tiempo real.
-                      </p>
-                    </>
-                  ) : locState.status === "error" ? (
-                    <>
-                      <p className="text-sm font-medium">Vaya, no pude verte 😅</p>
-                      <p className="text-xs text-muted-foreground">
-                        {locState.message}. Puedes intentarlo otra vez.
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-sm font-medium">¿Me compartes tu ubicación? 🙌</p>
-                      <p className="text-xs text-muted-foreground">
-                        Así te sugiero planes cerquita y todo se actualiza al moverte.
-                      </p>
-                    </>
-                  )}
-                </div>
-                {locState.status !== "ready" && (
-                  <button
-                    onClick={requestLocation}
-                    disabled={locState.status === "loading"}
-                    className="shrink-0 rounded-full gradient-warm px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-soft active:scale-95 disabled:opacity-60"
-                  >
-                    {locState.status === "loading" ? "Buscando…" : "Activar"}
-                  </button>
-                )}
-              </div>
 
               <div className="mt-2 flex flex-wrap gap-2">
                 {SUGGESTIONS.map((s) => (
