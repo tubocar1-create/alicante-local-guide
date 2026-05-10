@@ -439,7 +439,7 @@ async function googlePlacesTextSearch(
         "Content-Type": "application/json",
         "X-Goog-Api-Key": apiKey,
         "X-Goog-FieldMask":
-          "places.displayName,places.formattedAddress,places.location,places.primaryType,places.types,places.regularOpeningHours,places.currentOpeningHours",
+          "places.displayName,places.formattedAddress,places.location,places.primaryType,places.types,places.regularOpeningHours,places.currentOpeningHours,places.regularOpeningHours.weekdayDescriptions,places.currentOpeningHours.weekdayDescriptions",
       },
       body: JSON.stringify({
         textQuery: query,
@@ -459,7 +459,17 @@ async function googlePlacesTextSearch(
       return null;
     }
     const json = await res.json();
-    return (json.places?.[0] as GooglePlace) ?? null;
+    const place = (json.places?.[0] as GooglePlace) ?? null;
+    if (place) {
+      console.log("[GooglePlaces]", query, "->", JSON.stringify({
+        name: place.displayName?.text,
+        openNow: place.currentOpeningHours?.openNow ?? place.regularOpeningHours?.openNow,
+        currentPeriods: place.currentOpeningHours?.periods,
+        regularPeriods: place.regularOpeningHours?.periods,
+        weekday: (place.currentOpeningHours as any)?.weekdayDescriptions ?? (place.regularOpeningHours as any)?.weekdayDescriptions,
+      }));
+    }
+    return place;
   } catch (e) {
     console.error("Google Places textSearch error:", e);
     return null;
