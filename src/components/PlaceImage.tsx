@@ -217,9 +217,6 @@ export function PlaceImage({ name }: { name: string }) {
       >
         📍 Cómo llegar
       </a>
-          📍 Cómo llegar
-        </a>
-      </div>
     </div>
   );
 }
