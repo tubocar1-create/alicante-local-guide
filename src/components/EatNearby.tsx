@@ -388,6 +388,13 @@ export function EatNearby({ onClose, initialQuery }: Props) {
                         </button>
                         <button
                           type="button"
+                          onClick={() => setReferral(i)}
+                          className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full gradient-warm text-primary-foreground shadow-soft active:scale-95"
+                        >
+                          <Ticket className="w-3 h-3" /> Quiero ir
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => openExternal(tripHref)}
                           className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground active:scale-95"
                         >
