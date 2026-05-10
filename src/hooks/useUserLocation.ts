@@ -8,38 +8,71 @@ export type LocationState =
   | { status: "error"; message: string };
 
 let cached: Coords | null = null;
+let watchId: number | null = null;
+let watchRefs = 0;
 const listeners = new Set<(c: Coords) => void>();
 
-export function useUserLocation() {
+function notify(c: Coords) {
+  cached = c;
+  listeners.forEach((l) => l(c));
+}
+
+function startWatch() {
+  if (watchId !== null) return;
+  if (typeof navigator === "undefined" || !navigator.geolocation) return;
+  watchId = navigator.geolocation.watchPosition(
+    (pos) => notify({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+    () => {},
+    { enableHighAccuracy: true, maximumAge: 30_000, timeout: 20_000 },
+  );
+}
+
+function stopWatch() {
+  if (watchId !== null && navigator.geolocation) {
+    navigator.geolocation.clearWatch(watchId);
+  }
+  watchId = null;
+}
+
+export function useUserLocation(opts?: { watch?: boolean }) {
+  const watch = !!opts?.watch;
   const [state, setState] = useState<LocationState>(
     cached ? { status: "ready", coords: cached } : { status: "idle" },
   );
 
   useEffect(() => {
-    if (cached) return;
     const onUpdate = (c: Coords) => setState({ status: "ready", coords: c });
     listeners.add(onUpdate);
+    if (watch) {
+      watchRefs += 1;
+      startWatch();
+    }
     return () => {
       listeners.delete(onUpdate);
+      if (watch) {
+        watchRefs -= 1;
+        if (watchRefs <= 0) stopWatch();
+      }
     };
-  }, []);
+  }, [watch]);
 
   function request() {
-    if (cached) {
-      setState({ status: "ready", coords: cached });
-      return;
-    }
     if (typeof navigator === "undefined" || !navigator.geolocation) {
       setState({ status: "error", message: "Geolocalización no disponible" });
+      return;
+    }
+    if (cached) {
+      setState({ status: "ready", coords: cached });
+      startWatch();
       return;
     }
     setState({ status: "loading" });
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const c = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        cached = c;
-        listeners.forEach((l) => l(c));
+        notify(c);
         setState({ status: "ready", coords: c });
+        startWatch();
       },
       (err) => {
         setState({
@@ -50,7 +83,7 @@ export function useUserLocation() {
               : "No se pudo obtener tu ubicación",
         });
       },
-      { enableHighAccuracy: false, maximumAge: 5 * 60 * 1000, timeout: 10000 },
+      { enableHighAccuracy: true, maximumAge: 60_000, timeout: 15_000 },
     );
   }
 
@@ -82,13 +115,10 @@ export type TravelMode = "walking" | "driving" | "transit";
 export function estimateMinutes(km: number, mode: TravelMode): number {
   switch (mode) {
     case "walking":
-      // 4.8 km/h with +20% for stops/turns
       return Math.max(1, Math.round((km / 4.8) * 60 * 1.2));
     case "driving":
-      // 30 km/h urban with +30% for traffic + 2 min for parking/start
       return Math.max(2, Math.round((km / 30) * 60 * 1.3) + 2);
     case "transit":
-      // 18 km/h average with +40% for transfers + 5 min wait
       return Math.max(5, Math.round((km / 18) * 60 * 1.4) + 5);
   }
 }
