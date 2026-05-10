@@ -7,6 +7,7 @@ import { PlaceImage } from "@/components/PlaceImage";
 import { PointsHud } from "@/components/PointsHud";
 import { usePoints } from "@/hooks/usePoints";
 import { useUserLocation, distanceKm } from "@/hooks/useUserLocation";
+import ReferralDialog from "@/components/ReferralDialog";
 import heroImg from "@/assets/alicante-hero.jpg";
 
 type Msg = { role: "user" | "assistant"; content: string };
