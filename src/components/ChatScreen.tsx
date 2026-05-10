@@ -238,6 +238,7 @@ export function ChatScreen() {
           </p>
         </div>
         <nav className="flex items-center gap-1.5">
+          <PointsHud compact />
           <button
             onClick={() => {
               setMessages([GREETING]);
