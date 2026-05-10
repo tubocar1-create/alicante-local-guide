@@ -110,7 +110,7 @@ export function EatNearby({ onClose, initialQuery }: Props) {
     if (!me || !picked) return [];
     let arr = items.filter((i) => {
       if (isMercadoCentralClosedSunday(i.name)) return false;
-      return getOpeningStatus(i.openingHours).status !== "closed";
+      return getOpeningStatus(i.openingHours).status === "open";
     });
     if (picked.match.length > 0) {
       arr = arr.filter((i) => {
@@ -218,7 +218,7 @@ export function EatNearby({ onClose, initialQuery }: Props) {
               )}
               {!loading && !error && ranked.length === 0 && (
                 <div className="text-sm text-muted-foreground py-8 text-center">
-                  Uy, no veo nada de eso aquí al lado. Prueba otra opción 🙃
+                  Uy, no veo nada abierto ahora con horario confirmado aquí al lado. Prueba otra opción 🙃
                 </div>
               )}
 
