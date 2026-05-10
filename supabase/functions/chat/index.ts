@@ -374,7 +374,7 @@ function buildFoodRecommendationsResponse(
   const candidates = openFoodPlaces
     .filter((place) => !alreadyMentioned.has(normalized(place.name)))
     .filter((place) => matchesFoodPreference(place, latestUserText));
-  const selected = shuffle(candidates).slice(0, 4);
+  const selected = shuffle(candidates).slice(0, Math.max(maxOptions, 8));
 
   if (selected.length === 0) {
     return "Uy, ahora mismo no se me ocurre ningún sitio así que te pueda recomendar con la cabeza tranquila 😅 ¿Probamos cambiando de zona o de tipo de comida?";
@@ -605,6 +605,71 @@ async function googlePlacesNearbyFood(
   return merged;
 }
 
+// Multi-result Text Search — broadens coverage for specific cuisines/keywords
+// (e.g. "hamburguesería", "kebab", "pizzería") that Nearby's type list misses.
+async function googlePlacesSearchTextMany(
+  query: string,
+  center: { lat: number; lng: number },
+  radius = 9000,
+): Promise<GooglePlace[]> {
+  const apiKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
+  if (!apiKey) return [];
+  try {
+    const res = await fetch(`${GOOGLE_PLACES_BASE}/places:searchText`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask":
+          "places.id,places.displayName,places.formattedAddress,places.location,places.primaryType,places.types,places.regularOpeningHours,places.currentOpeningHours",
+      },
+      body: JSON.stringify({
+        textQuery: query,
+        languageCode: "es",
+        regionCode: "ES",
+        maxResultCount: 20,
+        locationBias: {
+          circle: {
+            center: { latitude: center.lat, longitude: center.lng },
+            radius,
+          },
+        },
+      }),
+    });
+    if (!res.ok) {
+      console.error("Google Places searchTextMany failed", query, res.status, await res.text());
+      return [];
+    }
+    const json = await res.json();
+    return (json.places ?? []) as GooglePlace[];
+  } catch (e) {
+    console.error("Google Places searchTextMany error:", query, e);
+    return [];
+  }
+}
+
+function fastFoodSubQueries(sub: FastFoodSub): string[] {
+  if (sub === "burger") return ["hamburguesería", "burger", "smash burger"];
+  if (sub === "kebab") return ["kebab", "döner", "shawarma"];
+  if (sub === "pizza") return ["pizzería", "pizza"];
+  if (sub === "chain")
+    return ["McDonald's", "KFC", "Burger King", "TGB", "100 Montaditos", "Telepizza", "Domino's", "Five Guys", "Goiko", "Popeyes", "Foster's Hollywood"];
+  if (sub === "all") return ["comida rápida", "hamburguesería", "kebab", "pizzería"];
+  return [];
+}
+
+function detectCuisineQueries(text: string): string[] {
+  const t = normalized(text);
+  const out: string[] = [];
+  if (/\b(italiano|italiana|pasta)\b/.test(t)) out.push("restaurante italiano", "trattoria");
+  if (/\b(japones|japonesa|sushi)\b/.test(t)) out.push("restaurante japonés", "sushi");
+  if (/\b(asiatico|asiatica|chino|china|tailandes|tailandesa|vietnamita|coreano|coreana)\b/.test(t))
+    out.push("restaurante asiático", "wok");
+  if (/\b(vegano|vegana|vegetariano|vegetariana|saludable)\b/.test(t)) out.push("restaurante vegano", "vegetariano");
+  if (/\b(arroz|arroces|paella|marisco|marisqueria)\b/.test(t)) out.push("arrocería", "marisquería", "paella");
+  if (/\b(brunch|desayuno)\b/.test(t)) out.push("brunch", "desayunos");
+  return out;
+}
 
 const NAME_STOPWORDS = new Set([
   "alicante",
@@ -850,7 +915,10 @@ async function fetchMentionedPlaces(text: string): Promise<MentionedPlace[]> {
   return results;
 }
 
-async function fetchConfirmedOpenFoodPlaces(context?: ChatContext): Promise<FoodPlace[]> {
+async function fetchConfirmedOpenFoodPlaces(
+  context?: ChatContext,
+  latestText = "",
+): Promise<FoodPlace[]> {
   const loc = context?.location;
   const center =
     typeof loc?.lat === "number" && typeof loc?.lng === "number"
@@ -858,9 +926,26 @@ async function fetchConfirmedOpenFoodPlaces(context?: ChatContext): Promise<Food
       : ALICANTE_CENTER;
   const radius = loc ? 9000 : 12000;
 
-  // 1) PRIMARY: Google Places — real-time hours from Maps.
+  // 1) PRIMARY: Google Places — Nearby + targeted Text Searches.
   const nowDate = new Date();
-  const gPlaces = await googlePlacesNearbyFood(center, radius);
+  const sub = detectFastFoodSub(latestText);
+  const extraQueries = [...fastFoodSubQueries(sub), ...detectCuisineQueries(latestText)];
+  const [nearby, ...textGroups] = await Promise.all([
+    googlePlacesNearbyFood(center, radius),
+    ...extraQueries.map((q) => googlePlacesSearchTextMany(q, center, radius)),
+  ]);
+  const gPlaces: GooglePlace[] = [...nearby];
+  const mergedSeen = new Set<string>(
+    nearby.map((p) => (p as { id?: string }).id ?? `${p.displayName?.text}|${p.location?.latitude}|${p.location?.longitude}`),
+  );
+  for (const list of textGroups) {
+    for (const p of list) {
+      const id = (p as { id?: string }).id ?? `${p.displayName?.text}|${p.location?.latitude}|${p.location?.longitude}`;
+      if (mergedSeen.has(id)) continue;
+      mergedSeen.add(id);
+      gPlaces.push(p);
+    }
+  }
   if (gPlaces.length > 0) {
     const seen = new Set<string>();
     const out: FoodPlace[] = [];
@@ -1119,7 +1204,7 @@ serve(async (req) => {
     const mayNeedFoodFallbacks = foodRequest || extractMentionedNames(latestUserText).length > 0;
     const [openFoodPlaces, mentionedPlaces] = await Promise.all([
       mayNeedFoodFallbacks
-        ? fetchConfirmedOpenFoodPlaces(context)
+        ? fetchConfirmedOpenFoodPlaces(context, latestUserText)
         : Promise.resolve([] as FoodPlace[]),
       fetchMentionedPlaces(latestUserText).catch(() => [] as MentionedPlace[]),
     ]);
