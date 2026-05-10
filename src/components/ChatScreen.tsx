@@ -4,9 +4,18 @@ import { Link } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { PlaceImage } from "@/components/PlaceImage";
+import { useUserLocation, distanceKm } from "@/hooks/useUserLocation";
 import heroImg from "@/assets/alicante-hero.jpg";
 
 type Msg = { role: "user" | "assistant"; content: string };
+type GeoInfo = {
+  lat: number;
+  lng: number;
+  area?: string;
+  city?: string;
+  distanceFromAlicanteKm?: number;
+};
+const ALICANTE_CENTER = { lat: 38.3452, lng: -0.481 };
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 const SUGGESTIONS: { label: string; prompt: string }[] = [
