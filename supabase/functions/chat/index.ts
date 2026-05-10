@@ -345,6 +345,168 @@ function buildFoodRecommendationsResponse(
 }
 
 const ALICANTE_BBOX = "37.84,-1.13,38.87,0.21";
+
+// ============================================================
+// Google Places (New) integration — PRIMARY source for hours
+// ============================================================
+const GOOGLE_PLACES_BASE = "https://places.googleapis.com/v1";
+
+type GooglePlace = {
+  displayName?: { text?: string };
+  formattedAddress?: string;
+  location?: { latitude: number; longitude: number };
+  primaryType?: string;
+  types?: string[];
+  regularOpeningHours?: {
+    openNow?: boolean;
+    periods?: Array<{
+      open?: { day: number; hour: number; minute: number };
+      close?: { day: number; hour: number; minute: number };
+    }>;
+  };
+  currentOpeningHours?: {
+    openNow?: boolean;
+    periods?: Array<{
+      open?: { day: number; hour: number; minute: number };
+      close?: { day: number; hour: number; minute: number };
+    }>;
+  };
+};
+
+// Compute "closes at" from Google Places periods using Madrid time.
+// Google days: 0 = Sunday, 1 = Monday, ..., 6 = Saturday.
+function googleClosesInfo(
+  place: GooglePlace,
+  date = new Date(),
+): { closesAt: string; closesInMinutes: number } | null {
+  const hours = place.currentOpeningHours ?? place.regularOpeningHours;
+  if (!hours?.periods?.length) return null;
+
+  // Madrid weekday (0=Sun..6=Sat) and minutes-of-day
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Europe/Madrid",
+    weekday: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  const wdMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  const today = wdMap[get("weekday")] ?? 0;
+  const nowMin = Number(get("hour")) * 60 + Number(get("minute"));
+
+  // Convert each period to absolute minute offsets from start-of-week (today as anchor).
+  // Look for a period covering "now".
+  for (const p of hours.periods) {
+    if (!p.open || !p.close) {
+      // 24h open period (Google encodes 24/7 as a single period without close on some accounts)
+      if (p.open && !p.close) {
+        return { closesAt: "24:00", closesInMinutes: 24 * 60 };
+      }
+      continue;
+    }
+    const openDayDelta = ((p.open.day - today) + 7) % 7;
+    // We only consider open today or yesterday-rolling-into-today
+    const openMin = openDayDelta * 1440 + p.open.hour * 60 + p.open.minute;
+    let closeDayDelta = ((p.close.day - today) + 7) % 7;
+    let closeMin = closeDayDelta * 1440 + p.close.hour * 60 + p.close.minute;
+    if (closeMin <= openMin) closeMin += 7 * 1440; // wraps
+    // Normalize to "today" frame: subtract days until openMin <= today end
+    // Try both today (delta=0) and yesterday (delta=-1)
+    for (const shift of [0, -1, -2]) {
+      const o = openMin + shift * 1440;
+      const c = closeMin + shift * 1440;
+      if (nowMin >= o && nowMin < c) {
+        const minsLeft = c - nowMin;
+        const closeHM = ((c % 1440) + 1440) % 1440;
+        return { closesAt: minutesToClock(closeHM), closesInMinutes: minsLeft };
+      }
+    }
+  }
+  return null;
+}
+
+async function googlePlacesTextSearch(
+  query: string,
+  center: { lat: number; lng: number },
+): Promise<GooglePlace | null> {
+  const apiKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
+  if (!apiKey) return null;
+  try {
+    const res = await fetch(`${GOOGLE_PLACES_BASE}/places:searchText`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask":
+          "places.displayName,places.formattedAddress,places.location,places.primaryType,places.types,places.regularOpeningHours,places.currentOpeningHours",
+      },
+      body: JSON.stringify({
+        textQuery: query,
+        languageCode: "es",
+        regionCode: "ES",
+        maxResultCount: 1,
+        locationBias: {
+          circle: {
+            center: { latitude: center.lat, longitude: center.lng },
+            radius: 15000,
+          },
+        },
+      }),
+    });
+    if (!res.ok) {
+      console.error("Google Places textSearch failed", res.status, await res.text());
+      return null;
+    }
+    const json = await res.json();
+    return (json.places?.[0] as GooglePlace) ?? null;
+  } catch (e) {
+    console.error("Google Places textSearch error:", e);
+    return null;
+  }
+}
+
+async function googlePlacesNearbyFood(
+  center: { lat: number; lng: number },
+  radius = 5500,
+): Promise<GooglePlace[]> {
+  const apiKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
+  if (!apiKey) return [];
+  try {
+    const res = await fetch(`${GOOGLE_PLACES_BASE}/places:searchNearby`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask":
+          "places.displayName,places.formattedAddress,places.location,places.primaryType,places.types,places.regularOpeningHours,places.currentOpeningHours",
+      },
+      body: JSON.stringify({
+        includedTypes: ["restaurant", "bar", "cafe", "bakery", "meal_takeaway", "ice_cream_shop"],
+        maxResultCount: 20,
+        languageCode: "es",
+        regionCode: "ES",
+        locationRestriction: {
+          circle: {
+            center: { latitude: center.lat, longitude: center.lng },
+            radius,
+          },
+        },
+      }),
+    });
+    if (!res.ok) {
+      console.error("Google Places nearby failed", res.status, await res.text());
+      return [];
+    }
+    const json = await res.json();
+    return (json.places ?? []) as GooglePlace[];
+  } catch (e) {
+    console.error("Google Places nearby error:", e);
+    return [];
+  }
+}
+
+
 const NAME_STOPWORDS = new Set([
   "alicante",
   "hola",
@@ -475,73 +637,117 @@ type MentionedPlace = {
 async function fetchMentionedPlaces(text: string): Promise<MentionedPlace[]> {
   const names = extractMentionedNames(text);
   if (names.length === 0) return [];
-  const escaped = (s: string) => s.replace(/["\\]/g, "\\$&");
-  const filters = names.map((n) => `nwr["name"~"${escaped(n)}",i](${ALICANTE_BBOX});`).join("\n");
-  const body = `[out:json][timeout:15];\n(\n${filters}\n);\nout tags center 60;`;
-  type OsmEl = {
-    tags?: Record<string, string>;
-    lat?: number;
-    lon?: number;
-    center?: { lat: number; lon: number };
-  };
-  let elements: OsmEl[] = [];
-  for (const url of OVERPASS_ENDPOINTS) {
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: "data=" + encodeURIComponent(body),
-      });
-      if (!res.ok) throw new Error(`Overpass ${res.status}`);
-      const json = await res.json();
-      elements = json.elements ?? [];
-      break;
-    } catch (e) {
-      console.error("mentioned places fetch failed:", e);
-    }
-  }
   const now = new Date();
   const results: MentionedPlace[] = [];
-  for (const query of names) {
-    const qNorm = normalized(query);
-    const matches = elements.filter((el) => {
-      const tags = el.tags ?? {};
-      const candidates = [tags.name, tags["name:es"], tags["name:en"], tags["alt_name"]]
-        .filter(Boolean)
-        .map((s: string) => normalized(s));
-      return candidates.some((c) => c.includes(qNorm) || qNorm.includes(c));
-    });
-    if (matches.length === 0) {
-      results.push({ query, name: query, kind: "unknown", status: "not_found" });
-      continue;
+
+  // 1) Try Google Places first for each name (real-time hours from Maps).
+  const googleResults = await Promise.all(
+    names.map((q) => googlePlacesTextSearch(`${q} Alicante`, ALICANTE_CENTER)),
+  );
+
+  const remaining: string[] = [];
+  names.forEach((query, i) => {
+    const g = googleResults[i];
+    if (!g) {
+      remaining.push(query);
+      return;
     }
-    const withHours = matches.find((el) => el.tags?.opening_hours) ?? matches[0];
-    const tags = withHours.tags ?? {};
-    const name = tags.name || tags["name:es"] || query;
-    const kind = tags.amenity || tags.tourism || tags.shop || tags.leisure || "place";
-    const openingHours = tags.opening_hours;
-    const info = getOpeningInfo(openingHours, now);
-    const address =
-      [tags["addr:street"], tags["addr:housenumber"], tags["addr:city"]]
-        .filter(Boolean)
-        .join(" ") || undefined;
-    if (info.status === "open") {
-      results.push({
-        query,
-        name,
-        kind,
-        openingHours,
-        status: "open",
-        closesAt: info.closesAt,
-        closesInMinutes: info.closesInMinutes,
-        address,
-      });
-    } else if (info.status === "closed") {
-      results.push({ query, name, kind, openingHours, status: "closed", address });
+    const name = g.displayName?.text ?? query;
+    const kind = g.primaryType ?? "place";
+    const address = g.formattedAddress;
+    const openNow = g.currentOpeningHours?.openNow ?? g.regularOpeningHours?.openNow;
+    if (openNow === true) {
+      const closes = googleClosesInfo(g, now);
+      if (closes) {
+        results.push({
+          query,
+          name,
+          kind,
+          status: "open",
+          closesAt: closes.closesAt,
+          closesInMinutes: closes.closesInMinutes,
+          address,
+        });
+      } else {
+        results.push({ query, name, kind, status: "open", closesAt: "", closesInMinutes: 0, address });
+      }
+    } else if (openNow === false) {
+      results.push({ query, name, kind, status: "closed", address });
     } else {
-      results.push({ query, name, kind, openingHours, status: "unknown", address });
+      // Google found place but no hours data → fall through to OSM
+      remaining.push(query);
+    }
+  });
+
+  // 2) Fallback to Overpass/OSM for whatever Google couldn't resolve.
+  if (remaining.length > 0) {
+    const escaped = (s: string) => s.replace(/["\\]/g, "\\$&");
+    const filters = remaining.map((n) => `nwr["name"~"${escaped(n)}",i](${ALICANTE_BBOX});`).join("\n");
+    const body = `[out:json][timeout:15];\n(\n${filters}\n);\nout tags center 60;`;
+    type OsmEl = {
+      tags?: Record<string, string>;
+      lat?: number;
+      lon?: number;
+      center?: { lat: number; lon: number };
+    };
+    let elements: OsmEl[] = [];
+    for (const url of OVERPASS_ENDPOINTS) {
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: "data=" + encodeURIComponent(body),
+        });
+        if (!res.ok) throw new Error(`Overpass ${res.status}`);
+        const json = await res.json();
+        elements = json.elements ?? [];
+        break;
+      } catch (e) {
+        console.error("mentioned places OSM fallback failed:", e);
+      }
+    }
+    for (const query of remaining) {
+      const qNorm = normalized(query);
+      const matches = elements.filter((el) => {
+        const tags = el.tags ?? {};
+        const candidates = [tags.name, tags["name:es"], tags["name:en"], tags["alt_name"]]
+          .filter(Boolean)
+          .map((s: string) => normalized(s));
+        return candidates.some((c) => c.includes(qNorm) || qNorm.includes(c));
+      });
+      if (matches.length === 0) {
+        results.push({ query, name: query, kind: "unknown", status: "not_found" });
+        continue;
+      }
+      const withHours = matches.find((el) => el.tags?.opening_hours) ?? matches[0];
+      const tags = withHours.tags ?? {};
+      const name = tags.name || tags["name:es"] || query;
+      const kind = tags.amenity || tags.tourism || tags.shop || tags.leisure || "place";
+      const openingHours = tags.opening_hours;
+      const info = getOpeningInfo(openingHours, now);
+      const address =
+        [tags["addr:street"], tags["addr:housenumber"], tags["addr:city"]]
+          .filter(Boolean)
+          .join(" ") || undefined;
+      if (info.status === "open") {
+        results.push({
+          query,
+          name,
+          kind,
+          openingHours,
+          status: "open",
+          closesAt: info.closesAt,
+          closesInMinutes: info.closesInMinutes,
+          address,
+        });
+      } else if (info.status === "closed") {
+        results.push({ query, name, kind, openingHours, status: "closed", address });
+      } else {
+        results.push({ query, name, kind, openingHours, status: "unknown", address });
+      }
     }
   }
+
   return results;
 }
 
@@ -552,6 +758,54 @@ async function fetchConfirmedOpenFoodPlaces(context?: ChatContext): Promise<Food
       ? { lat: loc.lat, lng: loc.lng }
       : ALICANTE_CENTER;
   const radius = loc ? 5500 : 8500;
+
+  // 1) PRIMARY: Google Places — real-time hours from Maps.
+  const nowDate = new Date();
+  const gPlaces = await googlePlacesNearbyFood(center, radius);
+  if (gPlaces.length > 0) {
+    const seen = new Set<string>();
+    const out: FoodPlace[] = [];
+    for (const g of gPlaces) {
+      const name = g.displayName?.text;
+      const lat = g.location?.latitude;
+      const lon = g.location?.longitude;
+      if (!name || lat == null || lon == null) continue;
+      const openNow = g.currentOpeningHours?.openNow ?? g.regularOpeningHours?.openNow;
+      if (openNow !== true) continue;
+      const closes = googleClosesInfo(g, nowDate);
+      if (!closes || closes.closesInMinutes <= 60) continue;
+      const key = normalized(`${name}|${lat.toFixed(4)}|${lon.toFixed(4)}`);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const cuisine = (g.types ?? []).find((t) =>
+        /restaurant|bar|cafe|bakery|pizza|sushi|seafood|vegan|vegetarian|fast_food|ice_cream/.test(t),
+      );
+      out.push({
+        name,
+        kind: g.primaryType ?? "restaurant",
+        lat,
+        lon,
+        openingHours: "",
+        closesAt: closes.closesAt,
+        closesInMinutes: closes.closesInMinutes,
+        cuisine,
+        address: g.formattedAddress,
+      });
+    }
+    if (out.length > 0) {
+      return shuffle(
+        out
+          .sort(
+            (a, b) =>
+              distanceKm(center, { lat: a.lat, lng: a.lon }) -
+              distanceKm(center, { lat: b.lat, lng: b.lon }),
+          )
+          .slice(0, 40),
+      ).slice(0, 16);
+    }
+  }
+
+  // 2) FALLBACK: OpenStreetMap / Overpass.
   const area = `(around:${radius},${center.lat},${center.lng})`;
   const body = `[out:json][timeout:18];
 (
