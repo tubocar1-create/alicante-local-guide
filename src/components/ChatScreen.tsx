@@ -159,6 +159,34 @@ export function ChatScreen() {
         </div>
         <nav className="flex items-center gap-1.5">
           <button
+            onClick={requestLocation}
+            aria-label="Compartir mi ubicación"
+            title={
+              locState.status === "ready"
+                ? `Ubicación activa (${locState.coords.lat.toFixed(3)}, ${locState.coords.lng.toFixed(3)})`
+                : locState.status === "error"
+                  ? locState.message
+                  : "Compartir mi ubicación"
+            }
+            className={[
+              "inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full active:scale-95 transition",
+              locState.status === "ready"
+                ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500/30"
+                : locState.status === "error"
+                  ? "bg-destructive/15 text-destructive ring-1 ring-destructive/30"
+                  : "bg-secondary text-secondary-foreground",
+            ].join(" ")}
+          >
+            {locState.status === "loading" ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : locState.status === "ready" ? (
+              <CheckCircle2 className="h-3 w-3" />
+            ) : (
+              <Navigation className="h-3 w-3" />
+            )}
+            {locState.status === "ready" ? "Ubicación" : "Mi ubicación"}
+          </button>
+          <button
             onClick={() => setEatOpen(true)}
             className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full gradient-warm text-primary-foreground active:scale-95 shadow-soft"
           >
