@@ -297,6 +297,30 @@ export function ChatScreen() {
 
       {/* Composer */}
       <div className="relative border-t border-border/60 bg-background/70 px-3 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/50">
+        {geoStatus === "denied" && (
+          <div className="mx-auto mb-2 flex max-w-2xl items-center justify-between gap-2 rounded-2xl border border-border bg-card/90 px-3 py-2 text-xs text-card-foreground shadow-sm">
+            <span className="flex items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5 text-primary" />
+              Para clavar recomendaciones cerquita, dame ubicación 📍
+            </span>
+            <button
+              onClick={() => {
+                setGeoStatus("asking");
+                requestLocation();
+              }}
+              className="rounded-full bg-primary px-3 py-1 text-[11px] font-medium text-primary-foreground active:scale-95"
+            >
+              Activar
+            </button>
+          </div>
+        )}
+        {geoStatus === "ok" && geo?.city && (
+          <div className="mx-auto mb-2 max-w-2xl text-center text-[11px] text-muted-foreground">
+            <MapPin className="mr-1 inline h-3 w-3 text-primary" />
+            Te tengo en {geo.area ? `${geo.area}, ` : ""}
+            {geo.city}
+          </div>
+        )}
         <div className="mx-auto flex max-w-2xl items-end gap-2">
           <div className="flex flex-1 items-end gap-2 rounded-3xl border border-border bg-card/90 px-3 py-2 shadow-sm backdrop-blur">
             <textarea
