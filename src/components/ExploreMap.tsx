@@ -77,7 +77,10 @@ export function ExploreMap() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [flyTarget, setFlyTarget] = useState<{ lat: number; lon: number } | null>(null);
-  const { coords, request, status } = useUserLocation();
+  const { state, request } = useUserLocation();
+  const coords =
+    state.status === "ready" ? { lat: state.coords.lat, lon: state.coords.lng } : null;
+  const status = state.status;
 
   useEffect(() => {
     let cancelled = false;
