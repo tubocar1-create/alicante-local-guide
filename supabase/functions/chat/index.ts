@@ -146,45 +146,6 @@ function getOpenWindow(raw?: string, date = new Date()) {
   return info.status === "open" ? { closesAt: info.closesAt, closesInMinutes: info.closesInMinutes } : null;
 }
 
-// (legacy body kept below for reference, replaced by getOpeningInfo wrapper)
-function _legacyGetOpenWindow(raw?: string, date = new Date()) {
-  if (!raw?.trim()) return null;
-  const clean = raw.replace(/"[^"]*"/g, "").trim();
-  if (/24\s*\/\s*7/.test(clean)) {
-    return { closesAt: "24:00", closesInMinutes: 24 * 60 };
-  }
-  const { day, minutes } = madridNow(date);
-  const yesterday = previousDay(day);
-
-  for (const rule of clean
-    .split(";")
-    .map((r) => r.trim())
-    .filter(Boolean)) {
-    const ranges = parseRanges(rule);
-    if (/\boff\b|\bclosed\b/i.test(rule) && ranges.length === 0 && appliesToDay(rule, day)) {
-      continue;
-    }
-
-    if (appliesToDay(rule, day)) {
-      for (const range of ranges) {
-        const end = range.end <= range.start ? range.end + 1440 : range.end;
-        if (minutes >= range.start && minutes < end) {
-          return { closesAt: minutesToClock(end), closesInMinutes: end - minutes };
-        }
-      }
-    }
-
-    if (appliesToDay(rule, yesterday)) {
-      for (const range of ranges) {
-        if (range.end > range.start) continue;
-        if (minutes < range.end) {
-          return { closesAt: minutesToClock(range.end), closesInMinutes: range.end - minutes };
-        }
-      }
-    }
-  }
-  return null;
-}
 
 function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
   const R = 6371;
