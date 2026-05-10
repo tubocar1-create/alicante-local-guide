@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Mic, MapPin, Map as MapIcon } from "lucide-react";
+import { Send, Mic, MapPin, Map as MapIcon, Navigation, Loader2, CheckCircle2 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { PlaceImage } from "@/components/PlaceImage";
 import { EatNearby } from "@/components/EatNearby";
+import { useUserLocation } from "@/hooks/useUserLocation";
 import heroImg from "@/assets/alicante-hero.jpg";
 
 type Msg = { role: "user" | "assistant"; content: string };
