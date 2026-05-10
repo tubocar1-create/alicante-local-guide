@@ -344,7 +344,9 @@ export function ChatScreen() {
               <div className="mb-2 flex items-center justify-between">
                 <p className="text-sm font-medium">{activeSubmenu.label} — ¿qué te apetece?</p>
                 <button
-                  onClick={() => setActiveSubmenu(null)}
+                  onClick={() =>
+                    setSubmenuStack((stack) => stack.slice(0, -1))
+                  }
                   className="text-xs text-muted-foreground underline-offset-2 hover:underline"
                 >
                   ← Volver
@@ -355,8 +357,12 @@ export function ChatScreen() {
                   <button
                     key={opt.label}
                     onClick={() => {
-                      setActiveSubmenu(null);
-                      send(opt.prompt);
+                      if (opt.submenu) {
+                        setSubmenuStack((stack) => [...stack, opt]);
+                      } else if (opt.prompt) {
+                        setSubmenuStack([]);
+                        send(opt.prompt);
+                      }
                     }}
                     className="rounded-full border border-border bg-background/80 px-3 py-2 text-sm shadow-sm transition hover:bg-accent/40"
                   >
