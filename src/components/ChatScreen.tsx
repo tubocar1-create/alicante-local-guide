@@ -115,7 +115,19 @@ export function ChatScreen() {
         },
         body: JSON.stringify({
           messages: next.map((m) => ({ role: m.role, content: m.content })),
-          context: { maxOptions: 4 },
+          context: {
+            maxOptions: 4,
+            location: geo
+              ? {
+                  lat: geo.lat,
+                  lng: geo.lng,
+                  area: geo.area,
+                  city: geo.city,
+                  distanceFromAlicanteKm: geo.distanceFromAlicanteKm,
+                }
+              : null,
+            locationStatus: geoStatus,
+          },
         }),
       });
 
