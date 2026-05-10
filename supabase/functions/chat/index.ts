@@ -332,15 +332,16 @@ function buildFoodRecommendationsResponse(
   const candidates = openFoodPlaces
     .filter((place) => !alreadyMentioned.has(normalized(place.name)))
     .filter((place) => matchesFoodPreference(place, latestUserText));
-  const selected = shuffle(candidates).slice(0, Math.max(1, Math.min(4, maxOptions)));
+  const selected = shuffle(candidates).slice(0, 4);
 
   if (selected.length === 0) {
-    return "Ahora mismo no tengo ningún sitio de ese tipo con horario confirmado y más de 1 hora antes de cerrar. Prefiero no inventar ni mandarte a un sitio cerrado; dime otra zona o cambiamos el tipo de comida.";
+    return "Uy, ahora mismo no se me ocurre ningún sitio así que te pueda recomendar con la cabeza tranquila 😅 ¿Probamos cambiando de zona o de tipo de comida?";
   }
 
   return [
-    "Tienes razón: aquí solo te doy sitios con horario confirmado ahora mismo:",
+    "¡Marchando! Aquí van 4 opciones que te van a encantar 😋",
     ...selected.map((place, index) => formatFoodPlace(place, index + 1)),
+    "¿Quieres que te dé otra alternativa más? 🙌",
   ].join("\n\n");
 }
 
