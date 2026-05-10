@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export type Coords = { lat: number; lng: number };
+export type Coords = { lat: number; lng: number; accuracy?: number };
 export type LocationState =
   | { status: "idle" }
   | { status: "loading" }
@@ -11,6 +11,7 @@ let cached: Coords | null = null;
 let watchId: number | null = null;
 let watchRefs = 0;
 const listeners = new Set<(c: Coords) => void>();
+const errorListeners = new Set<(message: string) => void>();
 
 function notify(c: Coords) {
   cached = c;
@@ -21,8 +22,16 @@ function startWatch() {
   if (watchId !== null) return;
   if (typeof navigator === "undefined" || !navigator.geolocation) return;
   watchId = navigator.geolocation.watchPosition(
-    (pos) => notify({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-    () => {},
+    (pos) =>
+      notify({
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+        accuracy: pos.coords.accuracy,
+      }),
+    (err) => {
+      const message = err.code === err.PERMISSION_DENIED ? "Permiso denegado" : "No se pudo obtener tu ubicación";
+      errorListeners.forEach((l) => l(message));
+    },
     { enableHighAccuracy: true, maximumAge: 30_000, timeout: 20_000 },
   );
 }
@@ -42,13 +51,17 @@ export function useUserLocation(opts?: { watch?: boolean }) {
 
   useEffect(() => {
     const onUpdate = (c: Coords) => setState({ status: "ready", coords: c });
+    const onError = (message: string) => setState((prev) => (prev.status === "ready" ? prev : { status: "error", message }));
     listeners.add(onUpdate);
+    errorListeners.add(onError);
     if (watch) {
       watchRefs += 1;
+      if (!cached) setState({ status: "loading" });
       startWatch();
     }
     return () => {
       listeners.delete(onUpdate);
+      errorListeners.delete(onError);
       if (watch) {
         watchRefs -= 1;
         if (watchRefs <= 0) stopWatch();
@@ -69,7 +82,7 @@ export function useUserLocation(opts?: { watch?: boolean }) {
     setState({ status: "loading" });
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const c = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        const c = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy };
         notify(c);
         setState({ status: "ready", coords: c });
         startWatch();
