@@ -21,6 +21,7 @@ type Sort = "distance" | "rating" | "name";
 export function ListingPage<K extends string>(props: Props<K>) {
   const [active, setActive] = useState<Set<K>>(new Set(props.initial));
   const [items, setItems] = useState<Listing[]>([]);
+  const [referral, setReferral] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
