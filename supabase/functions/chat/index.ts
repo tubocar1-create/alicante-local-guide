@@ -288,8 +288,11 @@ function matchesFoodPreference(place: FoodPlace, latestText: string) {
     const isFastAny = /\b(fast_food|burger|hamburger|kebab|turkish|pizza|sandwich|chicken|fried_chicken|hot_dog|food_court|doner)\b/.test(haystack)
       || CHAIN_NAMES.test(haystack);
     if (sub === "kebab") return /\b(kebab|turkish|doner|shawarma)\b/.test(haystack);
-    if (sub === "burger") return /\b(burger|hamburger|smash)\b/.test(haystack);
-    if (sub === "pizza") return /\b(pizza|italian)\b/.test(haystack);
+    if (sub === "burger") return /\b(burger|hamburger|smash|mcdonald|burger ?king|tgb|good burger|goiko|five guys|foster|carls? jr)\b/.test(haystack);
+    if (sub === "pizza") return /\b(pizza|italian|telepizza|domino|pizza hut|papa john)\b/.test(haystack);
+    if (sub === "montaditos") return /\b(montadit|lizarran|bocadill|sandwich|100 montaditos|cien montaditos)\b/.test(haystack);
+    if (sub === "chicken") return /\b(kfc|popeyes|pollo|chicken|fried_chicken|asador|alitas|wings)\b/.test(haystack);
+    if (sub === "mexican") return /\b(mexican|taco|burrito|tex.?mex|nachos|quesadilla|taco bell)\b/.test(haystack);
     if (sub === "chain") return CHAIN_NAMES.test(haystack);
     return isFastAny;
   }
