@@ -455,7 +455,7 @@ export function ChatScreen() {
                           <span className="text-[38px]">{t.emoji}</span>
                         )}
                       </div>
-                      <span className="mt-1.5 block w-full text-[12px] font-semibold leading-tight tracking-tight text-foreground text-center">
+                      <span className="mt-1 block w-full text-[10.5px] font-semibold leading-tight tracking-tight text-foreground text-center sm:text-[12px]">
                         {t.label}
                       </span>
                     </button>
