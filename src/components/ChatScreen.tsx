@@ -298,19 +298,6 @@ export function ChatScreen() {
           >
             🏨 Dormir
           </Link>
-          <a
-            href={
-              geo
-                ? `https://www.google.com/maps/search/?api=1&query=${geo.lat},${geo.lng}`
-                : `https://www.google.com/maps/search/?api=1&query=Alicante`
-            }
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full bg-primary text-primary-foreground active:scale-95 shadow-soft"
-          >
-            <MapIcon className="h-3 w-3" />
-            Google Maps
-          </a>
         </nav>
       </header>
 
