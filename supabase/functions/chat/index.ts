@@ -213,7 +213,7 @@ function normalized(text: string) {
 function isFoodOrDrinkRequest(messages: Array<{ role: string; content: string }>) {
   const latest = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
   const text = normalized(latest);
-  return /\b(comer|cenar|almorzar|desayunar|restaurante|restaurantes|tapas|tapear|bar|bares|cafe|cafeteria|tomar algo|beber|copa|copas|cocktail|coctel|cerveza|vino|hamburguesa|pizza|arro(z|ces)|marisco|menu|menú)\b/.test(
+  return /\b(comer|cenar|almorzar|desayunar|restaurante|restaurantes|tapas|tapear|bar|bares|cafe|cafeteria|tomar algo|beber|copa|copas|cocktail|coctel|cerveza|vino|hamburguesa|hamburguesas|burger|pizza|pizzas|arro(z|ces)|marisco|menu|menú|kebab|doner|döner|shawarma|durum|montadit(o|os)|bocadill(o|os)|bocat(a|as)|pollo|pollos|kfc|popeyes|mexicano|mexicana|tacos|burritos|taco bell|comida rapida|comida rápida|fast food|cadena|cadenas|mcdonalds|mac donalds|burger king|telepizza|domino|dominos|pizza hut|tgb|goiko|five guys|fosters hollywood|carls jr|100 montaditos|cien montaditos|lizarran|lizarrán)\b/.test(
     text,
   );
 }
