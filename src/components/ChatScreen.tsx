@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Mic, MapPin, Home, User as UserIcon } from "lucide-react";
+import { Send, Mic, MapPin, Home, User as UserIcon, QrCode, X, Gift, Ticket, Sparkles, ShieldCheck } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -82,6 +82,7 @@ export function ChatScreen() {
   const [geoStatus, setGeoStatus] = useState<GeoStatus>("idle");
   const [referralName, setReferralName] = useState<string | null>(null);
   const [referralAuto, setReferralAuto] = useState(false);
+  const [showQrInfo, setShowQrInfo] = useState(false);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -260,14 +261,15 @@ export function ChatScreen() {
 
       {/* Compact header (always visible) */}
       <header className="relative flex items-center gap-3 border-b border-border/60 bg-background/40 px-4 py-3 backdrop-blur">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full gradient-warm shadow-soft text-primary-foreground">
-          <MapPin className="h-5 w-5" />
-        </div>
-        <div className="flex-1">
-          <h1 className="text-base font-semibold leading-tight">Alicante Friend</h1>
+        <VamosLogo />
+        <div className="flex-1 min-w-0">
+          <h1 className="text-base font-extrabold leading-tight tracking-tight">
+            <span className="text-primary">VAMOS</span>
+            <span className="text-foreground"> a Alicante</span>
+          </h1>
           <p className="text-xs text-muted-foreground">
             <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-emerald-500 align-middle" />
-            your local in Alicante
+            tu amigo local
           </p>
         </div>
         <nav className="flex items-center gap-1.5">
@@ -316,12 +318,21 @@ export function ChatScreen() {
                   className="absolute inset-0 h-full w-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent" />
+                <button
+                  type="button"
+                  onClick={() => setShowQrInfo(true)}
+                  aria-label="Beneficios del QR VAMOS"
+                  className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[12px] font-extrabold text-primary-foreground shadow-soft ring-2 ring-white/70 backdrop-blur active:scale-95"
+                >
+                  <QrCode className="h-3.5 w-3.5" />
+                  QR VAMOS
+                </button>
                 <div className="absolute inset-x-0 bottom-0 p-4 text-white">
                   <p className="text-xs uppercase tracking-widest opacity-90">Puerto de Alicante</p>
-                  <h2 className="mt-1 text-2xl font-semibold leading-tight drop-shadow">
-                    ¡Hola! Bienvenido a Alicante 🌅
+                  <h2 className="mt-1 text-2xl font-extrabold leading-tight drop-shadow">
+                    ¡VAMOS a Alicante! 🌅
                   </h2>
-                  <p className="mt-1 text-sm opacity-90 drop-shadow">
+                  <p className="mt-1 text-sm opacity-95 drop-shadow">
                     Soy tu amigo local. Cuéntame qué te apetece hoy y te llevo a los rincones que adoramos los de aquí.
                   </p>
                 </div>
@@ -502,6 +513,93 @@ export function ChatScreen() {
           }}
         />
       )}
+      {showQrInfo && <QrVamosInfo onClose={() => setShowQrInfo(false)} />}
+    </div>
+  );
+}
+
+function VamosLogo() {
+  return (
+    <div
+      aria-label="VAMOS"
+      className="relative flex h-10 items-center justify-center rounded-2xl gradient-warm px-2.5 shadow-soft ring-2 ring-white/70"
+    >
+      <span className="text-[15px] font-black tracking-tight text-primary-foreground drop-shadow-sm">
+        VAMOS
+      </span>
+      <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-background text-[10px] shadow ring-1 ring-border">
+        🌅
+      </span>
+    </div>
+  );
+}
+
+function QrVamosInfo({ onClose }: { onClose: () => void }) {
+  const benefits = [
+    { icon: Gift, title: "Descuentos reales", text: "Precios de amigo en bares, restaurantes y planes que de verdad merecen la pena." },
+    { icon: Ticket, title: "Acceso a experiencias", text: "Catas, tours, rutas y eventos pensados para quienes viven Alicante como un local." },
+    { icon: Sparkles, title: "Suma puntos AFP", text: "Cada QR validado en sitio te da puntos para canjear por más ventajas." },
+    { icon: ShieldCheck, title: "Único e intransferible", text: "Tu QR, tu día, tu plan. Sin intermediarios, sin trampas, sin spam." },
+  ];
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-4 sm:items-center"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-sm rounded-3xl bg-background p-5 shadow-soft"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          aria-label="Cerrar"
+          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-secondary-foreground active:scale-95"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <div className="flex items-center gap-2">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl gradient-warm text-primary-foreground shadow-soft">
+            <QrCode className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="text-lg font-extrabold leading-tight">
+              <span className="text-primary">QR VAMOS</span> · GOO QR
+            </h3>
+            <p className="text-[11px] text-muted-foreground">
+              Tu llave de amigo local en Alicante
+            </p>
+          </div>
+        </div>
+
+        <p className="mt-3 text-sm text-foreground/90">
+          Con un <b>QR VAMOS</b> entras como un local, no como un turista. Esto es lo que te llevas:
+        </p>
+
+        <ul className="mt-3 space-y-2.5">
+          {benefits.map((b) => (
+            <li key={b.title} className="flex gap-3 rounded-2xl border border-border bg-card/60 p-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl gradient-warm text-primary-foreground shadow-soft">
+                <b.icon className="h-4 w-4" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[13px] font-bold leading-tight text-foreground">{b.title}</p>
+                <p className="mt-0.5 text-[12px] leading-snug text-muted-foreground">{b.text}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+
+        <p className="mt-3 text-[11px] text-muted-foreground">
+          ¿Cómo se consigue? Pulsa <b>VAMOS</b> en cualquier sitio que te recomiende tu amigo local y generas tu QR del día.
+        </p>
+
+        <button
+          onClick={onClose}
+          className="mt-4 w-full rounded-full gradient-warm py-2.5 text-sm font-bold text-primary-foreground shadow-soft active:scale-95"
+        >
+          ¡VAMOS!
+        </button>
+      </div>
     </div>
   );
 }
@@ -636,7 +734,7 @@ function PlaceCard({ data }: { data: PlaceCardData }) {
             }
             className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full gradient-warm text-primary-foreground shadow-soft active:scale-95"
           >
-            🎟️ Quiero ir
+            🎟️ VAMOS
           </button>
         </div>
       </div>
@@ -674,7 +772,7 @@ function MarkdownText({ text }: { text: string }) {
                 }
                 className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full gradient-warm text-primary-foreground shadow-soft active:scale-95 align-middle ml-1"
               >
-                🎟️ Quiero ir
+                🎟️ VAMOS
               </button>
             );
           }
