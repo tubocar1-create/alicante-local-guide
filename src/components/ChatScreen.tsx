@@ -82,6 +82,7 @@ export function ChatScreen() {
   const [geoStatus, setGeoStatus] = useState<GeoStatus>("idle");
   const [referralName, setReferralName] = useState<string | null>(null);
   const [referralAuto, setReferralAuto] = useState(false);
+  const [showQrInfo, setShowQrInfo] = useState(false);
 
   useEffect(() => {
     const handler = (e: Event) => {
