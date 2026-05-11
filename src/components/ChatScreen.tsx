@@ -454,18 +454,29 @@ export function ChatScreen() {
 function ProfileButton() {
   const { user, isAuthenticated } = useAuth();
   const avatarUrl = user?.user_metadata?.avatar_url as string | undefined;
+  if (isAuthenticated) {
+    return (
+      <Link
+        to="/perfil"
+        aria-label="Mi perfil"
+        className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-border bg-card shadow-sm active:scale-95"
+      >
+        {avatarUrl ? (
+          <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <UserIcon className="h-4 w-4 text-muted-foreground" />
+        )}
+      </Link>
+    );
+  }
   return (
     <Link
-      to={isAuthenticated ? "/perfil" : "/login"}
-      search={isAuthenticated ? undefined : { redirect: "/perfil" }}
-      aria-label={isAuthenticated ? "Mi perfil" : "Iniciar sesión"}
+      to="/login"
+      search={{ redirect: "/perfil" }}
+      aria-label="Iniciar sesión"
       className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-border bg-card shadow-sm active:scale-95"
     >
-      {avatarUrl ? (
-        <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
-      ) : (
-        <UserIcon className="h-4 w-4 text-muted-foreground" />
-      )}
+      <UserIcon className="h-4 w-4 text-muted-foreground" />
     </Link>
   );
 }
