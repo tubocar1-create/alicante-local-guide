@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Navigation, Phone, Globe, MapPin, Star, Ticket, Sparkles } from "lucide-react";
+import { Loader2, Navigation } from "lucide-react";
 import { fetchListings, type Listing } from "@/lib/overpass-listings";
-import { useUserLocation, distanceKm, formatDistance } from "@/hooks/useUserLocation";
+import { useUserLocation, distanceKm } from "@/hooks/useUserLocation";
 import ReferralDialog from "@/components/ReferralDialog";
+import { ListingCard } from "@/components/ListingCard";
 
 export type FilterChip<K extends string> = { kind: K; label: string; emoji: string };
 
@@ -155,113 +156,12 @@ export function ListingPage<K extends string>(props: Props<K>) {
           </div>
         )}
 
-        <ul className="flex flex-col gap-3">
-          {visible.map((it) => {
-            const dist = me ? distanceKm(me, { lat: it.lat, lng: it.lon }) : null;
-            const mapsHref = `https://www.google.com/maps/dir/?api=1&destination=${it.lat},${it.lon}`;
-            const wikiSlug = it.wikipedia?.split(":")[1];
-            return (
-              <li
-                key={it.id}
-                className="rounded-2xl bg-card shadow-soft border p-4 flex flex-col gap-2"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h3 className="font-semibold text-base leading-tight truncate">
-                      {it.name}
-                    </h3>
-                    <div className="text-[11px] uppercase tracking-wide text-muted-foreground mt-0.5">
-                      {it.kind.replace(/_/g, " ")}
-                      {it.cuisine ? ` · ${it.cuisine.replace(/;/g, ", ")}` : ""}
-                    </div>
-                  </div>
-                  {it.stars ? (
-                    <span className="inline-flex items-center gap-0.5 text-xs font-medium bg-accent text-accent-foreground rounded-full px-2 py-0.5 shrink-0">
-                      <Star className="w-3 h-3 fill-current" />
-                      {it.stars}
-                    </span>
-                  ) : null}
-                </div>
-
-                {it.address && (
-                  <div className="text-xs text-muted-foreground flex items-start gap-1">
-                    <MapPin className="w-3 h-3 mt-0.5 shrink-0" />
-                    <span>{it.address}</span>
-                  </div>
-                )}
-                {dist != null && (
-                  <div className="text-xs text-muted-foreground">
-                    📍 a {formatDistance(dist)} de ti
-                  </div>
-                )}
-
-                <div className="flex flex-wrap gap-2 pt-1">
-                  <a
-                    href={mapsHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full bg-primary text-primary-foreground"
-                  >
-                    <Navigation className="w-3 h-3" /> Cómo llegar
-                  </a>
-                  <a
-                    href={`https://www.google.com/search?q=${encodeURIComponent(`${it.name} Alicante reseñas`)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full bg-secondary text-secondary-foreground"
-                  >
-                    <Sparkles className="w-3 h-3" /> Reseñas
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() => setReferral(it)}
-                    className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full gradient-warm text-primary-foreground shadow-soft active:scale-95"
-                  >
-                    <Ticket className="w-3 h-3" /> Quiero ir
-                  </button>
-                  {it.phone && (
-                    <a
-                      href={`tel:${it.phone}`}
-                      className="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full bg-secondary text-secondary-foreground"
-                    >
-                      <Phone className="w-3 h-3" /> Llamar
-                    </a>
-                  )}
-                  {it.website && (
-                    <a
-                      href={it.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs font-medium px-3 py-1.5 rounded-full bg-secondary text-secondary-foreground"
-                    >
-                      <Globe className="w-3 h-3" /> Web
-                    </a>
-                  )}
-                  {wikiSlug && (
-                    <a
-                      href={`https://es.wikipedia.org/wiki/${encodeURIComponent(wikiSlug)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs font-medium px-3 py-1.5 rounded-full bg-secondary text-secondary-foreground"
-                    >
-                      Wiki
-                    </a>
-                  )}
-                  {props.externalSearch?.map((ext) => (
-                    <a
-                      key={ext.label}
-                      href={ext.url(it.name)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs font-medium px-3 py-1.5 rounded-full bg-secondary text-secondary-foreground"
-                    >
-                      {ext.label}
-                    </a>
-                  ))}
-                </div>
-              </li>
-            );
-          })}
+        <ul className="grid grid-cols-1 gap-4">
+          {visible.map((it) => (
+            <li key={it.id}>
+              <ListingCard it={it} me={me} onWantToGo={setReferral} />
+            </li>
+          ))}
         </ul>
         <p className="text-[10px] text-muted-foreground text-center mt-6 pb-6">
           Datos abiertos © OpenStreetMap contributors
