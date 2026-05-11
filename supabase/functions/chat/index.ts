@@ -1359,7 +1359,8 @@ type LatLng = { lat: number; lng: number };
 type TransitStop = {
   id: number;
   name: string;
-  ref: string | null; // 4-digit Vectalia stop code, when tagged in OSM
+  ref: string | null; // OSM stop ref; not trusted as Vectalia QR code
+  qrCode?: string | null; // fixed Vectalia QR stop code resolved from public GTFS mirrors when possible
   lat: number;
   lng: number;
   distMeters: number;
@@ -1464,6 +1465,84 @@ function haversineMeters(a: LatLng, b: LatLng): number {
   const h =
     Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
   return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+type BusMapsStop = {
+  countryUrl?: string;
+  stopHash1?: string;
+  stopName?: string;
+  urlStopName?: string;
+  stopTypeGroup?: string;
+  city500Name?: string;
+  stopLat?: number;
+  stopLon?: number;
+  routeNames?: string;
+};
+
+const vectaliaQrCache = new Map<string, string | null>();
+
+function normalizeLineToken(value: string): string {
+  const raw = value.toUpperCase().replace(/\s+/g, "").replace(/^LINEA/, "").replace(/^L(?=\d)/, "");
+  const m = raw.match(/^(\d+)([A-Z]*)$/);
+  if (!m) return raw;
+  return `${Number(m[1])}${m[2]}`;
+}
+
+function routeNamesMatchLine(routeNames: string | undefined, line: string): boolean {
+  const target = normalizeLineToken(line);
+  return (routeNames ?? "")
+    .split(/[\s,;/]+/)
+    .map(normalizeLineToken)
+    .some((token) => token === target);
+}
+
+async function fetchBusMapsStopCode(stop: TransitStop, line: string): Promise<string | null> {
+  const cacheKey = `${stop.name}|${stop.lat.toFixed(5)},${stop.lng.toFixed(5)}|${normalizeLineToken(line)}`;
+  if (vectaliaQrCache.has(cacheKey)) return vectaliaQrCache.get(cacheKey)!;
+
+  try {
+    const url = new URL("https://api.busmaps.com/api/v3/autosuggest");
+    url.searchParams.set("q", stop.name);
+    url.searchParams.set("results", "stops");
+    url.searchParams.set("location", `${stop.lat},${stop.lng}`);
+    const res = await fetch(url.toString(), {
+      headers: {
+        Accept: "application/json",
+        Origin: "https://busmaps.com",
+        Referer: "https://busmaps.com/",
+        "User-Agent": "AlicanteFriend/1.0",
+      },
+    });
+    if (!res.ok) throw new Error(`BusMaps autosuggest ${res.status}`);
+    const json = (await res.json()) as { stops?: BusMapsStop[] };
+    const candidates = (json.stops ?? [])
+      .filter((s) => s.stopHash1 && s.urlStopName && s.stopTypeGroup === "bus" && s.city500Name === "Alicante")
+      .map((s) => ({
+        stop: s,
+        meters: haversineMeters(stop, { lat: Number(s.stopLat), lng: Number(s.stopLon) }),
+        lineMatch: routeNamesMatchLine(s.routeNames, line),
+      }))
+      .filter((s) => Number.isFinite(s.meters) && s.meters <= 140)
+      .sort((a, b) => (a.lineMatch === b.lineMatch ? a.meters - b.meters : a.lineMatch ? -1 : 1));
+
+    for (const candidate of candidates.slice(0, 3)) {
+      const country = candidate.stop.countryUrl ?? "spain";
+      const pageUrl = `https://busmaps.com/en/${country}/public_transit-stop-${encodeURIComponent(candidate.stop.urlStopName!)}-${candidate.stop.stopHash1}`;
+      const page = await fetch(pageUrl, { headers: { "User-Agent": "AlicanteFriend/1.0" } });
+      if (!page.ok) continue;
+      const html = await page.text();
+      const code = html.match(/"identifier"\s*:\s*"(\d{1,5})"/)?.[1] ?? null;
+      if (code) {
+        vectaliaQrCache.set(cacheKey, code);
+        return code;
+      }
+    }
+  } catch (e) {
+    console.error("Vectalia QR resolve error:", e);
+  }
+
+  vectaliaQrCache.set(cacheKey, null);
+  return null;
 }
 
 async function fetchBusOptions(
