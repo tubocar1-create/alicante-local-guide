@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Mic, MapPin, Map as MapIcon, Home } from "lucide-react";
+import { Send, Mic, MapPin, Map as MapIcon, Home, User as UserIcon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -8,6 +8,7 @@ import { PointsHud } from "@/components/PointsHud";
 import { usePoints } from "@/hooks/usePoints";
 import { useUserLocation, distanceKm } from "@/hooks/useUserLocation";
 import ReferralDialog from "@/components/ReferralDialog";
+import { useAuth } from "@/hooks/useAuth";
 import { findPlaceOverride } from "@/data/places";
 import heroImg from "@/assets/alicante-hero.jpg";
 
