@@ -12,6 +12,25 @@ import { useAuth } from "@/hooks/useAuth";
 import { findPlaceOverride } from "@/data/places";
 import heroImg from "@/assets/alicante-hero.jpg";
 import vamosLogoImg from "@/assets/logo_vamos_d.png";
+import tileComer from "@/assets/tile_comer.png";
+import tileDormir from "@/assets/tile_dormir.png";
+import tilePlaya from "@/assets/tile_playa.png";
+import tileParque from "@/assets/tile_parque.png";
+import tileComprar from "@/assets/tile_comprar.png";
+import tileTomar from "@/assets/tile_tomar.png";
+import tileTurismo from "@/assets/tile_turismo.png";
+import tileMapa from "@/assets/tile_mapa.png";
+
+const TILE_STYLES: Record<string, { img: string; bg: string }> = {
+  Comer:        { img: tileComer,   bg: "oklch(0.95 0.06 70)" },
+  Dormir:       { img: tileDormir,  bg: "oklch(0.94 0.05 280)" },
+  Playa:        { img: tilePlaya,   bg: "oklch(0.93 0.07 220)" },
+  Parque:       { img: tileParque,  bg: "oklch(0.94 0.07 145)" },
+  Comprar:      { img: tileComprar, bg: "oklch(0.94 0.07 340)" },
+  "Tomar algo": { img: tileTomar,   bg: "oklch(0.95 0.07 50)" },
+  Turismo:      { img: tileTurismo, bg: "oklch(0.94 0.05 25)" },
+  Mapa:         { img: tileMapa,    bg: "oklch(0.93 0.06 200)" },
+};
 
 type Msg = { role: "user" | "assistant"; content: string };
 type GeoInfo = {
@@ -398,21 +417,39 @@ export function ChatScreen() {
                       }
                     },
                   },
-                ].map((t) => (
-                  <button
-                    key={t.key}
-                    onClick={t.onClick}
-                    aria-label={t.label}
-                    className="group flex flex-col items-center"
-                  >
-                    <div className="grid aspect-square w-full place-items-center rounded-2xl bg-white text-[38px] shadow-md ring-2 ring-[oklch(0.25_0.04_35)] transition group-hover:-translate-y-0.5 group-active:scale-95">
-                      <span className="drop-shadow-sm">{t.emoji}</span>
-                    </div>
-                    <span className="mt-2 block w-full rounded-md bg-[oklch(0.22_0.04_35)] px-1.5 py-1 text-[15px] font-extrabold leading-tight tracking-tight text-white text-center shadow-sm">
-                      {t.label}
-                    </span>
-                  </button>
-                ))}
+                ].map((t) => {
+                  const style = TILE_STYLES[t.label];
+                  return (
+                    <button
+                      key={t.key}
+                      onClick={t.onClick}
+                      aria-label={t.label}
+                      className="group flex flex-col items-center"
+                    >
+                      <div
+                        className="grid aspect-square w-full place-items-center rounded-2xl shadow-sm transition group-hover:-translate-y-0.5 group-active:scale-95 overflow-hidden"
+                        style={{ backgroundColor: style?.bg ?? "oklch(0.95 0.02 80)" }}
+                      >
+                        {style ? (
+                          <img
+                            src={style.img}
+                            alt=""
+                            aria-hidden
+                            loading="lazy"
+                            width={1024}
+                            height={1024}
+                            className="h-[78%] w-[78%] object-contain drop-shadow-sm"
+                          />
+                        ) : (
+                          <span className="text-[38px]">{t.emoji}</span>
+                        )}
+                      </div>
+                      <span className="mt-1.5 block w-full text-[12px] font-semibold leading-tight tracking-tight text-foreground text-center">
+                        {t.label}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
