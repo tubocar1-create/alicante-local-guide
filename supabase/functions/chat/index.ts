@@ -1697,7 +1697,18 @@ serve(async (req) => {
           })
           .join("\n")}`
       : "";
-    const runtimeContext = `RUNTIME CONTEXT (use this when relevant):\nTODAY: ${todayStr} (zona horaria Europe/Madrid)\nMAX_NEARBY_OPTIONS: ${context?.maxOptions ?? 4}\n${locationLine}${verifiedOpenLine}${mentionedLine}`;
+    const userOriginForTransit =
+      loc && typeof loc.lat === "number" && typeof loc.lng === "number"
+        ? { lat: loc.lat, lng: loc.lng }
+        : null;
+    const transitResult = await buildTransitResult(userOriginForTransit, latestUserText).catch(
+      (err) => {
+        console.error("transit lookup error:", err);
+        return null;
+      },
+    );
+    const transitLine = transitResult ? formatTransitResult(transitResult) : "";
+    const runtimeContext = `RUNTIME CONTEXT (use this when relevant):\nTODAY: ${todayStr} (zona horaria Europe/Madrid)\nMAX_NEARBY_OPTIONS: ${context?.maxOptions ?? 4}\n${locationLine}${verifiedOpenLine}${mentionedLine}${transitLine}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
