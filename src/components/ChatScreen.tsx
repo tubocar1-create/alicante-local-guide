@@ -492,7 +492,7 @@ export function ChatScreen() {
                         setSubmenuStack((stack) => [...stack, opt]);
                       } else if (opt.prompt) {
                         setSubmenuStack([]);
-                        send(opt.prompt);
+                        send(opt.prompt, { mode: null });
                       }
                     }}
                     className="rounded-full border border-border bg-background/80 px-3 py-2 text-sm shadow-sm transition hover:bg-accent/40"
