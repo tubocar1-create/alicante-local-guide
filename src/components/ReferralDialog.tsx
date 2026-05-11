@@ -41,6 +41,21 @@ export default function ReferralDialog({ placeId, placeName, autoCelebrate, onCl
   async function handleGenerate() {
     if (!user) return;
     setGenerating(true);
+
+    // 1 QR por local y día. Si ya existe uno de hoy para este local, lo reusamos.
+    const existing = findTodayQr(user.id, placeId);
+    if (existing) {
+      toast.info("Ya generaste un QR hoy para este local 😉", {
+        description:
+          "Solo puedes crear un QR por local y día. Te enseñamos el que ya tenías; mañana podrás generar uno nuevo.",
+        duration: 5000,
+      });
+      setCode(existing.code);
+      setStep("qr");
+      setGenerating(false);
+      return;
+    }
+
     const nonce = Math.random().toString(36).slice(2, 6).toUpperCase();
     const newCode = `AF-${user.id.slice(0, 6).toUpperCase()}-${placeId.slice(-4).toUpperCase()}-${day.replace(
       /-/g,
