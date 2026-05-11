@@ -11,6 +11,7 @@ import ReferralDialog from "@/components/ReferralDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { findPlaceOverride } from "@/data/places";
 import heroImg from "@/assets/alicante-hero.jpg";
+import vamosLogoImg from "@/assets/logo_vamos_d.png";
 
 type Msg = { role: "user" | "assistant"; content: string };
 type GeoInfo = {
@@ -261,12 +262,7 @@ export function ChatScreen() {
 
       {/* Compact header (always visible) */}
       <header className="relative flex items-center gap-3 border-b border-border/60 bg-background/40 px-4 py-3 backdrop-blur">
-        <VamosLogo />
         <div className="flex-1 min-w-0">
-          <h1 className="text-base font-extrabold leading-tight tracking-tight">
-            <span className="text-primary">VAMOS</span>
-            <span className="text-foreground"> a Alicante</span>
-          </h1>
           <p className="text-xs text-muted-foreground">
             <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-emerald-500 align-middle" />
             tu amigo local
@@ -329,8 +325,15 @@ export function ChatScreen() {
                 </button>
                 <div className="absolute inset-x-0 bottom-0 p-4 text-white">
                   <p className="text-xs uppercase tracking-widest opacity-90">Puerto de Alicante</p>
-                  <h2 className="mt-1 text-2xl font-extrabold leading-tight drop-shadow">
-                    ¡VAMOS a Alicante! 🌅
+                  <h2 className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-2xl font-extrabold leading-tight drop-shadow">
+                    <img
+                      src={vamosLogoImg}
+                      alt="VAMOS"
+                      width={1536}
+                      height={1024}
+                      className="h-9 w-auto drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] brightness-0 invert sm:h-11"
+                    />
+                    <span>a Alicante</span>
                   </h2>
                   <p className="mt-1 text-sm opacity-95 drop-shadow">
                     Soy tu amigo local. Cuéntame qué te apetece hoy y te llevo a los rincones que adoramos los de aquí.
@@ -563,7 +566,7 @@ function QrVamosInfo({ onClose }: { onClose: () => void }) {
           </div>
           <div className="min-w-0">
             <h3 className="text-lg font-extrabold leading-tight">
-              <span className="text-primary">QR VAMOS</span> · GOO QR
+              <span className="text-primary">QR VAMOS</span>
             </h3>
             <p className="text-[11px] text-muted-foreground">
               Tu llave de amigo local en Alicante
