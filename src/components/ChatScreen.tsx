@@ -518,12 +518,12 @@ function PlaceCard({ data }: { data: PlaceCardData }) {
             )}
           </div>
           {data.closesAt && (
-            <span className={`shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full ${theme.badge}`}>
-              cierra {data.closesAt}
+            <span className={`shrink-0 inline-flex items-center gap-1 text-[12px] font-bold px-2.5 py-1 rounded-full shadow-soft ring-1 ring-black/10 ${theme.badge}`}>
+              ⏰ cierra {data.closesAt}
             </span>
           )}
         </div>
-        {data.vibe && <p className="mt-2 text-sm text-foreground/90">{data.vibe}</p>}
+        {data.vibe && <p className="mt-2 text-sm font-bold text-foreground">{data.vibe}</p>}
         {data.address && (
           <p className="mt-1 text-xs text-muted-foreground flex items-start gap-1">
             <MapPin className="w-3 h-3 mt-0.5 shrink-0" /> <span>{data.address}</span>
