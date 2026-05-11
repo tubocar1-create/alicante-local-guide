@@ -332,62 +332,47 @@ export function ChatScreen() {
                 <div className="absolute inset-x-0 bottom-0 p-4 text-white">
                   <p className="text-xs uppercase tracking-widest opacity-90">Puerto de Alicante</p>
                   <h2 className="mt-1 text-2xl font-semibold leading-tight drop-shadow">
-                    Bienvenido a Alicante 🌅
+                    ¡Hola! Bienvenido a Alicante 🌅
                   </h2>
-                  <p className="mt-1 text-sm opacity-90">
-                    Soy tu amigo local. Cuéntame qué te apetece hoy.
+                  <p className="mt-1 text-sm opacity-90 drop-shadow">
+                    Soy tu amigo local. Cuéntame qué te apetece hoy y te llevo a los rincones que adoramos los de aquí.
                   </p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Glovo-style quick category tiles (only on welcome) */}
+          {/* Quick chips — single row, all go straight to chat */}
           {isWelcome && (
-            <div className="grid grid-cols-4 gap-2 px-1 pb-1 sm:grid-cols-6">
+            <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 no-scrollbar">
               {[
-                { emoji: "🍽️", label: "Comer", to: "/eat" as const },
-                { emoji: "🛏️", label: "Dormir", to: "/stay" as const },
-                { emoji: "🗺️", label: "Explorar", to: "/explore" as const },
+                { emoji: "🍽️", label: "Comer", prompt: "¿Dónde puedo comer rico ahora mismo?" },
+                { emoji: "🛏️", label: "Dormir", prompt: "¿Dónde puedo dormir esta noche en Alicante?" },
                 { emoji: "🏖️", label: "Playa", prompt: "¿Qué playa me recomiendas ahora?" },
                 { emoji: "🍹", label: "Tomar", prompt: "¿Dónde voy a tomar algo abierto ahora?" },
+                { emoji: "🗺️", label: "Plan", prompt: "Hazme un plan para hoy en Alicante" },
                 { emoji: "🛍️", label: "Comprar", prompt: "¿Dónde puedo ir de compras?" },
-              ].map((c) => {
-                const inner = (
-                  <>
-                    <div className="grid h-12 w-12 place-items-center rounded-2xl bg-card shadow-soft ring-1 ring-border/60 text-2xl transition group-active:scale-90">
-                      {c.emoji}
-                    </div>
-                    <span className="mt-1 text-[11px] font-medium text-foreground/80">
-                      {c.label}
-                    </span>
-                  </>
-                );
-                return "to" in c && c.to ? (
-                  <Link
-                    key={c.label}
-                    to={c.to}
-                    className="group flex flex-col items-center"
-                  >
-                    {inner}
-                  </Link>
-                ) : (
-                  <button
-                    key={c.label}
-                    type="button"
-                    onClick={() => c.prompt && send(c.prompt)}
-                    className="group flex flex-col items-center"
-                  >
-                    {inner}
-                  </button>
-                );
-              })}
+              ].map((c) => (
+                <button
+                  key={c.label}
+                  type="button"
+                  onClick={() => send(c.prompt)}
+                  className="group flex shrink-0 flex-col items-center"
+                >
+                  <div className="grid h-12 w-12 place-items-center rounded-2xl bg-card shadow-soft ring-1 ring-border/60 text-2xl transition group-active:scale-90">
+                    {c.emoji}
+                  </div>
+                  <span className="mt-1 text-[11px] font-medium text-foreground/80">
+                    {c.label}
+                  </span>
+                </button>
+              ))}
             </div>
           )}
 
-          {messages.map((m, i) => (
-            <Bubble key={i} role={m.role} content={m.content} />
-          ))}
+          {messages.map((m, i) =>
+            isWelcome && i === 0 ? null : <Bubble key={i} role={m.role} content={m.content} />,
+          )}
           {loading && messages[messages.length - 1]?.role === "user" && (
             <div className="flex justify-start">
               <div className="rounded-3xl rounded-bl-md bg-bubble-friend px-4 py-3 shadow-soft">
