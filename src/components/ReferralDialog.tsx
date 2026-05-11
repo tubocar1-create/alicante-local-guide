@@ -3,7 +3,7 @@ import { Ticket, ShieldCheck, Clock, AlertTriangle, Copy, Check, LogIn, PartyPop
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { addQr } from "@/lib/qr-storage";
+import { addQr, findTodayQr } from "@/lib/qr-storage";
 
 type Props = {
   placeId: string;
