@@ -1,0 +1,27 @@
+INSERT INTO public.bus_stops (code, name, lines) VALUES
+  ('3710', 'Marqués de Molins', ARRAY['39']),
+  ('3702', 'Barbieri', ARRAY['39']),
+  ('3707', 'Plaza Tordera', ARRAY['39']),
+  ('6201', 'Plaza Tordera', NULL),
+  ('6202', 'Plaza Tordera', ARRAY['4']),
+  ('2945', 'Representantes', ARRAY['16','24']),
+  ('6099', 'Representantes', ARRAY['4']),
+  ('6200', 'Plaza de España', NULL),
+  ('4114', 'Plaza de España', ARRAY['1','3','9']),
+  ('4438', 'Calderón-Pl. España', ARRAY['6','8','10','13']),
+  ('4115', 'Calderón-La Lonja', ARRAY['3']),
+  ('2902', 'Mercado-San Vicente', ARRAY['1','3','24']),
+  ('4400', 'Mercado-San Vicente', ARRAY['6','9','10']),
+  ('3400', 'Mercado-San Vicente', ARRAY['8','13']),
+  ('2579', 'Mercado-Jaime II', ARRAY['23']),
+  ('2504', 'Mercado-Rambla', ARRAY['23']),
+  ('2903', 'Panteón de Quijano', ARRAY['24']),
+  ('2682', 'Rambla-San Cristóbal', ARRAY['2','12','21','22','39']),
+  ('4600', 'Concatedral San Nicolás', NULL),
+  ('4045', 'Rambla-San José', ARRAY['5']),
+  ('2688', 'Rambla-Portal de Elche', ARRAY['10','13']),
+  ('6082', 'Rambla-San Fernando', ARRAY['2','5','12'])
+ON CONFLICT (code) DO UPDATE SET
+  name = COALESCE(EXCLUDED.name, public.bus_stops.name),
+  lines = COALESCE(EXCLUDED.lines, public.bus_stops.lines),
+  updated_at = now();
