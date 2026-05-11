@@ -15,6 +15,7 @@ import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as EatRouteImport } from './routes/eat'
+import { Route as BusRouteImport } from './routes/bus'
 import { Route as IndexRouteImport } from './routes/index'
 
 const StayRoute = StayRouteImport.update({
@@ -47,6 +48,11 @@ const EatRoute = EatRouteImport.update({
   path: '/eat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BusRoute = BusRouteImport.update({
+  id: '/bus',
+  path: '/bus',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -55,6 +61,7 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/bus': typeof BusRoute
   '/eat': typeof EatRoute
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
@@ -64,6 +71,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/bus': typeof BusRoute
   '/eat': typeof EatRoute
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
@@ -74,6 +82,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/bus': typeof BusRoute
   '/eat': typeof EatRoute
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
@@ -85,6 +94,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/bus'
     | '/eat'
     | '/explore'
     | '/login'
@@ -92,10 +102,19 @@ export interface FileRouteTypes {
     | '/repo'
     | '/stay'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/eat' | '/explore' | '/login' | '/perfil' | '/repo' | '/stay'
+  to:
+    | '/'
+    | '/bus'
+    | '/eat'
+    | '/explore'
+    | '/login'
+    | '/perfil'
+    | '/repo'
+    | '/stay'
   id:
     | '__root__'
     | '/'
+    | '/bus'
     | '/eat'
     | '/explore'
     | '/login'
@@ -106,6 +125,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BusRoute: typeof BusRoute
   EatRoute: typeof EatRoute
   ExploreRoute: typeof ExploreRoute
   LoginRoute: typeof LoginRoute
@@ -158,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bus': {
+      id: '/bus'
+      path: '/bus'
+      fullPath: '/bus'
+      preLoaderRoute: typeof BusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -170,6 +197,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BusRoute: BusRoute,
   EatRoute: EatRoute,
   ExploreRoute: ExploreRoute,
   LoginRoute: LoginRoute,
