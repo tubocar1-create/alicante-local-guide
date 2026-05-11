@@ -409,10 +409,10 @@ export function ChatScreen() {
                     aria-label={t.label}
                     className="group flex flex-col items-center"
                   >
-                    <div className="grid aspect-square w-full place-items-center rounded-2xl bg-background text-[34px] shadow-sm ring-2 ring-border transition group-hover:-translate-y-0.5 group-active:scale-95">
+                    <div className="grid aspect-square w-full place-items-center rounded-2xl bg-white text-[38px] shadow-md ring-2 ring-[oklch(0.25_0.04_35)] transition group-hover:-translate-y-0.5 group-active:scale-95">
                       <span className="drop-shadow-sm">{t.emoji}</span>
                     </div>
-                    <span className="mt-1.5 text-[13px] font-bold leading-tight text-foreground text-center">
+                    <span className="mt-2 block w-full rounded-md bg-[oklch(0.22_0.04_35)] px-1.5 py-1 text-[15px] font-extrabold leading-tight tracking-tight text-white text-center shadow-sm">
                       {t.label}
                     </span>
                   </button>
