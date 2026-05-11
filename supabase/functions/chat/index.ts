@@ -475,7 +475,7 @@ function buildMentionedPlacesResponse(mentionedPlaces: MentionedPlace[], openFoo
     ).slice(0, 2);
     if (alternatives.length > 0) {
       lines.push("Te dejo alternativas con horario confirmado:");
-      alternatives.forEach((alt, index) => lines.push(formatFoodPlace(alt, index + 1)));
+      alternatives.forEach((alt, index) => lines.push(formatFoodPlace(alt, index + 1, usedVibes)));
     }
   }
   return lines.join("\n\n");
