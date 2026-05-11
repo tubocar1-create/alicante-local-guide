@@ -49,6 +49,27 @@ export function listQrs(userId: string): LocalQr[] {
     .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
 }
 
+function sameLocalDay(iso: string, ref: Date): boolean {
+  const d = new Date(iso);
+  return (
+    d.getFullYear() === ref.getFullYear() &&
+    d.getMonth() === ref.getMonth() &&
+    d.getDate() === ref.getDate()
+  );
+}
+
+export function findTodayQr(userId: string, placeId: string): LocalQr | null {
+  const today = new Date();
+  return (
+    read().find(
+      (q) =>
+        q.user_id === userId &&
+        q.place_id === placeId &&
+        sameLocalDay(q.created_at, today)
+    ) ?? null
+  );
+}
+
 export function addQr(qr: LocalQr) {
   const list = read();
   list.push(qr);
