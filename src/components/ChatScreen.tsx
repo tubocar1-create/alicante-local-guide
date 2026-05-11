@@ -365,19 +365,29 @@ export function ChatScreen() {
           )}
 
           {isWelcome && !activeSubmenu && (
-            <div className="mt-2 flex flex-wrap gap-2">
-              {SUGGESTIONS.map((s) => (
-                <button
-                  key={s.label}
-                  onClick={() => {
-                    if (s.submenu) setActiveSubmenu(s);
-                    else if (s.prompt) send(s.prompt);
-                  }}
-                  className="rounded-full border border-border bg-card/90 px-3 py-2 text-sm text-card-foreground shadow-sm backdrop-blur transition hover:bg-accent/40"
-                >
-                  {s.label}
-                </button>
-              ))}
+            <div className="-mx-4 mt-2 flex gap-3 overflow-x-auto px-4 pb-2 no-scrollbar sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0">
+              {SUGGESTIONS.map((s) => {
+                const match = s.label.match(/^(\p{Extended_Pictographic}+)\s*(.*)$/u);
+                const emoji = match?.[1] ?? "✨";
+                const label = match?.[2] ?? s.label;
+                return (
+                  <button
+                    key={s.label}
+                    onClick={() => {
+                      if (s.submenu) setActiveSubmenu(s);
+                      else if (s.prompt) send(s.prompt);
+                    }}
+                    className="group flex shrink-0 flex-col items-center"
+                  >
+                    <div className="grid h-16 w-16 place-items-center rounded-2xl bg-card text-3xl shadow-soft ring-1 ring-border/60 transition group-hover:-translate-y-0.5 group-active:scale-95">
+                      <span className="drop-shadow-sm">{emoji}</span>
+                    </div>
+                    <span className="mt-1.5 text-[12px] font-semibold text-foreground/85">
+                      {label}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           )}
           {isWelcome && activeSubmenu && (
