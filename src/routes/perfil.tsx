@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { usePoints } from "@/hooks/usePoints";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { listQrs, subscribeQrs, type LocalQr } from "@/lib/qr-storage";
 import { AFP_LABELS, AFP_LEVELS, AFP_REWARDS, getLevel, getLevelProgress } from "@/lib/afp";
 
 export const Route = createFileRoute("/perfil")({
@@ -31,16 +31,7 @@ export const Route = createFileRoute("/perfil")({
 
 type ActionId = "itinerary" | "review" | "invite";
 
-type QrRow = {
-  id: string;
-  place_id: string;
-  place_name: string;
-  code: string;
-  status: "active" | "used" | "expired";
-  created_at: string;
-  expires_at: string | null;
-  used_at: string | null;
-};
+type QrRow = LocalQr;
 
 function PerfilPage() {
   const { points, history, streakDays, weekStreakPoints, award } = usePoints();
@@ -51,7 +42,7 @@ function PerfilPage() {
     "acciones"
   );
   const [qrs, setQrs] = useState<QrRow[]>([]);
-  const [loadingQrs, setLoadingQrs] = useState(false);
+  const loadingQrs = false;
 
   const badges = AFP_LEVELS.filter((l) => points >= l.min);
 
@@ -60,15 +51,9 @@ function PerfilPage() {
       setQrs([]);
       return;
     }
-    setLoadingQrs(true);
-    supabase
-      .from("referral_qrs")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        setQrs((data as QrRow[]) ?? []);
-        setLoadingQrs(false);
-      });
+    const refresh = () => setQrs(listQrs(user.id));
+    refresh();
+    return subscribeQrs(refresh);
   }, [user, activeTab]);
 
   const actions: Array<{
