@@ -417,21 +417,39 @@ export function ChatScreen() {
                       }
                     },
                   },
-                ].map((t) => (
-                  <button
-                    key={t.key}
-                    onClick={t.onClick}
-                    aria-label={t.label}
-                    className="group flex flex-col items-center"
-                  >
-                    <div className="grid aspect-square w-full place-items-center rounded-2xl bg-white text-[38px] shadow-md ring-2 ring-[oklch(0.25_0.04_35)] transition group-hover:-translate-y-0.5 group-active:scale-95">
-                      <span className="drop-shadow-sm">{t.emoji}</span>
-                    </div>
-                    <span className="mt-2 block w-full rounded-md bg-[oklch(0.22_0.04_35)] px-1.5 py-1 text-[15px] font-extrabold leading-tight tracking-tight text-white text-center shadow-sm">
-                      {t.label}
-                    </span>
-                  </button>
-                ))}
+                ].map((t) => {
+                  const style = TILE_STYLES[t.label];
+                  return (
+                    <button
+                      key={t.key}
+                      onClick={t.onClick}
+                      aria-label={t.label}
+                      className="group flex flex-col items-center"
+                    >
+                      <div
+                        className="grid aspect-square w-full place-items-center rounded-2xl shadow-sm transition group-hover:-translate-y-0.5 group-active:scale-95 overflow-hidden"
+                        style={{ backgroundColor: style?.bg ?? "oklch(0.95 0.02 80)" }}
+                      >
+                        {style ? (
+                          <img
+                            src={style.img}
+                            alt=""
+                            aria-hidden
+                            loading="lazy"
+                            width={1024}
+                            height={1024}
+                            className="h-[78%] w-[78%] object-contain drop-shadow-sm"
+                          />
+                        ) : (
+                          <span className="text-[38px]">{t.emoji}</span>
+                        )}
+                      </div>
+                      <span className="mt-1.5 block w-full text-[12px] font-semibold leading-tight tracking-tight text-foreground text-center">
+                        {t.label}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
