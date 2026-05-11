@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Navigation, Phone, Globe, MapPin, Star, Ticket, Sparkles } from "lucide-react";
+import { Loader2, Navigation } from "lucide-react";
 import { fetchListings, type Listing } from "@/lib/overpass-listings";
-import { useUserLocation, distanceKm, formatDistance } from "@/hooks/useUserLocation";
+import { useUserLocation, distanceKm } from "@/hooks/useUserLocation";
 import ReferralDialog from "@/components/ReferralDialog";
+import { ListingCard } from "@/components/ListingCard";
 
 export type FilterChip<K extends string> = { kind: K; label: string; emoji: string };
 
