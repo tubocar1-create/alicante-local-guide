@@ -616,14 +616,15 @@ function AssistantContent({ content }: { content: string }) {
 
   const parts: Array<{ type: "text"; value: string } | { type: "card"; data: PlaceCardData }> = [];
   let lastIndex = 0;
-  const re = new RegExp(CARD_RE.source, "g");
+  const re = /\[\[card:([\s\S]+?)\]\]/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(cleaned)) !== null) {
     if (m.index > lastIndex) parts.push({ type: "text", value: cleaned.slice(lastIndex, m.index) });
     try {
       const data = JSON.parse(decodeURIComponent(m[1])) as PlaceCardData;
       parts.push({ type: "card", data });
-    } catch {
+    } catch (err) {
+      console.warn("[card-parse-fail]", err, m[1]?.slice(0, 80));
       parts.push({ type: "text", value: m[0] });
     }
     lastIndex = m.index + m[0].length;
