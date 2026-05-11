@@ -700,7 +700,7 @@ type AssistantPart = { type: "text"; value: string } | { type: "card"; data: Pla
 const CARD_FALLBACK_THEMES = ["sun", "sea", "citrus", "rose", "mint", "grape"];
 
 function parseRecommendationListCards(text: string): AssistantPart[] | null {
-  const itemRe = /^\s*\d+\.\s+\*\*([^*]+)\*\*\s*(?:[—–-]\s*)?([\s\S]*?)(?=^\s*\d+\.\s+\*\*|\s*$)/gm;
+  const itemRe = /^\s*\d+\.\s+\*\*([^*]+)\*\*\s*(?:[—–-]\s*)?([\s\S]*?)(?=\n\s*\n\s*\d+\.\s+\*\*|\n\s*\n(?!\s*\d+\.\s+\*\*)|\s*$)/gm;
   const parts: AssistantPart[] = [];
   let lastIndex = 0;
   let found = false;
