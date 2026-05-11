@@ -1412,6 +1412,24 @@ function extractTransitDestination(text: string): string | null {
   return null;
 }
 
+function extractTransitOrigin(text: string): string | null {
+  const cleaned = text
+    .replace(/\s+/g, " ")
+    .replace(/[¿?¡!]/g, "")
+    .trim();
+  const patterns = [
+    /\b(?:estoy\s+(?:en|por|ahora\s+en)|me\s+encuentro\s+en|salgo\s+desde|salgo\s+de|desde)\s+(?:la\s+|el\s+|los\s+|las\s+)?(.+?)(?:\s+(?:y\s+quiero|y\s+voy|hasta|hacia|al?|para|en\s+bus|en\s+autob[uú]s|en\s+tram|\.|,|;).*)?$/i,
+  ];
+  for (const re of patterns) {
+    const m = cleaned.match(re);
+    if (m && m[1]) {
+      const o = m[1].replace(/[.,;:]+$/, "").trim();
+      if (o.length >= 3 && o.length < 120) return o;
+    }
+  }
+  return null;
+}
+
 async function geocodeAlicante(query: string): Promise<(LatLng & { label: string }) | null> {
   // Bias hard to Alicante province via viewbox
   const url = new URL("https://nominatim.openstreetmap.org/search");
