@@ -261,12 +261,7 @@ export function ChatScreen() {
 
       {/* Compact header (always visible) */}
       <header className="relative flex items-center gap-3 border-b border-border/60 bg-background/40 px-4 py-3 backdrop-blur">
-        <VamosLogo />
         <div className="flex-1 min-w-0">
-          <h1 className="text-base font-extrabold leading-tight tracking-tight">
-            <span className="text-primary">VAMOS</span>
-            <span className="text-foreground"> a Alicante</span>
-          </h1>
           <p className="text-xs text-muted-foreground">
             <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-emerald-500 align-middle" />
             tu amigo local
