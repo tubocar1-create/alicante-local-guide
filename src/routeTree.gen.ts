@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as StayRouteImport } from './routes/stay'
 import { Route as RepoRouteImport } from './routes/repo'
 import { Route as PerfilRouteImport } from './routes/perfil'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as EatRouteImport } from './routes/eat'
 import { Route as IndexRouteImport } from './routes/index'
@@ -29,6 +30,11 @@ const RepoRoute = RepoRouteImport.update({
 const PerfilRoute = PerfilRouteImport.update({
   id: '/perfil',
   path: '/perfil',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExploreRoute = ExploreRouteImport.update({
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/eat': typeof EatRoute
   '/explore': typeof ExploreRoute
+  '/login': typeof LoginRoute
   '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
   '/stay': typeof StayRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/eat': typeof EatRoute
   '/explore': typeof ExploreRoute
+  '/login': typeof LoginRoute
   '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
   '/stay': typeof StayRoute
@@ -68,22 +76,39 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/eat': typeof EatRoute
   '/explore': typeof ExploreRoute
+  '/login': typeof LoginRoute
   '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
   '/stay': typeof StayRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/eat' | '/explore' | '/perfil' | '/repo' | '/stay'
+  fullPaths:
+    | '/'
+    | '/eat'
+    | '/explore'
+    | '/login'
+    | '/perfil'
+    | '/repo'
+    | '/stay'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/eat' | '/explore' | '/perfil' | '/repo' | '/stay'
-  id: '__root__' | '/' | '/eat' | '/explore' | '/perfil' | '/repo' | '/stay'
+  to: '/' | '/eat' | '/explore' | '/login' | '/perfil' | '/repo' | '/stay'
+  id:
+    | '__root__'
+    | '/'
+    | '/eat'
+    | '/explore'
+    | '/login'
+    | '/perfil'
+    | '/repo'
+    | '/stay'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   EatRoute: typeof EatRoute
   ExploreRoute: typeof ExploreRoute
+  LoginRoute: typeof LoginRoute
   PerfilRoute: typeof PerfilRoute
   RepoRoute: typeof RepoRoute
   StayRoute: typeof StayRoute
@@ -110,6 +135,13 @@ declare module '@tanstack/react-router' {
       path: '/perfil'
       fullPath: '/perfil'
       preLoaderRoute: typeof PerfilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/explore': {
@@ -140,6 +172,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   EatRoute: EatRoute,
   ExploreRoute: ExploreRoute,
+  LoginRoute: LoginRoute,
   PerfilRoute: PerfilRoute,
   RepoRoute: RepoRoute,
   StayRoute: StayRoute,

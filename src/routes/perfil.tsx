@@ -1,7 +1,22 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Sparkles, QrCode, Check, MessageSquareQuote, Users, Flame, Trophy, Info } from "lucide-react";
+import {
+  ArrowLeft,
+  Sparkles,
+  Check,
+  MessageSquareQuote,
+  Users,
+  Flame,
+  Trophy,
+  Info,
+  LogIn,
+  LogOut,
+  QrCode,
+  User as UserIcon,
+} from "lucide-react";
 import { usePoints } from "@/hooks/usePoints";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { AFP_LABELS, AFP_LEVELS, AFP_REWARDS, getLevel, getLevelProgress } from "@/lib/afp";
 
 export const Route = createFileRoute("/perfil")({
@@ -14,26 +29,56 @@ export const Route = createFileRoute("/perfil")({
   component: PerfilPage,
 });
 
-type ActionId = "qr" | "itinerary" | "review" | "invite";
+type ActionId = "itinerary" | "review" | "invite";
+
+type QrRow = {
+  id: string;
+  place_id: string;
+  place_name: string;
+  code: string;
+  status: "active" | "used" | "expired";
+  created_at: string;
+  expires_at: string | null;
+  used_at: string | null;
+};
 
 function PerfilPage() {
   const { points, history, streakDays, weekStreakPoints, award } = usePoints();
+  const { user, isAuthenticated, signOut } = useAuth();
   const level = getLevel(points);
   const { pctToNext, next, remaining } = getLevelProgress(points);
-  const [qrOpen, setQrOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"acciones" | "historial" | "niveles">("acciones");
+  const [activeTab, setActiveTab] = useState<"acciones" | "qrs" | "historial" | "niveles">(
+    "acciones"
+  );
+  const [qrs, setQrs] = useState<QrRow[]>([]);
+  const [loadingQrs, setLoadingQrs] = useState(false);
 
   const badges = AFP_LEVELS.filter((l) => points >= l.min);
 
-  const actions: Array<{ id: ActionId; icon: typeof QrCode; title: string; desc: string; pts: number; onClick: () => void }> = [
-    {
-      id: "qr",
-      icon: QrCode,
-      title: "Generar QR de referral",
-      desc: "Enséñalo en el local. +20 ahora, +80 cuando lo confirmen.",
-      pts: AFP_REWARDS.qr_generated,
-      onClick: () => setQrOpen(true),
-    },
+  useEffect(() => {
+    if (!user) {
+      setQrs([]);
+      return;
+    }
+    setLoadingQrs(true);
+    supabase
+      .from("referral_qrs")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        setQrs((data as QrRow[]) ?? []);
+        setLoadingQrs(false);
+      });
+  }, [user, activeTab]);
+
+  const actions: Array<{
+    id: ActionId;
+    icon: typeof Check;
+    title: string;
+    desc: string;
+    pts: number;
+    onClick: () => void;
+  }> = [
     {
       id: "itinerary",
       icon: Check,
@@ -59,10 +104,20 @@ function PerfilPage() {
       onClick: () => {
         const name = window.prompt("Nombre o email del amigo (para no contarlo dos veces):");
         if (!name) return;
-        award("friend_invited", { uniqueKey: name.trim().toLowerCase(), note: `Invitó a ${name.trim()}` });
+        award("friend_invited", {
+          uniqueKey: name.trim().toLowerCase(),
+          note: `Invitó a ${name.trim()}`,
+        });
       },
     },
   ];
+
+  const displayName =
+    (user?.user_metadata?.full_name as string | undefined) ||
+    (user?.user_metadata?.name as string | undefined) ||
+    user?.email?.split("@")[0] ||
+    "Invitado";
+  const avatarUrl = user?.user_metadata?.avatar_url as string | undefined;
 
   return (
     <div className="mx-auto flex min-h-svh max-w-2xl flex-col bg-background px-4 pb-16 pt-4">
@@ -74,8 +129,40 @@ function PerfilPage() {
           <ArrowLeft className="h-3.5 w-3.5" /> Volver
         </Link>
         <h1 className="text-base font-semibold">Mi perfil</h1>
-        <span className="w-[64px]" />
+        {isAuthenticated ? (
+          <button
+            onClick={() => signOut()}
+            className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-xs text-secondary-foreground active:scale-95"
+          >
+            <LogOut className="h-3.5 w-3.5" /> Salir
+          </button>
+        ) : (
+          <Link
+            to="/login"
+            search={{ redirect: "/perfil" }}
+            className="inline-flex items-center gap-1 rounded-full gradient-warm px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-soft active:scale-95"
+          >
+            <LogIn className="h-3.5 w-3.5" /> Entrar
+          </Link>
+        )}
       </header>
+
+      {/* Identidad */}
+      <section className="mb-3 flex items-center gap-3 rounded-2xl border border-border bg-card/60 p-3">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary">
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <UserIcon className="h-6 w-6" />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold">{displayName}</p>
+          <p className="truncate text-[11px] text-muted-foreground">
+            {user?.email ?? "No has iniciado sesión"}
+          </p>
+        </div>
+      </section>
 
       {/* Tarjeta de progreso */}
       <section className="rounded-3xl gradient-warm p-5 text-primary-foreground shadow-soft">
@@ -86,7 +173,9 @@ function PerfilPage() {
           <div className="min-w-0 flex-1">
             <p className="flex items-center gap-1.5 text-[11px] uppercase tracking-widest opacity-90">
               Nivel {level.id}
-              <span className="rounded-full bg-white/25 px-1.5 py-0.5 text-[9px] font-bold tracking-wider">BETA</span>
+              <span className="rounded-full bg-white/25 px-1.5 py-0.5 text-[9px] font-bold tracking-wider">
+                BETA
+              </span>
             </p>
             <h2 className="truncate text-lg font-semibold">{level.name}</h2>
           </div>
@@ -101,11 +190,16 @@ function PerfilPage() {
         {next ? (
           <div className="mt-4">
             <div className="flex justify-between text-[11px] opacity-90">
-              <span>Siguiente: {next.emoji} {next.name}</span>
+              <span>
+                Siguiente: {next.emoji} {next.name}
+              </span>
               <span>{remaining} pts para subir</span>
             </div>
             <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/25">
-              <div className="h-full bg-white transition-all" style={{ width: `${pctToNext}%` }} />
+              <div
+                className="h-full bg-white transition-all"
+                style={{ width: `${pctToNext}%` }}
+              />
             </div>
           </div>
         ) : (
@@ -122,19 +216,17 @@ function PerfilPage() {
         </div>
       </section>
 
-      {/* Mensaje de transparencia BETA */}
       <div className="mt-4 flex items-start gap-2 rounded-2xl border border-amber-300/60 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100">
         <Info className="mt-0.5 h-4 w-4 shrink-0" />
         <p>
-          <strong>Estamos en versión Beta</strong>, así que los puntos y estadísticas son <strong>de prueba</strong>.
-          Cuando lancemos la <strong>Versión 1</strong> los puntos serán reales y podrás canjearlos por descuentos y
-          beneficios en locales partners 🔥. Mientras tanto, ¡testea todo lo que quieras!
+          <strong>Estamos en Beta.</strong> Los QR no suman puntos hasta que el local los valide en
+          su app. Los puntos y estadísticas son aún de prueba.
         </p>
       </div>
 
       {/* Tabs */}
       <div className="mt-5 flex gap-1 rounded-full bg-muted p-1 text-xs">
-        {(["acciones", "historial", "niveles"] as const).map((t) => (
+        {(["acciones", "qrs", "historial", "niveles"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setActiveTab(t)}
@@ -142,7 +234,7 @@ function PerfilPage() {
               activeTab === t ? "bg-background shadow-sm" : "text-muted-foreground"
             }`}
           >
-            {t}
+            {t === "qrs" ? "Mis QR" : t}
           </button>
         ))}
       </div>
@@ -171,6 +263,86 @@ function PerfilPage() {
         </ul>
       )}
 
+      {activeTab === "qrs" && (
+        <div className="mt-3">
+          {!isAuthenticated ? (
+            <div className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+              <p>Inicia sesión para ver tus QR generados.</p>
+              <Link
+                to="/login"
+                search={{ redirect: "/perfil" }}
+                className="mt-3 inline-flex items-center gap-1 rounded-full gradient-warm px-4 py-2 text-xs font-semibold text-primary-foreground shadow-soft"
+              >
+                <LogIn className="h-3.5 w-3.5" /> Entrar
+              </Link>
+            </div>
+          ) : loadingQrs ? (
+            <p className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+              Cargando tus QR…
+            </p>
+          ) : qrs.length === 0 ? (
+            <p className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+              Aún no has generado ningún QR. Pulsa <b>Quiero ir</b> en cualquier local 👇
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {qrs.map((q) => {
+                const isExpired =
+                  q.status === "expired" ||
+                  (q.expires_at && new Date(q.expires_at) < new Date() && q.status === "active");
+                const isUsed = q.status === "used";
+                return (
+                  <li
+                    key={q.id}
+                    className={`flex items-center gap-3 rounded-2xl border p-3 ${
+                      isUsed
+                        ? "border-emerald-300/60 bg-emerald-50/60 dark:border-emerald-500/40 dark:bg-emerald-500/10"
+                        : isExpired
+                          ? "border-border bg-muted/40 opacity-70"
+                          : "border-border bg-card/80"
+                    }`}
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <QrCode className="h-5 w-5" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="flex items-center gap-1.5 truncate text-sm font-semibold">
+                        {q.place_name}
+                        {isUsed && (
+                          <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold uppercase text-white">
+                            Usado
+                          </span>
+                        )}
+                        {!isUsed && isExpired && (
+                          <span className="rounded-full bg-muted-foreground/20 px-2 py-0.5 text-[10px] font-bold uppercase text-muted-foreground">
+                            Caducado
+                          </span>
+                        )}
+                      </p>
+                      <p className="truncate font-mono text-[11px] text-muted-foreground">
+                        {q.code}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        Generado{" "}
+                        {new Date(q.created_at).toLocaleString("es-ES", {
+                          dateStyle: "short",
+                          timeStyle: "short",
+                        })}
+                        {q.used_at &&
+                          ` · Usado ${new Date(q.used_at).toLocaleString("es-ES", {
+                            dateStyle: "short",
+                            timeStyle: "short",
+                          })}`}
+                      </p>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      )}
+
       {activeTab === "historial" && (
         <div className="mt-3">
           {history.length === 0 ? (
@@ -186,12 +358,21 @@ function PerfilPage() {
                 >
                   <span className="min-w-0">
                     <span className="block truncate font-medium">{AFP_LABELS[h.action]}</span>
-                    {h.note && <span className="block truncate text-[11px] text-muted-foreground">{h.note}</span>}
+                    {h.note && (
+                      <span className="block truncate text-[11px] text-muted-foreground">
+                        {h.note}
+                      </span>
+                    )}
                     <span className="block text-[10px] text-muted-foreground">
-                      {new Date(h.at).toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" })}
+                      {new Date(h.at).toLocaleString("es-ES", {
+                        dateStyle: "short",
+                        timeStyle: "short",
+                      })}
                     </span>
                   </span>
-                  <span className="shrink-0 font-semibold tabular-nums text-primary">+{h.points}</span>
+                  <span className="shrink-0 font-semibold tabular-nums text-primary">
+                    +{h.points}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -207,7 +388,10 @@ function PerfilPage() {
             </h3>
             <div className="flex flex-wrap gap-2">
               {badges.map((b) => (
-                <span key={b.id} className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                <span
+                  key={b.id}
+                  className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
+                >
                   {b.emoji} {b.name}
                 </span>
               ))}
@@ -229,7 +413,8 @@ function PerfilPage() {
                       {l.emoji} {l.name}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {l.min}{l.max === Infinity ? "+" : `–${l.max}`} pts
+                      {l.min}
+                      {l.max === Infinity ? "+" : `–${l.max}`} pts
                     </span>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">{l.perk}</p>
@@ -239,81 +424,6 @@ function PerfilPage() {
           </ul>
         </div>
       )}
-
-      {qrOpen && <QrDialog onClose={() => setQrOpen(false)} onAwardGenerate={() => award("qr_generated")} onAwardConfirm={() => award("qr_confirmed", { note: "Local confirmó la visita" })} />}
-    </div>
-  );
-}
-
-function QrDialog({
-  onClose,
-  onAwardGenerate,
-  onAwardConfirm,
-}: {
-  onClose: () => void;
-  onAwardGenerate: () => void;
-  onAwardConfirm: () => void;
-}) {
-  const [generated, setGenerated] = useState(false);
-  const [confirmed, setConfirmed] = useState(false);
-  const code = `AF-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
-    `https://alicante-friend.app/r/${code}`
-  )}`;
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-sm rounded-3xl bg-background p-5 shadow-soft"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h3 className="text-lg font-semibold">Tu QR de referral</h3>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Genéralo y enséñalo en el local. Cuando confirmen tu visita, sumas el premio gordo.
-        </p>
-
-        {!generated ? (
-          <button
-            onClick={() => {
-              setGenerated(true);
-              onAwardGenerate();
-            }}
-            className="mt-4 w-full rounded-full gradient-warm py-3 text-sm font-semibold text-primary-foreground shadow-soft active:scale-95"
-          >
-            Generar QR (+20 AFP)
-          </button>
-        ) : (
-          <div className="mt-4 flex flex-col items-center gap-3">
-            <img src={qrUrl} alt="QR de referral" width={240} height={240} className="rounded-2xl border border-border" />
-            <code className="text-xs text-muted-foreground">{code}</code>
-            {!confirmed ? (
-              <button
-                onClick={() => {
-                  setConfirmed(true);
-                  onAwardConfirm();
-                }}
-                className="w-full rounded-full bg-primary py-3 text-sm font-semibold text-primary-foreground shadow-soft active:scale-95"
-              >
-                El local lo confirmó (+80 AFP)
-              </button>
-            ) : (
-              <p className="rounded-xl bg-emerald-500/10 px-3 py-2 text-center text-xs text-emerald-700 dark:text-emerald-300">
-                ✅ Confirmado. ¡Brutal! Puedes cerrar este diálogo.
-              </p>
-            )}
-          </div>
-        )}
-
-        <button
-          onClick={onClose}
-          className="mt-4 w-full rounded-full border border-border py-2 text-sm text-muted-foreground active:scale-95"
-        >
-          Cerrar
-        </button>
-      </div>
     </div>
   );
 }

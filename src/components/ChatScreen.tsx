@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Mic, MapPin, Map as MapIcon, Home } from "lucide-react";
+import { Send, Mic, MapPin, Map as MapIcon, Home, User as UserIcon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -8,6 +8,7 @@ import { PointsHud } from "@/components/PointsHud";
 import { usePoints } from "@/hooks/usePoints";
 import { useUserLocation, distanceKm } from "@/hooks/useUserLocation";
 import ReferralDialog from "@/components/ReferralDialog";
+import { useAuth } from "@/hooks/useAuth";
 import { findPlaceOverride } from "@/data/places";
 import heroImg from "@/assets/alicante-hero.jpg";
 
@@ -251,6 +252,7 @@ export function ChatScreen() {
         </div>
         <nav className="flex items-center gap-1.5">
           <PointsHud compact />
+          <ProfileButton />
           <button
             onClick={() => {
               setMessages([GREETING]);
@@ -446,6 +448,36 @@ export function ChatScreen() {
         />
       )}
     </div>
+  );
+}
+
+function ProfileButton() {
+  const { user, isAuthenticated } = useAuth();
+  const avatarUrl = user?.user_metadata?.avatar_url as string | undefined;
+  if (isAuthenticated) {
+    return (
+      <Link
+        to="/perfil"
+        aria-label="Mi perfil"
+        className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-border bg-card shadow-sm active:scale-95"
+      >
+        {avatarUrl ? (
+          <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <UserIcon className="h-4 w-4 text-muted-foreground" />
+        )}
+      </Link>
+    );
+  }
+  return (
+    <Link
+      to="/login"
+      search={{ redirect: "/perfil" }}
+      aria-label="Iniciar sesión"
+      className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-border bg-card shadow-sm active:scale-95"
+    >
+      <UserIcon className="h-4 w-4 text-muted-foreground" />
+    </Link>
   );
 }
 

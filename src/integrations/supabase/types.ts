@@ -14,7 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      referral_qrs: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          place_id: string
+          place_name: string
+          status: Database["public"]["Enums"]["qr_status"]
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          place_id: string
+          place_name: string
+          status?: Database["public"]["Enums"]["qr_status"]
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          place_id?: string
+          place_name?: string
+          status?: Database["public"]["Enums"]["qr_status"]
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +85,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      qr_status: "active" | "used" | "expired"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +212,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      qr_status: ["active", "used", "expired"],
+    },
   },
 } as const
