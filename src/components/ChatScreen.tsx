@@ -734,7 +734,7 @@ function PlaceCard({ data }: { data: PlaceCardData }) {
             }
             className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full gradient-warm text-primary-foreground shadow-soft active:scale-95"
           >
-            🎟️ Quiero ir
+            🎟️ VAMOS
           </button>
         </div>
       </div>
@@ -772,7 +772,7 @@ function MarkdownText({ text }: { text: string }) {
                 }
                 className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full gradient-warm text-primary-foreground shadow-soft active:scale-95 align-middle ml-1"
               >
-                🎟️ Quiero ir
+                🎟️ VAMOS
               </button>
             );
           }
