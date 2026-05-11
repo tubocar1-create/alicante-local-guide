@@ -695,6 +695,41 @@ type PlaceCardData = {
   theme?: string;
 };
 
+type AssistantPart = { type: "text"; value: string } | { type: "card"; data: PlaceCardData };
+
+function parseRecommendationListCards(text: string): AssistantPart[] | null {
+  const itemRe = /^\s*\d+\.\s+\*\*([^*]+)\*\*\s*(?:[—–-]\s*)?([\s\S]*?(?:\[⭐[^\]]*\]\([^)]+\)(?:\s*·\s*\[🎟️[^\]]*\]\(qi:[^)]+\))?|\[🎟️[^\]]*\]\(qi:[^)]+\)))/gm;
+  const parts: AssistantPart[] = [];
+  let lastIndex = 0;
+  let found = false;
+  let m: RegExpExecArray | null;
+
+  while ((m = itemRe.exec(text)) !== null) {
+    found = true;
+    if (m.index > lastIndex) parts.push({ type: "text", value: text.slice(lastIndex, m.index) });
+
+    const name = m[1].trim();
+    const body = m[2]
+      .replace(/\s*·\s*\[🎟️[^\]]*\]\(qi:[^)]+\)/g, "")
+      .replace(/\[🎟️[^\]]*\]\(qi:[^)]+\)/g, "")
+      .replace(/\[⭐[^\]]*\]\([^)]+\)/g, "")
+      .trim();
+    const closesAt = body.match(/cierra(?:\s+a\s+las)?\s+(\d{1,2}:\d{2})/i)?.[1];
+    const vibe = body
+      .replace(/abierto ahora,?\s*/i, "")
+      .replace(/cierra(?:\s+a\s+las)?\s+\d{1,2}:\d{2}\.?/i, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    parts.push({ type: "card", data: { name, closesAt, vibe: vibe || undefined } });
+    lastIndex = itemRe.lastIndex;
+  }
+
+  if (!found) return null;
+  if (lastIndex < text.length) parts.push({ type: "text", value: text.slice(lastIndex) });
+  return parts;
+}
+
 const THEME_STYLES: Record<string, { bg: string; ring: string; badge: string }> = {
   sun:    { bg: "bg-gradient-to-br from-amber-200 via-orange-200 to-rose-300 dark:from-amber-800/60 dark:via-orange-800/50 dark:to-rose-800/60",  ring: "border-amber-400/70",  badge: "bg-amber-600 text-white" },
   sea:    { bg: "bg-gradient-to-br from-sky-200 via-cyan-200 to-blue-300 dark:from-sky-800/60 dark:via-cyan-800/50 dark:to-blue-800/60",          ring: "border-sky-400/70",    badge: "bg-sky-600 text-white" },
