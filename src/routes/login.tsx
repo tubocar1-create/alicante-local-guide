@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute, Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
 import { ArrowLeft, User as UserIcon, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { signInWithName } from "@/hooks/useAuth";
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
-  const navigate = useNavigate();
+  // hard-redirect after sign in (see below)
   const { redirect } = useSearch({ from: "/login" });
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
