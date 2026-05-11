@@ -332,11 +332,34 @@ function streamChatText(text: string) {
   );
 }
 
-function formatFoodPlace(place: FoodPlace, index?: number) {
-  const prefix = typeof index === "number" ? `${index}. ` : "";
-  const cuisine = place.cuisine ? ` · ${place.cuisine}` : "";
-  const address = place.address ? ` · ${place.address}` : "";
-  return `${prefix}**${place.name}** — abierto ahora, cierra a las ${place.closesAt}${cuisine}${address}. ${googleReviewsLink(place.name)}`;
+function vibeFor(place: FoodPlace): string {
+  const h = normalized(`${place.kind} ${place.cuisine ?? ""} ${place.name}`);
+  const closesSoon = place.closesInMinutes <= 60;
+  const pool: string[] = [];
+  if (/pizza|italian|pasta/.test(h)) pool.push("Masa fina, ambiente cañero — para no fallar 🍕");
+  if (/burger|hamburger|smash|mcdonald|burger ?king|tgb|goiko|five guys/.test(h)) pool.push("Hamburguesa al punto y patatas crujientes 🍔");
+  if (/kebab|doner|turkish|shawarma/.test(h)) pool.push("Rápido, sabroso y siempre apetece 🌯");
+  if (/sushi|japanese|asian|thai|chinese|korean/.test(h)) pool.push("Sabores asiáticos para flipar 🍣");
+  if (/vegan|vegetarian|healthy|salad|juice/.test(h)) pool.push("Saludable y rico, te vas ligero 🌱");
+  if (/cafe|coffee|bakery|pastry|dessert|ice_cream/.test(h)) pool.push("Café rico y dulces que enamoran ☕");
+  if (/seafood|paella|rice|spanish|mediterranean|regional/.test(h)) pool.push("Cocina de aquí, de la buena 🥘");
+  if (/bar|pub|cocktail|brewery|wine/.test(h)) pool.push("Para tomar algo con buen rollo 🍻");
+  if (pool.length === 0) pool.push("Un sitio que mola, no te va a fallar ✨");
+  const base = pool[Math.floor(Math.random() * pool.length)];
+  return closesSoon ? `${base} · ¡Corre que cierra pronto! ⏰` : base;
+}
+
+function formatFoodPlace(place: FoodPlace, _index?: number) {
+  const card = {
+    name: place.name,
+    cuisine: place.cuisine ?? null,
+    address: place.address ?? null,
+    closesAt: place.closesAt,
+    lat: place.lat,
+    lon: place.lon,
+    vibe: vibeFor(place),
+  };
+  return `[[card:${encodeURIComponent(JSON.stringify(card))}]]`;
 }
 
 function buildMentionedPlacesResponse(mentionedPlaces: MentionedPlace[], openFoodPlaces: FoodPlace[]) {
