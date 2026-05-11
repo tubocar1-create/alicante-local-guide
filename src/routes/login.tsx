@@ -30,7 +30,8 @@ function LoginPage() {
     setBusy(true);
     signInWithName(trimmed);
     toast.success(`¡Bienvenido/a, ${trimmed}!`);
-    navigate({ to: redirect });
+    // Use a hard navigation so search params (?ref=...) reach the target route reliably.
+    window.location.assign(redirect);
   }
 
   return (
