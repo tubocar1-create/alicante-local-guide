@@ -75,6 +75,23 @@ export default function ReferralDialog({ placeId, placeName, autoCelebrate, onCl
     setGenerating(false);
   }
 
+  // Si volvemos del login con autoCelebrate, generamos QR automáticamente.
+  useEffect(() => {
+    if (
+      autoCelebrate &&
+      isAuthenticated &&
+      !loading &&
+      step === "rules" &&
+      !generating &&
+      !code &&
+      !autoFiredRef.current
+    ) {
+      autoFiredRef.current = true;
+      handleGenerate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoCelebrate, isAuthenticated, loading]);
+
   function copyCode() {
     if (!code) return;
     navigator.clipboard?.writeText(code).then(() => {
