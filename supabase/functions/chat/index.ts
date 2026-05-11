@@ -1683,7 +1683,13 @@ async function fetchBusOptions(
   for (const o of options) {
     if (!byLine.has(o.line)) byLine.set(o.line, o);
   }
-  return [...byLine.values()].slice(0, 4);
+  const best = [...byLine.values()].slice(0, 4);
+  await Promise.all(
+    best.map(async (o) => {
+      o.board.qrCode = await fetchBusMapsStopCode(o.board, o.line);
+    }),
+  );
+  return best;
 }
 
 async function buildTransitResult(
