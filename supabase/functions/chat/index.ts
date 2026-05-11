@@ -1343,13 +1343,13 @@ QUIERO IR (CRÍTICO):
 - NO expliques qué es Quiero ir, solo añade el botón. Si el usuario pregunta, dile que genera un QR único intransferible, válido solo ese día, y que solo da puntos cuando el local lo valida en sitio (en Beta los puntos son demo).
 
 TRANSPORTE PÚBLICO URBANO (BUS / TRAM):
-- Si TRANSIT_RESULT viene en el contexto runtime, ÚSALO como verdad: dale al usuario las opciones de línea con su parada de subida (con código de 4 dígitos cuando exista) y de bajada. Formato corto, en lista numerada si hay varias. Ejemplo:
+- Si TRANSIT_RESULT viene en el contexto runtime, ÚSALO como verdad. Para CADA opción, incluye SIEMPRE el enlace de tiempo real de la parada de SUBIDA cuando exista código de 4 dígitos, con este formato EXACTO: 🕒 [tiempo real](https://alicante.vectalia.es/tu-proxima-parada/?parada=XXXX) — usa el código que viene en TRANSIT_RESULT (campo "parada=XXXX"). NO enlaces a la página principal de Vectalia. Formato corto, lista numerada si hay varias. Ejemplo:
   "Te llevan estas líneas:
-  1. **Línea 22** — sube en *Plaza del Mar (parada 2682)*, bájate en *Aeropuerto T1 (parada 4031)*. ~12 paradas.
-  2. **Línea 24** — sube en *Mercado (parada 1830)*, bájate en *Aeropuerto T2 (parada 4032)*."
-  Y termina con: "Cuando sepas qué línea coges, dime el código de la parada y te doy el enlace en tiempo real."
-- Si TRANSIT_RESULT.options está vacío y hay TRANSIT_RESULT.searched=true: dilo con honestidad ("No veo un bus directo de OSM entre tu ubicación y X — quizás haya transbordo. Mira el planificador: 🚌 [Vectalia](https://alicante.vectalia.es/tu-proxima-parada/)").
-- Si NO hay TRANSIT_RESULT pero la pregunta es claramente de bus y falta destino o ubicación, pregunta brevemente lo que falta antes de derivar al planificador.
+  1. **Línea 22** — sube en *Plaza del Mar (parada 2682)* · 🕒 [tiempo real](https://alicante.vectalia.es/tu-proxima-parada/?parada=2682) — bájate en *Aeropuerto T1 (parada 4031)*. ~12 paradas.
+  2. **Línea 24** — sube en *Mercado (parada 1830)* · 🕒 [tiempo real](https://alicante.vectalia.es/tu-proxima-parada/?parada=1830) — bájate en *Aeropuerto T2 (parada 4032)*."
+- Si una parada de subida NO tiene código de 4 dígitos en TRANSIT_RESULT, omite el enlace en esa opción (no inventes códigos). NO añadas un enlace genérico a la home de Vectalia.
+- Si TRANSIT_RESULT.options está vacío y hay TRANSIT_RESULT.searched=true: dilo con honestidad ("No veo un bus directo de OSM entre tu ubicación y X — quizás haya transbordo. Dime el código de la parada que tengas a mano y te doy el tiempo real.").
+- Si NO hay TRANSIT_RESULT pero la pregunta es claramente de bus y falta destino o ubicación, pregunta brevemente lo que falta.
 - Si el usuario te da un código de parada de 4 dígitos (ej. "parada 2682", "2682"), dale SIEMPRE el enlace directo: 🕒 [Próximos buses en la parada XXXX](https://alicante.vectalia.es/tu-proxima-parada/?parada=XXXX).
 - NUNCA inventes números de línea ni códigos de parada. Solo los que aparezcan en TRANSIT_RESULT o que el usuario te dé.`;
 
@@ -1636,10 +1636,13 @@ function formatTransitResult(r: TransitResult): string {
     return head + "\n  options=[] (sin línea directa encontrada en OSM dentro de 500m)";
   }
   const lines = r.options
-    .map(
-      (o, i) =>
-        `  ${i + 1}. línea=${o.line} (${o.lineName})${o.network ? ` red=${o.network}` : ""} | sube_en="${o.board.name}"${o.board.ref ? ` parada=${o.board.ref}` : ""} (${o.board.distMeters}m a pie) | bájate_en="${o.alight.name}"${o.alight.ref ? ` parada=${o.alight.ref}` : ""} (${o.alight.distMeters}m a pie) | paradas≈${o.stopsBetween}`,
-    )
+    .map((o, i) => {
+      const boardRef = o.board.ref && /^\d{3,5}$/.test(o.board.ref) ? o.board.ref : null;
+      const realtime = boardRef
+        ? ` | tiempo_real=https://alicante.vectalia.es/tu-proxima-parada/?parada=${boardRef}`
+        : "";
+      return `  ${i + 1}. línea=${o.line} (${o.lineName})${o.network ? ` red=${o.network}` : ""} | sube_en="${o.board.name}"${o.board.ref ? ` parada=${o.board.ref}` : ""} (${o.board.distMeters}m a pie) | bájate_en="${o.alight.name}"${o.alight.ref ? ` parada=${o.alight.ref}` : ""} (${o.alight.distMeters}m a pie) | paradas≈${o.stopsBetween}${realtime}`;
+    })
     .join("\n");
   return head + "\n" + lines;
 }
