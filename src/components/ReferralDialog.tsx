@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Ticket, ShieldCheck, Clock, AlertTriangle, Copy, Check, LogIn } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Ticket, ShieldCheck, Clock, AlertTriangle, Copy, Check, LogIn, PartyPopper } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,6 +8,7 @@ import { addQr } from "@/lib/qr-storage";
 type Props = {
   placeId: string;
   placeName: string;
+  autoCelebrate?: boolean;
   onClose: () => void;
 };
 
@@ -15,12 +16,14 @@ function todayStamp(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-export default function ReferralDialog({ placeId, placeName, onClose }: Props) {
+export default function ReferralDialog({ placeId, placeName, autoCelebrate, onClose }: Props) {
   const { user, loading, isAuthenticated } = useAuth();
   const [step, setStep] = useState<"rules" | "qr">("rules");
   const [copied, setCopied] = useState(false);
   const [code, setCode] = useState<string>("");
   const [generating, setGenerating] = useState(false);
+  const [celebrate, setCelebrate] = useState<boolean>(!!autoCelebrate);
+  const autoFiredRef = useRef(false);
 
   const day = todayStamp();
   const validUntil = "hoy a las 23:59";
