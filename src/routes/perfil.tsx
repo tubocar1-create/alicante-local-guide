@@ -112,12 +112,8 @@ function PerfilPage() {
     },
   ];
 
-  const displayName =
-    (user?.user_metadata?.full_name as string | undefined) ||
-    (user?.user_metadata?.name as string | undefined) ||
-    user?.email?.split("@")[0] ||
-    "Invitado";
-  const avatarUrl = user?.user_metadata?.avatar_url as string | undefined;
+  const displayName = user?.name || "Invitado";
+  const avatarUrl: string | undefined = undefined;
 
   return (
     <div className="mx-auto flex min-h-svh max-w-2xl flex-col bg-background px-4 pb-16 pt-4">
@@ -159,7 +155,7 @@ function PerfilPage() {
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold">{displayName}</p>
           <p className="truncate text-[11px] text-muted-foreground">
-            {user?.email ?? "No has iniciado sesión"}
+            {user ? "Usuario beta" : "No has iniciado sesión"}
           </p>
         </div>
       </section>
