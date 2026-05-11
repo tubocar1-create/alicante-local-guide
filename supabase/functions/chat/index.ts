@@ -1272,6 +1272,7 @@ WHEN NEVER TO USE [[place: ...]] (NO image at all — just text):
 
 CURATED LOCAL SHOPS (image IS available — DO use [[place: ...]] for these, exact name only, NO ", Alicante" suffix):
 - Plastiahorro — shop selling packaging, bags, napkins, plates and cups at Calle Teulada 21, Alicante. Use [[place: Plastiahorro]] when recommending it.
+- Open Wash — self-service laundromat (lavadero/lavandería de autoservicio) at Calle Teulada 25, Alicante. Open every day from 8:30 to 23:00, 365 days a year. Use [[place: Open Wash]] when recommending it.
 
 Other rules:
 - Use the real, exact name of the public place. Always append ", Alicante" at the end.
