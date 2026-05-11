@@ -81,13 +81,33 @@ export function ChatScreen() {
   const [geo, setGeo] = useState<GeoInfo | null>(null);
   const [geoStatus, setGeoStatus] = useState<GeoStatus>("idle");
   const [referralName, setReferralName] = useState<string | null>(null);
+  const [referralAuto, setReferralAuto] = useState(false);
 
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail as { name?: string } | undefined;
-      if (detail?.name) setReferralName(detail.name);
+      if (detail?.name) {
+        setReferralAuto(false);
+        setReferralName(detail.name);
+      }
     };
     window.addEventListener("afp:wantgo", handler);
+    // Pick up post-login redirect: /?ref=<placeName>
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const ref = params.get("ref");
+      if (ref) {
+        setReferralAuto(true);
+        setReferralName(ref);
+        params.delete("ref");
+        const qs = params.toString();
+        window.history.replaceState(
+          null,
+          "",
+          window.location.pathname + (qs ? `?${qs}` : "")
+        );
+      }
+    }
     return () => window.removeEventListener("afp:wantgo", handler);
   }, []);
   const scrollRef = useRef<HTMLDivElement>(null);
