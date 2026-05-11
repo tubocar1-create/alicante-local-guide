@@ -863,7 +863,7 @@ function AssistantContent({ content }: { content: string }) {
   const placeName = match?.[1]?.trim();
   const cleaned = content.replace(/\n?\[\[place:[^\]]+\]\]\n?/i, "").trim();
 
-  const parts: Array<{ type: "text"; value: string } | { type: "card"; data: PlaceCardData }> = [];
+  const parts: AssistantPart[] = [];
   let lastIndex = 0;
   const re = /\[\[card:([\s\S]+?)\]\]/g;
   let m: RegExpExecArray | null;
@@ -879,12 +879,12 @@ function AssistantContent({ content }: { content: string }) {
     lastIndex = m.index + m[0].length;
   }
   if (lastIndex < cleaned.length) parts.push({ type: "text", value: cleaned.slice(lastIndex) });
-  if (parts.length === 0) parts.push({ type: "text", value: cleaned });
+  const renderedParts = parts.length > 0 ? parts : parseRecommendationListCards(cleaned) ?? [{ type: "text", value: cleaned }];
 
   return (
     <div className="space-y-2 [&>p]:m-0 [&_strong]:font-semibold">
       {placeName && <PlaceImage name={placeName} />}
-      {parts.map((p, i) =>
+      {renderedParts.map((p, i) =>
         p.type === "card" ? (
           <PlaceCard key={i} data={p.data} />
         ) : (
