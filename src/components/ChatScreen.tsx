@@ -342,33 +342,7 @@ export function ChatScreen() {
             </div>
           )}
 
-          {/* Quick chips — single row, all go straight to chat */}
-          {isWelcome && (
-            <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 no-scrollbar">
-              {[
-                { emoji: "🍽️", label: "Comer", prompt: "¿Dónde puedo comer rico ahora mismo?" },
-                { emoji: "🛏️", label: "Dormir", prompt: "¿Dónde puedo dormir esta noche en Alicante?" },
-                { emoji: "🏖️", label: "Playa", prompt: "¿Qué playa me recomiendas ahora?" },
-                { emoji: "🍹", label: "Tomar", prompt: "¿Dónde voy a tomar algo abierto ahora?" },
-                { emoji: "🗺️", label: "Plan", prompt: "Hazme un plan para hoy en Alicante" },
-                { emoji: "🛍️", label: "Comprar", prompt: "¿Dónde puedo ir de compras?" },
-              ].map((c) => (
-                <button
-                  key={c.label}
-                  type="button"
-                  onClick={() => send(c.prompt)}
-                  className="group flex shrink-0 flex-col items-center"
-                >
-                  <div className="grid h-12 w-12 place-items-center rounded-2xl bg-card shadow-soft ring-1 ring-border/60 text-2xl transition group-active:scale-90">
-                    {c.emoji}
-                  </div>
-                  <span className="mt-1 text-[11px] font-medium text-foreground/80">
-                    {c.label}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
+          {/* (Tiles render below as Glovo-style row, replacing old chip suggestions) */}
 
           {messages.map((m, i) =>
             isWelcome && i === 0 ? null : <Bubble key={i} role={m.role} content={m.content} />,
