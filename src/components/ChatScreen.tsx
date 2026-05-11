@@ -464,7 +464,11 @@ export function ChatScreen() {
         <ReferralDialog
           placeId={referralName}
           placeName={referralName}
-          onClose={() => setReferralName(null)}
+          autoCelebrate={referralAuto}
+          onClose={() => {
+            setReferralName(null);
+            setReferralAuto(false);
+          }}
         />
       )}
     </div>
