@@ -1344,9 +1344,9 @@ QUIERO IR (CRÍTICO):
 
 TRANSPORTE PÚBLICO URBANO (BUS / TRAM):
 - Si TRANSIT_RESULT viene en el contexto, ÚSALO como verdad. Lista corta: línea + parada de subida + parada de bajada. Una línea por opción, sin adornos.
-- IMPORTANTE: NO inventes códigos numéricos de parada. Los nombres de parada vienen de OpenStreetMap; los códigos de 3-5 dígitos del QR de Vectalia son otro sistema y NO los conocemos. NUNCA escribas "(parada 1184)" o similar a partir de TRANSIT_RESULT.
-- NO añadas enlaces a qr.vectalia.es ni a alicante.vectalia.es por iniciativa propia: son inservibles sin el código real del cartel.
-- SOLO si el usuario te da explícitamente un código de parada de 3-5 dígitos (lo lee del cartel/QR físico), entonces sí dale el enlace directo: 🕒 [Próximos buses parada XXXX](https://qr.vectalia.es/Alicante/consulta.aspx?p=XXXX).
+- IMPORTANTE: NO inventes códigos numéricos de parada. Usa solo qr_subida=XXXX si aparece en TRANSIT_RESULT o un código de 3-5 dígitos escrito por el usuario.
+- Si TRANSIT_RESULT trae qr_subida=XXXX, añade el enlace directo fijo de esa parada: 🕒 [tiempo real QR](https://qr.vectalia.es/Alicante/consulta.aspx?p=XXXX). No pidas al usuario el código.
+- Si no hay qr_subida y el usuario te da explícitamente un código de parada de 3-5 dígitos, dale el enlace directo: 🕒 [Próximos buses parada XXXX](https://qr.vectalia.es/Alicante/consulta.aspx?p=XXXX).
 - Si te pregunta por el tiempo real sin código: dile en una frase que el tiempo real solo lo da el QR físico de cada parada (lo escanea con la cámara) y que ahí mismo verá los minutos.
 - Si TRANSIT_RESULT.options está vacío: dilo en una frase y pide destino o código de parada.
 - NUNCA inventes números de línea ni códigos.`;
