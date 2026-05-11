@@ -697,11 +697,14 @@ type PlaceCardData = {
 
 type AssistantPart = { type: "text"; value: string } | { type: "card"; data: PlaceCardData };
 
+const CARD_FALLBACK_THEMES = ["sun", "sea", "citrus", "rose", "mint", "grape"];
+
 function parseRecommendationListCards(text: string): AssistantPart[] | null {
-  const itemRe = /^\s*\d+\.\s+\*\*([^*]+)\*\*\s*(?:[—–-]\s*)?([\s\S]*?(?:\[⭐[^\]]*\]\([^)]+\)(?:\s*·\s*\[🎟️[^\]]*\]\(qi:[^)]+\))?|\[🎟️[^\]]*\]\(qi:[^)]+\)))/gm;
+  const itemRe = /^\s*\d+\.\s+\*\*([^*]+)\*\*\s*(?:[—–-]\s*)?([\s\S]*?)(?=\n\s*\n\s*\d+\.\s+\*\*|\n\s*\n(?!\s*\d+\.\s+\*\*)|\s*$)/gm;
   const parts: AssistantPart[] = [];
   let lastIndex = 0;
   let found = false;
+  let cardIndex = 0;
   let m: RegExpExecArray | null;
 
   while ((m = itemRe.exec(text)) !== null) {
@@ -709,7 +712,8 @@ function parseRecommendationListCards(text: string): AssistantPart[] | null {
     if (m.index > lastIndex) parts.push({ type: "text", value: text.slice(lastIndex, m.index) });
 
     const name = m[1].trim();
-    const body = m[2]
+    const bodyBlock = m[2].split(/\n{2,}/)[0] ?? m[2];
+    const body = bodyBlock
       .replace(/\s*·\s*\[🎟️[^\]]*\]\(qi:[^)]+\)/g, "")
       .replace(/\[🎟️[^\]]*\]\(qi:[^)]+\)/g, "")
       .replace(/\[⭐[^\]]*\]\([^)]+\)/g, "")
@@ -721,8 +725,46 @@ function parseRecommendationListCards(text: string): AssistantPart[] | null {
       .replace(/\s+/g, " ")
       .trim();
 
-    parts.push({ type: "card", data: { name, closesAt, vibe: vibe || undefined } });
+    parts.push({
+      type: "card",
+      data: {
+        name,
+        closesAt,
+        vibe: vibe || undefined,
+        theme: CARD_FALLBACK_THEMES[cardIndex % CARD_FALLBACK_THEMES.length],
+      },
+    });
+    cardIndex += 1;
     lastIndex = itemRe.lastIndex;
+  }
+
+  if (!found) return null;
+  if (lastIndex < text.length) parts.push({ type: "text", value: text.slice(lastIndex) });
+  return parts;
+}
+
+function parseOpenStatusCards(text: string): AssistantPart[] | null {
+  const statusRe = /✅\s*Sí:\s*\*\*([^*]+)\*\*\s+está abierto ahora(?:\s+y)?\s+cierra a las\s+(\d{1,2}:\d{2})\.?(?:\s*\[⭐[^\]]*\]\([^)]+\))?/g;
+  const parts: AssistantPart[] = [];
+  let lastIndex = 0;
+  let cardIndex = 0;
+  let found = false;
+  let m: RegExpExecArray | null;
+
+  while ((m = statusRe.exec(text)) !== null) {
+    found = true;
+    if (m.index > lastIndex) parts.push({ type: "text", value: text.slice(lastIndex, m.index) });
+    parts.push({
+      type: "card",
+      data: {
+        name: m[1].trim(),
+        closesAt: m[2],
+        vibe: "Está abierto ahora mismo.",
+        theme: CARD_FALLBACK_THEMES[cardIndex % CARD_FALLBACK_THEMES.length],
+      },
+    });
+    cardIndex += 1;
+    lastIndex = statusRe.lastIndex;
   }
 
   if (!found) return null;
@@ -881,7 +923,9 @@ function AssistantContent({ content }: { content: string }) {
     lastIndex = m.index + m[0].length;
   }
   if (lastIndex < cleaned.length) parts.push({ type: "text", value: cleaned.slice(lastIndex) });
-  const renderedParts = hasEncodedCards ? parts : parseRecommendationListCards(cleaned) ?? [{ type: "text", value: cleaned }];
+  const renderedParts = hasEncodedCards
+    ? parts
+    : parseRecommendationListCards(cleaned) ?? parseOpenStatusCards(cleaned) ?? [{ type: "text", value: cleaned }];
 
   return (
     <div className="space-y-2 [&>p]:m-0 [&_strong]:font-semibold">
