@@ -467,65 +467,157 @@ function Bubble({ role, content }: { role: "user" | "assistant"; content: string
 }
 
 const PLACE_RE = /\[\[place:\s*([^\]]+?)\]\]/i;
+const CARD_RE = /\[\[card:([^\]]+)\]\]/g;
+
+type PlaceCardData = {
+  name: string;
+  cuisine?: string | null;
+  address?: string | null;
+  closesAt?: string;
+  lat?: number;
+  lon?: number;
+  vibe?: string;
+};
+
+function PlaceCard({ data }: { data: PlaceCardData }) {
+  const mapsHref = data.lat && data.lon
+    ? `https://www.google.com/maps/dir/?api=1&destination=${data.lat},${data.lon}`
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${data.name} Alicante`)}`;
+  const reviewsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${data.name} Alicante`)}`;
+  return (
+    <div className="my-2 rounded-2xl border border-border bg-card/95 p-3 shadow-soft backdrop-blur">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <h4 className="font-semibold leading-tight text-card-foreground truncate">{data.name}</h4>
+          {data.cuisine && (
+            <p className="text-[11px] uppercase tracking-wide text-muted-foreground mt-0.5 truncate">
+              {data.cuisine.replace(/;/g, ", ")}
+            </p>
+          )}
+        </div>
+        {data.closesAt && (
+          <span className="shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+            abierto · cierra {data.closesAt}
+          </span>
+        )}
+      </div>
+      {data.vibe && <p className="mt-2 text-sm text-foreground/90">{data.vibe}</p>}
+      {data.address && (
+        <p className="mt-1 text-xs text-muted-foreground flex items-start gap-1">
+          <MapPin className="w-3 h-3 mt-0.5 shrink-0" /> <span>{data.address}</span>
+        </p>
+      )}
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        <a
+          href={mapsHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-primary text-primary-foreground active:scale-95"
+        >
+          📍 Cómo llegar
+        </a>
+        <a
+          href={reviewsHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground active:scale-95"
+        >
+          ⭐ Reseñas
+        </a>
+        <button
+          type="button"
+          onClick={() =>
+            window.dispatchEvent(new CustomEvent("afp:wantgo", { detail: { name: data.name } }))
+          }
+          className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full gradient-warm text-primary-foreground shadow-soft active:scale-95"
+        >
+          🎟️ Quiero ir
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function MarkdownText({ text }: { text: string }) {
+  if (!text.trim()) return null;
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      urlTransform={(url) => url}
+      components={{
+        img: ({ src, alt }) => (
+          <img
+            src={src as string}
+            alt={alt || ""}
+            loading="lazy"
+            className="my-1 h-44 w-full rounded-2xl object-cover shadow-soft"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).style.display = "none";
+            }}
+          />
+        ),
+        a: ({ href, children }) => {
+          const url = String(href ?? "");
+          if (url.startsWith("qi:")) {
+            const name = decodeURIComponent(url.slice(3));
+            return (
+              <button
+                type="button"
+                onClick={() =>
+                  window.dispatchEvent(new CustomEvent("afp:wantgo", { detail: { name } }))
+                }
+                className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full gradient-warm text-primary-foreground shadow-soft active:scale-95 align-middle ml-1"
+              >
+                🎟️ Quiero ir
+              </button>
+            );
+          }
+          return (
+            <a href={url} target="_blank" rel="noreferrer" className="text-primary underline underline-offset-2">
+              {children}
+            </a>
+          );
+        },
+        p: ({ children }) => <p className="whitespace-pre-wrap">{children}</p>,
+      }}
+    >
+      {text}
+    </ReactMarkdown>
+  );
+}
 
 function AssistantContent({ content }: { content: string }) {
   const match = content.match(PLACE_RE);
   const placeName = match?.[1]?.trim();
-  // Strip the marker (and any surrounding blank line) from the rendered text
   const cleaned = content.replace(/\n?\[\[place:[^\]]+\]\]\n?/i, "").trim();
+
+  const parts: Array<{ type: "text"; value: string } | { type: "card"; data: PlaceCardData }> = [];
+  let lastIndex = 0;
+  const re = new RegExp(CARD_RE.source, "g");
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(cleaned)) !== null) {
+    if (m.index > lastIndex) parts.push({ type: "text", value: cleaned.slice(lastIndex, m.index) });
+    try {
+      const data = JSON.parse(decodeURIComponent(m[1])) as PlaceCardData;
+      parts.push({ type: "card", data });
+    } catch {
+      parts.push({ type: "text", value: m[0] });
+    }
+    lastIndex = m.index + m[0].length;
+  }
+  if (lastIndex < cleaned.length) parts.push({ type: "text", value: cleaned.slice(lastIndex) });
+  if (parts.length === 0) parts.push({ type: "text", value: cleaned });
 
   return (
     <div className="space-y-2 [&>p]:m-0 [&_strong]:font-semibold">
       {placeName && <PlaceImage name={placeName} />}
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        urlTransform={(url) => (url.startsWith("qi:") ? url : url)}
-        components={{
-          img: ({ src, alt }) => (
-            <img
-              src={src as string}
-              alt={alt || ""}
-              loading="lazy"
-              className="my-1 h-44 w-full rounded-2xl object-cover shadow-soft"
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).style.display = "none";
-              }}
-            />
-          ),
-          a: ({ href, children }) => {
-            const url = String(href ?? "");
-            if (url.startsWith("qi:")) {
-              const name = decodeURIComponent(url.slice(3));
-              return (
-                <button
-                  type="button"
-                  onClick={() =>
-                    window.dispatchEvent(
-                      new CustomEvent("afp:wantgo", { detail: { name } }),
-                    )
-                  }
-                  className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full gradient-warm text-primary-foreground shadow-soft active:scale-95 align-middle ml-1"
-                >
-                  🎟️ Quiero ir
-                </button>
-              );
-            }
-            return (
-              <a
-                href={url}
-                target="_blank"
-                rel="noreferrer"
-                className="text-primary underline underline-offset-2"
-              >
-                {children}
-              </a>
-            );
-          },
-          p: ({ children }) => <p className="whitespace-pre-wrap">{children}</p>,
-        }}
-      >
-        {cleaned}
-      </ReactMarkdown>
+      {parts.map((p, i) =>
+        p.type === "card" ? (
+          <PlaceCard key={i} data={p.data} />
+        ) : (
+          <MarkdownText key={i} text={p.value.replace(/^\n+|\n+$/g, "")} />
+        ),
+      )}
     </div>
   );
 }
