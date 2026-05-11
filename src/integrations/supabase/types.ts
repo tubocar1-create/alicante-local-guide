@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      bus_stops: {
+        Row: {
+          code: string
+          created_at: string
+          lat: number | null
+          lines: string[] | null
+          lng: number | null
+          name: string | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          lat?: number | null
+          lines?: string[] | null
+          lng?: number | null
+          name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          lat?: number | null
+          lines?: string[] | null
+          lng?: number | null
+          name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
