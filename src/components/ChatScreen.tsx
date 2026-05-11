@@ -318,12 +318,21 @@ export function ChatScreen() {
                   className="absolute inset-0 h-full w-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent" />
+                <button
+                  type="button"
+                  onClick={() => setShowQrInfo(true)}
+                  aria-label="Beneficios del QR VAMOS"
+                  className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[12px] font-extrabold text-primary-foreground shadow-soft ring-2 ring-white/70 backdrop-blur active:scale-95"
+                >
+                  <QrCode className="h-3.5 w-3.5" />
+                  QR VAMOS
+                </button>
                 <div className="absolute inset-x-0 bottom-0 p-4 text-white">
                   <p className="text-xs uppercase tracking-widest opacity-90">Puerto de Alicante</p>
-                  <h2 className="mt-1 text-2xl font-semibold leading-tight drop-shadow">
-                    ¡Hola! Bienvenido a Alicante 🌅
+                  <h2 className="mt-1 text-2xl font-extrabold leading-tight drop-shadow">
+                    ¡VAMOS a Alicante! 🌅
                   </h2>
-                  <p className="mt-1 text-sm opacity-90 drop-shadow">
+                  <p className="mt-1 text-sm opacity-95 drop-shadow">
                     Soy tu amigo local. Cuéntame qué te apetece hoy y te llevo a los rincones que adoramos los de aquí.
                   </p>
                 </div>
