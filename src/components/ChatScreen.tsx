@@ -171,9 +171,11 @@ export function ChatScreen() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, loading]);
 
-  async function send(text: string) {
+  async function send(text: string, opts?: { mode?: "transit" | null }) {
     const trimmed = text.trim();
     if (!trimmed || loading) return;
+    const effectiveMode = opts?.mode !== undefined ? opts.mode : mode;
+    if (opts?.mode !== undefined) setMode(opts.mode);
     setError(null);
     const userMsg: Msg = { role: "user", content: trimmed };
     const next = [...messages, userMsg];
