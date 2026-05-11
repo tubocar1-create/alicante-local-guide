@@ -12,6 +12,25 @@ import { useAuth } from "@/hooks/useAuth";
 import { findPlaceOverride } from "@/data/places";
 import heroImg from "@/assets/alicante-hero.jpg";
 import vamosLogoImg from "@/assets/logo_vamos_d.png";
+import tileComer from "@/assets/tile_comer.png";
+import tileDormir from "@/assets/tile_dormir.png";
+import tilePlaya from "@/assets/tile_playa.png";
+import tileParque from "@/assets/tile_parque.png";
+import tileComprar from "@/assets/tile_comprar.png";
+import tileTomar from "@/assets/tile_tomar.png";
+import tileTurismo from "@/assets/tile_turismo.png";
+import tileMapa from "@/assets/tile_mapa.png";
+
+const TILE_STYLES: Record<string, { img: string; bg: string }> = {
+  Comer:        { img: tileComer,   bg: "oklch(0.95 0.06 70)" },
+  Dormir:       { img: tileDormir,  bg: "oklch(0.94 0.05 280)" },
+  Playa:        { img: tilePlaya,   bg: "oklch(0.93 0.07 220)" },
+  Parque:       { img: tileParque,  bg: "oklch(0.94 0.07 145)" },
+  Comprar:      { img: tileComprar, bg: "oklch(0.94 0.07 340)" },
+  "Tomar algo": { img: tileTomar,   bg: "oklch(0.95 0.07 50)" },
+  Turismo:      { img: tileTurismo, bg: "oklch(0.94 0.05 25)" },
+  Mapa:         { img: tileMapa,    bg: "oklch(0.93 0.06 200)" },
+};
 
 type Msg = { role: "user" | "assistant"; content: string };
 type GeoInfo = {
