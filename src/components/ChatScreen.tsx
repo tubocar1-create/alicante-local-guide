@@ -430,7 +430,8 @@ export function ChatScreen() {
                     label: "Bus",
                     onClick: () =>
                       send(
-                        "Quiero coger el bus o tram urbano en Alicante. Dime mi origen y destino y recomiéndame línea, parada de subida y parada de bajada.",
+                        "Quiero usar transporte urbano en Alicante (bus o tram). Pregúntame dónde estoy y a dónde quiero ir, y recomiéndame línea, parada de subida y parada de bajada.",
+                        { mode: "transit" },
                       ),
                   },
                 ].map((t) => {
