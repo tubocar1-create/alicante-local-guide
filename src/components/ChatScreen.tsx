@@ -482,12 +482,12 @@ type PlaceCardData = {
 };
 
 const THEME_STYLES: Record<string, { bg: string; ring: string; badge: string }> = {
-  sun:    { bg: "bg-gradient-to-br from-amber-100 via-orange-50 to-rose-100 dark:from-amber-950/40 dark:via-orange-950/30 dark:to-rose-950/40",  ring: "border-amber-300/50",  badge: "bg-amber-500/20 text-amber-800 dark:text-amber-200" },
-  sea:    { bg: "bg-gradient-to-br from-sky-100 via-cyan-50 to-blue-100 dark:from-sky-950/40 dark:via-cyan-950/30 dark:to-blue-950/40",          ring: "border-sky-300/50",    badge: "bg-sky-500/20 text-sky-800 dark:text-sky-200" },
-  citrus: { bg: "bg-gradient-to-br from-lime-100 via-yellow-50 to-amber-100 dark:from-lime-950/40 dark:via-yellow-950/30 dark:to-amber-950/40",  ring: "border-lime-300/50",   badge: "bg-lime-500/20 text-lime-800 dark:text-lime-200" },
-  rose:   { bg: "bg-gradient-to-br from-rose-100 via-pink-50 to-fuchsia-100 dark:from-rose-950/40 dark:via-pink-950/30 dark:to-fuchsia-950/40",   ring: "border-rose-300/50",   badge: "bg-rose-500/20 text-rose-800 dark:text-rose-200" },
-  mint:   { bg: "bg-gradient-to-br from-emerald-100 via-teal-50 to-cyan-100 dark:from-emerald-950/40 dark:via-teal-950/30 dark:to-cyan-950/40",   ring: "border-emerald-300/50",badge: "bg-emerald-500/20 text-emerald-800 dark:text-emerald-200" },
-  grape:  { bg: "bg-gradient-to-br from-violet-100 via-purple-50 to-indigo-100 dark:from-violet-950/40 dark:via-purple-950/30 dark:to-indigo-950/40", ring: "border-violet-300/50", badge: "bg-violet-500/20 text-violet-800 dark:text-violet-200" },
+  sun:    { bg: "bg-gradient-to-br from-amber-200 via-orange-200 to-rose-300 dark:from-amber-800/60 dark:via-orange-800/50 dark:to-rose-800/60",  ring: "border-amber-400/70",  badge: "bg-amber-600 text-white" },
+  sea:    { bg: "bg-gradient-to-br from-sky-200 via-cyan-200 to-blue-300 dark:from-sky-800/60 dark:via-cyan-800/50 dark:to-blue-800/60",          ring: "border-sky-400/70",    badge: "bg-sky-600 text-white" },
+  citrus: { bg: "bg-gradient-to-br from-lime-200 via-yellow-200 to-amber-300 dark:from-lime-800/60 dark:via-yellow-800/50 dark:to-amber-800/60",  ring: "border-lime-400/70",   badge: "bg-lime-600 text-white" },
+  rose:   { bg: "bg-gradient-to-br from-rose-200 via-pink-200 to-fuchsia-300 dark:from-rose-800/60 dark:via-pink-800/50 dark:to-fuchsia-800/60",   ring: "border-rose-400/70",   badge: "bg-rose-600 text-white" },
+  mint:   { bg: "bg-gradient-to-br from-emerald-200 via-teal-200 to-cyan-300 dark:from-emerald-800/60 dark:via-teal-800/50 dark:to-cyan-800/60",   ring: "border-emerald-400/70",badge: "bg-emerald-600 text-white" },
+  grape:  { bg: "bg-gradient-to-br from-violet-200 via-purple-200 to-indigo-300 dark:from-violet-800/60 dark:via-purple-800/50 dark:to-indigo-800/60", ring: "border-violet-400/70", badge: "bg-violet-600 text-white" },
 };
 
 function PlaceCard({ data }: { data: PlaceCardData }) {
