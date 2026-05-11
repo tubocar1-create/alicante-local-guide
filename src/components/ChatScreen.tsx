@@ -513,6 +513,93 @@ export function ChatScreen() {
           }}
         />
       )}
+      {showQrInfo && <QrVamosInfo onClose={() => setShowQrInfo(false)} />}
+    </div>
+  );
+}
+
+function VamosLogo() {
+  return (
+    <div
+      aria-label="VAMOS"
+      className="relative flex h-10 items-center justify-center rounded-2xl gradient-warm px-2.5 shadow-soft ring-2 ring-white/70"
+    >
+      <span className="text-[15px] font-black tracking-tight text-primary-foreground drop-shadow-sm">
+        VAMOS
+      </span>
+      <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-background text-[10px] shadow ring-1 ring-border">
+        🌅
+      </span>
+    </div>
+  );
+}
+
+function QrVamosInfo({ onClose }: { onClose: () => void }) {
+  const benefits = [
+    { icon: Gift, title: "Descuentos reales", text: "Precios de amigo en bares, restaurantes y planes que de verdad merecen la pena." },
+    { icon: Ticket, title: "Acceso a experiencias", text: "Catas, tours, rutas y eventos pensados para quienes viven Alicante como un local." },
+    { icon: Sparkles, title: "Suma puntos AFP", text: "Cada QR validado en sitio te da puntos para canjear por más ventajas." },
+    { icon: ShieldCheck, title: "Único e intransferible", text: "Tu QR, tu día, tu plan. Sin intermediarios, sin trampas, sin spam." },
+  ];
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-4 sm:items-center"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-sm rounded-3xl bg-background p-5 shadow-soft"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          aria-label="Cerrar"
+          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-secondary-foreground active:scale-95"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <div className="flex items-center gap-2">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl gradient-warm text-primary-foreground shadow-soft">
+            <QrCode className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="text-lg font-extrabold leading-tight">
+              <span className="text-primary">QR VAMOS</span> · GOO QR
+            </h3>
+            <p className="text-[11px] text-muted-foreground">
+              Tu llave de amigo local en Alicante
+            </p>
+          </div>
+        </div>
+
+        <p className="mt-3 text-sm text-foreground/90">
+          Con un <b>QR VAMOS</b> entras como un local, no como un turista. Esto es lo que te llevas:
+        </p>
+
+        <ul className="mt-3 space-y-2.5">
+          {benefits.map((b) => (
+            <li key={b.title} className="flex gap-3 rounded-2xl border border-border bg-card/60 p-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl gradient-warm text-primary-foreground shadow-soft">
+                <b.icon className="h-4 w-4" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[13px] font-bold leading-tight text-foreground">{b.title}</p>
+                <p className="mt-0.5 text-[12px] leading-snug text-muted-foreground">{b.text}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+
+        <p className="mt-3 text-[11px] text-muted-foreground">
+          ¿Cómo se consigue? Pulsa <b>VAMOS</b> en cualquier sitio que te recomiende tu amigo local y generas tu QR del día.
+        </p>
+
+        <button
+          onClick={onClose}
+          className="mt-4 w-full rounded-full gradient-warm py-2.5 text-sm font-bold text-primary-foreground shadow-soft active:scale-95"
+        >
+          ¡VAMOS!
+        </button>
+      </div>
     </div>
   );
 }
