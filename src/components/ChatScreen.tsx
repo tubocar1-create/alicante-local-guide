@@ -342,6 +342,49 @@ export function ChatScreen() {
             </div>
           )}
 
+          {/* Glovo-style quick category tiles (only on welcome) */}
+          {isWelcome && (
+            <div className="grid grid-cols-4 gap-2 px-1 pb-1 sm:grid-cols-6">
+              {[
+                { emoji: "🍽️", label: "Comer", to: "/eat" as const },
+                { emoji: "🛏️", label: "Dormir", to: "/stay" as const },
+                { emoji: "🗺️", label: "Explorar", to: "/explore" as const },
+                { emoji: "🏖️", label: "Playa", prompt: "¿Qué playa me recomiendas ahora?" },
+                { emoji: "🍹", label: "Tomar", prompt: "¿Dónde voy a tomar algo abierto ahora?" },
+                { emoji: "🛍️", label: "Comprar", prompt: "¿Dónde puedo ir de compras?" },
+              ].map((c) => {
+                const inner = (
+                  <>
+                    <div className="grid h-12 w-12 place-items-center rounded-2xl bg-card shadow-soft ring-1 ring-border/60 text-2xl transition group-active:scale-90">
+                      {c.emoji}
+                    </div>
+                    <span className="mt-1 text-[11px] font-medium text-foreground/80">
+                      {c.label}
+                    </span>
+                  </>
+                );
+                return "to" in c && c.to ? (
+                  <Link
+                    key={c.label}
+                    to={c.to}
+                    className="group flex flex-col items-center"
+                  >
+                    {inner}
+                  </Link>
+                ) : (
+                  <button
+                    key={c.label}
+                    type="button"
+                    onClick={() => c.prompt && send(c.prompt)}
+                    className="group flex flex-col items-center"
+                  >
+                    {inner}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           {messages.map((m, i) => (
             <Bubble key={i} role={m.role} content={m.content} />
           ))}
