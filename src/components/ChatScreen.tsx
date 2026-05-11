@@ -352,29 +352,49 @@ export function ChatScreen() {
           )}
 
           {isWelcome && !activeSubmenu && (
-            <div className="-mx-4 mt-2 flex gap-3 overflow-x-auto px-4 pb-2 no-scrollbar sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0">
-              {SUGGESTIONS.map((s) => {
-                const match = s.label.match(/^(\p{Extended_Pictographic}+)\s*(.*)$/u);
-                const emoji = match?.[1] ?? "✨";
-                const label = match?.[2] ?? s.label;
-                return (
-                  <button
-                    key={s.label}
-                    onClick={() => {
+            <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-7 sm:gap-3">
+              {[
+                ...SUGGESTIONS.map((s) => {
+                  const match = s.label.match(/^(\p{Extended_Pictographic}+)\s*(.*)$/u);
+                  return {
+                    key: s.label,
+                    emoji: match?.[1] ?? "✨",
+                    label: match?.[2] ?? s.label,
+                    onClick: () => {
                       if (s.submenu) setActiveSubmenu(s);
                       else if (s.prompt) send(s.prompt);
-                    }}
-                    className="group flex shrink-0 flex-col items-center"
-                  >
-                    <div className="grid h-16 w-16 place-items-center rounded-2xl bg-card text-3xl shadow-soft ring-1 ring-border/60 transition group-hover:-translate-y-0.5 group-active:scale-95">
-                      <span className="drop-shadow-sm">{emoji}</span>
-                    </div>
-                    <span className="mt-1.5 text-[12px] font-semibold text-foreground/85">
-                      {label}
-                    </span>
-                  </button>
-                );
-              })}
+                    },
+                  };
+                }),
+                {
+                  key: "mapa",
+                  emoji: "🗺️",
+                  label: "Mapa",
+                  onClick: () => {
+                    const url = geo
+                      ? `https://www.google.com/maps/search/?api=1&query=${geo.lat},${geo.lng}`
+                      : `https://www.google.com/maps/search/?api=1&query=Alicante`;
+                    try {
+                      (window.top ?? window).open(url, "_blank", "noopener,noreferrer");
+                    } catch {
+                      window.open(url, "_blank", "noopener,noreferrer");
+                    }
+                  },
+                },
+              ].map((t) => (
+                <button
+                  key={t.key}
+                  onClick={t.onClick}
+                  className="group flex flex-col items-center"
+                >
+                  <div className="grid aspect-square w-full place-items-center rounded-[1.4rem] bg-card text-[28px] shadow-soft ring-1 ring-border/60 transition group-hover:-translate-y-0.5 group-active:scale-95">
+                    <span className="drop-shadow-sm">{t.emoji}</span>
+                  </div>
+                  <span className="mt-1 text-[11px] font-semibold leading-tight text-foreground/85 text-center">
+                    {t.label}
+                  </span>
+                </button>
+              ))}
             </div>
           )}
           {isWelcome && activeSubmenu && (
