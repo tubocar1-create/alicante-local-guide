@@ -84,37 +84,56 @@ export function ListingPage<K extends string>(props: Props<K>) {
   return (
     <div className="min-h-[100dvh] bg-background">
       <header className="sticky top-0 z-20 bg-card/90 backdrop-blur border-b">
-        <div className="px-4 py-3">
+        <div className="mx-auto w-full max-w-7xl px-4 py-3 md:px-8 md:py-5">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h1 className="text-xl font-semibold leading-tight">{props.title}</h1>
-              <p className="text-xs text-muted-foreground">{props.subtitle}</p>
+              <h1 className="font-display text-xl font-semibold leading-tight md:text-3xl">
+                {props.title}
+              </h1>
+              <p className="text-xs text-muted-foreground md:text-sm">{props.subtitle}</p>
             </div>
             <button
               onClick={request}
-              className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-full bg-primary text-primary-foreground active:scale-95"
+              className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-2 text-xs font-medium text-primary-foreground active:scale-95 md:px-4 md:py-2.5 md:text-sm"
             >
-              <Navigation className="w-3.5 h-3.5" />
+              <Navigation className="h-3.5 w-3.5" />
               {me ? "Ubicación ✓" : "Mi ubicación"}
             </button>
           </div>
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por nombre, tipo de comida, calle…"
-            className="mt-3 w-full text-sm rounded-full border bg-background px-4 py-2 focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-          <div className="flex gap-2 mt-3 overflow-x-auto -mx-4 px-4 pb-1 no-scrollbar">
+          <div className="mt-3 flex flex-col gap-3 md:mt-4 md:flex-row md:items-center md:gap-4">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar por nombre, tipo de comida, calle…"
+              className="w-full rounded-full border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring md:flex-1 md:py-2.5 md:text-base"
+            />
+            <div className="hidden shrink-0 items-center gap-1 text-xs text-muted-foreground md:flex">
+              <span>Ordenar:</span>
+              {(["distance", "rating", "name"] as Sort[]).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setSort(s)}
+                  className={`rounded-full px-3 py-1.5 ${
+                    sort === s ? "bg-secondary text-secondary-foreground" : "hover:bg-muted"
+                  }`}
+                  disabled={s === "distance" && !me}
+                >
+                  {s === "distance" ? "Cercanía" : s === "rating" ? "★" : "A-Z"}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1 no-scrollbar md:mx-0 md:flex-wrap md:overflow-visible md:px-0">
             {props.filters.map((f) => {
               const on = active.has(f.kind);
               return (
                 <button
                   key={f.kind}
                   onClick={() => toggle(f.kind)}
-                  className={`shrink-0 inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border transition ${
+                  className={`shrink-0 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition md:text-sm ${
                     on
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-background text-foreground border-border hover:bg-muted"
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-background text-foreground hover:bg-muted"
                   }`}
                 >
                   <span>{f.emoji}</span>
@@ -122,13 +141,13 @@ export function ListingPage<K extends string>(props: Props<K>) {
                 </button>
               );
             })}
-            <div className="ml-auto shrink-0 flex items-center gap-1 text-xs text-muted-foreground">
+            <div className="ml-auto flex shrink-0 items-center gap-1 text-xs text-muted-foreground md:hidden">
               <span>Ordenar:</span>
               {(["distance", "rating", "name"] as Sort[]).map((s) => (
                 <button
                   key={s}
                   onClick={() => setSort(s)}
-                  className={`px-2 py-1 rounded-full ${
+                  className={`rounded-full px-2 py-1 ${
                     sort === s ? "bg-secondary text-secondary-foreground" : "hover:bg-muted"
                   }`}
                   disabled={s === "distance" && !me}
@@ -141,7 +160,7 @@ export function ListingPage<K extends string>(props: Props<K>) {
         </div>
       </header>
 
-      <main className="px-4 py-4 max-w-2xl mx-auto">
+      <main className="mx-auto w-full max-w-7xl px-4 py-4 md:px-8 md:py-8">
         {loading && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground py-6 justify-center">
             <Loader2 className="w-4 h-4 animate-spin" /> Cargando datos abiertos…
@@ -156,7 +175,7 @@ export function ListingPage<K extends string>(props: Props<K>) {
           </div>
         )}
 
-        <ul className="grid grid-cols-1 gap-4">
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-5">
           {visible.map((it) => (
             <li key={it.id}>
               <ListingCard it={it} me={me} onWantToGo={setReferral} />
