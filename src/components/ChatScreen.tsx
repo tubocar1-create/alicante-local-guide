@@ -8,6 +8,7 @@ import { PointsHud } from "@/components/PointsHud";
 import { usePoints } from "@/hooks/usePoints";
 import { useUserLocation, distanceKm } from "@/hooks/useUserLocation";
 import ReferralDialog from "@/components/ReferralDialog";
+import { findPlaceOverride } from "@/data/places";
 import heroImg from "@/assets/alicante-hero.jpg";
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -477,6 +478,16 @@ type PlaceCardData = {
   lat?: number;
   lon?: number;
   vibe?: string;
+  theme?: string;
+};
+
+const THEME_STYLES: Record<string, { bg: string; ring: string; badge: string }> = {
+  sun:    { bg: "bg-gradient-to-br from-amber-100 via-orange-50 to-rose-100 dark:from-amber-950/40 dark:via-orange-950/30 dark:to-rose-950/40",  ring: "border-amber-300/50",  badge: "bg-amber-500/20 text-amber-800 dark:text-amber-200" },
+  sea:    { bg: "bg-gradient-to-br from-sky-100 via-cyan-50 to-blue-100 dark:from-sky-950/40 dark:via-cyan-950/30 dark:to-blue-950/40",          ring: "border-sky-300/50",    badge: "bg-sky-500/20 text-sky-800 dark:text-sky-200" },
+  citrus: { bg: "bg-gradient-to-br from-lime-100 via-yellow-50 to-amber-100 dark:from-lime-950/40 dark:via-yellow-950/30 dark:to-amber-950/40",  ring: "border-lime-300/50",   badge: "bg-lime-500/20 text-lime-800 dark:text-lime-200" },
+  rose:   { bg: "bg-gradient-to-br from-rose-100 via-pink-50 to-fuchsia-100 dark:from-rose-950/40 dark:via-pink-950/30 dark:to-fuchsia-950/40",   ring: "border-rose-300/50",   badge: "bg-rose-500/20 text-rose-800 dark:text-rose-200" },
+  mint:   { bg: "bg-gradient-to-br from-emerald-100 via-teal-50 to-cyan-100 dark:from-emerald-950/40 dark:via-teal-950/30 dark:to-cyan-950/40",   ring: "border-emerald-300/50",badge: "bg-emerald-500/20 text-emerald-800 dark:text-emerald-200" },
+  grape:  { bg: "bg-gradient-to-br from-violet-100 via-purple-50 to-indigo-100 dark:from-violet-950/40 dark:via-purple-950/30 dark:to-indigo-950/40", ring: "border-violet-300/50", badge: "bg-violet-500/20 text-violet-800 dark:text-violet-200" },
 };
 
 function PlaceCard({ data }: { data: PlaceCardData }) {
@@ -484,55 +495,67 @@ function PlaceCard({ data }: { data: PlaceCardData }) {
     ? `https://www.google.com/maps/dir/?api=1&destination=${data.lat},${data.lon}`
     : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${data.name} Alicante`)}`;
   const reviewsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${data.name} Alicante`)}`;
+  const override = findPlaceOverride(data.name);
+  const theme = THEME_STYLES[data.theme ?? "sun"] ?? THEME_STYLES.sun;
   return (
-    <div className="my-2 rounded-2xl border border-border bg-card/95 p-3 shadow-soft backdrop-blur">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <h4 className="font-semibold leading-tight text-card-foreground truncate">{data.name}</h4>
-          {data.cuisine && (
-            <p className="text-[11px] uppercase tracking-wide text-muted-foreground mt-0.5 truncate">
-              {data.cuisine.replace(/;/g, ", ")}
-            </p>
+    <div className={`my-2 overflow-hidden rounded-2xl border ${theme.ring} ${theme.bg} shadow-soft backdrop-blur`}>
+      {override?.image && (
+        <img
+          src={override.image}
+          alt={data.name}
+          loading="lazy"
+          className="h-32 w-full object-cover"
+        />
+      )}
+      <div className="p-3">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h4 className="font-semibold leading-tight text-card-foreground truncate">{data.name}</h4>
+            {data.cuisine && (
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground mt-0.5 truncate">
+                {data.cuisine.replace(/;/g, ", ")}
+              </p>
+            )}
+          </div>
+          {data.closesAt && (
+            <span className={`shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full ${theme.badge}`}>
+              cierra {data.closesAt}
+            </span>
           )}
         </div>
-        {data.closesAt && (
-          <span className="shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
-            abierto · cierra {data.closesAt}
-          </span>
+        {data.vibe && <p className="mt-2 text-sm text-foreground/90">{data.vibe}</p>}
+        {data.address && (
+          <p className="mt-1 text-xs text-muted-foreground flex items-start gap-1">
+            <MapPin className="w-3 h-3 mt-0.5 shrink-0" /> <span>{data.address}</span>
+          </p>
         )}
-      </div>
-      {data.vibe && <p className="mt-2 text-sm text-foreground/90">{data.vibe}</p>}
-      {data.address && (
-        <p className="mt-1 text-xs text-muted-foreground flex items-start gap-1">
-          <MapPin className="w-3 h-3 mt-0.5 shrink-0" /> <span>{data.address}</span>
-        </p>
-      )}
-      <div className="mt-2 flex flex-wrap gap-1.5">
-        <a
-          href={mapsHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-primary text-primary-foreground active:scale-95"
-        >
-          📍 Cómo llegar
-        </a>
-        <a
-          href={reviewsHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground active:scale-95"
-        >
-          ⭐ Reseñas
-        </a>
-        <button
-          type="button"
-          onClick={() =>
-            window.dispatchEvent(new CustomEvent("afp:wantgo", { detail: { name: data.name } }))
-          }
-          className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full gradient-warm text-primary-foreground shadow-soft active:scale-95"
-        >
-          🎟️ Quiero ir
-        </button>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          <a
+            href={mapsHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-primary text-primary-foreground active:scale-95"
+          >
+            📍 Cómo llegar
+          </a>
+          <a
+            href={reviewsHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground active:scale-95"
+          >
+            ⭐ Reseñas
+          </a>
+          <button
+            type="button"
+            onClick={() =>
+              window.dispatchEvent(new CustomEvent("afp:wantgo", { detail: { name: data.name } }))
+            }
+            className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full gradient-warm text-primary-foreground shadow-soft active:scale-95"
+          >
+            🎟️ Quiero ir
+          </button>
+        </div>
       </div>
     </div>
   );

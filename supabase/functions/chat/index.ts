@@ -332,24 +332,94 @@ function streamChatText(text: string) {
   );
 }
 
-function vibeFor(place: FoodPlace): string {
-  const h = normalized(`${place.kind} ${place.cuisine ?? ""} ${place.name}`);
-  const closesSoon = place.closesInMinutes <= 60;
-  const pool: string[] = [];
-  if (/pizza|italian|pasta/.test(h)) pool.push("Masa fina, ambiente cañero — para no fallar 🍕");
-  if (/burger|hamburger|smash|mcdonald|burger ?king|tgb|goiko|five guys/.test(h)) pool.push("Hamburguesa al punto y patatas crujientes 🍔");
-  if (/kebab|doner|turkish|shawarma/.test(h)) pool.push("Rápido, sabroso y siempre apetece 🌯");
-  if (/sushi|japanese|asian|thai|chinese|korean/.test(h)) pool.push("Sabores asiáticos para flipar 🍣");
-  if (/vegan|vegetarian|healthy|salad|juice/.test(h)) pool.push("Saludable y rico, te vas ligero 🌱");
-  if (/cafe|coffee|bakery|pastry|dessert|ice_cream/.test(h)) pool.push("Café rico y dulces que enamoran ☕");
-  if (/seafood|paella|rice|spanish|mediterranean|regional/.test(h)) pool.push("Cocina de aquí, de la buena 🥘");
-  if (/bar|pub|cocktail|brewery|wine/.test(h)) pool.push("Para tomar algo con buen rollo 🍻");
-  if (pool.length === 0) pool.push("Un sitio que mola, no te va a fallar ✨");
-  const base = pool[Math.floor(Math.random() * pool.length)];
-  return closesSoon ? `${base} · ¡Corre que cierra pronto! ⏰` : base;
+function hashStr(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
 }
 
-function formatFoodPlace(place: FoodPlace, _index?: number) {
+const VIBE_POOLS: { rx: RegExp; lines: string[] }[] = [
+  { rx: /pizza|italian|pasta/, lines: [
+    "Masa fina y mozzarella derritiéndose, un peligro 🍕",
+    "Aquí la pizza no se dobla, se reza 🙏🍕",
+    "Pasta como la nonna, pero con vistas a Alicante 🇮🇹",
+    "Si no repites porción, no eres humano 🍕😅",
+  ] },
+  { rx: /burger|hamburger|smash|mcdonald|burger ?king|tgb|goiko|five guys/, lines: [
+    "Smash burger jugosa, prepárate para mancharte 🍔",
+    "De esas hamburguesas que te hacen cerrar los ojos 🤤",
+    "Pan brioche + queso fundido = amor verdadero 💛",
+    "Patatas crujientes y servilletas a mansalva 🍟",
+  ] },
+  { rx: /kebab|doner|turkish|shawarma/, lines: [
+    "El kebab salvavidas de las 3am 🌯✨",
+    "Carne asada al momento, salsita generosa 🔥",
+    "Rápido, barato y te deja KO de feliz 🌯",
+  ] },
+  { rx: /sushi|japanese|asian|thai|chinese|korean/, lines: [
+    "Sushi fresquito que se deshace en la boca 🍣",
+    "Wok humeante y sabores que te teletransportan 🥢",
+    "Picante nivel: '¿quién pidió esto?' 🌶️😂",
+    "Ramen calentito, abrazo en cuenco 🍜",
+  ] },
+  { rx: /vegan|vegetarian|healthy|salad|juice/, lines: [
+    "Verde, rico y te deja ligerito como pluma 🌱",
+    "Healthy sin aburrir, ni te enteras 🥗✨",
+    "Tu cuerpo te lo va a agradecer mañana 💚",
+  ] },
+  { rx: /cafe|coffee|bakery|pastry/, lines: [
+    "Café que despierta hasta a los muertos ☕⚡",
+    "Bollería casera, peligro nivel desayuno eterno 🥐",
+    "Wifi, enchufe y latte art — oficina improvisada 💻☕",
+  ] },
+  { rx: /ice_cream|gelato|helader/, lines: [
+    "Helado artesanal, el mejor amigo del calor alicantino 🍦☀️",
+    "Bola doble obligatoria, tú decides los sabores 😋",
+  ] },
+  { rx: /seafood|paella|rice|spanish|mediterranean|regional|tapas/, lines: [
+    "Paella con socarrat, como mandan los cánones 🥘",
+    "Tapeo de los de toda la vida, ambiente top 🍤",
+    "Pescaíto fresco del Mediterráneo, sin postureo 🐟",
+    "Cocina de la abuela pero con mantel bonito 🥘❤️",
+  ] },
+  { rx: /bar|pub|cocktail|brewery|wine/, lines: [
+    "Cañas frescas y conversación que se alarga 🍻",
+    "Cocteles bien hechos, sin prisa pero sin pausa 🍹",
+    "Para empezar la noche o no acabarla nunca 🌙🍺",
+    "Vinos de la tierra y mucho rollo local 🍷",
+  ] },
+];
+
+const VIBE_FALLBACK = [
+  "Un sitio con buen rollo, no falla ✨",
+  "De los que repites sin pensarlo dos veces 🙌",
+  "Pequeño tesoro local, sin postureo 💎",
+  "Ambiente top y la peña encantada 🔥",
+  "De los que cuentas a tus colegas al volver 🗣️",
+];
+
+const URGENT_TAILS = [
+  "¡Corre que cierra pronto! ⏰",
+  "Pilla mesa antes de que cierren 🏃💨",
+  "Última llamada, no te duermas 🛎️",
+];
+
+function vibeFor(place: FoodPlace, index = 0): string {
+  const h = normalized(`${place.kind} ${place.cuisine ?? ""} ${place.name}`);
+  const seed = hashStr(place.name) + index * 7;
+  const matched = VIBE_POOLS.filter((p) => p.rx.test(h));
+  const pool = matched.length > 0 ? matched[seed % matched.length].lines : VIBE_FALLBACK;
+  const base = pool[seed % pool.length];
+  if (place.closesInMinutes <= 60) {
+    return `${base} · ${URGENT_TAILS[seed % URGENT_TAILS.length]}`;
+  }
+  return base;
+}
+
+const THEMES = ["sun", "sea", "citrus", "rose", "mint", "grape"] as const;
+
+function formatFoodPlace(place: FoodPlace, index = 0) {
+  const seed = hashStr(place.name);
   const card = {
     name: place.name,
     cuisine: place.cuisine ?? null,
@@ -357,7 +427,8 @@ function formatFoodPlace(place: FoodPlace, _index?: number) {
     closesAt: place.closesAt,
     lat: place.lat,
     lon: place.lon,
-    vibe: vibeFor(place),
+    vibe: vibeFor(place, index),
+    theme: THEMES[(seed + index) % THEMES.length],
   };
   return `[[card:${encodeURIComponent(JSON.stringify(card))}]]`;
 }
