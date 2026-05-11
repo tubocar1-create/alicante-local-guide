@@ -426,10 +426,7 @@ export function ChatScreen() {
                       aria-label={t.label}
                       className="group flex flex-col items-center"
                     >
-                      <div
-                        className="grid aspect-square w-full place-items-center rounded-2xl shadow-sm transition group-hover:-translate-y-0.5 group-active:scale-95 overflow-hidden"
-                        style={{ backgroundColor: style?.bg ?? "oklch(0.95 0.02 80)" }}
-                      >
+                      <div className="grid aspect-square w-full place-items-center rounded-2xl bg-white shadow-md ring-2 ring-[oklch(0.25_0.04_35)] transition group-hover:-translate-y-0.5 group-active:scale-95 overflow-hidden">
                         {style ? (
                           <img
                             src={style.img}
@@ -438,7 +435,7 @@ export function ChatScreen() {
                             loading="lazy"
                             width={1024}
                             height={1024}
-                            className="h-[78%] w-[78%] object-contain drop-shadow-sm"
+                            className="h-[82%] w-[82%] object-contain"
                           />
                         ) : (
                           <span className="text-[38px]">{t.emoji}</span>
