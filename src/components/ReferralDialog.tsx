@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Ticket, ShieldCheck, Clock, AlertTriangle, Copy, Check, LogIn } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Ticket, ShieldCheck, Clock, AlertTriangle, Copy, Check, LogIn, PartyPopper } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -8,6 +8,7 @@ import { addQr } from "@/lib/qr-storage";
 type Props = {
   placeId: string;
   placeName: string;
+  autoCelebrate?: boolean;
   onClose: () => void;
 };
 
@@ -15,12 +16,14 @@ function todayStamp(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-export default function ReferralDialog({ placeId, placeName, onClose }: Props) {
+export default function ReferralDialog({ placeId, placeName, autoCelebrate, onClose }: Props) {
   const { user, loading, isAuthenticated } = useAuth();
   const [step, setStep] = useState<"rules" | "qr">("rules");
   const [copied, setCopied] = useState(false);
   const [code, setCode] = useState<string>("");
   const [generating, setGenerating] = useState(false);
+  const [celebrate, setCelebrate] = useState<boolean>(!!autoCelebrate);
+  const autoFiredRef = useRef(false);
 
   const day = todayStamp();
   const validUntil = "hoy a las 23:59";
@@ -72,6 +75,23 @@ export default function ReferralDialog({ placeId, placeName, onClose }: Props) {
     setGenerating(false);
   }
 
+  // Si volvemos del login con autoCelebrate, generamos QR automáticamente.
+  useEffect(() => {
+    if (
+      autoCelebrate &&
+      isAuthenticated &&
+      !loading &&
+      step === "rules" &&
+      !generating &&
+      !code &&
+      !autoFiredRef.current
+    ) {
+      autoFiredRef.current = true;
+      handleGenerate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoCelebrate, isAuthenticated, loading]);
+
   function copyCode() {
     if (!code) return;
     navigator.clipboard?.writeText(code).then(() => {
@@ -115,7 +135,7 @@ export default function ReferralDialog({ placeId, placeName, onClose }: Props) {
               </button>
               <Link
                 to="/login"
-                search={{ redirect: "/" }}
+                search={{ redirect: `/?ref=${encodeURIComponent(placeName)}` }}
                 className="flex-1 rounded-full gradient-warm py-2.5 text-center text-sm font-semibold text-primary-foreground shadow-soft active:scale-95"
               >
                 Poner mi nombre
@@ -180,6 +200,20 @@ export default function ReferralDialog({ placeId, placeName, onClose }: Props) {
           </>
         ) : (
           <>
+            {celebrate && (
+              <div className="mb-3 rounded-2xl gradient-warm p-4 text-primary-foreground shadow-soft">
+                <div className="flex items-center gap-2">
+                  <PartyPopper className="h-5 w-5" />
+                  <h3 className="text-lg font-bold leading-tight">
+                    ¡Hecho, {user?.name}! 🎉
+                  </h3>
+                </div>
+                <p className="mt-1 text-sm opacity-95">
+                  Bienvenido/a a la familia <b>Alicante Friend</b>. Aquí tienes tu primer QR
+                  para <b>{placeName}</b>. ¡A disfrutar! 🥂
+                </p>
+              </div>
+            )}
             <h3 className="text-base font-semibold leading-tight">Tu QR para {placeName}</h3>
             <p className="mt-1 text-[11px] text-muted-foreground">
               Enséñalo en el local hoy. Cuando lo escaneen y validen, sumarás tus AFP.
@@ -204,9 +238,27 @@ export default function ReferralDialog({ placeId, placeName, onClose }: Props) {
                 {code}
               </button>
 
-              <div className="w-full rounded-xl bg-amber-500/10 px-3 py-2 text-center text-[11px] text-amber-700 dark:text-amber-300">
-                Válido {validUntil}. <b>Sin validación del local, no hay puntos.</b>
-              </div>
+              <ul className="w-full space-y-1.5 rounded-xl border border-border bg-card/60 p-3 text-[11px] text-foreground/90">
+                <li className="flex gap-2">
+                  <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                  <span>Válido <b>{validUntil}</b>. Pasada esa hora, caduca.</span>
+                </li>
+                <li className="flex gap-2">
+                  <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                  <span><b>Único e intransferible.</b> Solo lo puedes usar tú.</span>
+                </li>
+                <li className="flex gap-2">
+                  <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+                  <span>
+                    <b>Sin validación del local, no hay puntos.</b> Los AFP llegan cuando lo
+                    escaneen en sitio.
+                  </span>
+                </li>
+                <li className="flex gap-2">
+                  <Ticket className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                  <span>Lo tienes guardado en <b>perfil → Mis QR</b>.</span>
+                </li>
+              </ul>
             </div>
 
             <button
