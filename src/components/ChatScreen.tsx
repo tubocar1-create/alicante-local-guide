@@ -426,7 +426,10 @@ export function ChatScreen() {
                       aria-label={t.label}
                       className="group flex flex-col items-center"
                     >
-                      <div className="grid aspect-square w-full place-items-center rounded-2xl bg-white shadow-md ring-2 ring-[oklch(0.25_0.04_35)] transition group-hover:-translate-y-0.5 group-active:scale-95 overflow-hidden">
+                      <div
+                        className="grid aspect-square w-full place-items-center rounded-2xl shadow-sm transition group-hover:-translate-y-0.5 group-active:scale-95 overflow-hidden"
+                        style={{ backgroundColor: style?.bg ?? "oklch(0.95 0.02 80)" }}
+                      >
                         {style ? (
                           <img
                             src={style.img}
