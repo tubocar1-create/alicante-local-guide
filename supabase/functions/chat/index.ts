@@ -404,12 +404,26 @@ const URGENT_TAILS = [
   "Última llamada, no te duermas 🛎️",
 ];
 
-function vibeFor(place: FoodPlace, index = 0): string {
+function vibeFor(place: FoodPlace, index = 0, used?: Set<string>): string {
   const h = normalized(`${place.kind} ${place.cuisine ?? ""} ${place.name}`);
   const seed = hashStr(place.name) + index * 7;
   const matched = VIBE_POOLS.filter((p) => p.rx.test(h));
   const pool = matched.length > 0 ? matched[seed % matched.length].lines : VIBE_FALLBACK;
-  const base = pool[seed % pool.length];
+  let base = pool[seed % pool.length];
+  if (used) {
+    let attempts = 0;
+    while (used.has(base) && attempts < pool.length) {
+      base = pool[(seed + ++attempts) % pool.length];
+    }
+    // If still colliding, fall back to fallback pool with offset
+    if (used.has(base)) {
+      for (let i = 0; i < VIBE_FALLBACK.length; i++) {
+        const cand = VIBE_FALLBACK[(seed + i) % VIBE_FALLBACK.length];
+        if (!used.has(cand)) { base = cand; break; }
+      }
+    }
+    used.add(base);
+  }
   if (place.closesInMinutes <= 60) {
     return `${base} · ${URGENT_TAILS[seed % URGENT_TAILS.length]}`;
   }
@@ -418,7 +432,7 @@ function vibeFor(place: FoodPlace, index = 0): string {
 
 const THEMES = ["sun", "sea", "citrus", "rose", "mint", "grape"] as const;
 
-function formatFoodPlace(place: FoodPlace, index = 0) {
+function formatFoodPlace(place: FoodPlace, index = 0, usedVibes?: Set<string>) {
   const seed = hashStr(place.name);
   const card = {
     name: place.name,
@@ -427,7 +441,7 @@ function formatFoodPlace(place: FoodPlace, index = 0) {
     closesAt: place.closesAt,
     lat: place.lat,
     lon: place.lon,
-    vibe: vibeFor(place, index),
+    vibe: vibeFor(place, index, usedVibes),
     theme: THEMES[(seed + index) % THEMES.length],
   };
   return `[[card:${encodeURIComponent(JSON.stringify(card))}]]`;
