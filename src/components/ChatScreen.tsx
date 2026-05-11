@@ -218,6 +218,7 @@ export function ChatScreen() {
                 }
               : null,
             locationStatus: geoStatus,
+            mode: effectiveMode,
           },
         }),
       });
