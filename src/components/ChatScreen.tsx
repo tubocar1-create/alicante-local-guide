@@ -867,7 +867,9 @@ function AssistantContent({ content }: { content: string }) {
   let lastIndex = 0;
   const re = /\[\[card:([\s\S]+?)\]\]/g;
   let m: RegExpExecArray | null;
+  let hasEncodedCards = false;
   while ((m = re.exec(cleaned)) !== null) {
+    hasEncodedCards = true;
     if (m.index > lastIndex) parts.push({ type: "text", value: cleaned.slice(lastIndex, m.index) });
     try {
       const data = JSON.parse(decodeURIComponent(m[1])) as PlaceCardData;
@@ -879,7 +881,7 @@ function AssistantContent({ content }: { content: string }) {
     lastIndex = m.index + m[0].length;
   }
   if (lastIndex < cleaned.length) parts.push({ type: "text", value: cleaned.slice(lastIndex) });
-  const renderedParts = parts.length > 0 ? parts : parseRecommendationListCards(cleaned) ?? [{ type: "text", value: cleaned }];
+  const renderedParts = hasEncodedCards ? parts : parseRecommendationListCards(cleaned) ?? [{ type: "text", value: cleaned }];
 
   return (
     <div className="space-y-2 [&>p]:m-0 [&_strong]:font-semibold">
