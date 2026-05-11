@@ -103,8 +103,8 @@ export default function ReferralDialog({ placeId, placeName, onClose }: Props) {
               </div>
             </div>
             <p className="mt-3 text-xs text-foreground/90">
-              Necesitamos identificarte para que tu QR sea único e intransferible y para guardarlo
-              en tu perfil. Tarda 10 segundos 🙌
+              Solo necesitamos un nombre (estamos en beta) para que tu QR sea único e
+              intransferible y se guarde en tu perfil. Tarda 5 segundos 🙌
             </p>
             <div className="mt-4 flex gap-2">
               <button
@@ -118,7 +118,7 @@ export default function ReferralDialog({ placeId, placeName, onClose }: Props) {
                 search={{ redirect: "/" }}
                 className="flex-1 rounded-full gradient-warm py-2.5 text-center text-sm font-semibold text-primary-foreground shadow-soft active:scale-95"
               >
-                Iniciar sesión
+                Poner mi nombre
               </Link>
             </div>
           </>
