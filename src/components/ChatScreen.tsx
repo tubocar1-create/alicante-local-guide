@@ -419,6 +419,15 @@ export function ChatScreen() {
                       }
                     },
                   },
+                  {
+                    key: "bus",
+                    emoji: "🚌",
+                    label: "Bus",
+                    onClick: () =>
+                      send(
+                        "Quiero coger el bus o tram urbano en Alicante. Dime mi origen y destino y recomiéndame línea, parada de subida y parada de bajada.",
+                      ),
+                  },
                 ].map((t) => {
                   const style = TILE_STYLES[t.label];
                   return (
