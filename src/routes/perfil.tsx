@@ -53,7 +53,17 @@ function PerfilPage() {
     }
     const refresh = () => setQrs(listQrs(user.id));
     refresh();
-    return subscribeQrs(refresh);
+    const unsub = subscribeQrs(refresh);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", refresh);
+    return () => {
+      unsub();
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", refresh);
+    };
   }, [user, activeTab]);
 
   const actions: Array<{
