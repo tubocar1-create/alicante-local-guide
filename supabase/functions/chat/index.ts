@@ -1636,10 +1636,13 @@ function formatTransitResult(r: TransitResult): string {
     return head + "\n  options=[] (sin línea directa encontrada en OSM dentro de 500m)";
   }
   const lines = r.options
-    .map(
-      (o, i) =>
-        `  ${i + 1}. línea=${o.line} (${o.lineName})${o.network ? ` red=${o.network}` : ""} | sube_en="${o.board.name}"${o.board.ref ? ` parada=${o.board.ref}` : ""} (${o.board.distMeters}m a pie) | bájate_en="${o.alight.name}"${o.alight.ref ? ` parada=${o.alight.ref}` : ""} (${o.alight.distMeters}m a pie) | paradas≈${o.stopsBetween}`,
-    )
+    .map((o, i) => {
+      const boardRef = o.board.ref && /^\d{3,5}$/.test(o.board.ref) ? o.board.ref : null;
+      const realtime = boardRef
+        ? ` | tiempo_real=https://alicante.vectalia.es/tu-proxima-parada/?parada=${boardRef}`
+        : "";
+      return `  ${i + 1}. línea=${o.line} (${o.lineName})${o.network ? ` red=${o.network}` : ""} | sube_en="${o.board.name}"${o.board.ref ? ` parada=${o.board.ref}` : ""} (${o.board.distMeters}m a pie) | bájate_en="${o.alight.name}"${o.alight.ref ? ` parada=${o.alight.ref}` : ""} (${o.alight.distMeters}m a pie) | paradas≈${o.stopsBetween}${realtime}`;
+    })
     .join("\n");
   return head + "\n" + lines;
 }
