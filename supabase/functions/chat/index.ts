@@ -1412,6 +1412,24 @@ function extractTransitDestination(text: string): string | null {
   return null;
 }
 
+function extractTransitOrigin(text: string): string | null {
+  const cleaned = text
+    .replace(/\s+/g, " ")
+    .replace(/[¿?¡!]/g, "")
+    .trim();
+  const patterns = [
+    /\b(?:estoy\s+(?:en|por|ahora\s+en)|me\s+encuentro\s+en|salgo\s+desde|salgo\s+de|desde)\s+(?:la\s+|el\s+|los\s+|las\s+)?(.+?)(?:\s+(?:y\s+quiero|y\s+voy|hasta|hacia|al?|para|en\s+bus|en\s+autob[uú]s|en\s+tram|\.|,|;).*)?$/i,
+  ];
+  for (const re of patterns) {
+    const m = cleaned.match(re);
+    if (m && m[1]) {
+      const o = m[1].replace(/[.,;:]+$/, "").trim();
+      if (o.length >= 3 && o.length < 120) return o;
+    }
+  }
+  return null;
+}
+
 async function geocodeAlicante(query: string): Promise<(LatLng & { label: string }) | null> {
   // Bias hard to Alicante province via viewbox
   const url = new URL("https://nominatim.openstreetmap.org/search");
@@ -1594,8 +1612,9 @@ async function fetchBusOptions(
 async function buildTransitResult(
   origin: LatLng | null,
   text: string,
+  opts?: { force?: boolean },
 ): Promise<TransitResult | null> {
-  if (!origin || !detectTransitIntent(text)) return null;
+  if (!origin || (!opts?.force && !detectTransitIntent(text))) return null;
   const destText = extractTransitDestination(text);
   if (!destText) return null;
   const dest = await geocodeAlicante(destText);
@@ -1653,15 +1672,19 @@ serve(async (req) => {
     const latestUserText =
       [...messages].reverse().find((m: { role: string; content: string }) => m.role === "user")
         ?.content ?? "";
-    const foodRequest = isFoodOrDrinkRequest(messages);
-    const mayNeedFoodFallbacks = foodRequest || extractMentionedNames(latestUserText).length > 0;
+    const transitMode = context?.mode === "transit";
+    const foodRequest = !transitMode && isFoodOrDrinkRequest(messages);
+    const mayNeedFoodFallbacks =
+      !transitMode && (foodRequest || extractMentionedNames(latestUserText).length > 0);
     const [openFoodPlaces, mentionedPlaces] = await Promise.all([
       mayNeedFoodFallbacks
         ? fetchConfirmedOpenFoodPlaces(context, latestUserText)
         : Promise.resolve([] as FoodPlace[]),
-      fetchMentionedPlaces(latestUserText).catch(() => [] as MentionedPlace[]),
+      transitMode
+        ? Promise.resolve([] as MentionedPlace[])
+        : fetchMentionedPlaces(latestUserText).catch(() => [] as MentionedPlace[]),
     ]);
-    if (mentionedPlaces.length > 0) {
+    if (!transitMode && mentionedPlaces.length > 0) {
       return streamChatText(buildMentionedPlacesResponse(mentionedPlaces, openFoodPlaces));
     }
     if (foodRequest) {
@@ -1697,18 +1720,35 @@ serve(async (req) => {
           })
           .join("\n")}`
       : "";
-    const userOriginForTransit =
+    let userOriginForTransit: LatLng | null =
       loc && typeof loc.lat === "number" && typeof loc.lng === "number"
         ? { lat: loc.lat, lng: loc.lng }
         : null;
-    const transitResult = await buildTransitResult(userOriginForTransit, latestUserText).catch(
-      (err) => {
-        console.error("transit lookup error:", err);
-        return null;
-      },
-    );
+    const transitText = transitMode
+      ? messages
+          .filter((m: { role: string; content: string }) => m.role === "user")
+          .slice(-4)
+          .map((m: { content: string }) => m.content)
+          .join(" \n ")
+      : latestUserText;
+    if (transitMode) {
+      const originText = extractTransitOrigin(transitText);
+      if (originText) {
+        const g = await geocodeAlicante(originText).catch(() => null);
+        if (g) userOriginForTransit = { lat: g.lat, lng: g.lng };
+      }
+    }
+    const transitResult = await buildTransitResult(userOriginForTransit, transitText, {
+      force: transitMode,
+    }).catch((err) => {
+      console.error("transit lookup error:", err);
+      return null;
+    });
     const transitLine = transitResult ? formatTransitResult(transitResult) : "";
-    const runtimeContext = `RUNTIME CONTEXT (use this when relevant):\nTODAY: ${todayStr} (zona horaria Europe/Madrid)\nMAX_NEARBY_OPTIONS: ${context?.maxOptions ?? 4}\n${locationLine}${verifiedOpenLine}${mentionedLine}${transitLine}`;
+    const transitModeLine = transitMode
+      ? `\nTRANSIT_MODE: ON. El usuario está en el flujo "Bus/Tram urbano". RESPONDE SOLO sobre transporte público de Alicante (TAM bus + TRAM). NO recomiendes restaurantes, bares, playas, ni otros sitios. Si falta el origen o el destino del usuario, pregúntale por lo que falte de forma breve y clara (1 pregunta). Cuando tengas ambos, propón línea + parada de subida + parada de bajada usando TRANSIT_RESULT si está presente; si no hay resultado o el lookup ha fallado, dilo con honestidad y sugiere abrir la app oficial Alicante Bus o el QR de la parada para tiempo real. No inventes líneas ni paradas.`
+      : "";
+    const runtimeContext = `RUNTIME CONTEXT (use this when relevant):\nTODAY: ${todayStr} (zona horaria Europe/Madrid)\nMAX_NEARBY_OPTIONS: ${context?.maxOptions ?? 4}\n${locationLine}${transitModeLine}${verifiedOpenLine}${mentionedLine}${transitLine}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

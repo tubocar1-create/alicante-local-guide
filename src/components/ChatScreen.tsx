@@ -105,6 +105,7 @@ export function ChatScreen() {
   const [referralName, setReferralName] = useState<string | null>(null);
   const [referralAuto, setReferralAuto] = useState(false);
   const [showQrInfo, setShowQrInfo] = useState(false);
+  const [mode, setMode] = useState<"transit" | null>(null);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -170,9 +171,11 @@ export function ChatScreen() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, loading]);
 
-  async function send(text: string) {
+  async function send(text: string, opts?: { mode?: "transit" | null }) {
     const trimmed = text.trim();
     if (!trimmed || loading) return;
+    const effectiveMode = opts?.mode !== undefined ? opts.mode : mode;
+    if (opts?.mode !== undefined) setMode(opts.mode);
     setError(null);
     const userMsg: Msg = { role: "user", content: trimmed };
     const next = [...messages, userMsg];
@@ -215,6 +218,7 @@ export function ChatScreen() {
                 }
               : null,
             locationStatus: geoStatus,
+            mode: effectiveMode,
           },
         }),
       });
@@ -391,7 +395,7 @@ export function ChatScreen() {
                       label: match?.[2] ?? s.label,
                       onClick: () => {
                         if (s.submenu) setActiveSubmenu(s);
-                        else if (s.prompt) send(s.prompt);
+                        else if (s.prompt) send(s.prompt, { mode: null });
                       },
                     };
                   }),
@@ -402,6 +406,7 @@ export function ChatScreen() {
                     onClick: () =>
                       send(
                         "¿Qué sitios turísticos imprescindibles puedo visitar en Alicante hoy?",
+                        { mode: null },
                       ),
                   },
                   {
@@ -425,7 +430,8 @@ export function ChatScreen() {
                     label: "Bus",
                     onClick: () =>
                       send(
-                        "Quiero coger el bus o tram urbano en Alicante. Dime mi origen y destino y recomiéndame línea, parada de subida y parada de bajada.",
+                        "Quiero usar transporte urbano en Alicante (bus o tram). Pregúntame dónde estoy y a dónde quiero ir, y recomiéndame línea, parada de subida y parada de bajada.",
+                        { mode: "transit" },
                       ),
                   },
                 ].map((t) => {
@@ -486,7 +492,7 @@ export function ChatScreen() {
                         setSubmenuStack((stack) => [...stack, opt]);
                       } else if (opt.prompt) {
                         setSubmenuStack([]);
-                        send(opt.prompt);
+                        send(opt.prompt, { mode: null });
                       }
                     }}
                     className="rounded-full border border-border bg-background/80 px-3 py-2 text-sm shadow-sm transition hover:bg-accent/40"
