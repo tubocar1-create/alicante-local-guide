@@ -105,6 +105,7 @@ export function ChatScreen() {
   const [referralName, setReferralName] = useState<string | null>(null);
   const [referralAuto, setReferralAuto] = useState(false);
   const [showQrInfo, setShowQrInfo] = useState(false);
+  const [mode, setMode] = useState<"transit" | null>(null);
 
   useEffect(() => {
     const handler = (e: Event) => {
