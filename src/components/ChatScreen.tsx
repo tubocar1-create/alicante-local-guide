@@ -370,9 +370,9 @@ export function ChatScreen() {
             </div>
           )}
 
-          {messages.map((m, i) => (
-            <Bubble key={i} role={m.role} content={m.content} />
-          ))}
+          {messages.map((m, i) =>
+            isWelcome && i === 0 ? null : <Bubble key={i} role={m.role} content={m.content} />,
+          )}
           {loading && messages[messages.length - 1]?.role === "user" && (
             <div className="flex justify-start">
               <div className="rounded-3xl rounded-bl-md bg-bubble-friend px-4 py-3 shadow-soft">
