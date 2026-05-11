@@ -566,7 +566,7 @@ function QrVamosInfo({ onClose }: { onClose: () => void }) {
           </div>
           <div className="min-w-0">
             <h3 className="text-lg font-extrabold leading-tight">
-              <span className="text-primary">QR VAMOS</span> · GOO QR
+              <span className="text-primary">QR VAMOS</span>
             </h3>
             <p className="text-[11px] text-muted-foreground">
               Tu llave de amigo local en Alicante
