@@ -200,6 +200,20 @@ export default function ReferralDialog({ placeId, placeName, autoCelebrate, onCl
           </>
         ) : (
           <>
+            {celebrate && (
+              <div className="mb-3 rounded-2xl gradient-warm p-4 text-primary-foreground shadow-soft">
+                <div className="flex items-center gap-2">
+                  <PartyPopper className="h-5 w-5" />
+                  <h3 className="text-lg font-bold leading-tight">
+                    ¡Hecho, {user?.name}! 🎉
+                  </h3>
+                </div>
+                <p className="mt-1 text-sm opacity-95">
+                  Bienvenido/a a la familia <b>Alicante Friend</b>. Aquí tienes tu primer QR
+                  para <b>{placeName}</b>. ¡A disfrutar! 🥂
+                </p>
+              </div>
+            )}
             <h3 className="text-base font-semibold leading-tight">Tu QR para {placeName}</h3>
             <p className="mt-1 text-[11px] text-muted-foreground">
               Enséñalo en el local hoy. Cuando lo escaneen y validen, sumarás tus AFP.
@@ -224,9 +238,27 @@ export default function ReferralDialog({ placeId, placeName, autoCelebrate, onCl
                 {code}
               </button>
 
-              <div className="w-full rounded-xl bg-amber-500/10 px-3 py-2 text-center text-[11px] text-amber-700 dark:text-amber-300">
-                Válido {validUntil}. <b>Sin validación del local, no hay puntos.</b>
-              </div>
+              <ul className="w-full space-y-1.5 rounded-xl border border-border bg-card/60 p-3 text-[11px] text-foreground/90">
+                <li className="flex gap-2">
+                  <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                  <span>Válido <b>{validUntil}</b>. Pasada esa hora, caduca.</span>
+                </li>
+                <li className="flex gap-2">
+                  <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                  <span><b>Único e intransferible.</b> Solo lo puedes usar tú.</span>
+                </li>
+                <li className="flex gap-2">
+                  <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+                  <span>
+                    <b>Sin validación del local, no hay puntos.</b> Los AFP llegan cuando lo
+                    escaneen en sitio.
+                  </span>
+                </li>
+                <li className="flex gap-2">
+                  <Ticket className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                  <span>Lo tienes guardado en <b>perfil → Mis QR</b>.</span>
+                </li>
+              </ul>
             </div>
 
             <button
