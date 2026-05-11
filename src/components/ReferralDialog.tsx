@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Ticket, ShieldCheck, Clock, AlertTriangle, Copy, Check, LogIn } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { addQr } from "@/lib/qr-storage";
 
 type Props = {
   placeId: string;
@@ -44,20 +44,25 @@ export default function ReferralDialog({ placeId, placeName, onClose }: Props) {
       ""
     )}-${nonce}`;
 
-    // Expira hoy a las 23:59 local
     const expires = new Date();
     expires.setHours(23, 59, 59, 999);
 
-    const { error } = await supabase.from("referral_qrs").insert({
-      user_id: user.id,
-      place_id: placeId,
-      place_name: placeName,
-      code: newCode,
-      expires_at: expires.toISOString(),
-    });
-
-    if (error) {
-      toast.error("No se pudo generar el QR. Intenta de nuevo.");
+    try {
+      addQr({
+        id:
+          globalThis.crypto?.randomUUID?.() ??
+          `qr_${Math.random().toString(36).slice(2)}`,
+        user_id: user.id,
+        place_id: placeId,
+        place_name: placeName,
+        code: newCode,
+        status: "active",
+        created_at: new Date().toISOString(),
+        expires_at: expires.toISOString(),
+        used_at: null,
+      });
+    } catch {
+      toast.error("No se pudo guardar el QR. Intenta de nuevo.");
       setGenerating(false);
       return;
     }
@@ -91,7 +96,7 @@ export default function ReferralDialog({ placeId, placeName, onClose }: Props) {
                 <LogIn className="h-4 w-4" />
               </div>
               <div className="min-w-0">
-                <h3 className="text-base font-semibold leading-tight">Inicia sesión primero</h3>
+                <h3 className="text-base font-semibold leading-tight">Pon tu nombre primero</h3>
                 <p className="text-[11px] text-muted-foreground">
                   Para generar tu QR de {placeName}
                 </p>
