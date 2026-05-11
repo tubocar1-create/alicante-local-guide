@@ -352,7 +352,7 @@ export function ChatScreen() {
           )}
 
           {isWelcome && !activeSubmenu && (
-            <div className="mt-2 rounded-3xl bg-card/95 p-3 shadow-soft ring-1 ring-border/60 backdrop-blur sm:p-4">
+            <div className="mt-2 rounded-3xl bg-[oklch(0.88_0.16_88)] p-3 shadow-soft ring-1 ring-[oklch(0.78_0.16_85)] backdrop-blur sm:p-4">
               <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-8 sm:gap-3">
                 {[
                   ...SUGGESTIONS.map((s) => {
