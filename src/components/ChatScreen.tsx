@@ -406,6 +406,7 @@ export function ChatScreen() {
                     onClick: () =>
                       send(
                         "¿Qué sitios turísticos imprescindibles puedo visitar en Alicante hoy?",
+                        { mode: null },
                       ),
                   },
                   {
