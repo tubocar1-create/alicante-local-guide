@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { usePoints } from "@/hooks/usePoints";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { listQrs, subscribeQrs, type LocalQr } from "@/lib/qr-storage";
 import { AFP_LABELS, AFP_LEVELS, AFP_REWARDS, getLevel, getLevelProgress } from "@/lib/afp";
 
 export const Route = createFileRoute("/perfil")({
@@ -31,16 +31,7 @@ export const Route = createFileRoute("/perfil")({
 
 type ActionId = "itinerary" | "review" | "invite";
 
-type QrRow = {
-  id: string;
-  place_id: string;
-  place_name: string;
-  code: string;
-  status: "active" | "used" | "expired";
-  created_at: string;
-  expires_at: string | null;
-  used_at: string | null;
-};
+type QrRow = LocalQr;
 
 function PerfilPage() {
   const { points, history, streakDays, weekStreakPoints, award } = usePoints();
@@ -51,7 +42,7 @@ function PerfilPage() {
     "acciones"
   );
   const [qrs, setQrs] = useState<QrRow[]>([]);
-  const [loadingQrs, setLoadingQrs] = useState(false);
+  const loadingQrs = false;
 
   const badges = AFP_LEVELS.filter((l) => points >= l.min);
 
@@ -60,15 +51,9 @@ function PerfilPage() {
       setQrs([]);
       return;
     }
-    setLoadingQrs(true);
-    supabase
-      .from("referral_qrs")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        setQrs((data as QrRow[]) ?? []);
-        setLoadingQrs(false);
-      });
+    const refresh = () => setQrs(listQrs(user.id));
+    refresh();
+    return subscribeQrs(refresh);
   }, [user, activeTab]);
 
   const actions: Array<{
@@ -112,12 +97,8 @@ function PerfilPage() {
     },
   ];
 
-  const displayName =
-    (user?.user_metadata?.full_name as string | undefined) ||
-    (user?.user_metadata?.name as string | undefined) ||
-    user?.email?.split("@")[0] ||
-    "Invitado";
-  const avatarUrl = user?.user_metadata?.avatar_url as string | undefined;
+  const displayName = user?.name || "Invitado";
+  const avatarUrl: string | undefined = undefined;
 
   return (
     <div className="mx-auto flex min-h-svh max-w-2xl flex-col bg-background px-4 pb-16 pt-4">
@@ -159,7 +140,7 @@ function PerfilPage() {
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold">{displayName}</p>
           <p className="truncate text-[11px] text-muted-foreground">
-            {user?.email ?? "No has iniciado sesión"}
+            {user ? "Usuario beta" : "No has iniciado sesión"}
           </p>
         </div>
       </section>
@@ -267,7 +248,7 @@ function PerfilPage() {
         <div className="mt-3">
           {!isAuthenticated ? (
             <div className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-              <p>Inicia sesión para ver tus QR generados.</p>
+              <p>Pon tu nombre para ver tus QR generados.</p>
               <Link
                 to="/login"
                 search={{ redirect: "/perfil" }}
