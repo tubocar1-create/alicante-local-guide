@@ -507,9 +507,10 @@ function buildFoodRecommendationsResponse(
     : candidates.length > selected.length
       ? "¿Quieres que te dé otra alternativa más? 🙌"
       : "¿Probamos con otra zona o tipo de comida para ampliar opciones? 🙌";
+  const usedVibes = new Set<string>();
   return [
     intro,
-    ...selected.map((place, index) => formatFoodPlace(place, index + 1)),
+    ...selected.map((place, index) => formatFoodPlace(place, index + 1, usedVibes)),
     outro,
   ].join("\n\n");
 }
