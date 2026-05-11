@@ -20,6 +20,7 @@ import tileComprar from "@/assets/tile_comprar.png";
 import tileTomar from "@/assets/tile_tomar.png";
 import tileTurismo from "@/assets/tile_turismo.png";
 import tileMapa from "@/assets/tile_mapa.png";
+import tileBus from "@/assets/tile_bus.png";
 
 const TILE_STYLES: Record<string, { img: string; bg: string }> = {
   Comer:        { img: tileComer,   bg: "oklch(0.95 0.06 70)" },
@@ -30,6 +31,7 @@ const TILE_STYLES: Record<string, { img: string; bg: string }> = {
   "Tomar algo": { img: tileTomar,   bg: "oklch(0.95 0.07 50)" },
   Turismo:      { img: tileTurismo, bg: "oklch(0.94 0.05 25)" },
   Mapa:         { img: tileMapa,    bg: "oklch(0.93 0.06 200)" },
+  Bus:          { img: tileBus,     bg: "oklch(0.93 0.06 190)" },
 };
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -378,8 +380,8 @@ export function ChatScreen() {
           )}
 
           {isWelcome && !activeSubmenu && (
-            <div className="mt-2 rounded-3xl bg-card/95 p-3 shadow-soft ring-1 ring-border/60 backdrop-blur sm:p-4">
-              <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-8 sm:gap-3">
+            <div className="mt-2 rounded-3xl bg-card/95 p-2 shadow-soft ring-1 ring-border/60 backdrop-blur sm:p-4">
+              <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-9 sm:gap-3">
                 {[
                   ...SUGGESTIONS.map((s) => {
                     const match = s.label.match(/^(\p{Extended_Pictographic}+)\s*(.*)$/u);
@@ -417,6 +419,15 @@ export function ChatScreen() {
                       }
                     },
                   },
+                  {
+                    key: "bus",
+                    emoji: "🚌",
+                    label: "Bus",
+                    onClick: () =>
+                      send(
+                        "Quiero coger el bus o tram urbano en Alicante. Dime mi origen y destino y recomiéndame línea, parada de subida y parada de bajada.",
+                      ),
+                  },
                 ].map((t) => {
                   const style = TILE_STYLES[t.label];
                   return (
@@ -444,7 +455,7 @@ export function ChatScreen() {
                           <span className="text-[38px]">{t.emoji}</span>
                         )}
                       </div>
-                      <span className="mt-1.5 block w-full text-[12px] font-semibold leading-tight tracking-tight text-foreground text-center">
+                      <span className="mt-1 block w-full text-[10.5px] font-semibold leading-tight tracking-tight text-foreground text-center sm:text-[12px]">
                         {t.label}
                       </span>
                     </button>
