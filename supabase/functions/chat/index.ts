@@ -1274,18 +1274,7 @@ CURATED LOCAL SHOPS (image IS available — DO use [[place: ...]] for these, exa
 - Plastiahorro — shop selling packaging, bags, napkins, plates and cups at Calle Teulada 21, Alicante. Use [[place: Plastiahorro]] when recommending it.
 - Open Wash — self-service laundromat (lavadero/lavandería de autoservicio) at Calle Teulada 25, Alicante. Open every day from 8:30 to 23:00, 365 days a year. Use [[place: Open Wash]] when recommending it.
 
-TRANSPORTE PÚBLICO URBANO (BUS VECTALIA + TRAM):
-- Cuando el usuario pregunte cómo llegar a algún sitio en bus, autobús, tram, transporte público, "qué línea me lleva", "cómo voy en bus a X", etc., NO inventes líneas ni números de parada (no tenemos GTFS cargado). En su lugar:
-  1. Reconoce el origen (si no lo da, usa "tu ubicación actual") y el destino que pide.
-  2. Responde con calidez en 1–2 frases ("Lo mejor es que lo mires en el planificador oficial de Vectalia, te lleva en un toque").
-  3. Incluye SIEMPRE el enlace al planificador oficial como markdown link en una línea propia:
-     🚌 [Abrir planificador de Vectalia](https://alicante.vectalia.es/tu-proxima-parada/)
-  4. Recuérdale que en cada marquesina hay un QR que abre el tiempo real de esa parada exacta, y que si me dice el código de 4 dígitos de la parada (lo ve junto al QR, ej. 2682) le doy el enlace directo a los próximos buses.
-- Si el usuario te da un código de parada de 4 dígitos (ej. "parada 2682", "2682", "código 4718"), responde con calidez y dale el enlace directo:
-  🕒 [Próximos buses en la parada XXXX](https://alicante.vectalia.es/tu-proxima-parada/?parada=XXXX)
-  (sustituye XXXX por el código real que te dio).
-- Para TRAM (FGV), el planificador de Vectalia también muestra conexiones; si pregunta específicamente por TRAM, dale el mismo enlace y menciona que el TRAM aparece integrado en la búsqueda.
-- NUNCA digas un número de línea concreto ("coge el 02") salvo que estés 100% seguro por conocimiento general (ej. Línea 22 Aeropuerto, que es muy conocida). Ante la duda, deriva al planificador.
+(transporte público — ver bloque TRANSPORTE PÚBLICO URBANO al final del prompt)
 
 Other rules:
 - Use the real, exact name of the public place. Always append ", Alicante" at the end.
@@ -1351,7 +1340,290 @@ RESEÑAS:
 QUIERO IR (CRÍTICO):
 - INMEDIATAMENTE después de cada enlace de reseñas (sea de un sitio mencionado por el usuario o de una recomendación tuya), añade siempre, en la MISMA línea separado por " · ", un enlace EXACTO con este formato: [🎟️ Quiero ir](qi:NOMBRE+DEL+SITIO) — el esquema es \`qi:\` (no http), y los espacios del nombre van como '+'. Ejemplo: [⭐ ver reseñas](https://www.google.com/maps/search/?api=1&query=El+Portal+Alicante) · [🎟️ Quiero ir](qi:El+Portal)
 - NO añadas Quiero ir a sitios públicos sin reseñas (playas, monumentos). Solo a locales reales (bares, restaurantes, hoteles, tiendas, clubs, cafeterías).
-- NO expliques qué es Quiero ir, solo añade el botón. Si el usuario pregunta, dile que genera un QR único intransferible, válido solo ese día, y que solo da puntos cuando el local lo valida en sitio (en Beta los puntos son demo).`;
+- NO expliques qué es Quiero ir, solo añade el botón. Si el usuario pregunta, dile que genera un QR único intransferible, válido solo ese día, y que solo da puntos cuando el local lo valida en sitio (en Beta los puntos son demo).
+
+TRANSPORTE PÚBLICO URBANO (BUS / TRAM):
+- Si TRANSIT_RESULT viene en el contexto runtime, ÚSALO como verdad: dale al usuario las opciones de línea con su parada de subida (con código de 4 dígitos cuando exista) y de bajada. Formato corto, en lista numerada si hay varias. Ejemplo:
+  "Te llevan estas líneas:
+  1. **Línea 22** — sube en *Plaza del Mar (parada 2682)*, bájate en *Aeropuerto T1 (parada 4031)*. ~12 paradas.
+  2. **Línea 24** — sube en *Mercado (parada 1830)*, bájate en *Aeropuerto T2 (parada 4032)*."
+  Y termina con: "Cuando sepas qué línea coges, dime el código de la parada y te doy el enlace en tiempo real."
+- Si TRANSIT_RESULT.options está vacío y hay TRANSIT_RESULT.searched=true: dilo con honestidad ("No veo un bus directo de OSM entre tu ubicación y X — quizás haya transbordo. Mira el planificador: 🚌 [Vectalia](https://alicante.vectalia.es/tu-proxima-parada/)").
+- Si NO hay TRANSIT_RESULT pero la pregunta es claramente de bus y falta destino o ubicación, pregunta brevemente lo que falta antes de derivar al planificador.
+- Si el usuario te da un código de parada de 4 dígitos (ej. "parada 2682", "2682"), dale SIEMPRE el enlace directo: 🕒 [Próximos buses en la parada XXXX](https://alicante.vectalia.es/tu-proxima-parada/?parada=XXXX).
+- NUNCA inventes números de línea ni códigos de parada. Solo los que aparezcan en TRANSIT_RESULT o que el usuario te dé.`;
+
+// ──────────────────────────────────────────────────────────────────────
+// TRANSIT (Vectalia bus / TRAM via OpenStreetMap Overpass)
+// ──────────────────────────────────────────────────────────────────────
+
+type LatLng = { lat: number; lng: number };
+type TransitStop = {
+  id: number;
+  name: string;
+  ref: string | null; // 4-digit Vectalia stop code, when tagged in OSM
+  lat: number;
+  lng: number;
+  distMeters: number;
+};
+type TransitOption = {
+  line: string;
+  lineName: string;
+  network?: string;
+  board: TransitStop;
+  alight: TransitStop;
+  stopsBetween: number;
+};
+type TransitResult = {
+  searched: true;
+  origin: LatLng & { label?: string };
+  destination: LatLng & { label: string };
+  options: TransitOption[];
+};
+
+function detectTransitIntent(text: string): boolean {
+  const t = text.toLowerCase();
+  return /\b(bus|autob[uú]s|tram|guagua|l[ií]nea\s*\d|transporte\s+p[uú]blico|c[oó]mo\s+(voy|llego|ir)|qu[eé]\s+l[ií]nea|en\s+bus|en\s+autob[uú]s)\b/.test(
+    t,
+  );
+}
+
+function extractTransitDestination(text: string): string | null {
+  const cleaned = text
+    .replace(/\s+/g, " ")
+    .replace(/[¿?¡!]/g, "")
+    .trim();
+  // Patterns ordered by specificity
+  const patterns = [
+    /\b(?:c[oó]mo\s+(?:voy|llego|ir)|qu[eé]\s+l[ií]nea\s+(?:me\s+lleva\s+)?)(?:en\s+bus\s+|en\s+autob[uú]s\s+|en\s+tram\s+)?(?:a|al|hasta|hacia|para|para\s+ir\s+a)\s+(.+?)(?:\s+desde\s+.+)?$/i,
+    /\b(?:en\s+bus|en\s+autob[uú]s|en\s+tram)\s+(?:a|al|hasta|hacia)\s+(.+?)(?:\s+desde\s+.+)?$/i,
+    /\b(?:a|al|hasta|hacia)\s+(.+?)\s+en\s+(?:bus|autob[uú]s|tram)\b/i,
+  ];
+  for (const re of patterns) {
+    const m = cleaned.match(re);
+    if (m && m[1]) {
+      const dest = m[1]
+        .replace(/^(la|el|los|las)\s+/i, "")
+        .replace(/[.,;:]+$/, "")
+        .trim();
+      if (dest.length >= 3 && dest.length < 120) return dest;
+    }
+  }
+  return null;
+}
+
+async function geocodeAlicante(query: string): Promise<(LatLng & { label: string }) | null> {
+  // Bias hard to Alicante province via viewbox
+  const url = new URL("https://nominatim.openstreetmap.org/search");
+  url.searchParams.set("q", `${query}, Alicante`);
+  url.searchParams.set("format", "json");
+  url.searchParams.set("limit", "1");
+  url.searchParams.set("countrycodes", "es");
+  url.searchParams.set("viewbox", "-0.65,38.45,-0.30,38.20"); // lon_min,lat_max,lon_max,lat_min
+  url.searchParams.set("bounded", "1");
+  try {
+    const res = await fetch(url.toString(), {
+      headers: { "User-Agent": "AlicanteFriend/1.0 (contact via lovable.app)" },
+    });
+    if (!res.ok) return null;
+    const arr = (await res.json()) as Array<{ lat: string; lon: string; display_name: string }>;
+    if (!arr.length) return null;
+    return {
+      lat: Number(arr[0].lat),
+      lng: Number(arr[0].lon),
+      label: arr[0].display_name.split(",").slice(0, 2).join(",").trim(),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function haversineMeters(a: LatLng, b: LatLng): number {
+  const R = 6371000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h =
+    Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+async function fetchBusOptions(
+  origin: LatLng,
+  destination: LatLng & { label: string },
+): Promise<TransitOption[]> {
+  const RADIUS_M = 500;
+  const q = `[out:json][timeout:30];
+(
+  node["highway"="bus_stop"](around:${RADIUS_M},${origin.lat},${origin.lng});
+  node["public_transport"="platform"]["bus"!="no"](around:${RADIUS_M},${origin.lat},${origin.lng});
+)->.os;
+(
+  node["highway"="bus_stop"](around:${RADIUS_M},${destination.lat},${destination.lng});
+  node["public_transport"="platform"]["bus"!="no"](around:${RADIUS_M},${destination.lat},${destination.lng});
+)->.ds;
+.os out tags;
+.ds out tags;
+(
+  rel(bn.os)["type"="route"]["route"~"^(bus|tram)$"];
+  rel(bn.ds)["type"="route"]["route"~"^(bus|tram)$"];
+)->.routes;
+.routes out body;`;
+
+  type OverpassNode = {
+    type: "node";
+    id: number;
+    lat: number;
+    lon: number;
+    tags?: Record<string, string>;
+  };
+  type OverpassRelation = {
+    type: "relation";
+    id: number;
+    tags?: Record<string, string>;
+    members: Array<{ type: string; ref: number; role: string }>;
+  };
+  type OverpassEl = OverpassNode | OverpassRelation;
+
+  let json: { elements: OverpassEl[] } | null = null;
+  for (const url of OVERPASS_ENDPOINTS) {
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "data=" + encodeURIComponent(q),
+      });
+      if (!res.ok) continue;
+      json = await res.json();
+      if (json) break;
+    } catch (e) {
+      console.error("Overpass transit error:", e);
+    }
+  }
+  if (!json) return [];
+
+  const nodes = new Map<number, OverpassNode>();
+  const rels: OverpassRelation[] = [];
+  for (const el of json.elements) {
+    if (el.type === "node") nodes.set(el.id, el);
+    else if (el.type === "relation") rels.push(el);
+  }
+
+  // Build origin/destination stop sets by distance (only nodes that are within radius)
+  const originStops = new Map<number, TransitStop>();
+  const destStops = new Map<number, TransitStop>();
+  for (const n of nodes.values()) {
+    const tags = n.tags ?? {};
+    const isStop =
+      tags["highway"] === "bus_stop" ||
+      (tags["public_transport"] === "platform" && tags["bus"] !== "no");
+    if (!isStop) continue;
+    const stop: TransitStop = {
+      id: n.id,
+      name: tags["name"] ?? "Parada sin nombre",
+      ref: tags["ref"] ?? tags["ref:vectalia"] ?? null,
+      lat: n.lat,
+      lng: n.lon,
+      distMeters: 0,
+    };
+    const dO = haversineMeters(origin, { lat: n.lat, lng: n.lon });
+    const dD = haversineMeters(destination, { lat: n.lat, lng: n.lon });
+    if (dO <= RADIUS_M) originStops.set(n.id, { ...stop, distMeters: Math.round(dO) });
+    if (dD <= RADIUS_M) destStops.set(n.id, { ...stop, distMeters: Math.round(dD) });
+  }
+
+  const options: TransitOption[] = [];
+  const seenLines = new Set<string>();
+
+  for (const rel of rels) {
+    const tags = rel.tags ?? {};
+    const lineRef = (tags["ref"] ?? tags["name"] ?? "").trim();
+    if (!lineRef) continue;
+    const memberStopIds = rel.members
+      .filter((m) => m.type === "node" && (m.role === "stop" || m.role === "platform" || m.role === ""))
+      .map((m) => m.ref);
+
+    let boardIdx = -1;
+    let board: TransitStop | null = null;
+    let alightIdx = -1;
+    let alight: TransitStop | null = null;
+    for (let i = 0; i < memberStopIds.length; i++) {
+      const id = memberStopIds[i];
+      if (boardIdx === -1 && originStops.has(id)) {
+        boardIdx = i;
+        board = originStops.get(id)!;
+      } else if (board && destStops.has(id) && i > boardIdx) {
+        alightIdx = i;
+        alight = destStops.get(id)!;
+        break;
+      }
+    }
+    if (!board || !alight || alightIdx <= boardIdx) continue;
+
+    const dedupKey = `${lineRef}|${board.id}|${alight.id}`;
+    if (seenLines.has(dedupKey)) continue;
+    seenLines.add(dedupKey);
+
+    options.push({
+      line: lineRef,
+      lineName: tags["name"] ?? lineRef,
+      network: tags["network"] ?? tags["operator"],
+      board,
+      alight,
+      stopsBetween: alightIdx - boardIdx,
+    });
+  }
+
+  // Best options: shortest walking distance to board + fewest stops
+  options.sort(
+    (a, b) =>
+      a.board.distMeters + a.alight.distMeters + a.stopsBetween * 5 -
+      (b.board.distMeters + b.alight.distMeters + b.stopsBetween * 5),
+  );
+
+  // Dedup by line keeping best
+  const byLine = new Map<string, TransitOption>();
+  for (const o of options) {
+    if (!byLine.has(o.line)) byLine.set(o.line, o);
+  }
+  return [...byLine.values()].slice(0, 4);
+}
+
+async function buildTransitResult(
+  origin: LatLng | null,
+  text: string,
+): Promise<TransitResult | null> {
+  if (!origin || !detectTransitIntent(text)) return null;
+  const destText = extractTransitDestination(text);
+  if (!destText) return null;
+  const dest = await geocodeAlicante(destText);
+  if (!dest) {
+    return {
+      searched: true,
+      origin,
+      destination: { lat: 0, lng: 0, label: destText },
+      options: [],
+    };
+  }
+  const options = await fetchBusOptions(origin, dest);
+  return { searched: true, origin, destination: dest, options };
+}
+
+function formatTransitResult(r: TransitResult): string {
+  const head = `\nTRANSIT_RESULT (verdad para responder sobre bus/tram):\n  origin=${r.origin.lat.toFixed(5)},${r.origin.lng.toFixed(5)}\n  destination="${r.destination.label}" (${r.destination.lat.toFixed(5)},${r.destination.lng.toFixed(5)})\n  searched=true`;
+  if (!r.options.length) {
+    return head + "\n  options=[] (sin línea directa encontrada en OSM dentro de 500m)";
+  }
+  const lines = r.options
+    .map(
+      (o, i) =>
+        `  ${i + 1}. línea=${o.line} (${o.lineName})${o.network ? ` red=${o.network}` : ""} | sube_en="${o.board.name}"${o.board.ref ? ` parada=${o.board.ref}` : ""} (${o.board.distMeters}m a pie) | bájate_en="${o.alight.name}"${o.alight.ref ? ` parada=${o.alight.ref}` : ""} (${o.alight.distMeters}m a pie) | paradas≈${o.stopsBetween}`,
+    )
+    .join("\n");
+  return head + "\n" + lines;
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -1425,7 +1697,18 @@ serve(async (req) => {
           })
           .join("\n")}`
       : "";
-    const runtimeContext = `RUNTIME CONTEXT (use this when relevant):\nTODAY: ${todayStr} (zona horaria Europe/Madrid)\nMAX_NEARBY_OPTIONS: ${context?.maxOptions ?? 4}\n${locationLine}${verifiedOpenLine}${mentionedLine}`;
+    const userOriginForTransit =
+      loc && typeof loc.lat === "number" && typeof loc.lng === "number"
+        ? { lat: loc.lat, lng: loc.lng }
+        : null;
+    const transitResult = await buildTransitResult(userOriginForTransit, latestUserText).catch(
+      (err) => {
+        console.error("transit lookup error:", err);
+        return null;
+      },
+    );
+    const transitLine = transitResult ? formatTransitResult(transitResult) : "";
+    const runtimeContext = `RUNTIME CONTEXT (use this when relevant):\nTODAY: ${todayStr} (zona horaria Europe/Madrid)\nMAX_NEARBY_OPTIONS: ${context?.maxOptions ?? 4}\n${locationLine}${verifiedOpenLine}${mentionedLine}${transitLine}`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
