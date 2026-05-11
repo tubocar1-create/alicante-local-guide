@@ -743,6 +743,35 @@ function parseRecommendationListCards(text: string): AssistantPart[] | null {
   return parts;
 }
 
+function parseOpenStatusCards(text: string): AssistantPart[] | null {
+  const statusRe = /✅\s*Sí:\s*\*\*([^*]+)\*\*\s+está abierto ahora(?:\s+y)?\s+cierra a las\s+(\d{1,2}:\d{2})\.?(?:\s*\[⭐[^\]]*\]\([^)]+\))?/g;
+  const parts: AssistantPart[] = [];
+  let lastIndex = 0;
+  let cardIndex = 0;
+  let found = false;
+  let m: RegExpExecArray | null;
+
+  while ((m = statusRe.exec(text)) !== null) {
+    found = true;
+    if (m.index > lastIndex) parts.push({ type: "text", value: text.slice(lastIndex, m.index) });
+    parts.push({
+      type: "card",
+      data: {
+        name: m[1].trim(),
+        closesAt: m[2],
+        vibe: "Está abierto ahora mismo.",
+        theme: CARD_FALLBACK_THEMES[cardIndex % CARD_FALLBACK_THEMES.length],
+      },
+    });
+    cardIndex += 1;
+    lastIndex = statusRe.lastIndex;
+  }
+
+  if (!found) return null;
+  if (lastIndex < text.length) parts.push({ type: "text", value: text.slice(lastIndex) });
+  return parts;
+}
+
 const THEME_STYLES: Record<string, { bg: string; ring: string; badge: string }> = {
   sun:    { bg: "bg-gradient-to-br from-amber-200 via-orange-200 to-rose-300 dark:from-amber-800/60 dark:via-orange-800/50 dark:to-rose-800/60",  ring: "border-amber-400/70",  badge: "bg-amber-600 text-white" },
   sea:    { bg: "bg-gradient-to-br from-sky-200 via-cyan-200 to-blue-300 dark:from-sky-800/60 dark:via-cyan-800/50 dark:to-blue-800/60",          ring: "border-sky-400/70",    badge: "bg-sky-600 text-white" },
@@ -894,7 +923,9 @@ function AssistantContent({ content }: { content: string }) {
     lastIndex = m.index + m[0].length;
   }
   if (lastIndex < cleaned.length) parts.push({ type: "text", value: cleaned.slice(lastIndex) });
-  const renderedParts = hasEncodedCards ? parts : parseRecommendationListCards(cleaned) ?? [{ type: "text", value: cleaned }];
+  const renderedParts = hasEncodedCards
+    ? parts
+    : parseRecommendationListCards(cleaned) ?? parseOpenStatusCards(cleaned) ?? [{ type: "text", value: cleaned }];
 
   return (
     <div className="space-y-2 [&>p]:m-0 [&_strong]:font-semibold">
