@@ -48,7 +48,8 @@ export default function ReferralDialog({ placeId, placeName, autoCelebrate, onCl
       toast.info("Ya generaste un QR hoy para este local 😉", {
         description:
           "Solo puedes crear un QR por local y día. Te enseñamos el que ya tenías; mañana podrás generar uno nuevo.",
-        duration: 5000,
+        duration: 12000,
+        closeButton: true,
       });
       setCode(existing.code);
       setStep("qr");
