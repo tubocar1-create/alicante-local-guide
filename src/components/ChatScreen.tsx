@@ -244,19 +244,19 @@ export function ChatScreen() {
   const isWelcome = messages.length === 1 && !loading;
 
   return (
-    <div className="relative flex h-[100dvh] flex-col bg-background">
-      {/* Persistent background photo of Puerto de Alicante */}
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <img src={heroImg} alt="" aria-hidden className="h-full w-full object-cover" />
-        <div
-          className={[
-            "absolute inset-0 transition-colors duration-700",
-            isWelcome
-              ? "bg-gradient-to-b from-background/10 via-background/40 to-background/85"
-              : "bg-background/85 backdrop-blur-sm",
-          ].join(" ")}
-        />
-      </div>
+    <div
+      className={[
+        "relative flex h-[100dvh] flex-col transition-colors duration-700",
+        isWelcome ? "bg-[oklch(0.88_0.16_88)]" : "bg-background",
+      ].join(" ")}
+    >
+      {/* Persistent background photo of Puerto de Alicante (only when chatting) */}
+      {!isWelcome && (
+        <div className="pointer-events-none absolute inset-0 -z-10">
+          <img src={heroImg} alt="" aria-hidden className="h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-background/85 backdrop-blur-sm" />
+        </div>
+      )}
 
       {/* Compact header (always visible) */}
       <header className="relative flex items-center gap-3 border-b border-border/60 bg-background/40 px-4 py-3 backdrop-blur">
@@ -352,7 +352,7 @@ export function ChatScreen() {
           )}
 
           {isWelcome && !activeSubmenu && (
-            <div className="mt-2 rounded-3xl bg-[oklch(0.88_0.16_88)] p-3 shadow-soft ring-1 ring-[oklch(0.78_0.16_85)] backdrop-blur sm:p-4">
+            <div className="mt-2 rounded-3xl bg-card/95 p-3 shadow-soft ring-1 ring-border/60 backdrop-blur sm:p-4">
               <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-8 sm:gap-3">
                 {[
                   ...SUGGESTIONS.map((s) => {
