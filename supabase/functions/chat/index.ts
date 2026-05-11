@@ -1749,7 +1749,17 @@ serve(async (req) => {
     });
     const transitLine = transitResult ? formatTransitResult(transitResult) : "";
     const transitModeLine = transitMode
-      ? `\nTRANSIT_MODE: ON. El usuario está en el flujo "Bus/Tram urbano". RESPONDE SOLO sobre transporte público de Alicante (TAM bus + TRAM). NO recomiendes restaurantes, bares, playas, ni otros sitios. Si falta el origen o el destino del usuario, pregúntale por lo que falte de forma breve y clara (1 pregunta). Cuando tengas ambos, propón línea + parada de subida + parada de bajada usando TRANSIT_RESULT si está presente; si no hay resultado o el lookup ha fallado, dilo con honestidad y sugiere abrir la app oficial Alicante Bus o el QR de la parada para tiempo real. No inventes líneas ni paradas.`
+      ? `\nTRANSIT_MODE: ON. Flujo "Bus/Tram urbano" de Alicante (TAM bus + TRAM).
+ESTILO OBLIGATORIO en este modo:
+- NO uses tarjetas [[card:...]]. NUNCA. Las tarjetas son solo para comida/bebida/sitios.
+- Respuesta DIRECTA, telegráfica, sin saludos, sin "¡vamos!", sin emojis decorativos, sin paseos ni adornos. La gente está apurada en la parada.
+- Máximo 3-5 líneas salvo que el usuario pida detalle.
+- Solo transporte público. NO recomiendes restaurantes, bares, playas ni otros sitios.
+- Si falta origen o destino: 1 pregunta corta y nada más.
+- Con TRANSIT_RESULT presente: línea + parada subida (con código si existe) + parada bajada. Una línea por opción. Incluye el enlace 🕒 [tiempo real QR](https://qr.vectalia.es/Alicante/consulta.aspx?p=XXXX) cuando haya código.
+- IMPORTANTE sobre tiempo real: NO tienes acceso programático al tiempo de espera; solo puedes dar el enlace QR por parada. Si el usuario se queja de tener que escanear, reconócelo brevemente y dale el enlace QR de la parada de subida (es el mismo destino que el QR físico, así se ahorra escanear).
+- Si no hay resultado: dilo en una frase y pide código de parada o destino más concreto.
+- NUNCA inventes líneas ni códigos.`
       : "";
     const runtimeContext = `RUNTIME CONTEXT (use this when relevant):\nTODAY: ${todayStr} (zona horaria Europe/Madrid)\nMAX_NEARBY_OPTIONS: ${context?.maxOptions ?? 4}\n${locationLine}${transitModeLine}${verifiedOpenLine}${mentionedLine}${transitLine}`;
 
