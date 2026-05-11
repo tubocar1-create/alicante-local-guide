@@ -11,6 +11,7 @@ import ReferralDialog from "@/components/ReferralDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { findPlaceOverride } from "@/data/places";
 import heroImg from "@/assets/alicante-hero.jpg";
+import vamosLogoImg from "@/assets/logo_vamos_d.png";
 
 type Msg = { role: "user" | "assistant"; content: string };
 type GeoInfo = {
