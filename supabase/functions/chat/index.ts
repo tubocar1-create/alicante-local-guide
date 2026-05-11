@@ -1637,13 +1637,12 @@ function formatTransitResult(r: TransitResult): string {
   }
   const lines = r.options
     .map((o, i) => {
-      const boardRef = o.board.ref && /^\d{3,5}$/.test(o.board.ref) ? o.board.ref : null;
-      const realtime = boardRef
-        ? ` | tiempo_real_qr=https://qr.vectalia.es/Alicante/consulta.aspx?p=${boardRef}`
-        : "";
-      return `  ${i + 1}. línea=${o.line} (${o.lineName})${o.network ? ` red=${o.network}` : ""} | sube_en="${o.board.name}"${o.board.ref ? ` parada=${o.board.ref}` : ""} (${o.board.distMeters}m a pie) | bájate_en="${o.alight.name}"${o.alight.ref ? ` parada=${o.alight.ref}` : ""} (${o.alight.distMeters}m a pie) | paradas≈${o.stopsBetween}${realtime}`;
+      // NOTA: los `ref` de OSM NO coinciden con los códigos de parada de Vectalia.
+      // El QR físico usa otro identificador interno. No emitimos enlace QR aquí.
+      return `  ${i + 1}. línea=${o.line} (${o.lineName})${o.network ? ` red=${o.network}` : ""} | sube_en="${o.board.name}" (${o.board.distMeters}m a pie) | bájate_en="${o.alight.name}" (${o.alight.distMeters}m a pie) | paradas≈${o.stopsBetween}`;
     })
     .join("\n");
+  return head + "\n" + lines + "\n  nota=Los códigos QR (3-5 dígitos) NO se conocen desde OSM; los códigos de parada de Vectalia solo son fiables si el usuario los lee del cartel/QR físico.";
   return head + "\n" + lines;
 }
 
