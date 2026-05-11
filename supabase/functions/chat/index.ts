@@ -1720,7 +1720,7 @@ serve(async (req) => {
           })
           .join("\n")}`
       : "";
-    const userOriginForTransit =
+    let userOriginForTransit: LatLng | null =
       loc && typeof loc.lat === "number" && typeof loc.lng === "number"
         ? { lat: loc.lat, lng: loc.lng }
         : null;
@@ -1731,6 +1731,13 @@ serve(async (req) => {
           .map((m: { content: string }) => m.content)
           .join(" \n ")
       : latestUserText;
+    if (transitMode) {
+      const originText = extractTransitOrigin(transitText);
+      if (originText) {
+        const g = await geocodeAlicante(originText).catch(() => null);
+        if (g) userOriginForTransit = { lat: g.lat, lng: g.lng };
+      }
+    }
     const transitResult = await buildTransitResult(userOriginForTransit, transitText, {
       force: transitMode,
     }).catch((err) => {
