@@ -395,7 +395,7 @@ export function ChatScreen() {
                       label: match?.[2] ?? s.label,
                       onClick: () => {
                         if (s.submenu) setActiveSubmenu(s);
-                        else if (s.prompt) send(s.prompt);
+                        else if (s.prompt) send(s.prompt, { mode: null });
                       },
                     };
                   }),
