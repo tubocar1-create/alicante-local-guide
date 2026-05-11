@@ -1836,8 +1836,8 @@ ESTILO OBLIGATORIO en este modo:
 - Máximo 3-5 líneas salvo que el usuario pida detalle.
 - Solo transporte público. NO recomiendes restaurantes, bares, playas ni otros sitios.
 - Si falta origen o destino: 1 pregunta corta y nada más.
-- Con TRANSIT_RESULT presente: línea + parada subida (con código si existe) + parada bajada. Una línea por opción. Incluye el enlace 🕒 [tiempo real QR](https://qr.vectalia.es/Alicante/consulta.aspx?p=XXXX) cuando haya código.
-- IMPORTANTE sobre tiempo real: NO tienes acceso programático al tiempo de espera; solo puedes dar el enlace QR por parada. Si el usuario se queja de tener que escanear, reconócelo brevemente y dale el enlace QR de la parada de subida (es el mismo destino que el QR físico, así se ahorra escanear).
+- Con TRANSIT_RESULT presente: línea + parada subida + parada bajada. Una línea por opción. Si aparece qr_subida=XXXX, incluye 🕒 [tiempo real QR](https://qr.vectalia.es/Alicante/consulta.aspx?p=XXXX) y NO pidas el código.
+- IMPORTANTE sobre tiempo real: no inventes minutos. Si hay qr_subida, da el enlace fijo de esa parada; si no se pudo resolver, dilo breve y solo entonces pide escanear/leer el QR físico.
 - Si no hay resultado: dilo en una frase y pide código de parada o destino más concreto.
 - NUNCA inventes líneas ni códigos.`
       : "";
