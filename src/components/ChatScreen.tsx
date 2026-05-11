@@ -20,6 +20,7 @@ import tileComprar from "@/assets/tile_comprar.png";
 import tileTomar from "@/assets/tile_tomar.png";
 import tileTurismo from "@/assets/tile_turismo.png";
 import tileMapa from "@/assets/tile_mapa.png";
+import tileBus from "@/assets/tile_bus.png";
 
 const TILE_STYLES: Record<string, { img: string; bg: string }> = {
   Comer:        { img: tileComer,   bg: "oklch(0.95 0.06 70)" },
