@@ -1594,8 +1594,9 @@ async function fetchBusOptions(
 async function buildTransitResult(
   origin: LatLng | null,
   text: string,
+  opts?: { force?: boolean },
 ): Promise<TransitResult | null> {
-  if (!origin || !detectTransitIntent(text)) return null;
+  if (!origin || (!opts?.force && !detectTransitIntent(text))) return null;
   const destText = extractTransitDestination(text);
   if (!destText) return null;
   const dest = await geocodeAlicante(destText);
