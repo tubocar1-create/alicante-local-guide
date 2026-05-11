@@ -352,49 +352,61 @@ export function ChatScreen() {
           )}
 
           {isWelcome && !activeSubmenu && (
-            <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-7 sm:gap-3">
-              {[
-                ...SUGGESTIONS.map((s) => {
-                  const match = s.label.match(/^(\p{Extended_Pictographic}+)\s*(.*)$/u);
-                  return {
-                    key: s.label,
-                    emoji: match?.[1] ?? "✨",
-                    label: match?.[2] ?? s.label,
-                    onClick: () => {
-                      if (s.submenu) setActiveSubmenu(s);
-                      else if (s.prompt) send(s.prompt);
-                    },
-                  };
-                }),
-                {
-                  key: "mapa",
-                  emoji: "🗺️",
-                  label: "Mapa",
-                  onClick: () => {
-                    const url = geo
-                      ? `https://www.google.com/maps/search/?api=1&query=${geo.lat},${geo.lng}`
-                      : `https://www.google.com/maps/search/?api=1&query=Alicante`;
-                    try {
-                      (window.top ?? window).open(url, "_blank", "noopener,noreferrer");
-                    } catch {
-                      window.open(url, "_blank", "noopener,noreferrer");
-                    }
+            <div className="mt-2 rounded-3xl bg-card/95 p-3 shadow-soft ring-1 ring-border/60 backdrop-blur sm:p-4">
+              <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-8 sm:gap-3">
+                {[
+                  ...SUGGESTIONS.map((s) => {
+                    const match = s.label.match(/^(\p{Extended_Pictographic}+)\s*(.*)$/u);
+                    return {
+                      key: s.label,
+                      emoji: match?.[1] ?? "✨",
+                      label: match?.[2] ?? s.label,
+                      onClick: () => {
+                        if (s.submenu) setActiveSubmenu(s);
+                        else if (s.prompt) send(s.prompt);
+                      },
+                    };
+                  }),
+                  {
+                    key: "turismo",
+                    emoji: "🏛️",
+                    label: "Turismo",
+                    onClick: () =>
+                      send(
+                        "¿Qué sitios turísticos imprescindibles puedo visitar en Alicante hoy?",
+                      ),
                   },
-                },
-              ].map((t) => (
-                <button
-                  key={t.key}
-                  onClick={t.onClick}
-                  className="group flex flex-col items-center"
-                >
-                  <div className="grid aspect-square w-full place-items-center rounded-[1.4rem] bg-card text-[28px] shadow-soft ring-1 ring-border/60 transition group-hover:-translate-y-0.5 group-active:scale-95">
-                    <span className="drop-shadow-sm">{t.emoji}</span>
-                  </div>
-                  <span className="mt-1 text-[11px] font-semibold leading-tight text-foreground/85 text-center">
-                    {t.label}
-                  </span>
-                </button>
-              ))}
+                  {
+                    key: "mapa",
+                    emoji: "🗺️",
+                    label: "Mapa",
+                    onClick: () => {
+                      const url = geo
+                        ? `https://www.google.com/maps/search/?api=1&query=${geo.lat},${geo.lng}`
+                        : `https://www.google.com/maps/search/?api=1&query=Alicante`;
+                      try {
+                        (window.top ?? window).open(url, "_blank", "noopener,noreferrer");
+                      } catch {
+                        window.open(url, "_blank", "noopener,noreferrer");
+                      }
+                    },
+                  },
+                ].map((t) => (
+                  <button
+                    key={t.key}
+                    onClick={t.onClick}
+                    aria-label={t.label}
+                    className="group flex flex-col items-center"
+                  >
+                    <div className="grid aspect-square w-full place-items-center rounded-2xl bg-background text-[34px] shadow-sm ring-2 ring-border transition group-hover:-translate-y-0.5 group-active:scale-95">
+                      <span className="drop-shadow-sm">{t.emoji}</span>
+                    </div>
+                    <span className="mt-1.5 text-[13px] font-bold leading-tight text-foreground text-center">
+                      {t.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
           {isWelcome && activeSubmenu && (
