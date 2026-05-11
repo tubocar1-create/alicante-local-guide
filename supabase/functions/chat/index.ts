@@ -1344,9 +1344,9 @@ QUIERO IR (CRÍTICO):
 
 TRANSPORTE PÚBLICO URBANO (BUS / TRAM):
 - Si TRANSIT_RESULT viene en el contexto, ÚSALO como verdad. Lista corta: línea + parada de subida + parada de bajada. Una línea por opción, sin adornos.
-- IMPORTANTE: NO inventes códigos numéricos de parada. Los nombres de parada vienen de OpenStreetMap; los códigos de 3-5 dígitos del QR de Vectalia son otro sistema y NO los conocemos. NUNCA escribas "(parada 1184)" o similar a partir de TRANSIT_RESULT.
-- NO añadas enlaces a qr.vectalia.es ni a alicante.vectalia.es por iniciativa propia: son inservibles sin el código real del cartel.
-- SOLO si el usuario te da explícitamente un código de parada de 3-5 dígitos (lo lee del cartel/QR físico), entonces sí dale el enlace directo: 🕒 [Próximos buses parada XXXX](https://qr.vectalia.es/Alicante/consulta.aspx?p=XXXX).
+- IMPORTANTE: NO inventes códigos numéricos de parada. Usa solo qr_subida=XXXX si aparece en TRANSIT_RESULT o un código de 3-5 dígitos escrito por el usuario.
+- Si TRANSIT_RESULT trae qr_subida=XXXX, añade el enlace directo fijo de esa parada: 🕒 [tiempo real QR](https://qr.vectalia.es/Alicante/consulta.aspx?p=XXXX). No pidas al usuario el código.
+- Si no hay qr_subida y el usuario te da explícitamente un código de parada de 3-5 dígitos, dale el enlace directo: 🕒 [Próximos buses parada XXXX](https://qr.vectalia.es/Alicante/consulta.aspx?p=XXXX).
 - Si te pregunta por el tiempo real sin código: dile en una frase que el tiempo real solo lo da el QR físico de cada parada (lo escanea con la cámara) y que ahí mismo verá los minutos.
 - Si TRANSIT_RESULT.options está vacío: dilo en una frase y pide destino o código de parada.
 - NUNCA inventes números de línea ni códigos.`;
@@ -1359,7 +1359,8 @@ type LatLng = { lat: number; lng: number };
 type TransitStop = {
   id: number;
   name: string;
-  ref: string | null; // 4-digit Vectalia stop code, when tagged in OSM
+  ref: string | null; // OSM stop ref; not trusted as Vectalia QR code
+  qrCode?: string | null; // fixed Vectalia QR stop code resolved from public GTFS mirrors when possible
   lat: number;
   lng: number;
   distMeters: number;
@@ -1464,6 +1465,84 @@ function haversineMeters(a: LatLng, b: LatLng): number {
   const h =
     Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
   return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+type BusMapsStop = {
+  countryUrl?: string;
+  stopHash1?: string;
+  stopName?: string;
+  urlStopName?: string;
+  stopTypeGroup?: string;
+  city500Name?: string;
+  stopLat?: number;
+  stopLon?: number;
+  routeNames?: string;
+};
+
+const vectaliaQrCache = new Map<string, string | null>();
+
+function normalizeLineToken(value: string): string {
+  const raw = value.toUpperCase().replace(/\s+/g, "").replace(/^LINEA/, "").replace(/^L(?=\d)/, "");
+  const m = raw.match(/^(\d+)([A-Z]*)$/);
+  if (!m) return raw;
+  return `${Number(m[1])}${m[2]}`;
+}
+
+function routeNamesMatchLine(routeNames: string | undefined, line: string): boolean {
+  const target = normalizeLineToken(line);
+  return (routeNames ?? "")
+    .split(/[\s,;/]+/)
+    .map(normalizeLineToken)
+    .some((token) => token === target);
+}
+
+async function fetchBusMapsStopCode(stop: TransitStop, line: string): Promise<string | null> {
+  const cacheKey = `${stop.name}|${stop.lat.toFixed(5)},${stop.lng.toFixed(5)}|${normalizeLineToken(line)}`;
+  if (vectaliaQrCache.has(cacheKey)) return vectaliaQrCache.get(cacheKey)!;
+
+  try {
+    const url = new URL("https://api.busmaps.com/api/v3/autosuggest");
+    url.searchParams.set("q", stop.name);
+    url.searchParams.set("results", "stops");
+    url.searchParams.set("location", `${stop.lat},${stop.lng}`);
+    const res = await fetch(url.toString(), {
+      headers: {
+        Accept: "application/json",
+        Origin: "https://busmaps.com",
+        Referer: "https://busmaps.com/",
+        "User-Agent": "AlicanteFriend/1.0",
+      },
+    });
+    if (!res.ok) throw new Error(`BusMaps autosuggest ${res.status}`);
+    const json = (await res.json()) as { stops?: BusMapsStop[] };
+    const candidates = (json.stops ?? [])
+      .filter((s) => s.stopHash1 && s.urlStopName && s.stopTypeGroup === "bus" && s.city500Name === "Alicante")
+      .map((s) => ({
+        stop: s,
+        meters: haversineMeters(stop, { lat: Number(s.stopLat), lng: Number(s.stopLon) }),
+        lineMatch: routeNamesMatchLine(s.routeNames, line),
+      }))
+      .filter((s) => Number.isFinite(s.meters) && s.meters <= 140)
+      .sort((a, b) => (a.lineMatch === b.lineMatch ? a.meters - b.meters : a.lineMatch ? -1 : 1));
+
+    for (const candidate of candidates.slice(0, 3)) {
+      const country = candidate.stop.countryUrl ?? "spain";
+      const pageUrl = `https://busmaps.com/en/${country}/public_transit-stop-${encodeURIComponent(candidate.stop.urlStopName!)}-${candidate.stop.stopHash1}`;
+      const page = await fetch(pageUrl, { headers: { "User-Agent": "AlicanteFriend/1.0" } });
+      if (!page.ok) continue;
+      const html = await page.text();
+      const code = html.match(/"identifier"\s*:\s*"(\d{1,5})"/)?.[1] ?? null;
+      if (code) {
+        vectaliaQrCache.set(cacheKey, code);
+        return code;
+      }
+    }
+  } catch (e) {
+    console.error("Vectalia QR resolve error:", e);
+  }
+
+  vectaliaQrCache.set(cacheKey, null);
+  return null;
 }
 
 async function fetchBusOptions(
@@ -1604,7 +1683,13 @@ async function fetchBusOptions(
   for (const o of options) {
     if (!byLine.has(o.line)) byLine.set(o.line, o);
   }
-  return [...byLine.values()].slice(0, 4);
+  const best = [...byLine.values()].slice(0, 4);
+  await Promise.all(
+    best.map(async (o) => {
+      o.board.qrCode = await fetchBusMapsStopCode(o.board, o.line);
+    }),
+  );
+  return best;
 }
 
 async function buildTransitResult(
@@ -1635,13 +1720,11 @@ function formatTransitResult(r: TransitResult): string {
   }
   const lines = r.options
     .map((o, i) => {
-      // NOTA: los `ref` de OSM NO coinciden con los códigos de parada de Vectalia.
-      // El QR físico usa otro identificador interno. No emitimos enlace QR aquí.
-      return `  ${i + 1}. línea=${o.line} (${o.lineName})${o.network ? ` red=${o.network}` : ""} | sube_en="${o.board.name}" (${o.board.distMeters}m a pie) | bájate_en="${o.alight.name}" (${o.alight.distMeters}m a pie) | paradas≈${o.stopsBetween}`;
+      const qr = o.board.qrCode ? ` | qr_subida=${o.board.qrCode} | realtime=https://qr.vectalia.es/Alicante/consulta.aspx?p=${o.board.qrCode}` : " | qr_subida=no_resuelto";
+      return `  ${i + 1}. línea=${o.line} (${o.lineName})${o.network ? ` red=${o.network}` : ""} | sube_en="${o.board.name}" (${o.board.distMeters}m a pie)${qr} | bájate_en="${o.alight.name}" (${o.alight.distMeters}m a pie) | paradas≈${o.stopsBetween}`;
     })
     .join("\n");
-  return head + "\n" + lines + "\n  nota=Los códigos QR (3-5 dígitos) NO se conocen desde OSM; los códigos de parada de Vectalia solo son fiables si el usuario los lee del cartel/QR físico.";
-  return head + "\n" + lines;
+  return head + "\n" + lines + "\n  nota=qr_subida viene de un identificador público de parada si se pudo resolver; si qr_subida=no_resuelto, no inventes enlace ni pidas código salvo que el usuario quiera tiempo real exacto.";
 }
 
 serve(async (req) => {
@@ -1753,8 +1836,8 @@ ESTILO OBLIGATORIO en este modo:
 - Máximo 3-5 líneas salvo que el usuario pida detalle.
 - Solo transporte público. NO recomiendes restaurantes, bares, playas ni otros sitios.
 - Si falta origen o destino: 1 pregunta corta y nada más.
-- Con TRANSIT_RESULT presente: línea + parada subida (con código si existe) + parada bajada. Una línea por opción. Incluye el enlace 🕒 [tiempo real QR](https://qr.vectalia.es/Alicante/consulta.aspx?p=XXXX) cuando haya código.
-- IMPORTANTE sobre tiempo real: NO tienes acceso programático al tiempo de espera; solo puedes dar el enlace QR por parada. Si el usuario se queja de tener que escanear, reconócelo brevemente y dale el enlace QR de la parada de subida (es el mismo destino que el QR físico, así se ahorra escanear).
+- Con TRANSIT_RESULT presente: línea + parada subida + parada bajada. Una línea por opción. Si aparece qr_subida=XXXX, incluye 🕒 [tiempo real QR](https://qr.vectalia.es/Alicante/consulta.aspx?p=XXXX) y NO pidas el código.
+- IMPORTANTE sobre tiempo real: no inventes minutos. Si hay qr_subida, da el enlace fijo de esa parada; si no se pudo resolver, dilo breve y solo entonces pide escanear/leer el QR físico.
 - Si no hay resultado: dilo en una frase y pide código de parada o destino más concreto.
 - NUNCA inventes líneas ni códigos.`
       : "";
