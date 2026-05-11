@@ -449,6 +449,7 @@ function formatFoodPlace(place: FoodPlace, index = 0, usedVibes?: Set<string>) {
 
 function buildMentionedPlacesResponse(mentionedPlaces: MentionedPlace[], openFoodPlaces: FoodPlace[]) {
   const lines: string[] = [];
+  const usedVibes = new Set<string>();
   for (const place of mentionedPlaces) {
     if (place.status === "open") {
       lines.push(
