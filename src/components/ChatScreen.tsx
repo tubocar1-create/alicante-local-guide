@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Mic, MapPin, Map as MapIcon, Home, User as UserIcon } from "lucide-react";
+import { Send, Mic, MapPin, Home, User as UserIcon } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
