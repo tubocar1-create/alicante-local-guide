@@ -261,42 +261,34 @@ export function ChatScreen() {
       )}
 
       {/* Compact header (always visible) */}
-      <header className="relative flex items-center gap-3 border-b border-border/60 bg-background/40 px-4 py-3 backdrop-blur">
-        <div className="flex-1 min-w-0">
-          <p className="text-xs text-muted-foreground">
-            <span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-emerald-500 align-middle" />
-            tu amigo local
-          </p>
-        </div>
-        <nav className="flex items-center gap-1.5">
-          <PointsHud compact />
-          <ProfileButton />
-          <button
-            onClick={() => {
-              setMessages([GREETING]);
-              setActiveSubmenu(null);
-              setError(null);
-              setInput("");
-            }}
-            className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full bg-secondary text-secondary-foreground active:scale-95"
-            aria-label="Inicio"
-          >
-            <Home className="h-3 w-3" />
-            Inicio
-          </button>
-          <Link
-            to="/explore"
-            className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full bg-secondary text-secondary-foreground active:scale-95"
-          >
-            🗺️ Explorar
-          </Link>
-          <Link
-            to="/stay"
-            className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full bg-secondary text-secondary-foreground active:scale-95"
-          >
-            🏨 Dormir
-          </Link>
-        </nav>
+      <header className="relative flex items-center justify-end gap-1.5 border-b border-border/60 bg-background/40 px-4 py-3 backdrop-blur">
+        <PointsHud compact />
+        <ProfileButton />
+        <button
+          onClick={() => {
+            setMessages([GREETING]);
+            setActiveSubmenu(null);
+            setError(null);
+            setInput("");
+          }}
+          className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full bg-secondary text-secondary-foreground active:scale-95"
+          aria-label="Inicio"
+        >
+          <Home className="h-3 w-3" />
+          Inicio
+        </button>
+        <Link
+          to="/explore"
+          className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full bg-secondary text-secondary-foreground active:scale-95"
+        >
+          🗺️ Explorar
+        </Link>
+        <Link
+          to="/stay"
+          className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full bg-secondary text-secondary-foreground active:scale-95"
+        >
+          🏨 Dormir
+        </Link>
       </header>
 
       {/* Messages */}
@@ -325,17 +317,18 @@ export function ChatScreen() {
                 </button>
                 <div className="absolute inset-x-0 bottom-0 p-4 text-white">
                   <p className="text-xs uppercase tracking-widest opacity-90">Puerto de Alicante</p>
-                  <h2 className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-2xl font-extrabold leading-tight drop-shadow">
-                    <img
-                      src={vamosLogoImg}
-                      alt="VAMOS"
-                      width={1536}
-                      height={1024}
-                      className="h-9 w-auto drop-shadow-[0_2px_6px_rgba(0,0,0,0.55)] brightness-0 invert sm:h-11"
-                    />
-                    <span>a Alicante</span>
+                  <h2 className="mt-1 leading-none drop-shadow">
+                    <span
+                      className="italic font-black text-[44px] sm:text-[54px] tracking-tight text-[oklch(0.92_0.16_85)] drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)]"
+                      style={{ fontFamily: "var(--font-display)" }}
+                    >
+                      VAMOS
+                    </span>
+                    <span className="ml-2 align-middle text-2xl font-extrabold text-white">
+                      a Alicante
+                    </span>
                   </h2>
-                  <p className="mt-1 text-sm opacity-95 drop-shadow">
+                  <p className="mt-2 text-sm opacity-95 drop-shadow">
                     Soy tu amigo local. Cuéntame qué te apetece hoy y te llevo a los rincones que adoramos los de aquí.
                   </p>
                 </div>
