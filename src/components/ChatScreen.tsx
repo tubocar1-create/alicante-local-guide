@@ -697,11 +697,14 @@ type PlaceCardData = {
 
 type AssistantPart = { type: "text"; value: string } | { type: "card"; data: PlaceCardData };
 
+const CARD_FALLBACK_THEMES = ["sun", "sea", "citrus", "rose", "mint", "grape"];
+
 function parseRecommendationListCards(text: string): AssistantPart[] | null {
-  const itemRe = /^\s*\d+\.\s+\*\*([^*]+)\*\*\s*(?:[—–-]\s*)?([\s\S]*?(?:\[⭐[^\]]*\]\([^)]+\)(?:\s*·\s*\[🎟️[^\]]*\]\(qi:[^)]+\))?|\[🎟️[^\]]*\]\(qi:[^)]+\)))/gm;
+  const itemRe = /^\s*\d+\.\s+\*\*([^*]+)\*\*\s*(?:[—–-]\s*)?([\s\S]*?)(?=^\s*\d+\.\s+\*\*|\s*$)/gm;
   const parts: AssistantPart[] = [];
   let lastIndex = 0;
   let found = false;
+  let cardIndex = 0;
   let m: RegExpExecArray | null;
 
   while ((m = itemRe.exec(text)) !== null) {
@@ -709,7 +712,8 @@ function parseRecommendationListCards(text: string): AssistantPart[] | null {
     if (m.index > lastIndex) parts.push({ type: "text", value: text.slice(lastIndex, m.index) });
 
     const name = m[1].trim();
-    const body = m[2]
+    const bodyBlock = m[2].split(/\n{2,}/)[0] ?? m[2];
+    const body = bodyBlock
       .replace(/\s*·\s*\[🎟️[^\]]*\]\(qi:[^)]+\)/g, "")
       .replace(/\[🎟️[^\]]*\]\(qi:[^)]+\)/g, "")
       .replace(/\[⭐[^\]]*\]\([^)]+\)/g, "")
@@ -721,7 +725,16 @@ function parseRecommendationListCards(text: string): AssistantPart[] | null {
       .replace(/\s+/g, " ")
       .trim();
 
-    parts.push({ type: "card", data: { name, closesAt, vibe: vibe || undefined } });
+    parts.push({
+      type: "card",
+      data: {
+        name,
+        closesAt,
+        vibe: vibe || undefined,
+        theme: CARD_FALLBACK_THEMES[cardIndex % CARD_FALLBACK_THEMES.length],
+      },
+    });
+    cardIndex += 1;
     lastIndex = itemRe.lastIndex;
   }
 
