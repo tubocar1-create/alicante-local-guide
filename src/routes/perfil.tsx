@@ -248,7 +248,7 @@ function PerfilPage() {
         <div className="mt-3">
           {!isAuthenticated ? (
             <div className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-              <p>Inicia sesión para ver tus QR generados.</p>
+              <p>Pon tu nombre para ver tus QR generados.</p>
               <Link
                 to="/login"
                 search={{ redirect: "/perfil" }}
