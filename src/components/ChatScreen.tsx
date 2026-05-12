@@ -135,6 +135,18 @@ export function ChatScreen() {
     }
     return () => window.removeEventListener("afp:wantgo", handler);
   }, []);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { text?: string } | undefined;
+      if (detail?.text) {
+        void send(detail.text, { mode: "transit" });
+      }
+    };
+    window.addEventListener("bus:choose", handler);
+    return () => window.removeEventListener("bus:choose", handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, loading]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { state: locState, request: requestLocation } = useUserLocation();
