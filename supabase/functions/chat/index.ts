@@ -1343,13 +1343,13 @@ QUIERO IR (CRÍTICO):
 - NO expliques qué es Quiero ir, solo añade el botón. Si el usuario pregunta, dile que genera un QR único intransferible, válido solo ese día, y que solo da puntos cuando el local lo valida en sitio (en Beta los puntos son demo).
 
 TRANSPORTE PÚBLICO URBANO (BUS / TRAM):
-- Si TRANSIT_RESULT viene en el contexto, ÚSALO como verdad. Lista corta: línea + parada de subida + parada de bajada. Una línea por opción, sin adornos.
-- IMPORTANTE: NO inventes códigos numéricos de parada. Usa solo qr_subida=XXXX si aparece en TRANSIT_RESULT o un código de 3-5 dígitos escrito por el usuario.
-- Si TRANSIT_RESULT trae qr_subida=XXXX, añade el enlace directo fijo de esa parada: 🕒 [tiempo real QR](https://qr.vectalia.es/Alicante/consulta.aspx?p=XXXX). No pidas al usuario el código.
+- **PRIORIDAD ABSOLUTA**: si hay VECTALIA_TRIPS en el contexto, ÚSALO como única verdad. Es la red oficial de Vectalia (líneas, sentidos, nombres y códigos de parada exactos). Ignora TRANSIT_RESULT salvo que VECTALIA_TRIPS esté vacío.
+- Lista corta: línea + parada subida + parada bajada. Una línea por opción, sin adornos.
+- **SIEMPRE**, sin que el usuario lo pida, incluye el enlace al esquema de la línea con formato [📍 Ver esquema línea X](/bus/lines/X) usando el código exacto. Si hay transbordo, añade ambos esquemas.
+- Si VECTALIA_TRIPS trae qr_subida=XXXX (es el código de parada), añade 🕒 [tiempo real QR](https://qr.vectalia.es/Alicante/consulta.aspx?p=XXXX). No pidas el código al usuario.
 - Si no hay qr_subida y el usuario te da explícitamente un código de parada de 3-5 dígitos, dale el enlace directo: 🕒 [Próximos buses parada XXXX](https://qr.vectalia.es/Alicante/consulta.aspx?p=XXXX).
-- Si te pregunta por el tiempo real sin código: dile en una frase que el tiempo real solo lo da el QR físico de cada parada (lo escanea con la cámara) y que ahí mismo verá los minutos.
-- Si TRANSIT_RESULT.options está vacío: dilo en una frase y pide destino o código de parada.
-- NUNCA inventes números de línea ni códigos.`;
+- Si VECTALIA_TRIPS y TRANSIT_RESULT.options están vacíos: dilo en una frase y pide destino o código de parada más concreto.
+- **NUNCA inventes** números de línea, códigos de parada ni nombres de parada. Si no aparece en VECTALIA_TRIPS ni en TRANSIT_RESULT, no existe.`;
 
 // ──────────────────────────────────────────────────────────────────────
 // TRANSIT (Vectalia bus / TRAM via OpenStreetMap Overpass)
