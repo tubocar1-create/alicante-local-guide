@@ -31,6 +31,13 @@ export function LiveEta({
   const [eta, setEta] = useState<number | null>(initialMin);
   const [loading, setLoading] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<number>(Date.now());
+  const [now, setNow] = useState<number>(Date.now());
+
+  // Tick local cada 15s para que los minutos restantes bajen sin esperar al fetch
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 15000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
