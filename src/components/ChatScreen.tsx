@@ -301,9 +301,11 @@ export function ChatScreen() {
       )}
 
       {/* Compact header (always visible) */}
-      <header className="relative flex items-center justify-end gap-1.5 border-b border-border/60 bg-background/40 px-4 py-3 backdrop-blur">
-        <PointsHud compact />
+      <header className="relative flex items-center justify-between gap-1.5 border-b border-border/60 bg-background/40 px-4 py-3 backdrop-blur">
         <ProfileButton />
+        <div className="flex-1 flex justify-center">
+          <PointsHud compact />
+        </div>
         <button
           onClick={() => {
             setMessages([GREETING]);
@@ -317,18 +319,6 @@ export function ChatScreen() {
           <Home className="h-3 w-3" />
           Inicio
         </button>
-        <Link
-          to="/explore"
-          className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full bg-secondary text-secondary-foreground active:scale-95"
-        >
-          🗺️ Explorar
-        </Link>
-        <Link
-          to="/stay"
-          className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full bg-secondary text-secondary-foreground active:scale-95"
-        >
-          🏨 Dormir
-        </Link>
       </header>
 
       {/* Messages */}
