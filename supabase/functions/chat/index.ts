@@ -1890,6 +1890,67 @@ function findVTrips(lineStops: DbLineStop[], oCode: string, dCode: string): VTri
   return uniq.slice(0, 6);
 }
 
+// Velocidad media bus urbano Alicante ≈ 16 km/h, +0.25 min de parada por stop
+const URBAN_KMH = 16;
+const DWELL_MIN_PER_STOP = 0.25;
+
+const VECTALIA_RT_URL = "https://qr.vectalia.es/Alicante/lib/request.aspx";
+const ARRIVAL_RE =
+  /Linea\s+(\d+)\s+([^:]+?)\s*:\s*(\d+)\s*min/gi;
+
+async function fetchVectaliaEta(stopCode: string, lineCode: string): Promise<number | null> {
+  try {
+    const padded = lineCode.padStart(3, "0");
+    const r = await fetch(
+      `${VECTALIA_RT_URL}?p=${encodeURIComponent(stopCode)}&l=${encodeURIComponent(padded)}`,
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0",
+          Referer: "https://qr.vectalia.es/Alicante/mapa.aspx",
+          "X-Requested-With": "XMLHttpRequest",
+        },
+      },
+    );
+    if (!r.ok) return null;
+    const txt = await r.text();
+    const matches = [...txt.matchAll(ARRIVAL_RE)];
+    let best: number | null = null;
+    for (const m of matches) {
+      const ln = String(parseInt(m[1], 10));
+      if (ln !== lineCode) continue;
+      const min = parseInt(m[3], 10);
+      if (Number.isFinite(min) && (best == null || min < best)) best = min;
+    }
+    return best;
+  } catch {
+    return null;
+  }
+}
+
+function legKmAndStops(
+  graph: { stops: DbStop[]; lineStops: DbLineStop[] },
+  leg: VLeg,
+): number {
+  const coords = new Map<string, LatLng>();
+  for (const s of graph.stops) {
+    if (s.lat != null && s.lng != null) coords.set(s.code, { lat: s.lat, lng: s.lng });
+  }
+  const list = graph.lineStops
+    .filter((s) => s.line_code === leg.lineCode && s.direction === leg.direction)
+    .sort((a, b) => a.seq - b.seq);
+  const slice = list.slice(leg.fromIdx, leg.toIdx + 1);
+  let km = 0;
+  let prev: LatLng | null = null;
+  for (const s of slice) {
+    if (!s.stop_code) continue;
+    const c = coords.get(s.stop_code);
+    if (!c) continue;
+    if (prev) km += haversineMeters(prev, c) / 1000;
+    prev = c;
+  }
+  return km;
+}
+
 async function buildVectaliaTransit(
   originText: string | null,
   destText: string | null,
@@ -1923,7 +1984,31 @@ async function buildVectaliaTransit(
     const ta = a.trips[0], tb = b.trips[0];
     return ta.transfers - tb.transfers || ta.totalStops - tb.totalStops;
   });
-  return all.slice(0, 3);
+  const top = all.slice(0, 3);
+
+  // Enriquece con km, estMin y ETA en tiempo real (paralelo)
+  const etaJobs: Promise<void>[] = [];
+  const etaCache = new Map<string, Promise<number | null>>();
+  for (const r of top) {
+    for (const t of r.trips.slice(0, 3)) {
+      for (const leg of t.legs) {
+        leg.km = Math.round(legKmAndStops(g, leg) * 10) / 10;
+        leg.estMin = Math.max(
+          1,
+          Math.round((leg.km / URBAN_KMH) * 60 + leg.numStops * DWELL_MIN_PER_STOP),
+        );
+        const key = `${leg.fromCode}|${leg.lineCode}`;
+        if (!etaCache.has(key)) etaCache.set(key, fetchVectaliaEta(leg.fromCode, leg.lineCode));
+        etaJobs.push(
+          etaCache.get(key)!.then((eta) => {
+            leg.etaMin = eta ?? undefined;
+          }),
+        );
+      }
+    }
+  }
+  await Promise.allSettled(etaJobs);
+  return top;
 }
 
 function formatVectaliaTransit(
@@ -1937,10 +2022,12 @@ function formatVectaliaTransit(
   for (const r of res) {
     for (const t of r.trips.slice(0, 3)) {
       const legs = t.legs
-        .map(
-          (l) =>
-            `Línea ${l.lineCode} (sentido ${l.direction}): sube en "${l.fromName}" [parada ${l.fromCode}] → bájate en "${l.toName}" [parada ${l.toCode}] · ${l.numStops} paradas · esquema=/bus/lines/${l.lineCode} · qr_subida=${l.fromCode}`,
-        )
+        .map((l) => {
+          const eta = l.etaMin != null ? `próximo_bus=${l.etaMin}min` : `próximo_bus=sin_dato`;
+          const km = l.km != null ? `${l.km}km` : "";
+          const est = l.estMin != null ? `tiempo_viaje≈${l.estMin}min` : "";
+          return `Línea ${l.lineCode} (sentido ${l.direction}): sube en "${l.fromName}" [parada ${l.fromCode}] → bájate en "${l.toName}" [parada ${l.toCode}] · ${l.numStops} paradas · ${km} · ${est} · ${eta} · esquema=/bus/lines/${l.lineCode} · qr_subida=${l.fromCode}`;
+        })
         .join("  ⇄ TRANSBORDO ⇄  ");
       out.push(`  ${n++}. ${legs}  | total=${t.totalStops} paradas, transbordos=${t.transfers}`);
       if (n > 8) break;
