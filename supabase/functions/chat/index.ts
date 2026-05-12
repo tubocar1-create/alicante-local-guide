@@ -2432,10 +2432,11 @@ async function buildVectaliaTransit(
     return true;
   });
 
-  const chosen = [
-    ...directTrips.slice(0, 3),
-    ...uniqTransfers.slice(0, 2),
-  ];
+  // Si hay directa, prioriza la mejor directa + hasta 2 alternativas con transbordo.
+  // Si no hay directa, ofrece hasta 2 opciones con transbordo.
+  const chosen = directTrips.length
+    ? [directTrips[0], ...uniqTransfers.slice(0, 2)]
+    : uniqTransfers.slice(0, 2);
   if (!chosen.length) return null;
 
   // Reagrupa por origen+destino para mantener el formato de retorno
