@@ -1843,21 +1843,23 @@ ESTILO OBLIGATORIO en este modo:
       : "";
     const runtimeContext = `RUNTIME CONTEXT (use this when relevant):\nTODAY: ${todayStr} (zona horaria Europe/Madrid)\nMAX_NEARBY_OPTIONS: ${context?.maxOptions ?? 4}\n${locationLine}${transitModeLine}${verifiedOpenLine}${mentionedLine}${transitLine}`;
 
+    const gatewayBody = {
+      model: "google/gemini-3-flash-preview",
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: runtimeContext },
+        ...messages,
+      ],
+      stream: true,
+    };
+    console.log("gateway body sample:", JSON.stringify(gatewayBody).slice(0, 800), "len=", JSON.stringify(gatewayBody).length);
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "system", content: runtimeContext },
-          ...messages,
-        ],
-        stream: true,
-      }),
+      body: JSON.stringify(gatewayBody),
     });
 
     if (!response.ok) {
