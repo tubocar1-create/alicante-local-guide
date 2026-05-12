@@ -3,6 +3,8 @@ import { createFileRoute } from "@tanstack/react-router";
 const VECTALIA_RT_URL = "https://qr.vectalia.es/Alicante/lib/request.aspx";
 const ARRIVAL_RE = /Linea\s+(\d+)\s+([^:]+?)\s*:\s*(\d+)\s*min/gi;
 
+let lastDebug: { status?: number; len?: number; sample?: string; error?: string } = {};
+
 async function fetchEtas(stopCode: string, lineCode: string): Promise<number[]> {
   try {
     const padded = lineCode.padStart(3, "0");
@@ -10,14 +12,17 @@ async function fetchEtas(stopCode: string, lineCode: string): Promise<number[]> 
       `${VECTALIA_RT_URL}?p=${encodeURIComponent(stopCode)}&l=${encodeURIComponent(padded)}`,
       {
         headers: {
-          "User-Agent": "Mozilla/5.0",
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
           Referer: "https://qr.vectalia.es/Alicante/mapa.aspx",
           "X-Requested-With": "XMLHttpRequest",
+          Accept: "*/*",
         },
       },
     );
-    if (!r.ok) return [];
     const txt = await r.text();
+    lastDebug = { status: r.status, len: txt.length, sample: txt.slice(0, 200) };
+    if (!r.ok) return [];
     const matches = [...txt.matchAll(ARRIVAL_RE)];
     const mins: number[] = [];
     for (const m of matches) {
