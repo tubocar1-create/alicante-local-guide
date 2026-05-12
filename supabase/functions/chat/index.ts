@@ -1854,6 +1854,7 @@ type DbLineStop = {
   stop_code: string | null;
   stop_name: string;
 };
+type StopCandidate = { stops: DbStop[]; source: "verified" | "stop-name" | "geocode" | "gps"; label?: string };
 
 let vectaliaCache: { stops: DbStop[]; lineStops: DbLineStop[]; loadedAt: number } | null = null;
 
@@ -2153,6 +2154,32 @@ function nearestStops(g: { stops: DbStop[] }, coords: LatLng, max = 3, maxMeters
     .sort((a, b) => a.d - b.d)
     .slice(0, max)
     .map((x) => x.s);
+}
+
+async function resolveStopCandidates(
+  query: string | null,
+  graph: { stops: DbStop[] },
+  opts: { coords?: LatLng | null; allowGps?: boolean; maxMeters?: number },
+): Promise<StopCandidate> {
+  if (query) {
+    const verified = verifiedReferenceStops(query, graph.stops);
+    if (verified.length) return { stops: verified, source: "verified", label: query };
+
+    const named = matchStops(query, graph.stops, opts.coords ?? null);
+    if (named.length) return { stops: named, source: "stop-name", label: query };
+
+    const geo = await geocodeAlicante(query).catch(() => null);
+    if (geo) {
+      const stops = nearestStops(graph, geo, 4, opts.maxMeters ?? 450);
+      if (stops.length) return { stops, source: "geocode", label: geo.label };
+    }
+  }
+
+  if (opts.allowGps && opts.coords) {
+    return { stops: nearestStops(graph, opts.coords, 4, 600), source: "gps", label: "ubicación actual" };
+  }
+
+  return { stops: [], source: "geocode", label: query ?? undefined };
 }
 
 async function buildVectaliaTransit(
