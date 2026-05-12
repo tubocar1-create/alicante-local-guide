@@ -2120,8 +2120,53 @@ function findVTrips(lineStops: DbLineStop[], oCode: string, dCode: string): VTri
       direct.add(o.key);
     }
   }
-  // Transbordos desactivados: solo aceptamos coincidencias directas dentro del
-  // mismo line_code + direction para no mezclar paradas de líneas distintas.
+  // Transbordos: solo si NO hay directo en esta línea, buscamos un transbordo.
+  // Para no liar la salida, limitamos exploración a ~30 paradas por línea A.
+  for (const o of oAt) {
+    if (direct.has(o.key)) continue;
+    const listA = byLine.get(o.key)!;
+    const maxA = Math.min(listA.length, o.idx + 31);
+    for (let i = o.idx + 1; i < maxA; i++) {
+      const transferStop = listA[i];
+      if (!transferStop.stop_code) continue;
+      const transferAt = byStop.get(transferStop.stop_code);
+      if (!transferAt) continue;
+      for (const t of transferAt) {
+        if (t.key === o.key) continue;
+        const di = dIdx.get(t.key);
+        if (di != null && di > t.idx) {
+          const listA2 = listA;
+          const listB = byLine.get(t.key)!;
+          const aFrom = listA2[o.idx], aTo = listA2[i];
+          const bFrom = listB[t.idx], bTo = listB[di];
+          const interA = listA2.slice(o.idx + 1, i).map((s) => s.stop_name);
+          const interB = listB.slice(t.idx + 1, di).map((s) => s.stop_name);
+          trips.push({
+            legs: [
+              {
+                lineCode: aFrom.line_code, direction: aFrom.direction,
+                fromCode: aFrom.stop_code!, fromName: aFrom.stop_name,
+                toCode: aTo.stop_code!, toName: aTo.stop_name,
+                numStops: i - o.idx,
+                lineKey: o.key, fromIdx: o.idx, toIdx: i,
+                intermediate: interA,
+              },
+              {
+                lineCode: bFrom.line_code, direction: bFrom.direction,
+                fromCode: bFrom.stop_code!, fromName: bFrom.stop_name,
+                toCode: bTo.stop_code!, toName: bTo.stop_name,
+                numStops: di - t.idx,
+                lineKey: t.key, fromIdx: t.idx, toIdx: di,
+                intermediate: interB,
+              },
+            ],
+            totalStops: (i - o.idx) + (di - t.idx),
+            transfers: 1,
+          });
+        }
+      }
+    }
+  }
   const seen = new Set<string>();
   const uniq = trips.filter((t) => {
     const sig = t.legs.map((l) => `${l.lineCode}|${l.direction}|${l.fromCode}|${l.toCode}`).join(">");
@@ -2130,7 +2175,7 @@ function findVTrips(lineStops: DbLineStop[], oCode: string, dCode: string): VTri
     return true;
   });
   uniq.sort((a, b) => a.transfers - b.transfers || a.totalStops - b.totalStops);
-  return uniq.slice(0, 6);
+  return uniq.slice(0, 8);
 }
 
 // Velocidad media bus urbano Alicante ≈ 16 km/h, +0.25 min de parada por stop
