@@ -420,7 +420,7 @@ export function ChatScreen() {
             />
           )}
 
-          {isWelcome && !activeSubmenu && !showBusPicker && (
+          {isWelcome && !activeSubmenu && (
             <div className="mt-2 rounded-3xl bg-card/95 p-2 shadow-soft ring-1 ring-border/60 backdrop-blur sm:p-4">
               <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-9 sm:gap-3">
                 {[
