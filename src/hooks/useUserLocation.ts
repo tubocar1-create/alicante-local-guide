@@ -46,7 +46,7 @@ function stopWatch() {
 
 /** Fully release geolocation: stop watching and clear any cached coords so
  *  the next time the user opens the app we ask again. */
-function releaseLocation() {
+export function releaseLocation() {
   stopWatch();
   cached = null;
   // Reset every active subscriber back to idle so the UI re-prompts
