@@ -2396,7 +2396,11 @@ async function buildVectaliaTransit(
     }
   }
   directTrips.sort((a, b) => a.trip.totalStops - b.trip.totalStops);
-  transferTrips.sort((a, b) => a.trip.totalStops - b.trip.totalStops);
+  transferTrips.sort((a, b) => {
+    const wa = a.trip.legs[1]?.transferWalkM ?? 0;
+    const wb = b.trip.legs[1]?.transferWalkM ?? 0;
+    return a.trip.totalStops - b.trip.totalStops || wa - wb;
+  });
 
   // Dedup transbordos por firma de líneas+paradas
   const seenT = new Set<string>();
