@@ -732,6 +732,7 @@ type BusLegData = {
   toName: string;
   toCode: string;
   nextMin?: number | null;
+  walkM?: number | null;
 };
 type BusOptionData = {
   legs: BusLegData[];
