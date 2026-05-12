@@ -115,6 +115,55 @@ function BusPage() {
       .slice(0, 5);
   }, [mapStops, userCoords]);
 
+  const stopCoordIndex = useMemo(() => {
+    const m = new Map<string, [number, number]>();
+    for (const s of mapStops) m.set(s.code, [s.lat, s.lng]);
+    return m;
+  }, [mapStops]);
+
+  const lineColor = useMemo(() => {
+    const m = new Map<string, string>();
+    lines.forEach((l, i) => m.set(l.code, l.color || PALETTE[i % PALETTE.length]));
+    return m;
+  }, [lines]);
+
+  const routes: LineRoute[] = useMemo(() => {
+    if (!lineStops.length) return [];
+    const groups = new Map<string, LineStopRow[]>();
+    for (const r of lineStops) {
+      const k = `${r.line_code}|${r.direction}`;
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k)!.push(r);
+    }
+    const out: LineRoute[] = [];
+    for (const [k, rows] of groups) {
+      const [lineCode, dirStr] = k.split("|");
+      if (selectedLines.size && !selectedLines.has(lineCode)) continue;
+      const points: [number, number][] = [];
+      for (const r of rows.sort((a, b) => a.seq - b.seq)) {
+        const c = r.stop_code ? stopCoordIndex.get(r.stop_code) : undefined;
+        if (c) points.push(c);
+      }
+      if (points.length >= 2) {
+        out.push({
+          lineCode,
+          direction: Number(dirStr),
+          color: lineColor.get(lineCode) || "#666",
+          points,
+        });
+      }
+    }
+    return out;
+  }, [lineStops, stopCoordIndex, lineColor, selectedLines]);
+
+  const toggleLine = (code: string) =>
+    setSelectedLines((prev) => {
+      const next = new Set(prev);
+      if (next.has(code)) next.delete(code);
+      else next.add(code);
+      return next;
+    });
+
   const ungeocoded = stops.length - mapStops.length;
 
   const handleGeocode = async () => {
