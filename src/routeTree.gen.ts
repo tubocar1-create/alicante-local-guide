@@ -18,6 +18,7 @@ import { Route as EatRouteImport } from './routes/eat'
 import { Route as BusRouteImport } from './routes/bus'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BusPlannerRouteImport } from './routes/bus.planner'
+import { Route as BusLinesRouteImport } from './routes/bus.lines'
 
 const StayRoute = StayRouteImport.update({
   id: '/stay',
@@ -64,6 +65,11 @@ const BusPlannerRoute = BusPlannerRouteImport.update({
   path: '/planner',
   getParentRoute: () => BusRoute,
 } as any)
+const BusLinesRoute = BusLinesRouteImport.update({
+  id: '/lines',
+  path: '/lines',
+  getParentRoute: () => BusRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -74,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
   '/stay': typeof StayRoute
+  '/bus/lines': typeof BusLinesRoute
   '/bus/planner': typeof BusPlannerRoute
 }
 export interface FileRoutesByTo {
@@ -85,6 +92,7 @@ export interface FileRoutesByTo {
   '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
   '/stay': typeof StayRoute
+  '/bus/lines': typeof BusLinesRoute
   '/bus/planner': typeof BusPlannerRoute
 }
 export interface FileRoutesById {
@@ -97,6 +105,7 @@ export interface FileRoutesById {
   '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
   '/stay': typeof StayRoute
+  '/bus/lines': typeof BusLinesRoute
   '/bus/planner': typeof BusPlannerRoute
 }
 export interface FileRouteTypes {
@@ -110,6 +119,7 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/repo'
     | '/stay'
+    | '/bus/lines'
     | '/bus/planner'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -121,6 +131,7 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/repo'
     | '/stay'
+    | '/bus/lines'
     | '/bus/planner'
   id:
     | '__root__'
@@ -132,6 +143,7 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/repo'
     | '/stay'
+    | '/bus/lines'
     | '/bus/planner'
   fileRoutesById: FileRoutesById
 }
@@ -211,14 +223,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BusPlannerRouteImport
       parentRoute: typeof BusRoute
     }
+    '/bus/lines': {
+      id: '/bus/lines'
+      path: '/lines'
+      fullPath: '/bus/lines'
+      preLoaderRoute: typeof BusLinesRouteImport
+      parentRoute: typeof BusRoute
+    }
   }
 }
 
 interface BusRouteChildren {
+  BusLinesRoute: typeof BusLinesRoute
   BusPlannerRoute: typeof BusPlannerRoute
 }
 
 const BusRouteChildren: BusRouteChildren = {
+  BusLinesRoute: BusLinesRoute,
   BusPlannerRoute: BusPlannerRoute,
 }
 
@@ -237,3 +258,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
