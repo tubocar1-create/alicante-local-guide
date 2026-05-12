@@ -243,10 +243,47 @@ function BusPage() {
                 </div>
               }
             >
-              <BusMapLazy stops={mapStops} user={userCoords} />
+              <BusMapLazy stops={mapStops} user={userCoords} routes={routes} />
             </Suspense>
           ) : (
             <div className="h-[420px] rounded-xl border" />
+          )}
+
+          {lines.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              <button
+                type="button"
+                onClick={() => setSelectedLines(new Set())}
+                className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+                  selectedLines.size === 0
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "bg-background hover:bg-muted"
+                }`}
+              >
+                Todas
+              </button>
+              {lines.map((l) => {
+                const active = selectedLines.has(l.code);
+                const color = lineColor.get(l.code) || "#666";
+                return (
+                  <button
+                    key={l.code}
+                    type="button"
+                    onClick={() => toggleLine(l.code)}
+                    className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+                      active ? "text-white" : "bg-background hover:bg-muted"
+                    }`}
+                    style={active ? { backgroundColor: color, borderColor: color } : undefined}
+                  >
+                    <span
+                      className="inline-block h-2 w-2 rounded-full"
+                      style={{ backgroundColor: color }}
+                    />
+                    L{l.code}
+                  </button>
+                );
+              })}
+            </div>
           )}
           {mapStops.length === 0 && !loading && (
             <p className="text-xs text-muted-foreground">
