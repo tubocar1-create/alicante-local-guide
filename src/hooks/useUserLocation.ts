@@ -76,10 +76,13 @@ export function useUserLocation(opts?: { watch?: boolean }) {
       setState((prev) => (prev.status === "ready" ? prev : { status: "error", message }));
     listeners.add(onUpdate);
     errorListeners.add(onError);
+    bindLifecycle();
     if (watch) {
       watchRefs += 1;
       if (!cached) setState({ status: "loading" });
-      startWatch();
+      if (typeof document === "undefined" || document.visibilityState !== "hidden") {
+        startWatch();
+      }
     }
     return () => {
       listeners.delete(onUpdate);
