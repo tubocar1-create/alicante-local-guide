@@ -44,6 +44,21 @@ function stopWatch() {
   watchId = null;
 }
 
+/** Fully release geolocation: stop watching and clear any cached coords so
+ *  the next time the user opens the app we ask again. */
+function releaseLocation() {
+  stopWatch();
+  cached = null;
+  // Reset every active subscriber back to idle so the UI re-prompts
+  listeners.forEach((l) => {
+    try {
+      (l as unknown as { __reset?: () => void }).__reset?.();
+    } catch {
+      /* noop */
+    }
+  });
+}
+
 // Pause geolocation when the app is not in use (tab hidden, app backgrounded,
 // or page closed). Resume automatically when the user returns, but only if
 // some component is still actively watching.
