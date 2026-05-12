@@ -65,13 +65,16 @@ export const Route = createFileRoute("/api/public/bus-eta")({
             etaMin = etas[Math.min(index, etas.length - 1)];
           }
         }
-        return new Response(JSON.stringify({ etaMin, all: etas, fetchedAt: Date.now() }), {
-          status: 200,
-          headers: {
-            "Content-Type": "application/json",
-            "Cache-Control": "no-store",
+        return new Response(
+          JSON.stringify({ etaMin, all: etas, fetchedAt: Date.now(), debug: lastDebug }),
+          {
+            status: 200,
+            headers: {
+              "Content-Type": "application/json",
+              "Cache-Control": "no-store",
+            },
           },
-        });
+        );
       },
     },
   },
