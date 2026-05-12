@@ -66,15 +66,17 @@ function BusPage() {
 
   const runGeocode = useServerFn(geocodeBusStops);
 
-  const refresh = () =>
-    supabase
-      .from("bus_stops")
-      .select("code,name,lines,lat,lng")
-      .order("code")
-      .then(({ data }) => {
-        setStops((data ?? []) as Stop[]);
-        setLoading(false);
-      });
+  const refresh = async () => {
+    const [stopsRes, linesRes, lsRes] = await Promise.all([
+      supabase.from("bus_stops").select("code,name,lines,lat,lng").order("code"),
+      supabase.from("bus_lines").select("code,name,color").order("code"),
+      supabase.from("bus_line_stops").select("line_code,direction,seq,stop_code").order("line_code").order("direction").order("seq"),
+    ]);
+    setStops((stopsRes.data ?? []) as Stop[]);
+    setLines((linesRes.data ?? []) as LineRow[]);
+    setLineStops((lsRes.data ?? []) as LineStopRow[]);
+    setLoading(false);
+  };
 
   useEffect(() => {
     setMounted(true);
