@@ -2275,14 +2275,16 @@ async function buildVectaliaTransit(
       if (trips.length) all.push({ origin: o, dest: d, trips });
     }
   }
-  if (!all.length) return null;
+  // SOLO trayectos directos (sin transbordos). Si no hay directo, devolvemos
+  // null para que el modelo proponga la parada directa más cercana al destino.
   const directOnly = all
     .map((r) => ({ ...r, trips: r.trips.filter((t) => t.transfers === 0) }))
     .filter((r) => r.trips.length > 0);
-  const ranked = directOnly.length ? directOnly : all;
+  if (!directOnly.length) return null;
+  const ranked = directOnly;
   ranked.sort((a, b) => {
     const ta = a.trips[0], tb = b.trips[0];
-    return ta.transfers - tb.transfers || ta.totalStops - tb.totalStops;
+    return ta.totalStops - tb.totalStops;
   });
   const top = ranked.slice(0, 3);
 
@@ -2495,9 +2497,9 @@ ESTILO OBLIGATORIO en este modo:
     Donde JSON_URI_ENCODED es \`encodeURIComponent(JSON.stringify(obj))\` y \`obj\` tiene la forma:
     \`{ "legs": [ { "line": "12", "fromName": "Plaza Calvo Sotelo", "fromCode": "1234", "toName": "Plaza Juan Pablo II", "toCode": "4332", "nextMin": 5 } ], "travelMin": 14, "km": 3.2 }\`
     - "line": código de línea sin ceros a la izquierda. "fromCode"/"toCode": qr_subida/qr_bajada del leg. "nextMin": próximo_bus en minutos (omite la propiedad si próximo_bus = sin_dato).
-    - Si la opción tiene transbordo, añade un segundo (o tercer) objeto al array \`legs\` con la siguiente línea y sus paradas.
-    - "travelMin" y "km" son la suma del trayecto completo (tiempo_viaje y km del context).
-    NO añadas en estas tarjetas enlaces de "Cómo llegar", "Reseñas", paradas intermedias ni el badge \`eta:\` en texto suelto: la tarjeta ya muestra el tiempo en vivo dentro y un botón VAMOS. Antes de las tarjetas puedes poner una línea muy breve introductoria (ej. "Estas son tus 3 opciones:"). Después de las tarjetas, NO preguntes "¿Cuál prefieres?" — el usuario elige pulsando VAMOS.
+    - **SOLO trayectos directos (sin transbordos)**. Si VECTALIA_TRIPS trae varias opciones, todas son directas: cada \`legs\` debe tener exactamente UN objeto. NUNCA propongas transbordos en este modo.
+    - "travelMin" y "km" son del trayecto (tiempo_viaje y km del context).
+    NO añadas en estas tarjetas enlaces de "Cómo llegar", "Reseñas", paradas intermedias ni el badge \`eta:\` en texto suelto: la tarjeta ya muestra el tiempo en vivo dentro y un botón VAMOS. Antes de las tarjetas puedes poner una línea muy breve introductoria (ej. "Estas son tus 3 opciones:"). Después de las tarjetas, NO preguntes "¿Cuál prefieres?" — el usuario elige pulsando VAMOS. Si la parada de bajada no es exactamente el destino sino la más cercana, añade UNA frase corta antes de las tarjetas avisando (ej. "La parada más cercana a tu destino es *Nombre*, te dejará a unos minutos andando.").
   - **Paso 2 — Esquema de la ruta (cuando el usuario ya ha elegido una línea/opción)**: NO enlaces a /bus/lines/. Renderiza tú mismo el esquema en el chat usando paradas_intermedias del contexto, así:
     "**Línea X — sentido Nombre bajada**" + repite el badge \`[próximo bus](eta:LINEA:CODIGO_PARADA_SUBIDA:MIN)\` y "⏱️ Trayecto: X min (~Y km)", y debajo una lista vertical:
     - 🟢 **Nombre parada subida** (subes aquí)
@@ -2505,7 +2507,7 @@ ESTILO OBLIGATORIO en este modo:
     - ⚪ Parada intermedia 2
     - … (lista TODAS las paradas_intermedias en orden, sin abreviar)
     - 🔴 **Nombre parada bajada** (te bajas aquí)
-    Si la opción tiene transbordo, repite el bloque para cada leg, separados por "↻ **Transbordo en *Parada*** — coge la Línea Y" y añade su propio badge \`[próximo bus](eta:LINEA2:CODIGO_PARADA_TRANSBORDO:MIN)\`.
+    NUNCA propongas transbordos. Si no hay línea directa, dilo claramente y sugiere la parada directa más cercana al destino.
   - NO incluyas nunca el enlace https://qr.vectalia.es/... ni el enlace /bus/lines/ — el tiempo real y el esquema ya los das tú aquí. NO escribas "Próximo bus: X min" en texto plano; usa SIEMPRE el badge \`[próximo bus](eta:...)\` para que se actualice solo.
 - Si VECTALIA_TRIPS está vacío y TRANSIT_RESULT también: di en una frase que no localizas con precisión esa dirección y pide al usuario que sea más específico (ej. "¿Puedes darme el nombre de la calle y el número, o un punto de referencia cercano como un colegio, hospital o plaza?"). NUNCA inventes paradas ni líneas.
 - **NUNCA inventes** líneas, códigos ni nombres de parada. Si no aparece en VECTALIA_TRIPS, no existe.`
