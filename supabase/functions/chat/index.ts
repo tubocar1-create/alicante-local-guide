@@ -2180,18 +2180,18 @@ ESTILO OBLIGATORIO en este modo:
   - **PRIORIDAD ABSOLUTA**: usa EXACTAMENTE la línea, sentido, nombres y códigos de parada que vengan en VECTALIA_TRIPS. Es la red oficial. Ignora TRANSIT_RESULT (OSM) salvo que VECTALIA_TRIPS esté vacío.
   - **Paso 1 — Alternativas (cuando el usuario aún no ha elegido línea)**: devuelve hasta 3 opciones en lista numerada y BREVE. Para cada opción, en este orden y SIEMPRE sin que el usuario lo pida:
     1. "**Línea X** · sube en *Nombre parada subida* → baja en *Nombre parada bajada*" (si hay transbordo, indícalo entre legs).
-    2. "🚌 Próximo bus: X min" si hay próximo_bus=Xmin; si es sin_dato, "🚌 Sin paso confirmado ahora".
+    2. Tiempo de espera EN VIVO: usa SIEMPRE este formato exacto en markdown para que el frontend lo renderice y lo refresque solo: \`[próximo bus](eta:LINEA:CODIGO_PARADA_SUBIDA:MIN)\`. Sustituye LINEA por el código de línea (sin ceros), CODIGO_PARADA_SUBIDA por qr_subida del leg, y MIN por próximo_bus en minutos (omite \`:MIN\` si próximo_bus=sin_dato). Ejemplo: \`[próximo bus](eta:12:1234:5)\` o \`[próximo bus](eta:12:1234)\`. NO escribas el número de minutos como texto plano: el badge se actualiza solo cada 30s.
     3. "⏱️ Trayecto: X min (~Y km)" usando tiempo_viaje≈Xmin y km.
     NO incluyas en este paso el listado de paradas intermedias ni enlaces /bus/lines/. Termina preguntando: "¿Cuál prefieres?".
   - **Paso 2 — Esquema de la ruta (cuando el usuario ya ha elegido una línea/opción)**: NO enlaces a /bus/lines/. Renderiza tú mismo el esquema en el chat usando paradas_intermedias del contexto, así:
-    "**Línea X — sentido Nombre bajada**" + repetición del próximo bus y trayecto, y debajo una lista vertical:
+    "**Línea X — sentido Nombre bajada**" + repite el badge \`[próximo bus](eta:LINEA:CODIGO_PARADA_SUBIDA:MIN)\` y "⏱️ Trayecto: X min (~Y km)", y debajo una lista vertical:
     - 🟢 **Nombre parada subida** (subes aquí)
     - ⚪ Parada intermedia 1
     - ⚪ Parada intermedia 2
     - … (lista TODAS las paradas_intermedias en orden, sin abreviar)
     - 🔴 **Nombre parada bajada** (te bajas aquí)
-    Si la opción tiene transbordo, repite el bloque para cada leg, separados por "↻ **Transbordo en *Parada*** — coge la Línea Y".
-  - NO incluyas nunca el enlace https://qr.vectalia.es/... ni el enlace /bus/lines/ — el tiempo real y el esquema ya los das tú aquí.
+    Si la opción tiene transbordo, repite el bloque para cada leg, separados por "↻ **Transbordo en *Parada*** — coge la Línea Y" y añade su propio badge \`[próximo bus](eta:LINEA2:CODIGO_PARADA_TRANSBORDO:MIN)\`.
+  - NO incluyas nunca el enlace https://qr.vectalia.es/... ni el enlace /bus/lines/ — el tiempo real y el esquema ya los das tú aquí. NO escribas "Próximo bus: X min" en texto plano; usa SIEMPRE el badge \`[próximo bus](eta:...)\` para que se actualice solo.
 - Si VECTALIA_TRIPS está vacío y TRANSIT_RESULT también: di en una frase que no encuentras línea directa y pide aclarar destino o origen (sin pedir códigos QR).
 - **NUNCA inventes** líneas, códigos ni nombres de parada. Si no aparece en VECTALIA_TRIPS, no existe.`
       : "";

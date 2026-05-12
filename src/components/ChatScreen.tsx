@@ -8,6 +8,7 @@ import { PointsHud } from "@/components/PointsHud";
 import { usePoints } from "@/hooks/usePoints";
 import { useUserLocation, distanceKm } from "@/hooks/useUserLocation";
 import ReferralDialog from "@/components/ReferralDialog";
+import { LiveEta } from "@/components/LiveEta";
 import { useAuth } from "@/hooks/useAuth";
 import { findPlaceOverride } from "@/data/places";
 import heroImg from "@/assets/alicante-hero.jpg";
@@ -889,6 +890,22 @@ function MarkdownText({ text }: { text: string }) {
         ),
         a: ({ href, children }) => {
           const url = String(href ?? "");
+          if (url.startsWith("eta:")) {
+            // formato: eta:LINEA:STOP[:INITIAL]
+            const parts = url.slice(4).split(":");
+            const line = parts[0] || "";
+            const stop = parts[1] || "";
+            const initial = parts[2] != null ? parseInt(parts[2], 10) : NaN;
+            if (line && stop) {
+              return (
+                <LiveEta
+                  line={line}
+                  stop={stop}
+                  initialMin={Number.isFinite(initial) ? initial : null}
+                />
+              );
+            }
+          }
           if (url.startsWith("qi:")) {
             const name = decodeURIComponent(url.slice(3));
             return (
