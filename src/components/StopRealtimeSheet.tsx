@@ -146,6 +146,17 @@ export function StopRealtimeSheet({
             </div>
           )}
 
+          {/* Alarm */}
+          {stop && (
+            <ArrivalAlarm
+              arrivals={arrivals}
+              stopName={stop.name ?? `Parada ${stop.code}`}
+              availableLines={Array.from(
+                new Set([...(stop.lines ?? []), ...arrivals.map((a) => a.line)]),
+              ).sort((a, b) => Number(a) - Number(b))}
+            />
+          )}
+
           {/* Arrivals */}
           <div>
             <div className="mb-2 flex items-center justify-between">
