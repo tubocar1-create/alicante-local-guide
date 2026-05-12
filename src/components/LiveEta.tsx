@@ -106,38 +106,29 @@ export function LiveEta({
       }`}
       title={`Línea ${line} · parada ${stop}`}
     >
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex flex-col leading-tight">
-          <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
-            Llega a las
-          </span>
+      <div className="flex flex-col gap-1">
+        <span className="flex items-center gap-1 text-[11px] uppercase tracking-wide text-muted-foreground">
           <span
-            className={`text-3xl font-bold tabular-nums ${
+            className={`h-1.5 w-1.5 rounded-full ${
+              loading
+                ? "bg-amber-500 animate-pulse"
+                : hasEta
+                  ? "bg-emerald-500"
+                  : "bg-muted-foreground/50"
+            }`}
+          />
+          Tiempo de llegada (tiempo real)
+        </span>
+        <div className="flex items-end justify-between gap-3">
+          <span
+            className={`text-3xl font-bold tabular-nums leading-none ${
               isImminent ? "text-primary" : "text-foreground"
             }`}
           >
+            {hasEta ? (eta! <= 0 ? "Llegando" : `Faltan ${eta} min`) : "Sin paso"}
+          </span>
+          <span className="text-sm font-semibold tabular-nums text-muted-foreground">
             {arrival ? formatHHMM(arrival) : "--:--"}
-          </span>
-        </div>
-        <div className="flex flex-col items-end leading-tight">
-          <span className="flex items-center gap-1 text-[11px] uppercase tracking-wide text-muted-foreground">
-            <span
-              className={`h-1.5 w-1.5 rounded-full ${
-                loading
-                  ? "bg-amber-500 animate-pulse"
-                  : hasEta
-                    ? "bg-emerald-500"
-                    : "bg-muted-foreground/50"
-              }`}
-            />
-            En vivo
-          </span>
-          <span
-            className={`text-2xl font-semibold tabular-nums ${
-              isImminent ? "text-primary" : "text-foreground/90"
-            }`}
-          >
-            {minsText}
           </span>
         </div>
       </div>
