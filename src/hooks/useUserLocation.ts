@@ -44,6 +44,21 @@ function stopWatch() {
   watchId = null;
 }
 
+/** Fully release geolocation: stop watching and clear any cached coords so
+ *  the next time the user opens the app we ask again. */
+function releaseLocation() {
+  stopWatch();
+  cached = null;
+  // Reset every active subscriber back to idle so the UI re-prompts
+  listeners.forEach((l) => {
+    try {
+      (l as unknown as { __reset?: () => void }).__reset?.();
+    } catch {
+      /* noop */
+    }
+  });
+}
+
 // Pause geolocation when the app is not in use (tab hidden, app backgrounded,
 // or page closed). Resume automatically when the user returns, but only if
 // some component is still actively watching.
@@ -53,15 +68,14 @@ function bindLifecycle() {
   lifecycleBound = true;
   const onVisibility = () => {
     if (document.visibilityState === "hidden") {
-      stopWatch();
-    } else if (watchRefs > 0) {
-      startWatch();
+      // App backgrounded: fully release so a returning user is asked again.
+      releaseLocation();
     }
   };
   document.addEventListener("visibilitychange", onVisibility);
   // pagehide fires on tab close / navigation away / mobile app backgrounding
-  window.addEventListener("pagehide", stopWatch);
-  window.addEventListener("beforeunload", stopWatch);
+  window.addEventListener("pagehide", releaseLocation);
+  window.addEventListener("beforeunload", releaseLocation);
 }
 
 export function useUserLocation(opts?: { watch?: boolean }) {
@@ -74,6 +88,10 @@ export function useUserLocation(opts?: { watch?: boolean }) {
     const onUpdate = (c: Coords) => setState({ status: "ready", coords: c });
     const onError = (message: string) =>
       setState((prev) => (prev.status === "ready" ? prev : { status: "error", message }));
+    // Allow releaseLocation() to reset this subscriber back to idle so the
+    // user is asked again when they return to the app.
+    (onUpdate as unknown as { __reset?: () => void }).__reset = () =>
+      setState({ status: "idle" });
     listeners.add(onUpdate);
     errorListeners.add(onError);
     bindLifecycle();
