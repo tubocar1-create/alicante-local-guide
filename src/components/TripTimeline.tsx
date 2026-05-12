@@ -46,7 +46,6 @@ export function TripTimeline({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!selected) return;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
 
@@ -59,13 +58,17 @@ export function TripTimeline({
             if (!cancelled) setOriginEta(r.arrivals);
           }),
         ];
-        for (let i = 1; i < trip.legs.length; i++) {
-          const transfer = trip.legs[i];
-          calls.push(
-            fetchRealtime({ data: { stopCode: transfer.fromCode, lines: [transfer.lineCode] } }).then((r) => {
-              if (!cancelled) setTransferEtas((prev) => ({ ...prev, [i]: r.arrivals }));
-            }),
-          );
+        // Solo cargamos los transbordos cuando el viaje está seleccionado
+        // (más tráfico de red); el ETA del origen siempre se muestra.
+        if (selected) {
+          for (let i = 1; i < trip.legs.length; i++) {
+            const transfer = trip.legs[i];
+            calls.push(
+              fetchRealtime({ data: { stopCode: transfer.fromCode, lines: [transfer.lineCode] } }).then((r) => {
+                if (!cancelled) setTransferEtas((prev) => ({ ...prev, [i]: r.arrivals }));
+              }),
+            );
+          }
         }
         await Promise.allSettled(calls);
         if (!cancelled) setFetchedAt(new Date().toISOString());
