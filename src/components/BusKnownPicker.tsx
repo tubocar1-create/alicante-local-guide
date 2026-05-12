@@ -202,7 +202,9 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
               <span className="text-[11px] font-normal text-muted-foreground">
                 {d.dir === 1 ? "Ida" : "Vuelta"} · {d.count} paradas
               </span>
-              <div className="mt-0.5 truncate">→ {d.headsign}</div>
+              <div className="mt-0.5 truncate">
+                {d.origin} → {d.headsign}
+              </div>
             </button>
           ))}
         </div>
