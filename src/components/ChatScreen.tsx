@@ -1086,6 +1086,7 @@ function BusStopCard({ data }: { data: BusStopCardData }) {
   );
 }
 
+function BusOptionCard({ data }: { data: BusOptionData }) {
   const isTransfer = data.legs.length > 1;
   const choose = () => {
     const first = data.legs[0];
