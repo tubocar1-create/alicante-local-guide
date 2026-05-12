@@ -2120,35 +2120,8 @@ function findVTrips(lineStops: DbLineStop[], oCode: string, dCode: string): VTri
       direct.add(o.key);
     }
   }
-  for (const o of oAt) {
-    if (direct.has(o.key)) continue;
-    const listA = byLine.get(o.key)!;
-    const maxA = Math.min(listA.length, o.idx + 31);
-    for (let i = o.idx + 1; i < maxA; i++) {
-      const tr = listA[i];
-      if (!tr.stop_code) continue;
-      const trAt = byStop.get(tr.stop_code);
-      if (!trAt) continue;
-      for (const t of trAt) {
-        if (t.key === o.key) continue;
-        const di = dIdx.get(t.key);
-        if (di != null && di > t.idx) {
-          const listB = byLine.get(t.key)!;
-          const a0 = listA[o.idx], a1 = listA[i], b0 = listB[t.idx], b1 = listB[di];
-          const interA = listA.slice(o.idx + 1, i).map((s) => s.stop_name);
-          const interB = listB.slice(t.idx + 1, di).map((s) => s.stop_name);
-          trips.push({
-            legs: [
-              { lineCode: a0.line_code, direction: a0.direction, fromCode: a0.stop_code!, fromName: a0.stop_name, toCode: a1.stop_code!, toName: a1.stop_name, numStops: i - o.idx, lineKey: o.key, fromIdx: o.idx, toIdx: i, intermediate: interA },
-              { lineCode: b0.line_code, direction: b0.direction, fromCode: b0.stop_code!, fromName: b0.stop_name, toCode: b1.stop_code!, toName: b1.stop_name, numStops: di - t.idx, lineKey: t.key, fromIdx: t.idx, toIdx: di, intermediate: interB },
-            ],
-            totalStops: (i - o.idx) + (di - t.idx),
-            transfers: 1,
-          });
-        }
-      }
-    }
-  }
+  // Transbordos desactivados: solo aceptamos coincidencias directas dentro del
+  // mismo line_code + direction para no mezclar paradas de líneas distintas.
   const seen = new Set<string>();
   const uniq = trips.filter((t) => {
     const sig = t.legs.map((l) => `${l.lineCode}|${l.direction}|${l.fromCode}|${l.toCode}`).join(">");
