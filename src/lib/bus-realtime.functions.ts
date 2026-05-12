@@ -34,8 +34,11 @@ function parseArrivals(raw: string): StopArrival[] {
 // pool de IPs). Si esa llamada falla, caemos al fetch directo.
 
 async function fetchViaEdge(stop: string, line: string): Promise<string> {
-  const supabaseUrl = process.env.VITE_SUPABASE_URL;
-  const anonKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const anonKey =
+    process.env.SUPABASE_PUBLISHABLE_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   if (!supabaseUrl || !anonKey) return "";
   try {
     const r = await fetch(
