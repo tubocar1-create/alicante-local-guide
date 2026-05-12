@@ -2497,37 +2497,42 @@ function formatTransitResult(r: TransitResult): string {
 }
 
 function buildBusOptionsReply(res: { origin: DbStop; dest: DbStop; trips: VTrip[] }[]): string {
-  const parts = ["Estas son las opciones directas:"];
+  const hasTransfer = res.some((r) => r.trips.some((t) => t.transfers > 0));
+  const intro = hasTransfer
+    ? "Estas son tus opciones (priorizo las directas, y añado transbordos si ayudan):"
+    : "Estas son las opciones directas:";
+  const parts: string[] = [intro];
   const seen = new Set<string>();
   for (const r of res) {
     for (const trip of r.trips) {
-      const leg = trip.legs[0];
-      if (!leg || trip.transfers !== 0) continue;
-      const key = `${leg.lineCode}|${leg.direction}|${leg.fromCode}|${leg.toCode}`;
+      if (!trip.legs.length) continue;
+      const key = trip.legs.map((l) => `${l.lineCode}|${l.direction}|${l.fromCode}|${l.toCode}`).join(">");
       if (seen.has(key)) continue;
       seen.add(key);
       const obj = {
-        legs: [{
+        legs: trip.legs.map((leg, idx) => ({
           line: leg.lineCode,
           fromName: leg.fromName,
           fromCode: leg.fromCode,
           toName: leg.toName,
           toCode: leg.toCode,
-          ...(leg.etaMin != null ? { nextMin: leg.etaMin } : {}),
-        }],
-        ...(leg.estMin != null ? { travelMin: leg.estMin } : {}),
-        ...(leg.km != null ? { km: leg.km } : {}),
+          // Solo damos próximo bus en el primer leg; en transbordos no damos hora del segundo bus
+          ...(idx === 0 && leg.etaMin != null ? { nextMin: leg.etaMin } : {}),
+        })),
+        ...(trip.legs[0].estMin != null ? { travelMin: trip.legs.reduce((s, l) => s + (l.estMin ?? 0), 0) } : {}),
+        ...(trip.legs[0].km != null ? { km: Math.round(trip.legs.reduce((s, l) => s + (l.km ?? 0), 0) * 10) / 10 } : {}),
+        ...(trip.transfers > 0 ? { transfer: true } : {}),
       };
       parts.push(`[[busopt:${encodeURIComponent(JSON.stringify(obj))}]]`);
-      if (parts.length >= 4) return parts.join("\n\n");
     }
   }
   return parts.join("\n\n");
 }
 
 function buildChosenBusReply(res: { origin: DbStop; dest: DbStop; trips: VTrip[] }[]): string {
-  const leg = res[0]?.trips[0]?.legs[0];
-  if (!leg) return "No puedo validar esa opción con la red oficial. Prefiero no inventarte paradas.";
+  const trip = res[0]?.trips[0];
+  const leg = trip?.legs[0];
+  if (!trip || !leg) return "No puedo validar esa opción con la red oficial. Prefiero no inventarte paradas.";
   const eta = leg.etaMin != null ? ` [próximo bus](eta:${leg.lineCode}:${leg.fromCode}:${leg.etaMin})` : "";
   const summary = `**Línea ${leg.lineCode} — sentido ${leg.toName}**${eta}\n⏱️ Trayecto: ${leg.estMin ?? "—"} min${leg.km != null ? ` (~${leg.km} km)` : ""}`;
   const stops = [
@@ -2535,7 +2540,18 @@ function buildChosenBusReply(res: { origin: DbStop; dest: DbStop; trips: VTrip[]
     ...leg.intermediate.map((name) => `- ⚪ ${name}`),
     `- 🔴 **${leg.toName}** (te bajas aquí)`,
   ];
-  return `${summary}\n\n${stops.join("\n")}`;
+  let out = `${summary}\n\n${stops.join("\n")}`;
+  for (let i = 1; i < trip.legs.length; i++) {
+    const next = trip.legs[i];
+    out += `\n\n**Transbordo:** en *${next.fromName}*, toma la **Línea ${next.lineCode}** hacia *${next.toName}* (no te doy hora aquí: depende de cuándo te deje el primer bus).`;
+    const stops2 = [
+      `- 🟢 **${next.fromName}** (subes aquí)`,
+      ...next.intermediate.map((name) => `- ⚪ ${name}`),
+      `- 🔴 **${next.toName}** (te bajas aquí)`,
+    ];
+    out += `\n${stops2.join("\n")}`;
+  }
+  return out;
 }
 
 serve(async (req) => {
