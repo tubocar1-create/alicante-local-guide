@@ -2433,24 +2433,40 @@ async function buildChosenVectaliaTransit(text: string): Promise<{ origin: DbSto
   if (!choice) return null;
   const g = await loadVectaliaGraph();
   if (!g) return null;
-  const leg = findDirectLegForLine(g.lineStops, choice);
-  if (!leg) return null;
-  const origin = g.stops.find((s) => s.code === choice.fromCode) ?? {
-    code: choice.fromCode,
-    name: leg.fromName,
-    lat: null,
-    lng: null,
-  };
-  const dest = g.stops.find((s) => s.code === choice.toCode) ?? {
-    code: choice.toCode,
-    name: leg.toName,
-    lat: null,
-    lng: null,
-  };
-  leg.km = Math.round(legKmAndStops(g, leg) * 10) / 10;
-  leg.estMin = Math.max(1, Math.round((leg.km / URBAN_KMH) * 60 + leg.numStops * DWELL_MIN_PER_STOP));
-  leg.etaMin = (await fetchVectaliaEta(leg.fromCode, leg.lineCode)) ?? undefined;
-  return [{ origin, dest, trips: [{ legs: [leg], totalStops: leg.numStops, transfers: 0 }] }];
+
+  const buildLegOrNull = (c: { lineCode: string; fromCode: string; toCode: string }) =>
+    findDirectLegForLine(g.lineStops, c);
+  const stopOrFallback = (code: string, fallbackName: string): DbStop =>
+    g.stops.find((s) => s.code === code) ?? { code, name: fallbackName, lat: null, lng: null };
+
+  if (choice.type === "direct") {
+    const leg = buildLegOrNull(choice);
+    if (!leg) return null;
+    leg.km = Math.round(legKmAndStops(g, leg) * 10) / 10;
+    leg.estMin = Math.max(1, Math.round((leg.km / URBAN_KMH) * 60 + leg.numStops * DWELL_MIN_PER_STOP));
+    leg.etaMin = (await fetchVectaliaEta(leg.fromCode, leg.lineCode)) ?? undefined;
+    return [{
+      origin: stopOrFallback(choice.fromCode, leg.fromName),
+      dest: stopOrFallback(choice.toCode, leg.toName),
+      trips: [{ legs: [leg], totalStops: leg.numStops, transfers: 0 }],
+    }];
+  }
+
+  // transfer
+  const legA = buildLegOrNull(choice.legA);
+  const legB = buildLegOrNull(choice.legB);
+  if (!legA || !legB) return null;
+  for (const leg of [legA, legB]) {
+    leg.km = Math.round(legKmAndStops(g, leg) * 10) / 10;
+    leg.estMin = Math.max(1, Math.round((leg.km / URBAN_KMH) * 60 + leg.numStops * DWELL_MIN_PER_STOP));
+  }
+  legA.etaMin = (await fetchVectaliaEta(legA.fromCode, legA.lineCode)) ?? undefined;
+  // Sin ETA en el segundo leg: depende de cuándo te deje el primer bus.
+  return [{
+    origin: stopOrFallback(choice.legA.fromCode, legA.fromName),
+    dest: stopOrFallback(choice.legB.toCode, legB.toName),
+    trips: [{ legs: [legA, legB], totalStops: legA.numStops + legB.numStops, transfers: 1 }],
+  }];
 }
 
 function formatVectaliaTransit(
