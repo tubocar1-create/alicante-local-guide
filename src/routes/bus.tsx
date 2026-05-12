@@ -271,6 +271,8 @@ function BusPage() {
           )}
         </section>
       </main>
+
+      <StopRealtimeSheet stop={activeStop} open={sheetOpen} onOpenChange={setSheetOpen} />
     </div>
   );
 }
