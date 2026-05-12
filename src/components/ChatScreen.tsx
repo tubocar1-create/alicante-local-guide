@@ -443,11 +443,7 @@ export function ChatScreen() {
                     key: "bus",
                     emoji: "🚌",
                     label: "Bus",
-                    onClick: () =>
-                      send(
-                        "Hola, quiero moverme en bus por Alicante.",
-                        { mode: "transit" },
-                      ),
+                    onClick: () => setShowBusPicker(true),
                   },
                 ].map((t) => {
                   const style = TILE_STYLES[t.label];
