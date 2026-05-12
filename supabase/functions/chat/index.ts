@@ -2490,11 +2490,14 @@ ESTILO OBLIGATORIO en este modo:
 - Cuando ya tengas VECTALIA_TRIPS disponibles:
   - **PRIORIDAD ABSOLUTA**: usa EXACTAMENTE la línea, sentido, nombres y códigos de parada que vengan en VECTALIA_TRIPS. Es la red oficial. Ignora TRANSIT_RESULT (OSM) salvo que VECTALIA_TRIPS esté vacío.
   - Si hay una línea DESTINO_VERIFICADO, NO propongas ninguna línea que no aparezca en líneas_que_llegan para llegar a ese destino final.
-  - **Paso 1 — Alternativas (cuando el usuario aún no ha elegido línea)**: devuelve hasta 3 opciones en lista numerada y BREVE. Para cada opción, en este orden y SIEMPRE sin que el usuario lo pida:
-    1. "**Línea X** · sube en *Nombre parada subida* → baja en *Nombre parada bajada*" (si hay transbordo, indícalo entre legs).
-    2. Tiempo de espera EN VIVO: usa SIEMPRE este formato exacto en markdown para que el frontend lo renderice y lo refresque solo: \`[próximo bus](eta:LINEA:CODIGO_PARADA_SUBIDA:MIN)\`. Sustituye LINEA por el código de línea (sin ceros), CODIGO_PARADA_SUBIDA por qr_subida del leg, y MIN por próximo_bus en minutos (omite \`:MIN\` si próximo_bus=sin_dato). Ejemplo: \`[próximo bus](eta:12:1234:5)\` o \`[próximo bus](eta:12:1234)\`. NO escribas el número de minutos como texto plano: el badge se actualiza solo cada 30s.
-    3. "⏱️ Trayecto: X min (~Y km)" usando tiempo_viaje≈Xmin y km.
-    NO incluyas en este paso el listado de paradas intermedias ni enlaces /bus/lines/. Termina preguntando: "¿Cuál prefieres?".
+  - **Paso 1 — Alternativas (cuando el usuario aún no ha elegido línea)**: devuelve hasta 3 opciones. Para CADA opción emite UNA tarjeta con este formato EXACTO en una línea propia (sin bullets, sin texto adicional alrededor de cada tarjeta):
+    \`[[busopt:JSON_URI_ENCODED]]\`
+    Donde JSON_URI_ENCODED es \`encodeURIComponent(JSON.stringify(obj))\` y \`obj\` tiene la forma:
+    \`{ "legs": [ { "line": "12", "fromName": "Plaza Calvo Sotelo", "fromCode": "1234", "toName": "Plaza Juan Pablo II", "toCode": "4332", "nextMin": 5 } ], "travelMin": 14, "km": 3.2 }\`
+    - "line": código de línea sin ceros a la izquierda. "fromCode"/"toCode": qr_subida/qr_bajada del leg. "nextMin": próximo_bus en minutos (omite la propiedad si próximo_bus = sin_dato).
+    - Si la opción tiene transbordo, añade un segundo (o tercer) objeto al array \`legs\` con la siguiente línea y sus paradas.
+    - "travelMin" y "km" son la suma del trayecto completo (tiempo_viaje y km del context).
+    NO añadas en estas tarjetas enlaces de "Cómo llegar", "Reseñas", paradas intermedias ni el badge \`eta:\` en texto suelto: la tarjeta ya muestra el tiempo en vivo dentro y un botón VAMOS. Antes de las tarjetas puedes poner una línea muy breve introductoria (ej. "Estas son tus 3 opciones:"). Después de las tarjetas, NO preguntes "¿Cuál prefieres?" — el usuario elige pulsando VAMOS.
   - **Paso 2 — Esquema de la ruta (cuando el usuario ya ha elegido una línea/opción)**: NO enlaces a /bus/lines/. Renderiza tú mismo el esquema en el chat usando paradas_intermedias del contexto, así:
     "**Línea X — sentido Nombre bajada**" + repite el badge \`[próximo bus](eta:LINEA:CODIGO_PARADA_SUBIDA:MIN)\` y "⏱️ Trayecto: X min (~Y km)", y debajo una lista vertical:
     - 🟢 **Nombre parada subida** (subes aquí)
