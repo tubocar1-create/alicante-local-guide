@@ -180,7 +180,30 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
         </div>
       )}
 
-      {step === "stop" && line && (
+      {step === "direction" && line && (
+        <div className="grid grid-cols-1 gap-2">
+          {directions.length === 0 && (
+            <p className="text-sm text-muted-foreground">Sin sentidos disponibles para esta línea.</p>
+          )}
+          {directions.map((d) => (
+            <button
+              key={d.dir}
+              onClick={() => {
+                setDirection(d.dir);
+                setStep("stop");
+              }}
+              className="rounded-2xl border border-border bg-background/80 px-4 py-3 text-left text-sm font-semibold shadow-sm hover:bg-accent/40 active:scale-[0.99]"
+            >
+              <span className="text-[11px] font-normal text-muted-foreground">
+                {d.dir === 1 ? "Ida" : "Vuelta"} · {d.count} paradas
+              </span>
+              <div className="mt-0.5 truncate">→ {d.headsign}</div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {step === "stop" && line && direction && (
         <div className="space-y-3">
           <button
             disabled={!nearest}
