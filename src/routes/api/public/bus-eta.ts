@@ -32,7 +32,8 @@ async function fetchEtas(stopCode: string, lineCode: string): Promise<number[]> 
       if (Number.isFinite(min)) mins.push(min);
     }
     return mins.sort((a, b) => a - b);
-  } catch {
+  } catch (e) {
+    lastDebug = { error: String(e) };
     return [];
   }
 }
