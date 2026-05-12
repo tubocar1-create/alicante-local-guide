@@ -1846,6 +1846,16 @@ const VERIFIED_ALICANTE_REFERENCES: Array<{
   },
 ];
 
+function verifiedReferenceLocation(query: string): (LatLng & { label: string }) | null {
+  const q = normTxt(query);
+  if (!q) return null;
+  const ref = VERIFIED_ALICANTE_REFERENCES.find((r) => r.aliases.some((a) => {
+    const an = normTxt(a);
+    return q === an || q.includes(an) || an.includes(q);
+  }));
+  return ref ? { lat: ref.lat, lng: ref.lng, label: ref.canonical } : null;
+}
+
 function verifiedReferenceStops(query: string, stops: DbStop[]): DbStop[] {
   const q = normTxt(query);
   if (!q) return [];
