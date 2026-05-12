@@ -932,6 +932,7 @@ function MarkdownText({ text }: { text: string }) {
                   line={line}
                   stop={stop}
                   initialMin={Number.isFinite(initial) ? initial : null}
+                  size="sm"
                 />
               );
             }
