@@ -1445,6 +1445,9 @@ async function geocodeAlicante(query: string): Promise<(LatLng & { label: string
   const verified = verifiedReferenceLocation(query);
   if (verified) return verified;
 
+  const overpass = await geocodeAlicanteWithOverpassName(query).catch(() => null);
+  if (overpass) return overpass;
+
   const osm = await geocodeAlicanteWithOsmStrict(query).catch(() => null);
   if (osm) return osm;
 
@@ -1452,6 +1455,62 @@ async function geocodeAlicante(query: string): Promise<(LatLng & { label: string
   if (google) return google;
 
   return null;
+}
+
+function escapeOverpassRegex(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, ".*");
+}
+
+function meaningfulPlaceTokens(value: string) {
+  return normTxt(value)
+    .split(" ")
+    .filter((t) => t.length >= 3 || /^\d+$/.test(t))
+    .filter((t) => !["plaza", "placa", "parque", "avenida", "av", "calle", "carrer", "centro", "comercial", "cc", "de", "del", "la", "el", "los", "las"].includes(t));
+}
+
+async function geocodeAlicanteWithOverpassName(query: string): Promise<(LatLng & { label: string }) | null> {
+  const tokens = meaningfulPlaceTokens(query);
+  if (!tokens.length) return null;
+  const regex = escapeOverpassRegex(query.trim());
+  const bbox = `${ALICANTE_BOUNDS.south},${ALICANTE_BOUNDS.west},${ALICANTE_BOUNDS.north},${ALICANTE_BOUNDS.east}`;
+  const overpassQuery = `[out:json][timeout:18];
+(
+  nwr["name"~"${regex}",i](${bbox});
+  nwr["official_name"~"${regex}",i](${bbox});
+  nwr["alt_name"~"${regex}",i](${bbox});
+);
+out center tags 25;`;
+  let json: { elements?: Array<{ lat?: number; lon?: number; center?: { lat: number; lon: number }; tags?: Record<string, string> }> } | null = null;
+  for (const endpoint of OVERPASS_ENDPOINTS) {
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "data=" + encodeURIComponent(overpassQuery),
+      });
+      if (!res.ok) continue;
+      json = await res.json();
+      break;
+    } catch {
+      // try next mirror
+    }
+  }
+  const allowed = new Set(["place", "leisure", "shop", "amenity", "tourism", "highway", "building", "landuse"]);
+  const best = (json?.elements ?? [])
+    .map((el) => {
+      const lat = el.lat ?? el.center?.lat;
+      const lng = el.lon ?? el.center?.lon;
+      const name = el.tags?.name ?? el.tags?.official_name ?? el.tags?.alt_name ?? "";
+      const point = lat != null && lng != null ? { lat, lng } : null;
+      const n = normTxt(name);
+      const overlap = tokens.filter((t) => n.includes(t)).length;
+      const classHit = ["place", "leisure", "shop", "amenity", "tourism", "highway", "building", "landuse"].some((k) => el.tags?.[k]);
+      const exact = n === normTxt(query) ? 10 : 0;
+      return { point, name, score: overlap * 3 + exact + (classHit ? 2 : 0), classHit };
+    })
+    .filter((x) => x.point && isInsideAlicanteBounds(x.point) && x.score >= Math.min(6, tokens.length * 3) && (x.classHit || allowed.size > 0))
+    .sort((a, b) => b.score - a.score)[0];
+  return best?.point ? { ...best.point, label: best.name || query } : null;
 }
 
 async function geocodeAlicanteWithOsmStrict(query: string): Promise<(LatLng & { label: string }) | null> {
