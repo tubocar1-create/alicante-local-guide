@@ -6,10 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { liveStopUrl, isValidStopCode } from "@/lib/bus";
+import { isValidStopCode } from "@/lib/bus";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { geocodeBusStops } from "@/lib/bus-geocode.functions";
 import { haversineKm, type MapStop } from "@/components/BusMap";
+import { StopRealtimeSheet, type StopRealtimeContext } from "@/components/StopRealtimeSheet";
 
 const BusMapLazy = lazy(() =>
   import("@/components/BusMap").then((m) => ({ default: m.BusMap })),
@@ -43,6 +44,8 @@ function BusPage() {
   const [code, setCode] = useState("");
   const [geocoding, setGeocoding] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [activeStop, setActiveStop] = useState<StopRealtimeContext | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const loc = useUserLocation({ watch: true });
   const userCoords = loc.state.status === "ready" ? loc.state.coords : null;
@@ -67,10 +70,21 @@ function BusPage() {
     refresh();
   }, []);
 
-  const open = (c: string) => {
-    if (!isValidStopCode(c)) return;
-    window.open(liveStopUrl(c.trim()), "_blank", "noopener,noreferrer");
+  const openStop = (s: StopRealtimeContext) => {
+    setActiveStop(s);
+    setSheetOpen(true);
   };
+
+  const openByCode = (c: string) => {
+    if (!isValidStopCode(c)) return;
+    const found = stops.find((x) => x.code === c.trim());
+    openStop(
+      found
+        ? { code: found.code, name: found.name, lines: found.lines, lat: found.lat, lng: found.lng }
+        : { code: c.trim(), name: null, lines: null, lat: null, lng: null },
+    );
+  };
+
 
   const mapStops: MapStop[] = useMemo(
     () =>
@@ -125,7 +139,7 @@ function BusPage() {
             className="flex gap-2"
             onSubmit={(e) => {
               e.preventDefault();
-              open(code);
+              openByCode(code);
             }}
           >
             <Input
@@ -189,11 +203,10 @@ function BusPage() {
             <ul className="space-y-2">
               {nearest.map((s) => (
                 <li key={s.code}>
-                  <a
-                    href={liveStopUrl(s.code)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between rounded-lg border bg-card p-3 transition-colors hover:bg-accent"
+                  <button
+                    type="button"
+                    onClick={() => openStop({ code: s.code, name: s.name, lines: s.lines, lat: s.lat, lng: s.lng })}
+                    className="flex w-full items-center justify-between rounded-lg border bg-card p-3 text-left transition-colors hover:bg-accent"
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -211,7 +224,7 @@ function BusPage() {
                       </div>
                     </div>
                     <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                  </a>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -229,11 +242,10 @@ function BusPage() {
             <ul className="space-y-2">
               {stops.map((s) => (
                 <li key={s.code}>
-                  <a
-                    href={liveStopUrl(s.code)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between rounded-lg border bg-card p-3 transition-colors hover:bg-accent"
+                  <button
+                    type="button"
+                    onClick={() => openStop({ code: s.code, name: s.name, lines: s.lines, lat: s.lat, lng: s.lng })}
+                    className="flex w-full items-center justify-between rounded-lg border bg-card p-3 text-left transition-colors hover:bg-accent"
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -252,13 +264,15 @@ function BusPage() {
                       </div>
                     </div>
                     <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                  </a>
+                  </button>
                 </li>
               ))}
             </ul>
           )}
         </section>
       </main>
+
+      <StopRealtimeSheet stop={activeStop} open={sheetOpen} onOpenChange={setSheetOpen} />
     </div>
   );
 }
