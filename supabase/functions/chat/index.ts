@@ -2210,7 +2210,7 @@ ESTILO OBLIGATORIO en este modo:
     - 🔴 **Nombre parada bajada** (te bajas aquí)
     Si la opción tiene transbordo, repite el bloque para cada leg, separados por "↻ **Transbordo en *Parada*** — coge la Línea Y" y añade su propio badge \`[próximo bus](eta:LINEA2:CODIGO_PARADA_TRANSBORDO:MIN)\`.
   - NO incluyas nunca el enlace https://qr.vectalia.es/... ni el enlace /bus/lines/ — el tiempo real y el esquema ya los das tú aquí. NO escribas "Próximo bus: X min" en texto plano; usa SIEMPRE el badge \`[próximo bus](eta:...)\` para que se actualice solo.
-- Si VECTALIA_TRIPS está vacío y TRANSIT_RESULT también: di en una frase que no encuentras línea directa y pide aclarar destino o origen (sin pedir códigos QR).
+- Si VECTALIA_TRIPS está vacío y TRANSIT_RESULT también: di en una frase que no localizas con precisión esa dirección y pide al usuario que sea más específico (ej. "¿Puedes darme el nombre de la calle y el número, o un punto de referencia cercano como un colegio, hospital o plaza?"). NUNCA inventes paradas ni líneas.
 - **NUNCA inventes** líneas, códigos ni nombres de parada. Si no aparece en VECTALIA_TRIPS, no existe.`
       : "";
     const runtimeContext = `RUNTIME CONTEXT (use this when relevant):\nTODAY: ${todayStr} (zona horaria Europe/Madrid)\nMAX_NEARBY_OPTIONS: ${context?.maxOptions ?? 4}\n${locationLine}${transitModeLine}${verifiedOpenLine}${mentionedLine}${vectaliaLine}${transitLine}`;
