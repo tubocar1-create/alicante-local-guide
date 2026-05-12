@@ -1804,6 +1804,7 @@ type VLeg = {
   lineKey: string;
   fromIdx: number;
   toIdx: number;
+  intermediate: string[];
   km?: number;
   estMin?: number;
   etaMin?: number;
