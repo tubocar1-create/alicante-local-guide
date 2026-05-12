@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getStopRealtime, type StopArrival } from "@/lib/bus-realtime.functions";
 import { liveStopUrl } from "@/lib/bus";
+import { ArrivalAlarm } from "@/components/ArrivalAlarm";
 
 const RealtimeMiniMap = lazy(() =>
   import("./RealtimeMiniMap").then((m) => ({ default: m.RealtimeMiniMap })),
