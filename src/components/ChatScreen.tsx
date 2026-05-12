@@ -1001,8 +1001,8 @@ function BusOptionCard({ data }: { data: BusOptionData }) {
     const last = data.legs[data.legs.length - 1];
     const text =
       data.legs.length === 1
-        ? `Voy con la Línea ${lines}: subo en ${first.fromName} y bajo en ${last.toName}.`
-        : `Voy con la opción de Líneas ${lines} (sube en ${first.fromName}, baja en ${last.toName}).`;
+        ? `Voy con la Línea ${lines}: subo en ${first.fromName} [parada ${first.fromCode}] y bajo en ${last.toName} [parada ${last.toCode}].`
+        : `Voy con la opción de Líneas ${lines} (sube en ${first.fromName} [parada ${first.fromCode}], baja en ${last.toName} [parada ${last.toCode}]).`;
     window.dispatchEvent(new CustomEvent("bus:choose", { detail: { text } }));
   };
   return (

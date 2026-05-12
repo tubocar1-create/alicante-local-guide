@@ -56,6 +56,10 @@ function isInsideAlicanteBounds(point: LatLng) {
   );
 }
 
+function isInsideAlicanteUrbanCore(point: LatLng) {
+  return distanceKm(ALICANTE_CENTER, point) <= 11;
+}
+
 function madridNow(date = new Date()) {
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Europe/Madrid",
@@ -1587,6 +1591,8 @@ async function geocodeAlicanteWithOsmStrict(query: string): Promise<(LatLng & { 
 async function geocodeAlicanteWithGoogle(query: string): Promise<(LatLng & { label: string }) | null> {
   const apiKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
   if (!apiKey) return null;
+  const qTokens = meaningfulPlaceTokens(query);
+  if (!qTokens.length) return null;
   const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
     method: "POST",
     headers: {
@@ -1595,9 +1601,14 @@ async function geocodeAlicanteWithGoogle(query: string): Promise<(LatLng & { lab
       "X-Goog-FieldMask": "places.location,places.displayName,places.formattedAddress,places.types",
     },
     body: JSON.stringify({
-      textQuery: `${query}, Alicante, España`,
-      locationBias: { circle: { center: ALICANTE_CENTER, radius: 12000 } },
-      maxResultCount: 3,
+      textQuery: `${query}, Alicante ciudad, Alicante, España`,
+      locationRestriction: {
+        rectangle: {
+          low: { latitude: ALICANTE_BOUNDS.south, longitude: ALICANTE_BOUNDS.west },
+          high: { latitude: ALICANTE_BOUNDS.north, longitude: ALICANTE_BOUNDS.east },
+        },
+      },
+      maxResultCount: 5,
       languageCode: "es",
       regionCode: "ES",
     }),
@@ -1634,10 +1645,12 @@ async function geocodeAlicanteWithGoogle(query: string): Promise<(LatLng & { lab
     const loc = place.location;
     if (!loc || !Number.isFinite(loc.latitude) || !Number.isFinite(loc.longitude)) continue;
     const point = { lat: loc.latitude, lng: loc.longitude };
-    if (!isInsideAlicanteBounds(point) || distanceKm(ALICANTE_CENTER, point) > 18) continue;
+    if (!isInsideAlicanteBounds(point) || !isInsideAlicanteUrbanCore(point)) continue;
     if (!(place.types ?? []).some((t) => acceptedTypes.has(t))) continue;
     const labelText = `${place.displayName?.text ?? ""} ${place.formattedAddress ?? ""}`;
     if (!normTxt(labelText).includes("alicante")) continue;
+    const labelNorm = normTxt(labelText);
+    if (qTokens.some((t) => !labelNorm.includes(t))) continue;
     return {
       ...point,
       label: place.displayName?.text ?? place.formattedAddress ?? query,
@@ -2107,35 +2120,8 @@ function findVTrips(lineStops: DbLineStop[], oCode: string, dCode: string): VTri
       direct.add(o.key);
     }
   }
-  for (const o of oAt) {
-    if (direct.has(o.key)) continue;
-    const listA = byLine.get(o.key)!;
-    const maxA = Math.min(listA.length, o.idx + 31);
-    for (let i = o.idx + 1; i < maxA; i++) {
-      const tr = listA[i];
-      if (!tr.stop_code) continue;
-      const trAt = byStop.get(tr.stop_code);
-      if (!trAt) continue;
-      for (const t of trAt) {
-        if (t.key === o.key) continue;
-        const di = dIdx.get(t.key);
-        if (di != null && di > t.idx) {
-          const listB = byLine.get(t.key)!;
-          const a0 = listA[o.idx], a1 = listA[i], b0 = listB[t.idx], b1 = listB[di];
-          const interA = listA.slice(o.idx + 1, i).map((s) => s.stop_name);
-          const interB = listB.slice(t.idx + 1, di).map((s) => s.stop_name);
-          trips.push({
-            legs: [
-              { lineCode: a0.line_code, direction: a0.direction, fromCode: a0.stop_code!, fromName: a0.stop_name, toCode: a1.stop_code!, toName: a1.stop_name, numStops: i - o.idx, lineKey: o.key, fromIdx: o.idx, toIdx: i, intermediate: interA },
-              { lineCode: b0.line_code, direction: b0.direction, fromCode: b0.stop_code!, fromName: b0.stop_name, toCode: b1.stop_code!, toName: b1.stop_name, numStops: di - t.idx, lineKey: t.key, fromIdx: t.idx, toIdx: di, intermediate: interB },
-            ],
-            totalStops: (i - o.idx) + (di - t.idx),
-            transfers: 1,
-          });
-        }
-      }
-    }
-  }
+  // Transbordos desactivados: solo aceptamos coincidencias directas dentro del
+  // mismo line_code + direction para no mezclar paradas de líneas distintas.
   const seen = new Set<string>();
   const uniq = trips.filter((t) => {
     const sig = t.legs.map((l) => `${l.lineCode}|${l.direction}|${l.fromCode}|${l.toCode}`).join(">");
@@ -2182,6 +2168,50 @@ async function fetchVectaliaEta(stopCode: string, lineCode: string): Promise<num
   } catch {
     return null;
   }
+}
+
+function extractChosenDirectBus(text: string): { lineCode: string; fromCode: string; toCode: string } | null {
+  const line = text.match(/\bL[ií]nea\s+(\d{1,3})\b/i)?.[1];
+  const codes = [...text.matchAll(/\[parada\s+(\d{3,5})\]/gi)].map((m) => m[1]);
+  if (!line || codes.length < 2) return null;
+  return { lineCode: String(parseInt(line, 10)), fromCode: codes[0], toCode: codes[codes.length - 1] };
+}
+
+function findDirectLegForLine(lineStops: DbLineStop[], choice: { lineCode: string; fromCode: string; toCode: string }): VLeg | null {
+  const byDirection = new Map<number, DbLineStop[]>();
+  for (const s of lineStops) {
+    if (s.line_code !== choice.lineCode) continue;
+    if (!byDirection.has(s.direction)) byDirection.set(s.direction, []);
+    byDirection.get(s.direction)!.push(s);
+  }
+  let best: VLeg | null = null;
+  for (const [direction, list] of byDirection) {
+    list.sort((a, b) => a.seq - b.seq);
+    const fromIdxs = list.map((s, idx) => (s.stop_code === choice.fromCode ? idx : -1)).filter((idx) => idx >= 0);
+    const toIdxs = list.map((s, idx) => (s.stop_code === choice.toCode ? idx : -1)).filter((idx) => idx >= 0);
+    for (const fromIdx of fromIdxs) {
+      for (const toIdx of toIdxs) {
+        if (toIdx <= fromIdx) continue;
+        const from = list[fromIdx];
+        const to = list[toIdx];
+        const leg: VLeg = {
+          lineCode: choice.lineCode,
+          direction,
+          fromCode: choice.fromCode,
+          fromName: from.stop_name,
+          toCode: choice.toCode,
+          toName: to.stop_name,
+          numStops: toIdx - fromIdx,
+          lineKey: `${choice.lineCode}|${direction}`,
+          fromIdx,
+          toIdx,
+          intermediate: list.slice(fromIdx + 1, toIdx).map((s) => s.stop_name),
+        };
+        if (!best || leg.numStops < best.numStops) best = leg;
+      }
+    }
+  }
+  return best;
 }
 
 function legKmAndStops(
@@ -2313,6 +2343,31 @@ async function buildVectaliaTransit(
   return top;
 }
 
+async function buildChosenVectaliaTransit(text: string): Promise<{ origin: DbStop; dest: DbStop; trips: VTrip[] }[] | null> {
+  const choice = extractChosenDirectBus(text);
+  if (!choice) return null;
+  const g = await loadVectaliaGraph();
+  if (!g) return null;
+  const leg = findDirectLegForLine(g.lineStops, choice);
+  if (!leg) return null;
+  const origin = g.stops.find((s) => s.code === choice.fromCode) ?? {
+    code: choice.fromCode,
+    name: leg.fromName,
+    lat: null,
+    lng: null,
+  };
+  const dest = g.stops.find((s) => s.code === choice.toCode) ?? {
+    code: choice.toCode,
+    name: leg.toName,
+    lat: null,
+    lng: null,
+  };
+  leg.km = Math.round(legKmAndStops(g, leg) * 10) / 10;
+  leg.estMin = Math.max(1, Math.round((leg.km / URBAN_KMH) * 60 + leg.numStops * DWELL_MIN_PER_STOP));
+  leg.etaMin = (await fetchVectaliaEta(leg.fromCode, leg.lineCode)) ?? undefined;
+  return [{ origin, dest, trips: [{ legs: [leg], totalStops: leg.numStops, transfers: 0 }] }];
+}
+
 function formatVectaliaTransit(
   res: { origin: DbStop; dest: DbStop; trips: VTrip[] }[],
 ): string {
@@ -2367,6 +2422,48 @@ function formatTransitResult(r: TransitResult): string {
     })
     .join("\n");
   return head + "\n" + lines + "\n  nota=qr_subida viene de un identificador público de parada si se pudo resolver; si qr_subida=no_resuelto, no inventes enlace ni pidas código salvo que el usuario quiera tiempo real exacto.";
+}
+
+function buildBusOptionsReply(res: { origin: DbStop; dest: DbStop; trips: VTrip[] }[]): string {
+  const parts = ["Estas son las opciones directas:"];
+  const seen = new Set<string>();
+  for (const r of res) {
+    for (const trip of r.trips) {
+      const leg = trip.legs[0];
+      if (!leg || trip.transfers !== 0) continue;
+      const key = `${leg.lineCode}|${leg.direction}|${leg.fromCode}|${leg.toCode}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const obj = {
+        legs: [{
+          line: leg.lineCode,
+          fromName: leg.fromName,
+          fromCode: leg.fromCode,
+          toName: leg.toName,
+          toCode: leg.toCode,
+          ...(leg.etaMin != null ? { nextMin: leg.etaMin } : {}),
+        }],
+        ...(leg.estMin != null ? { travelMin: leg.estMin } : {}),
+        ...(leg.km != null ? { km: leg.km } : {}),
+      };
+      parts.push(`[[busopt:${encodeURIComponent(JSON.stringify(obj))}]]`);
+      if (parts.length >= 4) return parts.join("\n\n");
+    }
+  }
+  return parts.join("\n\n");
+}
+
+function buildChosenBusReply(res: { origin: DbStop; dest: DbStop; trips: VTrip[] }[]): string {
+  const leg = res[0]?.trips[0]?.legs[0];
+  if (!leg) return "No puedo validar esa opción con la red oficial. Prefiero no inventarte paradas.";
+  const eta = leg.etaMin != null ? ` [próximo bus](eta:${leg.lineCode}:${leg.fromCode}:${leg.etaMin})` : "";
+  const summary = `**Línea ${leg.lineCode} — sentido ${leg.toName}**${eta}\n⏱️ Trayecto: ${leg.estMin ?? "—"} min${leg.km != null ? ` (~${leg.km} km)` : ""}`;
+  const stops = [
+    `- 🟢 **${leg.fromName}** (subes aquí)`,
+    ...leg.intermediate.map((name) => `- ⚪ ${name}`),
+    `- 🔴 **${leg.toName}** (te bajas aquí)`,
+  ];
+  return `${summary}\n\n${stops.join("\n")}`;
 }
 
 serve(async (req) => {
@@ -2473,16 +2570,31 @@ serve(async (req) => {
             return null;
           }),
       (transitMode || detectTransitIntent(transitText))
-        ? buildVectaliaTransit(originTextForTransit, destTextForTransit, userOriginForTransit).catch(
-            (err) => {
+        ? buildChosenVectaliaTransit(latestUserText)
+            .then((chosen) => chosen ?? buildVectaliaTransit(originTextForTransit, destTextForTransit, userOriginForTransit))
+            .catch((err) => {
               console.error("vectalia lookup error:", err);
               return null;
-            },
-          )
+            })
         : Promise.resolve(null),
     ]);
     const transitLine = transitResult ? formatTransitResult(transitResult) : "";
     const vectaliaLine = vectaliaTrips ? formatVectaliaTransit(vectaliaTrips) : "";
+    if (transitMode || detectTransitIntent(transitText)) {
+      if (vectaliaTrips) {
+        return streamChatText(
+          extractChosenDirectBus(latestUserText)
+            ? buildChosenBusReply(vectaliaTrips)
+            : buildBusOptionsReply(vectaliaTrips),
+        );
+      }
+      const msg = !destTextForTransit
+        ? "Dime desde dónde sales y a qué parada, calle o sitio quieres llegar, y lo valido solo con paradas oficiales."
+        : !originTextForTransit && !userOriginForTransit
+          ? "Dime desde qué calle, parada o punto cercano sales para buscarte una línea directa oficial."
+          : "No encuentro una línea directa verificada para ese trayecto. Prefiero no inventarte paradas ni líneas: dime una calle con número o una parada cercana y lo recalculo.";
+      return streamChatText(msg);
+    }
     const transitModeLine = transitMode
       ? `\nTRANSIT_MODE: ON. Flujo "Bus urbano de Alicante" (Vectalia).
 ESTILO OBLIGATORIO en este modo:
