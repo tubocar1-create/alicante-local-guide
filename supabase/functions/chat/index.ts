@@ -1445,28 +1445,77 @@ async function geocodeAlicante(query: string): Promise<(LatLng & { label: string
   const verified = verifiedReferenceLocation(query);
   if (verified) return verified;
 
+  const osm = await geocodeAlicanteWithOsmStrict(query).catch(() => null);
+  if (osm) return osm;
+
   const google = await geocodeAlicanteWithGoogle(query).catch(() => null);
   if (google) return google;
 
-  // Último recurso: OSM, acotado a Alicante. No se usa si tenemos referencia verificada.
+  return null;
+}
+
+async function geocodeAlicanteWithOsmStrict(query: string): Promise<(LatLng & { label: string }) | null> {
   const url = new URL("https://nominatim.openstreetmap.org/search");
   url.searchParams.set("q", `${query}, Alicante`);
   url.searchParams.set("format", "json");
-  url.searchParams.set("limit", "1");
+  url.searchParams.set("limit", "6");
   url.searchParams.set("countrycodes", "es");
   url.searchParams.set("viewbox", "-0.65,38.45,-0.30,38.20"); // lon_min,lat_max,lon_max,lat_min
   url.searchParams.set("bounded", "1");
+  url.searchParams.set("addressdetails", "1");
   try {
     const res = await fetch(url.toString(), {
       headers: { "User-Agent": "AlicanteFriend/1.0 (contact via lovable.app)" },
     });
     if (!res.ok) return null;
-    const arr = (await res.json()) as Array<{ lat: string; lon: string; display_name: string }>;
-    if (!arr.length) return null;
+    const arr = (await res.json()) as Array<{
+      lat: string;
+      lon: string;
+      display_name: string;
+      class?: string;
+      type?: string;
+      importance?: number;
+      address?: Record<string, string>;
+    }>;
+    const allowedTypes = new Set([
+      "square",
+      "park",
+      "garden",
+      "pedestrian",
+      "tertiary",
+      "secondary",
+      "primary",
+      "residential",
+      "service",
+      "footway",
+      "mall",
+      "supermarket",
+      "department_store",
+      "retail",
+      "commercial",
+      "attraction",
+      "hospital",
+      "school",
+      "university",
+      "college",
+      "public_building",
+    ]);
+    const candidates = arr
+      .map((p) => ({ ...p, point: { lat: Number(p.lat), lng: Number(p.lon) } }))
+      .filter((p) => Number.isFinite(p.point.lat) && Number.isFinite(p.point.lng))
+      .filter((p) => isInsideAlicanteBounds(p.point))
+      .filter((p) => {
+        const city = normTxt([p.address?.city, p.address?.town, p.address?.municipality, p.address?.county].filter(Boolean).join(" "));
+        const inAlicante = city.includes("alicante") || normTxt(p.display_name).includes("alicante");
+        return inAlicante && (allowedTypes.has(p.type ?? "") || ["highway", "place", "leisure", "shop", "amenity", "tourism"].includes(p.class ?? ""));
+      })
+      .sort((a, b) => (b.importance ?? 0) - (a.importance ?? 0));
+    if (!candidates.length) return null;
+    const best = candidates[0];
     return {
-      lat: Number(arr[0].lat),
-      lng: Number(arr[0].lon),
-      label: arr[0].display_name.split(",").slice(0, 2).join(",").trim(),
+      lat: best.point.lat,
+      lng: best.point.lng,
+      label: best.display_name.split(",").slice(0, 2).join(",").trim(),
     };
   } catch {
     return null;
