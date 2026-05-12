@@ -1432,7 +1432,13 @@ function extractTransitOrigin(text: string): string | null {
 }
 
 async function geocodeAlicante(query: string): Promise<(LatLng & { label: string }) | null> {
-  // Bias hard to Alicante province via viewbox
+  const verified = verifiedReferenceLocation(query);
+  if (verified) return verified;
+
+  const google = await geocodeAlicanteWithGoogle(query).catch(() => null);
+  if (google) return google;
+
+  // Último recurso: OSM, acotado a Alicante. No se usa si tenemos referencia verificada.
   const url = new URL("https://nominatim.openstreetmap.org/search");
   url.searchParams.set("q", `${query}, Alicante`);
   url.searchParams.set("format", "json");
@@ -1455,6 +1461,45 @@ async function geocodeAlicante(query: string): Promise<(LatLng & { label: string
   } catch {
     return null;
   }
+}
+
+async function geocodeAlicanteWithGoogle(query: string): Promise<(LatLng & { label: string }) | null> {
+  const apiKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
+  if (!apiKey) return null;
+  const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": apiKey,
+      "X-Goog-FieldMask": "places.location,places.displayName,places.formattedAddress",
+    },
+    body: JSON.stringify({
+      textQuery: `${query}, Alicante, España`,
+      locationBias: { circle: { center: ALICANTE_CENTER, radius: 12000 } },
+      maxResultCount: 3,
+      languageCode: "es",
+      regionCode: "ES",
+    }),
+  });
+  if (!res.ok) return null;
+  const data = (await res.json()) as {
+    places?: Array<{
+      location?: { latitude: number; longitude: number };
+      displayName?: { text?: string };
+      formattedAddress?: string;
+    }>;
+  };
+  for (const place of data.places ?? []) {
+    const loc = place.location;
+    if (!loc || !Number.isFinite(loc.latitude) || !Number.isFinite(loc.longitude)) continue;
+    const point = { lat: loc.latitude, lng: loc.longitude };
+    if (distanceKm(ALICANTE_CENTER, point) > 18) continue;
+    return {
+      ...point,
+      label: place.displayName?.text ?? place.formattedAddress ?? query,
+    };
+  }
+  return null;
 }
 
 function haversineMeters(a: LatLng, b: LatLng): number {
