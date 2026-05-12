@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Bus, ExternalLink } from "lucide-react";
+import { ArrowLeft, Clock, ExternalLink } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useBusGraph } from "@/hooks/useBusGraph";
 import type { RouteStop } from "@/lib/bus-routing";
+import { cumulativeMinutes, formatMinutes } from "@/lib/bus-eta";
 import { StopRealtimeSheet, type StopRealtimeContext } from "@/components/StopRealtimeSheet";
 
 export const Route = createFileRoute("/bus/lines/$code")({
