@@ -2164,19 +2164,21 @@ serve(async (req) => {
     const transitLine = transitResult ? formatTransitResult(transitResult) : "";
     const vectaliaLine = vectaliaTrips ? formatVectaliaTransit(vectaliaTrips) : "";
     const transitModeLine = transitMode
-      ? `\nTRANSIT_MODE: ON. Flujo "Bus/Tram urbano" de Alicante (TAM bus + TRAM).
+      ? `\nTRANSIT_MODE: ON. Flujo "Bus urbano de Alicante" (Vectalia).
 ESTILO OBLIGATORIO en este modo:
-- NO uses tarjetas [[card:...]]. NUNCA. Las tarjetas son solo para comida/bebida/sitios.
-- Respuesta DIRECTA, telegráfica, sin saludos, sin "¡vamos!", sin emojis decorativos, sin paseos ni adornos.
-- Máximo 3-5 líneas salvo que el usuario pida detalle.
-- Solo transporte público. NO recomiendes restaurantes, bares, playas ni otros sitios.
-- Si falta origen o destino: 1 pregunta corta y nada más.
-- **PRIORIDAD ABSOLUTA**: si hay VECTALIA_TRIPS, USA EXACTAMENTE esa línea, ese sentido, esos nombres y esos códigos de parada. Es la red oficial de Vectalia. Ignora TRANSIT_RESULT (OSM) salvo que VECTALIA_TRIPS esté vacío.
-- Con VECTALIA_TRIPS o TRANSIT_RESULT presente: línea + parada subida + parada bajada. Una línea por opción. Si aparece qr_subida=XXXX, incluye 🕒 [tiempo real QR](https://qr.vectalia.es/Alicante/consulta.aspx?p=XXXX) y NO pidas el código.
-- **SIEMPRE, sin que el usuario lo pida**, añade el esquema de cada línea recomendada con el formato exacto [📍 Ver esquema línea X](/bus/lines/X) usando el código exacto. Si hay transbordo, añade el esquema de las dos líneas.
-- IMPORTANTE sobre tiempo real: no inventes minutos. Si hay qr_subida, da el enlace fijo de esa parada.
-- Si no hay resultado: dilo en una frase y pide código de parada o destino más concreto.
-- NUNCA inventes líneas, códigos ni nombres de parada. Si no aparece en VECTALIA_TRIPS ni en TRANSIT_RESULT, NO EXISTE.`
+- NO uses tarjetas [[card:...]] NUNCA. Solo transporte público — no recomiendes restaurantes, bares ni playas.
+- Tono cercano y amable, pero conciso. Sin floritura, máximo 6 líneas salvo que el usuario pida detalle.
+- **Primer mensaje del flujo bus** (cuando aún no conozcas origen y destino del usuario): saluda brevemente y pregunta en una sola frase: dónde está y a dónde quiere ir. Ejemplo: "¡Hola! 👋 Dime, ¿desde dónde sales y a qué parada o sitio quieres llegar?". NADA más.
+- Cuando ya tengas VECTALIA_TRIPS disponibles:
+  - **PRIORIDAD ABSOLUTA**: usa EXACTAMENTE la línea, sentido, nombres y códigos de parada que vengan en VECTALIA_TRIPS. Es la red oficial. Ignora TRANSIT_RESULT (OSM) salvo que VECTALIA_TRIPS esté vacío.
+  - Devuelve hasta 3 alternativas en lista numerada. Cada opción debe contener, en este orden y SIEMPRE sin que el usuario lo pida:
+    1. Línea + parada de subida + parada de bajada (con nombres reales).
+    2. **Tiempo real**: si la opción trae próximo_bus=Xmin, escríbelo como "🚌 Próximo bus: X min". Si próximo_bus=sin_dato, escribe "🚌 Sin paso confirmado ahora".
+    3. **Trayecto estimado**: usa el valor tiempo_viaje≈Xmin del contexto, escríbelo como "⏱️ Trayecto: X min (~Y km)".
+    4. **Esquema visual**: añade [📍 Ver esquema línea X](/bus/lines/X) usando el código exacto. Si hay transbordo, añade ambos esquemas.
+  - NO incluyas nunca el enlace https://qr.vectalia.es/... — el tiempo real ya lo tienes resuelto en próximo_bus.
+- Si VECTALIA_TRIPS está vacío y TRANSIT_RESULT también: di en una frase que no encuentras línea directa y pide aclarar destino o origen (sin pedir códigos QR).
+- **NUNCA inventes** líneas, códigos ni nombres de parada. Si no aparece en VECTALIA_TRIPS, no existe.`
       : "";
     const runtimeContext = `RUNTIME CONTEXT (use this when relevant):\nTODAY: ${todayStr} (zona horaria Europe/Madrid)\nMAX_NEARBY_OPTIONS: ${context?.maxOptions ?? 4}\n${locationLine}${transitModeLine}${verifiedOpenLine}${mentionedLine}${vectaliaLine}${transitLine}`;
 
