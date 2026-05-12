@@ -2073,10 +2073,13 @@ type VLeg = {
   km?: number;
   estMin?: number;
   etaMin?: number;
+  transferWalkM?: number;
 };
 type VTrip = { legs: VLeg[]; totalStops: number; transfers: number };
 
-function findVTrips(lineStops: DbLineStop[], oCode: string, dCode: string): VTrip[] {
+const TRANSFER_WALK_MAX_M = 600;
+
+function findVTrips(lineStops: DbLineStop[], stops: DbStop[], oCode: string, dCode: string): VTrip[] {
   if (!oCode || !dCode || oCode === dCode) return [];
   const byLine = new Map<string, DbLineStop[]>();
   const byStop = new Map<string, { key: string; idx: number }[]>();
