@@ -1801,6 +1801,12 @@ type VLeg = {
   toCode: string;
   toName: string;
   numStops: number;
+  lineKey: string;
+  fromIdx: number;
+  toIdx: number;
+  km?: number;
+  estMin?: number;
+  etaMin?: number;
 };
 type VTrip = { legs: VLeg[]; totalStops: number; transfers: number };
 
@@ -1839,6 +1845,7 @@ function findVTrips(lineStops: DbLineStop[], oCode: string, dCode: string): VTri
           fromCode: a.stop_code!, fromName: a.stop_name,
           toCode: b.stop_code!, toName: b.stop_name,
           numStops: di - o.idx,
+          lineKey: o.key, fromIdx: o.idx, toIdx: di,
         }],
         totalStops: di - o.idx, transfers: 0,
       });
@@ -1862,8 +1869,8 @@ function findVTrips(lineStops: DbLineStop[], oCode: string, dCode: string): VTri
           const a0 = listA[o.idx], a1 = listA[i], b0 = listB[t.idx], b1 = listB[di];
           trips.push({
             legs: [
-              { lineCode: a0.line_code, direction: a0.direction, fromCode: a0.stop_code!, fromName: a0.stop_name, toCode: a1.stop_code!, toName: a1.stop_name, numStops: i - o.idx },
-              { lineCode: b0.line_code, direction: b0.direction, fromCode: b0.stop_code!, fromName: b0.stop_name, toCode: b1.stop_code!, toName: b1.stop_name, numStops: di - t.idx },
+              { lineCode: a0.line_code, direction: a0.direction, fromCode: a0.stop_code!, fromName: a0.stop_name, toCode: a1.stop_code!, toName: a1.stop_name, numStops: i - o.idx, lineKey: o.key, fromIdx: o.idx, toIdx: i },
+              { lineCode: b0.line_code, direction: b0.direction, fromCode: b0.stop_code!, fromName: b0.stop_name, toCode: b1.stop_code!, toName: b1.stop_name, numStops: di - t.idx, lineKey: t.key, fromIdx: t.idx, toIdx: di },
             ],
             totalStops: (i - o.idx) + (di - t.idx),
             transfers: 1,
@@ -1881,6 +1888,67 @@ function findVTrips(lineStops: DbLineStop[], oCode: string, dCode: string): VTri
   });
   uniq.sort((a, b) => a.transfers - b.transfers || a.totalStops - b.totalStops);
   return uniq.slice(0, 6);
+}
+
+// Velocidad media bus urbano Alicante ≈ 16 km/h, +0.25 min de parada por stop
+const URBAN_KMH = 16;
+const DWELL_MIN_PER_STOP = 0.25;
+
+const VECTALIA_RT_URL = "https://qr.vectalia.es/Alicante/lib/request.aspx";
+const ARRIVAL_RE =
+  /Linea\s+(\d+)\s+([^:]+?)\s*:\s*(\d+)\s*min/gi;
+
+async function fetchVectaliaEta(stopCode: string, lineCode: string): Promise<number | null> {
+  try {
+    const padded = lineCode.padStart(3, "0");
+    const r = await fetch(
+      `${VECTALIA_RT_URL}?p=${encodeURIComponent(stopCode)}&l=${encodeURIComponent(padded)}`,
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0",
+          Referer: "https://qr.vectalia.es/Alicante/mapa.aspx",
+          "X-Requested-With": "XMLHttpRequest",
+        },
+      },
+    );
+    if (!r.ok) return null;
+    const txt = await r.text();
+    const matches = [...txt.matchAll(ARRIVAL_RE)];
+    let best: number | null = null;
+    for (const m of matches) {
+      const ln = String(parseInt(m[1], 10));
+      if (ln !== lineCode) continue;
+      const min = parseInt(m[3], 10);
+      if (Number.isFinite(min) && (best == null || min < best)) best = min;
+    }
+    return best;
+  } catch {
+    return null;
+  }
+}
+
+function legKmAndStops(
+  graph: { stops: DbStop[]; lineStops: DbLineStop[] },
+  leg: VLeg,
+): number {
+  const coords = new Map<string, LatLng>();
+  for (const s of graph.stops) {
+    if (s.lat != null && s.lng != null) coords.set(s.code, { lat: s.lat, lng: s.lng });
+  }
+  const list = graph.lineStops
+    .filter((s) => s.line_code === leg.lineCode && s.direction === leg.direction)
+    .sort((a, b) => a.seq - b.seq);
+  const slice = list.slice(leg.fromIdx, leg.toIdx + 1);
+  let km = 0;
+  let prev: LatLng | null = null;
+  for (const s of slice) {
+    if (!s.stop_code) continue;
+    const c = coords.get(s.stop_code);
+    if (!c) continue;
+    if (prev) km += haversineMeters(prev, c) / 1000;
+    prev = c;
+  }
+  return km;
 }
 
 async function buildVectaliaTransit(
@@ -1916,7 +1984,31 @@ async function buildVectaliaTransit(
     const ta = a.trips[0], tb = b.trips[0];
     return ta.transfers - tb.transfers || ta.totalStops - tb.totalStops;
   });
-  return all.slice(0, 3);
+  const top = all.slice(0, 3);
+
+  // Enriquece con km, estMin y ETA en tiempo real (paralelo)
+  const etaJobs: Promise<void>[] = [];
+  const etaCache = new Map<string, Promise<number | null>>();
+  for (const r of top) {
+    for (const t of r.trips.slice(0, 3)) {
+      for (const leg of t.legs) {
+        leg.km = Math.round(legKmAndStops(g, leg) * 10) / 10;
+        leg.estMin = Math.max(
+          1,
+          Math.round((leg.km / URBAN_KMH) * 60 + leg.numStops * DWELL_MIN_PER_STOP),
+        );
+        const key = `${leg.fromCode}|${leg.lineCode}`;
+        if (!etaCache.has(key)) etaCache.set(key, fetchVectaliaEta(leg.fromCode, leg.lineCode));
+        etaJobs.push(
+          etaCache.get(key)!.then((eta) => {
+            leg.etaMin = eta ?? undefined;
+          }),
+        );
+      }
+    }
+  }
+  await Promise.allSettled(etaJobs);
+  return top;
 }
 
 function formatVectaliaTransit(
@@ -1930,10 +2022,12 @@ function formatVectaliaTransit(
   for (const r of res) {
     for (const t of r.trips.slice(0, 3)) {
       const legs = t.legs
-        .map(
-          (l) =>
-            `Línea ${l.lineCode} (sentido ${l.direction}): sube en "${l.fromName}" [parada ${l.fromCode}] → bájate en "${l.toName}" [parada ${l.toCode}] · ${l.numStops} paradas · esquema=/bus/lines/${l.lineCode} · qr_subida=${l.fromCode}`,
-        )
+        .map((l) => {
+          const eta = l.etaMin != null ? `próximo_bus=${l.etaMin}min` : `próximo_bus=sin_dato`;
+          const km = l.km != null ? `${l.km}km` : "";
+          const est = l.estMin != null ? `tiempo_viaje≈${l.estMin}min` : "";
+          return `Línea ${l.lineCode} (sentido ${l.direction}): sube en "${l.fromName}" [parada ${l.fromCode}] → bájate en "${l.toName}" [parada ${l.toCode}] · ${l.numStops} paradas · ${km} · ${est} · ${eta} · esquema=/bus/lines/${l.lineCode} · qr_subida=${l.fromCode}`;
+        })
         .join("  ⇄ TRANSBORDO ⇄  ");
       out.push(`  ${n++}. ${legs}  | total=${t.totalStops} paradas, transbordos=${t.transfers}`);
       if (n > 8) break;
@@ -2070,19 +2164,21 @@ serve(async (req) => {
     const transitLine = transitResult ? formatTransitResult(transitResult) : "";
     const vectaliaLine = vectaliaTrips ? formatVectaliaTransit(vectaliaTrips) : "";
     const transitModeLine = transitMode
-      ? `\nTRANSIT_MODE: ON. Flujo "Bus/Tram urbano" de Alicante (TAM bus + TRAM).
+      ? `\nTRANSIT_MODE: ON. Flujo "Bus urbano de Alicante" (Vectalia).
 ESTILO OBLIGATORIO en este modo:
-- NO uses tarjetas [[card:...]]. NUNCA. Las tarjetas son solo para comida/bebida/sitios.
-- Respuesta DIRECTA, telegráfica, sin saludos, sin "¡vamos!", sin emojis decorativos, sin paseos ni adornos.
-- Máximo 3-5 líneas salvo que el usuario pida detalle.
-- Solo transporte público. NO recomiendes restaurantes, bares, playas ni otros sitios.
-- Si falta origen o destino: 1 pregunta corta y nada más.
-- **PRIORIDAD ABSOLUTA**: si hay VECTALIA_TRIPS, USA EXACTAMENTE esa línea, ese sentido, esos nombres y esos códigos de parada. Es la red oficial de Vectalia. Ignora TRANSIT_RESULT (OSM) salvo que VECTALIA_TRIPS esté vacío.
-- Con VECTALIA_TRIPS o TRANSIT_RESULT presente: línea + parada subida + parada bajada. Una línea por opción. Si aparece qr_subida=XXXX, incluye 🕒 [tiempo real QR](https://qr.vectalia.es/Alicante/consulta.aspx?p=XXXX) y NO pidas el código.
-- **SIEMPRE, sin que el usuario lo pida**, añade el esquema de cada línea recomendada con el formato exacto [📍 Ver esquema línea X](/bus/lines/X) usando el código exacto. Si hay transbordo, añade el esquema de las dos líneas.
-- IMPORTANTE sobre tiempo real: no inventes minutos. Si hay qr_subida, da el enlace fijo de esa parada.
-- Si no hay resultado: dilo en una frase y pide código de parada o destino más concreto.
-- NUNCA inventes líneas, códigos ni nombres de parada. Si no aparece en VECTALIA_TRIPS ni en TRANSIT_RESULT, NO EXISTE.`
+- NO uses tarjetas [[card:...]] NUNCA. Solo transporte público — no recomiendes restaurantes, bares ni playas.
+- Tono cercano y amable, pero conciso. Sin floritura, máximo 6 líneas salvo que el usuario pida detalle.
+- **Primer mensaje del flujo bus** (cuando aún no conozcas origen y destino del usuario): saluda brevemente y pregunta en una sola frase: dónde está y a dónde quiere ir. Ejemplo: "¡Hola! 👋 Dime, ¿desde dónde sales y a qué parada o sitio quieres llegar?". NADA más.
+- Cuando ya tengas VECTALIA_TRIPS disponibles:
+  - **PRIORIDAD ABSOLUTA**: usa EXACTAMENTE la línea, sentido, nombres y códigos de parada que vengan en VECTALIA_TRIPS. Es la red oficial. Ignora TRANSIT_RESULT (OSM) salvo que VECTALIA_TRIPS esté vacío.
+  - Devuelve hasta 3 alternativas en lista numerada. Cada opción debe contener, en este orden y SIEMPRE sin que el usuario lo pida:
+    1. Línea + parada de subida + parada de bajada (con nombres reales).
+    2. **Tiempo real**: si la opción trae próximo_bus=Xmin, escríbelo como "🚌 Próximo bus: X min". Si próximo_bus=sin_dato, escribe "🚌 Sin paso confirmado ahora".
+    3. **Trayecto estimado**: usa el valor tiempo_viaje≈Xmin del contexto, escríbelo como "⏱️ Trayecto: X min (~Y km)".
+    4. **Esquema visual**: añade [📍 Ver esquema línea X](/bus/lines/X) usando el código exacto. Si hay transbordo, añade ambos esquemas.
+  - NO incluyas nunca el enlace https://qr.vectalia.es/... — el tiempo real ya lo tienes resuelto en próximo_bus.
+- Si VECTALIA_TRIPS está vacío y TRANSIT_RESULT también: di en una frase que no encuentras línea directa y pide aclarar destino o origen (sin pedir códigos QR).
+- **NUNCA inventes** líneas, códigos ni nombres de parada. Si no aparece en VECTALIA_TRIPS, no existe.`
       : "";
     const runtimeContext = `RUNTIME CONTEXT (use this when relevant):\nTODAY: ${todayStr} (zona horaria Europe/Madrid)\nMAX_NEARBY_OPTIONS: ${context?.maxOptions ?? 4}\n${locationLine}${transitModeLine}${verifiedOpenLine}${mentionedLine}${vectaliaLine}${transitLine}`;
 
