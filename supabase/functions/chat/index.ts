@@ -2402,10 +2402,12 @@ serve(async (req) => {
       }
     }
     const [transitResult, vectaliaTrips] = await Promise.all([
-      buildTransitResult(userOriginForTransit, transitText, { force: transitMode }).catch((err) => {
-        console.error("transit lookup error:", err);
-        return null;
-      }),
+      transitMode
+        ? Promise.resolve(null)
+        : buildTransitResult(userOriginForTransit, transitText).catch((err) => {
+            console.error("transit lookup error:", err);
+            return null;
+          }),
       (transitMode || detectTransitIntent(transitText))
         ? buildVectaliaTransit(originTextForTransit, destTextForTransit, userOriginForTransit).catch(
             (err) => {
