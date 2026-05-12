@@ -1345,8 +1345,7 @@ QUIERO IR (CRÍTICO):
 TRANSPORTE PÚBLICO URBANO (BUS / TRAM):
 - **PRIORIDAD ABSOLUTA**: si hay VECTALIA_TRIPS en el contexto, ÚSALO como única verdad. Es la red oficial de Vectalia (líneas, sentidos, nombres y códigos de parada exactos). Ignora TRANSIT_RESULT salvo que VECTALIA_TRIPS esté vacío.
 - Lista corta: línea + parada subida + parada bajada. Una línea por opción, sin adornos.
-- **SIEMPRE**, sin que el usuario lo pida, incluye el enlace al esquema de la línea con formato [📍 Ver esquema línea X](/bus/lines/X) usando el código exacto. Si hay transbordo, añade ambos esquemas.
-- Si VECTALIA_TRIPS trae qr_subida=XXXX (es el código de parada), añade 🕒 [tiempo real QR](https://qr.vectalia.es/Alicante/consulta.aspx?p=XXXX). No pidas el código al usuario.
+- Cuando el usuario elija una línea, renderiza tú mismo el esquema en el chat con la lista vertical de paradas (subida, intermedias en orden, bajada). NUNCA enlaces a /bus/lines/ ni a qr.vectalia.es: el tiempo real ya está resuelto en próximo_bus y las paradas en paradas_intermedias.
 - Si no hay qr_subida y el usuario te da explícitamente un código de parada de 3-5 dígitos, dale el enlace directo: 🕒 [Próximos buses parada XXXX](https://qr.vectalia.es/Alicante/consulta.aspx?p=XXXX).
 - Si VECTALIA_TRIPS y TRANSIT_RESULT.options están vacíos: dilo en una frase y pide destino o código de parada más concreto.
 - **NUNCA inventes** números de línea, códigos de parada ni nombres de parada. Si no aparece en VECTALIA_TRIPS ni en TRANSIT_RESULT, no existe.`;
@@ -1804,6 +1803,7 @@ type VLeg = {
   lineKey: string;
   fromIdx: number;
   toIdx: number;
+  intermediate: string[];
   km?: number;
   estMin?: number;
   etaMin?: number;
@@ -1839,6 +1839,7 @@ function findVTrips(lineStops: DbLineStop[], oCode: string, dCode: string): VTri
     if (di != null && di > o.idx) {
       const list = byLine.get(o.key)!;
       const a = list[o.idx], b = list[di];
+      const inter = list.slice(o.idx + 1, di).map((s) => s.stop_name);
       trips.push({
         legs: [{
           lineCode: a.line_code, direction: a.direction,
@@ -1846,6 +1847,7 @@ function findVTrips(lineStops: DbLineStop[], oCode: string, dCode: string): VTri
           toCode: b.stop_code!, toName: b.stop_name,
           numStops: di - o.idx,
           lineKey: o.key, fromIdx: o.idx, toIdx: di,
+          intermediate: inter,
         }],
         totalStops: di - o.idx, transfers: 0,
       });
@@ -1867,10 +1869,12 @@ function findVTrips(lineStops: DbLineStop[], oCode: string, dCode: string): VTri
         if (di != null && di > t.idx) {
           const listB = byLine.get(t.key)!;
           const a0 = listA[o.idx], a1 = listA[i], b0 = listB[t.idx], b1 = listB[di];
+          const interA = listA.slice(o.idx + 1, i).map((s) => s.stop_name);
+          const interB = listB.slice(t.idx + 1, di).map((s) => s.stop_name);
           trips.push({
             legs: [
-              { lineCode: a0.line_code, direction: a0.direction, fromCode: a0.stop_code!, fromName: a0.stop_name, toCode: a1.stop_code!, toName: a1.stop_name, numStops: i - o.idx, lineKey: o.key, fromIdx: o.idx, toIdx: i },
-              { lineCode: b0.line_code, direction: b0.direction, fromCode: b0.stop_code!, fromName: b0.stop_name, toCode: b1.stop_code!, toName: b1.stop_name, numStops: di - t.idx, lineKey: t.key, fromIdx: t.idx, toIdx: di },
+              { lineCode: a0.line_code, direction: a0.direction, fromCode: a0.stop_code!, fromName: a0.stop_name, toCode: a1.stop_code!, toName: a1.stop_name, numStops: i - o.idx, lineKey: o.key, fromIdx: o.idx, toIdx: i, intermediate: interA },
+              { lineCode: b0.line_code, direction: b0.direction, fromCode: b0.stop_code!, fromName: b0.stop_name, toCode: b1.stop_code!, toName: b1.stop_name, numStops: di - t.idx, lineKey: t.key, fromIdx: t.idx, toIdx: di, intermediate: interB },
             ],
             totalStops: (i - o.idx) + (di - t.idx),
             transfers: 1,
@@ -2026,7 +2030,10 @@ function formatVectaliaTransit(
           const eta = l.etaMin != null ? `próximo_bus=${l.etaMin}min` : `próximo_bus=sin_dato`;
           const km = l.km != null ? `${l.km}km` : "";
           const est = l.estMin != null ? `tiempo_viaje≈${l.estMin}min` : "";
-          return `Línea ${l.lineCode} (sentido ${l.direction}): sube en "${l.fromName}" [parada ${l.fromCode}] → bájate en "${l.toName}" [parada ${l.toCode}] · ${l.numStops} paradas · ${km} · ${est} · ${eta} · esquema=/bus/lines/${l.lineCode} · qr_subida=${l.fromCode}`;
+          const inter = l.intermediate.length
+            ? `paradas_intermedias=[${l.intermediate.map((s) => `"${s}"`).join(", ")}]`
+            : `paradas_intermedias=[]`;
+          return `Línea ${l.lineCode} (sentido ${l.direction}): sube en "${l.fromName}" [parada ${l.fromCode}] → bájate en "${l.toName}" [parada ${l.toCode}] · ${l.numStops} paradas · ${km} · ${est} · ${eta} · qr_subida=${l.fromCode} · ${inter}`;
         })
         .join("  ⇄ TRANSBORDO ⇄  ");
       out.push(`  ${n++}. ${legs}  | total=${t.totalStops} paradas, transbordos=${t.transfers}`);
@@ -2171,12 +2178,20 @@ ESTILO OBLIGATORIO en este modo:
 - **Primer mensaje del flujo bus** (cuando aún no conozcas origen y destino del usuario): saluda brevemente y pregunta en una sola frase: dónde está y a dónde quiere ir. Ejemplo: "¡Hola! 👋 Dime, ¿desde dónde sales y a qué parada o sitio quieres llegar?". NADA más.
 - Cuando ya tengas VECTALIA_TRIPS disponibles:
   - **PRIORIDAD ABSOLUTA**: usa EXACTAMENTE la línea, sentido, nombres y códigos de parada que vengan en VECTALIA_TRIPS. Es la red oficial. Ignora TRANSIT_RESULT (OSM) salvo que VECTALIA_TRIPS esté vacío.
-  - Devuelve hasta 3 alternativas en lista numerada. Cada opción debe contener, en este orden y SIEMPRE sin que el usuario lo pida:
-    1. Línea + parada de subida + parada de bajada (con nombres reales).
-    2. **Tiempo real**: si la opción trae próximo_bus=Xmin, escríbelo como "🚌 Próximo bus: X min". Si próximo_bus=sin_dato, escribe "🚌 Sin paso confirmado ahora".
-    3. **Trayecto estimado**: usa el valor tiempo_viaje≈Xmin del contexto, escríbelo como "⏱️ Trayecto: X min (~Y km)".
-    4. **Esquema visual**: añade [📍 Ver esquema línea X](/bus/lines/X) usando el código exacto. Si hay transbordo, añade ambos esquemas.
-  - NO incluyas nunca el enlace https://qr.vectalia.es/... — el tiempo real ya lo tienes resuelto en próximo_bus.
+  - **Paso 1 — Alternativas (cuando el usuario aún no ha elegido línea)**: devuelve hasta 3 opciones en lista numerada y BREVE. Para cada opción, en este orden y SIEMPRE sin que el usuario lo pida:
+    1. "**Línea X** · sube en *Nombre parada subida* → baja en *Nombre parada bajada*" (si hay transbordo, indícalo entre legs).
+    2. "🚌 Próximo bus: X min" si hay próximo_bus=Xmin; si es sin_dato, "🚌 Sin paso confirmado ahora".
+    3. "⏱️ Trayecto: X min (~Y km)" usando tiempo_viaje≈Xmin y km.
+    NO incluyas en este paso el listado de paradas intermedias ni enlaces /bus/lines/. Termina preguntando: "¿Cuál prefieres?".
+  - **Paso 2 — Esquema de la ruta (cuando el usuario ya ha elegido una línea/opción)**: NO enlaces a /bus/lines/. Renderiza tú mismo el esquema en el chat usando paradas_intermedias del contexto, así:
+    "**Línea X — sentido Nombre bajada**" + repetición del próximo bus y trayecto, y debajo una lista vertical:
+    - 🟢 **Nombre parada subida** (subes aquí)
+    - ⚪ Parada intermedia 1
+    - ⚪ Parada intermedia 2
+    - … (lista TODAS las paradas_intermedias en orden, sin abreviar)
+    - 🔴 **Nombre parada bajada** (te bajas aquí)
+    Si la opción tiene transbordo, repite el bloque para cada leg, separados por "↻ **Transbordo en *Parada*** — coge la Línea Y".
+  - NO incluyas nunca el enlace https://qr.vectalia.es/... ni el enlace /bus/lines/ — el tiempo real y el esquema ya los das tú aquí.
 - Si VECTALIA_TRIPS está vacío y TRANSIT_RESULT también: di en una frase que no encuentras línea directa y pide aclarar destino o origen (sin pedir códigos QR).
 - **NUNCA inventes** líneas, códigos ni nombres de parada. Si no aparece en VECTALIA_TRIPS, no existe.`
       : "";
