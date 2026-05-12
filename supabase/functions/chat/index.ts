@@ -2572,6 +2572,7 @@ function buildBusOptionsReply(res: { origin: DbStop; dest: DbStop; trips: VTrip[
           toCode: leg.toCode,
           // Solo damos próximo bus en el primer leg; en transbordos no damos hora del segundo bus
           ...(idx === 0 && leg.etaMin != null ? { nextMin: leg.etaMin } : {}),
+          ...(idx > 0 && leg.transferWalkM != null && leg.transferWalkM > 0 ? { walkM: leg.transferWalkM } : {}),
         })),
         ...(trip.legs[0].estMin != null ? { travelMin: trip.legs.reduce((s, l) => s + (l.estMin ?? 0), 0) } : {}),
         ...(trip.legs[0].km != null ? { km: Math.round(trip.legs.reduce((s, l) => s + (l.km ?? 0), 0) * 10) / 10 } : {}),
