@@ -65,10 +65,11 @@ export function LiveEta({
     };
   }, [line, stop, intervalMs, initialMin, index, minMin]);
 
-  // Compact variant (legacy)
+  // Compact variant (legacy) — muestra minutos restantes + hora estimada
   if (size === "sm") {
-    const label =
-      eta == null ? "sin paso" : eta <= 0 ? "llegando" : `${eta} min`;
+    const arrivalSm = eta != null ? new Date(updatedAt + Math.max(0, eta) * 60_000) : null;
+    const minsLabel =
+      eta == null ? "sin paso" : eta <= 0 ? "llegando" : `faltan ${eta} min`;
     return (
       <span
         className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold align-middle ${
@@ -83,7 +84,10 @@ export function LiveEta({
             loading ? "bg-amber-500 animate-pulse" : eta != null ? "bg-emerald-500" : "bg-muted-foreground/50"
           }`}
         />
-        🚌 {label}
+        🚌 {minsLabel}
+        {arrivalSm && (
+          <span className="font-bold tabular-nums">· {formatHHMM(arrivalSm)}</span>
+        )}
       </span>
     );
   }
