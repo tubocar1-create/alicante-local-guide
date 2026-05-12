@@ -29,11 +29,11 @@ function LineDetailPage() {
   const line = data?.lines.find((l) => l.code === code);
 
   const stopsByDir = useMemo(() => {
-    if (!data) return { 1: [], 2: [] } as Record<1 | 2, typeof data.stops>;
-    const out = { 1: [] as typeof data.stops, 2: [] as typeof data.stops };
+    const out: Record<1 | 2, RouteStop[]> = { 1: [], 2: [] };
+    if (!data) return out;
     for (const s of data.stops) {
       if (s.line_code !== code) continue;
-      if (s.direction === 1 || s.direction === 2) out[s.direction].push(s);
+      if (s.direction === 1 || s.direction === 2) out[s.direction as 1 | 2].push(s);
     }
     out[1].sort((a, b) => a.seq - b.seq);
     out[2].sort((a, b) => a.seq - b.seq);
