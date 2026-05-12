@@ -952,10 +952,116 @@ function MarkdownText({ text }: { text: string }) {
   );
 }
 
+const BUSOPT_RE = /\[\[busopt:([\s\S]+?)\]\]/g;
+
+function parseBusOptParts(text: string): AssistantPart[] | null {
+  const parts: AssistantPart[] = [];
+  let lastIndex = 0;
+  let m: RegExpExecArray | null;
+  let found = false;
+  const re = new RegExp(BUSOPT_RE.source, "g");
+  while ((m = re.exec(text)) !== null) {
+    found = true;
+    if (m.index > lastIndex) parts.push({ type: "text", value: text.slice(lastIndex, m.index) });
+    try {
+      const data = JSON.parse(decodeURIComponent(m[1])) as BusOptionData;
+      if (data && Array.isArray(data.legs) && data.legs.length > 0) {
+        parts.push({ type: "busopt", data });
+      } else {
+        parts.push({ type: "text", value: m[0] });
+      }
+    } catch (err) {
+      console.warn("[busopt-parse-fail]", err, m[1]?.slice(0, 80));
+      parts.push({ type: "text", value: m[0] });
+    }
+    lastIndex = m.index + m[0].length;
+  }
+  if (!found) return null;
+  if (lastIndex < text.length) parts.push({ type: "text", value: text.slice(lastIndex) });
+  return parts;
+}
+
+function BusOptionCard({ data }: { data: BusOptionData }) {
+  const choose = () => {
+    const lines = data.legs.map((l) => l.line).join(" + ");
+    const first = data.legs[0];
+    const last = data.legs[data.legs.length - 1];
+    const text =
+      data.legs.length === 1
+        ? `Voy con la Línea ${lines}: subo en ${first.fromName} y bajo en ${last.toName}.`
+        : `Voy con la opción de Líneas ${lines} (sube en ${first.fromName}, baja en ${last.toName}).`;
+    window.dispatchEvent(new CustomEvent("bus:choose", { detail: { text } }));
+  };
+  return (
+    <div className="my-2 overflow-hidden rounded-2xl border border-primary/20 bg-card shadow-soft">
+      <div className="p-3 space-y-2">
+        {data.legs.map((leg, idx) => (
+          <div key={idx} className="space-y-1.5">
+            {idx > 0 && (
+              <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                ↻ Transbordo
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center justify-center min-w-[2.25rem] h-7 px-2 rounded-full bg-primary text-primary-foreground text-sm font-bold">
+                {leg.line}
+              </span>
+              <LiveEta
+                line={leg.line}
+                stop={leg.fromCode}
+                initialMin={typeof leg.nextMin === "number" ? leg.nextMin : null}
+              />
+            </div>
+            <div className="text-sm text-card-foreground">
+              <span className="text-muted-foreground">Sube en </span>
+              <span className="font-semibold">{leg.fromName}</span>
+              <span className="text-muted-foreground"> → baja en </span>
+              <span className="font-semibold">{leg.toName}</span>
+            </div>
+          </div>
+        ))}
+        {(data.travelMin != null || data.km != null) && (
+          <div className="text-xs text-muted-foreground">
+            ⏱️ Trayecto{data.travelMin != null ? ` ${data.travelMin} min` : ""}
+            {data.km != null ? ` (~${data.km} km)` : ""}
+          </div>
+        )}
+        <div className="pt-1">
+          <button
+            type="button"
+            onClick={choose}
+            className="w-full inline-flex items-center justify-center gap-1 text-sm font-semibold px-3 py-2 rounded-full gradient-warm text-primary-foreground shadow-soft active:scale-95"
+          >
+            🚌 VAMOS
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AssistantContent({ content }: { content: string }) {
   const match = content.match(PLACE_RE);
   const placeName = match?.[1]?.trim();
   const cleaned = content.replace(/\n?\[\[place:[^\]]+\]\]\n?/i, "").trim();
+
+  // Bus options take precedence in transit mode
+  const busParts = parseBusOptParts(cleaned);
+  if (busParts) {
+    return (
+      <div className="space-y-2 [&>p]:m-0 [&_strong]:font-semibold">
+        {busParts.map((p, i) =>
+          p.type === "busopt" ? (
+            <BusOptionCard key={i} data={p.data} />
+          ) : p.type === "card" ? (
+            <PlaceCard key={i} data={p.data} />
+          ) : (
+            <MarkdownText key={i} text={p.value.replace(/^\n+|\n+$/g, "")} />
+          ),
+        )}
+      </div>
+    );
+  }
 
   const parts: AssistantPart[] = [];
   let lastIndex = 0;
@@ -985,6 +1091,8 @@ function AssistantContent({ content }: { content: string }) {
       {renderedParts.map((p, i) =>
         p.type === "card" ? (
           <PlaceCard key={i} data={p.data} />
+        ) : p.type === "busopt" ? (
+          <BusOptionCard key={i} data={p.data} />
         ) : (
           <MarkdownText key={i} text={p.value.replace(/^\n+|\n+$/g, "")} />
         ),
