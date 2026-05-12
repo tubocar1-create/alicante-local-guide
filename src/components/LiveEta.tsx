@@ -119,15 +119,15 @@ export function LiveEta({
           />
           Tiempo de llegada (tiempo real)
         </span>
-        <div className="flex items-end justify-between gap-3">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-xs font-medium tabular-nums text-muted-foreground">
+            {hasEta ? (eta! <= 0 ? "Llegando" : `Faltan ${eta} min`) : "Sin paso"}
+          </span>
           <span
             className={`text-3xl font-bold tabular-nums leading-none ${
               isImminent ? "text-primary" : "text-foreground"
             }`}
           >
-            {hasEta ? (eta! <= 0 ? "Llegando" : `Faltan ${eta} min`) : "Sin paso"}
-          </span>
-          <span className="text-sm font-semibold tabular-nums text-muted-foreground">
             {arrival ? formatHHMM(arrival) : "--:--"}
           </span>
         </div>
