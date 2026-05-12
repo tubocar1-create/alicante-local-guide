@@ -13,6 +13,7 @@ import {
   LogOut,
   QrCode,
   User as UserIcon,
+  Power,
 } from "lucide-react";
 import { usePoints } from "@/hooks/usePoints";
 import { useAuth } from "@/hooks/useAuth";
