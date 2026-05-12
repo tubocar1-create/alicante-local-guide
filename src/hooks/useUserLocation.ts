@@ -88,6 +88,10 @@ export function useUserLocation(opts?: { watch?: boolean }) {
     const onUpdate = (c: Coords) => setState({ status: "ready", coords: c });
     const onError = (message: string) =>
       setState((prev) => (prev.status === "ready" ? prev : { status: "error", message }));
+    // Allow releaseLocation() to reset this subscriber back to idle so the
+    // user is asked again when they return to the app.
+    (onUpdate as unknown as { __reset?: () => void }).__reset = () =>
+      setState({ status: "idle" });
     listeners.add(onUpdate);
     errorListeners.add(onError);
     bindLifecycle();
