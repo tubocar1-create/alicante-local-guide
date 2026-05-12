@@ -467,7 +467,7 @@ export function ChatScreen() {
                     label: "Bus",
                     onClick: () => setShowBusPicker(true),
                   },
-                ].map((t) => {
+                ].map((t, idx) => {
                   const style = TILE_STYLES[t.label];
                   return (
                     <button
