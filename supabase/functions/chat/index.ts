@@ -2580,6 +2580,13 @@ serve(async (req) => {
     ]);
     const transitLine = transitResult ? formatTransitResult(transitResult) : "";
     const vectaliaLine = vectaliaTrips ? formatVectaliaTransit(vectaliaTrips) : "";
+    if (vectaliaTrips && (transitMode || detectTransitIntent(transitText))) {
+      return streamChatText(
+        extractChosenDirectBus(latestUserText)
+          ? buildChosenBusReply(vectaliaTrips)
+          : buildBusOptionsReply(vectaliaTrips),
+      );
+    }
     const transitModeLine = transitMode
       ? `\nTRANSIT_MODE: ON. Flujo "Bus urbano de Alicante" (Vectalia).
 ESTILO OBLIGATORIO en este modo:
