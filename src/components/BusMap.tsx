@@ -71,6 +71,13 @@ export function BusMap({
             <Popup>Tú estás aquí</Popup>
           </CircleMarker>
         )}
+        {routes.map((r) => (
+          <Polyline
+            key={`${r.lineCode}-${r.direction}`}
+            positions={r.points}
+            pathOptions={{ color: r.color, weight: 4, opacity: 0.75 }}
+          />
+        ))}
         {stops.map((s) => (
           <Marker key={s.code} position={[s.lat, s.lng]} icon={busIcon}>
             <Popup>
