@@ -102,9 +102,9 @@ export function LiveEta({
   // Large variant: hora estimada + minutos restantes, dentro de la tarjeta.
   const hasEta = eta != null;
   const arrival = hasEta ? new Date(updatedAt + Math.max(0, eta!) * 60_000) : null;
-  const isImminent = hasEta && eta! <= 3;
-  const minsText =
-    !hasEta ? "—" : eta! <= 0 ? "llegando" : `${eta} min`;
+  // Recalcula minutos restantes desde "ahora" para que vaya bajando entre fetches
+  const liveMin = arrival ? Math.max(0, Math.round((arrival.getTime() - now) / 60000)) : null;
+  const isImminent = liveMin != null && liveMin <= 3;
 
   return (
     <div
