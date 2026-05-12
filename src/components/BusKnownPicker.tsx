@@ -104,7 +104,8 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
           {step !== "ask" && (
             <button
               onClick={() => {
-                if (step === "stop") setStep("line");
+                if (step === "stop") setStep("direction");
+                else if (step === "direction") setStep("line");
                 else if (step === "line") setStep("ask");
               }}
               className="inline-flex h-7 w-7 items-center justify-center rounded-full hover:bg-muted"
@@ -116,6 +117,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
           <h3 className="text-sm font-semibold">
             {step === "ask" && "🚌 ¿Ya sabes qué bus tomar?"}
             {step === "line" && "Elige tu línea"}
+            {step === "direction" && `Línea ${line?.code} · ¿Hacia dónde?`}
             {step === "stop" && `Línea ${line?.code} · ¿Qué parada?`}
           </h3>
         </div>
