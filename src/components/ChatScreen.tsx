@@ -398,7 +398,29 @@ export function ChatScreen() {
             </div>
           )}
 
-          {isWelcome && !activeSubmenu && (
+          {showBusPicker && (
+            <BusKnownPicker
+              onClose={() => setShowBusPicker(false)}
+              onUnknown={() => {
+                setShowBusPicker(false);
+                void send("Hola, quiero moverme en bus por Alicante.", { mode: "transit" });
+              }}
+              onSelected={(pick: BusStopPick) => {
+                setShowBusPicker(false);
+                setMode("transit");
+                const userText = `Quiero coger la línea ${pick.line} en la parada ${pick.stopName} (${pick.stopCode}).`;
+                const payload = encodeURIComponent(JSON.stringify(pick));
+                const reply = `¡Perfecto! Te muestro el tiempo de llegada en tu parada.\n\n[[busstop:${payload}]]`;
+                setMessages((prev) => [
+                  ...prev,
+                  { role: "user", content: userText },
+                  { role: "assistant", content: reply },
+                ]);
+              }}
+            />
+          )}
+
+          {isWelcome && !activeSubmenu && !showBusPicker && (
             <div className="mt-2 rounded-3xl bg-card/95 p-2 shadow-soft ring-1 ring-border/60 backdrop-blur sm:p-4">
               <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-9 sm:gap-3">
                 {[
