@@ -467,19 +467,21 @@ export function ChatScreen() {
                     label: "Bus",
                     onClick: () => setShowBusPicker(true),
                   },
-                ].map((t) => {
+                ].map((t, idx) => {
                   const style = TILE_STYLES[t.label];
                   return (
                     <button
                       key={t.key}
                       onClick={t.onClick}
                       aria-label={t.label}
-                      className="group flex flex-col items-center"
+                      className="group flex flex-col items-center animate-tile-in"
+                      style={{ animationDelay: `${(idx % 9) * 60}ms` }}
                     >
                       <div
-                        className="grid aspect-square w-full place-items-center rounded-2xl shadow-sm transition group-hover:-translate-y-0.5 group-active:scale-95 overflow-hidden"
+                        className="relative grid aspect-square w-full place-items-center rounded-2xl shadow-md ring-1 ring-white/60 transition-all duration-300 ease-out group-hover:-translate-y-1 group-hover:rotate-[-2deg] group-hover:shadow-xl group-hover:ring-2 group-hover:ring-primary/40 group-active:scale-90 overflow-hidden"
                         style={{ backgroundColor: style?.bg ?? "oklch(0.95 0.02 80)" }}
                       >
+                        <span className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-black/10" aria-hidden />
                         {style ? (
                           <img
                             src={style.img}
@@ -488,13 +490,13 @@ export function ChatScreen() {
                             loading="lazy"
                             width={1024}
                             height={1024}
-                            className="h-[82%] w-[82%] object-contain"
+                            className="h-[82%] w-[82%] object-contain transition-transform duration-300 group-hover:scale-110 group-active:scale-95 drop-shadow-md"
                           />
                         ) : (
-                          <span className="text-[38px]">{t.emoji}</span>
+                          <span className="text-[38px] transition-transform duration-300 group-hover:scale-125">{t.emoji}</span>
                         )}
                       </div>
-                      <span className="mt-1 block w-full text-[10.5px] font-semibold leading-tight tracking-tight text-foreground text-center sm:text-[12px]">
+                      <span className="mt-1.5 block w-full text-[11px] font-extrabold leading-tight tracking-tight text-foreground text-center sm:text-[13px] transition-colors group-hover:text-primary">
                         {t.label}
                       </span>
                     </button>
