@@ -48,6 +48,9 @@ export const Route = createFileRoute("/bus")({
 
 function BusPage() {
   const [stops, setStops] = useState<Stop[]>([]);
+  const [lines, setLines] = useState<LineRow[]>([]);
+  const [lineStops, setLineStops] = useState<LineStopRow[]>([]);
+  const [selectedLines, setSelectedLines] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [code, setCode] = useState("");
   const [geocoding, setGeocoding] = useState(false);
