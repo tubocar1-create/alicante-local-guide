@@ -713,7 +713,25 @@ type PlaceCardData = {
   theme?: string;
 };
 
-type AssistantPart = { type: "text"; value: string } | { type: "card"; data: PlaceCardData };
+type BusLegData = {
+  line: string;
+  fromName: string;
+  fromCode: string;
+  toName: string;
+  toCode: string;
+  nextMin?: number | null;
+};
+type BusOptionData = {
+  legs: BusLegData[];
+  travelMin?: number | null;
+  km?: number | null;
+  label?: string;
+};
+
+type AssistantPart =
+  | { type: "text"; value: string }
+  | { type: "card"; data: PlaceCardData }
+  | { type: "busopt"; data: BusOptionData };
 
 const CARD_FALLBACK_THEMES = ["sun", "sea", "citrus", "rose", "mint", "grape"];
 
