@@ -164,7 +164,8 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
                   key={l.code}
                   onClick={() => {
                     setLine(l);
-                    setStep("stop");
+                    setDirection(null);
+                    setStep("direction");
                     if (locState.status === "idle") requestLocation();
                   }}
                   title={l.name}
