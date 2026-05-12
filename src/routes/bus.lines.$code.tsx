@@ -67,6 +67,57 @@ function LineDetailPage() {
   const headsign =
     list.length > 0 ? `→ ${list[list.length - 1].stop_name}` : "";
 
+  // ===== Llegadas en vivo automáticas para todas las paradas del sentido actual =====
+  const fetchRealtime = useServerFn(getStopRealtime);
+  const [etas, setEtas] = useState<Record<string, number | null>>({});
+  const [etasLoading, setEtasLoading] = useState(false);
+  const [etasFetchedAt, setEtasFetchedAt] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (list.length === 0) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const tick = async () => {
+      setEtasLoading(true);
+      // Limit concurrency to avoid overwhelming Vectalia: chunks of 6.
+      const codes = list.map((s) => s.stop_code).filter((c): c is string => !!c);
+      const next: Record<string, number | null> = {};
+      const CHUNK = 6;
+      for (let i = 0; i < codes.length; i += CHUNK) {
+        if (cancelled) break;
+        const slice = codes.slice(i, i + CHUNK);
+        const results = await Promise.allSettled(
+          slice.map((c) => fetchRealtime({ data: { stopCode: c, lines: [code] } })),
+        );
+        results.forEach((r, idx) => {
+          const stopCode = slice[idx];
+          if (r.status === "fulfilled") {
+            const match = r.value.arrivals
+              .filter((a) => a.line === code)
+              .sort((a, b) => a.etaMin - b.etaMin)[0];
+            next[stopCode] = match ? match.etaMin : null;
+          } else {
+            next[stopCode] = null;
+          }
+        });
+        if (!cancelled) setEtas((prev) => ({ ...prev, ...next }));
+      }
+      if (!cancelled) {
+        setEtasFetchedAt(new Date().toISOString());
+        setEtasLoading(false);
+        timer = setTimeout(tick, 30_000);
+      }
+    };
+    tick();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+    // re-run when direction or line changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code, direction, list.length]);
+
   const open = (stopCode: string | null, name: string) => {
     if (!stopCode) return;
     const meta = stopMeta.get(stopCode);
