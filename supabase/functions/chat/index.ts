@@ -1845,6 +1845,7 @@ function findVTrips(lineStops: DbLineStop[], oCode: string, dCode: string): VTri
           fromCode: a.stop_code!, fromName: a.stop_name,
           toCode: b.stop_code!, toName: b.stop_name,
           numStops: di - o.idx,
+          lineKey: o.key, fromIdx: o.idx, toIdx: di,
         }],
         totalStops: di - o.idx, transfers: 0,
       });
@@ -1868,8 +1869,8 @@ function findVTrips(lineStops: DbLineStop[], oCode: string, dCode: string): VTri
           const a0 = listA[o.idx], a1 = listA[i], b0 = listB[t.idx], b1 = listB[di];
           trips.push({
             legs: [
-              { lineCode: a0.line_code, direction: a0.direction, fromCode: a0.stop_code!, fromName: a0.stop_name, toCode: a1.stop_code!, toName: a1.stop_name, numStops: i - o.idx },
-              { lineCode: b0.line_code, direction: b0.direction, fromCode: b0.stop_code!, fromName: b0.stop_name, toCode: b1.stop_code!, toName: b1.stop_name, numStops: di - t.idx },
+              { lineCode: a0.line_code, direction: a0.direction, fromCode: a0.stop_code!, fromName: a0.stop_name, toCode: a1.stop_code!, toName: a1.stop_name, numStops: i - o.idx, lineKey: o.key, fromIdx: o.idx, toIdx: i },
+              { lineCode: b0.line_code, direction: b0.direction, fromCode: b0.stop_code!, fromName: b0.stop_name, toCode: b1.stop_code!, toName: b1.stop_name, numStops: di - t.idx, lineKey: t.key, fromIdx: t.idx, toIdx: di },
             ],
             totalStops: (i - o.idx) + (di - t.idx),
             transfers: 1,
