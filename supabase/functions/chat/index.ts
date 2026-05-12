@@ -2343,6 +2343,31 @@ async function buildVectaliaTransit(
   return top;
 }
 
+async function buildChosenVectaliaTransit(text: string): Promise<{ origin: DbStop; dest: DbStop; trips: VTrip[] }[] | null> {
+  const choice = extractChosenDirectBus(text);
+  if (!choice) return null;
+  const g = await loadVectaliaGraph();
+  if (!g) return null;
+  const leg = findDirectLegForLine(g.lineStops, choice);
+  if (!leg) return null;
+  const origin = g.stops.find((s) => s.code === choice.fromCode) ?? {
+    code: choice.fromCode,
+    name: leg.fromName,
+    lat: null,
+    lng: null,
+  };
+  const dest = g.stops.find((s) => s.code === choice.toCode) ?? {
+    code: choice.toCode,
+    name: leg.toName,
+    lat: null,
+    lng: null,
+  };
+  leg.km = Math.round(legKmAndStops(g, leg) * 10) / 10;
+  leg.estMin = Math.max(1, Math.round((leg.km / URBAN_KMH) * 60 + leg.numStops * DWELL_MIN_PER_STOP));
+  leg.etaMin = (await fetchVectaliaEta(leg.fromCode, leg.lineCode)) ?? undefined;
+  return [{ origin, dest, trips: [{ legs: [leg], totalStops: leg.numStops, transfers: 0 }] }];
+}
+
 function formatVectaliaTransit(
   res: { origin: DbStop; dest: DbStop; trips: VTrip[] }[],
 ): string {
