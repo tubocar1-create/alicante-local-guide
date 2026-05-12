@@ -45,7 +45,10 @@ function BusPage() {
   const [mounted, setMounted] = useState(false);
 
   const loc = useUserLocation({ watch: true });
-  const userCoords = loc.status === "ready" ? loc.coords : null;
+  const userCoords = loc.state.status === "ready" ? loc.state.coords : null;
+  useEffect(() => {
+    if (loc.state.status === "idle") loc.request();
+  }, [loc]);
 
   const runGeocode = useServerFn(geocodeBusStops);
 
