@@ -31,6 +31,13 @@ export function LiveEta({
   const [eta, setEta] = useState<number | null>(initialMin);
   const [loading, setLoading] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<number>(Date.now());
+  const [now, setNow] = useState<number>(Date.now());
+
+  // Tick local cada 15s para que los minutos restantes bajen sin esperar al fetch
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 15000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -95,9 +102,9 @@ export function LiveEta({
   // Large variant: hora estimada + minutos restantes, dentro de la tarjeta.
   const hasEta = eta != null;
   const arrival = hasEta ? new Date(updatedAt + Math.max(0, eta!) * 60_000) : null;
-  const isImminent = hasEta && eta! <= 3;
-  const minsText =
-    !hasEta ? "—" : eta! <= 0 ? "llegando" : `${eta} min`;
+  // Recalcula minutos restantes desde "ahora" para que vaya bajando entre fetches
+  const liveMin = arrival ? Math.max(0, Math.round((arrival.getTime() - now) / 60000)) : null;
+  const isImminent = liveMin != null && liveMin <= 3;
 
   return (
     <div
@@ -124,8 +131,8 @@ export function LiveEta({
           Tiempo de llegada (tiempo real)
         </span>
         <div className="flex items-center justify-between gap-3">
-          <span className="text-xs font-medium tabular-nums text-muted-foreground">
-            {hasEta ? (eta! <= 0 ? "Llegando" : `Faltan ${eta} min`) : "Sin paso"}
+          <span className="text-sm sm:text-base font-semibold tabular-nums text-foreground/90">
+            {liveMin == null ? "Sin paso" : liveMin <= 0 ? "Llegando" : `Faltan ${liveMin} min`}
           </span>
           <span
             className={`text-3xl font-bold tabular-nums leading-none ${
