@@ -45,6 +45,16 @@ const OVERPASS_ENDPOINTS = [
   "https://overpass.kumi.systems/api/interpreter",
 ];
 const ALICANTE_CENTER = { lat: 38.3452, lng: -0.481 };
+const ALICANTE_BOUNDS = { south: 38.265, west: -0.595, north: 38.445, east: -0.335 };
+
+function isInsideAlicanteBounds(point: LatLng) {
+  return (
+    point.lat >= ALICANTE_BOUNDS.south &&
+    point.lat <= ALICANTE_BOUNDS.north &&
+    point.lng >= ALICANTE_BOUNDS.west &&
+    point.lng <= ALICANTE_BOUNDS.east
+  );
+}
 
 function madridNow(date = new Date()) {
   const parts = new Intl.DateTimeFormat("en-GB", {
@@ -1435,28 +1445,139 @@ async function geocodeAlicante(query: string): Promise<(LatLng & { label: string
   const verified = verifiedReferenceLocation(query);
   if (verified) return verified;
 
+  const overpass = await geocodeAlicanteWithOverpassName(query).catch(() => null);
+  if (overpass) return overpass;
+
+  const osm = await geocodeAlicanteWithOsmStrict(query).catch(() => null);
+  if (osm) return osm;
+
   const google = await geocodeAlicanteWithGoogle(query).catch(() => null);
   if (google) return google;
 
-  // Último recurso: OSM, acotado a Alicante. No se usa si tenemos referencia verificada.
+  return null;
+}
+
+function escapeOverpassRegex(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, ".*");
+}
+
+function meaningfulPlaceTokens(value: string) {
+  return normTxt(value)
+    .split(" ")
+    .filter((t) => t.length >= 3 || /^\d+$/.test(t))
+    .filter((t) => !["plaza", "placa", "parque", "avenida", "av", "calle", "carrer", "centro", "comercial", "cc", "de", "del", "la", "el", "los", "las"].includes(t));
+}
+
+async function geocodeAlicanteWithOverpassName(query: string): Promise<(LatLng & { label: string }) | null> {
+  const tokens = meaningfulPlaceTokens(query);
+  if (!tokens.length) return null;
+  const regex = escapeOverpassRegex(query.trim());
+  const bbox = `${ALICANTE_BOUNDS.south},${ALICANTE_BOUNDS.west},${ALICANTE_BOUNDS.north},${ALICANTE_BOUNDS.east}`;
+  const overpassQuery = `[out:json][timeout:18];
+(
+  nwr["name"~"${regex}",i](${bbox});
+  nwr["official_name"~"${regex}",i](${bbox});
+  nwr["alt_name"~"${regex}",i](${bbox});
+);
+out center tags 25;`;
+  let json: { elements?: Array<{ lat?: number; lon?: number; center?: { lat: number; lon: number }; tags?: Record<string, string> }> } | null = null;
+  for (const endpoint of OVERPASS_ENDPOINTS) {
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "data=" + encodeURIComponent(overpassQuery),
+      });
+      if (!res.ok) continue;
+      json = await res.json();
+      break;
+    } catch {
+      // try next mirror
+    }
+  }
+  const best = (json?.elements ?? [])
+    .map((el) => {
+      const lat = el.lat ?? el.center?.lat;
+      const lng = el.lon ?? el.center?.lon;
+      const name = el.tags?.name ?? el.tags?.official_name ?? el.tags?.alt_name ?? "";
+      const point = lat != null && lng != null ? { lat, lng } : null;
+      const n = normTxt(name);
+      const overlap = tokens.filter((t) => n.includes(t)).length;
+      const classHit = ["place", "leisure", "shop", "amenity", "tourism", "highway", "building", "landuse"].some((k) => el.tags?.[k]);
+      const exact = n === normTxt(query) ? 10 : 0;
+      return { point, name, score: overlap * 3 + exact + (classHit ? 2 : 0), classHit };
+    })
+    .filter((x) => x.point && isInsideAlicanteBounds(x.point) && x.score >= Math.min(6, tokens.length * 3) && x.classHit)
+    .sort((a, b) => b.score - a.score)[0];
+  return best?.point ? { ...best.point, label: best.name || query } : null;
+}
+
+async function geocodeAlicanteWithOsmStrict(query: string): Promise<(LatLng & { label: string }) | null> {
+  const qTokens = meaningfulPlaceTokens(query);
+  if (!qTokens.length) return null;
   const url = new URL("https://nominatim.openstreetmap.org/search");
   url.searchParams.set("q", `${query}, Alicante`);
   url.searchParams.set("format", "json");
-  url.searchParams.set("limit", "1");
+  url.searchParams.set("limit", "6");
   url.searchParams.set("countrycodes", "es");
   url.searchParams.set("viewbox", "-0.65,38.45,-0.30,38.20"); // lon_min,lat_max,lon_max,lat_min
   url.searchParams.set("bounded", "1");
+  url.searchParams.set("addressdetails", "1");
   try {
     const res = await fetch(url.toString(), {
       headers: { "User-Agent": "AlicanteFriend/1.0 (contact via lovable.app)" },
     });
     if (!res.ok) return null;
-    const arr = (await res.json()) as Array<{ lat: string; lon: string; display_name: string }>;
-    if (!arr.length) return null;
+    const arr = (await res.json()) as Array<{
+      lat: string;
+      lon: string;
+      display_name: string;
+      class?: string;
+      type?: string;
+      importance?: number;
+      address?: Record<string, string>;
+    }>;
+    const allowedTypes = new Set([
+      "square",
+      "park",
+      "garden",
+      "pedestrian",
+      "tertiary",
+      "secondary",
+      "primary",
+      "residential",
+      "service",
+      "footway",
+      "mall",
+      "supermarket",
+      "department_store",
+      "retail",
+      "commercial",
+      "attraction",
+      "hospital",
+      "school",
+      "university",
+      "college",
+      "public_building",
+    ]);
+    const candidates = arr
+      .map((p) => ({ ...p, point: { lat: Number(p.lat), lng: Number(p.lon) } }))
+      .filter((p) => Number.isFinite(p.point.lat) && Number.isFinite(p.point.lng))
+      .filter((p) => isInsideAlicanteBounds(p.point))
+      .filter((p) => {
+        const city = normTxt([p.address?.city, p.address?.town, p.address?.municipality, p.address?.county].filter(Boolean).join(" "));
+        const inAlicante = city.includes("alicante") || normTxt(p.display_name).includes("alicante");
+        const label = normTxt(p.display_name);
+        const tokenHit = qTokens.filter((t) => label.includes(t)).length;
+        return inAlicante && tokenHit === qTokens.length && (allowedTypes.has(p.type ?? "") || ["highway", "place", "leisure", "shop", "amenity", "tourism"].includes(p.class ?? ""));
+      })
+      .sort((a, b) => (b.importance ?? 0) - (a.importance ?? 0));
+    if (!candidates.length) return null;
+    const best = candidates[0];
     return {
-      lat: Number(arr[0].lat),
-      lng: Number(arr[0].lon),
-      label: arr[0].display_name.split(",").slice(0, 2).join(",").trim(),
+      lat: best.point.lat,
+      lng: best.point.lng,
+      label: best.display_name.split(",").slice(0, 2).join(",").trim(),
     };
   } catch {
     return null;
@@ -1471,7 +1592,7 @@ async function geocodeAlicanteWithGoogle(query: string): Promise<(LatLng & { lab
     headers: {
       "Content-Type": "application/json",
       "X-Goog-Api-Key": apiKey,
-      "X-Goog-FieldMask": "places.location,places.displayName,places.formattedAddress",
+      "X-Goog-FieldMask": "places.location,places.displayName,places.formattedAddress,places.types",
     },
     body: JSON.stringify({
       textQuery: `${query}, Alicante, España`,
@@ -1487,13 +1608,36 @@ async function geocodeAlicanteWithGoogle(query: string): Promise<(LatLng & { lab
       location?: { latitude: number; longitude: number };
       displayName?: { text?: string };
       formattedAddress?: string;
+      types?: string[];
     }>;
   };
+  const acceptedTypes = new Set([
+    "street_address",
+    "route",
+    "intersection",
+    "premise",
+    "park",
+    "plaza",
+    "tourist_attraction",
+    "shopping_mall",
+    "department_store",
+    "supermarket",
+    "store",
+    "hospital",
+    "school",
+    "university",
+    "locality",
+    "point_of_interest",
+    "establishment",
+  ]);
   for (const place of data.places ?? []) {
     const loc = place.location;
     if (!loc || !Number.isFinite(loc.latitude) || !Number.isFinite(loc.longitude)) continue;
     const point = { lat: loc.latitude, lng: loc.longitude };
-    if (distanceKm(ALICANTE_CENTER, point) > 18) continue;
+    if (!isInsideAlicanteBounds(point) || distanceKm(ALICANTE_CENTER, point) > 18) continue;
+    if (!(place.types ?? []).some((t) => acceptedTypes.has(t))) continue;
+    const labelText = `${place.displayName?.text ?? ""} ${place.formattedAddress ?? ""}`;
+    if (!normTxt(labelText).includes("alicante")) continue;
     return {
       ...point,
       label: place.displayName?.text ?? place.formattedAddress ?? query,
@@ -1772,6 +1916,7 @@ type DbLineStop = {
   stop_code: string | null;
   stop_name: string;
 };
+type StopCandidate = { stops: DbStop[]; source: "verified" | "stop-name" | "geocode" | "gps"; label?: string };
 
 let vectaliaCache: { stops: DbStop[]; lineStops: DbLineStop[]; loadedAt: number } | null = null;
 
@@ -1875,7 +2020,7 @@ function matchStops(query: string, stops: DbStop[], coords: LatLng | null): DbSt
   if (!q) return [];
   const verified = verifiedReferenceStops(query, stops);
   if (verified.length) return verified;
-  const tokens = q.split(" ").filter((t) => t.length >= 3);
+  const tokens = meaningfulPlaceTokens(q);
   if (!tokens.length) return [];
   return stops
     .map((s) => {
@@ -2073,6 +2218,32 @@ function nearestStops(g: { stops: DbStop[] }, coords: LatLng, max = 3, maxMeters
     .map((x) => x.s);
 }
 
+async function resolveStopCandidates(
+  query: string | null,
+  graph: { stops: DbStop[] },
+  opts: { coords?: LatLng | null; allowGps?: boolean; maxMeters?: number },
+): Promise<StopCandidate> {
+  if (query) {
+    const verified = verifiedReferenceStops(query, graph.stops);
+    if (verified.length) return { stops: verified, source: "verified", label: query };
+
+    const named = matchStops(query, graph.stops, opts.coords ?? null);
+    if (named.length) return { stops: named, source: "stop-name", label: query };
+
+    const geo = await geocodeAlicante(query).catch(() => null);
+    if (geo) {
+      const stops = nearestStops(graph, geo, 4, opts.maxMeters ?? 450);
+      if (stops.length) return { stops, source: "geocode", label: geo.label };
+    }
+  }
+
+  if (opts.allowGps && opts.coords) {
+    return { stops: nearestStops(graph, opts.coords, 4, 600), source: "gps", label: "ubicación actual" };
+  }
+
+  return { stops: [], source: "geocode", label: query ?? undefined };
+}
+
 async function buildVectaliaTransit(
   originText: string | null,
   destText: string | null,
@@ -2082,23 +2253,18 @@ async function buildVectaliaTransit(
   const g = await loadVectaliaGraph();
   if (!g) return null;
 
-  // Destino: 1) referencias verificadas/paradas oficiales, 2) geocodifica con OSM y coge paradas cercanas
-  let dCands = matchStops(destText, g.stops, null);
-  if (!dCands.length) {
-    const geo = await geocodeAlicante(destText).catch(() => null);
-    if (geo) dCands = nearestStops(g, geo, 3, 600);
-  }
+  // Destino: referencias verificadas/paradas oficiales > geocodificación estricta Alicante.
+  const destResolved = await resolveStopCandidates(destText, g, { maxMeters: 450 });
+  const dCands = destResolved.stops;
   if (!dCands.length) return null;
 
-  // Origen: 1) referencias verificadas/paradas oficiales, 2) geocodifica con OSM, 3) GPS del usuario
-  let oCands: DbStop[] = originText ? matchStops(originText, g.stops, originCoords) : [];
-  if (!oCands.length && originText) {
-    const geo = await geocodeAlicante(originText).catch(() => null);
-    if (geo) oCands = nearestStops(g, geo, 3, 600);
-  }
-  if (!oCands.length && originCoords) {
-    oCands = nearestStops(g, originCoords, 3, 700);
-  }
+  // Origen: referencias/paradas/geocodificación estricta; GPS solo si el usuario no dio texto claro.
+  const originResolved = await resolveStopCandidates(originText, g, {
+    coords: originCoords,
+    allowGps: !originText,
+    maxMeters: 450,
+  });
+  const oCands = originResolved.stops;
   if (!oCands.length) return null;
 
   const all: { origin: DbStop; dest: DbStop; trips: VTrip[] }[] = [];
@@ -2298,10 +2464,12 @@ serve(async (req) => {
       }
     }
     const [transitResult, vectaliaTrips] = await Promise.all([
-      buildTransitResult(userOriginForTransit, transitText, { force: transitMode }).catch((err) => {
-        console.error("transit lookup error:", err);
-        return null;
-      }),
+      transitMode
+        ? Promise.resolve(null)
+        : buildTransitResult(userOriginForTransit, transitText).catch((err) => {
+            console.error("transit lookup error:", err);
+            return null;
+          }),
       (transitMode || detectTransitIntent(transitText))
         ? buildVectaliaTransit(originTextForTransit, destTextForTransit, userOriginForTransit).catch(
             (err) => {
