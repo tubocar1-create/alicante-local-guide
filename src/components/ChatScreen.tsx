@@ -1024,9 +1024,15 @@ function BusOptionCard({ data }: { data: BusOptionData }) {
             <LiveEta
               line={leg.line}
               stop={leg.fromCode}
-              initialMin={typeof leg.nextMin === "number" ? leg.nextMin : null}
+              initialMin={idx === 0 && typeof leg.nextMin === "number" ? leg.nextMin : null}
               size="lg"
+              index={idx === 0 ? 0 : 1}
             />
+            {idx > 0 && (
+              <div className="text-[11px] text-muted-foreground">
+                Mostramos el 2.º paso de la línea {leg.line} para dar tiempo al transbordo desde la línea {data.legs[idx - 1].line}.
+              </div>
+            )}
             <div className="text-sm text-card-foreground">
               <span className="text-muted-foreground">Sube en </span>
               <span className="font-semibold">{leg.fromName}</span>
