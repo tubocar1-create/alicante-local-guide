@@ -1513,6 +1513,8 @@ out center tags 25;`;
 }
 
 async function geocodeAlicanteWithOsmStrict(query: string): Promise<(LatLng & { label: string }) | null> {
+  const qTokens = meaningfulPlaceTokens(query);
+  if (!qTokens.length) return null;
   const url = new URL("https://nominatim.openstreetmap.org/search");
   url.searchParams.set("q", `${query}, Alicante`);
   url.searchParams.set("format", "json");
@@ -1565,7 +1567,9 @@ async function geocodeAlicanteWithOsmStrict(query: string): Promise<(LatLng & { 
       .filter((p) => {
         const city = normTxt([p.address?.city, p.address?.town, p.address?.municipality, p.address?.county].filter(Boolean).join(" "));
         const inAlicante = city.includes("alicante") || normTxt(p.display_name).includes("alicante");
-        return inAlicante && (allowedTypes.has(p.type ?? "") || ["highway", "place", "leisure", "shop", "amenity", "tourism"].includes(p.class ?? ""));
+        const label = normTxt(p.display_name);
+        const tokenHit = qTokens.filter((t) => label.includes(t)).length;
+        return inAlicante && tokenHit === qTokens.length && (allowedTypes.has(p.type ?? "") || ["highway", "place", "leisure", "shop", "amenity", "tourism"].includes(p.class ?? ""));
       })
       .sort((a, b) => (b.importance ?? 0) - (a.importance ?? 0));
     if (!candidates.length) return null;
