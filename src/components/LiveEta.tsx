@@ -7,6 +7,10 @@ interface Props {
   intervalMs?: number;
   /** "lg" muestra el bloque grande (hora + minutos). "sm" mantiene el pill compacto. */
   size?: "sm" | "lg";
+  /** Índice del paso a mostrar (0 = primero, 1 = segundo, etc.) */
+  index?: number;
+  /** Mínimo de minutos que debe tener el paso (para transbordos: tiempo del 1er trayecto). */
+  minMin?: number | null;
 }
 
 function formatHHMM(date: Date): string {
