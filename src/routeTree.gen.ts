@@ -19,6 +19,7 @@ import { Route as BusRouteImport } from './routes/bus'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BusPlannerRouteImport } from './routes/bus.planner'
 import { Route as BusLinesRouteImport } from './routes/bus.lines'
+import { Route as BusLinesCodeRouteImport } from './routes/bus.lines.$code'
 
 const StayRoute = StayRouteImport.update({
   id: '/stay',
@@ -70,6 +71,11 @@ const BusLinesRoute = BusLinesRouteImport.update({
   path: '/lines',
   getParentRoute: () => BusRoute,
 } as any)
+const BusLinesCodeRoute = BusLinesCodeRouteImport.update({
+  id: '/$code',
+  path: '/$code',
+  getParentRoute: () => BusLinesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -80,8 +86,9 @@ export interface FileRoutesByFullPath {
   '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
   '/stay': typeof StayRoute
-  '/bus/lines': typeof BusLinesRoute
+  '/bus/lines': typeof BusLinesRouteWithChildren
   '/bus/planner': typeof BusPlannerRoute
+  '/bus/lines/$code': typeof BusLinesCodeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -92,8 +99,9 @@ export interface FileRoutesByTo {
   '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
   '/stay': typeof StayRoute
-  '/bus/lines': typeof BusLinesRoute
+  '/bus/lines': typeof BusLinesRouteWithChildren
   '/bus/planner': typeof BusPlannerRoute
+  '/bus/lines/$code': typeof BusLinesCodeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -105,8 +113,9 @@ export interface FileRoutesById {
   '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
   '/stay': typeof StayRoute
-  '/bus/lines': typeof BusLinesRoute
+  '/bus/lines': typeof BusLinesRouteWithChildren
   '/bus/planner': typeof BusPlannerRoute
+  '/bus/lines/$code': typeof BusLinesCodeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
     | '/stay'
     | '/bus/lines'
     | '/bus/planner'
+    | '/bus/lines/$code'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/stay'
     | '/bus/lines'
     | '/bus/planner'
+    | '/bus/lines/$code'
   id:
     | '__root__'
     | '/'
@@ -145,6 +156,7 @@ export interface FileRouteTypes {
     | '/stay'
     | '/bus/lines'
     | '/bus/planner'
+    | '/bus/lines/$code'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -230,16 +242,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BusLinesRouteImport
       parentRoute: typeof BusRoute
     }
+    '/bus/lines/$code': {
+      id: '/bus/lines/$code'
+      path: '/$code'
+      fullPath: '/bus/lines/$code'
+      preLoaderRoute: typeof BusLinesCodeRouteImport
+      parentRoute: typeof BusLinesRoute
+    }
   }
 }
 
+interface BusLinesRouteChildren {
+  BusLinesCodeRoute: typeof BusLinesCodeRoute
+}
+
+const BusLinesRouteChildren: BusLinesRouteChildren = {
+  BusLinesCodeRoute: BusLinesCodeRoute,
+}
+
+const BusLinesRouteWithChildren = BusLinesRoute._addFileChildren(
+  BusLinesRouteChildren,
+)
+
 interface BusRouteChildren {
-  BusLinesRoute: typeof BusLinesRoute
+  BusLinesRoute: typeof BusLinesRouteWithChildren
   BusPlannerRoute: typeof BusPlannerRoute
 }
 
 const BusRouteChildren: BusRouteChildren = {
-  BusLinesRoute: BusLinesRoute,
+  BusLinesRoute: BusLinesRouteWithChildren,
   BusPlannerRoute: BusPlannerRoute,
 }
 
