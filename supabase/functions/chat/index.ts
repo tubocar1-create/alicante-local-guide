@@ -2026,7 +2026,7 @@ async function buildVectaliaTransit(
   const g = await loadVectaliaGraph();
   if (!g) return null;
 
-  // Destino: 1) match por nombre de parada, 2) si no, geocodifica con OSM y coge paradas cercanas
+  // Destino: 1) referencias verificadas/paradas oficiales, 2) geocodifica con OSM y coge paradas cercanas
   let dCands = matchStops(destText, g.stops, null);
   if (!dCands.length) {
     const geo = await geocodeAlicante(destText).catch(() => null);
@@ -2034,7 +2034,7 @@ async function buildVectaliaTransit(
   }
   if (!dCands.length) return null;
 
-  // Origen: 1) match por nombre, 2) geocodifica con OSM, 3) GPS del usuario
+  // Origen: 1) referencias verificadas/paradas oficiales, 2) geocodifica con OSM, 3) GPS del usuario
   let oCands: DbStop[] = originText ? matchStops(originText, g.stops, originCoords) : [];
   if (!oCands.length && originText) {
     const geo = await geocodeAlicante(originText).catch(() => null);
