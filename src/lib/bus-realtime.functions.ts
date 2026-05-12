@@ -1,19 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 
 export type StopArrival = {
-  line: string; // "12"
-  destination: string; // "PUERTA DEL MAR"
-  etaMin: number; // minutes
+  line: string;
+  destination: string;
+  etaMin: number;
   lat: number | null;
   lng: number | null;
 };
 
-const URL = "https://qr.vectalia.es/Alicante/lib/request.aspx";
-
-// Format from server (intended to be JS-eval'd in their page):
-//   NOTHING\n" +
-//   "Linea 012 PUERTA DEL MAR: 9 min.: 2: 38.351, -0.508: nocab:\n" +
-//   "Linea 005 RAMBLA : 1 min.: 2: 38.353, -0.500: nocab:\n" +
+const VECTALIA_URL = "https://qr.vectalia.es/Alicante/lib/request.aspx";
 const ARRIVAL_RE =
   /Linea\s+(\d+)\s+([^:]+?)\s*:\s*(\d+)\s*min\.?\s*:\s*\d+\s*:\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)\s*:/gi;
 
@@ -23,7 +18,7 @@ function parseArrivals(raw: string): StopArrival[] {
     const lat = Number(m[4]);
     const lng = Number(m[5]);
     out.push({
-      line: String(parseInt(m[1], 10)), // strip leading zeros: "012" -> "12"
+      line: String(parseInt(m[1], 10)),
       destination: m[2].trim(),
       etaMin: parseInt(m[3], 10),
       lat: Number.isFinite(lat) && lat !== 0 ? lat : null,
@@ -33,34 +28,68 @@ function parseArrivals(raw: string): StopArrival[] {
   return out;
 }
 
+// Vectalia parece bloquear/filtrar el pool de IPs de Cloudflare Workers
+// (devuelve cuerpo vacío en producción). Para evitarlo, en el servidor
+// pedimos a la edge function de Supabase que haga el fetch (Deno, otro
+// pool de IPs). Si esa llamada falla, caemos al fetch directo.
+
+async function fetchViaEdge(stop: string, line: string): Promise<string> {
+  const supabaseUrl = process.env.VITE_SUPABASE_URL;
+  const anonKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  if (!supabaseUrl || !anonKey) return "";
+  try {
+    const r = await fetch(
+      `${supabaseUrl}/functions/v1/bus-eta-raw?stop=${encodeURIComponent(stop)}&line=${encodeURIComponent(line)}`,
+      { headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` } },
+    );
+    if (!r.ok) return "";
+    const j = (await r.json()) as { raw?: string };
+    return j.raw ?? "";
+  } catch {
+    return "";
+  }
+}
+
+async function fetchDirect(stop: string, line: string): Promise<string> {
+  try {
+    const res = await fetch(
+      `${VECTALIA_URL}?p=${encodeURIComponent(stop)}&l=${encodeURIComponent(line)}`,
+      {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+          Referer: "https://qr.vectalia.es/Alicante/mapa.aspx",
+          "X-Requested-With": "XMLHttpRequest",
+          Accept: "*/*",
+        },
+      },
+    );
+    if (!res.ok) return "";
+    return await res.text();
+  } catch {
+    return "";
+  }
+}
+
 async function fetchOne(stop: string, line: string): Promise<string> {
-  const res = await fetch(`${URL}?p=${encodeURIComponent(stop)}&l=${encodeURIComponent(line)}`, {
-    headers: {
-      "User-Agent": "Mozilla/5.0",
-      Referer: "https://qr.vectalia.es/Alicante/mapa.aspx",
-      "X-Requested-With": "XMLHttpRequest",
-    },
-  });
-  if (!res.ok) return "";
-  return await res.text();
+  const viaEdge = await fetchViaEdge(stop, line);
+  if (viaEdge) return viaEdge;
+  return fetchDirect(stop, line);
 }
 
 export const getStopRealtime = createServerFn({ method: "POST" })
-  .inputValidator(
-    (data: { stopCode: string; lines?: string[] }) => {
-      const code = String(data?.stopCode ?? "").trim();
-      if (!/^\d{3,5}$/.test(code)) throw new Error("invalid stopCode");
-      const lines = Array.isArray(data?.lines)
-        ? data.lines.filter((l) => /^\d{1,3}$/.test(String(l))).map(String)
-        : [];
-      return { stopCode: code, lines };
-    },
-  )
+  .inputValidator((data: { stopCode: string; lines?: string[] }) => {
+    const code = String(data?.stopCode ?? "").trim();
+    if (!/^\d{3,5}$/.test(code)) throw new Error("invalid stopCode");
+    const lines = Array.isArray(data?.lines)
+      ? data.lines.filter((l) => /^\d{1,3}$/.test(String(l))).map(String)
+      : [];
+    return { stopCode: code, lines };
+  })
   .handler(async ({ data }) => {
     const { stopCode, lines } = data;
     const arrivals: StopArrival[] = [];
 
-    // Strategy: try unified call first (works for many stops).
     try {
       const raw = await fetchOne(stopCode, "");
       const parsed = parseArrivals(raw);
@@ -69,7 +98,6 @@ export const getStopRealtime = createServerFn({ method: "POST" })
       /* ignore */
     }
 
-    // If nothing came back and we know the lines, fan out.
     if (arrivals.length === 0 && lines.length > 0) {
       const padded = Array.from(new Set(lines.map((l) => l.padStart(3, "0"))));
       const results = await Promise.allSettled(padded.map((l) => fetchOne(stopCode, l)));
@@ -78,7 +106,6 @@ export const getStopRealtime = createServerFn({ method: "POST" })
       }
     }
 
-    // De-dup (line + etaMin) and sort by ETA
     const seen = new Set<string>();
     const unique = arrivals.filter((a) => {
       const k = `${a.line}|${a.etaMin}|${a.destination}`;
