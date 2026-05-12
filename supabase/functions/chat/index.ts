@@ -1591,6 +1591,8 @@ async function geocodeAlicanteWithOsmStrict(query: string): Promise<(LatLng & { 
 async function geocodeAlicanteWithGoogle(query: string): Promise<(LatLng & { label: string }) | null> {
   const apiKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
   if (!apiKey) return null;
+  const qTokens = meaningfulPlaceTokens(query);
+  if (!qTokens.length) return null;
   const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
     method: "POST",
     headers: {
@@ -1599,9 +1601,14 @@ async function geocodeAlicanteWithGoogle(query: string): Promise<(LatLng & { lab
       "X-Goog-FieldMask": "places.location,places.displayName,places.formattedAddress,places.types",
     },
     body: JSON.stringify({
-      textQuery: `${query}, Alicante, España`,
-      locationBias: { circle: { center: ALICANTE_CENTER, radius: 12000 } },
-      maxResultCount: 3,
+      textQuery: `${query}, Alicante ciudad, Alicante, España`,
+      locationRestriction: {
+        rectangle: {
+          low: { latitude: ALICANTE_BOUNDS.south, longitude: ALICANTE_BOUNDS.west },
+          high: { latitude: ALICANTE_BOUNDS.north, longitude: ALICANTE_BOUNDS.east },
+        },
+      },
+      maxResultCount: 5,
       languageCode: "es",
       regionCode: "ES",
     }),
@@ -1638,10 +1645,12 @@ async function geocodeAlicanteWithGoogle(query: string): Promise<(LatLng & { lab
     const loc = place.location;
     if (!loc || !Number.isFinite(loc.latitude) || !Number.isFinite(loc.longitude)) continue;
     const point = { lat: loc.latitude, lng: loc.longitude };
-    if (!isInsideAlicanteBounds(point) || distanceKm(ALICANTE_CENTER, point) > 18) continue;
+    if (!isInsideAlicanteBounds(point) || !isInsideAlicanteUrbanCore(point)) continue;
     if (!(place.types ?? []).some((t) => acceptedTypes.has(t))) continue;
     const labelText = `${place.displayName?.text ?? ""} ${place.formattedAddress ?? ""}`;
     if (!normTxt(labelText).includes("alicante")) continue;
+    const labelNorm = normTxt(labelText);
+    if (qTokens.some((t) => !labelNorm.includes(t))) continue;
     return {
       ...point,
       label: place.displayName?.text ?? place.formattedAddress ?? query,
