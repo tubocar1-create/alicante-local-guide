@@ -7,6 +7,10 @@ interface Props {
   intervalMs?: number;
   /** "lg" muestra el bloque grande (hora + minutos). "sm" mantiene el pill compacto. */
   size?: "sm" | "lg";
+  /** Índice del paso a mostrar (0 = primero, 1 = segundo, etc.) */
+  index?: number;
+  /** Mínimo de minutos que debe tener el paso (para transbordos: tiempo del 1er trayecto). */
+  minMin?: number | null;
 }
 
 function formatHHMM(date: Date): string {
@@ -21,6 +25,8 @@ export function LiveEta({
   initialMin = null,
   intervalMs = 30000,
   size = "lg",
+  index = 0,
+  minMin = null,
 }: Props) {
   const [eta, setEta] = useState<number | null>(initialMin);
   const [loading, setLoading] = useState(false);
@@ -33,10 +39,10 @@ export function LiveEta({
     const tick = async () => {
       setLoading(true);
       try {
-        const r = await fetch(
-          `/api/public/bus-eta?stop=${encodeURIComponent(stop)}&line=${encodeURIComponent(line)}`,
-          { cache: "no-store" },
-        );
+        const params = new URLSearchParams({ stop, line });
+        if (index > 0) params.set("index", String(index));
+        if (typeof minMin === "number" && minMin > 0) params.set("min", String(minMin));
+        const r = await fetch(`/api/public/bus-eta?${params.toString()}`, { cache: "no-store" });
         if (r.ok) {
           const j = await r.json();
           if (!cancelled) {
@@ -57,7 +63,7 @@ export function LiveEta({
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [line, stop, intervalMs, initialMin]);
+  }, [line, stop, intervalMs, initialMin, index, minMin]);
 
   // Compact variant (legacy)
   if (size === "sm") {
