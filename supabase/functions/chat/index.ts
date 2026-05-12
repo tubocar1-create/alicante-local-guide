@@ -1393,6 +1393,8 @@ function extractTransitDestination(text: string): string | null {
     .trim();
   // Patterns ordered by specificity
   const patterns = [
+    /\bdesde\s+.+?\s+(?:hasta|hacia|para(?:\s+ir\s+a)?|a(?:l)?)\s+(?:la\s+|el\s+|los\s+|las\s+)?(.+?)(?:\s+(?:en\s+bus|en\s+autob[uú]s|en\s+tram|$)|[.,;:]|$)/i,
+    /\b(?:quiero\s+ir|voy|ir|llegar|llego)\s+(?:a|al|hasta|hacia|para)\s+(?:la\s+|el\s+|los\s+|las\s+)?(.+?)(?:\s+(?:desde\s+.+|en\s+bus|en\s+autob[uú]s|en\s+tram)|[.,;:]|$)/i,
     /\b(?:c[oó]mo\s+(?:voy|llego|ir)|qu[eé]\s+l[ií]nea\s+(?:me\s+lleva\s+)?)(?:en\s+bus\s+|en\s+autob[uú]s\s+|en\s+tram\s+)?(?:a|al|hasta|hacia|para|para\s+ir\s+a)\s+(.+?)(?:\s+desde\s+.+)?$/i,
     /\b(?:en\s+bus|en\s+autob[uú]s|en\s+tram)\s+(?:a|al|hasta|hacia)\s+(.+?)(?:\s+desde\s+.+)?$/i,
     /\b(?:a|al|hasta|hacia)\s+(.+?)\s+en\s+(?:bus|autob[uú]s|tram)\b/i,
