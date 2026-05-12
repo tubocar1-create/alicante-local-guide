@@ -44,6 +44,26 @@ function stopWatch() {
   watchId = null;
 }
 
+// Pause geolocation when the app is not in use (tab hidden, app backgrounded,
+// or page closed). Resume automatically when the user returns, but only if
+// some component is still actively watching.
+let lifecycleBound = false;
+function bindLifecycle() {
+  if (lifecycleBound || typeof document === "undefined") return;
+  lifecycleBound = true;
+  const onVisibility = () => {
+    if (document.visibilityState === "hidden") {
+      stopWatch();
+    } else if (watchRefs > 0) {
+      startWatch();
+    }
+  };
+  document.addEventListener("visibilitychange", onVisibility);
+  // pagehide fires on tab close / navigation away / mobile app backgrounding
+  window.addEventListener("pagehide", stopWatch);
+  window.addEventListener("beforeunload", stopWatch);
+}
+
 export function useUserLocation(opts?: { watch?: boolean }) {
   const watch = !!opts?.watch;
   const [state, setState] = useState<LocationState>(
@@ -56,10 +76,13 @@ export function useUserLocation(opts?: { watch?: boolean }) {
       setState((prev) => (prev.status === "ready" ? prev : { status: "error", message }));
     listeners.add(onUpdate);
     errorListeners.add(onError);
+    bindLifecycle();
     if (watch) {
       watchRefs += 1;
       if (!cached) setState({ status: "loading" });
-      startWatch();
+      if (typeof document === "undefined" || document.visibilityState !== "hidden") {
+        startWatch();
+      }
     }
     return () => {
       listeners.delete(onUpdate);
