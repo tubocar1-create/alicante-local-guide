@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { isValidStopCode } from "@/lib/bus";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { geocodeBusStops } from "@/lib/bus-geocode.functions";
-import { haversineKm, type MapStop } from "@/components/BusMap";
+import { haversineKm, type MapStop, type LineRoute } from "@/components/BusMap";
 import { StopRealtimeSheet, type StopRealtimeContext } from "@/components/StopRealtimeSheet";
 
 const BusMapLazy = lazy(() =>
@@ -23,6 +23,14 @@ type Stop = {
   lat: number | null;
   lng: number | null;
 };
+
+type LineRow = { code: string; name: string; color: string | null };
+type LineStopRow = { line_code: string; direction: number; seq: number; stop_code: string | null };
+
+const PALETTE = [
+  "#E84E2C", "#3FA9F5", "#7BC043", "#F4B400", "#9B59B6",
+  "#1ABC9C", "#E91E63", "#34495E", "#FF7F50", "#00ACC1",
+];
 
 export const Route = createFileRoute("/bus")({
   head: () => ({
@@ -40,6 +48,9 @@ export const Route = createFileRoute("/bus")({
 
 function BusPage() {
   const [stops, setStops] = useState<Stop[]>([]);
+  const [lines, setLines] = useState<LineRow[]>([]);
+  const [lineStops, setLineStops] = useState<LineStopRow[]>([]);
+  const [selectedLines, setSelectedLines] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [code, setCode] = useState("");
   const [geocoding, setGeocoding] = useState(false);
@@ -55,15 +66,17 @@ function BusPage() {
 
   const runGeocode = useServerFn(geocodeBusStops);
 
-  const refresh = () =>
-    supabase
-      .from("bus_stops")
-      .select("code,name,lines,lat,lng")
-      .order("code")
-      .then(({ data }) => {
-        setStops((data ?? []) as Stop[]);
-        setLoading(false);
-      });
+  const refresh = async () => {
+    const [stopsRes, linesRes, lsRes] = await Promise.all([
+      supabase.from("bus_stops").select("code,name,lines,lat,lng").order("code"),
+      supabase.from("bus_lines").select("code,name,color").order("code"),
+      supabase.from("bus_line_stops").select("line_code,direction,seq,stop_code").order("line_code").order("direction").order("seq"),
+    ]);
+    setStops((stopsRes.data ?? []) as Stop[]);
+    setLines((linesRes.data ?? []) as LineRow[]);
+    setLineStops((lsRes.data ?? []) as LineStopRow[]);
+    setLoading(false);
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -101,6 +114,55 @@ function BusPage() {
       .sort((a, b) => a.distKm - b.distKm)
       .slice(0, 5);
   }, [mapStops, userCoords]);
+
+  const stopCoordIndex = useMemo(() => {
+    const m = new Map<string, [number, number]>();
+    for (const s of mapStops) m.set(s.code, [s.lat, s.lng]);
+    return m;
+  }, [mapStops]);
+
+  const lineColor = useMemo(() => {
+    const m = new Map<string, string>();
+    lines.forEach((l, i) => m.set(l.code, l.color || PALETTE[i % PALETTE.length]));
+    return m;
+  }, [lines]);
+
+  const routes: LineRoute[] = useMemo(() => {
+    if (!lineStops.length) return [];
+    const groups = new Map<string, LineStopRow[]>();
+    for (const r of lineStops) {
+      const k = `${r.line_code}|${r.direction}`;
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k)!.push(r);
+    }
+    const out: LineRoute[] = [];
+    for (const [k, rows] of groups) {
+      const [lineCode, dirStr] = k.split("|");
+      if (selectedLines.size && !selectedLines.has(lineCode)) continue;
+      const points: [number, number][] = [];
+      for (const r of rows.sort((a, b) => a.seq - b.seq)) {
+        const c = r.stop_code ? stopCoordIndex.get(r.stop_code) : undefined;
+        if (c) points.push(c);
+      }
+      if (points.length >= 2) {
+        out.push({
+          lineCode,
+          direction: Number(dirStr),
+          color: lineColor.get(lineCode) || "#666",
+          points,
+        });
+      }
+    }
+    return out;
+  }, [lineStops, stopCoordIndex, lineColor, selectedLines]);
+
+  const toggleLine = (code: string) =>
+    setSelectedLines((prev) => {
+      const next = new Set(prev);
+      if (next.has(code)) next.delete(code);
+      else next.add(code);
+      return next;
+    });
 
   const ungeocoded = stops.length - mapStops.length;
 
@@ -181,10 +243,47 @@ function BusPage() {
                 </div>
               }
             >
-              <BusMapLazy stops={mapStops} user={userCoords} />
+              <BusMapLazy stops={mapStops} user={userCoords} routes={routes} />
             </Suspense>
           ) : (
             <div className="h-[420px] rounded-xl border" />
+          )}
+
+          {lines.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              <button
+                type="button"
+                onClick={() => setSelectedLines(new Set())}
+                className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+                  selectedLines.size === 0
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "bg-background hover:bg-muted"
+                }`}
+              >
+                Todas
+              </button>
+              {lines.map((l) => {
+                const active = selectedLines.has(l.code);
+                const color = lineColor.get(l.code) || "#666";
+                return (
+                  <button
+                    key={l.code}
+                    type="button"
+                    onClick={() => toggleLine(l.code)}
+                    className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+                      active ? "text-white" : "bg-background hover:bg-muted"
+                    }`}
+                    style={active ? { backgroundColor: color, borderColor: color } : undefined}
+                  >
+                    <span
+                      className="inline-block h-2 w-2 rounded-full"
+                      style={{ backgroundColor: color }}
+                    />
+                    L{l.code}
+                  </button>
+                );
+              })}
+            </div>
           )}
           {mapStops.length === 0 && !loading && (
             <p className="text-xs text-muted-foreground">

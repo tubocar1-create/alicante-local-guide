@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, CircleMarker } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, CircleMarker, Polyline } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { liveStopUrl } from "@/lib/bus";
@@ -21,9 +21,24 @@ export type MapStop = {
   lng: number;
 };
 
+export type LineRoute = {
+  lineCode: string;
+  direction: number;
+  color: string;
+  points: [number, number][];
+};
+
 const ALC: [number, number] = [38.3452, -0.481];
 
-export function BusMap({ stops, user }: { stops: MapStop[]; user: Coords | null }) {
+export function BusMap({
+  stops,
+  user,
+  routes = [],
+}: {
+  stops: MapStop[];
+  user: Coords | null;
+  routes?: LineRoute[];
+}) {
   const center = useMemo<[number, number]>(() => {
     if (user) return [user.lat, user.lng];
     if (stops.length) return [stops[0].lat, stops[0].lng];
@@ -56,6 +71,13 @@ export function BusMap({ stops, user }: { stops: MapStop[]; user: Coords | null 
             <Popup>Tú estás aquí</Popup>
           </CircleMarker>
         )}
+        {routes.map((r) => (
+          <Polyline
+            key={`${r.lineCode}-${r.direction}`}
+            positions={r.points}
+            pathOptions={{ color: r.color, weight: 4, opacity: 0.75 }}
+          />
+        ))}
         {stops.map((s) => (
           <Marker key={s.code} position={[s.lat, s.lng]} icon={busIcon}>
             <Popup>
