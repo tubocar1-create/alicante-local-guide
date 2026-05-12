@@ -2380,7 +2380,7 @@ async function buildVectaliaTransit(
   for (const o of oCands) {
     for (const d of dCands) {
       if (o.code === d.code) continue;
-      const trips = findVTrips(g.lineStops, o.code, d.code);
+      const trips = findVTrips(g.lineStops, g.stops, o.code, d.code);
       if (trips.length) all.push({ origin: o, dest: d, trips });
     }
   }
