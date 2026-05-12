@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { isValidStopCode } from "@/lib/bus";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { geocodeBusStops } from "@/lib/bus-geocode.functions";
-import { haversineKm, type MapStop } from "@/components/BusMap";
+import { haversineKm, type MapStop, type LineRoute } from "@/components/BusMap";
 import { StopRealtimeSheet, type StopRealtimeContext } from "@/components/StopRealtimeSheet";
 
 const BusMapLazy = lazy(() =>
