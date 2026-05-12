@@ -2191,23 +2191,18 @@ async function buildVectaliaTransit(
   const g = await loadVectaliaGraph();
   if (!g) return null;
 
-  // Destino: 1) referencias verificadas/paradas oficiales, 2) geocodifica con OSM y coge paradas cercanas
-  let dCands = matchStops(destText, g.stops, null);
-  if (!dCands.length) {
-    const geo = await geocodeAlicante(destText).catch(() => null);
-    if (geo) dCands = nearestStops(g, geo, 3, 600);
-  }
+  // Destino: referencias verificadas/paradas oficiales > geocodificación estricta Alicante.
+  const destResolved = await resolveStopCandidates(destText, g, { maxMeters: 450 });
+  const dCands = destResolved.stops;
   if (!dCands.length) return null;
 
-  // Origen: 1) referencias verificadas/paradas oficiales, 2) geocodifica con OSM, 3) GPS del usuario
-  let oCands: DbStop[] = originText ? matchStops(originText, g.stops, originCoords) : [];
-  if (!oCands.length && originText) {
-    const geo = await geocodeAlicante(originText).catch(() => null);
-    if (geo) oCands = nearestStops(g, geo, 3, 600);
-  }
-  if (!oCands.length && originCoords) {
-    oCands = nearestStops(g, originCoords, 3, 700);
-  }
+  // Origen: referencias/paradas/geocodificación estricta; GPS solo si el usuario no dio texto claro.
+  const originResolved = await resolveStopCandidates(originText, g, {
+    coords: originCoords,
+    allowGps: !originText,
+    maxMeters: 450,
+  });
+  const oCands = originResolved.stops;
   if (!oCands.length) return null;
 
   const all: { origin: DbStop; dest: DbStop; trips: VTrip[] }[] = [];
