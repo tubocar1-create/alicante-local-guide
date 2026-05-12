@@ -43,12 +43,25 @@ function LineDetailPage() {
   }, [data, code]);
 
   const stopMeta = useMemo(() => {
-    const m = new Map<string, { name: string | null }>();
-    for (const s of data?.stopsMeta ?? []) m.set(s.code, { name: s.name });
+    const m = new Map<string, { name: string | null; lat: number | null; lng: number | null }>();
+    for (const s of data?.stopsMeta ?? []) m.set(s.code, { name: s.name, lat: s.lat, lng: s.lng });
+    return m;
+  }, [data]);
+
+  const coords = useMemo(() => {
+    const m = new Map<string, { lat: number; lng: number }>();
+    for (const s of data?.stopsMeta ?? []) {
+      if (s.lat != null && s.lng != null) m.set(s.code, { lat: s.lat, lng: s.lng });
+    }
     return m;
   }, [data]);
 
   const list = stopsByDir[direction];
+  const cumMins = useMemo(
+    () => cumulativeMinutes(list.map((s) => s.stop_code ?? ""), coords),
+    [list, coords],
+  );
+  const totalMin = cumMins.length > 0 ? Math.round(cumMins[cumMins.length - 1]) : 0;
   const headsign =
     list.length > 0 ? `→ ${list[list.length - 1].stop_name}` : "";
 
