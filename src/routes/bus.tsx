@@ -193,6 +193,20 @@ function BusPage() {
       </header>
 
       <main className="mx-auto max-w-2xl space-y-6 px-4 py-6">
+        <div className="grid grid-cols-2 gap-2">
+          <Link
+            to="/bus/planner"
+            className="flex items-center justify-center gap-2 rounded-xl border bg-card p-3 text-sm font-medium transition-colors hover:bg-accent"
+          >
+            <Search className="h-4 w-4" /> Cómo ir
+          </Link>
+          <Link
+            to="/bus/lines"
+            className="flex items-center justify-center gap-2 rounded-xl border bg-card p-3 text-sm font-medium transition-colors hover:bg-accent"
+          >
+            <Bus className="h-4 w-4" /> Líneas
+          </Link>
+        </div>
         <Card className="p-4">
           <p className="mb-3 text-sm text-muted-foreground">
             Introduce el código de 4 dígitos de la parada para ver los próximos buses en tiempo real.
