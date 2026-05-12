@@ -2580,12 +2580,20 @@ serve(async (req) => {
     ]);
     const transitLine = transitResult ? formatTransitResult(transitResult) : "";
     const vectaliaLine = vectaliaTrips ? formatVectaliaTransit(vectaliaTrips) : "";
-    if (vectaliaTrips && (transitMode || detectTransitIntent(transitText))) {
-      return streamChatText(
-        extractChosenDirectBus(latestUserText)
-          ? buildChosenBusReply(vectaliaTrips)
-          : buildBusOptionsReply(vectaliaTrips),
-      );
+    if (transitMode || detectTransitIntent(transitText)) {
+      if (vectaliaTrips) {
+        return streamChatText(
+          extractChosenDirectBus(latestUserText)
+            ? buildChosenBusReply(vectaliaTrips)
+            : buildBusOptionsReply(vectaliaTrips),
+        );
+      }
+      const msg = !destTextForTransit
+        ? "Dime desde dónde sales y a qué parada, calle o sitio quieres llegar, y lo valido solo con paradas oficiales."
+        : !originTextForTransit && !userOriginForTransit
+          ? "Dime desde qué calle, parada o punto cercano sales para buscarte una línea directa oficial."
+          : "No encuentro una línea directa verificada para ese trayecto. Prefiero no inventarte paradas ni líneas: dime una calle con número o una parada cercana y lo recalculo.";
+      return streamChatText(msg);
     }
     const transitModeLine = transitMode
       ? `\nTRANSIT_MODE: ON. Flujo "Bus urbano de Alicante" (Vectalia).
