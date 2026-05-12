@@ -1024,7 +1024,68 @@ function parseBusOptParts(text: string): AssistantPart[] | null {
   return parts;
 }
 
-function BusOptionCard({ data }: { data: BusOptionData }) {
+const BUSSTOP_RE = /\[\[busstop:([\s\S]+?)\]\]/g;
+
+function parseBusStopParts(text: string): AssistantPart[] | null {
+  const parts: AssistantPart[] = [];
+  let lastIndex = 0;
+  let m: RegExpExecArray | null;
+  let found = false;
+  const re = new RegExp(BUSSTOP_RE.source, "g");
+  while ((m = re.exec(text)) !== null) {
+    found = true;
+    if (m.index > lastIndex) parts.push({ type: "text", value: text.slice(lastIndex, m.index) });
+    try {
+      const data = JSON.parse(decodeURIComponent(m[1])) as BusStopCardData;
+      if (data && data.line && data.stopCode) {
+        parts.push({ type: "busstop", data });
+      } else {
+        parts.push({ type: "text", value: m[0] });
+      }
+    } catch (err) {
+      console.warn("[busstop-parse-fail]", err);
+      parts.push({ type: "text", value: m[0] });
+    }
+    lastIndex = m.index + m[0].length;
+  }
+  if (!found) return null;
+  if (lastIndex < text.length) parts.push({ type: "text", value: text.slice(lastIndex) });
+  return parts;
+}
+
+function BusStopCard({ data }: { data: BusStopCardData }) {
+  return (
+    <div className="my-2 overflow-hidden rounded-3xl border border-border bg-card/95 p-4 shadow-soft backdrop-blur">
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-primary px-2 text-sm font-bold text-primary-foreground">
+              {data.line}
+            </span>
+            <span className="truncate text-sm font-semibold">
+              {data.stopName}
+              <span className="ml-1 text-[11px] font-medium text-muted-foreground">
+                #{data.stopCode}
+              </span>
+            </span>
+          </div>
+          {data.lineName && (
+            <p className="mt-1 text-[11px] uppercase tracking-wide text-muted-foreground">
+              {data.lineName}
+            </p>
+          )}
+        </div>
+        {data.distanceM != null && (
+          <span className="shrink-0 rounded-full bg-muted px-2 py-1 text-[11px] font-bold text-foreground/80">
+            📍 {data.distanceM} m
+          </span>
+        )}
+      </div>
+      <LiveEta line={data.line} stop={data.stopCode} size="lg" />
+    </div>
+  );
+}
+
   const isTransfer = data.legs.length > 1;
   const choose = () => {
     const first = data.legs[0];
