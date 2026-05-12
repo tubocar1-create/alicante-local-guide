@@ -24,6 +24,14 @@ type Stop = {
   lng: number | null;
 };
 
+type LineRow = { code: string; name: string; color: string | null };
+type LineStopRow = { line_code: string; direction: number; seq: number; stop_code: string | null };
+
+const PALETTE = [
+  "#E84E2C", "#3FA9F5", "#7BC043", "#F4B400", "#9B59B6",
+  "#1ABC9C", "#E91E63", "#34495E", "#FF7F50", "#00ACC1",
+];
+
 export const Route = createFileRoute("/bus")({
   head: () => ({
     meta: [
