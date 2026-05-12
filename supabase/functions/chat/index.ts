@@ -1801,6 +1801,12 @@ type VLeg = {
   toCode: string;
   toName: string;
   numStops: number;
+  lineKey: string;
+  fromIdx: number;
+  toIdx: number;
+  km?: number;
+  estMin?: number;
+  etaMin?: number;
 };
 type VTrip = { legs: VLeg[]; totalStops: number; transfers: number };
 
