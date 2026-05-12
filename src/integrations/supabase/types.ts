@@ -14,6 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
+      bus_line_stops: {
+        Row: {
+          created_at: string
+          direction: number
+          id: string
+          line_code: string
+          seq: number
+          stop_code: string | null
+          stop_name: string
+          transfer_lines: string[] | null
+        }
+        Insert: {
+          created_at?: string
+          direction: number
+          id?: string
+          line_code: string
+          seq: number
+          stop_code?: string | null
+          stop_name: string
+          transfer_lines?: string[] | null
+        }
+        Update: {
+          created_at?: string
+          direction?: number
+          id?: string
+          line_code?: string
+          seq?: number
+          stop_code?: string | null
+          stop_name?: string
+          transfer_lines?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bus_line_stops_line_code_fkey"
+            columns: ["line_code"]
+            isOneToOne: false
+            referencedRelation: "bus_lines"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "bus_line_stops_stop_code_fkey"
+            columns: ["stop_code"]
+            isOneToOne: false
+            referencedRelation: "bus_stops"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      bus_lines: {
+        Row: {
+          code: string
+          color: string | null
+          created_at: string
+          name: string
+          operator: string | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          color?: string | null
+          created_at?: string
+          name: string
+          operator?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          color?: string | null
+          created_at?: string
+          name?: string
+          operator?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bus_stops: {
         Row: {
           code: string
