@@ -932,6 +932,7 @@ function MarkdownText({ text }: { text: string }) {
                   line={line}
                   stop={stop}
                   initialMin={Number.isFinite(initial) ? initial : null}
+                  size="sm"
                 />
               );
             }
@@ -1018,12 +1019,14 @@ function BusOptionCard({ data }: { data: BusOptionData }) {
               <span className="inline-flex items-center justify-center min-w-[2.25rem] h-7 px-2 rounded-full bg-primary text-primary-foreground text-sm font-bold">
                 {leg.line}
               </span>
-              <LiveEta
-                line={leg.line}
-                stop={leg.fromCode}
-                initialMin={typeof leg.nextMin === "number" ? leg.nextMin : null}
-              />
+              <span className="text-xs text-muted-foreground">Línea {leg.line}</span>
             </div>
+            <LiveEta
+              line={leg.line}
+              stop={leg.fromCode}
+              initialMin={typeof leg.nextMin === "number" ? leg.nextMin : null}
+              size="lg"
+            />
             <div className="text-sm text-card-foreground">
               <span className="text-muted-foreground">Sube en </span>
               <span className="font-semibold">{leg.fromName}</span>
