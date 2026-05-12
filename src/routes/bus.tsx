@@ -44,6 +44,8 @@ function BusPage() {
   const [code, setCode] = useState("");
   const [geocoding, setGeocoding] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [activeStop, setActiveStop] = useState<StopRealtimeContext | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const loc = useUserLocation({ watch: true });
   const userCoords = loc.state.status === "ready" ? loc.state.coords : null;
@@ -68,10 +70,21 @@ function BusPage() {
     refresh();
   }, []);
 
-  const open = (c: string) => {
-    if (!isValidStopCode(c)) return;
-    window.open(liveStopUrl(c.trim()), "_blank", "noopener,noreferrer");
+  const openStop = (s: StopRealtimeContext) => {
+    setActiveStop(s);
+    setSheetOpen(true);
   };
+
+  const openByCode = (c: string) => {
+    if (!isValidStopCode(c)) return;
+    const found = stops.find((x) => x.code === c.trim());
+    openStop(
+      found
+        ? { code: found.code, name: found.name, lines: found.lines, lat: found.lat, lng: found.lng }
+        : { code: c.trim(), name: null, lines: null, lat: null, lng: null },
+    );
+  };
+
 
   const mapStops: MapStop[] = useMemo(
     () =>
