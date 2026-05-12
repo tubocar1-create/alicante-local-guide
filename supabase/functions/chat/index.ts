@@ -1846,13 +1846,11 @@ ESTILO OBLIGATORIO en este modo:
     const gatewayBody = {
       model: "google/gemini-3-flash-preview",
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "system", content: runtimeContext },
+        { role: "system", content: `${SYSTEM_PROMPT}\n\n${runtimeContext}` },
         ...messages,
       ],
       stream: true,
     };
-    console.log("gateway body sample:", JSON.stringify(gatewayBody).slice(0, 800), "len=", JSON.stringify(gatewayBody).length);
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
