@@ -9,6 +9,7 @@ import { usePoints } from "@/hooks/usePoints";
 import { useUserLocation, distanceKm } from "@/hooks/useUserLocation";
 import ReferralDialog from "@/components/ReferralDialog";
 import { LiveEta } from "@/components/LiveEta";
+import { BusKnownPicker, type BusStopPick } from "@/components/BusKnownPicker";
 import { useAuth } from "@/hooks/useAuth";
 import { findPlaceOverride } from "@/data/places";
 import heroImg from "@/assets/alicante-hero.jpg";
