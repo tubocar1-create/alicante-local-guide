@@ -31,14 +31,19 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
   const [search, setSearch] = useState("");
 
   const directions = useMemo(() => {
-    if (!data || !line) return [] as { dir: 1 | 2; headsign: string; count: number }[];
-    const out: { dir: 1 | 2; headsign: string; count: number }[] = [];
+    if (!data || !line) return [] as { dir: 1 | 2; origin: string; headsign: string; count: number }[];
+    const out: { dir: 1 | 2; origin: string; headsign: string; count: number }[] = [];
     for (const dir of [1, 2] as const) {
       const seq = data.stops
         .filter((s) => s.line_code === line.code && s.direction === dir)
         .sort((a, b) => a.seq - b.seq);
       if (seq.length === 0) continue;
-      out.push({ dir, headsign: seq[seq.length - 1].stop_name, count: seq.length });
+      out.push({
+        dir,
+        origin: seq[0].stop_name,
+        headsign: seq[seq.length - 1].stop_name,
+        count: seq.length,
+      });
     }
     return out;
   }, [data, line]);
