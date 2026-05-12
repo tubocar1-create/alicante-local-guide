@@ -1761,14 +1761,64 @@ function normTxt(s: string): string {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
+    .replace(/\b(ii|segundo|2o|2º|2ª)\b/g, " 2 ")
+    .replace(/\b(iii|tercero|3o|3º|3ª)\b/g, " 3 ")
+    .replace(/\b(iv|cuarto|4o|4º|4ª)\b/g, " 4 ")
+    .replace(/\b(i|primero|1o|1º|1ª)\b/g, " 1 ")
     .replace(/[^a-z0-9\s]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
 
+const VERIFIED_ALICANTE_REFERENCES: Array<{
+  canonical: string;
+  aliases: string[];
+  stopCodes: string[];
+  lat: number;
+  lng: number;
+}> = [
+  {
+    canonical: "Plaza Juan Pablo II",
+    aliases: [
+      "plaza juan pablo ii",
+      "plaza juan pablo 2",
+      "plaza juan pablo segundo",
+      "juan pablo ii",
+      "juan pablo 2",
+      "juan pablo segundo",
+    ],
+    stopCodes: ["4332"],
+    lat: 38.3545,
+    lng: -0.510787,
+  },
+  {
+    canonical: "Avenida Maisonnave",
+    aliases: ["avenida maisonnave", "av maisonnave", "maisonnave", "maisonave"],
+    stopCodes: ["4117", "4118", "4108", "4109"],
+    lat: 38.34345,
+    lng: -0.4912,
+  },
+];
+
+function verifiedReferenceStops(query: string, stops: DbStop[]): DbStop[] {
+  const q = normTxt(query);
+  if (!q) return [];
+  const ref = VERIFIED_ALICANTE_REFERENCES.find((r) => r.aliases.some((a) => {
+    const an = normTxt(a);
+    return q === an || q.includes(an) || an.includes(q);
+  }));
+  if (!ref) return [];
+  const byCode = new Map(stops.map((s) => [s.code, s]));
+  return ref.stopCodes
+    .map((code) => byCode.get(code))
+    .filter((s): s is DbStop => Boolean(s));
+}
+
 function matchStops(query: string, stops: DbStop[], coords: LatLng | null): DbStop[] {
   const q = normTxt(query);
   if (!q) return [];
+  const verified = verifiedReferenceStops(query, stops);
+  if (verified.length) return verified;
   const tokens = q.split(" ").filter((t) => t.length >= 3);
   if (!tokens.length) return [];
   return stops
