@@ -2099,7 +2099,10 @@ function formatVectaliaTransit(
     for (const t of r.trips) for (const l of t.legs) if (l.toCode === r.dest.code) set.add(l.lineCode);
     destLines.set(r.dest.code, set);
   }
+  const emittedDest = new Set<string>();
   for (const r of res) {
+    if (emittedDest.has(r.dest.code)) continue;
+    emittedDest.add(r.dest.code);
     const lines = [...(destLines.get(r.dest.code) ?? new Set<string>())].sort((a, b) => Number(a) - Number(b));
     out.push(`DESTINO_VERIFICADO: "${r.dest.name}" [parada ${r.dest.code}] líneas_que_llegan=[${lines.join(",")}]`);
   }
