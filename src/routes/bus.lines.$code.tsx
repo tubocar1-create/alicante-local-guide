@@ -212,6 +212,7 @@ function LineDetailPage() {
           {list.map((s, i) => {
             const m = Math.round(cumMins[i] ?? 0);
             const delta = i === 0 ? 0 : Math.round((cumMins[i] ?? 0) - (cumMins[i - 1] ?? 0));
+            const eta = s.stop_code ? etas[s.stop_code] : undefined;
             return (
               <li key={`${s.stop_code}-${i}`} className="relative pb-3">
                 <span
@@ -232,10 +233,21 @@ function LineDetailPage() {
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-1">
-                      <span className="text-xs font-semibold tabular-nums text-foreground">
-                        {i === 0 ? "0 min" : `${m} min`}
+                      {eta != null ? (
+                        <span
+                          className="rounded-full px-2 py-0.5 text-xs font-bold text-white tabular-nums"
+                          style={{ backgroundColor: line?.color || "hsl(var(--primary))" }}
+                        >
+                          {eta} min
+                        </span>
+                      ) : eta === null ? (
+                        <span className="text-[11px] text-muted-foreground">Sin paso</span>
+                      ) : (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                      )}
+                      <span className="text-[11px] text-muted-foreground tabular-nums">
+                        {i === 0 ? "salida" : `${m} min ruta`}
                       </span>
-                      <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
                     </div>
                   </div>
                 </button>
@@ -243,6 +255,15 @@ function LineDetailPage() {
             );
           })}
         </ol>
+
+        {etasFetchedAt && (
+          <p className="text-[11px] text-muted-foreground text-center">
+            Llegadas en vivo · actualizado{" "}
+            {new Date(etasFetchedAt).toLocaleTimeString("es-ES")}
+            {etasLoading && <Loader2 className="ml-1 inline h-3 w-3 animate-spin" />}
+            {" · se refresca cada 30 s"}
+          </p>
+        )}
       </main>
 
       <StopRealtimeSheet stop={activeStop} open={sheetOpen} onOpenChange={setSheetOpen} />
