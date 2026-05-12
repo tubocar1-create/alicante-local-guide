@@ -1183,6 +1183,22 @@ function AssistantContent({ content }: { content: string }) {
   const placeName = match?.[1]?.trim();
   const cleaned = content.replace(/\n?\[\[place:[^\]]+\]\]\n?/i, "").trim();
 
+  // Bus stop card takes precedence (UI-injected, no AI involved)
+  const stopParts = parseBusStopParts(cleaned);
+  if (stopParts) {
+    return (
+      <div className="space-y-2 [&>p]:m-0 [&_strong]:font-semibold">
+        {stopParts.map((p, i) =>
+          p.type === "busstop" ? (
+            <BusStopCard key={i} data={p.data} />
+          ) : p.type === "text" ? (
+            <MarkdownText key={i} text={p.value.replace(/^\n+|\n+$/g, "")} />
+          ) : null,
+        )}
+      </div>
+    );
+  }
+
   // Bus options take precedence in transit mode
   const busParts = parseBusOptParts(cleaned);
   if (busParts) {
@@ -1193,9 +1209,9 @@ function AssistantContent({ content }: { content: string }) {
             <BusOptionCard key={i} data={p.data} />
           ) : p.type === "card" ? (
             <PlaceCard key={i} data={p.data} />
-          ) : (
+          ) : p.type === "text" ? (
             <MarkdownText key={i} text={p.value.replace(/^\n+|\n+$/g, "")} />
-          ),
+          ) : null,
         )}
       </div>
     );
