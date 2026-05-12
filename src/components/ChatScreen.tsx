@@ -1023,7 +1023,10 @@ function BusOptionCard({ data }: { data: BusOptionData }) {
           <div key={idx} className="space-y-1.5">
             {idx > 0 && (
               <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                ↻ Transbordo en {leg.fromName}
+                ↻ Transbordo en {leg.fromName}{" "}
+                <span className="font-mono normal-case text-foreground/70">
+                  [parada {leg.fromCode}]
+                </span>
                 {typeof leg.walkM === "number" && leg.walkM > 0 && (
                   <span className="ml-1 normal-case font-normal text-amber-600">
                     · 🚶 ~{leg.walkM} m a pie
@@ -1047,7 +1050,8 @@ function BusOptionCard({ data }: { data: BusOptionData }) {
             ) : (
               <div className="text-sm text-card-foreground bg-muted/40 rounded-lg px-3 py-2">
                 Toma la <span className="font-semibold">Línea {leg.line}</span> en la parada{" "}
-                <span className="font-semibold">{leg.fromName}</span>.
+                <span className="font-semibold">{leg.fromName}</span>{" "}
+                <span className="font-mono text-xs text-muted-foreground">[{leg.fromCode}]</span>.
                 <div className="text-[11px] text-muted-foreground mt-0.5">
                   Sin hora aquí: depende de cuándo te deje el primer bus.
                 </div>
@@ -1055,9 +1059,11 @@ function BusOptionCard({ data }: { data: BusOptionData }) {
             )}
             <div className="text-sm text-card-foreground">
               <span className="text-muted-foreground">Sube en </span>
-              <span className="font-semibold">{leg.fromName}</span>
+              <span className="font-semibold">{leg.fromName}</span>{" "}
+              <span className="font-mono text-xs text-muted-foreground">[parada {leg.fromCode}]</span>
               <span className="text-muted-foreground"> → baja en </span>
-              <span className="font-semibold">{leg.toName}</span>
+              <span className="font-semibold">{leg.toName}</span>{" "}
+              <span className="font-mono text-xs text-muted-foreground">[parada {leg.toCode}]</span>
             </div>
           </div>
         ))}
