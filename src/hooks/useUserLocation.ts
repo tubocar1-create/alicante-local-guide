@@ -68,15 +68,14 @@ function bindLifecycle() {
   lifecycleBound = true;
   const onVisibility = () => {
     if (document.visibilityState === "hidden") {
-      stopWatch();
-    } else if (watchRefs > 0) {
-      startWatch();
+      // App backgrounded: fully release so a returning user is asked again.
+      releaseLocation();
     }
   };
   document.addEventListener("visibilitychange", onVisibility);
   // pagehide fires on tab close / navigation away / mobile app backgrounding
-  window.addEventListener("pagehide", stopWatch);
-  window.addEventListener("beforeunload", stopWatch);
+  window.addEventListener("pagehide", releaseLocation);
+  window.addEventListener("beforeunload", releaseLocation);
 }
 
 export function useUserLocation(opts?: { watch?: boolean }) {
