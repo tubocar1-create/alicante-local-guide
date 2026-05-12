@@ -1,12 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, ArrowRightLeft, Search, Bus, Repeat } from "lucide-react";
+import { ArrowLeft, ArrowRightLeft, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useBusGraph } from "@/hooks/useBusGraph";
-import { findTrips, type Trip } from "@/lib/bus-routing";
+import { findTrips } from "@/lib/bus-routing";
+import { TripTimeline } from "@/components/TripTimeline";
 
 export const Route = createFileRoute("/bus/planner")({
   head: () => ({
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/bus/planner")({
       {
         name: "description",
         content:
-          "Planifica tu trayecto en bus por Alicante. Encuentra la línea directa o el mejor transbordo entre dos paradas.",
+          "Planifica tu trayecto en bus por Alicante con esquema visual, tiempos estimados y llegadas en vivo.",
       },
     ],
   }),
@@ -45,10 +45,7 @@ function StopAutocomplete({
     if (!term) return [];
     const isCode = /^\d+$/.test(term);
     return options
-      .filter((s) => {
-        if (isCode) return s.code.startsWith(term);
-        return s.name.toLowerCase().includes(term);
-      })
+      .filter((s) => (isCode ? s.code.startsWith(term) : s.name.toLowerCase().includes(term)))
       .slice(0, 8);
   }, [q, options]);
 
@@ -66,20 +63,18 @@ function StopAutocomplete({
         </div>
       ) : (
         <div className="relative">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={q}
-              onChange={(e) => {
-                setQ(e.target.value);
-                setOpen(true);
-              }}
-              onFocus={() => setOpen(true)}
-              onBlur={() => setTimeout(() => setOpen(false), 150)}
-              placeholder={placeholder}
-              className="pl-9"
-            />
-          </div>
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={q}
+            onChange={(e) => {
+              setQ(e.target.value);
+              setOpen(true);
+            }}
+            onFocus={() => setOpen(true)}
+            onBlur={() => setTimeout(() => setOpen(false), 150)}
+            placeholder={placeholder}
+            className="pl-9"
+          />
           {open && filtered.length > 0 && (
             <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border bg-popover shadow-lg">
               {filtered.map((s) => (
@@ -109,67 +104,11 @@ function StopAutocomplete({
   );
 }
 
-function TripCard({ trip }: { trip: Trip }) {
-  return (
-    <Card className="space-y-3 p-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          {trip.transfers === 0 ? (
-            <Badge className="bg-emerald-600 text-white">Directo</Badge>
-          ) : (
-            <Badge variant="secondary" className="gap-1">
-              <Repeat className="h-3 w-3" /> {trip.transfers} transbordo
-            </Badge>
-          )}
-          <span className="text-xs text-muted-foreground">
-            {trip.totalStops} paradas
-          </span>
-        </div>
-        <div className="flex items-center gap-1">
-          {trip.legs.map((l, i) => (
-            <span key={i} className="flex items-center gap-1">
-              <Badge className="rounded-full bg-primary text-primary-foreground">
-                L{l.lineCode}
-              </Badge>
-              {i < trip.legs.length - 1 && (
-                <ArrowRightLeft className="h-3 w-3 text-muted-foreground" />
-              )}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      <ol className="space-y-2">
-        {trip.legs.map((leg, i) => (
-          <li key={i} className="rounded-lg border bg-muted/30 p-3">
-            <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              <Bus className="h-3.5 w-3.5" /> Línea {leg.lineCode} · sentido {leg.direction === 1 ? "Ida" : "Vuelta"}
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <div className="flex-1">
-                <div className="font-medium">{leg.fromName}</div>
-                <div className="text-xs text-muted-foreground">Parada {leg.fromCode}</div>
-              </div>
-              <ArrowRight className="h-4 w-4 text-muted-foreground" />
-              <div className="flex-1 text-right">
-                <div className="font-medium">{leg.toName}</div>
-                <div className="text-xs text-muted-foreground">Parada {leg.toCode}</div>
-              </div>
-            </div>
-            <div className="mt-1 text-xs text-muted-foreground">
-              {leg.numStops} paradas en este tramo
-            </div>
-          </li>
-        ))}
-      </ol>
-    </Card>
-  );
-}
-
 function PlannerPage() {
   const { data, loading } = useBusGraph();
   const [origin, setOrigin] = useState<StopOption | null>(null);
   const [dest, setDest] = useState<StopOption | null>(null);
+  const [selectedIdx, setSelectedIdx] = useState<number>(0);
 
   const options: StopOption[] = useMemo(() => {
     if (!data) return [];
@@ -178,14 +117,35 @@ function PlannerPage() {
       .map((s) => ({ code: s.code, name: s.name as string }));
   }, [data]);
 
+  const coords = useMemo(() => {
+    const m = new Map<string, { lat: number; lng: number }>();
+    for (const s of data?.stopsMeta ?? []) {
+      if (s.lat != null && s.lng != null) m.set(s.code, { lat: s.lat, lng: s.lng });
+    }
+    return m;
+  }, [data]);
+
+  const lineColors = useMemo(() => {
+    const m = new Map<string, string | null>();
+    for (const l of data?.lines ?? []) m.set(l.code, l.color);
+    return m;
+  }, [data]);
+
+  const lineIndex = useMemo(() => {
+    const m = new Map<string, number>();
+    (data?.lines ?? []).forEach((l, i) => m.set(l.code, i));
+    return m;
+  }, [data]);
+
   const trips = useMemo(() => {
     if (!data || !origin || !dest) return [];
-    return findTrips(data.stops, origin.code, dest.code, { maxResults: 12 });
+    return findTrips(data.stops, origin.code, dest.code, { maxResults: 8 });
   }, [data, origin, dest]);
 
   const swap = () => {
     setOrigin(dest);
     setDest(origin);
+    setSelectedIdx(0);
   };
 
   return (
@@ -204,11 +164,14 @@ function PlannerPage() {
       </header>
 
       <main className="mx-auto max-w-2xl space-y-4 px-4 py-6">
-        <Card className="space-y-3 p-4">
+        <div className="space-y-3 rounded-2xl border bg-card p-4">
           <StopAutocomplete
             label="Desde"
             value={origin}
-            onChange={setOrigin}
+            onChange={(v) => {
+              setOrigin(v);
+              setSelectedIdx(0);
+            }}
             options={options}
             placeholder="Nombre o código de parada…"
           />
@@ -220,27 +183,41 @@ function PlannerPage() {
           <StopAutocomplete
             label="Hasta"
             value={dest}
-            onChange={setDest}
+            onChange={(v) => {
+              setDest(v);
+              setSelectedIdx(0);
+            }}
             options={options}
             placeholder="Nombre o código de parada…"
           />
-        </Card>
+        </div>
 
-        {loading && (
-          <p className="text-sm text-muted-foreground">Cargando red de líneas…</p>
-        )}
+        {loading && <p className="text-sm text-muted-foreground">Cargando red de líneas…</p>}
 
         {!loading && origin && dest && trips.length === 0 && (
-          <Card className="p-4 text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             No encontramos un trayecto directo ni con un transbordo entre estas paradas.
-            Es posible que requiera dos transbordos o que no haya servicio entre ellas
-            con las líneas disponibles.
-          </Card>
+          </p>
+        )}
+
+        {trips.length > 0 && (
+          <p className="text-xs text-muted-foreground">
+            {trips.length} opciones · ordenadas por menos transbordos y paradas. La más rápida está
+            seleccionada por defecto.
+          </p>
         )}
 
         <div className="space-y-3">
           {trips.map((t, i) => (
-            <TripCard key={i} trip={t} />
+            <TripTimeline
+              key={i}
+              trip={t}
+              coords={coords}
+              lineColors={lineColors}
+              lineIndex={lineIndex}
+              selected={i === selectedIdx}
+              onSelect={() => setSelectedIdx(i)}
+            />
           ))}
         </div>
       </main>
