@@ -4,14 +4,16 @@ import type { RouteStop } from "@/lib/bus-routing";
 
 export type LineRow = { code: string; name: string; color: string | null };
 
-let cache: {
+type Cache = {
   stops: RouteStop[];
   lines: LineRow[];
   stopsMeta: { code: string; name: string | null }[];
-} | null = null;
-let inflight: Promise<typeof cache> | null = null;
+};
 
-async function load() {
+let cache: Cache | null = null;
+let inflight: Promise<Cache> | null = null;
+
+async function load(): Promise<Cache> {
   if (cache) return cache;
   if (inflight) return inflight;
   inflight = (async () => {
