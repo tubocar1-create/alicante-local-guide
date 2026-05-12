@@ -25,19 +25,44 @@ const PALETTE = [
 export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
   const { data, loading } = useBusGraph();
   const { state: locState, request: requestLocation } = useUserLocation();
-  const [step, setStep] = useState<"ask" | "line" | "stop">("ask");
+  const [step, setStep] = useState<"ask" | "line" | "direction" | "stop">("ask");
   const [line, setLine] = useState<{ code: string; name: string; color: string | null } | null>(null);
+  const [direction, setDirection] = useState<1 | 2 | null>(null);
   const [search, setSearch] = useState("");
 
-  const lineStops = useMemo(() => {
-    if (!data || !line) return [];
-    const codes = new Set(
-      data.stops.filter((s) => s.line_code === line.code).map((s) => s.stop_code),
-    );
-    return data.stopsMeta
-      .filter((s) => codes.has(s.code))
-      .map((s) => ({ ...s, name: s.name ?? s.code }));
+  const directions = useMemo(() => {
+    if (!data || !line) return [] as { dir: 1 | 2; headsign: string; count: number }[];
+    const out: { dir: 1 | 2; headsign: string; count: number }[] = [];
+    for (const dir of [1, 2] as const) {
+      const seq = data.stops
+        .filter((s) => s.line_code === line.code && s.direction === dir)
+        .sort((a, b) => a.seq - b.seq);
+      if (seq.length === 0) continue;
+      out.push({ dir, headsign: seq[seq.length - 1].stop_name, count: seq.length });
+    }
+    return out;
   }, [data, line]);
+
+  const lineStops = useMemo(() => {
+    if (!data || !line || !direction) return [];
+    const seq = data.stops
+      .filter((s) => s.line_code === line.code && s.direction === direction)
+      .sort((a, b) => a.seq - b.seq);
+    const metaByCode = new Map(data.stopsMeta.map((s) => [s.code, s]));
+    return seq
+      .map((s) => {
+        if (!s.stop_code) return null;
+        const meta = metaByCode.get(s.stop_code);
+        return {
+          code: s.stop_code,
+          name: s.stop_name ?? meta?.name ?? s.stop_code,
+          lat: meta?.lat ?? null,
+          lng: meta?.lng ?? null,
+          seq: s.seq,
+        };
+      })
+      .filter((x): x is { code: string; name: string; lat: number | null; lng: number | null; seq: number } => !!x);
+  }, [data, line, direction]);
 
   const userCoords = locState.status === "ready" ? locState.coords : null;
 
