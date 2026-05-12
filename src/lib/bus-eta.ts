@@ -41,6 +41,31 @@ export function estimateLegMinutes(
   return Math.max(1, Math.round(leg.numStops * FALLBACK_MIN_PER_STOP));
 }
 
+// Cumulative minutes from the first stop along an ordered list of codes.
+// Uses haversine + urban speed when coords are present; otherwise a flat
+// per-stop fallback. Always returns an array of length codes.length, with
+// index 0 = 0 minutes.
+export function cumulativeMinutes(
+  codes: string[],
+  coords: Map<string, { lat: number; lng: number }>,
+): number[] {
+  const out: number[] = [0];
+  let acc = 0;
+  for (let i = 1; i < codes.length; i++) {
+    const a = coords.get(codes[i - 1]);
+    const b = coords.get(codes[i]);
+    let seg: number;
+    if (a && b) {
+      seg = (haversineKm(a, b) / URBAN_KMH) * 60 + DWELL_MIN_PER_STOP;
+    } else {
+      seg = FALLBACK_MIN_PER_STOP;
+    }
+    acc += seg;
+    out.push(acc);
+  }
+  return out;
+}
+
 export function formatMinutes(mins: number): string {
   if (mins < 60) return `${mins} min`;
   const h = Math.floor(mins / 60);
