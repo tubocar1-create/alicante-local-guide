@@ -2528,12 +2528,12 @@ serve(async (req) => {
             return null;
           }),
       (transitMode || detectTransitIntent(transitText))
-        ? buildVectaliaTransit(originTextForTransit, destTextForTransit, userOriginForTransit).catch(
-            (err) => {
+        ? buildChosenVectaliaTransit(latestUserText)
+            .then((chosen) => chosen ?? buildVectaliaTransit(originTextForTransit, destTextForTransit, userOriginForTransit))
+            .catch((err) => {
               console.error("vectalia lookup error:", err);
               return null;
-            },
-          )
+            })
         : Promise.resolve(null),
     ]);
     const transitLine = transitResult ? formatTransitResult(transitResult) : "";
