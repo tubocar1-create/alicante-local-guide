@@ -1495,7 +1495,6 @@ out center tags 25;`;
       // try next mirror
     }
   }
-  const allowed = new Set(["place", "leisure", "shop", "amenity", "tourism", "highway", "building", "landuse"]);
   const best = (json?.elements ?? [])
     .map((el) => {
       const lat = el.lat ?? el.center?.lat;
@@ -1508,7 +1507,7 @@ out center tags 25;`;
       const exact = n === normTxt(query) ? 10 : 0;
       return { point, name, score: overlap * 3 + exact + (classHit ? 2 : 0), classHit };
     })
-    .filter((x) => x.point && isInsideAlicanteBounds(x.point) && x.score >= Math.min(6, tokens.length * 3) && (x.classHit || allowed.size > 0))
+    .filter((x) => x.point && isInsideAlicanteBounds(x.point) && x.score >= Math.min(6, tokens.length * 3) && x.classHit)
     .sort((a, b) => b.score - a.score)[0];
   return best?.point ? { ...best.point, label: best.name || query } : null;
 }
