@@ -9,6 +9,7 @@ import { usePoints } from "@/hooks/usePoints";
 import { useUserLocation, distanceKm } from "@/hooks/useUserLocation";
 import ReferralDialog from "@/components/ReferralDialog";
 import { LiveEta } from "@/components/LiveEta";
+import { BusKnownPicker, type BusStopPick } from "@/components/BusKnownPicker";
 import { useAuth } from "@/hooks/useAuth";
 import { findPlaceOverride } from "@/data/places";
 import heroImg from "@/assets/alicante-hero.jpg";
@@ -107,6 +108,7 @@ export function ChatScreen() {
   const [referralAuto, setReferralAuto] = useState(false);
   const [showQrInfo, setShowQrInfo] = useState(false);
   const [mode, setMode] = useState<"transit" | null>(null);
+  const [showBusPicker, setShowBusPicker] = useState(false);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -396,7 +398,29 @@ export function ChatScreen() {
             </div>
           )}
 
-          {isWelcome && !activeSubmenu && (
+          {showBusPicker && (
+            <BusKnownPicker
+              onClose={() => setShowBusPicker(false)}
+              onUnknown={() => {
+                setShowBusPicker(false);
+                void send("Hola, quiero moverme en bus por Alicante.", { mode: "transit" });
+              }}
+              onSelected={(pick: BusStopPick) => {
+                setShowBusPicker(false);
+                setMode("transit");
+                const userText = `Quiero coger la línea ${pick.line} en la parada ${pick.stopName} (${pick.stopCode}).`;
+                const payload = encodeURIComponent(JSON.stringify(pick));
+                const reply = `¡Perfecto! Te muestro el tiempo de llegada en tu parada.\n\n[[busstop:${payload}]]`;
+                setMessages((prev) => [
+                  ...prev,
+                  { role: "user", content: userText },
+                  { role: "assistant", content: reply },
+                ]);
+              }}
+            />
+          )}
+
+          {isWelcome && !activeSubmenu && !showBusPicker && (
             <div className="mt-2 rounded-3xl bg-card/95 p-2 shadow-soft ring-1 ring-border/60 backdrop-blur sm:p-4">
               <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-9 sm:gap-3">
                 {[
@@ -441,11 +465,7 @@ export function ChatScreen() {
                     key: "bus",
                     emoji: "🚌",
                     label: "Bus",
-                    onClick: () =>
-                      send(
-                        "Hola, quiero moverme en bus por Alicante.",
-                        { mode: "transit" },
-                      ),
+                    onClick: () => setShowBusPicker(true),
                   },
                 ].map((t) => {
                   const style = TILE_STYLES[t.label];
@@ -741,10 +761,19 @@ type BusOptionData = {
   label?: string;
 };
 
+type BusStopCardData = {
+  line: string;
+  lineName?: string;
+  stopCode: string;
+  stopName: string;
+  distanceM?: number | null;
+};
+
 type AssistantPart =
   | { type: "text"; value: string }
   | { type: "card"; data: PlaceCardData }
-  | { type: "busopt"; data: BusOptionData };
+  | { type: "busopt"; data: BusOptionData }
+  | { type: "busstop"; data: BusStopCardData };
 
 const CARD_FALLBACK_THEMES = ["sun", "sea", "citrus", "rose", "mint", "grape"];
 
@@ -995,6 +1024,68 @@ function parseBusOptParts(text: string): AssistantPart[] | null {
   return parts;
 }
 
+const BUSSTOP_RE = /\[\[busstop:([\s\S]+?)\]\]/g;
+
+function parseBusStopParts(text: string): AssistantPart[] | null {
+  const parts: AssistantPart[] = [];
+  let lastIndex = 0;
+  let m: RegExpExecArray | null;
+  let found = false;
+  const re = new RegExp(BUSSTOP_RE.source, "g");
+  while ((m = re.exec(text)) !== null) {
+    found = true;
+    if (m.index > lastIndex) parts.push({ type: "text", value: text.slice(lastIndex, m.index) });
+    try {
+      const data = JSON.parse(decodeURIComponent(m[1])) as BusStopCardData;
+      if (data && data.line && data.stopCode) {
+        parts.push({ type: "busstop", data });
+      } else {
+        parts.push({ type: "text", value: m[0] });
+      }
+    } catch (err) {
+      console.warn("[busstop-parse-fail]", err);
+      parts.push({ type: "text", value: m[0] });
+    }
+    lastIndex = m.index + m[0].length;
+  }
+  if (!found) return null;
+  if (lastIndex < text.length) parts.push({ type: "text", value: text.slice(lastIndex) });
+  return parts;
+}
+
+function BusStopCard({ data }: { data: BusStopCardData }) {
+  return (
+    <div className="my-2 overflow-hidden rounded-3xl border border-border bg-card/95 p-4 shadow-soft backdrop-blur">
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-primary px-2 text-sm font-bold text-primary-foreground">
+              {data.line}
+            </span>
+            <span className="truncate text-sm font-semibold">
+              {data.stopName}
+              <span className="ml-1 text-[11px] font-medium text-muted-foreground">
+                #{data.stopCode}
+              </span>
+            </span>
+          </div>
+          {data.lineName && (
+            <p className="mt-1 text-[11px] uppercase tracking-wide text-muted-foreground">
+              {data.lineName}
+            </p>
+          )}
+        </div>
+        {data.distanceM != null && (
+          <span className="shrink-0 rounded-full bg-muted px-2 py-1 text-[11px] font-bold text-foreground/80">
+            📍 {data.distanceM} m
+          </span>
+        )}
+      </div>
+      <LiveEta line={data.line} stop={data.stopCode} size="lg" />
+    </div>
+  );
+}
+
 function BusOptionCard({ data }: { data: BusOptionData }) {
   const isTransfer = data.legs.length > 1;
   const choose = () => {
@@ -1092,6 +1183,22 @@ function AssistantContent({ content }: { content: string }) {
   const placeName = match?.[1]?.trim();
   const cleaned = content.replace(/\n?\[\[place:[^\]]+\]\]\n?/i, "").trim();
 
+  // Bus stop card takes precedence (UI-injected, no AI involved)
+  const stopParts = parseBusStopParts(cleaned);
+  if (stopParts) {
+    return (
+      <div className="space-y-2 [&>p]:m-0 [&_strong]:font-semibold">
+        {stopParts.map((p, i) =>
+          p.type === "busstop" ? (
+            <BusStopCard key={i} data={p.data} />
+          ) : p.type === "text" ? (
+            <MarkdownText key={i} text={p.value.replace(/^\n+|\n+$/g, "")} />
+          ) : null,
+        )}
+      </div>
+    );
+  }
+
   // Bus options take precedence in transit mode
   const busParts = parseBusOptParts(cleaned);
   if (busParts) {
@@ -1102,9 +1209,9 @@ function AssistantContent({ content }: { content: string }) {
             <BusOptionCard key={i} data={p.data} />
           ) : p.type === "card" ? (
             <PlaceCard key={i} data={p.data} />
-          ) : (
+          ) : p.type === "text" ? (
             <MarkdownText key={i} text={p.value.replace(/^\n+|\n+$/g, "")} />
-          ),
+          ) : null,
         )}
       </div>
     );
@@ -1140,6 +1247,8 @@ function AssistantContent({ content }: { content: string }) {
           <PlaceCard key={i} data={p.data} />
         ) : p.type === "busopt" ? (
           <BusOptionCard key={i} data={p.data} />
+        ) : p.type === "busstop" ? (
+          <BusStopCard key={i} data={p.data} />
         ) : (
           <MarkdownText key={i} text={p.value.replace(/^\n+|\n+$/g, "")} />
         ),
