@@ -25,19 +25,44 @@ const PALETTE = [
 export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
   const { data, loading } = useBusGraph();
   const { state: locState, request: requestLocation } = useUserLocation();
-  const [step, setStep] = useState<"ask" | "line" | "stop">("ask");
+  const [step, setStep] = useState<"ask" | "line" | "direction" | "stop">("ask");
   const [line, setLine] = useState<{ code: string; name: string; color: string | null } | null>(null);
+  const [direction, setDirection] = useState<1 | 2 | null>(null);
   const [search, setSearch] = useState("");
 
-  const lineStops = useMemo(() => {
-    if (!data || !line) return [];
-    const codes = new Set(
-      data.stops.filter((s) => s.line_code === line.code).map((s) => s.stop_code),
-    );
-    return data.stopsMeta
-      .filter((s) => codes.has(s.code))
-      .map((s) => ({ ...s, name: s.name ?? s.code }));
+  const directions = useMemo(() => {
+    if (!data || !line) return [] as { dir: 1 | 2; headsign: string; count: number }[];
+    const out: { dir: 1 | 2; headsign: string; count: number }[] = [];
+    for (const dir of [1, 2] as const) {
+      const seq = data.stops
+        .filter((s) => s.line_code === line.code && s.direction === dir)
+        .sort((a, b) => a.seq - b.seq);
+      if (seq.length === 0) continue;
+      out.push({ dir, headsign: seq[seq.length - 1].stop_name, count: seq.length });
+    }
+    return out;
   }, [data, line]);
+
+  const lineStops = useMemo(() => {
+    if (!data || !line || !direction) return [];
+    const seq = data.stops
+      .filter((s) => s.line_code === line.code && s.direction === direction)
+      .sort((a, b) => a.seq - b.seq);
+    const metaByCode = new Map(data.stopsMeta.map((s) => [s.code, s]));
+    return seq
+      .map((s) => {
+        if (!s.stop_code) return null;
+        const meta = metaByCode.get(s.stop_code);
+        return {
+          code: s.stop_code,
+          name: s.stop_name ?? meta?.name ?? s.stop_code,
+          lat: meta?.lat ?? null,
+          lng: meta?.lng ?? null,
+          seq: s.seq,
+        };
+      })
+      .filter((x): x is { code: string; name: string; lat: number | null; lng: number | null; seq: number } => !!x);
+  }, [data, line, direction]);
 
   const userCoords = locState.status === "ready" ? locState.coords : null;
 
@@ -79,7 +104,8 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
           {step !== "ask" && (
             <button
               onClick={() => {
-                if (step === "stop") setStep("line");
+                if (step === "stop") setStep("direction");
+                else if (step === "direction") setStep("line");
                 else if (step === "line") setStep("ask");
               }}
               className="inline-flex h-7 w-7 items-center justify-center rounded-full hover:bg-muted"
@@ -91,6 +117,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
           <h3 className="text-sm font-semibold">
             {step === "ask" && "🚌 ¿Ya sabes qué bus tomar?"}
             {step === "line" && "Elige tu línea"}
+            {step === "direction" && `Línea ${line?.code} · ¿Hacia dónde?`}
             {step === "stop" && `Línea ${line?.code} · ¿Qué parada?`}
           </h3>
         </div>
@@ -137,7 +164,8 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
                   key={l.code}
                   onClick={() => {
                     setLine(l);
-                    setStep("stop");
+                    setDirection(null);
+                    setStep("direction");
                     if (locState.status === "idle") requestLocation();
                   }}
                   title={l.name}
@@ -152,7 +180,30 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
         </div>
       )}
 
-      {step === "stop" && line && (
+      {step === "direction" && line && (
+        <div className="grid grid-cols-1 gap-2">
+          {directions.length === 0 && (
+            <p className="text-sm text-muted-foreground">Sin sentidos disponibles para esta línea.</p>
+          )}
+          {directions.map((d) => (
+            <button
+              key={d.dir}
+              onClick={() => {
+                setDirection(d.dir);
+                setStep("stop");
+              }}
+              className="rounded-2xl border border-border bg-background/80 px-4 py-3 text-left text-sm font-semibold shadow-sm hover:bg-accent/40 active:scale-[0.99]"
+            >
+              <span className="text-[11px] font-normal text-muted-foreground">
+                {d.dir === 1 ? "Ida" : "Vuelta"} · {d.count} paradas
+              </span>
+              <div className="mt-0.5 truncate">→ {d.headsign}</div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {step === "stop" && line && direction && (
         <div className="space-y-3">
           <button
             disabled={!nearest}
