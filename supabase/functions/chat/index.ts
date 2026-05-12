@@ -2328,16 +2328,16 @@ async function buildVectaliaTransit(
   const g = await loadVectaliaGraph();
   if (!g) return null;
 
-  // Destino: referencias verificadas/paradas oficiales > geocodificación estricta Alicante.
-  const destResolved = await resolveStopCandidates(destText, g, { maxMeters: 450 });
+  // Destino: referencias verificadas/paradas oficiales > geocodificación estricta Alicante. Radio 600m.
+  const destResolved = await resolveStopCandidates(destText, g, { maxMeters: 600 });
   const dCands = destResolved.stops;
   if (!dCands.length) return null;
 
-  // Origen: referencias/paradas/geocodificación estricta; GPS solo si el usuario no dio texto claro.
+  // Origen: referencias/paradas/geocodificación estricta; GPS solo si el usuario no dio texto claro. Radio 600m.
   const originResolved = await resolveStopCandidates(originText, g, {
     coords: originCoords,
     allowGps: !originText,
-    maxMeters: 450,
+    maxMeters: 600,
   });
   const oCands = originResolved.stops;
   if (!oCands.length) return null;
@@ -2350,38 +2350,65 @@ async function buildVectaliaTransit(
       if (trips.length) all.push({ origin: o, dest: d, trips });
     }
   }
-  // SOLO trayectos directos (sin transbordos). Si no hay directo, devolvemos
-  // null para que el modelo proponga la parada directa más cercana al destino.
-  const directOnly = all
-    .map((r) => ({ ...r, trips: r.trips.filter((t) => t.transfers === 0) }))
-    .filter((r) => r.trips.length > 0);
-  if (!directOnly.length) return null;
-  const ranked = directOnly;
-  ranked.sort((a, b) => {
-    const ta = a.trips[0], tb = b.trips[0];
-    return ta.totalStops - tb.totalStops;
-  });
-  const top = ranked.slice(0, 3);
+  if (!all.length) return null;
 
-  // Enriquece con km, estMin y ETA en tiempo real (paralelo)
+  // Prioriza directas; añade hasta 2 transbordos como alternativa.
+  const directTrips: { origin: DbStop; dest: DbStop; trip: VTrip }[] = [];
+  const transferTrips: { origin: DbStop; dest: DbStop; trip: VTrip }[] = [];
+  for (const r of all) {
+    for (const t of r.trips) {
+      if (t.transfers === 0) directTrips.push({ origin: r.origin, dest: r.dest, trip: t });
+      else if (t.transfers === 1) transferTrips.push({ origin: r.origin, dest: r.dest, trip: t });
+    }
+  }
+  directTrips.sort((a, b) => a.trip.totalStops - b.trip.totalStops);
+  transferTrips.sort((a, b) => a.trip.totalStops - b.trip.totalStops);
+
+  // Dedup transbordos por firma de líneas+paradas
+  const seenT = new Set<string>();
+  const uniqTransfers = transferTrips.filter(({ trip }) => {
+    const sig = trip.legs.map((l) => `${l.lineCode}|${l.fromCode}|${l.toCode}`).join(">");
+    if (seenT.has(sig)) return false;
+    seenT.add(sig);
+    return true;
+  });
+
+  const chosen = [
+    ...directTrips.slice(0, 3),
+    ...uniqTransfers.slice(0, 2),
+  ];
+  if (!chosen.length) return null;
+
+  // Reagrupa por origen+destino para mantener el formato de retorno
+  const grouped = new Map<string, { origin: DbStop; dest: DbStop; trips: VTrip[] }>();
+  for (const c of chosen) {
+    const k = `${c.origin.code}|${c.dest.code}`;
+    if (!grouped.has(k)) grouped.set(k, { origin: c.origin, dest: c.dest, trips: [] });
+    grouped.get(k)!.trips.push(c.trip);
+  }
+  const top = [...grouped.values()];
+
+  // Enriquece con km, estMin y ETA (solo en el primer leg de cada viaje)
   const etaJobs: Promise<void>[] = [];
   const etaCache = new Map<string, Promise<number | null>>();
   for (const r of top) {
-    for (const t of r.trips.slice(0, 3)) {
-      for (const leg of t.legs) {
+    for (const t of r.trips) {
+      t.legs.forEach((leg, idx) => {
         leg.km = Math.round(legKmAndStops(g, leg) * 10) / 10;
         leg.estMin = Math.max(
           1,
           Math.round((leg.km / URBAN_KMH) * 60 + leg.numStops * DWELL_MIN_PER_STOP),
         );
-        const key = `${leg.fromCode}|${leg.lineCode}`;
-        if (!etaCache.has(key)) etaCache.set(key, fetchVectaliaEta(leg.fromCode, leg.lineCode));
-        etaJobs.push(
-          etaCache.get(key)!.then((eta) => {
-            leg.etaMin = eta ?? undefined;
-          }),
-        );
-      }
+        if (idx === 0) {
+          const key = `${leg.fromCode}|${leg.lineCode}`;
+          if (!etaCache.has(key)) etaCache.set(key, fetchVectaliaEta(leg.fromCode, leg.lineCode));
+          etaJobs.push(
+            etaCache.get(key)!.then((eta) => {
+              leg.etaMin = eta ?? undefined;
+            }),
+          );
+        }
+      });
     }
   }
   await Promise.allSettled(etaJobs);
