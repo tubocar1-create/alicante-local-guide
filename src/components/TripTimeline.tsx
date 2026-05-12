@@ -211,7 +211,7 @@ export function TripTimeline({
                     color={c}
                     bold
                     suffix={
-                      isFirst && selected ? (
+                      isFirst ? (
                         nextOrigin ? (
                           <span className="font-semibold text-primary">
                             Próximo bus: {nextOrigin.etaMin} min
@@ -237,12 +237,7 @@ export function TripTimeline({
           );
         })}
 
-        {!selected && (
-          <Button onClick={onSelect} className="mt-3 w-full" size="sm">
-            <Clock className="mr-1.5 h-4 w-4" /> Ver tiempo en vivo
-          </Button>
-        )}
-        {selected && fetchedAt && (
+        {fetchedAt && (
           <p className="mt-2 text-[11px] text-muted-foreground">
             Tiempos en vivo · actualizado {new Date(fetchedAt).toLocaleTimeString("es-ES")}
             {loading && <Loader2 className="ml-1 inline h-3 w-3 animate-spin" />}
