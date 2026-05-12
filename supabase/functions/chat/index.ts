@@ -1530,7 +1530,7 @@ async function geocodeAlicanteWithGoogle(query: string): Promise<(LatLng & { lab
     headers: {
       "Content-Type": "application/json",
       "X-Goog-Api-Key": apiKey,
-      "X-Goog-FieldMask": "places.location,places.displayName,places.formattedAddress",
+      "X-Goog-FieldMask": "places.location,places.displayName,places.formattedAddress,places.types",
     },
     body: JSON.stringify({
       textQuery: `${query}, Alicante, España`,
@@ -1546,13 +1546,36 @@ async function geocodeAlicanteWithGoogle(query: string): Promise<(LatLng & { lab
       location?: { latitude: number; longitude: number };
       displayName?: { text?: string };
       formattedAddress?: string;
+      types?: string[];
     }>;
   };
+  const acceptedTypes = new Set([
+    "street_address",
+    "route",
+    "intersection",
+    "premise",
+    "park",
+    "plaza",
+    "tourist_attraction",
+    "shopping_mall",
+    "department_store",
+    "supermarket",
+    "store",
+    "hospital",
+    "school",
+    "university",
+    "locality",
+    "point_of_interest",
+    "establishment",
+  ]);
   for (const place of data.places ?? []) {
     const loc = place.location;
     if (!loc || !Number.isFinite(loc.latitude) || !Number.isFinite(loc.longitude)) continue;
     const point = { lat: loc.latitude, lng: loc.longitude };
-    if (distanceKm(ALICANTE_CENTER, point) > 18) continue;
+    if (!isInsideAlicanteBounds(point) || distanceKm(ALICANTE_CENTER, point) > 18) continue;
+    if (!(place.types ?? []).some((t) => acceptedTypes.has(t))) continue;
+    const labelText = `${place.displayName?.text ?? ""} ${place.formattedAddress ?? ""}`;
+    if (!normTxt(labelText).includes("alicante")) continue;
     return {
       ...point,
       label: place.displayName?.text ?? place.formattedAddress ?? query,
