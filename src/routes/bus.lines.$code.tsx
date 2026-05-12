@@ -4,6 +4,7 @@ import { ArrowLeft, Bus, ExternalLink } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useBusGraph } from "@/hooks/useBusGraph";
+import type { RouteStop } from "@/lib/bus-routing";
 import { StopRealtimeSheet, type StopRealtimeContext } from "@/components/StopRealtimeSheet";
 
 export const Route = createFileRoute("/bus/lines/$code")({
