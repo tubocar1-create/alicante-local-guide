@@ -1955,6 +1955,16 @@ function legKmAndStops(
   return km;
 }
 
+function nearestStops(g: { stops: DbStop[] }, coords: LatLng, max = 3, maxMeters = 600): DbStop[] {
+  return g.stops
+    .filter((s) => s.lat != null && s.lng != null)
+    .map((s) => ({ s, d: haversineMeters(coords, { lat: s.lat!, lng: s.lng! }) }))
+    .filter((x) => x.d <= maxMeters)
+    .sort((a, b) => a.d - b.d)
+    .slice(0, max)
+    .map((x) => x.s);
+}
+
 async function buildVectaliaTransit(
   originText: string | null,
   destText: string | null,
@@ -1963,18 +1973,26 @@ async function buildVectaliaTransit(
   if (!destText) return null;
   const g = await loadVectaliaGraph();
   if (!g) return null;
-  const dCands = matchStops(destText, g.stops, null);
+
+  // Destino: 1) match por nombre de parada, 2) si no, geocodifica con OSM y coge paradas cercanas
+  let dCands = matchStops(destText, g.stops, null);
+  if (!dCands.length) {
+    const geo = await geocodeAlicante(destText).catch(() => null);
+    if (geo) dCands = nearestStops(g, geo, 3, 600);
+  }
   if (!dCands.length) return null;
+
+  // Origen: 1) match por nombre, 2) geocodifica con OSM, 3) GPS del usuario
   let oCands: DbStop[] = originText ? matchStops(originText, g.stops, originCoords) : [];
+  if (!oCands.length && originText) {
+    const geo = await geocodeAlicante(originText).catch(() => null);
+    if (geo) oCands = nearestStops(g, geo, 3, 600);
+  }
   if (!oCands.length && originCoords) {
-    oCands = g.stops
-      .filter((s) => s.lat != null && s.lng != null)
-      .map((s) => ({ s, d: haversineMeters(originCoords, { lat: s.lat!, lng: s.lng! }) }))
-      .sort((a, b) => a.d - b.d)
-      .slice(0, 3)
-      .map((x) => x.s);
+    oCands = nearestStops(g, originCoords, 3, 700);
   }
   if (!oCands.length) return null;
+
   const all: { origin: DbStop; dest: DbStop; trips: VTrip[] }[] = [];
   for (const o of oCands) {
     for (const d of dCands) {
