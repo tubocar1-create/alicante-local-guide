@@ -2424,6 +2424,48 @@ function formatTransitResult(r: TransitResult): string {
   return head + "\n" + lines + "\n  nota=qr_subida viene de un identificador público de parada si se pudo resolver; si qr_subida=no_resuelto, no inventes enlace ni pidas código salvo que el usuario quiera tiempo real exacto.";
 }
 
+function buildBusOptionsReply(res: { origin: DbStop; dest: DbStop; trips: VTrip[] }[]): string {
+  const parts = ["Estas son las opciones directas:"];
+  const seen = new Set<string>();
+  for (const r of res) {
+    for (const trip of r.trips) {
+      const leg = trip.legs[0];
+      if (!leg || trip.transfers !== 0) continue;
+      const key = `${leg.lineCode}|${leg.direction}|${leg.fromCode}|${leg.toCode}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const obj = {
+        legs: [{
+          line: leg.lineCode,
+          fromName: leg.fromName,
+          fromCode: leg.fromCode,
+          toName: leg.toName,
+          toCode: leg.toCode,
+          ...(leg.etaMin != null ? { nextMin: leg.etaMin } : {}),
+        }],
+        ...(leg.estMin != null ? { travelMin: leg.estMin } : {}),
+        ...(leg.km != null ? { km: leg.km } : {}),
+      };
+      parts.push(`[[busopt:${encodeURIComponent(JSON.stringify(obj))}]]`);
+      if (parts.length >= 4) return parts.join("\n\n");
+    }
+  }
+  return parts.join("\n\n");
+}
+
+function buildChosenBusReply(res: { origin: DbStop; dest: DbStop; trips: VTrip[] }[]): string {
+  const leg = res[0]?.trips[0]?.legs[0];
+  if (!leg) return "No puedo validar esa opción con la red oficial. Prefiero no inventarte paradas.";
+  const eta = leg.etaMin != null ? ` [próximo bus](eta:${leg.lineCode}:${leg.fromCode}:${leg.etaMin})` : "";
+  const summary = `**Línea ${leg.lineCode} — sentido ${leg.toName}**${eta}\n⏱️ Trayecto: ${leg.estMin ?? "—"} min${leg.km != null ? ` (~${leg.km} km)` : ""}`;
+  const stops = [
+    `- 🟢 **${leg.fromName}** (subes aquí)`,
+    ...leg.intermediate.map((name) => `- ⚪ ${name}`),
+    `- 🔴 **${leg.toName}** (te bajas aquí)`,
+  ];
+  return `${summary}\n\n${stops.join("\n")}`;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
