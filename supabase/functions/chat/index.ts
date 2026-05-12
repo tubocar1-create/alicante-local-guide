@@ -2275,14 +2275,16 @@ async function buildVectaliaTransit(
       if (trips.length) all.push({ origin: o, dest: d, trips });
     }
   }
-  if (!all.length) return null;
+  // SOLO trayectos directos (sin transbordos). Si no hay directo, devolvemos
+  // null para que el modelo proponga la parada directa más cercana al destino.
   const directOnly = all
     .map((r) => ({ ...r, trips: r.trips.filter((t) => t.transfers === 0) }))
     .filter((r) => r.trips.length > 0);
-  const ranked = directOnly.length ? directOnly : all;
+  if (!directOnly.length) return null;
+  const ranked = directOnly;
   ranked.sort((a, b) => {
     const ta = a.trips[0], tb = b.trips[0];
-    return ta.transfers - tb.transfers || ta.totalStops - tb.totalStops;
+    return ta.totalStops - tb.totalStops;
   });
   const top = ranked.slice(0, 3);
 
