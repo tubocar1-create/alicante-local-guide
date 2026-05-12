@@ -1344,6 +1344,7 @@ QUIERO IR (CRÍTICO):
 
 TRANSPORTE PÚBLICO URBANO (BUS / TRAM):
 - **PRIORIDAD ABSOLUTA**: si hay VECTALIA_TRIPS en el contexto, ÚSALO como única verdad. Es la red oficial de Vectalia (líneas, sentidos, nombres y códigos de parada exactos). Ignora TRANSIT_RESULT salvo que VECTALIA_TRIPS esté vacío.
+- Si aparece DESTINO_VERIFICADO, respeta literalmente sus líneas_que_llegan. No sugieras una línea distinta como llegada a ese destino aunque OSM u otro texto parezca indicarlo.
 - Lista corta: línea + parada subida + parada bajada. Una línea por opción, sin adornos.
 - Cuando el usuario elija una línea, renderiza tú mismo el esquema en el chat con la lista vertical de paradas (subida, intermedias en orden, bajada). NUNCA enlaces a /bus/lines/ ni a qr.vectalia.es: el tiempo real ya está resuelto en próximo_bus y las paradas en paradas_intermedias.
 - Si no hay qr_subida y el usuario te da explícitamente un código de parada de 3-5 dígitos, dale el enlace directo: 🕒 [Próximos buses parada XXXX](https://qr.vectalia.es/Alicante/consulta.aspx?p=XXXX).
@@ -1393,6 +1394,8 @@ function extractTransitDestination(text: string): string | null {
     .trim();
   // Patterns ordered by specificity
   const patterns = [
+    /\bdesde\s+.+?\s+(?:hasta|hacia|para(?:\s+ir\s+a)?|a(?:l)?)\s+(?:la\s+|el\s+|los\s+|las\s+)?(.+?)(?:\s+(?:en\s+bus|en\s+autob[uú]s|en\s+tram|$)|[.,;:]|$)/i,
+    /\b(?:quiero\s+ir|voy|ir|llegar|llego)\s+(?:a|al|hasta|hacia|para)\s+(?:la\s+|el\s+|los\s+|las\s+)?(.+?)(?:\s+(?:desde\s+.+|en\s+bus|en\s+autob[uú]s|en\s+tram)|[.,;:]|$)/i,
     /\b(?:c[oó]mo\s+(?:voy|llego|ir)|qu[eé]\s+l[ií]nea\s+(?:me\s+lleva\s+)?)(?:en\s+bus\s+|en\s+autob[uú]s\s+|en\s+tram\s+)?(?:a|al|hasta|hacia|para|para\s+ir\s+a)\s+(.+?)(?:\s+desde\s+.+)?$/i,
     /\b(?:en\s+bus|en\s+autob[uú]s|en\s+tram)\s+(?:a|al|hasta|hacia)\s+(.+?)(?:\s+desde\s+.+)?$/i,
     /\b(?:a|al|hasta|hacia)\s+(.+?)\s+en\s+(?:bus|autob[uú]s|tram)\b/i,
@@ -1429,7 +1432,13 @@ function extractTransitOrigin(text: string): string | null {
 }
 
 async function geocodeAlicante(query: string): Promise<(LatLng & { label: string }) | null> {
-  // Bias hard to Alicante province via viewbox
+  const verified = verifiedReferenceLocation(query);
+  if (verified) return verified;
+
+  const google = await geocodeAlicanteWithGoogle(query).catch(() => null);
+  if (google) return google;
+
+  // Último recurso: OSM, acotado a Alicante. No se usa si tenemos referencia verificada.
   const url = new URL("https://nominatim.openstreetmap.org/search");
   url.searchParams.set("q", `${query}, Alicante`);
   url.searchParams.set("format", "json");
@@ -1452,6 +1461,45 @@ async function geocodeAlicante(query: string): Promise<(LatLng & { label: string
   } catch {
     return null;
   }
+}
+
+async function geocodeAlicanteWithGoogle(query: string): Promise<(LatLng & { label: string }) | null> {
+  const apiKey = Deno.env.get("GOOGLE_PLACES_API_KEY");
+  if (!apiKey) return null;
+  const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": apiKey,
+      "X-Goog-FieldMask": "places.location,places.displayName,places.formattedAddress",
+    },
+    body: JSON.stringify({
+      textQuery: `${query}, Alicante, España`,
+      locationBias: { circle: { center: ALICANTE_CENTER, radius: 12000 } },
+      maxResultCount: 3,
+      languageCode: "es",
+      regionCode: "ES",
+    }),
+  });
+  if (!res.ok) return null;
+  const data = (await res.json()) as {
+    places?: Array<{
+      location?: { latitude: number; longitude: number };
+      displayName?: { text?: string };
+      formattedAddress?: string;
+    }>;
+  };
+  for (const place of data.places ?? []) {
+    const loc = place.location;
+    if (!loc || !Number.isFinite(loc.latitude) || !Number.isFinite(loc.longitude)) continue;
+    const point = { lat: loc.latitude, lng: loc.longitude };
+    if (distanceKm(ALICANTE_CENTER, point) > 18) continue;
+    return {
+      ...point,
+      label: place.displayName?.text ?? place.formattedAddress ?? query,
+    };
+  }
+  return null;
 }
 
 function haversineMeters(a: LatLng, b: LatLng): number {
@@ -1759,14 +1807,74 @@ function normTxt(s: string): string {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
+    .replace(/\b(ii|segundo|2o|2º|2ª)\b/g, " 2 ")
+    .replace(/\b(iii|tercero|3o|3º|3ª)\b/g, " 3 ")
+    .replace(/\b(iv|cuarto|4o|4º|4ª)\b/g, " 4 ")
+    .replace(/\b(i|primero|1o|1º|1ª)\b/g, " 1 ")
     .replace(/[^a-z0-9\s]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
 
+const VERIFIED_ALICANTE_REFERENCES: Array<{
+  canonical: string;
+  aliases: string[];
+  stopCodes: string[];
+  lat: number;
+  lng: number;
+}> = [
+  {
+    canonical: "Plaza Juan Pablo II",
+    aliases: [
+      "plaza juan pablo ii",
+      "plaza juan pablo 2",
+      "plaza juan pablo segundo",
+      "juan pablo ii",
+      "juan pablo 2",
+      "juan pablo segundo",
+    ],
+    stopCodes: ["4332"],
+    lat: 38.3545,
+    lng: -0.510787,
+  },
+  {
+    canonical: "Avenida Maisonnave",
+    aliases: ["avenida maisonnave", "av maisonnave", "maisonnave", "maisonave"],
+    stopCodes: ["4117", "4118", "4108", "4109"],
+    lat: 38.34345,
+    lng: -0.4912,
+  },
+];
+
+function verifiedReferenceLocation(query: string): (LatLng & { label: string }) | null {
+  const q = normTxt(query);
+  if (!q) return null;
+  const ref = VERIFIED_ALICANTE_REFERENCES.find((r) => r.aliases.some((a) => {
+    const an = normTxt(a);
+    return q === an || q.includes(an) || an.includes(q);
+  }));
+  return ref ? { lat: ref.lat, lng: ref.lng, label: ref.canonical } : null;
+}
+
+function verifiedReferenceStops(query: string, stops: DbStop[]): DbStop[] {
+  const q = normTxt(query);
+  if (!q) return [];
+  const ref = VERIFIED_ALICANTE_REFERENCES.find((r) => r.aliases.some((a) => {
+    const an = normTxt(a);
+    return q === an || q.includes(an) || an.includes(q);
+  }));
+  if (!ref) return [];
+  const byCode = new Map(stops.map((s) => [s.code, s]));
+  return ref.stopCodes
+    .map((code) => byCode.get(code))
+    .filter((s): s is DbStop => Boolean(s));
+}
+
 function matchStops(query: string, stops: DbStop[], coords: LatLng | null): DbStop[] {
   const q = normTxt(query);
   if (!q) return [];
+  const verified = verifiedReferenceStops(query, stops);
+  if (verified.length) return verified;
   const tokens = q.split(" ").filter((t) => t.length >= 3);
   if (!tokens.length) return [];
   return stops
@@ -1974,7 +2082,7 @@ async function buildVectaliaTransit(
   const g = await loadVectaliaGraph();
   if (!g) return null;
 
-  // Destino: 1) match por nombre de parada, 2) si no, geocodifica con OSM y coge paradas cercanas
+  // Destino: 1) referencias verificadas/paradas oficiales, 2) geocodifica con OSM y coge paradas cercanas
   let dCands = matchStops(destText, g.stops, null);
   if (!dCands.length) {
     const geo = await geocodeAlicante(destText).catch(() => null);
@@ -1982,7 +2090,7 @@ async function buildVectaliaTransit(
   }
   if (!dCands.length) return null;
 
-  // Origen: 1) match por nombre, 2) geocodifica con OSM, 3) GPS del usuario
+  // Origen: 1) referencias verificadas/paradas oficiales, 2) geocodifica con OSM, 3) GPS del usuario
   let oCands: DbStop[] = originText ? matchStops(originText, g.stops, originCoords) : [];
   if (!oCands.length && originText) {
     const geo = await geocodeAlicante(originText).catch(() => null);
@@ -2002,11 +2110,15 @@ async function buildVectaliaTransit(
     }
   }
   if (!all.length) return null;
-  all.sort((a, b) => {
+  const directOnly = all
+    .map((r) => ({ ...r, trips: r.trips.filter((t) => t.transfers === 0) }))
+    .filter((r) => r.trips.length > 0);
+  const ranked = directOnly.length ? directOnly : all;
+  ranked.sort((a, b) => {
     const ta = a.trips[0], tb = b.trips[0];
     return ta.transfers - tb.transfers || ta.totalStops - tb.totalStops;
   });
-  const top = all.slice(0, 3);
+  const top = ranked.slice(0, 3);
 
   // Enriquece con km, estMin y ETA en tiempo real (paralelo)
   const etaJobs: Promise<void>[] = [];
@@ -2040,6 +2152,19 @@ function formatVectaliaTransit(
     "",
     "VECTALIA_TRIPS (FUENTE OFICIAL desde la red real de Vectalia — usa EXACTAMENTE estos códigos de línea, nombres y códigos de parada; NO inventes nada):",
   ];
+  const destLines = new Map<string, Set<string>>();
+  for (const r of res) {
+    const set = destLines.get(r.dest.code) ?? new Set<string>();
+    for (const t of r.trips) for (const l of t.legs) if (l.toCode === r.dest.code) set.add(l.lineCode);
+    destLines.set(r.dest.code, set);
+  }
+  const emittedDest = new Set<string>();
+  for (const r of res) {
+    if (emittedDest.has(r.dest.code)) continue;
+    emittedDest.add(r.dest.code);
+    const lines = [...(destLines.get(r.dest.code) ?? new Set<string>())].sort((a, b) => Number(a) - Number(b));
+    out.push(`DESTINO_VERIFICADO: "${r.dest.name}" [parada ${r.dest.code}] líneas_que_llegan=[${lines.join(",")}]`);
+  }
   let n = 1;
   for (const r of res) {
     for (const t of r.trips.slice(0, 3)) {
@@ -2196,6 +2321,7 @@ ESTILO OBLIGATORIO en este modo:
 - **Primer mensaje del flujo bus** (cuando aún no conozcas origen y destino del usuario): saluda brevemente y pregunta en una sola frase: dónde está y a dónde quiere ir. Ejemplo: "¡Hola! 👋 Dime, ¿desde dónde sales y a qué parada o sitio quieres llegar?". NADA más.
 - Cuando ya tengas VECTALIA_TRIPS disponibles:
   - **PRIORIDAD ABSOLUTA**: usa EXACTAMENTE la línea, sentido, nombres y códigos de parada que vengan en VECTALIA_TRIPS. Es la red oficial. Ignora TRANSIT_RESULT (OSM) salvo que VECTALIA_TRIPS esté vacío.
+  - Si hay una línea DESTINO_VERIFICADO, NO propongas ninguna línea que no aparezca en líneas_que_llegan para llegar a ese destino final.
   - **Paso 1 — Alternativas (cuando el usuario aún no ha elegido línea)**: devuelve hasta 3 opciones en lista numerada y BREVE. Para cada opción, en este orden y SIEMPRE sin que el usuario lo pida:
     1. "**Línea X** · sube en *Nombre parada subida* → baja en *Nombre parada bajada*" (si hay transbordo, indícalo entre legs).
     2. Tiempo de espera EN VIVO: usa SIEMPRE este formato exacto en markdown para que el frontend lo renderice y lo refresque solo: \`[próximo bus](eta:LINEA:CODIGO_PARADA_SUBIDA:MIN)\`. Sustituye LINEA por el código de línea (sin ceros), CODIGO_PARADA_SUBIDA por qr_subida del leg, y MIN por próximo_bus en minutos (omite \`:MIN\` si próximo_bus=sin_dato). Ejemplo: \`[próximo bus](eta:12:1234:5)\` o \`[próximo bus](eta:12:1234)\`. NO escribas el número de minutos como texto plano: el badge se actualiza solo cada 30s.
