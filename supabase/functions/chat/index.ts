@@ -2123,49 +2123,67 @@ function findVTrips(lineStops: DbLineStop[], stops: DbStop[], oCode: string, dCo
       direct.add(o.key);
     }
   }
-  // Transbordos: solo si NO hay directo en esta línea, buscamos un transbordo.
-  // Para no liar la salida, limitamos exploración a ~30 paradas por línea A.
+  // Transbordos: si NO hay directo en esta línea, exploramos un transbordo.
+  // Permitimos caminar hasta 600m entre la parada de bajada (línea A) y la parada
+  // de subida (línea B). Limitamos exploración a ~30 paradas por línea A.
+  const stopCoord = new Map<string, LatLng>();
+  for (const s of stops) {
+    if (s.lat != null && s.lng != null) stopCoord.set(s.code, { lat: s.lat, lng: s.lng });
+  }
   for (const o of oAt) {
     if (direct.has(o.key)) continue;
     const listA = byLine.get(o.key)!;
     const maxA = Math.min(listA.length, o.idx + 31);
     for (let i = o.idx + 1; i < maxA; i++) {
-      const transferStop = listA[i];
-      if (!transferStop.stop_code) continue;
-      const transferAt = byStop.get(transferStop.stop_code);
-      if (!transferAt) continue;
-      for (const t of transferAt) {
-        if (t.key === o.key) continue;
-        const di = dIdx.get(t.key);
-        if (di != null && di > t.idx) {
-          const listA2 = listA;
-          const listB = byLine.get(t.key)!;
-          const aFrom = listA2[o.idx], aTo = listA2[i];
-          const bFrom = listB[t.idx], bTo = listB[di];
-          const interA = listA2.slice(o.idx + 1, i).map((s) => s.stop_name);
-          const interB = listB.slice(t.idx + 1, di).map((s) => s.stop_name);
-          trips.push({
-            legs: [
-              {
-                lineCode: aFrom.line_code, direction: aFrom.direction,
-                fromCode: aFrom.stop_code!, fromName: aFrom.stop_name,
-                toCode: aTo.stop_code!, toName: aTo.stop_name,
-                numStops: i - o.idx,
-                lineKey: o.key, fromIdx: o.idx, toIdx: i,
-                intermediate: interA,
-              },
-              {
-                lineCode: bFrom.line_code, direction: bFrom.direction,
-                fromCode: bFrom.stop_code!, fromName: bFrom.stop_name,
-                toCode: bTo.stop_code!, toName: bTo.stop_name,
-                numStops: di - t.idx,
-                lineKey: t.key, fromIdx: t.idx, toIdx: di,
-                intermediate: interB,
-              },
-            ],
-            totalStops: (i - o.idx) + (di - t.idx),
-            transfers: 1,
-          });
+      const alight = listA[i];
+      if (!alight.stop_code) continue;
+      const alightCoord = stopCoord.get(alight.stop_code);
+      // Candidatos: misma parada (walk=0) + paradas a ≤600m
+      const nearby: { code: string; walkM: number }[] = [{ code: alight.stop_code, walkM: 0 }];
+      if (alightCoord) {
+        for (const s of stops) {
+          if (!s.code || s.code === alight.stop_code) continue;
+          if (s.lat == null || s.lng == null) continue;
+          const d = haversineMeters(alightCoord, { lat: s.lat, lng: s.lng });
+          if (d <= TRANSFER_WALK_MAX_M) nearby.push({ code: s.code, walkM: Math.round(d) });
+        }
+      }
+      for (const cand of nearby) {
+        const boardAt = byStop.get(cand.code);
+        if (!boardAt) continue;
+        for (const t of boardAt) {
+          if (t.key === o.key) continue;
+          const di = dIdx.get(t.key);
+          if (di != null && di > t.idx) {
+            const listB = byLine.get(t.key)!;
+            const aFrom = listA[o.idx], aTo = listA[i];
+            const bFrom = listB[t.idx], bTo = listB[di];
+            const interA = listA.slice(o.idx + 1, i).map((s) => s.stop_name);
+            const interB = listB.slice(t.idx + 1, di).map((s) => s.stop_name);
+            trips.push({
+              legs: [
+                {
+                  lineCode: aFrom.line_code, direction: aFrom.direction,
+                  fromCode: aFrom.stop_code!, fromName: aFrom.stop_name,
+                  toCode: aTo.stop_code!, toName: aTo.stop_name,
+                  numStops: i - o.idx,
+                  lineKey: o.key, fromIdx: o.idx, toIdx: i,
+                  intermediate: interA,
+                },
+                {
+                  lineCode: bFrom.line_code, direction: bFrom.direction,
+                  fromCode: bFrom.stop_code!, fromName: bFrom.stop_name,
+                  toCode: bTo.stop_code!, toName: bTo.stop_name,
+                  numStops: di - t.idx,
+                  lineKey: t.key, fromIdx: t.idx, toIdx: di,
+                  intermediate: interB,
+                  transferWalkM: cand.walkM,
+                },
+              ],
+              totalStops: (i - o.idx) + (di - t.idx),
+              transfers: 1,
+            });
+          }
         }
       }
     }
