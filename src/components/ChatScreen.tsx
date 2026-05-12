@@ -732,6 +732,7 @@ type BusLegData = {
   toName: string;
   toCode: string;
   nextMin?: number | null;
+  walkM?: number | null;
 };
 type BusOptionData = {
   legs: BusLegData[];
@@ -1023,6 +1024,11 @@ function BusOptionCard({ data }: { data: BusOptionData }) {
             {idx > 0 && (
               <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                 ↻ Transbordo en {leg.fromName}
+                {typeof leg.walkM === "number" && leg.walkM > 0 && (
+                  <span className="ml-1 normal-case font-normal text-amber-600">
+                    · 🚶 ~{leg.walkM} m a pie
+                  </span>
+                )}
               </div>
             )}
             <div className="flex items-center gap-2">
