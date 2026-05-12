@@ -1840,6 +1840,7 @@ function findVTrips(lineStops: DbLineStop[], oCode: string, dCode: string): VTri
     if (di != null && di > o.idx) {
       const list = byLine.get(o.key)!;
       const a = list[o.idx], b = list[di];
+      const inter = list.slice(o.idx + 1, di).map((s) => s.stop_name);
       trips.push({
         legs: [{
           lineCode: a.line_code, direction: a.direction,
@@ -1847,6 +1848,7 @@ function findVTrips(lineStops: DbLineStop[], oCode: string, dCode: string): VTri
           toCode: b.stop_code!, toName: b.stop_name,
           numStops: di - o.idx,
           lineKey: o.key, fromIdx: o.idx, toIdx: di,
+          intermediate: inter,
         }],
         totalStops: di - o.idx, transfers: 0,
       });
@@ -1868,10 +1870,12 @@ function findVTrips(lineStops: DbLineStop[], oCode: string, dCode: string): VTri
         if (di != null && di > t.idx) {
           const listB = byLine.get(t.key)!;
           const a0 = listA[o.idx], a1 = listA[i], b0 = listB[t.idx], b1 = listB[di];
+          const interA = listA.slice(o.idx + 1, i).map((s) => s.stop_name);
+          const interB = listB.slice(t.idx + 1, di).map((s) => s.stop_name);
           trips.push({
             legs: [
-              { lineCode: a0.line_code, direction: a0.direction, fromCode: a0.stop_code!, fromName: a0.stop_name, toCode: a1.stop_code!, toName: a1.stop_name, numStops: i - o.idx, lineKey: o.key, fromIdx: o.idx, toIdx: i },
-              { lineCode: b0.line_code, direction: b0.direction, fromCode: b0.stop_code!, fromName: b0.stop_name, toCode: b1.stop_code!, toName: b1.stop_name, numStops: di - t.idx, lineKey: t.key, fromIdx: t.idx, toIdx: di },
+              { lineCode: a0.line_code, direction: a0.direction, fromCode: a0.stop_code!, fromName: a0.stop_name, toCode: a1.stop_code!, toName: a1.stop_name, numStops: i - o.idx, lineKey: o.key, fromIdx: o.idx, toIdx: i, intermediate: interA },
+              { lineCode: b0.line_code, direction: b0.direction, fromCode: b0.stop_code!, fromName: b0.stop_name, toCode: b1.stop_code!, toName: b1.stop_name, numStops: di - t.idx, lineKey: t.key, fromIdx: t.idx, toIdx: di, intermediate: interB },
             ],
             totalStops: (i - o.idx) + (di - t.idx),
             transfers: 1,
