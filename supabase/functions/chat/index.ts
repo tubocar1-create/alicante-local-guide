@@ -56,6 +56,10 @@ function isInsideAlicanteBounds(point: LatLng) {
   );
 }
 
+function isInsideAlicanteUrbanCore(point: LatLng) {
+  return distanceKm(ALICANTE_CENTER, point) <= 11;
+}
+
 function madridNow(date = new Date()) {
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Europe/Madrid",
