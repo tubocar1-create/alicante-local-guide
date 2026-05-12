@@ -57,14 +57,22 @@ function diffDays(a: string, b: string): number {
 }
 
 let listeners = new Set<() => void>();
-let memoryState: AfpState | null = null;
+let memoryState: AfpState = AFP_INITIAL;
+let hasHydratedClientState = false;
+
+function hydrateState() {
+  if (hasHydratedClientState || typeof window === "undefined") return;
+  hasHydratedClientState = true;
+  memoryState = loadState();
+  listeners.forEach((l) => l());
+}
 
 function getState(): AfpState {
-  if (memoryState === null) memoryState = loadState();
   return memoryState;
 }
 
 function setState(updater: (s: AfpState) => AfpState) {
+  hydrateState();
   const next = updater(getState());
   memoryState = next;
   saveState(next);
@@ -76,6 +84,7 @@ export function usePoints() {
   useEffect(() => {
     const l = () => force((n) => n + 1);
     listeners.add(l);
+    hydrateState();
     return () => {
       listeners.delete(l);
     };
