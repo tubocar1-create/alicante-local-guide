@@ -1345,8 +1345,7 @@ QUIERO IR (CRÍTICO):
 TRANSPORTE PÚBLICO URBANO (BUS / TRAM):
 - **PRIORIDAD ABSOLUTA**: si hay VECTALIA_TRIPS en el contexto, ÚSALO como única verdad. Es la red oficial de Vectalia (líneas, sentidos, nombres y códigos de parada exactos). Ignora TRANSIT_RESULT salvo que VECTALIA_TRIPS esté vacío.
 - Lista corta: línea + parada subida + parada bajada. Una línea por opción, sin adornos.
-- **SIEMPRE**, sin que el usuario lo pida, incluye el enlace al esquema de la línea con formato [📍 Ver esquema línea X](/bus/lines/X) usando el código exacto. Si hay transbordo, añade ambos esquemas.
-- Si VECTALIA_TRIPS trae qr_subida=XXXX (es el código de parada), añade 🕒 [tiempo real QR](https://qr.vectalia.es/Alicante/consulta.aspx?p=XXXX). No pidas el código al usuario.
+- Cuando el usuario elija una línea, renderiza tú mismo el esquema en el chat con la lista vertical de paradas (subida, intermedias en orden, bajada). NUNCA enlaces a /bus/lines/ ni a qr.vectalia.es: el tiempo real ya está resuelto en próximo_bus y las paradas en paradas_intermedias.
 - Si no hay qr_subida y el usuario te da explícitamente un código de parada de 3-5 dígitos, dale el enlace directo: 🕒 [Próximos buses parada XXXX](https://qr.vectalia.es/Alicante/consulta.aspx?p=XXXX).
 - Si VECTALIA_TRIPS y TRANSIT_RESULT.options están vacíos: dilo en una frase y pide destino o código de parada más concreto.
 - **NUNCA inventes** números de línea, códigos de parada ni nombres de parada. Si no aparece en VECTALIA_TRIPS ni en TRANSIT_RESULT, no existe.`;
