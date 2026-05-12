@@ -2055,11 +2055,15 @@ async function buildVectaliaTransit(
     }
   }
   if (!all.length) return null;
-  all.sort((a, b) => {
+  const directOnly = all
+    .map((r) => ({ ...r, trips: r.trips.filter((t) => t.transfers === 0) }))
+    .filter((r) => r.trips.length > 0);
+  const ranked = directOnly.length ? directOnly : all;
+  ranked.sort((a, b) => {
     const ta = a.trips[0], tb = b.trips[0];
     return ta.transfers - tb.transfers || ta.totalStops - tb.totalStops;
   });
-  const top = all.slice(0, 3);
+  const top = ranked.slice(0, 3);
 
   // Enriquece con km, estMin y ETA en tiempo real (paralelo)
   const etaJobs: Promise<void>[] = [];
