@@ -134,12 +134,17 @@ export function LiveEta({
           <span className="text-sm sm:text-base font-semibold tabular-nums text-foreground/90">
             {liveMin == null ? "Sin paso" : liveMin <= 0 ? "Llegando" : `Faltan ${liveMin} min`}
           </span>
-          <span
-            className={`text-3xl font-bold tabular-nums leading-none ${
-              isImminent ? "text-primary" : "text-foreground"
-            }`}
-          >
-            {arrival ? formatHHMM(arrival) : "--:--"}
+          <span className="flex flex-col items-end leading-none">
+            <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+              Hora estimada
+            </span>
+            <span
+              className={`mt-0.5 text-3xl font-bold tabular-nums leading-none ${
+                isImminent ? "text-primary" : "text-foreground"
+              }`}
+            >
+              {arrival ? formatHHMM(arrival) : "--:--"}
+            </span>
           </span>
         </div>
       </div>
