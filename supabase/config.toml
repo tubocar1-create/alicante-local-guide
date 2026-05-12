@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.bus-eta]
 verify_jwt = false
+
+[functions.bus-eta-raw]
+verify_jwt = false
