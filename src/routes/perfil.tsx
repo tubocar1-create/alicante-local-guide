@@ -416,6 +416,35 @@ function PerfilPage() {
           </ul>
         </div>
       )}
+
+      {/* Cerrar app */}
+      <section className="mt-6 border-t border-border pt-4">
+        <button
+          onClick={() => {
+            const ok = window.confirm(
+              "¿Cerrar la app? Se detendrá la ubicación y se cerrará esta pestaña.",
+            );
+            if (!ok) return;
+            try {
+              window.close();
+            } catch {
+              /* ignore */
+            }
+            // Si el navegador no permite cerrar la pestaña (no fue abierta por script),
+            // dejamos una pantalla de despedida en blanco para liberar recursos.
+            setTimeout(() => {
+              document.body.innerHTML =
+                '<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:system-ui;color:#666;text-align:center;padding:24px;">Puedes cerrar esta pestaña.<br/>¡Hasta pronto! 👋</div>';
+            }, 150);
+          }}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm font-semibold text-destructive transition active:scale-[0.99] hover:bg-destructive/10"
+        >
+          <Power className="h-4 w-4" /> Cerrar la app
+        </button>
+        <p className="mt-2 text-center text-[11px] text-muted-foreground">
+          Detiene la geolocalización y cierra la pestaña.
+        </p>
+      </section>
     </div>
   );
 }
