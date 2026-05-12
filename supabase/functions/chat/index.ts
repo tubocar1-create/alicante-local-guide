@@ -2726,14 +2726,12 @@ ESTILO OBLIGATORIO en este modo:
     Donde JSON_URI_ENCODED es \`encodeURIComponent(JSON.stringify(obj))\` y \`obj\` tiene la forma:
     \`{ "legs": [ { "line": "12", "fromName": "Plaza Calvo Sotelo", "fromCode": "1234", "toName": "Plaza Juan Pablo II", "toCode": "4332", "nextMin": 5 } ], "travelMin": 14, "km": 3.2 }\`
     - "line": código de línea sin ceros a la izquierda. "fromCode"/"toCode": qr_subida/qr_bajada del leg. "nextMin": próximo_bus en minutos (omite la propiedad si próximo_bus = sin_dato).
-    - **SOLO trayectos directos (sin transbordos)**. Si VECTALIA_TRIPS trae varias opciones, todas son directas: cada \`legs\` debe tener exactamente UN objeto. NUNCA propongas transbordos en este modo.
+    - **Prioriza directas**, pero si VECTALIA_TRIPS incluye opciones con \`legs\` de longitud 2 son **transbordos válidos** (máx 2). Renderiza cada opción tal cual viene en VECTALIA_TRIPS, sin inventar.
     - "travelMin" y "km" son del trayecto (tiempo_viaje y km del context).
-    NO añadas en estas tarjetas enlaces de "Cómo llegar", "Reseñas", paradas intermedias ni el badge \`eta:\` en texto suelto: la tarjeta ya muestra el tiempo en vivo dentro y un botón VAMOS. Antes de las tarjetas puedes poner una línea muy breve introductoria (ej. "Estas son tus 3 opciones:"). Después de las tarjetas, NO preguntes "¿Cuál prefieres?" — el usuario elige pulsando VAMOS. Si la parada de bajada no es exactamente el destino sino la más cercana, añade UNA frase corta antes de las tarjetas avisando (ej. "La parada más cercana a tu destino es *Nombre*, te dejará a unos minutos andando.").
-  - **Paso 2 — Esquema de la ruta (cuando el usuario ya ha elegido una línea/opción)**: NO enlaces a /bus/lines/. Renderiza tú mismo el esquema en el chat usando paradas_intermedias del contexto, así:
-    "**Línea X — sentido Nombre bajada**" + repite el badge \`[próximo bus](eta:LINEA:CODIGO_PARADA_SUBIDA:MIN)\` y "⏱️ Trayecto: X min (~Y km)", y debajo una lista vertical:
+    NO añadas en estas tarjetas enlaces de "Cómo llegar", "Reseñas", paradas intermedias ni el badge \`eta:\` en texto suelto. En transbordos, NO des hora del segundo bus: la tarjeta del segundo leg solo dirá "toma la línea X en la parada Y". Antes de las tarjetas puedes poner una línea muy breve introductoria. Después de las tarjetas, NO preguntes "¿Cuál prefieres?" — el usuario elige pulsando VAMOS.
+  - **Paso 2 — Esquema de la ruta (cuando el usuario ya ha elegido una opción)**: NO enlaces a /bus/lines/. Renderiza tú mismo el esquema en el chat usando paradas_intermedias del contexto. Para transbordos, lista primero el primer leg con su badge \`[próximo bus](eta:...)\` y al final añade un bloque de transbordo sin hora: "Transbordo: en *parada*, toma la **Línea X** hacia *destino* (no te doy hora aquí)."
     - 🟢 **Nombre parada subida** (subes aquí)
     - ⚪ Parada intermedia 1
-    - ⚪ Parada intermedia 2
     - … (lista TODAS las paradas_intermedias en orden, sin abreviar)
     - 🔴 **Nombre parada bajada** (te bajas aquí)
     NUNCA propongas transbordos. Si no hay línea directa, dilo claramente y sugiere la parada directa más cercana al destino.
