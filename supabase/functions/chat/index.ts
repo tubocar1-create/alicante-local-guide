@@ -2376,9 +2376,30 @@ async function buildVectaliaTransit(
   const oCands = originResolved.stops;
   if (!oCands.length) return null;
 
+  // Expande candidatos: añade paradas extra en radio 600m del centroide para
+  // encontrar rutas DIRECTAS aunque la parada "más obvia" no tenga línea directa.
+  const TRIP_RADIUS_M = 600;
+  function expandCandidates(base: DbStop[]): DbStop[] {
+    const withCoords = base.filter((s) => s.lat != null && s.lng != null);
+    if (!withCoords.length) return base;
+    const cx = withCoords.reduce((a, s) => a + s.lat!, 0) / withCoords.length;
+    const cy = withCoords.reduce((a, s) => a + s.lng!, 0) / withCoords.length;
+    const seen = new Set(base.map((s) => s.code));
+    const extras = g!.stops
+      .filter((s) => s.lat != null && s.lng != null && !seen.has(s.code))
+      .map((s) => ({ s, d: haversineMeters({ lat: cx, lng: cy }, { lat: s.lat!, lng: s.lng! }) }))
+      .filter((x) => x.d <= TRIP_RADIUS_M)
+      .sort((a, b) => a.d - b.d)
+      .slice(0, 8)
+      .map((x) => x.s);
+    return [...base, ...extras];
+  }
+  const oExpanded = expandCandidates(oCands);
+  const dExpanded = expandCandidates(dCands);
+
   const all: { origin: DbStop; dest: DbStop; trips: VTrip[] }[] = [];
-  for (const o of oCands) {
-    for (const d of dCands) {
+  for (const o of oExpanded) {
+    for (const d of dExpanded) {
       if (o.code === d.code) continue;
       const trips = findVTrips(g.lineStops, g.stops, o.code, d.code);
       if (trips.length) all.push({ origin: o, dest: d, trips });
