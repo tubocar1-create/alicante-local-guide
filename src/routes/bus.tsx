@@ -139,7 +139,7 @@ function BusPage() {
             className="flex gap-2"
             onSubmit={(e) => {
               e.preventDefault();
-              open(code);
+              openByCode(code);
             }}
           >
             <Input
@@ -203,11 +203,10 @@ function BusPage() {
             <ul className="space-y-2">
               {nearest.map((s) => (
                 <li key={s.code}>
-                  <a
-                    href={liveStopUrl(s.code)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between rounded-lg border bg-card p-3 transition-colors hover:bg-accent"
+                  <button
+                    type="button"
+                    onClick={() => openStop({ code: s.code, name: s.name, lines: s.lines, lat: s.lat, lng: s.lng })}
+                    className="flex w-full items-center justify-between rounded-lg border bg-card p-3 text-left transition-colors hover:bg-accent"
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -225,7 +224,7 @@ function BusPage() {
                       </div>
                     </div>
                     <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                  </a>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -243,11 +242,10 @@ function BusPage() {
             <ul className="space-y-2">
               {stops.map((s) => (
                 <li key={s.code}>
-                  <a
-                    href={liveStopUrl(s.code)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between rounded-lg border bg-card p-3 transition-colors hover:bg-accent"
+                  <button
+                    type="button"
+                    onClick={() => openStop({ code: s.code, name: s.name, lines: s.lines, lat: s.lat, lng: s.lng })}
+                    className="flex w-full items-center justify-between rounded-lg border bg-card p-3 text-left transition-colors hover:bg-accent"
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -266,7 +264,7 @@ function BusPage() {
                       </div>
                     </div>
                     <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                  </a>
+                  </button>
                 </li>
               ))}
             </ul>
