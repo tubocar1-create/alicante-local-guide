@@ -1955,6 +1955,16 @@ function legKmAndStops(
   return km;
 }
 
+function nearestStops(g: { stops: DbStop[] }, coords: LatLng, max = 3, maxMeters = 600): DbStop[] {
+  return g.stops
+    .filter((s) => s.lat != null && s.lng != null)
+    .map((s) => ({ s, d: haversineMeters(coords, { lat: s.lat!, lng: s.lng! }) }))
+    .filter((x) => x.d <= maxMeters)
+    .sort((a, b) => a.d - b.d)
+    .slice(0, max)
+    .map((x) => x.s);
+}
+
 async function buildVectaliaTransit(
   originText: string | null,
   destText: string | null,
@@ -1963,18 +1973,26 @@ async function buildVectaliaTransit(
   if (!destText) return null;
   const g = await loadVectaliaGraph();
   if (!g) return null;
-  const dCands = matchStops(destText, g.stops, null);
+
+  // Destino: 1) match por nombre de parada, 2) si no, geocodifica con OSM y coge paradas cercanas
+  let dCands = matchStops(destText, g.stops, null);
+  if (!dCands.length) {
+    const geo = await geocodeAlicante(destText).catch(() => null);
+    if (geo) dCands = nearestStops(g, geo, 3, 600);
+  }
   if (!dCands.length) return null;
+
+  // Origen: 1) match por nombre, 2) geocodifica con OSM, 3) GPS del usuario
   let oCands: DbStop[] = originText ? matchStops(originText, g.stops, originCoords) : [];
+  if (!oCands.length && originText) {
+    const geo = await geocodeAlicante(originText).catch(() => null);
+    if (geo) oCands = nearestStops(g, geo, 3, 600);
+  }
   if (!oCands.length && originCoords) {
-    oCands = g.stops
-      .filter((s) => s.lat != null && s.lng != null)
-      .map((s) => ({ s, d: haversineMeters(originCoords, { lat: s.lat!, lng: s.lng! }) }))
-      .sort((a, b) => a.d - b.d)
-      .slice(0, 3)
-      .map((x) => x.s);
+    oCands = nearestStops(g, originCoords, 3, 700);
   }
   if (!oCands.length) return null;
+
   const all: { origin: DbStop; dest: DbStop; trips: VTrip[] }[] = [];
   for (const o of oCands) {
     for (const d of dCands) {
@@ -2192,7 +2210,7 @@ ESTILO OBLIGATORIO en este modo:
     - 🔴 **Nombre parada bajada** (te bajas aquí)
     Si la opción tiene transbordo, repite el bloque para cada leg, separados por "↻ **Transbordo en *Parada*** — coge la Línea Y" y añade su propio badge \`[próximo bus](eta:LINEA2:CODIGO_PARADA_TRANSBORDO:MIN)\`.
   - NO incluyas nunca el enlace https://qr.vectalia.es/... ni el enlace /bus/lines/ — el tiempo real y el esquema ya los das tú aquí. NO escribas "Próximo bus: X min" en texto plano; usa SIEMPRE el badge \`[próximo bus](eta:...)\` para que se actualice solo.
-- Si VECTALIA_TRIPS está vacío y TRANSIT_RESULT también: di en una frase que no encuentras línea directa y pide aclarar destino o origen (sin pedir códigos QR).
+- Si VECTALIA_TRIPS está vacío y TRANSIT_RESULT también: di en una frase que no localizas con precisión esa dirección y pide al usuario que sea más específico (ej. "¿Puedes darme el nombre de la calle y el número, o un punto de referencia cercano como un colegio, hospital o plaza?"). NUNCA inventes paradas ni líneas.
 - **NUNCA inventes** líneas, códigos ni nombres de parada. Si no aparece en VECTALIA_TRIPS, no existe.`
       : "";
     const runtimeContext = `RUNTIME CONTEXT (use this when relevant):\nTODAY: ${todayStr} (zona horaria Europe/Madrid)\nMAX_NEARBY_OPTIONS: ${context?.maxOptions ?? 4}\n${locationLine}${transitModeLine}${verifiedOpenLine}${mentionedLine}${vectaliaLine}${transitLine}`;
