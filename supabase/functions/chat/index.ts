@@ -45,6 +45,16 @@ const OVERPASS_ENDPOINTS = [
   "https://overpass.kumi.systems/api/interpreter",
 ];
 const ALICANTE_CENTER = { lat: 38.3452, lng: -0.481 };
+const ALICANTE_BOUNDS = { south: 38.265, west: -0.595, north: 38.445, east: -0.335 };
+
+function isInsideAlicanteBounds(point: LatLng) {
+  return (
+    point.lat >= ALICANTE_BOUNDS.south &&
+    point.lat <= ALICANTE_BOUNDS.north &&
+    point.lng >= ALICANTE_BOUNDS.west &&
+    point.lng <= ALICANTE_BOUNDS.east
+  );
+}
 
 function madridNow(date = new Date()) {
   const parts = new Intl.DateTimeFormat("en-GB", {
