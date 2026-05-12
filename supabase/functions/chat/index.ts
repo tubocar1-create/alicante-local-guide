@@ -2020,7 +2020,7 @@ function matchStops(query: string, stops: DbStop[], coords: LatLng | null): DbSt
   if (!q) return [];
   const verified = verifiedReferenceStops(query, stops);
   if (verified.length) return verified;
-  const tokens = q.split(" ").filter((t) => t.length >= 3);
+  const tokens = meaningfulPlaceTokens(q);
   if (!tokens.length) return [];
   return stops
     .map((s) => {
