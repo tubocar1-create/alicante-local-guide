@@ -162,7 +162,10 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
         <div>
           {loading && <p className="text-sm text-muted-foreground">Cargando líneas…</p>}
           <div className="grid grid-cols-5 gap-2 sm:grid-cols-7">
-            {(data?.lines ?? []).map((l, i) => {
+            {(data?.lines ?? [])
+              .slice()
+              .sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: "base" }))
+              .map((l, i) => {
               const color = l.color || PALETTE[i % PALETTE.length];
               return (
                 <button
