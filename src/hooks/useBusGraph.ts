@@ -7,7 +7,7 @@ export type LineRow = { code: string; name: string; color: string | null };
 type Cache = {
   stops: RouteStop[];
   lines: LineRow[];
-  stopsMeta: { code: string; name: string | null }[];
+  stopsMeta: { code: string; name: string | null; lat: number | null; lng: number | null }[];
 };
 
 let cache: Cache | null = null;
@@ -25,12 +25,12 @@ async function load(): Promise<Cache> {
         .order("direction")
         .order("seq"),
       supabase.from("bus_lines").select("code,name,color").order("code"),
-      supabase.from("bus_stops").select("code,name").order("code"),
+      supabase.from("bus_stops").select("code,name,lat,lng").order("code"),
     ]);
     cache = {
       stops: (lsRes.data ?? []) as RouteStop[],
       lines: (linesRes.data ?? []) as LineRow[],
-      stopsMeta: (stopsRes.data ?? []) as { code: string; name: string | null }[],
+      stopsMeta: (stopsRes.data ?? []) as Cache["stopsMeta"],
     };
     return cache;
   })();
