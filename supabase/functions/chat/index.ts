@@ -2170,6 +2170,50 @@ async function fetchVectaliaEta(stopCode: string, lineCode: string): Promise<num
   }
 }
 
+function extractChosenDirectBus(text: string): { lineCode: string; fromCode: string; toCode: string } | null {
+  const line = text.match(/\bL[ií]nea\s+(\d{1,3})\b/i)?.[1];
+  const codes = [...text.matchAll(/\[parada\s+(\d{3,5})\]/gi)].map((m) => m[1]);
+  if (!line || codes.length < 2) return null;
+  return { lineCode: String(parseInt(line, 10)), fromCode: codes[0], toCode: codes[codes.length - 1] };
+}
+
+function findDirectLegForLine(lineStops: DbLineStop[], choice: { lineCode: string; fromCode: string; toCode: string }): VLeg | null {
+  const byDirection = new Map<number, DbLineStop[]>();
+  for (const s of lineStops) {
+    if (s.line_code !== choice.lineCode) continue;
+    if (!byDirection.has(s.direction)) byDirection.set(s.direction, []);
+    byDirection.get(s.direction)!.push(s);
+  }
+  let best: VLeg | null = null;
+  for (const [direction, list] of byDirection) {
+    list.sort((a, b) => a.seq - b.seq);
+    const fromIdxs = list.map((s, idx) => (s.stop_code === choice.fromCode ? idx : -1)).filter((idx) => idx >= 0);
+    const toIdxs = list.map((s, idx) => (s.stop_code === choice.toCode ? idx : -1)).filter((idx) => idx >= 0);
+    for (const fromIdx of fromIdxs) {
+      for (const toIdx of toIdxs) {
+        if (toIdx <= fromIdx) continue;
+        const from = list[fromIdx];
+        const to = list[toIdx];
+        const leg: VLeg = {
+          lineCode: choice.lineCode,
+          direction,
+          fromCode: choice.fromCode,
+          fromName: from.stop_name,
+          toCode: choice.toCode,
+          toName: to.stop_name,
+          numStops: toIdx - fromIdx,
+          lineKey: `${choice.lineCode}|${direction}`,
+          fromIdx,
+          toIdx,
+          intermediate: list.slice(fromIdx + 1, toIdx).map((s) => s.stop_name),
+        };
+        if (!best || leg.numStops < best.numStops) best = leg;
+      }
+    }
+  }
+  return best;
+}
+
 function legKmAndStops(
   graph: { stops: DbStop[]; lineStops: DbLineStop[] },
   leg: VLeg,
