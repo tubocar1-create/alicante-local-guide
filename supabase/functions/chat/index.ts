@@ -2044,34 +2044,47 @@ serve(async (req) => {
           .map((m: { content: string }) => m.content)
           .join(" \n ")
       : latestUserText;
-    if (transitMode) {
-      const originText = extractTransitOrigin(transitText);
-      if (originText) {
-        const g = await geocodeAlicante(originText).catch(() => null);
+    let originTextForTransit: string | null = null;
+    const destTextForTransit = extractTransitDestination(transitText);
+    if (transitMode || detectTransitIntent(transitText)) {
+      originTextForTransit = extractTransitOrigin(transitText);
+      if (originTextForTransit) {
+        const g = await geocodeAlicante(originTextForTransit).catch(() => null);
         if (g) userOriginForTransit = { lat: g.lat, lng: g.lng };
       }
     }
-    const transitResult = await buildTransitResult(userOriginForTransit, transitText, {
-      force: transitMode,
-    }).catch((err) => {
-      console.error("transit lookup error:", err);
-      return null;
-    });
+    const [transitResult, vectaliaTrips] = await Promise.all([
+      buildTransitResult(userOriginForTransit, transitText, { force: transitMode }).catch((err) => {
+        console.error("transit lookup error:", err);
+        return null;
+      }),
+      (transitMode || detectTransitIntent(transitText))
+        ? buildVectaliaTransit(originTextForTransit, destTextForTransit, userOriginForTransit).catch(
+            (err) => {
+              console.error("vectalia lookup error:", err);
+              return null;
+            },
+          )
+        : Promise.resolve(null),
+    ]);
     const transitLine = transitResult ? formatTransitResult(transitResult) : "";
+    const vectaliaLine = vectaliaTrips ? formatVectaliaTransit(vectaliaTrips) : "";
     const transitModeLine = transitMode
       ? `\nTRANSIT_MODE: ON. Flujo "Bus/Tram urbano" de Alicante (TAM bus + TRAM).
 ESTILO OBLIGATORIO en este modo:
 - NO uses tarjetas [[card:...]]. NUNCA. Las tarjetas son solo para comida/bebida/sitios.
-- Respuesta DIRECTA, telegráfica, sin saludos, sin "¡vamos!", sin emojis decorativos, sin paseos ni adornos. La gente está apurada en la parada.
+- Respuesta DIRECTA, telegráfica, sin saludos, sin "¡vamos!", sin emojis decorativos, sin paseos ni adornos.
 - Máximo 3-5 líneas salvo que el usuario pida detalle.
 - Solo transporte público. NO recomiendes restaurantes, bares, playas ni otros sitios.
 - Si falta origen o destino: 1 pregunta corta y nada más.
-- Con TRANSIT_RESULT presente: línea + parada subida + parada bajada. Una línea por opción. Si aparece qr_subida=XXXX, incluye 🕒 [tiempo real QR](https://qr.vectalia.es/Alicante/consulta.aspx?p=XXXX) y NO pidas el código.
-- IMPORTANTE sobre tiempo real: no inventes minutos. Si hay qr_subida, da el enlace fijo de esa parada; si no se pudo resolver, dilo breve y solo entonces pide escanear/leer el QR físico.
+- **PRIORIDAD ABSOLUTA**: si hay VECTALIA_TRIPS, USA EXACTAMENTE esa línea, ese sentido, esos nombres y esos códigos de parada. Es la red oficial de Vectalia. Ignora TRANSIT_RESULT (OSM) salvo que VECTALIA_TRIPS esté vacío.
+- Con VECTALIA_TRIPS o TRANSIT_RESULT presente: línea + parada subida + parada bajada. Una línea por opción. Si aparece qr_subida=XXXX, incluye 🕒 [tiempo real QR](https://qr.vectalia.es/Alicante/consulta.aspx?p=XXXX) y NO pidas el código.
+- **SIEMPRE, sin que el usuario lo pida**, añade el esquema de cada línea recomendada con el formato exacto [📍 Ver esquema línea X](/bus/lines/X) usando el código exacto. Si hay transbordo, añade el esquema de las dos líneas.
+- IMPORTANTE sobre tiempo real: no inventes minutos. Si hay qr_subida, da el enlace fijo de esa parada.
 - Si no hay resultado: dilo en una frase y pide código de parada o destino más concreto.
-- NUNCA inventes líneas ni códigos.`
+- NUNCA inventes líneas, códigos ni nombres de parada. Si no aparece en VECTALIA_TRIPS ni en TRANSIT_RESULT, NO EXISTE.`
       : "";
-    const runtimeContext = `RUNTIME CONTEXT (use this when relevant):\nTODAY: ${todayStr} (zona horaria Europe/Madrid)\nMAX_NEARBY_OPTIONS: ${context?.maxOptions ?? 4}\n${locationLine}${transitModeLine}${verifiedOpenLine}${mentionedLine}${transitLine}`;
+    const runtimeContext = `RUNTIME CONTEXT (use this when relevant):\nTODAY: ${todayStr} (zona horaria Europe/Madrid)\nMAX_NEARBY_OPTIONS: ${context?.maxOptions ?? 4}\n${locationLine}${transitModeLine}${verifiedOpenLine}${mentionedLine}${vectaliaLine}${transitLine}`;
 
     const gatewayBody = {
       model: "google/gemini-3-flash-preview",
