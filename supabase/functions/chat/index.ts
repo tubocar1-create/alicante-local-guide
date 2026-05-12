@@ -2734,7 +2734,7 @@ ESTILO OBLIGATORIO en este modo:
     - ⚪ Parada intermedia 1
     - … (lista TODAS las paradas_intermedias en orden, sin abreviar)
     - 🔴 **Nombre parada bajada** (te bajas aquí)
-    NUNCA propongas transbordos. Si no hay línea directa, dilo claramente y sugiere la parada directa más cercana al destino.
+    Prioriza la línea directa. Si no hay directa pero VECTALIA_TRIPS trae transbordos, úsalos tal cual (máx 2). Si nada existe, dilo y sugiere la parada directa más cercana al destino.
   - NO incluyas nunca el enlace https://qr.vectalia.es/... ni el enlace /bus/lines/ — el tiempo real y el esquema ya los das tú aquí. NO escribas "Próximo bus: X min" en texto plano; usa SIEMPRE el badge \`[próximo bus](eta:...)\` para que se actualice solo.
 - Si VECTALIA_TRIPS está vacío y TRANSIT_RESULT también: di en una frase que no localizas con precisión esa dirección y pide al usuario que sea más específico (ej. "¿Puedes darme el nombre de la calle y el número, o un punto de referencia cercano como un colegio, hospital o plaza?"). NUNCA inventes paradas ni líneas.
 - **NUNCA inventes** líneas, códigos ni nombres de parada. Si no aparece en VECTALIA_TRIPS, no existe.`
