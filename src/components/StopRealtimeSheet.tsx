@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getStopRealtime, type StopArrival } from "@/lib/bus-realtime.functions";
 import { liveStopUrl } from "@/lib/bus";
+import { ArrivalAlarm } from "@/components/ArrivalAlarm";
 
 const RealtimeMiniMap = lazy(() =>
   import("./RealtimeMiniMap").then((m) => ({ default: m.RealtimeMiniMap })),
@@ -143,6 +144,17 @@ export function StopRealtimeSheet({
             <div className="rounded-xl border bg-muted/30 p-4 text-xs text-muted-foreground">
               Esta parada no tiene coordenadas. Geocodifica la lista en /bus para ver el mapa.
             </div>
+          )}
+
+          {/* Alarm */}
+          {stop && (
+            <ArrivalAlarm
+              arrivals={arrivals}
+              stopName={stop.name ?? `Parada ${stop.code}`}
+              availableLines={Array.from(
+                new Set([...(stop.lines ?? []), ...arrivals.map((a) => a.line)]),
+              ).sort((a, b) => Number(a) - Number(b))}
+            />
           )}
 
           {/* Arrivals */}
