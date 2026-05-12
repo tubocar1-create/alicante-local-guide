@@ -6,10 +6,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { liveStopUrl, isValidStopCode } from "@/lib/bus";
+import { isValidStopCode } from "@/lib/bus";
 import { useUserLocation } from "@/hooks/useUserLocation";
 import { geocodeBusStops } from "@/lib/bus-geocode.functions";
 import { haversineKm, type MapStop } from "@/components/BusMap";
+import { StopRealtimeSheet, type StopRealtimeContext } from "@/components/StopRealtimeSheet";
 
 const BusMapLazy = lazy(() =>
   import("@/components/BusMap").then((m) => ({ default: m.BusMap })),
