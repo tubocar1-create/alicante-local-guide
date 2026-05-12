@@ -2215,11 +2215,24 @@ async function fetchVectaliaEta(stopCode: string, lineCode: string): Promise<num
   }
 }
 
-function extractChosenDirectBus(text: string): { lineCode: string; fromCode: string; toCode: string } | null {
-  const line = text.match(/\bL[ií]nea\s+(\d{1,3})\b/i)?.[1];
+type ChosenBus =
+  | { type: "direct"; lineCode: string; fromCode: string; toCode: string }
+  | { type: "transfer"; legA: { lineCode: string; fromCode: string; toCode: string }; legB: { lineCode: string; fromCode: string; toCode: string } };
+
+function extractChosenDirectBus(text: string): ChosenBus | null {
+  const lines = [...text.matchAll(/\bL[ií]nea\s+(\d{1,3})\b/gi)].map((m) => String(parseInt(m[1], 10)));
   const codes = [...text.matchAll(/\[parada\s+(\d{3,5})\]/gi)].map((m) => m[1]);
-  if (!line || codes.length < 2) return null;
-  return { lineCode: String(parseInt(line, 10)), fromCode: codes[0], toCode: codes[codes.length - 1] };
+  if (lines.length >= 2 && codes.length >= 4) {
+    return {
+      type: "transfer",
+      legA: { lineCode: lines[0], fromCode: codes[0], toCode: codes[1] },
+      legB: { lineCode: lines[1], fromCode: codes[2], toCode: codes[3] },
+    };
+  }
+  if (lines.length >= 1 && codes.length >= 2) {
+    return { type: "direct", lineCode: lines[0], fromCode: codes[0], toCode: codes[codes.length - 1] };
+  }
+  return null;
 }
 
 function findDirectLegForLine(lineStops: DbLineStop[], choice: { lineCode: string; fromCode: string; toCode: string }): VLeg | null {
