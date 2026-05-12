@@ -2031,7 +2031,10 @@ function formatVectaliaTransit(
           const eta = l.etaMin != null ? `próximo_bus=${l.etaMin}min` : `próximo_bus=sin_dato`;
           const km = l.km != null ? `${l.km}km` : "";
           const est = l.estMin != null ? `tiempo_viaje≈${l.estMin}min` : "";
-          return `Línea ${l.lineCode} (sentido ${l.direction}): sube en "${l.fromName}" [parada ${l.fromCode}] → bájate en "${l.toName}" [parada ${l.toCode}] · ${l.numStops} paradas · ${km} · ${est} · ${eta} · esquema=/bus/lines/${l.lineCode} · qr_subida=${l.fromCode}`;
+          const inter = l.intermediate.length
+            ? `paradas_intermedias=[${l.intermediate.map((s) => `"${s}"`).join(", ")}]`
+            : `paradas_intermedias=[]`;
+          return `Línea ${l.lineCode} (sentido ${l.direction}): sube en "${l.fromName}" [parada ${l.fromCode}] → bájate en "${l.toName}" [parada ${l.toCode}] · ${l.numStops} paradas · ${km} · ${est} · ${eta} · qr_subida=${l.fromCode} · ${inter}`;
         })
         .join("  ⇄ TRANSBORDO ⇄  ");
       out.push(`  ${n++}. ${legs}  | total=${t.totalStops} paradas, transbordos=${t.transfers}`);
