@@ -1247,6 +1247,8 @@ function AssistantContent({ content }: { content: string }) {
           <PlaceCard key={i} data={p.data} />
         ) : p.type === "busopt" ? (
           <BusOptionCard key={i} data={p.data} />
+        ) : p.type === "busstop" ? (
+          <BusStopCard key={i} data={p.data} />
         ) : (
           <MarkdownText key={i} text={p.value.replace(/^\n+|\n+$/g, "")} />
         ),
