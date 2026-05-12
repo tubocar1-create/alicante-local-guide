@@ -995,24 +995,34 @@ function parseBusOptParts(text: string): AssistantPart[] | null {
 }
 
 function BusOptionCard({ data }: { data: BusOptionData }) {
+  const isTransfer = data.legs.length > 1;
   const choose = () => {
-    const lines = data.legs.map((l) => l.line).join(" + ");
     const first = data.legs[0];
     const last = data.legs[data.legs.length - 1];
-    const text =
-      data.legs.length === 1
-        ? `Voy con la Línea ${lines}: subo en ${first.fromName} [parada ${first.fromCode}] y bajo en ${last.toName} [parada ${last.toCode}].`
-        : `Voy con la opción de Líneas ${lines} (sube en ${first.fromName} [parada ${first.fromCode}], baja en ${last.toName} [parada ${last.toCode}]).`;
+    let text: string;
+    if (!isTransfer) {
+      text = `Voy con la Línea ${first.line}: subo en ${first.fromName} [parada ${first.fromCode}] y bajo en ${last.toName} [parada ${last.toCode}].`;
+    } else {
+      const second = data.legs[1];
+      text =
+        `Voy con: Línea ${first.line} subo en ${first.fromName} [parada ${first.fromCode}] y bajo en ${first.toName} [parada ${first.toCode}], ` +
+        `transbordo a la Línea ${second.line} subo en ${second.fromName} [parada ${second.fromCode}] y bajo en ${second.toName} [parada ${second.toCode}].`;
+    }
     window.dispatchEvent(new CustomEvent("bus:choose", { detail: { text } }));
   };
   return (
     <div className="my-2 overflow-hidden rounded-2xl border border-primary/20 bg-card shadow-soft">
       <div className="p-3 space-y-2">
+        {isTransfer && (
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-amber-600">
+            ↻ Con transbordo
+          </div>
+        )}
         {data.legs.map((leg, idx) => (
           <div key={idx} className="space-y-1.5">
             {idx > 0 && (
               <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                ↻ Transbordo
+                ↻ Transbordo en {leg.fromName}
               </div>
             )}
             <div className="flex items-center gap-2">
@@ -1021,16 +1031,20 @@ function BusOptionCard({ data }: { data: BusOptionData }) {
               </span>
               <span className="text-xs text-muted-foreground">Línea {leg.line}</span>
             </div>
-            <LiveEta
-              line={leg.line}
-              stop={leg.fromCode}
-              initialMin={idx === 0 && typeof leg.nextMin === "number" ? leg.nextMin : null}
-              size="lg"
-              index={idx === 0 ? 0 : 1}
-            />
-            {idx > 0 && (
-              <div className="text-[11px] text-muted-foreground">
-                Mostramos el 2.º paso de la línea {leg.line} para dar tiempo al transbordo desde la línea {data.legs[idx - 1].line}.
+            {idx === 0 ? (
+              <LiveEta
+                line={leg.line}
+                stop={leg.fromCode}
+                initialMin={typeof leg.nextMin === "number" ? leg.nextMin : null}
+                size="lg"
+              />
+            ) : (
+              <div className="text-sm text-card-foreground bg-muted/40 rounded-lg px-3 py-2">
+                Toma la <span className="font-semibold">Línea {leg.line}</span> en la parada{" "}
+                <span className="font-semibold">{leg.fromName}</span>.
+                <div className="text-[11px] text-muted-foreground mt-0.5">
+                  Sin hora aquí: depende de cuándo te deje el primer bus.
+                </div>
               </div>
             )}
             <div className="text-sm text-card-foreground">

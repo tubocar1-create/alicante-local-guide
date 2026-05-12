@@ -2120,8 +2120,53 @@ function findVTrips(lineStops: DbLineStop[], oCode: string, dCode: string): VTri
       direct.add(o.key);
     }
   }
-  // Transbordos desactivados: solo aceptamos coincidencias directas dentro del
-  // mismo line_code + direction para no mezclar paradas de líneas distintas.
+  // Transbordos: solo si NO hay directo en esta línea, buscamos un transbordo.
+  // Para no liar la salida, limitamos exploración a ~30 paradas por línea A.
+  for (const o of oAt) {
+    if (direct.has(o.key)) continue;
+    const listA = byLine.get(o.key)!;
+    const maxA = Math.min(listA.length, o.idx + 31);
+    for (let i = o.idx + 1; i < maxA; i++) {
+      const transferStop = listA[i];
+      if (!transferStop.stop_code) continue;
+      const transferAt = byStop.get(transferStop.stop_code);
+      if (!transferAt) continue;
+      for (const t of transferAt) {
+        if (t.key === o.key) continue;
+        const di = dIdx.get(t.key);
+        if (di != null && di > t.idx) {
+          const listA2 = listA;
+          const listB = byLine.get(t.key)!;
+          const aFrom = listA2[o.idx], aTo = listA2[i];
+          const bFrom = listB[t.idx], bTo = listB[di];
+          const interA = listA2.slice(o.idx + 1, i).map((s) => s.stop_name);
+          const interB = listB.slice(t.idx + 1, di).map((s) => s.stop_name);
+          trips.push({
+            legs: [
+              {
+                lineCode: aFrom.line_code, direction: aFrom.direction,
+                fromCode: aFrom.stop_code!, fromName: aFrom.stop_name,
+                toCode: aTo.stop_code!, toName: aTo.stop_name,
+                numStops: i - o.idx,
+                lineKey: o.key, fromIdx: o.idx, toIdx: i,
+                intermediate: interA,
+              },
+              {
+                lineCode: bFrom.line_code, direction: bFrom.direction,
+                fromCode: bFrom.stop_code!, fromName: bFrom.stop_name,
+                toCode: bTo.stop_code!, toName: bTo.stop_name,
+                numStops: di - t.idx,
+                lineKey: t.key, fromIdx: t.idx, toIdx: di,
+                intermediate: interB,
+              },
+            ],
+            totalStops: (i - o.idx) + (di - t.idx),
+            transfers: 1,
+          });
+        }
+      }
+    }
+  }
   const seen = new Set<string>();
   const uniq = trips.filter((t) => {
     const sig = t.legs.map((l) => `${l.lineCode}|${l.direction}|${l.fromCode}|${l.toCode}`).join(">");
@@ -2130,7 +2175,7 @@ function findVTrips(lineStops: DbLineStop[], oCode: string, dCode: string): VTri
     return true;
   });
   uniq.sort((a, b) => a.transfers - b.transfers || a.totalStops - b.totalStops);
-  return uniq.slice(0, 6);
+  return uniq.slice(0, 8);
 }
 
 // Velocidad media bus urbano Alicante ≈ 16 km/h, +0.25 min de parada por stop
@@ -2170,11 +2215,24 @@ async function fetchVectaliaEta(stopCode: string, lineCode: string): Promise<num
   }
 }
 
-function extractChosenDirectBus(text: string): { lineCode: string; fromCode: string; toCode: string } | null {
-  const line = text.match(/\bL[ií]nea\s+(\d{1,3})\b/i)?.[1];
+type ChosenBus =
+  | { type: "direct"; lineCode: string; fromCode: string; toCode: string }
+  | { type: "transfer"; legA: { lineCode: string; fromCode: string; toCode: string }; legB: { lineCode: string; fromCode: string; toCode: string } };
+
+function extractChosenDirectBus(text: string): ChosenBus | null {
+  const lines = [...text.matchAll(/\bL[ií]nea\s+(\d{1,3})\b/gi)].map((m) => String(parseInt(m[1], 10)));
   const codes = [...text.matchAll(/\[parada\s+(\d{3,5})\]/gi)].map((m) => m[1]);
-  if (!line || codes.length < 2) return null;
-  return { lineCode: String(parseInt(line, 10)), fromCode: codes[0], toCode: codes[codes.length - 1] };
+  if (lines.length >= 2 && codes.length >= 4) {
+    return {
+      type: "transfer",
+      legA: { lineCode: lines[0], fromCode: codes[0], toCode: codes[1] },
+      legB: { lineCode: lines[1], fromCode: codes[2], toCode: codes[3] },
+    };
+  }
+  if (lines.length >= 1 && codes.length >= 2) {
+    return { type: "direct", lineCode: lines[0], fromCode: codes[0], toCode: codes[codes.length - 1] };
+  }
+  return null;
 }
 
 function findDirectLegForLine(lineStops: DbLineStop[], choice: { lineCode: string; fromCode: string; toCode: string }): VLeg | null {
@@ -2283,16 +2341,16 @@ async function buildVectaliaTransit(
   const g = await loadVectaliaGraph();
   if (!g) return null;
 
-  // Destino: referencias verificadas/paradas oficiales > geocodificación estricta Alicante.
-  const destResolved = await resolveStopCandidates(destText, g, { maxMeters: 450 });
+  // Destino: referencias verificadas/paradas oficiales > geocodificación estricta Alicante. Radio 600m.
+  const destResolved = await resolveStopCandidates(destText, g, { maxMeters: 600 });
   const dCands = destResolved.stops;
   if (!dCands.length) return null;
 
-  // Origen: referencias/paradas/geocodificación estricta; GPS solo si el usuario no dio texto claro.
+  // Origen: referencias/paradas/geocodificación estricta; GPS solo si el usuario no dio texto claro. Radio 600m.
   const originResolved = await resolveStopCandidates(originText, g, {
     coords: originCoords,
     allowGps: !originText,
-    maxMeters: 450,
+    maxMeters: 600,
   });
   const oCands = originResolved.stops;
   if (!oCands.length) return null;
@@ -2305,38 +2363,65 @@ async function buildVectaliaTransit(
       if (trips.length) all.push({ origin: o, dest: d, trips });
     }
   }
-  // SOLO trayectos directos (sin transbordos). Si no hay directo, devolvemos
-  // null para que el modelo proponga la parada directa más cercana al destino.
-  const directOnly = all
-    .map((r) => ({ ...r, trips: r.trips.filter((t) => t.transfers === 0) }))
-    .filter((r) => r.trips.length > 0);
-  if (!directOnly.length) return null;
-  const ranked = directOnly;
-  ranked.sort((a, b) => {
-    const ta = a.trips[0], tb = b.trips[0];
-    return ta.totalStops - tb.totalStops;
-  });
-  const top = ranked.slice(0, 3);
+  if (!all.length) return null;
 
-  // Enriquece con km, estMin y ETA en tiempo real (paralelo)
+  // Prioriza directas; añade hasta 2 transbordos como alternativa.
+  const directTrips: { origin: DbStop; dest: DbStop; trip: VTrip }[] = [];
+  const transferTrips: { origin: DbStop; dest: DbStop; trip: VTrip }[] = [];
+  for (const r of all) {
+    for (const t of r.trips) {
+      if (t.transfers === 0) directTrips.push({ origin: r.origin, dest: r.dest, trip: t });
+      else if (t.transfers === 1) transferTrips.push({ origin: r.origin, dest: r.dest, trip: t });
+    }
+  }
+  directTrips.sort((a, b) => a.trip.totalStops - b.trip.totalStops);
+  transferTrips.sort((a, b) => a.trip.totalStops - b.trip.totalStops);
+
+  // Dedup transbordos por firma de líneas+paradas
+  const seenT = new Set<string>();
+  const uniqTransfers = transferTrips.filter(({ trip }) => {
+    const sig = trip.legs.map((l) => `${l.lineCode}|${l.fromCode}|${l.toCode}`).join(">");
+    if (seenT.has(sig)) return false;
+    seenT.add(sig);
+    return true;
+  });
+
+  const chosen = [
+    ...directTrips.slice(0, 3),
+    ...uniqTransfers.slice(0, 2),
+  ];
+  if (!chosen.length) return null;
+
+  // Reagrupa por origen+destino para mantener el formato de retorno
+  const grouped = new Map<string, { origin: DbStop; dest: DbStop; trips: VTrip[] }>();
+  for (const c of chosen) {
+    const k = `${c.origin.code}|${c.dest.code}`;
+    if (!grouped.has(k)) grouped.set(k, { origin: c.origin, dest: c.dest, trips: [] });
+    grouped.get(k)!.trips.push(c.trip);
+  }
+  const top = [...grouped.values()];
+
+  // Enriquece con km, estMin y ETA (solo en el primer leg de cada viaje)
   const etaJobs: Promise<void>[] = [];
   const etaCache = new Map<string, Promise<number | null>>();
   for (const r of top) {
-    for (const t of r.trips.slice(0, 3)) {
-      for (const leg of t.legs) {
+    for (const t of r.trips) {
+      t.legs.forEach((leg, idx) => {
         leg.km = Math.round(legKmAndStops(g, leg) * 10) / 10;
         leg.estMin = Math.max(
           1,
           Math.round((leg.km / URBAN_KMH) * 60 + leg.numStops * DWELL_MIN_PER_STOP),
         );
-        const key = `${leg.fromCode}|${leg.lineCode}`;
-        if (!etaCache.has(key)) etaCache.set(key, fetchVectaliaEta(leg.fromCode, leg.lineCode));
-        etaJobs.push(
-          etaCache.get(key)!.then((eta) => {
-            leg.etaMin = eta ?? undefined;
-          }),
-        );
-      }
+        if (idx === 0) {
+          const key = `${leg.fromCode}|${leg.lineCode}`;
+          if (!etaCache.has(key)) etaCache.set(key, fetchVectaliaEta(leg.fromCode, leg.lineCode));
+          etaJobs.push(
+            etaCache.get(key)!.then((eta) => {
+              leg.etaMin = eta ?? undefined;
+            }),
+          );
+        }
+      });
     }
   }
   await Promise.allSettled(etaJobs);
@@ -2348,24 +2433,40 @@ async function buildChosenVectaliaTransit(text: string): Promise<{ origin: DbSto
   if (!choice) return null;
   const g = await loadVectaliaGraph();
   if (!g) return null;
-  const leg = findDirectLegForLine(g.lineStops, choice);
-  if (!leg) return null;
-  const origin = g.stops.find((s) => s.code === choice.fromCode) ?? {
-    code: choice.fromCode,
-    name: leg.fromName,
-    lat: null,
-    lng: null,
-  };
-  const dest = g.stops.find((s) => s.code === choice.toCode) ?? {
-    code: choice.toCode,
-    name: leg.toName,
-    lat: null,
-    lng: null,
-  };
-  leg.km = Math.round(legKmAndStops(g, leg) * 10) / 10;
-  leg.estMin = Math.max(1, Math.round((leg.km / URBAN_KMH) * 60 + leg.numStops * DWELL_MIN_PER_STOP));
-  leg.etaMin = (await fetchVectaliaEta(leg.fromCode, leg.lineCode)) ?? undefined;
-  return [{ origin, dest, trips: [{ legs: [leg], totalStops: leg.numStops, transfers: 0 }] }];
+
+  const buildLegOrNull = (c: { lineCode: string; fromCode: string; toCode: string }) =>
+    findDirectLegForLine(g.lineStops, c);
+  const stopOrFallback = (code: string, fallbackName: string): DbStop =>
+    g.stops.find((s) => s.code === code) ?? { code, name: fallbackName, lat: null, lng: null };
+
+  if (choice.type === "direct") {
+    const leg = buildLegOrNull(choice);
+    if (!leg) return null;
+    leg.km = Math.round(legKmAndStops(g, leg) * 10) / 10;
+    leg.estMin = Math.max(1, Math.round((leg.km / URBAN_KMH) * 60 + leg.numStops * DWELL_MIN_PER_STOP));
+    leg.etaMin = (await fetchVectaliaEta(leg.fromCode, leg.lineCode)) ?? undefined;
+    return [{
+      origin: stopOrFallback(choice.fromCode, leg.fromName),
+      dest: stopOrFallback(choice.toCode, leg.toName),
+      trips: [{ legs: [leg], totalStops: leg.numStops, transfers: 0 }],
+    }];
+  }
+
+  // transfer
+  const legA = buildLegOrNull(choice.legA);
+  const legB = buildLegOrNull(choice.legB);
+  if (!legA || !legB) return null;
+  for (const leg of [legA, legB]) {
+    leg.km = Math.round(legKmAndStops(g, leg) * 10) / 10;
+    leg.estMin = Math.max(1, Math.round((leg.km / URBAN_KMH) * 60 + leg.numStops * DWELL_MIN_PER_STOP));
+  }
+  legA.etaMin = (await fetchVectaliaEta(legA.fromCode, legA.lineCode)) ?? undefined;
+  // Sin ETA en el segundo leg: depende de cuándo te deje el primer bus.
+  return [{
+    origin: stopOrFallback(choice.legA.fromCode, legA.fromName),
+    dest: stopOrFallback(choice.legB.toCode, legB.toName),
+    trips: [{ legs: [legA, legB], totalStops: legA.numStops + legB.numStops, transfers: 1 }],
+  }];
 }
 
 function formatVectaliaTransit(
@@ -2425,37 +2526,42 @@ function formatTransitResult(r: TransitResult): string {
 }
 
 function buildBusOptionsReply(res: { origin: DbStop; dest: DbStop; trips: VTrip[] }[]): string {
-  const parts = ["Estas son las opciones directas:"];
+  const hasTransfer = res.some((r) => r.trips.some((t) => t.transfers > 0));
+  const intro = hasTransfer
+    ? "Estas son tus opciones (priorizo las directas, y añado transbordos si ayudan):"
+    : "Estas son las opciones directas:";
+  const parts: string[] = [intro];
   const seen = new Set<string>();
   for (const r of res) {
     for (const trip of r.trips) {
-      const leg = trip.legs[0];
-      if (!leg || trip.transfers !== 0) continue;
-      const key = `${leg.lineCode}|${leg.direction}|${leg.fromCode}|${leg.toCode}`;
+      if (!trip.legs.length) continue;
+      const key = trip.legs.map((l) => `${l.lineCode}|${l.direction}|${l.fromCode}|${l.toCode}`).join(">");
       if (seen.has(key)) continue;
       seen.add(key);
       const obj = {
-        legs: [{
+        legs: trip.legs.map((leg, idx) => ({
           line: leg.lineCode,
           fromName: leg.fromName,
           fromCode: leg.fromCode,
           toName: leg.toName,
           toCode: leg.toCode,
-          ...(leg.etaMin != null ? { nextMin: leg.etaMin } : {}),
-        }],
-        ...(leg.estMin != null ? { travelMin: leg.estMin } : {}),
-        ...(leg.km != null ? { km: leg.km } : {}),
+          // Solo damos próximo bus en el primer leg; en transbordos no damos hora del segundo bus
+          ...(idx === 0 && leg.etaMin != null ? { nextMin: leg.etaMin } : {}),
+        })),
+        ...(trip.legs[0].estMin != null ? { travelMin: trip.legs.reduce((s, l) => s + (l.estMin ?? 0), 0) } : {}),
+        ...(trip.legs[0].km != null ? { km: Math.round(trip.legs.reduce((s, l) => s + (l.km ?? 0), 0) * 10) / 10 } : {}),
+        ...(trip.transfers > 0 ? { transfer: true } : {}),
       };
       parts.push(`[[busopt:${encodeURIComponent(JSON.stringify(obj))}]]`);
-      if (parts.length >= 4) return parts.join("\n\n");
     }
   }
   return parts.join("\n\n");
 }
 
 function buildChosenBusReply(res: { origin: DbStop; dest: DbStop; trips: VTrip[] }[]): string {
-  const leg = res[0]?.trips[0]?.legs[0];
-  if (!leg) return "No puedo validar esa opción con la red oficial. Prefiero no inventarte paradas.";
+  const trip = res[0]?.trips[0];
+  const leg = trip?.legs[0];
+  if (!trip || !leg) return "No puedo validar esa opción con la red oficial. Prefiero no inventarte paradas.";
   const eta = leg.etaMin != null ? ` [próximo bus](eta:${leg.lineCode}:${leg.fromCode}:${leg.etaMin})` : "";
   const summary = `**Línea ${leg.lineCode} — sentido ${leg.toName}**${eta}\n⏱️ Trayecto: ${leg.estMin ?? "—"} min${leg.km != null ? ` (~${leg.km} km)` : ""}`;
   const stops = [
@@ -2463,7 +2569,18 @@ function buildChosenBusReply(res: { origin: DbStop; dest: DbStop; trips: VTrip[]
     ...leg.intermediate.map((name) => `- ⚪ ${name}`),
     `- 🔴 **${leg.toName}** (te bajas aquí)`,
   ];
-  return `${summary}\n\n${stops.join("\n")}`;
+  let out = `${summary}\n\n${stops.join("\n")}`;
+  for (let i = 1; i < trip.legs.length; i++) {
+    const next = trip.legs[i];
+    out += `\n\n**Transbordo:** en *${next.fromName}*, toma la **Línea ${next.lineCode}** hacia *${next.toName}* (no te doy hora aquí: depende de cuándo te deje el primer bus).`;
+    const stops2 = [
+      `- 🟢 **${next.fromName}** (subes aquí)`,
+      ...next.intermediate.map((name) => `- ⚪ ${name}`),
+      `- 🔴 **${next.toName}** (te bajas aquí)`,
+    ];
+    out += `\n${stops2.join("\n")}`;
+  }
+  return out;
 }
 
 serve(async (req) => {
@@ -2609,17 +2726,15 @@ ESTILO OBLIGATORIO en este modo:
     Donde JSON_URI_ENCODED es \`encodeURIComponent(JSON.stringify(obj))\` y \`obj\` tiene la forma:
     \`{ "legs": [ { "line": "12", "fromName": "Plaza Calvo Sotelo", "fromCode": "1234", "toName": "Plaza Juan Pablo II", "toCode": "4332", "nextMin": 5 } ], "travelMin": 14, "km": 3.2 }\`
     - "line": código de línea sin ceros a la izquierda. "fromCode"/"toCode": qr_subida/qr_bajada del leg. "nextMin": próximo_bus en minutos (omite la propiedad si próximo_bus = sin_dato).
-    - **SOLO trayectos directos (sin transbordos)**. Si VECTALIA_TRIPS trae varias opciones, todas son directas: cada \`legs\` debe tener exactamente UN objeto. NUNCA propongas transbordos en este modo.
+    - **Prioriza directas**, pero si VECTALIA_TRIPS incluye opciones con \`legs\` de longitud 2 son **transbordos válidos** (máx 2). Renderiza cada opción tal cual viene en VECTALIA_TRIPS, sin inventar.
     - "travelMin" y "km" son del trayecto (tiempo_viaje y km del context).
-    NO añadas en estas tarjetas enlaces de "Cómo llegar", "Reseñas", paradas intermedias ni el badge \`eta:\` en texto suelto: la tarjeta ya muestra el tiempo en vivo dentro y un botón VAMOS. Antes de las tarjetas puedes poner una línea muy breve introductoria (ej. "Estas son tus 3 opciones:"). Después de las tarjetas, NO preguntes "¿Cuál prefieres?" — el usuario elige pulsando VAMOS. Si la parada de bajada no es exactamente el destino sino la más cercana, añade UNA frase corta antes de las tarjetas avisando (ej. "La parada más cercana a tu destino es *Nombre*, te dejará a unos minutos andando.").
-  - **Paso 2 — Esquema de la ruta (cuando el usuario ya ha elegido una línea/opción)**: NO enlaces a /bus/lines/. Renderiza tú mismo el esquema en el chat usando paradas_intermedias del contexto, así:
-    "**Línea X — sentido Nombre bajada**" + repite el badge \`[próximo bus](eta:LINEA:CODIGO_PARADA_SUBIDA:MIN)\` y "⏱️ Trayecto: X min (~Y km)", y debajo una lista vertical:
+    NO añadas en estas tarjetas enlaces de "Cómo llegar", "Reseñas", paradas intermedias ni el badge \`eta:\` en texto suelto. En transbordos, NO des hora del segundo bus: la tarjeta del segundo leg solo dirá "toma la línea X en la parada Y". Antes de las tarjetas puedes poner una línea muy breve introductoria. Después de las tarjetas, NO preguntes "¿Cuál prefieres?" — el usuario elige pulsando VAMOS.
+  - **Paso 2 — Esquema de la ruta (cuando el usuario ya ha elegido una opción)**: NO enlaces a /bus/lines/. Renderiza tú mismo el esquema en el chat usando paradas_intermedias del contexto. Para transbordos, lista primero el primer leg con su badge \`[próximo bus](eta:...)\` y al final añade un bloque de transbordo sin hora: "Transbordo: en *parada*, toma la **Línea X** hacia *destino* (no te doy hora aquí)."
     - 🟢 **Nombre parada subida** (subes aquí)
     - ⚪ Parada intermedia 1
-    - ⚪ Parada intermedia 2
     - … (lista TODAS las paradas_intermedias en orden, sin abreviar)
     - 🔴 **Nombre parada bajada** (te bajas aquí)
-    NUNCA propongas transbordos. Si no hay línea directa, dilo claramente y sugiere la parada directa más cercana al destino.
+    Prioriza la línea directa. Si no hay directa pero VECTALIA_TRIPS trae transbordos, úsalos tal cual (máx 2). Si nada existe, dilo y sugiere la parada directa más cercana al destino.
   - NO incluyas nunca el enlace https://qr.vectalia.es/... ni el enlace /bus/lines/ — el tiempo real y el esquema ya los das tú aquí. NO escribas "Próximo bus: X min" en texto plano; usa SIEMPRE el badge \`[próximo bus](eta:...)\` para que se actualice solo.
 - Si VECTALIA_TRIPS está vacío y TRANSIT_RESULT también: di en una frase que no localizas con precisión esa dirección y pide al usuario que sea más específico (ej. "¿Puedes darme el nombre de la calle y el número, o un punto de referencia cercano como un colegio, hospital o plaza?"). NUNCA inventes paradas ni líneas.
 - **NUNCA inventes** líneas, códigos ni nombres de parada. Si no aparece en VECTALIA_TRIPS, no existe.`
