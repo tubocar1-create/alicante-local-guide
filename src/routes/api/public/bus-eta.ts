@@ -3,8 +3,6 @@ import { createFileRoute } from "@tanstack/react-router";
 const VECTALIA_RT_URL = "https://qr.vectalia.es/Alicante/lib/request.aspx";
 const ARRIVAL_RE = /Linea\s+(\d+)\s+([^:]+?)\s*:\s*(\d+)\s*min/gi;
 
-let lastDebug: { status?: number; len?: number; sample?: string; error?: string } = {};
-
 async function fetchEtas(stopCode: string, lineCode: string): Promise<number[]> {
   try {
     const padded = lineCode.padStart(3, "0");
@@ -20,9 +18,8 @@ async function fetchEtas(stopCode: string, lineCode: string): Promise<number[]> 
         },
       },
     );
-    const txt = await r.text();
-    lastDebug = { status: r.status, len: txt.length, sample: txt.slice(0, 200) };
     if (!r.ok) return [];
+    const txt = await r.text();
     const matches = [...txt.matchAll(ARRIVAL_RE)];
     const mins: number[] = [];
     for (const m of matches) {
@@ -33,7 +30,7 @@ async function fetchEtas(stopCode: string, lineCode: string): Promise<number[]> 
     }
     return mins.sort((a, b) => a - b);
   } catch (e) {
-    lastDebug = { error: String(e) };
+    console.error("[bus-eta] fetch failed", e);
     return [];
   }
 }
@@ -65,16 +62,13 @@ export const Route = createFileRoute("/api/public/bus-eta")({
             etaMin = etas[Math.min(index, etas.length - 1)];
           }
         }
-        return new Response(
-          JSON.stringify({ etaMin, all: etas, fetchedAt: Date.now(), debug: lastDebug }),
-          {
-            status: 200,
-            headers: {
-              "Content-Type": "application/json",
-              "Cache-Control": "no-store",
-            },
+        return new Response(JSON.stringify({ etaMin, all: etas, fetchedAt: Date.now() }), {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store",
           },
-        );
+        });
       },
     },
   },
