@@ -1875,10 +1875,9 @@ ESTILO OBLIGATORIO en este modo:
       }
       const t = await response.text();
       console.error("AI gateway error:", response.status, t);
-      return new Response(JSON.stringify({ error: "AI gateway error" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return streamChatText(
+        "Uy, el servicio de IA está fallando ahora mismo 😅 Inténtalo de nuevo en unos segundos.",
+      );
     }
 
     return new Response(response.body, {
