@@ -761,10 +761,19 @@ type BusOptionData = {
   label?: string;
 };
 
+type BusStopCardData = {
+  line: string;
+  lineName?: string;
+  stopCode: string;
+  stopName: string;
+  distanceM?: number | null;
+};
+
 type AssistantPart =
   | { type: "text"; value: string }
   | { type: "card"; data: PlaceCardData }
-  | { type: "busopt"; data: BusOptionData };
+  | { type: "busopt"; data: BusOptionData }
+  | { type: "busstop"; data: BusStopCardData };
 
 const CARD_FALLBACK_THEMES = ["sun", "sea", "citrus", "rose", "mint", "grape"];
 
