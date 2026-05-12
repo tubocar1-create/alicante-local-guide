@@ -134,29 +134,61 @@ function LineDetailPage() {
           </Card>
         )}
 
-        <ol className="relative space-y-0 border-l-2 border-primary/30 pl-4">
-          {list.map((s, i) => (
-            <li key={`${s.stop_code}-${i}`} className="relative pb-3">
-              <span className="absolute -left-[22px] top-1.5 h-3 w-3 rounded-full border-2 border-primary bg-background" />
-              <button
-                type="button"
-                onClick={() => open(s.stop_code, s.stop_name)}
-                className="w-full rounded-lg border bg-card p-3 text-left transition-colors hover:bg-accent"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="truncate font-medium">{s.stop_name}</div>
-                    {s.stop_code && (
+        {list.length > 0 && (
+          <div className="flex items-center justify-between rounded-xl border bg-card px-4 py-3">
+            <div className="flex items-center gap-2 text-sm">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <span className="text-muted-foreground">Recorrido completo</span>
+            </div>
+            <div className="text-right">
+              <div className="text-lg font-semibold tabular-nums">~{formatMinutes(totalMin)}</div>
+              <div className="text-[11px] text-muted-foreground">{list.length} paradas</div>
+            </div>
+          </div>
+        )}
+
+        <ol className="relative space-y-0 pl-6">
+          {/* Línea de color del recorrido */}
+          {list.length > 1 && (
+            <span
+              aria-hidden
+              className="absolute left-2 top-2 bottom-2 w-1 rounded-full"
+              style={{ backgroundColor: line?.color || "hsl(var(--primary))" }}
+            />
+          )}
+          {list.map((s, i) => {
+            const m = Math.round(cumMins[i] ?? 0);
+            const delta = i === 0 ? 0 : Math.round((cumMins[i] ?? 0) - (cumMins[i - 1] ?? 0));
+            return (
+              <li key={`${s.stop_code}-${i}`} className="relative pb-3">
+                <span
+                  className="absolute -left-[2px] top-3 h-3.5 w-3.5 rounded-full border-2 bg-background"
+                  style={{ borderColor: line?.color || "hsl(var(--primary))" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => open(s.stop_code, s.stop_name)}
+                  className="w-full rounded-lg border bg-card p-3 text-left transition-colors hover:bg-accent"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="truncate font-medium">{s.stop_name}</div>
                       <div className="text-xs text-muted-foreground">
-                        Parada {s.stop_code}
+                        {s.stop_code ? `Parada ${s.stop_code}` : "Sin código"}
+                        {i > 0 && <span className="ml-2">· +{delta} min</span>}
                       </div>
-                    )}
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <span className="text-xs font-semibold tabular-nums text-foreground">
+                        {i === 0 ? "0 min" : `${m} min`}
+                      </span>
+                      <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+                    </div>
                   </div>
-                  <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />
-                </div>
-              </button>
-            </li>
-          ))}
+                </button>
+              </li>
+            );
+          })}
         </ol>
       </main>
 
