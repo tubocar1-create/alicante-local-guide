@@ -7,6 +7,7 @@ import {
   fetchAlicanteAirQuality,
   fetchAlicanteAgenda,
   fetchAlicanteAirTraffic,
+  fetchRenfeAlicanteSchedule,
   type CulturalEvent,
 } from "./alicante-city.server";
 
@@ -348,6 +349,20 @@ export const getAdVariants = createServerFn({ method: "POST" })
       }
     }
 
+    let trainsCtx = "";
+    if (advertiser.kind === "trains") {
+      const trips = await fetchRenfeAlicanteSchedule();
+      if (trips && trips.length) {
+        const llegadas = trips.filter((t) => t.direction === "llegada").slice(0, 5);
+        const salidas = trips.filter((t) => t.direction === "salida").slice(0, 5);
+        const fmt = (t: typeof trips[number]) =>
+          `- ${t.line} ${t.trainCode} · ${t.direction === "llegada" ? `desde ${t.origin}` : `hacia ${t.destination}`} · ${t.scheduledTime} (en ${t.minutesFromNow} min)`;
+        trainsCtx = `\n\nHORARIO REAL Renfe Cercanías en Alicante-Terminal (próximas 3h, hora local):\nLLEGADAS:\n${llegadas.map(fmt).join("\n") || "(ninguna)"}\nSALIDAS:\n${salidas.map(fmt).join("\n") || "(ninguna)"}\n\nUsa SOLO estos datos. Cada variante = un tren concreto.`;
+      } else {
+        trainsCtx = "\n\n(Sin horarios de Cercanías ahora mismo).";
+      }
+    }
+
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       return {
@@ -379,6 +394,9 @@ export const getAdVariants = createServerFn({ method: "POST" })
         break;
       case "flights":
         userPrompt = `Genera ${count} variantes de tarjeta sobre VUELOS en vivo cerca de ALC. MÁXIMA INFORMACIÓN, MÍNIMO COMENTARIO. Body con formato compacto: "[Aerolínea] [vuelo] · desde [ciudad] · aterriza en [N] min" (máx 90 chars). Sin adjetivos, sin opiniones, sin "¡", sin "ya viene". headline: el código del vuelo (ej "Iberia IB3567") máx 4 palabras. cta "Ver vuelos". Usa SOLO los datos del listado; si falta origen o ETA, omite ese campo (no inventes).${flightsCtx}`;
+        break;
+      case "trains":
+        userPrompt = `Genera ${count} variantes de tarjeta sobre TRENES de Cercanías en Alicante-Terminal. MÁXIMA INFORMACIÓN, MÍNIMO COMENTARIO. UNA variante por tren del listado (mezcla llegadas y salidas). Body formato compacto: "[Llegada/Salida] [Línea] · [desde/hacia X] · [HH:MM] (en N min)" (máx 90 chars). headline: línea + código (ej "C-1 Salida 32802") máx 4 palabras. cta "Ver horarios". Usa SOLO los datos; no inventes retrasos ni andenes.${trainsCtx}`;
         break;
       default:
         userPrompt = wiki

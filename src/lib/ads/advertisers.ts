@@ -9,7 +9,8 @@ export type BannerKind =
   | "traffic"
   | "air"
   | "agenda"
-  | "flights";
+  | "flights"
+  | "trains";
 
 export type Advertiser = {
   id: string;
@@ -164,6 +165,23 @@ export const ADVERTISERS: Advertiser[] = [
     },
     brief:
       "Tráfico aéreo en vivo alrededor del aeropuerto de Alicante-Elche (ALC/LEAL) usando OpenSky Network: aviones en vuelo cerca, en pista, callsign, altitud y país.",
+  },
+  {
+    id: "trenes-alicante",
+    name: "Trenes Alicante",
+    tagline: "Próximas llegadas y salidas",
+    category: "Tren",
+    kind: "trains",
+    ctaLabel: "Ver horarios",
+    ctaUrl: "https://www.renfe.com/es/es/cercanias/cercanias-murcia-alicante",
+    theme: {
+      bg: "bg-gradient-to-r from-purple-700 via-indigo-700 to-blue-800",
+      fg: "text-white",
+      accent: "bg-white text-indigo-700",
+      emoji: "🚆",
+    },
+    brief:
+      "Próximas llegadas y salidas programadas en Alicante-Terminal según el horario oficial de Renfe Cercanías (núcleo Murcia/Alicante). Líneas C-1 (Murcia/Orihuela) y C-3 (Sant Vicent).",
   },
 ];
 export function getAdvertiser(id: string): Advertiser | undefined {
