@@ -171,7 +171,7 @@ function cardCls(status?: string) {
   if (status === "confirmed")
     return "border-emerald-500/60 bg-emerald-50 dark:bg-emerald-950/30 border-2";
   if (status === "rejected" || status === "declined" || status === "cancelled")
-    return "border-rose-300/60 bg-rose-50/60 dark:bg-rose-950/20";
+    return "border-red-800 bg-red-900/80 text-white dark:bg-red-950 border-2";
   if (status === "awaiting_user" || status === "rescheduled")
     return "border-blue-300/60 bg-blue-50/60 dark:bg-blue-950/20";
   return "border-border bg-card";
