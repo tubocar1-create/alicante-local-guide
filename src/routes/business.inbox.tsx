@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
@@ -123,7 +123,13 @@ function InboxPage() {
                   </div>
                 </div>
               </Link>
-              {isPending && <QuickActions threadId={t.id} />}
+              {isPending && (
+                <QuickActions
+                  threadId={t.id}
+                  scheduledAt={t.booking?.scheduled_at}
+                  customerName={t.booking?.customer_name ?? undefined}
+                />
+              )}
             </li>
           );
         })}
@@ -160,43 +166,129 @@ function badgeFor(s: string) {
   return "bg-muted text-foreground";
 }
 
-function QuickActions({ threadId }: { threadId: string }) {
+function toLocalInputValue(iso: string) {
+  const d = new Date(iso);
+  const off = d.getTimezoneOffset();
+  return new Date(d.getTime() - off * 60000).toISOString().slice(0, 16);
+}
+
+function QuickActions({
+  threadId,
+  scheduledAt,
+  customerName,
+}: {
+  threadId: string;
+  scheduledAt?: string;
+  customerName?: string;
+}) {
   const send = useServerFn(sendMessage);
   const qc = useQueryClient();
-  const navigate = useNavigate();
-  const [busy, setBusy] = useState(false);
+  const [mode, setMode] = useState<null | "propose" | "decline">(null);
+  const [slot, setSlot] = useState(() =>
+    scheduledAt ? toLocalInputValue(scheduledAt) : "",
+  );
+  const firstName = (customerName ?? "").split(" ")[0] || "Hola";
+  const [reason, setReason] = useState(
+    `Hola ${firstName}, hoy no tenemos disponibilidad en todo el horario. ¿Te gustaría reservar para otra fecha? Estaremos encantados de recibirte.`,
+  );
 
   const m = useMutation({
     mutationFn: (v: { template_key: string; payload?: Record<string, unknown> }) =>
       send({ data: { thread_id: threadId, actor_role: "business", ...v } }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["inbox"] });
+      setMode(null);
       toast.success("Respuesta enviada");
     },
     onError: (e: Error) => toast.error(e.message),
-    onSettled: () => setBusy(false),
   });
+
+  if (mode === "propose") {
+    return (
+      <div className="space-y-2 border-t border-border px-3 py-2">
+        <p className="text-xs font-medium">Propón una nueva hora</p>
+        <input
+          type="datetime-local"
+          value={slot}
+          onChange={(e) => setSlot(e.target.value)}
+          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+        />
+        <div className="flex gap-2">
+          <button
+            onClick={() => setMode(null)}
+            className="flex-1 rounded-full border border-border px-3 py-1.5 text-xs"
+          >
+            Cancelar
+          </button>
+          <button
+            disabled={m.isPending || !slot}
+            onClick={() =>
+              m.mutate({
+                template_key: "business.propose_slot",
+                payload: { scheduled_at: new Date(slot).toISOString() },
+              })
+            }
+            className="flex-1 rounded-full bg-primary px-3 py-1.5 text-xs text-primary-foreground disabled:opacity-50"
+          >
+            Enviar propuesta
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (mode === "decline") {
+    return (
+      <div className="space-y-2 border-t border-border px-3 py-2">
+        <p className="text-xs font-medium">Rechazar e invitar a otra fecha</p>
+        <textarea
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          maxLength={280}
+          rows={3}
+          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+        />
+        <div className="flex gap-2">
+          <button
+            onClick={() => setMode(null)}
+            className="flex-1 rounded-full border border-border px-3 py-1.5 text-xs"
+          >
+            Cancelar
+          </button>
+          <button
+            disabled={m.isPending}
+            onClick={() =>
+              m.mutate({ template_key: "business.decline", payload: { reason } })
+            }
+            className="flex-1 rounded-full bg-destructive px-3 py-1.5 text-xs text-destructive-foreground disabled:opacity-50"
+          >
+            Rechazar e invitar
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-3 gap-1.5 border-t border-border px-3 py-2">
       <button
-        disabled={busy || m.isPending}
-        onClick={(e) => { e.stopPropagation(); setBusy(true); m.mutate({ template_key: "business.confirm", payload: {} }); }}
+        disabled={m.isPending}
+        onClick={(e) => { e.stopPropagation(); m.mutate({ template_key: "business.confirm", payload: {} }); }}
         className="flex items-center justify-center gap-1 rounded-full bg-primary px-2 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
       >
         <Check className="h-3.5 w-3.5" /> Aceptar
       </button>
       <button
-        disabled={busy}
-        onClick={(e) => { e.stopPropagation(); navigate({ to: "/business/inbox/$id", params: { id: threadId } }); }}
-        className="flex items-center justify-center gap-1 rounded-full border border-border bg-background px-2 py-1.5 text-xs font-medium"
+        disabled={m.isPending}
+        onClick={(e) => { e.stopPropagation(); setMode("propose"); }}
+        className="flex items-center justify-center gap-1 rounded-full border border-border bg-background px-2 py-1.5 text-xs font-medium disabled:opacity-50"
       >
         <CalendarClock className="h-3.5 w-3.5" /> Cambiar
       </button>
       <button
-        disabled={busy}
-        onClick={(e) => { e.stopPropagation(); navigate({ to: "/business/inbox/$id", params: { id: threadId } }); }}
-        className="flex items-center justify-center gap-1 rounded-full border border-border bg-background px-2 py-1.5 text-xs font-medium text-destructive"
+        disabled={m.isPending}
+        onClick={(e) => { e.stopPropagation(); setMode("decline"); }}
+        className="flex items-center justify-center gap-1 rounded-full border border-border bg-background px-2 py-1.5 text-xs font-medium text-destructive disabled:opacity-50"
       >
         <X className="h-3.5 w-3.5" /> Rechazar
       </button>
