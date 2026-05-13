@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useEffect } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { listMyBusinesses } from "@/lib/business/business.functions";
 import {
   listBookings,
@@ -44,6 +46,19 @@ function BookingsPage() {
     queryFn: () => fetchBookings({ data: { business_id: business!.id } }),
     enabled: !!business,
   });
+
+  useEffect(() => {
+    if (!business?.id) return;
+    const channel = supabase
+      .channel(`bookings:${business.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "bookings", filter: `business_id=eq.${business.id}` },
+        () => qc.invalidateQueries({ queryKey: ["bookings", business.id] }),
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [business?.id, qc]);
 
   const m = useMutation({
     mutationFn: (v: { id: string; status: (typeof STATUSES)[number] }) =>
