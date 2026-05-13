@@ -1,10 +1,48 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useEffect, useRef } from "react";
 import { listMyBusinesses } from "@/lib/business/business.functions";
 import { getBusinessMetrics } from "@/lib/business/metrics.functions";
 import { listThreadsForBusiness } from "@/lib/coord/threads.functions";
 import { Plus, QrCode, Calendar, BarChart3 } from "lucide-react";
+import { toast } from "sonner";
+
+function playAlarm() {
+  try {
+    const Ctx = (window.AudioContext || (window as any).webkitAudioContext) as
+      | typeof AudioContext
+      | undefined;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const now = ctx.currentTime;
+    // Repeating loud beeps for ~2.5s
+    for (let i = 0; i < 5; i++) {
+      const t = now + i * 0.5;
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "square";
+      o.frequency.setValueAtTime(1200, t);
+      o.frequency.setValueAtTime(800, t + 0.15);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.6, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
+      o.connect(g);
+      g.connect(ctx.destination);
+      o.start(t);
+      o.stop(t + 0.42);
+    }
+  } catch {
+    /* ignore */
+  }
+  try {
+    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+      navigator.vibrate?.([400, 150, 400, 150, 600, 150, 400]);
+    }
+  } catch {
+    /* ignore */
+  }
+}
 
 export const Route = createFileRoute("/business/")({
   component: BusinessDashboard,
