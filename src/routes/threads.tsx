@@ -171,7 +171,7 @@ function cardCls(status?: string) {
   if (status === "confirmed")
     return "border-emerald-500/60 bg-emerald-50 dark:bg-emerald-950/30 border-2";
   if (status === "rejected" || status === "declined" || status === "cancelled")
-    return "border-rose-300/60 bg-rose-50/60 dark:bg-rose-950/20";
+    return "border-red-700 bg-red-100 dark:bg-red-950/40 border-2";
   if (status === "awaiting_user" || status === "rescheduled")
     return "border-blue-300/60 bg-blue-50/60 dark:bg-blue-950/20";
   return "border-border bg-card";
@@ -184,9 +184,9 @@ function StatusBadge({ status }: { status?: string }) {
     awaiting_user: { label: "Esperando tu respuesta", cls: "bg-blue-100 text-blue-800" },
     confirmed: { label: "Confirmada", cls: "bg-emerald-500 text-white" },
     rescheduled: { label: "Nuevo horario propuesto", cls: "bg-blue-100 text-blue-800" },
-    rejected: { label: "Rechazada", cls: "bg-rose-100 text-rose-800" },
-    declined: { label: "Rechazada", cls: "bg-rose-100 text-rose-800" },
-    cancelled: { label: "Cancelada", cls: "bg-muted text-muted-foreground" },
+    rejected: { label: "Rechazada", cls: "bg-red-700 text-white" },
+    declined: { label: "Rechazada", cls: "bg-red-700 text-white" },
+    cancelled: { label: "Cancelada", cls: "bg-red-700 text-white" },
     closed: { label: "Cerrada", cls: "bg-muted text-muted-foreground" },
     completed: { label: "Completada", cls: "bg-muted text-muted-foreground" },
   };
