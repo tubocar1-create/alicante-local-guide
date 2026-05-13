@@ -173,9 +173,9 @@ function cardCls(status?: string) {
   if (status === "rejected" || status === "declined" || status === "cancelled")
     return "border-red-700 bg-red-100 dark:bg-red-950/40 border-2";
   if (status === "awaiting_user" || status === "rescheduled")
-    return "border-blue-300/60 bg-blue-50/60 dark:bg-blue-950/20 animate-pulse";
+    return "border-blue-400 bg-blue-50 dark:bg-blue-950/30 border-2 animate-blink";
   if (status === "pending" || status === "awaiting_business")
-    return "border-amber-300/70 bg-amber-50/70 dark:bg-amber-950/20 animate-pulse";
+    return "border-amber-400 bg-amber-50 dark:bg-amber-950/30 border-2 animate-blink";
   return "border-border bg-card";
 }
 
