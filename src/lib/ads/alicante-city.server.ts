@@ -103,3 +103,88 @@ export async function fetchAlicanteTraffic(): Promise<TrafficSummary | null> {
     return null;
   }
 }
+
+export type AirQualityStation = {
+  address: string;
+  status: "verde" | "amarillo" | "naranja" | "rojo" | "morado" | "desconocido";
+};
+
+export async function fetchAlicanteAirQuality(): Promise<AirQualityStation[] | null> {
+  try {
+    const r = await fetch(`${BASE}/asmpois`, {
+      headers: { "User-Agent": UA, Accept: "application/json" },
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!r.ok) return null;
+    const list: Array<{
+      content_type: string;
+      address?: string;
+      icono?: string;
+    }> = await r.json();
+    const out: AirQualityStation[] = [];
+    for (const x of list) {
+      if (x.content_type !== "air_qualities") continue;
+      const m = /medioambiental\/(verde|amarillo|naranja|rojo|morado)/i.exec(
+        String(x.icono ?? ""),
+      );
+      out.push({
+        address: (x.address ?? "Estación").replace(/\s+/g, " ").trim(),
+        status: (m?.[1]?.toLowerCase() as AirQualityStation["status"]) ?? "desconocido",
+      });
+    }
+    return out.length ? out : null;
+  } catch {
+    return null;
+  }
+}
+
+export type CulturalEvent = {
+  title: string;
+  when: string;
+  excerpt: string;
+};
+
+// Scrape agenda cultural del Ayto. de Alicante (alicante.es/es/agenda).
+export async function fetchAlicanteAgenda(): Promise<CulturalEvent[] | null> {
+  try {
+    const r = await fetch("https://www.alicante.es/es/agenda", {
+      headers: { "User-Agent": UA, Accept: "text/html" },
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!r.ok) return null;
+    const html = await r.text();
+    // Cada item de agenda suele venir como <article>...<h2>Title</h2>...<p>excerpt</p>...De DD MMM YYYY hasta DD MMM YYYY
+    const articles = [...html.matchAll(/<article\b[^>]*>([\s\S]*?)<\/article>/gi)];
+    const out: CulturalEvent[] = [];
+    for (const a of articles) {
+      const block = a[1];
+      const titleM = /<h[23][^>]*>\s*(?:<a[^>]*>)?([^<]{4,180})/i.exec(block);
+      if (!titleM) continue;
+      const title = titleM[1].replace(/\s+/g, " ").trim();
+      const text = block
+        .replace(/<script[\s\S]*?<\/script>/gi, "")
+        .replace(/<style[\s\S]*?<\/style>/gi, "")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/&nbsp;/g, " ")
+        .replace(/&amp;/g, "&")
+        .replace(/&quot;/g, '"')
+        .replace(/\s+/g, " ")
+        .trim();
+      const whenM = /(De\s+\d{1,2}\s+\w+\s+\d{4}\s+(?:hasta|al)\s+\d{1,2}\s+\w+\s+\d{4}[^.,]*)/i.exec(text);
+      const when = whenM?.[1]?.trim() ?? "";
+      const excerpt = text
+        .replace(title, "")
+        .replace(when, "")
+        .trim()
+        .slice(0, 240);
+      if (title && excerpt.length > 20) {
+        out.push({ title, when, excerpt });
+      }
+      if (out.length >= 12) break;
+    }
+    return out.length ? out : null;
+  } catch {
+    return null;
+  }
+}
+

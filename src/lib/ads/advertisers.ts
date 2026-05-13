@@ -1,7 +1,14 @@
 // Catálogo de "banners" informativos. Ya no son anuncios comerciales:
 // son tarjetitas de clima y datos útiles sobre Alicante generados por IA.
 
-export type BannerKind = "weather" | "info" | "marine" | "parkings" | "traffic";
+export type BannerKind =
+  | "weather"
+  | "info"
+  | "marine"
+  | "parkings"
+  | "traffic"
+  | "air"
+  | "agenda";
 
 export type Advertiser = {
   id: string;
@@ -106,8 +113,41 @@ export const ADVERTISERS: Advertiser[] = [
     brief:
       "Estado del tráfico en Alicante (datos en vivo del Ayuntamiento): tramos fluidos vs densos, incidencias y cortes activos.",
   },
+  {
+    id: "aire-alicante",
+    name: "Calidad del aire",
+    tagline: "Estaciones medioambientales",
+    category: "Medio ambiente",
+    kind: "air",
+    ctaLabel: "Ver estaciones",
+    ctaUrl: "https://movilidad.alicante.es/estaciones-medioambientales",
+    theme: {
+      bg: "bg-gradient-to-r from-emerald-500 via-green-500 to-lime-500",
+      fg: "text-white",
+      accent: "bg-white text-emerald-700",
+      emoji: "🌿",
+    },
+    brief:
+      "Estado real de la calidad del aire en Alicante según las estaciones del Ayuntamiento (verde = bueno, amarillo = aceptable, rojo = malo).",
+  },
+  {
+    id: "agenda-alicante",
+    name: "Agenda cultural",
+    tagline: "Qué hacer hoy en Alicante",
+    category: "Cultura",
+    kind: "agenda",
+    ctaLabel: "Ver agenda",
+    ctaUrl: "https://www.alicante.es/es/agenda",
+    theme: {
+      bg: "bg-gradient-to-r from-fuchsia-600 via-pink-600 to-rose-500",
+      fg: "text-white",
+      accent: "bg-white text-fuchsia-700",
+      emoji: "🎭",
+    },
+    brief:
+      "Eventos culturales reales publicados en la agenda oficial del Ayuntamiento de Alicante: exposiciones, conciertos, rutas, etc.",
+  },
 ];
-
 export function getAdvertiser(id: string): Advertiser | undefined {
   return ADVERTISERS.find((a) => a.id === id);
 }
