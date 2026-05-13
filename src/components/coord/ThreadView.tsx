@@ -50,6 +50,7 @@ export function ThreadView({
       send({ data: { thread_id: threadId, actor_role: role, access_token: accessToken, ...v } }),
     onSuccess: () => {
       setText("");
+      toast.success("Respuesta enviada al negocio");
       qc.invalidateQueries({ queryKey: ["thread", threadId] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -60,6 +61,9 @@ export function ThreadView({
   const { thread, messages, booking } = data;
   const closed = thread.status === "closed" || thread.status === "expired";
   const suggestions = suggestionsFor(role, thread.status, booking?.status ?? "pending");
+  const latestProposal = [...messages]
+    .reverse()
+    .find((msg) => msg.template_key === "business.propose_slot");
 
   return (
     <div className="flex h-full flex-col">
@@ -132,22 +136,33 @@ export function ThreadView({
                 {role === "user" &&
                   !closed &&
                   msg.template_key === "business.propose_slot" &&
+                  msg.id === latestProposal?.id &&
                   thread.status === "awaiting_user" &&
                   booking?.status === "pending" && (
                     <div className="mt-2 flex gap-2">
                       <button
                         disabled={m.isPending}
-                        onClick={() => m.mutate({ template_key: "user.accept", payload: {} })}
+                        onClick={() =>
+                          m.mutate({
+                            template_key: "user.accept",
+                            payload: { proposal_message_id: msg.id },
+                          })
+                        }
                         className="flex-1 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
                       >
                         Aceptar nueva hora
                       </button>
                       <button
                         disabled={m.isPending}
-                        onClick={() => m.mutate({ template_key: "user.reject_proposal", payload: {} })}
+                        onClick={() =>
+                          m.mutate({
+                            template_key: "user.reject_proposal",
+                            payload: { proposal_message_id: msg.id },
+                          })
+                        }
                         className="flex-1 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground disabled:opacity-50"
                       >
-                        Rechazar
+                        Cancelar reserva
                       </button>
                     </div>
                   )}
