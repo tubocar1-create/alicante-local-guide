@@ -416,6 +416,18 @@ export const getAdVariants = createServerFn({ method: "POST" })
       }
     }
 
+    let busesCtx = "";
+    if (advertiser.kind === "buses") {
+      const arrivals = await fetchAlibusAlicante();
+      if (arrivals && arrivals.length) {
+        const fmt = (b: typeof arrivals[number]) =>
+          `- Parada ${b.stop} · L${b.line}${b.destination ? ` → ${b.destination}` : ""} · en ${b.minutes} min`;
+        busesCtx = `\n\nPRÓXIMAS LLEGADAS REALES de buses urbanos (Vectalia/Masatusa) en paradas céntricas de Alicante (datos AliBus, en vivo):\n${arrivals.map(fmt).join("\n")}\n\nUsa SOLO estos datos. Cada variante = una llegada concreta en una parada concreta.`;
+      } else {
+        busesCtx = "\n\n(Sin llegadas previstas ahora mismo en las paradas monitorizadas).";
+      }
+    }
+
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       return {
