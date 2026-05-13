@@ -1,113 +1,133 @@
-# Plan: Módulo Universal de Servicios — Alicante Friend
+ns
+# Módulo de Coordinación Urbana Contextual Inteligente
 
-## Resumen
+Diseño de comunicación **operacional, contextual y atada a un servicio**. No es un chat social. Cada conversación nace de una reserva o interacción concreta y muere cuando esa interacción se cierra.
 
-Extender la app actual con un núcleo modular para negocios (QR, reservas, referrals, métricas, dashboard) sin tocar las funcionalidades existentes (buses, mapas, IA, ETA, exploración, puntos, rutas, Supabase, edge functions, Overpass).
+## 1. Principios de diseño (no negociables)
 
-Trabajo en **fases incrementales**. Esta primera entrega monta los **cimientos** (modelo de datos universal, RLS, roles, rutas privadas, dashboard mínimo). Las features avanzadas (campañas, analytics ricos, marketplace) se construyen encima, en fases posteriores.
+- 1 reserva = 1 hilo. No existe chat libre.
+- Mensajes mayoritariamente **estructurados** (quick replies). Texto libre limitado a 280 chars y solo cuando el hilo está activo.
+- El hilo **caduca** automáticamente al completarse / cancelarse el servicio (+ ventana corta post-servicio para feedback).
+- Mobile-first, una sola pantalla, acciones grandes.
+- Cada mensaje puede llevar **payload contextual** (ETA, ubicación, QR, slot propuesto) — no solo texto.
 
----
+## 2. Modelo de datos (nuevas tablas)
 
-## Fase 1 — Cimientos (esta entrega)
+```text
+conversation_threads
+ ├─ id (uuid)
+ ├─ booking_id (uuid, FK bookings)         ← raíz contextual
+ ├─ business_id (uuid)
+ ├─ user_id (uuid)
+ ├─ status: open | awaiting_user | awaiting_business | closed | expired
+ ├─ last_message_at, created_at, closed_at
+ └─ context_snapshot jsonb (servicio, hora, party_size)
 
-### 1. Modelo de datos universal (Supabase)
+messages
+ ├─ id, thread_id
+ ├─ sender_type: user | business | system | ai
+ ├─ message_type: quick_reply | free_text | system_event | eta_update | location | qr | slot_proposal
+ ├─ template_key (ej. 'business.confirm', 'user.on_my_way')
+ ├─ text (nullable, ≤280)
+ ├─ payload jsonb (slot, eta_minutes, lat/lng, qr_code_id, …)
+ ├─ created_at, read_at
+ └─ requires_action boolean
 
-Una sola migración, entidades genéricas reutilizables por cualquier vertical:
-
-- `businesses` — negocio (nombre, slug, sector, lat/lng, datos de contacto, horario JSON, owner_id).
-- `business_users` — relación usuario↔negocio con rol (`owner`, `staff`).
-- `services` — servicio/producto ofrecido por un negocio (nombre, duración, precio opcional, metadata JSONB para extender por vertical).
-- `bookings` — reserva ligera (business_id, service_id, user_id, datetime, party_size, status, notes).
-- `qr_codes` — QR universal (business_id, code, purpose `visit|referral|promo|booking|campaign`, payload JSONB, expires_at, max_uses, uses).
-- `visits` — validación física (qr_id, business_id, user_id, scanned_at, source).
-- `referrals` — origen→destino (referrer_user_id, business_id, code, status, converted_at).
-- `interaction_events` — tabla **única** de eventos para métricas (type, user_id, business_id, timestamp, location, source, campaign_id, conversion_status, metadata JSONB).
-- `campaigns` — placeholder mínimo (business_id, name, type, starts_at, ends_at, active).
-- `app_role` enum (`public_user`, `business_user`, `admin`) + `user_roles` table + `has_role()` SECURITY DEFINER (patrón estándar).
-
-Cada tabla con RLS:
-- Lectura pública sólo lo que debe serlo (negocios, servicios).
-- Escritura/lectura privada gated por `has_role` o `business_users`.
-- `referral_qrs` existente se mantiene tal cual; el nuevo `qr_codes` convive.
-
-### 2. Roles y acceso
-
-- Función `has_role(user_id, role)` SECURITY DEFINER.
-- Función `is_business_member(user_id, business_id)` SECURITY DEFINER.
-- RLS del módulo business usa estas funciones — nada de roles en `profiles`.
-
-### 3. Rutas — separación pública / privada
-
+booking_requests  (extiende bookings con estado de negociación)
+ └─ ya cubierto por bookings + nueva columna negotiation_state
 ```
+
+RLS: hilo visible solo a `user_id`, miembros del `business_id`, y admin. Insert de mensajes: solo participantes del hilo y solo si `status != closed`. Trigger crea `conversation_thread` automáticamente al insertar `bookings` (status=pending).
+
+Realtime: `ALTER PUBLICATION supabase_realtime ADD TABLE messages, conversation_threads`.
+
+## 3. Catálogo de mensajes estructurados
+
+**Negocio → Usuario**: `confirm`, `propose_slot` (payload: nuevo `scheduled_at`), `decline` (payload: motivo), `service_ready`, `running_late` (payload: `delay_minutes`), `request_clarification`.
+
+**Usuario → Negocio**: `accept`, `reject_proposal`, `on_my_way` (payload: ETA calculada), `running_late`, `arrived` (payload: lat/lng + QR), `cancel`.
+
+**Sistema (auto)**: `booking_created`, `eta_update` (cada N min si usuario en tránsito), `qr_validated`, `thread_closed`, `reminder_pre_arrival` (T-15min).
+
+**IA (futuro)**: `suggested_reply`, `auto_confirm` (cuando reglas del negocio lo permiten).
+
+## 4. Integraciones urbanas
+
+- **ETA / Bus**: cuando usuario envía `on_my_way`, server fn `computeUserEta` usa `useUserLocation` + `bus-eta` y emite `eta_update` periódicos hasta llegada o timeout. Negocio ve countdown en vivo.
+- **QR**: `arrived` se cierra validando el QR del negocio (`/api/public/qr-validate`). Esto dispara `system_event: qr_validated` y mueve `booking.status = completed`.
+- **Disponibilidad**: cuando negocio responde `propose_slot`, sistema chequea `services` + huecos ocupados antes de permitir el envío.
+- **Métricas**: cada mensaje genera `interaction_event` (type según `message_type`) — alimenta el panel existente.
+
+## 5. Estados del hilo (máquina simple)
+
+```text
+open → awaiting_business (user creó reserva)
+awaiting_business → awaiting_user (negocio propone/pide aclaración)
+awaiting_user ↔ awaiting_business (ping-pong negociación)
+cualquiera → closed (booking confirmed+completed | cancelled | no_show)
+inactividad >24h en awaiting_* → expired (auto vía cron)
+```
+
+## 6. UX / superficies
+
+- **Usuario**: ruta `/threads` (lista compacta de reservas activas) y `/threads/$id` (timeline + barra de quick-replies contextual al estado).
+- **Negocio**: nueva pestaña en bottom nav `Bandeja`, badge con count de `awaiting_business`. Cada item muestra: cliente, servicio, hora propuesta, tiempo desde último mensaje (SLA visible).
+- **Composer**: 90% botones (chips), 10% texto libre. Sin emojis pickers, sin attachments, sin grupos.
+- **Sin notificaciones intrusivas**: in-app realtime + push opcional para `requires_action=true`.
+
+## 7. Métricas nuevas (panel negocio)
+
+- Tiempo medio de respuesta del negocio (P50, P95).
+- Tasa de confirmación / rechazo / contrapropuesta.
+- Tasa de llegadas confirmadas vs no-show.
+- Diferencia ETA prometido vs real.
+- Reservas completadas por hilo.
+
+## 8. Arquitectura de código
+
+```text
+src/lib/coord/
+ ├─ threads.functions.ts      createThread, listThreads, getThread, closeThread
+ ├─ messages.functions.ts     sendMessage (valida template + payload), markRead
+ ├─ templates.ts              catálogo de message_type + schemas Zod
+ ├─ eta-bridge.ts             integra bus-eta + useUserLocation
+ └─ state-machine.ts          transiciones de thread/booking
 src/routes/
-  (existentes intactas)
-  _business.tsx                 ← layout protegido (beforeLoad → /login si no business_user)
-  _business/
-    index.tsx                   ← dashboard
-    bookings.tsx
-    qr.tsx                      ← generar / escanear
-    referrals.tsx
-    metrics.tsx
-    settings.tsx
-  api/public/
-    qr-validate.ts              ← POST: valida un QR escaneado
-    booking-create.ts           ← POST: crea reserva (con rate-limit + zod)
+ ├─ threads.tsx               layout (lista + outlet)
+ ├─ threads.$id.tsx           timeline
+ └─ business.inbox.tsx        bandeja del negocio
+src/components/coord/
+ ├─ Timeline.tsx
+ ├─ QuickReplyBar.tsx         renderiza chips según state + role
+ ├─ MessageBubble.tsx         variantes por message_type
+ ├─ EtaLive.tsx               countdown realtime
+ └─ SlotProposalCard.tsx
 ```
 
-El módulo business **no aparece** en la navegación pública. Acceso vía URL directa + login con rol `business_user`.
+Realtime con `supabase.channel('thread:'+id)` filtrado por `thread_id`.
 
-### 4. Server functions (createServerFn)
+## 9. Preparación para IA y futuro
 
-En `src/lib/business/`:
-- `qr.functions.ts` — crear QR, validar QR, listar visitas.
-- `bookings.functions.ts` — crear, listar, cambiar estado.
-- `referrals.functions.ts` — generar código, registrar conversión.
-- `metrics.functions.ts` — agregaciones simples sobre `interaction_events`.
-- `business.functions.ts` — CRUD básico del negocio del usuario.
+- Cada mensaje guarda `template_key` → fácil entrenar/auto-completar.
+- Hook `onIncomingMessage` con punto de extensión para "auto-confirm si regla cumplida" (ej. negocio activa "auto-aceptar reservas <2 personas en horario X").
+- `context_snapshot` permite pasar contexto completo a un LLM sin reconsultar DB.
+- Multi-vertical: `service_id` ya existe, los templates son agnósticos del vertical.
+- Multi-ciudad: nada del módulo asume Alicante.
 
-Todas con `requireSupabaseAuth` + validación Zod.
+## 10. Plan de entrega por fases
 
-### 5. Tracking universal
+**Fase 1 – Núcleo (este sprint)**
+Migración tablas + RLS + trigger auto-thread, server fns CRUD, ruta `/threads/$id` y `/business/inbox`, templates básicos (confirm / propose_slot / accept / cancel / arrived), realtime. Cierre de hilo al completarse el booking.
 
-Helper `trackEvent({ type, business_id, ... })` que escribe en `interaction_events`. Lo usan todas las acciones (qr_scan, booking_created, referral_converted, visit_validated…). Una sola fuente de verdad para métricas.
+**Fase 2 – Urbano**
+ETA en vivo (`on_my_way` + `eta_update`), integración QR en `arrived`, recordatorio T-15.
 
-### 6. Dashboard business (mínimo viable, móvil-first)
+**Fase 3 – Métricas + SLAs**
+Panel de tiempos de respuesta, badge de SLA en bandeja del negocio, alertas (Brevo WhatsApp ya planteado) para `awaiting_business >X min`.
 
-Pantallas listas pero compactas:
-- **Resumen**: hoy → visitas, QR escaneados, reservas, referrals.
-- **Reservas**: lista + cambio de estado.
-- **QR**: generar QR (purpose + expiración) y mostrar imagen escaneable.
-- **Referrals**: lista + código compartible.
-- **Métricas**: 4-5 cards + gráfico simple semanal (recharts ya disponible).
-
-Diseño con tokens existentes en `src/styles.css`. Sin colores hardcoded.
+**Fase 4 – IA y reglas**
+Auto-confirm, sugerencias de respuesta, detección de no-show probable.
 
 ---
 
-## Fases siguientes (NO en esta entrega — sólo se documentan)
-
-- **Fase 2**: escáner QR con cámara en el dashboard, WhatsApp deep-links para reservas, campañas activas.
-- **Fase 3**: analytics enriquecido (cohortes, recurrencia, horarios pico), CPA, exportes.
-- **Fase 4**: marketplace, multi-ciudad, IA contextual aplicada a negocios.
-
----
-
-## Detalles técnicos
-
-- **Stack**: TanStack Start + Supabase (ya configurado). Sin nuevas dependencias salvo `qrcode` para generar imágenes QR.
-- **Compatibilidad**: cero cambios en `src/routes/index.tsx`, `bus.*`, `eat.tsx`, `stay.tsx`, `explore.tsx`, hooks existentes, edge functions de bus. La tabla `referral_qrs` actual se mantiene.
-- **Seguridad**: RLS en todas las tablas nuevas, roles en tabla separada (no en profiles), validación Zod en todas las entradas, rate-limit en endpoints `/api/public/*`.
-- **SSR-safe**: server functions con `requireSupabaseAuth`; `_business` layout con `beforeLoad` que verifica sesión + rol.
-
----
-
-## Entregables Fase 1
-
-1. Migración Supabase con todas las tablas + RLS + funciones helper.
-2. `src/routes/_business.tsx` + 6 sub-rutas con UI mínima funcional.
-3. `src/lib/business/*.functions.ts` con la lógica server.
-4. 2 endpoints `/api/public/*` (qr-validate, booking-create).
-5. Componente `BusinessNav` y tokens de diseño si hacen falta.
-6. Documentación breve en `.lovable/plan.md`.
-
-¿Apruebas este plan para empezar con la Fase 1?
+¿Arranco por la **Fase 1** (migración + hilo atado a booking + bandeja del negocio + 5 templates básicos + realtime)? Si prefieres, puedo empezar solo por el modelo de datos y la bandeja, y dejar la UX del usuario para después.
