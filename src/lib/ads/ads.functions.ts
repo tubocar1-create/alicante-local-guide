@@ -328,7 +328,10 @@ export const getAdVariants = createServerFn({ method: "POST" })
 
     let flightsCtx = "";
     if (advertiser.kind === "flights") {
-      const t = await fetchAlicanteAirTraffic();
+      const [t, cancels] = await Promise.all([
+        fetchAlicanteAirTraffic(),
+        fetchAenaCancellations(),
+      ]);
       if (t) {
         const sample = t.sample
           .map((s) => {
@@ -347,6 +350,15 @@ export const getAdVariants = createServerFn({ method: "POST" })
         flightsCtx = `\n\nTRÁFICO AÉREO REAL ahora cerca de Alicante-Elche (OpenSky + adsbdb):\nTotal: ${t.total} (${t.airborne} en vuelo, ${t.onGround} en pista).\nVuelos detectados:\n${sample || "(ninguno)"}\n\nUsa SOLO estos datos. Prioriza vuelos que se aproximan (con ETA y origen).`;
       } else {
         flightsCtx = "\n\n(Sin datos de tráfico aéreo en este momento).";
+      }
+      if (cancels && cancels.length) {
+        const cLines = cancels
+          .map(
+            (c) =>
+              `- ${c.type === "salida" ? "Salida" : "Llegada"} ${c.airline} ${c.flightNumber} · ${c.type === "salida" ? "hacia" : "desde"} ${c.otherCity}${c.otherIata ? ` (${c.otherIata})` : ""} · prevista ${c.scheduledTime} (${c.date})`,
+          )
+          .join("\n");
+        flightsCtx += `\n\nCANCELACIONES OFICIALES de Aena hoy en ALC (estado=CAN):\n${cLines}\n\nGenera UNA variante por cancelación con headline "CANCELADO [vuelo]" y body con aerolínea, ruta y hora prevista. Estas variantes tienen PRIORIDAD sobre los vuelos en vivo.`;
       }
     }
 
