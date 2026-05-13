@@ -361,8 +361,7 @@ export function ChatScreen() {
                   QR VAMOS
                 </button>
                 <div className="absolute inset-x-0 bottom-0 p-4 text-white">
-                  <p className="text-xs uppercase tracking-widest opacity-90">Puerto de Alicante</p>
-                  <h2 className="mt-1 leading-none drop-shadow">
+                  <h2 className="leading-none drop-shadow">
                     <span
                       className="italic font-black text-[44px] sm:text-[54px] tracking-tight text-[oklch(0.92_0.16_85)] drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)]"
                       style={{ fontFamily: "var(--font-display)" }}
