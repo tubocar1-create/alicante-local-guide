@@ -22,11 +22,13 @@ const CreateSchema = z.object({
   lng: z.number().min(-180).max(180).optional(),
 });
 
+type BusinessRow = Database["public"]["Tables"]["businesses"]["Row"];
+
 export const listMyBusinesses = createServerFn({ method: "GET" }).handler(
-  async () => {
+  async (): Promise<{ businesses: BusinessRow[]; error?: string }> => {
     const authHeader = getRequestHeader("authorization");
     if (!authHeader?.startsWith("Bearer ")) {
-      return { businesses: [] as Array<Record<string, unknown>>, error: "UNAUTHORIZED" };
+      return { businesses: [], error: "UNAUTHORIZED" };
     }
 
     const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -58,13 +60,13 @@ export const listMyBusinesses = createServerFn({ method: "GET" }).handler(
         .eq("user_id", userId);
       const memberIds = (memberRes.data ?? []).map((r) => r.business_id);
 
-      let memberBiz: typeof ownedRes.data = [];
+      let memberBiz: BusinessRow[] = [];
       if (memberIds.length) {
         const r = await supabase.from("businesses").select("*").in("id", memberIds);
         memberBiz = r.data ?? [];
       }
 
-      const map = new Map<string, (typeof ownedRes.data)[number]>();
+      const map = new Map<string, BusinessRow>();
       for (const b of [...(ownedRes.data ?? []), ...memberBiz]) map.set(b.id, b);
       const businesses = Array.from(map.values()).sort((a, b) =>
         b.created_at.localeCompare(a.created_at),
