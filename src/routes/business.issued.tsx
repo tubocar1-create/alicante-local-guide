@@ -32,6 +32,14 @@ type QrRow = {
   payload: IssuerPayload | null;
 };
 
+type BusinessInfo = {
+  id: string;
+  name: string;
+  phone: string | null;
+  address: string | null;
+  opening_hours_json: string | null;
+};
+
 function fmtDateTime(iso?: string | null) {
   if (!iso) return "—";
   try {
