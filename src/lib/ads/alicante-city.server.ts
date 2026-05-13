@@ -367,3 +367,115 @@ export async function fetchAlicanteAirTraffic(): Promise<AirTraffic | null> {
     return null;
   }
 }
+
+// === Renfe Cercanías: próximas llegadas y salidas en Alicante-Terminal ===
+// API real usada por el panel oficial (horarios.renfe.com).
+// Núcleo 41 = Cercanías Murcia/Alicante.
+// Estaciones clave:
+//   60911 Alicante-Terminal · 60913 Sant Vicent Centre · 60914 Universidad
+//   61200 Murcia del Carmen · 62103 Elx-Parc · 62002 Orihuela
+const RENFE_ALC = "60911";
+const RENFE_PAIRS: Array<{ other: string; otherName: string; line: string }> = [
+  { other: "61200", otherName: "Murcia", line: "C-1" },
+  { other: "62002", otherName: "Orihuela", line: "C-1" },
+  { other: "60913", otherName: "Sant Vicent", line: "C-3" },
+];
+
+export type RenfeTrip = {
+  direction: "llegada" | "salida";
+  line: string;
+  trainCode: string;
+  origin: string;
+  destination: string;
+  scheduledTime: string; // HH:MM
+  minutesFromNow: number;
+};
+
+async function fetchRenfeOD(
+  origen: string,
+  destino: string,
+  fchaViaje: string,
+): Promise<Array<{ linea: string; cdgoTren: string; horaSalida: string; horaLlegada: string }> | null> {
+  try {
+    const r = await fetch("https://horarios.renfe.com/cer/HorariosServlet", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "User-Agent": UA, Accept: "application/json" },
+      body: JSON.stringify({
+        nucleo: "41",
+        origen,
+        destino,
+        fchaViaje,
+        validaReglaNegocio: true,
+        tiempoReal: false,
+        servicioHorarios: "VTI",
+        horaViajeOrigen: "00",
+        horaViajeLlegada: "26",
+        accesibilidadTrenes: false,
+      }),
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!r.ok) return null;
+    const j = (await r.json()) as { horario?: Array<{ linea: string; cdgoTren: string; horaSalida: string; horaLlegada: string }> };
+    return j.horario ?? [];
+  } catch {
+    return null;
+  }
+}
+
+function nowInMadrid(): { hhmm: string; yyyymmdd: string; minutes: number } {
+  const now = new Date();
+  const fmt = new Intl.DateTimeFormat("es-ES", {
+    timeZone: "Europe/Madrid",
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", hour12: false,
+  });
+  const parts = Object.fromEntries(fmt.formatToParts(now).map((p) => [p.type, p.value])) as Record<string, string>;
+  const yyyymmdd = `${parts.year}${parts.month}${parts.day}`;
+  const hhmm = `${parts.hour}:${parts.minute}`;
+  const minutes = Number(parts.hour) * 60 + Number(parts.minute);
+  return { hhmm, yyyymmdd, minutes };
+}
+
+function hhmmToMin(s: string): number {
+  const [h, m] = s.split(":").map(Number);
+  return h * 60 + m;
+}
+
+export async function fetchRenfeAlicanteSchedule(): Promise<RenfeTrip[] | null> {
+  const { yyyymmdd, minutes } = nowInMadrid();
+  const requests = RENFE_PAIRS.flatMap((p) => [
+    fetchRenfeOD(RENFE_ALC, p.other, yyyymmdd).then((horarios) => ({ p, horarios, dir: "salida" as const })),
+    fetchRenfeOD(p.other, RENFE_ALC, yyyymmdd).then((horarios) => ({ p, horarios, dir: "llegada" as const })),
+  ]);
+  const results = await Promise.allSettled(requests);
+  const trips: RenfeTrip[] = [];
+  for (const r of results) {
+    if (r.status !== "fulfilled" || !r.value.horarios) continue;
+    const { p, horarios, dir } = r.value;
+    for (const h of horarios) {
+      const sched = dir === "salida" ? h.horaSalida : h.horaLlegada;
+      const min = hhmmToMin(sched) - minutes;
+      if (min < -2 || min > 180) continue; // próxima ventana 3h
+      trips.push({
+        direction: dir,
+        line: h.linea || p.line,
+        trainCode: h.cdgoTren,
+        origin: dir === "salida" ? "Alicante-Terminal" : p.otherName,
+        destination: dir === "salida" ? p.otherName : "Alicante-Terminal",
+        scheduledTime: sched,
+        minutesFromNow: min,
+      });
+    }
+  }
+  if (!trips.length) return null;
+  // Dedup por trainCode+direction (un mismo tren puede aparecer en varias O-D)
+  const seen = new Set<string>();
+  const unique = trips.filter((t) => {
+    const k = `${t.direction}-${t.trainCode}`;
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+  unique.sort((a, b) => a.minutesFromNow - b.minutesFromNow);
+  return unique.slice(0, 10);
+}
