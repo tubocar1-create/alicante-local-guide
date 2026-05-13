@@ -1,0 +1,1 @@
+DROP TRIGGER IF EXISTS trg_create_thread_for_booking ON public.bookings;
