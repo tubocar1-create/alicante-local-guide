@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Check, CalendarClock, X } from "lucide-react";
+import { Check, CalendarClock, X, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { listMyBusinesses } from "@/lib/business/business.functions";
 import { listThreadsForBusiness } from "@/lib/coord/threads.functions";
@@ -57,6 +57,12 @@ function InboxPage() {
 
   return (
     <div className="space-y-3">
+      <Link
+        to="/business"
+        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" /> Volver al dashboard
+      </Link>
       <div className="flex items-baseline justify-between">
         <h1 className="text-xl font-semibold">Bandeja</h1>
         {awaiting > 0 && (
