@@ -200,28 +200,6 @@ export const sendMessage = createServerFn({ method: "POST" })
       .single();
     if (mErr) throw new Error(mErr.message);
 
-    if (nextThreadStatus) {
-      await supabase
-        .from("conversation_threads")
-        .update({
-          status: nextThreadStatus as never,
-          ...(nextThreadStatus === "closed" ? { closed_at: new Date().toISOString() } : {}),
-        })
-        .eq("id", thread.id);
-    }
-    if (nextBookingStatus) {
-      await supabase
-        .from("bookings")
-        .update({
-          status: nextBookingStatus as never,
-          ...(acceptedScheduledAt ? { scheduled_at: acceptedScheduledAt } : {}),
-        })
-        .eq("id", thread.booking_id);
-    }
-    // Nota: el slot propuesto se persiste en messages.payload (slot_proposal),
-    // por lo que no tocamos bookings.metadata para preservar public_access_token.
-
-
     await supabase.from("interaction_events").insert({
       type: `coord_${data.template_key ?? "free_text"}`,
       business_id: thread.business_id,
