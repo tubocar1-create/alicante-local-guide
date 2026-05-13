@@ -11,6 +11,19 @@ import {
   fetchAenaDisruptions,
   type CulturalEvent,
 } from "./alicante-city.server";
+import {
+  fetchSanVicenteAgenda,
+  fetchSantJoanAgenda,
+  fetchMutxamelAgenda,
+  fetchSantaPolaAgenda,
+  fetchVisitElcheAgenda,
+  fetchBenidormAgenda,
+  fetchTorreviejaAgenda,
+  fetchTeatroPrincipalAgenda,
+  fetchPlazaTorosAgenda,
+  fetchMercadillosHoy,
+  type RegionalEvent,
+} from "./regional-agendas.server";
 
 export type AdCopy = {
   headline: string; // 4-7 palabras
