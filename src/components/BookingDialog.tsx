@@ -182,6 +182,7 @@ export default function BookingDialog({ listing, onClose }: Props) {
           El negocio recibirá tu reserva y podrás coordinar en el hilo.
         </p>
       </form>
-    </div>
+    </div>,
+    document.body,
   );
 }
