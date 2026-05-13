@@ -6,6 +6,11 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
     return await next();
   } catch (error) {
+    // Re-throw framework signals (redirects, notFound) and raw Response throws
+    // (e.g. requireSupabaseAuth's 401) so they reach the client unchanged.
+    if (error instanceof Response) {
+      return error;
+    }
     if (error != null && typeof error === "object" && "statusCode" in error) {
       throw error;
     }
