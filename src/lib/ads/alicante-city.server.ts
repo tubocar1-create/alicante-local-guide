@@ -40,10 +40,10 @@ export async function fetchAlicanteParkings(): Promise<ParkingStatus[] | null> {
     const total = [...html.matchAll(/Disponibilidad de\s*(\d+)/gi)].map((m) =>
       Number(m[1]),
     );
-    // Nombres en orden de aparición
+    // Nombres en orden de aparición (vienen en <p class="title-parking">)
     const names = [
       ...html.matchAll(
-        /<h[1-4][^>]*>\s*(APARCAMIENTO[^<]+|PLAZA DE AMERICA[^<]*)<\/h/gi,
+        /class="title-parking[^"]*"[^>]*>\s*([^<]+?)\s*</gi,
       ),
     ].map((m) =>
       m[1]
