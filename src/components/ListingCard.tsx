@@ -89,9 +89,9 @@ export function ListingCard({ it, me, onWantToGo }: Props) {
   const wikiSlug = it.wikipedia?.split(":")[1];
 
   return (
-    <article className="group rounded-3xl bg-card overflow-hidden border border-border/60 shadow-soft transition active:scale-[0.99]">
+    <article className="group rounded-2xl bg-card overflow-hidden border border-border/60 shadow-soft transition active:scale-[0.99]">
       {/* Hero image */}
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-br from-secondary to-accent/40">
+      <div className="relative aspect-[16/7] w-full overflow-hidden bg-gradient-to-br from-secondary to-accent/40">
         {img ? (
           <img
             src={img}
@@ -144,9 +144,9 @@ export function ListingCard({ it, me, onWantToGo }: Props) {
       </div>
 
       {/* Body */}
-      <div className="px-4 pt-3 pb-4">
+      <div className="px-3 pt-2 pb-3">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="font-display text-[17px] font-semibold leading-tight tracking-tight">
+          <h3 className="font-display text-[15px] font-semibold leading-tight tracking-tight">
             {it.name}
           </h3>
           {it.stars ? (
@@ -157,7 +157,7 @@ export function ListingCard({ it, me, onWantToGo }: Props) {
           ) : null}
         </div>
 
-        <div className="mt-1 flex items-center gap-1.5 text-[12px] text-muted-foreground">
+        <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
           <span className="capitalize truncate">{kindLabel(it)}</span>
           <span aria-hidden>·</span>
           <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
@@ -166,14 +166,14 @@ export function ListingCard({ it, me, onWantToGo }: Props) {
         </div>
 
         {it.address && (
-          <div className="mt-1.5 flex items-start gap-1 text-[11px] text-muted-foreground">
+          <div className="mt-1 flex items-start gap-1 text-[11px] text-muted-foreground">
             <MapPin className="mt-0.5 h-3 w-3 shrink-0" />
             <span className="truncate">{it.address}</span>
           </div>
         )}
 
         {/* Action chips */}
-        <div className="mt-3 flex flex-wrap gap-1.5">
+        <div className="mt-2 flex flex-wrap gap-1">
           <button
             type="button"
             onClick={() => setBooking(true)}
