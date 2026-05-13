@@ -375,7 +375,7 @@ export const getAdVariants = createServerFn({ method: "POST" })
         userPrompt = `Genera ${count} variantes de tarjeta de AGENDA CULTURAL en Alicante, UNA por evento del listado. Cada variante: headline (máx 4 palabras, inspirada en el título real), body (1 frase con la fecha y el qué, máx 65 caracteres), cta (2-3 palabras tipo "Ver agenda"). NO inventes nada que no esté en el listado.${agendaCtx}`;
         break;
       case "flights":
-        userPrompt = `Genera ${count} variantes DISTINTAS de tarjeta sobre TRÁFICO AÉREO en vivo cerca del aeropuerto de Alicante-Elche (ALC/LEAL). Cada variante: headline (máx 4 palabras), body (1 frase con un dato REAL del listado, máx 65 caracteres), cta (2-3 palabras tipo "Ver vuelos"). Menciona números reales (cuántos aviones, callsign de ejemplo, país de la aerolínea). Tono curioso/cercano.${flightsCtx}`;
+        userPrompt = `Genera ${count} variantes DISTINTAS de tarjeta sobre VUELOS en vivo cerca del aeropuerto de Alicante-Elche (ALC/LEAL). Formato preferido del body: "Vuelo [callsign], proveniente de [país], estima aterrizar en [N] minutos" (máx 90 caracteres). headline máx 4 palabras (ej: "Vuelo entrante"). cta 2-3 palabras ("Ver vuelos"). Usa SOLO callsigns, países y ETAs del listado. Si un vuelo no tiene ETA, no inventes minutos: di que está sobrevolando o rodando.${flightsCtx}`;
         break;
       default:
         userPrompt = wiki
