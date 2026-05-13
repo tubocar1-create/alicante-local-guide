@@ -45,6 +45,7 @@ function BookingsPage() {
     queryKey: ["bookings", business?.id],
     queryFn: () => fetchBookings({ data: { business_id: business!.id } }),
     enabled: !!business,
+    refetchInterval: 15000,
   });
 
   useEffect(() => {
