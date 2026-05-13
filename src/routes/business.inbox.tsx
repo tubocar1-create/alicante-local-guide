@@ -1,11 +1,14 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Check, CalendarClock, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { listMyBusinesses } from "@/lib/business/business.functions";
 import { listThreadsForBusiness } from "@/lib/coord/threads.functions";
+import { sendMessage } from "@/lib/coord/messages.functions";
 import { TEMPLATES } from "@/lib/coord/templates";
 
 export const Route = createFileRoute("/business/inbox")({
