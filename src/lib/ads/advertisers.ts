@@ -11,6 +11,7 @@ export type BannerKind =
   | "agenda"
   | "flights"
   | "trains"
+  | "buses"
   | "regional_agenda"
   | "mercadillos";
 
@@ -184,6 +185,23 @@ export const ADVERTISERS: Advertiser[] = [
     },
     brief:
       "Próximas llegadas y salidas programadas en Alicante-Terminal según el horario oficial de Renfe Cercanías (núcleo Murcia/Alicante). Líneas C-1 (Murcia/Orihuela) y C-3 (Sant Vicent).",
+  },
+  {
+    id: "buses-alicante",
+    name: "Buses Alicante",
+    tagline: "Próximas llegadas en paradas céntricas",
+    category: "Transporte",
+    kind: "buses",
+    ctaLabel: "Ver en mapa",
+    ctaUrl: "https://alibus.es/",
+    theme: {
+      bg: "bg-gradient-to-r from-emerald-700 via-teal-700 to-cyan-700",
+      fg: "text-white",
+      accent: "bg-white text-teal-700",
+      emoji: "🚌",
+    },
+    brief:
+      "Próximas llegadas en tiempo real de buses urbanos (Vectalia/Masatusa) en paradas céntricas de Alicante: Luceros, Mercado, Puerta del Mar, Estación-Maisonnave y Rambla. Datos de AliBus.",
   },
   {
     id: "mercadillos-alicante",
