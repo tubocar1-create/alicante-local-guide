@@ -224,14 +224,14 @@ export async function fetchAlicanteAirTraffic(): Promise<AirTraffic | null> {
     const j = (await r.json()) as { states?: unknown[][] | null };
     const raw = j.states ?? [];
     if (!raw.length) return { total: 0, airborne: 0, onGround: 0, sample: [] };
-    const states: FlightState[] = raw.map((s) => ({
+    type WithDist = FlightState & { _d: number };
+    const states: WithDist[] = raw.map((s) => ({
       callsign: String(s[1] ?? "").trim() || "—",
       country: String(s[2] ?? "").trim(),
       altitudeM: s[7] != null ? Math.round(Number(s[7])) : null,
       velocityKmh: s[9] != null ? Math.round(Number(s[9]) * 3.6) : null,
       onGround: Boolean(s[8]),
       headingDeg: s[10] != null ? Math.round(Number(s[10])) : null,
-      // distancia para ordenar
       _d: (() => {
         const lat = Number(s[6]);
         const lon = Number(s[5]);
@@ -240,11 +240,11 @@ export async function fetchAlicanteAirTraffic(): Promise<AirTraffic | null> {
         const dy = lat - ALC_AIRPORT.lat;
         return dx * dx + dy * dy;
       })(),
-    }) as FlightState & { _d: number });
+    }));
     const airborne = states.filter((s) => !s.onGround).length;
     const onGround = states.length - airborne;
-    const sample = [...states]
-      .sort((a, b) => (a as { _d: number })._d - (b as { _d: number })._d)
+    const sample: FlightState[] = [...states]
+      .sort((a, b) => a._d - b._d)
       .slice(0, 6)
       .map(({ callsign, country, altitudeM, velocityKmh, onGround, headingDeg }) => ({
         callsign,
