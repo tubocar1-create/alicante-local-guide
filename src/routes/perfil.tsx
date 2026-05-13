@@ -14,6 +14,7 @@ import {
   QrCode,
   User as UserIcon,
   Power,
+  Briefcase,
 } from "lucide-react";
 import { usePoints } from "@/hooks/usePoints";
 import { useAuth } from "@/hooks/useAuth";
@@ -416,6 +417,27 @@ function PerfilPage() {
           </ul>
         </div>
       )}
+
+      {/* Módulo profesional */}
+      <section className="mt-6">
+        <Link
+          to="/business"
+          className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/80 p-3 text-left shadow-sm transition active:scale-[0.99] hover:bg-accent/30"
+        >
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Briefcase className="h-5 w-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-semibold">Módulo profesional</span>
+            <span className="block truncate text-xs text-muted-foreground">
+              Acceso para negocios: QR, reservas, referrals y métricas.
+            </span>
+          </span>
+          <span className="shrink-0 rounded-full bg-amber-500/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
+            Pro
+          </span>
+        </Link>
+      </section>
 
       {/* Cerrar app */}
       <section className="mt-6 border-t border-border pt-4">
