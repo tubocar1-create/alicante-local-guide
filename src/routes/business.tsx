@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useNavigate, useLocation } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useBusinessAuth } from "@/hooks/useBusinessAuth";
 import { Loader2, LayoutDashboard, QrCode, Calendar, Users, BarChart3, LogOut } from "lucide-react";
@@ -16,12 +16,26 @@ export const Route = createFileRoute("/business")({
 
 function BusinessLayout() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { loading, isAuthenticated, isBusinessUser, user, signOut } = useBusinessAuth();
+
+  // Rutas públicas dentro del módulo business (no requieren sesión)
+  const isPublicRoute =
+    location.pathname === "/business/login" ||
+    location.pathname === "/business/onboarding";
 
   useEffect(() => {
     if (loading) return;
-    if (!isAuthenticated) navigate({ to: "/business/login" });
-  }, [loading, isAuthenticated, navigate]);
+    if (!isAuthenticated && !isPublicRoute) navigate({ to: "/business/login" });
+  }, [loading, isAuthenticated, isPublicRoute, navigate]);
+
+  if (isPublicRoute) {
+    return (
+      <div className="mx-auto min-h-svh max-w-md bg-background px-4 py-8">
+        <Outlet />
+      </div>
+    );
+  }
 
   if (loading) {
     return (
