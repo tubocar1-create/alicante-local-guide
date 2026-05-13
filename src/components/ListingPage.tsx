@@ -15,6 +15,8 @@ type Props<K extends string> = {
   toOverpass: (kinds: K[]) => { tag: string; value: string }[];
   /** Optional: extra UI extras like "Buscar Airbnb" link in stays */
   externalSearch?: { label: string; url: (q: string) => string }[];
+  /** Optional: featured listings pinned at the top of the grid */
+  featured?: Listing[];
 };
 
 type Sort = "distance" | "rating" | "name";
@@ -176,6 +178,11 @@ export function ListingPage<K extends string>(props: Props<K>) {
         )}
 
         <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-5">
+          {(props.featured ?? []).map((it) => (
+            <li key={`featured-${it.id}`}>
+              <ListingCard it={it} me={me} onWantToGo={setReferral} />
+            </li>
+          ))}
           {visible.map((it) => (
             <li key={it.id}>
               <ListingCard it={it} me={me} onWantToGo={setReferral} />
