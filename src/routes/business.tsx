@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useNavigate, useLocation } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useBusinessAuth } from "@/hooks/useBusinessAuth";
 import { Loader2, LayoutDashboard, QrCode, Calendar, Users, BarChart3, LogOut } from "lucide-react";
