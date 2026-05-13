@@ -330,16 +330,19 @@ export const getAdVariants = createServerFn({ method: "POST" })
       if (t) {
         const sample = t.sample
           .map((s) => {
-            if (s.onGround) {
-              return `- Vuelo ${s.callsign} (${s.country || "país desconocido"}) rodando en pista`;
-            }
-            const alt = s.altitudeM != null ? `${Math.round(s.altitudeM / 30.48) / 10} mil pies` : "en vuelo";
-            const dist = s.distanceKm != null ? `, a ${s.distanceKm} km` : "";
-            const eta = s.etaMin != null ? `, ESTIMA ATERRIZAR EN ${s.etaMin} min` : "";
-            return `- Vuelo ${s.callsign} (procedente de ${s.country || "país desconocido"}), ${alt}${dist}${eta}`;
+            const id =
+              s.airline && s.flightNumber
+                ? `${s.airline} ${s.flightNumber}`
+                : `Vuelo ${s.callsign}`;
+            if (s.onGround) return `- ${id}: rodando en pista`;
+            const origin = s.originCity
+              ? `desde ${s.originCity}${s.originIata ? ` (${s.originIata})` : ""}`
+              : `país de matrícula: ${s.country || "?"}`;
+            const eta = s.etaMin != null ? `aterriza en ${s.etaMin} min` : `a ${s.distanceKm ?? "?"} km`;
+            return `- ${id} · ${origin} · ${eta}`;
           })
           .join("\n");
-        flightsCtx = `\n\nTRÁFICO AÉREO REAL ahora cerca de Alicante-Elche (OpenSky):\nTotal: ${t.total} (${t.airborne} en vuelo, ${t.onGround} en pista).\nVuelos detectados:\n${sample || "(ninguno)"}\n\nUsa SOLO estos datos. Prioriza vuelos con ETA (los que se aproximan).`;
+        flightsCtx = `\n\nTRÁFICO AÉREO REAL ahora cerca de Alicante-Elche (OpenSky + adsbdb):\nTotal: ${t.total} (${t.airborne} en vuelo, ${t.onGround} en pista).\nVuelos detectados:\n${sample || "(ninguno)"}\n\nUsa SOLO estos datos. Prioriza vuelos que se aproximan (con ETA y origen).`;
       } else {
         flightsCtx = "\n\n(Sin datos de tráfico aéreo en este momento).";
       }
@@ -375,7 +378,7 @@ export const getAdVariants = createServerFn({ method: "POST" })
         userPrompt = `Genera ${count} variantes de tarjeta de AGENDA CULTURAL en Alicante, UNA por evento del listado. Cada variante: headline (máx 4 palabras, inspirada en el título real), body (1 frase con la fecha y el qué, máx 65 caracteres), cta (2-3 palabras tipo "Ver agenda"). NO inventes nada que no esté en el listado.${agendaCtx}`;
         break;
       case "flights":
-        userPrompt = `Genera ${count} variantes DISTINTAS de tarjeta sobre VUELOS en vivo cerca del aeropuerto de Alicante-Elche (ALC/LEAL). Formato preferido del body: "Vuelo [callsign], proveniente de [país], estima aterrizar en [N] minutos" (máx 90 caracteres). headline máx 4 palabras (ej: "Vuelo entrante"). cta 2-3 palabras ("Ver vuelos"). Usa SOLO callsigns, países y ETAs del listado. Si un vuelo no tiene ETA, no inventes minutos: di que está sobrevolando o rodando.${flightsCtx}`;
+        userPrompt = `Genera ${count} variantes de tarjeta sobre VUELOS en vivo cerca de ALC. MÁXIMA INFORMACIÓN, MÍNIMO COMENTARIO. Body con formato compacto: "[Aerolínea] [vuelo] · desde [ciudad] · aterriza en [N] min" (máx 90 chars). Sin adjetivos, sin opiniones, sin "¡", sin "ya viene". headline: el código del vuelo (ej "Iberia IB3567") máx 4 palabras. cta "Ver vuelos". Usa SOLO los datos del listado; si falta origen o ETA, omite ese campo (no inventes).${flightsCtx}`;
         break;
       default:
         userPrompt = wiki
