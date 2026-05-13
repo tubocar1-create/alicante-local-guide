@@ -328,39 +328,26 @@ export const getAdVariants = createServerFn({ method: "POST" })
 
     let flightsCtx = "";
     if (advertiser.kind === "flights") {
-      const [t, cancels] = await Promise.all([
-        fetchAlicanteAirTraffic(),
-        fetchAenaCancellations(),
-      ]);
-      if (t) {
-        const sample = t.sample
-          .map((s) => {
-            const id =
-              s.airline && s.flightNumber
-                ? `${s.airline} ${s.flightNumber}`
-                : `Vuelo ${s.callsign}`;
-            if (s.onGround) return `- ${id}: rodando en pista`;
-            const origin = s.originCity
-              ? `desde ${s.originCity}${s.originIata ? ` (${s.originIata})` : ""}`
-              : `país de matrícula: ${s.country || "?"}`;
-            const eta = s.etaMin != null ? `aterriza en ${s.etaMin} min` : `a ${s.distanceKm ?? "?"} km`;
-            return `- ${id} · ${origin} · ${eta}`;
-          })
-          .join("\n");
-        flightsCtx = `\n\nTRÁFICO AÉREO REAL ahora cerca de Alicante-Elche (OpenSky + adsbdb):\nTotal: ${t.total} (${t.airborne} en vuelo, ${t.onGround} en pista).\nVuelos detectados:\n${sample || "(ninguno)"}\n\nUsa SOLO estos datos. Prioriza vuelos que se aproximan (con ETA y origen).`;
-      } else {
-        flightsCtx = "\n\n(Sin datos de tráfico aéreo en este momento).";
+      const disruptions = await fetchAenaDisruptions();
+      // Si Aena falla (null) o no hay incidencias hoy → banner suspendido (sin variantes)
+      if (!disruptions || disruptions.length === 0) {
+        return { ...baseResp, variants: [] };
       }
-      if (cancels && cancels.length) {
-        const cLines = cancels
-          .map(
-            (c) =>
-              `- ${c.type === "salida" ? "Salida" : "Llegada"} ${c.airline} ${c.flightNumber} · ${c.type === "salida" ? "hacia" : "desde"} ${c.otherCity}${c.otherIata ? ` (${c.otherIata})` : ""} · prevista ${c.scheduledTime} (${c.date})`,
-          )
-          .join("\n");
-        flightsCtx += `\n\nCANCELACIONES OFICIALES de Aena hoy en ALC (estado=CAN):\n${cLines}\n\nGenera UNA variante por cancelación con headline "CANCELADO [vuelo]" y body con aerolínea, ruta y hora prevista. Estas variantes tienen PRIORIDAD sobre los vuelos en vivo.`;
-      }
+      const lines = disruptions
+        .map((d) => {
+          const route =
+            d.type === "salida"
+              ? `hacia ${d.otherCity}${d.otherIata ? ` (${d.otherIata})` : ""}`
+              : `desde ${d.otherCity}${d.otherIata ? ` (${d.otherIata})` : ""}`;
+          if (d.status === "cancelado") {
+            return `- CANCELADO ${d.type} ${d.airline} ${d.flightNumber} · ${route} · prevista ${d.scheduledTime} (${d.date})`;
+          }
+          return `- RETRASO +${d.delayMin} min · ${d.type} ${d.airline} ${d.flightNumber} · ${route} · prog ${d.scheduledTime} → est ${d.estimatedTime}`;
+        })
+        .join("\n");
+      flightsCtx = `\n\nINCIDENCIAS OFICIALES Aena hoy en Alicante-Elche (ALC), salidas y llegadas:\n${lines}\n\nGenera UNA variante por incidencia. Usa SOLO estos datos.`;
     }
+
 
     let trainsCtx = "";
     if (advertiser.kind === "trains") {
