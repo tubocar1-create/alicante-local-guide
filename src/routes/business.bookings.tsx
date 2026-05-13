@@ -80,7 +80,7 @@ function BookingsPage() {
             </div>
           </li>
         ))}
-        {data?.bookings.length === 0 && (
+        {data?.bookings?.length === 0 && (
           <li className="text-sm text-muted-foreground">Sin reservas todavía.</li>
         )}
       </ul>
