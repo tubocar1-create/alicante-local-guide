@@ -50,5 +50,16 @@ export const listIssuedQrs = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .limit(data.limit);
     if (error) return empty(error.message);
-    return { qrs: (rows ?? []) as Row[], error: null };
+    const mapped: Row[] = (rows ?? []).map((r) => ({
+      id: r.id,
+      code: r.code,
+      purpose: r.purpose,
+      created_at: r.created_at,
+      expires_at: r.expires_at,
+      uses: r.uses,
+      max_uses: r.max_uses,
+      active: r.active,
+      payload: (r.payload as IssuerPayload | null) ?? null,
+    }));
+    return { qrs: mapped, error: null };
   });
