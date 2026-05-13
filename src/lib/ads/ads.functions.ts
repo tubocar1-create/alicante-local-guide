@@ -12,13 +12,6 @@ import {
   type CulturalEvent,
 } from "./alicante-city.server";
 import {
-  fetchSanVicenteAgenda,
-  fetchSantJoanAgenda,
-  fetchMutxamelAgenda,
-  fetchSantaPolaAgenda,
-  fetchVisitElcheAgenda,
-  fetchBenidormAgenda,
-  fetchTorreviejaAgenda,
   fetchTeatroPrincipalAgenda,
   fetchPlazaTorosAgenda,
   fetchMercadillosHoy,
@@ -380,13 +373,6 @@ export const getAdVariants = createServerFn({ method: "POST" })
       const fetcher: Record<string, () => Promise<RegionalEvent[] | null>> = {
         "teatro-principal": fetchTeatroPrincipalAgenda,
         "plaza-toros": fetchPlazaTorosAgenda,
-        "agenda-benidorm": fetchBenidormAgenda,
-        "agenda-elche": fetchVisitElcheAgenda,
-        "agenda-santa-pola": fetchSantaPolaAgenda,
-        "agenda-torrevieja": fetchTorreviejaAgenda,
-        "agenda-san-vicente": fetchSanVicenteAgenda,
-        "agenda-sant-joan": fetchSantJoanAgenda,
-        "agenda-mutxamel": fetchMutxamelAgenda,
       };
       const fn = fetcher[advertiser.id];
       const events = fn ? await fn() : null;
