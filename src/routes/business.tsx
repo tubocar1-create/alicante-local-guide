@@ -17,17 +17,12 @@ export const Route = createFileRoute("/business")({
 function BusinessLayout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { loading, isAuthenticated, isBusinessUser, user, signOut } = useBusinessAuth();
+  const { loading, isAuthenticated, signOut } = useBusinessAuth();
 
   // Rutas públicas dentro del módulo business (no requieren sesión)
   const isPublicRoute =
     location.pathname === "/business/login" ||
     location.pathname === "/business/onboarding";
-
-  useEffect(() => {
-    if (loading) return;
-    if (!isAuthenticated && !isPublicRoute) navigate({ to: "/business/login" });
-  }, [loading, isAuthenticated, isPublicRoute, navigate]);
 
   if (isPublicRoute) {
     return (
@@ -41,35 +36,6 @@ function BusinessLayout() {
     return (
       <div className="flex min-h-svh items-center justify-center bg-background">
         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) return null;
-
-  if (!isBusinessUser) {
-    return (
-      <div className="mx-auto max-w-md px-4 py-10">
-        <div className="rounded-2xl border border-border bg-card p-5 text-sm">
-          <h1 className="text-base font-semibold">Cuenta sin acceso</h1>
-          <p className="mt-2 text-muted-foreground">
-            Tu cuenta ({user?.email}) no tiene rol de negocio. Pide acceso al administrador o solicita registro como negocio.
-          </p>
-          <div className="mt-4 flex gap-2">
-            <Link
-              to="/business/onboarding"
-              className="rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
-            >
-              Solicitar acceso
-            </Link>
-            <button
-              onClick={async () => { await signOut(); navigate({ to: "/" }); }}
-              className="rounded-full border border-border px-3 py-1.5 text-xs"
-            >
-              Salir
-            </button>
-          </div>
-        </div>
       </div>
     );
   }
