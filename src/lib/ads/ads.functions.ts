@@ -7,6 +7,7 @@ import {
   fetchAlicanteAirQuality,
   fetchAlicanteAgenda,
   fetchAlicanteAirTraffic,
+  fetchRenfeAlicanteSchedule,
   type CulturalEvent,
 } from "./alicante-city.server";
 
@@ -345,6 +346,20 @@ export const getAdVariants = createServerFn({ method: "POST" })
         flightsCtx = `\n\nTRÁFICO AÉREO REAL ahora cerca de Alicante-Elche (OpenSky + adsbdb):\nTotal: ${t.total} (${t.airborne} en vuelo, ${t.onGround} en pista).\nVuelos detectados:\n${sample || "(ninguno)"}\n\nUsa SOLO estos datos. Prioriza vuelos que se aproximan (con ETA y origen).`;
       } else {
         flightsCtx = "\n\n(Sin datos de tráfico aéreo en este momento).";
+      }
+    }
+
+    let trainsCtx = "";
+    if (advertiser.kind === "trains") {
+      const trips = await fetchRenfeAlicanteSchedule();
+      if (trips && trips.length) {
+        const llegadas = trips.filter((t) => t.direction === "llegada").slice(0, 5);
+        const salidas = trips.filter((t) => t.direction === "salida").slice(0, 5);
+        const fmt = (t: typeof trips[number]) =>
+          `- ${t.line} ${t.trainCode} · ${t.direction === "llegada" ? `desde ${t.origin}` : `hacia ${t.destination}`} · ${t.scheduledTime} (en ${t.minutesFromNow} min)`;
+        trainsCtx = `\n\nHORARIO REAL Renfe Cercanías en Alicante-Terminal (próximas 3h, hora local):\nLLEGADAS:\n${llegadas.map(fmt).join("\n") || "(ninguna)"}\nSALIDAS:\n${salidas.map(fmt).join("\n") || "(ninguna)"}\n\nUsa SOLO estos datos. Cada variante = un tren concreto.`;
+      } else {
+        trainsCtx = "\n\n(Sin horarios de Cercanías ahora mismo).";
       }
     }
 
