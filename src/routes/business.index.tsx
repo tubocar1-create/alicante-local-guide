@@ -56,14 +56,14 @@ function BusinessDashboard() {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <Stat label="Visitas (7d)" value={s?.visits ?? 0} />
+        <Stat label="Visitas (7d)" value={s?.visit_viewed ?? 0} />
+        <Stat label="QR validados" value={s?.qr_validated ?? 0} />
+        <Stat label="QR emitidos" value={s?.qr_created ?? 0} />
         <Stat label="Reservas" value={s?.bookings ?? 0} />
-        <Stat label="QR creados" value={s?.qr_created ?? 0} />
-        <Stat label="Referrals" value={s?.referrals ?? 0} />
       </div>
 
       <div className="grid grid-cols-3 gap-2">
-        <Quick to="/business/qr" icon={QrCode} label="Nuevo QR" />
+        <Quick to="/business/qr" icon={QrCode} label="Validar QR" />
         <Quick to="/business/bookings" icon={Calendar} label="Reservas" />
         <Quick to="/business/referrals" icon={Users} label="Refer." />
       </div>

@@ -100,7 +100,7 @@ function BusinessLayout() {
 function BottomNav() {
   const items = [
     { to: "/business", icon: LayoutDashboard, label: "Inicio" },
-    { to: "/business/qr", icon: QrCode, label: "QR" },
+    { to: "/business/qr", icon: QrCode, label: "Validar" },
     { to: "/business/bookings", icon: Calendar, label: "Reservas" },
     { to: "/business/referrals", icon: Users, label: "Refer." },
     { to: "/business/metrics", icon: BarChart3, label: "Métricas" },
