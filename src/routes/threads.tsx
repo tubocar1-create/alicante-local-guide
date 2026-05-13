@@ -103,7 +103,7 @@ function ThreadsLayout() {
               >
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-sm font-medium">{t.business?.name ?? "Negocio"}</p>
-                  <StatusBadge status={t.booking?.status ?? t.status} />
+                  <StatusBadge status={effectiveStatus} />
                 </div>
                 <p className="text-[11px] text-muted-foreground">
                   {t.booking?.scheduled_at ||
