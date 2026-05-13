@@ -153,9 +153,18 @@ function bookingBadge(b: string | undefined, s: string) {
   return "bg-muted text-foreground";
 }
 
-function bookingLabel(b: string | undefined, s: string, hadProposal?: boolean) {
+function bookingLabel(
+  b: string | undefined,
+  s: string,
+  hadProposal?: boolean,
+  cancelledBy?: "business" | "user" | null,
+) {
   if (b === "confirmed") return hadProposal ? "confirmada con cambio de horario" : "confirmada";
-  if (b === "cancelled") return "cancelada";
+  if (b === "cancelled") {
+    if (cancelledBy === "business") return "cancelada por el negocio";
+    if (cancelledBy === "user") return "cancelada por el cliente";
+    return "cancelada";
+  }
   if (b === "completed") return "completada";
   if (s === "awaiting_business") return "nueva";
   if (s === "awaiting_user") return "esperando cliente";
