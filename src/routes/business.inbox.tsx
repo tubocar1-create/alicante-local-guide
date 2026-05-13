@@ -26,6 +26,8 @@ function InboxPage() {
     queryFn: () => fetchThreads({ data: { business_id: business!.id } }),
     enabled: !!business,
     refetchInterval: 15000,
+    retry: false,
+    throwOnError: false,
   });
 
   useEffect(() => {

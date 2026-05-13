@@ -8,42 +8,49 @@ export const listThreadsForBusiness = createServerFn({ method: "GET" })
     z.object({ business_id: z.string().uuid() }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
-    const { data: rows, error } = await supabase
-      .from("conversation_threads")
-      .select("id, booking_id, business_id, user_id, status, last_message_at, created_at, context_snapshot")
-      .eq("business_id", data.business_id)
-      .order("last_message_at", { ascending: false })
-      .limit(100);
-    if (error) throw new Error(error.message);
+    try {
+      const { supabase } = context;
+      const { data: rows, error } = await supabase
+        .from("conversation_threads")
+        .select("id, booking_id, business_id, user_id, status, last_message_at, created_at, context_snapshot")
+        .eq("business_id", data.business_id)
+        .order("last_message_at", { ascending: false })
+        .limit(100);
+      if (error) {
+        console.error("listThreadsForBusiness error", error);
+        return { threads: [] };
+      }
 
-    // Adjuntar booking + último mensaje
-    const ids = (rows ?? []).map((r) => r.id);
-    const bookingIds = (rows ?? []).map((r) => r.booking_id);
-    const [{ data: msgs }, { data: bks }] = await Promise.all([
-      supabase
-        .from("messages")
-        .select("id, thread_id, sender_type, message_type, template_key, text, payload, created_at")
-        .in("thread_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"])
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("bookings")
-        .select("id, customer_name, customer_phone, customer_email, scheduled_at, party_size, status, notes")
-        .in("id", bookingIds.length ? bookingIds : ["00000000-0000-0000-0000-000000000000"]),
-    ]);
-    const lastByThread = new Map<string, NonNullable<typeof msgs>[number]>();
-    (msgs ?? []).forEach((m) => {
-      if (!lastByThread.has(m.thread_id)) lastByThread.set(m.thread_id, m);
-    });
-    const bookingsById = new Map((bks ?? []).map((b) => [b.id, b]));
+      const ids = (rows ?? []).map((r) => r.id);
+      const bookingIds = (rows ?? []).map((r) => r.booking_id);
+      const [{ data: msgs }, { data: bks }] = await Promise.all([
+        supabase
+          .from("messages")
+          .select("id, thread_id, sender_type, message_type, template_key, text, payload, created_at")
+          .in("thread_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"])
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("bookings")
+          .select("id, customer_name, customer_phone, customer_email, scheduled_at, party_size, status, notes")
+          .in("id", bookingIds.length ? bookingIds : ["00000000-0000-0000-0000-000000000000"]),
+      ]);
+      const lastByThread = new Map<string, NonNullable<typeof msgs>[number]>();
+      (msgs ?? []).forEach((m) => {
+        if (!lastByThread.has(m.thread_id)) lastByThread.set(m.thread_id, m);
+      });
+      const bookingsById = new Map((bks ?? []).map((b) => [b.id, b]));
 
-    return {
-      threads: (rows ?? []).map((t) => ({
-        ...t,
-        last_message: lastByThread.get(t.id) ?? null,
-        booking: bookingsById.get(t.booking_id) ?? null,
-      })),
-    };
+      return {
+        threads: (rows ?? []).map((t) => ({
+          ...t,
+          last_message: lastByThread.get(t.id) ?? null,
+          booking: bookingsById.get(t.booking_id) ?? null,
+        })),
+      };
+    } catch (e) {
+      console.error("listThreadsForBusiness failed", e);
+      return { threads: [] };
+    }
   });
 
 export const getThread = createServerFn({ method: "GET" })
