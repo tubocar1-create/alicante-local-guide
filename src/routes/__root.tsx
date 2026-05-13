@@ -11,6 +11,7 @@ import {
 
 import appCss from "../styles.css?url";
 import "@/integrations/supabase/server-fn-fetch";
+import { AdBanner } from "@/components/AdBanner";
 
 function NotFoundComponent() {
   return (
@@ -129,6 +130,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
+      <AdBanner />
       <Toaster />
     </QueryClientProvider>
   );
