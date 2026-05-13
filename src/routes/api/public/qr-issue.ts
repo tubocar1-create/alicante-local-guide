@@ -12,6 +12,10 @@ const Body = z.object({
   code: z.string().min(4).max(64),
   expires_at: z.string().datetime().optional(),
   user_id: z.string().min(1).max(128).optional(),
+  user_name: z.string().min(1).max(120).optional(),
+  user_surname: z.string().max(120).nullable().optional(),
+  user_email: z.string().max(160).nullable().optional(),
+  user_phone: z.string().max(40).nullable().optional(),
 });
 
 function admin() {
