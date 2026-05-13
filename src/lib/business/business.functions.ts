@@ -1,7 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequestHeader } from "@tanstack/react-start/server";
+import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { Database } from "@/integrations/supabase/types";
 
 const slugRe = /^[a-z0-9][a-z0-9-]{1,60}$/;
 
@@ -19,40 +22,62 @@ const CreateSchema = z.object({
   lng: z.number().min(-180).max(180).optional(),
 });
 
-export const listMyBusinesses = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { supabase, userId } = context;
-    // Owner businesses
-    const ownedRes = await supabase
-      .from("businesses")
-      .select("*")
-      .eq("owner_id", userId);
-    if (ownedRes.error) throw new Error(ownedRes.error.message);
+type BusinessRow = Database["public"]["Tables"]["businesses"]["Row"];
 
-    // Member businesses (via business_users)
-    const memberRes = await supabase
-      .from("business_users")
-      .select("business_id")
-      .eq("user_id", userId);
-    const memberIds = (memberRes.data ?? []).map((r) => r.business_id);
-
-    let memberBiz: typeof ownedRes.data = [];
-    if (memberIds.length) {
-      const r = await supabase
-        .from("businesses")
-        .select("*")
-        .in("id", memberIds);
-      memberBiz = r.data ?? [];
+export const listMyBusinesses = createServerFn({ method: "GET" }).handler(
+  async (): Promise<{ businesses: BusinessRow[]; error?: string }> => {
+    const authHeader = getRequestHeader("authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return { businesses: [], error: "UNAUTHORIZED" };
     }
 
-    const map = new Map<string, (typeof ownedRes.data)[number]>();
-    for (const b of [...(ownedRes.data ?? []), ...memberBiz]) map.set(b.id, b);
-    const businesses = Array.from(map.values()).sort((a, b) =>
-      b.created_at.localeCompare(a.created_at),
-    );
-    return { businesses };
-  });
+    const SUPABASE_URL = process.env.SUPABASE_URL;
+    const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
+    if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+      return { businesses: [], error: "BACKEND_UNAVAILABLE" };
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+    const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      if (!userId) return { businesses: [], error: "UNAUTHORIZED" };
+
+      const ownedRes = await supabase
+        .from("businesses")
+        .select("*")
+        .eq("owner_id", userId);
+      if (ownedRes.error) return { businesses: [], error: ownedRes.error.message };
+
+      const memberRes = await supabase
+        .from("business_users")
+        .select("business_id")
+        .eq("user_id", userId);
+      const memberIds = (memberRes.data ?? []).map((r) => r.business_id);
+
+      let memberBiz: BusinessRow[] = [];
+      if (memberIds.length) {
+        const r = await supabase.from("businesses").select("*").in("id", memberIds);
+        memberBiz = r.data ?? [];
+      }
+
+      const map = new Map<string, BusinessRow>();
+      for (const b of [...(ownedRes.data ?? []), ...memberBiz]) map.set(b.id, b);
+      const businesses = Array.from(map.values()).sort((a, b) =>
+        b.created_at.localeCompare(a.created_at),
+      );
+      return { businesses };
+    } catch (e) {
+      console.error("listMyBusinesses failed", e);
+      return { businesses: [], error: "LIST_FAILED" };
+    }
+  },
+);
 
 export const createBusiness = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
