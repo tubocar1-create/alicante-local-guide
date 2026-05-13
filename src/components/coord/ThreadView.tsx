@@ -50,6 +50,7 @@ export function ThreadView({
       send({ data: { thread_id: threadId, actor_role: role, access_token: accessToken, ...v } }),
     onSuccess: () => {
       setText("");
+      toast.success("Respuesta enviada al negocio");
       qc.invalidateQueries({ queryKey: ["thread", threadId] });
     },
     onError: (e: Error) => toast.error(e.message),
