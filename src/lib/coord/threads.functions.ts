@@ -233,7 +233,7 @@ export const listThreadsForUser = createServerFn({ method: "GET" }).handler(asyn
         .in("id", bizIds.length ? bizIds : ["00000000-0000-0000-0000-000000000000"]),
       supabase
         .from("bookings")
-        .select("id, status, scheduled_at")
+        .select("id, status, scheduled_at, customer_name")
         .in("id", bookingIds.length ? bookingIds : ["00000000-0000-0000-0000-000000000000"]),
     ]);
     const map = new Map((bizs ?? []).map((b) => [b.id, b]));
@@ -268,7 +268,7 @@ export const listGuestBookingStatuses = createServerFn({ method: "POST" })
       const ids = data.items.map((i) => i.booking_id);
       const { data: bookings } = await admin
         .from("bookings")
-        .select("id, status, scheduled_at, business_id, metadata")
+        .select("id, status, scheduled_at, business_id, metadata, customer_name")
         .in("id", ids);
 
       const valid = (bookings ?? []).filter((b) => {
@@ -294,6 +294,7 @@ export const listGuestBookingStatuses = createServerFn({ method: "POST" })
           booking_id: b.id,
           booking_status: b.status,
           scheduled_at: b.scheduled_at,
+          customer_name: b.customer_name ?? null,
           business_name: bizMap.get(b.business_id)?.name ?? null,
           thread: threadByBooking.get(b.id) ?? null,
         })),

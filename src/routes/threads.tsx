@@ -94,6 +94,7 @@ function ThreadsLayout() {
         {threads.map((t) => {
           const effectiveStatus = t.booking?.status ?? t.status;
           const cls = cardCls(effectiveStatus);
+          const customerName = t.booking?.customer_name;
           return (
             <li key={t.id}>
               <Link
@@ -105,6 +106,11 @@ function ThreadsLayout() {
                   <p className="text-sm font-medium">{t.business?.name ?? "Negocio"}</p>
                   <StatusBadge status={effectiveStatus} />
                 </div>
+                {customerName && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Reserva hecha por {customerName}
+                  </p>
+                )}
                 <p className="text-[11px] text-muted-foreground">
                   {t.booking?.scheduled_at ||
                   (t.context_snapshot as Record<string, unknown> | null)?.scheduled_at
@@ -121,6 +127,7 @@ function ThreadsLayout() {
           const effectiveStatus =
             remote?.booking_status ?? remote?.thread?.status ?? t.status ?? "pending";
           const cls = cardCls(effectiveStatus);
+          const customerName = remote?.customer_name;
           return (
             <li key={`local-${t.id}`}>
               <Link
@@ -135,6 +142,11 @@ function ThreadsLayout() {
                   </p>
                   <StatusBadge status={effectiveStatus} />
                 </div>
+                {customerName && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Reserva hecha por {customerName}
+                  </p>
+                )}
                 <p className="text-[11px] text-muted-foreground">
                   {remote?.scheduled_at || t.scheduled_at
                     ? `Para: ${new Date(remote?.scheduled_at ?? t.scheduled_at!).toLocaleString()}`
