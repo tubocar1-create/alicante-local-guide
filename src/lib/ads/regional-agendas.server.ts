@@ -135,41 +135,55 @@ async function scrapeJsonLdAgenda(url: string): Promise<RegionalEvent[] | null> 
 
 // ─── Sources ──────────────────────────────────────────────────────────
 
+// Cartel oficial Teatro Principal Alicante 2026.
+// `end` opcional para funciones de larga estancia (ej. Mamma Mia!).
+const TEATRO_PRINCIPAL_2026: Array<{ date: string; end?: string; title: string }> = [
+  { date: "2026-01-22", end: "2026-02-22", title: "MAMMA MIA!" },
+  { date: "2026-02-07", title: "Kids & Stories: The brave little tailor" },
+  { date: "2026-02-25", title: "The Best of Soul" },
+  { date: "2026-02-26", title: "La Bohème" },
+  { date: "2026-02-27", title: "Yo sólo quiero irme a Francia" },
+  { date: "2026-02-28", title: "Kids & Stories: Garden Party" },
+  { date: "2026-03-01", title: "Aryel Altamar: Hipnosis de Comedia" },
+  { date: "2026-03-07", title: "The pied piper of Hamelin" },
+  { date: "2026-03-07", title: "Magia desde el futuro" },
+  { date: "2026-03-08", title: "Dos payasos con mucha magia" },
+  { date: "2026-03-14", title: "20 pasos, 20 huellas" },
+  { date: "2026-03-15", title: "American Buffalo" },
+  { date: "2026-03-17", title: "El Consorcio" },
+  { date: "2026-04-25", title: "Mejor no decirlo" },
+  { date: "2026-04-30", title: "La Quijá" },
+  { date: "2026-05-02", title: "El raro de los 90" },
+  { date: "2026-05-03", title: "Día Internacional del Jazz Alicante 2026" },
+  { date: "2026-05-07", title: "Paco Candela: Gira 30" },
+  { date: "2026-05-08", title: "La mujer rota" },
+  { date: "2026-06-04", title: "Tubular Bells by Opus One" },
+  { date: "2026-07-25", title: "Stars Gala" },
+];
+
 export async function fetchTeatroPrincipalAgenda(): Promise<RegionalEvent[] | null> {
-  const fromJsonLd = await scrapeJsonLdAgenda(
-    "https://www.teatroprincipaldealicante.com/programacion-actual/",
-  );
-  if (fromJsonLd) return fromJsonLd;
-  const html = await fetchHtml(
-    "https://www.teatroprincipaldealicante.com/programacion-actual/",
-  );
-  if (!html) return null;
-  // Cada show: bloque con día + mes + título + (subtítulo)
-  // Patrón visto: "17-18 viernessábadoabril\n### Ernesto Sevilla\n### Yo literal"
-  const months = "enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre";
-  const re = new RegExp(
-    `(\\d{1,2}(?:[\\-–]\\d{1,2})?)[^<]*?(${months})[\\s\\S]{0,400}?<h3[^>]*>\\s*([^<]{3,140})\\s*</h3>(?:[\\s\\S]{0,200}?<h4[^>]*>\\s*([^<]{3,140})\\s*</h4>)?`,
-    "gi",
-  );
-  const out: RegionalEvent[] = [];
-  const seen = new Set<string>();
-  for (const m of [...html.matchAll(re)]) {
-    const day = m[1];
-    const month = m[2];
-    const title = clean(m[3]);
-    const sub = clean(m[4] ?? "");
-    if (!title) continue;
-    const k = title.toLowerCase();
-    if (seen.has(k)) continue;
-    seen.add(k);
-    out.push({
-      title,
-      when: `${day} ${month}`,
-      excerpt: sub || "Teatro Principal de Alicante.",
-    });
-    if (out.length >= 10) break;
+  const today = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Madrid",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+  // Una función sigue vigente mientras `end ?? date` >= hoy.
+  const upcoming = TEATRO_PRINCIPAL_2026.filter((c) => (c.end ?? c.date) >= today);
+  if (upcoming.length === 0) return null;
+  const shuffled = [...upcoming];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
-  return out.length ? out : null;
+  return shuffled.slice(0, 8).map((c) => ({
+    title: c.title,
+    when: fmtDateRange(
+      `${c.date}T20:00:00+02:00`,
+      c.end ? `${c.end}T20:00:00+02:00` : undefined,
+    ),
+    excerpt: "Función en el Teatro Principal de Alicante.",
+  }));
 }
 
 // Cartel oficial Plaza de Toros Alicante 2026 (cerrado por el promotor).
