@@ -11,6 +11,19 @@ import {
   fetchAenaDisruptions,
   type CulturalEvent,
 } from "./alicante-city.server";
+import {
+  fetchSanVicenteAgenda,
+  fetchSantJoanAgenda,
+  fetchMutxamelAgenda,
+  fetchSantaPolaAgenda,
+  fetchVisitElcheAgenda,
+  fetchBenidormAgenda,
+  fetchTorreviejaAgenda,
+  fetchTeatroPrincipalAgenda,
+  fetchPlazaTorosAgenda,
+  fetchMercadillosHoy,
+  type RegionalEvent,
+} from "./regional-agendas.server";
 
 export type AdCopy = {
   headline: string; // 4-7 palabras
@@ -348,6 +361,47 @@ export const getAdVariants = createServerFn({ method: "POST" })
       flightsCtx = `\n\nINCIDENCIAS OFICIALES Aena hoy en Alicante-Elche (ALC), salidas y llegadas:\n${lines}\n\nGenera UNA variante por incidencia. Usa SOLO estos datos.`;
     }
 
+    // Mercadillos: solo si HOY hay alguno activo. Si no, suspende.
+    let mercadillosCtx = "";
+    if (advertiser.kind === "mercadillos") {
+      const today = await fetchMercadillosHoy();
+      if (!today || today.length === 0) {
+        return { ...baseResp, variants: [] };
+      }
+      const lines = today
+        .map((m, i) => `${i + 1}. "${m.title}" — ${m.when} — ${m.excerpt}`)
+        .join("\n");
+      mercadillosCtx = `\n\nMERCADILLOS DEL AYTO. DE ALICANTE ACTIVOS HOY:\n${lines}\n\nGenera UNA variante por mercadillo. Usa el nombre y horario REALES.`;
+    }
+
+    // Agendas regionales: scraping según advertiser.id
+    let regionalCtx = "";
+    if (advertiser.kind === "regional_agenda") {
+      const fetcher: Record<string, () => Promise<RegionalEvent[] | null>> = {
+        "teatro-principal": fetchTeatroPrincipalAgenda,
+        "plaza-toros": fetchPlazaTorosAgenda,
+        "agenda-benidorm": fetchBenidormAgenda,
+        "agenda-elche": fetchVisitElcheAgenda,
+        "agenda-santa-pola": fetchSantaPolaAgenda,
+        "agenda-torrevieja": fetchTorreviejaAgenda,
+        "agenda-san-vicente": fetchSanVicenteAgenda,
+        "agenda-sant-joan": fetchSantJoanAgenda,
+        "agenda-mutxamel": fetchMutxamelAgenda,
+      };
+      const fn = fetcher[advertiser.id];
+      const events = fn ? await fn() : null;
+      if (!events || events.length === 0) {
+        return { ...baseResp, variants: [] };
+      }
+      const pick = events.slice(0, Math.max(count, 6));
+      const lines = pick
+        .map(
+          (e, i) =>
+            `${i + 1}. "${e.title}"${e.when ? ` (${e.when})` : ""} — ${e.excerpt.slice(0, 160)}`,
+        )
+        .join("\n");
+      regionalCtx = `\n\nEVENTOS REALES de "${advertiser.name}" (fuente: ${advertiser.ctaUrl}):\n${lines}\n\nGenera UNA variante por evento. Usa SOLO la información del listado, no inventes nada.`;
+    }
 
     let trainsCtx = "";
     if (advertiser.kind === "trains") {
@@ -397,6 +451,12 @@ export const getAdVariants = createServerFn({ method: "POST" })
         break;
       case "trains":
         userPrompt = `Genera ${count} variantes de tarjeta sobre TRENES de Cercanías en Alicante-Terminal. MÁXIMA INFORMACIÓN, MÍNIMO COMENTARIO. UNA variante por tren del listado (mezcla llegadas y salidas). Body formato compacto: "[Llegada/Salida] [Línea] · [desde/hacia X] · [HH:MM] (en N min)" (máx 90 chars). headline: línea + código (ej "C-1 Salida 32802") máx 4 palabras. cta "Ver horarios". Usa SOLO los datos; no inventes retrasos ni andenes.${trainsCtx}`;
+        break;
+      case "mercadillos":
+        userPrompt = `Genera ${count} variantes sobre MERCADILLOS de Alicante activos HOY. UNA variante por mercadillo del listado. headline (máx 4 palabras, ej "Hoy mercadillo Babel"), body (1 frase con horario y ubicación, máx 90 caracteres), cta "Ver mercados". Usa SOLO los datos; no inventes.${mercadillosCtx}`;
+        break;
+      case "regional_agenda":
+        userPrompt = `Genera ${count} variantes de tarjeta sobre eventos de "${advertiser.name}". UNA variante por evento del listado. headline (máx 5 palabras, inspirada en el título real), body (1 frase con la fecha y el qué, máx 90 caracteres), cta "Ver agenda". NO inventes nada que no esté en el listado.${regionalCtx}`;
         break;
       default:
         userPrompt = wiki
