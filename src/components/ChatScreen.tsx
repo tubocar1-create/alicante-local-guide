@@ -304,7 +304,17 @@ export function ChatScreen() {
 
       {/* Compact header (always visible) */}
       <header className="relative flex items-center justify-between gap-1.5 border-b border-border/60 bg-background/40 px-4 py-3 backdrop-blur">
-        <ProfileButton />
+        <div className="flex items-center gap-2">
+          <ProfileButton />
+          <Link
+            to="/threads"
+            aria-label="Mis reservas"
+            className="flex h-8 items-center gap-1 rounded-full border border-border bg-card px-2.5 text-[11px] font-semibold text-foreground shadow-sm active:scale-95"
+          >
+            <CalendarCheck className="h-3.5 w-3.5 text-primary" />
+            <span>Mis reservas</span>
+          </Link>
+        </div>
         <div className="flex-1 flex justify-center">
           <PointsHud compact />
         </div>
