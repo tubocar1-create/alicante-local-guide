@@ -463,6 +463,9 @@ export const getAdVariants = createServerFn({ method: "POST" })
       case "trains":
         userPrompt = `Genera ${count} variantes de tarjeta sobre TRENES de Cercanías en Alicante-Terminal. MÁXIMA INFORMACIÓN, MÍNIMO COMENTARIO. UNA variante por tren del listado (mezcla llegadas y salidas). Body formato compacto: "[Llegada/Salida] [Línea] · [desde/hacia X] · [HH:MM]" (máx 90 chars, hora exacta del listado). headline: línea + código (ej "C-1 Salida 32802") máx 4 palabras. cta "Ver horarios". NUNCA escribas "en N min", "en X minutos" ni cuentas atrás: el copy se cachea y los minutos quedan obsoletos. Usa SOLO los datos; no inventes retrasos ni andenes.${trainsCtx}`;
         break;
+      case "buses":
+        userPrompt = `Genera ${count} variantes de tarjeta sobre BUSES URBANOS en paradas céntricas de Alicante (datos AliBus en vivo). UNA variante por llegada del listado. headline: "L[línea] en [parada]" (ej "L02 en Luceros") máx 4 palabras. body: "Próximo bus L[línea]${"\u00A0"}→ [destino] desde parada [parada], en [N] min" (máx 95 chars). cta "Ver en mapa". Usa SOLO los datos; no inventes destinos ni minutos. Mantén el "en N min" tal cual aparece (los buses cambian cada pocos minutos y el banner se regenera con frecuencia).${busesCtx}`;
+        break;
       case "mercadillos":
         userPrompt = `Genera ${count} variantes sobre MERCADILLOS de Alicante activos HOY. UNA variante por mercadillo del listado. headline (máx 4 palabras, ej "Hoy mercadillo Babel"), body (1 frase con horario y ubicación, máx 90 caracteres), cta "Ver mercados". Usa SOLO los datos; no inventes.${mercadillosCtx}`;
         break;
