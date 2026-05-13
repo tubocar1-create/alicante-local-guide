@@ -33,12 +33,13 @@ export const listIssuedQrs = createServerFn({ method: "GET" })
       active: boolean;
       payload: IssuerPayload | null;
     };
+    type OpeningHours = Record<string, unknown> | null;
     type Business = {
       id: string;
       name: string;
       phone: string | null;
       address: string | null;
-      opening_hours: unknown;
+      opening_hours: OpeningHours;
     } | null;
     const empty = (error?: string) => ({
       qrs: [] as Row[],
