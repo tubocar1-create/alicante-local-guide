@@ -7,6 +7,7 @@ const LOCAL_BOOKINGS_KEY = "local_booking_threads_v1";
 
 type LocalBookingThread = {
   id: string;
+  booking_id?: string;
   business_name?: string;
   status?: string;
   scheduled_at?: string;
@@ -45,7 +46,9 @@ function ThreadsLayout() {
   });
 
   const localThreads = isList ? readLocalBookings() : [];
-  const guestItems = localThreads.filter((t) => t.access_token).map((t) => ({ booking_id: t.id, token: t.access_token! }));
+  const guestItems = localThreads
+    .filter((t) => t.access_token)
+    .map((t) => ({ booking_id: t.booking_id ?? t.id, token: t.access_token! }));
 
   const { data: guestData } = useQuery({
     queryKey: ["guest-statuses", guestItems.map((i) => i.booking_id).sort().join(",")],
@@ -63,7 +66,7 @@ function ThreadsLayout() {
   const threads = data?.threads ?? [];
   const guestStatuses = new Map((guestData?.items ?? []).map((i) => [i.booking_id, i]));
   const serverBookingIds = new Set(threads.map((t) => t.booking_id));
-  const dedupedLocal = localThreads.filter((t) => !serverBookingIds.has(t.id));
+  const dedupedLocal = localThreads.filter((t) => !serverBookingIds.has(t.booking_id ?? t.id));
 
   return (
     <div className="mx-auto min-h-svh max-w-md bg-background px-4 py-6">
@@ -86,17 +89,20 @@ function ThreadsLayout() {
               >
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-sm font-medium">{t.business?.name ?? "Negocio"}</p>
-                  <StatusBadge status={t.status} />
+                  <StatusBadge status={t.booking?.status ?? t.status} />
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  Última actividad: {new Date(t.last_message_at).toLocaleString()}
+                  {(t.booking?.scheduled_at || (t.context_snapshot as Record<string, unknown> | null)?.scheduled_at)
+                    ? `Para: ${new Date(String(t.booking?.scheduled_at ?? (t.context_snapshot as Record<string, unknown>).scheduled_at)).toLocaleString()}`
+                    : `Última actividad: ${new Date(t.last_message_at).toLocaleString()}`}
                 </p>
               </Link>
             </li>
           );
         })}
         {dedupedLocal.map((t) => {
-          const remote = guestStatuses.get(t.id);
+          const bookingId = t.booking_id ?? t.id;
+          const remote = guestStatuses.get(bookingId);
           const effectiveStatus = remote?.booking_status ?? remote?.thread?.status ?? t.status ?? "pending";
           const cls = cardCls(effectiveStatus);
           return (
