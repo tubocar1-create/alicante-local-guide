@@ -223,3 +223,56 @@ export const listThreadsForUser = createServerFn({ method: "GET" }).handler(asyn
     return { threads: [] };
   }
 });
+
+const GuestStatusesSchema = z.object({
+  items: z
+    .array(z.object({ booking_id: uuid, token: z.string().min(8).max(120) }))
+    .min(1)
+    .max(50),
+});
+
+export const listGuestBookingStatuses = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => GuestStatusesSchema.parse(d))
+  .handler(async ({ data }) => {
+    try {
+      const admin = serviceClient();
+      if (!admin) return { items: [] };
+
+      const ids = data.items.map((i) => i.booking_id);
+      const { data: bookings } = await admin
+        .from("bookings")
+        .select("id, status, scheduled_at, business_id, metadata")
+        .in("id", ids);
+
+      const valid = (bookings ?? []).filter((b) => {
+        const tok = data.items.find((i) => i.booking_id === b.id)?.token;
+        return tokenMatches(b as { metadata: unknown }, tok);
+      });
+
+      const bizIds = [...new Set(valid.map((b) => b.business_id))];
+      const { data: bizs } = await admin
+        .from("businesses")
+        .select("id, name")
+        .in("id", bizIds.length ? bizIds : ["00000000-0000-0000-0000-000000000000"]);
+      const bizMap = new Map((bizs ?? []).map((b) => [b.id, b]));
+
+      const { data: threads } = await admin
+        .from("conversation_threads")
+        .select("id, booking_id, status, last_message_at")
+        .in("booking_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]);
+      const threadByBooking = new Map((threads ?? []).map((t) => [t.booking_id, t]));
+
+      return {
+        items: valid.map((b) => ({
+          booking_id: b.id,
+          booking_status: b.status,
+          scheduled_at: b.scheduled_at,
+          business_name: bizMap.get(b.business_id)?.name ?? null,
+          thread: threadByBooking.get(b.id) ?? null,
+        })),
+      };
+    } catch (e) {
+      console.error("listGuestBookingStatuses failed", e);
+      return { items: [] };
+    }
+  });
