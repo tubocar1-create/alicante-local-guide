@@ -86,6 +86,20 @@ export default function ReferralDialog({ placeId, placeName, autoCelebrate, onCl
       return;
     }
 
+    // Best-effort: register the QR in the backend so it shows up on the
+    // business dashboard. Never block the UX if it fails.
+    fetch("/api/public/qr-issue", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        place_id: placeId,
+        place_name: placeName,
+        code: newCode,
+        expires_at: expires.toISOString(),
+        user_id: user.id,
+      }),
+    }).catch(() => {});
+
     setCode(newCode);
     setStep("qr");
     setGenerating(false);
