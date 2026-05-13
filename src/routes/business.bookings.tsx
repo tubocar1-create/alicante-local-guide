@@ -20,6 +20,13 @@ const STATUSES = [
   "no_show",
 ] as const;
 
+function bookingCardClass(status: string) {
+  if (status === "confirmed") return "rounded-2xl border-2 border-emerald-500/60 bg-emerald-50 p-3 dark:bg-emerald-950/30";
+  if (status === "cancelled") return "rounded-2xl border border-rose-300/60 bg-rose-50/60 p-3 opacity-80 dark:bg-rose-950/20";
+  if (status === "completed") return "rounded-2xl border border-border bg-muted/50 p-3";
+  return "rounded-2xl border border-border bg-card p-3";
+}
+
 function BookingsPage() {
   const fetchBiz = useServerFn(listMyBusinesses);
   const fetchBookings = useServerFn(listBookings);
@@ -55,7 +62,7 @@ function BookingsPage() {
       <h1 className="text-xl font-semibold">Reservas</h1>
       <ul className="space-y-2">
         {(data?.bookings ?? []).map((b) => (
-          <li key={b.id} className="rounded-2xl border border-border bg-card p-3">
+          <li key={b.id} className={bookingCardClass(b.status)}>
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="text-sm font-medium">
