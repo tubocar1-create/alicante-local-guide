@@ -286,6 +286,42 @@ export const getAdVariants = createServerFn({ method: "POST" })
       }
     }
 
+    let airCtx = "";
+    if (advertiser.kind === "air") {
+      const aq = await fetchAlicanteAirQuality();
+      if (aq && aq.length) {
+        const lines = aq
+          .map((s) => `- ${s.address}: estado ${s.status}`)
+          .join("\n");
+        const allGreen = aq.every((s) => s.status === "verde");
+        airCtx = `\n\nDATOS REALES Ayto. Alicante (estaciones medioambientales, ahora):\n${lines}\n\nCódigo de color: verde=bueno, amarillo=aceptable, naranja=regular, rojo=malo, morado=muy malo. ${
+          allGreen
+            ? "Todas en verde: aire limpio."
+            : "Hay diferencias entre estaciones, menciónalo."
+        } Usa los datos REALES, no inventes.`;
+      } else {
+        airCtx = "\n\n(Sin datos de calidad del aire ahora mismo).";
+      }
+    }
+
+    let agenda: CulturalEvent[] | null = null;
+    let agendaCtx = "";
+    if (advertiser.kind === "agenda") {
+      agenda = await fetchAlicanteAgenda();
+      if (agenda && agenda.length) {
+        const pick = agenda.slice(0, Math.max(count, 6));
+        const lines = pick
+          .map(
+            (e, i) =>
+              `${i + 1}. "${e.title}"${e.when ? ` (${e.when})` : ""} — ${e.excerpt.slice(0, 160)}`,
+          )
+          .join("\n");
+        agendaCtx = `\n\nEVENTOS CULTURALES REALES (agenda oficial alicante.es, ahora):\n${lines}\n\nGenera UNA variante por evento usando SOLO la información del evento (no inventes nada). Si una fecha no está, omítela.`;
+      } else {
+        agendaCtx = "\n\n(Sin agenda cultural disponible ahora).";
+      }
+    }
+
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       return {
