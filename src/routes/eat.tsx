@@ -45,6 +45,7 @@ function EatPage() {
       filters={EAT_FILTERS}
       initial={["restaurant", "cafe", "bar"]}
       toOverpass={eatFiltersToOverpass}
+      featured={[TUMBARANCHO]}
       externalSearch={[
         {
           label: "TripAdvisor",
