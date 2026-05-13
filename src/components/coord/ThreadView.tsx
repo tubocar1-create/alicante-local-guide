@@ -10,7 +10,15 @@ import { sendMessage, markThreadRead } from "@/lib/coord/messages.functions";
 import { suggestionsFor, TEMPLATES } from "@/lib/coord/templates";
 import { cn } from "@/lib/utils";
 
-export function ThreadView({ threadId, role }: { threadId: string; role: "user" | "business" }) {
+export function ThreadView({
+  threadId,
+  role,
+  accessToken,
+}: {
+  threadId: string;
+  role: "user" | "business";
+  accessToken?: string;
+}) {
   const fetchThread = useServerFn(getThread);
   const send = useServerFn(sendMessage);
   const markRead = useServerFn(markThreadRead);
@@ -19,7 +27,7 @@ export function ThreadView({ threadId, role }: { threadId: string; role: "user" 
 
   const { data, isLoading } = useQuery({
     queryKey: ["thread", threadId],
-    queryFn: () => fetchThread({ data: { thread_id: threadId } }),
+    queryFn: () => fetchThread({ data: { thread_id: threadId, actor_role: role, access_token: accessToken } }),
   });
 
   // Realtime
@@ -39,7 +47,7 @@ export function ThreadView({ threadId, role }: { threadId: string; role: "user" 
 
   const m = useMutation({
     mutationFn: (v: { template_key?: string; text?: string; payload?: Record<string, unknown> }) =>
-      send({ data: { thread_id: threadId, ...v } }),
+      send({ data: { thread_id: threadId, actor_role: role, access_token: accessToken, ...v } }),
     onSuccess: () => {
       setText("");
       qc.invalidateQueries({ queryKey: ["thread", threadId] });

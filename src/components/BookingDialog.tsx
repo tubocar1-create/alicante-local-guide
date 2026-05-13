@@ -75,6 +75,7 @@ export default function BookingDialog({ listing, onClose }: Props) {
       saveLocalBooking({
         id: json.thread_id || json.id,
         booking_id: json.id,
+        access_token: json.access_token,
         business_name: listing.name,
         status: json.status || "pending",
         scheduled_at: new Date(when).toISOString(),

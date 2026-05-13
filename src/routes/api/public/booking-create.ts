@@ -49,31 +49,32 @@ async function resolveBusinessId(
   if (parsed.business_id) return parsed.business_id;
   const p = parsed.place!;
   const slug = `osm-${p.osm_id}`.toLowerCase().replace(/[^a-z0-9-]/g, "-");
+  const name = p.name.trim();
+
+  // Reuse the visible/open business card first, even if stored with spacing differences.
+  const { data: openByName } = await a
+    .from("businesses")
+    .select("id")
+    .ilike("name", `%${name}%`)
+    .is("owner_id", null)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (openByName?.id) return openByName.id;
+
   const { data: existing } = await a
     .from("businesses")
     .select("id")
     .eq("slug", slug)
     .maybeSingle();
   if (existing?.id) return existing.id;
-  // Reuse the open business card with the same name first, because the
-  // current partner dashboard lists open businesses while private login is pending.
-  const { data: openByName } = await a
-    .from("businesses")
-    .select("id")
-    .ilike("name", p.name.trim())
-    .is("owner_id", null)
-    .limit(1)
-    .maybeSingle();
-  if (openByName?.id) return openByName.id;
 
-  // Otherwise reuse an existing claimed business with the same name
-  // so bookings on OSM listings reach the real owner instead of creating a
-  // duplicate shadow row.
   const { data: byName } = await a
     .from("businesses")
     .select("id")
-    .ilike("name", p.name.trim())
+    .ilike("name", `%${name}%`)
     .not("owner_id", "is", null)
+    .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
   if (byName?.id) return byName.id;
@@ -123,6 +124,7 @@ export const Route = createFileRoute("/api/public/booking-create")({
           );
         }
 
+        const accessToken = crypto.randomUUID();
         const { data, error } = await a
           .from("bookings")
           .insert({
@@ -135,6 +137,7 @@ export const Route = createFileRoute("/api/public/booking-create")({
             customer_phone: parsed.customer_phone ?? null,
             customer_email: parsed.customer_email ?? null,
             notes: parsed.notes ?? null,
+            metadata: { public_access_token: accessToken } as never,
           })
           .select("id, status")
           .single();
@@ -160,6 +163,7 @@ export const Route = createFileRoute("/api/public/booking-create")({
           id: data.id,
           status: data.status,
           thread_id: thread?.id ?? null,
+          access_token: accessToken,
         });
       },
     },

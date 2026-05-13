@@ -11,6 +11,7 @@ type LocalBookingThread = {
   status?: string;
   scheduled_at?: string;
   created_at?: string;
+  access_token?: string;
 };
 
 function readLocalBookings(): LocalBookingThread[] {
@@ -70,12 +71,19 @@ function ThreadsLayout() {
           </li>
         ))}
         {localThreads.map((t) => (
-          <li key={`local-${t.id}`} className="rounded-2xl border border-border bg-card p-3">
-            <p className="text-sm font-medium">{t.business_name ?? "Negocio"}</p>
-            <p className="text-xs text-muted-foreground">{t.status ?? "pending"}</p>
-            <p className="text-[11px] text-muted-foreground">
-              {new Date(t.scheduled_at ?? t.created_at ?? Date.now()).toLocaleString()}
-            </p>
+          <li key={`local-${t.id}`}>
+            <Link
+              to="/threads/$id"
+              params={{ id: t.id }}
+              search={{ token: t.access_token }}
+              className="block rounded-2xl border border-border bg-card p-3"
+            >
+              <p className="text-sm font-medium">{t.business_name ?? "Negocio"}</p>
+              <p className="text-xs text-muted-foreground">{t.status ?? "pending"}</p>
+              <p className="text-[11px] text-muted-foreground">
+                {new Date(t.scheduled_at ?? t.created_at ?? Date.now()).toLocaleString()}
+              </p>
+            </Link>
           </li>
         ))}
         {threads.length === 0 && localThreads.length === 0 && (

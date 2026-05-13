@@ -1,21 +1,53 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequestHeader } from "@tanstack/react-start/server";
+import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { TEMPLATES } from "./templates";
-import { trackEvent } from "@/lib/business/track";
+import type { Database } from "@/integrations/supabase/types";
 
 const SendSchema = z.object({
   thread_id: z.string().uuid(),
   template_key: z.string().min(1).max(80).optional(),
   text: z.string().min(1).max(280).optional(),
   payload: z.record(z.string(), z.unknown()).optional(),
+  actor_role: z.enum(["user", "business"]).optional(),
+  access_token: z.string().min(12).max(120).optional(),
 });
 
+function serviceClient() {
+  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  return createClient<Database>(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
+async function currentUserId() {
+  const authHeader = getRequestHeader("authorization");
+  if (!authHeader?.startsWith("Bearer ")) return null;
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_PUBLISHABLE_KEY;
+  if (!url || !key) return null;
+  const supabase = createClient<Database>(url, key, {
+    global: { headers: { Authorization: authHeader } },
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { data } = await supabase.auth.getUser();
+  return data.user?.id ?? null;
+}
+
+function tokenMatches(booking: { metadata: unknown } | null, accessToken?: string) {
+  if (!booking || !accessToken || typeof booking.metadata !== "object" || booking.metadata === null) return false;
+  return (booking.metadata as Record<string, unknown>).public_access_token === accessToken;
+}
+
 export const sendMessage = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => SendSchema.parse(d))
-  .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
+  .handler(async ({ data }) => {
+    const supabase = serviceClient();
+    if (!supabase) throw new Error("Backend no disponible");
+    const userId = await currentUserId();
 
     const { data: thread, error: tErr } = await supabase
       .from("conversation_threads")
@@ -27,17 +59,18 @@ export const sendMessage = createServerFn({ method: "POST" })
       throw new Error("Hilo cerrado");
     }
 
-    // Determinar rol
-    const isOwner = thread.user_id === userId;
-    let isBusiness = false;
-    if (!isOwner) {
-      const { data: ok } = await supabase.rpc("is_business_member", {
-        _user_id: userId,
-        _business_id: thread.business_id,
-      });
-      isBusiness = !!ok;
-    }
-    if (!isOwner && !isBusiness) throw new Error("No autorizado");
+    const [{ data: booking }, { data: business }, { data: ok }] = await Promise.all([
+      supabase.from("bookings").select("metadata").eq("id", thread.booking_id).single(),
+      supabase.from("businesses").select("owner_id").eq("id", thread.business_id).single(),
+      userId
+        ? supabase.rpc("is_business_member", { _user_id: userId, _business_id: thread.business_id })
+        : Promise.resolve({ data: false }),
+    ]);
+
+    const isOwner = !!userId && thread.user_id === userId;
+    const isPublicUser = data.actor_role === "user" && tokenMatches(booking, data.access_token);
+    const isBusiness = !!ok || (data.actor_role === "business" && business?.owner_id === null);
+    if (!isOwner && !isPublicUser && !isBusiness) throw new Error("No autorizado");
 
     let messageType: "quick_reply" | "free_text" | "slot_proposal" = "free_text";
     let nextThreadStatus: string | undefined;
@@ -47,7 +80,7 @@ export const sendMessage = createServerFn({ method: "POST" })
     if (data.template_key) {
       const tpl = TEMPLATES[data.template_key];
       if (!tpl) throw new Error("Template inválido");
-      if ((tpl.role === "user") !== isOwner) throw new Error("Rol no válido para template");
+      if ((tpl.role === "user") !== (isOwner || isPublicUser)) throw new Error("Rol no válido para template");
       if (tpl.payloadSchema) tpl.payloadSchema.parse(data.payload ?? {});
       messageType = data.template_key.endsWith("propose_slot") ? "slot_proposal" : "quick_reply";
       nextThreadStatus = tpl.nextThreadStatus;
@@ -59,7 +92,7 @@ export const sendMessage = createServerFn({ method: "POST" })
       .from("messages")
       .insert({
         thread_id: thread.id,
-        sender_type: isOwner ? "user" : "business",
+        sender_type: isOwner || isPublicUser ? "user" : "business",
         sender_user_id: userId,
         message_type: messageType,
         template_key: data.template_key ?? null,
@@ -96,21 +129,22 @@ export const sendMessage = createServerFn({ method: "POST" })
         .eq("id", thread.booking_id);
     }
 
-    await trackEvent(supabase, {
+    await supabase.from("interaction_events").insert({
       type: `coord_${data.template_key ?? "free_text"}`,
       business_id: thread.business_id,
       user_id: userId,
-      metadata: { thread_id: thread.id },
+      source: "coord",
+      metadata: { thread_id: thread.id } as never,
     });
 
     return { message: msg };
   });
 
 export const markThreadRead = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ thread_id: z.string().uuid() }).parse(d))
-  .handler(async ({ data, context }) => {
-    const { supabase } = context;
+  .handler(async ({ data }) => {
+    const supabase = serviceClient();
+    if (!supabase) return { ok: false };
     await supabase
       .from("messages")
       .update({ read_at: new Date().toISOString() })

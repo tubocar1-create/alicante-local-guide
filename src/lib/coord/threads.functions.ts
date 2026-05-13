@@ -2,21 +2,105 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
 
+const uuid = z.string().uuid();
+
+const BusinessThreadsSchema = z
+  .object({
+    business_id: uuid.optional(),
+    business_ids: z.array(uuid).min(1).max(25).optional(),
+  })
+  .refine((d) => d.business_id || d.business_ids?.length, {
+    message: "business_id requerido",
+  });
+
+const ThreadSchema = z.object({
+  thread_id: uuid,
+  actor_role: z.enum(["user", "business"]).optional(),
+  access_token: z.string().min(12).max(120).optional(),
+});
+
+function serviceClient() {
+  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  return createClient<Database>(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
+async function currentUserId() {
+  const authHeader = getRequestHeader("authorization");
+  if (!authHeader?.startsWith("Bearer ")) return null;
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_PUBLISHABLE_KEY;
+  if (!url || !key) return null;
+
+  const supabase = createClient<Database>(url, key, {
+    global: { headers: { Authorization: authHeader } },
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data.user?.id) return null;
+  return data.user.id;
+}
+
+function uniqueBusinessIds(input: z.infer<typeof BusinessThreadsSchema>) {
+  return [...new Set([...(input.business_ids ?? []), ...(input.business_id ? [input.business_id] : [])])];
+}
+
+async function allowedBusinessIds(
+  admin: ReturnType<typeof createClient<Database>>,
+  requestedIds: string[],
+  userId: string | null,
+) {
+  const { data: businesses, error } = await admin
+    .from("businesses")
+    .select("id, owner_id")
+    .in("id", requestedIds);
+  if (error || !businesses?.length) return [];
+
+  const openIds = businesses.filter((b) => b.owner_id === null).map((b) => b.id);
+  if (!userId) return openIds;
+
+  const [{ data: memberships }, { data: roles }] = await Promise.all([
+    admin
+      .from("business_users")
+      .select("business_id")
+      .eq("user_id", userId)
+      .in("business_id", requestedIds),
+    admin.from("user_roles").select("role").eq("user_id", userId),
+  ]);
+  const isAdmin = (roles ?? []).some((r) => r.role === "admin");
+  const memberIds = new Set((memberships ?? []).map((m) => m.business_id));
+
+  return businesses
+    .filter((b) => isAdmin || b.owner_id === null || b.owner_id === userId || memberIds.has(b.id))
+    .map((b) => b.id);
+}
+
+function tokenMatches(booking: { metadata: unknown } | null, accessToken?: string) {
+  if (!booking || !accessToken || typeof booking.metadata !== "object" || booking.metadata === null) {
+    return false;
+  }
+  return (booking.metadata as Record<string, unknown>).public_access_token === accessToken;
+}
+
 export const listThreadsForBusiness = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
-    z.object({ business_id: z.string().uuid() }).parse(d),
-  )
-  .handler(async ({ data, context }) => {
+  .inputValidator((d: unknown) => BusinessThreadsSchema.parse(d))
+  .handler(async ({ data }) => {
     try {
-      const { supabase } = context;
-      const { data: rows, error } = await supabase
+      const admin = serviceClient();
+      if (!admin) return { threads: [] };
+      const userId = await currentUserId();
+      const allowedIds = await allowedBusinessIds(admin, uniqueBusinessIds(data), userId);
+      if (!allowedIds.length) return { threads: [] };
+
+      const { data: rows, error } = await admin
         .from("conversation_threads")
         .select("id, booking_id, business_id, user_id, status, last_message_at, created_at, context_snapshot")
-        .eq("business_id", data.business_id)
+        .in("business_id", allowedIds)
         .order("last_message_at", { ascending: false })
         .limit(100);
       if (error) {
@@ -27,12 +111,12 @@ export const listThreadsForBusiness = createServerFn({ method: "GET" })
       const ids = (rows ?? []).map((r) => r.id);
       const bookingIds = (rows ?? []).map((r) => r.booking_id);
       const [{ data: msgs }, { data: bks }] = await Promise.all([
-        supabase
+        admin
           .from("messages")
           .select("id, thread_id, sender_type, message_type, template_key, text, payload, created_at")
           .in("thread_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"])
           .order("created_at", { ascending: false }),
-        supabase
+        admin
           .from("bookings")
           .select("id, customer_name, customer_phone, customer_email, scheduled_at, party_size, status, notes")
           .in("id", bookingIds.length ? bookingIds : ["00000000-0000-0000-0000-000000000000"]),
@@ -57,72 +141,85 @@ export const listThreadsForBusiness = createServerFn({ method: "GET" })
   });
 
 export const getThread = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) =>
-    z.object({ thread_id: z.string().uuid() }).parse(d),
-  )
-  .handler(async ({ data, context }) => {
-    const { supabase } = context;
-    const { data: thread, error } = await supabase
+  .inputValidator((d: unknown) => ThreadSchema.parse(d))
+  .handler(async ({ data }) => {
+    const admin = serviceClient();
+    if (!admin) throw new Error("Backend no disponible");
+
+    const { data: thread, error } = await admin
       .from("conversation_threads")
       .select("*")
       .eq("id", data.thread_id)
       .single();
     if (error) throw new Error(error.message);
 
-    const [{ data: messages }, { data: booking }] = await Promise.all([
-      supabase
+    const [{ data: messages }, { data: booking }, { data: business }] = await Promise.all([
+      admin
         .from("messages")
         .select("*")
         .eq("thread_id", data.thread_id)
         .order("created_at", { ascending: true }),
-      supabase.from("bookings").select("*").eq("id", thread.booking_id).single(),
+      admin.from("bookings").select("*").eq("id", thread.booking_id).single(),
+      admin.from("businesses").select("id, owner_id").eq("id", thread.business_id).single(),
     ]);
+
+    const userId = await currentUserId();
+    const allowedForBusiness = (
+      await allowedBusinessIds(admin, [thread.business_id], userId)
+    ).includes(thread.business_id);
+    const allowedForUser =
+      (userId && thread.user_id === userId) ||
+      tokenMatches(booking, data.access_token) ||
+      (data.actor_role === "user" && !thread.user_id && !(booking?.metadata as Record<string, unknown> | null)?.public_access_token);
+    const allowedOpenBusiness = data.actor_role === "business" && business?.owner_id === null;
+
+    if (!allowedForUser && !allowedForBusiness && !allowedOpenBusiness) {
+      throw new Error("No autorizado");
+    }
 
     return { thread, messages: messages ?? [], booking: booking ?? null };
   });
 
-export const listThreadsForUser = createServerFn({ method: "GET" })
-  .handler(async () => {
-    try {
-      const authHeader = getRequestHeader("authorization");
-      if (!authHeader?.startsWith("Bearer ")) return { threads: [] };
+export const listThreadsForUser = createServerFn({ method: "GET" }).handler(async () => {
+  try {
+    const authHeader = getRequestHeader("authorization");
+    if (!authHeader?.startsWith("Bearer ")) return { threads: [] };
 
-      const SUPABASE_URL = process.env.SUPABASE_URL;
-      const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
-      if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) return { threads: [] };
+    const SUPABASE_URL = process.env.SUPABASE_URL;
+    const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
+    if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) return { threads: [] };
 
-      const token = authHeader.replace("Bearer ", "");
-      const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-        global: { headers: { Authorization: `Bearer ${token}` } },
-        auth: { persistSession: false, autoRefreshToken: false },
-      });
+    const token = authHeader.replace("Bearer ", "");
+    const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
 
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      const userId = userData.user?.id;
-      if (userError || !userId) return { threads: [] };
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    const userId = userData.user?.id;
+    if (userError || !userId) return { threads: [] };
 
-      const { data: rows, error } = await supabase
-        .from("conversation_threads")
-        .select("id, booking_id, business_id, status, last_message_at, context_snapshot")
-        .eq("user_id", userId)
-        .order("last_message_at", { ascending: false })
-        .limit(50);
-      if (error) {
-        console.error("listThreadsForUser error", error);
-        return { threads: [] };
-      }
-      const bizIds = [...new Set((rows ?? []).map((r) => r.business_id))];
-      const { data: bizs } = await supabase
-        .from("businesses")
-        .select("id, name, address, phone")
-        .in("id", bizIds.length ? bizIds : ["00000000-0000-0000-0000-000000000000"]);
-      const map = new Map((bizs ?? []).map((b) => [b.id, b]));
-      return {
-        threads: (rows ?? []).map((t) => ({ ...t, business: map.get(t.business_id) ?? null })),
-      };
-    } catch (e) {
-      console.error("listThreadsForUser failed", e);
+    const { data: rows, error } = await supabase
+      .from("conversation_threads")
+      .select("id, booking_id, business_id, status, last_message_at, context_snapshot")
+      .eq("user_id", userId)
+      .order("last_message_at", { ascending: false })
+      .limit(50);
+    if (error) {
+      console.error("listThreadsForUser error", error);
       return { threads: [] };
     }
-  });
+    const bizIds = [...new Set((rows ?? []).map((r) => r.business_id))];
+    const { data: bizs } = await supabase
+      .from("businesses")
+      .select("id, name, address, phone")
+      .in("id", bizIds.length ? bizIds : ["00000000-0000-0000-0000-000000000000"]);
+    const map = new Map((bizs ?? []).map((b) => [b.id, b]));
+    return {
+      threads: (rows ?? []).map((t) => ({ ...t, business: map.get(t.business_id) ?? null })),
+    };
+  } catch (e) {
+    console.error("listThreadsForUser failed", e);
+    return { threads: [] };
+  }
+});

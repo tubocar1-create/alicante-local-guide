@@ -19,29 +19,33 @@ function InboxPage() {
   const qc = useQueryClient();
 
   const { data: bizData } = useQuery({ queryKey: ["my-businesses"], queryFn: () => fetchBiz() });
-  const business = bizData?.businesses[0];
+  const businesses = bizData?.businesses ?? [];
+  const businessIds = businesses.map((b) => b.id);
+  const business = businesses[0];
 
   const { data } = useQuery({
-    queryKey: ["inbox", business?.id],
-    queryFn: () => fetchThreads({ data: { business_id: business!.id } }),
-    enabled: !!business,
+    queryKey: ["inbox", businessIds],
+    queryFn: () => fetchThreads({ data: { business_ids: businessIds } }),
+    enabled: businessIds.length > 0,
     refetchInterval: 15000,
     retry: false,
     throwOnError: false,
   });
 
   useEffect(() => {
-    if (!business) return;
-    const ch = supabase
-      .channel(`inbox:${business.id}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "conversation_threads", filter: `business_id=eq.${business.id}` },
-        () => qc.invalidateQueries({ queryKey: ["inbox", business.id] }),
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [business, qc]);
+    if (!businessIds.length) return;
+    const channels = businessIds.map((id) =>
+      supabase
+        .channel(`inbox:${id}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "conversation_threads", filter: `business_id=eq.${id}` },
+          () => qc.invalidateQueries({ queryKey: ["inbox", businessIds] }),
+        )
+        .subscribe(),
+    );
+    return () => { channels.forEach((ch) => supabase.removeChannel(ch)); };
+  }, [businessIds.join(","), qc]);
 
   if (!business) return <p className="text-sm text-muted-foreground">Crea primero un negocio.</p>;
 
