@@ -1,10 +1,48 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useEffect, useRef } from "react";
 import { listMyBusinesses } from "@/lib/business/business.functions";
 import { getBusinessMetrics } from "@/lib/business/metrics.functions";
 import { listThreadsForBusiness } from "@/lib/coord/threads.functions";
 import { Plus, QrCode, Calendar, BarChart3 } from "lucide-react";
+import { toast } from "sonner";
+
+function playAlarm() {
+  try {
+    const Ctx = (window.AudioContext || (window as any).webkitAudioContext) as
+      | typeof AudioContext
+      | undefined;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const now = ctx.currentTime;
+    // Repeating loud beeps for ~2.5s
+    for (let i = 0; i < 5; i++) {
+      const t = now + i * 0.5;
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "square";
+      o.frequency.setValueAtTime(1200, t);
+      o.frequency.setValueAtTime(800, t + 0.15);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.6, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
+      o.connect(g);
+      g.connect(ctx.destination);
+      o.start(t);
+      o.stop(t + 0.42);
+    }
+  } catch {
+    /* ignore */
+  }
+  try {
+    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+      navigator.vibrate?.([400, 150, 400, 150, 600, 150, 400]);
+    }
+  } catch {
+    /* ignore */
+  }
+}
 
 export const Route = createFileRoute("/business/")({
   component: BusinessDashboard,
@@ -41,6 +79,32 @@ function BusinessDashboard() {
     (t) => t.status === "awaiting_business" && t.booking?.status === "pending",
   ).length;
 
+  const prevAwaitingRef = useRef<number | null>(null);
+  const notifiedRef = useRef(false);
+  useEffect(() => {
+    if (typeof Notification !== "undefined" && Notification.permission === "default" && !notifiedRef.current) {
+      notifiedRef.current = true;
+      Notification.requestPermission().catch(() => {});
+    }
+  }, []);
+  useEffect(() => {
+    const prev = prevAwaitingRef.current;
+    if (prev !== null && awaiting > prev) {
+      playAlarm();
+      const title = "¡Nueva reserva!";
+      const body = `Tienes ${awaiting} reserva${awaiting === 1 ? "" : "s"} pendiente${awaiting === 1 ? "" : "s"}`;
+      toast(title, { description: body, duration: 8000 });
+      try {
+        if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+          new Notification(title, { body });
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+    prevAwaitingRef.current = awaiting;
+  }, [awaiting]);
+
   if (isLoading) return <p className="text-sm text-muted-foreground">Cargando…</p>;
 
   if (!primary) {
@@ -72,10 +136,10 @@ function BusinessDashboard() {
 
       <Link
         to="/business/inbox"
-        className={`flex items-center justify-between rounded-3xl px-5 py-5 text-primary-foreground shadow-lg ${
+        className={`flex items-center justify-between rounded-3xl px-5 py-5 text-white shadow-lg ${
           awaiting > 0
-            ? "bg-amber-500 animate-blink"
-            : "bg-primary"
+            ? "bg-amber-400 animate-blink ring-4 ring-amber-300"
+            : "bg-orange-500"
         }`}
       >
         <div className="flex items-center gap-3">
@@ -90,7 +154,7 @@ function BusinessDashboard() {
           </div>
         </div>
         {awaiting > 0 && (
-          <span className="rounded-full bg-white/95 px-3 py-1 text-base font-bold text-amber-600">
+          <span className="rounded-full bg-white px-3 py-1 text-base font-bold text-orange-600">
             {awaiting}
           </span>
         )}
