@@ -200,7 +200,63 @@ export async function fetchPlazaTorosAgenda(): Promise<RegionalEvent[] | null> {
   return out.length ? out : null;
 }
 
-// ─── Mercadillos: calendario estático del Ayto. (Concejalía de Mercados) ──
+// ─── Otros venues (mismo patrón: JSON-LD + fallback heurístico) ──────
+// Extrae títulos y fechas próximas. Si la web cambia, el banner se
+// suspende solo (devuelve null/[]).
+
+async function scrapeVenue(
+  url: string,
+  venueLabel: string,
+): Promise<RegionalEvent[] | null> {
+  const fromJsonLd = await scrapeJsonLdAgenda(url);
+  if (fromJsonLd) {
+    return fromJsonLd.map((e) => ({
+      ...e,
+      excerpt: e.excerpt || `${venueLabel}.`,
+    }));
+  }
+  const html = await fetchHtml(url);
+  if (!html) return null;
+  // Heurística: títulos en h2/h3/h4 + fecha cercana ("12 de marzo", "12/03/2025", "12 mar")
+  const months = "enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre|ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic";
+  const re = new RegExp(
+    `<h[234][^>]*>\\s*([^<]{4,160})\\s*</h[234]>[\\s\\S]{0,500}?((?:\\d{1,2}\\s+(?:de\\s+)?(?:${months}))|(?:\\d{1,2}\\/\\d{1,2}(?:\\/\\d{2,4})?))`,
+    "gi",
+  );
+  const out: RegionalEvent[] = [];
+  const seen = new Set<string>();
+  for (const m of [...html.matchAll(re)]) {
+    const title = clean(m[1]);
+    const when = clean(m[2]);
+    if (!title || /cookie|men[uú]|inicio|portada|aviso|política/i.test(title)) continue;
+    const k = title.toLowerCase();
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push({ title, when, excerpt: `${venueLabel}.` });
+    if (out.length >= 8) break;
+  }
+  return out.length ? out : null;
+}
+
+export async function fetchAddaAgenda() {
+  return scrapeVenue("https://addaalicante.es/programacion/", "ADDA - Auditorio de la Diputación de Alicante");
+}
+
+export async function fetchStereoAgenda() {
+  return scrapeVenue("https://stereoalicante.es/agenda/", "Stereo Alicante");
+}
+
+export async function fetchSalaOneAgenda() {
+  return scrapeVenue("https://salaone.com/agenda/", "Sala One Alicante");
+}
+
+export async function fetchMuelleLiveAgenda() {
+  return scrapeVenue("https://muellelive.com/agenda/", "Muelle Live Alicante");
+}
+
+export async function fetchSpringAgenda() {
+  return scrapeVenue("https://springalicante.es/agenda/", "Spring Alicante");
+}
 // Solo se muestra si HOY hay mercadillo activo.
 const MERCADILLOS: Array<{ name: string; days: number[]; hours: string; place: string }> = [
   // 0=domingo, 1=lunes ... 6=sábado
@@ -227,4 +283,45 @@ export async function fetchMercadillosHoy(): Promise<RegionalEvent[] | null> {
     when: `Hoy ${m.hours}`,
     excerpt: m.place,
   }));
+}
+
+// ─── Songkick (API oficial) ────────────────────────────────────────────
+// Metro area de Alicante = 34604. Devuelve conciertos próximos.
+export async function fetchSongkickAlicante(): Promise<RegionalEvent[] | null> {
+  const apiKey = process.env.SONGKICK_API_KEY;
+  if (!apiKey) return null;
+  try {
+    const url = `https://api.songkick.com/api/3.0/metro_areas/34604/calendar.json?apikey=${apiKey}&per_page=15`;
+    const r = await fetch(url, {
+      headers: { Accept: "application/json", "User-Agent": UA },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!r.ok) return null;
+    const json = (await r.json()) as {
+      resultsPage?: { results?: { event?: Array<Record<string, unknown>> } };
+    };
+    const events = json.resultsPage?.results?.event ?? [];
+    if (events.length === 0) return [];
+    const out: RegionalEvent[] = [];
+    for (const ev of events) {
+      const displayName = clean(String(ev.displayName ?? ""));
+      if (!displayName) continue;
+      const start = ev.start as { date?: string; time?: string } | undefined;
+      const venue = ev.venue as { displayName?: string } | undefined;
+      const dateISO = start?.date;
+      const when = dateISO ? fmtDateRange(dateISO) : "";
+      const place = clean(String(venue?.displayName ?? "Alicante"));
+      // displayName típico: "Artist at Venue (City) on Date" → coge la parte del artista
+      const artist = displayName.split(/\s+at\s+/i)[0] || displayName;
+      out.push({
+        title: artist.slice(0, 100),
+        when,
+        excerpt: `${place}. Vía Songkick.`,
+      });
+      if (out.length >= 10) break;
+    }
+    return out.length ? out : [];
+  } catch {
+    return null;
+  }
 }
