@@ -298,12 +298,87 @@ export async function fetchMuelleLiveAgenda(): Promise<RegionalEvent[] | null> {
   }));
 }
 
-export async function fetchSpringAgenda() {
-  return scrapeVenue("https://springalicante.es/agenda/", "Spring Alicante");
+// Helper común: hoy en YYYY-MM-DD zona Madrid
+function todayMadrid(): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Madrid",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
 }
 
-export async function fetchRabasaAgenda() {
-  return scrapeVenue("https://area12alicante.es/", "Área 12 - Multiespacio Rabasa, Alicante");
+function shuffle<T>(arr: T[]): T[] {
+  const out = [...arr];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+// Cartel oficial Rabasa / Área 12 2026
+const RABASA_2026: Array<{ date: string; artist: string }> = [
+  { date: "2026-06-27", artist: "Dani Martín" },
+  { date: "2026-07-08", artist: "The Black Crowes + Los Enemigos" },
+  { date: "2026-07-11", artist: "Viva Suecia" },
+  { date: "2026-08-21", artist: "Nostalgia Milenial Fest + I Love Reggaeton" },
+  { date: "2026-08-22", artist: "Love The 90s" },
+  { date: "2026-08-29", artist: "Hombres G" },
+];
+
+export async function fetchRabasaAgenda(): Promise<RegionalEvent[] | null> {
+  const today = todayMadrid();
+  const upcoming = RABASA_2026.filter((c) => c.date >= today);
+  if (upcoming.length === 0) return null;
+  return shuffle(upcoming).slice(0, 6).map((c) => ({
+    title: c.artist,
+    when: fmtDateRange(`${c.date}T21:00:00+02:00`),
+    excerpt: "Concierto en Multiespacio Rabasa (Área 12), Alicante.",
+  }));
+}
+
+// Spring Festival 2026 — festival multidía con varios artistas.
+const SPRING_FESTIVAL_2026 = {
+  start: "2026-05-29",
+  end: "2026-05-30",
+  artists: ["Love of Lesbian", "Carolina Durante", "Dorian", "La M.O.D.A.", "Xoel López"],
+};
+
+export async function fetchSpringAgenda(): Promise<RegionalEvent[] | null> {
+  const today = todayMadrid();
+  if (SPRING_FESTIVAL_2026.end < today) return null;
+  // Un evento por artista, rotando aleatoriamente.
+  const when = fmtDateRange(
+    `${SPRING_FESTIVAL_2026.start}T20:00:00+02:00`,
+    `${SPRING_FESTIVAL_2026.end}T20:00:00+02:00`,
+  );
+  return shuffle(SPRING_FESTIVAL_2026.artists).map((artist) => ({
+    title: `${artist} · Spring Festival`,
+    when,
+    excerpt: "Spring Festival Alicante, en Spring Club / recinto Spring.",
+  }));
+}
+
+// Rocanrola 2026 — festival hip-hop multidía.
+const ROCANROLA_2026 = {
+  start: "2026-04-30",
+  end: "2026-05-02",
+  artists: ["Kase.O", "Nach", "Delaossa", "Hijos de la Ruina", "Fernandocosta", "Lia Kali"],
+};
+
+export async function fetchRocanrolaAgenda(): Promise<RegionalEvent[] | null> {
+  const today = todayMadrid();
+  if (ROCANROLA_2026.end < today) return null;
+  const when = fmtDateRange(
+    `${ROCANROLA_2026.start}T19:00:00+02:00`,
+    `${ROCANROLA_2026.end}T19:00:00+02:00`,
+  );
+  return shuffle(ROCANROLA_2026.artists).map((artist) => ({
+    title: `${artist} · Rocanrola`,
+    when,
+    excerpt: "Festival Rocanrola en Alicante (hip-hop, rap).",
+  }));
 }
 // Solo se muestra si HOY hay mercadillo activo.
 const MERCADILLOS: Array<{ name: string; days: number[]; hours: string; place: string }> = [
