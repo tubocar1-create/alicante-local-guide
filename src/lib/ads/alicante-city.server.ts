@@ -2,6 +2,7 @@
 // Endpoints descubiertos:
 //   GET /asmpois  → JSON con virtual_sections (tráfico), incidencias, eventos
 //   GET /parkings → HTML con ocupación en vivo de parkings públicos
+// Tráfico aéreo en vivo cerca del aeropuerto ALC/LEAL: OpenSky Network.
 
 const BASE = "https://movilidad.alicante.es";
 const UA = "Mozilla/5.0 (compatible; AlicanteFriend/1.0)";
