@@ -5,31 +5,63 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { listMyBusinesses } from "@/lib/business/business.functions";
 
-function playAlarm() {
+// Singleton AudioContext. Browsers require a user gesture before audio can
+// play; we create/resume the context the first time the user interacts with
+// the page and reuse it for every alarm afterwards.
+let sharedCtx: AudioContext | null = null;
+let unlocked = false;
+
+function getCtx(): AudioContext | null {
+  if (typeof window === "undefined") return null;
+  const Ctx = (window.AudioContext || (window as any).webkitAudioContext) as
+    | typeof AudioContext
+    | undefined;
+  if (!Ctx) return null;
+  if (!sharedCtx) sharedCtx = new Ctx();
+  return sharedCtx;
+}
+
+function unlockAudio() {
+  const ctx = getCtx();
+  if (!ctx) return;
+  if (ctx.state === "suspended") ctx.resume().catch(() => {});
+  // Play a 1-sample silent buffer to fully unlock on iOS Safari.
   try {
-    const Ctx = (window.AudioContext || (window as any).webkitAudioContext) as
-      | typeof AudioContext
-      | undefined;
-    if (!Ctx) return;
-    const ctx = new Ctx();
-    const now = ctx.currentTime;
-    for (let i = 0; i < 6; i++) {
-      const t = now + i * 0.45;
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = "square";
-      o.frequency.setValueAtTime(1200, t);
-      o.frequency.setValueAtTime(800, t + 0.15);
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(0.7, t + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
-      o.connect(g);
-      g.connect(ctx.destination);
-      o.start(t);
-      o.stop(t + 0.42);
-    }
+    const buf = ctx.createBuffer(1, 1, 22050);
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(ctx.destination);
+    src.start(0);
   } catch {
     /* ignore */
+  }
+  unlocked = true;
+}
+
+export function playAlarm() {
+  const ctx = getCtx();
+  if (ctx) {
+    if (ctx.state === "suspended") ctx.resume().catch(() => {});
+    try {
+      const now = ctx.currentTime;
+      for (let i = 0; i < 6; i++) {
+        const t = now + i * 0.45;
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = "square";
+        o.frequency.setValueAtTime(1200, t);
+        o.frequency.setValueAtTime(800, t + 0.15);
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.7, t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
+        o.connect(g);
+        g.connect(ctx.destination);
+        o.start(t);
+        o.stop(t + 0.42);
+      }
+    } catch {
+      /* ignore */
+    }
   }
   try {
     if (typeof navigator !== "undefined" && "vibrate" in navigator) {
@@ -42,7 +74,7 @@ function playAlarm() {
 
 function notify(title: string, body: string) {
   playAlarm();
-  toast(title, { description: body, duration: 10000 });
+  toast(title, { description: body, duration: 15000 });
   try {
     if (typeof Notification !== "undefined" && Notification.permission === "granted") {
       new Notification(title, { body });
@@ -69,7 +101,7 @@ export function useBookingAlarm() {
   const businessIds = businesses.map((b) => b.id);
   const idsKey = businessIds.join(",");
 
-  // Ask for browser notification permission once.
+  // Ask for browser notification permission + unlock audio on first gesture.
   const askedRef = useRef(false);
   useEffect(() => {
     if (askedRef.current) return;
@@ -77,12 +109,22 @@ export function useBookingAlarm() {
     if (typeof Notification !== "undefined" && Notification.permission === "default") {
       Notification.requestPermission().catch(() => {});
     }
+    const onGesture = () => {
+      if (!unlocked) unlockAudio();
+    };
+    window.addEventListener("pointerdown", onGesture, { once: false });
+    window.addEventListener("keydown", onGesture, { once: false });
+    window.addEventListener("touchstart", onGesture, { once: false });
+    return () => {
+      window.removeEventListener("pointerdown", onGesture);
+      window.removeEventListener("keydown", onGesture);
+      window.removeEventListener("touchstart", onGesture);
+    };
   }, []);
 
   useEffect(() => {
     if (businessIds.length === 0) return;
     const idSet = new Set(businessIds);
-    // Avoid double-firing for the same thread (StrictMode / reconnects).
     const seen = new Set<string>();
 
     const channel = supabase
