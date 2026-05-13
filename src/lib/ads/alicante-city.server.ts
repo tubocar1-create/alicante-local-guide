@@ -484,13 +484,16 @@ export async function fetchRenfeAlicanteSchedule(): Promise<RenfeTrip[] | null> 
 // AENA — Cancelaciones del día (scraping del endpoint JSON oculto)
 // ─────────────────────────────────────────────────────────────────
 
-export type AenaCancellation = {
+export type AenaDisruption = {
   type: "salida" | "llegada";
+  status: "cancelado" | "retrasado";
   airline: string;
   flightNumber: string;
   otherCity: string;
   otherIata: string;
   scheduledTime: string; // HH:MM
+  estimatedTime: string; // HH:MM (vacío si no hay)
+  delayMin: number; // minutos de retraso (0 si cancelado o sin estimada)
   date: string; // dd/mm/yyyy
 };
 
@@ -518,31 +521,55 @@ async function fetchAenaFlights(
   }
 }
 
+function diffMinutes(progHHMMSS: string, estHHMMSS: string): number {
+  if (!progHHMMSS || !estHHMMSS) return 0;
+  const [ph, pm] = progHHMMSS.split(":").map(Number);
+  const [eh, em] = estHHMMSS.split(":").map(Number);
+  if ([ph, pm, eh, em].some((n) => Number.isNaN(n))) return 0;
+  let d = eh * 60 + em - (ph * 60 + pm);
+  // si cruza medianoche
+  if (d < -12 * 60) d += 24 * 60;
+  if (d > 12 * 60) d -= 24 * 60;
+  return d;
+}
+
 /**
- * Devuelve las cancelaciones (estado=CAN) del día en ALC, salidas y llegadas,
- * ordenadas por hora programada. Máx 10.
+ * Devuelve cancelaciones (CAN) y retrasos significativos (RET con >=15 min,
+ * o estado RET con cualquier desviación) en ALC. Máx 10. Si Aena falla,
+ * devuelve null y el banner queda en suspenso.
  */
-export async function fetchAenaCancellations(): Promise<AenaCancellation[] | null> {
+export async function fetchAenaDisruptions(): Promise<AenaDisruption[] | null> {
   const [salidas, llegadas] = await Promise.all([
     fetchAenaFlights("S"),
     fetchAenaFlights("L"),
   ]);
   if (!salidas && !llegadas) return null;
-  const all: AenaCancellation[] = [];
+  const all: AenaDisruption[] = [];
   const push = (rows: Array<Record<string, string>> | null, type: "salida" | "llegada") => {
     if (!rows) return;
     for (const f of rows) {
-      if ((f.estado || "").toUpperCase() !== "CAN") continue;
+      const estado = (f.estado || "").toUpperCase();
       const iataCia = (f.iataCompania || "").trim();
       const num = (f.numVuelo || "").trim();
       const horaProg = (f.horaProgramada || "").slice(0, 5);
+      const horaEst = (f.horaEstimada || "").slice(0, 5);
+      const delay = diffMinutes(f.horaProgramada || "", f.horaEstimada || "");
+
+      let status: "cancelado" | "retrasado" | null = null;
+      if (estado === "CAN") status = "cancelado";
+      else if (estado === "RET" || delay >= 15) status = "retrasado";
+      if (!status) continue;
+
       all.push({
         type,
+        status,
         airline: (f.nombreCompania || iataCia || "").trim() || "—",
         flightNumber: iataCia && num ? `${iataCia}${num}` : num || "—",
         otherCity: (f.ciudadIataOtro || "").trim() || (f.iataOtro || "").trim() || "—",
         otherIata: (f.iataOtro || "").trim() || "",
         scheduledTime: horaProg,
+        estimatedTime: status === "cancelado" ? "" : horaEst,
+        delayMin: status === "cancelado" ? 0 : Math.max(0, delay),
         date: (f.fecha || "").trim(),
       });
     }
@@ -550,13 +577,16 @@ export async function fetchAenaCancellations(): Promise<AenaCancellation[] | nul
   push(salidas, "salida");
   push(llegadas, "llegada");
   if (!all.length) return [];
-  // Orden: hoy primero, luego por hora
+  // Cancelados primero, luego por mayor retraso, luego por hora
   const today = new Date().toLocaleDateString("es-ES", { timeZone: "Europe/Madrid" });
   all.sort((a, b) => {
+    if (a.status !== b.status) return a.status === "cancelado" ? -1 : 1;
     const ta = a.date === today ? 0 : 1;
     const tb = b.date === today ? 0 : 1;
     if (ta !== tb) return ta - tb;
+    if (a.status === "retrasado") return b.delayMin - a.delayMin;
     return a.scheduledTime.localeCompare(b.scheduledTime);
   });
   return all.slice(0, 10);
 }
+
