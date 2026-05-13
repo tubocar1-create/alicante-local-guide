@@ -30,38 +30,34 @@ export const getBusinessMetrics = createServerFn({ method: "GET" })
       .parse(d),
   )
   .handler(async ({ data }) => {
-    const authHeader = getRequestHeader("authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return emptyMetrics("UNAUTHORIZED");
-    }
-
     const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
-    if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+    const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const PUBLISHABLE = process.env.SUPABASE_PUBLISHABLE_KEY;
+    if (!SUPABASE_URL || !(SERVICE_ROLE || PUBLISHABLE)) {
       console.error("Business metrics unavailable: backend env is missing");
       return emptyMetrics("BACKEND_UNAVAILABLE");
     }
 
-    const token = authHeader.replace("Bearer ", "");
-    const supabase = createClient<Database>(
-      SUPABASE_URL,
-      SUPABASE_PUBLISHABLE_KEY,
-      {
-        global: { headers: { Authorization: `Bearer ${token}` } },
-        auth: {
-          storage: undefined,
-          persistSession: false,
-          autoRefreshToken: false,
-        },
-      },
-    );
+    const authHeader = getRequestHeader("authorization");
+    const token = authHeader?.startsWith("Bearer ")
+      ? authHeader.replace("Bearer ", "")
+      : null;
 
-    const { data: claims, error: claimsError } = await supabase.auth.getClaims(
-      token,
-    );
-    if (claimsError || !claims?.claims?.sub) {
-      return emptyMetrics("UNAUTHORIZED");
-    }
+    // Use service role when available so open-mode (no session) dashboards work.
+    const supabase = SERVICE_ROLE
+      ? createClient<Database>(SUPABASE_URL, SERVICE_ROLE, {
+          auth: { persistSession: false, autoRefreshToken: false },
+        })
+      : createClient<Database>(SUPABASE_URL, PUBLISHABLE!, {
+          global: token
+            ? { headers: { Authorization: `Bearer ${token}` } }
+            : undefined,
+          auth: {
+            storage: undefined,
+            persistSession: false,
+            autoRefreshToken: false,
+          },
+        });
 
     const since = new Date(
       Date.now() - data.days * 24 * 60 * 60 * 1000,
