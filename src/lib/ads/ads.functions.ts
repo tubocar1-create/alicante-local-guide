@@ -1,6 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { ADVERTISERS, getAdvertiser, type Advertiser } from "./advertisers";
+import {
+  fetchAlicanteParkings,
+  fetchAlicanteTraffic,
+} from "./alicante-city.server";
 
 export type AdCopy = {
   headline: string; // 4-7 palabras
@@ -244,6 +248,41 @@ export const getAdVariants = createServerFn({ method: "POST" })
       }
     }
 
+    let parkingsCtx = "";
+    if (advertiser.kind === "parkings") {
+      const ps = await fetchAlicanteParkings();
+      if (ps && ps.length) {
+        const sorted = [...ps].sort((a, b) => b.libres - a.libres);
+        const lines = sorted
+          .map(
+            (p) =>
+              `- ${p.name}: ${p.libres} libres / ${p.total} (ocupación ${p.ocupacionPct}%)`,
+          )
+          .join("\n");
+        parkingsCtx = `\n\nDATOS REALES Ayto. Alicante (parkings públicos del centro, ahora):\n${lines}\n\nUsa estos números EXACTOS, no inventes. Destaca el más libre o el más lleno según el ángulo.`;
+      } else {
+        parkingsCtx = "\n\n(Sin datos de parkings ahora mismo).";
+      }
+    }
+
+    let trafficCtx = "";
+    if (advertiser.kind === "traffic") {
+      const t = await fetchAlicanteTraffic();
+      if (t && t.total > 0) {
+        const pctFluido = Math.round((t.fluido / t.total) * 100);
+        const lines = [
+          `Tramos: ${t.fluido} fluidos, ${t.denso} densos, ${t.congestionado} congestionados (${t.total} total → ${pctFluido}% fluido).`,
+        ];
+        if (t.incidencias.length)
+          lines.push(`Incidencias activas: ${t.incidencias.slice(0, 3).join("; ")}.`);
+        if (t.eventos.length)
+          lines.push(`Eventos de tráfico: ${t.eventos.slice(0, 3).join("; ")}.`);
+        trafficCtx = `\n\nDATOS REALES Ayto. Alicante (tráfico ahora):\n${lines.join("\n")}\n\nUsa los datos REALES. Si hay incidencia o evento, menciónalo en alguna variante. Si todo va fluido, dilo con naturalidad.`;
+      } else {
+        trafficCtx = "\n\n(Sin datos de tráfico ahora mismo).";
+      }
+    }
+
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       return {
@@ -253,14 +292,25 @@ export const getAdVariants = createServerFn({ method: "POST" })
       };
     }
 
-    const userPrompt =
-      advertiser.kind === "weather"
-        ? `Genera ${count} variantes DISTINTAS de tarjeta de CLIMA para Alicante. Cada variante: headline (máx 7 palabras), body (1 frase con consejo práctico, máx 110 caracteres), cta (2-3 palabras tipo "Ver tiempo"). Tono cercano. Sin alarmismo.${weatherCtx}`
-        : advertiser.kind === "marine"
-          ? `Genera ${count} variantes DISTINTAS de tarjeta de MAR Y PLAYA para Alicante. Cada variante: headline (máx 7 palabras), body (1 frase con un dato real y un consejo, máx 110 caracteres), cta (2-3 palabras tipo "Ver mar"). Tono cercano. Menciona temperatura del agua o estado del oleaje.${marineCtx}`
-          : wiki
-            ? `Tema REAL de Wikipedia: "${wiki.title}".\n\nResumen fuente:\n"""${wiki.extract}"""\n\nGenera ${count} variantes DISTINTAS de tarjeta INFORMATIVA basadas EXCLUSIVAMENTE en ese resumen (no inventes datos). Cada variante destaca un ángulo distinto. Cada variante: headline (máx 7 palabras), body (1 frase con un dato concreto, máx 110 caracteres), cta (2-3 palabras tipo "Saber más"). Tono cercano, sin clichés. Si un dato no está en el resumen, omítelo.`
-            : `Genera ${count} variantes DISTINTAS de tarjeta INFORMATIVA sobre Alicante. Temas variados: gastronomía, Hogueras, playas, TRAM, Castillo, barrios, mercados. Cada variante: headline (máx 7 palabras), body (1 frase, máx 110 caracteres), cta (2-3 palabras tipo "Saber más"). Tono cercano.`;
+    let userPrompt: string;
+    switch (advertiser.kind) {
+      case "weather":
+        userPrompt = `Genera ${count} variantes DISTINTAS de tarjeta de CLIMA para Alicante. Cada variante: headline (máx 7 palabras), body (1 frase con consejo práctico, máx 110 caracteres), cta (2-3 palabras tipo "Ver tiempo"). Tono cercano. Sin alarmismo.${weatherCtx}`;
+        break;
+      case "marine":
+        userPrompt = `Genera ${count} variantes DISTINTAS de tarjeta de MAR Y PLAYA para Alicante. Cada variante: headline (máx 7 palabras), body (1 frase con un dato real y un consejo, máx 110 caracteres), cta (2-3 palabras tipo "Ver mar"). Tono cercano. Menciona temperatura del agua o estado del oleaje.${marineCtx}`;
+        break;
+      case "parkings":
+        userPrompt = `Genera ${count} variantes DISTINTAS de tarjeta sobre PARKINGS del centro de Alicante. Cada variante: headline (máx 7 palabras), body (1 frase con un dato REAL del listado, máx 110 caracteres), cta (2-3 palabras tipo "Ver parkings"). Menciona el nombre de un parking concreto y sus plazas o porcentaje de ocupación. Útil para alguien que busca aparcar.${parkingsCtx}`;
+        break;
+      case "traffic":
+        userPrompt = `Genera ${count} variantes DISTINTAS de tarjeta de TRÁFICO en Alicante. Cada variante: headline (máx 7 palabras), body (1 frase con un dato real, máx 110 caracteres), cta (2-3 palabras tipo "Ver mapa"). Si hay incidencia o evento, una variante lo nombra. Si todo va fluido, dilo en positivo.${trafficCtx}`;
+        break;
+      default:
+        userPrompt = wiki
+          ? `Tema REAL de Wikipedia: "${wiki.title}".\n\nResumen fuente:\n"""${wiki.extract}"""\n\nGenera ${count} variantes DISTINTAS de tarjeta INFORMATIVA basadas EXCLUSIVAMENTE en ese resumen (no inventes datos). Cada variante destaca un ángulo distinto. Cada variante: headline (máx 7 palabras), body (1 frase con un dato concreto, máx 110 caracteres), cta (2-3 palabras tipo "Saber más"). Tono cercano, sin clichés. Si un dato no está en el resumen, omítelo.`
+          : `Genera ${count} variantes DISTINTAS de tarjeta INFORMATIVA sobre Alicante. Temas variados: gastronomía, Hogueras, playas, TRAM, Castillo, barrios, mercados. Cada variante: headline (máx 7 palabras), body (1 frase, máx 110 caracteres), cta (2-3 palabras tipo "Saber más"). Tono cercano.`;
+    }
 
     try {
       const res = await fetch(

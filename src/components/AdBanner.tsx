@@ -8,7 +8,7 @@ import { ADVERTISERS } from "@/lib/ads/advertisers";
 const FREQUENCY_MS = 2 * 60 * 1000; // 2 min
 const VISIBLE_MS = 18 * 1000; // 18s visible
 const FIRST_DELAY_MS = 30 * 1000;
-const CACHE_TTL_MS = 60 * 60 * 1000; // 1h (clima cambia)
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 min (datos de parking/tráfico cambian rápido)
 
 type Cached = { at: number; data: AdVariantsResponse };
 

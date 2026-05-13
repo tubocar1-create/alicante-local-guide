@@ -1,7 +1,7 @@
 // Catálogo de "banners" informativos. Ya no son anuncios comerciales:
 // son tarjetitas de clima y datos útiles sobre Alicante generados por IA.
 
-export type BannerKind = "weather" | "info" | "marine";
+export type BannerKind = "weather" | "info" | "marine" | "parkings" | "traffic";
 
 export type Advertiser = {
   id: string;
@@ -71,6 +71,40 @@ export const ADVERTISERS: Advertiser[] = [
     },
     brief:
       "Tarjeta informativa con datos reales sobre Alicante extraídos de Wikipedia.",
+  },
+  {
+    id: "parkings-alicante",
+    name: "Parkings centro",
+    tagline: "Plazas libres en tiempo real",
+    category: "Movilidad",
+    kind: "parkings",
+    ctaLabel: "Ver parkings",
+    ctaUrl: "https://movilidad.alicante.es/parkings",
+    theme: {
+      bg: "bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600",
+      fg: "text-white",
+      accent: "bg-white text-violet-700",
+      emoji: "🅿️",
+    },
+    brief:
+      "Estado en vivo de los parkings públicos del centro de Alicante (datos del Ayuntamiento). Indica cuál tiene más plazas libres y cuál está más lleno.",
+  },
+  {
+    id: "trafico-alicante",
+    name: "Tráfico Alicante",
+    tagline: "Cómo está la circulación",
+    category: "Movilidad",
+    kind: "traffic",
+    ctaLabel: "Ver mapa",
+    ctaUrl: "https://movilidad.alicante.es/",
+    theme: {
+      bg: "bg-gradient-to-r from-rose-500 via-red-500 to-orange-500",
+      fg: "text-white",
+      accent: "bg-white text-rose-700",
+      emoji: "🚦",
+    },
+    brief:
+      "Estado del tráfico en Alicante (datos en vivo del Ayuntamiento): tramos fluidos vs densos, incidencias y cortes activos.",
   },
 ];
 
