@@ -82,33 +82,35 @@ export const listMyBusinesses = createServerFn({ method: "GET" }).handler(
 export const createBusiness = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => CreateSchema.parse(d))
   .handler(async ({ data }) => {
-    const authHeader = getRequestHeader("authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return { business: null, error: "UNAUTHORIZED" as const };
-    }
-
-    const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
-    if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-      return { business: null, error: "BACKEND_UNAVAILABLE" as const };
-    }
-
-    const token = authHeader.replace("Bearer ", "");
-    const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-      global: { headers: { Authorization: `Bearer ${token}` } },
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
-
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData.user?.id;
-      if (!userId) return { business: null, error: "UNAUTHORIZED" as const };
-
-      // Ensure caller has business_user role (required by RLS insert policy).
-      const { error: roleErr } = await supabaseAdmin
-        .from("user_roles")
-        .upsert({ user_id: userId, role: "business_user" }, { onConflict: "user_id,role" });
-      if (roleErr) return { business: null, error: roleErr.message };
+      // Optional: si hay sesión, asignamos owner_id; si no, queda sin propietario.
+      let ownerId: string | null = null;
+      const authHeader = getRequestHeader("authorization");
+      if (authHeader?.startsWith("Bearer ")) {
+        const SUPABASE_URL = process.env.SUPABASE_URL;
+        const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
+        if (SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY) {
+          const token = authHeader.replace("Bearer ", "");
+          const userClient = createClient<Database>(
+            SUPABASE_URL,
+            SUPABASE_PUBLISHABLE_KEY,
+            {
+              global: { headers: { Authorization: `Bearer ${token}` } },
+              auth: { persistSession: false, autoRefreshToken: false },
+            },
+          );
+          const { data: userData } = await userClient.auth.getUser();
+          ownerId = userData.user?.id ?? null;
+          if (ownerId) {
+            await supabaseAdmin
+              .from("user_roles")
+              .upsert(
+                { user_id: ownerId, role: "business_user" },
+                { onConflict: "user_id,role" },
+              );
+          }
+        }
+      }
 
       // Ensure unique slug by appending a numeric suffix on collision.
       let slug = data.slug;
@@ -122,14 +124,15 @@ export const createBusiness = createServerFn({ method: "POST" })
         slug = `${data.slug}-${Math.random().toString(36).slice(2, 6)}`;
       }
 
-      const { data: row, error } = await supabase
+      // Usar admin client para evitar bloqueos de RLS cuando no hay sesión.
+      const { data: row, error } = await supabaseAdmin
         .from("businesses")
         .insert({
           ...data,
           slug,
           email: data.email || null,
           website: data.website || null,
-          owner_id: userId,
+          owner_id: ownerId,
         })
         .select()
         .single();
