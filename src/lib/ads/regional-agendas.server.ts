@@ -284,3 +284,44 @@ export async function fetchMercadillosHoy(): Promise<RegionalEvent[] | null> {
     excerpt: m.place,
   }));
 }
+
+// ─── Songkick (API oficial) ────────────────────────────────────────────
+// Metro area de Alicante = 34604. Devuelve conciertos próximos.
+export async function fetchSongkickAlicante(): Promise<RegionalEvent[] | null> {
+  const apiKey = process.env.SONGKICK_API_KEY;
+  if (!apiKey) return null;
+  try {
+    const url = `https://api.songkick.com/api/3.0/metro_areas/34604/calendar.json?apikey=${apiKey}&per_page=15`;
+    const r = await fetch(url, {
+      headers: { Accept: "application/json", "User-Agent": UA },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!r.ok) return null;
+    const json = (await r.json()) as {
+      resultsPage?: { results?: { event?: Array<Record<string, unknown>> } };
+    };
+    const events = json.resultsPage?.results?.event ?? [];
+    if (events.length === 0) return [];
+    const out: RegionalEvent[] = [];
+    for (const ev of events) {
+      const displayName = clean(String(ev.displayName ?? ""));
+      if (!displayName) continue;
+      const start = ev.start as { date?: string; time?: string } | undefined;
+      const venue = ev.venue as { displayName?: string } | undefined;
+      const dateISO = start?.date;
+      const when = dateISO ? fmtDateRange(dateISO) : "";
+      const place = clean(String(venue?.displayName ?? "Alicante"));
+      // displayName típico: "Artist at Venue (City) on Date" → coge la parte del artista
+      const artist = displayName.split(/\s+at\s+/i)[0] || displayName;
+      out.push({
+        title: artist.slice(0, 100),
+        when,
+        excerpt: `${place}. Vía Songkick.`,
+      });
+      if (out.length >= 10) break;
+    }
+    return out.length ? out : [];
+  } catch {
+    return null;
+  }
+}
