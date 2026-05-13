@@ -33,7 +33,18 @@ export const listIssuedQrs = createServerFn({ method: "GET" })
       active: boolean;
       payload: IssuerPayload | null;
     };
-    const empty = (error?: string) => ({ qrs: [] as Row[], error: error ?? null });
+    type Business = {
+      id: string;
+      name: string;
+      phone: string | null;
+      address: string | null;
+      opening_hours: unknown;
+    } | null;
+    const empty = (error?: string) => ({
+      qrs: [] as Row[],
+      business: null as Business,
+      error: error ?? null,
+    });
 
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
