@@ -79,9 +79,17 @@ function InboxPage() {
               : (last?.text ?? "—");
           const ageMin = Math.round((Date.now() - new Date(t.last_message_at).getTime()) / 60000);
           const sla = t.status === "awaiting_business" && ageMin > 10;
-          const isPending = t.booking?.status === "pending";
+          const bookingStatus = t.booking?.status;
+          const isPending = bookingStatus === "pending";
+          const isConfirmed = bookingStatus === "confirmed";
+          const isRejected = bookingStatus === "rejected" || bookingStatus === "declined" || bookingStatus === "cancelled";
+          const cardCls = isConfirmed
+            ? "rounded-2xl border-2 border-emerald-500/60 bg-emerald-50 dark:bg-emerald-950/30"
+            : isRejected
+              ? "rounded-2xl border border-rose-300/60 bg-rose-50/60 dark:bg-rose-950/20 opacity-80"
+              : "rounded-2xl border border-border bg-card";
           return (
-            <li key={t.id} className="rounded-2xl border border-border bg-card">
+            <li key={t.id} className={cardCls}>
               <Link
                 to="/business/inbox/$id"
                 params={{ id: t.id }}
@@ -106,8 +114,8 @@ function InboxPage() {
                     </p>
                   </div>
                   <div className="flex flex-col items-end gap-1">
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] ${badgeFor(t.status)}`}>
-                      {t.status === "awaiting_business" ? "nuevo" : t.status}
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${bookingBadge(bookingStatus, t.status)}`}>
+                      {bookingLabel(bookingStatus, t.status)}
                     </span>
                     <span className={`text-[10px] ${sla ? "text-destructive" : "text-muted-foreground"}`}>
                       {ageMin}m
