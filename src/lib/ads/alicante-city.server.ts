@@ -590,3 +590,61 @@ export async function fetchAenaDisruptions(): Promise<AenaDisruption[] | null> {
   return all.slice(0, 10);
 }
 
+// ─────────────────────────────────────────────────────────────────
+// AliBus — Próximas llegadas de buses urbanos en paradas céntricas
+// (Vectalia/Masatusa). API pública usada por alibus.es.
+// ─────────────────────────────────────────────────────────────────
+
+export type BusArrival = {
+  stop: string;
+  line: string;
+  destination: string;
+  minutes: number;
+};
+
+const ALIBUS_API = "https://alibus-buses.eduardogr.workers.dev/";
+const ALIBUS_STOPS: Array<{ code: string; label: string }> = [
+  { code: "4046", label: "Luceros" },
+  { code: "3129", label: "Mercado" },
+  { code: "4009", label: "Puerta del Mar" },
+  { code: "4118", label: "Estación-Maisonnave" },
+  { code: "2606", label: "Rambla" },
+];
+
+async function fetchAlibusStop(code: string, label: string): Promise<BusArrival[]> {
+  try {
+    const url = `${ALIBUS_API}?stop=${encodeURIComponent(code)}&municipio=alicante`;
+    const r = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    if (!r.ok) return [];
+    const j = (await r.json()) as { buses?: Array<{ line?: unknown; destination?: unknown; minutes?: unknown; seconds?: unknown }> };
+    const buses = Array.isArray(j.buses) ? j.buses : [];
+    return buses
+      .map((b) => {
+        const line = b.line != null ? String(b.line).trim() : "";
+        const destination = b.destination != null ? String(b.destination).trim() : "";
+        const mins = Number(b.minutes);
+        const secs = Number(b.seconds);
+        const minutes = Number.isFinite(mins) ? mins : Number.isFinite(secs) ? Math.round(secs / 60) : NaN;
+        if (!line || !Number.isFinite(minutes)) return null;
+        return { stop: label, line, destination, minutes } as BusArrival;
+      })
+      .filter((x): x is BusArrival => x !== null);
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchAlibusAlicante(): Promise<BusArrival[] | null> {
+  const results = await Promise.allSettled(
+    ALIBUS_STOPS.map((s) => fetchAlibusStop(s.code, s.label)),
+  );
+  const all: BusArrival[] = [];
+  for (const r of results) {
+    if (r.status === "fulfilled") all.push(...r.value);
+  }
+  if (!all.length) return null;
+  // Ordenar por minutos ascendentes y tomar las 10 más próximas
+  all.sort((a, b) => a.minutes - b.minutes);
+  return all.slice(0, 10);
+}
+
