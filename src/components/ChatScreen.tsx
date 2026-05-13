@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Mic, MapPin, Home, User as UserIcon, QrCode, X, Gift, Ticket, Sparkles, ShieldCheck } from "lucide-react";
+import { Send, Mic, MapPin, Home, User as UserIcon, QrCode, X, Gift, Ticket, Sparkles, ShieldCheck, CalendarPlus } from "lucide-react";
+import BookingDialog from "@/components/BookingDialog";
+import type { Listing } from "@/lib/overpass-listings";
 import { Link } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -852,12 +854,23 @@ const THEME_STYLES: Record<string, { bg: string; ring: string; badge: string }> 
 };
 
 function PlaceCard({ data }: { data: PlaceCardData }) {
+  const [booking, setBooking] = useState(false);
   const mapsHref = data.lat && data.lon
     ? `https://www.google.com/maps/dir/?api=1&destination=${data.lat},${data.lon}`
     : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${data.name} Alicante`)}`;
   const reviewsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${data.name} Alicante`)}`;
   const override = findPlaceOverride(data.name);
   const theme = THEME_STYLES[data.theme ?? "sun"] ?? THEME_STYLES.sun;
+  const synthListing: Listing = {
+    id: `chat-${data.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 60)}`,
+    name: data.name,
+    lat: data.lat ?? 0,
+    lon: data.lon ?? 0,
+    kind: "restaurant",
+    address: data.address ?? undefined,
+    cuisine: data.cuisine ?? undefined,
+    tags: {},
+  };
   return (
     <div className={`my-2 overflow-hidden rounded-2xl border ${theme.ring} ${theme.bg} shadow-soft backdrop-blur`}>
       {override?.image && (
@@ -891,11 +904,18 @@ function PlaceCard({ data }: { data: PlaceCardData }) {
           </p>
         )}
         <div className="mt-2 flex flex-wrap gap-1.5">
+          <button
+            type="button"
+            onClick={() => setBooking(true)}
+            className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full bg-primary text-primary-foreground active:scale-95"
+          >
+            <CalendarPlus className="w-3 h-3" /> Reservar
+          </button>
           <a
             href={mapsHref}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-primary text-primary-foreground active:scale-95"
+            className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground active:scale-95"
           >
             📍 Cómo llegar
           </a>
@@ -918,6 +938,7 @@ function PlaceCard({ data }: { data: PlaceCardData }) {
           </button>
         </div>
       </div>
+      {booking && <BookingDialog listing={synthListing} onClose={() => setBooking(false)} />}
     </div>
   );
 }
