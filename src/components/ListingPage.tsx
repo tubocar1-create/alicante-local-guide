@@ -17,6 +17,8 @@ type Props<K extends string> = {
   externalSearch?: { label: string; url: (q: string) => string }[];
   /** Optional: featured listings pinned at the top of the grid */
   featured?: Listing[];
+  /** Optional: featured listings computed from current active filter set */
+  getFeatured?: (active: K[]) => Listing[];
 };
 
 type Sort = "distance" | "rating" | "name";
