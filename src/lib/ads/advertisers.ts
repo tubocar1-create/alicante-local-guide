@@ -11,6 +11,7 @@ export type BannerKind =
   | "agenda"
   | "flights"
   | "trains"
+  | "buses"
   | "regional_agenda"
   | "mercadillos";
 
