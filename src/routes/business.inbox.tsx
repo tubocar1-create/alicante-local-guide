@@ -59,9 +59,15 @@ function InboxPage() {
       <ul className="space-y-2">
         {threads.map((t) => {
           const last = t.last_message;
-          const lastLabel = last?.template_key
-            ? (TEMPLATES[last.template_key]?.label ?? last.template_key)
-            : (last?.text ?? "—");
+          const isBookingRequest =
+            !last || last.template_key === "booking_created";
+          const lastLabel = isBookingRequest
+            ? `solicitó una reserva para ${t.booking?.party_size ?? 1} ${
+                (t.booking?.party_size ?? 1) === 1 ? "persona" : "personas"
+              }`
+            : last?.template_key
+              ? (TEMPLATES[last.template_key]?.label ?? last.template_key)
+              : (last?.text ?? "—");
           const ageMin = Math.round((Date.now() - new Date(t.last_message_at).getTime()) / 60000);
           const sla = t.status === "awaiting_business" && ageMin > 10;
           return (
@@ -74,16 +80,24 @@ function InboxPage() {
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">
-                      {t.booking?.customer_name ?? "Cliente"} · {t.booking?.party_size ?? 1}p
+                      {t.booking?.customer_name ?? "Cliente"}{" "}
+                      <span className="font-normal text-muted-foreground">{lastLabel}</span>
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {t.booking ? new Date(t.booking.scheduled_at).toLocaleString() : ""}
+                      {t.booking
+                        ? new Date(t.booking.scheduled_at).toLocaleString([], {
+                            weekday: "short",
+                            day: "2-digit",
+                            month: "short",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : ""}
                     </p>
-                    <p className="mt-1 truncate text-xs">{lastLabel}</p>
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     <span className={`rounded-full px-2 py-0.5 text-[10px] ${badgeFor(t.status)}`}>
-                      {t.status}
+                      {t.status === "awaiting_business" ? "nuevo" : t.status}
                     </span>
                     <span className={`text-[10px] ${sla ? "text-destructive" : "text-muted-foreground"}`}>
                       {ageMin}m
