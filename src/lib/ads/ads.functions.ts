@@ -84,6 +84,47 @@ async function fetchAlicanteWeather(): Promise<Weather | null> {
   }
 }
 
+const WIKI_TOPICS = [
+  "Alicante",
+  "Castillo_de_Santa_Bárbara",
+  "Hogueras_de_San_Juan",
+  "Explanada_de_España",
+  "Barrio_de_Santa_Cruz_(Alicante)",
+  "Playa_del_Postiguet",
+  "Mercado_Central_de_Alicante",
+  "Isla_de_Tabarca",
+  "Basílica_de_Santa_María_(Alicante)",
+  "Concatedral_de_San_Nicolás_de_Bari_(Alicante)",
+  "MARQ_(Alicante)",
+  "Tranvía_Metropolitano_de_Alicante",
+  "Puerto_de_Alicante",
+  "Monte_Benacantil",
+  "Gastronomía_de_la_provincia_de_Alicante",
+];
+
+type WikiSummary = { title: string; extract: string; url: string };
+
+async function fetchRandomWikiSummary(): Promise<WikiSummary | null> {
+  const topic = WIKI_TOPICS[Math.floor(Math.random() * WIKI_TOPICS.length)];
+  try {
+    const url = `https://es.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(topic)}`;
+    const r = await fetch(url, {
+      headers: { Accept: "application/json" },
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!r.ok) return null;
+    const j = await r.json();
+    if (!j?.extract) return null;
+    return {
+      title: j.title ?? topic.replace(/_/g, " "),
+      extract: String(j.extract).slice(0, 800),
+      url: j?.content_urls?.desktop?.page ?? `https://es.wikipedia.org/wiki/${topic}`,
+    };
+  } catch {
+    return null;
+  }
+}
+
 function describeWmo(code: number): string {
   if (code === 0) return "despejado";
   if ([1, 2, 3].includes(code)) return "parcialmente nublado";
@@ -128,6 +169,14 @@ export const getAdVariants = createServerFn({ method: "POST" })
       }
     }
 
+    let wiki: WikiSummary | null = null;
+    if (advertiser.kind === "info") {
+      wiki = await fetchRandomWikiSummary();
+      if (wiki) {
+        baseResp.advertiser.ctaUrl = wiki.url;
+      }
+    }
+
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       return {
@@ -140,7 +189,9 @@ export const getAdVariants = createServerFn({ method: "POST" })
     const userPrompt =
       advertiser.kind === "weather"
         ? `Genera ${count} variantes DISTINTAS de tarjeta de CLIMA para Alicante. Cada variante: headline (máx 7 palabras, refleja el tiempo actual), body (1 frase con consejo práctico, máx 110 caracteres), cta (2-3 palabras tipo "Ver tiempo"). Tono cercano y útil. Sin alarmismo.${weatherCtx}`
-        : `Genera ${count} variantes DISTINTAS de tarjeta INFORMATIVA sobre Alicante. Temas variados: gastronomía local, Hogueras, playas, TRAM/TAM, Castillo de Santa Bárbara, barrios (Santa Cruz, San Antón), mercados, datos curiosos. Cada variante: headline (máx 7 palabras), body (1 frase, máx 110 caracteres), cta (2-3 palabras tipo "Saber más"). Tono cercano, sin clichés turísticos.`;
+        : wiki
+          ? `Tema REAL extraído de Wikipedia: "${wiki.title}".\n\nResumen fuente:\n"""${wiki.extract}"""\n\nGenera ${count} variantes DISTINTAS de tarjeta INFORMATIVA basadas EXCLUSIVAMENTE en ese resumen (no inventes datos que no estén ahí). Cada variante destaca un ángulo distinto del tema. Cada variante: headline (máx 7 palabras), body (1 frase con un dato concreto, máx 110 caracteres), cta (2-3 palabras tipo "Saber más"). Tono cercano, sin clichés. Si un dato no está en el resumen, omítelo.`
+          : `Genera ${count} variantes DISTINTAS de tarjeta INFORMATIVA sobre Alicante. Temas variados: gastronomía local, Hogueras, playas, TRAM/TAM, Castillo de Santa Bárbara, barrios, mercados, datos curiosos. Cada variante: headline (máx 7 palabras), body (1 frase, máx 110 caracteres), cta (2-3 palabras tipo "Saber más"). Tono cercano, sin clichés turísticos.`;
 
     try {
       const res = await fetch(
