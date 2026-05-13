@@ -268,7 +268,7 @@ export const listGuestBookingStatuses = createServerFn({ method: "POST" })
       const ids = data.items.map((i) => i.booking_id);
       const { data: bookings } = await admin
         .from("bookings")
-        .select("id, status, scheduled_at, business_id, metadata")
+        .select("id, status, scheduled_at, business_id, metadata, customer_name")
         .in("id", ids);
 
       const valid = (bookings ?? []).filter((b) => {
