@@ -89,13 +89,29 @@ export const Route = createFileRoute("/api/public/qr-issue")({
           .select("id")
           .maybeSingle();
 
-        // Track event regardless (still useful if QR row already existed).
-        await sb.from("interaction_events").insert({
-          type: "qr_created",
+        // Log a visit (the user "visited" the place by generating a QR there).
+        await sb.from("visits").insert({
           business_id: biz.id,
-          source: "beta_user",
+          source: "beta_user_qr",
+          qr_id: qrIns.data?.id ?? null,
           metadata: { place_id, code } as never,
         });
+
+        // Track events: visit_viewed + qr_created so the dashboard reflects both.
+        await sb.from("interaction_events").insert([
+          {
+            type: "visit_viewed",
+            business_id: biz.id,
+            source: "beta_user",
+            metadata: { place_id } as never,
+          },
+          {
+            type: "qr_created",
+            business_id: biz.id,
+            source: "beta_user",
+            metadata: { place_id, code } as never,
+          },
+        ]);
 
         return Response.json({ ok: true, business_id: biz.id, qr_id: qrIns.data?.id ?? null });
       },
