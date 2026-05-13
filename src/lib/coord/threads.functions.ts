@@ -192,7 +192,7 @@ export const getThread = createServerFn({ method: "GET" })
       throw new Error("No autorizado");
     }
 
-    return { thread, messages: messages ?? [], booking: booking ?? null };
+    return { thread, messages: messages ?? [], booking: booking ?? null, business: business ?? null };
   });
 
 export const listThreadsForUser = createServerFn({ method: "GET" }).handler(async () => {
