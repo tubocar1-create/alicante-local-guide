@@ -330,16 +330,16 @@ export const getAdVariants = createServerFn({ method: "POST" })
       if (t) {
         const sample = t.sample
           .map((s) => {
-            const where = s.onGround
-              ? "en pista"
-              : s.altitudeM != null
-                ? `${Math.round(s.altitudeM / 30.48) / 10} mil pies`
-                : "en vuelo";
-            const speed = s.velocityKmh ? `${s.velocityKmh} km/h` : "";
-            return `- ${s.callsign} (${s.country || "—"}) ${where}${speed ? ", " + speed : ""}`;
+            if (s.onGround) {
+              return `- Vuelo ${s.callsign} (${s.country || "país desconocido"}) rodando en pista`;
+            }
+            const alt = s.altitudeM != null ? `${Math.round(s.altitudeM / 30.48) / 10} mil pies` : "en vuelo";
+            const dist = s.distanceKm != null ? `, a ${s.distanceKm} km` : "";
+            const eta = s.etaMin != null ? `, ESTIMA ATERRIZAR EN ${s.etaMin} min` : "";
+            return `- Vuelo ${s.callsign} (procedente de ${s.country || "país desconocido"}), ${alt}${dist}${eta}`;
           })
           .join("\n");
-        flightsCtx = `\n\nTRÁFICO AÉREO REAL ahora alrededor de Alicante-Elche (OpenSky Network):\nTotal aviones detectados: ${t.total} (${t.airborne} en vuelo, ${t.onGround} en pista).\nMuestra (más cercanos al aeropuerto):\n${sample || "(ninguno)"}\n\nUsa estos datos REALES sin inventar callsigns ni países. Si está en pista, di "rodando". Si vuela, menciona altitud o velocidad.`;
+        flightsCtx = `\n\nTRÁFICO AÉREO REAL ahora cerca de Alicante-Elche (OpenSky):\nTotal: ${t.total} (${t.airborne} en vuelo, ${t.onGround} en pista).\nVuelos detectados:\n${sample || "(ninguno)"}\n\nUsa SOLO estos datos. Prioriza vuelos con ETA (los que se aproximan).`;
       } else {
         flightsCtx = "\n\n(Sin datos de tráfico aéreo en este momento).";
       }
