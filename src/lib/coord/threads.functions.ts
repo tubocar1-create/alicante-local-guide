@@ -210,13 +210,25 @@ export const listThreadsForUser = createServerFn({ method: "GET" }).handler(asyn
       return { threads: [] };
     }
     const bizIds = [...new Set((rows ?? []).map((r) => r.business_id))];
-    const { data: bizs } = await supabase
-      .from("businesses")
-      .select("id, name, address, phone")
-      .in("id", bizIds.length ? bizIds : ["00000000-0000-0000-0000-000000000000"]);
+    const bookingIds = (rows ?? []).map((r) => r.booking_id);
+    const [{ data: bizs }, { data: bookings }] = await Promise.all([
+      supabase
+        .from("businesses")
+        .select("id, name, address, phone")
+        .in("id", bizIds.length ? bizIds : ["00000000-0000-0000-0000-000000000000"]),
+      supabase
+        .from("bookings")
+        .select("id, status, scheduled_at")
+        .in("id", bookingIds.length ? bookingIds : ["00000000-0000-0000-0000-000000000000"]),
+    ]);
     const map = new Map((bizs ?? []).map((b) => [b.id, b]));
+    const bookingsById = new Map((bookings ?? []).map((b) => [b.id, b]));
     return {
-      threads: (rows ?? []).map((t) => ({ ...t, business: map.get(t.business_id) ?? null })),
+      threads: (rows ?? []).map((t) => ({
+        ...t,
+        business: map.get(t.business_id) ?? null,
+        booking: bookingsById.get(t.booking_id) ?? null,
+      })),
     };
   } catch (e) {
     console.error("listThreadsForUser failed", e);
