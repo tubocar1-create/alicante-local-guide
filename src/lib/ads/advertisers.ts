@@ -148,6 +148,23 @@ export const ADVERTISERS: Advertiser[] = [
     brief:
       "Eventos culturales reales publicados en la agenda oficial del Ayuntamiento de Alicante: exposiciones, conciertos, rutas, etc.",
   },
+  {
+    id: "vuelos-alicante",
+    name: "Vuelos en vivo",
+    tagline: "Tráfico aéreo cerca del aeropuerto",
+    category: "Aeropuerto",
+    kind: "flights",
+    ctaLabel: "Ver vuelos",
+    ctaUrl: "https://www.aena.es/es/aeropuerto-alicante-elche/index.html",
+    theme: {
+      bg: "bg-gradient-to-r from-slate-700 via-blue-700 to-indigo-700",
+      fg: "text-white",
+      accent: "bg-white text-blue-700",
+      emoji: "✈️",
+    },
+    brief:
+      "Tráfico aéreo en vivo alrededor del aeropuerto de Alicante-Elche (ALC/LEAL) usando OpenSky Network: aviones en vuelo cerca, en pista, callsign, altitud y país.",
+  },
 ];
 export function getAdvertiser(id: string): Advertiser | undefined {
   return ADVERTISERS.find((a) => a.id === id);
