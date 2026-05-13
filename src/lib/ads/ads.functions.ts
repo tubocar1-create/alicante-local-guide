@@ -20,29 +20,80 @@ export type AdVariantsResponse = {
 };
 
 const FALLBACK: Record<string, AdCopy[]> = {
-  plastiahorro: [
+  "clima-alicante": [
     {
-      headline: "Tuppers que duran de verdad",
-      body: "Llévate la cocina ordenada sin gastar de más. Te esperamos en Plastiahorro.",
-      cta: "Ver tienda",
+      headline: "Buen día para pasear",
+      body: "Cielo amable en Alicante. Aprovecha el rato para callejear por el casco antiguo.",
+      cta: "Ver tiempo",
     },
     {
-      headline: "Lo del hogar, a precio Plastiahorro",
-      body: "Menaje, organización y mil ideas para el día a día sin vaciar la cartera.",
-      cta: "Echa un vistazo",
+      headline: "Hidrátate, que aprieta",
+      body: "El sol mediterráneo no avisa: lleva agua y crema, sobre todo si vas a la playa.",
+      cta: "Ver tiempo",
+    },
+  ],
+  "info-alicante": [
+    {
+      headline: "El Castillo de Santa Bárbara",
+      body: "Está sobre el monte Benacantil y se ve la silueta de la 'Cara del Moro' desde el puerto.",
+      cta: "Saber más",
     },
     {
-      headline: "Tu bazar de confianza en Alicante",
-      body: "Desde el vaso de agua hasta el organizador del cajón: lo tenemos.",
-      cta: "Ir a la tienda",
+      headline: "TRAM hasta El Campello",
+      body: "La L1 te lleva por la costa con vistas; ideal para escaparte sin coche.",
+      cta: "Saber más",
     },
     {
-      headline: "Ahorra en lo de cada día",
-      body: "Productos de cocina, baño y limpieza con esa sonrisa al ver el ticket.",
-      cta: "Descubrir",
+      headline: "Hogueras: junio en llamas",
+      body: "Del 20 al 24 la ciudad arde de fiesta. Si vienes esos días, reserva con tiempo.",
+      cta: "Saber más",
     },
   ],
 };
+
+const ALC_LAT = 38.3452;
+const ALC_LON = -0.481;
+
+type Weather = {
+  tempC: number;
+  feelsC: number;
+  windKmh: number;
+  precipMm: number;
+  code: number;
+  isDay: boolean;
+};
+
+async function fetchAlicanteWeather(): Promise<Weather | null> {
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${ALC_LAT}&longitude=${ALC_LON}&current=temperature_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,is_day&timezone=Europe%2FMadrid`;
+    const r = await fetch(url, { signal: AbortSignal.timeout(4000) });
+    if (!r.ok) return null;
+    const j = await r.json();
+    const c = j?.current;
+    if (!c) return null;
+    return {
+      tempC: Math.round(c.temperature_2m),
+      feelsC: Math.round(c.apparent_temperature),
+      windKmh: Math.round(c.wind_speed_10m),
+      precipMm: Number(c.precipitation ?? 0),
+      code: Number(c.weather_code ?? 0),
+      isDay: Number(c.is_day) === 1,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function describeWmo(code: number): string {
+  if (code === 0) return "despejado";
+  if ([1, 2, 3].includes(code)) return "parcialmente nublado";
+  if ([45, 48].includes(code)) return "niebla";
+  if ([51, 53, 55, 56, 57].includes(code)) return "llovizna";
+  if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return "lluvia";
+  if ([71, 73, 75, 77, 85, 86].includes(code)) return "nieve";
+  if ([95, 96, 99].includes(code)) return "tormenta";
+  return "variable";
+}
 
 export const getAdVariants = createServerFn({ method: "POST" })
   .inputValidator(
@@ -55,8 +106,7 @@ export const getAdVariants = createServerFn({ method: "POST" })
         .parse(input),
   )
   .handler(async ({ data }): Promise<AdVariantsResponse> => {
-    const advertiser =
-      getAdvertiser(data.advertiserId) ?? ADVERTISERS[0];
+    const advertiser = getAdvertiser(data.advertiserId) ?? ADVERTISERS[0];
     const count = data.count ?? 6;
 
     const baseResp = {
@@ -68,14 +118,29 @@ export const getAdVariants = createServerFn({ method: "POST" })
       },
     };
 
+    let weatherCtx = "";
+    if (advertiser.kind === "weather") {
+      const w = await fetchAlicanteWeather();
+      if (w) {
+        weatherCtx = `\n\nDATOS METEO ACTUALES (Alicante): ${w.tempC}°C (sensación ${w.feelsC}°C), viento ${w.windKmh} km/h, precipitación ${w.precipMm} mm, condición: ${describeWmo(w.code)}, ${w.isDay ? "de día" : "de noche"}. Usa estos datos REALES, no los inventes. Menciona la temperatura.`;
+      } else {
+        weatherCtx = "\n\n(Sin datos meteo en vivo: escribe consejos generales según la estación actual en Alicante).";
+      }
+    }
+
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       return {
         ...baseResp,
-        variants: FALLBACK[advertiser.id] ?? FALLBACK.plastiahorro,
+        variants: FALLBACK[advertiser.id] ?? FALLBACK["info-alicante"],
         error: "no_api_key",
       };
     }
+
+    const userPrompt =
+      advertiser.kind === "weather"
+        ? `Genera ${count} variantes DISTINTAS de tarjeta de CLIMA para Alicante. Cada variante: headline (máx 7 palabras, refleja el tiempo actual), body (1 frase con consejo práctico, máx 110 caracteres), cta (2-3 palabras tipo "Ver tiempo"). Tono cercano y útil. Sin alarmismo.${weatherCtx}`
+        : `Genera ${count} variantes DISTINTAS de tarjeta INFORMATIVA sobre Alicante. Temas variados: gastronomía local, Hogueras, playas, TRAM/TAM, Castillo de Santa Bárbara, barrios (Santa Cruz, San Antón), mercados, datos curiosos. Cada variante: headline (máx 7 palabras), body (1 frase, máx 110 caracteres), cta (2-3 palabras tipo "Saber más"). Tono cercano, sin clichés turísticos.`;
 
     try {
       const res = await fetch(
@@ -92,19 +157,16 @@ export const getAdVariants = createServerFn({ method: "POST" })
               {
                 role: "system",
                 content:
-                  "Eres copywriter publicitario en español de España. Escribes banners cortos, frescos y honestos. Nada de mayúsculas gritonas, nada de '¡!' encadenados, nada de promesas vacías.",
+                  "Eres redactor en español de España. Escribes tarjetas cortas, frescas y honestas para una app local de Alicante. Nada de mayúsculas gritonas, nada de '¡!' encadenados, nada de promesas vacías.",
               },
-              {
-                role: "user",
-                content: `Anunciante: ${advertiser.name}\nCategoría: ${advertiser.category}\nBrief: ${advertiser.brief}\n\nGenera ${count} variantes DISTINTAS de banner publicitario corto. Cada variante: headline (máx 7 palabras), body (1 frase, máx 110 caracteres), cta (2-3 palabras). Tono cercano, alicantino, sin clichés. Variedad de ángulos (precio, utilidad, ocasión, descubrimiento, hostelero, hogar, regalo…).`,
-              },
+              { role: "user", content: userPrompt },
             ],
             tools: [
               {
                 type: "function",
                 function: {
                   name: "emit_ad_variants",
-                  description: "Devuelve variantes de copy publicitario.",
+                  description: "Devuelve variantes de copy.",
                   parameters: {
                     type: "object",
                     properties: {
@@ -140,7 +202,7 @@ export const getAdVariants = createServerFn({ method: "POST" })
         console.error("[ads] gateway error", res.status, await res.text());
         return {
           ...baseResp,
-          variants: FALLBACK[advertiser.id] ?? FALLBACK.plastiahorro,
+          variants: FALLBACK[advertiser.id] ?? FALLBACK["info-alicante"],
           error: `gateway_${res.status}`,
         };
       }
@@ -151,7 +213,7 @@ export const getAdVariants = createServerFn({ method: "POST" })
       if (!args) {
         return {
           ...baseResp,
-          variants: FALLBACK[advertiser.id] ?? FALLBACK.plastiahorro,
+          variants: FALLBACK[advertiser.id] ?? FALLBACK["info-alicante"],
           error: "no_tool_call",
         };
       }
@@ -163,7 +225,7 @@ export const getAdVariants = createServerFn({ method: "POST" })
       if (variants.length === 0) {
         return {
           ...baseResp,
-          variants: FALLBACK[advertiser.id] ?? FALLBACK.plastiahorro,
+          variants: FALLBACK[advertiser.id] ?? FALLBACK["info-alicante"],
           error: "empty_variants",
         };
       }
@@ -173,7 +235,7 @@ export const getAdVariants = createServerFn({ method: "POST" })
       console.error("[ads] error", e);
       return {
         ...baseResp,
-        variants: FALLBACK[advertiser.id] ?? FALLBACK.plastiahorro,
+        variants: FALLBACK[advertiser.id] ?? FALLBACK["info-alicante"],
         error: "exception",
       };
     }
