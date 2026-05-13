@@ -27,8 +27,21 @@ type BusinessRow = Database["public"]["Tables"]["businesses"]["Row"];
 export const listMyBusinesses = createServerFn({ method: "GET" }).handler(
   async (): Promise<{ businesses: BusinessRow[]; error?: string }> => {
     const authHeader = getRequestHeader("authorization");
+
+    // Sin sesión: devolvemos los negocios sin propietario (creados en modo abierto).
     if (!authHeader?.startsWith("Bearer ")) {
-      return { businesses: [], error: "UNAUTHORIZED" };
+      try {
+        const { data, error } = await supabaseAdmin
+          .from("businesses")
+          .select("*")
+          .is("owner_id", null)
+          .order("created_at", { ascending: false });
+        if (error) return { businesses: [], error: error.message };
+        return { businesses: data ?? [] };
+      } catch (e) {
+        console.error("listMyBusinesses (anon) failed", e);
+        return { businesses: [], error: "LIST_FAILED" };
+      }
     }
 
     const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -46,7 +59,14 @@ export const listMyBusinesses = createServerFn({ method: "GET" }).handler(
     try {
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id;
-      if (!userId) return { businesses: [], error: "UNAUTHORIZED" };
+      if (!userId) {
+        const { data } = await supabaseAdmin
+          .from("businesses")
+          .select("*")
+          .is("owner_id", null)
+          .order("created_at", { ascending: false });
+        return { businesses: data ?? [] };
+      }
 
       const ownedRes = await supabase
         .from("businesses")
