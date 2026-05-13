@@ -256,14 +256,15 @@ export const getAdVariants = createServerFn({ method: "POST" })
     if (advertiser.kind === "parkings") {
       const ps = await fetchAlicanteParkings();
       if (ps && ps.length) {
-        const sorted = [...ps].sort((a, b) => b.libres - a.libres);
+        const named = ps.filter((p) => !/^Parking\s+\d+$/i.test(p.name));
+        const sorted = [...named].sort((a, b) => b.libres - a.libres);
         const lines = sorted
           .map(
             (p) =>
               `- ${p.name}: ${p.libres} libres / ${p.total} (ocupación ${p.ocupacionPct}%)`,
           )
           .join("\n");
-        parkingsCtx = `\n\nDATOS REALES Ayto. Alicante (parkings públicos del centro, ahora):\n${lines}\n\nUsa estos números EXACTOS, no inventes. Destaca el más libre o el más lleno según el ángulo.`;
+        parkingsCtx = `\n\nDATOS REALES Ayto. Alicante (parkings públicos del centro, ahora):\n${lines}\n\nUsa estos números EXACTOS y refiérete a cada parking por su NOMBRE tal cual aparece arriba. NUNCA uses números de orden ni "Parking 1/2/3".`;
       } else {
         parkingsCtx = "\n\n(Sin datos de parkings ahora mismo).";
       }
