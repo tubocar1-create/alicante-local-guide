@@ -26,7 +26,10 @@ function ThreadsLayout() {
   const threads = data?.threads ?? [];
   return (
     <div className="mx-auto min-h-svh max-w-md bg-background px-4 py-6">
-      <h1 className="mb-3 text-xl font-semibold">Mis conversaciones</h1>
+      <Link to="/" className="mb-3 inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground active:scale-95">
+        ← Inicio
+      </Link>
+      <h1 className="mb-3 mt-3 text-xl font-semibold">Mis conversaciones</h1>
       <ul className="space-y-2">
         {threads.map((t) => (
           <li key={t.id}>
