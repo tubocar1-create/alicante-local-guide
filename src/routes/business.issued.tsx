@@ -64,6 +64,7 @@ function IssuedQrsPage() {
   });
 
   const qrs = (data?.qrs ?? []) as QrRow[];
+  const business = (data?.business ?? null) as BusinessInfo | null;
   const [openQr, setOpenQr] = useState<QrRow | null>(null);
 
   return (
