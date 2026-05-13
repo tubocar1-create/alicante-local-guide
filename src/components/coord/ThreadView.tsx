@@ -58,12 +58,13 @@ export function ThreadView({
 
   if (isLoading || !data) return <p className="p-4 text-sm text-muted-foreground">Cargando…</p>;
 
-  const { thread, messages, booking } = data;
+  const { thread, messages, booking, business } = data;
   const closed = thread.status === "closed" || thread.status === "expired";
   const suggestions = suggestionsFor(role, thread.status, booking?.status ?? "pending");
   const latestProposal = [...messages]
     .reverse()
     .find((msg) => msg.template_key === "business.propose_slot");
+  const businessName = business?.name ?? "El negocio";
 
   return (
     <div className="flex h-full flex-col">
@@ -123,13 +124,30 @@ export function ThreadView({
                   mine ? "bg-primary text-primary-foreground" : "bg-muted",
                 )}
               >
-                {msg.template_key && (
-                  <p className="text-xs font-semibold opacity-80">
-                    {TEMPLATES[msg.template_key]?.label ?? msg.template_key}
-                  </p>
+                {msg.template_key === "business.propose_slot" && role === "user" ? (
+                  <>
+                    <p className="text-xs font-semibold opacity-80">
+                      {businessName} te propone cambio de hora para:
+                    </p>
+                    {(msg.payload as Record<string, unknown> | null)?.scheduled_at && (
+                      <p className="mt-1 text-sm font-medium">
+                        {new Date(
+                          String((msg.payload as Record<string, unknown>).scheduled_at),
+                        ).toLocaleString()}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {msg.template_key && (
+                      <p className="text-xs font-semibold opacity-80">
+                        {TEMPLATES[msg.template_key]?.label ?? msg.template_key}
+                      </p>
+                    )}
+                    {msg.text && <p>{msg.text}</p>}
+                    {renderPayload(msg.template_key, msg.payload)}
+                  </>
                 )}
-                {msg.text && <p>{msg.text}</p>}
-                {renderPayload(msg.template_key, msg.payload)}
                 <p className="mt-0.5 text-[10px] opacity-60">
                   {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </p>

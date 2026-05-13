@@ -173,7 +173,7 @@ export const getThread = createServerFn({ method: "GET" })
         .eq("thread_id", data.thread_id)
         .order("created_at", { ascending: true }),
       admin.from("bookings").select("*").eq("id", thread.booking_id).single(),
-      admin.from("businesses").select("id, owner_id").eq("id", thread.business_id).single(),
+      admin.from("businesses").select("id, owner_id, name").eq("id", thread.business_id).single(),
     ]);
 
     const userId = await currentUserId();
@@ -192,7 +192,7 @@ export const getThread = createServerFn({ method: "GET" })
       throw new Error("No autorizado");
     }
 
-    return { thread, messages: messages ?? [], booking: booking ?? null };
+    return { thread, messages: messages ?? [], booking: booking ?? null, business: business ?? null };
   });
 
 export const listThreadsForUser = createServerFn({ method: "GET" }).handler(async () => {
