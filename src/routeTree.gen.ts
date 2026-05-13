@@ -15,8 +15,16 @@ import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as EatRouteImport } from './routes/eat'
+import { Route as BusinessRouteImport } from './routes/business'
 import { Route as BusRouteImport } from './routes/bus'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BusinessIndexRouteImport } from './routes/business.index'
+import { Route as BusinessReferralsRouteImport } from './routes/business.referrals'
+import { Route as BusinessQrRouteImport } from './routes/business.qr'
+import { Route as BusinessOnboardingRouteImport } from './routes/business.onboarding'
+import { Route as BusinessMetricsRouteImport } from './routes/business.metrics'
+import { Route as BusinessLoginRouteImport } from './routes/business.login'
+import { Route as BusinessBookingsRouteImport } from './routes/business.bookings'
 import { Route as BusPlannerRouteImport } from './routes/bus.planner'
 import { Route as BusLinesRouteImport } from './routes/bus.lines'
 import { Route as BusLinesCodeRouteImport } from './routes/bus.lines.$code'
@@ -52,6 +60,11 @@ const EatRoute = EatRouteImport.update({
   path: '/eat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BusinessRoute = BusinessRouteImport.update({
+  id: '/business',
+  path: '/business',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BusRoute = BusRouteImport.update({
   id: '/bus',
   path: '/bus',
@@ -61,6 +74,41 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const BusinessIndexRoute = BusinessIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => BusinessRoute,
+} as any)
+const BusinessReferralsRoute = BusinessReferralsRouteImport.update({
+  id: '/referrals',
+  path: '/referrals',
+  getParentRoute: () => BusinessRoute,
+} as any)
+const BusinessQrRoute = BusinessQrRouteImport.update({
+  id: '/qr',
+  path: '/qr',
+  getParentRoute: () => BusinessRoute,
+} as any)
+const BusinessOnboardingRoute = BusinessOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => BusinessRoute,
+} as any)
+const BusinessMetricsRoute = BusinessMetricsRouteImport.update({
+  id: '/metrics',
+  path: '/metrics',
+  getParentRoute: () => BusinessRoute,
+} as any)
+const BusinessLoginRoute = BusinessLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => BusinessRoute,
+} as any)
+const BusinessBookingsRoute = BusinessBookingsRouteImport.update({
+  id: '/bookings',
+  path: '/bookings',
+  getParentRoute: () => BusinessRoute,
 } as any)
 const BusPlannerRoute = BusPlannerRouteImport.update({
   id: '/planner',
@@ -86,6 +134,7 @@ const ApiPublicBusEtaRoute = ApiPublicBusEtaRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bus': typeof BusRouteWithChildren
+  '/business': typeof BusinessRouteWithChildren
   '/eat': typeof EatRoute
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
@@ -94,6 +143,13 @@ export interface FileRoutesByFullPath {
   '/stay': typeof StayRoute
   '/bus/lines': typeof BusLinesRouteWithChildren
   '/bus/planner': typeof BusPlannerRoute
+  '/business/bookings': typeof BusinessBookingsRoute
+  '/business/login': typeof BusinessLoginRoute
+  '/business/metrics': typeof BusinessMetricsRoute
+  '/business/onboarding': typeof BusinessOnboardingRoute
+  '/business/qr': typeof BusinessQrRoute
+  '/business/referrals': typeof BusinessReferralsRoute
+  '/business/': typeof BusinessIndexRoute
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
 }
@@ -108,6 +164,13 @@ export interface FileRoutesByTo {
   '/stay': typeof StayRoute
   '/bus/lines': typeof BusLinesRouteWithChildren
   '/bus/planner': typeof BusPlannerRoute
+  '/business/bookings': typeof BusinessBookingsRoute
+  '/business/login': typeof BusinessLoginRoute
+  '/business/metrics': typeof BusinessMetricsRoute
+  '/business/onboarding': typeof BusinessOnboardingRoute
+  '/business/qr': typeof BusinessQrRoute
+  '/business/referrals': typeof BusinessReferralsRoute
+  '/business': typeof BusinessIndexRoute
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
 }
@@ -115,6 +178,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/bus': typeof BusRouteWithChildren
+  '/business': typeof BusinessRouteWithChildren
   '/eat': typeof EatRoute
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
@@ -123,6 +187,13 @@ export interface FileRoutesById {
   '/stay': typeof StayRoute
   '/bus/lines': typeof BusLinesRouteWithChildren
   '/bus/planner': typeof BusPlannerRoute
+  '/business/bookings': typeof BusinessBookingsRoute
+  '/business/login': typeof BusinessLoginRoute
+  '/business/metrics': typeof BusinessMetricsRoute
+  '/business/onboarding': typeof BusinessOnboardingRoute
+  '/business/qr': typeof BusinessQrRoute
+  '/business/referrals': typeof BusinessReferralsRoute
+  '/business/': typeof BusinessIndexRoute
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
 }
@@ -131,6 +202,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/bus'
+    | '/business'
     | '/eat'
     | '/explore'
     | '/login'
@@ -139,6 +211,13 @@ export interface FileRouteTypes {
     | '/stay'
     | '/bus/lines'
     | '/bus/planner'
+    | '/business/bookings'
+    | '/business/login'
+    | '/business/metrics'
+    | '/business/onboarding'
+    | '/business/qr'
+    | '/business/referrals'
+    | '/business/'
     | '/api/public/bus-eta'
     | '/bus/lines/$code'
   fileRoutesByTo: FileRoutesByTo
@@ -153,12 +232,20 @@ export interface FileRouteTypes {
     | '/stay'
     | '/bus/lines'
     | '/bus/planner'
+    | '/business/bookings'
+    | '/business/login'
+    | '/business/metrics'
+    | '/business/onboarding'
+    | '/business/qr'
+    | '/business/referrals'
+    | '/business'
     | '/api/public/bus-eta'
     | '/bus/lines/$code'
   id:
     | '__root__'
     | '/'
     | '/bus'
+    | '/business'
     | '/eat'
     | '/explore'
     | '/login'
@@ -167,6 +254,13 @@ export interface FileRouteTypes {
     | '/stay'
     | '/bus/lines'
     | '/bus/planner'
+    | '/business/bookings'
+    | '/business/login'
+    | '/business/metrics'
+    | '/business/onboarding'
+    | '/business/qr'
+    | '/business/referrals'
+    | '/business/'
     | '/api/public/bus-eta'
     | '/bus/lines/$code'
   fileRoutesById: FileRoutesById
@@ -174,6 +268,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BusRoute: typeof BusRouteWithChildren
+  BusinessRoute: typeof BusinessRouteWithChildren
   EatRoute: typeof EatRoute
   ExploreRoute: typeof ExploreRoute
   LoginRoute: typeof LoginRoute
@@ -227,6 +322,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/business': {
+      id: '/business'
+      path: '/business'
+      fullPath: '/business'
+      preLoaderRoute: typeof BusinessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/bus': {
       id: '/bus'
       path: '/bus'
@@ -240,6 +342,55 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/business/': {
+      id: '/business/'
+      path: '/'
+      fullPath: '/business/'
+      preLoaderRoute: typeof BusinessIndexRouteImport
+      parentRoute: typeof BusinessRoute
+    }
+    '/business/referrals': {
+      id: '/business/referrals'
+      path: '/referrals'
+      fullPath: '/business/referrals'
+      preLoaderRoute: typeof BusinessReferralsRouteImport
+      parentRoute: typeof BusinessRoute
+    }
+    '/business/qr': {
+      id: '/business/qr'
+      path: '/qr'
+      fullPath: '/business/qr'
+      preLoaderRoute: typeof BusinessQrRouteImport
+      parentRoute: typeof BusinessRoute
+    }
+    '/business/onboarding': {
+      id: '/business/onboarding'
+      path: '/onboarding'
+      fullPath: '/business/onboarding'
+      preLoaderRoute: typeof BusinessOnboardingRouteImport
+      parentRoute: typeof BusinessRoute
+    }
+    '/business/metrics': {
+      id: '/business/metrics'
+      path: '/metrics'
+      fullPath: '/business/metrics'
+      preLoaderRoute: typeof BusinessMetricsRouteImport
+      parentRoute: typeof BusinessRoute
+    }
+    '/business/login': {
+      id: '/business/login'
+      path: '/login'
+      fullPath: '/business/login'
+      preLoaderRoute: typeof BusinessLoginRouteImport
+      parentRoute: typeof BusinessRoute
+    }
+    '/business/bookings': {
+      id: '/business/bookings'
+      path: '/bookings'
+      fullPath: '/business/bookings'
+      preLoaderRoute: typeof BusinessBookingsRouteImport
+      parentRoute: typeof BusinessRoute
     }
     '/bus/planner': {
       id: '/bus/planner'
@@ -296,9 +447,34 @@ const BusRouteChildren: BusRouteChildren = {
 
 const BusRouteWithChildren = BusRoute._addFileChildren(BusRouteChildren)
 
+interface BusinessRouteChildren {
+  BusinessBookingsRoute: typeof BusinessBookingsRoute
+  BusinessLoginRoute: typeof BusinessLoginRoute
+  BusinessMetricsRoute: typeof BusinessMetricsRoute
+  BusinessOnboardingRoute: typeof BusinessOnboardingRoute
+  BusinessQrRoute: typeof BusinessQrRoute
+  BusinessReferralsRoute: typeof BusinessReferralsRoute
+  BusinessIndexRoute: typeof BusinessIndexRoute
+}
+
+const BusinessRouteChildren: BusinessRouteChildren = {
+  BusinessBookingsRoute: BusinessBookingsRoute,
+  BusinessLoginRoute: BusinessLoginRoute,
+  BusinessMetricsRoute: BusinessMetricsRoute,
+  BusinessOnboardingRoute: BusinessOnboardingRoute,
+  BusinessQrRoute: BusinessQrRoute,
+  BusinessReferralsRoute: BusinessReferralsRoute,
+  BusinessIndexRoute: BusinessIndexRoute,
+}
+
+const BusinessRouteWithChildren = BusinessRoute._addFileChildren(
+  BusinessRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BusRoute: BusRouteWithChildren,
+  BusinessRoute: BusinessRouteWithChildren,
   EatRoute: EatRoute,
   ExploreRoute: ExploreRoute,
   LoginRoute: LoginRoute,
