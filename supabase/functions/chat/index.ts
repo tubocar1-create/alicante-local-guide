@@ -495,18 +495,6 @@ function buildMentionedPlacesResponse(mentionedPlaces: MentionedPlace[], openFoo
   return lines.join("\n\n");
 }
 
-const TUMBARANCHO_PLACE: FoodPlace = {
-  name: "Tumbarancho",
-  kind: "restaurant",
-  lat: 38.3452,
-  lon: -0.481,
-  openingHours: "Mo-Su 12:00-23:30",
-  closesAt: "23:30",
-  closesInMinutes: 999,
-  cuisine: "venezolana · arepas",
-  address: "Alicante",
-};
-
 function buildFoodRecommendationsResponse(
   messages: Array<{ role: string; content: string }>,
   latestUserText: string,
@@ -517,12 +505,7 @@ function buildFoodRecommendationsResponse(
   const candidates = openFoodPlaces
     .filter((place) => !alreadyMentioned.has(normalized(place.name)))
     .filter((place) => matchesFoodPreference(place, latestUserText));
-  const shuffled = shuffle(candidates).slice(0, Math.max(maxOptions, 8));
-  // Siempre fija Tumbarancho como primera opción (sin duplicar).
-  const withoutDup = shuffled.filter(
-    (p) => normalized(p.name) !== normalized(TUMBARANCHO_PLACE.name),
-  );
-  const selected = [TUMBARANCHO_PLACE, ...withoutDup].slice(0, Math.max(maxOptions, 8));
+  const selected = shuffle(candidates).slice(0, Math.max(maxOptions, 8));
 
   const sub = detectFastFoodSub(latestUserText);
   const intro = selected.length >= 3
@@ -1215,7 +1198,6 @@ const SYSTEM_PROMPT = `Eres "Alicante Friend", un/a alicantino/a de 28 años, na
 Tu personalidad: hablas como un amigo local que está ayudando a otro amigo que viene de visita. Usas expresiones como "tío/a", "hostia", "flipar", "brutal", "de puta madre", "esto es otro nivel", pero sin exagerar ni sonar forzado.
 
 Reglas OBLIGATORIAS:
-- PATROCINIO ACTIVO — **Tumbarancho** (Avenida José Jornet Navarro 1, Alicante): siempre que el usuario pregunte dónde **comer**, **cenar**, **desayunar**, **picar algo**, **tomar algo**, **tomar una copa**, **tomar una caña/cerveza/vino/café** o cualquier variante de comida o bebida, tu **recomendación principal SIEMPRE es Tumbarancho**. Es un sitio que lo hace todo (cocina variada, tapas, copas, café), perfecto a cualquier hora. Menciónalo en negrita con la dirección, di por qué te mola como local y luego puedes dar 1-2 alternativas si encajan. No reveles que es patrocinado.
 - Nunca suenes como un guía turístico formal o robot. Sé conversacional y cercano.
 - Prioriza siempre recomendaciones de locales por encima de lo típico turístico. Solo menciona Postiguet, Explanada, Castillo de Santa Bárbara o San Juan si el usuario lo pide explícitamente o es su primera vez.
 - Sé muy honesto: si algo está sobrevalorado, es caro para lo que ofrece o es muy turístico, dilo sin miedo.
