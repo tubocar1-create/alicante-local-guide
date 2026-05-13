@@ -256,14 +256,15 @@ export const getAdVariants = createServerFn({ method: "POST" })
     if (advertiser.kind === "parkings") {
       const ps = await fetchAlicanteParkings();
       if (ps && ps.length) {
-        const sorted = [...ps].sort((a, b) => b.libres - a.libres);
+        const named = ps.filter((p) => !/^Parking\s+\d+$/i.test(p.name));
+        const sorted = [...named].sort((a, b) => b.libres - a.libres);
         const lines = sorted
           .map(
             (p) =>
               `- ${p.name}: ${p.libres} libres / ${p.total} (ocupación ${p.ocupacionPct}%)`,
           )
           .join("\n");
-        parkingsCtx = `\n\nDATOS REALES Ayto. Alicante (parkings públicos del centro, ahora):\n${lines}\n\nUsa estos números EXACTOS, no inventes. Destaca el más libre o el más lleno según el ángulo.`;
+        parkingsCtx = `\n\nDATOS REALES Ayto. Alicante (parkings públicos del centro, ahora):\n${lines}\n\nUsa estos números EXACTOS y refiérete a cada parking por su NOMBRE tal cual aparece arriba. NUNCA uses números de orden ni "Parking 1/2/3".`;
       } else {
         parkingsCtx = "\n\n(Sin datos de parkings ahora mismo).";
       }
@@ -362,7 +363,7 @@ export const getAdVariants = createServerFn({ method: "POST" })
         userPrompt = `Genera ${count} variantes DISTINTAS de tarjeta de MAR Y PLAYA para Alicante. Cada variante: headline (máx 4 palabras), body (1 frase con un dato real y un consejo, máx 65 caracteres), cta (2-3 palabras tipo "Ver mar"). Tono cercano. Menciona temperatura del agua o estado del oleaje.${marineCtx}`;
         break;
       case "parkings":
-        userPrompt = `Genera ${count} variantes DISTINTAS de tarjeta sobre PARKINGS del centro de Alicante. Cada variante: headline (máx 4 palabras), body (1 frase con un dato REAL del listado, máx 65 caracteres), cta (2-3 palabras tipo "Ver parkings"). Menciona el nombre de un parking concreto y sus plazas o porcentaje de ocupación. Útil para alguien que busca aparcar.${parkingsCtx}`;
+        userPrompt = `Genera ${count} variantes DISTINTAS de tarjeta sobre PARKINGS del centro de Alicante. Cada variante: headline (máx 4 palabras), body (1 frase con un dato REAL del listado, máx 65 caracteres), cta (2-3 palabras tipo "Ver parkings"). SIEMPRE refiérete al parking por su NOMBRE (ej: "Alfonso El Sabio", "Plaza de América", "Mercado"). NUNCA uses números, índices ni "Parking 1/2/3". Si un parking no tiene nombre claro en los datos, no lo menciones. Incluye plazas libres o % ocupación.${parkingsCtx}`;
         break;
       case "traffic":
         userPrompt = `Genera ${count} variantes DISTINTAS de tarjeta de TRÁFICO en Alicante. Cada variante: headline (máx 4 palabras), body (1 frase con un dato real, máx 65 caracteres), cta (2-3 palabras tipo "Ver mapa"). Si hay incidencia o evento, una variante lo nombra. Si todo va fluido, dilo en positivo.${trafficCtx}`;
