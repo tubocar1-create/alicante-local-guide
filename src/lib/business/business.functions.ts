@@ -67,10 +67,23 @@ export const createBusiness = createServerFn({ method: "POST" })
       .upsert({ user_id: userId, role: "business_user" }, { onConflict: "user_id,role" });
     if (roleErr) throw new Error(roleErr.message);
 
+    // Ensure unique slug by appending a numeric suffix on collision.
+    let slug = data.slug;
+    for (let i = 0; i < 5; i++) {
+      const { data: existing } = await supabaseAdmin
+        .from("businesses")
+        .select("id")
+        .eq("slug", slug)
+        .maybeSingle();
+      if (!existing) break;
+      slug = `${data.slug}-${Math.random().toString(36).slice(2, 6)}`;
+    }
+
     const { data: row, error } = await supabase
       .from("businesses")
       .insert({
         ...data,
+        slug,
         email: data.email || null,
         website: data.website || null,
         owner_id: userId,
