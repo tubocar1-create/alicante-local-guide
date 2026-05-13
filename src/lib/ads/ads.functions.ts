@@ -32,6 +32,18 @@ const FALLBACK: Record<string, AdCopy[]> = {
       cta: "Ver tiempo",
     },
   ],
+  "mar-alicante": [
+    {
+      headline: "Mar tranquilo en el Postiguet",
+      body: "Buen día para un baño rápido o pasear por el paseo marítimo.",
+      cta: "Ver mar",
+    },
+    {
+      headline: "Levante en la costa",
+      body: "El mar viene movido. Cuidado si vas con peques o paddle surf.",
+      cta: "Ver mar",
+    },
+  ],
   "info-alicante": [
     {
       headline: "El Castillo de Santa Bárbara",
