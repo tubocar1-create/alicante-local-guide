@@ -1,6 +1,7 @@
 import { createFileRoute, Link, Outlet, useNavigate, useLocation } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useBusinessAuth } from "@/hooks/useBusinessAuth";
+import { useBookingAlarm } from "@/hooks/useBookingAlarm";
 import { Loader2, LogOut } from "lucide-react";
 
 export const Route = createFileRoute("/business")({
@@ -17,6 +18,7 @@ function BusinessLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { loading, isAuthenticated, signOut } = useBusinessAuth();
+  useBookingAlarm();
 
   // Rutas públicas dentro del módulo business (no requieren sesión)
   const isPublicRoute =
