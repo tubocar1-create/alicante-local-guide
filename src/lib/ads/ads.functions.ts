@@ -32,6 +32,18 @@ const FALLBACK: Record<string, AdCopy[]> = {
       cta: "Ver tiempo",
     },
   ],
+  "mar-alicante": [
+    {
+      headline: "Mar tranquilo en el Postiguet",
+      body: "Buen día para un baño rápido o pasear por el paseo marítimo.",
+      cta: "Ver mar",
+    },
+    {
+      headline: "Levante en la costa",
+      body: "El mar viene movido. Cuidado si vas con peques o paddle surf.",
+      cta: "Ver mar",
+    },
+  ],
   "info-alicante": [
     {
       headline: "El Castillo de Santa Bárbara",
@@ -78,6 +90,45 @@ async function fetchAlicanteWeather(): Promise<Weather | null> {
       precipMm: Number(c.precipitation ?? 0),
       code: Number(c.weather_code ?? 0),
       isDay: Number(c.is_day) === 1,
+    };
+  } catch {
+    return null;
+  }
+}
+
+type SunTimes = { sunrise: string; sunset: string };
+async function fetchSunTimes(): Promise<SunTimes | null> {
+  try {
+    const url = `https://api.sunrise-sunset.org/json?lat=${ALC_LAT}&lng=${ALC_LON}&formatted=0`;
+    const r = await fetch(url, { signal: AbortSignal.timeout(4000) });
+    if (!r.ok) return null;
+    const j = await r.json();
+    if (j?.status !== "OK") return null;
+    const fmt = (iso: string) =>
+      new Date(iso).toLocaleTimeString("es-ES", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Europe/Madrid",
+      });
+    return { sunrise: fmt(j.results.sunrise), sunset: fmt(j.results.sunset) };
+  } catch {
+    return null;
+  }
+}
+
+type Marine = { seaTempC: number; waveM: number; wavePeriodS: number };
+async function fetchMarine(): Promise<Marine | null> {
+  try {
+    const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${ALC_LAT}&longitude=${ALC_LON}&current=wave_height,wave_period,sea_surface_temperature&timezone=Europe%2FMadrid`;
+    const r = await fetch(url, { signal: AbortSignal.timeout(4000) });
+    if (!r.ok) return null;
+    const j = await r.json();
+    const c = j?.current;
+    if (!c) return null;
+    return {
+      seaTempC: Math.round(Number(c.sea_surface_temperature)),
+      waveM: Number(Number(c.wave_height).toFixed(1)),
+      wavePeriodS: Math.round(Number(c.wave_period)),
     };
   } catch {
     return null;
@@ -161,12 +212,28 @@ export const getAdVariants = createServerFn({ method: "POST" })
 
     let weatherCtx = "";
     if (advertiser.kind === "weather") {
-      const w = await fetchAlicanteWeather();
+      const [w, sun] = await Promise.all([fetchAlicanteWeather(), fetchSunTimes()]);
+      const parts: string[] = [];
       if (w) {
-        weatherCtx = `\n\nDATOS METEO ACTUALES (Alicante): ${w.tempC}°C (sensación ${w.feelsC}°C), viento ${w.windKmh} km/h, precipitación ${w.precipMm} mm, condición: ${describeWmo(w.code)}, ${w.isDay ? "de día" : "de noche"}. Usa estos datos REALES, no los inventes. Menciona la temperatura.`;
-      } else {
-        weatherCtx = "\n\n(Sin datos meteo en vivo: escribe consejos generales según la estación actual en Alicante).";
+        parts.push(
+          `${w.tempC}°C (sensación ${w.feelsC}°C), viento ${w.windKmh} km/h, precipitación ${w.precipMm} mm, condición: ${describeWmo(w.code)}, ${w.isDay ? "de día" : "de noche"}`,
+        );
       }
+      if (sun) parts.push(`amanecer ${sun.sunrise}, atardecer ${sun.sunset}`);
+      weatherCtx = parts.length
+        ? `\n\nDATOS REALES (Alicante, ahora): ${parts.join(". ")}. Usa estos datos, no los inventes. Menciona la temperatura o la hora del sol cuando proceda.`
+        : "\n\n(Sin datos en vivo: escribe consejos generales según la estación).";
+    }
+
+    let marineCtx = "";
+    if (advertiser.kind === "marine") {
+      const [m, sun] = await Promise.all([fetchMarine(), fetchSunTimes()]);
+      const parts: string[] = [];
+      if (m) parts.push(`agua ${m.seaTempC}°C, ola ${m.waveM} m, periodo ${m.wavePeriodS}s`);
+      if (sun) parts.push(`atardecer ${sun.sunset}`);
+      marineCtx = parts.length
+        ? `\n\nDATOS REALES del mar en Alicante (Postiguet): ${parts.join(". ")}. Usa estos datos REALES. Si la ola es <0.3 m: mar plato. 0.3-0.7 m: tranquilo. 0.7-1.2 m: rizado. >1.2 m: movido. Si el agua está <18°C: fresquita; 18-22 agradable; >22 cálida.`
+        : "\n\n(Sin datos marinos en vivo: escribe consejo general de playa).";
     }
 
     let wiki: WikiSummary | null = null;
@@ -188,10 +255,12 @@ export const getAdVariants = createServerFn({ method: "POST" })
 
     const userPrompt =
       advertiser.kind === "weather"
-        ? `Genera ${count} variantes DISTINTAS de tarjeta de CLIMA para Alicante. Cada variante: headline (máx 7 palabras, refleja el tiempo actual), body (1 frase con consejo práctico, máx 110 caracteres), cta (2-3 palabras tipo "Ver tiempo"). Tono cercano y útil. Sin alarmismo.${weatherCtx}`
-        : wiki
-          ? `Tema REAL extraído de Wikipedia: "${wiki.title}".\n\nResumen fuente:\n"""${wiki.extract}"""\n\nGenera ${count} variantes DISTINTAS de tarjeta INFORMATIVA basadas EXCLUSIVAMENTE en ese resumen (no inventes datos que no estén ahí). Cada variante destaca un ángulo distinto del tema. Cada variante: headline (máx 7 palabras), body (1 frase con un dato concreto, máx 110 caracteres), cta (2-3 palabras tipo "Saber más"). Tono cercano, sin clichés. Si un dato no está en el resumen, omítelo.`
-          : `Genera ${count} variantes DISTINTAS de tarjeta INFORMATIVA sobre Alicante. Temas variados: gastronomía local, Hogueras, playas, TRAM/TAM, Castillo de Santa Bárbara, barrios, mercados, datos curiosos. Cada variante: headline (máx 7 palabras), body (1 frase, máx 110 caracteres), cta (2-3 palabras tipo "Saber más"). Tono cercano, sin clichés turísticos.`;
+        ? `Genera ${count} variantes DISTINTAS de tarjeta de CLIMA para Alicante. Cada variante: headline (máx 7 palabras), body (1 frase con consejo práctico, máx 110 caracteres), cta (2-3 palabras tipo "Ver tiempo"). Tono cercano. Sin alarmismo.${weatherCtx}`
+        : advertiser.kind === "marine"
+          ? `Genera ${count} variantes DISTINTAS de tarjeta de MAR Y PLAYA para Alicante. Cada variante: headline (máx 7 palabras), body (1 frase con un dato real y un consejo, máx 110 caracteres), cta (2-3 palabras tipo "Ver mar"). Tono cercano. Menciona temperatura del agua o estado del oleaje.${marineCtx}`
+          : wiki
+            ? `Tema REAL de Wikipedia: "${wiki.title}".\n\nResumen fuente:\n"""${wiki.extract}"""\n\nGenera ${count} variantes DISTINTAS de tarjeta INFORMATIVA basadas EXCLUSIVAMENTE en ese resumen (no inventes datos). Cada variante destaca un ángulo distinto. Cada variante: headline (máx 7 palabras), body (1 frase con un dato concreto, máx 110 caracteres), cta (2-3 palabras tipo "Saber más"). Tono cercano, sin clichés. Si un dato no está en el resumen, omítelo.`
+            : `Genera ${count} variantes DISTINTAS de tarjeta INFORMATIVA sobre Alicante. Temas variados: gastronomía, Hogueras, playas, TRAM, Castillo, barrios, mercados. Cada variante: headline (máx 7 palabras), body (1 frase, máx 110 caracteres), cta (2-3 palabras tipo "Saber más"). Tono cercano.`;
 
     try {
       const res = await fetch(
