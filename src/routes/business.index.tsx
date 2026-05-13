@@ -4,8 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { listMyBusinesses } from "@/lib/business/business.functions";
 import { getBusinessMetrics } from "@/lib/business/metrics.functions";
 import { listThreadsForBusiness } from "@/lib/coord/threads.functions";
-import { Plus, QrCode, Calendar, BarChart3, Bell } from "lucide-react";
-import { playAlarm } from "@/hooks/useBookingAlarm";
+import { Plus, QrCode, Calendar, BarChart3 } from "lucide-react";
 
 export const Route = createFileRoute("/business/")({
   component: BusinessDashboard,
