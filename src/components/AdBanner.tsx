@@ -10,7 +10,7 @@ const FIRST_DELAY_MS = 5 * 1000;
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
 type Cached = { at: number; data: AdVariantsResponse };
-const cacheKey = (id: string) => `banner:${id}:variants:v3`;
+const cacheKey = (id: string) => `banner:${id}:variants:v4`;
 const rotateKey = (id: string) => `banner:${id}:idx`;
 
 function readCache(id: string): AdVariantsResponse | null {
