@@ -330,6 +330,42 @@ export type Database = {
           },
         ]
       }
+      conversation_threads: {
+        Row: {
+          booking_id: string
+          business_id: string
+          closed_at: string | null
+          context_snapshot: Json
+          created_at: string
+          id: string
+          last_message_at: string
+          status: Database["public"]["Enums"]["thread_status"]
+          user_id: string | null
+        }
+        Insert: {
+          booking_id: string
+          business_id: string
+          closed_at?: string | null
+          context_snapshot?: Json
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          status?: Database["public"]["Enums"]["thread_status"]
+          user_id?: string | null
+        }
+        Update: {
+          booking_id?: string
+          business_id?: string
+          closed_at?: string | null
+          context_snapshot?: Json
+          created_at?: string
+          id?: string
+          last_message_at?: string
+          status?: Database["public"]["Enums"]["thread_status"]
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       interaction_events: {
         Row: {
           business_id: string | null
@@ -383,6 +419,56 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          created_at: string
+          id: string
+          message_type: Database["public"]["Enums"]["message_kind"]
+          payload: Json
+          read_at: string | null
+          requires_action: boolean
+          sender_type: Database["public"]["Enums"]["message_sender"]
+          sender_user_id: string | null
+          template_key: string | null
+          text: string | null
+          thread_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_type?: Database["public"]["Enums"]["message_kind"]
+          payload?: Json
+          read_at?: string | null
+          requires_action?: boolean
+          sender_type: Database["public"]["Enums"]["message_sender"]
+          sender_user_id?: string | null
+          template_key?: string | null
+          text?: string | null
+          thread_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_type?: Database["public"]["Enums"]["message_kind"]
+          payload?: Json
+          read_at?: string | null
+          requires_action?: boolean
+          sender_type?: Database["public"]["Enums"]["message_sender"]
+          sender_user_id?: string | null
+          template_key?: string | null
+          text?: string | null
+          thread_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_threads"
             referencedColumns: ["id"]
           },
         ]
@@ -691,9 +777,24 @@ export type Database = {
         | "cancelled"
         | "completed"
         | "no_show"
+      message_kind:
+        | "quick_reply"
+        | "free_text"
+        | "system_event"
+        | "eta_update"
+        | "location"
+        | "qr"
+        | "slot_proposal"
+      message_sender: "user" | "business" | "system" | "ai"
       qr_purpose: "visit" | "referral" | "promo" | "booking" | "campaign"
       qr_status: "active" | "used" | "expired"
       referral_status: "pending" | "converted" | "expired"
+      thread_status:
+        | "open"
+        | "awaiting_user"
+        | "awaiting_business"
+        | "closed"
+        | "expired"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -829,9 +930,26 @@ export const Constants = {
         "completed",
         "no_show",
       ],
+      message_kind: [
+        "quick_reply",
+        "free_text",
+        "system_event",
+        "eta_update",
+        "location",
+        "qr",
+        "slot_proposal",
+      ],
+      message_sender: ["user", "business", "system", "ai"],
       qr_purpose: ["visit", "referral", "promo", "booking", "campaign"],
       qr_status: ["active", "used", "expired"],
       referral_status: ["pending", "converted", "expired"],
+      thread_status: [
+        "open",
+        "awaiting_user",
+        "awaiting_business",
+        "closed",
+        "expired",
+      ],
     },
   },
 } as const
