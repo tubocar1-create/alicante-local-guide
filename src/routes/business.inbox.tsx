@@ -118,7 +118,7 @@ function InboxPage() {
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${bookingBadge(bookingStatus, t.status)}`}>
-                      {bookingLabel(bookingStatus, t.status)}
+                      {bookingLabel(bookingStatus, t.status, t.had_proposal)}
                     </span>
                     <span className={`text-[10px] ${sla ? "text-destructive" : "text-muted-foreground"}`}>
                       {ageMin}m
@@ -153,8 +153,8 @@ function bookingBadge(b: string | undefined, s: string) {
   return "bg-muted text-foreground";
 }
 
-function bookingLabel(b: string | undefined, s: string) {
-  if (b === "confirmed") return "confirmada";
+function bookingLabel(b: string | undefined, s: string, hadProposal?: boolean) {
+  if (b === "confirmed") return hadProposal ? "confirmada con cambio de horario" : "confirmada";
   if (b === "cancelled") return "cancelada";
   if (b === "completed") return "completada";
   if (s === "awaiting_business") return "nueva";

@@ -135,8 +135,10 @@ export const listThreadsForBusiness = createServerFn({ method: "GET" })
           .in("id", bookingIds.length ? bookingIds : ["00000000-0000-0000-0000-000000000000"]),
       ]);
       const lastByThread = new Map<string, NonNullable<typeof msgs>[number]>();
+      const hadProposalByThread = new Set<string>();
       (msgs ?? []).forEach((m) => {
         if (!lastByThread.has(m.thread_id)) lastByThread.set(m.thread_id, m);
+        if (m.template_key === "business.propose_slot") hadProposalByThread.add(m.thread_id);
       });
       const bookingsById = new Map((bks ?? []).map((b) => [b.id, b]));
 
@@ -145,6 +147,7 @@ export const listThreadsForBusiness = createServerFn({ method: "GET" })
           ...t,
           last_message: lastByThread.get(t.id) ?? null,
           booking: bookingsById.get(t.booking_id) ?? null,
+          had_proposal: hadProposalByThread.has(t.id),
         })),
       };
     } catch (e) {
