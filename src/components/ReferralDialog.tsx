@@ -97,6 +97,10 @@ export default function ReferralDialog({ placeId, placeName, autoCelebrate, onCl
         code: newCode,
         expires_at: expires.toISOString(),
         user_id: user.id,
+        user_name: user.name,
+        user_surname: user.surname ?? null,
+        user_email: user.email ?? null,
+        user_phone: user.phone ?? null,
       }),
     }).catch(() => {});
 
