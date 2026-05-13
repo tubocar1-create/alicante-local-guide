@@ -294,6 +294,7 @@ export const listGuestBookingStatuses = createServerFn({ method: "POST" })
           booking_id: b.id,
           booking_status: b.status,
           scheduled_at: b.scheduled_at,
+          customer_name: b.customer_name ?? null,
           business_name: bizMap.get(b.business_id)?.name ?? null,
           thread: threadByBooking.get(b.id) ?? null,
         })),
