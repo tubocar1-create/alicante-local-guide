@@ -55,7 +55,18 @@ async function resolveBusinessId(
     .eq("slug", slug)
     .maybeSingle();
   if (existing?.id) return existing.id;
-  // Reuse an existing claimed business with the same name (case-insensitive)
+  // Reuse the open business card with the same name first, because the
+  // current partner dashboard lists open businesses while private login is pending.
+  const { data: openByName } = await a
+    .from("businesses")
+    .select("id")
+    .ilike("name", p.name.trim())
+    .is("owner_id", null)
+    .limit(1)
+    .maybeSingle();
+  if (openByName?.id) return openByName.id;
+
+  // Otherwise reuse an existing claimed business with the same name
   // so bookings on OSM listings reach the real owner instead of creating a
   // duplicate shadow row.
   const { data: byName } = await a
