@@ -4,12 +4,13 @@ import { useServerFn } from "@tanstack/react-start";
 import { getAdVariants, type AdVariantsResponse } from "@/lib/ads/ads.functions";
 import { ADVERTISERS } from "@/lib/ads/advertisers";
 
-const ROTATE_MS = 2 * 60 * 1000; // 2 min entre rotaciones
+const FREQUENCY_MS = 60 * 1000; // 1 min entre apariciones
+const VISIBLE_MS = 10 * 1000; // 10 s visible
+const FIRST_DELAY_MS = 5 * 1000;
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
 type Cached = { at: number; data: AdVariantsResponse };
-
-const cacheKey = (id: string) => `banner:${id}:variants:v3`;
+const cacheKey = (id: string) => `banner:${id}:variants:v4`;
 const rotateKey = (id: string) => `banner:${id}:idx`;
 
 function readCache(id: string): AdVariantsResponse | null {
@@ -45,6 +46,7 @@ function nextIndex(id: string, len: number): number {
 export function AdBanner() {
   const fetchAds = useServerFn(getAdVariants);
   const [cycle, setCycle] = useState(0);
+  const [open, setOpen] = useState(false);
 
   const queries = useQueries({
     queries: ADVERTISERS.map((a) => ({
@@ -60,41 +62,60 @@ export function AdBanner() {
       retry: false,
     })),
   });
+  const allLoaded = queries.every((q) => q.data);
 
   useEffect(() => {
-    const t = setInterval(() => setCycle((c) => c + 1), ROTATE_MS);
-    return () => clearInterval(t);
-  }, []);
+    if (!allLoaded) return;
+    let hideT: ReturnType<typeof setTimeout> | null = null;
+    const show = () => {
+      setCycle((c) => c + 1);
+      setOpen(true);
+      hideT = setTimeout(() => setOpen(false), VISIBLE_MS);
+    };
+    const first = setTimeout(show, FIRST_DELAY_MS);
+    const interval = setInterval(show, FREQUENCY_MS);
+    return () => {
+      clearTimeout(first);
+      clearInterval(interval);
+      if (hideT) clearTimeout(hideT);
+    };
+  }, [allLoaded]);
 
-  const allLoaded = queries.every((q) => q.data);
-  if (!allLoaded) return null;
+  // Reservamos siempre el alto del banner para que no salte el layout.
+  const SLOT = (
+    <div className="mx-auto w-full max-w-2xl px-4 pt-2" aria-hidden={!open}>
+      <div className="h-[44px]" />
+    </div>
+  );
 
-  const ai = cycle % ADVERTISERS.length;
+  if (!allLoaded || !open) return SLOT;
+
+  const ai = (cycle - 1 + ADVERTISERS.length * 1000) % ADVERTISERS.length;
   const data = queries[ai]?.data;
-  if (!data) return null;
+  if (!data) return SLOT;
   const variant =
     data.variants[nextIndex(ADVERTISERS[ai].id, data.variants.length)] ??
     data.variants[0];
-  if (!variant) return null;
+  if (!variant) return SLOT;
   const theme = data.advertiser.theme;
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pt-2">
       <div
         key={cycle}
-        className={`flex items-center gap-2.5 overflow-hidden rounded-2xl px-3 py-2 ${theme.bg} ${theme.fg} shadow-sm ring-1 ring-black/5 animate-in fade-in slide-in-from-top-1 duration-500`}
+        className={`flex h-[44px] items-center gap-2.5 overflow-hidden rounded-2xl px-3 ${theme.bg} ${theme.fg} shadow-sm ring-1 ring-black/5 animate-in fade-in slide-in-from-top-1 duration-300`}
       >
-        <div className="text-xl leading-none shrink-0">{theme.emoji}</div>
+        <div className="text-lg leading-none shrink-0">{theme.emoji}</div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-1.5">
+          <div className="flex items-baseline gap-1.5 leading-tight">
             <span className="text-[10px] font-semibold uppercase tracking-wide opacity-90 shrink-0">
               {data.advertiser.name}
             </span>
-            <span className="truncate text-[12px] font-bold leading-tight">
+            <span className="truncate text-[12px] font-bold">
               {variant.headline}
             </span>
           </div>
-          <p className="mt-0.5 truncate text-[11px] opacity-95 leading-snug">
+          <p className="truncate text-[11px] opacity-95 leading-tight">
             {variant.body}
           </p>
         </div>
