@@ -327,9 +327,15 @@ export async function fetchAlicanteAirTraffic(): Promise<AirTraffic | null> {
         approaching && distanceKm != null && velocityKmh && velocityKmh > 100
           ? Math.max(1, Math.round((distanceKm / velocityKmh) * 60))
           : null;
+      const callsign = String(s[1] ?? "").trim() || "—";
+      const { airline, flightNumber } = parseCallsign(callsign);
       return {
-        callsign: String(s[1] ?? "").trim() || "—",
+        callsign,
         country: String(s[2] ?? "").trim(),
+        airline,
+        flightNumber,
+        originCity: null,
+        originIata: null,
         altitudeM: s[7] != null ? Math.round(Number(s[7])) : null,
         velocityKmh,
         onGround,
@@ -349,6 +355,13 @@ export async function fetchAlicanteAirTraffic(): Promise<AirTraffic | null> {
       })
       .slice(0, 6)
       .map(({ _d, ...rest }) => rest);
+    // Enriquecer con procedencia (origen) los vuelos que se aproximan.
+    const toEnrich = sample.filter((f) => f.approaching && f.callsign !== "—").slice(0, 4);
+    const routes = await Promise.all(toEnrich.map((f) => fetchRoute(f.callsign)));
+    toEnrich.forEach((f, i) => {
+      f.originCity = routes[i].originCity;
+      f.originIata = routes[i].originIata;
+    });
     return { total: states.length, airborne, onGround, sample };
   } catch {
     return null;
