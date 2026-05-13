@@ -45,7 +45,7 @@ function EatPage() {
       filters={EAT_FILTERS}
       initial={["restaurant", "cafe", "bar"]}
       toOverpass={eatFiltersToOverpass}
-      featured={[TUMBARANCHO]}
+      getFeatured={(active) => (active.includes("arroz_pescado") ? [TUMBARANCHO] : [])}
       externalSearch={[
         {
           label: "TripAdvisor",

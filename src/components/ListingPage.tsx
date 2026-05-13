@@ -17,6 +17,8 @@ type Props<K extends string> = {
   externalSearch?: { label: string; url: (q: string) => string }[];
   /** Optional: featured listings pinned at the top of the grid */
   featured?: Listing[];
+  /** Optional: featured listings computed from current active filter set */
+  getFeatured?: (active: K[]) => Listing[];
 };
 
 type Sort = "distance" | "rating" | "name";
@@ -171,14 +173,14 @@ export function ListingPage<K extends string>(props: Props<K>) {
         {error && (
           <div className="text-sm text-destructive py-4">No se pudieron cargar: {error}</div>
         )}
-        {!loading && !error && visible.length === 0 && (
+        {!loading && !error && visible.length === 0 && (props.getFeatured ? props.getFeatured(Array.from(active)).length === 0 : (props.featured ?? []).length === 0) && (
           <div className="text-sm text-muted-foreground py-10 text-center">
             Sin resultados. Prueba a activar más filtros.
           </div>
         )}
 
         <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-5">
-          {(props.featured ?? []).map((it) => (
+          {(props.getFeatured ? props.getFeatured(Array.from(active)) : (props.featured ?? [])).map((it) => (
             <li key={`featured-${it.id}`}>
               <ListingCard it={it} me={me} onWantToGo={setReferral} />
             </li>

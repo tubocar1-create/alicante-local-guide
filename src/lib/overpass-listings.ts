@@ -24,7 +24,14 @@ export type Listing = {
 };
 
 export type StayKind = "hotel" | "hostel" | "guest_house" | "apartment" | "motel";
-export type EatKind = "restaurant" | "cafe" | "bar" | "pub" | "fast_food" | "ice_cream";
+export type EatKind =
+  | "restaurant"
+  | "cafe"
+  | "bar"
+  | "pub"
+  | "fast_food"
+  | "ice_cream"
+  | "arroz_pescado";
 
 const STAY_TAG: Record<StayKind, string> = {
   hotel: "tourism",
@@ -130,6 +137,7 @@ export const STAY_FILTERS: { kind: StayKind; label: string; emoji: string }[] = 
 ];
 
 export const EAT_FILTERS: { kind: EatKind; label: string; emoji: string }[] = [
+  { kind: "arroz_pescado", label: "Arroces y pescados", emoji: "🥘" },
   { kind: "restaurant", label: "Restaurantes", emoji: "🍽️" },
   { kind: "cafe", label: "Cafeterías", emoji: "☕" },
   { kind: "bar", label: "Bares", emoji: "🍻" },
@@ -142,5 +150,7 @@ export function stayFiltersToOverpass(kinds: StayKind[]) {
   return kinds.map((k) => ({ tag: STAY_TAG[k], value: k }));
 }
 export function eatFiltersToOverpass(kinds: EatKind[]) {
-  return kinds.map((k) => ({ tag: EAT_TAG, value: k }));
+  return kinds
+    .filter((k) => k !== "arroz_pescado")
+    .map((k) => ({ tag: EAT_TAG, value: k }));
 }
