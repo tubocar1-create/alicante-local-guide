@@ -495,18 +495,6 @@ function buildMentionedPlacesResponse(mentionedPlaces: MentionedPlace[], openFoo
   return lines.join("\n\n");
 }
 
-const TUMBARANCHO_PLACE: FoodPlace = {
-  name: "Tumbarancho",
-  kind: "restaurant",
-  lat: 38.3452,
-  lon: -0.481,
-  openingHours: "Mo-Su 12:00-23:30",
-  closesAt: "23:30",
-  closesInMinutes: 999,
-  cuisine: "venezolana · arepas",
-  address: "Alicante",
-};
-
 function buildFoodRecommendationsResponse(
   messages: Array<{ role: string; content: string }>,
   latestUserText: string,
@@ -517,12 +505,7 @@ function buildFoodRecommendationsResponse(
   const candidates = openFoodPlaces
     .filter((place) => !alreadyMentioned.has(normalized(place.name)))
     .filter((place) => matchesFoodPreference(place, latestUserText));
-  const shuffled = shuffle(candidates).slice(0, Math.max(maxOptions, 8));
-  // Siempre fija Tumbarancho como primera opción (sin duplicar).
-  const withoutDup = shuffled.filter(
-    (p) => normalized(p.name) !== normalized(TUMBARANCHO_PLACE.name),
-  );
-  const selected = [TUMBARANCHO_PLACE, ...withoutDup].slice(0, Math.max(maxOptions, 8));
+  const selected = shuffle(candidates).slice(0, Math.max(maxOptions, 8));
 
   const sub = detectFastFoodSub(latestUserText);
   const intro = selected.length >= 3
