@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const slugRe = /^[a-z0-9][a-z0-9-]{1,60}$/;
 
@@ -58,6 +59,14 @@ export const createBusiness = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => CreateSchema.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+
+    // Ensure caller has business_user role (required by RLS insert policy).
+    // Self-grant on first onboarding via admin client (bypasses user_roles RLS).
+    const { error: roleErr } = await supabaseAdmin
+      .from("user_roles")
+      .upsert({ user_id: userId, role: "business_user" }, { onConflict: "user_id,role" });
+    if (roleErr) throw new Error(roleErr.message);
+
     const { data: row, error } = await supabase
       .from("businesses")
       .insert({
