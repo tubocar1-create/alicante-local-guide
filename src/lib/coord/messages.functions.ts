@@ -132,6 +132,9 @@ export const sendMessage = createServerFn({ method: "POST" })
     if (data.template_key === "user.cancel" && !["pending", "confirmed"].includes(String(booking?.status))) {
       throw new Error("Esta reserva ya no se puede cancelar");
     }
+    if (data.template_key === "user.cancel" && thread.status === "awaiting_user" && booking?.status === "pending") {
+      throw new Error("Responde la propuesta con aceptar o cancelar reserva");
+    }
 
     let acceptedScheduledAt: string | undefined;
     if (data.template_key === "user.accept") {
