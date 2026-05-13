@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { listThreadsForUser } from "@/lib/coord/threads.functions";
+import { listThreadsForUser, listGuestBookingStatuses } from "@/lib/coord/threads.functions";
 
 const LOCAL_BOOKINGS_KEY = "local_booking_threads_v1";
 
@@ -33,11 +33,25 @@ function ThreadsLayout() {
   const location = useLocation();
   const isList = location.pathname === "/threads" || location.pathname === "/threads/";
   const fetchThreads = useServerFn(listThreadsForUser);
+  const fetchGuest = useServerFn(listGuestBookingStatuses);
+
   const { data } = useQuery({
     queryKey: ["my-threads"],
     queryFn: () => fetchThreads(),
     enabled: isList,
-    refetchInterval: 20000,
+    refetchInterval: 15000,
+    retry: false,
+    throwOnError: false,
+  });
+
+  const localThreads = isList ? readLocalBookings() : [];
+  const guestItems = localThreads.filter((t) => t.access_token).map((t) => ({ booking_id: t.id, token: t.access_token! }));
+
+  const { data: guestData } = useQuery({
+    queryKey: ["guest-statuses", guestItems.map((i) => i.booking_id).sort().join(",")],
+    queryFn: () => fetchGuest({ data: { items: guestItems } }),
+    enabled: isList && guestItems.length > 0,
+    refetchInterval: 15000,
     retry: false,
     throwOnError: false,
   });
@@ -47,7 +61,7 @@ function ThreadsLayout() {
   }
 
   const threads = data?.threads ?? [];
-  const localThreads = readLocalBookings();
+  const guestStatuses = new Map((guestData?.items ?? []).map((i) => [i.booking_id, i]));
   const serverBookingIds = new Set(threads.map((t) => t.booking_id));
   const dedupedLocal = localThreads.filter((t) => !serverBookingIds.has(t.id));
 
@@ -61,41 +75,51 @@ function ThreadsLayout() {
         Aquí verás el estado y la respuesta del negocio para cada reserva.
       </p>
       <ul className="space-y-2">
-        {threads.map((t) => (
-          <li key={t.id}>
-            <Link
-              to="/threads/$id"
-              params={{ id: t.id }}
-              className="block rounded-2xl border border-border bg-card p-3"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <p className="text-sm font-medium">{t.business?.name ?? "Negocio"}</p>
-                <StatusBadge status={t.status} />
-              </div>
-              <p className="text-[11px] text-muted-foreground">
-                Última actividad: {new Date(t.last_message_at).toLocaleString()}
-              </p>
-            </Link>
-          </li>
-        ))}
-        {dedupedLocal.map((t) => (
-          <li key={`local-${t.id}`}>
-            <Link
-              to="/threads/$id"
-              params={{ id: t.id }}
-              search={{ token: t.access_token }}
-              className="block rounded-2xl border border-border bg-card p-3"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <p className="text-sm font-medium">{t.business_name ?? "Negocio"}</p>
-                <StatusBadge status={t.status ?? "pending"} />
-              </div>
-              <p className="text-[11px] text-muted-foreground">
-                {t.scheduled_at ? `Para: ${new Date(t.scheduled_at).toLocaleString()}` : new Date(t.created_at ?? Date.now()).toLocaleString()}
-              </p>
-            </Link>
-          </li>
-        ))}
+        {threads.map((t) => {
+          const cls = cardCls(t.status);
+          return (
+            <li key={t.id}>
+              <Link
+                to="/threads/$id"
+                params={{ id: t.id }}
+                className={`block rounded-2xl border p-3 ${cls}`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-medium">{t.business?.name ?? "Negocio"}</p>
+                  <StatusBadge status={t.status} />
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Última actividad: {new Date(t.last_message_at).toLocaleString()}
+                </p>
+              </Link>
+            </li>
+          );
+        })}
+        {dedupedLocal.map((t) => {
+          const remote = guestStatuses.get(t.id);
+          const effectiveStatus = remote?.booking_status ?? remote?.thread?.status ?? t.status ?? "pending";
+          const cls = cardCls(effectiveStatus);
+          return (
+            <li key={`local-${t.id}`}>
+              <Link
+                to="/threads/$id"
+                params={{ id: t.id }}
+                search={{ token: t.access_token }}
+                className={`block rounded-2xl border p-3 ${cls}`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-medium">{remote?.business_name ?? t.business_name ?? "Negocio"}</p>
+                  <StatusBadge status={effectiveStatus} />
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  {(remote?.scheduled_at || t.scheduled_at)
+                    ? `Para: ${new Date(remote?.scheduled_at ?? t.scheduled_at!).toLocaleString()}`
+                    : new Date(t.created_at ?? Date.now()).toLocaleString()}
+                </p>
+              </Link>
+            </li>
+          );
+        })}
         {threads.length === 0 && dedupedLocal.length === 0 && (
           <li className="rounded-2xl border border-dashed border-border p-4 text-sm text-muted-foreground">
             Aún no tienes reservas. Cuando reserves en un negocio, aparecerá aquí con el estado y la respuesta.
@@ -106,17 +130,25 @@ function ThreadsLayout() {
   );
 }
 
+function cardCls(status?: string) {
+  if (status === "confirmed") return "border-emerald-500/60 bg-emerald-50 dark:bg-emerald-950/30 border-2";
+  if (status === "rejected" || status === "declined" || status === "cancelled") return "border-rose-300/60 bg-rose-50/60 dark:bg-rose-950/20";
+  if (status === "awaiting_user" || status === "rescheduled") return "border-blue-300/60 bg-blue-50/60 dark:bg-blue-950/20";
+  return "border-border bg-card";
+}
+
 function StatusBadge({ status }: { status?: string }) {
   const map: Record<string, { label: string; cls: string }> = {
     pending: { label: "Pendiente por responder", cls: "bg-amber-100 text-amber-800" },
     awaiting_business: { label: "Pendiente por responder", cls: "bg-amber-100 text-amber-800" },
     awaiting_user: { label: "Esperando tu respuesta", cls: "bg-blue-100 text-blue-800" },
-    confirmed: { label: "Confirmada", cls: "bg-emerald-100 text-emerald-800" },
+    confirmed: { label: "Confirmada", cls: "bg-emerald-500 text-white" },
     rescheduled: { label: "Nuevo horario propuesto", cls: "bg-blue-100 text-blue-800" },
     rejected: { label: "Rechazada", cls: "bg-rose-100 text-rose-800" },
     declined: { label: "Rechazada", cls: "bg-rose-100 text-rose-800" },
     cancelled: { label: "Cancelada", cls: "bg-muted text-muted-foreground" },
     closed: { label: "Cerrada", cls: "bg-muted text-muted-foreground" },
+    completed: { label: "Completada", cls: "bg-muted text-muted-foreground" },
   };
   const m = map[status ?? "pending"] ?? { label: status ?? "—", cls: "bg-muted text-muted-foreground" };
   return <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${m.cls}`}>{m.label}</span>;
