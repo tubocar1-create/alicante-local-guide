@@ -10,7 +10,9 @@ export type BannerKind =
   | "air"
   | "agenda"
   | "flights"
-  | "trains";
+  | "trains"
+  | "regional_agenda"
+  | "mercadillos";
 
 export type Advertiser = {
   id: string;
@@ -182,6 +184,167 @@ export const ADVERTISERS: Advertiser[] = [
     },
     brief:
       "Próximas llegadas y salidas programadas en Alicante-Terminal según el horario oficial de Renfe Cercanías (núcleo Murcia/Alicante). Líneas C-1 (Murcia/Orihuela) y C-3 (Sant Vicent).",
+  },
+  {
+    id: "mercadillos-alicante",
+    name: "Mercadillos hoy",
+    tagline: "Qué mercadillo toca hoy en Alicante",
+    category: "Comercio",
+    kind: "mercadillos",
+    ctaLabel: "Ver mercados",
+    ctaUrl: "https://www.alicante.es/es/estructura-politica/concejalia-mercados",
+    theme: {
+      bg: "bg-gradient-to-r from-amber-600 via-orange-600 to-red-600",
+      fg: "text-white",
+      accent: "bg-white text-amber-700",
+      emoji: "🧺",
+    },
+    brief:
+      "Mercadillos municipales de Alicante que están activos hoy según el calendario oficial de la Concejalía de Mercados.",
+  },
+  {
+    id: "teatro-principal",
+    name: "Teatro Principal",
+    tagline: "Próximas funciones",
+    category: "Cultura",
+    kind: "regional_agenda",
+    ctaLabel: "Ver cartelera",
+    ctaUrl: "https://www.teatroprincipaldealicante.com/programacion-actual/",
+    theme: {
+      bg: "bg-gradient-to-r from-red-700 via-rose-700 to-pink-700",
+      fg: "text-white",
+      accent: "bg-white text-red-700",
+      emoji: "🎭",
+    },
+    brief: "Cartelera del Teatro Principal de Alicante.",
+  },
+  {
+    id: "plaza-toros",
+    name: "Plaza de Toros",
+    tagline: "Conciertos y eventos",
+    category: "Cultura",
+    kind: "regional_agenda",
+    ctaLabel: "Ver eventos",
+    ctaUrl: "https://plazatorosalicante.com/conciertos-y-eventos/",
+    theme: {
+      bg: "bg-gradient-to-r from-yellow-600 via-amber-700 to-orange-800",
+      fg: "text-white",
+      accent: "bg-white text-amber-800",
+      emoji: "🎤",
+    },
+    brief: "Conciertos y eventos en la Plaza de Toros de Alicante.",
+  },
+  {
+    id: "agenda-benidorm",
+    name: "Agenda Benidorm",
+    tagline: "Eventos del Ayto. de Benidorm",
+    category: "Cultura",
+    kind: "regional_agenda",
+    ctaLabel: "Ver agenda",
+    ctaUrl: "https://benidorm.org/es/agenda",
+    theme: {
+      bg: "bg-gradient-to-r from-cyan-600 via-sky-600 to-blue-700",
+      fg: "text-white",
+      accent: "bg-white text-cyan-700",
+      emoji: "🌇",
+    },
+    brief: "Eventos publicados en la agenda oficial del Ayuntamiento de Benidorm.",
+  },
+  {
+    id: "agenda-elche",
+    name: "Agenda Elche",
+    tagline: "Eventos en Elche (VisitElche)",
+    category: "Cultura",
+    kind: "regional_agenda",
+    ctaLabel: "Ver agenda",
+    ctaUrl: "https://www.visitelche.com/eventos/",
+    theme: {
+      bg: "bg-gradient-to-r from-green-600 via-emerald-700 to-teal-700",
+      fg: "text-white",
+      accent: "bg-white text-emerald-700",
+      emoji: "🌴",
+    },
+    brief: "Eventos próximos en Elche según el portal oficial VisitElche.",
+  },
+  {
+    id: "agenda-santa-pola",
+    name: "Agenda Santa Pola",
+    tagline: "Eventos en Santa Pola",
+    category: "Cultura",
+    kind: "regional_agenda",
+    ctaLabel: "Ver agenda",
+    ctaUrl: "https://www.santapola4you.es/es/calendar/",
+    theme: {
+      bg: "bg-gradient-to-r from-blue-500 via-indigo-600 to-violet-700",
+      fg: "text-white",
+      accent: "bg-white text-blue-700",
+      emoji: "⛵",
+    },
+    brief: "Eventos próximos en Santa Pola.",
+  },
+  {
+    id: "agenda-torrevieja",
+    name: "Agenda Torrevieja",
+    tagline: "Cultura Torrevieja",
+    category: "Cultura",
+    kind: "regional_agenda",
+    ctaLabel: "Ver agenda",
+    ctaUrl: "https://culturatorrevieja.com/programacion/",
+    theme: {
+      bg: "bg-gradient-to-r from-pink-600 via-rose-600 to-red-600",
+      fg: "text-white",
+      accent: "bg-white text-rose-700",
+      emoji: "🎶",
+    },
+    brief: "Programación cultural del Teatro Municipal y otros espacios de Torrevieja.",
+  },
+  {
+    id: "agenda-san-vicente",
+    name: "San Vicente",
+    tagline: "Agenda Sant Vicent del Raspeig",
+    category: "Cultura",
+    kind: "regional_agenda",
+    ctaLabel: "Ver agenda",
+    ctaUrl: "https://raspeig.es/agenda/",
+    theme: {
+      bg: "bg-gradient-to-r from-indigo-600 via-purple-700 to-fuchsia-700",
+      fg: "text-white",
+      accent: "bg-white text-indigo-700",
+      emoji: "🏛️",
+    },
+    brief: "Eventos del Ayto. de San Vicente del Raspeig.",
+  },
+  {
+    id: "agenda-sant-joan",
+    name: "Sant Joan",
+    tagline: "Agenda Sant Joan d'Alacant",
+    category: "Cultura",
+    kind: "regional_agenda",
+    ctaLabel: "Ver agenda",
+    ctaUrl: "https://www.santjoandalacant.es/events/",
+    theme: {
+      bg: "bg-gradient-to-r from-lime-600 via-green-600 to-emerald-700",
+      fg: "text-white",
+      accent: "bg-white text-green-700",
+      emoji: "🌳",
+    },
+    brief: "Eventos del Ayto. de Sant Joan d'Alacant (San Juan pueblo).",
+  },
+  {
+    id: "agenda-mutxamel",
+    name: "Mutxamel",
+    tagline: "Agenda Mutxamel (Muchamiel)",
+    category: "Cultura",
+    kind: "regional_agenda",
+    ctaLabel: "Ver agenda",
+    ctaUrl: "https://ayto.mutxamel.org/eventos-mtx/",
+    theme: {
+      bg: "bg-gradient-to-r from-orange-600 via-red-600 to-rose-700",
+      fg: "text-white",
+      accent: "bg-white text-orange-700",
+      emoji: "🎪",
+    },
+    brief: "Eventos del Ayto. de Mutxamel.",
   },
 ];
 export function getAdvertiser(id: string): Advertiser | undefined {
