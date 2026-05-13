@@ -135,11 +135,24 @@ export function ThreadView({
         })}
       </ul>
 
-      {/* Quick replies + composer */}
+      {/* Composer */}
       {closed ? (
         <div className="border-t border-border px-4 py-3 text-center text-xs text-muted-foreground">
           Conversación cerrada
         </div>
+      ) : role === "business" && booking?.status === "pending" ? (
+        <BusinessDecisionPanel
+          currentScheduledAt={booking.scheduled_at}
+          customerName={booking.customer_name ?? "Hola"}
+          pending={m.isPending}
+          onConfirm={() => m.mutate({ template_key: "business.confirm", payload: {} })}
+          onPropose={(iso) =>
+            m.mutate({ template_key: "business.propose_slot", payload: { scheduled_at: iso } })
+          }
+          onDecline={(reason) =>
+            m.mutate({ template_key: "business.decline", payload: { reason } })
+          }
+        />
       ) : (
         <div className="border-t border-border bg-card px-3 py-2">
           {suggestions.length > 0 && (
