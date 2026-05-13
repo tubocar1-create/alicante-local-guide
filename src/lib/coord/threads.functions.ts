@@ -82,21 +82,29 @@ export const getThread = createServerFn({ method: "GET" })
 export const listThreadsForUser = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase, userId } = context;
-    const { data: rows, error } = await supabase
-      .from("conversation_threads")
-      .select("id, booking_id, business_id, status, last_message_at, context_snapshot")
-      .eq("user_id", userId)
-      .order("last_message_at", { ascending: false })
-      .limit(50);
-    if (error) throw new Error(error.message);
-    const bizIds = [...new Set((rows ?? []).map((r) => r.business_id))];
-    const { data: bizs } = await supabase
-      .from("businesses")
-      .select("id, name, address, phone")
-      .in("id", bizIds.length ? bizIds : ["00000000-0000-0000-0000-000000000000"]);
-    const map = new Map((bizs ?? []).map((b) => [b.id, b]));
-    return {
-      threads: (rows ?? []).map((t) => ({ ...t, business: map.get(t.business_id) ?? null })),
-    };
+    try {
+      const { supabase, userId } = context;
+      const { data: rows, error } = await supabase
+        .from("conversation_threads")
+        .select("id, booking_id, business_id, status, last_message_at, context_snapshot")
+        .eq("user_id", userId)
+        .order("last_message_at", { ascending: false })
+        .limit(50);
+      if (error) {
+        console.error("listThreadsForUser error", error);
+        return { threads: [] };
+      }
+      const bizIds = [...new Set((rows ?? []).map((r) => r.business_id))];
+      const { data: bizs } = await supabase
+        .from("businesses")
+        .select("id, name, address, phone")
+        .in("id", bizIds.length ? bizIds : ["00000000-0000-0000-0000-000000000000"]);
+      const map = new Map((bizs ?? []).map((b) => [b.id, b]));
+      return {
+        threads: (rows ?? []).map((t) => ({ ...t, business: map.get(t.business_id) ?? null })),
+      };
+    } catch (e) {
+      console.error("listThreadsForUser failed", e);
+      return { threads: [] };
+    }
   });
