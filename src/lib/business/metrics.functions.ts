@@ -1,9 +1,26 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequestHeader } from "@tanstack/react-start/server";
+import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Database } from "@/integrations/supabase/types";
+
+const emptyMetrics = (error?: string) => ({
+  totals: {} as Record<string, number>,
+  series: [] as Array<{ date: string; count: number }>,
+  summary: {
+    total: 0,
+    visit_viewed: 0,
+    qr_created: 0,
+    qr_validated: 0,
+    bookings: 0,
+    referrals: 0,
+    conversion_pct: 0,
+    qr_redemption_pct: 0,
+  },
+  error,
+});
 
 export const getBusinessMetrics = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z
       .object({
@@ -12,17 +29,53 @@ export const getBusinessMetrics = createServerFn({ method: "GET" })
       })
       .parse(d),
   )
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data }) => {
+    const authHeader = getRequestHeader("authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return emptyMetrics("UNAUTHORIZED");
+    }
+
+    const SUPABASE_URL = process.env.SUPABASE_URL;
+    const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY;
+    if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+      console.error("Business metrics unavailable: backend env is missing");
+      return emptyMetrics("BACKEND_UNAVAILABLE");
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+    const supabase = createClient<Database>(
+      SUPABASE_URL,
+      SUPABASE_PUBLISHABLE_KEY,
+      {
+        global: { headers: { Authorization: `Bearer ${token}` } },
+        auth: {
+          storage: undefined,
+          persistSession: false,
+          autoRefreshToken: false,
+        },
+      },
+    );
+
+    const { data: claims, error: claimsError } = await supabase.auth.getClaims(
+      token,
+    );
+    if (claimsError || !claims?.claims?.sub) {
+      return emptyMetrics("UNAUTHORIZED");
+    }
+
     const since = new Date(
       Date.now() - data.days * 24 * 60 * 60 * 1000,
     ).toISOString();
-    const { data: rows, error } = await context.supabase
+    const { data: rows, error } = await supabase
       .from("interaction_events")
       .select("type, occurred_at, conversion_status")
       .eq("business_id", data.business_id)
       .gte("occurred_at", since)
       .order("occurred_at", { ascending: true });
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("Business metrics query failed:", error.message);
+      return emptyMetrics("METRICS_UNAVAILABLE");
+    }
 
     const totals: Record<string, number> = {};
     const byDay: Record<string, number> = {};
