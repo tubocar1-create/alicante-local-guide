@@ -4,8 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { listMyBusinesses } from "@/lib/business/business.functions";
 import { getBusinessMetrics } from "@/lib/business/metrics.functions";
 import { listThreadsForBusiness } from "@/lib/coord/threads.functions";
-import { Plus, QrCode, Calendar, BarChart3, Bell } from "lucide-react";
-import { playAlarm } from "@/hooks/useBookingAlarm";
+import { Plus, QrCode, Calendar, BarChart3 } from "lucide-react";
 
 export const Route = createFileRoute("/business/")({
   component: BusinessDashboard,
@@ -107,14 +106,6 @@ function BusinessDashboard() {
       <div className="grid grid-cols-1 gap-2">
         <Quick to="/business/qr" icon={QrCode} label="Validar QR" />
         <Quick to="/business/metrics" icon={BarChart3} label="Métricas" />
-        <button
-          type="button"
-          onClick={() => playAlarm()}
-          className="flex flex-col items-center gap-1 rounded-2xl border border-border bg-card px-3 py-3 text-xs"
-        >
-          <Bell className="h-5 w-5 text-primary" />
-          Probar alarma
-        </button>
       </div>
     </div>
   );
