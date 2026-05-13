@@ -79,12 +79,13 @@ function InboxPage() {
               : (last?.text ?? "—");
           const ageMin = Math.round((Date.now() - new Date(t.last_message_at).getTime()) / 60000);
           const sla = t.status === "awaiting_business" && ageMin > 10;
+          const isPending = t.booking?.status === "pending";
           return (
-            <li key={t.id}>
+            <li key={t.id} className="rounded-2xl border border-border bg-card">
               <Link
                 to="/business/inbox/$id"
                 params={{ id: t.id }}
-                className="block rounded-2xl border border-border bg-card p-3"
+                className="block p-3"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -114,6 +115,7 @@ function InboxPage() {
                   </div>
                 </div>
               </Link>
+              {isPending && <QuickActions threadId={t.id} />}
             </li>
           );
         })}
