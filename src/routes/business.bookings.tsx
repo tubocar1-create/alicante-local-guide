@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { useEffect } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { listMyBusinesses } from "@/lib/business/business.functions";
 import {
   listBookings,
@@ -20,6 +22,13 @@ const STATUSES = [
   "no_show",
 ] as const;
 
+function bookingCardClass(status: string) {
+  if (status === "confirmed") return "rounded-2xl border-2 border-emerald-500/60 bg-emerald-50 p-3 dark:bg-emerald-950/30";
+  if (status === "cancelled") return "rounded-2xl border border-rose-300/60 bg-rose-50/60 p-3 opacity-80 dark:bg-rose-950/20";
+  if (status === "completed") return "rounded-2xl border border-border bg-muted/50 p-3";
+  return "rounded-2xl border border-border bg-card p-3";
+}
+
 function BookingsPage() {
   const fetchBiz = useServerFn(listMyBusinesses);
   const fetchBookings = useServerFn(listBookings);
@@ -36,7 +45,21 @@ function BookingsPage() {
     queryKey: ["bookings", business?.id],
     queryFn: () => fetchBookings({ data: { business_id: business!.id } }),
     enabled: !!business,
+    refetchInterval: 15000,
   });
+
+  useEffect(() => {
+    if (!business?.id) return;
+    const channel = supabase
+      .channel(`bookings:${business.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "bookings", filter: `business_id=eq.${business.id}` },
+        () => qc.invalidateQueries({ queryKey: ["bookings", business.id] }),
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [business?.id, qc]);
 
   const m = useMutation({
     mutationFn: (v: { id: string; status: (typeof STATUSES)[number] }) =>
@@ -55,7 +78,7 @@ function BookingsPage() {
       <h1 className="text-xl font-semibold">Reservas</h1>
       <ul className="space-y-2">
         {(data?.bookings ?? []).map((b) => (
-          <li key={b.id} className="rounded-2xl border border-border bg-card p-3">
+          <li key={b.id} className={bookingCardClass(b.status)}>
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="text-sm font-medium">
