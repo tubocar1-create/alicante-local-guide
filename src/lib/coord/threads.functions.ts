@@ -233,7 +233,7 @@ export const listThreadsForUser = createServerFn({ method: "GET" }).handler(asyn
         .in("id", bizIds.length ? bizIds : ["00000000-0000-0000-0000-000000000000"]),
       supabase
         .from("bookings")
-        .select("id, status, scheduled_at")
+        .select("id, status, scheduled_at, customer_name")
         .in("id", bookingIds.length ? bookingIds : ["00000000-0000-0000-0000-000000000000"]),
     ]);
     const map = new Map((bizs ?? []).map((b) => [b.id, b]));
