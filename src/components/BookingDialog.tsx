@@ -33,8 +33,8 @@ export default function BookingDialog({ listing, onClose }: Props) {
     if (!name.trim()) return setError("Indica un nombre");
     setLoading(true);
     try {
-      const { data: auth } = await supabase.auth.getUser();
-      const userId = auth.user?.id;
+      const { data: sess } = await supabase.auth.getSession();
+      const userId = sess.session?.user?.id;
       const res = await fetch("/api/public/booking-create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
