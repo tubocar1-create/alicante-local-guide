@@ -361,6 +361,47 @@ export const getAdVariants = createServerFn({ method: "POST" })
       flightsCtx = `\n\nINCIDENCIAS OFICIALES Aena hoy en Alicante-Elche (ALC), salidas y llegadas:\n${lines}\n\nGenera UNA variante por incidencia. Usa SOLO estos datos.`;
     }
 
+    // Mercadillos: solo si HOY hay alguno activo. Si no, suspende.
+    let mercadillosCtx = "";
+    if (advertiser.kind === "mercadillos") {
+      const today = await fetchMercadillosHoy();
+      if (!today || today.length === 0) {
+        return { ...baseResp, variants: [] };
+      }
+      const lines = today
+        .map((m, i) => `${i + 1}. "${m.title}" — ${m.when} — ${m.excerpt}`)
+        .join("\n");
+      mercadillosCtx = `\n\nMERCADILLOS DEL AYTO. DE ALICANTE ACTIVOS HOY:\n${lines}\n\nGenera UNA variante por mercadillo. Usa el nombre y horario REALES.`;
+    }
+
+    // Agendas regionales: scraping según advertiser.id
+    let regionalCtx = "";
+    if (advertiser.kind === "regional_agenda") {
+      const fetcher: Record<string, () => Promise<RegionalEvent[] | null>> = {
+        "teatro-principal": fetchTeatroPrincipalAgenda,
+        "plaza-toros": fetchPlazaTorosAgenda,
+        "agenda-benidorm": fetchBenidormAgenda,
+        "agenda-elche": fetchVisitElcheAgenda,
+        "agenda-santa-pola": fetchSantaPolaAgenda,
+        "agenda-torrevieja": fetchTorreviejaAgenda,
+        "agenda-san-vicente": fetchSanVicenteAgenda,
+        "agenda-sant-joan": fetchSantJoanAgenda,
+        "agenda-mutxamel": fetchMutxamelAgenda,
+      };
+      const fn = fetcher[advertiser.id];
+      const events = fn ? await fn() : null;
+      if (!events || events.length === 0) {
+        return { ...baseResp, variants: [] };
+      }
+      const pick = events.slice(0, Math.max(count, 6));
+      const lines = pick
+        .map(
+          (e, i) =>
+            `${i + 1}. "${e.title}"${e.when ? ` (${e.when})` : ""} — ${e.excerpt.slice(0, 160)}`,
+        )
+        .join("\n");
+      regionalCtx = `\n\nEVENTOS REALES de "${advertiser.name}" (fuente: ${advertiser.ctaUrl}):\n${lines}\n\nGenera UNA variante por evento. Usa SOLO la información del listado, no inventes nada.`;
+    }
 
     let trainsCtx = "";
     if (advertiser.kind === "trains") {
