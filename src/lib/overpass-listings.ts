@@ -24,7 +24,14 @@ export type Listing = {
 };
 
 export type StayKind = "hotel" | "hostel" | "guest_house" | "apartment" | "motel";
-export type EatKind = "restaurant" | "cafe" | "bar" | "pub" | "fast_food" | "ice_cream";
+export type EatKind =
+  | "restaurant"
+  | "cafe"
+  | "bar"
+  | "pub"
+  | "fast_food"
+  | "ice_cream"
+  | "arroz_pescado";
 
 const STAY_TAG: Record<StayKind, string> = {
   hotel: "tourism",
