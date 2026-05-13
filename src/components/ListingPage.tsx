@@ -15,6 +15,8 @@ type Props<K extends string> = {
   toOverpass: (kinds: K[]) => { tag: string; value: string }[];
   /** Optional: extra UI extras like "Buscar Airbnb" link in stays */
   externalSearch?: { label: string; url: (q: string) => string }[];
+  /** Optional: featured listings pinned at the top of the grid */
+  featured?: Listing[];
 };
 
 type Sort = "distance" | "rating" | "name";
