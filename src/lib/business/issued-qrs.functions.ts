@@ -13,6 +13,15 @@ export const listIssuedQrs = createServerFn({ method: "GET" })
       .parse(d),
   )
   .handler(async ({ data }) => {
+    type IssuerPayload = {
+      issued_by?: string;
+      user_id?: string | null;
+      user_name?: string | null;
+      user_surname?: string | null;
+      user_email?: string | null;
+      user_phone?: string | null;
+      issued_at?: string | null;
+    };
     type Row = {
       id: string;
       code: string;
@@ -22,7 +31,7 @@ export const listIssuedQrs = createServerFn({ method: "GET" })
       uses: number;
       max_uses: number | null;
       active: boolean;
-      payload: Record<string, unknown> | null;
+      payload: IssuerPayload | null;
     };
     const empty = (error?: string) => ({ qrs: [] as Row[], error: error ?? null });
 
