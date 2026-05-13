@@ -72,11 +72,21 @@ export default function BookingDialog({ listing, onClose }: Props) {
     }
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center">
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/50 sm:items-center">
       <form
         onSubmit={submit}
-        className="relative w-full max-w-md rounded-t-3xl bg-card p-5 shadow-2xl sm:rounded-3xl"
+        className="relative w-full max-w-md rounded-t-3xl bg-card p-5 shadow-2xl sm:rounded-3xl max-h-[90svh] overflow-y-auto"
       >
         <button
           type="button"
