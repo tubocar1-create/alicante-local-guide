@@ -83,11 +83,14 @@ function InboxPage() {
           const isPending = bookingStatus === "pending";
           const isConfirmed = bookingStatus === "confirmed";
           const isRejected = bookingStatus === "cancelled";
+          const isAwaitingBusiness = t.status === "awaiting_business" && isPending;
           const cardCls = isConfirmed
             ? "rounded-2xl border-2 border-emerald-500/60 bg-emerald-50 dark:bg-emerald-950/30"
             : isRejected
-              ? "rounded-2xl border border-rose-300/60 bg-rose-50/60 dark:bg-rose-950/20 opacity-80"
-              : "rounded-2xl border border-border bg-card";
+              ? "rounded-2xl border-2 border-red-700 bg-red-100 dark:bg-red-950/40"
+              : isAwaitingBusiness
+                ? "rounded-2xl border-2 border-amber-400 bg-amber-50 dark:bg-amber-950/30 animate-blink"
+                : "rounded-2xl border border-border bg-card";
           return (
             <li key={t.id} className={cardCls}>
               <Link
@@ -143,9 +146,9 @@ function InboxPage() {
 
 function bookingBadge(b: string | undefined, s: string) {
   if (b === "confirmed") return "bg-emerald-500 text-white";
-  if (b === "cancelled") return "bg-rose-500/10 text-rose-700 dark:text-rose-300";
+  if (b === "cancelled") return "bg-red-700 text-white";
   if (b === "completed") return "bg-muted text-muted-foreground";
-  if (s === "awaiting_business") return "bg-primary/10 text-primary";
+  if (s === "awaiting_business") return "bg-amber-500 text-white";
   if (s === "awaiting_user") return "bg-blue-500/10 text-blue-700 dark:text-blue-300";
   return "bg-muted text-foreground";
 }
