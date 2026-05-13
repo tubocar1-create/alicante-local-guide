@@ -116,6 +116,24 @@ export const sendMessage = createServerFn({ method: "POST" })
       requiresAction = !!tpl.requiresAction;
     }
 
+    let acceptedScheduledAt: string | undefined;
+    if (data.template_key === "user.accept") {
+      const { data: proposal } = await supabase
+        .from("messages")
+        .select("payload")
+        .eq("thread_id", thread.id)
+        .eq("template_key", "business.propose_slot")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const proposalPayload = proposal?.payload as Record<string, unknown> | null | undefined;
+      const metaPayload = booking?.metadata as Record<string, unknown> | null | undefined;
+      const proposed = proposalPayload?.scheduled_at ?? metaPayload?.proposed_scheduled_at;
+      if (typeof proposed === "string" && !Number.isNaN(new Date(proposed).getTime())) {
+        acceptedScheduledAt = new Date(proposed).toISOString();
+      }
+    }
+
     const { data: msg, error: mErr } = await supabase
       .from("messages")
       .insert({
@@ -144,7 +162,10 @@ export const sendMessage = createServerFn({ method: "POST" })
     if (nextBookingStatus) {
       await supabase
         .from("bookings")
-        .update({ status: nextBookingStatus as never })
+        .update({
+          status: nextBookingStatus as never,
+          ...(acceptedScheduledAt ? { scheduled_at: acceptedScheduledAt } : {}),
+        })
         .eq("id", thread.booking_id);
     }
     // Nota: el slot propuesto se persiste en messages.payload (slot_proposal),
