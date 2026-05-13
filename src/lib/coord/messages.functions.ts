@@ -68,7 +68,35 @@ export const sendMessage = createServerFn({ method: "POST" })
     ]);
 
     const isOwner = !!userId && thread.user_id === userId;
-    const isPublicUser = data.actor_role === "user" && tokenMatches(booking, data.access_token);
+    let isPublicUser = data.actor_role === "user" && tokenMatches(booking, data.access_token);
+
+    // Auto-recovery: si la metadata perdió el token (caso de bug previo) y el hilo
+    // es de invitado (sin user_id), aceptamos el primer token presentado y lo
+    // reescribimos para futuras acciones.
+    if (
+      !isOwner &&
+      !isPublicUser &&
+      data.actor_role === "user" &&
+      data.access_token &&
+      thread.user_id === null &&
+      booking &&
+      (typeof booking.metadata !== "object" ||
+        booking.metadata === null ||
+        !(booking.metadata as Record<string, unknown>).public_access_token)
+    ) {
+      const prev =
+        booking.metadata && typeof booking.metadata === "object"
+          ? (booking.metadata as Record<string, unknown>)
+          : {};
+      await supabase
+        .from("bookings")
+        .update({
+          metadata: { ...prev, public_access_token: data.access_token } as never,
+        })
+        .eq("id", thread.booking_id);
+      isPublicUser = true;
+    }
+
     const isBusiness = !!ok || (data.actor_role === "business" && business?.owner_id === null);
     if (!isOwner && !isPublicUser && !isBusiness) throw new Error("No autorizado");
 
