@@ -55,6 +55,17 @@ async function resolveBusinessId(
     .eq("slug", slug)
     .maybeSingle();
   if (existing?.id) return existing.id;
+  // Reuse an existing claimed business with the same name (case-insensitive)
+  // so bookings on OSM listings reach the real owner instead of creating a
+  // duplicate shadow row.
+  const { data: byName } = await a
+    .from("businesses")
+    .select("id")
+    .ilike("name", p.name.trim())
+    .not("owner_id", "is", null)
+    .limit(1)
+    .maybeSingle();
+  if (byName?.id) return byName.id;
   const { data: created, error } = await a
     .from("businesses")
     .insert({
