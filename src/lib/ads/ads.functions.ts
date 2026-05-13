@@ -22,6 +22,7 @@ import {
   fetchMuelleLiveAgenda,
   fetchSpringAgenda,
   fetchRabasaAgenda,
+  fetchRocanrolaAgenda,
   fetchSongkickAlicante,
   type RegionalEvent,
 } from "./regional-agendas.server";
@@ -387,6 +388,7 @@ export const getAdVariants = createServerFn({ method: "POST" })
         "muelle-live": fetchMuelleLiveAgenda,
         "spring-alicante": fetchSpringAgenda,
         "rabasa-alicante": fetchRabasaAgenda,
+        "rocanrola-alicante": fetchRocanrolaAgenda,
         "songkick-alicante": fetchSongkickAlicante,
       };
       const fn = fetcher[advertiser.id];

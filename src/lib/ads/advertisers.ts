@@ -349,6 +349,22 @@ export const ADVERTISERS: Advertiser[] = [
     brief: "Conciertos del ciclo Área 12 en el Multiespacio Rabasa de Alicante (formato grande: Black Crowes, Dani Martín, Viva Suecia, Hombres G…).",
   },
   {
+    id: "rocanrola-alicante",
+    name: "Rocanrola",
+    tagline: "Festival de hip-hop en Alicante",
+    category: "Cultura",
+    kind: "regional_agenda",
+    ctaLabel: "Ver cartel",
+    ctaUrl: "https://area12alicante.es/",
+    theme: {
+      bg: "bg-gradient-to-r from-zinc-800 via-neutral-900 to-stone-900",
+      fg: "text-white",
+      accent: "bg-white text-zinc-900",
+      emoji: "🎤",
+    },
+    brief: "Festival Rocanrola en Alicante: hip-hop y rap en español (Kase.O, Nach, Delaossa, Hijos de la Ruina, Fernandocosta, Lia Kali).",
+  },
+  {
     id: "songkick-alicante",
     name: "Conciertos cercanos",
     tagline: "Próximos directos en Alicante",
