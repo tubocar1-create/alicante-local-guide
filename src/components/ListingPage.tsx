@@ -178,6 +178,11 @@ export function ListingPage<K extends string>(props: Props<K>) {
         )}
 
         <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 md:gap-5">
+          {(props.featured ?? []).map((it) => (
+            <li key={`featured-${it.id}`}>
+              <ListingCard it={it} me={me} onWantToGo={setReferral} />
+            </li>
+          ))}
           {visible.map((it) => (
             <li key={it.id}>
               <ListingCard it={it} me={me} onWantToGo={setReferral} />
