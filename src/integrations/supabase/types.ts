@@ -230,7 +230,7 @@ export type Database = {
           metadata: Json
           name: string
           opening_hours: Json | null
-          owner_id: string
+          owner_id: string | null
           phone: string | null
           sector: string
           slug: string
@@ -250,7 +250,7 @@ export type Database = {
           metadata?: Json
           name: string
           opening_hours?: Json | null
-          owner_id: string
+          owner_id?: string | null
           phone?: string | null
           sector: string
           slug: string
@@ -270,7 +270,7 @@ export type Database = {
           metadata?: Json
           name?: string
           opening_hours?: Json | null
-          owner_id?: string
+          owner_id?: string | null
           phone?: string | null
           sector?: string
           slug?: string
