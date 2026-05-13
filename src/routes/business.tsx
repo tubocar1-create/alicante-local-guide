@@ -81,7 +81,7 @@ function BusinessLayout() {
           Business <span className="text-muted-foreground">· Alicante Friend</span>
         </Link>
         <button
-          onClick={() => signOut()}
+          onClick={async () => { await signOut(); navigate({ to: "/" }); }}
           className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground"
         >
           <LogOut className="h-3 w-3" /> Salir
