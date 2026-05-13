@@ -84,6 +84,45 @@ async function fetchAlicanteWeather(): Promise<Weather | null> {
   }
 }
 
+type SunTimes = { sunrise: string; sunset: string };
+async function fetchSunTimes(): Promise<SunTimes | null> {
+  try {
+    const url = `https://api.sunrise-sunset.org/json?lat=${ALC_LAT}&lng=${ALC_LON}&formatted=0`;
+    const r = await fetch(url, { signal: AbortSignal.timeout(4000) });
+    if (!r.ok) return null;
+    const j = await r.json();
+    if (j?.status !== "OK") return null;
+    const fmt = (iso: string) =>
+      new Date(iso).toLocaleTimeString("es-ES", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Europe/Madrid",
+      });
+    return { sunrise: fmt(j.results.sunrise), sunset: fmt(j.results.sunset) };
+  } catch {
+    return null;
+  }
+}
+
+type Marine = { seaTempC: number; waveM: number; wavePeriodS: number };
+async function fetchMarine(): Promise<Marine | null> {
+  try {
+    const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${ALC_LAT}&longitude=${ALC_LON}&current=wave_height,wave_period,sea_surface_temperature&timezone=Europe%2FMadrid`;
+    const r = await fetch(url, { signal: AbortSignal.timeout(4000) });
+    if (!r.ok) return null;
+    const j = await r.json();
+    const c = j?.current;
+    if (!c) return null;
+    return {
+      seaTempC: Math.round(Number(c.sea_surface_temperature)),
+      waveM: Number(Number(c.wave_height).toFixed(1)),
+      wavePeriodS: Math.round(Number(c.wave_period)),
+    };
+  } catch {
+    return null;
+  }
+}
+
 const WIKI_TOPICS = [
   "Alicante",
   "Castillo_de_Santa_Bárbara",
