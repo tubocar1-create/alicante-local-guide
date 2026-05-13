@@ -4,6 +4,9 @@ import { ADVERTISERS, getAdvertiser, type Advertiser } from "./advertisers";
 import {
   fetchAlicanteParkings,
   fetchAlicanteTraffic,
+  fetchAlicanteAirQuality,
+  fetchAlicanteAgenda,
+  type CulturalEvent,
 } from "./alicante-city.server";
 
 export type AdCopy = {
