@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listMyBusinesses } from "@/lib/business/business.functions";
 import { getBusinessMetrics } from "@/lib/business/metrics.functions";
-import { Plus, QrCode, Calendar, Users } from "lucide-react";
+import { listThreadsForBusiness } from "@/lib/coord/threads.functions";
+import { Plus, QrCode, Calendar } from "lucide-react";
 
 export const Route = createFileRoute("/business/")({
   component: BusinessDashboard,
@@ -25,6 +26,20 @@ function BusinessDashboard() {
     queryFn: () => fetchMetrics({ data: { business_id: primary!.id, days: 7 } }),
     enabled: !!primary,
   });
+
+  const fetchThreads = useServerFn(listThreadsForBusiness);
+  const businessIds = businesses.map((b) => b.id);
+  const { data: inbox } = useQuery({
+    queryKey: ["inbox", businessIds],
+    queryFn: () => fetchThreads({ data: { business_ids: businessIds } }),
+    enabled: businessIds.length > 0,
+    refetchInterval: 15000,
+    retry: false,
+    throwOnError: false,
+  });
+  const awaiting = (inbox?.threads ?? []).filter(
+    (t) => t.status === "awaiting_business" && t.booking?.status === "pending",
+  ).length;
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Cargando…</p>;
 
@@ -55,6 +70,32 @@ function BusinessDashboard() {
         <p className="text-xs text-muted-foreground">{primary.sector}</p>
       </div>
 
+      <Link
+        to="/business/inbox"
+        className={`flex items-center justify-between rounded-3xl px-5 py-5 text-primary-foreground shadow-lg ${
+          awaiting > 0
+            ? "bg-amber-500 animate-blink"
+            : "bg-primary"
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <Calendar className="h-7 w-7" />
+          <div className="text-left">
+            <p className="text-lg font-semibold leading-tight">Reservas</p>
+            <p className="text-xs opacity-90">
+              {awaiting > 0
+                ? `${awaiting} pendiente${awaiting === 1 ? "" : "s"} por responder`
+                : "Gestiona tus reservas"}
+            </p>
+          </div>
+        </div>
+        {awaiting > 0 && (
+          <span className="rounded-full bg-white/95 px-3 py-1 text-base font-bold text-amber-600">
+            {awaiting}
+          </span>
+        )}
+      </Link>
+
       <div className="grid grid-cols-2 gap-3">
         <Stat label="Visitas (7d)" value={s?.visit_viewed ?? 0} />
         <Stat label="QR validados" value={s?.qr_validated ?? 0} />
@@ -62,11 +103,8 @@ function BusinessDashboard() {
         <Stat label="Reservas" value={s?.bookings ?? 0} />
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 gap-2">
         <Quick to="/business/qr" icon={QrCode} label="Validar QR" />
-        <Quick to="/business/issued" icon={Users} label="QR emitidos" />
-        <Quick to="/business/bookings" icon={Calendar} label="Reservas" />
-        <Quick to="/business/referrals" icon={Users} label="Referidos" />
       </div>
     </div>
   );

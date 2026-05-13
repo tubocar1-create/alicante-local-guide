@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useNavigate, useLocation } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useBusinessAuth } from "@/hooks/useBusinessAuth";
-import { Loader2, LayoutDashboard, QrCode, Calendar, BarChart3, LogOut, MessageSquare } from "lucide-react";
+import { Loader2, LayoutDashboard, QrCode, Calendar, BarChart3, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/business")({
@@ -66,9 +66,8 @@ function BusinessLayout() {
 function BottomNav() {
   const items = [
     { to: "/business", icon: LayoutDashboard, label: "Inicio" },
-    { to: "/business/inbox", icon: MessageSquare, label: "Bandeja" },
     { to: "/business/qr", icon: QrCode, label: "Validar" },
-    { to: "/business/bookings", icon: Calendar, label: "Reservas" },
+    { to: "/business/inbox", icon: Calendar, label: "Reservas" },
     { to: "/business/metrics", icon: BarChart3, label: "Métricas" },
   ] as const;
   return (
