@@ -17,6 +17,8 @@ function ThreadsLayout() {
     queryFn: () => fetchThreads(),
     enabled: isList,
     refetchInterval: 20000,
+    retry: false,
+    throwOnError: false,
   });
 
   if (!isList) {
