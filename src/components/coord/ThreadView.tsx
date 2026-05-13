@@ -231,3 +231,124 @@ function renderPayload(key: string | null, payload: unknown) {
   }
   return null;
 }
+
+function toLocalInputValue(iso: string) {
+  const d = new Date(iso);
+  const off = d.getTimezoneOffset();
+  return new Date(d.getTime() - off * 60000).toISOString().slice(0, 16);
+}
+
+function BusinessDecisionPanel({
+  currentScheduledAt,
+  customerName,
+  pending,
+  onConfirm,
+  onPropose,
+  onDecline,
+}: {
+  currentScheduledAt: string;
+  customerName: string;
+  pending: boolean;
+  onConfirm: () => void;
+  onPropose: (iso: string) => void;
+  onDecline: (reason: string) => void;
+}) {
+  const [mode, setMode] = useState<null | "propose" | "decline">(null);
+  const [slot, setSlot] = useState(() => toLocalInputValue(currentScheduledAt));
+  const [reason, setReason] = useState(
+    `Hola ${customerName.split(" ")[0]}, hoy no tenemos disponibilidad en todo el horario. ¿Te gustaría reservar para otra fecha? Estaremos encantados de recibirte.`,
+  );
+
+  if (mode === "propose") {
+    return (
+      <div className="space-y-2 border-t border-border bg-card px-3 py-3">
+        <p className="text-xs font-medium">Propón una nueva hora</p>
+        <input
+          type="datetime-local"
+          value={slot}
+          onChange={(e) => setSlot(e.target.value)}
+          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+        />
+        <div className="flex gap-2">
+          <button
+            onClick={() => setMode(null)}
+            className="flex-1 rounded-full border border-border px-3 py-2 text-sm"
+          >
+            Cancelar
+          </button>
+          <button
+            disabled={pending || !slot}
+            onClick={() => onPropose(new Date(slot).toISOString())}
+            className="flex-1 rounded-full bg-primary px-3 py-2 text-sm text-primary-foreground disabled:opacity-50"
+          >
+            Enviar propuesta
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (mode === "decline") {
+    return (
+      <div className="space-y-2 border-t border-border bg-card px-3 py-3">
+        <p className="text-xs font-medium">Rechazar e invitar a otra fecha</p>
+        <textarea
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          maxLength={280}
+          rows={3}
+          className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+        />
+        <div className="flex gap-2">
+          <button
+            onClick={() => setMode(null)}
+            className="flex-1 rounded-full border border-border px-3 py-2 text-sm"
+          >
+            Cancelar
+          </button>
+          <button
+            disabled={pending}
+            onClick={() => onDecline(reason)}
+            className="flex-1 rounded-full bg-destructive px-3 py-2 text-sm text-destructive-foreground disabled:opacity-50"
+          >
+            Rechazar e invitar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="border-t border-border bg-card px-3 py-3">
+      <p className="mb-2 text-center text-[11px] uppercase tracking-wide text-muted-foreground">
+        Responder al cliente
+      </p>
+      <div className="grid grid-cols-3 gap-2">
+        <button
+          disabled={pending}
+          onClick={onConfirm}
+          className="flex flex-col items-center gap-1 rounded-2xl bg-primary px-2 py-3 text-primary-foreground disabled:opacity-50"
+        >
+          <Check className="h-5 w-5" />
+          <span className="text-[11px] font-medium leading-tight">Aceptar</span>
+        </button>
+        <button
+          disabled={pending}
+          onClick={() => setMode("propose")}
+          className="flex flex-col items-center gap-1 rounded-2xl border border-border bg-background px-2 py-3 disabled:opacity-50"
+        >
+          <CalendarClock className="h-5 w-5" />
+          <span className="text-[11px] font-medium leading-tight">Cambiar hora</span>
+        </button>
+        <button
+          disabled={pending}
+          onClick={() => setMode("decline")}
+          className="flex flex-col items-center gap-1 rounded-2xl border border-border bg-background px-2 py-3 text-destructive disabled:opacity-50"
+        >
+          <X className="h-5 w-5" />
+          <span className="text-[11px] font-medium leading-tight">Rechazar</span>
+        </button>
+      </div>
+    </div>
+  );
+}
