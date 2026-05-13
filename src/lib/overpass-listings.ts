@@ -150,5 +150,7 @@ export function stayFiltersToOverpass(kinds: StayKind[]) {
   return kinds.map((k) => ({ tag: STAY_TAG[k], value: k }));
 }
 export function eatFiltersToOverpass(kinds: EatKind[]) {
-  return kinds.map((k) => ({ tag: EAT_TAG, value: k }));
+  return kinds
+    .filter((k) => k !== "arroz_pescado")
+    .map((k) => ({ tag: EAT_TAG, value: k }));
 }
