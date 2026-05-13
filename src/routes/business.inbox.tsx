@@ -123,7 +123,13 @@ function InboxPage() {
                   </div>
                 </div>
               </Link>
-              {isPending && <QuickActions threadId={t.id} />}
+              {isPending && (
+                <QuickActions
+                  threadId={t.id}
+                  scheduledAt={t.booking?.scheduled_at}
+                  customerName={t.booking?.customer_name ?? undefined}
+                />
+              )}
             </li>
           );
         })}
