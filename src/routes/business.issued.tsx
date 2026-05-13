@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listMyBusinesses } from "@/lib/business/business.functions";
 import { listIssuedQrs } from "@/lib/business/issued-qrs.functions";
-import { ArrowLeft, Mail, Phone, User as UserIcon, Clock, Eye, Printer, X } from "lucide-react";
+import { ArrowLeft, Mail, Phone, User as UserIcon, Clock, Eye, Printer, X, MapPin, Store } from "lucide-react";
 
 export const Route = createFileRoute("/business/issued")({
   component: IssuedQrsPage,
@@ -30,6 +30,14 @@ type QrRow = {
   max_uses: number | null;
   active: boolean;
   payload: IssuerPayload | null;
+};
+
+type BusinessInfo = {
+  id: string;
+  name: string;
+  phone: string | null;
+  address: string | null;
+  opening_hours_json: string | null;
 };
 
 function fmtDateTime(iso?: string | null) {
@@ -64,6 +72,7 @@ function IssuedQrsPage() {
   });
 
   const qrs = (data?.qrs ?? []) as QrRow[];
+  const business = (data?.business ?? null) as BusinessInfo | null;
   const [openQr, setOpenQr] = useState<QrRow | null>(null);
 
   return (
@@ -160,12 +169,45 @@ function IssuedQrsPage() {
         })}
       </ul>
 
-      {openQr && <QrModal qr={openQr} onClose={() => setOpenQr(null)} />}
+      {openQr && <QrModal qr={openQr} business={business} onClose={() => setOpenQr(null)} />}
     </div>
   );
 }
 
-function QrModal({ qr, onClose }: { qr: QrRow; onClose: () => void }) {
+function formatHours(json: string | null): Array<[string, string]> {
+  if (!json) return [];
+  try {
+    const v = JSON.parse(json);
+    if (v && typeof v === "object" && !Array.isArray(v)) {
+      return Object.entries(v).map(([k, val]) => [
+        k,
+        typeof val === "string" ? val : JSON.stringify(val),
+      ]);
+    }
+    if (typeof v === "string") return [["Horario", v]];
+  } catch {
+    return [["Horario", json]];
+  }
+  return [];
+}
+
+function escapeHtml(s: string) {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function QrModal({
+  qr,
+  business,
+  onClose,
+}: {
+  qr: QrRow;
+  business: BusinessInfo | null;
+  onClose: () => void;
+}) {
   const p = qr.payload ?? {};
   const fullName = [p.user_name, p.user_surname].filter(Boolean).join(" ") || "Anónimo";
   const qrUrl = useMemo(
@@ -175,25 +217,49 @@ function QrModal({ qr, onClose }: { qr: QrRow; onClose: () => void }) {
       )}`,
     [qr.code],
   );
+  const hours = formatHours(business?.opening_hours_json ?? null);
 
   function handlePrint() {
-    const w = window.open("", "_blank", "width=480,height=640");
+    const w = window.open("", "_blank", "width=480,height=720");
     if (!w) return;
+    const bizBlock = business
+      ? `
+        <h2>${escapeHtml(business.name)}</h2>
+        ${business.phone ? `<p>Tel: ${escapeHtml(business.phone)}</p>` : ""}
+        ${business.address ? `<p>${escapeHtml(business.address)}</p>` : ""}
+        ${
+          hours.length
+            ? `<div class="hours"><strong>Horario</strong>${hours
+                .map(
+                  ([k, v]) =>
+                    `<p><span>${escapeHtml(k)}</span>: ${escapeHtml(v)}</p>`,
+                )
+                .join("")}</div>`
+            : ""
+        }
+        <hr />
+      `
+      : "";
     w.document.write(`<!doctype html><html><head><title>QR ${qr.code}</title>
       <style>
         body { font-family: system-ui, -apple-system, sans-serif; padding: 24px; text-align: center; color: #111; }
         h1 { font-size: 18px; margin: 0 0 8px; }
-        p { margin: 4px 0; font-size: 13px; color: #555; }
+        h2 { font-size: 16px; margin: 4px 0; }
+        p { margin: 4px 0; font-size: 13px; color: #444; }
+        hr { border: 0; border-top: 1px solid #ddd; margin: 12px 0; }
         .code { font-family: ui-monospace, monospace; font-size: 14px; margin-top: 12px; }
+        .hours { margin-top: 6px; font-size: 12px; }
+        .hours p { margin: 2px 0; }
         img { margin: 16px auto; display: block; }
       </style></head><body>
-      <h1>${fullName}</h1>
-      ${p.user_email ? `<p>${p.user_email}</p>` : ""}
-      ${p.user_phone ? `<p>${p.user_phone}</p>` : ""}
+      ${bizBlock}
+      <h1>${escapeHtml(fullName)}</h1>
+      ${p.user_email ? `<p>${escapeHtml(p.user_email)}</p>` : ""}
+      ${p.user_phone ? `<p>${escapeHtml(p.user_phone)}</p>` : ""}
       <p>Emitido: ${fmtDateTime(p.issued_at ?? qr.created_at)}</p>
       ${qr.expires_at ? `<p>Caduca: ${fmtDateTime(qr.expires_at)}</p>` : ""}
       <img src="${qrUrl}" width="320" height="320" alt="QR ${qr.code}" />
-      <p class="code">${qr.code}</p>
+      <p class="code">${escapeHtml(qr.code)}</p>
       <script>window.onload = () => { setTimeout(() => window.print(), 300); };</script>
     </body></html>`);
     w.document.close();
@@ -205,14 +271,14 @@ function QrModal({ qr, onClose }: { qr: QrRow; onClose: () => void }) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm rounded-3xl bg-background p-5 shadow-soft"
+        className="w-full max-w-sm rounded-3xl bg-background p-5 shadow-soft max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between">
-          <div>
+          <div className="min-w-0">
             <h3 className="text-base font-semibold">{fullName}</h3>
             {p.user_email && (
-              <p className="text-[11px] text-muted-foreground">{p.user_email}</p>
+              <p className="text-[11px] text-muted-foreground truncate">{p.user_email}</p>
             )}
             {p.user_phone && (
               <p className="text-[11px] text-muted-foreground">{p.user_phone}</p>
@@ -227,12 +293,46 @@ function QrModal({ qr, onClose }: { qr: QrRow; onClose: () => void }) {
           </button>
         </div>
 
+        {business && (
+          <div className="mt-3 rounded-2xl border border-border bg-secondary/40 p-3 text-[11px]">
+            <p className="flex items-center gap-1 text-sm font-medium text-foreground">
+              <Store className="h-3.5 w-3.5 text-primary" /> {business.name}
+            </p>
+            <div className="mt-1 space-y-0.5 text-muted-foreground">
+              {business.phone && (
+                <p className="flex items-center gap-1">
+                  <Phone className="h-3 w-3" /> {business.phone}
+                </p>
+              )}
+              {business.address && (
+                <p className="flex items-center gap-1">
+                  <MapPin className="h-3 w-3" /> {business.address}
+                </p>
+              )}
+              {hours.length > 0 && (
+                <div className="mt-1">
+                  <p className="flex items-center gap-1 font-medium text-foreground">
+                    <Clock className="h-3 w-3" /> Horario
+                  </p>
+                  <ul className="ml-4 mt-0.5 space-y-0.5">
+                    {hours.map(([k, v]) => (
+                      <li key={k}>
+                        <span className="capitalize">{k}</span>: {v}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="mt-3 flex justify-center">
           <img
             src={qrUrl}
             alt={`QR ${qr.code}`}
-            width={260}
-            height={260}
+            width={240}
+            height={240}
             className="rounded-2xl border border-border bg-white p-2"
           />
         </div>

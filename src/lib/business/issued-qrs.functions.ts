@@ -33,7 +33,18 @@ export const listIssuedQrs = createServerFn({ method: "GET" })
       active: boolean;
       payload: IssuerPayload | null;
     };
-    const empty = (error?: string) => ({ qrs: [] as Row[], error: error ?? null });
+    type Business = {
+      id: string;
+      name: string;
+      phone: string | null;
+      address: string | null;
+      opening_hours_json: string | null;
+    } | null;
+    const empty = (error?: string) => ({
+      qrs: [] as Row[],
+      business: null as Business,
+      error: error ?? null,
+    });
 
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -61,5 +72,22 @@ export const listIssuedQrs = createServerFn({ method: "GET" })
       active: r.active,
       payload: (r.payload as IssuerPayload | null) ?? null,
     }));
-    return { qrs: mapped, error: null };
+
+    const { data: bizRow } = await sb
+      .from("businesses")
+      .select("id, name, phone, address, opening_hours")
+      .eq("id", data.business_id)
+      .maybeSingle();
+    const business: Business = bizRow
+      ? {
+          id: bizRow.id,
+          name: bizRow.name,
+          phone: bizRow.phone ?? null,
+          address: bizRow.address ?? null,
+          opening_hours_json:
+            bizRow.opening_hours == null ? null : JSON.stringify(bizRow.opening_hours),
+        }
+      : null;
+
+    return { qrs: mapped, business, error: null };
   });
