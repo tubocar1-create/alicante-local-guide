@@ -116,9 +116,9 @@ export function suggestionsFor(
   }
   // user
   if (threadStatus === "awaiting_user" && bookingStatus === "pending") {
-    return all.filter((t) =>
-      ["user.accept", "user.reject_proposal", "user.cancel"].includes(t.key),
-    );
+    // Hay una propuesta del negocio pendiente: la respuesta se da con los
+    // botones inline de la propuesta, no desde el composer.
+    return [];
   }
   if (bookingStatus === "confirmed") {
     return all.filter((t) =>
