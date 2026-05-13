@@ -57,7 +57,7 @@ export const TEMPLATES: Record<string, TemplateDef> = {
     key: "user.accept",
     label: "Aceptar",
     role: "user",
-    nextThreadStatus: "awaiting_business",
+    nextThreadStatus: "closed",
     nextBookingStatus: "confirmed",
   },
   "user.reject_proposal": {
