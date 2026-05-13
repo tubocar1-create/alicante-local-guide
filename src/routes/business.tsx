@@ -66,9 +66,8 @@ function BusinessLayout() {
 function BottomNav() {
   const items = [
     { to: "/business", icon: LayoutDashboard, label: "Inicio" },
-    { to: "/business/inbox", icon: MessageSquare, label: "Bandeja" },
     { to: "/business/qr", icon: QrCode, label: "Validar" },
-    { to: "/business/bookings", icon: Calendar, label: "Reservas" },
+    { to: "/business/inbox", icon: Calendar, label: "Reservas" },
     { to: "/business/metrics", icon: BarChart3, label: "Métricas" },
   ] as const;
   return (
