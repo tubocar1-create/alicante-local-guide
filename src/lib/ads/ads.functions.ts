@@ -356,30 +356,30 @@ export const getAdVariants = createServerFn({ method: "POST" })
     let userPrompt: string;
     switch (advertiser.kind) {
       case "weather":
-        userPrompt = `Genera ${count} variantes DISTINTAS de tarjeta de CLIMA para Alicante. Cada variante: headline (máx 7 palabras), body (1 frase con consejo práctico, máx 110 caracteres), cta (2-3 palabras tipo "Ver tiempo"). Tono cercano. Sin alarmismo.${weatherCtx}`;
+        userPrompt = `Genera ${count} variantes DISTINTAS de tarjeta de CLIMA para Alicante. Cada variante: headline (máx 4 palabras), body (1 frase con consejo práctico, máx 65 caracteres), cta (2-3 palabras tipo "Ver tiempo"). Tono cercano. Sin alarmismo.${weatherCtx}`;
         break;
       case "marine":
-        userPrompt = `Genera ${count} variantes DISTINTAS de tarjeta de MAR Y PLAYA para Alicante. Cada variante: headline (máx 7 palabras), body (1 frase con un dato real y un consejo, máx 110 caracteres), cta (2-3 palabras tipo "Ver mar"). Tono cercano. Menciona temperatura del agua o estado del oleaje.${marineCtx}`;
+        userPrompt = `Genera ${count} variantes DISTINTAS de tarjeta de MAR Y PLAYA para Alicante. Cada variante: headline (máx 4 palabras), body (1 frase con un dato real y un consejo, máx 65 caracteres), cta (2-3 palabras tipo "Ver mar"). Tono cercano. Menciona temperatura del agua o estado del oleaje.${marineCtx}`;
         break;
       case "parkings":
-        userPrompt = `Genera ${count} variantes DISTINTAS de tarjeta sobre PARKINGS del centro de Alicante. Cada variante: headline (máx 7 palabras), body (1 frase con un dato REAL del listado, máx 110 caracteres), cta (2-3 palabras tipo "Ver parkings"). Menciona el nombre de un parking concreto y sus plazas o porcentaje de ocupación. Útil para alguien que busca aparcar.${parkingsCtx}`;
+        userPrompt = `Genera ${count} variantes DISTINTAS de tarjeta sobre PARKINGS del centro de Alicante. Cada variante: headline (máx 4 palabras), body (1 frase con un dato REAL del listado, máx 65 caracteres), cta (2-3 palabras tipo "Ver parkings"). Menciona el nombre de un parking concreto y sus plazas o porcentaje de ocupación. Útil para alguien que busca aparcar.${parkingsCtx}`;
         break;
       case "traffic":
-        userPrompt = `Genera ${count} variantes DISTINTAS de tarjeta de TRÁFICO en Alicante. Cada variante: headline (máx 7 palabras), body (1 frase con un dato real, máx 110 caracteres), cta (2-3 palabras tipo "Ver mapa"). Si hay incidencia o evento, una variante lo nombra. Si todo va fluido, dilo en positivo.${trafficCtx}`;
+        userPrompt = `Genera ${count} variantes DISTINTAS de tarjeta de TRÁFICO en Alicante. Cada variante: headline (máx 4 palabras), body (1 frase con un dato real, máx 65 caracteres), cta (2-3 palabras tipo "Ver mapa"). Si hay incidencia o evento, una variante lo nombra. Si todo va fluido, dilo en positivo.${trafficCtx}`;
         break;
       case "air":
-        userPrompt = `Genera ${count} variantes DISTINTAS de tarjeta sobre CALIDAD DEL AIRE en Alicante. Cada variante: headline (máx 7 palabras), body (1 frase con un dato real, máx 110 caracteres), cta (2-3 palabras tipo "Ver estaciones"). Tono cercano, útil para decidir si salir a correr, pasear con peques, etc.${airCtx}`;
+        userPrompt = `Genera ${count} variantes DISTINTAS de tarjeta sobre CALIDAD DEL AIRE en Alicante. Cada variante: headline (máx 4 palabras), body (1 frase con un dato real, máx 65 caracteres), cta (2-3 palabras tipo "Ver estaciones"). Tono cercano, útil para decidir si salir a correr, pasear con peques, etc.${airCtx}`;
         break;
       case "agenda":
-        userPrompt = `Genera ${count} variantes de tarjeta de AGENDA CULTURAL en Alicante, UNA por evento del listado. Cada variante: headline (máx 7 palabras, inspirada en el título real), body (1 frase con la fecha y el qué, máx 110 caracteres), cta (2-3 palabras tipo "Ver agenda"). NO inventes nada que no esté en el listado.${agendaCtx}`;
+        userPrompt = `Genera ${count} variantes de tarjeta de AGENDA CULTURAL en Alicante, UNA por evento del listado. Cada variante: headline (máx 4 palabras, inspirada en el título real), body (1 frase con la fecha y el qué, máx 65 caracteres), cta (2-3 palabras tipo "Ver agenda"). NO inventes nada que no esté en el listado.${agendaCtx}`;
         break;
       case "flights":
-        userPrompt = `Genera ${count} variantes DISTINTAS de tarjeta sobre TRÁFICO AÉREO en vivo cerca del aeropuerto de Alicante-Elche (ALC/LEAL). Cada variante: headline (máx 7 palabras), body (1 frase con un dato REAL del listado, máx 110 caracteres), cta (2-3 palabras tipo "Ver vuelos"). Menciona números reales (cuántos aviones, callsign de ejemplo, país de la aerolínea). Tono curioso/cercano.${flightsCtx}`;
+        userPrompt = `Genera ${count} variantes DISTINTAS de tarjeta sobre TRÁFICO AÉREO en vivo cerca del aeropuerto de Alicante-Elche (ALC/LEAL). Cada variante: headline (máx 4 palabras), body (1 frase con un dato REAL del listado, máx 65 caracteres), cta (2-3 palabras tipo "Ver vuelos"). Menciona números reales (cuántos aviones, callsign de ejemplo, país de la aerolínea). Tono curioso/cercano.${flightsCtx}`;
         break;
       default:
         userPrompt = wiki
-          ? `Tema REAL de Wikipedia: "${wiki.title}".\n\nResumen fuente:\n"""${wiki.extract}"""\n\nGenera ${count} variantes DISTINTAS de tarjeta INFORMATIVA basadas EXCLUSIVAMENTE en ese resumen (no inventes datos). Cada variante destaca un ángulo distinto. Cada variante: headline (máx 7 palabras), body (1 frase con un dato concreto, máx 110 caracteres), cta (2-3 palabras tipo "Saber más"). Tono cercano, sin clichés. Si un dato no está en el resumen, omítelo.`
-          : `Genera ${count} variantes DISTINTAS de tarjeta INFORMATIVA sobre Alicante. Temas variados: gastronomía, Hogueras, playas, TRAM, Castillo, barrios, mercados. Cada variante: headline (máx 7 palabras), body (1 frase, máx 110 caracteres), cta (2-3 palabras tipo "Saber más"). Tono cercano.`;
+          ? `Tema REAL de Wikipedia: "${wiki.title}".\n\nResumen fuente:\n"""${wiki.extract}"""\n\nGenera ${count} variantes DISTINTAS de tarjeta INFORMATIVA basadas EXCLUSIVAMENTE en ese resumen (no inventes datos). Cada variante destaca un ángulo distinto. Cada variante: headline (máx 4 palabras), body (1 frase con un dato concreto, máx 65 caracteres), cta (2-3 palabras tipo "Saber más"). Tono cercano, sin clichés. Si un dato no está en el resumen, omítelo.`
+          : `Genera ${count} variantes DISTINTAS de tarjeta INFORMATIVA sobre Alicante. Temas variados: gastronomía, Hogueras, playas, TRAM, Castillo, barrios, mercados. Cada variante: headline (máx 4 palabras), body (1 frase, máx 65 caracteres), cta (2-3 palabras tipo "Saber más"). Tono cercano.`;
     }
 
     try {
