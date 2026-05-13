@@ -63,7 +63,7 @@ function BusinessLayout() {
               Solicitar acceso
             </Link>
             <button
-              onClick={() => signOut()}
+              onClick={async () => { await signOut(); navigate({ to: "/" }); }}
               className="rounded-full border border-border px-3 py-1.5 text-xs"
             >
               Salir
