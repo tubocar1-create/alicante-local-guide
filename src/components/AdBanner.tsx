@@ -87,7 +87,14 @@ export function AdBanner() {
 
   if (!allLoaded || !open) return SLOT;
 
-  const ai = (cycle - 1 + ADVERTISERS.length * 1000) % ADVERTISERS.length;
+  // Filtramos anunciantes sin variantes (banner suspendido, p.ej. Aena sin incidencias)
+  const activeIdx: number[] = [];
+  queries.forEach((q, i) => {
+    if (q.data && q.data.variants.length > 0) activeIdx.push(i);
+  });
+  if (activeIdx.length === 0) return SLOT;
+
+  const ai = activeIdx[(cycle - 1 + activeIdx.length * 1000) % activeIdx.length];
   const data = queries[ai]?.data;
   if (!data) return SLOT;
   const variant =
