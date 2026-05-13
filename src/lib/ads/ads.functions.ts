@@ -6,6 +6,7 @@ import {
   fetchAlicanteTraffic,
   fetchAlicanteAirQuality,
   fetchAlicanteAgenda,
+  fetchAlicanteAirTraffic,
   type CulturalEvent,
 } from "./alicante-city.server";
 
@@ -322,6 +323,27 @@ export const getAdVariants = createServerFn({ method: "POST" })
       }
     }
 
+    let flightsCtx = "";
+    if (advertiser.kind === "flights") {
+      const t = await fetchAlicanteAirTraffic();
+      if (t) {
+        const sample = t.sample
+          .map((s) => {
+            const where = s.onGround
+              ? "en pista"
+              : s.altitudeM != null
+                ? `${Math.round(s.altitudeM / 30.48) / 10} mil pies`
+                : "en vuelo";
+            const speed = s.velocityKmh ? `${s.velocityKmh} km/h` : "";
+            return `- ${s.callsign} (${s.country || "—"}) ${where}${speed ? ", " + speed : ""}`;
+          })
+          .join("\n");
+        flightsCtx = `\n\nTRÁFICO AÉREO REAL ahora alrededor de Alicante-Elche (OpenSky Network):\nTotal aviones detectados: ${t.total} (${t.airborne} en vuelo, ${t.onGround} en pista).\nMuestra (más cercanos al aeropuerto):\n${sample || "(ninguno)"}\n\nUsa estos datos REALES sin inventar callsigns ni países. Si está en pista, di "rodando". Si vuela, menciona altitud o velocidad.`;
+      } else {
+        flightsCtx = "\n\n(Sin datos de tráfico aéreo en este momento).";
+      }
+    }
+
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       return {
@@ -350,6 +372,9 @@ export const getAdVariants = createServerFn({ method: "POST" })
         break;
       case "agenda":
         userPrompt = `Genera ${count} variantes de tarjeta de AGENDA CULTURAL en Alicante, UNA por evento del listado. Cada variante: headline (máx 7 palabras, inspirada en el título real), body (1 frase con la fecha y el qué, máx 110 caracteres), cta (2-3 palabras tipo "Ver agenda"). NO inventes nada que no esté en el listado.${agendaCtx}`;
+        break;
+      case "flights":
+        userPrompt = `Genera ${count} variantes DISTINTAS de tarjeta sobre TRÁFICO AÉREO en vivo cerca del aeropuerto de Alicante-Elche (ALC/LEAL). Cada variante: headline (máx 7 palabras), body (1 frase con un dato REAL del listado, máx 110 caracteres), cta (2-3 palabras tipo "Ver vuelos"). Menciona números reales (cuántos aviones, callsign de ejemplo, país de la aerolínea). Tono curioso/cercano.${flightsCtx}`;
         break;
       default:
         userPrompt = wiki

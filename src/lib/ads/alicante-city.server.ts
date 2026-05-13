@@ -2,6 +2,7 @@
 // Endpoints descubiertos:
 //   GET /asmpois  → JSON con virtual_sections (tráfico), incidencias, eventos
 //   GET /parkings → HTML con ocupación en vivo de parkings públicos
+// Tráfico aéreo en vivo cerca del aeropuerto ALC/LEAL: OpenSky Network.
 
 const BASE = "https://movilidad.alicante.es";
 const UA = "Mozilla/5.0 (compatible; AlicanteFriend/1.0)";
@@ -188,3 +189,73 @@ export async function fetchAlicanteAgenda(): Promise<CulturalEvent[] | null> {
   }
 }
 
+
+// === Tráfico aéreo en vivo: OpenSky Network ===
+// Aeropuerto Alicante-Elche (ALC / LEAL): 38.2822, -0.5582.
+// Bounding box ~35 km alrededor.
+export type FlightState = {
+  callsign: string;
+  country: string;
+  altitudeM: number | null;
+  velocityKmh: number | null;
+  onGround: boolean;
+  headingDeg: number | null;
+};
+
+export type AirTraffic = {
+  total: number;
+  airborne: number;
+  onGround: number;
+  sample: FlightState[]; // hasta 6 más cercanos al aeropuerto
+};
+
+const ALC_AIRPORT = { lat: 38.2822, lon: -0.5582 };
+
+export async function fetchAlicanteAirTraffic(): Promise<AirTraffic | null> {
+  try {
+    const url =
+      "https://opensky-network.org/api/states/all" +
+      "?lamin=38.00&lomin=-0.95&lamax=38.55&lomax=-0.20";
+    const r = await fetch(url, {
+      headers: { "User-Agent": UA, Accept: "application/json" },
+      signal: AbortSignal.timeout(7000),
+    });
+    if (!r.ok) return null;
+    const j = (await r.json()) as { states?: unknown[][] | null };
+    const raw = j.states ?? [];
+    if (!raw.length) return { total: 0, airborne: 0, onGround: 0, sample: [] };
+    type WithDist = FlightState & { _d: number };
+    const states: WithDist[] = raw.map((s) => ({
+      callsign: String(s[1] ?? "").trim() || "—",
+      country: String(s[2] ?? "").trim(),
+      altitudeM: s[7] != null ? Math.round(Number(s[7])) : null,
+      velocityKmh: s[9] != null ? Math.round(Number(s[9]) * 3.6) : null,
+      onGround: Boolean(s[8]),
+      headingDeg: s[10] != null ? Math.round(Number(s[10])) : null,
+      _d: (() => {
+        const lat = Number(s[6]);
+        const lon = Number(s[5]);
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) return Infinity;
+        const dx = (lon - ALC_AIRPORT.lon) * Math.cos((lat * Math.PI) / 180);
+        const dy = lat - ALC_AIRPORT.lat;
+        return dx * dx + dy * dy;
+      })(),
+    }));
+    const airborne = states.filter((s) => !s.onGround).length;
+    const onGround = states.length - airborne;
+    const sample: FlightState[] = [...states]
+      .sort((a, b) => a._d - b._d)
+      .slice(0, 6)
+      .map(({ callsign, country, altitudeM, velocityKmh, onGround, headingDeg }) => ({
+        callsign,
+        country,
+        altitudeM,
+        velocityKmh,
+        onGround,
+        headingDeg,
+      }));
+    return { total: states.length, airborne, onGround, sample };
+  } catch {
+    return null;
+  }
+}
