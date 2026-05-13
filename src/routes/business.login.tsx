@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Home } from "lucide-react";
@@ -30,13 +30,13 @@ function BusinessLogin() {
           Acceso privado para negocios partner. Próximamente.
         </p>
 
-        <button
-          onClick={() => navigate({ to: "/" })}
+        <Link
+          to="/"
           className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-primary py-3 text-sm font-semibold text-primary-foreground"
         >
           <Home className="h-4 w-4" />
           Ir al menú principal
-        </button>
+        </Link>
       </div>
     </div>
   );
