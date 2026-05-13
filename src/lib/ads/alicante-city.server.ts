@@ -479,3 +479,84 @@ export async function fetchRenfeAlicanteSchedule(): Promise<RenfeTrip[] | null> 
   unique.sort((a, b) => a.minutesFromNow - b.minutesFromNow);
   return unique.slice(0, 10);
 }
+
+// ─────────────────────────────────────────────────────────────────
+// AENA — Cancelaciones del día (scraping del endpoint JSON oculto)
+// ─────────────────────────────────────────────────────────────────
+
+export type AenaCancellation = {
+  type: "salida" | "llegada";
+  airline: string;
+  flightNumber: string;
+  otherCity: string;
+  otherIata: string;
+  scheduledTime: string; // HH:MM
+  date: string; // dd/mm/yyyy
+};
+
+async function fetchAenaFlights(
+  flightType: "S" | "L",
+): Promise<Array<Record<string, string>> | null> {
+  try {
+    const r = await fetch(
+      `https://www.aena.es/sites/Satellite?pagename=AENA_ConsultarVuelos&airport=ALC&flightType=${flightType}&dosDias=si`,
+      {
+        method: "POST",
+        headers: {
+          "User-Agent": UA,
+          Accept: "application/json",
+          Referer: "https://www.aena.es/es/infovuelos.html",
+          "Content-Length": "0",
+        },
+        signal: AbortSignal.timeout(7000),
+      },
+    );
+    if (!r.ok) return null;
+    return (await r.json()) as Array<Record<string, string>>;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Devuelve las cancelaciones (estado=CAN) del día en ALC, salidas y llegadas,
+ * ordenadas por hora programada. Máx 10.
+ */
+export async function fetchAenaCancellations(): Promise<AenaCancellation[] | null> {
+  const [salidas, llegadas] = await Promise.all([
+    fetchAenaFlights("S"),
+    fetchAenaFlights("L"),
+  ]);
+  if (!salidas && !llegadas) return null;
+  const all: AenaCancellation[] = [];
+  const push = (rows: Array<Record<string, string>> | null, type: "salida" | "llegada") => {
+    if (!rows) return;
+    for (const f of rows) {
+      if ((f.estado || "").toUpperCase() !== "CAN") continue;
+      const iataCia = (f.iataCompania || "").trim();
+      const num = (f.numVuelo || "").trim();
+      const horaProg = (f.horaProgramada || "").slice(0, 5);
+      all.push({
+        type,
+        airline: (f.nombreCompania || iataCia || "").trim() || "—",
+        flightNumber: iataCia && num ? `${iataCia}${num}` : num || "—",
+        otherCity: (f.ciudadIataOtro || "").trim() || (f.iataOtro || "").trim() || "—",
+        otherIata: (f.iataOtro || "").trim() || "",
+        scheduledTime: horaProg,
+        date: (f.fecha || "").trim(),
+      });
+    }
+  };
+  push(salidas, "salida");
+  push(llegadas, "llegada");
+  if (!all.length) return [];
+  // Orden: hoy primero, luego por hora
+  const today = new Date().toLocaleDateString("es-ES", { timeZone: "Europe/Madrid" });
+  all.sort((a, b) => {
+    const ta = a.date === today ? 0 : 1;
+    const tb = b.date === today ? 0 : 1;
+    if (ta !== tb) return ta - tb;
+    return a.scheduledTime.localeCompare(b.scheduledTime);
+  });
+  return all.slice(0, 10);
+}
