@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { listMyBusinesses } from "@/lib/business/business.functions";
+import { listThreadsForBusiness } from "@/lib/coord/threads.functions";
 
 // Singleton AudioContext. Browsers require a user gesture before audio can
 // play; we create/resume the context the first time the user interacts with
@@ -25,7 +26,6 @@ function unlockAudio() {
   const ctx = getCtx();
   if (!ctx) return;
   if (ctx.state === "suspended") ctx.resume().catch(() => {});
-  // Play a 1-sample silent buffer to fully unlock on iOS Safari.
   try {
     const buf = ctx.createBuffer(1, 1, 22050);
     const src = ctx.createBufferSource();
@@ -84,10 +84,15 @@ function notify(title: string, body: string) {
   }
 }
 
+// Tracks thread IDs we've already alerted on, across realtime + polling.
+const seenThreads = new Set<string>();
+
 /**
  * Subscribes in realtime to new bookings for businesses owned by the
  * current user and fires a loud alarm + toast + browser notification
- * the moment a customer creates a reservation.
+ * the moment a customer creates a reservation. Falls back to polling
+ * every 10s in case the realtime websocket misses an event (RLS, auth
+ * token race, dropped WS, etc).
  */
 export function useBookingAlarm() {
   const fetchBiz = useServerFn(listMyBusinesses);
@@ -112,9 +117,9 @@ export function useBookingAlarm() {
     const onGesture = () => {
       if (!unlocked) unlockAudio();
     };
-    window.addEventListener("pointerdown", onGesture, { once: false });
-    window.addEventListener("keydown", onGesture, { once: false });
-    window.addEventListener("touchstart", onGesture, { once: false });
+    window.addEventListener("pointerdown", onGesture);
+    window.addEventListener("keydown", onGesture);
+    window.addEventListener("touchstart", onGesture);
     return () => {
       window.removeEventListener("pointerdown", onGesture);
       window.removeEventListener("keydown", onGesture);
@@ -122,29 +127,26 @@ export function useBookingAlarm() {
     };
   }, []);
 
+  // Realtime subscription
   useEffect(() => {
     if (businessIds.length === 0) return;
     const idSet = new Set(businessIds);
-    const seen = new Set<string>();
 
     const channel = supabase
       .channel(`biz-bookings-${idsKey}`)
       .on(
         "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "conversation_threads",
-        },
+        { event: "INSERT", schema: "public", table: "conversation_threads" },
         (payload) => {
           const row = payload.new as {
             id?: string;
             business_id?: string;
             context_snapshot?: { customer_name?: string; scheduled_at?: string } | null;
           };
+          console.log("[alarm] realtime thread INSERT", row);
           if (!row?.business_id || !idSet.has(row.business_id)) return;
-          if (row.id && seen.has(row.id)) return;
-          if (row.id) seen.add(row.id);
+          if (row.id && seenThreads.has(row.id)) return;
+          if (row.id) seenThreads.add(row.id);
 
           const biz = businesses.find((b) => b.id === row.business_id);
           const customer = row.context_snapshot?.customer_name?.trim();
@@ -162,11 +164,60 @@ export function useBookingAlarm() {
           notify(title, body);
         },
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("[alarm] realtime status:", status);
+      });
 
     return () => {
       supabase.removeChannel(channel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idsKey]);
+
+  // Polling fallback — every 10s fetch threads and alert on any new ones.
+  // This guarantees the alarm fires even if the realtime channel never
+  // receives the event (auth race, WS disconnect, RLS edge case).
+  const fetchThreads = useServerFn(listThreadsForBusiness);
+  const baselineSetRef = useRef(false);
+  const { data: pollData } = useQuery({
+    queryKey: ["alarm-poll", idsKey],
+    queryFn: () => fetchThreads({ data: { business_ids: businessIds } }),
+    enabled: businessIds.length > 0,
+    refetchInterval: 10000,
+    refetchIntervalInBackground: true,
+    retry: false,
+    throwOnError: false,
+  });
+
+  useEffect(() => {
+    const threads = pollData?.threads ?? [];
+    if (!baselineSetRef.current) {
+      // First load: mark all existing threads as seen so we don't alarm
+      // on historical reservations.
+      threads.forEach((t) => seenThreads.add(t.id));
+      baselineSetRef.current = true;
+      return;
+    }
+    for (const t of threads) {
+      if (seenThreads.has(t.id)) continue;
+      seenThreads.add(t.id);
+      const biz = businesses.find((b) => b.id === t.business_id);
+      const customer =
+        (t.context_snapshot as { customer_name?: string } | null)?.customer_name?.trim() ||
+        t.booking?.customer_name?.trim();
+      const when = t.booking?.scheduled_at
+        ? new Date(t.booking.scheduled_at).toLocaleString("es-ES", {
+            day: "2-digit",
+            month: "short",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : null;
+      const title = `¡Nueva reserva${biz ? ` en ${biz.name}` : ""}!`;
+      const body = [customer, when].filter(Boolean).join(" · ") || "Un cliente acaba de reservar";
+      console.log("[alarm] polling detected new thread", t.id);
+      notify(title, body);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pollData]);
 }
