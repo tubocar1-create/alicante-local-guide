@@ -137,6 +137,7 @@ export const STAY_FILTERS: { kind: StayKind; label: string; emoji: string }[] = 
 ];
 
 export const EAT_FILTERS: { kind: EatKind; label: string; emoji: string }[] = [
+  { kind: "arroz_pescado", label: "Arroces y pescados", emoji: "🥘" },
   { kind: "restaurant", label: "Restaurantes", emoji: "🍽️" },
   { kind: "cafe", label: "Cafeterías", emoji: "☕" },
   { kind: "bar", label: "Bares", emoji: "🍻" },
