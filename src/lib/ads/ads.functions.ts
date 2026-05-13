@@ -323,6 +323,27 @@ export const getAdVariants = createServerFn({ method: "POST" })
       }
     }
 
+    let flightsCtx = "";
+    if (advertiser.kind === "flights") {
+      const t = await fetchAlicanteAirTraffic();
+      if (t) {
+        const sample = t.sample
+          .map((s) => {
+            const where = s.onGround
+              ? "en pista"
+              : s.altitudeM != null
+                ? `${Math.round(s.altitudeM / 30.48) / 10} mil pies`
+                : "en vuelo";
+            const speed = s.velocityKmh ? `${s.velocityKmh} km/h` : "";
+            return `- ${s.callsign} (${s.country || "—"}) ${where}${speed ? ", " + speed : ""}`;
+          })
+          .join("\n");
+        flightsCtx = `\n\nTRÁFICO AÉREO REAL ahora alrededor de Alicante-Elche (OpenSky Network):\nTotal aviones detectados: ${t.total} (${t.airborne} en vuelo, ${t.onGround} en pista).\nMuestra (más cercanos al aeropuerto):\n${sample || "(ninguno)"}\n\nUsa estos datos REALES sin inventar callsigns ni países. Si está en pista, di "rodando". Si vuela, menciona altitud o velocidad.`;
+      } else {
+        flightsCtx = "\n\n(Sin datos de tráfico aéreo en este momento).";
+      }
+    }
+
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       return {
