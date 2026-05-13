@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { listMyBusinesses } from "@/lib/business/business.functions";
 import { getBusinessMetrics } from "@/lib/business/metrics.functions";
 import { listThreadsForBusiness } from "@/lib/coord/threads.functions";
-import { Plus, QrCode, Calendar } from "lucide-react";
+import { Plus, QrCode, Calendar, BarChart3 } from "lucide-react";
 
 export const Route = createFileRoute("/business/")({
   component: BusinessDashboard,
@@ -105,6 +105,7 @@ function BusinessDashboard() {
 
       <div className="grid grid-cols-1 gap-2">
         <Quick to="/business/qr" icon={QrCode} label="Validar QR" />
+        <Quick to="/business/metrics" icon={BarChart3} label="Métricas" />
       </div>
     </div>
   );
