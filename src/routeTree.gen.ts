@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ThreadsRouteImport } from './routes/threads'
 import { Route as StayRouteImport } from './routes/stay'
 import { Route as RepoRouteImport } from './routes/repo'
 import { Route as PerfilRouteImport } from './routes/perfil'
@@ -19,21 +20,29 @@ import { Route as BusinessRouteImport } from './routes/business'
 import { Route as BusRouteImport } from './routes/bus'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BusinessIndexRouteImport } from './routes/business.index'
+import { Route as ThreadsIdRouteImport } from './routes/threads.$id'
 import { Route as BusinessReferralsRouteImport } from './routes/business.referrals'
 import { Route as BusinessQrRouteImport } from './routes/business.qr'
 import { Route as BusinessOnboardingRouteImport } from './routes/business.onboarding'
 import { Route as BusinessMetricsRouteImport } from './routes/business.metrics'
 import { Route as BusinessLoginRouteImport } from './routes/business.login'
 import { Route as BusinessIssuedRouteImport } from './routes/business.issued'
+import { Route as BusinessInboxRouteImport } from './routes/business.inbox'
 import { Route as BusinessBookingsRouteImport } from './routes/business.bookings'
 import { Route as BusPlannerRouteImport } from './routes/bus.planner'
 import { Route as BusLinesRouteImport } from './routes/bus.lines'
+import { Route as BusinessInboxIdRouteImport } from './routes/business.inbox.$id'
 import { Route as BusLinesCodeRouteImport } from './routes/bus.lines.$code'
 import { Route as ApiPublicQrValidateRouteImport } from './routes/api/public/qr-validate'
 import { Route as ApiPublicQrIssueRouteImport } from './routes/api/public/qr-issue'
 import { Route as ApiPublicBusEtaRouteImport } from './routes/api/public/bus-eta'
 import { Route as ApiPublicBookingCreateRouteImport } from './routes/api/public/booking-create'
 
+const ThreadsRoute = ThreadsRouteImport.update({
+  id: '/threads',
+  path: '/threads',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StayRoute = StayRouteImport.update({
   id: '/stay',
   path: '/stay',
@@ -84,6 +93,11 @@ const BusinessIndexRoute = BusinessIndexRouteImport.update({
   path: '/',
   getParentRoute: () => BusinessRoute,
 } as any)
+const ThreadsIdRoute = ThreadsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ThreadsRoute,
+} as any)
 const BusinessReferralsRoute = BusinessReferralsRouteImport.update({
   id: '/referrals',
   path: '/referrals',
@@ -114,6 +128,11 @@ const BusinessIssuedRoute = BusinessIssuedRouteImport.update({
   path: '/issued',
   getParentRoute: () => BusinessRoute,
 } as any)
+const BusinessInboxRoute = BusinessInboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => BusinessRoute,
+} as any)
 const BusinessBookingsRoute = BusinessBookingsRouteImport.update({
   id: '/bookings',
   path: '/bookings',
@@ -128,6 +147,11 @@ const BusLinesRoute = BusLinesRouteImport.update({
   id: '/lines',
   path: '/lines',
   getParentRoute: () => BusRoute,
+} as any)
+const BusinessInboxIdRoute = BusinessInboxIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => BusinessInboxRoute,
 } as any)
 const BusLinesCodeRoute = BusLinesCodeRouteImport.update({
   id: '/$code',
@@ -165,21 +189,25 @@ export interface FileRoutesByFullPath {
   '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
   '/stay': typeof StayRoute
+  '/threads': typeof ThreadsRouteWithChildren
   '/bus/lines': typeof BusLinesRouteWithChildren
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
+  '/business/inbox': typeof BusinessInboxRouteWithChildren
   '/business/issued': typeof BusinessIssuedRoute
   '/business/login': typeof BusinessLoginRoute
   '/business/metrics': typeof BusinessMetricsRoute
   '/business/onboarding': typeof BusinessOnboardingRoute
   '/business/qr': typeof BusinessQrRoute
   '/business/referrals': typeof BusinessReferralsRoute
+  '/threads/$id': typeof ThreadsIdRoute
   '/business/': typeof BusinessIndexRoute
   '/api/public/booking-create': typeof ApiPublicBookingCreateRoute
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
   '/api/public/qr-issue': typeof ApiPublicQrIssueRoute
   '/api/public/qr-validate': typeof ApiPublicQrValidateRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
+  '/business/inbox/$id': typeof BusinessInboxIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -190,21 +218,25 @@ export interface FileRoutesByTo {
   '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
   '/stay': typeof StayRoute
+  '/threads': typeof ThreadsRouteWithChildren
   '/bus/lines': typeof BusLinesRouteWithChildren
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
+  '/business/inbox': typeof BusinessInboxRouteWithChildren
   '/business/issued': typeof BusinessIssuedRoute
   '/business/login': typeof BusinessLoginRoute
   '/business/metrics': typeof BusinessMetricsRoute
   '/business/onboarding': typeof BusinessOnboardingRoute
   '/business/qr': typeof BusinessQrRoute
   '/business/referrals': typeof BusinessReferralsRoute
+  '/threads/$id': typeof ThreadsIdRoute
   '/business': typeof BusinessIndexRoute
   '/api/public/booking-create': typeof ApiPublicBookingCreateRoute
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
   '/api/public/qr-issue': typeof ApiPublicQrIssueRoute
   '/api/public/qr-validate': typeof ApiPublicQrValidateRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
+  '/business/inbox/$id': typeof BusinessInboxIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -217,21 +249,25 @@ export interface FileRoutesById {
   '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
   '/stay': typeof StayRoute
+  '/threads': typeof ThreadsRouteWithChildren
   '/bus/lines': typeof BusLinesRouteWithChildren
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
+  '/business/inbox': typeof BusinessInboxRouteWithChildren
   '/business/issued': typeof BusinessIssuedRoute
   '/business/login': typeof BusinessLoginRoute
   '/business/metrics': typeof BusinessMetricsRoute
   '/business/onboarding': typeof BusinessOnboardingRoute
   '/business/qr': typeof BusinessQrRoute
   '/business/referrals': typeof BusinessReferralsRoute
+  '/threads/$id': typeof ThreadsIdRoute
   '/business/': typeof BusinessIndexRoute
   '/api/public/booking-create': typeof ApiPublicBookingCreateRoute
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
   '/api/public/qr-issue': typeof ApiPublicQrIssueRoute
   '/api/public/qr-validate': typeof ApiPublicQrValidateRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
+  '/business/inbox/$id': typeof BusinessInboxIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -245,21 +281,25 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/repo'
     | '/stay'
+    | '/threads'
     | '/bus/lines'
     | '/bus/planner'
     | '/business/bookings'
+    | '/business/inbox'
     | '/business/issued'
     | '/business/login'
     | '/business/metrics'
     | '/business/onboarding'
     | '/business/qr'
     | '/business/referrals'
+    | '/threads/$id'
     | '/business/'
     | '/api/public/booking-create'
     | '/api/public/bus-eta'
     | '/api/public/qr-issue'
     | '/api/public/qr-validate'
     | '/bus/lines/$code'
+    | '/business/inbox/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -270,21 +310,25 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/repo'
     | '/stay'
+    | '/threads'
     | '/bus/lines'
     | '/bus/planner'
     | '/business/bookings'
+    | '/business/inbox'
     | '/business/issued'
     | '/business/login'
     | '/business/metrics'
     | '/business/onboarding'
     | '/business/qr'
     | '/business/referrals'
+    | '/threads/$id'
     | '/business'
     | '/api/public/booking-create'
     | '/api/public/bus-eta'
     | '/api/public/qr-issue'
     | '/api/public/qr-validate'
     | '/bus/lines/$code'
+    | '/business/inbox/$id'
   id:
     | '__root__'
     | '/'
@@ -296,21 +340,25 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/repo'
     | '/stay'
+    | '/threads'
     | '/bus/lines'
     | '/bus/planner'
     | '/business/bookings'
+    | '/business/inbox'
     | '/business/issued'
     | '/business/login'
     | '/business/metrics'
     | '/business/onboarding'
     | '/business/qr'
     | '/business/referrals'
+    | '/threads/$id'
     | '/business/'
     | '/api/public/booking-create'
     | '/api/public/bus-eta'
     | '/api/public/qr-issue'
     | '/api/public/qr-validate'
     | '/bus/lines/$code'
+    | '/business/inbox/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -323,6 +371,7 @@ export interface RootRouteChildren {
   PerfilRoute: typeof PerfilRoute
   RepoRoute: typeof RepoRoute
   StayRoute: typeof StayRoute
+  ThreadsRoute: typeof ThreadsRouteWithChildren
   ApiPublicBookingCreateRoute: typeof ApiPublicBookingCreateRoute
   ApiPublicBusEtaRoute: typeof ApiPublicBusEtaRoute
   ApiPublicQrIssueRoute: typeof ApiPublicQrIssueRoute
@@ -331,6 +380,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/threads': {
+      id: '/threads'
+      path: '/threads'
+      fullPath: '/threads'
+      preLoaderRoute: typeof ThreadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/stay': {
       id: '/stay'
       path: '/stay'
@@ -401,6 +457,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BusinessIndexRouteImport
       parentRoute: typeof BusinessRoute
     }
+    '/threads/$id': {
+      id: '/threads/$id'
+      path: '/$id'
+      fullPath: '/threads/$id'
+      preLoaderRoute: typeof ThreadsIdRouteImport
+      parentRoute: typeof ThreadsRoute
+    }
     '/business/referrals': {
       id: '/business/referrals'
       path: '/referrals'
@@ -443,6 +506,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BusinessIssuedRouteImport
       parentRoute: typeof BusinessRoute
     }
+    '/business/inbox': {
+      id: '/business/inbox'
+      path: '/inbox'
+      fullPath: '/business/inbox'
+      preLoaderRoute: typeof BusinessInboxRouteImport
+      parentRoute: typeof BusinessRoute
+    }
     '/business/bookings': {
       id: '/business/bookings'
       path: '/bookings'
@@ -463,6 +533,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/bus/lines'
       preLoaderRoute: typeof BusLinesRouteImport
       parentRoute: typeof BusRoute
+    }
+    '/business/inbox/$id': {
+      id: '/business/inbox/$id'
+      path: '/$id'
+      fullPath: '/business/inbox/$id'
+      preLoaderRoute: typeof BusinessInboxIdRouteImport
+      parentRoute: typeof BusinessInboxRoute
     }
     '/bus/lines/$code': {
       id: '/bus/lines/$code'
@@ -526,8 +603,21 @@ const BusRouteChildren: BusRouteChildren = {
 
 const BusRouteWithChildren = BusRoute._addFileChildren(BusRouteChildren)
 
+interface BusinessInboxRouteChildren {
+  BusinessInboxIdRoute: typeof BusinessInboxIdRoute
+}
+
+const BusinessInboxRouteChildren: BusinessInboxRouteChildren = {
+  BusinessInboxIdRoute: BusinessInboxIdRoute,
+}
+
+const BusinessInboxRouteWithChildren = BusinessInboxRoute._addFileChildren(
+  BusinessInboxRouteChildren,
+)
+
 interface BusinessRouteChildren {
   BusinessBookingsRoute: typeof BusinessBookingsRoute
+  BusinessInboxRoute: typeof BusinessInboxRouteWithChildren
   BusinessIssuedRoute: typeof BusinessIssuedRoute
   BusinessLoginRoute: typeof BusinessLoginRoute
   BusinessMetricsRoute: typeof BusinessMetricsRoute
@@ -539,6 +629,7 @@ interface BusinessRouteChildren {
 
 const BusinessRouteChildren: BusinessRouteChildren = {
   BusinessBookingsRoute: BusinessBookingsRoute,
+  BusinessInboxRoute: BusinessInboxRouteWithChildren,
   BusinessIssuedRoute: BusinessIssuedRoute,
   BusinessLoginRoute: BusinessLoginRoute,
   BusinessMetricsRoute: BusinessMetricsRoute,
@@ -552,6 +643,17 @@ const BusinessRouteWithChildren = BusinessRoute._addFileChildren(
   BusinessRouteChildren,
 )
 
+interface ThreadsRouteChildren {
+  ThreadsIdRoute: typeof ThreadsIdRoute
+}
+
+const ThreadsRouteChildren: ThreadsRouteChildren = {
+  ThreadsIdRoute: ThreadsIdRoute,
+}
+
+const ThreadsRouteWithChildren =
+  ThreadsRoute._addFileChildren(ThreadsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BusRoute: BusRouteWithChildren,
@@ -562,6 +664,7 @@ const rootRouteChildren: RootRouteChildren = {
   PerfilRoute: PerfilRoute,
   RepoRoute: RepoRoute,
   StayRoute: StayRoute,
+  ThreadsRoute: ThreadsRouteWithChildren,
   ApiPublicBookingCreateRoute: ApiPublicBookingCreateRoute,
   ApiPublicBusEtaRoute: ApiPublicBusEtaRoute,
   ApiPublicQrIssueRoute: ApiPublicQrIssueRoute,
