@@ -47,7 +47,9 @@ async function currentUserId() {
 }
 
 function uniqueBusinessIds(input: z.infer<typeof BusinessThreadsSchema>) {
-  return [...new Set([...(input.business_ids ?? []), ...(input.business_id ? [input.business_id] : [])])];
+  return [
+    ...new Set([...(input.business_ids ?? []), ...(input.business_id ? [input.business_id] : [])]),
+  ];
 }
 
 async function allowedBusinessIds(
@@ -81,7 +83,12 @@ async function allowedBusinessIds(
 }
 
 function tokenMatches(booking: { metadata: unknown } | null, accessToken?: string) {
-  if (!booking || !accessToken || typeof booking.metadata !== "object" || booking.metadata === null) {
+  if (
+    !booking ||
+    !accessToken ||
+    typeof booking.metadata !== "object" ||
+    booking.metadata === null
+  ) {
     return false;
   }
   return (booking.metadata as Record<string, unknown>).public_access_token === accessToken;
@@ -99,7 +106,9 @@ export const listThreadsForBusiness = createServerFn({ method: "GET" })
 
       const { data: rows, error } = await admin
         .from("conversation_threads")
-        .select("id, booking_id, business_id, user_id, status, last_message_at, created_at, context_snapshot")
+        .select(
+          "id, booking_id, business_id, user_id, status, last_message_at, created_at, context_snapshot",
+        )
         .in("business_id", allowedIds)
         .order("last_message_at", { ascending: false })
         .limit(100);
@@ -113,12 +122,16 @@ export const listThreadsForBusiness = createServerFn({ method: "GET" })
       const [{ data: msgs }, { data: bks }] = await Promise.all([
         admin
           .from("messages")
-          .select("id, thread_id, sender_type, message_type, template_key, text, payload, created_at")
+          .select(
+            "id, thread_id, sender_type, message_type, template_key, text, payload, created_at",
+          )
           .in("thread_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"])
           .order("created_at", { ascending: false }),
         admin
           .from("bookings")
-          .select("id, customer_name, customer_phone, customer_email, scheduled_at, party_size, status, notes")
+          .select(
+            "id, customer_name, customer_phone, customer_email, scheduled_at, party_size, status, notes",
+          )
           .in("id", bookingIds.length ? bookingIds : ["00000000-0000-0000-0000-000000000000"]),
       ]);
       const lastByThread = new Map<string, NonNullable<typeof msgs>[number]>();
@@ -170,7 +183,9 @@ export const getThread = createServerFn({ method: "GET" })
     const allowedForUser =
       (userId && thread.user_id === userId) ||
       tokenMatches(booking, data.access_token) ||
-      (data.actor_role === "user" && !thread.user_id && !(booking?.metadata as Record<string, unknown> | null)?.public_access_token);
+      (data.actor_role === "user" &&
+        !thread.user_id &&
+        !(booking?.metadata as Record<string, unknown> | null)?.public_access_token);
     const allowedOpenBusiness = data.actor_role === "business" && business?.owner_id === null;
 
     if (!allowedForUser && !allowedForBusiness && !allowedOpenBusiness) {
@@ -210,13 +225,25 @@ export const listThreadsForUser = createServerFn({ method: "GET" }).handler(asyn
       return { threads: [] };
     }
     const bizIds = [...new Set((rows ?? []).map((r) => r.business_id))];
-    const { data: bizs } = await supabase
-      .from("businesses")
-      .select("id, name, address, phone")
-      .in("id", bizIds.length ? bizIds : ["00000000-0000-0000-0000-000000000000"]);
+    const bookingIds = (rows ?? []).map((r) => r.booking_id);
+    const [{ data: bizs }, { data: bookings }] = await Promise.all([
+      supabase
+        .from("businesses")
+        .select("id, name, address, phone")
+        .in("id", bizIds.length ? bizIds : ["00000000-0000-0000-0000-000000000000"]),
+      supabase
+        .from("bookings")
+        .select("id, status, scheduled_at")
+        .in("id", bookingIds.length ? bookingIds : ["00000000-0000-0000-0000-000000000000"]),
+    ]);
     const map = new Map((bizs ?? []).map((b) => [b.id, b]));
+    const bookingsById = new Map((bookings ?? []).map((b) => [b.id, b]));
     return {
-      threads: (rows ?? []).map((t) => ({ ...t, business: map.get(t.business_id) ?? null })),
+      threads: (rows ?? []).map((t) => ({
+        ...t,
+        business: map.get(t.business_id) ?? null,
+        booking: bookingsById.get(t.booking_id) ?? null,
+      })),
     };
   } catch (e) {
     console.error("listThreadsForUser failed", e);

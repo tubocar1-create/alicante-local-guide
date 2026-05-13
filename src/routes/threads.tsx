@@ -7,6 +7,7 @@ const LOCAL_BOOKINGS_KEY = "local_booking_threads_v1";
 
 type LocalBookingThread = {
   id: string;
+  booking_id?: string;
   business_name?: string;
   status?: string;
   scheduled_at?: string;
@@ -45,10 +46,18 @@ function ThreadsLayout() {
   });
 
   const localThreads = isList ? readLocalBookings() : [];
-  const guestItems = localThreads.filter((t) => t.access_token).map((t) => ({ booking_id: t.id, token: t.access_token! }));
+  const guestItems = localThreads
+    .filter((t) => t.access_token)
+    .map((t) => ({ booking_id: t.booking_id ?? t.id, token: t.access_token! }));
 
   const { data: guestData } = useQuery({
-    queryKey: ["guest-statuses", guestItems.map((i) => i.booking_id).sort().join(",")],
+    queryKey: [
+      "guest-statuses",
+      guestItems
+        .map((i) => i.booking_id)
+        .sort()
+        .join(","),
+    ],
     queryFn: () => fetchGuest({ data: { items: guestItems } }),
     enabled: isList && guestItems.length > 0,
     refetchInterval: 15000,
@@ -57,17 +66,24 @@ function ThreadsLayout() {
   });
 
   if (!isList) {
-    return <div className="mx-auto min-h-svh max-w-md bg-background"><Outlet /></div>;
+    return (
+      <div className="mx-auto min-h-svh max-w-md bg-background">
+        <Outlet />
+      </div>
+    );
   }
 
   const threads = data?.threads ?? [];
   const guestStatuses = new Map((guestData?.items ?? []).map((i) => [i.booking_id, i]));
   const serverBookingIds = new Set(threads.map((t) => t.booking_id));
-  const dedupedLocal = localThreads.filter((t) => !serverBookingIds.has(t.id));
+  const dedupedLocal = localThreads.filter((t) => !serverBookingIds.has(t.booking_id ?? t.id));
 
   return (
     <div className="mx-auto min-h-svh max-w-md bg-background px-4 py-6">
-      <Link to="/" className="mb-3 inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground active:scale-95">
+      <Link
+        to="/"
+        className="mb-3 inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground active:scale-95"
+      >
         ← Inicio
       </Link>
       <h1 className="mb-1 mt-3 text-xl font-semibold">Mis reservas</h1>
@@ -86,18 +102,23 @@ function ThreadsLayout() {
               >
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-sm font-medium">{t.business?.name ?? "Negocio"}</p>
-                  <StatusBadge status={t.status} />
+                  <StatusBadge status={t.booking?.status ?? t.status} />
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  Última actividad: {new Date(t.last_message_at).toLocaleString()}
+                  {t.booking?.scheduled_at ||
+                  (t.context_snapshot as Record<string, unknown> | null)?.scheduled_at
+                    ? `Para: ${new Date(String(t.booking?.scheduled_at ?? (t.context_snapshot as Record<string, unknown>).scheduled_at)).toLocaleString()}`
+                    : `Última actividad: ${new Date(t.last_message_at).toLocaleString()}`}
                 </p>
               </Link>
             </li>
           );
         })}
         {dedupedLocal.map((t) => {
-          const remote = guestStatuses.get(t.id);
-          const effectiveStatus = remote?.booking_status ?? remote?.thread?.status ?? t.status ?? "pending";
+          const bookingId = t.booking_id ?? t.id;
+          const remote = guestStatuses.get(bookingId);
+          const effectiveStatus =
+            remote?.booking_status ?? remote?.thread?.status ?? t.status ?? "pending";
           const cls = cardCls(effectiveStatus);
           return (
             <li key={`local-${t.id}`}>
@@ -108,11 +129,13 @@ function ThreadsLayout() {
                 className={`block rounded-2xl border p-3 ${cls}`}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <p className="text-sm font-medium">{remote?.business_name ?? t.business_name ?? "Negocio"}</p>
+                  <p className="text-sm font-medium">
+                    {remote?.business_name ?? t.business_name ?? "Negocio"}
+                  </p>
                   <StatusBadge status={effectiveStatus} />
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  {(remote?.scheduled_at || t.scheduled_at)
+                  {remote?.scheduled_at || t.scheduled_at
                     ? `Para: ${new Date(remote?.scheduled_at ?? t.scheduled_at!).toLocaleString()}`
                     : new Date(t.created_at ?? Date.now()).toLocaleString()}
                 </p>
@@ -122,7 +145,8 @@ function ThreadsLayout() {
         })}
         {threads.length === 0 && dedupedLocal.length === 0 && (
           <li className="rounded-2xl border border-dashed border-border p-4 text-sm text-muted-foreground">
-            Aún no tienes reservas. Cuando reserves en un negocio, aparecerá aquí con el estado y la respuesta.
+            Aún no tienes reservas. Cuando reserves en un negocio, aparecerá aquí con el estado y la
+            respuesta.
           </li>
         )}
       </ul>
@@ -131,9 +155,12 @@ function ThreadsLayout() {
 }
 
 function cardCls(status?: string) {
-  if (status === "confirmed") return "border-emerald-500/60 bg-emerald-50 dark:bg-emerald-950/30 border-2";
-  if (status === "rejected" || status === "declined" || status === "cancelled") return "border-rose-300/60 bg-rose-50/60 dark:bg-rose-950/20";
-  if (status === "awaiting_user" || status === "rescheduled") return "border-blue-300/60 bg-blue-50/60 dark:bg-blue-950/20";
+  if (status === "confirmed")
+    return "border-emerald-500/60 bg-emerald-50 dark:bg-emerald-950/30 border-2";
+  if (status === "rejected" || status === "declined" || status === "cancelled")
+    return "border-rose-300/60 bg-rose-50/60 dark:bg-rose-950/20";
+  if (status === "awaiting_user" || status === "rescheduled")
+    return "border-blue-300/60 bg-blue-50/60 dark:bg-blue-950/20";
   return "border-border bg-card";
 }
 
@@ -150,6 +177,13 @@ function StatusBadge({ status }: { status?: string }) {
     closed: { label: "Cerrada", cls: "bg-muted text-muted-foreground" },
     completed: { label: "Completada", cls: "bg-muted text-muted-foreground" },
   };
-  const m = map[status ?? "pending"] ?? { label: status ?? "—", cls: "bg-muted text-muted-foreground" };
-  return <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${m.cls}`}>{m.label}</span>;
+  const m = map[status ?? "pending"] ?? {
+    label: status ?? "—",
+    cls: "bg-muted text-muted-foreground",
+  };
+  return (
+    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${m.cls}`}>
+      {m.label}
+    </span>
+  );
 }
