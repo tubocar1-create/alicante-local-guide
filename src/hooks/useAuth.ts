@@ -1,5 +1,6 @@
-// Beta auth: solo pedimos un nombre y lo guardamos en localStorage.
-// Cuando salgamos de beta, esto se reemplaza por auth real (Google, email…).
+// Beta auth: pedimos nombre y datos de contacto opcionales (apellido, email, teléfono)
+// y los guardamos en localStorage. Cuando salgamos de beta, esto se reemplaza por
+// auth real (Google, email…).
 import { useEffect, useState, useCallback } from "react";
 
 const KEY = "beta_user_v1";
@@ -8,6 +9,9 @@ const EVT = "beta-user-changed";
 export type BetaUser = {
   id: string;
   name: string;
+  surname?: string;
+  email?: string;
+  phone?: string;
   createdAt: string;
 };
 
@@ -28,20 +32,32 @@ function write(u: BetaUser | null) {
   window.dispatchEvent(new Event(EVT));
 }
 
-export function signInWithName(name: string): BetaUser {
+export function signInWithName(
+  name: string,
+  extra?: { surname?: string; email?: string; phone?: string },
+): BetaUser {
   const trimmed = name.trim().slice(0, 60);
   const existing = read();
-  const user: BetaUser = existing
-    ? { ...existing, name: trimmed }
+  const merged: BetaUser = existing
+    ? {
+        ...existing,
+        name: trimmed,
+        surname: extra?.surname?.trim().slice(0, 60) || existing.surname,
+        email: extra?.email?.trim().slice(0, 120) || existing.email,
+        phone: extra?.phone?.trim().slice(0, 30) || existing.phone,
+      }
     : {
         id:
           (globalThis.crypto?.randomUUID?.() ??
             `beta_${Math.random().toString(36).slice(2, 10)}`),
         name: trimmed,
+        surname: extra?.surname?.trim().slice(0, 60) || undefined,
+        email: extra?.email?.trim().slice(0, 120) || undefined,
+        phone: extra?.phone?.trim().slice(0, 30) || undefined,
         createdAt: new Date().toISOString(),
       };
-  write(user);
-  return user;
+  write(merged);
+  return merged;
 }
 
 export function signOutBeta() {
