@@ -58,12 +58,13 @@ export function ThreadView({
 
   if (isLoading || !data) return <p className="p-4 text-sm text-muted-foreground">Cargando…</p>;
 
-  const { thread, messages, booking } = data;
+  const { thread, messages, booking, business } = data;
   const closed = thread.status === "closed" || thread.status === "expired";
   const suggestions = suggestionsFor(role, thread.status, booking?.status ?? "pending");
   const latestProposal = [...messages]
     .reverse()
     .find((msg) => msg.template_key === "business.propose_slot");
+  const businessName = business?.name ?? "El negocio";
 
   return (
     <div className="flex h-full flex-col">
