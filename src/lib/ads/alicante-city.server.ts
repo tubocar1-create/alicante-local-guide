@@ -196,6 +196,10 @@ export async function fetchAlicanteAgenda(): Promise<CulturalEvent[] | null> {
 export type FlightState = {
   callsign: string;
   country: string;
+  airline: string | null;
+  flightNumber: string | null;
+  originCity: string | null;
+  originIata: string | null;
   altitudeM: number | null;
   velocityKmh: number | null;
   onGround: boolean;
@@ -204,6 +208,79 @@ export type FlightState = {
   etaMin: number | null;
   approaching: boolean;
 };
+
+// Mapeo mínimo de prefijos ICAO de aerolínea → nombre comercial.
+// Cubre las aerolíneas más comunes en ALC.
+const AIRLINE_ICAO: Record<string, string> = {
+  RYR: "Ryanair",
+  VLG: "Vueling",
+  IBE: "Iberia",
+  IBS: "Iberia Express",
+  ANE: "Air Nostrum",
+  AEA: "Air Europa",
+  EZY: "easyJet",
+  EJU: "easyJet Europe",
+  TRA: "Transavia",
+  TFL: "TUI fly",
+  TOM: "TUI Airways",
+  JAF: "TUI fly Belgium",
+  WZZ: "Wizz Air",
+  WUK: "Wizz Air UK",
+  KLM: "KLM",
+  AFR: "Air France",
+  DLH: "Lufthansa",
+  EWG: "Eurowings",
+  BAW: "British Airways",
+  BEE: "Jet2",
+  EXS: "Jet2",
+  SAS: "SAS",
+  NAX: "Norwegian",
+  NOZ: "Norwegian",
+  FIN: "Finnair",
+  SWR: "SWISS",
+  AUA: "Austrian",
+  THY: "Turkish Airlines",
+  RAM: "Royal Air Maroc",
+  MSR: "EgyptAir",
+};
+
+function parseCallsign(callsign: string): {
+  airline: string | null;
+  flightNumber: string | null;
+} {
+  const cs = callsign.replace(/\s+/g, "").toUpperCase();
+  const m = /^([A-Z]{3})(\d+[A-Z]?)$/.exec(cs);
+  if (!m) return { airline: null, flightNumber: null };
+  const icao = m[1];
+  const num = m[2];
+  const airline = AIRLINE_ICAO[icao] ?? null;
+  return { airline, flightNumber: airline ? `${icao}${num}` : null };
+}
+
+type RouteInfo = { originCity: string | null; originIata: string | null };
+
+async function fetchRoute(callsign: string): Promise<RouteInfo> {
+  try {
+    const cs = callsign.replace(/\s+/g, "").toUpperCase();
+    if (!cs) return { originCity: null, originIata: null };
+    const r = await fetch(`https://api.adsbdb.com/v0/callsign/${cs}`, {
+      headers: { Accept: "application/json", "User-Agent": UA },
+      signal: AbortSignal.timeout(3500),
+    });
+    if (!r.ok) return { originCity: null, originIata: null };
+    const j = (await r.json()) as {
+      response?: { flightroute?: { origin?: { municipality?: string; iata_code?: string; name?: string } } };
+    };
+    const o = j?.response?.flightroute?.origin;
+    if (!o) return { originCity: null, originIata: null };
+    return {
+      originCity: (o.municipality || o.name || "").trim() || null,
+      originIata: (o.iata_code || "").trim() || null,
+    };
+  } catch {
+    return { originCity: null, originIata: null };
+  }
+}
 
 export type AirTraffic = {
   total: number;
