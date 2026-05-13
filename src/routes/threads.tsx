@@ -184,9 +184,9 @@ function StatusBadge({ status }: { status?: string }) {
     awaiting_user: { label: "Esperando tu respuesta", cls: "bg-blue-100 text-blue-800" },
     confirmed: { label: "Confirmada", cls: "bg-emerald-500 text-white" },
     rescheduled: { label: "Nuevo horario propuesto", cls: "bg-blue-100 text-blue-800" },
-    rejected: { label: "Rechazada", cls: "bg-rose-100 text-rose-800" },
-    declined: { label: "Rechazada", cls: "bg-rose-100 text-rose-800" },
-    cancelled: { label: "Cancelada", cls: "bg-muted text-muted-foreground" },
+    rejected: { label: "Rechazada", cls: "bg-red-700 text-white" },
+    declined: { label: "Rechazada", cls: "bg-red-700 text-white" },
+    cancelled: { label: "Cancelada", cls: "bg-red-700 text-white" },
     closed: { label: "Cerrada", cls: "bg-muted text-muted-foreground" },
     completed: { label: "Completada", cls: "bg-muted text-muted-foreground" },
   };
