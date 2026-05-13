@@ -51,7 +51,7 @@ function Onboarding() {
           .insert({ user_id: u.user.id, role: "business_user" })
           .select();
       }
-      await create({
+      const res = await create({
         data: {
           name,
           slug: slug || name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 60),
@@ -60,6 +60,14 @@ function Onboarding() {
           address: address || undefined,
         },
       });
+      if (res.error || !res.business) {
+        toast.error(
+          res.error === "UNAUTHORIZED"
+            ? "Necesitas iniciar sesión para crear un negocio"
+            : res.error ?? "No se pudo crear el negocio",
+        );
+        return;
+      }
       toast.success("Negocio creado");
       qc.invalidateQueries({ queryKey: ["my-businesses"] });
       nav({ to: "/business" });
