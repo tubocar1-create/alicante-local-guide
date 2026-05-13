@@ -250,8 +250,52 @@ export async function fetchSalaOneAgenda() {
   return scrapeVenue("https://salaone.com/agenda/", "Sala One Alicante");
 }
 
-export async function fetchMuelleLiveAgenda() {
-  return scrapeVenue("https://muellelive.com/agenda/", "Muelle Live Alicante");
+// Programación oficial Muelle Live (cartel cerrado por el promotor).
+// A medida que pasa la fecha, el concierto desaparece. Se rotan al azar.
+const MUELLE_LIVE_2026: Array<{ date: string; artist: string }> = [
+  { date: "2026-05-29", artist: "Miguel Ríos" },
+  { date: "2026-06-06", artist: "La Gossa Sorda" },
+  { date: "2026-06-13", artist: "La Reina del Flow Live" },
+  { date: "2026-07-02", artist: "Rosario" },
+  { date: "2026-07-04", artist: "Rosana" },
+  { date: "2026-07-06", artist: "Alan Parsons Live Project" },
+  { date: "2026-07-09", artist: "Pablo Alborán" },
+  { date: "2026-07-10", artist: "Bandalos Chinos + Silvestre y La Naranja" },
+  { date: "2026-07-11", artist: "Valeria Castro" },
+  { date: "2026-07-15", artist: "Anastacia" },
+  { date: "2026-07-16", artist: "God Save The Queen" },
+  { date: "2026-07-17", artist: "Gira OT 2025" },
+  { date: "2026-07-18", artist: "Luz Casal" },
+  { date: "2026-08-15", artist: "Loquillo" },
+  { date: "2026-08-22", artist: "Sergio Dalma" },
+  { date: "2026-09-11", artist: "Vanesa Martín" },
+  { date: "2026-09-26", artist: "Raphael" },
+];
+
+export async function fetchMuelleLiveAgenda(): Promise<RegionalEvent[] | null> {
+  // Hoy en zona Madrid (YYYY-MM-DD)
+  const today = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Madrid",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+
+  const upcoming = MUELLE_LIVE_2026.filter((c) => c.date >= today);
+  if (upcoming.length === 0) return null;
+
+  // Rotación aleatoria (Fisher-Yates)
+  const shuffled = [...upcoming];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  return shuffled.slice(0, 8).map((c) => ({
+    title: c.artist,
+    when: fmtDateRange(`${c.date}T20:00:00+02:00`),
+    excerpt: "Concierto en Muelle Live, puerto de Alicante.",
+  }));
 }
 
 export async function fetchSpringAgenda() {
