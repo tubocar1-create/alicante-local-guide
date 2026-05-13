@@ -248,6 +248,41 @@ export const getAdVariants = createServerFn({ method: "POST" })
       }
     }
 
+    let parkingsCtx = "";
+    if (advertiser.kind === "parkings") {
+      const ps = await fetchAlicanteParkings();
+      if (ps && ps.length) {
+        const sorted = [...ps].sort((a, b) => b.libres - a.libres);
+        const lines = sorted
+          .map(
+            (p) =>
+              `- ${p.name}: ${p.libres} libres / ${p.total} (ocupación ${p.ocupacionPct}%)`,
+          )
+          .join("\n");
+        parkingsCtx = `\n\nDATOS REALES Ayto. Alicante (parkings públicos del centro, ahora):\n${lines}\n\nUsa estos números EXACTOS, no inventes. Destaca el más libre o el más lleno según el ángulo.`;
+      } else {
+        parkingsCtx = "\n\n(Sin datos de parkings ahora mismo).";
+      }
+    }
+
+    let trafficCtx = "";
+    if (advertiser.kind === "traffic") {
+      const t = await fetchAlicanteTraffic();
+      if (t && t.total > 0) {
+        const pctFluido = Math.round((t.fluido / t.total) * 100);
+        const lines = [
+          `Tramos: ${t.fluido} fluidos, ${t.denso} densos, ${t.congestionado} congestionados (${t.total} total → ${pctFluido}% fluido).`,
+        ];
+        if (t.incidencias.length)
+          lines.push(`Incidencias activas: ${t.incidencias.slice(0, 3).join("; ")}.`);
+        if (t.eventos.length)
+          lines.push(`Eventos de tráfico: ${t.eventos.slice(0, 3).join("; ")}.`);
+        trafficCtx = `\n\nDATOS REALES Ayto. Alicante (tráfico ahora):\n${lines.join("\n")}\n\nUsa los datos REALES. Si hay incidencia o evento, menciónalo en alguna variante. Si todo va fluido, dilo con naturalidad.`;
+      } else {
+        trafficCtx = "\n\n(Sin datos de tráfico ahora mismo).";
+      }
+    }
+
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       return {
