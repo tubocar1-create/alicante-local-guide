@@ -89,9 +89,9 @@ export function ListingCard({ it, me, onWantToGo }: Props) {
   const wikiSlug = it.wikipedia?.split(":")[1];
 
   return (
-    <article className="group rounded-3xl bg-card overflow-hidden border border-border/60 shadow-soft transition active:scale-[0.99]">
+    <article className="group rounded-2xl bg-card overflow-hidden border border-border/60 shadow-soft transition active:scale-[0.99]">
       {/* Hero image */}
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-gradient-to-br from-secondary to-accent/40">
+      <div className="relative aspect-[16/7] w-full overflow-hidden bg-gradient-to-br from-secondary to-accent/40">
         {img ? (
           <img
             src={img}
