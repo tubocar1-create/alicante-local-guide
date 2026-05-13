@@ -119,12 +119,16 @@ export const sendMessage = createServerFn({ method: "POST" })
         .update({ status: nextBookingStatus as never })
         .eq("id", thread.booking_id);
     }
-    // Si propose_slot, persistimos en booking.metadata
+    // Si propose_slot, persistimos en booking.metadata (preservando otros campos como public_access_token)
     if (data.template_key === "business.propose_slot" && data.payload?.scheduled_at) {
+      const prevMeta =
+        booking && typeof booking.metadata === "object" && booking.metadata !== null
+          ? (booking.metadata as Record<string, unknown>)
+          : {};
       await supabase
         .from("bookings")
         .update({
-          metadata: { proposed_scheduled_at: data.payload.scheduled_at } as never,
+          metadata: { ...prevMeta, proposed_scheduled_at: data.payload.scheduled_at } as never,
         })
         .eq("id", thread.booking_id);
     }
