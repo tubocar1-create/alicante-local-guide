@@ -35,15 +35,28 @@ export const getBusinessMetrics = createServerFn({ method: "GET" })
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([date, count]) => ({ date, count }));
 
+    const visitViewed = totals["visit_viewed"] ?? 0;
+    const qrCreated = totals["qr_created"] ?? 0;
+    const qrValidated = totals["qr_validated"] ?? 0;
+    const bookings = totals["booking_created"] ?? 0;
+
+    const conversion =
+      visitViewed > 0 ? Math.round((qrValidated / visitViewed) * 100) : 0;
+    const qrRedemption =
+      qrCreated > 0 ? Math.round((qrValidated / qrCreated) * 100) : 0;
+
     return {
       totals,
       series,
       summary: {
         total: rows?.length ?? 0,
-        visits: totals["qr_validated"] ?? 0,
-        bookings: totals["booking_created"] ?? 0,
+        visit_viewed: visitViewed,
+        qr_created: qrCreated,
+        qr_validated: qrValidated,
+        bookings,
         referrals: totals["referral_created"] ?? 0,
-        qr_created: totals["qr_created"] ?? 0,
+        conversion_pct: conversion,
+        qr_redemption_pct: qrRedemption,
       },
     };
   });
