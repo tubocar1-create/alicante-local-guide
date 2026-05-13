@@ -136,9 +136,15 @@ export const listThreadsForBusiness = createServerFn({ method: "GET" })
       ]);
       const lastByThread = new Map<string, NonNullable<typeof msgs>[number]>();
       const hadProposalByThread = new Set<string>();
+      const cancelledByByThread = new Map<string, "business" | "user">();
       (msgs ?? []).forEach((m) => {
         if (!lastByThread.has(m.thread_id)) lastByThread.set(m.thread_id, m);
         if (m.template_key === "business.propose_slot") hadProposalByThread.add(m.thread_id);
+        if (!cancelledByByThread.has(m.thread_id)) {
+          if (m.template_key === "business.decline") cancelledByByThread.set(m.thread_id, "business");
+          else if (m.template_key === "user.cancel" || m.template_key === "user.reject_proposal")
+            cancelledByByThread.set(m.thread_id, "user");
+        }
       });
       const bookingsById = new Map((bks ?? []).map((b) => [b.id, b]));
 
@@ -148,6 +154,7 @@ export const listThreadsForBusiness = createServerFn({ method: "GET" })
           last_message: lastByThread.get(t.id) ?? null,
           booking: bookingsById.get(t.booking_id) ?? null,
           had_proposal: hadProposalByThread.has(t.id),
+          cancelled_by: cancelledByByThread.get(t.id) ?? null,
         })),
       };
     } catch (e) {
