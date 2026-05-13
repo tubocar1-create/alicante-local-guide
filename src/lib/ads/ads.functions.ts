@@ -408,8 +408,8 @@ export const getAdVariants = createServerFn({ method: "POST" })
         const llegadas = trips.filter((t) => t.direction === "llegada").slice(0, 5);
         const salidas = trips.filter((t) => t.direction === "salida").slice(0, 5);
         const fmt = (t: typeof trips[number]) =>
-          `- ${t.line} ${t.trainCode} · ${t.direction === "llegada" ? `desde ${t.origin}` : `hacia ${t.destination}`} · ${t.scheduledTime} (en ${t.minutesFromNow} min)`;
-        trainsCtx = `\n\nHORARIO REAL Renfe Cercanías en Alicante-Terminal (próximas 3h, hora local):\nLLEGADAS:\n${llegadas.map(fmt).join("\n") || "(ninguna)"}\nSALIDAS:\n${salidas.map(fmt).join("\n") || "(ninguna)"}\n\nUsa SOLO estos datos. Cada variante = un tren concreto.`;
+          `- ${t.line} ${t.trainCode} · ${t.direction === "llegada" ? `desde ${t.origin}` : `hacia ${t.destination}`} · ${t.scheduledTime}`;
+        trainsCtx = `\n\nHORARIO REAL Renfe Cercanías en Alicante-Terminal (próximas 3h, hora local Madrid):\nLLEGADAS:\n${llegadas.map(fmt).join("\n") || "(ninguna)"}\nSALIDAS:\n${salidas.map(fmt).join("\n") || "(ninguna)"}\n\nUsa SOLO estos datos. Cada variante = un tren concreto. Muestra SIEMPRE la hora programada HH:MM exactamente como aparece en el listado.`;
       } else {
         trainsCtx = "\n\n(Sin horarios de Cercanías ahora mismo).";
       }
@@ -448,7 +448,7 @@ export const getAdVariants = createServerFn({ method: "POST" })
         userPrompt = `Genera ${count} variantes de tarjeta sobre INCIDENCIAS de vuelos en ALC (datos oficiales Aena). UNA variante por incidencia del listado. MÁXIMA INFORMACIÓN, MÍNIMO COMENTARIO. Sin adjetivos, sin "¡". cta "Ver vuelos".\n\n• Si CANCELADO: headline "CANCELADO [vuelo]" (ej "CANCELADO IB3567"), body "[Aerolínea] · [salida hacia / llegada desde] [ciudad] · prevista HH:MM" (máx 90 chars).\n• Si RETRASADO: headline "Retraso +[N]m [vuelo]" (ej "Retraso +45m FR1234"), body "[Aerolínea] · [hacia/desde] [ciudad] · prog HH:MM → est HH:MM" (máx 90 chars).\n\nUsa SOLO los datos del listado; no inventes.${flightsCtx}`;
         break;
       case "trains":
-        userPrompt = `Genera ${count} variantes de tarjeta sobre TRENES de Cercanías en Alicante-Terminal. MÁXIMA INFORMACIÓN, MÍNIMO COMENTARIO. UNA variante por tren del listado (mezcla llegadas y salidas). Body formato compacto: "[Llegada/Salida] [Línea] · [desde/hacia X] · [HH:MM] (en N min)" (máx 90 chars). headline: línea + código (ej "C-1 Salida 32802") máx 4 palabras. cta "Ver horarios". Usa SOLO los datos; no inventes retrasos ni andenes.${trainsCtx}`;
+        userPrompt = `Genera ${count} variantes de tarjeta sobre TRENES de Cercanías en Alicante-Terminal. MÁXIMA INFORMACIÓN, MÍNIMO COMENTARIO. UNA variante por tren del listado (mezcla llegadas y salidas). Body formato compacto: "[Llegada/Salida] [Línea] · [desde/hacia X] · [HH:MM]" (máx 90 chars, hora exacta del listado). headline: línea + código (ej "C-1 Salida 32802") máx 4 palabras. cta "Ver horarios". NUNCA escribas "en N min", "en X minutos" ni cuentas atrás: el copy se cachea y los minutos quedan obsoletos. Usa SOLO los datos; no inventes retrasos ni andenes.${trainsCtx}`;
         break;
       case "mercadillos":
         userPrompt = `Genera ${count} variantes sobre MERCADILLOS de Alicante activos HOY. UNA variante por mercadillo del listado. headline (máx 4 palabras, ej "Hoy mercadillo Babel"), body (1 frase con horario y ubicación, máx 90 caracteres), cta "Ver mercados". Usa SOLO los datos; no inventes.${mercadillosCtx}`;
