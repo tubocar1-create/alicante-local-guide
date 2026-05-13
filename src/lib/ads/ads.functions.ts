@@ -452,6 +452,12 @@ export const getAdVariants = createServerFn({ method: "POST" })
       case "trains":
         userPrompt = `Genera ${count} variantes de tarjeta sobre TRENES de Cercanías en Alicante-Terminal. MÁXIMA INFORMACIÓN, MÍNIMO COMENTARIO. UNA variante por tren del listado (mezcla llegadas y salidas). Body formato compacto: "[Llegada/Salida] [Línea] · [desde/hacia X] · [HH:MM] (en N min)" (máx 90 chars). headline: línea + código (ej "C-1 Salida 32802") máx 4 palabras. cta "Ver horarios". Usa SOLO los datos; no inventes retrasos ni andenes.${trainsCtx}`;
         break;
+      case "mercadillos":
+        userPrompt = `Genera ${count} variantes sobre MERCADILLOS de Alicante activos HOY. UNA variante por mercadillo del listado. headline (máx 4 palabras, ej "Hoy mercadillo Babel"), body (1 frase con horario y ubicación, máx 90 caracteres), cta "Ver mercados". Usa SOLO los datos; no inventes.${mercadillosCtx}`;
+        break;
+      case "regional_agenda":
+        userPrompt = `Genera ${count} variantes de tarjeta sobre eventos de "${advertiser.name}". UNA variante por evento del listado. headline (máx 5 palabras, inspirada en el título real), body (1 frase con la fecha y el qué, máx 90 caracteres), cta "Ver agenda". NO inventes nada que no esté en el listado.${regionalCtx}`;
+        break;
       default:
         userPrompt = wiki
           ? `Tema REAL de Wikipedia: "${wiki.title}".\n\nResumen fuente:\n"""${wiki.extract}"""\n\nGenera ${count} variantes DISTINTAS de tarjeta INFORMATIVA basadas EXCLUSIVAMENTE en ese resumen (no inventes datos). Cada variante destaca un ángulo distinto. Cada variante: headline (máx 4 palabras), body (1 frase con un dato concreto, máx 65 caracteres), cta (2-3 palabras tipo "Saber más"). Tono cercano, sin clichés. Si un dato no está en el resumen, omítelo.`
