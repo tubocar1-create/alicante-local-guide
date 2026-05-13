@@ -21,6 +21,7 @@ import {
   fetchSalaOneAgenda,
   fetchMuelleLiveAgenda,
   fetchSpringAgenda,
+  fetchRabasaAgenda,
   fetchSongkickAlicante,
   type RegionalEvent,
 } from "./regional-agendas.server";
