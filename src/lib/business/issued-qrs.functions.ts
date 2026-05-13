@@ -13,11 +13,23 @@ export const listIssuedQrs = createServerFn({ method: "GET" })
       .parse(d),
   )
   .handler(async ({ data }) => {
+    type Row = {
+      id: string;
+      code: string;
+      purpose: string;
+      created_at: string;
+      expires_at: string | null;
+      uses: number;
+      max_uses: number | null;
+      active: boolean;
+      payload: Record<string, unknown> | null;
+    };
+    const empty = (error?: string) => ({ qrs: [] as Row[], error: error ?? null });
+
     const SUPABASE_URL = process.env.SUPABASE_URL;
     const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!SUPABASE_URL || !SERVICE_ROLE) {
-      return { qrs: [] as Array<Record<string, unknown>>, error: "BACKEND_UNAVAILABLE" };
-    }
+    if (!SUPABASE_URL || !SERVICE_ROLE) return empty("BACKEND_UNAVAILABLE");
+
     const sb = createClient<Database>(SUPABASE_URL, SERVICE_ROLE, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
@@ -28,6 +40,6 @@ export const listIssuedQrs = createServerFn({ method: "GET" })
       .eq("business_id", data.business_id)
       .order("created_at", { ascending: false })
       .limit(data.limit);
-    if (error) return { qrs: [], error: error.message };
-    return { qrs: rows ?? [] };
+    if (error) return empty(error.message);
+    return { qrs: (rows ?? []) as Row[], error: null };
   });
