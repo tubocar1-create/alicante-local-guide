@@ -62,10 +62,11 @@ function BusinessDashboard() {
         <Stat label="Reservas" value={s?.bookings ?? 0} />
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         <Quick to="/business/qr" icon={QrCode} label="Validar QR" />
+        <Quick to="/business/issued" icon={Users} label="QR emitidos" />
         <Quick to="/business/bookings" icon={Calendar} label="Reservas" />
-        <Quick to="/business/referrals" icon={Users} label="Refer." />
+        <Quick to="/business/referrals" icon={Users} label="Referidos" />
       </div>
     </div>
   );

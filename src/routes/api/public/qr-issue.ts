@@ -12,6 +12,10 @@ const Body = z.object({
   code: z.string().min(4).max(64),
   expires_at: z.string().datetime().optional(),
   user_id: z.string().min(1).max(128).optional(),
+  user_name: z.string().min(1).max(120).optional(),
+  user_surname: z.string().max(120).nullable().optional(),
+  user_email: z.string().max(160).nullable().optional(),
+  user_phone: z.string().max(40).nullable().optional(),
 });
 
 function admin() {
@@ -44,7 +48,17 @@ export const Route = createFileRoute("/api/public/qr-issue")({
         if (!parsed.success) {
           return Response.json({ ok: false, reason: "bad_input" }, { status: 400 });
         }
-        const { place_id, place_name, code, expires_at, user_id } = parsed.data;
+        const {
+          place_id,
+          place_name,
+          code,
+          expires_at,
+          user_id,
+          user_name,
+          user_surname,
+          user_email,
+          user_phone,
+        } = parsed.data;
 
         const slug = `place-${slugify(place_id)}`;
 
@@ -75,6 +89,16 @@ export const Route = createFileRoute("/api/public/qr-issue")({
           biz = ins.data;
         }
 
+        const issuerPayload = {
+          issued_by: "beta_app",
+          user_id: user_id ?? null,
+          user_name: user_name ?? null,
+          user_surname: user_surname ?? null,
+          user_email: user_email ?? null,
+          user_phone: user_phone ?? null,
+          issued_at: new Date().toISOString(),
+        };
+
         // Insert QR row (ignore if already exists by unique code).
         const qrIns = await sb
           .from("qr_codes")
@@ -84,7 +108,7 @@ export const Route = createFileRoute("/api/public/qr-issue")({
             purpose: "visit",
             expires_at: expires_at ?? null,
             max_uses: 1,
-            payload: { issued_by: "beta_app", user_id: user_id ?? null } as never,
+            payload: issuerPayload as never,
           })
           .select("id")
           .maybeSingle();

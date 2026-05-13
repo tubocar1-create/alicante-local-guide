@@ -24,6 +24,7 @@ import { Route as BusinessQrRouteImport } from './routes/business.qr'
 import { Route as BusinessOnboardingRouteImport } from './routes/business.onboarding'
 import { Route as BusinessMetricsRouteImport } from './routes/business.metrics'
 import { Route as BusinessLoginRouteImport } from './routes/business.login'
+import { Route as BusinessIssuedRouteImport } from './routes/business.issued'
 import { Route as BusinessBookingsRouteImport } from './routes/business.bookings'
 import { Route as BusPlannerRouteImport } from './routes/bus.planner'
 import { Route as BusLinesRouteImport } from './routes/bus.lines'
@@ -108,6 +109,11 @@ const BusinessLoginRoute = BusinessLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => BusinessRoute,
 } as any)
+const BusinessIssuedRoute = BusinessIssuedRouteImport.update({
+  id: '/issued',
+  path: '/issued',
+  getParentRoute: () => BusinessRoute,
+} as any)
 const BusinessBookingsRoute = BusinessBookingsRouteImport.update({
   id: '/bookings',
   path: '/bookings',
@@ -162,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/bus/lines': typeof BusLinesRouteWithChildren
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
+  '/business/issued': typeof BusinessIssuedRoute
   '/business/login': typeof BusinessLoginRoute
   '/business/metrics': typeof BusinessMetricsRoute
   '/business/onboarding': typeof BusinessOnboardingRoute
@@ -186,6 +193,7 @@ export interface FileRoutesByTo {
   '/bus/lines': typeof BusLinesRouteWithChildren
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
+  '/business/issued': typeof BusinessIssuedRoute
   '/business/login': typeof BusinessLoginRoute
   '/business/metrics': typeof BusinessMetricsRoute
   '/business/onboarding': typeof BusinessOnboardingRoute
@@ -212,6 +220,7 @@ export interface FileRoutesById {
   '/bus/lines': typeof BusLinesRouteWithChildren
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
+  '/business/issued': typeof BusinessIssuedRoute
   '/business/login': typeof BusinessLoginRoute
   '/business/metrics': typeof BusinessMetricsRoute
   '/business/onboarding': typeof BusinessOnboardingRoute
@@ -239,6 +248,7 @@ export interface FileRouteTypes {
     | '/bus/lines'
     | '/bus/planner'
     | '/business/bookings'
+    | '/business/issued'
     | '/business/login'
     | '/business/metrics'
     | '/business/onboarding'
@@ -263,6 +273,7 @@ export interface FileRouteTypes {
     | '/bus/lines'
     | '/bus/planner'
     | '/business/bookings'
+    | '/business/issued'
     | '/business/login'
     | '/business/metrics'
     | '/business/onboarding'
@@ -288,6 +299,7 @@ export interface FileRouteTypes {
     | '/bus/lines'
     | '/bus/planner'
     | '/business/bookings'
+    | '/business/issued'
     | '/business/login'
     | '/business/metrics'
     | '/business/onboarding'
@@ -424,6 +436,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BusinessLoginRouteImport
       parentRoute: typeof BusinessRoute
     }
+    '/business/issued': {
+      id: '/business/issued'
+      path: '/issued'
+      fullPath: '/business/issued'
+      preLoaderRoute: typeof BusinessIssuedRouteImport
+      parentRoute: typeof BusinessRoute
+    }
     '/business/bookings': {
       id: '/business/bookings'
       path: '/bookings'
@@ -509,6 +528,7 @@ const BusRouteWithChildren = BusRoute._addFileChildren(BusRouteChildren)
 
 interface BusinessRouteChildren {
   BusinessBookingsRoute: typeof BusinessBookingsRoute
+  BusinessIssuedRoute: typeof BusinessIssuedRoute
   BusinessLoginRoute: typeof BusinessLoginRoute
   BusinessMetricsRoute: typeof BusinessMetricsRoute
   BusinessOnboardingRoute: typeof BusinessOnboardingRoute
@@ -519,6 +539,7 @@ interface BusinessRouteChildren {
 
 const BusinessRouteChildren: BusinessRouteChildren = {
   BusinessBookingsRoute: BusinessBookingsRoute,
+  BusinessIssuedRoute: BusinessIssuedRoute,
   BusinessLoginRoute: BusinessLoginRoute,
   BusinessMetricsRoute: BusinessMetricsRoute,
   BusinessOnboardingRoute: BusinessOnboardingRoute,
