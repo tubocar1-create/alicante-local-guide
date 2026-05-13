@@ -257,6 +257,10 @@ export async function fetchMuelleLiveAgenda() {
 export async function fetchSpringAgenda() {
   return scrapeVenue("https://springalicante.es/agenda/", "Spring Alicante");
 }
+
+export async function fetchRabasaAgenda() {
+  return scrapeVenue("https://area12alicante.es/", "Área 12 - Multiespacio Rabasa, Alicante");
+}
 // Solo se muestra si HOY hay mercadillo activo.
 const MERCADILLOS: Array<{ name: string; days: number[]; hours: string; place: string }> = [
   // 0=domingo, 1=lunes ... 6=sábado

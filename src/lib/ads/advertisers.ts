@@ -333,6 +333,22 @@ export const ADVERTISERS: Advertiser[] = [
     brief: "Programación de la sala Spring Alicante.",
   },
   {
+    id: "rabasa-alicante",
+    name: "Rabasa / Área 12",
+    tagline: "Grandes conciertos en Rabasa",
+    category: "Cultura",
+    kind: "regional_agenda",
+    ctaLabel: "Ver cartel",
+    ctaUrl: "https://area12alicante.es/",
+    theme: {
+      bg: "bg-gradient-to-r from-orange-700 via-red-700 to-rose-800",
+      fg: "text-white",
+      accent: "bg-white text-orange-700",
+      emoji: "🎪",
+    },
+    brief: "Conciertos del ciclo Área 12 en el Multiespacio Rabasa de Alicante (formato grande: Black Crowes, Dani Martín, Viva Suecia, Hombres G…).",
+  },
+  {
     id: "songkick-alicante",
     name: "Conciertos cercanos",
     tagline: "Próximos directos en Alicante",
