@@ -5,6 +5,8 @@ import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import type { Listing } from "@/lib/overpass-listings";
 
+const LOCAL_BOOKINGS_KEY = "local_booking_threads_v1";
+
 type Props = {
   listing: Listing;
   onClose: () => void;
@@ -15,6 +17,17 @@ function defaultDateTime() {
   d.setMinutes(0, 0, 0);
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function saveLocalBooking(entry: Record<string, unknown>) {
+  if (typeof window === "undefined") return;
+  try {
+    const current = JSON.parse(localStorage.getItem(LOCAL_BOOKINGS_KEY) || "[]");
+    const next = [entry, ...(Array.isArray(current) ? current : [])].slice(0, 20);
+    localStorage.setItem(LOCAL_BOOKINGS_KEY, JSON.stringify(next));
+  } catch {
+    localStorage.setItem(LOCAL_BOOKINGS_KEY, JSON.stringify([entry]));
+  }
 }
 
 export default function BookingDialog({ listing, onClose }: Props) {
@@ -59,6 +72,16 @@ export default function BookingDialog({ listing, onClose }: Props) {
       });
       const json = await res.json();
       if (!json.ok) throw new Error(json.error || "Error al reservar");
+      saveLocalBooking({
+        id: json.thread_id || json.id,
+        booking_id: json.id,
+        business_name: listing.name,
+        status: json.status || "pending",
+        scheduled_at: new Date(when).toISOString(),
+        party_size: partySize,
+        customer_name: name.trim().slice(0, 120),
+        created_at: new Date().toISOString(),
+      });
       onClose();
       if (json.thread_id && userId) {
         navigate({ to: "/threads/$id", params: { id: json.thread_id } });
