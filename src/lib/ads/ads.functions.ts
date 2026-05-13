@@ -373,6 +373,9 @@ export const getAdVariants = createServerFn({ method: "POST" })
       case "agenda":
         userPrompt = `Genera ${count} variantes de tarjeta de AGENDA CULTURAL en Alicante, UNA por evento del listado. Cada variante: headline (máx 7 palabras, inspirada en el título real), body (1 frase con la fecha y el qué, máx 110 caracteres), cta (2-3 palabras tipo "Ver agenda"). NO inventes nada que no esté en el listado.${agendaCtx}`;
         break;
+      case "flights":
+        userPrompt = `Genera ${count} variantes DISTINTAS de tarjeta sobre TRÁFICO AÉREO en vivo cerca del aeropuerto de Alicante-Elche (ALC/LEAL). Cada variante: headline (máx 7 palabras), body (1 frase con un dato REAL del listado, máx 110 caracteres), cta (2-3 palabras tipo "Ver vuelos"). Menciona números reales (cuántos aviones, callsign de ejemplo, país de la aerolínea). Tono curioso/cercano.${flightsCtx}`;
+        break;
       default:
         userPrompt = wiki
           ? `Tema REAL de Wikipedia: "${wiki.title}".\n\nResumen fuente:\n"""${wiki.extract}"""\n\nGenera ${count} variantes DISTINTAS de tarjeta INFORMATIVA basadas EXCLUSIVAMENTE en ese resumen (no inventes datos). Cada variante destaca un ángulo distinto. Cada variante: headline (máx 7 palabras), body (1 frase con un dato concreto, máx 110 caracteres), cta (2-3 palabras tipo "Saber más"). Tono cercano, sin clichés. Si un dato no está en el resumen, omítelo.`
