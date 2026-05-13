@@ -15,6 +15,12 @@ import {
   fetchTeatroPrincipalAgenda,
   fetchPlazaTorosAgenda,
   fetchMercadillosHoy,
+  fetchAddaAgenda,
+  fetchStereoAgenda,
+  fetchSalaOneAgenda,
+  fetchMuelleLiveAgenda,
+  fetchSpringAgenda,
+  fetchSongkickAlicante,
   type RegionalEvent,
 } from "./regional-agendas.server";
 
@@ -373,6 +379,12 @@ export const getAdVariants = createServerFn({ method: "POST" })
       const fetcher: Record<string, () => Promise<RegionalEvent[] | null>> = {
         "teatro-principal": fetchTeatroPrincipalAgenda,
         "plaza-toros": fetchPlazaTorosAgenda,
+        "adda-alicante": fetchAddaAgenda,
+        "stereo-alicante": fetchStereoAgenda,
+        "sala-one": fetchSalaOneAgenda,
+        "muelle-live": fetchMuelleLiveAgenda,
+        "spring-alicante": fetchSpringAgenda,
+        "songkick-alicante": fetchSongkickAlicante,
       };
       const fn = fetcher[advertiser.id];
       const events = fn ? await fn() : null;
