@@ -6,61 +6,98 @@ import { supabase } from "@/integrations/supabase/client";
 import { listMyBusinesses } from "@/lib/business/business.functions";
 import { listThreadsForBusiness } from "@/lib/coord/threads.functions";
 
-// Singleton AudioContext. Browsers require a user gesture before audio can
-// play; we create/resume the context the first time the user interacts with
-// the page and reuse it for every alarm afterwards.
-let sharedCtx: AudioContext | null = null;
+// Generate a loud alarm WAV (3s, alternating 1200/800 Hz square wave) once
+// and reuse it. HTMLAudioElement is more reliable than scheduled oscillators
+// inside iframes (Lovable preview) where AudioContext may be suspended at
+// the moment a realtime event arrives.
+let alarmUrl: string | null = null;
+let alarmEl: HTMLAudioElement | null = null;
 let unlocked = false;
 
-function getCtx(): AudioContext | null {
+function buildAlarmWav(): string {
+  const sampleRate = 22050;
+  const duration = 3; // seconds
+  const total = sampleRate * duration;
+  const bytesPerSample = 2;
+  const buffer = new ArrayBuffer(44 + total * bytesPerSample);
+  const view = new DataView(buffer);
+  const writeStr = (off: number, s: string) => {
+    for (let i = 0; i < s.length; i++) view.setUint8(off + i, s.charCodeAt(i));
+  };
+  writeStr(0, "RIFF");
+  view.setUint32(4, 36 + total * bytesPerSample, true);
+  writeStr(8, "WAVE");
+  writeStr(12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * bytesPerSample, true);
+  view.setUint16(32, bytesPerSample, true);
+  view.setUint16(34, 16, true);
+  writeStr(36, "data");
+  view.setUint32(40, total * bytesPerSample, true);
+
+  // Alternating beep pattern: 0.25s on (1200Hz), 0.15s off, 0.25s on (800Hz), 0.15s off …
+  for (let i = 0; i < total; i++) {
+    const t = i / sampleRate;
+    const cycle = t % 0.8; // 0.8s cycle
+    let sample = 0;
+    if (cycle < 0.25) {
+      // 1200 Hz square
+      sample = Math.sign(Math.sin(2 * Math.PI * 1200 * t)) * 0.6;
+    } else if (cycle >= 0.4 && cycle < 0.65) {
+      // 800 Hz square
+      sample = Math.sign(Math.sin(2 * Math.PI * 800 * t)) * 0.6;
+    }
+    view.setInt16(44 + i * 2, sample * 0x7fff, true);
+  }
+  const blob = new Blob([buffer], { type: "audio/wav" });
+  return URL.createObjectURL(blob);
+}
+
+function getAlarmEl(): HTMLAudioElement | null {
   if (typeof window === "undefined") return null;
-  const Ctx = (window.AudioContext || (window as any).webkitAudioContext) as
-    | typeof AudioContext
-    | undefined;
-  if (!Ctx) return null;
-  if (!sharedCtx) sharedCtx = new Ctx();
-  return sharedCtx;
+  if (!alarmUrl) alarmUrl = buildAlarmWav();
+  if (!alarmEl) {
+    alarmEl = new Audio(alarmUrl);
+    alarmEl.preload = "auto";
+    alarmEl.volume = 1;
+  }
+  return alarmEl;
 }
 
 function unlockAudio() {
-  const ctx = getCtx();
-  if (!ctx) return;
-  if (ctx.state === "suspended") ctx.resume().catch(() => {});
-  try {
-    const buf = ctx.createBuffer(1, 1, 22050);
-    const src = ctx.createBufferSource();
-    src.buffer = buf;
-    src.connect(ctx.destination);
-    src.start(0);
-  } catch {
-    /* ignore */
-  }
-  unlocked = true;
+  const el = getAlarmEl();
+  if (!el) return;
+  // Play + immediately pause inside the gesture handler to satisfy browser
+  // autoplay policies. After this, .play() works from any callback.
+  el.muted = true;
+  el.play()
+    .then(() => {
+      el.pause();
+      el.currentTime = 0;
+      el.muted = false;
+      unlocked = true;
+      console.log("[alarm] audio unlocked");
+    })
+    .catch((e) => {
+      el.muted = false;
+      console.warn("[alarm] unlock failed", e);
+    });
 }
 
 export function playAlarm() {
-  const ctx = getCtx();
-  if (ctx) {
-    if (ctx.state === "suspended") ctx.resume().catch(() => {});
+  const el = getAlarmEl();
+  if (el) {
     try {
-      const now = ctx.currentTime;
-      for (let i = 0; i < 6; i++) {
-        const t = now + i * 0.45;
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.type = "square";
-        o.frequency.setValueAtTime(1200, t);
-        o.frequency.setValueAtTime(800, t + 0.15);
-        g.gain.setValueAtTime(0.0001, t);
-        g.gain.exponentialRampToValueAtTime(0.7, t + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
-        o.connect(g);
-        g.connect(ctx.destination);
-        o.start(t);
-        o.stop(t + 0.42);
-      }
-    } catch {
-      /* ignore */
+      el.currentTime = 0;
+      el.volume = 1;
+      el.muted = false;
+      const p = el.play();
+      if (p) p.catch((e) => console.warn("[alarm] play() rejected", e));
+    } catch (e) {
+      console.warn("[alarm] play threw", e);
     }
   }
   try {
