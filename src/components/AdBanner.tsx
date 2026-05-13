@@ -1,22 +1,27 @@
 import { useEffect, useState, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQueries } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { X } from "lucide-react";
 import { getAdVariants, type AdVariantsResponse } from "@/lib/ads/ads.functions";
+import { ADVERTISERS } from "@/lib/ads/advertisers";
 
-const ADVERTISER_ID = "plastiahorro";
 const FREQUENCY_MS = 2 * 60 * 1000; // 2 min
 const VISIBLE_MS = 18 * 1000; // 18s visible
-const FIRST_DELAY_MS = 30 * 1000; // primer banner a los 30s
-const CACHE_KEY = `ad:${ADVERTISER_ID}:variants:v1`;
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h
-const ROTATE_KEY = `ad:${ADVERTISER_ID}:idx`;
+const FIRST_DELAY_MS = 30 * 1000;
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1h (clima cambia)
 
 type Cached = { at: number; data: AdVariantsResponse };
 
-function readCache(): AdVariantsResponse | null {
+function cacheKey(id: string) {
+  return `banner:${id}:variants:v2`;
+}
+function rotateKey(id: string) {
+  return `banner:${id}:idx`;
+}
+
+function readCache(id: string): AdVariantsResponse | null {
   try {
-    const raw = localStorage.getItem(CACHE_KEY);
+    const raw = localStorage.getItem(cacheKey(id));
     if (!raw) return null;
     const c = JSON.parse(raw) as Cached;
     if (Date.now() - c.at > CACHE_TTL_MS) return null;
@@ -26,23 +31,20 @@ function readCache(): AdVariantsResponse | null {
   }
 }
 
-function writeCache(data: AdVariantsResponse) {
+function writeCache(id: string, data: AdVariantsResponse) {
   try {
-    localStorage.setItem(
-      CACHE_KEY,
-      JSON.stringify({ at: Date.now(), data }),
-    );
+    localStorage.setItem(cacheKey(id), JSON.stringify({ at: Date.now(), data }));
   } catch {
     /* ignore */
   }
 }
 
-function nextIndex(len: number): number {
+function nextIndex(id: string, len: number): number {
   if (len <= 0) return 0;
   try {
-    const cur = parseInt(localStorage.getItem(ROTATE_KEY) ?? "0", 10);
+    const cur = parseInt(localStorage.getItem(rotateKey(id)) ?? "0", 10);
     const next = (Number.isFinite(cur) ? cur : 0) % len;
-    localStorage.setItem(ROTATE_KEY, String((next + 1) % len));
+    localStorage.setItem(rotateKey(id), String((next + 1) % len));
     return next;
   } catch {
     return Math.floor(Math.random() * len);
@@ -52,33 +54,40 @@ function nextIndex(len: number): number {
 export function AdBanner() {
   const fetchAds = useServerFn(getAdVariants);
   const [open, setOpen] = useState(false);
+  const [activeIdx, setActiveIdx] = useState(0); // qué advertiser
   const [variantIdx, setVariantIdx] = useState(0);
   const [dismissed, setDismissed] = useState(false);
+  const cycleRef = useRef(0);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const { data } = useQuery<AdVariantsResponse>({
-    queryKey: ["ad-variants", ADVERTISER_ID],
-    queryFn: async () => {
-      const cached = readCache();
-      if (cached) return cached;
-      const res = await fetchAds({
-        data: { advertiserId: ADVERTISER_ID, count: 6 },
-      });
-      writeCache(res);
-      return res;
-    },
-    staleTime: CACHE_TTL_MS,
-    retry: false,
+  const queries = useQueries({
+    queries: ADVERTISERS.map((a) => ({
+      queryKey: ["banner-variants", a.id],
+      queryFn: async () => {
+        const cached = readCache(a.id);
+        if (cached) return cached;
+        const res = await fetchAds({ data: { advertiserId: a.id, count: 6 } });
+        writeCache(a.id, res);
+        return res;
+      },
+      staleTime: CACHE_TTL_MS,
+      retry: false,
+    })),
   });
 
-  // Programa el ciclo: oculto N min → visible 18s → oculto…
+  const allLoaded = queries.every((q) => q.data);
+
   useEffect(() => {
-    if (!data || dismissed) return;
+    if (!allLoaded || dismissed) return;
     let cancelled = false;
 
     const showNow = () => {
       if (cancelled) return;
-      setVariantIdx(nextIndex(data.variants.length));
+      const ai = cycleRef.current % ADVERTISERS.length;
+      cycleRef.current += 1;
+      const data = queries[ai].data!;
+      setActiveIdx(ai);
+      setVariantIdx(nextIndex(ADVERTISERS[ai].id, data.variants.length));
       setOpen(true);
       hideTimerRef.current = setTimeout(() => {
         if (!cancelled) setOpen(false);
@@ -94,9 +103,11 @@ export function AdBanner() {
       clearInterval(interval);
       if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
     };
-  }, [data, dismissed]);
+  }, [allLoaded, dismissed, queries]);
 
-  if (!data || !open || dismissed) return null;
+  if (!allLoaded || !open || dismissed) return null;
+  const data = queries[activeIdx]?.data;
+  if (!data) return null;
   const v = data.variants[variantIdx] ?? data.variants[0];
   if (!v) return null;
   const theme = data.advertiser.theme;
@@ -111,10 +122,9 @@ export function AdBanner() {
           onClick={() => {
             setOpen(false);
             setDismissed(true);
-            // permite reaparecer en próximo ciclo si recarga
             setTimeout(() => setDismissed(false), FREQUENCY_MS);
           }}
-          aria-label="Cerrar anuncio"
+          aria-label="Cerrar"
           className="absolute right-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full bg-black/20 hover:bg-black/30"
         >
           <X className="h-3.5 w-3.5" />
@@ -123,9 +133,6 @@ export function AdBanner() {
           <div className="text-2xl leading-none mt-0.5">{theme.emoji}</div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
-              <span className="text-[9px] font-bold uppercase tracking-wider opacity-80">
-                Publi
-              </span>
               <span className="text-[11px] font-semibold opacity-95 truncate">
                 {data.advertiser.name}
               </span>
@@ -139,7 +146,7 @@ export function AdBanner() {
             <a
               href={data.advertiser.ctaUrl}
               target="_blank"
-              rel="noopener noreferrer sponsored"
+              rel="noopener noreferrer"
               className={`mt-1.5 inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-bold ${theme.accent} active:scale-95`}
             >
               {v.cta} →
