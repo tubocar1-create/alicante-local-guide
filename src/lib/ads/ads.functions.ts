@@ -169,6 +169,14 @@ export const getAdVariants = createServerFn({ method: "POST" })
       }
     }
 
+    let wiki: WikiSummary | null = null;
+    if (advertiser.kind === "info") {
+      wiki = await fetchRandomWikiSummary();
+      if (wiki) {
+        baseResp.advertiser.ctaUrl = wiki.url;
+      }
+    }
+
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       return {
@@ -181,7 +189,9 @@ export const getAdVariants = createServerFn({ method: "POST" })
     const userPrompt =
       advertiser.kind === "weather"
         ? `Genera ${count} variantes DISTINTAS de tarjeta de CLIMA para Alicante. Cada variante: headline (máx 7 palabras, refleja el tiempo actual), body (1 frase con consejo práctico, máx 110 caracteres), cta (2-3 palabras tipo "Ver tiempo"). Tono cercano y útil. Sin alarmismo.${weatherCtx}`
-        : `Genera ${count} variantes DISTINTAS de tarjeta INFORMATIVA sobre Alicante. Temas variados: gastronomía local, Hogueras, playas, TRAM/TAM, Castillo de Santa Bárbara, barrios (Santa Cruz, San Antón), mercados, datos curiosos. Cada variante: headline (máx 7 palabras), body (1 frase, máx 110 caracteres), cta (2-3 palabras tipo "Saber más"). Tono cercano, sin clichés turísticos.`;
+        : wiki
+          ? `Tema REAL extraído de Wikipedia: "${wiki.title}".\n\nResumen fuente:\n"""${wiki.extract}"""\n\nGenera ${count} variantes DISTINTAS de tarjeta INFORMATIVA basadas EXCLUSIVAMENTE en ese resumen (no inventes datos que no estén ahí). Cada variante destaca un ángulo distinto del tema. Cada variante: headline (máx 7 palabras), body (1 frase con un dato concreto, máx 110 caracteres), cta (2-3 palabras tipo "Saber más"). Tono cercano, sin clichés. Si un dato no está en el resumen, omítelo.`
+          : `Genera ${count} variantes DISTINTAS de tarjeta INFORMATIVA sobre Alicante. Temas variados: gastronomía local, Hogueras, playas, TRAM/TAM, Castillo de Santa Bárbara, barrios, mercados, datos curiosos. Cada variante: headline (máx 7 palabras), body (1 frase, máx 110 caracteres), cta (2-3 palabras tipo "Saber más"). Tono cercano, sin clichés turísticos.`;
 
     try {
       const res = await fetch(
