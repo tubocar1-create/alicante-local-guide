@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  CalendarPlus,
   Heart,
   Navigation,
   Phone,
@@ -12,6 +13,7 @@ import {
 } from "lucide-react";
 import { type Listing } from "@/lib/overpass-listings";
 import { distanceKm, formatDistance, type Coords } from "@/hooks/useUserLocation";
+import BookingDialog from "@/components/BookingDialog";
 
 const BAD_IMAGE_RE =
   /(\.svg($|\?))|(map|mapa|locator|location|flag|bandera|coat[_-]?of[_-]?arms|escudo|seal|logo|icon)/i;
@@ -68,6 +70,7 @@ export function ListingCard({ it, me, onWantToGo }: Props) {
     imgCache.get(it.name.trim().toLowerCase()),
   );
   const [liked, setLiked] = useState(false);
+  const [booking, setBooking] = useState(false);
 
   useEffect(() => {
     if (img !== undefined) return;
@@ -171,11 +174,18 @@ export function ListingCard({ it, me, onWantToGo }: Props) {
 
         {/* Action chips */}
         <div className="mt-3 flex flex-wrap gap-1.5">
+          <button
+            type="button"
+            onClick={() => setBooking(true)}
+            className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-[11px] font-semibold text-primary-foreground active:scale-95"
+          >
+            <CalendarPlus className="h-3 w-3" /> Reservar
+          </button>
           <a
             href={mapsHref}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-[11px] font-semibold text-primary-foreground"
+            className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-[11px] font-semibold text-secondary-foreground"
           >
             <Navigation className="h-3 w-3" /> Cómo llegar
           </a>
@@ -217,6 +227,7 @@ export function ListingCard({ it, me, onWantToGo }: Props) {
           )}
         </div>
       </div>
+      {booking && <BookingDialog listing={it} onClose={() => setBooking(false)} />}
     </article>
   );
 }
