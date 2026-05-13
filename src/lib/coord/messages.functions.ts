@@ -81,11 +81,10 @@ export const sendMessage = createServerFn({ method: "POST" })
         .eq("id", thread.id);
     }
     if (nextBookingStatus) {
-      const patch: Record<string, unknown> = { status: nextBookingStatus };
-      if (data.template_key === "business.propose_slot" && data.payload && "scheduled_at" in data.payload) {
-        // no cambia status, solo guarda nueva propuesta en metadata
-      }
-      await supabase.from("bookings").update(patch).eq("id", thread.booking_id);
+      await supabase
+        .from("bookings")
+        .update({ status: nextBookingStatus as never })
+        .eq("id", thread.booking_id);
     }
     // Si propose_slot, persistimos en booking.metadata
     if (data.template_key === "business.propose_slot" && data.payload?.scheduled_at) {
