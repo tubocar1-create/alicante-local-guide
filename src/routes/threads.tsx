@@ -92,7 +92,8 @@ function ThreadsLayout() {
       </p>
       <ul className="space-y-2">
         {threads.map((t) => {
-          const cls = cardCls(t.status);
+          const effectiveStatus = t.booking?.status ?? t.status;
+          const cls = cardCls(effectiveStatus);
           return (
             <li key={t.id}>
               <Link
