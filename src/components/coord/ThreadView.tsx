@@ -73,6 +73,28 @@ export function ThreadView({ threadId, role }: { threadId: string; role: "user" 
             (role === "business" && msg.sender_type === "business");
           const sys = msg.sender_type === "system";
           if (sys) {
+            if (msg.template_key === "booking_created" && booking) {
+              return (
+                <li key={msg.id} className="mx-auto max-w-[90%] rounded-2xl border border-border bg-muted/40 px-3 py-2 text-center text-xs">
+                  <p className="font-medium text-foreground">
+                    {booking.customer_name} ha solicitado una reserva
+                  </p>
+                  <p className="mt-0.5 text-muted-foreground">
+                    {booking.party_size} {booking.party_size === 1 ? "persona" : "personas"} ·{" "}
+                    {new Date(booking.scheduled_at).toLocaleString([], {
+                      weekday: "short",
+                      day: "2-digit",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                  {booking.notes && (
+                    <p className="mt-1 italic text-muted-foreground">"{booking.notes}"</p>
+                  )}
+                </li>
+              );
+            }
             return (
               <li key={msg.id} className="text-center text-[11px] text-muted-foreground">
                 <Clock className="mr-1 inline h-3 w-3" />
