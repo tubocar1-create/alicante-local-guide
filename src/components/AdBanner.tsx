@@ -1,23 +1,16 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useQueries } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { X } from "lucide-react";
 import { getAdVariants, type AdVariantsResponse } from "@/lib/ads/ads.functions";
 import { ADVERTISERS } from "@/lib/ads/advertisers";
 
-const FREQUENCY_MS = 2 * 60 * 1000; // 2 min
-const VISIBLE_MS = 18 * 1000; // 18s visible
-const FIRST_DELAY_MS = 30 * 1000;
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 min (datos de parking/tráfico cambian rápido)
+const ROTATE_MS = 2 * 60 * 1000; // 2 min entre rotaciones
+const CACHE_TTL_MS = 5 * 60 * 1000;
 
 type Cached = { at: number; data: AdVariantsResponse };
 
-function cacheKey(id: string) {
-  return `banner:${id}:variants:v2`;
-}
-function rotateKey(id: string) {
-  return `banner:${id}:idx`;
-}
+const cacheKey = (id: string) => `banner:${id}:variants:v3`;
+const rotateKey = (id: string) => `banner:${id}:idx`;
 
 function readCache(id: string): AdVariantsResponse | null {
   try {
@@ -30,7 +23,6 @@ function readCache(id: string): AdVariantsResponse | null {
     return null;
   }
 }
-
 function writeCache(id: string, data: AdVariantsResponse) {
   try {
     localStorage.setItem(cacheKey(id), JSON.stringify({ at: Date.now(), data }));
@@ -38,7 +30,6 @@ function writeCache(id: string, data: AdVariantsResponse) {
     /* ignore */
   }
 }
-
 function nextIndex(id: string, len: number): number {
   if (len <= 0) return 0;
   try {
@@ -53,12 +44,7 @@ function nextIndex(id: string, len: number): number {
 
 export function AdBanner() {
   const fetchAds = useServerFn(getAdVariants);
-  const [open, setOpen] = useState(false);
-  const [activeIdx, setActiveIdx] = useState(0); // qué advertiser
-  const [variantIdx, setVariantIdx] = useState(0);
-  const [dismissed, setDismissed] = useState(false);
-  const cycleRef = useRef(0);
-  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [cycle, setCycle] = useState(0);
 
   const queries = useQueries({
     queries: ADVERTISERS.map((a) => ({
@@ -75,83 +61,42 @@ export function AdBanner() {
     })),
   });
 
-  const allLoaded = queries.every((q) => q.data);
-
   useEffect(() => {
-    if (!allLoaded || dismissed) return;
-    let cancelled = false;
+    const t = setInterval(() => setCycle((c) => c + 1), ROTATE_MS);
+    return () => clearInterval(t);
+  }, []);
 
-    const showNow = () => {
-      if (cancelled) return;
-      const ai = cycleRef.current % ADVERTISERS.length;
-      cycleRef.current += 1;
-      const data = queries[ai].data!;
-      setActiveIdx(ai);
-      setVariantIdx(nextIndex(ADVERTISERS[ai].id, data.variants.length));
-      setOpen(true);
-      hideTimerRef.current = setTimeout(() => {
-        if (!cancelled) setOpen(false);
-      }, VISIBLE_MS);
-    };
+  const allLoaded = queries.every((q) => q.data);
+  if (!allLoaded) return null;
 
-    const firstTimer = setTimeout(showNow, FIRST_DELAY_MS);
-    const interval = setInterval(showNow, FREQUENCY_MS);
-
-    return () => {
-      cancelled = true;
-      clearTimeout(firstTimer);
-      clearInterval(interval);
-      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
-    };
-  }, [allLoaded, dismissed, queries]);
-
-  if (!allLoaded || !open || dismissed) return null;
-  const data = queries[activeIdx]?.data;
+  const ai = cycle % ADVERTISERS.length;
+  const data = queries[ai]?.data;
   if (!data) return null;
-  const v = data.variants[variantIdx] ?? data.variants[0];
-  if (!v) return null;
+  const variant =
+    data.variants[nextIndex(ADVERTISERS[ai].id, data.variants.length)] ??
+    data.variants[0];
+  if (!variant) return null;
   const theme = data.advertiser.theme;
 
   return (
-    <div className="fixed inset-x-2 bottom-2 z-[60] pointer-events-none sm:inset-x-auto sm:right-4 sm:bottom-4 sm:max-w-sm">
+    <div className="mx-auto w-full max-w-2xl px-4 pt-2">
       <div
-        className={`pointer-events-auto relative overflow-hidden rounded-2xl ${theme.bg} ${theme.fg} shadow-2xl ring-1 ring-black/10 animate-in slide-in-from-bottom-4 fade-in duration-300`}
+        key={cycle}
+        className={`flex items-center gap-2.5 overflow-hidden rounded-2xl px-3 py-2 ${theme.bg} ${theme.fg} shadow-sm ring-1 ring-black/5 animate-in fade-in slide-in-from-top-1 duration-500`}
       >
-        <button
-          type="button"
-          onClick={() => {
-            setOpen(false);
-            setDismissed(true);
-            setTimeout(() => setDismissed(false), FREQUENCY_MS);
-          }}
-          aria-label="Cerrar"
-          className="absolute right-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full bg-black/20 hover:bg-black/30"
-        >
-          <X className="h-3.5 w-3.5" />
-        </button>
-        <div className="flex items-start gap-3 px-3 py-2.5 pr-9">
-          <div className="text-2xl leading-none mt-0.5">{theme.emoji}</div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] font-semibold opacity-95 truncate">
-                {data.advertiser.name}
-              </span>
-            </div>
-            <h4 className="mt-0.5 text-[14px] font-bold leading-tight">
-              {v.headline}
-            </h4>
-            <p className="mt-0.5 text-[11px] opacity-95 leading-snug line-clamp-2">
-              {v.body}
-            </p>
-            <a
-              href={data.advertiser.ctaUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`mt-1.5 inline-flex items-center gap-1 rounded-full px-3 py-1 text-[11px] font-bold ${theme.accent} active:scale-95`}
-            >
-              {v.cta} →
-            </a>
+        <div className="text-xl leading-none shrink-0">{theme.emoji}</div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-wide opacity-90 shrink-0">
+              {data.advertiser.name}
+            </span>
+            <span className="truncate text-[12px] font-bold leading-tight">
+              {variant.headline}
+            </span>
           </div>
+          <p className="mt-0.5 truncate text-[11px] opacity-95 leading-snug">
+            {variant.body}
+          </p>
         </div>
       </div>
     </div>
