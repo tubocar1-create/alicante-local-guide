@@ -118,7 +118,7 @@ function InboxPage() {
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${bookingBadge(bookingStatus, t.status)}`}>
-                      {bookingLabel(bookingStatus, t.status, t.had_proposal)}
+                      {bookingLabel(bookingStatus, t.status, t.had_proposal, t.cancelled_by)}
                     </span>
                     <span className={`text-[10px] ${sla ? "text-destructive" : "text-muted-foreground"}`}>
                       {ageMin}m
