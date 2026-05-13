@@ -79,6 +79,32 @@ function BusinessDashboard() {
     (t) => t.status === "awaiting_business" && t.booking?.status === "pending",
   ).length;
 
+  const prevAwaitingRef = useRef<number | null>(null);
+  const notifiedRef = useRef(false);
+  useEffect(() => {
+    if (typeof Notification !== "undefined" && Notification.permission === "default" && !notifiedRef.current) {
+      notifiedRef.current = true;
+      Notification.requestPermission().catch(() => {});
+    }
+  }, []);
+  useEffect(() => {
+    const prev = prevAwaitingRef.current;
+    if (prev !== null && awaiting > prev) {
+      playAlarm();
+      const title = "¡Nueva reserva!";
+      const body = `Tienes ${awaiting} reserva${awaiting === 1 ? "" : "s"} pendiente${awaiting === 1 ? "" : "s"}`;
+      toast(title, { description: body, duration: 8000 });
+      try {
+        if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+          new Notification(title, { body });
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+    prevAwaitingRef.current = awaiting;
+  }, [awaiting]);
+
   if (isLoading) return <p className="text-sm text-muted-foreground">Cargando…</p>;
 
   if (!primary) {
