@@ -10,6 +10,7 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
+import "@/integrations/supabase/server-fn-fetch.client";
 
 function NotFoundComponent() {
   return (
