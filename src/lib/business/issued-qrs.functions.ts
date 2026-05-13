@@ -72,5 +72,22 @@ export const listIssuedQrs = createServerFn({ method: "GET" })
       active: r.active,
       payload: (r.payload as IssuerPayload | null) ?? null,
     }));
-    return { qrs: mapped, error: null };
+
+    const { data: bizRow } = await sb
+      .from("businesses")
+      .select("id, name, phone, address, opening_hours")
+      .eq("id", data.business_id)
+      .maybeSingle();
+    const business: Business = bizRow
+      ? {
+          id: bizRow.id,
+          name: bizRow.name,
+          phone: bizRow.phone ?? null,
+          address: bizRow.address ?? null,
+          opening_hours_json:
+            bizRow.opening_hours == null ? null : JSON.stringify(bizRow.opening_hours),
+        }
+      : null;
+
+    return { qrs: mapped, business, error: null };
   });
