@@ -8,7 +8,8 @@ export type BannerKind =
   | "parkings"
   | "traffic"
   | "air"
-  | "agenda";
+  | "agenda"
+  | "flights";
 
 export type Advertiser = {
   id: string;
