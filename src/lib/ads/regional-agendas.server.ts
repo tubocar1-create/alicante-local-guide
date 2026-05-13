@@ -172,32 +172,36 @@ export async function fetchTeatroPrincipalAgenda(): Promise<RegionalEvent[] | nu
   return out.length ? out : null;
 }
 
+// Cartel oficial Plaza de Toros Alicante 2026 (cerrado por el promotor).
+const PLAZA_TOROS_2026: Array<{ date: string; artist: string; note?: string }> = [
+  { date: "2026-03-06", artist: "Fito y Fitipaldis" },
+  { date: "2026-07-11", artist: "2º Festival Mediterráneo de Cantautores" },
+  { date: "2026-07-25", artist: "Antonio Orozco" },
+  { date: "2026-07-12", artist: "Joaquín Sabina" },
+  { date: "2026-07-17", artist: "Miguel Bosé" },
+  { date: "2026-08-08", artist: "Triana Tour Cano" },
+];
+
 export async function fetchPlazaTorosAgenda(): Promise<RegionalEvent[] | null> {
-  const fromJsonLd = await scrapeJsonLdAgenda("https://plazatorosalicante.com/conciertos-y-eventos/");
-  if (fromJsonLd) return fromJsonLd;
-  const html = await fetchHtml("https://plazatorosalicante.com/conciertos-y-eventos/");
-  if (!html) return null;
-  // Títulos típicos: "## MANUEL CARRASCO – 19 de septiembre" → buscamos h2/h3 con guión y fecha
-  const items = [
-    ...html.matchAll(
-      /<h[23][^>]*>\s*([^<]+(?:[–\-—])\s*\d{1,2}\s+de\s+\w+(?:\s+\d{4})?)\s*<\/h[23]>/gi,
-    ),
-  ];
-  const out: RegionalEvent[] = [];
-  const seen = new Set<string>();
-  for (const it of items) {
-    const raw = clean(it[1]);
-    const k = raw.toLowerCase();
-    if (seen.has(k)) continue;
-    seen.add(k);
-    // Separa título y fecha
-    const split = raw.split(/[–\-—]\s*/);
-    const title = split[0] ? split[0].trim() : raw;
-    const when = split[1] ? split[1].trim() : "";
-    out.push({ title, when, excerpt: "Plaza de Toros de Alicante." });
-    if (out.length >= 8) break;
+  // Reutiliza helpers definidos más abajo en este módulo (todayMadrid, shuffle).
+  const today = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Madrid",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+  const upcoming = PLAZA_TOROS_2026.filter((c) => c.date >= today);
+  if (upcoming.length === 0) return null;
+  const shuffled = [...upcoming];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
-  return out.length ? out : null;
+  return shuffled.slice(0, 6).map((c) => ({
+    title: c.artist,
+    when: fmtDateRange(`${c.date}T21:30:00+02:00`),
+    excerpt: "Concierto en la Plaza de Toros de Alicante.",
+  }));
 }
 
 // ─── Otros venues (mismo patrón: JSON-LD + fallback heurístico) ──────
