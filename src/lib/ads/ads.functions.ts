@@ -6,6 +6,7 @@ import {
   fetchAlicanteTraffic,
   fetchAlicanteAirQuality,
   fetchAlicanteAgenda,
+  fetchAlicanteAirTraffic,
   type CulturalEvent,
 } from "./alicante-city.server";
 
