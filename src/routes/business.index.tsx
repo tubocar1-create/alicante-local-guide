@@ -154,7 +154,7 @@ function BusinessDashboard() {
           </div>
         </div>
         {awaiting > 0 && (
-          <span className="rounded-full bg-white/95 px-3 py-1 text-base font-bold text-amber-600">
+          <span className="rounded-full bg-white px-3 py-1 text-base font-bold text-orange-600">
             {awaiting}
           </span>
         )}
