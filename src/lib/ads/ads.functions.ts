@@ -1,6 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { ADVERTISERS, getAdvertiser, type Advertiser } from "./advertisers";
+import {
+  fetchAlicanteParkings,
+  fetchAlicanteTraffic,
+} from "./alicante-city.server";
 
 export type AdCopy = {
   headline: string; // 4-7 palabras
