@@ -1,11 +1,14 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Check, CalendarClock, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { listMyBusinesses } from "@/lib/business/business.functions";
 import { listThreadsForBusiness } from "@/lib/coord/threads.functions";
+import { sendMessage } from "@/lib/coord/messages.functions";
 import { TEMPLATES } from "@/lib/coord/templates";
 
 export const Route = createFileRoute("/business/inbox")({
@@ -76,12 +79,13 @@ function InboxPage() {
               : (last?.text ?? "—");
           const ageMin = Math.round((Date.now() - new Date(t.last_message_at).getTime()) / 60000);
           const sla = t.status === "awaiting_business" && ageMin > 10;
+          const isPending = t.booking?.status === "pending";
           return (
-            <li key={t.id}>
+            <li key={t.id} className="rounded-2xl border border-border bg-card">
               <Link
                 to="/business/inbox/$id"
                 params={{ id: t.id }}
-                className="block rounded-2xl border border-border bg-card p-3"
+                className="block p-3"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
@@ -111,6 +115,7 @@ function InboxPage() {
                   </div>
                 </div>
               </Link>
+              {isPending && <QuickActions threadId={t.id} />}
             </li>
           );
         })}
@@ -127,4 +132,48 @@ function badgeFor(s: string) {
   if (s === "awaiting_user") return "bg-muted text-foreground";
   if (s === "closed" || s === "expired") return "bg-muted text-muted-foreground";
   return "bg-muted text-foreground";
+}
+
+function QuickActions({ threadId }: { threadId: string }) {
+  const send = useServerFn(sendMessage);
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
+
+  const m = useMutation({
+    mutationFn: (v: { template_key: string; payload?: Record<string, unknown> }) =>
+      send({ data: { thread_id: threadId, actor_role: "business", ...v } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["inbox"] });
+      toast.success("Respuesta enviada");
+    },
+    onError: (e: Error) => toast.error(e.message),
+    onSettled: () => setBusy(false),
+  });
+
+  return (
+    <div className="grid grid-cols-3 gap-1.5 border-t border-border px-3 py-2">
+      <button
+        disabled={busy || m.isPending}
+        onClick={(e) => { e.stopPropagation(); setBusy(true); m.mutate({ template_key: "business.confirm", payload: {} }); }}
+        className="flex items-center justify-center gap-1 rounded-full bg-primary px-2 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
+      >
+        <Check className="h-3.5 w-3.5" /> Aceptar
+      </button>
+      <button
+        disabled={busy}
+        onClick={(e) => { e.stopPropagation(); navigate({ to: "/business/inbox/$id", params: { id: threadId } }); }}
+        className="flex items-center justify-center gap-1 rounded-full border border-border bg-background px-2 py-1.5 text-xs font-medium"
+      >
+        <CalendarClock className="h-3.5 w-3.5" /> Cambiar
+      </button>
+      <button
+        disabled={busy}
+        onClick={(e) => { e.stopPropagation(); navigate({ to: "/business/inbox/$id", params: { id: threadId } }); }}
+        className="flex items-center justify-center gap-1 rounded-full border border-border bg-background px-2 py-1.5 text-xs font-medium text-destructive"
+      >
+        <X className="h-3.5 w-3.5" /> Rechazar
+      </button>
+    </div>
+  );
 }
