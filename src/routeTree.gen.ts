@@ -28,7 +28,9 @@ import { Route as BusinessBookingsRouteImport } from './routes/business.bookings
 import { Route as BusPlannerRouteImport } from './routes/bus.planner'
 import { Route as BusLinesRouteImport } from './routes/bus.lines'
 import { Route as BusLinesCodeRouteImport } from './routes/bus.lines.$code'
+import { Route as ApiPublicQrValidateRouteImport } from './routes/api/public/qr-validate'
 import { Route as ApiPublicBusEtaRouteImport } from './routes/api/public/bus-eta'
+import { Route as ApiPublicBookingCreateRouteImport } from './routes/api/public/booking-create'
 
 const StayRoute = StayRouteImport.update({
   id: '/stay',
@@ -125,9 +127,19 @@ const BusLinesCodeRoute = BusLinesCodeRouteImport.update({
   path: '/$code',
   getParentRoute: () => BusLinesRoute,
 } as any)
+const ApiPublicQrValidateRoute = ApiPublicQrValidateRouteImport.update({
+  id: '/api/public/qr-validate',
+  path: '/api/public/qr-validate',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicBusEtaRoute = ApiPublicBusEtaRouteImport.update({
   id: '/api/public/bus-eta',
   path: '/api/public/bus-eta',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicBookingCreateRoute = ApiPublicBookingCreateRouteImport.update({
+  id: '/api/public/booking-create',
+  path: '/api/public/booking-create',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -150,7 +162,9 @@ export interface FileRoutesByFullPath {
   '/business/qr': typeof BusinessQrRoute
   '/business/referrals': typeof BusinessReferralsRoute
   '/business/': typeof BusinessIndexRoute
+  '/api/public/booking-create': typeof ApiPublicBookingCreateRoute
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
+  '/api/public/qr-validate': typeof ApiPublicQrValidateRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
 }
 export interface FileRoutesByTo {
@@ -171,7 +185,9 @@ export interface FileRoutesByTo {
   '/business/qr': typeof BusinessQrRoute
   '/business/referrals': typeof BusinessReferralsRoute
   '/business': typeof BusinessIndexRoute
+  '/api/public/booking-create': typeof ApiPublicBookingCreateRoute
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
+  '/api/public/qr-validate': typeof ApiPublicQrValidateRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
 }
 export interface FileRoutesById {
@@ -194,7 +210,9 @@ export interface FileRoutesById {
   '/business/qr': typeof BusinessQrRoute
   '/business/referrals': typeof BusinessReferralsRoute
   '/business/': typeof BusinessIndexRoute
+  '/api/public/booking-create': typeof ApiPublicBookingCreateRoute
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
+  '/api/public/qr-validate': typeof ApiPublicQrValidateRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
 }
 export interface FileRouteTypes {
@@ -218,7 +236,9 @@ export interface FileRouteTypes {
     | '/business/qr'
     | '/business/referrals'
     | '/business/'
+    | '/api/public/booking-create'
     | '/api/public/bus-eta'
+    | '/api/public/qr-validate'
     | '/bus/lines/$code'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -239,7 +259,9 @@ export interface FileRouteTypes {
     | '/business/qr'
     | '/business/referrals'
     | '/business'
+    | '/api/public/booking-create'
     | '/api/public/bus-eta'
+    | '/api/public/qr-validate'
     | '/bus/lines/$code'
   id:
     | '__root__'
@@ -261,7 +283,9 @@ export interface FileRouteTypes {
     | '/business/qr'
     | '/business/referrals'
     | '/business/'
+    | '/api/public/booking-create'
     | '/api/public/bus-eta'
+    | '/api/public/qr-validate'
     | '/bus/lines/$code'
   fileRoutesById: FileRoutesById
 }
@@ -275,7 +299,9 @@ export interface RootRouteChildren {
   PerfilRoute: typeof PerfilRoute
   RepoRoute: typeof RepoRoute
   StayRoute: typeof StayRoute
+  ApiPublicBookingCreateRoute: typeof ApiPublicBookingCreateRoute
   ApiPublicBusEtaRoute: typeof ApiPublicBusEtaRoute
+  ApiPublicQrValidateRoute: typeof ApiPublicQrValidateRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -413,11 +439,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BusLinesCodeRouteImport
       parentRoute: typeof BusLinesRoute
     }
+    '/api/public/qr-validate': {
+      id: '/api/public/qr-validate'
+      path: '/api/public/qr-validate'
+      fullPath: '/api/public/qr-validate'
+      preLoaderRoute: typeof ApiPublicQrValidateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/bus-eta': {
       id: '/api/public/bus-eta'
       path: '/api/public/bus-eta'
       fullPath: '/api/public/bus-eta'
       preLoaderRoute: typeof ApiPublicBusEtaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/booking-create': {
+      id: '/api/public/booking-create'
+      path: '/api/public/booking-create'
+      fullPath: '/api/public/booking-create'
+      preLoaderRoute: typeof ApiPublicBookingCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -481,8 +521,20 @@ const rootRouteChildren: RootRouteChildren = {
   PerfilRoute: PerfilRoute,
   RepoRoute: RepoRoute,
   StayRoute: StayRoute,
+  ApiPublicBookingCreateRoute: ApiPublicBookingCreateRoute,
   ApiPublicBusEtaRoute: ApiPublicBusEtaRoute,
+  ApiPublicQrValidateRoute: ApiPublicQrValidateRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
