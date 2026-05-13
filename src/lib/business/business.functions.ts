@@ -22,22 +22,35 @@ export const listMyBusinesses = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    const { data, error } = await supabase
+    // Owner businesses
+    const ownedRes = await supabase
       .from("businesses")
       .select("*")
-      .or(`owner_id.eq.${userId},id.in.(select business_id from business_users where user_id=${userId})`)
-      .order("created_at", { ascending: false });
-    if (error) {
-      // Fallback simple query (owner only) if the OR filter syntax breaks
+      .eq("owner_id", userId);
+    if (ownedRes.error) throw new Error(ownedRes.error.message);
+
+    // Member businesses (via business_users)
+    const memberRes = await supabase
+      .from("business_users")
+      .select("business_id")
+      .eq("user_id", userId);
+    const memberIds = (memberRes.data ?? []).map((r) => r.business_id);
+
+    let memberBiz: typeof ownedRes.data = [];
+    if (memberIds.length) {
       const r = await supabase
         .from("businesses")
         .select("*")
-        .eq("owner_id", userId)
-        .order("created_at", { ascending: false });
-      if (r.error) throw r.error;
-      return { businesses: r.data ?? [] };
+        .in("id", memberIds);
+      memberBiz = r.data ?? [];
     }
-    return { businesses: data ?? [] };
+
+    const map = new Map<string, (typeof ownedRes.data)[number]>();
+    for (const b of [...(ownedRes.data ?? []), ...memberBiz]) map.set(b.id, b);
+    const businesses = Array.from(map.values()).sort((a, b) =>
+      b.created_at.localeCompare(a.created_at),
+    );
+    return { businesses };
   });
 
 export const createBusiness = createServerFn({ method: "POST" })
