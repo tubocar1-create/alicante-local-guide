@@ -136,10 +136,10 @@ function BusinessDashboard() {
 
       <Link
         to="/business/inbox"
-        className={`flex items-center justify-between rounded-3xl px-5 py-5 text-primary-foreground shadow-lg ${
+        className={`flex items-center justify-between rounded-3xl px-5 py-5 text-white shadow-lg ${
           awaiting > 0
-            ? "bg-amber-500 animate-blink"
-            : "bg-primary"
+            ? "bg-amber-400 animate-blink ring-4 ring-amber-300"
+            : "bg-orange-500"
         }`}
       >
         <div className="flex items-center gap-3">
