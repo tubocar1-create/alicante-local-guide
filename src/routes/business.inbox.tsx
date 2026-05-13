@@ -57,6 +57,12 @@ function InboxPage() {
 
   return (
     <div className="space-y-3">
+      <Link
+        to="/business"
+        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" /> Volver al dashboard
+      </Link>
       <div className="flex items-baseline justify-between">
         <h1 className="text-xl font-semibold">Bandeja</h1>
         {awaiting > 0 && (
