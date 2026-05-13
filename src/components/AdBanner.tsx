@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getAdVariants, type AdVariantsResponse } from "@/lib/ads/ads.functions";
 import { ADVERTISERS } from "@/lib/ads/advertisers";
 
-const FREQUENCY_MS = 60 * 1000; // 1 min entre apariciones
+const FREQUENCY_MS = 10 * 1000; // 10 s entre apariciones
 const VISIBLE_MS = 10 * 1000; // 10 s visible
 const FIRST_DELAY_MS = 5 * 1000;
 const CACHE_TTL_MS = 5 * 60 * 1000;
