@@ -68,7 +68,35 @@ export const sendMessage = createServerFn({ method: "POST" })
     ]);
 
     const isOwner = !!userId && thread.user_id === userId;
-    const isPublicUser = data.actor_role === "user" && tokenMatches(booking, data.access_token);
+    let isPublicUser = data.actor_role === "user" && tokenMatches(booking, data.access_token);
+
+    // Auto-recovery: si la metadata perdió el token (caso de bug previo) y el hilo
+    // es de invitado (sin user_id), aceptamos el primer token presentado y lo
+    // reescribimos para futuras acciones.
+    if (
+      !isOwner &&
+      !isPublicUser &&
+      data.actor_role === "user" &&
+      data.access_token &&
+      thread.user_id === null &&
+      booking &&
+      (typeof booking.metadata !== "object" ||
+        booking.metadata === null ||
+        !(booking.metadata as Record<string, unknown>).public_access_token)
+    ) {
+      const prev =
+        booking.metadata && typeof booking.metadata === "object"
+          ? (booking.metadata as Record<string, unknown>)
+          : {};
+      await supabase
+        .from("bookings")
+        .update({
+          metadata: { ...prev, public_access_token: data.access_token } as never,
+        })
+        .eq("id", thread.booking_id);
+      isPublicUser = true;
+    }
+
     const isBusiness = !!ok || (data.actor_role === "business" && business?.owner_id === null);
     if (!isOwner && !isPublicUser && !isBusiness) throw new Error("No autorizado");
 
@@ -119,19 +147,9 @@ export const sendMessage = createServerFn({ method: "POST" })
         .update({ status: nextBookingStatus as never })
         .eq("id", thread.booking_id);
     }
-    // Si propose_slot, persistimos en booking.metadata (preservando otros campos como public_access_token)
-    if (data.template_key === "business.propose_slot" && data.payload?.scheduled_at) {
-      const prevMeta =
-        booking && typeof booking.metadata === "object" && booking.metadata !== null
-          ? (booking.metadata as Record<string, unknown>)
-          : {};
-      await supabase
-        .from("bookings")
-        .update({
-          metadata: { ...prevMeta, proposed_scheduled_at: data.payload.scheduled_at } as never,
-        })
-        .eq("id", thread.booking_id);
-    }
+    // Nota: el slot propuesto se persiste en messages.payload (slot_proposal),
+    // por lo que no tocamos bookings.metadata para preservar public_access_token.
+
 
     await supabase.from("interaction_events").insert({
       type: `coord_${data.template_key ?? "free_text"}`,
