@@ -147,6 +147,7 @@ export const ADVERTISERS: Advertiser[] = [
     brief:
       "Eventos culturales reales publicados en la agenda oficial del Ayuntamiento de Alicante: exposiciones, conciertos, rutas, etc.",
   },
+];
 export function getAdvertiser(id: string): Advertiser | undefined {
   return ADVERTISERS.find((a) => a.id === id);
 }
