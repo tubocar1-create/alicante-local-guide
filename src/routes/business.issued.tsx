@@ -1,0 +1,255 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { listMyBusinesses } from "@/lib/business/business.functions";
+import { listIssuedQrs } from "@/lib/business/issued-qrs.functions";
+import { ArrowLeft, Mail, Phone, User as UserIcon, Clock, Eye, Printer, X } from "lucide-react";
+
+export const Route = createFileRoute("/business/issued")({
+  component: IssuedQrsPage,
+});
+
+type IssuerPayload = {
+  issued_by?: string;
+  user_id?: string | null;
+  user_name?: string | null;
+  user_surname?: string | null;
+  user_email?: string | null;
+  user_phone?: string | null;
+  issued_at?: string | null;
+};
+
+type QrRow = {
+  id: string;
+  code: string;
+  purpose: string;
+  created_at: string;
+  expires_at: string | null;
+  uses: number;
+  max_uses: number | null;
+  active: boolean;
+  payload: IssuerPayload | null;
+};
+
+function fmtDateTime(iso?: string | null) {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleString("es-ES", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return iso;
+  }
+}
+
+function IssuedQrsPage() {
+  const fetchBiz = useServerFn(listMyBusinesses);
+  const { data: bizData } = useQuery({
+    queryKey: ["my-businesses"],
+    queryFn: () => fetchBiz(),
+  });
+  const primary = bizData?.businesses?.[0];
+
+  const fetchQrs = useServerFn(listIssuedQrs);
+  const { data, isLoading } = useQuery({
+    queryKey: ["issued-qrs", primary?.id],
+    queryFn: () => fetchQrs({ data: { business_id: primary!.id, limit: 100 } }),
+    enabled: !!primary,
+    refetchInterval: 15000,
+  });
+
+  const qrs = (data?.qrs ?? []) as QrRow[];
+  const [openQr, setOpenQr] = useState<QrRow | null>(null);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Link
+          to="/business"
+          className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-xs text-secondary-foreground"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" /> Volver
+        </Link>
+        <h1 className="text-xl font-semibold">QR emitidos</h1>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Lista de QR generados por usuarios para tu negocio. Pulsa un elemento para ver e
+        imprimir el código.
+      </p>
+
+      {isLoading && <p className="text-sm text-muted-foreground">Cargando…</p>}
+
+      {!isLoading && qrs.length === 0 && (
+        <p className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+          Aún no hay QR emitidos.
+        </p>
+      )}
+
+      <ul className="space-y-2">
+        {qrs.map((q) => {
+          const p = q.payload ?? {};
+          const fullName = [p.user_name, p.user_surname].filter(Boolean).join(" ") || "Anónimo";
+          const expired = q.expires_at && new Date(q.expires_at).getTime() < Date.now();
+          const used = q.max_uses != null && q.uses >= q.max_uses;
+          return (
+            <li
+              key={q.id}
+              className="rounded-2xl border border-border bg-card p-3"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="flex items-center gap-1.5 text-sm font-medium">
+                    <UserIcon className="h-3.5 w-3.5 text-primary" />
+                    {fullName}
+                  </p>
+                  <div className="mt-1 space-y-0.5 text-[11px] text-muted-foreground">
+                    {p.user_email && (
+                      <p className="flex items-center gap-1">
+                        <Mail className="h-3 w-3" /> {p.user_email}
+                      </p>
+                    )}
+                    {p.user_phone && (
+                      <p className="flex items-center gap-1">
+                        <Phone className="h-3 w-3" /> {p.user_phone}
+                      </p>
+                    )}
+                    <p className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      Emitido: {fmtDateTime(p.issued_at ?? q.created_at)}
+                    </p>
+                    {q.expires_at && (
+                      <p className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        Caduca: {fmtDateTime(q.expires_at)}
+                      </p>
+                    )}
+                    <p className="font-mono text-foreground/80">{q.code}</p>
+                  </div>
+                  <div className="mt-1.5 flex flex-wrap gap-1">
+                    {used && (
+                      <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px]">
+                        Usado
+                      </span>
+                    )}
+                    {expired && (
+                      <span className="rounded-full bg-destructive/15 px-1.5 py-0.5 text-[10px] text-destructive">
+                        Caducado
+                      </span>
+                    )}
+                    {!q.active && (
+                      <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px]">
+                        Inactivo
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={() => setOpenQr(q)}
+                  className="inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-1.5 text-[11px] font-semibold text-primary-foreground"
+                >
+                  <Eye className="h-3 w-3" /> Ver
+                </button>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+
+      {openQr && <QrModal qr={openQr} onClose={() => setOpenQr(null)} />}
+    </div>
+  );
+}
+
+function QrModal({ qr, onClose }: { qr: QrRow; onClose: () => void }) {
+  const p = qr.payload ?? {};
+  const fullName = [p.user_name, p.user_surname].filter(Boolean).join(" ") || "Anónimo";
+  const qrUrl = useMemo(
+    () =>
+      `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(
+        `https://alicante-friend.app/v/${qr.code}`,
+      )}`,
+    [qr.code],
+  );
+
+  function handlePrint() {
+    const w = window.open("", "_blank", "width=480,height=640");
+    if (!w) return;
+    w.document.write(`<!doctype html><html><head><title>QR ${qr.code}</title>
+      <style>
+        body { font-family: system-ui, -apple-system, sans-serif; padding: 24px; text-align: center; color: #111; }
+        h1 { font-size: 18px; margin: 0 0 8px; }
+        p { margin: 4px 0; font-size: 13px; color: #555; }
+        .code { font-family: ui-monospace, monospace; font-size: 14px; margin-top: 12px; }
+        img { margin: 16px auto; display: block; }
+      </style></head><body>
+      <h1>${fullName}</h1>
+      ${p.user_email ? `<p>${p.user_email}</p>` : ""}
+      ${p.user_phone ? `<p>${p.user_phone}</p>` : ""}
+      <p>Emitido: ${fmtDateTime(p.issued_at ?? qr.created_at)}</p>
+      ${qr.expires_at ? `<p>Caduca: ${fmtDateTime(qr.expires_at)}</p>` : ""}
+      <img src="${qrUrl}" width="320" height="320" alt="QR ${qr.code}" />
+      <p class="code">${qr.code}</p>
+      <script>window.onload = () => { setTimeout(() => window.print(), 300); };</script>
+    </body></html>`);
+    w.document.close();
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-sm rounded-3xl bg-background p-5 shadow-soft"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between">
+          <div>
+            <h3 className="text-base font-semibold">{fullName}</h3>
+            {p.user_email && (
+              <p className="text-[11px] text-muted-foreground">{p.user_email}</p>
+            )}
+            {p.user_phone && (
+              <p className="text-[11px] text-muted-foreground">{p.user_phone}</p>
+            )}
+          </div>
+          <button
+            onClick={onClose}
+            className="rounded-full bg-secondary p-1.5 text-muted-foreground"
+            aria-label="Cerrar"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="mt-3 flex justify-center">
+          <img
+            src={qrUrl}
+            alt={`QR ${qr.code}`}
+            width={260}
+            height={260}
+            className="rounded-2xl border border-border bg-white p-2"
+          />
+        </div>
+
+        <div className="mt-3 space-y-1 text-[11px] text-muted-foreground">
+          <p>Código: <span className="font-mono text-foreground">{qr.code}</span></p>
+          <p>Emitido: {fmtDateTime(p.issued_at ?? qr.created_at)}</p>
+          {qr.expires_at && <p>Caduca: {fmtDateTime(qr.expires_at)}</p>}
+        </div>
+
+        <button
+          onClick={handlePrint}
+          className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-primary py-2.5 text-sm font-semibold text-primary-foreground active:scale-95"
+        >
+          <Printer className="h-4 w-4" /> Imprimir QR
+        </button>
+      </div>
+    </div>
+  );
+}
