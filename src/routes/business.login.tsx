@@ -1,8 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Mail, Lock } from "lucide-react";
+import { Home } from "lucide-react";
 
 export const Route = createFileRoute("/business/login")({
   head: () => ({
