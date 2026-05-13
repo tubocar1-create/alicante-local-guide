@@ -1,7 +1,14 @@
 // Catálogo de "banners" informativos. Ya no son anuncios comerciales:
 // son tarjetitas de clima y datos útiles sobre Alicante generados por IA.
 
-export type BannerKind = "weather" | "info" | "marine" | "parkings" | "traffic";
+export type BannerKind =
+  | "weather"
+  | "info"
+  | "marine"
+  | "parkings"
+  | "traffic"
+  | "air"
+  | "agenda";
 
 export type Advertiser = {
   id: string;
