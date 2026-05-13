@@ -92,7 +92,11 @@ function ThreadsLayout() {
       </p>
       <ul className="space-y-2">
         {threads.map((t) => {
-          const effectiveStatus = t.booking?.status ?? t.status;
+          const bookingStatus = t.booking?.status;
+          const effectiveStatus =
+            t.status === "awaiting_user" && (!bookingStatus || bookingStatus === "pending")
+              ? "rescheduled"
+              : (bookingStatus ?? t.status);
           const cls = cardCls(effectiveStatus);
           const customerName = t.booking?.customer_name;
           return (
@@ -124,8 +128,15 @@ function ThreadsLayout() {
         {dedupedLocal.map((t) => {
           const bookingId = t.booking_id ?? t.id;
           const remote = guestStatuses.get(bookingId);
+          const remoteThreadStatus = remote?.thread?.status;
+          const remoteBookingStatus = remote?.booking_status;
+          const baseStatus =
+            remoteBookingStatus ?? remoteThreadStatus ?? t.status ?? "pending";
           const effectiveStatus =
-            remote?.booking_status ?? remote?.thread?.status ?? t.status ?? "pending";
+            remoteThreadStatus === "awaiting_user" &&
+            (!remoteBookingStatus || remoteBookingStatus === "pending")
+              ? "rescheduled"
+              : baseStatus;
           const cls = cardCls(effectiveStatus);
           const customerName = remote?.customer_name;
           return (
@@ -185,7 +196,7 @@ function StatusBadge({ status }: { status?: string }) {
     awaiting_business: { label: "Pendiente por responder", cls: "bg-amber-100 text-amber-800" },
     awaiting_user: { label: "Esperando tu respuesta", cls: "bg-blue-100 text-blue-800" },
     confirmed: { label: "Confirmada", cls: "bg-emerald-500 text-white" },
-    rescheduled: { label: "Nuevo horario propuesto", cls: "bg-blue-100 text-blue-800" },
+    rescheduled: { label: "Negocio solicita cambio de horario", cls: "bg-blue-100 text-blue-800" },
     rejected: { label: "Rechazada", cls: "bg-red-700 text-white" },
     declined: { label: "Rechazada", cls: "bg-red-700 text-white" },
     cancelled: { label: "Cancelada", cls: "bg-red-700 text-white" },
