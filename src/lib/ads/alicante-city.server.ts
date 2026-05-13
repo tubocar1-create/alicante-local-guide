@@ -200,13 +200,16 @@ export type FlightState = {
   velocityKmh: number | null;
   onGround: boolean;
   headingDeg: number | null;
+  distanceKm: number | null;
+  etaMin: number | null;
+  approaching: boolean;
 };
 
 export type AirTraffic = {
   total: number;
   airborne: number;
   onGround: number;
-  sample: FlightState[]; // hasta 6 más cercanos al aeropuerto
+  sample: FlightState[];
 };
 
 const ALC_AIRPORT = { lat: 38.2822, lon: -0.5582 };
@@ -225,35 +228,50 @@ export async function fetchAlicanteAirTraffic(): Promise<AirTraffic | null> {
     const raw = j.states ?? [];
     if (!raw.length) return { total: 0, airborne: 0, onGround: 0, sample: [] };
     type WithDist = FlightState & { _d: number };
-    const states: WithDist[] = raw.map((s) => ({
-      callsign: String(s[1] ?? "").trim() || "—",
-      country: String(s[2] ?? "").trim(),
-      altitudeM: s[7] != null ? Math.round(Number(s[7])) : null,
-      velocityKmh: s[9] != null ? Math.round(Number(s[9]) * 3.6) : null,
-      onGround: Boolean(s[8]),
-      headingDeg: s[10] != null ? Math.round(Number(s[10])) : null,
-      _d: (() => {
-        const lat = Number(s[6]);
-        const lon = Number(s[5]);
-        if (!Number.isFinite(lat) || !Number.isFinite(lon)) return Infinity;
-        const dx = (lon - ALC_AIRPORT.lon) * Math.cos((lat * Math.PI) / 180);
-        const dy = lat - ALC_AIRPORT.lat;
-        return dx * dx + dy * dy;
-      })(),
-    }));
-    const airborne = states.filter((s) => !s.onGround).length;
-    const onGround = states.length - airborne;
-    const sample: FlightState[] = [...states]
-      .sort((a, b) => a._d - b._d)
-      .slice(0, 6)
-      .map(({ callsign, country, altitudeM, velocityKmh, onGround, headingDeg }) => ({
-        callsign,
-        country,
-        altitudeM,
+    const states: WithDist[] = raw.map((s) => {
+      const lat = Number(s[6]);
+      const lon = Number(s[5]);
+      const validPos = Number.isFinite(lat) && Number.isFinite(lon);
+      const dx = validPos ? (lon - ALC_AIRPORT.lon) * Math.cos((lat * Math.PI) / 180) : 0;
+      const dy = validPos ? lat - ALC_AIRPORT.lat : 0;
+      const distDeg = validPos ? Math.sqrt(dx * dx + dy * dy) : Infinity;
+      const distanceKm = validPos ? Math.round(distDeg * 111) : null;
+      const onGround = Boolean(s[8]);
+      const velocityKmh = s[9] != null ? Math.round(Number(s[9]) * 3.6) : null;
+      const headingDeg = s[10] != null ? Math.round(Number(s[10])) : null;
+      let approaching = false;
+      if (validPos && headingDeg != null && !onGround) {
+        const bearingToALC = (Math.atan2(-dx, -dy) * 180) / Math.PI;
+        const norm = (bearingToALC + 360) % 360;
+        const diff = Math.abs(((headingDeg - norm + 540) % 360) - 180);
+        approaching = diff < 45;
+      }
+      const etaMin =
+        approaching && distanceKm != null && velocityKmh && velocityKmh > 100
+          ? Math.max(1, Math.round((distanceKm / velocityKmh) * 60))
+          : null;
+      return {
+        callsign: String(s[1] ?? "").trim() || "—",
+        country: String(s[2] ?? "").trim(),
+        altitudeM: s[7] != null ? Math.round(Number(s[7])) : null,
         velocityKmh,
         onGround,
         headingDeg,
-      }));
+        distanceKm,
+        etaMin,
+        approaching,
+        _d: validPos ? dx * dx + dy * dy : Infinity,
+      };
+    });
+    const airborne = states.filter((s) => !s.onGround).length;
+    const onGround = states.length - airborne;
+    const sample: FlightState[] = [...states]
+      .sort((a, b) => {
+        if (a.approaching !== b.approaching) return a.approaching ? -1 : 1;
+        return a._d - b._d;
+      })
+      .slice(0, 6)
+      .map(({ _d, ...rest }) => rest);
     return { total: states.length, airborne, onGround, sample };
   } catch {
     return null;
