@@ -121,6 +121,11 @@ function ThreadsLayout() {
                     ? `Para: ${new Date(String(t.booking?.scheduled_at ?? (t.context_snapshot as Record<string, unknown>).scheduled_at)).toLocaleString()}`
                     : `Última actividad: ${new Date(t.last_message_at).toLocaleString()}`}
                 </p>
+                {effectiveStatus === "rescheduled" && (
+                  <p className="mt-1 text-[11px] font-medium text-blue-700 dark:text-blue-300">
+                    Toca aquí para ver la nueva hora y responder →
+                  </p>
+                )}
               </Link>
             </li>
           );
@@ -163,6 +168,11 @@ function ThreadsLayout() {
                     ? `Para: ${new Date(remote?.scheduled_at ?? t.scheduled_at!).toLocaleString()}`
                     : new Date(t.created_at ?? Date.now()).toLocaleString()}
                 </p>
+                {effectiveStatus === "rescheduled" && (
+                  <p className="mt-1 text-[11px] font-medium text-blue-700 dark:text-blue-300">
+                    Toca aquí para ver la nueva hora y responder →
+                  </p>
+                )}
               </Link>
             </li>
           );
