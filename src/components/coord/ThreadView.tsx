@@ -129,6 +129,28 @@ export function ThreadView({
                 <p className="mt-0.5 text-[10px] opacity-60">
                   {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </p>
+                {role === "user" &&
+                  !closed &&
+                  msg.template_key === "business.propose_slot" &&
+                  thread.status === "awaiting_user" &&
+                  booking?.status === "pending" && (
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        disabled={m.isPending}
+                        onClick={() => m.mutate({ template_key: "user.accept", payload: {} })}
+                        className="flex-1 rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
+                      >
+                        Aceptar nueva hora
+                      </button>
+                      <button
+                        disabled={m.isPending}
+                        onClick={() => m.mutate({ template_key: "user.reject_proposal", payload: {} })}
+                        className="flex-1 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground disabled:opacity-50"
+                      >
+                        Rechazar
+                      </button>
+                    </div>
+                  )}
               </div>
             </li>
           );
