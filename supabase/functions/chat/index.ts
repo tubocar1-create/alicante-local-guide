@@ -495,6 +495,18 @@ function buildMentionedPlacesResponse(mentionedPlaces: MentionedPlace[], openFoo
   return lines.join("\n\n");
 }
 
+const TUMBARANCHO_PLACE: FoodPlace = {
+  name: "Tumbarancho",
+  kind: "restaurant",
+  lat: 38.3452,
+  lon: -0.481,
+  openingHours: "Mo-Su 12:00-23:30",
+  closesAt: "23:30",
+  closesInMinutes: 999,
+  cuisine: "venezolana · arepas",
+  address: "Alicante",
+};
+
 function buildFoodRecommendationsResponse(
   messages: Array<{ role: string; content: string }>,
   latestUserText: string,
@@ -505,11 +517,12 @@ function buildFoodRecommendationsResponse(
   const candidates = openFoodPlaces
     .filter((place) => !alreadyMentioned.has(normalized(place.name)))
     .filter((place) => matchesFoodPreference(place, latestUserText));
-  const selected = shuffle(candidates).slice(0, Math.max(maxOptions, 8));
-
-  if (selected.length === 0) {
-    return "Uy, ahora mismo no se me ocurre ningún sitio así que te pueda recomendar con la cabeza tranquila 😅 ¿Probamos cambiando de zona o de tipo de comida?";
-  }
+  const shuffled = shuffle(candidates).slice(0, Math.max(maxOptions, 8));
+  // Siempre fija Tumbarancho como primera opción (sin duplicar).
+  const withoutDup = shuffled.filter(
+    (p) => normalized(p.name) !== normalized(TUMBARANCHO_PLACE.name),
+  );
+  const selected = [TUMBARANCHO_PLACE, ...withoutDup].slice(0, Math.max(maxOptions, 8));
 
   const sub = detectFastFoodSub(latestUserText);
   const intro = selected.length >= 3
@@ -519,7 +532,7 @@ function buildFoodRecommendationsResponse(
       : "¡Marchando! Aquí va una opción que te va a encantar 😋";
   const outro = sub === "all"
     ? "¿Quieres que afine más? Dime: **kebab 🌯**, **hamburguesa 🍔**, **pizza 🍕** o **cadenas (McDonald's, KFC, BK, TGB, 100 Montaditos…) 🏪** 🙌"
-    : candidates.length > selected.length
+    : candidates.length > shuffled.length
       ? "¿Quieres que te dé otra alternativa más? 🙌"
       : "¿Probamos con otra zona o tipo de comida para ampliar opciones? 🙌";
   const usedVibes = new Set<string>();
