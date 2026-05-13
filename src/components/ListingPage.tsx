@@ -173,7 +173,7 @@ export function ListingPage<K extends string>(props: Props<K>) {
         {error && (
           <div className="text-sm text-destructive py-4">No se pudieron cargar: {error}</div>
         )}
-        {!loading && !error && visible.length === 0 && (
+        {!loading && !error && visible.length === 0 && (props.getFeatured ? props.getFeatured(Array.from(active)).length === 0 : (props.featured ?? []).length === 0) && (
           <div className="text-sm text-muted-foreground py-10 text-center">
             Sin resultados. Prueba a activar más filtros.
           </div>
