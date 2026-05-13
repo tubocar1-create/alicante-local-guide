@@ -66,18 +66,15 @@ export function AdBanner() {
 
   useEffect(() => {
     if (!allLoaded) return;
-    let hideT: ReturnType<typeof setTimeout> | null = null;
     const show = () => {
       setCycle((c) => c + 1);
       setOpen(true);
-      hideT = setTimeout(() => setOpen(false), VISIBLE_MS);
     };
     const first = setTimeout(show, FIRST_DELAY_MS);
-    const interval = setInterval(show, FREQUENCY_MS);
+    const interval = setInterval(show, VISIBLE_MS);
     return () => {
       clearTimeout(first);
       clearInterval(interval);
-      if (hideT) clearTimeout(hideT);
     };
   }, [allLoaded]);
 
