@@ -511,14 +511,14 @@ function DestinationDashboard() {
           </div>
           <p className="mt-2 text-center text-[10px] text-slate-500">
             {isArrival
-              ? "* Salida y duración estimadas. Datos de llegada en tiempo real (AENA)."
-              : "* Llegada y duración estimadas. Datos de salida en tiempo real (AENA)."}
+              ? "* Salida y duración estimadas. Datos de llegada en tiempo real."
+              : "* Llegada y duración estimadas. Datos de salida en tiempo real."}
           </p>
         </Card>
       </div>
 
       <p className="mt-3 text-center text-[10px] text-slate-600">
-        Fuente: AENA · Actualizado:{" "}
+        Actualizado:{" "}
         {new Date().toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })}
       </p>
     </Shell>
