@@ -465,7 +465,7 @@ function DestinationDashboard() {
               <div className="text-[9px] text-slate-500">de 7 días</div>
             </div>
           </div>
-          {daysWithoutList.length > 0 && daysWithoutList.length < 14 && (
+          {daysWithoutList.length > 0 && daysWithoutList.length < 7 && (
             <p className="mt-2 text-center text-[10px] text-slate-500">
               ⓘ Los días sin vuelos directos son{" "}
               {daysWithoutList
