@@ -43,7 +43,7 @@ type Slim = {
 };
 
 let cache: { key: string; at: number; data: Slim[] } | null = null;
-const TTL_MS = 60_000; // 1 min
+const TTL_MS = 30 * 60_000; // 30 min
 
 export const Route = createFileRoute("/api/public/aena-flights")({
   server: {
@@ -124,7 +124,7 @@ export const Route = createFileRoute("/api/public/aena-flights")({
             status: 200,
             headers: {
               "Content-Type": "application/json",
-              "Cache-Control": "public, max-age=60",
+              "Cache-Control": "public, max-age=1800",
             },
           });
         } catch (e) {
