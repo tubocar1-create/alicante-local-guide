@@ -433,7 +433,6 @@ function ConnectivityMap({
           doubleClick={{ mode: "zoomIn", step: 0.6 }}
           panning={{ velocityDisabled: true }}
           limitToBounds={true}
-          centerOnInit={true}
         >
           {({ zoomIn, resetTransform }) => {
             return (
