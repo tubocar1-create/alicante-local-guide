@@ -11,6 +11,7 @@ import {
   fetchAenaDisruptions,
   fetchAenaTomorrowDepartures,
   fetchAlibusAlicante,
+  fetchAlicantePressHeadlines,
   type CulturalEvent,
 } from "./alicante-city.server";
 import {
@@ -449,6 +450,18 @@ export const getAdVariants = createServerFn({ method: "POST" })
       }
     }
 
+    let newsCtx = "";
+    if (advertiser.kind === "news") {
+      const headlines = await fetchAlicantePressHeadlines();
+      if (!headlines || headlines.length === 0) {
+        return { ...baseResp, variants: [] };
+      }
+      const lines = headlines
+        .map((h, i) => `${i + 1}. "${h.title}"${h.source ? ` (${h.source})` : ""}`)
+        .join("\n");
+      newsCtx = `\n\nTITULARES REALES de la prensa alicantina (Google News, hoy):\n${lines}\n\nGenera UNA variante por titular. Usa SOLO la información del titular; no inventes detalles ni fechas. DESCARTA cualquier titular que sea política partidista, sucesos, accidentes, fallecimientos o tragedias (si quedara alguno colado, omítelo).`;
+    }
+
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       return {
@@ -495,6 +508,9 @@ export const getAdVariants = createServerFn({ method: "POST" })
         break;
       case "regional_agenda":
         userPrompt = `Genera ${count} variantes de tarjeta sobre eventos de "${advertiser.name}". UNA variante por evento del listado. headline (máx 5 palabras, inspirada en el título real), body (1 frase con la fecha y el qué, máx 90 caracteres), cta "Ver agenda". NO inventes nada que no esté en el listado.${regionalCtx}`;
+        break;
+      case "news":
+        userPrompt = `Genera ${count} variantes de tarjeta sobre TITULARES de prensa alicantina de hoy. UNA variante por titular del listado. headline (máx 5 palabras, reescritura corta y neutra del titular real, sin clickbait), body (1 frase de contexto basada SOLO en el titular, máx 95 caracteres, puede citar la fuente entre paréntesis al final), cta "Ver noticias". DESCARTA política partidista, sucesos, accidentes, muertes y tragedias. Tono informativo, sin opinión, sin signos de exclamación.${newsCtx}`;
         break;
       default:
         userPrompt = wiki

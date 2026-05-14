@@ -14,7 +14,8 @@ export type BannerKind =
   | "trains"
   | "buses"
   | "regional_agenda"
-  | "mercadillos";
+  | "mercadillos"
+  | "news";
 
 export type Advertiser = {
   id: string;
@@ -398,6 +399,23 @@ const ADVERTISERS_RAW: Advertiser[] = [
     },
     brief: "Próximos conciertos en el área metropolitana de Alicante según la API oficial de Songkick.",
   },
+  {
+    id: "prensa-alicante",
+    name: "Prensa local",
+    tagline: "Titulares de hoy en Alicante",
+    category: "Actualidad",
+    kind: "news",
+    ctaLabel: "Ver noticias",
+    ctaUrl: "https://news.google.com/search?q=Alicante&hl=es-ES&gl=ES&ceid=ES:es",
+    theme: {
+      bg: "bg-gradient-to-r from-neutral-800 via-stone-700 to-amber-800",
+      fg: "text-white",
+      accent: "bg-white text-neutral-900",
+      emoji: "📰",
+    },
+    brief:
+      "Titulares destacados de la prensa alicantina de hoy (Google News). Filtramos política y tragedias; nos centramos en contexto urbano, eventos, cultura, gastronomía, deporte y ciencia/tecnología.",
+  },
 ];
 
 // Orden de aparición en el carrusel: intercalamos musicales/cultura con
@@ -412,6 +430,7 @@ const DISPLAY_ORDER: string[] = [
   "trafico-alicante",
   "adda-alicante",
   "info-alicante",
+  "prensa-alicante",
   "rabasa-alicante",
   "aire-alicante",
   "stereo-alicante",
