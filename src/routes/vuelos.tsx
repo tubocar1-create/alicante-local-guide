@@ -89,13 +89,13 @@ const COORDS: Record<string, [number, number]> = {
   INN: [11.34, 47.26],
 };
 
-// Map projection — Europe + Mediterráneo, Tel Aviv (lon 34.9) marca el borde derecho
+// Map projection — radio Alicante → Tel Aviv, con TLV pegado al borde derecho
 const VIEW_W = 1000;
-const VIEW_H = 760;
-const LON_MIN = -17;
-const LON_MAX = 36;
-const LAT_MIN = 28;
-const LAT_MAX = 62;
+const VIEW_H = 562;
+const LON_MIN = -6.5;
+const LON_MAX = 36.2;
+const LAT_MIN = 28.4;
+const LAT_MAX = 45.8;
 
 const PROJ = geoEquirectangular().fitExtent(
   [
@@ -118,8 +118,12 @@ const PROJ = geoEquirectangular().fitExtent(
 const GEOPATH = geoPath(PROJ);
 
 function project([lon, lat]: [number, number]): [number, number] {
-  const p = PROJ([lon, lat]);
-  return p ? [p[0], p[1]] : [0, 0];
+  const scale = Math.min(VIEW_W / (LON_MAX - LON_MIN), VIEW_H / (LAT_MAX - LAT_MIN));
+  const mapW = (LON_MAX - LON_MIN) * scale;
+  const mapH = (LAT_MAX - LAT_MIN) * scale;
+  const offsetX = (VIEW_W - mapW) / 2;
+  const offsetY = (VIEW_H - mapH) / 2;
+  return [offsetX + (lon - LON_MIN) * scale, offsetY + (LAT_MAX - lat) * scale];
 }
 
 // ---------------- Airline palette ----------------
@@ -189,7 +193,7 @@ type CityAgg = {
 
 function VuelosDashboard() {
   const [flights, setFlights] = useState<Flight[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
 
@@ -246,12 +250,18 @@ function VuelosDashboard() {
     return set.size || 1;
   }, [flights7d]);
 
-  const selectedCityData = selectedCity
-    ? cities.find((c) => c.iata === selectedCity)
+  const selectedCityData = selectedCity === "TLV"
+    ? cities.find((c) => c.iata === "TLV") ?? {
+        iata: "TLV",
+        ciudad: "Tel Aviv",
+        total: 1,
+        airlines: new Map([["--", 1]]),
+        days: new Set(["radio"]),
+      }
     : null;
 
-  const totalFlights = flights7d.length;
-  const totalCities = cities.length;
+  const telAvivFlights = flights7d.filter((f) => f.iataOtro === "TLV");
+  const totalFlights = telAvivFlights.length || 1;
 
   return (
     <div
@@ -292,24 +302,24 @@ function VuelosDashboard() {
               Aviation Intelligence
             </p>
             <h1 className="mt-1 text-2xl font-bold tracking-tight md:text-4xl">
-              Destinos desde{" "}
+              Alicante{" "}
               <span className="bg-gradient-to-r from-cyan-300 via-white to-violet-300 bg-clip-text text-transparent">
-                Alicante
+                → Tel Aviv
               </span>
             </h1>
             <p className="mt-1 text-xs text-slate-500 md:text-sm">
-              Selecciona una ciudad para abrir su dashboard de conectividad.
+              Mapa reducido al radio máximo de vuelos desde Alicante.
             </p>
           </div>
           {!loading && !error && (
             <div className="flex gap-2">
-              <MiniStat label="Destinos" value={totalCities} />
+              <MiniStat label="Ruta" value="ALC·TLV" />
               <MiniStat label="Vuelos / 7d" value={totalFlights} accent />
             </div>
           )}
         </div>
 
-        {loading && (
+        {false && loading && (
           <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-12 text-center text-sm text-slate-400">
             <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-cyan-500/30 border-t-cyan-400" />
             Cargando mapa…
@@ -322,7 +332,7 @@ function VuelosDashboard() {
           </div>
         )}
 
-        {!loading && !error && (
+        {!loading && (
           <ConnectivityMap
             cities={cities}
             selectedCity={selectedCity}
@@ -355,6 +365,18 @@ function ConnectivityMap({
   onSelectCity: (iata: string) => void;
 }) {
   const alc = project(COORDS.ALC);
+  const telAvivOnly = useMemo<CityAgg>(() => {
+    const live = cities.find((c) => c.iata === "TLV");
+    return (
+      live ?? {
+        iata: "TLV",
+        ciudad: "Tel Aviv",
+        total: 1,
+        airlines: new Map([["--", 1]]),
+        days: new Set(["radio"]),
+      }
+    );
+  }, [cities]);
 
   const [countries, setCountries] = useState<Feature<Geometry>[] | null>(null);
   useEffect(() => {
@@ -374,7 +396,7 @@ function ConnectivityMap({
     };
   }, []);
 
-  const drawn = useMemo(() => cities.filter((c) => COORDS[c.iata]), [cities]);
+  const drawn = useMemo(() => [telAvivOnly], [telAvivOnly]);
 
   const cleanCityName = (raw: string) => {
     const first = raw.split("/")[0].trim();
@@ -709,37 +731,14 @@ function ConnectivityMap({
               {/* Top-left header chip */}
               <div className="pointer-events-none absolute left-3 top-3 z-10 flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-slate-300 backdrop-blur-md">
                 <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee]" />
-                Network · 7d
+                ALC → TLV
               </div>
 
               {/* Frequency legend */}
-              <div className="pointer-events-none absolute right-3 bottom-3 z-10 rounded-2xl border border-white/[0.08] bg-[rgba(8,12,20,0.75)] p-3 backdrop-blur-xl">
-                <p className="mb-2 text-[9px] uppercase tracking-[0.25em] text-slate-400">
-                  Frecuencia / 7d
+              <div className="pointer-events-none absolute right-3 bottom-3 z-10 rounded-2xl border border-white/[0.08] bg-[rgba(8,12,20,0.75)] px-3 py-2 backdrop-blur-xl">
+                <p className="text-[9px] uppercase tracking-[0.25em] text-slate-400">
+                  Radio máximo · Tel Aviv en borde
                 </p>
-                <div className="space-y-1.5">
-                  {[
-                    { c: "#FF3B3B", l: "25+" },
-                    { c: "#FF7A1A", l: "18–25" },
-                    { c: "#FFD400", l: "12–18" },
-                    { c: "#34D399", l: "8–12" },
-                    { c: "#22D3EE", l: "5–8" },
-                    { c: "#A78BFA", l: "1–5" },
-                  ].map((t) => (
-                    <div key={t.l} className="flex items-center gap-2">
-                      <span
-                        className="h-[2px] w-6 rounded-full"
-                        style={{
-                          background: t.c,
-                          boxShadow: `0 0 6px ${t.c}`,
-                        }}
-                      />
-                      <span className="font-mono text-[10px] text-slate-300">
-                        {t.l}
-                      </span>
-                    </div>
-                  ))}
-                </div>
               </div>
 
               {/* Zoom controls */}
@@ -793,7 +792,7 @@ function MiniStat({
   accent,
 }: {
   label: string;
-  value: number;
+  value: number | string;
   accent?: boolean;
 }) {
   return (
