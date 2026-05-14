@@ -540,6 +540,42 @@ function ConnectivityMap({
             </text>
           </g>
         </svg>
+              </TransformComponent>
+
+              {/* Zoom controls */}
+              <div className="absolute right-2 top-2 z-10 flex flex-col gap-1 rounded-xl border border-white/10 bg-[#06122a]/90 p-1 backdrop-blur-sm">
+                <button
+                  type="button"
+                  onClick={() => zoomIn()}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-200 hover:bg-white/10"
+                  aria-label="Acercar"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => zoomOut()}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-200 hover:bg-white/10"
+                  aria-label="Alejar"
+                >
+                  <Minus className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => resetTransform()}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-200 hover:bg-white/10"
+                  aria-label="Restablecer"
+                >
+                  <Maximize2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              <div className="pointer-events-none absolute bottom-2 left-2 z-10 rounded-md bg-black/40 px-2 py-1 text-[10px] text-slate-300 backdrop-blur-sm">
+                Pellizca o arrastra para explorar
+              </div>
+            </>
+          )}
+        </TransformWrapper>
       </div>
     </div>
   );
