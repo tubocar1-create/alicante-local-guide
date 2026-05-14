@@ -431,14 +431,11 @@ function ConnectivityMap({
           maxScale={6}
           wheel={{ step: 0.15 }}
           doubleClick={{ mode: "zoomIn", step: 0.6 }}
-          panning={{ velocityDisabled: true, disabled: false }}
+          panning={{ velocityDisabled: true }}
           limitToBounds={true}
           centerOnInit={true}
-          alignmentAnimation={{ disabled: true }}
-          velocityAnimation={{ disabled: true }}
         >
-          {({ zoomIn, zoomOut, resetTransform, instance }) => {
-            const atMin = (instance?.transformState?.scale ?? 1) <= 1.001;
+          {({ zoomIn, resetTransform }) => {
             return (
             <>
               <TransformComponent
