@@ -420,7 +420,7 @@ function VuelosDashboard() {
                 selectedCity={selectedCity}
                 onSelectCity={(c) => {
                   if (typeof window !== "undefined") {
-                    window.location.href = `/vuelos/${c}`;
+                    window.open(`/vuelos/${c}`, "_blank", "noopener,noreferrer");
                   }
                 }}
               />
