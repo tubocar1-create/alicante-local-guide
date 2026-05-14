@@ -391,16 +391,18 @@ function VuelosDashboard() {
 
         <div className="mb-5">
           <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-400/70">
-            Aviation Intelligence
+            {flightType === "L" ? "Dashboard de llegadas" : "Dashboard de salidas"}
           </p>
           <h1 className="mt-1 text-2xl font-bold tracking-tight md:text-4xl">
-            {flightType === "L" ? "Mapa de llegadas " : "Mapa de destinos "}
+            {flightType === "L" ? "Vuelos de llegada " : "Vuelos de salida "}
             <span className="bg-gradient-to-r from-cyan-300 via-white to-violet-300 bg-clip-text text-transparent">
               {flightType === "L" ? "hacia Alicante" : "desde Alicante"}
             </span>
           </h1>
           <p className="mt-1 text-xs text-cyan-300/80 md:text-sm">
-            Métricas semanales (7 días) · Aeropuerto de Alicante-Elche (ALC).
+            {flightType === "L"
+              ? "Métricas semanales (7 días) de vuelos que aterrizan en Alicante-Elche (ALC), agrupados por ciudad de origen."
+              : "Métricas semanales (7 días) de vuelos que despegan de Alicante-Elche (ALC), agrupados por ciudad de destino."}
           </p>
         </div>
 
