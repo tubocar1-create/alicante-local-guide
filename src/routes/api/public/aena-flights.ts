@@ -1,12 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-// Proxy ligero a AENA. AENA expone vuelos programados en
-// /sites/Satellite?pagename=AENA_ConsultarVuelos
-// flightType=S (salidas) | L (llegadas). Sin `dosDias` devuelve ~3 días
-// (que es la ventana real publicada por AENA, aunque la UI hable de
-// "próximos días").
+// Proxy ligero al feed oficial de vuelos programados del aeropuerto.
+// flightType=S (salidas) | L (llegadas).
+//
+// Recalculamos cada 30 minutos: filtramos los vuelos que ya han salido /
+// aterrizado y conservamos los próximos vuelos hasta 7 días vista.
 
-type AenaFlight = {
+type RawFlight = {
   numVuelo: string;
   fecha: string;            // dd/mm/yyyy
   horaProgramada: string;   // hh:mm:ss
@@ -44,16 +44,17 @@ type Slim = {
 
 let cache: { key: string; expiresAt: number; data: Slim[] } | null = null;
 
-// Refresco semanal: cacheamos hasta el próximo domingo 03:00 UTC.
-// Una vez por semana (domingo) hacemos un único scraping y reutilizamos
-// esos datos durante los 7 días siguientes.
-function nextSundayRefresh(now = new Date()): number {
-  const d = new Date(now);
-  d.setUTCHours(3, 0, 0, 0);
-  const day = d.getUTCDay(); // 0 = domingo
-  const daysUntilSunday = day === 0 && now.getTime() < d.getTime() ? 0 : 7 - day;
-  d.setUTCDate(d.getUTCDate() + daysUntilSunday);
-  return d.getTime();
+// Refresco cada 30 minutos.
+const CACHE_MS = 30 * 60 * 1000;
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+// Convierte fecha dd/mm/yyyy + hh:mm[:ss] a timestamp ms (hora local Madrid ~ UTC+1/2).
+// Para filtrar pasado/futuro basta comparar con Date.now() asumiendo misma zona.
+function toTs(fecha: string, hora: string): number {
+  const [d, m, y] = fecha.split("/").map((n) => parseInt(n, 10));
+  const [hh, mm] = hora.split(":").map((n) => parseInt(n, 10));
+  if (!d || !m || !y || isNaN(hh) || isNaN(mm)) return 0;
+  return new Date(y, m - 1, d, hh, mm, 0, 0).getTime();
 }
 
 export const Route = createFileRoute("/api/public/aena-flights")({
@@ -67,14 +68,22 @@ export const Route = createFileRoute("/api/public/aena-flights")({
           .slice(0, 4);
         const type = url.searchParams.get("type") === "L" ? "L" : "S";
         const key = `${airport}:${type}`;
+        const now = Date.now();
 
-        if (cache && cache.key === key && Date.now() < cache.expiresAt) {
-          return Response.json({ flights: cache.data, cached: true });
+        const filterWindow = (rows: Slim[]) =>
+          rows.filter((f) => {
+            const ts = toTs(f.fecha, f.horaProgramada);
+            if (!ts) return false;
+            return ts >= now - 5 * 60 * 1000 && ts <= now + WEEK_MS;
+          });
+
+        if (cache && cache.key === key && now < cache.expiresAt) {
+          return Response.json({ flights: filterWindow(cache.data), cached: true });
         }
 
-        const aenaUrl = `https://www.aena.es/sites/Satellite?pagename=AENA_ConsultarVuelos&airport=${airport}&flightType=${type}`;
+        const sourceUrl = `https://www.aena.es/sites/Satellite?pagename=AENA_ConsultarVuelos&airport=${airport}&flightType=${type}&dosDias=si`;
         try {
-          const r = await fetch(aenaUrl, {
+          const r = await fetch(sourceUrl, {
             headers: {
               "User-Agent":
                 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
@@ -84,12 +93,12 @@ export const Route = createFileRoute("/api/public/aena-flights")({
           });
           if (!r.ok) {
             return Response.json(
-              { flights: [], error: `AENA HTTP ${r.status}` },
+              { flights: [], error: `Upstream HTTP ${r.status}` },
               { status: 200 },
             );
           }
           const text = await r.text();
-          const parsed = JSON.parse(text) as AenaFlight[];
+          const parsed = JSON.parse(text) as RawFlight[];
           const slim: Slim[] = parsed.map((f) => ({
             numVuelo: `${f.iataCompania || ""}${f.numVuelo}`.trim(),
             fecha: f.fecha,
@@ -130,18 +139,21 @@ export const Route = createFileRoute("/api/public/aena-flights")({
                 ? f.tipoAeronave
                 : undefined,
           }));
-          cache = { key, expiresAt: nextSundayRefresh(), data: slim };
-          return new Response(JSON.stringify({ flights: slim }), {
-            status: 200,
-            headers: {
-              "Content-Type": "application/json",
-              "Cache-Control": "public, max-age=604800",
+          cache = { key, expiresAt: now + CACHE_MS, data: slim };
+          return new Response(
+            JSON.stringify({ flights: filterWindow(slim) }),
+            {
+              status: 200,
+              headers: {
+                "Content-Type": "application/json",
+                "Cache-Control": "public, max-age=1800",
+              },
             },
-          });
+          );
         } catch (e) {
-          console.error("[aena-flights] failed", e);
+          console.error("[flights] failed", e);
           return Response.json(
-            { flights: [], error: "AENA fetch failed" },
+            { flights: [], error: "Upstream fetch failed" },
             { status: 200 },
           );
         }
