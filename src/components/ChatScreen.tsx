@@ -109,8 +109,9 @@ const SUGGESTIONS: Suggestion[] = [
       {
         label: "✈️ Avión",
         submenu: [
-          { label: "🛰️ Panel de conectividad (próx. 15 días)", href: "/vuelos" },
-          { label: "🔎 Buscar vuelo concreto", action: "flight-picker" },
+          { label: "🛫 Vuelos de salida", href: "/vuelos?type=S" },
+          { label: "🛬 Vuelos de llegada", href: "/vuelos?type=L" },
+          { label: "🔎 Seleccione su vuelo", action: "flight-picker" },
         ],
       },
     ],

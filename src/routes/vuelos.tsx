@@ -250,9 +250,12 @@ function VuelosDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
 
+  const flightType = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("type") === "L" ? "L" : "S";
+
   useEffect(() => {
     let cancel = false;
-    fetch("/api/public/aena-flights?airport=ALC&type=S")
+    setLoading(true);
+    fetch(`/api/public/aena-flights?airport=ALC&type=${flightType}`)
       .then((r) => r.json())
       .then((d) => {
         if (cancel) return;
@@ -264,7 +267,7 @@ function VuelosDashboard() {
     return () => {
       cancel = true;
     };
-  }, []);
+  }, [flightType]);
 
   const flights7d = useMemo(() => {
     if (!flights.length) return [];
@@ -425,6 +428,7 @@ function VuelosDashboard() {
               region={principalRegion}
               weekStart={weekRange.start}
               weekEnd={weekRange.end}
+              flightType={flightType}
             />
             <div>
               <ConnectivityMap
@@ -1024,6 +1028,7 @@ function InfoPanel({
   region,
   weekStart,
   weekEnd,
+  flightType,
 }: {
   cities: CityAgg[];
   airlines: [string, number][];
@@ -1033,6 +1038,7 @@ function InfoPanel({
   region: string;
   weekStart: string;
   weekEnd: string;
+  flightType: "S" | "L";
 }) {
   const items = [
     { icon: "✈", value: `${destinos}`, label: "Destinos / 7d" },
@@ -1314,7 +1320,7 @@ function CityDetail({
         </ul>
 
         <p className="mb-2 text-[10px] uppercase tracking-[0.2em] text-cyan-400/70">
-          Próximas salidas
+          Próximos vuelos
         </p>
         <ul className="space-y-1">
           {flights.slice(0, 12).map((f, i) => (
