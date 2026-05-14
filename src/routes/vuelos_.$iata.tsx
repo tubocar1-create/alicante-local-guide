@@ -428,7 +428,7 @@ function DestinationDashboard() {
                     {airlineName(code)}
                   </div>
                   <div className="font-mono text-sm text-slate-100">
-                    {(n / 14).toFixed(2).replace(".", ",")}
+                    {(n / 7).toFixed(2).replace(".", ",")}
                   </div>
                   <div className="text-[9px] text-slate-500">vuelos/día</div>
                 </div>
