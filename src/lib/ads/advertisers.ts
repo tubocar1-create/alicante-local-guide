@@ -33,7 +33,7 @@ export type Advertiser = {
   brief: string;
 };
 
-export const ADVERTISERS: Advertiser[] = [
+const ADVERTISERS_RAW: Advertiser[] = [
   {
     id: "clima-alicante",
     name: "Clima Alicante",
@@ -399,6 +399,49 @@ export const ADVERTISERS: Advertiser[] = [
     brief: "Próximos conciertos en el área metropolitana de Alicante según la API oficial de Songkick.",
   },
 ];
+
+// Orden de aparición en el carrusel: intercalamos musicales/cultura con
+// datos en vivo (clima, tráfico, transporte) para que no salgan en bloque.
+const DISPLAY_ORDER: string[] = [
+  "clima-alicante",
+  "teatro-principal",
+  "mar-alicante",
+  "muelle-live",
+  "parkings-alicante",
+  "plaza-toros",
+  "trafico-alicante",
+  "adda-alicante",
+  "info-alicante",
+  "rabasa-alicante",
+  "aire-alicante",
+  "stereo-alicante",
+  "vuelos-alicante",
+  "spring-alicante",
+  "trenes-alicante",
+  "sala-one",
+  "agenda-alicante",
+  "rocanrola-alicante",
+  "buses-alicante",
+  "songkick-alicante",
+  "vuelos-manana-alicante",
+  "mercadillos-alicante",
+];
+
+export const ADVERTISERS: Advertiser[] = (() => {
+  const byId = new Map(ADVERTISERS_RAW.map((a) => [a.id, a]));
+  const ordered: Advertiser[] = [];
+  for (const id of DISPLAY_ORDER) {
+    const a = byId.get(id);
+    if (a) {
+      ordered.push(a);
+      byId.delete(id);
+    }
+  }
+  // Cualquiera nuevo que se añada y no esté en DISPLAY_ORDER va al final.
+  for (const a of byId.values()) ordered.push(a);
+  return ordered;
+})();
+
 export function getAdvertiser(id: string): Advertiser | undefined {
   return ADVERTISERS.find((a) => a.id === id);
 }
