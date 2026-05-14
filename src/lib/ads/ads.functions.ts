@@ -450,6 +450,18 @@ export const getAdVariants = createServerFn({ method: "POST" })
       }
     }
 
+    let newsCtx = "";
+    if (advertiser.kind === "news") {
+      const headlines = await fetchAlicantePressHeadlines();
+      if (!headlines || headlines.length === 0) {
+        return { ...baseResp, variants: [] };
+      }
+      const lines = headlines
+        .map((h, i) => `${i + 1}. "${h.title}"${h.source ? ` (${h.source})` : ""}`)
+        .join("\n");
+      newsCtx = `\n\nTITULARES REALES de la prensa alicantina (Google News, hoy):\n${lines}\n\nGenera UNA variante por titular. Usa SOLO la información del titular; no inventes detalles ni fechas. DESCARTA cualquier titular que sea política partidista, sucesos, accidentes, fallecimientos o tragedias (si quedara alguno colado, omítelo).`;
+    }
+
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       return {
