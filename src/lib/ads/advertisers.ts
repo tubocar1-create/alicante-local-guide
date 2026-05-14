@@ -10,6 +10,7 @@ export type BannerKind =
   | "air"
   | "agenda"
   | "flights"
+  | "flights_tomorrow"
   | "trains"
   | "buses"
   | "regional_agenda"
@@ -168,6 +169,23 @@ export const ADVERTISERS: Advertiser[] = [
     },
     brief:
       "Tráfico aéreo en vivo alrededor del aeropuerto de Alicante-Elche (ALC/LEAL) usando OpenSky Network: aviones en vuelo cerca, en pista, callsign, altitud y país.",
+  },
+  {
+    id: "vuelos-manana-alicante",
+    name: "Vuelos mañana",
+    tagline: "Salidas programadas Alicante-Elche",
+    category: "Aeropuerto",
+    kind: "flights_tomorrow",
+    ctaLabel: "Ver vuelos",
+    ctaUrl: "https://www.aena.es/es/aeropuerto-alicante-elche/vuelos.html",
+    theme: {
+      bg: "bg-gradient-to-r from-sky-700 via-blue-700 to-indigo-800",
+      fg: "text-white",
+      accent: "bg-white text-sky-700",
+      emoji: "🛫",
+    },
+    brief:
+      "Salidas programadas para mañana en el aeropuerto de Alicante-Elche (ALC), fuente oficial AENA Infovuelos. Se rotan aleatoriamente y se actualizan cada día.",
   },
   {
     id: "trenes-alicante",

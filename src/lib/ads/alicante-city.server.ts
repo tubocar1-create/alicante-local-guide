@@ -591,6 +591,78 @@ export async function fetchAenaDisruptions(): Promise<AenaDisruption[] | null> {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// AENA — Salidas programadas de MAÑANA en ALC (Infovuelos, dosDias=si)
+// ─────────────────────────────────────────────────────────────────
+
+export type AenaScheduledFlight = {
+  flightNumber: string;
+  airline: string;
+  destinationCity: string;
+  destinationIata: string;
+  scheduledTime: string; // HH:MM
+  date: string; // dd/mm/yyyy
+};
+
+function tomorrowMadridDDMMYYYY(): string {
+  const now = new Date();
+  // Hoy en Madrid → sumamos 1 día sobre el calendario Madrid
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Madrid",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const y = Number(parts.find((p) => p.type === "year")?.value);
+  const m = Number(parts.find((p) => p.type === "month")?.value);
+  const d = Number(parts.find((p) => p.type === "day")?.value);
+  // Construimos como UTC para evitar desplazamientos de TZ y sumamos 1 día
+  const t = new Date(Date.UTC(y, m - 1, d));
+  t.setUTCDate(t.getUTCDate() + 1);
+  const dd = String(t.getUTCDate()).padStart(2, "0");
+  const mm = String(t.getUTCMonth() + 1).padStart(2, "0");
+  const yyyy = t.getUTCFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
+
+/**
+ * Devuelve hasta 12 salidas PROGRAMADAS de mañana (Europe/Madrid) en ALC,
+ * mezcladas aleatoriamente. Si Aena falla o no hay vuelos → null/[] y el
+ * banner se suspende.
+ */
+export async function fetchAenaTomorrowDepartures(): Promise<AenaScheduledFlight[] | null> {
+  const rows = await fetchAenaFlights("S");
+  if (!rows) return null;
+  const target = tomorrowMadridDDMMYYYY();
+  const out: AenaScheduledFlight[] = [];
+  for (const f of rows) {
+    const fecha = (f.fecha || "").trim();
+    if (fecha !== target) continue;
+    const estado = (f.estado || "").toUpperCase();
+    if (estado === "CAN") continue; // saltamos cancelados de mañana
+    const iataCia = (f.iataCompania || "").trim();
+    const num = (f.numVuelo || "").trim();
+    const horaProg = (f.horaProgramada || "").slice(0, 5);
+    if (!horaProg) continue;
+    out.push({
+      flightNumber: iataCia && num ? `${iataCia}${num}` : num || "—",
+      airline: (f.nombreCompania || iataCia || "").trim() || "—",
+      destinationCity:
+        (f.ciudadIataOtro || "").trim() || (f.iataOtro || "").trim() || "—",
+      destinationIata: (f.iataOtro || "").trim() || "",
+      scheduledTime: horaProg,
+      date: fecha,
+    });
+  }
+  if (!out.length) return [];
+  // Shuffle Fisher-Yates
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out.slice(0, 12);
+}
+
+// ─────────────────────────────────────────────────────────────────
 // AliBus — Próximas llegadas de buses urbanos en paradas céntricas
 // (Vectalia/Masatusa). API pública usada por alibus.es.
 // ─────────────────────────────────────────────────────────────────

@@ -9,6 +9,7 @@ import {
   fetchAlicanteAirTraffic,
   fetchRenfeAlicanteSchedule,
   fetchAenaDisruptions,
+  fetchAenaTomorrowDepartures,
   fetchAlibusAlicante,
   type CulturalEvent,
 } from "./alicante-city.server";
@@ -363,6 +364,22 @@ export const getAdVariants = createServerFn({ method: "POST" })
       flightsCtx = `\n\nINCIDENCIAS OFICIALES Aena hoy en Alicante-Elche (ALC), salidas y llegadas:\n${lines}\n\nGenera UNA variante por incidencia. Usa SOLO estos datos.`;
     }
 
+    // Salidas PROGRAMADAS de mañana (Aena Infovuelos)
+    let flightsTomorrowCtx = "";
+    if (advertiser.kind === "flights_tomorrow") {
+      const flights = await fetchAenaTomorrowDepartures();
+      if (!flights || flights.length === 0) {
+        return { ...baseResp, variants: [] };
+      }
+      const lines = flights
+        .map(
+          (f) =>
+            `- ${f.scheduledTime} · ${f.flightNumber} · ${f.airline} · → ${f.destinationCity}${f.destinationIata ? ` (${f.destinationIata})` : ""}`,
+        )
+        .join("\n");
+      flightsTomorrowCtx = `\n\nSALIDAS PROGRAMADAS MAÑANA en Alicante-Elche (ALC), fuente oficial Aena Infovuelos:\n${lines}\n\nGenera UNA variante por vuelo. Usa SOLO estos datos, no inventes nada.`;
+    }
+
     // Mercadillos: solo si HOY hay alguno activo. Si no, suspende.
     let mercadillosCtx = "";
     if (advertiser.kind === "mercadillos") {
@@ -463,6 +480,9 @@ export const getAdVariants = createServerFn({ method: "POST" })
         break;
       case "flights":
         userPrompt = `Genera ${count} variantes de tarjeta sobre INCIDENCIAS de vuelos en ALC (datos oficiales Aena). UNA variante por incidencia del listado. MÁXIMA INFORMACIÓN, MÍNIMO COMENTARIO. Sin adjetivos, sin "¡". cta "Ver vuelos".\n\n• Si CANCELADO: headline "CANCELADO [vuelo]" (ej "CANCELADO IB3567"), body "[Aerolínea] · [salida hacia / llegada desde] [ciudad] · prevista HH:MM" (máx 90 chars).\n• Si RETRASADO: headline "Retraso +[N]m [vuelo]" (ej "Retraso +45m FR1234"), body "[Aerolínea] · [hacia/desde] [ciudad] · prog HH:MM → est HH:MM" (máx 90 chars).\n\nUsa SOLO los datos del listado; no inventes.${flightsCtx}`;
+        break;
+      case "flights_tomorrow":
+        userPrompt = `Genera ${count} variantes de tarjeta sobre SALIDAS PROGRAMADAS DE MAÑANA en Alicante-Elche (ALC, datos oficiales Aena Infovuelos). UNA variante por vuelo del listado. MÁXIMA INFORMACIÓN, MÍNIMO COMENTARIO. Sin adjetivos, sin "¡". cta "Ver vuelos".\n\nFormato: headline "Mañana HH:MM → [Ciudad]" (máx 5 palabras, ej "Mañana 07:25 → Londres"), body "[Aerolínea] · vuelo [código] · ALC → [Ciudad] ([IATA])" (máx 90 chars).\n\nUsa SOLO los datos del listado; no inventes destinos, horas ni códigos.${flightsTomorrowCtx}`;
         break;
       case "trains":
         userPrompt = `Genera ${count} variantes de tarjeta sobre TRENES de Cercanías en Alicante-Terminal. MÁXIMA INFORMACIÓN, MÍNIMO COMENTARIO. UNA variante por tren del listado (mezcla llegadas y salidas). Body formato compacto: "[Llegada/Salida] [Línea] · [desde/hacia X] · [HH:MM]" (máx 90 chars, hora exacta del listado). headline: línea + código (ej "C-1 Salida 32802") máx 4 palabras. cta "Ver horarios". NUNCA escribas "en N min", "en X minutos" ni cuentas atrás: el copy se cachea y los minutos quedan obsoletos. Usa SOLO los datos; no inventes retrasos ni andenes.${trainsCtx}`;
