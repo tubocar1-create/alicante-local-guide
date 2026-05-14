@@ -604,7 +604,7 @@ function ConnectivityMap({
                     key={i}
                     d={d}
                     fill="url(#landGrad)"
-                    stroke="#2a4980"
+                    stroke="#94a3b8"
                     strokeWidth={0.5}
                     strokeLinejoin="round"
                     vectorEffect="non-scaling-stroke"
