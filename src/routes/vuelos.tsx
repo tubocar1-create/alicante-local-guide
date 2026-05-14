@@ -112,6 +112,59 @@ function project([lon, lat]: [number, number]): [number, number] {
   return p ? [p[0], p[1]] : [0, 0];
 }
 
+// ---------------- Country mapping (IATA → ISO2) ----------------
+const IATA_COUNTRY: Record<string, string> = {
+  ALC: "ES", MAD: "ES", BCN: "ES", PMI: "ES", TFN: "ES", TFS: "ES", LPA: "ES",
+  BIO: "ES", SCQ: "ES", VGO: "ES", SVQ: "ES", AGP: "ES", IBZ: "ES", MAH: "ES",
+  LCG: "ES", OVD: "ES", VLL: "ES", MLN: "ES", GRX: "ES", XRY: "ES",
+  STN: "GB", LGW: "GB", LTN: "GB", LHR: "GB", LCY: "GB", MAN: "GB", BHX: "GB",
+  LBA: "GB", EDI: "GB", GLA: "GB", NCL: "GB", LPL: "GB", BRS: "GB", EMA: "GB",
+  BFS: "GB", BOH: "GB", EXT: "GB", NWI: "GB", CWL: "GB",
+  SNN: "IE", DUB: "IE", ORK: "IE", LDY: "IE",
+  CDG: "FR", ORY: "FR", BVA: "FR", NCE: "FR", LYS: "FR", MRS: "FR", TLS: "FR",
+  NTE: "FR", BOD: "FR", BIQ: "FR",
+  BRU: "BE", CRL: "BE",
+  AMS: "NL", EIN: "NL", RTM: "NL",
+  LUX: "LU",
+  FRA: "DE", MUC: "DE", BER: "DE", DUS: "DE", HAM: "DE", CGN: "DE", STR: "DE",
+  HHN: "DE", NRN: "DE", FMM: "DE",
+  ZRH: "CH", GVA: "CH", BSL: "CH",
+  VIE: "AT", SZG: "AT", INN: "AT",
+  FCO: "IT", CIA: "IT", MXP: "IT", LIN: "IT", BGY: "IT", VCE: "IT", TSF: "IT",
+  NAP: "IT", BLQ: "IT", PSA: "IT", TRN: "IT", CTA: "IT", PMO: "IT", BRI: "IT", CAG: "IT",
+  LIS: "PT", OPO: "PT", FAO: "PT", FNC: "PT",
+  CPH: "DK", BLL: "DK", AAL: "DK",
+  OSL: "NO", TRF: "NO", BGO: "NO",
+  ARN: "SE", GOT: "SE", BMA: "SE", NYO: "SE",
+  HEL: "FI",
+  WAW: "PL", WMI: "PL", KRK: "PL", GDN: "PL", WRO: "PL", POZ: "PL",
+  PRG: "CZ", BUD: "HU", OTP: "RO", SOF: "BG",
+  ATH: "GR", SKG: "GR", RHO: "GR", HER: "GR",
+  TIA: "AL", BEG: "RS", ZAG: "HR", LJU: "SI",
+  TLL: "EE", RIX: "LV", VNO: "LT", KUN: "LT",
+  RAK: "MA", CMN: "MA", TNG: "MA", NDR: "MA", AHU: "MA", FEZ: "MA", OUD: "MA",
+  TTU: "MA", AGA: "MA",
+  MLA: "MT", LCA: "CY", PFO: "CY", TLV: "IL",
+};
+
+function flagEmoji(iata: string): string {
+  const cc = IATA_COUNTRY[iata];
+  if (!cc) return "🏳️";
+  return String.fromCodePoint(
+    ...cc.toUpperCase().split("").map((c) => 0x1f1e6 + c.charCodeAt(0) - 65),
+  );
+}
+
+const COUNTRY_NAME: Record<string, string> = {
+  ES: "España", GB: "Reino Unido", IE: "Irlanda", FR: "Francia", BE: "Bélgica",
+  NL: "Países Bajos", LU: "Luxemburgo", DE: "Alemania", CH: "Suiza", AT: "Austria",
+  IT: "Italia", PT: "Portugal", DK: "Dinamarca", NO: "Noruega", SE: "Suecia",
+  FI: "Finlandia", PL: "Polonia", CZ: "Chequia", HU: "Hungría", RO: "Rumanía",
+  BG: "Bulgaria", GR: "Grecia", AL: "Albania", RS: "Serbia", HR: "Croacia",
+  SI: "Eslovenia", EE: "Estonia", LV: "Letonia", LT: "Lituania", MA: "Marruecos",
+  MT: "Malta", CY: "Chipre", IL: "Israel",
+};
+
 // ---------------- Airline palette ----------------
 const AIRLINE_COLORS: Record<string, string> = {
   FR: "#FFD400", VY: "#FF6FB0", IB: "#E2261C", I2: "#E2261C", UX: "#9F2A6A",
@@ -121,6 +174,20 @@ const AIRLINE_COLORS: Record<string, string> = {
   LX: "#E10718", OS: "#CC0000", TK: "#C70A0C", EI: "#0F8A4A", PC: "#FFD400",
   XQ: "#0099D8", XC: "#FF8C00", SU: "#0066B3",
 };
+
+const AIRLINE_NAMES: Record<string, string> = {
+  FR: "Ryanair", VY: "Vueling", IB: "Iberia", I2: "Iberia Express", UX: "Air Europa",
+  U2: "easyJet", EJU: "easyJet Europe", W6: "Wizz Air", HV: "Transavia", TO: "Transavia France",
+  KL: "KLM", AF: "Air France", LH: "Lufthansa", EW: "Eurowings", BA: "British Airways",
+  AY: "Finnair", SK: "SAS", DY: "Norwegian", TP: "TAP Portugal", AZ: "ITA Airways",
+  LX: "Swiss", OS: "Austrian", TK: "Turkish Airlines", EI: "Aer Lingus", PC: "Pegasus",
+  XQ: "SunExpress", XC: "Corendon", SU: "Aeroflot", LS: "Jet2.com", BY: "TUI",
+  TB: "TUI fly", X3: "TUI fly Deutschland", QR: "Qatar Airways", DL: "Delta",
+};
+
+function airlineName(code: string): string {
+  return AIRLINE_NAMES[code] ?? code;
+}
 
 const PALETTE_FALLBACK = [
   "#22D3EE", "#A78BFA", "#F472B6", "#34D399", "#FBBF24", "#F87171",
@@ -259,8 +326,22 @@ function VuelosDashboard() {
         : null)
     : null;
 
-  const telAvivFlights = flights7d.filter((f) => f.iataOtro === "TLV");
-  const totalFlights = telAvivFlights.length || 1;
+  // Métricas globales para los paneles laterales
+  const totalFlights = flights7d.length;
+  const destinationsCount = cities.filter((c) => c.iata !== "ALC" && c.total > 0).length;
+  const airlinesAgg = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const f of flights7d) {
+      const code = f.iataCompania || "??";
+      m.set(code, (m.get(code) ?? 0) + 1);
+    }
+    return [...m.entries()].sort((a, b) => b[1] - a[1]);
+  }, [flights7d]);
+  const airlinesCount = airlinesAgg.length;
+  const topCities = cities.filter((c) => c.total > 0).slice(0, 10);
+  const topDestino = topCities[0];
+  const topCountryISO = topDestino ? IATA_COUNTRY[topDestino.iata] : undefined;
+  const principalRegion = topCountryISO ? COUNTRY_NAME[topCountryISO] ?? "Europa" : "Europa";
 
   return (
     <div
@@ -295,27 +376,19 @@ function VuelosDashboard() {
           </div>
         </header>
 
-        <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-400/70">
-              Aviation Intelligence
-            </p>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight md:text-4xl">
-              Alicante{" "}
-              <span className="bg-gradient-to-r from-cyan-300 via-white to-violet-300 bg-clip-text text-transparent">
-                → Tel Aviv
-              </span>
-            </h1>
-            <p className="mt-1 text-xs text-slate-500 md:text-sm">
-              Mapa reducido al radio máximo de vuelos desde Alicante.
-            </p>
-          </div>
-          {!loading && !error && (
-            <div className="flex gap-2">
-              <MiniStat label="Ruta" value="ALC·TLV" />
-              <MiniStat label="Vuelos / 7d" value={totalFlights} accent />
-            </div>
-          )}
+        <div className="mb-5">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-400/70">
+            Aviation Intelligence
+          </p>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight md:text-4xl">
+            Mapa de destinos{" "}
+            <span className="bg-gradient-to-r from-cyan-300 via-white to-violet-300 bg-clip-text text-transparent">
+              desde Alicante
+            </span>
+          </h1>
+          <p className="mt-1 text-xs text-slate-500 md:text-sm">
+            Más de {destinationsCount} destinos y {airlinesCount} aerolíneas conectan Alicante con Europa.
+          </p>
         </div>
 
         {false && loading && (
@@ -332,10 +405,27 @@ function VuelosDashboard() {
         )}
 
         {!loading && (
-          <ConnectivityMap
-            cities={cities}
-            selectedCity={selectedCity}
-            onSelectCity={(c) => setSelectedCity(c)}
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
+            <div className="flex flex-col gap-4 order-2 lg:order-1">
+              <TopDestinosPanel cities={topCities} />
+              <AerolineasPanel airlines={airlinesAgg.slice(0, 9)} />
+            </div>
+            <div className="order-1 lg:order-2">
+              <ConnectivityMap
+                cities={cities}
+                selectedCity={selectedCity}
+                onSelectCity={(c) => setSelectedCity(c)}
+              />
+            </div>
+          </div>
+        )}
+
+        {!loading && (
+          <FooterStatsRow
+            destinos={destinationsCount}
+            aerolineas={airlinesCount}
+            vuelos={totalFlights}
+            region={principalRegion}
           />
         )}
       </div>
@@ -611,44 +701,28 @@ function ConnectivityMap({
                     filter: `drop-shadow(0 0 ${isFocus ? 6 : 2}px ${tier.color})`,
                   }}
                 />
-                {/* persistent tiny IATA label */}
+                {/* persistent full city name label */}
                 {(() => {
                   const lab = labelFor(c);
                   return (
                     <text
-                      x={x + lab.dx * 2}
+                      x={x + lab.dx * 1.5}
                       y={y + 1.4}
-                      fill={isFocus ? "#ffffff" : "#9fb4d6"}
-                      fontSize={4.4}
-                      fontWeight={600}
+                      fill={isFocus ? "#ffffff" : "#cdd9ee"}
+                      fontSize={isFocus ? 5.2 : 4.4}
+                      fontWeight={isFocus ? 700 : 600}
                       textAnchor={lab.anchor as "start" | "end"}
                       style={{
                         pointerEvents: "none",
-                        letterSpacing: "0.06em",
-                        textShadow: "0 0 4px rgba(0,0,0,0.95)",
+                        letterSpacing: "0.04em",
+                        textShadow: "0 0 4px rgba(0,0,0,0.95), 0 0 2px rgba(0,0,0,0.95)",
                       }}
                     >
-                      {c.iata}
+                      {cleanCityName(c.ciudad)}
                     </text>
                   );
                 })()}
-                {isFocus && (
-                  <text
-                    x={x}
-                    y={y - 7}
-                    fill="#ffffff"
-                    fontSize={6}
-                    fontWeight={700}
-                    textAnchor="middle"
-                    style={{
-                      pointerEvents: "none",
-                      letterSpacing: "0.04em",
-                      textShadow: "0 0 6px rgba(0,0,0,0.95)",
-                    }}
-                  >
-                    {cleanCityName(c.ciudad).toUpperCase()}
-                  </text>
-                )}
+
               </g>
             );
           })}
@@ -791,7 +865,135 @@ function MiniStat({
   );
 }
 
-// ---------------- City Dashboard ----------------
+// ---------------- Side panels (Top destinos, Aerolíneas, Footer stats) ----------------
+
+function PanelCard({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-2xl border border-white/[0.08] bg-[rgba(8,12,22,0.7)] p-4 backdrop-blur-xl">
+      <p className="mb-3 text-sm font-semibold text-slate-100">{title}</p>
+      {children}
+    </div>
+  );
+}
+
+function cleanCityNamePublic(raw: string) {
+  const first = raw.split("/")[0].trim();
+  return first
+    .toLowerCase()
+    .split(" ")
+    .map((w) => (w.length > 2 ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(" ");
+}
+
+function TopDestinosPanel({ cities }: { cities: CityAgg[] }) {
+  return (
+    <PanelCard title="Top 10 destinos por frecuencia">
+      <ul className="space-y-1.5">
+        {cities.map((c, i) => (
+          <li
+            key={c.iata}
+            className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[12px] text-slate-200 odd:bg-white/[0.02]"
+          >
+            <span className="w-4 text-right font-mono text-[11px] text-slate-500">
+              {i + 1}
+            </span>
+            <span className="text-base leading-none">{flagEmoji(c.iata)}</span>
+            <span className="flex-1 truncate">
+              {cleanCityNamePublic(c.ciudad)}{" "}
+              <span className="font-mono text-[10px] text-slate-500">
+                ({c.iata})
+              </span>
+            </span>
+            <span className="font-mono tabular-nums text-slate-300">
+              {c.total}
+            </span>
+          </li>
+        ))}
+        {cities.length === 0 && (
+          <li className="text-xs text-slate-500">Sin datos disponibles.</li>
+        )}
+      </ul>
+    </PanelCard>
+  );
+}
+
+function AerolineasPanel({ airlines }: { airlines: [string, number][] }) {
+  return (
+    <PanelCard title="Aerolíneas por número de vuelos">
+      <ul className="space-y-1.5">
+        {airlines.map(([code, count], i) => {
+          const color = airlineColor(code, i);
+          return (
+            <li
+              key={code}
+              className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[12px] text-slate-200 odd:bg-white/[0.02]"
+            >
+              <span
+                className="h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ background: color, boxShadow: `0 0 6px ${color}` }}
+              />
+              <span className="flex-1 truncate">
+                <span className="font-semibold" style={{ color }}>
+                  {airlineName(code)}
+                </span>{" "}
+                <span className="font-mono text-[10px] text-slate-500">
+                  {code}
+                </span>
+              </span>
+              <span className="font-mono tabular-nums text-slate-300">
+                {count.toLocaleString("es-ES")}
+              </span>
+            </li>
+          );
+        })}
+        {airlines.length === 0 && (
+          <li className="text-xs text-slate-500">Sin datos disponibles.</li>
+        )}
+      </ul>
+    </PanelCard>
+  );
+}
+
+function FooterStatsRow({
+  destinos,
+  aerolineas,
+  vuelos,
+  region,
+}: {
+  destinos: number;
+  aerolineas: number;
+  vuelos: number;
+  region: string;
+}) {
+  const items = [
+    { icon: "✈", value: `+${destinos}`, label: "Destinos" },
+    { icon: "🛫", value: `${aerolineas}+`, label: "Aerolíneas" },
+    { icon: "✓", value: vuelos.toLocaleString("es-ES"), label: "Vuelos / 7d" },
+    { icon: "🌍", value: region, label: "Principal destino" },
+  ];
+  return (
+    <div className="mt-4 grid grid-cols-2 gap-3 rounded-2xl border border-white/[0.08] bg-[rgba(8,12,22,0.7)] p-4 backdrop-blur-xl sm:grid-cols-4">
+      {items.map((it) => (
+        <div key={it.label} className="flex flex-col items-center text-center">
+          <div className="mb-1 flex h-9 w-9 items-center justify-center rounded-full border border-cyan-400/30 text-cyan-300">
+            <span className="text-base leading-none">{it.icon}</span>
+          </div>
+          <p className="text-base font-bold text-white">{it.value}</p>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">
+            {it.label}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 
 function CityDetail({
   city,
