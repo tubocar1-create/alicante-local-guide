@@ -322,8 +322,6 @@ function DestinationDashboard() {
     });
   }, [airlinesAgg]);
 
-  // Tip aerolínea más barata (placeholder: la que tiene más vuelos directos = más oferta y suele ser low-cost)
-  const cheapestAirline = airlinesAgg[0]?.[0];
 
   if (loading) {
     return (
