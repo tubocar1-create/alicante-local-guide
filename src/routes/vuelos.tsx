@@ -537,19 +537,6 @@ function ConnectivityMap({
                     filter: `drop-shadow(0 0 ${isFocus ? 6 : 3}px ${tier.color})`,
                   }}
                 />
-                {/* animated dash overlay */}
-                <path
-                  d={path}
-                  fill="none"
-                  stroke="#ffffff"
-                  strokeWidth={Math.max(0.6, tier.width * 0.4)}
-                  opacity={opacity * 0.55}
-                  strokeLinecap="round"
-                  strokeDasharray="4 10"
-                  style={{
-                    animation: "dashFlow 6s linear infinite",
-                  }}
-                />
               </g>
             );
           })}
@@ -601,11 +588,11 @@ function ConnectivityMap({
                 <circle
                   cx={x}
                   cy={y}
-                  r={isFocus ? 2.6 : 1.7}
+                  r={isFocus ? 1.4 : 0.9}
                   fill="#e2e8f0"
                   opacity={0.95}
                   style={{
-                    filter: `drop-shadow(0 0 ${isFocus ? 5 : 2}px ${tier.color})`,
+                    filter: `drop-shadow(0 0 ${isFocus ? 3 : 1}px ${tier.color})`,
                   }}
                 />
                 {/* persistent tiny IATA label */}
@@ -614,15 +601,15 @@ function ConnectivityMap({
                   return (
                     <text
                       x={x + lab.dx}
-                      y={y + 1.2}
+                      y={y + 0.7}
                       fill={isFocus ? "#ffffff" : "#9fb4d6"}
-                      fontSize={3.4}
+                      fontSize={2}
                       fontWeight={600}
                       textAnchor={lab.anchor as "start" | "end"}
                       style={{
                         pointerEvents: "none",
-                        letterSpacing: "0.08em",
-                        textShadow: "0 0 3px rgba(0,0,0,0.9)",
+                        letterSpacing: "0.06em",
+                        textShadow: "0 0 2px rgba(0,0,0,0.9)",
                       }}
                     >
                       {c.iata}
@@ -632,15 +619,15 @@ function ConnectivityMap({
                 {isFocus && (
                   <text
                     x={x}
-                    y={y - 6}
+                    y={y - 3.5}
                     fill="#ffffff"
-                    fontSize={4.8}
+                    fontSize={2.8}
                     fontWeight={700}
                     textAnchor="middle"
                     style={{
                       pointerEvents: "none",
                       letterSpacing: "0.04em",
-                      textShadow: "0 0 4px rgba(0,0,0,0.9)",
+                      textShadow: "0 0 3px rgba(0,0,0,0.9)",
                     }}
                   >
                     {cleanCityName(c.ciudad).toUpperCase()}
@@ -652,32 +639,25 @@ function ConnectivityMap({
 
           {/* Alicante hub */}
           <g style={{ pointerEvents: "none" }}>
-            <circle cx={alc[0]} cy={alc[1]} r={28} fill="url(#alcGlow)" />
+            <circle cx={alc[0]} cy={alc[1]} r={14} fill="url(#alcGlow)" />
             <circle
               cx={alc[0]}
               cy={alc[1]}
-              r={4}
+              r={1.6}
               fill="#ffffff"
               style={{
                 filter:
-                  "drop-shadow(0 0 6px #ffffff) drop-shadow(0 0 14px #3b82f6)",
+                  "drop-shadow(0 0 3px #ffffff) drop-shadow(0 0 7px #3b82f6)",
               }}
-            >
-              <animate
-                attributeName="r"
-                values="3.6;4.6;3.6"
-                dur="2.4s"
-                repeatCount="indefinite"
-              />
-            </circle>
+            />
             <text
               x={alc[0]}
-              y={alc[1] + 9}
+              y={alc[1] + 4}
               fill="#ffffff"
-              fontSize={4.5}
+              fontSize={2.4}
               fontWeight={800}
               textAnchor="middle"
-              style={{ letterSpacing: "0.18em" }}
+              style={{ letterSpacing: "0.14em" }}
             >
               ALICANTE
             </text>
