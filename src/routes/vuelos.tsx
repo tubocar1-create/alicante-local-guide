@@ -639,32 +639,25 @@ function ConnectivityMap({
 
           {/* Alicante hub */}
           <g style={{ pointerEvents: "none" }}>
-            <circle cx={alc[0]} cy={alc[1]} r={28} fill="url(#alcGlow)" />
+            <circle cx={alc[0]} cy={alc[1]} r={14} fill="url(#alcGlow)" />
             <circle
               cx={alc[0]}
               cy={alc[1]}
-              r={4}
+              r={1.6}
               fill="#ffffff"
               style={{
                 filter:
-                  "drop-shadow(0 0 6px #ffffff) drop-shadow(0 0 14px #3b82f6)",
+                  "drop-shadow(0 0 3px #ffffff) drop-shadow(0 0 7px #3b82f6)",
               }}
-            >
-              <animate
-                attributeName="r"
-                values="3.6;4.6;3.6"
-                dur="2.4s"
-                repeatCount="indefinite"
-              />
-            </circle>
+            />
             <text
               x={alc[0]}
-              y={alc[1] + 9}
+              y={alc[1] + 4}
               fill="#ffffff"
-              fontSize={4.5}
+              fontSize={2.4}
               fontWeight={800}
               textAnchor="middle"
-              style={{ letterSpacing: "0.18em" }}
+              style={{ letterSpacing: "0.14em" }}
             >
               ALICANTE
             </text>
