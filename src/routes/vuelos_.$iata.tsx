@@ -525,32 +525,8 @@ function DestinationDashboard() {
         </Card>
       </div>
 
-      {/* FOOTER TIPS */}
-      <div className="mt-3 grid gap-3 rounded-2xl border border-slate-800 bg-slate-900/40 p-3 md:grid-cols-2">
-        <div className="flex items-start gap-2">
-          <Bus className="h-4 w-4 flex-shrink-0 text-cyan-300" />
-          <div className="text-xs">
-            <div className="font-semibold text-cyan-300">Llegar al aeropuerto</div>
-            <div className="text-slate-400">
-              C6: 24 min desde el centro de Alicante.
-              <br />
-              Recomendado: salir 2h antes del vuelo.
-            </div>
-          </div>
-        </div>
-        <div className="flex items-start gap-2">
-          <Plane className="h-4 w-4 flex-shrink-0 text-violet-300" />
-          <div className="text-xs">
-            <div className="font-semibold text-violet-300">Aerolíneas que operan</div>
-            <div className="text-slate-400">
-              {airlinesAgg.map(([c]) => airlineName(c)).join(" · ")}
-            </div>
-          </div>
-        </div>
-      </div>
-
       <p className="mt-3 text-center text-[10px] text-slate-600">
-        Fuente: Datos de AENA · Actualizado:{" "}
+        Fuente: AENA · Frecuencia semanal · Recálculo diario · Actualizado:{" "}
         {new Date().toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })}
       </p>
     </Shell>
