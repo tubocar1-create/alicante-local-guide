@@ -24,6 +24,7 @@ import tileParque from "@/assets/tile_parque.png";
 import tileComprar from "@/assets/tile_comprar.png";
 import tileTomar from "@/assets/tile_tomar.png";
 import tileTurismo from "@/assets/tile_turismo.png";
+import tilePlayaAventura from "@/assets/tile_playa_aventura.png";
 import tileMapa from "@/assets/tile_mapa.png";
 import tileBus from "@/assets/tile_bus.png";
 
@@ -35,7 +36,7 @@ const TILE_STYLES: Record<string, { img: string; bg: string }> = {
   Comprar:      { img: tileComprar, bg: "oklch(0.94 0.07 340)" },
   "Tomar algo": { img: tileTomar,   bg: "oklch(0.95 0.07 50)" },
   Turismo:      { img: tileTurismo, bg: "oklch(0.94 0.05 25)" },
-  "Turismo, playa y aventuras": { img: tileTurismo, bg: "oklch(0.94 0.05 25)" },
+  "Turismo, playa y aventuras": { img: tilePlayaAventura, bg: "oklch(0.93 0.07 220)" },
   Mapa:         { img: tileMapa,    bg: "oklch(0.93 0.06 200)" },
   Bus:          { img: tileBus,     bg: "oklch(0.93 0.06 190)" },
 };
@@ -499,7 +500,13 @@ export function ChatScreen() {
                           <span className="text-[38px] transition-transform duration-300 group-hover:scale-125">{t.emoji}</span>
                         )}
                       </div>
-                      <span className="mt-1.5 block w-full text-[11px] font-extrabold leading-tight tracking-tight text-foreground text-center sm:text-[13px] transition-colors group-hover:text-primary">
+                      <span
+                        className={`relative z-10 block w-full text-[11px] font-extrabold leading-tight tracking-tight text-foreground text-center sm:text-[13px] transition-colors group-hover:text-primary ${
+                          t.label === "Turismo, playa y aventuras"
+                            ? "-mt-7 sm:-mt-8"
+                            : "mt-1.5"
+                        }`}
+                      >
                         {t.label}
                       </span>
                     </button>
