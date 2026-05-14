@@ -238,6 +238,16 @@ function VuelosDashboard() {
       const a = f.iataCompania || "??";
       entry.airlines.set(a, (entry.airlines.get(a) ?? 0) + 1);
     }
+    // Asegurar que Tel Aviv (TLV) siempre aparezca en el mapa, aunque no haya vuelos en la ventana.
+    if (!map.has("TLV")) {
+      map.set("TLV", {
+        iata: "TLV",
+        ciudad: "Tel Aviv",
+        total: 0,
+        airlines: new Map(),
+        days: new Set(),
+      });
+    }
     return [...map.values()].sort((a, b) => b.total - a.total);
   }, [flights7d]);
 
@@ -441,9 +451,9 @@ function ConnectivityMap({
       <div ref={wrapRef} className="relative h-[85vh] w-full sm:aspect-[16/9] sm:h-auto">
         <TransformWrapper
           ref={trRef}
-          initialScale={1}
-          minScale={1}
-          maxScale={6}
+          initialScale={2.6}
+          minScale={2.6}
+          maxScale={8}
           wheel={{ step: 0.15 }}
           doubleClick={{ mode: "zoomIn", step: 0.6 }}
           panning={{ velocityDisabled: true }}
