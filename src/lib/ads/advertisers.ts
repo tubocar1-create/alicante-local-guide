@@ -33,7 +33,7 @@ export type Advertiser = {
   brief: string;
 };
 
-export const ADVERTISERS: Advertiser[] = [
+const ADVERTISERS_RAW: Advertiser[] = [
   {
     id: "clima-alicante",
     name: "Clima Alicante",
