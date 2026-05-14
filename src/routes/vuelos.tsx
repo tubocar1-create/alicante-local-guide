@@ -406,11 +406,11 @@ function VuelosDashboard() {
 
         {!loading && (
           <div className="grid gap-4 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
-            <div className="flex flex-col gap-4 order-2 lg:order-1">
+            <div className="flex flex-col gap-4">
               <TopDestinosPanel cities={topCities} />
               <AerolineasPanel airlines={airlinesAgg.slice(0, 9)} />
             </div>
-            <div className="order-1 lg:order-2">
+            <div>
               <ConnectivityMap
                 cities={cities}
                 selectedCity={selectedCity}
@@ -531,7 +531,7 @@ function ConnectivityMap({
           "radial-gradient(ellipse at center, #06122a 0%, #030917 60%, #01060f 100%)",
       }}
     >
-      <div ref={wrapRef} className="relative h-[85vh] w-full sm:aspect-[16/9] sm:h-auto">
+      <div ref={wrapRef} className="relative h-[55vh] w-full sm:aspect-[16/9] sm:h-auto">
         <TransformWrapper
           ref={trRef}
           initialScale={3.7}
