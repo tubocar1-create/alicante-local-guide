@@ -36,7 +36,7 @@ const TILE_STYLES: Record<string, { img: string; bg: string }> = {
   Comprar:      { img: tileComprar, bg: "oklch(0.94 0.07 340)" },
   "Tomar algo": { img: tileTomar,   bg: "oklch(0.95 0.07 50)" },
   Turismo:      { img: tileTurismo, bg: "oklch(0.94 0.05 25)" },
-  "Turismo, playa y aventuras": { img: tileTurismo, bg: "oklch(0.94 0.05 25)" },
+  "Turismo, playa y aventuras": { img: tilePlayaAventura, bg: "oklch(0.93 0.07 220)" },
   Mapa:         { img: tileMapa,    bg: "oklch(0.93 0.06 200)" },
   Bus:          { img: tileBus,     bg: "oklch(0.93 0.06 190)" },
 };
