@@ -42,8 +42,19 @@ type Slim = {
   aeronave?: string;
 };
 
-let cache: { key: string; at: number; data: Slim[] } | null = null;
-const TTL_MS = 7 * 24 * 60 * 60_000; // 1 semana
+let cache: { key: string; expiresAt: number; data: Slim[] } | null = null;
+
+// Refresco semanal: cacheamos hasta el próximo domingo 03:00 UTC.
+// Una vez por semana (domingo) hacemos un único scraping y reutilizamos
+// esos datos durante los 7 días siguientes.
+function nextSundayRefresh(now = new Date()): number {
+  const d = new Date(now);
+  d.setUTCHours(3, 0, 0, 0);
+  const day = d.getUTCDay(); // 0 = domingo
+  const daysUntilSunday = day === 0 && now.getTime() < d.getTime() ? 0 : 7 - day;
+  d.setUTCDate(d.getUTCDate() + daysUntilSunday);
+  return d.getTime();
+}
 
 export const Route = createFileRoute("/api/public/aena-flights")({
   server: {
