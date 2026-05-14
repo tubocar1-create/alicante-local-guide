@@ -89,13 +89,13 @@ const COORDS: Record<string, [number, number]> = {
   INN: [11.34, 47.26],
 };
 
-// Map projection — equirectangular tuned for Europa + Mediterráneo
+// Map projection — equirectangular focused on Western Europe (where most ALC routes live)
 const VIEW_W = 1000;
 const VIEW_H = 900;
-const LON_MIN = -18;
-const LON_MAX = 36;
-const LAT_MIN = 27;
-const LAT_MAX = 62;
+const LON_MIN = -11;
+const LON_MAX = 28;
+const LAT_MIN = 30;
+const LAT_MAX = 60;
 
 const PROJ = geoEquirectangular().fitExtent(
   [
