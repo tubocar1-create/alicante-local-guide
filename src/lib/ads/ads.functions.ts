@@ -9,6 +9,7 @@ import {
   fetchAlicanteAirTraffic,
   fetchRenfeAlicanteSchedule,
   fetchAenaDisruptions,
+  fetchAenaTomorrowDepartures,
   fetchAlibusAlicante,
   type CulturalEvent,
 } from "./alicante-city.server";
