@@ -15,6 +15,8 @@ import { geoEquirectangular, geoPath } from "d3-geo";
 import { feature } from "topojson-client";
 import type { Topology } from "topojson-specification";
 import type { Feature, FeatureCollection, Geometry } from "geojson";
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import { Plus, Minus, Maximize2 } from "lucide-react";
 
 export const Route = createFileRoute("/vuelos")({
   head: () => ({
