@@ -10,6 +10,7 @@ export type BannerKind =
   | "air"
   | "agenda"
   | "flights"
+  | "flights_tomorrow"
   | "trains"
   | "buses"
   | "regional_agenda"
