@@ -250,45 +250,63 @@ function VuelosDashboard() {
     ? cities.find((c) => c.iata === selectedCity)
     : null;
 
+  const totalFlights = flights7d.length;
+  const totalCities = cities.length;
+
   return (
-    <div className="min-h-screen bg-[#040814] text-slate-100">
-      {/* Background grid + glow */}
+    <div
+      className="min-h-screen text-slate-100"
+      style={{
+        background:
+          "linear-gradient(180deg, #020617 0%, #06111f 50%, #020617 100%)",
+      }}
+    >
+      {/* ambient glow */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div
-          className="absolute inset-0 opacity-[0.07]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(34,211,238,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(34,211,238,0.5) 1px, transparent 1px)",
-            backgroundSize: "48px 48px",
-          }}
-        />
-        <div className="absolute -top-40 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-cyan-500/10 blur-3xl" />
+        <div className="absolute -top-40 left-1/2 h-[28rem] w-[28rem] -translate-x-1/2 rounded-full bg-cyan-500/[0.06] blur-3xl" />
+        <div className="absolute bottom-0 right-0 h-[24rem] w-[24rem] rounded-full bg-violet-500/[0.05] blur-3xl" />
       </div>
 
-      <div className="relative mx-auto max-w-6xl px-3 pb-10 pt-5 md:px-4">
-        <header className="mb-4 flex items-center justify-between">
+      <div className="relative mx-auto max-w-7xl px-3 pb-10 pt-5 md:px-6">
+        <header className="mb-5 flex items-center justify-between">
           <Link
             to="/"
-            className="text-xs uppercase tracking-[0.2em] text-slate-400 hover:text-cyan-300"
+            className="text-[11px] uppercase tracking-[0.25em] text-slate-500 transition hover:text-cyan-300"
           >
             ← Inicio
           </Link>
-          <div className="flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/5 px-2.5 py-1 text-[10px] uppercase tracking-widest text-cyan-300">
-            <Plane className="h-3 w-3" />
-            ALC
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+            </span>
+            <span className="text-[10px] uppercase tracking-[0.25em] text-emerald-300/80">
+              Live · ALC
+            </span>
           </div>
         </header>
 
-        <div className="mb-4">
-          <h1 className="text-xl font-semibold tracking-tight md:text-3xl">
-            Mapa de destinos desde{" "}
-            <span className="bg-gradient-to-r from-cyan-300 via-cyan-100 to-violet-300 bg-clip-text text-transparent">
-              Alicante
-            </span>
-          </h1>
-          <p className="mt-1 text-xs text-slate-400 md:text-sm">
-            Toca una ciudad para ver sus métricas de conectividad.
-          </p>
+        <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-400/70">
+              Aviation Intelligence
+            </p>
+            <h1 className="mt-1 text-2xl font-bold tracking-tight md:text-4xl">
+              Destinos desde{" "}
+              <span className="bg-gradient-to-r from-cyan-300 via-white to-violet-300 bg-clip-text text-transparent">
+                Alicante
+              </span>
+            </h1>
+            <p className="mt-1 text-xs text-slate-500 md:text-sm">
+              Selecciona una ciudad para abrir su dashboard de conectividad.
+            </p>
+          </div>
+          {!loading && !error && (
+            <div className="flex gap-2">
+              <MiniStat label="Destinos" value={totalCities} />
+              <MiniStat label="Vuelos / 7d" value={totalFlights} accent />
+            </div>
+          )}
         </div>
 
         {loading && (
