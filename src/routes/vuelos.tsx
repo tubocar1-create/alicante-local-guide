@@ -1,16 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Plane, Clock, X, Sparkles, Building2, TrendingUp, Calendar } from "lucide-react";
-import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  Tooltip,
-} from "recharts";
 import { geoMercator, geoPath } from "d3-geo";
 import { feature } from "topojson-client";
 import type { Topology } from "topojson-specification";
@@ -885,34 +875,21 @@ function CityDetail({
                 Por día de la semana
               </p>
             </div>
-            <div className="h-32">
-              <ResponsiveContainer>
-                <BarChart data={perDay}>
-                  <defs>
-                    <linearGradient id="cityBar" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#22D3EE" stopOpacity={0.95} />
-                      <stop offset="100%" stopColor="#7C3AED" stopOpacity={0.6} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis
-                    dataKey="weekday"
-                    tick={{ fill: "#64748b", fontSize: 10 }}
-                    tickLine={false}
-                    axisLine={{ stroke: "#1e293b" }}
-                  />
-                  <Tooltip
-                    cursor={{ fill: "rgba(34,211,238,0.06)" }}
-                    contentStyle={{
-                      background: "#0a1224",
-                      border: "1px solid #1e293b",
-                      borderRadius: 8,
-                      fontSize: 12,
-                    }}
-                    labelFormatter={(_, p) => p?.[0]?.payload?.date ?? ""}
-                  />
-                  <Bar dataKey="total" fill="url(#cityBar)" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="flex h-32 items-end gap-1.5 px-1">
+              {(() => {
+                const max = Math.max(...perDay.map((d) => d.total), 1);
+                return perDay.map((d) => (
+                  <div key={d.date} className="flex flex-1 flex-col items-center gap-1" title={`${d.date}: ${d.total}`}>
+                    <div className="flex w-full flex-1 items-end">
+                      <div
+                        className="w-full rounded-t-md bg-gradient-to-b from-cyan-400/95 to-violet-600/60"
+                        style={{ height: `${(d.total / max) * 100}%`, minHeight: 2 }}
+                      />
+                    </div>
+                    <span className="text-[9px] text-slate-500">{d.weekday}</span>
+                  </div>
+                ));
+              })()}
             </div>
           </div>
         )}
@@ -922,37 +899,39 @@ function CityDetail({
             <p className="mb-2 text-[10px] uppercase tracking-[0.2em] text-cyan-400/70">
               Reparto por aerolínea
             </p>
-            <div className="h-36">
-              <ResponsiveContainer>
-                <PieChart>
-                  <Pie
-                    data={airlineList.map(([code, value], i) => ({
-                      name: code,
-                      value,
-                      fill: airlineColor(code, i),
-                    }))}
-                    dataKey="value"
-                    innerRadius={35}
-                    outerRadius={60}
-                    paddingAngle={2}
-                    stroke="#040814"
-                    strokeWidth={2}
-                  >
-                    {airlineList.map(([code], i) => (
-                      <Cell key={code} fill={airlineColor(code, i)} />
+            {(() => {
+              const total = airlineList.reduce((s, [, v]) => s + v, 0) || 1;
+              return (
+                <>
+                  <div className="flex h-3 w-full overflow-hidden rounded-full border border-slate-800">
+                    {airlineList.map(([code, value], i) => (
+                      <div
+                        key={code}
+                        title={`${code}: ${value}`}
+                        style={{
+                          width: `${(value / total) * 100}%`,
+                          background: airlineColor(code, i),
+                        }}
+                      />
                     ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      background: "#0a1224",
-                      border: "1px solid #1e293b",
-                      borderRadius: 8,
-                      fontSize: 12,
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1.5">
+                    {airlineList.map(([code, value], i) => (
+                      <div key={code} className="flex items-center gap-1.5 text-[10px] text-slate-300">
+                        <span
+                          className="inline-block h-2 w-2 rounded-sm"
+                          style={{ background: airlineColor(code, i) }}
+                        />
+                        <span className="font-mono">{code}</span>
+                        <span className="text-slate-500">
+                          {Math.round((value / total) * 100)}%
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
           </div>
         )}
 
