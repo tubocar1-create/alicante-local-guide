@@ -1044,11 +1044,14 @@ function InfoPanel({
   weekEnd: string;
   flightType: "S" | "L";
 }) {
+  const isArrivals = flightType === "L";
+  const noun = isArrivals ? "Orígenes" : "Destinos";
+  const nounLower = isArrivals ? "orígenes" : "destinos";
   const items = [
-    { icon: "✈", value: `${destinos}`, label: "Destinos / 7d" },
+    { icon: "✈", value: `${destinos}`, label: `${noun} / 7d` },
     { icon: "🛫", value: `${aerolineas}`, label: "Aerolíneas / 7d" },
     { icon: "✓", value: vuelos.toLocaleString("es-ES"), label: "Vuelos / 7d" },
-    { icon: "🌍", value: region, label: "Principal" },
+    { icon: "🌍", value: region, label: isArrivals ? "Principal origen" : "Principal" },
   ];
   const [visibleCount, setVisibleCount] = useState(20);
   const visibleCities = cities.slice(0, visibleCount);
@@ -1057,11 +1060,11 @@ function InfoPanel({
     <div className="rounded-2xl border border-white/[0.08] bg-[rgba(8,12,22,0.7)] p-4 backdrop-blur-xl">
       <p className="text-sm font-semibold text-slate-100">
         {weekStart && weekEnd
-          ? `Destinos de la semana del ${weekStart} al ${weekEnd}`
-          : "Destinos de la semana"}
+          ? `${noun} de la semana del ${weekStart} al ${weekEnd}`
+          : `${noun} de la semana`}
       </p>
       <p className="mb-3 text-[10px] uppercase tracking-[0.2em] text-cyan-400/70">
-        {cities.length} destinos · clic para abrir el dashboard
+        {cities.length} {nounLower} · clic para abrir el dashboard
       </p>
       <ul className="mb-3 space-y-1">
         {visibleCities.map((c, i) => (
