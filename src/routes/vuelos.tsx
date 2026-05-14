@@ -118,8 +118,12 @@ const PROJ = geoEquirectangular().fitExtent(
 const GEOPATH = geoPath(PROJ);
 
 function project([lon, lat]: [number, number]): [number, number] {
-  const p = PROJ([lon, lat]);
-  return p ? [p[0], p[1]] : [0, 0];
+  const scale = Math.min(VIEW_W / (LON_MAX - LON_MIN), VIEW_H / (LAT_MAX - LAT_MIN));
+  const mapW = (LON_MAX - LON_MIN) * scale;
+  const mapH = (LAT_MAX - LAT_MIN) * scale;
+  const offsetX = (VIEW_W - mapW) / 2;
+  const offsetY = (VIEW_H - mapH) / 2;
+  return [offsetX + (lon - LON_MIN) * scale, offsetY + (LAT_MAX - lat) * scale];
 }
 
 // ---------------- Airline palette ----------------
