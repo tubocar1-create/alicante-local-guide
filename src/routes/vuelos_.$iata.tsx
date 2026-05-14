@@ -227,14 +227,13 @@ function DestinationDashboard() {
     };
   }, [code]);
 
-  // Ventana 14 días desde la primera fecha disponible
+  // Ventana semanal (7 días) desde hoy. Se recalcula cada día con los datos del backend.
   const window14 = useMemo(() => {
     if (!flights.length) return { start: null as Date | null, end: null as Date | null, flights: [] as Flight[] };
-    const dates = flights.map((f) => parseDate(f.fecha)).sort((a, b) => a.getTime() - b.getTime());
-    const start = new Date(dates[0]);
+    const start = new Date();
     start.setHours(0, 0, 0, 0);
     const end = new Date(start);
-    end.setDate(end.getDate() + 14);
+    end.setDate(end.getDate() + 7);
     return {
       start,
       end,
