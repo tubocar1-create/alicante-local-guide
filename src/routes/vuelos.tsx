@@ -1028,6 +1028,7 @@ function InfoPanel({
   region,
   weekStart,
   weekEnd,
+  flightType,
 }: {
   cities: CityAgg[];
   airlines: [string, number][];
@@ -1037,6 +1038,7 @@ function InfoPanel({
   region: string;
   weekStart: string;
   weekEnd: string;
+  flightType: "S" | "L";
 }) {
   const items = [
     { icon: "✈", value: `${destinos}`, label: "Destinos / 7d" },
