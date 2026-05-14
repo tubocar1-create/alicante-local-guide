@@ -42,8 +42,19 @@ type Slim = {
   aeronave?: string;
 };
 
-let cache: { key: string; at: number; data: Slim[] } | null = null;
-const TTL_MS = 7 * 24 * 60 * 60_000; // 1 semana
+let cache: { key: string; expiresAt: number; data: Slim[] } | null = null;
+
+// Refresco semanal: cacheamos hasta el próximo domingo 03:00 UTC.
+// Una vez por semana (domingo) hacemos un único scraping y reutilizamos
+// esos datos durante los 7 días siguientes.
+function nextSundayRefresh(now = new Date()): number {
+  const d = new Date(now);
+  d.setUTCHours(3, 0, 0, 0);
+  const day = d.getUTCDay(); // 0 = domingo
+  const daysUntilSunday = day === 0 && now.getTime() < d.getTime() ? 0 : 7 - day;
+  d.setUTCDate(d.getUTCDate() + daysUntilSunday);
+  return d.getTime();
+}
 
 export const Route = createFileRoute("/api/public/aena-flights")({
   server: {
@@ -57,7 +68,7 @@ export const Route = createFileRoute("/api/public/aena-flights")({
         const type = url.searchParams.get("type") === "L" ? "L" : "S";
         const key = `${airport}:${type}`;
 
-        if (cache && cache.key === key && Date.now() - cache.at < TTL_MS) {
+        if (cache && cache.key === key && Date.now() < cache.expiresAt) {
           return Response.json({ flights: cache.data, cached: true });
         }
 
@@ -119,7 +130,7 @@ export const Route = createFileRoute("/api/public/aena-flights")({
                 ? f.tipoAeronave
                 : undefined,
           }));
-          cache = { key, at: Date.now(), data: slim };
+          cache = { key, expiresAt: nextSundayRefresh(), data: slim };
           return new Response(JSON.stringify({ flights: slim }), {
             status: 200,
             headers: {
