@@ -405,11 +405,15 @@ function VuelosDashboard() {
         )}
 
         {!loading && (
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
-            <div className="flex flex-col gap-4">
-              <TopDestinosPanel cities={topCities} />
-              <AerolineasPanel airlines={airlinesAgg.slice(0, 9)} />
-            </div>
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
+            <InfoPanel
+              cities={topCities}
+              airlines={airlinesAgg.slice(0, 9)}
+              destinos={destinationsCount}
+              aerolineas={airlinesCount}
+              vuelos={totalFlights}
+              region={principalRegion}
+            />
             <div>
               <ConnectivityMap
                 cities={cities}
@@ -418,15 +422,6 @@ function VuelosDashboard() {
               />
             </div>
           </div>
-        )}
-
-        {!loading && (
-          <FooterStatsRow
-            destinos={destinationsCount}
-            aerolineas={airlinesCount}
-            vuelos={totalFlights}
-            region={principalRegion}
-          />
         )}
       </div>
 
