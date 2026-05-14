@@ -38,7 +38,7 @@ const TILE_STYLES: Record<string, { img: string; bg: string }> = {
   Turismo:      { img: tileTurismo, bg: "oklch(0.94 0.05 25)" },
   "Turismo, playa y aventuras": { img: tilePlayaAventura, bg: "oklch(0.93 0.07 220)" },
   Mapa:         { img: tileMapa,    bg: "oklch(0.93 0.06 200)" },
-  Bus:          { img: tileBus,     bg: "oklch(0.93 0.06 190)" },
+  "Transporte público": { img: tileBus, bg: "oklch(0.93 0.06 190)" },
 };
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -57,6 +57,7 @@ type Suggestion = {
   label: string;
   prompt?: string;
   submenu?: Suggestion[];
+  action?: "bus-picker";
 };
 const SUGGESTIONS: Suggestion[] = [
   {
@@ -96,6 +97,15 @@ const SUGGESTIONS: Suggestion[] = [
   },
   { label: "🛍️ Comprar", prompt: "¿Dónde puedo ir de compras?" },
   { label: "🍹 Tomar algo", prompt: "¿Dónde voy a tomar algo abierto ahora?" },
+  {
+    label: "🚆 Transporte público",
+    submenu: [
+      { label: "🚌 Bus", action: "bus-picker" },
+      { label: "🚆 Tren", prompt: "¿Cómo me muevo en tren por Alicante y alrededores? Horarios, estaciones de Cercanías y Renfe." },
+      { label: "✈️ Avión", prompt: "Información sobre el aeropuerto de Alicante-Elche: cómo llegar, transporte al centro y vuelos." },
+      { label: "🚊 Tram", prompt: "¿Cómo uso el TRAM de Alicante? Líneas, paradas principales y conexiones con la playa." },
+    ],
+  },
 ];
 
 const GREETING: Msg = {
@@ -466,12 +476,6 @@ export function ChatScreen() {
                       }
                     },
                   },
-                  {
-                    key: "bus",
-                    emoji: "🚌",
-                    label: "Bus",
-                    onClick: () => setShowBusPicker(true),
-                  },
                 ].map((t, idx) => {
                   const style = TILE_STYLES[t.label];
                   return (
@@ -536,6 +540,9 @@ export function ChatScreen() {
                     onClick={() => {
                       if (opt.submenu) {
                         setSubmenuStack((stack) => [...stack, opt]);
+                      } else if (opt.action === "bus-picker") {
+                        setSubmenuStack([]);
+                        setShowBusPicker(true);
                       } else if (opt.prompt) {
                         setSubmenuStack([]);
                         send(opt.prompt, { mode: null });
