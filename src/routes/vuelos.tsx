@@ -875,34 +875,21 @@ function CityDetail({
                 Por día de la semana
               </p>
             </div>
-            <div className="h-32">
-              <ResponsiveContainer>
-                <BarChart data={perDay}>
-                  <defs>
-                    <linearGradient id="cityBar" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#22D3EE" stopOpacity={0.95} />
-                      <stop offset="100%" stopColor="#7C3AED" stopOpacity={0.6} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis
-                    dataKey="weekday"
-                    tick={{ fill: "#64748b", fontSize: 10 }}
-                    tickLine={false}
-                    axisLine={{ stroke: "#1e293b" }}
-                  />
-                  <Tooltip
-                    cursor={{ fill: "rgba(34,211,238,0.06)" }}
-                    contentStyle={{
-                      background: "#0a1224",
-                      border: "1px solid #1e293b",
-                      borderRadius: 8,
-                      fontSize: 12,
-                    }}
-                    labelFormatter={(_, p) => p?.[0]?.payload?.date ?? ""}
-                  />
-                  <Bar dataKey="total" fill="url(#cityBar)" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="flex h-32 items-end gap-1.5 px-1">
+              {(() => {
+                const max = Math.max(...perDay.map((d) => d.total), 1);
+                return perDay.map((d) => (
+                  <div key={d.date} className="flex flex-1 flex-col items-center gap-1" title={`${d.date}: ${d.total}`}>
+                    <div className="flex w-full flex-1 items-end">
+                      <div
+                        className="w-full rounded-t-md bg-gradient-to-b from-cyan-400/95 to-violet-600/60"
+                        style={{ height: `${(d.total / max) * 100}%`, minHeight: 2 }}
+                      />
+                    </div>
+                    <span className="text-[9px] text-slate-500">{d.weekday}</span>
+                  </div>
+                ));
+              })()}
             </div>
           </div>
         )}
