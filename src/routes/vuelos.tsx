@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Plane, Clock, X, Sparkles, Building2, TrendingUp, Calendar } from "lucide-react";
 import {
   PieChart,
@@ -407,6 +407,29 @@ function ConnectivityMap({
 
   const focusCity = hoverCity ?? selectedCity;
 
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const trRef = useRef<any>(null);
+
+  // Centra la vista inicial en Europa central (lon 12, lat 50) con un zoom suave.
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      const el = wrapRef.current;
+      const tr = trRef.current;
+      if (!el || !tr) return;
+      const w = el.clientWidth;
+      const h = el.clientHeight;
+      const c = project([12, 50]);
+      const fx = c[0] / VIEW_W;
+      const fy = c[1] / VIEW_H;
+      const s = 1.9;
+      const x = w / 2 - fx * s * w;
+      const y = h / 2 - fy * s * h;
+      tr.setTransform(x, y, s, 0);
+    }, 60);
+    return () => window.clearTimeout(id);
+  }, []);
+
   return (
     <div
       className="relative overflow-hidden rounded-3xl border border-white/[0.06] shadow-[0_30px_120px_-20px_rgba(0,0,0,0.9)]"
@@ -415,8 +438,9 @@ function ConnectivityMap({
           "radial-gradient(ellipse at center, #06122a 0%, #030917 60%, #01060f 100%)",
       }}
     >
-      <div className="relative h-[85vh] w-full sm:aspect-[16/9] sm:h-auto">
+      <div ref={wrapRef} className="relative h-[85vh] w-full sm:aspect-[16/9] sm:h-auto">
         <TransformWrapper
+          ref={trRef}
           initialScale={1}
           minScale={1}
           maxScale={6}
@@ -506,9 +530,17 @@ function ConnectivityMap({
             const dx = x2 - x1;
             const dy = y2 - y1;
             const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+            // Curva con dirección y magnitud variable por destino para
+            // separar rutas que de otro modo se superpondrían.
+            const angle = Math.atan2(dy, dx); // -π..π, dirección desde ALC
+            // Norte (angle < 0) → curva a la izquierda; Sur → derecha.
+            const sign = angle < 0 ? -1 : 1;
+            // Variación pseudoaleatoria estable basada en el código IATA.
+            const hash = (c.iata.charCodeAt(0) * 31 + c.iata.charCodeAt(1) * 7 + c.iata.charCodeAt(2)) % 100;
+            const jitter = 0.6 + (hash / 100) * 0.9; // 0.6..1.5
+            const lift = sign * Math.min(dist * 0.28 * jitter, 260);
             const nx = -dy / dist;
             const ny = dx / dist;
-            const lift = Math.min(dist * 0.22, 180);
             const cx = mx + nx * lift;
             const cy = my + ny * lift;
             const path = `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`;
