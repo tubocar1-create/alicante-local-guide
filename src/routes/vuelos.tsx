@@ -175,6 +175,20 @@ const AIRLINE_COLORS: Record<string, string> = {
   XQ: "#0099D8", XC: "#FF8C00", SU: "#0066B3",
 };
 
+const AIRLINE_NAMES: Record<string, string> = {
+  FR: "Ryanair", VY: "Vueling", IB: "Iberia", I2: "Iberia Express", UX: "Air Europa",
+  U2: "easyJet", EJU: "easyJet Europe", W6: "Wizz Air", HV: "Transavia", TO: "Transavia France",
+  KL: "KLM", AF: "Air France", LH: "Lufthansa", EW: "Eurowings", BA: "British Airways",
+  AY: "Finnair", SK: "SAS", DY: "Norwegian", TP: "TAP Portugal", AZ: "ITA Airways",
+  LX: "Swiss", OS: "Austrian", TK: "Turkish Airlines", EI: "Aer Lingus", PC: "Pegasus",
+  XQ: "SunExpress", XC: "Corendon", SU: "Aeroflot", LS: "Jet2.com", BY: "TUI",
+  TB: "TUI fly", X3: "TUI fly Deutschland", QR: "Qatar Airways", DL: "Delta",
+};
+
+function airlineName(code: string): string {
+  return AIRLINE_NAMES[code] ?? code;
+}
+
 const PALETTE_FALLBACK = [
   "#22D3EE", "#A78BFA", "#F472B6", "#34D399", "#FBBF24", "#F87171",
   "#60A5FA", "#FB923C", "#4ADE80", "#E879F9", "#2DD4BF", "#F59E0B",
