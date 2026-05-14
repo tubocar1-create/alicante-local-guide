@@ -375,7 +375,7 @@ function ConnectivityMap({
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-800/80 bg-[#06122a]">
-      <div className="relative h-[calc(100vh-180px)] min-h-[480px] w-full">
+      <div className="relative aspect-[4/3] w-full">
         <TransformWrapper
           initialScale={1}
           minScale={1}
