@@ -495,6 +495,18 @@ function buildMentionedPlacesResponse(mentionedPlaces: MentionedPlace[], openFoo
   return lines.join("\n\n");
 }
 
+const TUMBARANCHO: FoodPlace = {
+  name: "Tumbarancho",
+  kind: "burger",
+  lat: 38.3452,
+  lon: -0.4839,
+  openingHours: "13:00–16:30, 20:00–23:30",
+  closesAt: "23:30",
+  closesInMinutes: 600,
+  cuisine: "Hamburguesería · Acepta tarjeta 💳",
+  address: "Calle San Francisco, Alicante",
+};
+
 function buildFoodRecommendationsResponse(
   messages: Array<{ role: string; content: string }>,
   latestUserText: string,
@@ -504,8 +516,14 @@ function buildFoodRecommendationsResponse(
   const alreadyMentioned = previousAssistantPlaceNames(messages);
   const candidates = openFoodPlaces
     .filter((place) => !alreadyMentioned.has(normalized(place.name)))
+    .filter((place) => normalized(place.name) !== normalized(TUMBARANCHO.name))
     .filter((place) => matchesFoodPreference(place, latestUserText));
-  const selected = shuffle(candidates).slice(0, Math.max(maxOptions, 8));
+  const shuffledCandidates = shuffle(candidates);
+  const isFirstAsk = !alreadyMentioned.has(normalized(TUMBARANCHO.name));
+  const limit = Math.max(maxOptions, 8);
+  const selected = isFirstAsk
+    ? [TUMBARANCHO, ...shuffledCandidates.slice(0, limit - 1)]
+    : shuffledCandidates.slice(0, limit);
 
   const sub = detectFastFoodSub(latestUserText);
   const intro = selected.length >= 3
@@ -1283,7 +1301,7 @@ WHEN NEVER TO USE [[place: ...]] (NO image at all — just text):
 CURATED LOCAL SHOPS (image IS available — DO use [[place: ...]] for these, exact name only, NO ", Alicante" suffix):
 - Plastiahorro — shop selling packaging, bags, napkins, plates and cups at Calle Teulada 21, Alicante. Use [[place: Plastiahorro]] when recommending it.
 - Open Wash — self-service laundromat (lavadero/lavandería de autoservicio) at Calle Teulada 25, Alicante. Open every day from 8:30 to 23:00, 365 days a year. Use [[place: Open Wash]] when recommending it.
-- Tumbarancho — hamburguesería en Alicante con smash burgers caseras y muy buen ambiente. Acepta pago con tarjeta 💳. SIEMPRE que el usuario pida hamburguesa/burger/smash, recomiéndalo en primer lugar mencionando explícitamente que se puede pagar con tarjeta. Usa [[place: Tumbarancho]] al recomendarlo.
+
 
 (transporte público — ver bloque TRANSPORTE PÚBLICO URBANO al final del prompt)
 
