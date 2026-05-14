@@ -197,7 +197,7 @@ export const Route = createFileRoute("/vuelos_/$iata")({
   head: ({ params }) => ({
     meta: [
       {
-        title: `Vuelos desde Alicante a ${params.iata.toUpperCase()} · Dashboard`,
+        title: `Vuelos · Alicante ↔ ${params.iata.toUpperCase()} · Dashboard`,
       },
     ],
   }),
@@ -207,13 +207,19 @@ export const Route = createFileRoute("/vuelos_/$iata")({
 function DestinationDashboard() {
   const { iata } = Route.useParams();
   const code = iata.toUpperCase();
+  const flightType =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("type") === "L"
+      ? "L"
+      : "S";
+  const isArrival = flightType === "L";
   const [flights, setFlights] = useState<Flight[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancel = false;
-    fetch("/api/public/aena-flights?airport=ALC&type=S")
+    fetch(`/api/public/aena-flights?airport=ALC&type=${flightType}`)
       .then((r) => r.json())
       .then((d) => {
         if (cancel) return;
@@ -225,7 +231,7 @@ function DestinationDashboard() {
     return () => {
       cancel = true;
     };
-  }, [code]);
+  }, [code, flightType]);
 
   // Ventana semanal (7 días) desde hoy. Se recalcula cada día con los datos del backend.
   const window14 = useMemo(() => {
