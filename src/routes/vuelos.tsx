@@ -11,11 +11,11 @@ import { Plus, Maximize2 } from "lucide-react";
 export const Route = createFileRoute("/vuelos")({
   head: () => ({
     meta: [
-      { title: "Mapa de destinos desde Alicante" },
+      { title: "Mapa de vuelos · Alicante-Elche" },
       {
         name: "description",
         content:
-          "Mapa interactivo con todos los destinos directos desde el aeropuerto de Alicante-Elche. Selecciona una ciudad para ver sus métricas.",
+          "Mapa interactivo con destinos y orígenes del aeropuerto de Alicante-Elche. Selecciona una ciudad para ver sus métricas semanales.",
       },
     ],
   }),
