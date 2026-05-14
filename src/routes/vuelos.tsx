@@ -465,10 +465,12 @@ function ConnectivityMap({
   cities,
   selectedCity,
   onSelectCity,
+  flightType,
 }: {
   cities: CityAgg[];
   selectedCity: string | null;
   onSelectCity: (iata: string) => void;
+  flightType: "S" | "L";
 }) {
   const alc = project(COORDS.ALC);
 
