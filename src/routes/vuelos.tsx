@@ -160,14 +160,14 @@ function inferFreqLabel(perDay: number): { label: string; cls: string } {
 }
 
 const FREQ_TIERS: { min: number; max: number; color: string; width: number }[] = [
-  { min: 25, max: Infinity, color: "#FF3B3B", width: 0.6 },
-  { min: 18, max: 25, color: "#FF7A1A", width: 0.5 },
-  { min: 12, max: 18, color: "#FFD400", width: 0.45 },
-  { min: 8, max: 12, color: "#34D399", width: 0.4 },
-  { min: 5, max: 8, color: "#22D3EE", width: 0.35 },
-  { min: 3, max: 5, color: "#60A5FA", width: 0.3 },
-  { min: 2, max: 3, color: "#A78BFA", width: 0.28 },
-  { min: 1, max: 2, color: "#F472B6", width: 0.25 },
+  { min: 25, max: Infinity, color: "#FF3B3B", width: 1.4 },
+  { min: 18, max: 25, color: "#FF7A1A", width: 1.2 },
+  { min: 12, max: 18, color: "#FFD400", width: 1.05 },
+  { min: 8, max: 12, color: "#34D399", width: 0.95 },
+  { min: 5, max: 8, color: "#22D3EE", width: 0.85 },
+  { min: 3, max: 5, color: "#60A5FA", width: 0.75 },
+  { min: 2, max: 3, color: "#A78BFA", width: 0.7 },
+  { min: 1, max: 2, color: "#F472B6", width: 0.65 },
 ];
 
 function freqTier(total: number) {
