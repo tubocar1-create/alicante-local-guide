@@ -338,7 +338,7 @@ function VuelosDashboard() {
           </Link>
           <div className="flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/5 px-2.5 py-1 text-[10px] uppercase tracking-widest text-cyan-300">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-400" />
-            Live · AENA
+            Actualización semanal
           </div>
         </header>
 
@@ -353,20 +353,20 @@ function VuelosDashboard() {
             </span>
           </h1>
           <p className="mt-1 text-xs text-slate-400 md:text-sm">
-            Próximos 7 días · datos inferidos de programación AENA
+            Próximos 7 días · programación inferida, refresco cada domingo
           </p>
         </div>
 
         {loading && (
           <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-12 text-center text-sm text-slate-400">
             <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-cyan-500/30 border-t-cyan-400" />
-            Cargando datos de AENA…
+            Cargando programación…
           </div>
         )}
 
         {!loading && error && (
           <div className="rounded-2xl border border-red-900/50 bg-red-950/30 p-6 text-sm text-red-300">
-            No se pudo conectar con AENA. Reintenta en unos minutos.
+            No hay datos de programación disponibles ahora mismo.
           </div>
         )}
 
