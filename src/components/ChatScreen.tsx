@@ -38,7 +38,7 @@ const TILE_STYLES: Record<string, { img: string; bg: string }> = {
   Turismo:      { img: tileTurismo, bg: "oklch(0.94 0.05 25)" },
   "Turismo, playa y aventuras": { img: tilePlayaAventura, bg: "oklch(0.93 0.07 220)" },
   Mapa:         { img: tileMapa,    bg: "oklch(0.93 0.06 200)" },
-  Bus:          { img: tileBus,     bg: "oklch(0.93 0.06 190)" },
+  "Transporte público": { img: tileBus, bg: "oklch(0.93 0.06 190)" },
 };
 
 type Msg = { role: "user" | "assistant"; content: string };
