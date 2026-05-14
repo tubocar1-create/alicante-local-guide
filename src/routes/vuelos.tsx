@@ -530,9 +530,17 @@ function ConnectivityMap({
             const dx = x2 - x1;
             const dy = y2 - y1;
             const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+            // Curva con dirección y magnitud variable por destino para
+            // separar rutas que de otro modo se superpondrían.
+            const angle = Math.atan2(dy, dx); // -π..π, dirección desde ALC
+            // Norte (angle < 0) → curva a la izquierda; Sur → derecha.
+            const sign = angle < 0 ? -1 : 1;
+            // Variación pseudoaleatoria estable basada en el código IATA.
+            const hash = (c.iata.charCodeAt(0) * 31 + c.iata.charCodeAt(1) * 7 + c.iata.charCodeAt(2)) % 100;
+            const jitter = 0.6 + (hash / 100) * 0.9; // 0.6..1.5
+            const lift = sign * Math.min(dist * 0.28 * jitter, 260);
             const nx = -dy / dist;
             const ny = dx / dist;
-            const lift = Math.min(dist * 0.22, 180);
             const cx = mx + nx * lift;
             const cy = my + ny * lift;
             const path = `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`;
