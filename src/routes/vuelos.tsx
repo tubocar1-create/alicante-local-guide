@@ -720,13 +720,13 @@ function ConnectivityMap({
               {/* Top-left header chip */}
               <div className="pointer-events-none absolute left-3 top-3 z-10 flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-slate-300 backdrop-blur-md">
                 <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee]" />
-                ALC → TLV
+                ALC · {drawn.length} destinos
               </div>
 
               {/* Frequency legend */}
               <div className="pointer-events-none absolute right-3 bottom-3 z-10 rounded-2xl border border-white/[0.08] bg-[rgba(8,12,20,0.75)] px-3 py-2 backdrop-blur-xl">
                 <p className="text-[9px] uppercase tracking-[0.25em] text-slate-400">
-                  Radio máximo · Tel Aviv en borde
+                  Red completa de destinos directos
                 </p>
               </div>
 
