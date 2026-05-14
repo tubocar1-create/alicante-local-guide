@@ -5,7 +5,6 @@ import {
   Armchair,
   CalendarDays,
   TrendingUp,
-  Lightbulb,
   Bus,
   ArrowLeft,
 } from "lucide-react";
@@ -323,8 +322,6 @@ function DestinationDashboard() {
     });
   }, [airlinesAgg]);
 
-  // Tip aerolínea más barata (placeholder: la que tiene más vuelos directos = más oferta y suele ser low-cost)
-  const cheapestAirline = airlinesAgg[0]?.[0];
 
   if (loading) {
     return (
@@ -532,18 +529,7 @@ function DestinationDashboard() {
       </div>
 
       {/* FOOTER TIPS */}
-      <div className="mt-3 grid gap-3 rounded-2xl border border-slate-800 bg-slate-900/40 p-3 md:grid-cols-3">
-        <div className="flex items-start gap-2">
-          <Lightbulb className="h-4 w-4 flex-shrink-0 text-amber-300" />
-          <div className="text-xs">
-            <div className="font-semibold text-amber-300">Consejo</div>
-            <div className="text-slate-400">
-              {cheapestAirline
-                ? `${airlineName(cheapestAirline)} ofrece más frecuencia y los precios suelen ser más bajos.`
-                : "Reserva con antelación para mejores precios."}
-            </div>
-          </div>
-        </div>
+      <div className="mt-3 grid gap-3 rounded-2xl border border-slate-800 bg-slate-900/40 p-3 md:grid-cols-2">
         <div className="flex items-start gap-2">
           <Bus className="h-4 w-4 flex-shrink-0 text-cyan-300" />
           <div className="text-xs">
@@ -558,7 +544,7 @@ function DestinationDashboard() {
         <div className="flex items-start gap-2">
           <Plane className="h-4 w-4 flex-shrink-0 text-violet-300" />
           <div className="text-xs">
-            <div className="font-semibold text-violet-300">Aerolíneas</div>
+            <div className="font-semibold text-violet-300">Aerolíneas que operan</div>
             <div className="text-slate-400">
               {airlinesAgg.map(([c]) => airlineName(c)).join(" · ")}
             </div>
@@ -586,23 +572,12 @@ function Shell({ children }: { children: React.ReactNode }) {
     >
       <div className="relative mx-auto max-w-7xl px-3 pb-10 pt-5 md:px-6">
         <header className="mb-4 flex items-center justify-between">
-          <button
-            onClick={() => {
-              if (typeof window !== "undefined") {
-                if (window.history.length > 1) window.history.back();
-                else window.location.href = "/vuelos";
-              }
-            }}
+          <Link
+            to="/vuelos"
             className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1.5 text-xs text-slate-300 transition hover:border-cyan-500/50 hover:text-cyan-300"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            Volver
-          </button>
-          <Link
-            to="/vuelos"
-            className="text-[10px] uppercase tracking-[0.25em] text-slate-500 transition hover:text-cyan-300"
-          >
-            Mapa de destinos
+            Volver al mapa
           </Link>
         </header>
         {children}
