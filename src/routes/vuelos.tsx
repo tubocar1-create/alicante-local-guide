@@ -788,7 +788,7 @@ function MiniStat({
   accent,
 }: {
   label: string;
-  value: number;
+  value: number | string;
   accent?: boolean;
 }) {
   return (
