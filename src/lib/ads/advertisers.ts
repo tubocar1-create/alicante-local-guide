@@ -430,6 +430,7 @@ const DISPLAY_ORDER: string[] = [
   "trafico-alicante",
   "adda-alicante",
   "info-alicante",
+  "prensa-alicante",
   "rabasa-alicante",
   "aire-alicante",
   "stereo-alicante",
