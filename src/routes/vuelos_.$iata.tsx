@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   Plane,
@@ -197,7 +197,7 @@ export const Route = createFileRoute("/vuelos_/$iata")({
   head: ({ params }) => ({
     meta: [
       {
-        title: `Vuelos desde Alicante a ${params.iata.toUpperCase()} · Dashboard`,
+        title: `Vuelos · Alicante ↔ ${params.iata.toUpperCase()} · Dashboard`,
       },
     ],
   }),
@@ -207,13 +207,19 @@ export const Route = createFileRoute("/vuelos_/$iata")({
 function DestinationDashboard() {
   const { iata } = Route.useParams();
   const code = iata.toUpperCase();
+  const flightType =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("type") === "L"
+      ? "L"
+      : "S";
+  const isArrival = flightType === "L";
   const [flights, setFlights] = useState<Flight[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancel = false;
-    fetch("/api/public/aena-flights?airport=ALC&type=S")
+    fetch(`/api/public/aena-flights?airport=ALC&type=${flightType}`)
       .then((r) => r.json())
       .then((d) => {
         if (cancel) return;
@@ -225,7 +231,7 @@ function DestinationDashboard() {
     return () => {
       cancel = true;
     };
-  }, [code]);
+  }, [code, flightType]);
 
   // Ventana semanal (7 días) desde hoy. Se recalcula cada día con los datos del backend.
   const window14 = useMemo(() => {
@@ -323,7 +329,7 @@ function DestinationDashboard() {
 
   if (loading) {
     return (
-      <Shell>
+      <Shell flightType={flightType}>
         <div className="flex h-[60vh] items-center justify-center text-sm text-slate-500">
           <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-cyan-500/30 border-t-cyan-400" />
         </div>
@@ -332,9 +338,11 @@ function DestinationDashboard() {
   }
   if (error || total === 0) {
     return (
-      <Shell>
+      <Shell flightType={flightType}>
         <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-8 text-center text-sm text-slate-400">
-          No hay vuelos directos disponibles desde Alicante a {code} en los próximos días.
+          {isArrival
+            ? `No hay vuelos directos hacia Alicante desde ${code} en los próximos días.`
+            : `No hay vuelos directos disponibles desde Alicante a ${code} en los próximos días.`}
         </div>
       </Shell>
     );
@@ -349,12 +357,14 @@ function DestinationDashboard() {
     : "";
 
   return (
-    <Shell>
+    <Shell flightType={flightType}>
       {/* HEADER + KPIs */}
       <div className="mb-2 grid gap-2 rounded-2xl border border-slate-800 bg-slate-900/40 p-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
         <div>
           <h1 className="text-base font-semibold leading-tight md:text-lg">
-            Vuelos desde Alicante (ALC) a {ciudad} ({pais})
+            {isArrival
+              ? `Vuelos hacia Alicante (ALC) desde ${ciudad} (${pais})`
+              : `Vuelos desde Alicante (ALC) a ${ciudad} (${pais})`}
           </h1>
           <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-cyan-300">
             <CalendarDays className="h-3 w-3" />
@@ -467,7 +477,12 @@ function DestinationDashboard() {
                 const d = parseDate(f.fecha);
                 const day = `${WEEKDAYS_PRETTY[(d.getDay() + 6) % 7]} ${d.getDate()} ${MONTHS_LONG[d.getMonth()].slice(0, 3)}`;
                 const ac = f.iataCompania || "??";
-                const llegada = addMinutes(f.horaProgramada, dur.mins);
+                const salida = isArrival
+                  ? addMinutes(f.horaProgramada, -dur.mins)
+                  : f.horaProgramada;
+                const llegada = isArrival
+                  ? f.horaProgramada
+                  : addMinutes(f.horaProgramada, dur.mins);
                 return (
                   <div
                     key={i}
@@ -484,9 +499,9 @@ function DestinationDashboard() {
                       {airlineName(ac).split(" ")[0]}
                     </span>
                     <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] font-bold text-cyan-300">
-                      {code}
+                      {isArrival ? `${code} → ALC` : `ALC → ${code}`}
                     </span>
-                    <span className="font-mono text-slate-200">{f.horaProgramada}</span>
+                    <span className="font-mono text-slate-200">{salida}</span>
                     <span className="font-mono text-slate-400">{llegada}</span>
                     <span className="font-mono text-slate-400">{dur.label}</span>
                   </div>
@@ -495,7 +510,9 @@ function DestinationDashboard() {
             </div>
           </div>
           <p className="mt-2 text-center text-[10px] text-slate-500">
-            * Llegada y duración estimadas. Datos de salida en tiempo real (AENA).
+            {isArrival
+              ? "* Salida y duración estimadas. Datos de llegada en tiempo real (AENA)."
+              : "* Llegada y duración estimadas. Datos de salida en tiempo real (AENA)."}
           </p>
         </Card>
       </div>
@@ -510,7 +527,7 @@ function DestinationDashboard() {
 
 // ---------- UI atoms ----------
 
-function Shell({ children }: { children: React.ReactNode }) {
+function Shell({ children, flightType }: { children: React.ReactNode; flightType?: "S" | "L" }) {
   return (
     <div
       className="min-h-screen text-slate-100"
@@ -520,13 +537,13 @@ function Shell({ children }: { children: React.ReactNode }) {
     >
       <div className="relative mx-auto max-w-7xl px-3 pb-6 pt-3 md:px-6">
         <header className="mb-2 flex items-center justify-between">
-          <Link
-            to="/vuelos"
+          <a
+            href={`/vuelos${flightType === "L" ? "?type=L" : ""}`}
             className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1 text-[11px] text-slate-300 transition hover:border-cyan-500/50 hover:text-cyan-300"
           >
             <ArrowLeft className="h-3 w-3" />
             Volver al mapa
-          </Link>
+          </a>
         </header>
         {children}
       </div>
