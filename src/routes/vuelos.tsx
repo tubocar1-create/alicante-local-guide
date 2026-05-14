@@ -421,9 +421,9 @@ function ConnectivityMap({
                   <path
                     key={i}
                     d={d}
-                    fill="#0f244c"
-                    stroke="#1d3a73"
-                    strokeWidth={0.6}
+                    fill="#1c3a78"
+                    stroke="#3a5fa8"
+                    strokeWidth={0.5}
                     opacity={0.95}
                   />
                 );
