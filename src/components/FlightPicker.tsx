@@ -184,13 +184,13 @@ export function FlightPicker({ onClose }: { onClose: () => void }) {
       {loading && (
         <div className="flex items-center justify-center py-8 text-muted-foreground">
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          <span className="text-sm">Cargando vuelos de AENA…</span>
+          <span className="text-sm">Cargando vuelos…</span>
         </div>
       )}
 
       {!loading && error && (
         <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
-          No pude conectar con AENA ahora mismo. Inténtalo en unos minutos.
+          No pude cargar los vuelos ahora mismo. Inténtalo en unos minutos.
         </p>
       )}
 
