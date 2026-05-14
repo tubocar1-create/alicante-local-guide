@@ -827,7 +827,7 @@ function ConnectivityMap({
               {/* Frequency legend */}
               <div className="pointer-events-none absolute right-3 bottom-3 z-10 rounded-2xl border border-white/[0.08] bg-[rgba(8,12,20,0.75)] px-3 py-2 backdrop-blur-xl">
                 <p className="text-[9px] uppercase tracking-[0.25em] text-slate-400">
-                  Red completa de destinos directos
+                  {flightType === "L" ? "Red completa de orígenes directos" : "Red completa de destinos directos"}
                 </p>
               </div>
 
