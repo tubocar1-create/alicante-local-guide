@@ -578,25 +578,25 @@ function ConnectivityMap({
                 style={{ cursor: "pointer" }}
                 opacity={dim ? 0.35 : 1}
               >
-                <circle cx={x} cy={y} r={14} fill="transparent" />
+                <circle cx={x} cy={y} r={28} fill="transparent" />
                 {isFocus && (
                   <circle
                     cx={x}
                     cy={y}
-                    r={5}
+                    r={11}
                     fill={tier.color}
                     opacity={0.25}
-                    style={{ filter: `drop-shadow(0 0 6px ${tier.color})` }}
+                    style={{ filter: `drop-shadow(0 0 12px ${tier.color})` }}
                   />
                 )}
                 <circle
                   cx={x}
                   cy={y}
-                  r={isFocus ? 1.4 : 0.9}
+                  r={isFocus ? 3 : 2}
                   fill="#e2e8f0"
                   opacity={0.95}
                   style={{
-                    filter: `drop-shadow(0 0 ${isFocus ? 3 : 1}px ${tier.color})`,
+                    filter: `drop-shadow(0 0 ${isFocus ? 6 : 2}px ${tier.color})`,
                   }}
                 />
                 {/* persistent tiny IATA label */}
@@ -604,16 +604,16 @@ function ConnectivityMap({
                   const lab = labelFor(c);
                   return (
                     <text
-                      x={x + lab.dx}
-                      y={y + 0.7}
+                      x={x + lab.dx * 2}
+                      y={y + 1.4}
                       fill={isFocus ? "#ffffff" : "#9fb4d6"}
-                      fontSize={2}
+                      fontSize={4.4}
                       fontWeight={600}
                       textAnchor={lab.anchor as "start" | "end"}
                       style={{
                         pointerEvents: "none",
                         letterSpacing: "0.06em",
-                        textShadow: "0 0 2px rgba(0,0,0,0.9)",
+                        textShadow: "0 0 4px rgba(0,0,0,0.95)",
                       }}
                     >
                       {c.iata}
@@ -623,15 +623,15 @@ function ConnectivityMap({
                 {isFocus && (
                   <text
                     x={x}
-                    y={y - 3.5}
+                    y={y - 7}
                     fill="#ffffff"
-                    fontSize={2.8}
+                    fontSize={6}
                     fontWeight={700}
                     textAnchor="middle"
                     style={{
                       pointerEvents: "none",
                       letterSpacing: "0.04em",
-                      textShadow: "0 0 3px rgba(0,0,0,0.9)",
+                      textShadow: "0 0 6px rgba(0,0,0,0.95)",
                     }}
                   >
                     {cleanCityName(c.ciudad).toUpperCase()}
@@ -643,22 +643,22 @@ function ConnectivityMap({
 
           {/* Alicante hub */}
           <g style={{ pointerEvents: "none" }}>
-            <circle cx={alc[0]} cy={alc[1]} r={14} fill="url(#alcGlow)" />
+            <circle cx={alc[0]} cy={alc[1]} r={28} fill="url(#alcGlow)" />
             <circle
               cx={alc[0]}
               cy={alc[1]}
-              r={1.6}
+              r={3.5}
               fill="#ffffff"
               style={{
                 filter:
-                  "drop-shadow(0 0 3px #ffffff) drop-shadow(0 0 7px #3b82f6)",
+                  "drop-shadow(0 0 6px #ffffff) drop-shadow(0 0 14px #3b82f6)",
               }}
             />
             <text
               x={alc[0]}
-              y={alc[1] + 4}
+              y={alc[1] + 8}
               fill="#ffffff"
-              fontSize={2.4}
+              fontSize={5.2}
               fontWeight={800}
               textAnchor="middle"
               style={{ letterSpacing: "0.14em" }}
