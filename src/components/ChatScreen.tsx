@@ -133,6 +133,7 @@ export function ChatScreen() {
   const [showQrInfo, setShowQrInfo] = useState(false);
   const [mode, setMode] = useState<"transit" | null>(null);
   const [showBusPicker, setShowBusPicker] = useState(false);
+  const [showFlightPicker, setShowFlightPicker] = useState(false);
 
   useEffect(() => {
     const handler = (e: Event) => {
