@@ -477,7 +477,12 @@ function DestinationDashboard() {
                 const d = parseDate(f.fecha);
                 const day = `${WEEKDAYS_PRETTY[(d.getDay() + 6) % 7]} ${d.getDate()} ${MONTHS_LONG[d.getMonth()].slice(0, 3)}`;
                 const ac = f.iataCompania || "??";
-                const llegada = addMinutes(f.horaProgramada, dur.mins);
+                const salida = isArrival
+                  ? addMinutes(f.horaProgramada, -dur.mins)
+                  : f.horaProgramada;
+                const llegada = isArrival
+                  ? f.horaProgramada
+                  : addMinutes(f.horaProgramada, dur.mins);
                 return (
                   <div
                     key={i}
@@ -494,9 +499,9 @@ function DestinationDashboard() {
                       {airlineName(ac).split(" ")[0]}
                     </span>
                     <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] font-bold text-cyan-300">
-                      {code}
+                      {isArrival ? `${code} → ALC` : `ALC → ${code}`}
                     </span>
-                    <span className="font-mono text-slate-200">{f.horaProgramada}</span>
+                    <span className="font-mono text-slate-200">{salida}</span>
                     <span className="font-mono text-slate-400">{llegada}</span>
                     <span className="font-mono text-slate-400">{dur.label}</span>
                   </div>
@@ -505,7 +510,9 @@ function DestinationDashboard() {
             </div>
           </div>
           <p className="mt-2 text-center text-[10px] text-slate-500">
-            * Llegada y duración estimadas. Datos de salida en tiempo real (AENA).
+            {isArrival
+              ? "* Salida y duración estimadas. Datos de llegada en tiempo real (AENA)."
+              : "* Llegada y duración estimadas. Datos de salida en tiempo real (AENA)."}
           </p>
         </Card>
       </div>
