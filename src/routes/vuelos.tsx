@@ -1320,7 +1320,7 @@ function CityDetail({
         </ul>
 
         <p className="mb-2 text-[10px] uppercase tracking-[0.2em] text-cyan-400/70">
-          {flightType === "L" ? "Próximas llegadas" : "Próximas salidas"}
+          Próximos vuelos
         </p>
         <ul className="space-y-1">
           {flights.slice(0, 12).map((f, i) => (
