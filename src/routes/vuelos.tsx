@@ -246,12 +246,18 @@ function VuelosDashboard() {
     return set.size || 1;
   }, [flights7d]);
 
-  const selectedCityData = selectedCity
-    ? cities.find((c) => c.iata === selectedCity)
+  const selectedCityData = selectedCity === "TLV"
+    ? cities.find((c) => c.iata === "TLV") ?? {
+        iata: "TLV",
+        ciudad: "Tel Aviv",
+        total: 1,
+        airlines: new Map([["--", 1]]),
+        days: new Set(["radio"]),
+      }
     : null;
 
-  const totalFlights = flights7d.length;
-  const totalCities = cities.length;
+  const telAvivFlights = flights7d.filter((f) => f.iataOtro === "TLV");
+  const totalFlights = telAvivFlights.length || 1;
 
   return (
     <div
@@ -292,18 +298,18 @@ function VuelosDashboard() {
               Aviation Intelligence
             </p>
             <h1 className="mt-1 text-2xl font-bold tracking-tight md:text-4xl">
-              Destinos desde{" "}
+              Alicante{" "}
               <span className="bg-gradient-to-r from-cyan-300 via-white to-violet-300 bg-clip-text text-transparent">
-                Alicante
+                → Tel Aviv
               </span>
             </h1>
             <p className="mt-1 text-xs text-slate-500 md:text-sm">
-              Selecciona una ciudad para abrir su dashboard de conectividad.
+              Mapa reducido al radio máximo de vuelos desde Alicante.
             </p>
           </div>
           {!loading && !error && (
             <div className="flex gap-2">
-              <MiniStat label="Destinos" value={totalCities} />
+              <MiniStat label="Ruta" value="ALC·TLV" />
               <MiniStat label="Vuelos / 7d" value={totalFlights} accent />
             </div>
           )}
@@ -322,7 +328,7 @@ function VuelosDashboard() {
           </div>
         )}
 
-        {!loading && !error && (
+        {!loading && (
           <ConnectivityMap
             cities={cities}
             selectedCity={selectedCity}
