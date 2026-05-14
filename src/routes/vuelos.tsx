@@ -819,7 +819,7 @@ function ConnectivityMap({
               {/* Top-left header chip */}
               <div className="pointer-events-none absolute left-3 top-3 z-10 flex items-center gap-2 rounded-full border border-cyan-400/30 bg-black/50 px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-cyan-200 backdrop-blur-md">
                 <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee]" />
-                Mapa interactivo · seleccione su destino
+                {flightType === "L" ? "Mapa de llegadas · seleccione su origen" : "Mapa interactivo · seleccione su destino"}
               </div>
 
               {/* Frequency legend */}
