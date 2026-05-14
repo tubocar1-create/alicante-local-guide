@@ -557,7 +557,7 @@ function ConnectivityMap({
             const tier = freqTier(c.total);
             const isFocus = focusCity === c.iata;
             const dim = focusCity && !isFocus;
-            const opacity = dim ? 0.08 : isFocus ? 1 : 0.85;
+            const opacity = dim ? 0.05 : isFocus ? 0.65 : 0.45;
 
             return (
               <g key={c.iata} style={{ color: tier.color }}>
@@ -566,8 +566,8 @@ function ConnectivityMap({
                   d={path}
                   fill="none"
                   stroke={tier.color}
-                  strokeWidth={tier.width + 4}
-                  opacity={opacity * 0.18}
+                  strokeWidth={tier.width + 2}
+                  opacity={opacity * 0.08}
                   filter="url(#softGlow)"
                   strokeLinecap="round"
                 />
@@ -579,9 +579,6 @@ function ConnectivityMap({
                   strokeWidth={tier.width}
                   opacity={opacity}
                   strokeLinecap="round"
-                  style={{
-                    filter: `drop-shadow(0 0 ${isFocus ? 6 : 3}px ${tier.color})`,
-                  }}
                 />
               </g>
             );
