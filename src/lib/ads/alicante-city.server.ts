@@ -764,10 +764,12 @@ function decodeXmlEntities(s: string): string {
 }
 
 export async function fetchAlicantePressHeadlines(): Promise<NewsHeadline[] | null> {
+  // Solo medios alicantinos: Diario Información, Alicante Plaza, Alicante Press.
+  // (diariodealicante.com no devuelve resultados en Google News.)
   const queries = [
-    "Alicante",
-    "Alicante+cultura",
-    "Alicante+evento",
+    "site:informacion.es",
+    "site:alicanteplaza.es",
+    "site:alicantepress.com",
   ];
   const all: NewsHeadline[] = [];
   for (const q of queries) {
