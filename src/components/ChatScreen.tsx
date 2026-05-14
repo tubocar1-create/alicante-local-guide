@@ -337,7 +337,7 @@ export function ChatScreen() {
       <AdBanner />
 
       {/* Messages */}
-      <div ref={scrollRef} className="relative flex-1 overflow-y-auto px-4 py-5">
+      <div ref={scrollRef} className="relative flex-1 overflow-y-auto px-4 pt-4 pb-5">
         <div className="mx-auto flex max-w-2xl flex-col gap-3">
           {/* Welcome hero — shows on first open, fades when chat starts */}
           {isWelcome && (
@@ -349,8 +349,9 @@ export function ChatScreen() {
                   width={1536}
                   height={1024}
                   className="absolute inset-0 h-full w-full object-cover"
+                  style={{ filter: "brightness(1.12) saturate(1.25) contrast(1.05)" }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/15 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-transparent" />
                 <button
                   type="button"
                   onClick={() => setShowQrInfo(true)}
