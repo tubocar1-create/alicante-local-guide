@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Plane, Clock, X, Sparkles, Building2, TrendingUp, Calendar } from "lucide-react";
 import {
   PieChart,
