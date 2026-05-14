@@ -418,7 +418,11 @@ function VuelosDashboard() {
               <ConnectivityMap
                 cities={cities}
                 selectedCity={selectedCity}
-                onSelectCity={(c) => setSelectedCity(c)}
+                onSelectCity={(c) => {
+                  if (typeof window !== "undefined") {
+                    window.open(`/vuelos/${c}`, "_blank", "noopener,noreferrer");
+                  }
+                }}
               />
             </div>
           </div>
