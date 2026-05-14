@@ -349,7 +349,7 @@ export function ChatScreen() {
                   width={1536}
                   height={1024}
                   className="absolute inset-0 h-full w-full object-cover"
-                  style={{ filter: "brightness(1.12) saturate(1.25) contrast(1.05)" }}
+                  style={{ filter: "brightness(1.05) saturate(1.15) contrast(1.08) hue-rotate(-12deg) sepia(0.12)" }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-transparent" />
                 <button
