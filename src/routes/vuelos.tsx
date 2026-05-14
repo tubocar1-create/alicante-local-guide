@@ -119,11 +119,54 @@ const LON_MAX = 36;
 const LAT_MIN = 28;
 const LAT_MAX = 62;
 
+const PROJ = geoEquirectangular().fitExtent(
+  [
+    [0, 0],
+    [VIEW_W, VIEW_H],
+  ],
+  {
+    type: "Polygon",
+    coordinates: [
+      [
+        [LON_MIN, LAT_MIN],
+        [LON_MAX, LAT_MIN],
+        [LON_MAX, LAT_MAX],
+        [LON_MIN, LAT_MAX],
+        [LON_MIN, LAT_MIN],
+      ],
+    ],
+  } as Geometry,
+);
+const GEOPATH = geoPath(PROJ);
+
 function project([lon, lat]: [number, number]): [number, number] {
-  const x = ((lon - LON_MIN) / (LON_MAX - LON_MIN)) * VIEW_W;
-  const y = ((LAT_MAX - lat) / (LAT_MAX - LAT_MIN)) * VIEW_H;
-  return [x, y];
+  const p = PROJ([lon, lat]);
+  return p ? [p[0], p[1]] : [0, 0];
 }
+
+// World inset projection (whole globe in tiny box)
+const WORLD_W = 220;
+const WORLD_H = 110;
+const WORLD_PROJ = geoEquirectangular().fitExtent(
+  [
+    [0, 0],
+    [WORLD_W, WORLD_H],
+  ],
+  {
+    type: "Polygon",
+    coordinates: [
+      [
+        [-180, -60],
+        [180, -60],
+        [180, 80],
+        [-180, 80],
+        [-180, -60],
+      ],
+    ],
+  } as Geometry,
+);
+const WORLD_GEOPATH = geoPath(WORLD_PROJ);
+
 
 // ---------------- Airline palette ----------------
 const AIRLINE_COLORS: Record<string, string> = {
