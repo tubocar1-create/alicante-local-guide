@@ -228,7 +228,27 @@ function inferFreqLabel(perDay: number): { label: string; cls: string } {
   return { label: "Baja", cls: "text-slate-300 bg-slate-500/10 border-slate-500/30" };
 }
 
+// Frequency tiers (vuelos / 7 días) — paleta inspirada en la referencia.
+const FREQ_TIERS: { min: number; max: number; color: string; label: string; width: number }[] = [
+  { min: 25, max: Infinity, color: "#FF3B3B", label: "+25", width: 4.2 },
+  { min: 18, max: 25, color: "#FF7A1A", label: "18 – 25", width: 3.6 },
+  { min: 12, max: 18, color: "#FFD400", label: "12 – 18", width: 3.0 },
+  { min: 8, max: 12, color: "#34D399", label: "8 – 12", width: 2.4 },
+  { min: 5, max: 8, color: "#22D3EE", label: "5 – 8", width: 1.9 },
+  { min: 3, max: 5, color: "#60A5FA", label: "3 – 5", width: 1.5 },
+  { min: 2, max: 3, color: "#A78BFA", label: "2", width: 1.2 },
+  { min: 1, max: 2, color: "#F472B6", label: "1", width: 1 },
+];
+
+function freqTier(total: number) {
+  return (
+    FREQ_TIERS.find((t) => total >= t.min && total < t.max) ??
+    FREQ_TIERS[FREQ_TIERS.length - 1]
+  );
+}
+
 // ---------------- Component ----------------
+
 
 function VuelosDashboard() {
   const [flights, setFlights] = useState<Flight[]>([]);
