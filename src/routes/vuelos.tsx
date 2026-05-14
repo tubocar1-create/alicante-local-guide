@@ -89,13 +89,14 @@ const COORDS: Record<string, [number, number]> = {
   INN: [11.34, 47.26],
 };
 
-// Map projection — radio Alicante → Tel Aviv, con TLV pegado al borde derecho
+// Map projection — vista inicial amplia: la ruta ALC → TLV arranca en esta escala
+// y el zoom mínimo queda bloqueado en esta misma posición.
 const VIEW_W = 1000;
 const VIEW_H = 562;
-const LON_MIN = -6.5;
-const LON_MAX = 36.2;
-const LAT_MIN = 28.4;
-const LAT_MAX = 45.8;
+const LON_MIN = -125;
+const LON_MAX = 125;
+const LAT_MIN = -55;
+const LAT_MAX = 75;
 
 const PROJ = geoEquirectangular().fitExtent(
   [
