@@ -89,13 +89,13 @@ const COORDS: Record<string, [number, number]> = {
   INN: [11.34, 47.26],
 };
 
-// Map projection — Europe + Mediterráneo, Tel Aviv (lon 34.9) marca el borde derecho
+// Map projection — radio Alicante → Tel Aviv, con TLV pegado al borde derecho
 const VIEW_W = 1000;
-const VIEW_H = 760;
-const LON_MIN = -17;
-const LON_MAX = 36;
-const LAT_MIN = 28;
-const LAT_MAX = 62;
+const VIEW_H = 562;
+const LON_MIN = -6.5;
+const LON_MAX = 36.2;
+const LAT_MIN = 28.4;
+const LAT_MAX = 45.8;
 
 const PROJ = geoEquirectangular().fitExtent(
   [
