@@ -334,7 +334,7 @@ export function ChatScreen() {
         </button>
       </header>
 
-      <AdBanner />
+      {isWelcome && <AdBanner />}
 
       {/* Messages */}
       <div ref={scrollRef} className="relative flex-1 overflow-y-auto px-4 pt-6 pb-5">
