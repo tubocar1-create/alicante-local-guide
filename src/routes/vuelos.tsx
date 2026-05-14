@@ -112,6 +112,59 @@ function project([lon, lat]: [number, number]): [number, number] {
   return p ? [p[0], p[1]] : [0, 0];
 }
 
+// ---------------- Country mapping (IATA → ISO2) ----------------
+const IATA_COUNTRY: Record<string, string> = {
+  ALC: "ES", MAD: "ES", BCN: "ES", PMI: "ES", TFN: "ES", TFS: "ES", LPA: "ES",
+  BIO: "ES", SCQ: "ES", VGO: "ES", SVQ: "ES", AGP: "ES", IBZ: "ES", MAH: "ES",
+  LCG: "ES", OVD: "ES", VLL: "ES", MLN: "ES", GRX: "ES", XRY: "ES",
+  STN: "GB", LGW: "GB", LTN: "GB", LHR: "GB", LCY: "GB", MAN: "GB", BHX: "GB",
+  LBA: "GB", EDI: "GB", GLA: "GB", NCL: "GB", LPL: "GB", BRS: "GB", EMA: "GB",
+  BFS: "GB", BOH: "GB", EXT: "GB", NWI: "GB", CWL: "GB",
+  SNN: "IE", DUB: "IE", ORK: "IE", LDY: "IE",
+  CDG: "FR", ORY: "FR", BVA: "FR", NCE: "FR", LYS: "FR", MRS: "FR", TLS: "FR",
+  NTE: "FR", BOD: "FR", BIQ: "FR",
+  BRU: "BE", CRL: "BE",
+  AMS: "NL", EIN: "NL", RTM: "NL",
+  LUX: "LU",
+  FRA: "DE", MUC: "DE", BER: "DE", DUS: "DE", HAM: "DE", CGN: "DE", STR: "DE",
+  HHN: "DE", NRN: "DE", FMM: "DE",
+  ZRH: "CH", GVA: "CH", BSL: "CH",
+  VIE: "AT", SZG: "AT", INN: "AT",
+  FCO: "IT", CIA: "IT", MXP: "IT", LIN: "IT", BGY: "IT", VCE: "IT", TSF: "IT",
+  NAP: "IT", BLQ: "IT", PSA: "IT", TRN: "IT", CTA: "IT", PMO: "IT", BRI: "IT", CAG: "IT",
+  LIS: "PT", OPO: "PT", FAO: "PT", FNC: "PT",
+  CPH: "DK", BLL: "DK", AAL: "DK",
+  OSL: "NO", TRF: "NO", BGO: "NO",
+  ARN: "SE", GOT: "SE", BMA: "SE", NYO: "SE",
+  HEL: "FI",
+  WAW: "PL", WMI: "PL", KRK: "PL", GDN: "PL", WRO: "PL", POZ: "PL",
+  PRG: "CZ", BUD: "HU", OTP: "RO", SOF: "BG",
+  ATH: "GR", SKG: "GR", RHO: "GR", HER: "GR",
+  TIA: "AL", BEG: "RS", ZAG: "HR", LJU: "SI",
+  TLL: "EE", RIX: "LV", VNO: "LT", KUN: "LT",
+  RAK: "MA", CMN: "MA", TNG: "MA", NDR: "MA", AHU: "MA", FEZ: "MA", OUD: "MA",
+  TTU: "MA", AGA: "MA",
+  MLA: "MT", LCA: "CY", PFO: "CY", TLV: "IL",
+};
+
+function flagEmoji(iata: string): string {
+  const cc = IATA_COUNTRY[iata];
+  if (!cc) return "🏳️";
+  return String.fromCodePoint(
+    ...cc.toUpperCase().split("").map((c) => 0x1f1e6 + c.charCodeAt(0) - 65),
+  );
+}
+
+const COUNTRY_NAME: Record<string, string> = {
+  ES: "España", GB: "Reino Unido", IE: "Irlanda", FR: "Francia", BE: "Bélgica",
+  NL: "Países Bajos", LU: "Luxemburgo", DE: "Alemania", CH: "Suiza", AT: "Austria",
+  IT: "Italia", PT: "Portugal", DK: "Dinamarca", NO: "Noruega", SE: "Suecia",
+  FI: "Finlandia", PL: "Polonia", CZ: "Chequia", HU: "Hungría", RO: "Rumanía",
+  BG: "Bulgaria", GR: "Grecia", AL: "Albania", RS: "Serbia", HR: "Croacia",
+  SI: "Eslovenia", EE: "Estonia", LV: "Letonia", LT: "Lituania", MA: "Marruecos",
+  MT: "Malta", CY: "Chipre", IL: "Israel",
+};
+
 // ---------------- Airline palette ----------------
 const AIRLINE_COLORS: Record<string, string> = {
   FR: "#FFD400", VY: "#FF6FB0", IB: "#E2261C", I2: "#E2261C", UX: "#9F2A6A",
