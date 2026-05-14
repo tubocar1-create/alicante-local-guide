@@ -408,6 +408,9 @@ function ConnectivityMap({
             <filter id="arcGlow">
               <feGaussianBlur stdDeviation="2" />
             </filter>
+            <clipPath id="mapClip">
+              <rect x={0} y={0} width={VIEW_W} height={VIEW_H} />
+            </clipPath>
           </defs>
 
           <rect width={VIEW_W} height={VIEW_H} fill="url(#seaGrad)" />
