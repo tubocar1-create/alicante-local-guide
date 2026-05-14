@@ -488,10 +488,10 @@ function ConnectivityMap({
                 />
                 <text
                   x={x + lab.dx}
-                  y={y - 5}
+                  y={y - 2}
                   fill="#e2ecff"
-                  fontSize={12}
-                  fontWeight={500}
+                  fontSize={6}
+                  fontWeight={600}
                   textAnchor={lab.anchor as "start" | "end"}
                   style={{ pointerEvents: "none" }}
                 >
@@ -499,13 +499,13 @@ function ConnectivityMap({
                 </text>
                 <text
                   x={x + lab.dx}
-                  y={y + 8}
+                  y={y + 5}
                   fill="#7d93b8"
-                  fontSize={10}
+                  fontSize={5}
                   textAnchor={lab.anchor as "start" | "end"}
                   style={{ pointerEvents: "none" }}
                 >
-                  ({c.iata})
+                  {c.iata}
                 </text>
               </g>
             );
