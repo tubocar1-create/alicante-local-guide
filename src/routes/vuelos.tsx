@@ -362,18 +362,6 @@ function ConnectivityMap({
   onSelectCity: (iata: string) => void;
 }) {
   const alc = project(COORDS.ALC);
-  const telAvivOnly = useMemo<CityAgg>(() => {
-    const live = cities.find((c) => c.iata === "TLV");
-    return (
-      live ?? {
-        iata: "TLV",
-        ciudad: "Tel Aviv",
-        total: 1,
-        airlines: new Map([["--", 1]]),
-        days: new Set(["radio"]),
-      }
-    );
-  }, [cities]);
 
   const [countries, setCountries] = useState<Feature<Geometry>[] | null>(null);
   useEffect(() => {
@@ -393,7 +381,10 @@ function ConnectivityMap({
     };
   }, []);
 
-  const drawn = useMemo(() => [telAvivOnly], [telAvivOnly]);
+  const drawn = useMemo(
+    () => cities.filter((c) => c.iata !== "ALC" && COORDS[c.iata]),
+    [cities],
+  );
 
   const cleanCityName = (raw: string) => {
     const first = raw.split("/")[0].trim();
