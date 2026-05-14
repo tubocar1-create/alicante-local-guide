@@ -14,7 +14,8 @@ export type BannerKind =
   | "trains"
   | "buses"
   | "regional_agenda"
-  | "mercadillos";
+  | "mercadillos"
+  | "news";
 
 export type Advertiser = {
   id: string;
