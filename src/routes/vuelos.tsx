@@ -721,28 +721,13 @@ function ConnectivityMap({
               {/* Top-left header chip */}
               <div className="pointer-events-none absolute left-3 top-3 z-10 flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-slate-300 backdrop-blur-md">
                 <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee]" />
-                Network · 7d
+                ALC → TLV
               </div>
 
               {/* Frequency legend */}
-              <div className="pointer-events-none absolute right-3 bottom-3 z-10 rounded-2xl border border-white/[0.08] bg-[rgba(8,12,20,0.75)] p-3 backdrop-blur-xl">
-                <p className="mb-2 text-[9px] uppercase tracking-[0.25em] text-slate-400">
-                  Frecuencia / 7d
-                </p>
-                <div className="space-y-1.5">
-                  {[
-                    { c: "#FF3B3B", l: "25+" },
-                    { c: "#FF7A1A", l: "18–25" },
-                    { c: "#FFD400", l: "12–18" },
-                    { c: "#34D399", l: "8–12" },
-                    { c: "#22D3EE", l: "5–8" },
-                    { c: "#A78BFA", l: "1–5" },
-                  ].map((t) => (
-                    <div key={t.l} className="flex items-center gap-2">
-                      <span
-                        className="h-[2px] w-6 rounded-full"
-                        style={{
-                          background: t.c,
+              <div className="pointer-events-none absolute right-3 bottom-3 z-10 rounded-2xl border border-white/[0.08] bg-[rgba(8,12,20,0.75)] px-3 py-2 backdrop-blur-xl">
+                <p className="text-[9px] uppercase tracking-[0.25em] text-slate-400">
+                  Radio máximo · Tel Aviv en borde
                           boxShadow: `0 0 6px ${t.c}`,
                         }}
                       />
