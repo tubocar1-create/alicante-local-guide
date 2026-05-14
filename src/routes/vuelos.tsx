@@ -815,184 +815,409 @@ function Insight({ title, body }: { title: string; body: string }) {
   );
 }
 
+type City = {
+  iata: string;
+  ciudad: string;
+  total: number;
+  airlines: Map<string, number>;
+};
+
 function ConnectivityMap({
   cities,
   airlines,
+  totalFlights,
+  destinationCount,
+  airlineCount,
   selectedCity,
   onSelectCity,
 }: {
-  cities: { iata: string; ciudad: string; total: number; airlines: Map<string, number> }[];
-  airlines: { code: string; total: number }[];
+  cities: City[];
+  airlines: { code: string; name: string; total: number }[];
+  totalFlights: number;
+  destinationCount: number;
+  airlineCount: number;
   selectedCity: string | null;
   onSelectCity: (iata: string) => void;
 }) {
   const alc = project(COORDS.ALC);
-  const maxTotal = Math.max(...cities.map((c) => c.total), 1);
 
-  const airlineIdx = useMemo(() => {
-    const m = new Map<string, number>();
-    airlines.forEach((a, i) => m.set(a.code, i));
-    return m;
-  }, [airlines]);
+  const [countries, setCountries] = useState<Feature<Geometry>[] | null>(null);
+  useEffect(() => {
+    let cancel = false;
+    fetch("https://unpkg.com/world-atlas@2/countries-110m.json")
+      .then((r) => r.json())
+      .then((topo: Topology) => {
+        if (cancel) return;
+        const obj = topo.objects.countries;
+        if (!obj) return;
+        const fc = feature(topo, obj) as unknown as FeatureCollection<Geometry>;
+        setCountries(fc.features);
+      })
+      .catch(() => {});
+    return () => {
+      cancel = true;
+    };
+  }, []);
+
+  const top10 = useMemo(() => cities.slice(0, 10), [cities]);
+  const topAirlines = useMemo(() => airlines.slice(0, 8), [airlines]);
+  const drawn = useMemo(() => cities.filter((c) => COORDS[c.iata]), [cities]);
+
+  const labelFor = (c: City) => {
+    const [lon] = COORDS[c.iata];
+    const right = lon >= -0.5;
+    return { anchor: right ? "start" : "end", dx: right ? 7 : -7 };
+  };
 
   return (
-    <div className="relative aspect-[4/3] w-full">
-      <svg
-        viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
-        className="absolute inset-0 h-full w-full"
-        preserveAspectRatio="xMidYMid meet"
-      >
-        <defs>
-          <radialGradient id="alcGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#22D3EE" stopOpacity="0.7" />
-            <stop offset="100%" stopColor="#22D3EE" stopOpacity="0" />
-          </radialGradient>
-          <filter id="neonBlur">
-            <feGaussianBlur stdDeviation="2.5" />
-          </filter>
-        </defs>
+    <div className="overflow-hidden rounded-2xl border border-slate-800/80 bg-[#06122a]">
+      <div className="flex items-start justify-between border-b border-white/5 px-4 py-3 md:px-6 md:py-4">
+        <div>
+          <h2 className="text-base font-semibold text-white md:text-lg">
+            Conectividad aérea desde Alicante (ALC)
+          </h2>
+          <p className="mt-0.5 text-[11px] text-slate-400 md:text-xs">
+            {destinationCount}+ destinos y {airlineCount}+ aerolíneas conectan
+            Alicante con Europa y el mundo
+          </p>
+        </div>
+      </div>
 
-        {/* lat/lon grid */}
-        <g stroke="rgba(34,211,238,0.06)" strokeWidth="1">
-          {[35, 40, 45, 50, 55].map((lat) => {
-            const [, y] = project([0, lat]);
-            return <line key={lat} x1="0" x2={VIEW_W} y1={y} y2={y} />;
-          })}
-          {[-10, 0, 10, 20, 30].map((lon) => {
-            const [x] = project([lon, 0]);
-            return <line key={lon} y1="0" y2={VIEW_H} x1={x} x2={x} />;
-          })}
-        </g>
+      <div className="relative">
+        <div className="relative aspect-[4/3] w-full">
+          <svg
+            viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
+            className="absolute inset-0 h-full w-full"
+            preserveAspectRatio="xMidYMid meet"
+          >
+            <defs>
+              <radialGradient id="seaGrad" cx="50%" cy="55%" r="70%">
+                <stop offset="0%" stopColor="#0b1a3a" />
+                <stop offset="100%" stopColor="#040b1d" />
+              </radialGradient>
+              <radialGradient id="alcGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#22D3EE" stopOpacity="0.55" />
+                <stop offset="100%" stopColor="#22D3EE" stopOpacity="0" />
+              </radialGradient>
+              <filter id="arcGlow">
+                <feGaussianBlur stdDeviation="2" />
+              </filter>
+            </defs>
 
-        {/* Arcs */}
-        {cities.map((c) => {
-          const coords = COORDS[c.iata];
-          if (!coords) return null;
-          const [x2, y2] = project(coords);
-          const [x1, y1] = alc;
-          const mx = (x1 + x2) / 2;
-          const my = (y1 + y2) / 2;
-          const dx = x2 - x1;
-          const dy = y2 - y1;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          // perpendicular offset for arc
-          const nx = -dy / dist;
-          const ny = dx / dist;
-          const lift = Math.min(dist * 0.25, 90);
-          const cx = mx + nx * lift;
-          const cy = my + ny * lift;
-          const path = `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`;
+            <rect width={VIEW_W} height={VIEW_H} fill="url(#seaGrad)" />
 
-          // Top airline color for this city
-          const topAirline = [...c.airlines.entries()].sort(
-            (a, b) => b[1] - a[1],
-          )[0]?.[0];
-          const color = airlineColor(
-            topAirline,
-            airlineIdx.get(topAirline ?? "") ?? 0,
-          );
-          const strokeWidth = 0.6 + (c.total / maxTotal) * 2.4;
-          const isActive = !selectedCity || selectedCity === c.iata;
-          const opacity = isActive ? 0.85 : 0.12;
+            {countries && (
+              <g>
+                {countries.map((f, i) => {
+                  const d = GEOPATH(f);
+                  if (!d) return null;
+                  return (
+                    <path
+                      key={i}
+                      d={d}
+                      fill="#0f244c"
+                      stroke="#1d3a73"
+                      strokeWidth={0.6}
+                      opacity={0.95}
+                    />
+                  );
+                })}
+              </g>
+            )}
 
-          return (
-            <g key={c.iata} style={{ cursor: "pointer" }}>
-              <path
-                d={path}
-                fill="none"
-                stroke={color}
-                strokeWidth={strokeWidth + 1.5}
-                opacity={opacity * 0.4}
-                filter="url(#neonBlur)"
-              />
-              <path
-                d={path}
-                fill="none"
-                stroke={color}
-                strokeWidth={strokeWidth}
-                opacity={opacity}
-                strokeLinecap="round"
-              />
-            </g>
-          );
-        })}
+            {drawn.map((c) => {
+              const [x2, y2] = project(COORDS[c.iata]);
+              const [x1, y1] = alc;
+              const mx = (x1 + x2) / 2;
+              const my = (y1 + y2) / 2;
+              const dx = x2 - x1;
+              const dy = y2 - y1;
+              const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+              const nx = -dy / dist;
+              const ny = dx / dist;
+              const lift = Math.min(dist * 0.25, 90);
+              const cx = mx + nx * lift;
+              const cy = my + ny * lift;
+              const path = `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`;
+              const tier = freqTier(c.total);
+              const isActive = !selectedCity || selectedCity === c.iata;
+              const opacity = isActive ? 1 : 0.12;
 
-        {/* City dots + labels */}
-        {cities.map((c) => {
-          const coords = COORDS[c.iata];
-          if (!coords) return null;
-          const [x, y] = project(coords);
-          const isActive = !selectedCity || selectedCity === c.iata;
-          const isSel = selectedCity === c.iata;
-          const r = 2 + Math.min(c.total / maxTotal, 1) * 4;
-          const topAirline = [...c.airlines.entries()].sort(
-            (a, b) => b[1] - a[1],
-          )[0]?.[0];
-          const color = airlineColor(
-            topAirline,
-            airlineIdx.get(topAirline ?? "") ?? 0,
-          );
-          return (
-            <g
-              key={c.iata}
-              onClick={() => onSelectCity(c.iata)}
-              style={{ cursor: "pointer" }}
-              opacity={isActive ? 1 : 0.25}
-            >
-              <circle cx={x} cy={y} r={r + 4} fill={color} opacity="0.15" />
-              <circle
-                cx={x}
-                cy={y}
-                r={r}
-                fill={color}
-                stroke="#040814"
-                strokeWidth="1"
-              />
-              {(c.total >= maxTotal * 0.25 || isSel) && (
-                <text
-                  x={x + r + 3}
-                  y={y + 3}
-                  fill={isSel ? "#22D3EE" : "#cbd5e1"}
-                  fontSize={isSel ? 13 : 10}
-                  fontWeight={isSel ? 600 : 500}
-                  style={{ pointerEvents: "none" }}
+              return (
+                <g key={c.iata} style={{ cursor: "pointer" }}>
+                  <path
+                    d={path}
+                    fill="none"
+                    stroke={tier.color}
+                    strokeWidth={tier.width + 2}
+                    opacity={opacity * 0.35}
+                    filter="url(#arcGlow)"
+                  />
+                  <path
+                    d={path}
+                    fill="none"
+                    stroke={tier.color}
+                    strokeWidth={tier.width}
+                    opacity={opacity}
+                    strokeLinecap="round"
+                  />
+                </g>
+              );
+            })}
+
+            {drawn.map((c) => {
+              const [x, y] = project(COORDS[c.iata]);
+              const isSel = selectedCity === c.iata;
+              const isActive = !selectedCity || isSel;
+              const tier = freqTier(c.total);
+              const lab = labelFor(c);
+              return (
+                <g
+                  key={c.iata}
+                  onClick={() => onSelectCity(c.iata)}
+                  style={{ cursor: "pointer" }}
+                  opacity={isActive ? 1 : 0.3}
                 >
-                  {c.iata}
-                </text>
-              )}
-            </g>
-          );
-        })}
+                  <circle cx={x} cy={y} r={5} fill={tier.color} opacity={0.18} />
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r={2.4}
+                    fill="#ffffff"
+                    stroke={tier.color}
+                    strokeWidth={1.4}
+                  />
+                  <text
+                    x={x + lab.dx}
+                    y={y - 4}
+                    fill="#e2ecff"
+                    fontSize={11}
+                    fontWeight={500}
+                    textAnchor={lab.anchor as "start" | "end"}
+                    style={{ pointerEvents: "none" }}
+                  >
+                    {c.ciudad}
+                  </text>
+                  <text
+                    x={x + lab.dx}
+                    y={y + 7}
+                    fill="#7d93b8"
+                    fontSize={9}
+                    textAnchor={lab.anchor as "start" | "end"}
+                    style={{ pointerEvents: "none" }}
+                  >
+                    ({c.iata})
+                  </text>
+                </g>
+              );
+            })}
 
-        {/* ALC marker */}
-        <g>
-          <circle cx={alc[0]} cy={alc[1]} r="40" fill="url(#alcGlow)" />
-          <circle
-            cx={alc[0]}
-            cy={alc[1]}
-            r="6"
-            fill="#22D3EE"
-            stroke="#040814"
-            strokeWidth="2"
-          >
-            <animate
-              attributeName="r"
-              values="6;8;6"
-              dur="2.5s"
-              repeatCount="indefinite"
-            />
-          </circle>
-          <text
-            x={alc[0] + 12}
-            y={alc[1] + 4}
-            fill="#22D3EE"
-            fontSize="14"
-            fontWeight="700"
-          >
-            ALC
-          </text>
-        </g>
-      </svg>
+            <g>
+              <circle cx={alc[0]} cy={alc[1]} r={42} fill="url(#alcGlow)" />
+              <circle
+                cx={alc[0]}
+                cy={alc[1]}
+                r={5}
+                fill="#22D3EE"
+                stroke="#031024"
+                strokeWidth={2}
+              >
+                <animate
+                  attributeName="r"
+                  values="5;8;5"
+                  dur="2.4s"
+                  repeatCount="indefinite"
+                />
+              </circle>
+              <text
+                x={alc[0]}
+                y={alc[1] + 22}
+                fill="#22D3EE"
+                fontSize={12}
+                fontWeight={700}
+                textAnchor="middle"
+              >
+                ALICANTE
+              </text>
+              <text
+                x={alc[0]}
+                y={alc[1] + 34}
+                fill="#7fbedc"
+                fontSize={9}
+                textAnchor="middle"
+              >
+                (ALC)
+              </text>
+            </g>
+          </svg>
+
+          {/* Frequency legend */}
+          <div className="absolute right-2 top-2 hidden rounded-xl border border-white/10 bg-[#06122a]/90 p-2.5 backdrop-blur-sm md:block md:right-3 md:top-3 md:p-3">
+            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-200">
+              Frecuencia de vuelos
+            </p>
+            <ul className="space-y-1">
+              {FREQ_TIERS.map((t) => (
+                <li key={t.label} className="flex items-center gap-2">
+                  <span
+                    className="block rounded-full"
+                    style={{
+                      background: t.color,
+                      width: 22,
+                      height: Math.max(2, t.width),
+                    }}
+                  />
+                  <span className="text-[10px] text-slate-300">{t.label}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2 max-w-[140px] text-[9px] leading-snug text-slate-500">
+              El grosor y color de las líneas representan la frecuencia semanal
+              de vuelos.
+            </p>
+          </div>
+
+          {/* World inset */}
+          {countries && (
+            <div className="absolute bottom-2 right-2 hidden rounded-lg border border-white/10 bg-[#040b1d]/90 p-1 md:block md:bottom-3 md:right-3">
+              <svg viewBox={`0 0 ${WORLD_W} ${WORLD_H}`} width={140} height={70}>
+                <rect width={WORLD_W} height={WORLD_H} fill="#040b1d" />
+                {countries.map((f, i) => {
+                  const d = WORLD_GEOPATH(f);
+                  if (!d) return null;
+                  return (
+                    <path
+                      key={i}
+                      d={d}
+                      fill="#1a3060"
+                      stroke="#0a1834"
+                      strokeWidth={0.3}
+                    />
+                  );
+                })}
+                {(() => {
+                  const p = WORLD_PROJ(COORDS.ALC);
+                  if (!p) return null;
+                  return <circle cx={p[0]} cy={p[1]} r={2.5} fill="#22D3EE" />;
+                })()}
+              </svg>
+            </div>
+          )}
+        </div>
+
+        {/* Side panels: overlay desktop, stacked mobile */}
+        <div className="grid gap-3 px-3 pb-3 md:absolute md:left-3 md:top-3 md:w-[260px] md:px-0 md:pb-0">
+          <div className="rounded-xl border border-white/10 bg-[#06122a]/90 p-3 backdrop-blur-sm">
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-white">
+              Top 10 destinos por frecuencia
+            </p>
+            <ol className="space-y-1">
+              {top10.map((c, i) => {
+                const tier = freqTier(c.total);
+                const isSel = selectedCity === c.iata;
+                return (
+                  <li key={c.iata}>
+                    <button
+                      onClick={() => onSelectCity(c.iata)}
+                      className={`flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left text-[11px] transition ${
+                        isSel ? "bg-white/10" : "hover:bg-white/5"
+                      }`}
+                    >
+                      <span className="w-3 text-right font-mono text-[10px] text-slate-500">
+                        {i + 1}
+                      </span>
+                      <span
+                        className="h-2 w-2 shrink-0 rounded-full"
+                        style={{ background: tier.color }}
+                      />
+                      <span className="min-w-0 flex-1 truncate text-slate-100">
+                        {c.ciudad}{" "}
+                        <span className="text-slate-500">({c.iata})</span>
+                      </span>
+                      <span className="font-mono text-[11px] font-semibold text-white">
+                        {c.total}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+
+          <div className="rounded-xl border border-white/10 bg-[#06122a]/90 p-3 backdrop-blur-sm">
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-white">
+              Aerolíneas por número de vuelos
+            </p>
+            <ul className="space-y-1">
+              {topAirlines.map((a, i) => (
+                <li
+                  key={a.code}
+                  className="flex items-center gap-2 rounded-md px-1.5 py-1 text-[11px]"
+                >
+                  <span
+                    className="h-2 w-2 shrink-0 rounded-full"
+                    style={{ background: airlineColor(a.code, i) }}
+                  />
+                  <span className="min-w-0 flex-1 truncate text-slate-100">
+                    {a.name}
+                  </span>
+                  <span className="font-mono text-[11px] font-semibold text-white">
+                    {a.total}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom KPI strip */}
+      <div className="grid grid-cols-2 gap-px border-t border-white/5 bg-white/5 md:grid-cols-4">
+        <KpiTile
+          icon={<Plane className="h-3.5 w-3.5" />}
+          value={`+${destinationCount}`}
+          label="Destinos"
+        />
+        <KpiTile
+          icon={<Building2 className="h-3.5 w-3.5" />}
+          value={`${airlineCount}+`}
+          label="Aerolíneas"
+        />
+        <KpiTile
+          icon={<TrendingUp className="h-3.5 w-3.5" />}
+          value={totalFlights.toLocaleString("es-ES")}
+          label="Vuelos / 7 días"
+        />
+        <KpiTile
+          icon={<Globe2 className="h-3.5 w-3.5" />}
+          value="Europa"
+          label="Principal mercado"
+        />
+      </div>
+    </div>
+  );
+}
+
+function KpiTile({
+  icon,
+  value,
+  label,
+}: {
+  icon: React.ReactNode;
+  value: string;
+  label: string;
+}) {
+  return (
+    <div className="flex items-center gap-2.5 bg-[#06122a] px-3 py-2.5">
+      <span className="flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/5 text-cyan-300">
+        {icon}
+      </span>
+      <div>
+        <div className="text-sm font-semibold text-white">{value}</div>
+        <div className="text-[9px] uppercase tracking-wider text-slate-400">
+          {label}
+        </div>
+      </div>
     </div>
   );
 }
