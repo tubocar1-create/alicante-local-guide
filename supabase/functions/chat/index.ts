@@ -515,7 +515,7 @@ function buildFoodRecommendationsResponse(
       : "¡Marchando! Aquí va una opción que te va a encantar 😋";
   const outro = sub === "all"
     ? "¿Quieres que afine más? Dime: **kebab 🌯**, **hamburguesa 🍔**, **pizza 🍕** o **cadenas (McDonald's, KFC, BK, TGB, 100 Montaditos…) 🏪** 🙌"
-    : candidates.length > shuffled.length
+    : candidates.length > selected.length
       ? "¿Quieres que te dé otra alternativa más? 🙌"
       : "¿Probamos con otra zona o tipo de comida para ampliar opciones? 🙌";
   const usedVibes = new Set<string>();
