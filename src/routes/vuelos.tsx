@@ -11,7 +11,7 @@ import {
   XAxis,
   Tooltip,
 } from "recharts";
-import { geoEquirectangular, geoPath } from "d3-geo";
+import { geoMercator, geoPath } from "d3-geo";
 import { feature } from "topojson-client";
 import type { Topology } from "topojson-specification";
 import type { Feature, FeatureCollection, Geometry } from "geojson";
