@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as VuelosRouteImport } from './routes/vuelos'
 import { Route as ThreadsRouteImport } from './routes/threads'
 import { Route as StayRouteImport } from './routes/stay'
 import { Route as RepoRouteImport } from './routes/repo'
@@ -40,6 +41,11 @@ import { Route as ApiPublicBusEtaRouteImport } from './routes/api/public/bus-eta
 import { Route as ApiPublicBookingCreateRouteImport } from './routes/api/public/booking-create'
 import { Route as ApiPublicAenaFlightsRouteImport } from './routes/api/public/aena-flights'
 
+const VuelosRoute = VuelosRouteImport.update({
+  id: '/vuelos',
+  path: '/vuelos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ThreadsRoute = ThreadsRouteImport.update({
   id: '/threads',
   path: '/threads',
@@ -202,6 +208,7 @@ export interface FileRoutesByFullPath {
   '/repo': typeof RepoRoute
   '/stay': typeof StayRoute
   '/threads': typeof ThreadsRouteWithChildren
+  '/vuelos': typeof VuelosRoute
   '/bus/lines': typeof BusLinesRouteWithChildren
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
@@ -233,6 +240,7 @@ export interface FileRoutesByTo {
   '/repo': typeof RepoRoute
   '/stay': typeof StayRoute
   '/threads': typeof ThreadsRouteWithChildren
+  '/vuelos': typeof VuelosRoute
   '/bus/lines': typeof BusLinesRouteWithChildren
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
@@ -266,6 +274,7 @@ export interface FileRoutesById {
   '/repo': typeof RepoRoute
   '/stay': typeof StayRoute
   '/threads': typeof ThreadsRouteWithChildren
+  '/vuelos': typeof VuelosRoute
   '/bus/lines': typeof BusLinesRouteWithChildren
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
@@ -300,6 +309,7 @@ export interface FileRouteTypes {
     | '/repo'
     | '/stay'
     | '/threads'
+    | '/vuelos'
     | '/bus/lines'
     | '/bus/planner'
     | '/business/bookings'
@@ -331,6 +341,7 @@ export interface FileRouteTypes {
     | '/repo'
     | '/stay'
     | '/threads'
+    | '/vuelos'
     | '/bus/lines'
     | '/bus/planner'
     | '/business/bookings'
@@ -363,6 +374,7 @@ export interface FileRouteTypes {
     | '/repo'
     | '/stay'
     | '/threads'
+    | '/vuelos'
     | '/bus/lines'
     | '/bus/planner'
     | '/business/bookings'
@@ -396,6 +408,7 @@ export interface RootRouteChildren {
   RepoRoute: typeof RepoRoute
   StayRoute: typeof StayRoute
   ThreadsRoute: typeof ThreadsRouteWithChildren
+  VuelosRoute: typeof VuelosRoute
   ApiPublicAenaFlightsRoute: typeof ApiPublicAenaFlightsRoute
   ApiPublicBookingCreateRoute: typeof ApiPublicBookingCreateRoute
   ApiPublicBusEtaRoute: typeof ApiPublicBusEtaRoute
@@ -406,6 +419,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/vuelos': {
+      id: '/vuelos'
+      path: '/vuelos'
+      fullPath: '/vuelos'
+      preLoaderRoute: typeof VuelosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/threads': {
       id: '/threads'
       path: '/threads'
@@ -705,6 +725,7 @@ const rootRouteChildren: RootRouteChildren = {
   RepoRoute: RepoRoute,
   StayRoute: StayRoute,
   ThreadsRoute: ThreadsRouteWithChildren,
+  VuelosRoute: VuelosRoute,
   ApiPublicAenaFlightsRoute: ApiPublicAenaFlightsRoute,
   ApiPublicBookingCreateRoute: ApiPublicBookingCreateRoute,
   ApiPublicBusEtaRoute: ApiPublicBusEtaRoute,
@@ -715,13 +736,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
