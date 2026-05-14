@@ -348,7 +348,7 @@ function VuelosDashboard() {
     return [...m.entries()].sort((a, b) => b[1] - a[1]);
   }, [flights7d]);
   const airlinesCount = airlinesAgg.length;
-  const topCities = cities.filter((c) => c.total > 0).slice(0, 10);
+  const topCities = cities.filter((c) => c.total > 0);
   const topDestino = topCities[0];
   const topCountryISO = topDestino ? IATA_COUNTRY[topDestino.iata] : undefined;
   const principalRegion = topCountryISO ? COUNTRY_NAME[topCountryISO] ?? "Europa" : "Europa";
