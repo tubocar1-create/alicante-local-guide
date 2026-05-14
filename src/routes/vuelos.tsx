@@ -271,16 +271,15 @@ function VuelosDashboard() {
 
   const flights7d = useMemo(() => {
     if (!flights.length) return [];
-    const dates = [...new Set(flights.map((f) => f.fecha))]
-      .map(parseDate)
-      .sort((a, b) => a.getTime() - b.getTime());
-    if (!dates.length) return flights;
-    const start = dates[0];
-    const end = new Date(start);
+    // Ventana deslizante: desde hoy hasta hoy + 7 días (inclusive).
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const end = new Date(today);
     end.setDate(end.getDate() + 7);
+    end.setHours(23, 59, 59, 999);
     return flights.filter((f) => {
       const d = parseDate(f.fecha);
-      return d >= start && d < end;
+      return d >= today && d <= end;
     });
   }, [flights]);
 
