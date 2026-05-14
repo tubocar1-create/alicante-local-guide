@@ -415,8 +415,9 @@ function ConnectivityMap({
           "radial-gradient(ellipse at center, #06122a 0%, #030917 60%, #01060f 100%)",
       }}
     >
-      <div className="relative h-[85vh] w-full sm:aspect-[16/9] sm:h-auto">
+      <div ref={wrapRef} className="relative h-[85vh] w-full sm:aspect-[16/9] sm:h-auto">
         <TransformWrapper
+          ref={trRef}
           initialScale={1}
           minScale={1}
           maxScale={6}
