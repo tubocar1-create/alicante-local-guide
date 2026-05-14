@@ -881,7 +881,135 @@ function MiniStat({
   );
 }
 
-// ---------------- City Dashboard ----------------
+// ---------------- Side panels (Top destinos, Aerolíneas, Footer stats) ----------------
+
+function PanelCard({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-2xl border border-white/[0.08] bg-[rgba(8,12,22,0.7)] p-4 backdrop-blur-xl">
+      <p className="mb-3 text-sm font-semibold text-slate-100">{title}</p>
+      {children}
+    </div>
+  );
+}
+
+function cleanCityNamePublic(raw: string) {
+  const first = raw.split("/")[0].trim();
+  return first
+    .toLowerCase()
+    .split(" ")
+    .map((w) => (w.length > 2 ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(" ");
+}
+
+function TopDestinosPanel({ cities }: { cities: CityAgg[] }) {
+  return (
+    <PanelCard title="Top 10 destinos por frecuencia">
+      <ul className="space-y-1.5">
+        {cities.map((c, i) => (
+          <li
+            key={c.iata}
+            className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[12px] text-slate-200 odd:bg-white/[0.02]"
+          >
+            <span className="w-4 text-right font-mono text-[11px] text-slate-500">
+              {i + 1}
+            </span>
+            <span className="text-base leading-none">{flagEmoji(c.iata)}</span>
+            <span className="flex-1 truncate">
+              {cleanCityNamePublic(c.ciudad)}{" "}
+              <span className="font-mono text-[10px] text-slate-500">
+                ({c.iata})
+              </span>
+            </span>
+            <span className="font-mono tabular-nums text-slate-300">
+              {c.total}
+            </span>
+          </li>
+        ))}
+        {cities.length === 0 && (
+          <li className="text-xs text-slate-500">Sin datos disponibles.</li>
+        )}
+      </ul>
+    </PanelCard>
+  );
+}
+
+function AerolineasPanel({ airlines }: { airlines: [string, number][] }) {
+  return (
+    <PanelCard title="Aerolíneas por número de vuelos">
+      <ul className="space-y-1.5">
+        {airlines.map(([code, count], i) => {
+          const color = airlineColor(code, i);
+          return (
+            <li
+              key={code}
+              className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[12px] text-slate-200 odd:bg-white/[0.02]"
+            >
+              <span
+                className="h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ background: color, boxShadow: `0 0 6px ${color}` }}
+              />
+              <span className="flex-1 truncate">
+                <span className="font-semibold" style={{ color }}>
+                  {airlineName(code)}
+                </span>{" "}
+                <span className="font-mono text-[10px] text-slate-500">
+                  {code}
+                </span>
+              </span>
+              <span className="font-mono tabular-nums text-slate-300">
+                {count.toLocaleString("es-ES")}
+              </span>
+            </li>
+          );
+        })}
+        {airlines.length === 0 && (
+          <li className="text-xs text-slate-500">Sin datos disponibles.</li>
+        )}
+      </ul>
+    </PanelCard>
+  );
+}
+
+function FooterStatsRow({
+  destinos,
+  aerolineas,
+  vuelos,
+  region,
+}: {
+  destinos: number;
+  aerolineas: number;
+  vuelos: number;
+  region: string;
+}) {
+  const items = [
+    { icon: "✈", value: `+${destinos}`, label: "Destinos" },
+    { icon: "🛫", value: `${aerolineas}+`, label: "Aerolíneas" },
+    { icon: "✓", value: vuelos.toLocaleString("es-ES"), label: "Vuelos / 7d" },
+    { icon: "🌍", value: region, label: "Principal destino" },
+  ];
+  return (
+    <div className="mt-4 grid grid-cols-2 gap-3 rounded-2xl border border-white/[0.08] bg-[rgba(8,12,22,0.7)] p-4 backdrop-blur-xl sm:grid-cols-4">
+      {items.map((it) => (
+        <div key={it.label} className="flex flex-col items-center text-center">
+          <div className="mb-1 flex h-9 w-9 items-center justify-center rounded-full border border-cyan-400/30 text-cyan-300">
+            <span className="text-base leading-none">{it.icon}</span>
+          </div>
+          <p className="text-base font-bold text-white">{it.value}</p>
+          <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">
+            {it.label}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 
 function CityDetail({
   city,
