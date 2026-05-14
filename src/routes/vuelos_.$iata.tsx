@@ -527,7 +527,7 @@ function DestinationDashboard() {
 
 // ---------- UI atoms ----------
 
-function Shell({ children }: { children: React.ReactNode }) {
+function Shell({ children, flightType }: { children: React.ReactNode; flightType?: "S" | "L" }) {
   return (
     <div
       className="min-h-screen text-slate-100"
@@ -537,8 +537,8 @@ function Shell({ children }: { children: React.ReactNode }) {
     >
       <div className="relative mx-auto max-w-7xl px-3 pb-6 pt-3 md:px-6">
         <header className="mb-2 flex items-center justify-between">
-          <Link
-            to="/vuelos"
+          <a
+            href={`/vuelos${flightType === "L" ? "?type=L" : ""}`}
             className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1 text-[11px] text-slate-300 transition hover:border-cyan-500/50 hover:text-cyan-300"
           >
             <ArrowLeft className="h-3 w-3" />
