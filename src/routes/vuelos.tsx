@@ -1203,7 +1203,7 @@ function CityDetail({
             </p>
             <h2 className="mt-0.5 text-2xl font-semibold">{city.ciudad}</h2>
             <p className="font-mono text-[11px] text-slate-500">
-              ALC → {city.iata}
+              {flightType === "L" ? `${city.iata} → ALC` : `ALC → ${city.iata}`}
             </p>
           </div>
           <button
