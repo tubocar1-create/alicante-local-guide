@@ -86,7 +86,7 @@ const SUGGESTIONS: Suggestion[] = [
   },
   { label: "🏨 Dormir", prompt: "¿Dónde puedo dormir esta noche?" },
   {
-    label: "🏛️ Turismo, playa y aventuras",
+    label: "🏖️ Turismo, playa y aventuras",
     submenu: [
       { label: "🏛️ Turismo", prompt: "¿Qué sitios turísticos imprescindibles puedo visitar en Alicante hoy?" },
       { label: "🏖️ Playa", prompt: "¿Qué playa me recomiendas?" },
@@ -439,11 +439,12 @@ export function ChatScreen() {
               <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-9 sm:gap-3">
                 {[
                   ...SUGGESTIONS.map((s) => {
-                    const match = s.label.match(/^(\p{Extended_Pictographic}+)\s*(.*)$/u);
+                    const match = s.label.match(/^(\p{Extended_Pictographic}+)/u);
+                    const cleanLabel = s.label.replace(/^[\p{Extended_Pictographic}\uFE0F\u200D\s]+/u, "");
                     return {
                       key: s.label,
                       emoji: match?.[1] ?? "✨",
-                      label: match?.[2] ?? s.label,
+                      label: cleanLabel || s.label,
                       onClick: () => {
                         if (s.submenu) setActiveSubmenu(s);
                         else if (s.prompt) send(s.prompt, { mode: null });
