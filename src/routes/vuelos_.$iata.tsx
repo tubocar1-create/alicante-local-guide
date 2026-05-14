@@ -194,7 +194,7 @@ const WEEKDAYS_PRETTY = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
 // ---------- Route ----------
 
-export const Route = createFileRoute("/vuelos/$iata")({
+export const Route = createFileRoute("/vuelos_/$iata")({
   head: ({ params }) => ({
     meta: [
       {

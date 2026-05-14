@@ -21,7 +21,7 @@ import { Route as BusinessRouteImport } from './routes/business'
 import { Route as BusRouteImport } from './routes/bus'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BusinessIndexRouteImport } from './routes/business.index'
-import { Route as VuelosIataRouteImport } from './routes/vuelos.$iata'
+import { Route as VuelosIataRouteImport } from './routes/vuelos_.$iata'
 import { Route as ThreadsIdRouteImport } from './routes/threads.$id'
 import { Route as BusinessReferralsRouteImport } from './routes/business.referrals'
 import { Route as BusinessQrRouteImport } from './routes/business.qr'
@@ -103,9 +103,9 @@ const BusinessIndexRoute = BusinessIndexRouteImport.update({
   getParentRoute: () => BusinessRoute,
 } as any)
 const VuelosIataRoute = VuelosIataRouteImport.update({
-  id: '/$iata',
-  path: '/$iata',
-  getParentRoute: () => VuelosRoute,
+  id: '/vuelos_/$iata',
+  path: '/vuelos/$iata',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ThreadsIdRoute = ThreadsIdRouteImport.update({
   id: '/$id',
@@ -214,7 +214,7 @@ export interface FileRoutesByFullPath {
   '/repo': typeof RepoRoute
   '/stay': typeof StayRoute
   '/threads': typeof ThreadsRouteWithChildren
-  '/vuelos': typeof VuelosRouteWithChildren
+  '/vuelos': typeof VuelosRoute
   '/bus/lines': typeof BusLinesRouteWithChildren
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
@@ -247,7 +247,7 @@ export interface FileRoutesByTo {
   '/repo': typeof RepoRoute
   '/stay': typeof StayRoute
   '/threads': typeof ThreadsRouteWithChildren
-  '/vuelos': typeof VuelosRouteWithChildren
+  '/vuelos': typeof VuelosRoute
   '/bus/lines': typeof BusLinesRouteWithChildren
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
@@ -282,7 +282,7 @@ export interface FileRoutesById {
   '/repo': typeof RepoRoute
   '/stay': typeof StayRoute
   '/threads': typeof ThreadsRouteWithChildren
-  '/vuelos': typeof VuelosRouteWithChildren
+  '/vuelos': typeof VuelosRoute
   '/bus/lines': typeof BusLinesRouteWithChildren
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
@@ -294,7 +294,7 @@ export interface FileRoutesById {
   '/business/qr': typeof BusinessQrRoute
   '/business/referrals': typeof BusinessReferralsRoute
   '/threads/$id': typeof ThreadsIdRoute
-  '/vuelos/$iata': typeof VuelosIataRoute
+  '/vuelos_/$iata': typeof VuelosIataRoute
   '/business/': typeof BusinessIndexRoute
   '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
   '/api/public/booking-create': typeof ApiPublicBookingCreateRoute
@@ -397,7 +397,7 @@ export interface FileRouteTypes {
     | '/business/qr'
     | '/business/referrals'
     | '/threads/$id'
-    | '/vuelos/$iata'
+    | '/vuelos_/$iata'
     | '/business/'
     | '/api/public/aena-flights'
     | '/api/public/booking-create'
@@ -420,7 +420,8 @@ export interface RootRouteChildren {
   RepoRoute: typeof RepoRoute
   StayRoute: typeof StayRoute
   ThreadsRoute: typeof ThreadsRouteWithChildren
-  VuelosRoute: typeof VuelosRouteWithChildren
+  VuelosRoute: typeof VuelosRoute
+  VuelosIataRoute: typeof VuelosIataRoute
   ApiPublicAenaFlightsRoute: typeof ApiPublicAenaFlightsRoute
   ApiPublicBookingCreateRoute: typeof ApiPublicBookingCreateRoute
   ApiPublicBusEtaRoute: typeof ApiPublicBusEtaRoute
@@ -515,12 +516,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BusinessIndexRouteImport
       parentRoute: typeof BusinessRoute
     }
-    '/vuelos/$iata': {
-      id: '/vuelos/$iata'
-      path: '/$iata'
+    '/vuelos_/$iata': {
+      id: '/vuelos_/$iata'
+      path: '/vuelos/$iata'
       fullPath: '/vuelos/$iata'
       preLoaderRoute: typeof VuelosIataRouteImport
-      parentRoute: typeof VuelosRoute
+      parentRoute: typeof rootRouteImport
     }
     '/threads/$id': {
       id: '/threads/$id'
@@ -733,17 +734,6 @@ const ThreadsRouteChildren: ThreadsRouteChildren = {
 const ThreadsRouteWithChildren =
   ThreadsRoute._addFileChildren(ThreadsRouteChildren)
 
-interface VuelosRouteChildren {
-  VuelosIataRoute: typeof VuelosIataRoute
-}
-
-const VuelosRouteChildren: VuelosRouteChildren = {
-  VuelosIataRoute: VuelosIataRoute,
-}
-
-const VuelosRouteWithChildren =
-  VuelosRoute._addFileChildren(VuelosRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BusRoute: BusRouteWithChildren,
@@ -755,7 +745,8 @@ const rootRouteChildren: RootRouteChildren = {
   RepoRoute: RepoRoute,
   StayRoute: StayRoute,
   ThreadsRoute: ThreadsRouteWithChildren,
-  VuelosRoute: VuelosRouteWithChildren,
+  VuelosRoute: VuelosRoute,
+  VuelosIataRoute: VuelosIataRoute,
   ApiPublicAenaFlightsRoute: ApiPublicAenaFlightsRoute,
   ApiPublicBookingCreateRoute: ApiPublicBookingCreateRoute,
   ApiPublicBusEtaRoute: ApiPublicBusEtaRoute,
