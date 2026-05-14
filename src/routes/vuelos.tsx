@@ -439,10 +439,14 @@ function ConnectivityMap({
         >
           <defs>
             <radialGradient id="seaGrad" cx="50%" cy="50%" r="75%">
-              <stop offset="0%" stopColor="#08162e" />
-              <stop offset="60%" stopColor="#030a18" />
+              <stop offset="0%" stopColor="#0a1a36" />
+              <stop offset="60%" stopColor="#040c1c" />
               <stop offset="100%" stopColor="#01060f" />
             </radialGradient>
+            <linearGradient id="landGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#1a2f55" />
+              <stop offset="100%" stopColor="#0e1c38" />
+            </linearGradient>
             <radialGradient id="alcGlow" cx="50%" cy="50%" r="50%">
               <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.7" />
               <stop offset="60%" stopColor="#3b82f6" stopOpacity="0.15" />
@@ -481,10 +485,11 @@ function ConnectivityMap({
                   <path
                     key={i}
                     d={d}
-                    fill="#0c1a33"
-                    stroke="#1d3358"
-                    strokeWidth={0.4}
-                    opacity={0.95}
+                    fill="url(#landGrad)"
+                    stroke="#2a4980"
+                    strokeWidth={0.5}
+                    strokeLinejoin="round"
+                    vectorEffect="non-scaling-stroke"
                   />
                 );
               })}
