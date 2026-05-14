@@ -326,8 +326,22 @@ function VuelosDashboard() {
         : null)
     : null;
 
-  const telAvivFlights = flights7d.filter((f) => f.iataOtro === "TLV");
-  const totalFlights = telAvivFlights.length || 1;
+  // Métricas globales para los paneles laterales
+  const totalFlights = flights7d.length;
+  const destinationsCount = cities.filter((c) => c.iata !== "ALC" && c.total > 0).length;
+  const airlinesAgg = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const f of flights7d) {
+      const code = f.iataCompania || "??";
+      m.set(code, (m.get(code) ?? 0) + 1);
+    }
+    return [...m.entries()].sort((a, b) => b[1] - a[1]);
+  }, [flights7d]);
+  const airlinesCount = airlinesAgg.length;
+  const topCities = cities.filter((c) => c.total > 0).slice(0, 10);
+  const topDestino = topCities[0];
+  const topCountryISO = topDestino ? IATA_COUNTRY[topDestino.iata] : undefined;
+  const principalRegion = topCountryISO ? COUNTRY_NAME[topCountryISO] ?? "Europa" : "Europa";
 
   return (
     <div
