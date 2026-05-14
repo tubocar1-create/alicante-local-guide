@@ -100,10 +100,11 @@ const SUGGESTIONS: Suggestion[] = [
   {
     label: "🚆 Transporte público",
     submenu: [
-      { label: "🚌 Bus", action: "bus-picker" },
+      { label: "🚌 Buses urbanos", action: "bus-picker" },
+      { label: "🚍 Buses extra urbanos", prompt: "¿Cómo me muevo en bus extraurbano desde Alicante? Líneas, compañías (ALSA, Vectalia…), estación de autobuses y destinos principales (Elche, Benidorm, Murcia, Valencia, pueblos del interior)." },
+      { label: "🚊 Tram", prompt: "¿Cómo uso el TRAM de Alicante? Líneas, paradas principales y conexiones con la playa." },
       { label: "🚆 Tren", prompt: "¿Cómo me muevo en tren por Alicante y alrededores? Horarios, estaciones de Cercanías y Renfe." },
       { label: "✈️ Avión", prompt: "Información sobre el aeropuerto de Alicante-Elche: cómo llegar, transporte al centro y vuelos." },
-      { label: "🚊 Tram", prompt: "¿Cómo uso el TRAM de Alicante? Líneas, paradas principales y conexiones con la playa." },
     ],
   },
 ];
@@ -533,7 +534,7 @@ export function ChatScreen() {
                   ← Volver
                 </button>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-col gap-2">
                 {activeSubmenu.submenu?.map((opt) => (
                   <button
                     key={opt.label}
@@ -548,7 +549,7 @@ export function ChatScreen() {
                         send(opt.prompt, { mode: null });
                       }
                     }}
-                    className="rounded-full border border-border bg-background/80 px-3 py-2 text-sm shadow-sm transition hover:bg-accent/40"
+                    className="w-full rounded-xl border border-border bg-background/80 px-4 py-3 text-left text-sm shadow-sm transition hover:bg-accent/40"
                   >
                     {opt.label}
                   </button>
