@@ -423,6 +423,8 @@ function VuelosDashboard() {
               aerolineas={airlinesCount}
               vuelos={totalFlights}
               region={principalRegion}
+              weekStart={weekRange.start}
+              weekEnd={weekRange.end}
             />
             <div>
               <ConnectivityMap
