@@ -520,9 +520,9 @@ function ConnectivityMap({
             </circle>
             <text
               x={alc[0]}
-              y={alc[1] + 10}
+              y={alc[1] + 6}
               fill="#22D3EE"
-              fontSize={7}
+              fontSize={4.5}
               fontWeight={700}
               textAnchor="middle"
             >
