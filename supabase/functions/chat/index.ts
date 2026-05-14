@@ -503,7 +503,7 @@ const TUMBARANCHO: FoodPlace = {
   openingHours: "13:00–16:30, 20:00–23:30",
   closesAt: "23:30",
   closesInMinutes: 600,
-  cuisine: "Hamburguesería · Acepta tarjeta 💳",
+  cuisine: "Hamburguesería",
   address: "Calle San Francisco, Alicante",
 };
 
