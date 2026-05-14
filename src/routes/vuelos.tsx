@@ -412,11 +412,19 @@ function ConnectivityMap({
 
           <rect width={VIEW_W} height={VIEW_H} fill="url(#seaGrad)" />
 
+          <defs>
+            <clipPath id="mapClip">
+              <rect x={0} y={0} width={VIEW_W} height={VIEW_H} />
+            </clipPath>
+          </defs>
           {countries && (
-            <g>
+            <g clipPath="url(#mapClip)">
               {countries.map((f, i) => {
                 const d = GEOPATH(f);
                 if (!d) return null;
+                const [[x0, y0], [x1, y1]] = GEOPATH.bounds(f);
+                // Skip features completely outside the visible viewport
+                if (x1 < 0 || y1 < 0 || x0 > VIEW_W || y0 > VIEW_H) return null;
                 return (
                   <path
                     key={i}
