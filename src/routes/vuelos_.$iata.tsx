@@ -378,7 +378,7 @@ function DestinationDashboard() {
       {/* TRES TARJETAS */}
       <div className="grid gap-3 lg:grid-cols-3">
         {/* 1. Resumen por aerolínea */}
-        <Card index={1} title="Resumen por aerolínea" subtitle={`Vuelos totales en los próximos 14 días`}>
+        <Card index={1} title="Resumen por aerolínea" subtitle="Vuelos totales esta semana (7 días)">
           <div className="flex items-start gap-4">
             <div className="relative">
               <svg width="140" height="140" viewBox="0 0 140 140">
