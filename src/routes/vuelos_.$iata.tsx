@@ -358,9 +358,7 @@ function DestinationDashboard() {
           </h1>
           <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-400">
             <CalendarDays className="h-3.5 w-3.5 text-cyan-400" />
-            <span>
-              <span className="text-cyan-300">Semana ({startStr} – {endStr}).</span> Métricas semanales · recálculo diario.
-            </span>
+            <span className="text-cyan-300">Semana ({startStr} – {endStr})</span>
           </p>
         </div>
         <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
