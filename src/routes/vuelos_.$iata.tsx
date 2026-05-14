@@ -586,23 +586,12 @@ function Shell({ children }: { children: React.ReactNode }) {
     >
       <div className="relative mx-auto max-w-7xl px-3 pb-10 pt-5 md:px-6">
         <header className="mb-4 flex items-center justify-between">
-          <button
-            onClick={() => {
-              if (typeof window !== "undefined") {
-                if (window.history.length > 1) window.history.back();
-                else window.location.href = "/vuelos";
-              }
-            }}
+          <Link
+            to="/vuelos"
             className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1.5 text-xs text-slate-300 transition hover:border-cyan-500/50 hover:text-cyan-300"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            Volver
-          </button>
-          <Link
-            to="/vuelos"
-            className="text-[10px] uppercase tracking-[0.25em] text-slate-500 transition hover:text-cyan-300"
-          >
-            Mapa de destinos
+            Volver al mapa
           </Link>
         </header>
         {children}
