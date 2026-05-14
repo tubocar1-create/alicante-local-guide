@@ -451,9 +451,9 @@ function ConnectivityMap({
       <div ref={wrapRef} className="relative h-[85vh] w-full sm:aspect-[16/9] sm:h-auto">
         <TransformWrapper
           ref={trRef}
-          initialScale={2.6}
-          minScale={2.6}
-          maxScale={8}
+          initialScale={3.6}
+          minScale={3.6}
+          maxScale={10}
           wheel={{ step: 0.15 }}
           doubleClick={{ mode: "zoomIn", step: 0.6 }}
           panning={{ velocityDisabled: true }}
