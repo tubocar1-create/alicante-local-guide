@@ -386,8 +386,8 @@ function VuelosDashboard() {
               desde Alicante
             </span>
           </h1>
-          <p className="mt-1 text-xs text-slate-500 md:text-sm">
-            Más de {destinationsCount} destinos y {airlinesCount} aerolíneas conectan Alicante con Europa.
+          <p className="mt-1 text-xs text-cyan-300/80 md:text-sm">
+            Métricas semanales (7 días) · Aeropuerto de Alicante-Elche (ALC).
           </p>
         </div>
 
