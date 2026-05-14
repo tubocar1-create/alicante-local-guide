@@ -362,7 +362,9 @@ function DestinationDashboard() {
       <div className="mb-2 grid gap-2 rounded-2xl border border-slate-800 bg-slate-900/40 p-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
         <div>
           <h1 className="text-base font-semibold leading-tight md:text-lg">
-            Vuelos desde Alicante (ALC) a {ciudad} ({pais})
+            {isArrival
+              ? `Vuelos hacia Alicante (ALC) desde ${ciudad} (${pais})`
+              : `Vuelos desde Alicante (ALC) a ${ciudad} (${pais})`}
           </h1>
           <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-cyan-300">
             <CalendarDays className="h-3 w-3" />
