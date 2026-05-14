@@ -508,7 +508,7 @@ function ConnectivityMap({
             const dist = Math.sqrt(dx * dx + dy * dy) || 1;
             const nx = -dy / dist;
             const ny = dx / dist;
-            const lift = Math.min(dist * 0.22, 80);
+            const lift = Math.min(dist * 0.22, 180);
             const cx = mx + nx * lift;
             const cy = my + ny * lift;
             const path = `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`;
