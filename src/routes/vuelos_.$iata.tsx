@@ -207,6 +207,7 @@ export const Route = createFileRoute("/vuelos_/$iata")({
 function DestinationDashboard() {
   const { iata } = Route.useParams();
   const code = iata.toUpperCase();
+  const DASHBOARD_REFRESH_MS = 30 * 60 * 1000;
   const flightType =
     typeof window !== "undefined" &&
     new URLSearchParams(window.location.search).get("type") === "L"
@@ -219,21 +220,29 @@ function DestinationDashboard() {
 
   useEffect(() => {
     let cancel = false;
-    fetch(`/api/public/aena-flights?airport=ALC&type=${flightType}`)
-      .then((r) => r.json())
-      .then((d) => {
-        if (cancel) return;
-        if (d.error) setError(d.error);
-        setFlights((d.flights ?? []).filter((f: Flight) => f.iataOtro === code));
-      })
-      .catch((e) => !cancel && setError(String(e)))
-      .finally(() => !cancel && setLoading(false));
+    const loadFlights = () => {
+      setLoading(true);
+      fetch(`/api/public/aena-flights?airport=ALC&type=${flightType}`)
+        .then((r) => r.json())
+        .then((d) => {
+          if (cancel) return;
+          if (d.error) setError(d.error);
+          else setError(null);
+          setFlights((d.flights ?? []).filter((f: Flight) => f.iataOtro === code));
+        })
+        .catch((e) => !cancel && setError(String(e)))
+        .finally(() => !cancel && setLoading(false));
+    };
+
+    loadFlights();
+    const interval = window.setInterval(loadFlights, DASHBOARD_REFRESH_MS);
     return () => {
       cancel = true;
+      window.clearInterval(interval);
     };
   }, [code, flightType]);
 
-  // Ventana semanal (7 días) desde hoy. Se recalcula cada día con los datos del backend.
+  // Ventana semanal (7 días) desde hoy, alimentada por el backend actualizado cada 30 minutos.
   const window14 = useMemo(() => {
     if (!flights.length) return { start: null as Date | null, end: null as Date | null, flights: [] as Flight[] };
     const start = new Date();
