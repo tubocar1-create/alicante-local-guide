@@ -512,27 +512,27 @@ function ConnectivityMap({
           })}
 
           <g style={{ pointerEvents: "none" }}>
-            <circle cx={alc[0]} cy={alc[1]} r={42} fill="url(#alcGlow)" />
+            <circle cx={alc[0]} cy={alc[1]} r={22} fill="url(#alcGlow)" />
             <circle
               cx={alc[0]}
               cy={alc[1]}
-              r={5}
+              r={2.6}
               fill="#22D3EE"
               stroke="#031024"
-              strokeWidth={2}
+              strokeWidth={1}
             >
               <animate
                 attributeName="r"
-                values="5;8;5"
+                values="2.6;4;2.6"
                 dur="2.4s"
                 repeatCount="indefinite"
               />
             </circle>
             <text
               x={alc[0]}
-              y={alc[1] + 22}
+              y={alc[1] + 10}
               fill="#22D3EE"
-              fontSize={13}
+              fontSize={7}
               fontWeight={700}
               textAnchor="middle"
             >
