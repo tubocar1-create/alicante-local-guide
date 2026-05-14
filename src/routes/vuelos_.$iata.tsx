@@ -438,7 +438,7 @@ function DestinationDashboard() {
         </Card>
 
         {/* 2. Calendario */}
-        <Card index={2} title="Vuelos por día" subtitle="Distribución de vuelos en los próximos 14 días">
+        <Card index={2} title="Vuelos por día" subtitle="Distribución semanal (7 días)">
           <div className="grid grid-cols-7 gap-1 text-center text-[9px] uppercase tracking-wider text-slate-500">
             {WEEKDAYS_SHORT.map((d) => (
               <div key={d}>{d}</div>
