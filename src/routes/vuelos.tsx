@@ -590,24 +590,46 @@ function ConnectivityMap({
                 <circle
                   cx={x}
                   cy={y}
-                  r={isFocus ? 2.4 : 1.6}
+                  r={isFocus ? 2.6 : 1.7}
                   fill="#e2e8f0"
                   opacity={0.95}
                   style={{
-                    filter: `drop-shadow(0 0 ${isFocus ? 4 : 2}px ${tier.color})`,
+                    filter: `drop-shadow(0 0 ${isFocus ? 5 : 2}px ${tier.color})`,
                   }}
                 />
+                {/* persistent tiny IATA label */}
+                {(() => {
+                  const lab = labelFor(c);
+                  return (
+                    <text
+                      x={x + lab.dx}
+                      y={y + 1.2}
+                      fill={isFocus ? "#ffffff" : "#9fb4d6"}
+                      fontSize={3.4}
+                      fontWeight={600}
+                      textAnchor={lab.anchor as "start" | "end"}
+                      style={{
+                        pointerEvents: "none",
+                        letterSpacing: "0.08em",
+                        textShadow: "0 0 3px rgba(0,0,0,0.9)",
+                      }}
+                    >
+                      {c.iata}
+                    </text>
+                  );
+                })()}
                 {isFocus && (
                   <text
                     x={x}
                     y={y - 6}
                     fill="#ffffff"
-                    fontSize={4.5}
+                    fontSize={4.8}
                     fontWeight={700}
                     textAnchor="middle"
                     style={{
                       pointerEvents: "none",
                       letterSpacing: "0.04em",
+                      textShadow: "0 0 4px rgba(0,0,0,0.9)",
                     }}
                   >
                     {cleanCityName(c.ciudad).toUpperCase()}
