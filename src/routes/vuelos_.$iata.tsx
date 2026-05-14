@@ -329,7 +329,7 @@ function DestinationDashboard() {
 
   if (loading) {
     return (
-      <Shell>
+      <Shell flightType={flightType}>
         <div className="flex h-[60vh] items-center justify-center text-sm text-slate-500">
           <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-cyan-500/30 border-t-cyan-400" />
         </div>
@@ -338,7 +338,7 @@ function DestinationDashboard() {
   }
   if (error || total === 0) {
     return (
-      <Shell>
+      <Shell flightType={flightType}>
         <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-8 text-center text-sm text-slate-400">
           {isArrival
             ? `No hay vuelos directos hacia Alicante desde ${code} en los próximos días.`
@@ -357,7 +357,7 @@ function DestinationDashboard() {
     : "";
 
   return (
-    <Shell>
+    <Shell flightType={flightType}>
       {/* HEADER + KPIs */}
       <div className="mb-2 grid gap-2 rounded-2xl border border-slate-800 bg-slate-900/40 p-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
         <div>
