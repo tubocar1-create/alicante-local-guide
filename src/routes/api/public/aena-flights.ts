@@ -130,7 +130,7 @@ export const Route = createFileRoute("/api/public/aena-flights")({
                 ? f.tipoAeronave
                 : undefined,
           }));
-          cache = { key, at: Date.now(), data: slim };
+          cache = { key, expiresAt: nextSundayRefresh(), data: slim };
           return new Response(JSON.stringify({ flights: slim }), {
             status: 200,
             headers: {
