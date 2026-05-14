@@ -120,7 +120,12 @@ export const Route = createFileRoute("/api/public/hooks/aena-sync")({
           return Response.json({ ok: true, airport, salidas: s, llegadas: l });
         } catch (e: unknown) {
           console.error("[aena-sync] failed", e);
-          const msg = e instanceof Error ? e.message : String(e);
+          const msg =
+            e instanceof Error
+              ? e.message
+              : typeof e === "object" && e !== null
+                ? JSON.stringify(e)
+                : String(e);
           return Response.json({ ok: false, error: msg }, { status: 500 });
         }
       },
