@@ -445,7 +445,6 @@ function DestinationDashboard() {
             ))}
           </div>
           <WeekRange week={week1} />
-          <WeekRange week={week2} />
           <div className="mt-2 flex flex-wrap justify-center gap-x-3 gap-y-1 text-[10px]">
             {airlinesAgg.map(([code, _n], i) => (
               <div key={code} className="flex items-center gap-1">
