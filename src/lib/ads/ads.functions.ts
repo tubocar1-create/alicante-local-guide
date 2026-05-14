@@ -11,6 +11,7 @@ import {
   fetchAenaDisruptions,
   fetchAenaTomorrowDepartures,
   fetchAlibusAlicante,
+  fetchAlicantePressHeadlines,
   type CulturalEvent,
 } from "./alicante-city.server";
 import {
