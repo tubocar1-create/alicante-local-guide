@@ -11,7 +11,7 @@ export const Route = createFileRoute("/api/public/refresh-news")({
         try {
           const headlines = await fetchAlicantePressHeadlines();
           return new Response(
-            JSON.stringify({ ok: true, count: headlines.length, at: new Date().toISOString() }),
+            JSON.stringify({ ok: true, count: (headlines?.length ?? 0), at: new Date().toISOString() }),
             { headers: { "Content-Type": "application/json" } },
           );
         } catch (err) {
@@ -25,7 +25,7 @@ export const Route = createFileRoute("/api/public/refresh-news")({
       GET: async () => {
         const headlines = await fetchAlicantePressHeadlines();
         return new Response(
-          JSON.stringify({ ok: true, count: headlines.length }),
+          JSON.stringify({ ok: true, count: (headlines?.length ?? 0) }),
           { headers: { "Content-Type": "application/json" } },
         );
       },
