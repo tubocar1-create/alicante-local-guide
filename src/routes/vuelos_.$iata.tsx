@@ -518,13 +518,13 @@ function Shell({ children }: { children: React.ReactNode }) {
         background: "linear-gradient(180deg, #020617 0%, #06111f 50%, #020617 100%)",
       }}
     >
-      <div className="relative mx-auto max-w-7xl px-3 pb-10 pt-5 md:px-6">
-        <header className="mb-4 flex items-center justify-between">
+      <div className="relative mx-auto max-w-7xl px-3 pb-6 pt-3 md:px-6">
+        <header className="mb-2 flex items-center justify-between">
           <Link
             to="/vuelos"
-            className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1.5 text-xs text-slate-300 transition hover:border-cyan-500/50 hover:text-cyan-300"
+            className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1 text-[11px] text-slate-300 transition hover:border-cyan-500/50 hover:text-cyan-300"
           >
-            <ArrowLeft className="h-3.5 w-3.5" />
+            <ArrowLeft className="h-3 w-3" />
             Volver al mapa
           </Link>
         </header>
@@ -536,12 +536,12 @@ function Shell({ children }: { children: React.ReactNode }) {
 
 function Kpi({ icon, value, label }: { icon: React.ReactNode; value: number | string; label: string }) {
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-950/40 px-3 py-2">
-      <div className="flex items-center gap-1.5 text-cyan-300">
+    <div className="rounded-lg border border-slate-800 bg-slate-950/40 px-2 py-1.5">
+      <div className="flex items-center gap-1 text-cyan-300">
         {icon}
-        <span className="font-mono text-base font-bold text-white">{value}</span>
+        <span className="font-mono text-sm font-bold text-white">{value}</span>
       </div>
-      <div className="mt-0.5 text-[9px] uppercase tracking-wider text-slate-500">{label}</div>
+      <div className="mt-0.5 text-[8px] uppercase tracking-wider text-slate-500">{label}</div>
     </div>
   );
 }
