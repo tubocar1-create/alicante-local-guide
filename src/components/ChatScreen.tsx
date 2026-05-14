@@ -540,6 +540,9 @@ export function ChatScreen() {
                     onClick={() => {
                       if (opt.submenu) {
                         setSubmenuStack((stack) => [...stack, opt]);
+                      } else if (opt.action === "bus-picker") {
+                        setSubmenuStack([]);
+                        setShowBusPicker(true);
                       } else if (opt.prompt) {
                         setSubmenuStack([]);
                         send(opt.prompt, { mode: null });
