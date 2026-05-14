@@ -701,44 +701,28 @@ function ConnectivityMap({
                     filter: `drop-shadow(0 0 ${isFocus ? 6 : 2}px ${tier.color})`,
                   }}
                 />
-                {/* persistent tiny IATA label */}
+                {/* persistent full city name label */}
                 {(() => {
                   const lab = labelFor(c);
                   return (
                     <text
-                      x={x + lab.dx * 2}
+                      x={x + lab.dx * 1.5}
                       y={y + 1.4}
-                      fill={isFocus ? "#ffffff" : "#9fb4d6"}
-                      fontSize={4.4}
-                      fontWeight={600}
+                      fill={isFocus ? "#ffffff" : "#cdd9ee"}
+                      fontSize={isFocus ? 5.2 : 4.4}
+                      fontWeight={isFocus ? 700 : 600}
                       textAnchor={lab.anchor as "start" | "end"}
                       style={{
                         pointerEvents: "none",
-                        letterSpacing: "0.06em",
-                        textShadow: "0 0 4px rgba(0,0,0,0.95)",
+                        letterSpacing: "0.04em",
+                        textShadow: "0 0 4px rgba(0,0,0,0.95), 0 0 2px rgba(0,0,0,0.95)",
                       }}
                     >
-                      {c.iata}
+                      {cleanCityName(c.ciudad)}
                     </text>
                   );
                 })()}
-                {isFocus && (
-                  <text
-                    x={x}
-                    y={y - 7}
-                    fill="#ffffff"
-                    fontSize={6}
-                    fontWeight={700}
-                    textAnchor="middle"
-                    style={{
-                      pointerEvents: "none",
-                      letterSpacing: "0.04em",
-                      textShadow: "0 0 6px rgba(0,0,0,0.95)",
-                    }}
-                  >
-                    {cleanCityName(c.ciudad).toUpperCase()}
-                  </text>
-                )}
+
               </g>
             );
           })}
