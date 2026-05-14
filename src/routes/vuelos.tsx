@@ -415,11 +415,6 @@ function ConnectivityMap({
 
           <rect width={VIEW_W} height={VIEW_H} fill="url(#seaGrad)" />
 
-          <defs>
-            <clipPath id="mapClip">
-              <rect x={0} y={0} width={VIEW_W} height={VIEW_H} />
-            </clipPath>
-          </defs>
           {countries && (
             <g clipPath="url(#mapClip)">
               {countries.map((f, i) => {
