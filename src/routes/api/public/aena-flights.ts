@@ -68,7 +68,7 @@ export const Route = createFileRoute("/api/public/aena-flights")({
         const type = url.searchParams.get("type") === "L" ? "L" : "S";
         const key = `${airport}:${type}`;
 
-        if (cache && cache.key === key && Date.now() - cache.at < TTL_MS) {
+        if (cache && cache.key === key && Date.now() < cache.expiresAt) {
           return Response.json({ flights: cache.data, cached: true });
         }
 
