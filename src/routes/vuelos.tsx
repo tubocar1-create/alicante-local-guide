@@ -348,7 +348,7 @@ function VuelosDashboard() {
     return [...m.entries()].sort((a, b) => b[1] - a[1]);
   }, [flights7d]);
   const airlinesCount = airlinesAgg.length;
-  const topCities = cities.filter((c) => c.total > 0).slice(0, 10);
+  const topCities = cities.filter((c) => c.total > 0);
   const topDestino = topCities[0];
   const topCountryISO = topDestino ? IATA_COUNTRY[topDestino.iata] : undefined;
   const principalRegion = topCountryISO ? COUNTRY_NAME[topCountryISO] ?? "Europa" : "Europa";
@@ -567,13 +567,13 @@ function ConnectivityMap({
         >
           <defs>
             <radialGradient id="seaGrad" cx="50%" cy="50%" r="75%">
-              <stop offset="0%" stopColor="#0a1a36" />
-              <stop offset="60%" stopColor="#040c1c" />
-              <stop offset="100%" stopColor="#01060f" />
+              <stop offset="0%" stopColor="#0b2540" />
+              <stop offset="60%" stopColor="#071a30" />
+              <stop offset="100%" stopColor="#040f1f" />
             </radialGradient>
             <linearGradient id="landGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#1a2f55" />
-              <stop offset="100%" stopColor="#0e1c38" />
+              <stop offset="0%" stopColor="#e2e8f0" />
+              <stop offset="100%" stopColor="#b8c1cc" />
             </linearGradient>
             <radialGradient id="alcGlow" cx="50%" cy="50%" r="50%">
               <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.7" />
@@ -604,7 +604,7 @@ function ConnectivityMap({
                     key={i}
                     d={d}
                     fill="url(#landGrad)"
-                    stroke="#2a4980"
+                    stroke="#94a3b8"
                     strokeWidth={0.5}
                     strokeLinejoin="round"
                     vectorEffect="non-scaling-stroke"
@@ -1033,13 +1033,13 @@ function InfoPanel({
   return (
     <div className="rounded-2xl border border-white/[0.08] bg-[rgba(8,12,22,0.7)] p-4 backdrop-blur-xl">
       <p className="text-sm font-semibold text-slate-100">
-        Top 10 destinos por frecuencia
+        {weekStart && weekEnd
+          ? `Destinos de la semana del ${weekStart} al ${weekEnd}`
+          : "Destinos de la semana"}
       </p>
-      {weekStart && weekEnd && (
-        <p className="mb-3 text-[10px] uppercase tracking-[0.2em] text-cyan-400/70">
-          en la semana del {weekStart} al {weekEnd}
-        </p>
-      )}
+      <p className="mb-3 text-[10px] uppercase tracking-[0.2em] text-cyan-400/70">
+        {cities.length} destinos · clic para abrir el dashboard
+      </p>
       <ul className="mb-5 space-y-1">
         {cities.map((c, i) => (
           <li key={c.iata} className="odd:bg-white/[0.02] rounded-lg">
