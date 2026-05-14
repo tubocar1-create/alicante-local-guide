@@ -38,6 +38,7 @@ import { Route as ApiPublicQrValidateRouteImport } from './routes/api/public/qr-
 import { Route as ApiPublicQrIssueRouteImport } from './routes/api/public/qr-issue'
 import { Route as ApiPublicBusEtaRouteImport } from './routes/api/public/bus-eta'
 import { Route as ApiPublicBookingCreateRouteImport } from './routes/api/public/booking-create'
+import { Route as ApiPublicAenaFlightsRouteImport } from './routes/api/public/aena-flights'
 
 const ThreadsRoute = ThreadsRouteImport.update({
   id: '/threads',
@@ -184,6 +185,11 @@ const ApiPublicBookingCreateRoute = ApiPublicBookingCreateRouteImport.update({
   path: '/api/public/booking-create',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAenaFlightsRoute = ApiPublicAenaFlightsRouteImport.update({
+  id: '/api/public/aena-flights',
+  path: '/api/public/aena-flights',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -208,6 +214,7 @@ export interface FileRoutesByFullPath {
   '/business/referrals': typeof BusinessReferralsRoute
   '/threads/$id': typeof ThreadsIdRoute
   '/business/': typeof BusinessIndexRoute
+  '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
   '/api/public/booking-create': typeof ApiPublicBookingCreateRoute
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
   '/api/public/qr-issue': typeof ApiPublicQrIssueRoute
@@ -238,6 +245,7 @@ export interface FileRoutesByTo {
   '/business/referrals': typeof BusinessReferralsRoute
   '/threads/$id': typeof ThreadsIdRoute
   '/business': typeof BusinessIndexRoute
+  '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
   '/api/public/booking-create': typeof ApiPublicBookingCreateRoute
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
   '/api/public/qr-issue': typeof ApiPublicQrIssueRoute
@@ -270,6 +278,7 @@ export interface FileRoutesById {
   '/business/referrals': typeof BusinessReferralsRoute
   '/threads/$id': typeof ThreadsIdRoute
   '/business/': typeof BusinessIndexRoute
+  '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
   '/api/public/booking-create': typeof ApiPublicBookingCreateRoute
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
   '/api/public/qr-issue': typeof ApiPublicQrIssueRoute
@@ -303,6 +312,7 @@ export interface FileRouteTypes {
     | '/business/referrals'
     | '/threads/$id'
     | '/business/'
+    | '/api/public/aena-flights'
     | '/api/public/booking-create'
     | '/api/public/bus-eta'
     | '/api/public/qr-issue'
@@ -333,6 +343,7 @@ export interface FileRouteTypes {
     | '/business/referrals'
     | '/threads/$id'
     | '/business'
+    | '/api/public/aena-flights'
     | '/api/public/booking-create'
     | '/api/public/bus-eta'
     | '/api/public/qr-issue'
@@ -364,6 +375,7 @@ export interface FileRouteTypes {
     | '/business/referrals'
     | '/threads/$id'
     | '/business/'
+    | '/api/public/aena-flights'
     | '/api/public/booking-create'
     | '/api/public/bus-eta'
     | '/api/public/qr-issue'
@@ -384,6 +396,7 @@ export interface RootRouteChildren {
   RepoRoute: typeof RepoRoute
   StayRoute: typeof StayRoute
   ThreadsRoute: typeof ThreadsRouteWithChildren
+  ApiPublicAenaFlightsRoute: typeof ApiPublicAenaFlightsRoute
   ApiPublicBookingCreateRoute: typeof ApiPublicBookingCreateRoute
   ApiPublicBusEtaRoute: typeof ApiPublicBusEtaRoute
   ApiPublicQrIssueRoute: typeof ApiPublicQrIssueRoute
@@ -596,6 +609,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBookingCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/aena-flights': {
+      id: '/api/public/aena-flights'
+      path: '/api/public/aena-flights'
+      fullPath: '/api/public/aena-flights'
+      preLoaderRoute: typeof ApiPublicAenaFlightsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -685,6 +705,7 @@ const rootRouteChildren: RootRouteChildren = {
   RepoRoute: RepoRoute,
   StayRoute: StayRoute,
   ThreadsRoute: ThreadsRouteWithChildren,
+  ApiPublicAenaFlightsRoute: ApiPublicAenaFlightsRoute,
   ApiPublicBookingCreateRoute: ApiPublicBookingCreateRoute,
   ApiPublicBusEtaRoute: ApiPublicBusEtaRoute,
   ApiPublicQrIssueRoute: ApiPublicQrIssueRoute,

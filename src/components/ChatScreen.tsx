@@ -13,6 +13,7 @@ import { useUserLocation, distanceKm } from "@/hooks/useUserLocation";
 import ReferralDialog from "@/components/ReferralDialog";
 import { LiveEta } from "@/components/LiveEta";
 import { BusKnownPicker, type BusStopPick } from "@/components/BusKnownPicker";
+import { FlightPicker } from "@/components/FlightPicker";
 import { useAuth } from "@/hooks/useAuth";
 import { findPlaceOverride } from "@/data/places";
 import heroImg from "@/assets/alicante-hero.jpg";
@@ -57,7 +58,7 @@ type Suggestion = {
   label: string;
   prompt?: string;
   submenu?: Suggestion[];
-  action?: "bus-picker";
+  action?: "bus-picker" | "flight-picker";
 };
 const SUGGESTIONS: Suggestion[] = [
   {
@@ -104,7 +105,7 @@ const SUGGESTIONS: Suggestion[] = [
       { label: "🚍 Buses extra urbanos", prompt: "¿Cómo me muevo en bus extraurbano desde Alicante? Líneas, compañías (ALSA, Vectalia…), estación de autobuses y destinos principales (Elche, Benidorm, Murcia, Valencia, pueblos del interior)." },
       { label: "🚊 Tram", prompt: "¿Cómo uso el TRAM de Alicante? Líneas, paradas principales y conexiones con la playa." },
       { label: "🚆 Tren", prompt: "¿Cómo me muevo en tren por Alicante y alrededores? Horarios, estaciones de Cercanías y Renfe." },
-      { label: "✈️ Avión", prompt: "Información sobre el aeropuerto de Alicante-Elche: cómo llegar, transporte al centro y vuelos." },
+      { label: "✈️ Avión", action: "flight-picker" },
     ],
   },
 ];
@@ -132,6 +133,7 @@ export function ChatScreen() {
   const [showQrInfo, setShowQrInfo] = useState(false);
   const [mode, setMode] = useState<"transit" | null>(null);
   const [showBusPicker, setShowBusPicker] = useState(false);
+  const [showFlightPicker, setShowFlightPicker] = useState(false);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -445,6 +447,10 @@ export function ChatScreen() {
             />
           )}
 
+          {showFlightPicker && (
+            <FlightPicker onClose={() => setShowFlightPicker(false)} />
+          )}
+
           {isWelcome && !activeSubmenu && (
             <div className="mt-2 rounded-3xl bg-card/95 p-2 shadow-soft ring-1 ring-border/60 backdrop-blur sm:p-4">
               <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-9 sm:gap-3">
@@ -544,6 +550,9 @@ export function ChatScreen() {
                       } else if (opt.action === "bus-picker") {
                         setSubmenuStack([]);
                         setShowBusPicker(true);
+                      } else if (opt.action === "flight-picker") {
+                        setSubmenuStack([]);
+                        setShowFlightPicker(true);
                       } else if (opt.prompt) {
                         setSubmenuStack([]);
                         send(opt.prompt, { mode: null });
