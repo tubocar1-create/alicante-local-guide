@@ -416,7 +416,7 @@ function DestinationDashboard() {
           </div>
           <div className="mt-3 rounded-xl border border-slate-800 bg-slate-950/40 p-3">
             <div className="text-center text-[10px] uppercase tracking-wider text-slate-500">
-              Frecuencia media diaria (14 días)
+              Frecuencia media diaria (semana, 7 días)
             </div>
             <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
               {airlinesAgg.map(([code, n], i) => (
