@@ -524,7 +524,7 @@ function DestinationDashboard() {
       </div>
 
       <p className="mt-3 text-center text-[10px] text-slate-600">
-        Fuente: AENA · Frecuencia semanal · Recálculo diario · Actualizado:{" "}
+        Fuente: AENA · Actualizado:{" "}
         {new Date().toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })}
       </p>
     </Shell>
