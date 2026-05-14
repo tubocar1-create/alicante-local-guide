@@ -24,6 +24,7 @@ import tileParque from "@/assets/tile_parque.png";
 import tileComprar from "@/assets/tile_comprar.png";
 import tileTomar from "@/assets/tile_tomar.png";
 import tileTurismo from "@/assets/tile_turismo.png";
+import tilePlayaAventura from "@/assets/tile_playa_aventura.png";
 import tileMapa from "@/assets/tile_mapa.png";
 import tileBus from "@/assets/tile_bus.png";
 
