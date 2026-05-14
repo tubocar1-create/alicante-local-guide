@@ -502,13 +502,9 @@ export function ChatScreen() {
                         )}
                       </div>
                       <span
-                        className={`relative z-10 block w-full text-[11px] font-extrabold leading-tight tracking-tight text-foreground text-center sm:text-[13px] transition-colors group-hover:text-primary ${
-                          t.label === "Turismo, playa y aventuras"
-                            ? "-mt-7 sm:-mt-8"
-                            : "mt-1.5"
-                        }`}
+                        className="relative z-10 mt-1.5 flex min-h-[42px] sm:min-h-[50px] w-full items-end justify-center text-[11px] font-extrabold leading-tight tracking-tight text-foreground text-center sm:text-[13px] transition-colors group-hover:text-primary"
                       >
-                        {t.label}
+                        <span className="block w-full">{t.label}</span>
                       </span>
                     </button>
                   );
