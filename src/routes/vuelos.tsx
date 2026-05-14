@@ -432,7 +432,7 @@ function ConnectivityMap({
       const c = project([16, 36]);
       const fx = c[0] / VIEW_W;
       const fy = c[1] / VIEW_H;
-      const s = 3.6;
+      const s = 3.7;
       const x = w / 2 - fx * s * w;
       const y = h / 2 - fy * s * h;
       tr.setTransform(x, y, s, 0);
@@ -451,8 +451,8 @@ function ConnectivityMap({
       <div ref={wrapRef} className="relative h-[85vh] w-full sm:aspect-[16/9] sm:h-auto">
         <TransformWrapper
           ref={trRef}
-          initialScale={3.6}
-          minScale={3.6}
+          initialScale={3.7}
+          minScale={3.7}
           maxScale={10}
           wheel={{ step: 0.15 }}
           doubleClick={{ mode: "zoomIn", step: 0.6 }}
