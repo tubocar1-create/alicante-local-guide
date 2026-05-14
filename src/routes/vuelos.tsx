@@ -394,9 +394,9 @@ function VuelosDashboard() {
             Aviation Intelligence
           </p>
           <h1 className="mt-1 text-2xl font-bold tracking-tight md:text-4xl">
-            Mapa de destinos{" "}
+            {flightType === "L" ? "Mapa de llegadas " : "Mapa de destinos "}
             <span className="bg-gradient-to-r from-cyan-300 via-white to-violet-300 bg-clip-text text-transparent">
-              desde Alicante
+              {flightType === "L" ? "hacia Alicante" : "desde Alicante"}
             </span>
           </h1>
           <p className="mt-1 text-xs text-cyan-300/80 md:text-sm">
