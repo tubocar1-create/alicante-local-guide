@@ -351,44 +351,42 @@ function DestinationDashboard() {
   return (
     <Shell>
       {/* HEADER + KPIs */}
-      <div className="mb-3 grid gap-3 rounded-2xl border border-slate-800 bg-slate-900/40 p-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+      <div className="mb-2 grid gap-2 rounded-2xl border border-slate-800 bg-slate-900/40 p-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
         <div>
-          <h1 className="text-lg font-semibold leading-tight md:text-xl">
+          <h1 className="text-base font-semibold leading-tight md:text-lg">
             Vuelos desde Alicante (ALC) a {ciudad} ({pais})
           </h1>
-          <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-400">
-            <CalendarDays className="h-3.5 w-3.5 text-cyan-400" />
-            <span>
-              <span className="text-cyan-300">Semana ({startStr} – {endStr}).</span> Métricas semanales · recálculo diario.
-            </span>
+          <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-cyan-300">
+            <CalendarDays className="h-3 w-3" />
+            Semana ({startStr} – {endStr})
           </p>
         </div>
-        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-          <Kpi icon={<Plane className="h-4 w-4" />} value={total} label="vuelos totales" />
-          <Kpi icon={<Armchair className="h-4 w-4" />} value={airlinesAgg.length} label="aerolíneas" />
-          <Kpi icon={<CalendarDays className="h-4 w-4" />} value={daysWith} label="días con vuelos" />
+        <div className="grid grid-cols-4 gap-1.5">
+          <Kpi icon={<Plane className="h-3.5 w-3.5" />} value={total} label="vuelos / 7d" />
+          <Kpi icon={<Armchair className="h-3.5 w-3.5" />} value={airlinesAgg.length} label="aerolíneas / 7d" />
+          <Kpi icon={<CalendarDays className="h-3.5 w-3.5" />} value={daysWith} label="días con vuelos" />
           <Kpi
-            icon={<TrendingUp className="h-4 w-4" />}
+            icon={<TrendingUp className="h-3.5 w-3.5" />}
             value={avgPerDay.toFixed(1).replace(".", ",")}
-            label="vuelos/día (media)"
+            label="vuelos/día"
           />
         </div>
       </div>
 
       {/* TRES TARJETAS */}
-      <div className="grid gap-3 lg:grid-cols-3">
+      <div className="grid gap-2 lg:grid-cols-3">
         {/* 1. Resumen por aerolínea */}
-        <Card index={1} title="Resumen por aerolínea" subtitle="Vuelos totales esta semana (7 días)">
-          <div className="flex items-start gap-4">
-            <div className="relative">
-              <svg width="140" height="140" viewBox="0 0 140 140">
+        <Card index={1} title="Resumen por aerolínea" subtitle="Semana (7 días)">
+          <div className="flex items-center gap-3">
+            <div className="relative shrink-0">
+              <svg width="110" height="110" viewBox="0 0 140 140">
                 {donut.map((s, i) => (
                   <path key={i} d={s.d} fill={s.color} />
                 ))}
               </svg>
               <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-                <div className="text-2xl font-bold leading-none text-white">{total}</div>
-                <div className="text-[9px] uppercase tracking-wider text-slate-400">vuelos totales</div>
+                <div className="text-xl font-bold leading-none text-white">{total}</div>
+                <div className="text-[8px] uppercase tracking-wider text-slate-400">vuelos / 7d</div>
               </div>
             </div>
             <div className="flex-1 text-xs">
@@ -397,7 +395,7 @@ function DestinationDashboard() {
                 <span className="text-right">Vuelos</span>
                 <span className="text-right">%</span>
               </div>
-              <div className="mt-1.5 space-y-1.5">
+              <div className="mt-1 space-y-1">
                 {airlinesAgg.map(([code, n], i) => {
                   const pct = Math.round((n / total) * 100);
                   return (
@@ -412,27 +410,6 @@ function DestinationDashboard() {
                   );
                 })}
               </div>
-            </div>
-          </div>
-          <div className="mt-3 rounded-xl border border-slate-800 bg-slate-950/40 p-3">
-            <div className="text-center text-[10px] uppercase tracking-wider text-slate-500">
-              Frecuencia media diaria (semana, 7 días)
-            </div>
-            <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-              {airlinesAgg.map(([code, n], i) => (
-                <div key={code} className="text-center">
-                  <div
-                    className="mx-auto mb-0.5 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-bold"
-                    style={{ background: colorFor(code, i) + "22", color: colorFor(code, i) }}
-                  >
-                    {airlineName(code)}
-                  </div>
-                  <div className="font-mono text-sm text-slate-100">
-                    {(n / 7).toFixed(2).replace(".", ",")}
-                  </div>
-                  <div className="text-[9px] text-slate-500">vuelos/día</div>
-                </div>
-              ))}
             </div>
           </div>
         </Card>
@@ -453,16 +430,14 @@ function DestinationDashboard() {
               </div>
             ))}
           </div>
-          <div className="mt-3 grid grid-cols-2 gap-2 rounded-xl border border-slate-800 bg-slate-950/40 p-3 text-center">
+          <div className="mt-2 grid grid-cols-2 gap-2 rounded-xl border border-slate-800 bg-slate-950/40 p-2 text-center">
             <div>
               <div className="text-[9px] uppercase tracking-wider text-slate-500">Días con vuelos</div>
-              <div className="font-mono text-xl font-bold text-emerald-300">{daysWith}</div>
-              <div className="text-[9px] text-slate-500">de 7 días</div>
+              <div className="font-mono text-base font-bold text-emerald-300">{daysWith}<span className="text-[10px] text-slate-500"> / 7</span></div>
             </div>
             <div>
               <div className="text-[9px] uppercase tracking-wider text-slate-500">Días sin vuelos</div>
-              <div className="font-mono text-xl font-bold text-slate-300">{7 - daysWith}</div>
-              <div className="text-[9px] text-slate-500">de 7 días</div>
+              <div className="font-mono text-base font-bold text-slate-300">{7 - daysWith}<span className="text-[10px] text-slate-500"> / 7</span></div>
             </div>
           </div>
           {daysWithoutList.length > 0 && daysWithoutList.length < 7 && (
@@ -487,7 +462,7 @@ function DestinationDashboard() {
               <span>Llegada</span>
               <span>Duración</span>
             </div>
-            <div className="max-h-[260px] divide-y divide-slate-800/60 overflow-y-auto">
+            <div className="max-h-[220px] divide-y divide-slate-800/60 overflow-y-auto">
               {window14Flights.map((f, i) => {
                 const d = parseDate(f.fecha);
                 const day = `${WEEKDAYS_PRETTY[(d.getDay() + 6) % 7]} ${d.getDate()} ${MONTHS_LONG[d.getMonth()].slice(0, 3)}`;
@@ -526,7 +501,7 @@ function DestinationDashboard() {
       </div>
 
       <p className="mt-3 text-center text-[10px] text-slate-600">
-        Fuente: AENA · Frecuencia semanal · Recálculo diario · Actualizado:{" "}
+        Fuente: AENA · Actualizado:{" "}
         {new Date().toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })}
       </p>
     </Shell>
@@ -543,13 +518,13 @@ function Shell({ children }: { children: React.ReactNode }) {
         background: "linear-gradient(180deg, #020617 0%, #06111f 50%, #020617 100%)",
       }}
     >
-      <div className="relative mx-auto max-w-7xl px-3 pb-10 pt-5 md:px-6">
-        <header className="mb-4 flex items-center justify-between">
+      <div className="relative mx-auto max-w-7xl px-3 pb-6 pt-3 md:px-6">
+        <header className="mb-2 flex items-center justify-between">
           <Link
             to="/vuelos"
-            className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1.5 text-xs text-slate-300 transition hover:border-cyan-500/50 hover:text-cyan-300"
+            className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1 text-[11px] text-slate-300 transition hover:border-cyan-500/50 hover:text-cyan-300"
           >
-            <ArrowLeft className="h-3.5 w-3.5" />
+            <ArrowLeft className="h-3 w-3" />
             Volver al mapa
           </Link>
         </header>
@@ -561,12 +536,12 @@ function Shell({ children }: { children: React.ReactNode }) {
 
 function Kpi({ icon, value, label }: { icon: React.ReactNode; value: number | string; label: string }) {
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-950/40 px-3 py-2">
-      <div className="flex items-center gap-1.5 text-cyan-300">
+    <div className="rounded-lg border border-slate-800 bg-slate-950/40 px-2 py-1.5">
+      <div className="flex items-center gap-1 text-cyan-300">
         {icon}
-        <span className="font-mono text-base font-bold text-white">{value}</span>
+        <span className="font-mono text-sm font-bold text-white">{value}</span>
       </div>
-      <div className="mt-0.5 text-[9px] uppercase tracking-wider text-slate-500">{label}</div>
+      <div className="mt-0.5 text-[8px] uppercase tracking-wider text-slate-500">{label}</div>
     </div>
   );
 }

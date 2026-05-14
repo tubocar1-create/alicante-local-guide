@@ -313,6 +313,16 @@ function VuelosDashboard() {
     return set.size || 1;
   }, [flights7d]);
 
+  const weekRange = useMemo(() => {
+    if (!flights7d.length) return { start: "", end: "" };
+    const dates = [...new Set(flights7d.map((f) => f.fecha))]
+      .map(parseDate)
+      .sort((a, b) => a.getTime() - b.getTime());
+    const fmt = (d: Date) =>
+      `${d.getDate()} ${["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"][d.getMonth()]}`;
+    return { start: fmt(dates[0]), end: fmt(dates[dates.length - 1]) };
+  }, [flights7d]);
+
   const selectedCityData = selectedCity
     ? cities.find((c) => c.iata === selectedCity) ??
       (selectedCity === "TLV"
@@ -386,8 +396,8 @@ function VuelosDashboard() {
               desde Alicante
             </span>
           </h1>
-          <p className="mt-1 text-xs text-slate-500 md:text-sm">
-            Más de {destinationsCount} destinos y {airlinesCount} aerolíneas conectan Alicante con Europa.
+          <p className="mt-1 text-xs text-cyan-300/80 md:text-sm">
+            Métricas semanales (7 días) · Aeropuerto de Alicante-Elche (ALC).
           </p>
         </div>
 
@@ -413,6 +423,8 @@ function VuelosDashboard() {
               aerolineas={airlinesCount}
               vuelos={totalFlights}
               region={principalRegion}
+              weekStart={weekRange.start}
+              weekEnd={weekRange.end}
             />
             <div>
               <ConnectivityMap
@@ -787,9 +799,9 @@ function ConnectivityMap({
               )}
 
               {/* Top-left header chip */}
-              <div className="pointer-events-none absolute left-3 top-3 z-10 flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-slate-300 backdrop-blur-md">
+              <div className="pointer-events-none absolute left-3 top-3 z-10 flex items-center gap-2 rounded-full border border-cyan-400/30 bg-black/50 px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-cyan-200 backdrop-blur-md">
                 <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee]" />
-                ALC · {drawn.length} destinos
+                Mapa interactivo · seleccione su destino
               </div>
 
               {/* Frequency legend */}
@@ -1000,6 +1012,8 @@ function InfoPanel({
   aerolineas,
   vuelos,
   region,
+  weekStart,
+  weekEnd,
 }: {
   cities: CityAgg[];
   airlines: [string, number][];
@@ -1007,37 +1021,48 @@ function InfoPanel({
   aerolineas: number;
   vuelos: number;
   region: string;
+  weekStart: string;
+  weekEnd: string;
 }) {
   const items = [
-    { icon: "✈", value: `+${destinos}`, label: "Destinos" },
-    { icon: "🛫", value: `${aerolineas}+`, label: "Aerolíneas" },
+    { icon: "✈", value: `${destinos}`, label: "Destinos / 7d" },
+    { icon: "🛫", value: `${aerolineas}`, label: "Aerolíneas / 7d" },
     { icon: "✓", value: vuelos.toLocaleString("es-ES"), label: "Vuelos / 7d" },
     { icon: "🌍", value: region, label: "Principal" },
   ];
   return (
     <div className="rounded-2xl border border-white/[0.08] bg-[rgba(8,12,22,0.7)] p-4 backdrop-blur-xl">
-      <p className="mb-3 text-sm font-semibold text-slate-100">
+      <p className="text-sm font-semibold text-slate-100">
         Top 10 destinos por frecuencia
       </p>
+      {weekStart && weekEnd && (
+        <p className="mb-3 text-[10px] uppercase tracking-[0.2em] text-cyan-400/70">
+          en la semana del {weekStart} al {weekEnd}
+        </p>
+      )}
       <ul className="mb-5 space-y-1">
         {cities.map((c, i) => (
-          <li
-            key={c.iata}
-            className="flex items-center gap-2 rounded-lg px-2 py-1 text-[12px] text-slate-200 odd:bg-white/[0.02]"
-          >
-            <span className="w-4 text-right font-mono text-[11px] text-slate-500">
-              {i + 1}
-            </span>
-            <span className="text-base leading-none">{flagEmoji(c.iata)}</span>
-            <span className="flex-1 truncate">
-              {cleanCityNamePublic(c.ciudad)}{" "}
-              <span className="font-mono text-[10px] text-slate-500">
-                ({c.iata})
+          <li key={c.iata} className="odd:bg-white/[0.02] rounded-lg">
+            <a
+              href={`/vuelos/${c.iata}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-2 py-1 text-[12px] text-slate-200 transition hover:text-cyan-300"
+            >
+              <span className="w-4 text-right font-mono text-[11px] text-slate-500">
+                {i + 1}
               </span>
-            </span>
-            <span className="font-mono tabular-nums text-slate-300">
-              {c.total}
-            </span>
+              <span className="text-base leading-none">{flagEmoji(c.iata)}</span>
+              <span className="flex-1 truncate">
+                {cleanCityNamePublic(c.ciudad)}{" "}
+                <span className="font-mono text-[10px] text-slate-500">
+                  ({c.iata})
+                </span>
+              </span>
+              <span className="font-mono tabular-nums text-slate-300">
+                {c.total}
+              </span>
+            </a>
           </li>
         ))}
         {cities.length === 0 && (
