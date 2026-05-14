@@ -497,14 +497,24 @@ function ConnectivityMap({
                 />
                 <text
                   x={x + lab.dx}
-                  y={y + 1.5}
-                  fill="#e2ecff"
-                  fontSize={4}
+                  y={y - 1.2}
+                  fill="#e6efff"
+                  fontSize={3.2}
                   fontWeight={600}
                   textAnchor={lab.anchor as "start" | "end"}
                   style={{ pointerEvents: "none" }}
                 >
-                  {c.ciudad}
+                  {cleanCityName(c.ciudad)}
+                </text>
+                <text
+                  x={x + lab.dx}
+                  y={y + 2.5}
+                  fill="#8aa3c8"
+                  fontSize={2.6}
+                  textAnchor={lab.anchor as "start" | "end"}
+                  style={{ pointerEvents: "none" }}
+                >
+                  ({c.iata})
                 </text>
               </g>
             );
