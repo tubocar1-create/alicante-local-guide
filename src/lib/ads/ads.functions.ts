@@ -364,6 +364,22 @@ export const getAdVariants = createServerFn({ method: "POST" })
       flightsCtx = `\n\nINCIDENCIAS OFICIALES Aena hoy en Alicante-Elche (ALC), salidas y llegadas:\n${lines}\n\nGenera UNA variante por incidencia. Usa SOLO estos datos.`;
     }
 
+    // Salidas PROGRAMADAS de mañana (Aena Infovuelos)
+    let flightsTomorrowCtx = "";
+    if (advertiser.kind === "flights_tomorrow") {
+      const flights = await fetchAenaTomorrowDepartures();
+      if (!flights || flights.length === 0) {
+        return { ...baseResp, variants: [] };
+      }
+      const lines = flights
+        .map(
+          (f) =>
+            `- ${f.scheduledTime} · ${f.flightNumber} · ${f.airline} · → ${f.destinationCity}${f.destinationIata ? ` (${f.destinationIata})` : ""}`,
+        )
+        .join("\n");
+      flightsTomorrowCtx = `\n\nSALIDAS PROGRAMADAS MAÑANA en Alicante-Elche (ALC), fuente oficial Aena Infovuelos:\n${lines}\n\nGenera UNA variante por vuelo. Usa SOLO estos datos, no inventes nada.`;
+    }
+
     // Mercadillos: solo si HOY hay alguno activo. Si no, suspende.
     let mercadillosCtx = "";
     if (advertiser.kind === "mercadillos") {
