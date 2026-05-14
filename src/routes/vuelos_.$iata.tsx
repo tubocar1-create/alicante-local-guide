@@ -272,13 +272,13 @@ function DestinationDashboard() {
   // Días con vuelos / sin vuelos
   const daysSet = useMemo(() => new Set(window14Flights.map((f) => f.fecha)), [window14Flights]);
   const daysWith = daysSet.size;
-  const avgPerDay = total > 0 ? total / 14 : 0;
+  const avgPerDay = total > 0 ? total / 7 : 0;
 
-  // Calendario 14 días
+  // Calendario 7 días
   const calendar = useMemo(() => {
     if (!window14.start) return [] as { date: Date; airlines: string[] }[];
     const out: { date: Date; airlines: string[] }[] = [];
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < 7; i++) {
       const d = new Date(window14.start);
       d.setDate(d.getDate() + i);
       const key = `${String(d.getDate()).padStart(2, "0")}/${String(
@@ -289,8 +289,7 @@ function DestinationDashboard() {
     }
     return out;
   }, [window14, window14Flights]);
-  const week1 = calendar.slice(0, 7);
-  const week2 = calendar.slice(7, 14);
+  const week1 = calendar;
   const daysWithoutList = calendar.filter((d) => d.airlines.length === 0);
 
   const dur = estimateDuration(code);
