@@ -560,6 +560,9 @@ export function ChatScreen() {
                       } else if (opt.action === "flight-picker") {
                         setSubmenuStack([]);
                         setShowFlightPicker(true);
+                      } else if (opt.href) {
+                        setSubmenuStack([]);
+                        window.location.href = opt.href;
                       } else if (opt.prompt) {
                         setSubmenuStack([]);
                         send(opt.prompt, { mode: null });
