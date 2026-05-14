@@ -376,27 +376,19 @@ function VuelosDashboard() {
           </div>
         </header>
 
-        <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-400/70">
-              Aviation Intelligence
-            </p>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight md:text-4xl">
-              Alicante{" "}
-              <span className="bg-gradient-to-r from-cyan-300 via-white to-violet-300 bg-clip-text text-transparent">
-                → Tel Aviv
-              </span>
-            </h1>
-            <p className="mt-1 text-xs text-slate-500 md:text-sm">
-              Mapa reducido al radio máximo de vuelos desde Alicante.
-            </p>
-          </div>
-          {!loading && !error && (
-            <div className="flex gap-2">
-              <MiniStat label="Ruta" value="ALC·TLV" />
-              <MiniStat label="Vuelos / 7d" value={totalFlights} accent />
-            </div>
-          )}
+        <div className="mb-5">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-400/70">
+            Aviation Intelligence
+          </p>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight md:text-4xl">
+            Mapa de destinos{" "}
+            <span className="bg-gradient-to-r from-cyan-300 via-white to-violet-300 bg-clip-text text-transparent">
+              desde Alicante
+            </span>
+          </h1>
+          <p className="mt-1 text-xs text-slate-500 md:text-sm">
+            Más de {destinationsCount} destinos y {airlinesCount} aerolíneas conectan Alicante con Europa.
+          </p>
         </div>
 
         {false && loading && (
@@ -413,10 +405,27 @@ function VuelosDashboard() {
         )}
 
         {!loading && (
-          <ConnectivityMap
-            cities={cities}
-            selectedCity={selectedCity}
-            onSelectCity={(c) => setSelectedCity(c)}
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
+            <div className="flex flex-col gap-4 order-2 lg:order-1">
+              <TopDestinosPanel cities={topCities} />
+              <AerolineasPanel airlines={airlinesAgg.slice(0, 9)} />
+            </div>
+            <div className="order-1 lg:order-2">
+              <ConnectivityMap
+                cities={cities}
+                selectedCity={selectedCity}
+                onSelectCity={(c) => setSelectedCity(c)}
+              />
+            </div>
+          </div>
+        )}
+
+        {!loading && (
+          <FooterStatsRow
+            destinos={destinationsCount}
+            aerolineas={airlinesCount}
+            vuelos={totalFlights}
+            region={principalRegion}
           />
         )}
       </div>
