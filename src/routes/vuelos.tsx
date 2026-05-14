@@ -358,15 +358,24 @@ function ConnectivityMap({
 
   const drawn = useMemo(() => cities.filter((c) => COORDS[c.iata]), [cities]);
 
+  const cleanCityName = (raw: string) => {
+    const first = raw.split("/")[0].trim();
+    return first
+      .toLowerCase()
+      .split(" ")
+      .map((w) => (w.length > 2 ? w[0].toUpperCase() + w.slice(1) : w))
+      .join(" ");
+  };
+
   const labelFor = (c: CityAgg) => {
     const [lon] = COORDS[c.iata];
     const right = lon >= -0.5;
-    return { anchor: right ? "start" : "end", dx: right ? 8 : -8 };
+    return { anchor: right ? "start" : "end", dx: right ? 4 : -4 };
   };
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-800/80 bg-[#06122a]">
-      <div className="relative h-[calc(100vh-180px)] min-h-[480px] w-full">
+      <div className="relative aspect-[4/3] w-full">
         <TransformWrapper
           initialScale={1}
           minScale={1}
@@ -412,9 +421,9 @@ function ConnectivityMap({
                   <path
                     key={i}
                     d={d}
-                    fill="#0f244c"
-                    stroke="#1d3a73"
-                    strokeWidth={0.6}
+                    fill="#1c3a78"
+                    stroke="#3a5fa8"
+                    strokeWidth={0.5}
                     opacity={0.95}
                   />
                 );
@@ -488,14 +497,24 @@ function ConnectivityMap({
                 />
                 <text
                   x={x + lab.dx}
-                  y={y + 1.5}
-                  fill="#e2ecff"
-                  fontSize={4}
+                  y={y - 1.2}
+                  fill="#e6efff"
+                  fontSize={3.2}
                   fontWeight={600}
                   textAnchor={lab.anchor as "start" | "end"}
                   style={{ pointerEvents: "none" }}
                 >
-                  {c.ciudad}
+                  {cleanCityName(c.ciudad)}
+                </text>
+                <text
+                  x={x + lab.dx}
+                  y={y + 2.5}
+                  fill="#8aa3c8"
+                  fontSize={2.6}
+                  textAnchor={lab.anchor as "start" | "end"}
+                  style={{ pointerEvents: "none" }}
+                >
+                  ({c.iata})
                 </text>
               </g>
             );
@@ -520,13 +539,22 @@ function ConnectivityMap({
             </circle>
             <text
               x={alc[0]}
-              y={alc[1] + 6}
+              y={alc[1] + 5}
               fill="#22D3EE"
-              fontSize={4.5}
+              fontSize={3.6}
               fontWeight={700}
               textAnchor="middle"
             >
               ALICANTE
+            </text>
+            <text
+              x={alc[0]}
+              y={alc[1] + 8.2}
+              fill="#7fbedc"
+              fontSize={2.6}
+              textAnchor="middle"
+            >
+              (ALC)
             </text>
           </g>
         </svg>
