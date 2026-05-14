@@ -58,7 +58,7 @@ type Suggestion = {
   label: string;
   prompt?: string;
   submenu?: Suggestion[];
-  action?: "bus-picker";
+  action?: "bus-picker" | "flight-picker";
 };
 const SUGGESTIONS: Suggestion[] = [
   {
