@@ -338,7 +338,7 @@ function VuelosDashboard() {
           </Link>
           <div className="flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/5 px-2.5 py-1 text-[10px] uppercase tracking-widest text-cyan-300">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-400" />
-            Actualización semanal
+            Live
           </div>
         </header>
 
