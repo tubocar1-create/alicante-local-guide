@@ -227,14 +227,13 @@ function DestinationDashboard() {
     };
   }, [code]);
 
-  // Ventana 14 días desde la primera fecha disponible
+  // Ventana semanal (7 días) desde hoy. Se recalcula cada día con los datos del backend.
   const window14 = useMemo(() => {
     if (!flights.length) return { start: null as Date | null, end: null as Date | null, flights: [] as Flight[] };
-    const dates = flights.map((f) => parseDate(f.fecha)).sort((a, b) => a.getTime() - b.getTime());
-    const start = new Date(dates[0]);
+    const start = new Date();
     start.setHours(0, 0, 0, 0);
     const end = new Date(start);
-    end.setDate(end.getDate() + 14);
+    end.setDate(end.getDate() + 7);
     return {
       start,
       end,
@@ -273,13 +272,13 @@ function DestinationDashboard() {
   // Días con vuelos / sin vuelos
   const daysSet = useMemo(() => new Set(window14Flights.map((f) => f.fecha)), [window14Flights]);
   const daysWith = daysSet.size;
-  const avgPerDay = total > 0 ? total / 14 : 0;
+  const avgPerDay = total > 0 ? total / 7 : 0;
 
-  // Calendario 14 días
+  // Calendario 7 días
   const calendar = useMemo(() => {
     if (!window14.start) return [] as { date: Date; airlines: string[] }[];
     const out: { date: Date; airlines: string[] }[] = [];
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < 7; i++) {
       const d = new Date(window14.start);
       d.setDate(d.getDate() + i);
       const key = `${String(d.getDate()).padStart(2, "0")}/${String(
@@ -290,8 +289,7 @@ function DestinationDashboard() {
     }
     return out;
   }, [window14, window14Flights]);
-  const week1 = calendar.slice(0, 7);
-  const week2 = calendar.slice(7, 14);
+  const week1 = calendar;
   const daysWithoutList = calendar.filter((d) => d.airlines.length === 0);
 
   const dur = estimateDuration(code);
@@ -361,7 +359,7 @@ function DestinationDashboard() {
           <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-400">
             <CalendarDays className="h-3.5 w-3.5 text-cyan-400" />
             <span>
-              <span className="text-cyan-300">Próximos 14 días:</span> {startStr} – {endStr}
+              <span className="text-cyan-300">Semana ({startStr} – {endStr}).</span> Métricas semanales · recálculo diario.
             </span>
           </p>
         </div>
@@ -380,7 +378,7 @@ function DestinationDashboard() {
       {/* TRES TARJETAS */}
       <div className="grid gap-3 lg:grid-cols-3">
         {/* 1. Resumen por aerolínea */}
-        <Card index={1} title="Resumen por aerolínea" subtitle={`Vuelos totales en los próximos 14 días`}>
+        <Card index={1} title="Resumen por aerolínea" subtitle="Vuelos totales esta semana (7 días)">
           <div className="flex items-start gap-4">
             <div className="relative">
               <svg width="140" height="140" viewBox="0 0 140 140">
@@ -418,7 +416,7 @@ function DestinationDashboard() {
           </div>
           <div className="mt-3 rounded-xl border border-slate-800 bg-slate-950/40 p-3">
             <div className="text-center text-[10px] uppercase tracking-wider text-slate-500">
-              Frecuencia media diaria (14 días)
+              Frecuencia media diaria (semana, 7 días)
             </div>
             <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
               {airlinesAgg.map(([code, n], i) => (
@@ -430,7 +428,7 @@ function DestinationDashboard() {
                     {airlineName(code)}
                   </div>
                   <div className="font-mono text-sm text-slate-100">
-                    {(n / 14).toFixed(2).replace(".", ",")}
+                    {(n / 7).toFixed(2).replace(".", ",")}
                   </div>
                   <div className="text-[9px] text-slate-500">vuelos/día</div>
                 </div>
@@ -440,14 +438,13 @@ function DestinationDashboard() {
         </Card>
 
         {/* 2. Calendario */}
-        <Card index={2} title="Vuelos por día" subtitle="Distribución de vuelos en los próximos 14 días">
+        <Card index={2} title="Vuelos por día" subtitle="Distribución semanal (7 días)">
           <div className="grid grid-cols-7 gap-1 text-center text-[9px] uppercase tracking-wider text-slate-500">
             {WEEKDAYS_SHORT.map((d) => (
               <div key={d}>{d}</div>
             ))}
           </div>
           <WeekRange week={week1} />
-          <WeekRange week={week2} />
           <div className="mt-2 flex flex-wrap justify-center gap-x-3 gap-y-1 text-[10px]">
             {airlinesAgg.map(([code, _n], i) => (
               <div key={code} className="flex items-center gap-1">
@@ -460,15 +457,15 @@ function DestinationDashboard() {
             <div>
               <div className="text-[9px] uppercase tracking-wider text-slate-500">Días con vuelos</div>
               <div className="font-mono text-xl font-bold text-emerald-300">{daysWith}</div>
-              <div className="text-[9px] text-slate-500">de 14 días</div>
+              <div className="text-[9px] text-slate-500">de 7 días</div>
             </div>
             <div>
               <div className="text-[9px] uppercase tracking-wider text-slate-500">Días sin vuelos</div>
-              <div className="font-mono text-xl font-bold text-slate-300">{14 - daysWith}</div>
-              <div className="text-[9px] text-slate-500">de 14 días</div>
+              <div className="font-mono text-xl font-bold text-slate-300">{7 - daysWith}</div>
+              <div className="text-[9px] text-slate-500">de 7 días</div>
             </div>
           </div>
-          {daysWithoutList.length > 0 && daysWithoutList.length < 14 && (
+          {daysWithoutList.length > 0 && daysWithoutList.length < 7 && (
             <p className="mt-2 text-center text-[10px] text-slate-500">
               ⓘ Los días sin vuelos directos son{" "}
               {daysWithoutList
@@ -490,7 +487,7 @@ function DestinationDashboard() {
               <span>Llegada</span>
               <span>Duración</span>
             </div>
-            <div className="max-h-[360px] divide-y divide-slate-800/60 overflow-y-auto">
+            <div className="max-h-[260px] divide-y divide-slate-800/60 overflow-y-auto">
               {window14Flights.map((f, i) => {
                 const d = parseDate(f.fecha);
                 const day = `${WEEKDAYS_PRETTY[(d.getDay() + 6) % 7]} ${d.getDate()} ${MONTHS_LONG[d.getMonth()].slice(0, 3)}`;
@@ -528,32 +525,8 @@ function DestinationDashboard() {
         </Card>
       </div>
 
-      {/* FOOTER TIPS */}
-      <div className="mt-3 grid gap-3 rounded-2xl border border-slate-800 bg-slate-900/40 p-3 md:grid-cols-2">
-        <div className="flex items-start gap-2">
-          <Bus className="h-4 w-4 flex-shrink-0 text-cyan-300" />
-          <div className="text-xs">
-            <div className="font-semibold text-cyan-300">Llegar al aeropuerto</div>
-            <div className="text-slate-400">
-              C6: 24 min desde el centro de Alicante.
-              <br />
-              Recomendado: salir 2h antes del vuelo.
-            </div>
-          </div>
-        </div>
-        <div className="flex items-start gap-2">
-          <Plane className="h-4 w-4 flex-shrink-0 text-violet-300" />
-          <div className="text-xs">
-            <div className="font-semibold text-violet-300">Aerolíneas que operan</div>
-            <div className="text-slate-400">
-              {airlinesAgg.map(([c]) => airlineName(c)).join(" · ")}
-            </div>
-          </div>
-        </div>
-      </div>
-
       <p className="mt-3 text-center text-[10px] text-slate-600">
-        Fuente: Datos de AENA · Actualizado:{" "}
+        Fuente: AENA · Frecuencia semanal · Recálculo diario · Actualizado:{" "}
         {new Date().toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })}
       </p>
     </Shell>
