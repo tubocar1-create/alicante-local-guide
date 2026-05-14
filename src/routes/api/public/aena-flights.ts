@@ -124,7 +124,7 @@ export const Route = createFileRoute("/api/public/aena-flights")({
             status: 200,
             headers: {
               "Content-Type": "application/json",
-              "Cache-Control": "public, max-age=60",
+              "Cache-Control": "public, max-age=1800",
             },
           });
         } catch (e) {
