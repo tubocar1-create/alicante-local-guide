@@ -407,6 +407,29 @@ function ConnectivityMap({
 
   const focusCity = hoverCity ?? selectedCity;
 
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const trRef = useRef<any>(null);
+
+  // Centra la vista inicial en Europa central (lon 12, lat 50) con un zoom suave.
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      const el = wrapRef.current;
+      const tr = trRef.current;
+      if (!el || !tr) return;
+      const w = el.clientWidth;
+      const h = el.clientHeight;
+      const c = project([12, 50]);
+      const fx = c[0] / VIEW_W;
+      const fy = c[1] / VIEW_H;
+      const s = 1.9;
+      const x = w / 2 - fx * s * w;
+      const y = h / 2 - fy * s * h;
+      tr.setTransform(x, y, s, 0);
+    }, 60);
+    return () => window.clearTimeout(id);
+  }, []);
+
   return (
     <div
       className="relative overflow-hidden rounded-3xl border border-white/[0.06] shadow-[0_30px_120px_-20px_rgba(0,0,0,0.9)]"
