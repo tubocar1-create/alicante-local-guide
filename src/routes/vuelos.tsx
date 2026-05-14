@@ -476,15 +476,15 @@ function ConnectivityMap({
                 opacity={isActive ? 1 : 0.35}
               >
                 {/* Larger transparent hit area for easier tap */}
-                <circle cx={x} cy={y} r={18} fill="transparent" />
-                <circle cx={x} cy={y} r={6} fill={tier.color} opacity={0.18} />
+                <circle cx={x} cy={y} r={12} fill="transparent" />
+                <circle cx={x} cy={y} r={3} fill={tier.color} opacity={0.25} />
                 <circle
                   cx={x}
                   cy={y}
-                  r={3}
+                  r={1.6}
                   fill="#ffffff"
                   stroke={tier.color}
-                  strokeWidth={1.6}
+                  strokeWidth={0.9}
                 />
                 <text
                   x={x + lab.dx}
