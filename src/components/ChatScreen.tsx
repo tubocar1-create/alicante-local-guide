@@ -450,16 +450,6 @@ export function ChatScreen() {
                     };
                   }),
                   {
-                    key: "turismo",
-                    emoji: "🏛️",
-                    label: "Turismo",
-                    onClick: () =>
-                      send(
-                        "¿Qué sitios turísticos imprescindibles puedo visitar en Alicante hoy?",
-                        { mode: null },
-                      ),
-                  },
-                  {
                     key: "mapa",
                     emoji: "🗺️",
                     label: "Mapa",
