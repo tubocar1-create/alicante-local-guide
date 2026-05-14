@@ -660,7 +660,14 @@ function ConnectivityMap({
           </g>
 
           {/* Destination nodes */}
-          {drawn.map((c) => {
+          {[...drawn]
+            .sort((a, b) => {
+              // Render hovered/selected last so it sits on top and reliably captures clicks
+              const aFocus = a.iata === hoverCity || a.iata === selectedCity ? 1 : 0;
+              const bFocus = b.iata === hoverCity || b.iata === selectedCity ? 1 : 0;
+              return aFocus - bFocus;
+            })
+            .map((c) => {
             const [x, y] = project(COORDS[c.iata]);
             const isSel = selectedCity === c.iata;
             const isHover = hoverCity === c.iata;
@@ -670,7 +677,10 @@ function ConnectivityMap({
             return (
               <g
                 key={c.iata}
-                onClick={() => onSelectCity(c.iata)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelectCity(c.iata);
+                }}
                 onMouseEnter={(e) => {
                   setHoverCity(c.iata);
                   const r = (
@@ -691,7 +701,7 @@ function ConnectivityMap({
                 style={{ cursor: "pointer" }}
                 opacity={dim ? 0.35 : 1}
               >
-                <circle cx={x} cy={y} r={28} fill="transparent" />
+                <circle cx={x} cy={y} r={10} fill="transparent" />
                 {isFocus && (
                   <circle
                     cx={x}
