@@ -483,7 +483,7 @@ export function ChatScreen() {
                       style={{ animationDelay: `${(idx % 9) * 60}ms` }}
                     >
                       <div
-                        className="relative grid aspect-square w-full place-items-center rounded-2xl shadow-md ring-1 ring-white/60 transition-all duration-300 ease-out group-hover:-translate-y-1 group-hover:rotate-[-2deg] group-hover:shadow-xl group-hover:ring-2 group-hover:ring-primary/40 group-active:scale-90 overflow-hidden"
+                        className="relative grid aspect-square w-full place-items-center rounded-2xl shadow-md ring-1 ring-black/30 transition-all duration-300 ease-out group-hover:-translate-y-1 group-hover:rotate-[-2deg] group-hover:shadow-xl group-hover:ring-2 group-hover:ring-primary/40 group-active:scale-90 overflow-hidden"
                         style={{ backgroundColor: style?.bg ?? "oklch(0.95 0.02 80)" }}
                       >
                         <span className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-black/10" aria-hidden />
