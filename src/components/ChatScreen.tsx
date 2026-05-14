@@ -106,7 +106,13 @@ const SUGGESTIONS: Suggestion[] = [
       { label: "🚍 Buses extra urbanos", prompt: "¿Cómo me muevo en bus extraurbano desde Alicante? Líneas, compañías (ALSA, Vectalia…), estación de autobuses y destinos principales (Elche, Benidorm, Murcia, Valencia, pueblos del interior)." },
       { label: "🚊 Tram", prompt: "¿Cómo uso el TRAM de Alicante? Líneas, paradas principales y conexiones con la playa." },
       { label: "🚆 Tren", prompt: "¿Cómo me muevo en tren por Alicante y alrededores? Horarios, estaciones de Cercanías y Renfe." },
-      { label: "✈️ Avión", action: "flight-picker" },
+      {
+        label: "✈️ Avión",
+        submenu: [
+          { label: "🛰️ Panel de conectividad (próx. 15 días)", href: "/vuelos" },
+          { label: "🔎 Buscar vuelo concreto", action: "flight-picker" },
+        ],
+      },
     ],
   },
 ];
