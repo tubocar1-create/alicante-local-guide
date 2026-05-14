@@ -378,7 +378,7 @@ function ConnectivityMap({
   const [countries, setCountries] = useState<Feature<Geometry>[] | null>(null);
   useEffect(() => {
     let cancel = false;
-    fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json")
+    fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json")
       .then((r) => r.json())
       .then((topo: Topology) => {
         if (cancel) return;
@@ -494,16 +494,6 @@ function ConnectivityMap({
               <stop offset="70%" stopColor="#000" stopOpacity="0.35" />
               <stop offset="100%" stopColor="#000" stopOpacity="0.85" />
             </radialGradient>
-            <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="3" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-            <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="1.6" />
-            </filter>
             <clipPath id="mapClip">
               <rect x={0} y={0} width={VIEW_W} height={VIEW_H} />
             </clipPath>
