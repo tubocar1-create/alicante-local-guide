@@ -391,9 +391,22 @@ function ConnectivityMap({
     return { anchor: right ? "start" : "end", dx: right ? 4 : -4 };
   };
 
+  const [hoverCity, setHoverCity] = useState<string | null>(null);
+  const [tip, setTip] = useState<{ x: number; y: number; city: CityAgg } | null>(
+    null,
+  );
+
+  const focusCity = hoverCity ?? selectedCity;
+
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-800/80 bg-[#06122a]">
-      <div className="relative aspect-[4/3] w-full">
+    <div
+      className="relative overflow-hidden rounded-3xl border border-white/[0.06] shadow-[0_30px_120px_-20px_rgba(0,0,0,0.9)]"
+      style={{
+        background:
+          "radial-gradient(ellipse at center, #06122a 0%, #030917 60%, #01060f 100%)",
+      }}
+    >
+      <div className="relative aspect-[16/9] w-full">
         <TransformWrapper
           initialScale={1}
           minScale={1}
@@ -412,19 +425,33 @@ function ConnectivityMap({
         <svg
           viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
           className="absolute inset-0 h-full w-full"
-          preserveAspectRatio="xMidYMid meet"
+          preserveAspectRatio="xMidYMid slice"
         >
           <defs>
-            <radialGradient id="seaGrad" cx="50%" cy="55%" r="70%">
-              <stop offset="0%" stopColor="#0b1a3a" />
-              <stop offset="100%" stopColor="#040b1d" />
+            <radialGradient id="seaGrad" cx="50%" cy="50%" r="75%">
+              <stop offset="0%" stopColor="#08162e" />
+              <stop offset="60%" stopColor="#030a18" />
+              <stop offset="100%" stopColor="#01060f" />
             </radialGradient>
             <radialGradient id="alcGlow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#22D3EE" stopOpacity="0.55" />
-              <stop offset="100%" stopColor="#22D3EE" stopOpacity="0" />
+              <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.7" />
+              <stop offset="60%" stopColor="#3b82f6" stopOpacity="0.15" />
+              <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
             </radialGradient>
-            <filter id="arcGlow">
-              <feGaussianBlur stdDeviation="2" />
+            <radialGradient id="vignette" cx="50%" cy="50%" r="70%">
+              <stop offset="0%" stopColor="#000" stopOpacity="0" />
+              <stop offset="70%" stopColor="#000" stopOpacity="0.35" />
+              <stop offset="100%" stopColor="#000" stopOpacity="0.85" />
+            </radialGradient>
+            <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+            <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="1.6" />
             </filter>
             <clipPath id="mapClip">
               <rect x={0} y={0} width={VIEW_W} height={VIEW_H} />
@@ -439,15 +466,14 @@ function ConnectivityMap({
                 const d = GEOPATH(f);
                 if (!d) return null;
                 const [[x0, y0], [x1, y1]] = GEOPATH.bounds(f);
-                // Skip features completely outside the visible viewport
                 if (x1 < 0 || y1 < 0 || x0 > VIEW_W || y0 > VIEW_H) return null;
                 return (
                   <path
                     key={i}
                     d={d}
-                    fill="#1c3a78"
-                    stroke="#3a5fa8"
-                    strokeWidth={0.5}
+                    fill="#0c1a33"
+                    stroke="#1d3358"
+                    strokeWidth={0.4}
                     opacity={0.95}
                   />
                 );
@@ -455,6 +481,8 @@ function ConnectivityMap({
             </g>
           )}
 
+          {/* Routes */}
+          <g clipPath="url(#mapClip)">
           {drawn.map((c) => {
             const [x2, y2] = project(COORDS[c.iata]);
             const [x1, y1] = alc;
@@ -465,24 +493,28 @@ function ConnectivityMap({
             const dist = Math.sqrt(dx * dx + dy * dy) || 1;
             const nx = -dy / dist;
             const ny = dx / dist;
-            const lift = Math.min(dist * 0.25, 90);
+            const lift = Math.min(dist * 0.22, 80);
             const cx = mx + nx * lift;
             const cy = my + ny * lift;
             const path = `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`;
             const tier = freqTier(c.total);
-            const isActive = !selectedCity || selectedCity === c.iata;
-            const opacity = isActive ? 1 : 0.12;
+            const isFocus = focusCity === c.iata;
+            const dim = focusCity && !isFocus;
+            const opacity = dim ? 0.08 : isFocus ? 1 : 0.85;
 
             return (
-              <g key={c.iata}>
+              <g key={c.iata} style={{ color: tier.color }}>
+                {/* outer halo */}
                 <path
                   d={path}
                   fill="none"
                   stroke={tier.color}
-                  strokeWidth={tier.width + 2}
-                  opacity={opacity * 0.35}
-                  filter="url(#arcGlow)"
+                  strokeWidth={tier.width + 4}
+                  opacity={opacity * 0.18}
+                  filter="url(#softGlow)"
+                  strokeLinecap="round"
                 />
+                {/* core line */}
                 <path
                   d={path}
                   fill="none"
@@ -490,106 +522,210 @@ function ConnectivityMap({
                   strokeWidth={tier.width}
                   opacity={opacity}
                   strokeLinecap="round"
+                  style={{
+                    filter: `drop-shadow(0 0 ${isFocus ? 6 : 3}px ${tier.color})`,
+                  }}
+                />
+                {/* animated dash overlay */}
+                <path
+                  d={path}
+                  fill="none"
+                  stroke="#ffffff"
+                  strokeWidth={Math.max(0.6, tier.width * 0.4)}
+                  opacity={opacity * 0.55}
+                  strokeLinecap="round"
+                  strokeDasharray="4 10"
+                  style={{
+                    animation: "dashFlow 6s linear infinite",
+                  }}
                 />
               </g>
             );
           })}
+          </g>
 
+          {/* Destination nodes */}
           {drawn.map((c) => {
             const [x, y] = project(COORDS[c.iata]);
             const isSel = selectedCity === c.iata;
-            const isActive = !selectedCity || isSel;
+            const isHover = hoverCity === c.iata;
+            const isFocus = isSel || isHover;
+            const dim = focusCity && !isFocus;
             const tier = freqTier(c.total);
-            const lab = labelFor(c);
             return (
               <g
                 key={c.iata}
                 onClick={() => onSelectCity(c.iata)}
+                onMouseEnter={(e) => {
+                  setHoverCity(c.iata);
+                  const r = (
+                    e.currentTarget.ownerSVGElement as SVGSVGElement
+                  )?.getBoundingClientRect();
+                  if (r) {
+                    setTip({
+                      x: ((x / VIEW_W) * r.width),
+                      y: ((y / VIEW_H) * r.height),
+                      city: c,
+                    });
+                  }
+                }}
+                onMouseLeave={() => {
+                  setHoverCity(null);
+                  setTip(null);
+                }}
                 style={{ cursor: "pointer" }}
-                opacity={isActive ? 1 : 0.35}
+                opacity={dim ? 0.35 : 1}
               >
-                {/* Larger transparent hit area for easier tap */}
-                <circle cx={x} cy={y} r={12} fill="transparent" />
-                <circle cx={x} cy={y} r={3} fill={tier.color} opacity={0.25} />
+                <circle cx={x} cy={y} r={14} fill="transparent" />
+                {isFocus && (
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r={5}
+                    fill={tier.color}
+                    opacity={0.25}
+                    style={{ filter: `drop-shadow(0 0 6px ${tier.color})` }}
+                  />
+                )}
                 <circle
                   cx={x}
                   cy={y}
-                  r={1.6}
-                  fill="#ffffff"
-                  stroke={tier.color}
-                  strokeWidth={0.9}
+                  r={isFocus ? 2.4 : 1.6}
+                  fill="#e2e8f0"
+                  opacity={0.95}
+                  style={{
+                    filter: `drop-shadow(0 0 ${isFocus ? 4 : 2}px ${tier.color})`,
+                  }}
                 />
-                <text
-                  x={x + lab.dx}
-                  y={y - 1.2}
-                  fill="#e6efff"
-                  fontSize={3.2}
-                  fontWeight={600}
-                  textAnchor={lab.anchor as "start" | "end"}
-                  style={{ pointerEvents: "none" }}
-                >
-                  {cleanCityName(c.ciudad)}
-                </text>
-                <text
-                  x={x + lab.dx}
-                  y={y + 2.5}
-                  fill="#8aa3c8"
-                  fontSize={2.6}
-                  textAnchor={lab.anchor as "start" | "end"}
-                  style={{ pointerEvents: "none" }}
-                >
-                  ({c.iata})
-                </text>
+                {isFocus && (
+                  <text
+                    x={x}
+                    y={y - 6}
+                    fill="#ffffff"
+                    fontSize={4.5}
+                    fontWeight={700}
+                    textAnchor="middle"
+                    style={{
+                      pointerEvents: "none",
+                      letterSpacing: "0.04em",
+                    }}
+                  >
+                    {cleanCityName(c.ciudad).toUpperCase()}
+                  </text>
+                )}
               </g>
             );
           })}
 
+          {/* Alicante hub */}
           <g style={{ pointerEvents: "none" }}>
-            <circle cx={alc[0]} cy={alc[1]} r={22} fill="url(#alcGlow)" />
+            <circle cx={alc[0]} cy={alc[1]} r={28} fill="url(#alcGlow)" />
             <circle
               cx={alc[0]}
               cy={alc[1]}
-              r={2.6}
-              fill="#22D3EE"
-              stroke="#031024"
-              strokeWidth={1}
+              r={4}
+              fill="#ffffff"
+              style={{
+                filter:
+                  "drop-shadow(0 0 6px #ffffff) drop-shadow(0 0 14px #3b82f6)",
+              }}
             >
               <animate
                 attributeName="r"
-                values="2.6;4;2.6"
+                values="3.6;4.6;3.6"
                 dur="2.4s"
                 repeatCount="indefinite"
               />
             </circle>
             <text
               x={alc[0]}
-              y={alc[1] + 5}
-              fill="#22D3EE"
-              fontSize={3.6}
-              fontWeight={700}
+              y={alc[1] + 9}
+              fill="#ffffff"
+              fontSize={4.5}
+              fontWeight={800}
               textAnchor="middle"
+              style={{ letterSpacing: "0.18em" }}
             >
               ALICANTE
             </text>
-            <text
-              x={alc[0]}
-              y={alc[1] + 8.2}
-              fill="#7fbedc"
-              fontSize={2.6}
-              textAnchor="middle"
-            >
-              (ALC)
-            </text>
           </g>
+
+          {/* cinematic vignette */}
+          <rect
+            width={VIEW_W}
+            height={VIEW_H}
+            fill="url(#vignette)"
+            style={{ pointerEvents: "none" }}
+          />
         </svg>
               </TransformComponent>
 
+              {/* Tooltip */}
+              {tip && (
+                <div
+                  className="pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-full rounded-xl border border-white/10 bg-black/80 px-3 py-2 text-[11px] text-slate-100 shadow-2xl backdrop-blur-md"
+                  style={{
+                    left: tip.x,
+                    top: tip.y - 14,
+                  }}
+                >
+                  <div className="font-semibold text-white">
+                    {cleanCityName(tip.city.ciudad)}{" "}
+                    <span className="font-mono text-[10px] text-slate-400">
+                      {tip.city.iata}
+                    </span>
+                  </div>
+                  <div className="mt-0.5 flex items-center gap-2 text-slate-300">
+                    <span style={{ color: freqTier(tip.city.total).color }}>
+                      ●
+                    </span>
+                    {tip.city.total} vuelos · {tip.city.airlines.size} aerolíneas
+                  </div>
+                </div>
+              )}
+
+              {/* Top-left header chip */}
+              <div className="pointer-events-none absolute left-3 top-3 z-10 flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-slate-300 backdrop-blur-md">
+                <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee]" />
+                Network · 7d
+              </div>
+
+              {/* Frequency legend */}
+              <div className="pointer-events-none absolute right-3 bottom-3 z-10 rounded-2xl border border-white/[0.08] bg-[rgba(8,12,20,0.75)] p-3 backdrop-blur-xl">
+                <p className="mb-2 text-[9px] uppercase tracking-[0.25em] text-slate-400">
+                  Frecuencia / 7d
+                </p>
+                <div className="space-y-1.5">
+                  {[
+                    { c: "#FF3B3B", l: "25+" },
+                    { c: "#FF7A1A", l: "18–25" },
+                    { c: "#FFD400", l: "12–18" },
+                    { c: "#34D399", l: "8–12" },
+                    { c: "#22D3EE", l: "5–8" },
+                    { c: "#A78BFA", l: "1–5" },
+                  ].map((t) => (
+                    <div key={t.l} className="flex items-center gap-2">
+                      <span
+                        className="h-[2px] w-6 rounded-full"
+                        style={{
+                          background: t.c,
+                          boxShadow: `0 0 6px ${t.c}`,
+                        }}
+                      />
+                      <span className="font-mono text-[10px] text-slate-300">
+                        {t.l}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {/* Zoom controls */}
-              <div className="absolute right-2 top-2 z-10 flex flex-col gap-1 rounded-xl border border-white/10 bg-[#06122a]/90 p-1 backdrop-blur-sm">
+              <div className="absolute right-3 top-3 z-10 flex flex-col gap-1 rounded-xl border border-white/10 bg-black/50 p-1 backdrop-blur-md">
                 <button
                   type="button"
                   onClick={() => zoomIn()}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-200 hover:bg-white/10"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-200 transition hover:bg-white/10 hover:text-cyan-300"
                   aria-label="Acercar"
                 >
                   <Plus className="h-4 w-4" />
@@ -597,7 +733,7 @@ function ConnectivityMap({
                 <button
                   type="button"
                   onClick={() => zoomOut()}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-200 hover:bg-white/10"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-200 transition hover:bg-white/10 hover:text-cyan-300"
                   aria-label="Alejar"
                 >
                   <Minus className="h-4 w-4" />
@@ -605,20 +741,53 @@ function ConnectivityMap({
                 <button
                   type="button"
                   onClick={() => resetTransform()}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-200 hover:bg-white/10"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-200 transition hover:bg-white/10 hover:text-cyan-300"
                   aria-label="Restablecer"
                 >
                   <Maximize2 className="h-3.5 w-3.5" />
                 </button>
               </div>
 
-              <div className="pointer-events-none absolute bottom-2 left-2 z-10 rounded-md bg-black/40 px-2 py-1 text-[10px] text-slate-300 backdrop-blur-sm">
-                Pellizca o arrastra para explorar
+              <div className="pointer-events-none absolute bottom-3 left-3 z-10 rounded-md border border-white/5 bg-black/40 px-2 py-1 text-[10px] uppercase tracking-widest text-slate-400 backdrop-blur-sm">
+                Pellizca · arrastra · toca
               </div>
             </>
           )}
         </TransformWrapper>
       </div>
+
+      <style>{`
+        @keyframes dashFlow {
+          to { stroke-dashoffset: -140; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+function MiniStat({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: number;
+  accent?: boolean;
+}) {
+  return (
+    <div className="rounded-xl border border-white/[0.08] bg-[rgba(10,15,25,0.7)] px-3 py-2 backdrop-blur-xl">
+      <p className="text-[9px] uppercase tracking-[0.25em] text-slate-500">
+        {label}
+      </p>
+      <p
+        className={`text-xl font-bold tabular-nums ${
+          accent
+            ? "bg-gradient-to-r from-cyan-300 to-violet-300 bg-clip-text text-transparent"
+            : "text-white"
+        }`}
+      >
+        {value}
+      </p>
     </div>
   );
 }
