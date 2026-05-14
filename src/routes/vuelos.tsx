@@ -774,7 +774,8 @@ function ConnectivityMap({
                 Pellizca · arrastra · toca
               </div>
             </>
-          )}
+            );
+          }}
         </TransformWrapper>
       </div>
 
