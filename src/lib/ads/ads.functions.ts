@@ -427,11 +427,11 @@ export const getAdVariants = createServerFn({ method: "POST" })
     if (advertiser.kind === "trains") {
       const trips = await fetchRenfeAlicanteSchedule();
       if (trips && trips.length) {
-        const llegadas = trips.filter((t) => t.direction === "llegada").slice(0, 5);
-        const salidas = trips.filter((t) => t.direction === "salida").slice(0, 5);
+        const llegadas = trips.filter((t) => t.direction === "llegada").slice(0, 6);
+        const salidas = trips.filter((t) => t.direction === "salida").slice(0, 6);
         const fmt = (t: typeof trips[number]) =>
-          `- ${t.line} ${t.trainCode} · ${t.direction === "llegada" ? `desde ${t.origin}` : `hacia ${t.destination}`} · ${t.scheduledTime}`;
-        trainsCtx = `\n\nHORARIO REAL Renfe Cercanías en Alicante-Terminal (próximas 3h, hora local Madrid):\nLLEGADAS:\n${llegadas.map(fmt).join("\n") || "(ninguna)"}\nSALIDAS:\n${salidas.map(fmt).join("\n") || "(ninguna)"}\n\nUsa SOLO estos datos. Cada variante = un tren concreto. Muestra SIEMPRE la hora programada HH:MM exactamente como aparece en el listado.`;
+          `- ${t.line} ${t.trainCode} · ${t.direction === "llegada" ? `LLEGADA desde ${t.origin}` : `SALIDA hacia ${t.destination}`} · ${t.scheduledTime}`;
+        trainsCtx = `\n\nHORARIO REAL Renfe Cercanías en Alicante-Terminal (próximas 3h, hora local Madrid):\nSALIDAS (trenes que SALEN de Alicante-Terminal):\n${salidas.map(fmt).join("\n") || "(ninguna)"}\n\nLLEGADAS (trenes que LLEGAN a Alicante-Terminal):\n${llegadas.map(fmt).join("\n") || "(ninguna)"}\n\nUsa SOLO estos datos. Cada variante = un tren concreto. OBLIGATORIO mezclar AMBOS sentidos: aproximadamente la mitad de las variantes deben ser SALIDAS y la otra mitad LLEGADAS (no todas llegadas). Muestra SIEMPRE la hora programada HH:MM exactamente como aparece en el listado.`;
       } else {
         trainsCtx = "\n\n(Sin horarios de Cercanías ahora mismo).";
       }
