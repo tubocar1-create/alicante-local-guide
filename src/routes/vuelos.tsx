@@ -207,6 +207,7 @@ function parseDate(d: string): Date {
 }
 
 const WEEKDAYS = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
+const DASHBOARD_REFRESH_MS = 30 * 60 * 1000;
 
 function inferFreqLabel(perDay: number): { label: string; cls: string } {
   if (perDay >= 1.5) return { label: "Casi diaria", cls: "text-emerald-300 bg-emerald-500/10 border-emerald-500/30" };
@@ -254,18 +255,25 @@ function VuelosDashboard() {
 
   useEffect(() => {
     let cancel = false;
-    setLoading(true);
-    fetch(`/api/public/aena-flights?airport=ALC&type=${flightType}`)
-      .then((r) => r.json())
-      .then((d) => {
-        if (cancel) return;
-        if (d.error) setError(d.error);
-        setFlights(d.flights ?? []);
-      })
-      .catch((e) => !cancel && setError(String(e)))
-      .finally(() => !cancel && setLoading(false));
+    const loadFlights = () => {
+      setLoading(true);
+      fetch(`/api/public/aena-flights?airport=ALC&type=${flightType}`)
+        .then((r) => r.json())
+        .then((d) => {
+          if (cancel) return;
+          if (d.error) setError(d.error);
+          else setError(null);
+          setFlights(d.flights ?? []);
+        })
+        .catch((e) => !cancel && setError(String(e)))
+        .finally(() => !cancel && setLoading(false));
+    };
+
+    loadFlights();
+    const interval = window.setInterval(loadFlights, DASHBOARD_REFRESH_MS);
     return () => {
       cancel = true;
+      window.clearInterval(interval);
     };
   }, [flightType]);
 
