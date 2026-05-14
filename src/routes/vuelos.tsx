@@ -560,21 +560,11 @@ function ConnectivityMap({
             const tier = freqTier(c.total);
             const isFocus = focusCity === c.iata;
             const dim = focusCity && !isFocus;
-            const opacity = dim ? 0.05 : isFocus ? 0.65 : 0.45;
+            const opacity = dim ? 0.03 : isFocus ? 0.45 : 0.22;
 
             return (
               <g key={c.iata} style={{ color: tier.color }}>
-                {/* outer halo */}
-                <path
-                  d={path}
-                  fill="none"
-                  stroke={tier.color}
-                  strokeWidth={tier.width + 2}
-                  opacity={opacity * 0.08}
-                  filter="url(#softGlow)"
-                  strokeLinecap="round"
-                />
-                {/* core line */}
+                {/* core line — sin halo, sin glow */}
                 <path
                   d={path}
                   fill="none"
