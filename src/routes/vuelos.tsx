@@ -256,14 +256,17 @@ function VuelosDashboard() {
     return set.size || 1;
   }, [flights7d]);
 
-  const selectedCityData = selectedCity === "TLV"
-    ? cities.find((c) => c.iata === "TLV") ?? {
-        iata: "TLV",
-        ciudad: "Tel Aviv",
-        total: 1,
-        airlines: new Map([["--", 1]]),
-        days: new Set(["radio"]),
-      }
+  const selectedCityData = selectedCity
+    ? cities.find((c) => c.iata === selectedCity) ??
+      (selectedCity === "TLV"
+        ? {
+            iata: "TLV",
+            ciudad: "Tel Aviv",
+            total: 1,
+            airlines: new Map([["--", 1]]),
+            days: new Set(["radio"]),
+          }
+        : null)
     : null;
 
   const telAvivFlights = flights7d.filter((f) => f.iataOtro === "TLV");
