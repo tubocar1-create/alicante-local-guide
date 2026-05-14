@@ -572,8 +572,8 @@ function ConnectivityMap({
               <stop offset="100%" stopColor="#040f1f" />
             </radialGradient>
             <linearGradient id="landGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#e2e8f0" />
-              <stop offset="100%" stopColor="#b8c1cc" />
+              <stop offset="0%" stopColor="#4a2f1c" />
+              <stop offset="100%" stopColor="#2b1a0e" />
             </linearGradient>
             <radialGradient id="alcGlow" cx="50%" cy="50%" r="50%">
               <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.7" />
