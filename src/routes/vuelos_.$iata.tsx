@@ -351,24 +351,24 @@ function DestinationDashboard() {
   return (
     <Shell>
       {/* HEADER + KPIs */}
-      <div className="mb-3 grid gap-3 rounded-2xl border border-slate-800 bg-slate-900/40 p-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+      <div className="mb-2 grid gap-2 rounded-2xl border border-slate-800 bg-slate-900/40 p-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
         <div>
-          <h1 className="text-lg font-semibold leading-tight md:text-xl">
+          <h1 className="text-base font-semibold leading-tight md:text-lg">
             Vuelos desde Alicante (ALC) a {ciudad} ({pais})
           </h1>
-          <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-400">
-            <CalendarDays className="h-3.5 w-3.5 text-cyan-400" />
-            <span className="text-cyan-300">Semana ({startStr} – {endStr})</span>
+          <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-cyan-300">
+            <CalendarDays className="h-3 w-3" />
+            Semana ({startStr} – {endStr})
           </p>
         </div>
-        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-          <Kpi icon={<Plane className="h-4 w-4" />} value={total} label="vuelos totales" />
-          <Kpi icon={<Armchair className="h-4 w-4" />} value={airlinesAgg.length} label="aerolíneas" />
-          <Kpi icon={<CalendarDays className="h-4 w-4" />} value={daysWith} label="días con vuelos" />
+        <div className="grid grid-cols-4 gap-1.5">
+          <Kpi icon={<Plane className="h-3.5 w-3.5" />} value={total} label="vuelos / 7d" />
+          <Kpi icon={<Armchair className="h-3.5 w-3.5" />} value={airlinesAgg.length} label="aerolíneas / 7d" />
+          <Kpi icon={<CalendarDays className="h-3.5 w-3.5" />} value={daysWith} label="días con vuelos" />
           <Kpi
-            icon={<TrendingUp className="h-4 w-4" />}
+            icon={<TrendingUp className="h-3.5 w-3.5" />}
             value={avgPerDay.toFixed(1).replace(".", ",")}
-            label="vuelos/día (media)"
+            label="vuelos/día"
           />
         </div>
       </div>
