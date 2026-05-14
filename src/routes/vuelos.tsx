@@ -482,27 +482,14 @@ function VuelosDashboard() {
               />
             </section>
 
-            {/* Map */}
-            <section className="mb-6 overflow-hidden rounded-2xl border border-slate-800/80 bg-gradient-to-br from-slate-950 to-[#050a18]">
-              <div className="flex items-center justify-between border-b border-slate-800/60 px-4 py-3">
-                <div>
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-cyan-400/70">
-                    Network Map
-                  </p>
-                  <p className="text-sm font-medium">Rutas activas</p>
-                </div>
-                {selectedAirline && (
-                  <button
-                    onClick={() => setSelectedAirline(null)}
-                    className="flex items-center gap-1 rounded-full border border-slate-700 bg-slate-800/60 px-2.5 py-1 text-[10px] text-slate-300 hover:border-cyan-500/50"
-                  >
-                    Mostrando {selectedAirline} <X className="h-3 w-3" />
-                  </button>
-                )}
-              </div>
+            {/* Map — Connectivity poster */}
+            <section className="mb-6">
               <ConnectivityMap
-                cities={visibleCities}
+                cities={cities}
                 airlines={airlines}
+                totalFlights={totalFlights}
+                destinationCount={destinationCount}
+                airlineCount={airlineCount}
                 selectedCity={selectedCity}
                 onSelectCity={(c) => setSelectedCity(c)}
               />
