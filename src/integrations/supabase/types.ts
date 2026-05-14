@@ -14,6 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      aena_flights: {
+        Row: {
+          aeronave: string | null
+          airport: string
+          ciudad: string | null
+          compania: string | null
+          estado: string | null
+          fecha: string
+          flight_type: string
+          hora_estimada: string | null
+          hora_programada: string
+          iata_compania: string | null
+          iata_otro: string | null
+          id: string
+          mostrador: string | null
+          num_vuelo: string
+          puerta: string | null
+          scheduled_at: string
+          terminal: string | null
+          updated_at: string
+        }
+        Insert: {
+          aeronave?: string | null
+          airport: string
+          ciudad?: string | null
+          compania?: string | null
+          estado?: string | null
+          fecha: string
+          flight_type: string
+          hora_estimada?: string | null
+          hora_programada: string
+          iata_compania?: string | null
+          iata_otro?: string | null
+          id?: string
+          mostrador?: string | null
+          num_vuelo: string
+          puerta?: string | null
+          scheduled_at: string
+          terminal?: string | null
+          updated_at?: string
+        }
+        Update: {
+          aeronave?: string | null
+          airport?: string
+          ciudad?: string | null
+          compania?: string | null
+          estado?: string | null
+          fecha?: string
+          flight_type?: string
+          hora_estimada?: string | null
+          hora_programada?: string
+          iata_compania?: string | null
+          iata_otro?: string | null
+          id?: string
+          mostrador?: string | null
+          num_vuelo?: string
+          puerta?: string | null
+          scheduled_at?: string
+          terminal?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           business_id: string
