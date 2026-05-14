@@ -313,6 +313,16 @@ function VuelosDashboard() {
     return set.size || 1;
   }, [flights7d]);
 
+  const weekRange = useMemo(() => {
+    if (!flights7d.length) return { start: "", end: "" };
+    const dates = [...new Set(flights7d.map((f) => f.fecha))]
+      .map(parseDate)
+      .sort((a, b) => a.getTime() - b.getTime());
+    const fmt = (d: Date) =>
+      `${d.getDate()} ${["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"][d.getMonth()]}`;
+    return { start: fmt(dates[0]), end: fmt(dates[dates.length - 1]) };
+  }, [flights7d]);
+
   const selectedCityData = selectedCity
     ? cities.find((c) => c.iata === selectedCity) ??
       (selectedCity === "TLV"
