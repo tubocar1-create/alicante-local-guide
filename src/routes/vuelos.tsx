@@ -434,9 +434,10 @@ function VuelosDashboard() {
               <ConnectivityMap
                 cities={cities}
                 selectedCity={selectedCity}
+                flightType={flightType}
                 onSelectCity={(c) => {
                   if (typeof window !== "undefined") {
-                    window.open(`/vuelos/${c}`, "_blank", "noopener,noreferrer");
+                    window.open(`/vuelos/${c}?type=${flightType}`, "_blank", "noopener,noreferrer");
                   }
                 }}
               />
@@ -450,6 +451,7 @@ function VuelosDashboard() {
           city={selectedCityData}
           flights={flights7d.filter((f) => f.iataOtro === selectedCityData.iata)}
           dayCount={dayCount}
+          flightType={flightType}
           onClose={() => setSelectedCity(null)}
         />
       )}
