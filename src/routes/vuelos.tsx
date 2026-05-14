@@ -89,13 +89,13 @@ const COORDS: Record<string, [number, number]> = {
   INN: [11.34, 47.26],
 };
 
-// Map projection — equirectangular focused on Western Europe (where most ALC routes live)
+// Map projection — Europe + Mediterráneo, Tel Aviv (lon 34.9) marca el borde derecho
 const VIEW_W = 1000;
-const VIEW_H = 900;
-const LON_MIN = -11;
-const LON_MAX = 28;
-const LAT_MIN = 30;
-const LAT_MAX = 60;
+const VIEW_H = 760;
+const LON_MIN = -17;
+const LON_MAX = 36;
+const LAT_MIN = 28;
+const LAT_MAX = 62;
 
 const PROJ = geoEquirectangular().fitExtent(
   [
@@ -488,24 +488,14 @@ function ConnectivityMap({
                 />
                 <text
                   x={x + lab.dx}
-                  y={y - 2}
+                  y={y + 1.5}
                   fill="#e2ecff"
-                  fontSize={6}
+                  fontSize={4}
                   fontWeight={600}
                   textAnchor={lab.anchor as "start" | "end"}
                   style={{ pointerEvents: "none" }}
                 >
                   {c.ciudad}
-                </text>
-                <text
-                  x={x + lab.dx}
-                  y={y + 5}
-                  fill="#7d93b8"
-                  fontSize={5}
-                  textAnchor={lab.anchor as "start" | "end"}
-                  style={{ pointerEvents: "none" }}
-                >
-                  {c.iata}
                 </text>
               </g>
             );
@@ -530,9 +520,9 @@ function ConnectivityMap({
             </circle>
             <text
               x={alc[0]}
-              y={alc[1] + 10}
+              y={alc[1] + 6}
               fill="#22D3EE"
-              fontSize={7}
+              fontSize={4.5}
               fontWeight={700}
               textAnchor="middle"
             >
