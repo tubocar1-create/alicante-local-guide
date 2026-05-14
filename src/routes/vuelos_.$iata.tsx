@@ -543,7 +543,7 @@ function Shell({ children, flightType }: { children: React.ReactNode; flightType
           >
             <ArrowLeft className="h-3 w-3" />
             Volver al mapa
-          </Link>
+          </a>
         </header>
         {children}
       </div>
