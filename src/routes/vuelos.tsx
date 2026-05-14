@@ -432,7 +432,7 @@ function ConnectivityMap({
       const c = project([16, 36]);
       const fx = c[0] / VIEW_W;
       const fy = c[1] / VIEW_H;
-      const s = 3.6;
+      const s = 3.7;
       const x = w / 2 - fx * s * w;
       const y = h / 2 - fy * s * h;
       tr.setTransform(x, y, s, 0);
@@ -451,8 +451,8 @@ function ConnectivityMap({
       <div ref={wrapRef} className="relative h-[85vh] w-full sm:aspect-[16/9] sm:h-auto">
         <TransformWrapper
           ref={trRef}
-          initialScale={3.6}
-          minScale={3.6}
+          initialScale={3.7}
+          minScale={3.7}
           maxScale={10}
           wheel={{ step: 0.15 }}
           doubleClick={{ mode: "zoomIn", step: 0.6 }}
@@ -557,7 +557,7 @@ function ConnectivityMap({
             const tier = freqTier(c.total);
             const isFocus = focusCity === c.iata;
             const dim = focusCity && !isFocus;
-            const opacity = dim ? 0.08 : isFocus ? 1 : 0.85;
+            const opacity = dim ? 0.05 : isFocus ? 0.65 : 0.45;
 
             return (
               <g key={c.iata} style={{ color: tier.color }}>
@@ -566,8 +566,8 @@ function ConnectivityMap({
                   d={path}
                   fill="none"
                   stroke={tier.color}
-                  strokeWidth={tier.width + 4}
-                  opacity={opacity * 0.18}
+                  strokeWidth={tier.width + 2}
+                  opacity={opacity * 0.08}
                   filter="url(#softGlow)"
                   strokeLinecap="round"
                 />
@@ -579,9 +579,6 @@ function ConnectivityMap({
                   strokeWidth={tier.width}
                   opacity={opacity}
                   strokeLinecap="round"
-                  style={{
-                    filter: `drop-shadow(0 0 ${isFocus ? 6 : 3}px ${tier.color})`,
-                  }}
                 />
               </g>
             );
