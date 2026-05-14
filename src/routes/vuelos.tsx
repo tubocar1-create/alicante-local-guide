@@ -476,22 +476,22 @@ function ConnectivityMap({
                 opacity={isActive ? 1 : 0.35}
               >
                 {/* Larger transparent hit area for easier tap */}
-                <circle cx={x} cy={y} r={18} fill="transparent" />
-                <circle cx={x} cy={y} r={6} fill={tier.color} opacity={0.18} />
+                <circle cx={x} cy={y} r={12} fill="transparent" />
+                <circle cx={x} cy={y} r={3} fill={tier.color} opacity={0.25} />
                 <circle
                   cx={x}
                   cy={y}
-                  r={3}
+                  r={1.6}
                   fill="#ffffff"
                   stroke={tier.color}
-                  strokeWidth={1.6}
+                  strokeWidth={0.9}
                 />
                 <text
                   x={x + lab.dx}
-                  y={y - 5}
+                  y={y - 2}
                   fill="#e2ecff"
-                  fontSize={12}
-                  fontWeight={500}
+                  fontSize={6}
+                  fontWeight={600}
                   textAnchor={lab.anchor as "start" | "end"}
                   style={{ pointerEvents: "none" }}
                 >
@@ -499,40 +499,40 @@ function ConnectivityMap({
                 </text>
                 <text
                   x={x + lab.dx}
-                  y={y + 8}
+                  y={y + 5}
                   fill="#7d93b8"
-                  fontSize={10}
+                  fontSize={5}
                   textAnchor={lab.anchor as "start" | "end"}
                   style={{ pointerEvents: "none" }}
                 >
-                  ({c.iata})
+                  {c.iata}
                 </text>
               </g>
             );
           })}
 
           <g style={{ pointerEvents: "none" }}>
-            <circle cx={alc[0]} cy={alc[1]} r={42} fill="url(#alcGlow)" />
+            <circle cx={alc[0]} cy={alc[1]} r={22} fill="url(#alcGlow)" />
             <circle
               cx={alc[0]}
               cy={alc[1]}
-              r={5}
+              r={2.6}
               fill="#22D3EE"
               stroke="#031024"
-              strokeWidth={2}
+              strokeWidth={1}
             >
               <animate
                 attributeName="r"
-                values="5;8;5"
+                values="2.6;4;2.6"
                 dur="2.4s"
                 repeatCount="indefinite"
               />
             </circle>
             <text
               x={alc[0]}
-              y={alc[1] + 22}
+              y={alc[1] + 10}
               fill="#22D3EE"
-              fontSize={13}
+              fontSize={7}
               fontWeight={700}
               textAnchor="middle"
             >
