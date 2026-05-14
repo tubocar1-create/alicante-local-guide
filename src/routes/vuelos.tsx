@@ -15,6 +15,8 @@ import { geoEquirectangular, geoPath } from "d3-geo";
 import { feature } from "topojson-client";
 import type { Topology } from "topojson-specification";
 import type { Feature, FeatureCollection, Geometry } from "geojson";
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import { Plus, Minus, Maximize2 } from "lucide-react";
 
 export const Route = createFileRoute("/vuelos")({
   head: () => ({
@@ -87,13 +89,13 @@ const COORDS: Record<string, [number, number]> = {
   INN: [11.34, 47.26],
 };
 
-// Map projection — equirectangular tuned for Europa + Mediterráneo
+// Map projection — equirectangular focused on Western Europe (where most ALC routes live)
 const VIEW_W = 1000;
 const VIEW_H = 900;
-const LON_MIN = -18;
-const LON_MAX = 36;
-const LAT_MIN = 27;
-const LAT_MAX = 62;
+const LON_MIN = -11;
+const LON_MAX = 28;
+const LAT_MIN = 30;
+const LAT_MAX = 60;
 
 const PROJ = geoEquirectangular().fitExtent(
   [
@@ -365,6 +367,21 @@ function ConnectivityMap({
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-800/80 bg-[#06122a]">
       <div className="relative h-[calc(100vh-180px)] min-h-[480px] w-full">
+        <TransformWrapper
+          initialScale={1}
+          minScale={1}
+          maxScale={6}
+          wheel={{ step: 0.15 }}
+          doubleClick={{ mode: "zoomIn", step: 0.6 }}
+          panning={{ velocityDisabled: true }}
+          limitToBounds={true}
+        >
+          {({ zoomIn, zoomOut, resetTransform }) => (
+            <>
+              <TransformComponent
+                wrapperClass="!h-full !w-full"
+                contentClass="!h-full !w-full"
+              >
         <svg
           viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
           className="absolute inset-0 h-full w-full"
@@ -523,6 +540,42 @@ function ConnectivityMap({
             </text>
           </g>
         </svg>
+              </TransformComponent>
+
+              {/* Zoom controls */}
+              <div className="absolute right-2 top-2 z-10 flex flex-col gap-1 rounded-xl border border-white/10 bg-[#06122a]/90 p-1 backdrop-blur-sm">
+                <button
+                  type="button"
+                  onClick={() => zoomIn()}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-200 hover:bg-white/10"
+                  aria-label="Acercar"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => zoomOut()}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-200 hover:bg-white/10"
+                  aria-label="Alejar"
+                >
+                  <Minus className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => resetTransform()}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-200 hover:bg-white/10"
+                  aria-label="Restablecer"
+                >
+                  <Maximize2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              <div className="pointer-events-none absolute bottom-2 left-2 z-10 rounded-md bg-black/40 px-2 py-1 text-[10px] text-slate-300 backdrop-blur-sm">
+                Pellizca o arrastra para explorar
+              </div>
+            </>
+          )}
+        </TransformWrapper>
       </div>
     </div>
   );
