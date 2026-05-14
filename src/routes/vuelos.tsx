@@ -537,19 +537,6 @@ function ConnectivityMap({
                     filter: `drop-shadow(0 0 ${isFocus ? 6 : 3}px ${tier.color})`,
                   }}
                 />
-                {/* animated dash overlay */}
-                <path
-                  d={path}
-                  fill="none"
-                  stroke="#ffffff"
-                  strokeWidth={Math.max(0.6, tier.width * 0.4)}
-                  opacity={opacity * 0.55}
-                  strokeLinecap="round"
-                  strokeDasharray="4 10"
-                  style={{
-                    animation: "dashFlow 6s linear infinite",
-                  }}
-                />
               </g>
             );
           })}
