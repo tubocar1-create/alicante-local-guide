@@ -33,6 +33,7 @@ import { Route as BusPlannerRouteImport } from './routes/bus.planner'
 import { Route as BusLinesRouteImport } from './routes/bus.lines'
 import { Route as BusinessInboxIdRouteImport } from './routes/business.inbox.$id'
 import { Route as BusLinesCodeRouteImport } from './routes/bus.lines.$code'
+import { Route as ApiPublicRefreshNewsRouteImport } from './routes/api/public/refresh-news'
 import { Route as ApiPublicQrValidateRouteImport } from './routes/api/public/qr-validate'
 import { Route as ApiPublicQrIssueRouteImport } from './routes/api/public/qr-issue'
 import { Route as ApiPublicBusEtaRouteImport } from './routes/api/public/bus-eta'
@@ -158,6 +159,11 @@ const BusLinesCodeRoute = BusLinesCodeRouteImport.update({
   path: '/$code',
   getParentRoute: () => BusLinesRoute,
 } as any)
+const ApiPublicRefreshNewsRoute = ApiPublicRefreshNewsRouteImport.update({
+  id: '/api/public/refresh-news',
+  path: '/api/public/refresh-news',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicQrValidateRoute = ApiPublicQrValidateRouteImport.update({
   id: '/api/public/qr-validate',
   path: '/api/public/qr-validate',
@@ -206,6 +212,7 @@ export interface FileRoutesByFullPath {
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
   '/api/public/qr-issue': typeof ApiPublicQrIssueRoute
   '/api/public/qr-validate': typeof ApiPublicQrValidateRoute
+  '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
 }
@@ -235,6 +242,7 @@ export interface FileRoutesByTo {
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
   '/api/public/qr-issue': typeof ApiPublicQrIssueRoute
   '/api/public/qr-validate': typeof ApiPublicQrValidateRoute
+  '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
 }
@@ -266,6 +274,7 @@ export interface FileRoutesById {
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
   '/api/public/qr-issue': typeof ApiPublicQrIssueRoute
   '/api/public/qr-validate': typeof ApiPublicQrValidateRoute
+  '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
 }
@@ -298,6 +307,7 @@ export interface FileRouteTypes {
     | '/api/public/bus-eta'
     | '/api/public/qr-issue'
     | '/api/public/qr-validate'
+    | '/api/public/refresh-news'
     | '/bus/lines/$code'
     | '/business/inbox/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -327,6 +337,7 @@ export interface FileRouteTypes {
     | '/api/public/bus-eta'
     | '/api/public/qr-issue'
     | '/api/public/qr-validate'
+    | '/api/public/refresh-news'
     | '/bus/lines/$code'
     | '/business/inbox/$id'
   id:
@@ -357,6 +368,7 @@ export interface FileRouteTypes {
     | '/api/public/bus-eta'
     | '/api/public/qr-issue'
     | '/api/public/qr-validate'
+    | '/api/public/refresh-news'
     | '/bus/lines/$code'
     | '/business/inbox/$id'
   fileRoutesById: FileRoutesById
@@ -376,6 +388,7 @@ export interface RootRouteChildren {
   ApiPublicBusEtaRoute: typeof ApiPublicBusEtaRoute
   ApiPublicQrIssueRoute: typeof ApiPublicQrIssueRoute
   ApiPublicQrValidateRoute: typeof ApiPublicQrValidateRoute
+  ApiPublicRefreshNewsRoute: typeof ApiPublicRefreshNewsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -548,6 +561,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BusLinesCodeRouteImport
       parentRoute: typeof BusLinesRoute
     }
+    '/api/public/refresh-news': {
+      id: '/api/public/refresh-news'
+      path: '/api/public/refresh-news'
+      fullPath: '/api/public/refresh-news'
+      preLoaderRoute: typeof ApiPublicRefreshNewsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/qr-validate': {
       id: '/api/public/qr-validate'
       path: '/api/public/qr-validate'
@@ -669,6 +689,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicBusEtaRoute: ApiPublicBusEtaRoute,
   ApiPublicQrIssueRoute: ApiPublicQrIssueRoute,
   ApiPublicQrValidateRoute: ApiPublicQrValidateRoute,
+  ApiPublicRefreshNewsRoute: ApiPublicRefreshNewsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
