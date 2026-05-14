@@ -35,6 +35,7 @@ const TILE_STYLES: Record<string, { img: string; bg: string }> = {
   Comprar:      { img: tileComprar, bg: "oklch(0.94 0.07 340)" },
   "Tomar algo": { img: tileTomar,   bg: "oklch(0.95 0.07 50)" },
   Turismo:      { img: tileTurismo, bg: "oklch(0.94 0.05 25)" },
+  "Turismo, playa y aventuras": { img: tileTurismo, bg: "oklch(0.94 0.05 25)" },
   Mapa:         { img: tileMapa,    bg: "oklch(0.93 0.06 200)" },
   Bus:          { img: tileBus,     bg: "oklch(0.93 0.06 190)" },
 };
@@ -83,8 +84,15 @@ const SUGGESTIONS: Suggestion[] = [
     ],
   },
   { label: "🏨 Dormir", prompt: "¿Dónde puedo dormir esta noche?" },
-  { label: "🏖️ Playa", prompt: "¿Qué playa me recomiendas?" },
-  { label: "🌳 Parque", prompt: "¿Qué parque o zona verde me recomiendas?" },
+  {
+    label: "🏛️ Turismo, playa y aventuras",
+    submenu: [
+      { label: "🏛️ Turismo", prompt: "¿Qué sitios turísticos imprescindibles puedo visitar en Alicante hoy?" },
+      { label: "🏖️ Playa", prompt: "¿Qué playa me recomiendas?" },
+      { label: "🌳 Parque", prompt: "¿Qué parque o zona verde me recomiendas?" },
+      { label: "🧗 Aventuras", prompt: "¿Qué planes de aventura o actividades al aire libre puedo hacer hoy en Alicante o alrededores?" },
+    ],
+  },
   { label: "🛍️ Comprar", prompt: "¿Dónde puedo ir de compras?" },
   { label: "🍹 Tomar algo", prompt: "¿Dónde voy a tomar algo abierto ahora?" },
 ];
@@ -441,16 +449,6 @@ export function ChatScreen() {
                       },
                     };
                   }),
-                  {
-                    key: "turismo",
-                    emoji: "🏛️",
-                    label: "Turismo",
-                    onClick: () =>
-                      send(
-                        "¿Qué sitios turísticos imprescindibles puedo visitar en Alicante hoy?",
-                        { mode: null },
-                      ),
-                  },
                   {
                     key: "mapa",
                     emoji: "🗺️",
