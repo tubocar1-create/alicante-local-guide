@@ -359,7 +359,7 @@ function DestinationDashboard() {
           <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-400">
             <CalendarDays className="h-3.5 w-3.5 text-cyan-400" />
             <span>
-              <span className="text-cyan-300">Próximos 14 días:</span> {startStr} – {endStr}
+              <span className="text-cyan-300">Semana ({startStr} – {endStr}).</span> Métricas semanales · recálculo diario.
             </span>
           </p>
         </div>
