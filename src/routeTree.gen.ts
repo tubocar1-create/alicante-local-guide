@@ -42,7 +42,6 @@ import { Route as ApiPublicBusEtaRouteImport } from './routes/api/public/bus-eta
 import { Route as ApiPublicBookingCreateRouteImport } from './routes/api/public/booking-create'
 import { Route as ApiPublicAenaFlightsRouteImport } from './routes/api/public/aena-flights'
 import { Route as ApiPublicHooksAenaSyncRouteImport } from './routes/api/public/hooks/aena-sync'
-import { Route as ApiPublicHooksAenaPruneRouteImport } from './routes/api/public/hooks/aena-prune'
 
 const VuelosRoute = VuelosRouteImport.update({
   id: '/vuelos',
@@ -209,11 +208,6 @@ const ApiPublicHooksAenaSyncRoute = ApiPublicHooksAenaSyncRouteImport.update({
   path: '/api/public/hooks/aena-sync',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicHooksAenaPruneRoute = ApiPublicHooksAenaPruneRouteImport.update({
-  id: '/api/public/hooks/aena-prune',
-  path: '/api/public/hooks/aena-prune',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -248,7 +242,6 @@ export interface FileRoutesByFullPath {
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
-  '/api/public/hooks/aena-prune': typeof ApiPublicHooksAenaPruneRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
 }
 export interface FileRoutesByTo {
@@ -283,7 +276,6 @@ export interface FileRoutesByTo {
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
-  '/api/public/hooks/aena-prune': typeof ApiPublicHooksAenaPruneRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
 }
 export interface FileRoutesById {
@@ -320,7 +312,6 @@ export interface FileRoutesById {
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
-  '/api/public/hooks/aena-prune': typeof ApiPublicHooksAenaPruneRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
 }
 export interface FileRouteTypes {
@@ -358,7 +349,6 @@ export interface FileRouteTypes {
     | '/api/public/refresh-news'
     | '/bus/lines/$code'
     | '/business/inbox/$id'
-    | '/api/public/hooks/aena-prune'
     | '/api/public/hooks/aena-sync'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -393,7 +383,6 @@ export interface FileRouteTypes {
     | '/api/public/refresh-news'
     | '/bus/lines/$code'
     | '/business/inbox/$id'
-    | '/api/public/hooks/aena-prune'
     | '/api/public/hooks/aena-sync'
   id:
     | '__root__'
@@ -429,7 +418,6 @@ export interface FileRouteTypes {
     | '/api/public/refresh-news'
     | '/bus/lines/$code'
     | '/business/inbox/$id'
-    | '/api/public/hooks/aena-prune'
     | '/api/public/hooks/aena-sync'
   fileRoutesById: FileRoutesById
 }
@@ -452,7 +440,6 @@ export interface RootRouteChildren {
   ApiPublicQrIssueRoute: typeof ApiPublicQrIssueRoute
   ApiPublicQrValidateRoute: typeof ApiPublicQrValidateRoute
   ApiPublicRefreshNewsRoute: typeof ApiPublicRefreshNewsRoute
-  ApiPublicHooksAenaPruneRoute: typeof ApiPublicHooksAenaPruneRoute
   ApiPublicHooksAenaSyncRoute: typeof ApiPublicHooksAenaSyncRoute
 }
 
@@ -689,13 +676,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksAenaSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/aena-prune': {
-      id: '/api/public/hooks/aena-prune'
-      path: '/api/public/hooks/aena-prune'
-      fullPath: '/api/public/hooks/aena-prune'
-      preLoaderRoute: typeof ApiPublicHooksAenaPruneRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -793,7 +773,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicQrIssueRoute: ApiPublicQrIssueRoute,
   ApiPublicQrValidateRoute: ApiPublicQrValidateRoute,
   ApiPublicRefreshNewsRoute: ApiPublicRefreshNewsRoute,
-  ApiPublicHooksAenaPruneRoute: ApiPublicHooksAenaPruneRoute,
   ApiPublicHooksAenaSyncRoute: ApiPublicHooksAenaSyncRoute,
 }
 export const routeTree = rootRouteImport
