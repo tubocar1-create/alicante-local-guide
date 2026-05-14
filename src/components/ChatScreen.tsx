@@ -500,7 +500,13 @@ export function ChatScreen() {
                           <span className="text-[38px] transition-transform duration-300 group-hover:scale-125">{t.emoji}</span>
                         )}
                       </div>
-                      <span className="mt-1.5 block w-full text-[11px] font-extrabold leading-tight tracking-tight text-foreground text-center sm:text-[13px] transition-colors group-hover:text-primary">
+                      <span
+                        className={`relative z-10 block w-full text-[11px] font-extrabold leading-tight tracking-tight text-foreground text-center sm:text-[13px] transition-colors group-hover:text-primary ${
+                          t.label === "Turismo, playa y aventuras"
+                            ? "-mt-7 sm:-mt-8"
+                            : "mt-1.5"
+                        }`}
+                      >
                         {t.label}
                       </span>
                     </button>
