@@ -93,10 +93,10 @@ const COORDS: Record<string, [number, number]> = {
 // y el zoom mínimo queda bloqueado en esta misma posición.
 const VIEW_W = 1000;
 const VIEW_H = 562;
-const LON_MIN = -125;
-const LON_MAX = 125;
-const LAT_MIN = -55;
-const LAT_MAX = 75;
+const LON_MIN = -15;
+const LON_MAX = 50;
+const LAT_MIN = 18;
+const LAT_MAX = 60;
 
 const PROJ = geoEquirectangular().fitExtent(
   [
