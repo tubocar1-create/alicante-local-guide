@@ -367,6 +367,21 @@ function ConnectivityMap({
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-800/80 bg-[#06122a]">
       <div className="relative h-[calc(100vh-180px)] min-h-[480px] w-full">
+        <TransformWrapper
+          initialScale={1}
+          minScale={1}
+          maxScale={6}
+          wheel={{ step: 0.15 }}
+          doubleClick={{ mode: "zoomIn", step: 0.6 }}
+          panning={{ velocityDisabled: true }}
+          limitToBounds={true}
+        >
+          {({ zoomIn, zoomOut, resetTransform }) => (
+            <>
+              <TransformComponent
+                wrapperClass="!h-full !w-full"
+                contentClass="!h-full !w-full"
+              >
         <svg
           viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
           className="absolute inset-0 h-full w-full"
