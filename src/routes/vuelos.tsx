@@ -11,7 +11,7 @@ import {
   XAxis,
   Tooltip,
 } from "recharts";
-import { geoEquirectangular, geoPath } from "d3-geo";
+import { geoMercator, geoPath } from "d3-geo";
 import { feature } from "topojson-client";
 import type { Topology } from "topojson-specification";
 import type { Feature, FeatureCollection, Geometry } from "geojson";
@@ -89,16 +89,15 @@ const COORDS: Record<string, [number, number]> = {
   INN: [11.34, 47.26],
 };
 
-// Map projection — vista inicial amplia: la ruta ALC → TLV arranca en esta escala
-// y el zoom mínimo queda bloqueado en esta misma posición.
-const VIEW_W = 1000;
-const VIEW_H = 562;
+// Map projection — Mercator centrada en Europa, viewBox grande para nitidez.
+const VIEW_W = 2000;
+const VIEW_H = 1400;
 const LON_MIN = -15;
 const LON_MAX = 50;
-const LAT_MIN = 18;
-const LAT_MAX = 60;
+const LAT_MIN = 28;
+const LAT_MAX = 62;
 
-const PROJ = geoEquirectangular().fitExtent(
+const PROJ = geoMercator().fitExtent(
   [
     [0, 0],
     [VIEW_W, VIEW_H],
@@ -161,14 +160,14 @@ function inferFreqLabel(perDay: number): { label: string; cls: string } {
 }
 
 const FREQ_TIERS: { min: number; max: number; color: string; width: number }[] = [
-  { min: 25, max: Infinity, color: "#FF3B3B", width: 0.6 },
-  { min: 18, max: 25, color: "#FF7A1A", width: 0.5 },
-  { min: 12, max: 18, color: "#FFD400", width: 0.45 },
-  { min: 8, max: 12, color: "#34D399", width: 0.4 },
-  { min: 5, max: 8, color: "#22D3EE", width: 0.35 },
-  { min: 3, max: 5, color: "#60A5FA", width: 0.3 },
-  { min: 2, max: 3, color: "#A78BFA", width: 0.28 },
-  { min: 1, max: 2, color: "#F472B6", width: 0.25 },
+  { min: 25, max: Infinity, color: "#FF3B3B", width: 1.4 },
+  { min: 18, max: 25, color: "#FF7A1A", width: 1.2 },
+  { min: 12, max: 18, color: "#FFD400", width: 1.05 },
+  { min: 8, max: 12, color: "#34D399", width: 0.95 },
+  { min: 5, max: 8, color: "#22D3EE", width: 0.85 },
+  { min: 3, max: 5, color: "#60A5FA", width: 0.75 },
+  { min: 2, max: 3, color: "#A78BFA", width: 0.7 },
+  { min: 1, max: 2, color: "#F472B6", width: 0.65 },
 ];
 
 function freqTier(total: number) {
@@ -366,7 +365,7 @@ function ConnectivityMap({
   const [countries, setCountries] = useState<Feature<Geometry>[] | null>(null);
   useEffect(() => {
     let cancel = false;
-    fetch("https://unpkg.com/world-atlas@2/countries-110m.json")
+    fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json")
       .then((r) => r.json())
       .then((topo: Topology) => {
         if (cancel) return;
@@ -440,10 +439,14 @@ function ConnectivityMap({
         >
           <defs>
             <radialGradient id="seaGrad" cx="50%" cy="50%" r="75%">
-              <stop offset="0%" stopColor="#08162e" />
-              <stop offset="60%" stopColor="#030a18" />
+              <stop offset="0%" stopColor="#0a1a36" />
+              <stop offset="60%" stopColor="#040c1c" />
               <stop offset="100%" stopColor="#01060f" />
             </radialGradient>
+            <linearGradient id="landGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#1a2f55" />
+              <stop offset="100%" stopColor="#0e1c38" />
+            </linearGradient>
             <radialGradient id="alcGlow" cx="50%" cy="50%" r="50%">
               <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.7" />
               <stop offset="60%" stopColor="#3b82f6" stopOpacity="0.15" />
@@ -482,10 +485,11 @@ function ConnectivityMap({
                   <path
                     key={i}
                     d={d}
-                    fill="#0c1a33"
-                    stroke="#1d3358"
-                    strokeWidth={0.4}
-                    opacity={0.95}
+                    fill="url(#landGrad)"
+                    stroke="#2a4980"
+                    strokeWidth={0.5}
+                    strokeLinejoin="round"
+                    vectorEffect="non-scaling-stroke"
                   />
                 );
               })}
@@ -504,7 +508,7 @@ function ConnectivityMap({
             const dist = Math.sqrt(dx * dx + dy * dy) || 1;
             const nx = -dy / dist;
             const ny = dx / dist;
-            const lift = Math.min(dist * 0.22, 80);
+            const lift = Math.min(dist * 0.22, 180);
             const cx = mx + nx * lift;
             const cy = my + ny * lift;
             const path = `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`;
@@ -574,25 +578,25 @@ function ConnectivityMap({
                 style={{ cursor: "pointer" }}
                 opacity={dim ? 0.35 : 1}
               >
-                <circle cx={x} cy={y} r={14} fill="transparent" />
+                <circle cx={x} cy={y} r={28} fill="transparent" />
                 {isFocus && (
                   <circle
                     cx={x}
                     cy={y}
-                    r={5}
+                    r={11}
                     fill={tier.color}
                     opacity={0.25}
-                    style={{ filter: `drop-shadow(0 0 6px ${tier.color})` }}
+                    style={{ filter: `drop-shadow(0 0 12px ${tier.color})` }}
                   />
                 )}
                 <circle
                   cx={x}
                   cy={y}
-                  r={isFocus ? 1.4 : 0.9}
+                  r={isFocus ? 3 : 2}
                   fill="#e2e8f0"
                   opacity={0.95}
                   style={{
-                    filter: `drop-shadow(0 0 ${isFocus ? 3 : 1}px ${tier.color})`,
+                    filter: `drop-shadow(0 0 ${isFocus ? 6 : 2}px ${tier.color})`,
                   }}
                 />
                 {/* persistent tiny IATA label */}
@@ -600,16 +604,16 @@ function ConnectivityMap({
                   const lab = labelFor(c);
                   return (
                     <text
-                      x={x + lab.dx}
-                      y={y + 0.7}
+                      x={x + lab.dx * 2}
+                      y={y + 1.4}
                       fill={isFocus ? "#ffffff" : "#9fb4d6"}
-                      fontSize={2}
+                      fontSize={4.4}
                       fontWeight={600}
                       textAnchor={lab.anchor as "start" | "end"}
                       style={{
                         pointerEvents: "none",
                         letterSpacing: "0.06em",
-                        textShadow: "0 0 2px rgba(0,0,0,0.9)",
+                        textShadow: "0 0 4px rgba(0,0,0,0.95)",
                       }}
                     >
                       {c.iata}
@@ -619,15 +623,15 @@ function ConnectivityMap({
                 {isFocus && (
                   <text
                     x={x}
-                    y={y - 3.5}
+                    y={y - 7}
                     fill="#ffffff"
-                    fontSize={2.8}
+                    fontSize={6}
                     fontWeight={700}
                     textAnchor="middle"
                     style={{
                       pointerEvents: "none",
                       letterSpacing: "0.04em",
-                      textShadow: "0 0 3px rgba(0,0,0,0.9)",
+                      textShadow: "0 0 6px rgba(0,0,0,0.95)",
                     }}
                   >
                     {cleanCityName(c.ciudad).toUpperCase()}
@@ -639,22 +643,22 @@ function ConnectivityMap({
 
           {/* Alicante hub */}
           <g style={{ pointerEvents: "none" }}>
-            <circle cx={alc[0]} cy={alc[1]} r={14} fill="url(#alcGlow)" />
+            <circle cx={alc[0]} cy={alc[1]} r={28} fill="url(#alcGlow)" />
             <circle
               cx={alc[0]}
               cy={alc[1]}
-              r={1.6}
+              r={3.5}
               fill="#ffffff"
               style={{
                 filter:
-                  "drop-shadow(0 0 3px #ffffff) drop-shadow(0 0 7px #3b82f6)",
+                  "drop-shadow(0 0 6px #ffffff) drop-shadow(0 0 14px #3b82f6)",
               }}
             />
             <text
               x={alc[0]}
-              y={alc[1] + 4}
+              y={alc[1] + 8}
               fill="#ffffff"
-              fontSize={2.4}
+              fontSize={5.2}
               fontWeight={800}
               textAnchor="middle"
               style={{ letterSpacing: "0.14em" }}
