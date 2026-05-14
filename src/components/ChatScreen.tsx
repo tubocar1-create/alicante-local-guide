@@ -549,7 +549,7 @@ export function ChatScreen() {
                         send(opt.prompt, { mode: null });
                       }
                     }}
-                    className="rounded-full border border-border bg-background/80 px-3 py-2 text-sm shadow-sm transition hover:bg-accent/40"
+                    className="w-full rounded-xl border border-border bg-background/80 px-4 py-3 text-left text-sm shadow-sm transition hover:bg-accent/40"
                   >
                     {opt.label}
                   </button>
