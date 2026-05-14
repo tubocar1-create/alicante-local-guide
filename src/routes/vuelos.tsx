@@ -378,7 +378,7 @@ function ConnectivityMap({
   const [countries, setCountries] = useState<Feature<Geometry>[] | null>(null);
   useEffect(() => {
     let cancel = false;
-    fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json")
+    fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json")
       .then((r) => r.json())
       .then((topo: Topology) => {
         if (cancel) return;
