@@ -374,19 +374,19 @@ function DestinationDashboard() {
       </div>
 
       {/* TRES TARJETAS */}
-      <div className="grid gap-3 lg:grid-cols-3">
+      <div className="grid gap-2 lg:grid-cols-3">
         {/* 1. Resumen por aerolínea */}
-        <Card index={1} title="Resumen por aerolínea" subtitle="Vuelos totales esta semana (7 días)">
-          <div className="flex items-start gap-4">
-            <div className="relative">
-              <svg width="140" height="140" viewBox="0 0 140 140">
+        <Card index={1} title="Resumen por aerolínea" subtitle="Semana (7 días)">
+          <div className="flex items-center gap-3">
+            <div className="relative shrink-0">
+              <svg width="110" height="110" viewBox="0 0 140 140">
                 {donut.map((s, i) => (
                   <path key={i} d={s.d} fill={s.color} />
                 ))}
               </svg>
               <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-                <div className="text-2xl font-bold leading-none text-white">{total}</div>
-                <div className="text-[9px] uppercase tracking-wider text-slate-400">vuelos totales</div>
+                <div className="text-xl font-bold leading-none text-white">{total}</div>
+                <div className="text-[8px] uppercase tracking-wider text-slate-400">vuelos / 7d</div>
               </div>
             </div>
             <div className="flex-1 text-xs">
@@ -395,7 +395,7 @@ function DestinationDashboard() {
                 <span className="text-right">Vuelos</span>
                 <span className="text-right">%</span>
               </div>
-              <div className="mt-1.5 space-y-1.5">
+              <div className="mt-1 space-y-1">
                 {airlinesAgg.map(([code, n], i) => {
                   const pct = Math.round((n / total) * 100);
                   return (
@@ -410,27 +410,6 @@ function DestinationDashboard() {
                   );
                 })}
               </div>
-            </div>
-          </div>
-          <div className="mt-3 rounded-xl border border-slate-800 bg-slate-950/40 p-3">
-            <div className="text-center text-[10px] uppercase tracking-wider text-slate-500">
-              Frecuencia media diaria (semana, 7 días)
-            </div>
-            <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-              {airlinesAgg.map(([code, n], i) => (
-                <div key={code} className="text-center">
-                  <div
-                    className="mx-auto mb-0.5 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-bold"
-                    style={{ background: colorFor(code, i) + "22", color: colorFor(code, i) }}
-                  >
-                    {airlineName(code)}
-                  </div>
-                  <div className="font-mono text-sm text-slate-100">
-                    {(n / 7).toFixed(2).replace(".", ",")}
-                  </div>
-                  <div className="text-[9px] text-slate-500">vuelos/día</div>
-                </div>
-              ))}
             </div>
           </div>
         </Card>
