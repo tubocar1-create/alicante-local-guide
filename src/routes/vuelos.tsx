@@ -539,13 +539,22 @@ function ConnectivityMap({
             </circle>
             <text
               x={alc[0]}
-              y={alc[1] + 6}
+              y={alc[1] + 5}
               fill="#22D3EE"
-              fontSize={4.5}
+              fontSize={3.6}
               fontWeight={700}
               textAnchor="middle"
             >
               ALICANTE
+            </text>
+            <text
+              x={alc[0]}
+              y={alc[1] + 8.2}
+              fill="#7fbedc"
+              fontSize={2.6}
+              textAnchor="middle"
+            >
+              (ALC)
             </text>
           </g>
         </svg>
