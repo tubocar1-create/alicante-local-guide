@@ -41,6 +41,8 @@ import { Route as ApiPublicQrIssueRouteImport } from './routes/api/public/qr-iss
 import { Route as ApiPublicBusEtaRouteImport } from './routes/api/public/bus-eta'
 import { Route as ApiPublicBookingCreateRouteImport } from './routes/api/public/booking-create'
 import { Route as ApiPublicAenaFlightsRouteImport } from './routes/api/public/aena-flights'
+import { Route as ApiPublicHooksAenaSyncRouteImport } from './routes/api/public/hooks/aena-sync'
+import { Route as ApiPublicHooksAenaPruneRouteImport } from './routes/api/public/hooks/aena-prune'
 
 const VuelosRoute = VuelosRouteImport.update({
   id: '/vuelos',
@@ -202,6 +204,16 @@ const ApiPublicAenaFlightsRoute = ApiPublicAenaFlightsRouteImport.update({
   path: '/api/public/aena-flights',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksAenaSyncRoute = ApiPublicHooksAenaSyncRouteImport.update({
+  id: '/api/public/hooks/aena-sync',
+  path: '/api/public/hooks/aena-sync',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHooksAenaPruneRoute = ApiPublicHooksAenaPruneRouteImport.update({
+  id: '/api/public/hooks/aena-prune',
+  path: '/api/public/hooks/aena-prune',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -236,6 +248,8 @@ export interface FileRoutesByFullPath {
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
+  '/api/public/hooks/aena-prune': typeof ApiPublicHooksAenaPruneRoute
+  '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -269,6 +283,8 @@ export interface FileRoutesByTo {
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
+  '/api/public/hooks/aena-prune': typeof ApiPublicHooksAenaPruneRoute
+  '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -304,6 +320,8 @@ export interface FileRoutesById {
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
+  '/api/public/hooks/aena-prune': typeof ApiPublicHooksAenaPruneRoute
+  '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -340,6 +358,8 @@ export interface FileRouteTypes {
     | '/api/public/refresh-news'
     | '/bus/lines/$code'
     | '/business/inbox/$id'
+    | '/api/public/hooks/aena-prune'
+    | '/api/public/hooks/aena-sync'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -373,6 +393,8 @@ export interface FileRouteTypes {
     | '/api/public/refresh-news'
     | '/bus/lines/$code'
     | '/business/inbox/$id'
+    | '/api/public/hooks/aena-prune'
+    | '/api/public/hooks/aena-sync'
   id:
     | '__root__'
     | '/'
@@ -407,6 +429,8 @@ export interface FileRouteTypes {
     | '/api/public/refresh-news'
     | '/bus/lines/$code'
     | '/business/inbox/$id'
+    | '/api/public/hooks/aena-prune'
+    | '/api/public/hooks/aena-sync'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -428,6 +452,8 @@ export interface RootRouteChildren {
   ApiPublicQrIssueRoute: typeof ApiPublicQrIssueRoute
   ApiPublicQrValidateRoute: typeof ApiPublicQrValidateRoute
   ApiPublicRefreshNewsRoute: typeof ApiPublicRefreshNewsRoute
+  ApiPublicHooksAenaPruneRoute: typeof ApiPublicHooksAenaPruneRoute
+  ApiPublicHooksAenaSyncRoute: typeof ApiPublicHooksAenaSyncRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -656,6 +682,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAenaFlightsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/aena-sync': {
+      id: '/api/public/hooks/aena-sync'
+      path: '/api/public/hooks/aena-sync'
+      fullPath: '/api/public/hooks/aena-sync'
+      preLoaderRoute: typeof ApiPublicHooksAenaSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/aena-prune': {
+      id: '/api/public/hooks/aena-prune'
+      path: '/api/public/hooks/aena-prune'
+      fullPath: '/api/public/hooks/aena-prune'
+      preLoaderRoute: typeof ApiPublicHooksAenaPruneRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -753,6 +793,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicQrIssueRoute: ApiPublicQrIssueRoute,
   ApiPublicQrValidateRoute: ApiPublicQrValidateRoute,
   ApiPublicRefreshNewsRoute: ApiPublicRefreshNewsRoute,
+  ApiPublicHooksAenaPruneRoute: ApiPublicHooksAenaPruneRoute,
+  ApiPublicHooksAenaSyncRoute: ApiPublicHooksAenaSyncRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
