@@ -88,11 +88,18 @@ async function fetchAndStore(airport: string, type: "S" | "L") {
     })
     .filter((r): r is NonNullable<typeof r> => r !== null);
 
-  // Upsert por la clave única (airport, flight_type, num_vuelo, fecha, hora_programada).
-  // Trocamos para no exceder límites de carga.
+  // Dedup por la clave única antes del upsert: el feed devuelve filas
+  // duplicadas y Postgres rechaza ON CONFLICT con conflictos internos.
+  const dedup = new Map<string, (typeof rows)[number]>();
+  for (const r of rows) {
+    const key = `${r.airport}|${r.flight_type}|${r.num_vuelo}|${r.fecha}|${r.hora_programada}`;
+    dedup.set(key, r);
+  }
+  const unique = Array.from(dedup.values());
+
   const CHUNK = 500;
-  for (let i = 0; i < rows.length; i += CHUNK) {
-    const slice = rows.slice(i, i + CHUNK);
+  for (let i = 0; i < unique.length; i += CHUNK) {
+    const slice = unique.slice(i, i + CHUNK);
     const { error } = await supabaseAdmin
       .from("aena_flights")
       .upsert(slice, {
@@ -100,7 +107,7 @@ async function fetchAndStore(airport: string, type: "S" | "L") {
       });
     if (error) throw error;
   }
-  return rows.length;
+  return unique.length;
 }
 
 export const Route = createFileRoute("/api/public/hooks/aena-sync")({
@@ -120,7 +127,12 @@ export const Route = createFileRoute("/api/public/hooks/aena-sync")({
           return Response.json({ ok: true, airport, salidas: s, llegadas: l });
         } catch (e: unknown) {
           console.error("[aena-sync] failed", e);
-          const msg = e instanceof Error ? e.message : String(e);
+          const msg =
+            e instanceof Error
+              ? e.message
+              : typeof e === "object" && e !== null
+                ? JSON.stringify(e)
+                : String(e);
           return Response.json({ ok: false, error: msg }, { status: 500 });
         }
       },
@@ -139,7 +151,12 @@ export const Route = createFileRoute("/api/public/hooks/aena-sync")({
           return Response.json({ ok: true, airport, salidas: s, llegadas: l });
         } catch (e: unknown) {
           console.error("[aena-sync] failed", e);
-          const msg = e instanceof Error ? e.message : String(e);
+          const msg =
+            e instanceof Error
+              ? e.message
+              : typeof e === "object" && e !== null
+                ? JSON.stringify(e)
+                : String(e);
           return Response.json({ ok: false, error: msg }, { status: 500 });
         }
       },
