@@ -720,3 +720,98 @@ export async function fetchAlibusAlicante(): Promise<BusArrival[] | null> {
   return all.slice(0, 10);
 }
 
+
+// ============================================================================
+// Prensa local de Alicante (Google News RSS).
+// Filtramos titulares políticos y de tragedias; nos quedamos con contexto
+// urbano, eventos, cultura, gastronomía, deporte, ciencia/tecnología.
+// ============================================================================
+
+export type NewsHeadline = {
+  title: string;
+  source: string;
+  pubDate: string; // ISO o RFC
+};
+
+const NEWS_BAD_RE = new RegExp(
+  [
+    // política
+    "PP\\b", "PSOE", "Vox", "Compromís", "Podemos", "Sumar", "Ciudadanos",
+    "alcalde", "alcaldesa", "concejal", "concejala", "oposici[oó]n",
+    "pleno municipal", "diputaci[oó]n", "Generalitat", "Consell\\b",
+    "Mazón", "Barcala", "Baño\\b", "elecciones", "moción", "gobierno municipal",
+    "PSPV", "bipartito", "tripartito", "ediles?",
+    // tragedias / sucesos
+    "muerto", "muerta", "muere\\b", "fallec", "asesinat", "homicidio",
+    "apuñal", "tiroteo", "disparo", "herido grave", "herida grave",
+    "atropell", "incendio", "explosi[oó]n", "accidente mortal",
+    "víctima", "violaci[oó]n", "agresi[oó]n sexual", "viol[eé]ncia machista",
+    "detenido", "detenida", "narcotráfico", "alijo", "okupa",
+    "ahogad", "rescate", "desaparec", "suicid",
+  ].join("|"),
+  "i",
+);
+
+function decodeXmlEntities(s: string): string {
+  return s
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
+}
+
+export async function fetchAlicantePressHeadlines(): Promise<NewsHeadline[] | null> {
+  const queries = [
+    "Alicante",
+    "Alicante+cultura",
+    "Alicante+evento",
+  ];
+  const all: NewsHeadline[] = [];
+  for (const q of queries) {
+    try {
+      const url = `https://news.google.com/rss/search?q=${q}&hl=es-ES&gl=ES&ceid=ES:es`;
+      const r = await fetch(url, {
+        headers: { "User-Agent": UA, Accept: "application/rss+xml,application/xml;q=0.9" },
+        signal: AbortSignal.timeout(6000),
+      });
+      if (!r.ok) continue;
+      const xml = await r.text();
+      const items = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)];
+      for (const m of items) {
+        const block = m[1];
+        const title = block.match(/<title>([\s\S]*?)<\/title>/)?.[1]?.trim();
+        const pubDate = block.match(/<pubDate>([\s\S]*?)<\/pubDate>/)?.[1]?.trim() ?? "";
+        const source = block.match(/<source[^>]*>([\s\S]*?)<\/source>/)?.[1]?.trim() ?? "";
+        if (!title) continue;
+        const clean = decodeXmlEntities(title)
+          // titulares google news suelen acabar en " - Fuente"
+          .replace(/\s+-\s+[^-]+$/, "")
+          .trim();
+        if (!clean) continue;
+        if (NEWS_BAD_RE.test(clean)) continue;
+        // descartar duplicados por título normalizado
+        if (all.some((h) => h.title.toLowerCase() === clean.toLowerCase())) continue;
+        all.push({ title: clean, source: decodeXmlEntities(source), pubDate });
+      }
+    } catch {
+      /* siguiente query */
+    }
+  }
+  if (!all.length) return null;
+  // Ordenar por fecha desc
+  all.sort((a, b) => {
+    const ta = Date.parse(a.pubDate) || 0;
+    const tb = Date.parse(b.pubDate) || 0;
+    return tb - ta;
+  });
+  // Quedarnos con noticias de las últimas 36h
+  const cutoff = Date.now() - 36 * 3600 * 1000;
+  const fresh = all.filter((h) => {
+    const t = Date.parse(h.pubDate) || 0;
+    return t === 0 || t >= cutoff;
+  });
+  return (fresh.length ? fresh : all).slice(0, 12);
+}
