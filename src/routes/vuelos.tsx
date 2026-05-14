@@ -1033,13 +1033,13 @@ function InfoPanel({
   return (
     <div className="rounded-2xl border border-white/[0.08] bg-[rgba(8,12,22,0.7)] p-4 backdrop-blur-xl">
       <p className="text-sm font-semibold text-slate-100">
-        Top 10 destinos por frecuencia
+        {weekStart && weekEnd
+          ? `Destinos de la semana del ${weekStart} al ${weekEnd}`
+          : "Destinos de la semana"}
       </p>
-      {weekStart && weekEnd && (
-        <p className="mb-3 text-[10px] uppercase tracking-[0.2em] text-cyan-400/70">
-          en la semana del {weekStart} al {weekEnd}
-        </p>
-      )}
+      <p className="mb-3 text-[10px] uppercase tracking-[0.2em] text-cyan-400/70">
+        {cities.length} destinos · clic para abrir el dashboard
+      </p>
       <ul className="mb-5 space-y-1">
         {cities.map((c, i) => (
           <li key={c.iata} className="odd:bg-white/[0.02] rounded-lg">
