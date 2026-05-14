@@ -457,12 +457,12 @@ function DestinationDashboard() {
             <div>
               <div className="text-[9px] uppercase tracking-wider text-slate-500">Días con vuelos</div>
               <div className="font-mono text-xl font-bold text-emerald-300">{daysWith}</div>
-              <div className="text-[9px] text-slate-500">de 14 días</div>
+              <div className="text-[9px] text-slate-500">de 7 días</div>
             </div>
             <div>
               <div className="text-[9px] uppercase tracking-wider text-slate-500">Días sin vuelos</div>
-              <div className="font-mono text-xl font-bold text-slate-300">{14 - daysWith}</div>
-              <div className="text-[9px] text-slate-500">de 14 días</div>
+              <div className="font-mono text-xl font-bold text-slate-300">{7 - daysWith}</div>
+              <div className="text-[9px] text-slate-500">de 7 días</div>
             </div>
           </div>
           {daysWithoutList.length > 0 && daysWithoutList.length < 14 && (
