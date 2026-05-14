@@ -41,7 +41,8 @@ function clean(v: string | undefined | null): string | null {
 }
 
 async function fetchAndStore(airport: string, type: "S" | "L") {
-  const src = `https://www.aena.es/sites/Satellite?pagename=AENA_ConsultarVuelos&airport=${airport}&flightType=${type}&dosDias=si`;
+  // Sin `dosDias=si` el feed devuelve la ventana completa (~15 días).
+  const src = `https://www.aena.es/sites/Satellite?pagename=AENA_ConsultarVuelos&airport=${airport}&flightType=${type}`;
   const r = await fetch(src, {
     headers: {
       "User-Agent":
