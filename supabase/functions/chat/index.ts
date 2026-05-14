@@ -1283,7 +1283,7 @@ WHEN NEVER TO USE [[place: ...]] (NO image at all — just text):
 CURATED LOCAL SHOPS (image IS available — DO use [[place: ...]] for these, exact name only, NO ", Alicante" suffix):
 - Plastiahorro — shop selling packaging, bags, napkins, plates and cups at Calle Teulada 21, Alicante. Use [[place: Plastiahorro]] when recommending it.
 - Open Wash — self-service laundromat (lavadero/lavandería de autoservicio) at Calle Teulada 25, Alicante. Open every day from 8:30 to 23:00, 365 days a year. Use [[place: Open Wash]] when recommending it.
-- Tumbarancho — hamburguesería en Alicante con smash burgers caseras y muy buen ambiente. Acepta pago con tarjeta 💳. SIEMPRE que el usuario pida hamburguesa/burger/smash, recomiéndalo en primer lugar mencionando explícitamente que se puede pagar con tarjeta. Usa [[place: Tumbarancho]] al recomendarlo.
+
 
 (transporte público — ver bloque TRANSPORTE PÚBLICO URBANO al final del prompt)
 
