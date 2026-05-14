@@ -572,8 +572,8 @@ function ConnectivityMap({
               <stop offset="100%" stopColor="#040f1f" />
             </radialGradient>
             <linearGradient id="landGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#e2e8f0" />
-              <stop offset="100%" stopColor="#b8c1cc" />
+              <stop offset="0%" stopColor="#4a2f1c" />
+              <stop offset="100%" stopColor="#2b1a0e" />
             </linearGradient>
             <radialGradient id="alcGlow" cx="50%" cy="50%" r="50%">
               <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.7" />
@@ -604,7 +604,7 @@ function ConnectivityMap({
                     key={i}
                     d={d}
                     fill="url(#landGrad)"
-                    stroke="#94a3b8"
+                    stroke="#6b4226"
                     strokeWidth={0.5}
                     strokeLinejoin="round"
                     vectorEffect="non-scaling-stroke"
@@ -1030,6 +1030,9 @@ function InfoPanel({
     { icon: "✓", value: vuelos.toLocaleString("es-ES"), label: "Vuelos / 7d" },
     { icon: "🌍", value: region, label: "Principal" },
   ];
+  const [visibleCount, setVisibleCount] = useState(20);
+  const visibleCities = cities.slice(0, visibleCount);
+  const hasMore = cities.length > visibleCount;
   return (
     <div className="rounded-2xl border border-white/[0.08] bg-[rgba(8,12,22,0.7)] p-4 backdrop-blur-xl">
       <p className="text-sm font-semibold text-slate-100">
@@ -1040,8 +1043,8 @@ function InfoPanel({
       <p className="mb-3 text-[10px] uppercase tracking-[0.2em] text-cyan-400/70">
         {cities.length} destinos · clic para abrir el dashboard
       </p>
-      <ul className="mb-5 space-y-1">
-        {cities.map((c, i) => (
+      <ul className="mb-3 space-y-1">
+        {visibleCities.map((c, i) => (
           <li key={c.iata} className="odd:bg-white/[0.02] rounded-lg">
             <a
               href={`/vuelos/${c.iata}`}
@@ -1069,6 +1072,15 @@ function InfoPanel({
           <li className="text-xs text-slate-500">Sin datos disponibles.</li>
         )}
       </ul>
+      {hasMore && (
+        <button
+          type="button"
+          onClick={() => setVisibleCount((n) => n + 20)}
+          className="mb-5 w-full rounded-lg border border-cyan-400/30 bg-cyan-400/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.15em] text-cyan-300 transition hover:bg-cyan-400/10"
+        >
+          Ver más ({Math.min(20, cities.length - visibleCount)} de {cities.length - visibleCount} restantes)
+        </button>
+      )}
 
       <p className="mb-3 text-sm font-semibold text-slate-100">
         Aerolíneas por número de vuelos
