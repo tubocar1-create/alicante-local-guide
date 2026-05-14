@@ -358,10 +358,19 @@ function ConnectivityMap({
 
   const drawn = useMemo(() => cities.filter((c) => COORDS[c.iata]), [cities]);
 
+  const cleanCityName = (raw: string) => {
+    const first = raw.split("/")[0].trim();
+    return first
+      .toLowerCase()
+      .split(" ")
+      .map((w) => (w.length > 2 ? w[0].toUpperCase() + w.slice(1) : w))
+      .join(" ");
+  };
+
   const labelFor = (c: CityAgg) => {
     const [lon] = COORDS[c.iata];
     const right = lon >= -0.5;
-    return { anchor: right ? "start" : "end", dx: right ? 8 : -8 };
+    return { anchor: right ? "start" : "end", dx: right ? 4 : -4 };
   };
 
   return (
