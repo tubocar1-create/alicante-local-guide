@@ -340,7 +340,9 @@ function DestinationDashboard() {
     return (
       <Shell>
         <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-8 text-center text-sm text-slate-400">
-          No hay vuelos directos disponibles desde Alicante a {code} en los próximos días.
+          {isArrival
+            ? `No hay vuelos directos hacia Alicante desde ${code} en los próximos días.`
+            : `No hay vuelos directos disponibles desde Alicante a ${code} en los próximos días.`}
         </div>
       </Shell>
     );
