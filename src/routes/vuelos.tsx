@@ -419,10 +419,10 @@ function ConnectivityMap({
       if (!el || !tr) return;
       const w = el.clientWidth;
       const h = el.clientHeight;
-      const c = project([12, 50]);
+      const c = project([16, 36]);
       const fx = c[0] / VIEW_W;
       const fy = c[1] / VIEW_H;
-      const s = 1.9;
+      const s = 2.6;
       const x = w / 2 - fx * s * w;
       const y = h / 2 - fy * s * h;
       tr.setTransform(x, y, s, 0);
