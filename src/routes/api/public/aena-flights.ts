@@ -39,27 +39,38 @@ export const Route = createFileRoute("/api/public/aena-flights")({
         const fromIso = new Date(now - 5 * 60 * 1000).toISOString();
         const toIso = new Date(now + WEEK_MS).toISOString();
 
-        const { data, error } = await supabaseAdmin
-          .from("aena_flights")
-          .select(
-            "num_vuelo, fecha, hora_programada, hora_estimada, iata_otro, ciudad, estado, terminal, puerta, mostrador, compania, iata_compania, aeronave",
-          )
-          .eq("airport", airport)
-          .eq("flight_type", type)
-          .gte("scheduled_at", fromIso)
-          .lte("scheduled_at", toIso)
-          .order("scheduled_at", { ascending: true })
-          .limit(2000);
+        // Paginamos en bloques de 1000 para sortear el tope por defecto de PostgREST.
+        const PAGE = 1000;
+        const MAX_PAGES = 6; // hasta 6000 vuelos / 7 días
+        const all: any[] = [];
+        for (let page = 0; page < MAX_PAGES; page++) {
+          const from = page * PAGE;
+          const to = from + PAGE - 1;
+          const { data, error } = await supabaseAdmin
+            .from("aena_flights")
+            .select(
+              "num_vuelo, fecha, hora_programada, hora_estimada, iata_otro, ciudad, estado, terminal, puerta, mostrador, compania, iata_compania, aeronave",
+            )
+            .eq("airport", airport)
+            .eq("flight_type", type)
+            .gte("scheduled_at", fromIso)
+            .lte("scheduled_at", toIso)
+            .order("scheduled_at", { ascending: true })
+            .range(from, to);
 
-        if (error) {
-          console.error("[aena-flights] db error", error);
-          return Response.json(
-            { flights: [], error: error.message },
-            { status: 200 },
-          );
+          if (error) {
+            console.error("[aena-flights] db error", error);
+            return Response.json(
+              { flights: [], error: error.message },
+              { status: 200 },
+            );
+          }
+          if (!data || data.length === 0) break;
+          all.push(...data);
+          if (data.length < PAGE) break;
         }
 
-        const flights: Slim[] = (data || []).map((r) => ({
+        const flights: Slim[] = all.map((r) => ({
           numVuelo: r.num_vuelo,
           fecha: r.fecha,
           horaProgramada: r.hora_programada,
