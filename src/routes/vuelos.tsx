@@ -11,11 +11,11 @@ import { Plus, Maximize2 } from "lucide-react";
 export const Route = createFileRoute("/vuelos")({
   head: () => ({
     meta: [
-      { title: "Mapa de destinos desde Alicante" },
+      { title: "Mapa de vuelos · Alicante-Elche" },
       {
         name: "description",
         content:
-          "Mapa interactivo con todos los destinos directos desde el aeropuerto de Alicante-Elche. Selecciona una ciudad para ver sus métricas.",
+          "Mapa interactivo con destinos y orígenes del aeropuerto de Alicante-Elche. Selecciona una ciudad para ver sus métricas semanales.",
       },
     ],
   }),
@@ -394,9 +394,9 @@ function VuelosDashboard() {
             Aviation Intelligence
           </p>
           <h1 className="mt-1 text-2xl font-bold tracking-tight md:text-4xl">
-            Mapa de destinos{" "}
+            {flightType === "L" ? "Mapa de llegadas " : "Mapa de destinos "}
             <span className="bg-gradient-to-r from-cyan-300 via-white to-violet-300 bg-clip-text text-transparent">
-              desde Alicante
+              {flightType === "L" ? "hacia Alicante" : "desde Alicante"}
             </span>
           </h1>
           <p className="mt-1 text-xs text-cyan-300/80 md:text-sm">
@@ -434,9 +434,10 @@ function VuelosDashboard() {
               <ConnectivityMap
                 cities={cities}
                 selectedCity={selectedCity}
+                flightType={flightType}
                 onSelectCity={(c) => {
                   if (typeof window !== "undefined") {
-                    window.open(`/vuelos/${c}`, "_blank", "noopener,noreferrer");
+                    window.open(`/vuelos/${c}?type=${flightType}`, "_blank", "noopener,noreferrer");
                   }
                 }}
               />
@@ -450,6 +451,7 @@ function VuelosDashboard() {
           city={selectedCityData}
           flights={flights7d.filter((f) => f.iataOtro === selectedCityData.iata)}
           dayCount={dayCount}
+          flightType={flightType}
           onClose={() => setSelectedCity(null)}
         />
       )}
@@ -463,10 +465,12 @@ function ConnectivityMap({
   cities,
   selectedCity,
   onSelectCity,
+  flightType,
 }: {
   cities: CityAgg[];
   selectedCity: string | null;
   onSelectCity: (iata: string) => void;
+  flightType: "S" | "L";
 }) {
   const alc = project(COORDS.ALC);
 
@@ -815,7 +819,7 @@ function ConnectivityMap({
               {/* Top-left header chip */}
               <div className="pointer-events-none absolute left-3 top-3 z-10 flex items-center gap-2 rounded-full border border-cyan-400/30 bg-black/50 px-3 py-1 text-[10px] uppercase tracking-[0.25em] text-cyan-200 backdrop-blur-md">
                 <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee]" />
-                Mapa interactivo · seleccione su destino
+                {flightType === "L" ? "Mapa de llegadas · seleccione su origen" : "Mapa interactivo · seleccione su destino"}
               </div>
 
               {/* Frequency legend */}
@@ -1040,11 +1044,14 @@ function InfoPanel({
   weekEnd: string;
   flightType: "S" | "L";
 }) {
+  const isArrivals = flightType === "L";
+  const noun = isArrivals ? "Orígenes" : "Destinos";
+  const nounLower = isArrivals ? "orígenes" : "destinos";
   const items = [
-    { icon: "✈", value: `${destinos}`, label: "Destinos / 7d" },
+    { icon: "✈", value: `${destinos}`, label: `${noun} / 7d` },
     { icon: "🛫", value: `${aerolineas}`, label: "Aerolíneas / 7d" },
     { icon: "✓", value: vuelos.toLocaleString("es-ES"), label: "Vuelos / 7d" },
-    { icon: "🌍", value: region, label: "Principal" },
+    { icon: "🌍", value: region, label: isArrivals ? "Principal origen" : "Principal" },
   ];
   const [visibleCount, setVisibleCount] = useState(20);
   const visibleCities = cities.slice(0, visibleCount);
@@ -1053,17 +1060,17 @@ function InfoPanel({
     <div className="rounded-2xl border border-white/[0.08] bg-[rgba(8,12,22,0.7)] p-4 backdrop-blur-xl">
       <p className="text-sm font-semibold text-slate-100">
         {weekStart && weekEnd
-          ? `Destinos de la semana del ${weekStart} al ${weekEnd}`
-          : "Destinos de la semana"}
+          ? `${noun} de la semana del ${weekStart} al ${weekEnd}`
+          : `${noun} de la semana`}
       </p>
       <p className="mb-3 text-[10px] uppercase tracking-[0.2em] text-cyan-400/70">
-        {cities.length} destinos · clic para abrir el dashboard
+        {cities.length} {nounLower} · clic para abrir el dashboard
       </p>
       <ul className="mb-3 space-y-1">
         {visibleCities.map((c, i) => (
           <li key={c.iata} className="odd:bg-white/[0.02] rounded-lg">
             <a
-              href={`/vuelos/${c.iata}`}
+              href={`/vuelos/${c.iata}?type=${flightType}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 px-2 py-1 text-[12px] text-slate-200 transition hover:text-cyan-300"
@@ -1153,11 +1160,13 @@ function CityDetail({
   city,
   flights,
   dayCount,
+  flightType,
   onClose,
 }: {
   city: CityAgg;
   flights: Flight[];
   dayCount: number;
+  flightType: "S" | "L";
   onClose: () => void;
 }) {
   const perDayCity = city.total / dayCount;
@@ -1197,7 +1206,7 @@ function CityDetail({
             </p>
             <h2 className="mt-0.5 text-2xl font-semibold">{city.ciudad}</h2>
             <p className="font-mono text-[11px] text-slate-500">
-              ALC → {city.iata}
+              {flightType === "L" ? `${city.iata} → ALC` : `ALC → ${city.iata}`}
             </p>
           </div>
           <button
