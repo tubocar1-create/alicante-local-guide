@@ -4,9 +4,9 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 // Sincroniza el feed oficial del aeropuerto y vuelca los vuelos a la BD
 // para que el resto de la app trabaje solo contra nuestra base de datos.
 //
-// Se ejecuta semanalmente vía cron y guarda los vuelos a ~14 días vista
-// (el feed devuelve la ventana máxima disponible). Los recálculos cada
-// 30 minutos NO vuelven a AENA: trabajan sobre estas filas.
+// Se ejecuta cada 30 minutos vía cron y guarda los vuelos a ~14 días vista
+// (el feed devuelve la ventana máxima disponible) para que el dashboard
+// siempre trabaje contra datos recientes del backend.
 
 type RawFlight = {
   numVuelo: string;

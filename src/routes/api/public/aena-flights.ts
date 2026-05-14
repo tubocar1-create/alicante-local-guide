@@ -2,9 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 // Devuelve los vuelos almacenados en la BD para el aeropuerto y tipo
-// solicitados. La sincronización con el feed oficial es semanal y los
-// recálculos (limpieza de vuelos pasados) cada 30 minutos: aquí solo
-// leemos de la tabla `aena_flights` ya alimentada por esos procesos.
+// solicitados. La sincronización con el feed oficial ocurre cada 30 minutos:
+// aquí solo leemos de la tabla `aena_flights` ya alimentada por ese proceso.
 
 type Slim = {
   numVuelo: string;
@@ -90,7 +89,7 @@ export const Route = createFileRoute("/api/public/aena-flights")({
           status: 200,
           headers: {
             "Content-Type": "application/json",
-            "Cache-Control": "public, max-age=300",
+            "Cache-Control": "public, max-age=60, stale-while-revalidate=120",
           },
         });
       },
