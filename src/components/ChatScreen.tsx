@@ -534,7 +534,7 @@ export function ChatScreen() {
                   ← Volver
                 </button>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-col gap-2">
                 {activeSubmenu.submenu?.map((opt) => (
                   <button
                     key={opt.label}
