@@ -89,16 +89,15 @@ const COORDS: Record<string, [number, number]> = {
   INN: [11.34, 47.26],
 };
 
-// Map projection — vista inicial amplia: la ruta ALC → TLV arranca en esta escala
-// y el zoom mínimo queda bloqueado en esta misma posición.
-const VIEW_W = 1000;
-const VIEW_H = 562;
+// Map projection — Mercator centrada en Europa, viewBox grande para nitidez.
+const VIEW_W = 2000;
+const VIEW_H = 1400;
 const LON_MIN = -15;
 const LON_MAX = 50;
-const LAT_MIN = 18;
-const LAT_MAX = 60;
+const LAT_MIN = 28;
+const LAT_MAX = 62;
 
-const PROJ = geoEquirectangular().fitExtent(
+const PROJ = geoMercator().fitExtent(
   [
     [0, 0],
     [VIEW_W, VIEW_H],
