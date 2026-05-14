@@ -189,7 +189,7 @@ type CityAgg = {
 
 function VuelosDashboard() {
   const [flights, setFlights] = useState<Flight[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
 
@@ -315,7 +315,7 @@ function VuelosDashboard() {
           )}
         </div>
 
-        {loading && (
+        {false && loading && (
           <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-12 text-center text-sm text-slate-400">
             <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-cyan-500/30 border-t-cyan-400" />
             Cargando mapa…
