@@ -5,7 +5,6 @@ import {
   Armchair,
   CalendarDays,
   TrendingUp,
-  Lightbulb,
   Bus,
   ArrowLeft,
 } from "lucide-react";
