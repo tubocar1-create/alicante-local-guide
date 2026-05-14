@@ -57,6 +57,7 @@ type Suggestion = {
   label: string;
   prompt?: string;
   submenu?: Suggestion[];
+  action?: "bus-picker";
 };
 const SUGGESTIONS: Suggestion[] = [
   {
@@ -96,6 +97,15 @@ const SUGGESTIONS: Suggestion[] = [
   },
   { label: "🛍️ Comprar", prompt: "¿Dónde puedo ir de compras?" },
   { label: "🍹 Tomar algo", prompt: "¿Dónde voy a tomar algo abierto ahora?" },
+  {
+    label: "🚆 Transporte público",
+    submenu: [
+      { label: "🚌 Bus", action: "bus-picker" },
+      { label: "🚆 Tren", prompt: "¿Cómo me muevo en tren por Alicante y alrededores? Horarios, estaciones de Cercanías y Renfe." },
+      { label: "✈️ Avión", prompt: "Información sobre el aeropuerto de Alicante-Elche: cómo llegar, transporte al centro y vuelos." },
+      { label: "🚊 Tram", prompt: "¿Cómo uso el TRAM de Alicante? Líneas, paradas principales y conexiones con la playa." },
+    ],
+  },
 ];
 
 const GREETING: Msg = {
