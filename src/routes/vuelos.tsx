@@ -1157,11 +1157,13 @@ function CityDetail({
   city,
   flights,
   dayCount,
+  flightType,
   onClose,
 }: {
   city: CityAgg;
   flights: Flight[];
   dayCount: number;
+  flightType: "S" | "L";
   onClose: () => void;
 }) {
   const perDayCity = city.total / dayCount;
