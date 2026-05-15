@@ -956,6 +956,10 @@ type PlaceCardData = {
   vibe?: string;
   theme?: string;
   priceLevel?: string | null;
+  priceRangeMin?: number | null;
+  priceRangeMax?: number | null;
+  rating?: number | null;
+  openNow?: boolean | null;
 };
 
 type BusLegData = {
