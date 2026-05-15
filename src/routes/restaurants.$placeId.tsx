@@ -129,8 +129,8 @@ function RestaurantDashboard() {
               </section>
             )}
 
-            {/* Stats grid */}
-            <section className="grid grid-cols-2 gap-3">
+            {/* Precio */}
+            <section>
               <Stat
                 icon={<Euro className="h-4 w-4" />}
                 label="Precio"
@@ -140,32 +140,14 @@ function RestaurantDashboard() {
                     : place.price_level?.replace("PRICE_LEVEL_", "") ?? "—"
                 }
               />
-              <Stat
-                icon={<Clock className="h-4 w-4" />}
-                label="Estado"
-                value={
-                  place.open_now == null
-                    ? "s/d"
-                    : place.open_now
-                    ? "Abierto ahora"
-                    : "Cerrado"
-                }
-              />
             </section>
 
-            {/* Horarios */}
-            {place.opening_hours_text && (
-              <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-200">
-                  <Clock className="h-4 w-4" /> Horario
-                </h3>
-                <ul className="space-y-1 text-sm text-slate-300">
-                  {place.opening_hours_text.split(" · ").map((line, i) => (
-                    <li key={i} className="font-mono text-[12px]">{line}</li>
-                  ))}
-                </ul>
-              </section>
-            )}
+            {/* Estado + horarios desplegables */}
+            <OpeningHoursCard
+              openingHoursText={place.opening_hours_text}
+              openNow={place.open_now}
+              rawOpeningHours={null}
+            />
 
             {/* Contacto */}
             <section className="space-y-2">
