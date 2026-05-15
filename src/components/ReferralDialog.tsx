@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Ticket, ShieldCheck, Clock, AlertTriangle, Copy, Check, LogIn, PartyPopper } from "lucide-react";
+import {
+  Ticket,
+  ShieldCheck,
+  Clock,
+  AlertTriangle,
+  Copy,
+  Check,
+  LogIn,
+  PartyPopper,
+} from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
@@ -32,10 +41,10 @@ export default function ReferralDialog({ placeId, placeName, autoCelebrate, onCl
     () =>
       code
         ? `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(
-            `https://alicante-friend.app/v/${code}`
+            `https://alicante-friend.app/v/${code}`,
           )}`
         : "",
-    [code]
+    [code],
   );
 
   async function handleGenerate() {
@@ -60,7 +69,7 @@ export default function ReferralDialog({ placeId, placeName, autoCelebrate, onCl
     const nonce = Math.random().toString(36).slice(2, 6).toUpperCase();
     const newCode = `AF-${user.id.slice(0, 6).toUpperCase()}-${placeId.slice(-4).toUpperCase()}-${day.replace(
       /-/g,
-      ""
+      "",
     )}-${nonce}`;
 
     const expires = new Date();
@@ -68,9 +77,7 @@ export default function ReferralDialog({ placeId, placeName, autoCelebrate, onCl
 
     try {
       addQr({
-        id:
-          globalThis.crypto?.randomUUID?.() ??
-          `qr_${Math.random().toString(36).slice(2)}`,
+        id: globalThis.crypto?.randomUUID?.() ?? `qr_${Math.random().toString(36).slice(2)}`,
         user_id: user.id,
         place_id: placeId,
         place_name: placeName,
@@ -157,8 +164,8 @@ export default function ReferralDialog({ placeId, placeName, autoCelebrate, onCl
               </div>
             </div>
             <p className="mt-3 text-xs text-foreground/90">
-              Solo necesitamos un nombre (estamos en beta) para que tu QR sea único e
-              intransferible y se guarde en tu perfil. Tarda 5 segundos 🙌
+              Solo necesitamos un nombre (estamos en beta) para que tu QR sea único e intransferible
+              y se guarde en tu perfil. Tarda 5 segundos 🙌
             </p>
             <div className="mt-4 flex gap-2">
               <button
@@ -204,8 +211,8 @@ export default function ReferralDialog({ placeId, placeName, autoCelebrate, onCl
               <li className="flex gap-2">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
                 <span>
-                  Generarlo <b>no suma puntos</b>. Los AFP llegarán cuando el local valide tu QR
-                  en sitio (eso se hará desde la app de locales).
+                  Generarlo <b>no suma puntos</b>. Los AFP llegarán cuando el local valide tu QR en
+                  sitio (eso se hará desde la app de locales).
                 </span>
               </li>
               <li className="flex gap-2">
@@ -238,13 +245,11 @@ export default function ReferralDialog({ placeId, placeName, autoCelebrate, onCl
               <div className="mb-3 rounded-2xl gradient-warm p-4 text-primary-foreground shadow-soft">
                 <div className="flex items-center gap-2">
                   <PartyPopper className="h-5 w-5" />
-                  <h3 className="text-lg font-bold leading-tight">
-                    ¡Hecho, {user?.name}! 🎉
-                  </h3>
+                  <h3 className="text-lg font-bold leading-tight">¡Hecho, {user?.name}! 🎉</h3>
                 </div>
                 <p className="mt-1 text-sm opacity-95">
-                  Bienvenido/a a la familia <b>Alicante Friend</b>. Aquí tienes tu primer QR
-                  para <b>{placeName}</b>. ¡A disfrutar! 🥂
+                  Bienvenido/a a la familia <b>Alicante Friend</b>. Aquí tienes tu primer QR para{" "}
+                  <b>{placeName}</b>. ¡A disfrutar! 🥂
                 </p>
               </div>
             )}
@@ -275,11 +280,15 @@ export default function ReferralDialog({ placeId, placeName, autoCelebrate, onCl
               <ul className="w-full space-y-1.5 rounded-xl border border-border bg-card/60 p-3 text-[11px] text-foreground/90">
                 <li className="flex gap-2">
                   <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                  <span>Válido <b>{validUntil}</b>. Pasada esa hora, caduca.</span>
+                  <span>
+                    Válido <b>{validUntil}</b>. Pasada esa hora, caduca.
+                  </span>
                 </li>
                 <li className="flex gap-2">
                   <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                  <span><b>Único e intransferible.</b> Solo lo puedes usar tú.</span>
+                  <span>
+                    <b>Único e intransferible.</b> Solo lo puedes usar tú.
+                  </span>
                 </li>
                 <li className="flex gap-2">
                   <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
@@ -290,7 +299,9 @@ export default function ReferralDialog({ placeId, placeName, autoCelebrate, onCl
                 </li>
                 <li className="flex gap-2">
                   <Ticket className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                  <span>Lo tienes guardado en <b>perfil → Mis QR</b>.</span>
+                  <span>
+                    Lo tienes guardado en <b>perfil → Mis QR</b>.
+                  </span>
                 </li>
               </ul>
             </div>
