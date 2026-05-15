@@ -42,6 +42,16 @@ const TILE_STYLES: Record<string, { img: string; bg: string }> = {
   "Transporte público": { img: tileBus, bg: "oklch(0.93 0.06 190)" },
 };
 
+const TILE_SUBTITLES: Record<string, string> = {
+  "Comer": "Restaurantes y tapas",
+  "Dormir": "Hoteles y alojamientos",
+  "Turismo, playa y aventuras": "Turismo, sol y planes",
+  "Comprar": "Tiendas y mercados",
+  "Tomar algo": "Bares y copas",
+  "Transporte público": "Bus, TRAM, taxis",
+  "Mapa": "Explora la ciudad",
+};
+
 type Msg = { role: "user" | "assistant"; content: string };
 type GeoInfo = {
   lat: number;
