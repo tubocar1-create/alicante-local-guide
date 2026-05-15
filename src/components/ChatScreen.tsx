@@ -2097,6 +2097,12 @@ function DrinksTableInner({ ranked, loading, onClose }: {
       </div>
 
       <div className="relative z-10 mx-auto max-w-5xl px-4 pb-10 pt-5 md:px-6">
+        <header className="mb-5 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-[11px] uppercase tracking-[0.25em] text-amber-200/60 transition hover:text-amber-300"
+          >
             ← Volver al chat
           </button>
           <div className="flex items-center gap-2">
