@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Mic, MapPin, Home, User as UserIcon, QrCode, X, Gift, Ticket, Sparkles, ShieldCheck, CalendarPlus, CalendarCheck, Sun, Bell, Heart, Bookmark, ChevronRight, Utensils, Bed, Umbrella, ShoppingBag, Martini, Bus, type LucideIcon } from "lucide-react";
+import { Send, Mic, MapPin, Home, User as UserIcon, QrCode, X, Gift, Ticket, Sparkles, ShieldCheck, CalendarPlus, CalendarCheck, Sun, Bell, Heart, Bookmark, ChevronRight, Utensils, Bed, Umbrella, ShoppingBag, Martini, Bus, Stethoscope, type LucideIcon } from "lucide-react";
 import BookingDialog from "@/components/BookingDialog";
 import { AdBanner } from "@/components/AdBanner";
 import type { Listing } from "@/lib/overpass-listings";
@@ -51,6 +51,7 @@ const TILE_SUBTITLES: Record<string, string> = {
   "Tomar algo": "Bares y copas",
   "Transporte público": "Bus, TRAM, taxis",
   "Mapa": "Explora la ciudad",
+  "Servicios sanitarios": "Farmacias y hospitales",
 };
 
 const TILE_ICONS: Record<string, LucideIcon> = {
@@ -61,6 +62,7 @@ const TILE_ICONS: Record<string, LucideIcon> = {
   "Tomar algo": Martini,
   "Transporte público": Bus,
   "Mapa": MapPin,
+  "Servicios sanitarios": Stethoscope,
 };
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -435,27 +437,23 @@ export function ChatScreen() {
                   width={1536}
                   height={1024}
                   className="absolute inset-0 h-full w-full object-cover"
-                  style={{ filter: "brightness(1.05) saturate(1.15) contrast(1.08) hue-rotate(-12deg) sepia(0.12)" }}
+                  style={{
+                    filter: "brightness(1.05) saturate(1.2) contrast(1.08) hue-rotate(-12deg) sepia(0.14)",
+                    transform: "scaleX(-1)",
+                  }}
                 />
+                {/* Atardecer: luz cálida entrando desde la derecha hacia la izquierda */}
+                <div className="absolute inset-0 bg-[linear-gradient(270deg,oklch(0.85_0.18_55_/_0.55),transparent_55%)]" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
-                <button
-                  type="button"
-                  onClick={() => setShowQrInfo(true)}
-                  aria-label="Beneficios del QR VAMOS"
-                  className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[12px] font-extrabold text-primary-foreground shadow-soft ring-2 ring-white/70 backdrop-blur active:scale-95"
-                >
-                  <QrCode className="h-3.5 w-3.5" />
-                  QR VAMOS
-                </button>
-                <div className="absolute inset-x-0 bottom-0 p-3 text-white">
+                <div className="absolute left-3 top-3 text-white">
                   <h2 className="leading-none drop-shadow">
                     <span
-                      className="italic font-black text-[40px] sm:text-[50px] tracking-tight text-[oklch(0.92_0.16_85)] drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)]"
+                      className="italic font-black text-[34px] sm:text-[44px] tracking-tight text-[oklch(0.92_0.16_85)] drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)]"
                       style={{ fontFamily: "var(--font-display)" }}
                     >
                       VAMOS
                     </span>
-                    <span className="ml-2 align-middle text-xl font-extrabold text-white">
+                    <span className="ml-2 align-middle text-lg font-extrabold text-white">
                       a Alicante
                     </span>
                   </h2>
@@ -513,7 +511,7 @@ export function ChatScreen() {
           )}
 
           {isWelcome && !activeSubmenu && (
-            <div className="mt-2 rounded-3xl bg-white p-3 shadow-soft ring-1 ring-black/5">
+            <div className="mt-1 px-1">
               <div className="grid grid-cols-5 gap-x-1 gap-y-3">
                 {[
                   ...SUGGESTIONS.map((s) => {
@@ -544,12 +542,25 @@ export function ChatScreen() {
                       }
                     },
                   },
+                  {
+                    key: "servicios-sanitarios",
+                    emoji: "🩺",
+                    label: "Servicios sanitarios",
+                    onClick: () =>
+                      send(
+                        "¿Dónde encuentro servicios sanitarios cercanos en Alicante? Farmacias de guardia, centros de salud y hospitales abiertos ahora.",
+                        { mode: null },
+                      ),
+                  },
                 ].map((t, idx) => {
-                  const style = TILE_STYLES[t.label];
                   const subtitle = TILE_SUBTITLES[t.label];
                   const Icon = TILE_ICONS[t.label];
                   // Shorten the long label to fit the small grid cell.
-                  const displayLabel = t.label === "Turismo, playa y aventuras" ? "Playas" : t.label === "Transporte público" ? "Transporte" : t.label;
+                  const displayLabel =
+                    t.label === "Turismo, playa y aventuras" ? "Playas"
+                    : t.label === "Transporte público" ? "Transporte"
+                    : t.label === "Servicios sanitarios" ? "Salud"
+                    : t.label;
                   return (
                     <button
                       key={t.key}
@@ -558,10 +569,7 @@ export function ChatScreen() {
                       className="group flex flex-col items-center text-center animate-tile-in"
                       style={{ animationDelay: `${(idx % 9) * 60}ms` }}
                     >
-                      <div
-                        className="relative grid h-12 w-12 place-items-center rounded-full transition-transform duration-300 ease-out group-active:scale-90"
-                        style={{ backgroundColor: style?.bg ?? "oklch(0.95 0.02 80)" }}
-                      >
+                      <div className="relative grid h-12 w-12 place-items-center rounded-full bg-white/70 ring-1 ring-border/50 transition-transform duration-300 ease-out group-active:scale-90">
                         {Icon ? (
                           <Icon className="h-5 w-5 text-foreground" strokeWidth={1.75} />
                         ) : (
@@ -579,18 +587,18 @@ export function ChatScreen() {
                     </button>
                   );
                 })}
-                {/* Decorative skyline illustration filling the remaining cells */}
-                <div className="col-span-2 flex items-end justify-end -mt-1">
-                  <img
-                    src={skylineImg}
-                    alt=""
-                    aria-hidden
-                    loading="lazy"
-                    width={512}
-                    height={512}
-                    className="h-16 w-auto object-contain opacity-90"
-                  />
-                </div>
+              </div>
+              {/* Decorative skyline filling the available space */}
+              <div className="mt-3 flex w-full items-end justify-center">
+                <img
+                  src={skylineImg}
+                  alt=""
+                  aria-hidden
+                  loading="lazy"
+                  width={512}
+                  height={512}
+                  className="h-20 w-full max-w-md object-contain opacity-90"
+                />
               </div>
             </div>
           )}
