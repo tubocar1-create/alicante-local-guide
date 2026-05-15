@@ -144,11 +144,11 @@ export function getOpeningStatus(raw?: string, date = new Date()): OpeningStatus
 const SPANISH_DAY_TO_KEY: Record<string, DayKey> = {
   lunes: "Mo",
   martes: "Tu",
-  "miércoles": "We",
+  miércoles: "We",
   miercoles: "We",
   jueves: "Th",
   viernes: "Fr",
-  "sábado": "Sa",
+  sábado: "Sa",
   sabado: "Sa",
   domingo: "Su",
 };
@@ -228,10 +228,7 @@ export function getOpeningStatusFromSpanishText(
  * first, then the Google Places Spanish " · "-separated text. Returns the most
  * confident result.
  */
-export function resolveOpeningStatus(
-  raw?: string | null,
-  date = new Date(),
-): OpeningStatus {
+export function resolveOpeningStatus(raw?: string | null, date = new Date()): OpeningStatus {
   if (raw && SPANISH_OPENING_DAY_RE.test(raw)) return getOpeningStatusFromSpanishText(raw, date);
   const osm = getOpeningStatus(raw ?? undefined, date);
   if (osm.status !== "unknown") return osm;

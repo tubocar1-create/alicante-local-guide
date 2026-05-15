@@ -31,22 +31,16 @@ type Props = {
   rawOpeningHours?: string | null;
 };
 
-const SPANISH_DAYS = [
-  "lunes",
-  "martes",
-  "miércoles",
-  "jueves",
-  "viernes",
-  "sábado",
-  "domingo",
-];
+const SPANISH_DAYS = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"];
 
 function todayIndexMadrid(date = new Date()): number {
   // Intl weekday short, en-GB → Mon..Sun. Convert to Mon=0..Sun=6
   const wk = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Europe/Madrid",
     weekday: "short",
-  }).format(date).toLowerCase();
+  })
+    .format(date)
+    .toLowerCase();
   const map: Record<string, number> = { mon: 0, tue: 1, wed: 2, thu: 3, fri: 4, sat: 5, sun: 6 };
   return map[wk.slice(0, 3)] ?? 0;
 }
@@ -68,11 +62,7 @@ function parseLines(text: string): { day: string; hours: string; idx: number }[]
     .filter((x): x is { day: string; hours: string; idx: number } => x !== null);
 }
 
-export default function OpeningHoursCard({
-  openingHoursText,
-  openNow,
-  rawOpeningHours,
-}: Props) {
+export default function OpeningHoursCard({ openingHoursText, openNow, rawOpeningHours }: Props) {
   const [expanded, setExpanded] = useState(false);
   const { h: liveH, m: liveM } = useLiveMadridTime();
 
@@ -134,10 +124,10 @@ export default function OpeningHoursCard({
     todayRanges.length > 0
       ? activeRange !== null
       : status.status === "open"
-      ? true
-      : status.status === "closed"
-      ? false
-      : openNow ?? null;
+        ? true
+        : status.status === "closed"
+          ? false
+          : (openNow ?? null);
 
   const closesAt = useMemo(() => {
     if (activeRange) {
@@ -150,10 +140,9 @@ export default function OpeningHoursCard({
   const stateLabel =
     isOpen === true ? "Abierto ahora" : isOpen === false ? "Cerrado" : "Horario no confirmado";
 
-  const subtitle =
-    closesAt
-      ? `Cierra a las ${closesAt}`
-      : isOpen === false
+  const subtitle = closesAt
+    ? `Cierra a las ${closesAt}`
+    : isOpen === false
       ? lines[today]?.hours
         ? nextRange
           ? `Abre ${formatMinutes(nextRange.start)} · cierra ${formatMinutes(nextRange.end)}`
@@ -165,8 +154,8 @@ export default function OpeningHoursCard({
     isOpen === true
       ? "bg-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.85)]"
       : isOpen === false
-      ? "bg-rose-400 shadow-[0_0_10px_rgba(244,63,94,0.6)]"
-      : "bg-slate-400";
+        ? "bg-rose-400 shadow-[0_0_10px_rgba(244,63,94,0.6)]"
+        : "bg-slate-400";
 
   return (
     <div
@@ -207,17 +196,12 @@ export default function OpeningHoursCard({
         {/* Texts */}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span
-              className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotColor}`}
-              aria-hidden
-            />
+            <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dotColor}`} aria-hidden />
             <span className="truncate text-[14px] font-semibold tracking-tight text-white">
               {stateLabel}
             </span>
           </div>
-          <p className="mt-0.5 truncate text-[12px] font-normal text-slate-400">
-            {subtitle}
-          </p>
+          <p className="mt-0.5 truncate text-[12px] font-normal text-slate-400">{subtitle}</p>
         </div>
 
         {/* CTA */}
