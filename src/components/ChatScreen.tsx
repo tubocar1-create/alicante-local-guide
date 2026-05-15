@@ -908,8 +908,22 @@ function ProfileButton({ large = false }: { large?: boolean }) {
   );
 }
 
+function isAsianBroadcast(content: string): boolean {
+  if (!ASIAN_RE.test(content)) return false;
+  const cardCount = (content.match(/\[\[card:/g) ?? []).length;
+  return cardCount >= 2;
+}
+
 function Bubble({ role, content }: { role: "user" | "assistant"; content: string }) {
   const isUser = role === "user";
+  // Asian dashboard: break out of the bubble and render full-width.
+  if (!isUser && isAsianBroadcast(content)) {
+    return (
+      <div className="-mx-4 sm:mx-0">
+        <AssistantContent content={content} />
+      </div>
+    );
+  }
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
@@ -925,6 +939,7 @@ function Bubble({ role, content }: { role: "user" | "assistant"; content: string
     </div>
   );
 }
+
 
 const PLACE_RE = /\[\[place:\s*([^\]]+?)\]\]/i;
 const CARD_RE = /\[\[card:([^\]]+)\]\]/g;
