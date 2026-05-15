@@ -511,8 +511,8 @@ export function ChatScreen() {
           )}
 
           {isWelcome && !activeSubmenu && (
-            <div className="mt-1 px-1">
-              <div className="grid grid-cols-5 gap-x-1 gap-y-3">
+            <div className="mt-1 flex items-stretch gap-3 px-1">
+              <div className="grid flex-1 grid-cols-4 gap-x-1 gap-y-3">
                 {[
                   ...SUGGESTIONS.map((s) => {
                     const match = s.label.match(/^(\p{Extended_Pictographic}+)/u);
@@ -555,7 +555,17 @@ export function ChatScreen() {
                 ].map((t, idx) => {
                   const subtitle = TILE_SUBTITLES[t.label];
                   const Icon = TILE_ICONS[t.label];
-                  // Shorten the long label to fit the small grid cell.
+                  const PASTEL: Record<string, { bg: string; fg: string }> = {
+                    "Comer":               { bg: "oklch(0.94 0.07 60)",  fg: "oklch(0.55 0.16 50)" },
+                    "Dormir":              { bg: "oklch(0.93 0.06 280)", fg: "oklch(0.50 0.18 285)" },
+                    "Turismo, playa y aventuras": { bg: "oklch(0.93 0.07 220)", fg: "oklch(0.50 0.16 230)" },
+                    "Comprar":             { bg: "oklch(0.94 0.07 340)", fg: "oklch(0.55 0.18 350)" },
+                    "Tomar algo":          { bg: "oklch(0.94 0.08 40)",  fg: "oklch(0.58 0.18 35)" },
+                    "Transporte público":  { bg: "oklch(0.93 0.07 190)", fg: "oklch(0.50 0.14 210)" },
+                    "Mapa":                { bg: "oklch(0.93 0.07 160)", fg: "oklch(0.48 0.14 165)" },
+                    "Servicios sanitarios":{ bg: "oklch(0.94 0.06 25)",  fg: "oklch(0.55 0.18 25)" },
+                  };
+                  const pastel = PASTEL[t.label] ?? { bg: "oklch(0.95 0.02 80)", fg: "oklch(0.40 0.05 80)" };
                   const displayLabel =
                     t.label === "Turismo, playa y aventuras" ? "Playas"
                     : t.label === "Transporte público" ? "Transporte"
@@ -569,9 +579,12 @@ export function ChatScreen() {
                       className="group flex flex-col items-center text-center animate-tile-in"
                       style={{ animationDelay: `${(idx % 9) * 60}ms` }}
                     >
-                      <div className="relative grid h-12 w-12 place-items-center rounded-full bg-white/70 ring-1 ring-border/50 transition-transform duration-300 ease-out group-active:scale-90">
+                      <div
+                        className="relative grid h-12 w-12 place-items-center rounded-full transition-transform duration-300 ease-out group-active:scale-90"
+                        style={{ backgroundColor: pastel.bg }}
+                      >
                         {Icon ? (
-                          <Icon className="h-5 w-5 text-foreground" strokeWidth={1.75} />
+                          <Icon className="h-5 w-5" strokeWidth={1.9} style={{ color: pastel.fg }} />
                         ) : (
                           <span className="text-[20px]">{t.emoji}</span>
                         )}
@@ -588,8 +601,8 @@ export function ChatScreen() {
                   );
                 })}
               </div>
-              {/* Decorative skyline filling the available space */}
-              <div className="mt-3 flex w-full items-end justify-center">
+              {/* Skyline motif fitted to the right side of the icons */}
+              <div className="flex w-20 shrink-0 items-end justify-end">
                 <img
                   src={skylineImg}
                   alt=""
@@ -597,7 +610,7 @@ export function ChatScreen() {
                   loading="lazy"
                   width={512}
                   height={512}
-                  className="h-20 w-full max-w-md object-contain opacity-90"
+                  className="h-full w-full object-contain object-bottom opacity-90"
                 />
               </div>
             </div>
