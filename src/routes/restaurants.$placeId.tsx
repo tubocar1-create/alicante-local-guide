@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { getPlaceById, getPlacePhotos } from "@/lib/places.functions";
@@ -37,7 +37,6 @@ type Place = Awaited<ReturnType<typeof getPlaceById>>["place"];
 
 function RestaurantDashboard() {
   const { placeId } = Route.useParams();
-  const router = useRouter();
   const fetchPlace = useServerFn(getPlaceById);
   const fetchPhotos = useServerFn(getPlacePhotos);
   const [place, setPlace] = useState<Place | null>(null);
@@ -89,13 +88,13 @@ function RestaurantDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100">
       <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-white/10 bg-slate-950/80 px-4 py-3 backdrop-blur">
-        <button
-          onClick={() => router.history.back()}
+        <Link
+          to="/"
           className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 hover:bg-white/10"
           aria-label="Volver al listado"
         >
           <ArrowLeft className="h-4 w-4" />
-        </button>
+        </Link>
         <h1 className="truncate text-base font-semibold">
           {place?.name ?? (loading ? "Cargando…" : "Restaurante")}
         </h1>
@@ -296,13 +295,12 @@ function RestaurantDashboard() {
                   ¿Cómo llegar?
                 </a>
               )}
-              <button
-                type="button"
-                onClick={() => router.history.back()}
+              <Link
+                to="/"
                 className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-center text-sm font-semibold text-slate-200 hover:bg-white/10"
               >
                 Volver al listado
-              </button>
+              </Link>
             </section>
           </div>
         )}

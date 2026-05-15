@@ -153,12 +153,42 @@ const GREETING: Msg = {
     "¡Hola! 👋 I'm your friend in Alicante. Tell me what you feel like — food, beach, a plan for today? I'll show you the spots locals actually love.",
 };
 
+const CHAT_STATE_KEY = "afp:chat-messages";
+const RESTAURANT_RETURN_KEY = "afp:return-to-gastro";
+
+function readInitialMessages(): Msg[] {
+  if (typeof window === "undefined") return [GREETING];
+  if (window.sessionStorage.getItem(RESTAURANT_RETURN_KEY) !== "1") return [GREETING];
+  try {
+    const stored = JSON.parse(window.sessionStorage.getItem(CHAT_STATE_KEY) ?? "[]");
+    if (
+      Array.isArray(stored) &&
+      stored.every(
+        (m) =>
+          (m?.role === "user" || m?.role === "assistant") && typeof m?.content === "string",
+      )
+    ) {
+      return stored.length ? stored : [GREETING];
+    }
+  } catch {
+    // Ignore invalid session state.
+  }
+  return [GREETING];
+}
+
+function markRestaurantReturn() {
+  if (typeof window !== "undefined") {
+    window.sessionStorage.setItem(RESTAURANT_RETURN_KEY, "1");
+  }
+}
+
 export function ChatScreen() {
   // Activa el sistema de puntos (también dispara el streak diario al montar).
   usePoints();
   const { user: authUser } = useAuth();
   const firstName = authUser?.name?.trim().split(" ")[0];
   const [messages, setMessages] = useState<Msg[]>([GREETING]);
+  const restoredReturnRef = useRef(false);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -173,6 +203,28 @@ export function ChatScreen() {
   const [mode, setMode] = useState<"transit" | null>(null);
   const [showBusPicker, setShowBusPicker] = useState(false);
   const [showFlightPicker, setShowFlightPicker] = useState(false);
+
+  useEffect(() => {
+    const restored = readInitialMessages();
+    restoredReturnRef.current = true;
+    if (restored.length > 1) setMessages(restored);
+  }, []);
+
+  useEffect(() => {
+    if (!restoredReturnRef.current) return;
+    if (typeof window === "undefined") return;
+    if (messages.length <= 1) {
+      window.sessionStorage.removeItem(CHAT_STATE_KEY);
+      return;
+    }
+    window.sessionStorage.setItem(CHAT_STATE_KEY, JSON.stringify(messages));
+  }, [messages]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.sessionStorage.removeItem(RESTAURANT_RETURN_KEY);
+    }
+  }, []);
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -1650,6 +1702,7 @@ function AsianTableInner({ ranked, loading, onClose }: {
 
   const openDashboard = async (c: PlaceCardData) => {
     if (c.placeId) {
+        markRestaurantReturn();
       navigate({ to: "/restaurants/$placeId", params: { placeId: c.placeId } });
       return;
     }
@@ -1660,6 +1713,7 @@ function AsianTableInner({ ranked, loading, onClose }: {
         data: { name: c.name, lat: c.lat ?? null, lon: c.lon ?? null },
       });
       if (placeId) {
+        markRestaurantReturn();
         navigate({ to: "/restaurants/$placeId", params: { placeId } });
       } else {
         const href =
@@ -1808,6 +1862,7 @@ function AsianTableInner({ ranked, loading, onClose }: {
                         <Link
                           to="/restaurants/$placeId"
                           params={{ placeId: c.placeId }}
+                          onClick={markRestaurantReturn}
                           className="block"
                         >
                           {nameNode}
