@@ -52,6 +52,16 @@ const TILE_SUBTITLES: Record<string, string> = {
   "Mapa": "Explora la ciudad",
 };
 
+const TILE_ICONS: Record<string, LucideIcon> = {
+  "Comer": Utensils,
+  "Dormir": Bed,
+  "Turismo, playa y aventuras": Umbrella,
+  "Comprar": ShoppingBag,
+  "Tomar algo": Martini,
+  "Transporte público": Bus,
+  "Mapa": MapPin,
+};
+
 type Msg = { role: "user" | "assistant"; content: string };
 type GeoInfo = {
   lat: number;
