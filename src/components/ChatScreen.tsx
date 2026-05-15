@@ -1830,6 +1830,7 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
       .then((res) => {
         if (cancelled) return;
         const mapped: PlaceCardData[] = (res.places ?? []).map((p) => ({
+          placeId: p.google_place_id,
           name: p.name,
           cuisine: p.cuisine,
           address: p.address,
