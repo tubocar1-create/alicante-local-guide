@@ -511,7 +511,7 @@ export function ChatScreen() {
           )}
 
           {isWelcome && !activeSubmenu && (
-            <div className="mt-2 rounded-3xl bg-white p-3 shadow-soft ring-1 ring-black/5">
+            <div className="mt-1 px-1">
               <div className="grid grid-cols-5 gap-x-1 gap-y-3">
                 {[
                   ...SUGGESTIONS.map((s) => {
@@ -542,12 +542,25 @@ export function ChatScreen() {
                       }
                     },
                   },
+                  {
+                    key: "servicios-sanitarios",
+                    emoji: "🩺",
+                    label: "Servicios sanitarios",
+                    onClick: () =>
+                      send(
+                        "¿Dónde encuentro servicios sanitarios cercanos en Alicante? Farmacias de guardia, centros de salud y hospitales abiertos ahora.",
+                        { mode: null },
+                      ),
+                  },
                 ].map((t, idx) => {
-                  const style = TILE_STYLES[t.label];
                   const subtitle = TILE_SUBTITLES[t.label];
                   const Icon = TILE_ICONS[t.label];
                   // Shorten the long label to fit the small grid cell.
-                  const displayLabel = t.label === "Turismo, playa y aventuras" ? "Playas" : t.label === "Transporte público" ? "Transporte" : t.label;
+                  const displayLabel =
+                    t.label === "Turismo, playa y aventuras" ? "Playas"
+                    : t.label === "Transporte público" ? "Transporte"
+                    : t.label === "Servicios sanitarios" ? "Salud"
+                    : t.label;
                   return (
                     <button
                       key={t.key}
@@ -556,10 +569,7 @@ export function ChatScreen() {
                       className="group flex flex-col items-center text-center animate-tile-in"
                       style={{ animationDelay: `${(idx % 9) * 60}ms` }}
                     >
-                      <div
-                        className="relative grid h-12 w-12 place-items-center rounded-full transition-transform duration-300 ease-out group-active:scale-90"
-                        style={{ backgroundColor: style?.bg ?? "oklch(0.95 0.02 80)" }}
-                      >
+                      <div className="relative grid h-12 w-12 place-items-center rounded-full bg-white/70 ring-1 ring-border/50 transition-transform duration-300 ease-out group-active:scale-90">
                         {Icon ? (
                           <Icon className="h-5 w-5 text-foreground" strokeWidth={1.75} />
                         ) : (
@@ -577,18 +587,18 @@ export function ChatScreen() {
                     </button>
                   );
                 })}
-                {/* Decorative skyline illustration filling the remaining cells */}
-                <div className="col-span-2 flex items-end justify-end -mt-1">
-                  <img
-                    src={skylineImg}
-                    alt=""
-                    aria-hidden
-                    loading="lazy"
-                    width={512}
-                    height={512}
-                    className="h-16 w-auto object-contain opacity-90"
-                  />
-                </div>
+              </div>
+              {/* Decorative skyline filling the available space */}
+              <div className="mt-3 flex w-full items-end justify-center">
+                <img
+                  src={skylineImg}
+                  alt=""
+                  aria-hidden
+                  loading="lazy"
+                  width={512}
+                  height={512}
+                  className="h-20 w-full max-w-md object-contain opacity-90"
+                />
               </div>
             </div>
           )}
