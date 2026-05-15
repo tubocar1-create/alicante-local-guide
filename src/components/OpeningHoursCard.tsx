@@ -62,6 +62,16 @@ function parseLines(text: string): { day: string; hours: string; idx: number }[]
     .filter((x): x is { day: string; hours: string; idx: number } => x !== null);
 }
 
+function parseTimeRanges(hours?: string | null): { start: number; end: number }[] {
+  if (!hours) return [];
+  return [...hours.matchAll(/(\d{1,2}):(\d{2})\s*[–-]\s*(\d{1,2}):(\d{2})/g)].map((r) => {
+    const start = Number(r[1]) * 60 + Number(r[2]);
+    let end = Number(r[3]) * 60 + Number(r[4]);
+    if (end <= start) end += 1440;
+    return { start, end };
+  });
+}
+
 export default function OpeningHoursCard({ openingHoursText, openNow, rawOpeningHours }: Props) {
   const [expanded, setExpanded] = useState(false);
   const { h: liveH, m: liveM } = useLiveMadridTime();
@@ -76,6 +86,12 @@ export default function OpeningHoursCard({ openingHoursText, openNow, rawOpening
   );
 
   const today = todayIndexMadrid();
+  const yesterday = (today + 6) % 7;
+  const todayLine = useMemo(() => lines.find((line) => line.idx === today) ?? null, [lines, today]);
+  const yesterdayLine = useMemo(
+    () => lines.find((line) => line.idx === yesterday) ?? null,
+    [lines, yesterday],
+  );
 
   // Compute current Madrid time in minutes
   const nowMin = useMemo(() => {
@@ -92,21 +108,25 @@ export default function OpeningHoursCard({ openingHoursText, openNow, rawOpening
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [liveM]);
 
-  // Find active range from today's parsed hours (most reliable: ground-truth schedule)
+  // Find active range from parsed hours, including yesterday's overnight services.
   const todayRanges = useMemo(() => {
-    const todayHours = lines[today]?.hours;
-    if (!todayHours) return [] as { start: number; end: number }[];
-    return [...todayHours.matchAll(/(\d{1,2}):(\d{2})\s*[–-]\s*(\d{1,2}):(\d{2})/g)].map((r) => {
-      const start = Number(r[1]) * 60 + Number(r[2]);
-      let end = Number(r[3]) * 60 + Number(r[4]);
-      if (end <= start) end += 1440;
-      return { start, end };
-    });
-  }, [lines, today]);
+    return parseTimeRanges(todayLine?.hours);
+  }, [todayLine]);
+
+  const overnightRanges = useMemo(
+    () =>
+      parseTimeRanges(yesterdayLine?.hours)
+        .filter((r) => r.end > 1440)
+        .map((r) => ({ start: r.start - 1440, end: r.end - 1440 })),
+    [yesterdayLine],
+  );
 
   const activeRange = useMemo(
-    () => todayRanges.find((r) => nowMin >= r.start && nowMin < r.end) ?? null,
-    [todayRanges, nowMin],
+    () =>
+      todayRanges.find((r) => nowMin >= r.start && nowMin < r.end) ??
+      overnightRanges.find((r) => nowMin >= r.start && nowMin < r.end) ??
+      null,
+    [todayRanges, overnightRanges, nowMin],
   );
 
   const nextRange = useMemo(
@@ -121,7 +141,7 @@ export default function OpeningHoursCard({ openingHoursText, openNow, rawOpening
 
   // Determine effective open state: prefer parsed schedule, then status parser, then API hint
   const isOpen: boolean | null =
-    todayRanges.length > 0
+    todayRanges.length > 0 || overnightRanges.length > 0
       ? activeRange !== null
       : status.status === "open"
         ? true
@@ -143,10 +163,10 @@ export default function OpeningHoursCard({ openingHoursText, openNow, rawOpening
   const subtitle = closesAt
     ? `Cierra a las ${closesAt}`
     : isOpen === false
-      ? lines[today]?.hours
+      ? todayLine?.hours
         ? nextRange
           ? `Abre ${formatMinutes(nextRange.start)} · cierra ${formatMinutes(nextRange.end)}`
-          : `Hoy: ${lines[today].hours}`
+          : `Hoy: ${todayLine.hours}`
         : "Consulta horarios"
       : "Consulta horarios";
 
