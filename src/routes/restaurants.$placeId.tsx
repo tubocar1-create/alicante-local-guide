@@ -75,7 +75,7 @@ function RestaurantDashboard() {
         </h1>
       </header>
 
-      <main className="mx-auto max-w-2xl px-4 py-5">
+      <main className="w-full px-4 py-5">
         {loading && <p className="text-sm text-slate-400">Cargando información…</p>}
         {err && <p className="text-sm text-rose-400">Error: {err}</p>}
         {!loading && !place && !err && (
