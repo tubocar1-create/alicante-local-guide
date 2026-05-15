@@ -510,8 +510,8 @@ export function ChatScreen() {
           )}
 
           {isWelcome && !activeSubmenu && (
-            <div className="mt-1 flex items-stretch gap-3 px-1">
-              <div className="grid flex-1 grid-cols-4 gap-x-1 gap-y-3">
+            <div className="mt-1 px-1">
+              <div className="grid grid-cols-5 gap-x-1 gap-y-3">
                 {[
                   ...SUGGESTIONS.map((s) => {
                     const match = s.label.match(/^(\p{Extended_Pictographic}+)/u);
@@ -599,18 +599,18 @@ export function ChatScreen() {
                     </button>
                   );
                 })}
-              </div>
-              {/* Skyline motif fitted to the right side of the icons */}
-              <div className="flex w-20 shrink-0 items-end justify-end">
-                <img
-                  src={skylineImg}
-                  alt=""
-                  aria-hidden
-                  loading="lazy"
-                  width={512}
-                  height={512}
-                  className="h-full w-full object-contain object-bottom opacity-90"
-                />
+                {/* Beach + sailboat motif filling the remaining 2 cells of row 2 */}
+                <div className="col-span-2 flex items-end justify-end">
+                  <img
+                    src={skylineImg}
+                    alt=""
+                    aria-hidden
+                    loading="lazy"
+                    width={1024}
+                    height={1024}
+                    className="h-20 w-full object-contain object-right-bottom"
+                  />
+                </div>
               </div>
             </div>
           )}
