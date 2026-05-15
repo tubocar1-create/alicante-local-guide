@@ -1,6 +1,29 @@
-import { useMemo, useState } from "react";
-import { ChevronDown, Clock } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { getOpeningStatus } from "@/lib/opening-hours";
+
+function formatMadridTime(date: Date) {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Madrid",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const h = parts.find((p) => p.type === "hour")?.value ?? "00";
+  const m = parts.find((p) => p.type === "minute")?.value ?? "00";
+  return { h, m };
+}
+
+function useLiveMadridTime() {
+  const [now, setNow] = useState(() => formatMadridTime(new Date()));
+  useEffect(() => {
+    const tick = () => setNow(formatMadridTime(new Date()));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+  return now;
+}
 
 type Props = {
   openingHoursText?: string | null;
