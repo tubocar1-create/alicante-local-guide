@@ -1070,7 +1070,7 @@ function PlaceCard({ data }: { data: PlaceCardData }) {
     tags: {},
   };
   return (
-    <div className={`my-1.5 overflow-hidden rounded-xl border ${theme.ring} ${theme.bg} shadow-soft backdrop-blur`}>
+    <div className={`my-1.5 w-full max-w-[240px] overflow-hidden rounded-xl border ${theme.ring} ${theme.bg} shadow-soft backdrop-blur`}>
       {override?.image && (
         <img
           src={override.image}
