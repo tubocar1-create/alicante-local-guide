@@ -2397,9 +2397,8 @@ function AssistantContent({ content, userPrompt = "" }: { content: string; userP
   return (
     <div className="space-y-2 [&>p]:m-0 [&_strong]:font-semibold">
       {placeName && <PlaceImage name={placeName} />}
-      {drinksMode && cardData.length === 0 && (
-        <DrinksTable cards={[]} />
-      )}
+      {asianMode && cardData.length === 0 && <AsianTable cards={[]} />}
+      {drinksMode && cardData.length === 0 && <DrinksTable cards={[]} />}
       {renderedParts.map((p, i) => {
         if (p.type === "card") {
           if (asianMode) {
