@@ -1662,8 +1662,11 @@ function AssistantContent({ content }: { content: string }) {
   const cardData = renderedParts
     .filter((p): p is Extract<AssistantPart, { type: "card" }> => p.type === "card")
     .map((p) => p.data);
+  const textHasAsian = ASIAN_RE.test(cleaned);
   const asianMode =
-    cardData.length >= 2 && cardData.every((c) => isAsianCard(c));
+    cardData.length >= 2 &&
+    (cardData.every((c) => isAsianCard(c)) ||
+      (textHasAsian && cardData.length >= 2));
   let tableInjected = false;
 
   return (
