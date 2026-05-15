@@ -948,6 +948,7 @@ const PLACE_RE = /\[\[place:\s*([^\]]+?)\]\]/i;
 const CARD_RE = /\[\[card:([^\]]+)\]\]/g;
 
 type PlaceCardData = {
+  placeId?: string | null;
   name: string;
   cuisine?: string | null;
   address?: string | null;
@@ -1759,20 +1760,30 @@ function AsianTableInner({ ranked, loading, onClose }: {
                   c.lat && c.lon
                     ? `https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lon}`
                     : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.name + " Alicante")}`;
+                const nameNode = (
+                  <span className="flex items-center gap-1 text-white hover:text-cyan-300">
+                    <span className="text-[13px] leading-none">{asianEmoji(c)}</span>
+                    <span className="min-w-0 truncate text-[11px] font-medium">
+                      {c.name}
+                    </span>
+                  </span>
+                );
                 return (
                   <tr key={i} className="bg-white/[0.02]">
                     <td className="rounded-l-md px-1.5 py-1 align-middle">
-                      <a
-                        href={mapsHref}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center gap-1 text-white hover:text-cyan-300"
-                      >
-                        <span className="text-[13px] leading-none">{asianEmoji(c)}</span>
-                        <span className="min-w-0 truncate text-[11px] font-medium">
-                          {c.name}
-                        </span>
-                      </a>
+                      {c.placeId ? (
+                        <Link
+                          to="/restaurants/$placeId"
+                          params={{ placeId: c.placeId }}
+                          className="block"
+                        >
+                          {nameNode}
+                        </Link>
+                      ) : (
+                        <a href={mapsHref} target="_blank" rel="noreferrer" className="block">
+                          {nameNode}
+                        </a>
+                      )}
                     </td>
                     <td className="px-1 py-1 align-middle">
                       {isOpen ? (
@@ -1829,6 +1840,7 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
       .then((res) => {
         if (cancelled) return;
         const mapped: PlaceCardData[] = (res.places ?? []).map((p) => ({
+          placeId: p.google_place_id,
           name: p.name,
           cuisine: p.cuisine,
           address: p.address,
