@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Mic, MapPin, Home, User as UserIcon, QrCode, X, Gift, Ticket, Sparkles, ShieldCheck, CalendarPlus, CalendarCheck, Sun, Bell, Heart, Bookmark, ChevronRight, Utensils, Bed, Umbrella, ShoppingBag, Martini, Bus, Stethoscope, type LucideIcon } from "lucide-react";
+import { Send, Mic, MapPin, Home, User as UserIcon, QrCode, X, Gift, Ticket, Sparkles, ShieldCheck, CalendarPlus, CalendarCheck, Sun, Cloud, CloudRain, CloudSnow, CloudLightning, CloudFog, Bell, Heart, Bookmark, ChevronRight, Utensils, Bed, Umbrella, ShoppingBag, Martini, Bus, Stethoscope, type LucideIcon } from "lucide-react";
+import { useWeather } from "@/hooks/useWeather";
 import BookingDialog from "@/components/BookingDialog";
 import { AdBanner } from "@/components/AdBanner";
 import type { Listing } from "@/lib/overpass-listings";
@@ -374,13 +375,7 @@ export function ChatScreen() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <div className="flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 ring-1 ring-border/60">
-              <Sun className="h-4 w-4 text-[oklch(0.78_0.16_70)]" />
-              <div className="leading-tight">
-                <p className="text-[12px] font-bold text-foreground">20°</p>
-                <p className="text-[9px] -mt-0.5 text-muted-foreground">Soleado</p>
-              </div>
-            </div>
+            <WeatherChip />
             <Link
               to="/threads"
               aria-label="Mis reservas"
@@ -421,7 +416,6 @@ export function ChatScreen() {
           </button>
         </header>
       )}
-
 
       {isWelcome && <div className="mb-2"><AdBanner /></div>}
 
@@ -762,6 +756,38 @@ function VamosLogo() {
         🌅
       </span>
     </div>
+  );
+}
+
+function weatherIconFor(code: number): LucideIcon {
+  if ([0, 1].includes(code)) return Sun;
+  if ([2, 3].includes(code)) return Cloud;
+  if ([45, 48].includes(code)) return CloudFog;
+  if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) return CloudRain;
+  if ([71, 73, 75].includes(code)) return CloudSnow;
+  if ([95, 96, 99].includes(code)) return CloudLightning;
+  return Sun;
+}
+
+function WeatherChip() {
+  const { data, loading } = useWeather();
+  const Icon = data ? weatherIconFor(data.code) : Sun;
+  return (
+    <Link
+      to="/clima"
+      aria-label="Ver clima en Alicante"
+      className="flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 ring-1 ring-border/60 active:scale-95 transition"
+    >
+      <Icon className="h-4 w-4 text-[oklch(0.78_0.16_70)]" />
+      <div className="leading-tight text-left">
+        <p className="text-[12px] font-bold text-foreground">
+          {loading || !data ? "—" : `${data.tempC}°`}
+        </p>
+        <p className="text-[9px] -mt-0.5 text-muted-foreground truncate max-w-[80px]">
+          {data?.label ?? "Cargando…"}
+        </p>
+      </div>
+    </Link>
   );
 }
 
