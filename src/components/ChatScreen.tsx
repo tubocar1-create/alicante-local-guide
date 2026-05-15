@@ -347,7 +347,7 @@ export function ChatScreen() {
     <div
       className={[
         "relative flex h-[100dvh] flex-col transition-colors duration-700",
-        isWelcome ? "bg-white text-foreground" : "bg-background",
+        isWelcome ? "bg-[oklch(0.985_0.018_88)] text-foreground" : "bg-background",
       ].join(" ")}
     >
       {/* Persistent background photo of Puerto de Alicante (only when chatting) */}
@@ -433,30 +433,11 @@ export function ChatScreen() {
               <div className="relative aspect-[16/9] w-full">
                 <img
                   src={heroImg}
-                  alt="Puerto de Alicante al atardecer"
-                  width={1536}
-                  height={1024}
+                  alt="Alicante: castillo, casas de colores y playa"
+                  width={1080}
+                  height={2400}
                   className="absolute inset-0 h-full w-full object-cover"
-                  style={{
-                    filter: "brightness(1.08) saturate(1.55) contrast(1.12) hue-rotate(-8deg) sepia(0.10)",
-                  }}
                 />
-                {/* Atardecer: luz cálida entrando desde la derecha */}
-                <div className="absolute inset-0 bg-[linear-gradient(270deg,oklch(0.88_0.20_55_/_0.55),transparent_60%)]" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
-                <div className="absolute left-3 top-3 text-white">
-                  <h2 className="leading-none drop-shadow">
-                    <span
-                      className="italic font-black text-[34px] sm:text-[44px] tracking-tight text-[oklch(0.92_0.16_85)] drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)]"
-                      style={{ fontFamily: "var(--font-display)" }}
-                    >
-                      VAMOS
-                    </span>
-                    <span className="ml-2 align-middle text-lg font-extrabold text-white">
-                      a Alicante
-                    </span>
-                  </h2>
-                </div>
               </div>
             </div>
           )}
@@ -600,15 +581,15 @@ export function ChatScreen() {
                   );
                 })}
                 {/* Beach + sailboat motif filling the remaining 2 cells of row 2 */}
-                <div className="col-span-2 flex items-end justify-end">
+                <div className="col-span-2 flex items-end">
                   <img
                     src={skylineImg}
                     alt=""
                     aria-hidden
                     loading="lazy"
-                    width={1024}
-                    height={1024}
-                    className="h-20 w-full object-contain object-right-bottom"
+                    width={1280}
+                    height={512}
+                    className="h-20 w-full object-cover object-bottom"
                   />
                 </div>
               </div>
