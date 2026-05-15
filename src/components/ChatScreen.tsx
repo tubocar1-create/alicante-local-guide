@@ -438,12 +438,11 @@ export function ChatScreen() {
                   height={1024}
                   className="absolute inset-0 h-full w-full object-cover"
                   style={{
-                    filter: "brightness(1.05) saturate(1.2) contrast(1.08) hue-rotate(-12deg) sepia(0.14)",
-                    transform: "scaleX(-1)",
+                    filter: "brightness(1.08) saturate(1.55) contrast(1.12) hue-rotate(-8deg) sepia(0.10)",
                   }}
                 />
-                {/* Atardecer: luz cálida entrando desde la derecha hacia la izquierda */}
-                <div className="absolute inset-0 bg-[linear-gradient(270deg,oklch(0.85_0.18_55_/_0.55),transparent_55%)]" />
+                {/* Atardecer: luz cálida entrando desde la derecha */}
+                <div className="absolute inset-0 bg-[linear-gradient(270deg,oklch(0.88_0.20_55_/_0.55),transparent_60%)]" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
                 <div className="absolute left-3 top-3 text-white">
                   <h2 className="leading-none drop-shadow">
@@ -511,8 +510,8 @@ export function ChatScreen() {
           )}
 
           {isWelcome && !activeSubmenu && (
-            <div className="mt-1 flex items-stretch gap-3 px-1">
-              <div className="grid flex-1 grid-cols-4 gap-x-1 gap-y-3">
+            <div className="mt-1 px-1">
+              <div className="grid grid-cols-5 gap-x-1 gap-y-3">
                 {[
                   ...SUGGESTIONS.map((s) => {
                     const match = s.label.match(/^(\p{Extended_Pictographic}+)/u);
@@ -600,18 +599,18 @@ export function ChatScreen() {
                     </button>
                   );
                 })}
-              </div>
-              {/* Skyline motif fitted to the right side of the icons */}
-              <div className="flex w-20 shrink-0 items-end justify-end">
-                <img
-                  src={skylineImg}
-                  alt=""
-                  aria-hidden
-                  loading="lazy"
-                  width={512}
-                  height={512}
-                  className="h-full w-full object-contain object-bottom opacity-90"
-                />
+                {/* Beach + sailboat motif filling the remaining 2 cells of row 2 */}
+                <div className="col-span-2 flex items-end justify-end">
+                  <img
+                    src={skylineImg}
+                    alt=""
+                    aria-hidden
+                    loading="lazy"
+                    width={1024}
+                    height={1024}
+                    className="h-20 w-full object-contain object-right-bottom"
+                  />
+                </div>
               </div>
             </div>
           )}
