@@ -430,14 +430,12 @@ export function ChatScreen() {
         <div className="mx-auto flex max-w-2xl flex-col gap-3">
           {/* Welcome hero — shows on first open, fades when chat starts */}
           {isWelcome && (
-            <div className="mt-6 mb-2 overflow-hidden rounded-3xl shadow-soft ring-1 ring-black/5">
-              <div className="relative aspect-[16/9] w-full">
+            <div className="mt-6 mb-2 overflow-hidden rounded-3xl shadow-soft ring-1 ring-black/5 bg-[oklch(0.985_0.018_88)]">
+              <div className="relative w-full">
                 <img
                   src={heroImg}
                   alt="Alicante: castillo, casas de colores y playa"
-                  width={1080}
-                  height={2400}
-                  className="absolute inset-0 h-full w-full object-cover"
+                  className="block h-auto w-full object-contain"
                 />
               </div>
             </div>
