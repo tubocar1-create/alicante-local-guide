@@ -972,8 +972,7 @@ function isAsianBroadcast(content: string): boolean {
 function isDrinksBroadcast(content: string): boolean {
   if (!DRINKS_RE.test(content)) return false;
   if (ASIAN_RE.test(content)) return false;
-  const cardCount = (content.match(/\[\[card:/g) ?? []).length;
-  return cardCount >= 2;
+  return true;
 }
 
 function Bubble({ role, content }: { role: "user" | "assistant"; content: string }) {
@@ -2386,14 +2385,16 @@ function AssistantContent({ content }: { content: string }) {
       (textHasAsian && cardData.length >= 2));
   const drinksMode =
     !asianMode &&
-    cardData.length >= 2 &&
-    (cardData.every((c) => isDrinksCard(c)) ||
-      (textHasDrinks && cardData.length >= 2));
+    (textHasDrinks ||
+      (cardData.length >= 2 && cardData.every((c) => isDrinksCard(c))));
   let tableInjected = false;
 
   return (
     <div className="space-y-2 [&>p]:m-0 [&_strong]:font-semibold">
       {placeName && <PlaceImage name={placeName} />}
+      {drinksMode && cardData.length === 0 && (
+        <DrinksTable cards={[]} />
+      )}
       {renderedParts.map((p, i) => {
         if (p.type === "card") {
           if (asianMode) {
