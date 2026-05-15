@@ -347,7 +347,7 @@ export function ChatScreen() {
     <div
       className={[
         "relative flex h-[100dvh] flex-col transition-colors duration-700",
-        isWelcome ? "bg-[oklch(0.97_0.025_75)] text-foreground" : "bg-background",
+        isWelcome ? "bg-white text-foreground" : "bg-background",
       ].join(" ")}
     >
       {/* Persistent background photo of Puerto de Alicante (only when chatting) */}
