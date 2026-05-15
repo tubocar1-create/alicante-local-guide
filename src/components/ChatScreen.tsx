@@ -1348,7 +1348,7 @@ function BigLiveEta({ line, stop }: { line: string; stop: string }) {
     <div
       className={`relative overflow-hidden rounded-2xl border-2 p-5 transition-colors ${
         isImminent
-          ? "border-primary bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5"
+          ? "border-primary bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 animate-blink"
           : arrival
             ? "border-border bg-muted/40"
             : "border-dashed border-border bg-muted/20"
