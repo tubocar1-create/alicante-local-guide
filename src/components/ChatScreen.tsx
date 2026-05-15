@@ -1608,6 +1608,7 @@ out center 400;`;
           name,
           cuisine: t.cuisine ?? null,
           address: addr || null,
+          openingHours: t.opening_hours ?? null,
           lat,
           lon,
           priceLevel: null,
