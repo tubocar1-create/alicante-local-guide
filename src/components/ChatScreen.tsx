@@ -1694,6 +1694,7 @@ function AsianTableInner({ ranked, loading, onClose }: {
 
   const openDashboard = async (c: PlaceCardData) => {
     if (c.placeId) {
+        markRestaurantReturn();
       navigate({ to: "/restaurants/$placeId", params: { placeId: c.placeId } });
       return;
     }
@@ -1704,6 +1705,7 @@ function AsianTableInner({ ranked, loading, onClose }: {
         data: { name: c.name, lat: c.lat ?? null, lon: c.lon ?? null },
       });
       if (placeId) {
+        markRestaurantReturn();
         navigate({ to: "/restaurants/$placeId", params: { placeId } });
       } else {
         const href =
@@ -1852,6 +1854,7 @@ function AsianTableInner({ ranked, loading, onClose }: {
                         <Link
                           to="/restaurants/$placeId"
                           params={{ placeId: c.placeId }}
+                          onClick={markRestaurantReturn}
                           className="block"
                         >
                           {nameNode}
