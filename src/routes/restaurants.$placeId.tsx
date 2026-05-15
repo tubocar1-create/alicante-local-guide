@@ -4,10 +4,10 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { getPlaceById, getPlacePhotos } from "@/lib/places.functions";
 import { ArrowLeft, MapPin, Phone, Globe, Star, Clock, Euro, MessageSquare, CalendarCheck } from "lucide-react";
 import ReferralDialog from "@/components/ReferralDialog";
+import BookingDialog from "@/components/BookingDialog";
 
 const PlaceLocationMap = lazy(() => import("@/components/PlaceLocationMap"));
 import OpeningHoursCard from "@/components/OpeningHoursCard";
-import PhotoLightbox from "@/components/PhotoLightbox";
 
 export const Route = createFileRoute("/restaurants/$placeId")({
   head: () => ({
