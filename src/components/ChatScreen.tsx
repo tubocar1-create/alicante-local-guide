@@ -1343,6 +1343,9 @@ function BigLiveEta({ line, stop }: { line: string; stop: string }) {
   const isImminent = liveMin != null && liveMin <= 3;
   const hh = arrival ? arrival.getHours().toString().padStart(2, "0") : "--";
   const mm = arrival ? arrival.getMinutes().toString().padStart(2, "0") : "--";
+  const isNight = /N$/i.test(line);
+  const isExtraurban = ["24", "27", "28", "39"].includes(line.toUpperCase());
+  const noLiveSupport = isNight || isExtraurban;
 
   return (
     <div
