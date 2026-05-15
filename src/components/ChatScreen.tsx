@@ -1759,15 +1759,6 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
             )}
           </ul>
 
-          {visible < ranked.length && (
-            <button
-              type="button"
-              onClick={() => setVisible((v) => v + 10)}
-              className="w-full rounded-lg border border-cyan-400/30 bg-cyan-400/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.15em] text-cyan-300 transition hover:bg-cyan-400/10"
-            >
-              Ver 10 más · {ranked.length - visible} restantes
-            </button>
-          )}
         </div>
       </div>
     </div>
