@@ -969,6 +969,13 @@ function isAsianBroadcast(content: string): boolean {
   return cardCount >= 2;
 }
 
+function isDrinksBroadcast(content: string): boolean {
+  if (!DRINKS_RE.test(content)) return false;
+  if (ASIAN_RE.test(content)) return false;
+  const cardCount = (content.match(/\[\[card:/g) ?? []).length;
+  return cardCount >= 2;
+}
+
 function Bubble({ role, content }: { role: "user" | "assistant"; content: string }) {
   const isUser = role === "user";
   // Asian dashboard: break out of the bubble and render full-width.
