@@ -347,7 +347,7 @@ export function ChatScreen() {
     <div
       className={[
         "relative flex h-[100dvh] flex-col transition-colors duration-700",
-        "ring-1 ring-[oklch(0.86_0.04_85)]/70 ring-inset",
+        "ring-2 ring-[oklch(0.78_0.05_85)]/80 ring-inset",
         isWelcome ? "bg-[oklch(0.985_0.018_88)] text-foreground" : "bg-background",
       ].join(" ")}
     >
@@ -423,7 +423,7 @@ export function ChatScreen() {
       )}
 
 
-      {isWelcome && <AdBanner />}
+      {isWelcome && <div className="mb-2"><AdBanner /></div>}
 
       {/* Messages */}
       <div ref={scrollRef} className={["relative flex-1 px-4 pt-3 pb-5", isWelcome ? "overflow-hidden" : "overflow-y-auto"].join(" ")}>
