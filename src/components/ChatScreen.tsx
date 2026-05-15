@@ -19,7 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { findPlaceOverride } from "@/data/places";
 import { resolveOpeningStatus, getTodayClosingTime } from "@/lib/opening-hours";
 import { useServerFn } from "@tanstack/react-start";
-import { getAsianPlaces, resolvePlaceByName } from "@/lib/places.functions";
+import { getAsianPlaces, getDrinksPlaces, resolvePlaceByName } from "@/lib/places.functions";
 import heroImg from "@/assets/alicante-hero.jpg";
 import skylineImg from "@/assets/alicante-skyline.png";
 import portadaImg from "@/assets/alicante-portada.jpg";
@@ -969,10 +969,17 @@ function isAsianBroadcast(content: string): boolean {
   return cardCount >= 2;
 }
 
+function isDrinksBroadcast(content: string): boolean {
+  if (!DRINKS_RE.test(content)) return false;
+  if (ASIAN_RE.test(content)) return false;
+  const cardCount = (content.match(/\[\[card:/g) ?? []).length;
+  return cardCount >= 2;
+}
+
 function Bubble({ role, content }: { role: "user" | "assistant"; content: string }) {
   const isUser = role === "user";
-  // Asian dashboard: break out of the bubble and render full-width.
-  if (!isUser && isAsianBroadcast(content)) {
+  // Asian / Drinks dashboards: break out of the bubble and render full-width.
+  if (!isUser && (isAsianBroadcast(content) || isDrinksBroadcast(content))) {
     return (
       <div className="-mx-4 sm:mx-0">
         <AssistantContent content={content} />
@@ -1585,6 +1592,7 @@ function BusOptionCard({ data }: { data: BusOptionData }) {
 
 const ALC_CENTER = { lat: 38.3452, lon: -0.481 };
 const ASIAN_RE = /asian|japanese|sushi|ramen|chinese|china|thai|tailand|vietnam|korean|coreano|wok|noodle|asiat|japon/i;
+const DRINKS_RE = /\b(tomar algo|copa|copas|coctel|cóctel|cocktail|cerveza|cervezas|cerveceria|cervecería|vinoteca|wine bar|pub|pubs|discoteca|brewery|rooftop|gin tonic|vermut|terraceo|bar de copas)\b/i;
 
 function isAsianCard(c: PlaceCardData): boolean {
   const hay = `${c.cuisine ?? ""} ${c.name ?? ""} ${c.vibe ?? ""}`;
@@ -1988,6 +1996,324 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
 }
 
 
+function isDrinksCard(c: PlaceCardData): boolean {
+  const hay = `${c.cuisine ?? ""} ${c.name ?? ""} ${c.vibe ?? ""}`;
+  return DRINKS_RE.test(hay) || /\bbar\b|\bpub\b|cocktail|brewery|cerveceria|cervecería|vinoteca|wine_bar/i.test(hay);
+}
+
+function drinksEmoji(c: PlaceCardData): string {
+  const hay = `${c.cuisine ?? ""} ${c.name ?? ""} ${c.vibe ?? ""}`.toLowerCase();
+  if (/coctel|cóctel|cocktail|gin/.test(hay)) return "🍸";
+  if (/vino|wine|vinoteca/.test(hay)) return "🍷";
+  if (/cerveza|cerveceria|cervecería|brewery|beer/.test(hay)) return "🍺";
+  if (/discoteca|club|night/.test(hay)) return "🕺";
+  if (/rooftop|terraza/.test(hay)) return "🌇";
+  if (/vermut/.test(hay)) return "🍹";
+  return "🍻";
+}
+
+function guessDrinksPrice(c: PlaceCardData): string {
+  const hay = `${c.cuisine ?? ""} ${c.name ?? ""}`.toLowerCase();
+  if (/coctel|cóctel|cocktail|gin|rooftop/.test(hay)) return "~10 €";
+  if (/vino|wine|vinoteca/.test(hay)) return "~6 €";
+  if (/discoteca|club/.test(hay)) return "~12 €";
+  if (/cerveza|cerveceria|cervecería|brewery|pub/.test(hay)) return "~4 €";
+  return "~6 €";
+}
+
+function DrinksTableInner({ ranked, loading, onClose }: {
+  ranked: { c: PlaceCardData; d: number }[];
+  loading: boolean;
+  onClose: () => void;
+}) {
+  const navigate = useNavigate();
+  const resolvePlace = useServerFn(resolvePlaceByName);
+  const [resolving, setResolving] = useState<string | null>(null);
+
+  const openDashboard = async (c: PlaceCardData) => {
+    if (c.placeId) {
+      markRestaurantReturn();
+      navigate({ to: "/restaurants/$placeId", params: { placeId: c.placeId } });
+      return;
+    }
+    if (resolving) return;
+    setResolving(c.name);
+    try {
+      const { placeId } = await resolvePlace({
+        data: { name: c.name, lat: c.lat ?? null, lon: c.lon ?? null },
+      });
+      if (placeId) {
+        markRestaurantReturn();
+        navigate({ to: "/restaurants/$placeId", params: { placeId } });
+      } else {
+        const href =
+          c.lat && c.lon
+            ? `https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lon}`
+            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.name + " Alicante")}`;
+        window.open(href, "_blank", "noreferrer");
+      }
+    } catch (e) {
+      console.error("resolvePlaceByName failed", e);
+    } finally {
+      setResolving(null);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] overflow-y-auto text-amber-50"
+      style={{
+        background:
+          "linear-gradient(180deg, #1a0f05 0%, #2a1607 50%, #120800 100%)",
+      }}
+    >
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 left-1/2 h-[28rem] w-[28rem] -translate-x-1/2 rounded-full bg-amber-500/[0.08] blur-3xl" />
+        <div className="absolute bottom-0 right-0 h-[24rem] w-[24rem] rounded-full bg-rose-500/[0.06] blur-3xl" />
+      </div>
+
+      <div className="relative mx-auto max-w-5xl px-4 pb-10 pt-5 md:px-6">
+        <header className="mb-5 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-[11px] uppercase tracking-[0.25em] text-amber-200/60 transition hover:text-amber-300"
+          >
+            ← Volver al chat
+          </button>
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-400" />
+            </span>
+            <span className="text-[10px] uppercase tracking-[0.25em] text-amber-300/80">
+              Live · ALC
+            </span>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Cerrar"
+              className="ml-2 rounded-full border border-amber-900/60 p-1.5 text-amber-200/70 hover:border-amber-500/50 hover:text-amber-300"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </header>
+
+        <div className="mb-5">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-amber-400/80">
+            Dashboard nocturno
+          </p>
+          <h1 className="mt-1 font-display text-2xl font-bold tracking-tight text-amber-50 md:text-4xl">
+            Para tomar algo{" "}
+            <span className="bg-gradient-to-r from-amber-300 via-white to-rose-300 bg-clip-text text-transparent">
+              en Alicante
+            </span>
+          </h1>
+          <p className="mt-1 text-xs text-amber-200/80 md:text-sm">
+            Bares, copas y cervecerías · ordenados por cercanía a Puerta del Mar.
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-amber-100/[0.08] bg-[rgba(20,10,4,0.7)] p-2 backdrop-blur-xl md:p-4">
+          <div className="mb-2 flex items-baseline justify-between gap-2">
+            <p className="text-[12px] font-semibold text-amber-50">
+              {loading ? "Cargando…" : `${ranked.length} sitios`}
+            </p>
+            <p className="text-[9px] uppercase tracking-[0.18em] text-amber-400/70">
+              estado · cierre · precio · dist.
+            </p>
+          </div>
+
+          <table className="w-full table-fixed border-separate border-spacing-y-0.5 text-left text-[11px] text-amber-50">
+            <colgroup>
+              <col />
+              <col className="w-[58px]" />
+              <col className="w-[42px]" />
+              <col className="w-[46px]" />
+              <col className="w-[54px]" />
+            </colgroup>
+            <thead>
+              <tr className="text-[9px] uppercase tracking-[0.12em] text-amber-200/50">
+                <th className="px-1 py-1 font-medium">Local</th>
+                <th className="px-1 py-1 font-medium">Estado</th>
+                <th className="px-1 py-1 font-medium">Cierra</th>
+                <th className="px-1 py-1 text-right font-medium">€/copa</th>
+                <th className="px-1 py-1 text-right font-medium">Dist.</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ranked.map(({ c, d }, i) => {
+                const status = resolveOpeningStatus(c.openingHours ?? undefined);
+                const closesAt =
+                  (status.status === "open" ? status.closesAt : null) ??
+                  getTodayClosingTime(c.openingHours ?? undefined) ??
+                  c.closesAt ??
+                  null;
+                const isOpen =
+                  status.status === "open" ||
+                  (status.status === "unknown" && c.openNow === true);
+                const isClosed =
+                  status.status === "closed" ||
+                  (status.status === "unknown" && c.openNow === false);
+                const price = priceLabel(c.priceLevel);
+                const priceFromRange =
+                  c.priceRangeMin && c.priceRangeMax
+                    ? `${c.priceRangeMin}–${c.priceRangeMax} €`
+                    : c.priceRangeMin
+                      ? `~${c.priceRangeMin} €`
+                      : null;
+                const priceAvg =
+                  priceFromRange ??
+                  (price.avg !== "s/d" ? price.avg : guessDrinksPrice(c));
+                const priceShort = priceAvg.replace(/[~\s€]/g, "").replace("–", "-") + "€";
+                const meters = Number.isFinite(d) ? Math.round(d * 1000) : null;
+                const distLabel =
+                  meters == null
+                    ? "—"
+                    : meters >= 1000
+                      ? `${(meters / 1000).toFixed(1)}km`
+                      : `${meters}m`;
+
+                const nameNode = (
+                  <span className="flex items-center gap-1 text-amber-50 hover:text-amber-300">
+                    <span className="text-[13px] leading-none">{drinksEmoji(c)}</span>
+                    <span className="min-w-0 truncate text-[11px] font-medium">
+                      {c.name}
+                    </span>
+                  </span>
+                );
+                return (
+                  <tr key={i} className="bg-white/[0.02]">
+                    <td className="rounded-l-md px-1.5 py-1 align-middle">
+                      {c.placeId ? (
+                        <Link
+                          to="/restaurants/$placeId"
+                          params={{ placeId: c.placeId }}
+                          onClick={markRestaurantReturn}
+                          className="block"
+                        >
+                          {nameNode}
+                        </Link>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => openDashboard(c)}
+                          disabled={resolving === c.name}
+                          className="block w-full text-left disabled:opacity-60"
+                        >
+                          {nameNode}
+                        </button>
+                      )}
+                    </td>
+                    <td className="px-1 py-1 align-middle">
+                      {isOpen ? (
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500/15 px-1 py-0.5 text-[9px] font-semibold text-emerald-300">
+                          ● Abre
+                        </span>
+                      ) : isClosed ? (
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-rose-500/15 px-1 py-0.5 text-[9px] font-semibold text-rose-300">
+                          ● Cerr
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/15 px-1 py-0.5 text-[9px] font-semibold text-amber-300/80">
+                          s/d
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-1 py-1 text-center align-middle font-mono text-[10px] text-amber-100/80">
+                      {closesAt ?? "—"}
+                    </td>
+                    <td className="px-1 py-1 text-right align-middle font-mono text-[10px] text-amber-50">
+                      {priceShort}
+                    </td>
+                    <td className="rounded-r-md px-1 py-1 text-right align-middle font-mono text-[11px] font-semibold tabular-nums text-amber-50">
+                      {distLabel}
+                    </td>
+                  </tr>
+                );
+              })}
+              {!loading && ranked.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-2 py-4 text-center text-xs text-amber-200/50">
+                    Sin datos disponibles.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DrinksTable({ cards }: { cards: PlaceCardData[] }) {
+  const [extra, setExtra] = useState<PlaceCardData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(true);
+
+  const fetchDrinks = useServerFn(getDrinksPlaces);
+  useEffect(() => {
+    let cancelled = false;
+    fetchDrinks()
+      .then((res) => {
+        if (cancelled) return;
+        const mapped: PlaceCardData[] = (res.places ?? []).map((p) => ({
+          placeId: p.google_place_id,
+          name: p.name,
+          cuisine: p.cuisine,
+          address: p.address,
+          openingHours: p.opening_hours_text,
+          lat: p.lat ?? undefined,
+          lon: p.lng ?? undefined,
+          priceLevel: p.price_level,
+          priceRangeMin: p.price_range_min,
+          priceRangeMax: p.price_range_max,
+          rating: p.rating,
+          openNow: p.open_now,
+        }));
+        setExtra(mapped);
+      })
+      .catch((e) => console.error("getDrinksPlaces failed", e))
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [fetchDrinks]);
+
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  const byKey = new Map<string, PlaceCardData>();
+  for (const c of cards) byKey.set(norm(c.name), c);
+  for (const c of extra) {
+    const k = norm(c.name);
+    if (!byKey.has(k)) byKey.set(k, c);
+    else {
+      const prev = byKey.get(k)!;
+      byKey.set(k, { ...prev, openingHours: prev.openingHours ?? c.openingHours, lat: prev.lat ?? c.lat, lon: prev.lon ?? c.lon });
+    }
+  }
+  const ranked = Array.from(byKey.values())
+    .map((c) => ({
+      c,
+      d: c.lat && c.lon ? distKm(ALC_CENTER, { lat: c.lat, lon: c.lon }) : Number.POSITIVE_INFINITY,
+    }))
+    .sort((a, b) => a.d - b.d);
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="my-2 w-full rounded-2xl border border-amber-400/30 bg-amber-400/5 px-4 py-3 text-[12px] font-semibold uppercase tracking-[0.18em] text-amber-300 transition hover:bg-amber-400/10"
+      >
+        Reabrir dashboard de copas ({ranked.length})
+      </button>
+    );
+  }
+
+  return <DrinksTableInner ranked={ranked} loading={loading} onClose={() => setOpen(false)} />;
+}
+
+
 function AssistantContent({ content }: { content: string }) {
   const match = content.match(PLACE_RE);
   const placeName = match?.[1]?.trim();
@@ -2053,10 +2379,16 @@ function AssistantContent({ content }: { content: string }) {
     .filter((p): p is Extract<AssistantPart, { type: "card" }> => p.type === "card")
     .map((p) => p.data);
   const textHasAsian = ASIAN_RE.test(cleaned);
+  const textHasDrinks = DRINKS_RE.test(cleaned);
   const asianMode =
     cardData.length >= 2 &&
     (cardData.every((c) => isAsianCard(c)) ||
       (textHasAsian && cardData.length >= 2));
+  const drinksMode =
+    !asianMode &&
+    cardData.length >= 2 &&
+    (cardData.every((c) => isDrinksCard(c)) ||
+      (textHasDrinks && cardData.length >= 2));
   let tableInjected = false;
 
   return (
@@ -2068,6 +2400,11 @@ function AssistantContent({ content }: { content: string }) {
             if (tableInjected) return null;
             tableInjected = true;
             return <AsianTable key={i} cards={cardData} />;
+          }
+          if (drinksMode) {
+            if (tableInjected) return null;
+            tableInjected = true;
+            return <DrinksTable key={i} cards={cardData} />;
           }
           return <PlaceCard key={i} data={p.data} />;
         }
