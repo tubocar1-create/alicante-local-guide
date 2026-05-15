@@ -74,6 +74,7 @@ export default function OpeningHoursCard({
   rawOpeningHours,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
+  const { h: liveH, m: liveM } = useLiveMadridTime();
 
   const status = useMemo(
     () => getOpeningStatus(rawOpeningHours ?? undefined),
