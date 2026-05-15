@@ -137,6 +137,8 @@ const GREETING: Msg = {
 export function ChatScreen() {
   // Activa el sistema de puntos (también dispara el streak diario al montar).
   usePoints();
+  const { user: authUser } = useAuth();
+  const firstName = authUser?.name?.trim().split(" ")[0];
   const [messages, setMessages] = useState<Msg[]>([GREETING]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
