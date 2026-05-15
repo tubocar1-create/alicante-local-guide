@@ -11,6 +11,13 @@ export type StopArrival = {
 const VECTALIA_URL = "https://qr.vectalia.es/Alicante/lib/request.aspx";
 const ARRIVAL_RE =
   /Linea\s+(\d+)\s+([^:]+?)\s*:\s*(\d+)\s*min\.?\s*:\s*\d+\s*:\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)\s*:/gi;
+const VECTALIA_LINE_CODES: Record<string, string> = {
+  "14": "084",
+};
+
+function toVectaliaLineCode(line: string): string {
+  return VECTALIA_LINE_CODES[line] ?? line.padStart(3, "0");
+}
 
 function parseArrivals(raw: string): StopArrival[] {
   const out: StopArrival[] = [];
@@ -26,6 +33,10 @@ function parseArrivals(raw: string): StopArrival[] {
     });
   }
   return out;
+}
+
+function parseArrivalsForRequestedLine(raw: string, requestedLine: string): StopArrival[] {
+  return parseArrivals(raw).map((arrival) => ({ ...arrival, line: requestedLine }));
 }
 
 // Vectalia parece bloquear/filtrar el pool de IPs de Cloudflare Workers
@@ -55,8 +66,9 @@ async function fetchViaEdge(stop: string, line: string): Promise<string> {
 
 async function fetchDirect(stop: string, line: string): Promise<string> {
   try {
+    const lineParam = line ? toVectaliaLineCode(line) : "";
     const res = await fetch(
-      `${VECTALIA_URL}?p=${encodeURIComponent(stop)}&l=${encodeURIComponent(line)}`,
+      `${VECTALIA_URL}?p=${encodeURIComponent(stop)}&l=${encodeURIComponent(lineParam)}`,
       {
         headers: {
           "User-Agent":
@@ -102,10 +114,11 @@ export const getStopRealtime = createServerFn({ method: "POST" })
     }
 
     if (arrivals.length === 0 && lines.length > 0) {
-      const padded = Array.from(new Set(lines.map((l) => l.padStart(3, "0"))));
-      const results = await Promise.allSettled(padded.map((l) => fetchOne(stopCode, l)));
-      for (const r of results) {
-        if (r.status === "fulfilled") arrivals.push(...parseArrivals(r.value));
+      const requestedLines = Array.from(new Set(lines));
+      const results = await Promise.allSettled(requestedLines.map((l) => fetchOne(stopCode, l)));
+      for (let i = 0; i < results.length; i += 1) {
+        const r = results[i];
+        if (r.status === "fulfilled") arrivals.push(...parseArrivalsForRequestedLine(r.value, requestedLines[i]));
       }
     }
 

@@ -2,6 +2,13 @@
 // Lo usa el server fn getStopRealtime para parsear con coordenadas.
 
 const VECTALIA_RT_URL = "https://qr.vectalia.es/Alicante/lib/request.aspx";
+const VECTALIA_LINE_CODES: Record<string, string> = {
+  "14": "084",
+};
+
+function toVectaliaLineCode(lineCode: string): string {
+  return VECTALIA_LINE_CODES[lineCode] ?? lineCode.padStart(3, "0");
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,7 +33,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const padded = line ? line.padStart(3, "0") : "";
+    const padded = line ? toVectaliaLineCode(line) : "";
     const r = await fetch(
       `${VECTALIA_RT_URL}?p=${encodeURIComponent(stop)}&l=${encodeURIComponent(padded)}`,
       {

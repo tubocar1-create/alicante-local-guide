@@ -2222,12 +2222,19 @@ const DWELL_MIN_PER_STOP = 0.25;
 const VECTALIA_RT_URL = "https://qr.vectalia.es/Alicante/lib/request.aspx";
 const ARRIVAL_RE =
   /Linea\s+(\d+)\s+([^:]+?)\s*:\s*(\d+)\s*min/gi;
+const VECTALIA_LINE_CODES: Record<string, string> = {
+  "14": "084",
+};
+
+function toVectaliaLineCode(lineCode: string): string {
+  return VECTALIA_LINE_CODES[lineCode] ?? lineCode.padStart(3, "0");
+}
 
 async function fetchVectaliaEta(stopCode: string, lineCode: string): Promise<number | null> {
   try {
-    const padded = lineCode.padStart(3, "0");
+    const vectaliaLine = toVectaliaLineCode(lineCode);
     const r = await fetch(
-      `${VECTALIA_RT_URL}?p=${encodeURIComponent(stopCode)}&l=${encodeURIComponent(padded)}`,
+      `${VECTALIA_RT_URL}?p=${encodeURIComponent(stopCode)}&l=${encodeURIComponent(vectaliaLine)}`,
       {
         headers: {
           "User-Agent": "Mozilla/5.0",
@@ -2241,8 +2248,8 @@ async function fetchVectaliaEta(stopCode: string, lineCode: string): Promise<num
     const matches = [...txt.matchAll(ARRIVAL_RE)];
     let best: number | null = null;
     for (const m of matches) {
-      const ln = String(parseInt(m[1], 10));
-      if (ln !== lineCode) continue;
+      const ln = m[1].trim().padStart(3, "0");
+      if (ln !== vectaliaLine) continue;
       const min = parseInt(m[3], 10);
       if (Number.isFinite(min) && (best == null || min < best)) best = min;
     }
