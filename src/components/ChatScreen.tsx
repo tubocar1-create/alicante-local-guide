@@ -1648,79 +1648,128 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
     .sort((a, b) => a.d - b.d);
 
   return (
-    <div className="my-2 w-full overflow-hidden rounded-3xl border border-[#1c2a4a] bg-gradient-to-b from-[#0b1225] to-[#0a0f1f] text-slate-100 shadow-soft">
-      <div className="px-4 pt-4 pb-3 border-b border-[#1c2a4a]">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-300/80">
-          Dashboard gastro
-        </div>
-        <h3 className="mt-1 font-display text-[20px] font-semibold leading-tight text-white">
-          Asiático <span className="text-cyan-300">en Alicante</span>
-        </h3>
-        <p className="mt-1 text-[11px] text-slate-400">
-          {loading ? "Cargando…" : `${ranked.length} restaurantes`} · ordenados por cercanía a Puerta del Mar
-        </p>
+    <div
+      className="relative -mx-4 sm:mx-0 min-h-[100dvh] text-slate-100 overflow-hidden"
+      style={{
+        background:
+          "linear-gradient(180deg, #020617 0%, #06111f 50%, #020617 100%)",
+      }}
+    >
+      {/* ambient glow */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 left-1/2 h-[28rem] w-[28rem] -translate-x-1/2 rounded-full bg-cyan-500/[0.06] blur-3xl" />
+        <div className="absolute bottom-0 right-0 h-[24rem] w-[24rem] rounded-full bg-violet-500/[0.05] blur-3xl" />
       </div>
-      <ol className="max-h-[70vh] overflow-y-auto divide-y divide-[#162038]">
-        {ranked.slice(0, visible).map(({ c, d }, i) => {
-          const hasHours = Boolean(c.closesAt);
-          const price = priceLabel(c.priceLevel);
-          const km = Number.isFinite(d) ? d.toFixed(1) : "—";
-          const mapsHref = c.lat && c.lon
-            ? `https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lon}`
-            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.name + " Alicante")}`;
-          return (
-            <li key={i}>
-              <a
-                href={mapsHref}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-white/5 active:bg-white/10"
-              >
-                <span className="w-5 shrink-0 text-right text-[13px] font-semibold tabular-nums text-slate-500">
-                  {i + 1}
-                </span>
-                <span className="text-xl leading-none">{asianEmoji(c)}</span>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-[14px] font-semibold text-white">
-                    {c.name}
-                    {c.cuisine && (
-                      <span className="ml-1.5 text-[11px] font-normal text-slate-400">
-                        ({c.cuisine})
-                      </span>
-                    )}
-                  </div>
-                  <div className="mt-0.5 flex items-center gap-2 text-[11px] text-slate-400">
-                    {hasHours ? (
-                      <>
-                        <span className="text-emerald-400">● Abierto</span>
-                        <span className="text-slate-500">· cierra {c.closesAt}</span>
-                      </>
-                    ) : (
-                      <span className="text-slate-500">Horario no confirmado</span>
-                    )}
-                    {c.priceLevel && <span className="text-slate-500">· {price.sym}</span>}
-                  </div>
-                </div>
-                <div className="shrink-0 text-right tabular-nums">
-                  <div className="text-[18px] font-semibold leading-none text-white">{km}</div>
-                  <div className="mt-0.5 text-[9px] uppercase tracking-wide text-slate-500">km</div>
-                </div>
-              </a>
-            </li>
-          );
-        })}
-      </ol>
-      {visible < ranked.length && (
-        <div className="border-t border-[#1c2a4a] p-3">
-          <button
-            type="button"
-            onClick={() => setVisible((v) => v + 10)}
-            className="w-full rounded-xl bg-cyan-500/10 px-4 py-2.5 text-[13px] font-semibold text-cyan-300 transition-colors hover:bg-cyan-500/20 active:bg-cyan-500/30"
+
+      <div className="relative mx-auto max-w-7xl px-4 pb-8 pt-5 md:px-6">
+        <header className="mb-5 flex items-center justify-between">
+          <a
+            href="/"
+            className="text-[11px] uppercase tracking-[0.25em] text-slate-500 transition hover:text-cyan-300"
           >
-            Ver 10 más · {ranked.length - visible} restantes
-          </button>
+            ← Inicio
+          </a>
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+            </span>
+            <span className="text-[10px] uppercase tracking-[0.25em] text-emerald-300/80">
+              Live · ALC
+            </span>
+          </div>
+        </header>
+
+        <div className="mb-5">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-400/70">
+            Dashboard gastro
+          </p>
+          <h1 className="mt-1 font-display text-2xl font-bold tracking-tight md:text-4xl">
+            Restaurantes asiáticos{" "}
+            <span className="bg-gradient-to-r from-cyan-300 via-white to-violet-300 bg-clip-text text-transparent">
+              en Alicante
+            </span>
+          </h1>
+          <p className="mt-1 text-xs text-cyan-300/80 md:text-sm">
+            Listado completo de restaurantes japoneses, chinos, thai, vietnamitas y otras cocinas asiáticas en la ciudad, ordenados por cercanía a Puerta del Mar.
+          </p>
         </div>
-      )}
+
+        <div className="rounded-2xl border border-white/[0.08] bg-[rgba(8,12,22,0.7)] p-4 backdrop-blur-xl">
+          <p className="text-sm font-semibold text-slate-100">
+            Restaurantes asiáticos cercanos
+          </p>
+          <p className="mb-3 text-[10px] uppercase tracking-[0.2em] text-cyan-400/70">
+            {loading ? "Cargando…" : `${ranked.length} restaurantes`} · clic para abrir en mapas
+          </p>
+
+          <ul className="mb-3 space-y-1">
+            {ranked.slice(0, visible).map(({ c, d }, i) => {
+              const hasHours = Boolean(c.closesAt);
+              const price = priceLabel(c.priceLevel);
+              const km = Number.isFinite(d) ? d.toFixed(1) : "—";
+              const mapsHref = c.lat && c.lon
+                ? `https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lon}`
+                : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.name + " Alicante")}`;
+              return (
+                <li key={i} className="odd:bg-white/[0.02] rounded-lg">
+                  <a
+                    href={mapsHref}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2 px-2 py-1.5 text-[12px] text-slate-200 transition hover:text-cyan-300"
+                  >
+                    <span className="w-5 text-right font-mono text-[11px] text-slate-500">
+                      {i + 1}
+                    </span>
+                    <span className="text-base leading-none">{asianEmoji(c)}</span>
+                    <span className="flex-1 truncate">
+                      <span className="font-medium text-white">{c.name}</span>
+                      {c.cuisine && (
+                        <span className="ml-1 font-mono text-[10px] text-slate-500">
+                          ({c.cuisine})
+                        </span>
+                      )}
+                      <span className="mt-0.5 block truncate text-[10px] text-slate-500">
+                        {hasHours ? (
+                          <>
+                            <span className="text-emerald-400">● Abierto</span>
+                            <span> · cierra {c.closesAt}</span>
+                          </>
+                        ) : (
+                          "Horario no confirmado"
+                        )}
+                        {c.priceLevel && <span> · {price.sym}</span>}
+                      </span>
+                    </span>
+                    <span className="shrink-0 text-right tabular-nums">
+                      <span className="block font-mono text-[15px] font-semibold text-white leading-none">
+                        {km}
+                      </span>
+                      <span className="mt-0.5 block text-[9px] uppercase tracking-wide text-slate-500">
+                        km
+                      </span>
+                    </span>
+                  </a>
+                </li>
+              );
+            })}
+            {!loading && ranked.length === 0 && (
+              <li className="text-xs text-slate-500">Sin datos disponibles.</li>
+            )}
+          </ul>
+
+          {visible < ranked.length && (
+            <button
+              type="button"
+              onClick={() => setVisible((v) => v + 10)}
+              className="w-full rounded-lg border border-cyan-400/30 bg-cyan-400/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.15em] text-cyan-300 transition hover:bg-cyan-400/10"
+            >
+              Ver 10 más · {ranked.length - visible} restantes
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
