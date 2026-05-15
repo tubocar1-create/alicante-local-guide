@@ -208,3 +208,19 @@ export const refreshAsianPlaces = createServerFn({ method: "POST" }).handler(
     return { count: rows.length };
   },
 );
+
+export const getPlaceById = createServerFn({ method: "GET" })
+  .inputValidator((d: unknown) => {
+    const o = d as { placeId?: string };
+    if (!o?.placeId || typeof o.placeId !== "string") throw new Error("placeId required");
+    return { placeId: o.placeId };
+  })
+  .handler(async ({ data }) => {
+    const { data: row, error } = await supabaseAdmin
+      .from("places_cache")
+      .select("*")
+      .eq("google_place_id", data.placeId)
+      .maybeSingle();
+    if (error) throw error;
+    return { place: row };
+  });
