@@ -131,6 +131,108 @@ export function getOpeningStatus(raw?: string, date = new Date()): OpeningStatus
   return { status: "unknown", raw };
 }
 
+/**
+ * Parse Google Places-style Spanish opening hours text where days are
+ * separated by " · ", e.g.
+ *   "lunes: 13:30–16:00 · 20:00–23:00 · martes: 13:30–16:00 · ..."
+ * Returns open/closed/unknown evaluated against current Madrid time.
+ */
+const SPANISH_DAY_TO_KEY: Record<string, DayKey> = {
+  lunes: "Mo",
+  martes: "Tu",
+  "miércoles": "We",
+  miercoles: "We",
+  jueves: "Th",
+  viernes: "Fr",
+  "sábado": "Sa",
+  sabado: "Sa",
+  domingo: "Su",
+};
+
+export function getOpeningStatusFromSpanishText(
+  raw?: string | null,
+  date = new Date(),
+): OpeningStatus {
+  if (!raw?.trim()) return { status: "unknown" };
+  const { day, minutes } = madridNow(date);
+  const yesterday = previousDay(day);
+
+  // Split by " · " and group ranges per labelled day.
+  const segments = raw.split(/\s+·\s+/);
+  const perDay: Partial<Record<DayKey, { start: number; end: number }[]>> = {};
+  let currentDay: DayKey | null = null;
+
+  for (const seg of segments) {
+    const labelMatch = seg.match(/^([A-Za-zÁÉÍÓÚÑáéíóúñ]+)\s*:\s*(.*)$/);
+    let body = seg;
+    if (labelMatch) {
+      const key = SPANISH_DAY_TO_KEY[labelMatch[1].toLowerCase()];
+      if (key) {
+        currentDay = key;
+        body = labelMatch[2];
+      }
+    }
+    if (!currentDay) continue;
+    if (/cerrado|closed/i.test(body)) {
+      perDay[currentDay] = perDay[currentDay] ?? [];
+      continue;
+    }
+    const ranges = [...body.matchAll(/(\d{1,2}):(\d{2})\s*[–-]\s*(\d{1,2}):(\d{2})/g)];
+    for (const r of ranges) {
+      const start = Number(r[1]) * 60 + Number(r[2]);
+      const end = Number(r[3]) * 60 + Number(r[4]);
+      (perDay[currentDay] ??= []).push({ start, end });
+    }
+  }
+
+  const todayRanges = perDay[day] ?? [];
+  for (const r of todayRanges) {
+    const end = r.end <= r.start ? r.end + 1440 : r.end;
+    if (minutes >= r.start && minutes < end) {
+      return {
+        status: "open",
+        raw,
+        closesAt: minutesToClock(end),
+        closesInMinutes: end - minutes,
+      };
+    }
+  }
+
+  // Overnight from yesterday (e.g. 20:00–02:00)
+  const yRanges = perDay[yesterday] ?? [];
+  for (const r of yRanges) {
+    if (r.end > r.start) continue;
+    const start = r.start - 1440;
+    const end = r.end;
+    if (minutes >= start && minutes < end) {
+      return {
+        status: "open",
+        raw,
+        closesAt: minutesToClock(end),
+        closesInMinutes: end - minutes,
+      };
+    }
+  }
+
+  // We had structured info for today (or any day) → confidently closed
+  if (Object.keys(perDay).length > 0) return { status: "closed", raw };
+  return { status: "unknown", raw };
+}
+
+/**
+ * Resolve opening status from any supported format: tries OSM `opening_hours`
+ * first, then the Google Places Spanish " · "-separated text. Returns the most
+ * confident result.
+ */
+export function resolveOpeningStatus(
+  raw?: string | null,
+  date = new Date(),
+): OpeningStatus {
+  const osm = getOpeningStatus(raw ?? undefined, date);
+  if (osm.status !== "unknown") return osm;
+  return getOpeningStatusFromSpanishText(raw, date);
+}
+
 export function formatOpeningStatus(hours: OpeningStatus) {
   if (hours.status === "open") return `Abierto ahora · cierra a las ${hours.closesAt}`;
   if (hours.status === "closed") return "Cerrado ahora";
