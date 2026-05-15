@@ -879,11 +879,13 @@ function QrVamosInfo({ onClose }: { onClose: () => void }) {
 
 function ProfileButton({ large = false }: { large?: boolean }) {
   const { user, isAuthenticated } = useAuth();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const initial = user?.name?.trim().charAt(0).toUpperCase();
   const sizeCls = large
     ? "h-11 w-11 text-base bg-primary text-primary-foreground border-0"
     : "h-8 w-8 text-xs bg-card text-primary border border-border";
-  if (isAuthenticated) {
+  if (mounted && isAuthenticated) {
     return (
       <Link
         to="/perfil"
