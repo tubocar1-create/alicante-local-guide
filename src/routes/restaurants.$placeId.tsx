@@ -7,6 +7,7 @@ import ReferralDialog from "@/components/ReferralDialog";
 
 const PlaceLocationMap = lazy(() => import("@/components/PlaceLocationMap"));
 import OpeningHoursCard from "@/components/OpeningHoursCard";
+import PhotoLightbox from "@/components/PhotoLightbox";
 
 export const Route = createFileRoute("/restaurants/$placeId")({
   head: () => ({
@@ -30,6 +31,7 @@ function RestaurantDashboard() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -39,7 +41,7 @@ function RestaurantDashboard() {
       .then((r) => { if (!cancelled) setPlace(r.place); })
       .catch((e) => { if (!cancelled) setErr(String(e?.message ?? e)); })
       .finally(() => { if (!cancelled) setLoading(false); });
-    fetchPhotos({ data: { placeId, max: 6 } })
+    fetchPhotos({ data: { placeId, max: 10 } })
       .then((r) => { if (!cancelled) setPhotos(r.photos); })
       .catch(() => { /* photos optional */ });
     return () => { cancelled = true; };
@@ -113,17 +115,20 @@ function RestaurantDashboard() {
               <section className="-mx-4">
                 <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-1">
                   {photos.map((src, i) => (
-                    <div
+                    <button
                       key={src}
-                      className="relative h-44 w-64 shrink-0 snap-start overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]"
+                      type="button"
+                      onClick={() => setLightboxIdx(i)}
+                      className="group relative h-44 w-64 shrink-0 snap-start overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] transition-transform active:scale-[0.98]"
+                      aria-label={`Ampliar foto ${i + 1}`}
                     >
                       <img
                         src={src}
                         alt={`${place.name} foto ${i + 1}`}
                         loading="lazy"
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
-                    </div>
+                    </button>
                   ))}
                 </div>
               </section>
@@ -227,6 +232,16 @@ function RestaurantDashboard() {
           placeId={place.google_place_id ?? placeId}
           placeName={place.name ?? "Restaurante"}
           onClose={() => setQrOpen(false)}
+        />
+      )}
+
+      {lightboxIdx !== null && photos.length > 0 && (
+        <PhotoLightbox
+          photos={photos}
+          index={lightboxIdx}
+          alt={place?.name ?? "Foto"}
+          onClose={() => setLightboxIdx(null)}
+          onIndexChange={setLightboxIdx}
         />
       )}
     </div>
