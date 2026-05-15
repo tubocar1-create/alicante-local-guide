@@ -978,8 +978,8 @@ function isDrinksBroadcast(content: string): boolean {
 
 function Bubble({ role, content }: { role: "user" | "assistant"; content: string }) {
   const isUser = role === "user";
-  // Asian dashboard: break out of the bubble and render full-width.
-  if (!isUser && isAsianBroadcast(content)) {
+  // Asian / Drinks dashboards: break out of the bubble and render full-width.
+  if (!isUser && (isAsianBroadcast(content) || isDrinksBroadcast(content))) {
     return (
       <div className="-mx-4 sm:mx-0">
         <AssistantContent content={content} />
