@@ -347,6 +347,7 @@ export function ChatScreen() {
     <div
       className={[
         "relative flex h-[100dvh] flex-col transition-colors duration-700",
+        "ring-1 ring-[oklch(0.86_0.04_85)]/70 ring-inset",
         isWelcome ? "bg-[oklch(0.985_0.018_88)] text-foreground" : "bg-background",
       ].join(" ")}
     >
@@ -429,7 +430,7 @@ export function ChatScreen() {
         <div className="mx-auto flex max-w-2xl flex-col gap-3">
           {/* Welcome hero — shows on first open, fades when chat starts */}
           {isWelcome && (
-            <div className="mb-2 overflow-hidden rounded-3xl shadow-soft ring-1 ring-black/5">
+            <div className="mt-6 mb-2 overflow-hidden rounded-3xl shadow-soft ring-1 ring-black/5">
               <div className="relative aspect-[16/9] w-full">
                 <img
                   src={heroImg}
@@ -698,7 +699,7 @@ export function ChatScreen() {
         />
       )}
       {isWelcome && (
-        <nav className="relative flex items-center justify-around border-t border-border/60 bg-white/95 px-2 pt-2 pb-3 backdrop-blur">
+        <nav className="relative flex items-center justify-around border-t border-border/60 bg-[oklch(0.985_0.018_88)]/95 px-2 pt-2 pb-3 backdrop-blur">
           <button
             type="button"
             onClick={() => {
