@@ -17,6 +17,7 @@ import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as EatRouteImport } from './routes/eat'
+import { Route as ClimaRouteImport } from './routes/clima'
 import { Route as BusinessRouteImport } from './routes/business'
 import { Route as BusRouteImport } from './routes/bus'
 import { Route as IndexRouteImport } from './routes/index'
@@ -81,6 +82,11 @@ const ExploreRoute = ExploreRouteImport.update({
 const EatRoute = EatRouteImport.update({
   id: '/eat',
   path: '/eat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClimaRoute = ClimaRouteImport.update({
+  id: '/clima',
+  path: '/clima',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BusinessRoute = BusinessRouteImport.update({
@@ -213,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bus': typeof BusRouteWithChildren
   '/business': typeof BusinessRouteWithChildren
+  '/clima': typeof ClimaRoute
   '/eat': typeof EatRoute
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
@@ -247,6 +254,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bus': typeof BusRouteWithChildren
+  '/clima': typeof ClimaRoute
   '/eat': typeof EatRoute
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
@@ -283,6 +291,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/bus': typeof BusRouteWithChildren
   '/business': typeof BusinessRouteWithChildren
+  '/clima': typeof ClimaRoute
   '/eat': typeof EatRoute
   '/explore': typeof ExploreRoute
   '/login': typeof LoginRoute
@@ -320,6 +329,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bus'
     | '/business'
+    | '/clima'
     | '/eat'
     | '/explore'
     | '/login'
@@ -354,6 +364,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/bus'
+    | '/clima'
     | '/eat'
     | '/explore'
     | '/login'
@@ -389,6 +400,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bus'
     | '/business'
+    | '/clima'
     | '/eat'
     | '/explore'
     | '/login'
@@ -425,6 +437,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BusRoute: typeof BusRouteWithChildren
   BusinessRoute: typeof BusinessRouteWithChildren
+  ClimaRoute: typeof ClimaRoute
   EatRoute: typeof EatRoute
   ExploreRoute: typeof ExploreRoute
   LoginRoute: typeof LoginRoute
@@ -499,6 +512,13 @@ declare module '@tanstack/react-router' {
       path: '/eat'
       fullPath: '/eat'
       preLoaderRoute: typeof EatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/clima': {
+      id: '/clima'
+      path: '/clima'
+      fullPath: '/clima'
+      preLoaderRoute: typeof ClimaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/business': {
@@ -758,6 +778,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BusRoute: BusRouteWithChildren,
   BusinessRoute: BusinessRouteWithChildren,
+  ClimaRoute: ClimaRoute,
   EatRoute: EatRoute,
   ExploreRoute: ExploreRoute,
   LoginRoute: LoginRoute,
