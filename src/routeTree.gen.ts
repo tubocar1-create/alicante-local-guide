@@ -24,6 +24,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as BusinessIndexRouteImport } from './routes/business.index'
 import { Route as VuelosIataRouteImport } from './routes/vuelos_.$iata'
 import { Route as ThreadsIdRouteImport } from './routes/threads.$id'
+import { Route as RestaurantsPlaceIdRouteImport } from './routes/restaurants.$placeId'
 import { Route as BusinessReferralsRouteImport } from './routes/business.referrals'
 import { Route as BusinessQrRouteImport } from './routes/business.qr'
 import { Route as BusinessOnboardingRouteImport } from './routes/business.onboarding'
@@ -118,6 +119,11 @@ const ThreadsIdRoute = ThreadsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => ThreadsRoute,
+} as any)
+const RestaurantsPlaceIdRoute = RestaurantsPlaceIdRouteImport.update({
+  id: '/restaurants/$placeId',
+  path: '/restaurants/$placeId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const BusinessReferralsRoute = BusinessReferralsRouteImport.update({
   id: '/referrals',
@@ -238,6 +244,7 @@ export interface FileRoutesByFullPath {
   '/business/onboarding': typeof BusinessOnboardingRoute
   '/business/qr': typeof BusinessQrRoute
   '/business/referrals': typeof BusinessReferralsRoute
+  '/restaurants/$placeId': typeof RestaurantsPlaceIdRoute
   '/threads/$id': typeof ThreadsIdRoute
   '/vuelos/$iata': typeof VuelosIataRoute
   '/business/': typeof BusinessIndexRoute
@@ -273,6 +280,7 @@ export interface FileRoutesByTo {
   '/business/onboarding': typeof BusinessOnboardingRoute
   '/business/qr': typeof BusinessQrRoute
   '/business/referrals': typeof BusinessReferralsRoute
+  '/restaurants/$placeId': typeof RestaurantsPlaceIdRoute
   '/threads/$id': typeof ThreadsIdRoute
   '/vuelos/$iata': typeof VuelosIataRoute
   '/business': typeof BusinessIndexRoute
@@ -310,6 +318,7 @@ export interface FileRoutesById {
   '/business/onboarding': typeof BusinessOnboardingRoute
   '/business/qr': typeof BusinessQrRoute
   '/business/referrals': typeof BusinessReferralsRoute
+  '/restaurants/$placeId': typeof RestaurantsPlaceIdRoute
   '/threads/$id': typeof ThreadsIdRoute
   '/vuelos_/$iata': typeof VuelosIataRoute
   '/business/': typeof BusinessIndexRoute
@@ -348,6 +357,7 @@ export interface FileRouteTypes {
     | '/business/onboarding'
     | '/business/qr'
     | '/business/referrals'
+    | '/restaurants/$placeId'
     | '/threads/$id'
     | '/vuelos/$iata'
     | '/business/'
@@ -383,6 +393,7 @@ export interface FileRouteTypes {
     | '/business/onboarding'
     | '/business/qr'
     | '/business/referrals'
+    | '/restaurants/$placeId'
     | '/threads/$id'
     | '/vuelos/$iata'
     | '/business'
@@ -419,6 +430,7 @@ export interface FileRouteTypes {
     | '/business/onboarding'
     | '/business/qr'
     | '/business/referrals'
+    | '/restaurants/$placeId'
     | '/threads/$id'
     | '/vuelos_/$iata'
     | '/business/'
@@ -446,6 +458,7 @@ export interface RootRouteChildren {
   StayRoute: typeof StayRoute
   ThreadsRoute: typeof ThreadsRouteWithChildren
   VuelosRoute: typeof VuelosRoute
+  RestaurantsPlaceIdRoute: typeof RestaurantsPlaceIdRoute
   VuelosIataRoute: typeof VuelosIataRoute
   ApiPublicAenaFlightsRoute: typeof ApiPublicAenaFlightsRoute
   ApiPublicBookingCreateRoute: typeof ApiPublicBookingCreateRoute
@@ -562,6 +575,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/threads/$id'
       preLoaderRoute: typeof ThreadsIdRouteImport
       parentRoute: typeof ThreadsRoute
+    }
+    '/restaurants/$placeId': {
+      id: '/restaurants/$placeId'
+      path: '/restaurants/$placeId'
+      fullPath: '/restaurants/$placeId'
+      preLoaderRoute: typeof RestaurantsPlaceIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/business/referrals': {
       id: '/business/referrals'
@@ -787,6 +807,7 @@ const rootRouteChildren: RootRouteChildren = {
   StayRoute: StayRoute,
   ThreadsRoute: ThreadsRouteWithChildren,
   VuelosRoute: VuelosRoute,
+  RestaurantsPlaceIdRoute: RestaurantsPlaceIdRoute,
   VuelosIataRoute: VuelosIataRoute,
   ApiPublicAenaFlightsRoute: ApiPublicAenaFlightsRoute,
   ApiPublicBookingCreateRoute: ApiPublicBookingCreateRoute,
