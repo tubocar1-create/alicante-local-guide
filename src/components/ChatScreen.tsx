@@ -427,7 +427,7 @@ export function ChatScreen() {
           {/* Welcome hero — shows on first open, fades when chat starts */}
           {isWelcome && (
             <div className="mb-2 overflow-hidden rounded-3xl shadow-soft ring-1 ring-black/5">
-              <div className="relative aspect-[16/11] w-full">
+              <div className="relative aspect-[16/9] w-full">
                 <img
                   src={heroImg}
                   alt="Puerto de Alicante al atardecer"
