@@ -422,16 +422,7 @@ export function ChatScreen() {
       {/* Messages */}
       <div ref={scrollRef} className={["relative flex-1 px-4 pt-3 pb-5", isWelcome ? "overflow-hidden" : "overflow-y-auto"].join(" ")}>
         <div className="mx-auto flex max-w-2xl flex-col gap-3">
-          {/* Welcome hero — shows on first open, fades when chat starts */}
-          {isWelcome && (
-            <div className="mt-6 mb-2 rounded-xl shadow-soft ring-1 ring-black/5 bg-[oklch(0.985_0.018_88)] flex items-center justify-center">
-              <img
-                src={heroImg}
-                alt="Alicante: castillo, casas de colores y playa"
-                className="block w-full h-auto max-h-[38vh] object-contain rounded-xl"
-              />
-            </div>
-          )}
+          {/* Welcome hero removed by request */}
 
           {/* (Tiles render below as Glovo-style row, replacing old chip suggestions) */}
 
