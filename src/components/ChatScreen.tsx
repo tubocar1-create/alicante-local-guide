@@ -493,9 +493,14 @@ export function ChatScreen() {
 
           {/* (Tiles render below as Glovo-style row, replacing old chip suggestions) */}
 
-          {messages.map((m, i) =>
-            m === GREETING || m.role === "user" ? null : <Bubble key={i} role={m.role} content={m.content} />,
-          )}
+          {messages.map((m, i) => {
+            if (m === GREETING || m.role === "user") return null;
+            let prevUser = "";
+            for (let j = i - 1; j >= 0; j--) {
+              if (messages[j].role === "user") { prevUser = messages[j].content; break; }
+            }
+            return <Bubble key={i} role={m.role} content={m.content} userPrompt={prevUser} />;
+          })}
           {loading && messages[messages.length - 1]?.role === "user" && (
             <div className="flex justify-start">
               <div className="rounded-3xl rounded-bl-md bg-bubble-friend px-4 py-3 shadow-soft">
