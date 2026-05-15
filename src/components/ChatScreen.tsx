@@ -1343,9 +1343,6 @@ function BigLiveEta({ line, stop }: { line: string; stop: string }) {
   const isImminent = liveMin != null && liveMin <= 3;
   const hh = arrival ? arrival.getHours().toString().padStart(2, "0") : "--";
   const mm = arrival ? arrival.getMinutes().toString().padStart(2, "0") : "--";
-  const isNight = /N$/i.test(line);
-  const isExtraurban = ["24", "27", "28", "39"].includes(line.toUpperCase());
-  const noLiveSupport = isNight || isExtraurban;
 
   return (
     <div
@@ -1407,22 +1404,9 @@ function BigLiveEta({ line, stop }: { line: string; stop: string }) {
       </div>
 
       {!arrival && !loading && (
-        noLiveSupport ? (
-          <div className="relative mt-4 rounded-xl border border-amber-300/50 bg-amber-50/80 px-3 py-2.5 text-[11px] leading-snug text-amber-900 dark:border-amber-400/30 dark:bg-amber-900/20 dark:text-amber-100">
-            <p className="font-bold uppercase tracking-wider">
-              {isNight ? "🌙 Línea nocturna" : "🛣️ Línea interurbana"}
-            </p>
-            <p className="mt-1 font-medium">
-              {isNight
-                ? "No hay tiempo real para líneas nocturnas. Consulta el horario oficial: salen aprox. cada hora desde Puerta del Mar a partir de las 23:00."
-                : "Vectalia no publica tiempo real para esta línea. Consulta el horario oficial de TAM/Subus para tu parada."}
-            </p>
-          </div>
-        ) : (
-          <p className="relative mt-3 text-xs text-muted-foreground">
-            Sin próximas salidas ahora mismo.
-          </p>
-        )
+        <p className="relative mt-3 text-xs text-muted-foreground">
+          Sin próximas salidas ahora mismo.
+        </p>
       )}
     </div>
   );
