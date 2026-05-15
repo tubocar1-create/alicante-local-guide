@@ -115,22 +115,29 @@ function RestaurantDashboard() {
             {photos.length > 0 && (
               <section className="-mx-4">
                 <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-1">
-                  {photos.map((src, i) => (
-                    <button
-                      key={src}
-                      type="button"
-                      onClick={() => setLightboxIdx(i)}
-                      className="group relative h-44 w-64 shrink-0 snap-start overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] transition-transform active:scale-[0.98]"
-                      aria-label={`Ampliar foto ${i + 1}`}
-                    >
-                      <img
-                        src={src}
-                        alt={`${place.name} foto ${i + 1}`}
-                        loading="lazy"
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                    </button>
-                  ))}
+                  {photos.map((src, i) => {
+                    const isZoom = zoomedIdx === i;
+                    return (
+                      <button
+                        key={src}
+                        type="button"
+                        onClick={() => setZoomedIdx(isZoom ? null : i)}
+                        className={`group relative shrink-0 snap-start overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] transition-all duration-500 ease-out ${
+                          isZoom ? "h-[22rem] w-[22rem]" : "h-44 w-64"
+                        }`}
+                        aria-label={isZoom ? `Reducir foto ${i + 1}` : `Ampliar foto ${i + 1}`}
+                      >
+                        <img
+                          src={src}
+                          alt={`${place.name} foto ${i + 1}`}
+                          loading="lazy"
+                          className={`h-full w-full object-cover transition-transform duration-500 ${
+                            isZoom ? "scale-110 cursor-zoom-out" : "cursor-zoom-in group-hover:scale-105"
+                          }`}
+                        />
+                      </button>
+                    );
+                  })}
                 </div>
               </section>
             )}
