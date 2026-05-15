@@ -438,7 +438,7 @@ export function ChatScreen() {
           {/* (Tiles render below as Glovo-style row, replacing old chip suggestions) */}
 
           {messages.map((m, i) =>
-            isWelcome && i === 0 ? null : <Bubble key={i} role={m.role} content={m.content} />,
+            m === GREETING || m.role === "user" ? null : <Bubble key={i} role={m.role} content={m.content} />,
           )}
           {loading && messages[messages.length - 1]?.role === "user" && (
             <div className="flex justify-start">
