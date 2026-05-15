@@ -141,8 +141,40 @@ function toRow(p: GPlace, category: string): CachedPlace | null {
     website: p.websiteUri ?? null,
     category,
     fetched_at: new Date().toISOString(),
+    raw: { photos: p.photos ?? [] } as unknown,
   };
 }
+
+async function resolvePhotoUri(photoName: string, apiKey: string, maxWidth = 1200): Promise<string | null> {
+  try {
+    const url = `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=${maxWidth}&skipHttpRedirect=true&key=${apiKey}`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const j = (await res.json()) as { photoUri?: string };
+    return j.photoUri ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export const getPlacePhotos = createServerFn({ method: "GET" })
+  .inputValidator((d: unknown) => {
+    const o = d as { placeId?: string; max?: number };
+    if (!o?.placeId || typeof o.placeId !== "string") throw new Error("placeId required");
+    return { placeId: o.placeId, max: Math.min(o.max ?? 4, 8) };
+  })
+  .handler(async ({ data }) => {
+    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+    if (!apiKey) return { photos: [] as string[] };
+    const { data: row } = await supabaseAdmin
+      .from("places_cache")
+      .select("raw")
+      .eq("google_place_id", data.placeId)
+      .maybeSingle();
+    const photos = ((row?.raw as { photos?: Array<{ name: string }> } | null)?.photos ?? []).slice(0, data.max);
+    const urls = await Promise.all(photos.map((p) => resolvePhotoUri(p.name, apiKey)));
+    return { photos: urls.filter((u): u is string => !!u) };
+  });
 
 async function refreshAsianFromGoogle() {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
