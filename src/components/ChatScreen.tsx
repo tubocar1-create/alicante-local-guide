@@ -948,6 +948,7 @@ const PLACE_RE = /\[\[place:\s*([^\]]+?)\]\]/i;
 const CARD_RE = /\[\[card:([^\]]+)\]\]/g;
 
 type PlaceCardData = {
+  placeId?: string | null;
   name: string;
   cuisine?: string | null;
   address?: string | null;
