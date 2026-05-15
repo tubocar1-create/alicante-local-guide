@@ -45,7 +45,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
   );
   const [direction, setDirection] = useState<1 | 2 | null>(null);
   const [search, setSearch] = useState("");
-  const isStopStep = step === "stop";
+  const isExpanded = step === "stop" || step === "line";
 
   const directions = useMemo(() => {
     if (!data || !line)
