@@ -1,0 +1,1 @@
+UPDATE public.places_cache SET fetched_at = now() - interval '7 days' WHERE category = 'drinks';
