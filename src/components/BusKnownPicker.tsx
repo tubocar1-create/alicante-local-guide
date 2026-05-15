@@ -259,7 +259,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
                 className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground"
               />
             </div>
-            <div className="max-h-64 space-y-1 overflow-y-auto pr-1">
+            <div className="max-h-56 space-y-1 overflow-y-auto pr-1">
               {filtered.map((s) => (
                 <button
                   key={s.code}
@@ -272,14 +272,14 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
                       distanceM: s.distM ?? null,
                     })
                   }
-                  className="flex w-full items-center justify-between rounded-xl border border-border bg-background/70 px-3 py-2 text-left text-sm shadow-sm hover:bg-accent/40 active:scale-[0.99]"
+                  className="flex w-full items-center justify-between rounded-lg border border-border bg-background/70 px-2 py-1.5 text-left text-[12px] shadow-sm hover:bg-accent/40 active:scale-[0.99]"
                 >
                   <span className="min-w-0 truncate">
                     <span className="font-semibold">{s.name}</span>
-                    <span className="ml-1 text-[11px] text-muted-foreground">#{s.code}</span>
+                    <span className="ml-1 text-[10px] text-muted-foreground">#{s.code}</span>
                   </span>
                   {s.distM != null && (
-                    <span className="shrink-0 text-[11px] text-muted-foreground">{s.distM} m</span>
+                    <span className="shrink-0 text-[10px] text-muted-foreground">{s.distM} m</span>
                   )}
                 </button>
               ))}
