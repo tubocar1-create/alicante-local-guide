@@ -190,7 +190,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
       )}
 
       {step === "line" && (
-        <div className="space-y-3">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pr-1">
           {loading && <p className="text-sm text-muted-foreground">Cargando líneas…</p>}
 
           {(["urban", "extraurban", "night"] as const).map((cat) => {
