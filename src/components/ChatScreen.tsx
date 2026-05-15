@@ -1704,7 +1704,7 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
           </p>
 
           <ul className="mb-3 space-y-1">
-            {ranked.slice(0, visible).map(({ c, d }, i) => {
+            {ranked.map(({ c, d }, i) => {
               const hasHours = Boolean(c.closesAt);
               const price = priceLabel(c.priceLevel);
               const km = Number.isFinite(d) ? d.toFixed(1) : "—";
