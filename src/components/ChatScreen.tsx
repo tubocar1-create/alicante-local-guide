@@ -1816,9 +1816,14 @@ function AsianTableInner({ ranked, loading, onClose }: {
                           {nameNode}
                         </Link>
                       ) : (
-                        <a href={mapsHref} target="_blank" rel="noreferrer" className="block">
+                        <button
+                          type="button"
+                          onClick={() => openDashboard(c)}
+                          disabled={resolving === c.name}
+                          className="block w-full text-left disabled:opacity-60"
+                        >
                           {nameNode}
-                        </a>
+                        </button>
                       )}
                     </td>
                     <td className="px-1 py-1 align-middle">
