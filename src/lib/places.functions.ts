@@ -161,7 +161,7 @@ async function refreshAsianFromGoogle() {
 
   const { error } = await supabaseAdmin
     .from("places_cache")
-    .upsert(rows, { onConflict: "google_place_id" });
+    .upsert(rows as never, { onConflict: "google_place_id" });
   if (error) {
     console.error("upsert places_cache error", error);
     throw error;
