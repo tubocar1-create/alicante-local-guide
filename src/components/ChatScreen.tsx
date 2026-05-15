@@ -436,7 +436,6 @@ export function ChatScreen() {
                 alt="Alicante: castillo, casas de colores y playa"
                 className="block w-full h-auto object-contain"
               />
-              </div>
             </div>
           )}
 
