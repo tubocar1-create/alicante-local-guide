@@ -17,18 +17,24 @@ type Props = {
   onSelected: (pick: BusStopPick) => void;
 };
 
-const PALETTE = [
-  "#E84E2C",
-  "#3FA9F5",
-  "#7BC043",
-  "#F4B400",
-  "#9B59B6",
-  "#1ABC9C",
-  "#E91E63",
-  "#34495E",
-  "#FF7F50",
-  "#00ACC1",
-];
+// Categorías de líneas en Alicante:
+// - Nocturnas: código terminado en N (3N, 13N, 22N…)
+// - Interurbanas (TAM): salen de la ciudad (27, 28, 39…)
+// - Urbanas: el resto
+const EXTRAURBAN_CODES = new Set(["27", "28", "39"]);
+
+function classifyLine(code: string): "night" | "extraurban" | "urban" {
+  if (/N$/i.test(code)) return "night";
+  if (EXTRAURBAN_CODES.has(code.toUpperCase())) return "extraurban";
+  return "urban";
+}
+
+const CATEGORY_COLOR: Record<"night" | "extraurban" | "urban", string> = {
+  urban: "#DC2626",       // rojo
+  extraurban: "#1E3A8A",  // azul marino
+  night: "#312E81",       // índigo profundo (nocturno)
+};
+
 
 export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
   const { data, loading } = useBusGraph();
@@ -184,34 +190,61 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
       )}
 
       {step === "line" && (
-        <div>
+        <div className="space-y-3">
           {loading && <p className="text-sm text-muted-foreground">Cargando líneas…</p>}
-          <div className="grid grid-cols-6 gap-1.5 sm:grid-cols-8">
-            {(data?.lines ?? [])
+
+          {(["urban", "extraurban", "night"] as const).map((cat) => {
+            const lines = (data?.lines ?? [])
+              .filter((l) => classifyLine(l.code) === cat)
               .slice()
               .sort((a, b) =>
                 a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: "base" }),
-              )
-              .map((l, i) => {
-                const color = l.color || PALETTE[i % PALETTE.length];
-                return (
-                  <button
-                    key={l.code}
-                    onClick={() => {
-                      setLine(l);
-                      setDirection(null);
-                      setStep("direction");
-                      if (locState.status === "idle") requestLocation();
-                    }}
-                    title={l.name}
-                    className="flex h-9 items-center justify-center rounded-lg text-[12px] font-bold text-white shadow-sm transition active:scale-95"
-                    style={{ backgroundColor: color }}
-                  >
-                    {l.code}
-                  </button>
-                );
-              })}
-          </div>
+              );
+            if (lines.length === 0) return null;
+            const label =
+              cat === "urban" ? "Urbanas" : cat === "extraurban" ? "Interurbanas" : "Nocturnas";
+            const sublabel =
+              cat === "urban"
+                ? "Dentro de la ciudad"
+                : cat === "extraurban"
+                  ? "Fuera de Alicante"
+                  : "Servicio nocturno";
+            const catColor = CATEGORY_COLOR[cat];
+            return (
+              <div key={cat}>
+                <div className="mb-1.5 flex items-center gap-2">
+                  <span
+                    className="inline-block h-2.5 w-2.5 rounded-full"
+                    style={{ backgroundColor: catColor }}
+                  />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-foreground/80">
+                    {label}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">· {sublabel}</span>
+                </div>
+                <div className="grid grid-cols-6 gap-1.5 sm:grid-cols-8">
+                  {lines.map((l) => (
+                    <button
+                      key={l.code}
+                      onClick={() => {
+                        setLine(l);
+                        setDirection(null);
+                        setStep("direction");
+                        if (locState.status === "idle") requestLocation();
+                      }}
+                      title={l.name}
+                      className={`flex h-9 items-center justify-center rounded-lg text-[12px] font-bold text-white shadow-sm transition active:scale-95 ${
+                        cat === "night" ? "ring-1 ring-amber-300/60" : ""
+                      }`}
+                      style={{ backgroundColor: catColor }}
+                    >
+                      {cat === "night" ? `🌙 ${l.code}` : l.code}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
