@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
-import { getPlaceById } from "@/lib/places.functions";
+import { getPlaceById, getPlacePhotos } from "@/lib/places.functions";
 import { ArrowLeft, MapPin, Phone, Globe, Star, Clock, Euro } from "lucide-react";
 
 export const Route = createFileRoute("/restaurants/$placeId")({
@@ -20,19 +20,25 @@ function RestaurantDashboard() {
   const { placeId } = Route.useParams();
   const router = useRouter();
   const fetchPlace = useServerFn(getPlaceById);
+  const fetchPhotos = useServerFn(getPlacePhotos);
   const [place, setPlace] = useState<Place | null>(null);
+  const [photos, setPhotos] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    setPhotos([]);
     fetchPlace({ data: { placeId } })
       .then((r) => { if (!cancelled) setPlace(r.place); })
       .catch((e) => { if (!cancelled) setErr(String(e?.message ?? e)); })
       .finally(() => { if (!cancelled) setLoading(false); });
+    fetchPhotos({ data: { placeId, max: 6 } })
+      .then((r) => { if (!cancelled) setPhotos(r.photos); })
+      .catch(() => { /* photos optional */ });
     return () => { cancelled = true; };
-  }, [fetchPlace, placeId]);
+  }, [fetchPlace, fetchPhotos, placeId]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100">
@@ -90,6 +96,30 @@ function RestaurantDashboard() {
                 </div>
               )}
             </section>
+
+            {/* Photo gallery */}
+            {photos.length > 0 && (
+              <section className="-mx-4">
+                <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-1">
+                  {photos.map((src, i) => (
+                    <a
+                      key={src}
+                      href={src}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="relative h-44 w-64 shrink-0 snap-start overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]"
+                    >
+                      <img
+                        src={src}
+                        alt={`${place.name} foto ${i + 1}`}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform hover:scale-105"
+                      />
+                    </a>
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* Stats grid */}
             <section className="grid grid-cols-2 gap-3">
