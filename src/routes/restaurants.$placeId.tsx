@@ -216,10 +216,6 @@ function RestaurantDashboard() {
           </div>
         )}
       </main>
-
-      {bookingOpen && bookingListing && (
-        <BookingDialog listing={bookingListing} onClose={() => setBookingOpen(false)} />
-      )}
     </div>
   );
 }
