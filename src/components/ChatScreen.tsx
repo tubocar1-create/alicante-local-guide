@@ -599,7 +599,7 @@ export function ChatScreen() {
                   ← Volver
                 </button>
               </div>
-              <div className="flex flex-col gap-2">
+              <div className="grid grid-cols-2 gap-1.5">
                 {activeSubmenu.submenu?.map((opt) => (
                   <button
                     key={opt.label}
@@ -620,7 +620,7 @@ export function ChatScreen() {
                         send(opt.prompt, { mode: null });
                       }
                     }}
-                    className="flex w-full items-center gap-2 rounded-lg border border-border bg-background/80 px-3 py-2 text-left text-[13px] shadow-sm transition hover:bg-accent/40"
+                    className="flex w-full items-center gap-1.5 rounded-lg border border-border bg-background/80 px-2 py-1.5 text-left text-[12px] shadow-sm transition hover:bg-accent/40"
                   >
                     {(() => {
                       const m = opt.label.match(/^(\p{Extended_Pictographic}(?:\u200d\p{Extended_Pictographic})*\uFE0F?)\s*(.*)$/u);
@@ -629,7 +629,7 @@ export function ChatScreen() {
                       return (
                         <>
                           {icon && (
-                            <span className="text-base leading-none" aria-hidden>
+                            <span className="text-sm leading-none" aria-hidden>
                               {icon}
                             </span>
                           )}
