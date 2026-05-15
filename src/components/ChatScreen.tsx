@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Mic, MapPin, Home, User as UserIcon, QrCode, X, Gift, Ticket, Sparkles, ShieldCheck, CalendarPlus, CalendarCheck } from "lucide-react";
+import { Send, Mic, MapPin, Home, User as UserIcon, QrCode, X, Gift, Ticket, Sparkles, ShieldCheck, CalendarPlus, CalendarCheck, Sun, Bell, Heart, Bookmark, ChevronRight } from "lucide-react";
 import BookingDialog from "@/components/BookingDialog";
 import { AdBanner } from "@/components/AdBanner";
 import type { Listing } from "@/lib/overpass-listings";
@@ -40,6 +40,16 @@ const TILE_STYLES: Record<string, { img: string; bg: string }> = {
   "Turismo, playa y aventuras": { img: tilePlayaAventura, bg: "oklch(0.93 0.07 220)" },
   Mapa:         { img: tileMapa,    bg: "oklch(0.93 0.06 200)" },
   "Transporte público": { img: tileBus, bg: "oklch(0.93 0.06 190)" },
+};
+
+const TILE_SUBTITLES: Record<string, string> = {
+  "Comer": "Restaurantes y tapas",
+  "Dormir": "Hoteles y alojamientos",
+  "Turismo, playa y aventuras": "Turismo, sol y planes",
+  "Comprar": "Tiendas y mercados",
+  "Tomar algo": "Bares y copas",
+  "Transporte público": "Bus, TRAM, taxis",
+  "Mapa": "Explora la ciudad",
 };
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -127,6 +137,8 @@ const GREETING: Msg = {
 export function ChatScreen() {
   // Activa el sistema de puntos (también dispara el streak diario al montar).
   usePoints();
+  const { user: authUser } = useAuth();
+  const firstName = authUser?.name?.trim().split(" ")[0];
   const [messages, setMessages] = useState<Msg[]>([GREETING]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -322,7 +334,7 @@ export function ChatScreen() {
     <div
       className={[
         "relative flex h-[100dvh] flex-col transition-colors duration-700",
-        isWelcome ? "bg-black text-white" : "bg-background",
+        isWelcome ? "bg-[oklch(0.97_0.025_75)] text-foreground" : "bg-background",
       ].join(" ")}
     >
       {/* Persistent background photo of Puerto de Alicante (only when chatting) */}
@@ -333,46 +345,84 @@ export function ChatScreen() {
         </div>
       )}
 
-      {/* Compact header (always visible) */}
-      <header className="relative flex items-center justify-between gap-1.5 border-b border-border/60 bg-background/40 px-4 py-3 backdrop-blur">
-        <div className="flex items-center gap-2">
-          <ProfileButton />
-          <Link
-            to="/threads"
-            aria-label="Mis reservas"
-            className="flex h-8 items-center gap-1 rounded-full border border-border bg-card px-2.5 text-[11px] font-semibold text-foreground shadow-sm active:scale-95"
+      {/* Header — formato cabecera tipo app: avatar + saludo + tiempo + campana */}
+      {isWelcome ? (
+        <header className="relative flex items-center justify-between gap-3 px-4 pt-4 pb-2">
+          <div className="flex items-center gap-3 min-w-0">
+            <ProfileButton large />
+            <div className="min-w-0">
+              <p className="text-[15px] font-extrabold leading-tight text-foreground truncate">
+                ¡Hola{firstName ? `, ${firstName}` : ""}!
+              </p>
+              <p className="text-[12px] leading-tight text-muted-foreground truncate">
+                ¿Qué vas a descubrir hoy?
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 ring-1 ring-border/60">
+              <Sun className="h-4 w-4 text-[oklch(0.78_0.16_70)]" />
+              <div className="leading-tight">
+                <p className="text-[12px] font-bold text-foreground">20°</p>
+                <p className="text-[9px] -mt-0.5 text-muted-foreground">Soleado</p>
+              </div>
+            </div>
+            <Link
+              to="/threads"
+              aria-label="Mis reservas"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/70 ring-1 ring-border/60 text-foreground active:scale-95"
+            >
+              <Bell className="h-4 w-4" />
+            </Link>
+          </div>
+        </header>
+      ) : (
+        <header className="relative flex items-center justify-between gap-1.5 border-b border-border/60 bg-background/40 px-4 py-3 backdrop-blur">
+          <div className="flex items-center gap-2">
+            <ProfileButton />
+            <Link
+              to="/threads"
+              aria-label="Mis reservas"
+              className="flex h-8 items-center gap-1 rounded-full border border-border bg-card px-2.5 text-[11px] font-semibold text-foreground shadow-sm active:scale-95"
+            >
+              <CalendarCheck className="h-3.5 w-3.5 text-primary" />
+              <span>Mis reservas</span>
+            </Link>
+          </div>
+          <div className="flex-1 flex justify-center">
+            <PointsHud compact />
+          </div>
+          <button
+            onClick={() => {
+              setMessages([GREETING]);
+              setActiveSubmenu(null);
+              setError(null);
+              setInput("");
+            }}
+            className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full bg-secondary text-secondary-foreground active:scale-95"
+            aria-label="Inicio"
           >
-            <CalendarCheck className="h-3.5 w-3.5 text-primary" />
-            <span>Mis reservas</span>
-          </Link>
-        </div>
-        <div className="flex-1 flex justify-center">
+            <Home className="h-3 w-3" />
+            Inicio
+          </button>
+        </header>
+      )}
+
+      {isWelcome && (
+        <div className="px-4">
           <PointsHud compact />
         </div>
-        <button
-          onClick={() => {
-            setMessages([GREETING]);
-            setActiveSubmenu(null);
-            setError(null);
-            setInput("");
-          }}
-          className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full bg-secondary text-secondary-foreground active:scale-95"
-          aria-label="Inicio"
-        >
-          <Home className="h-3 w-3" />
-          Inicio
-        </button>
-      </header>
+      )}
 
       {isWelcome && <AdBanner />}
 
       {/* Messages */}
-      <div ref={scrollRef} className="relative flex-1 overflow-y-auto px-4 pt-6 pb-5">
+      <div ref={scrollRef} className="relative flex-1 overflow-y-auto px-4 pt-3 pb-5">
         <div className="mx-auto flex max-w-2xl flex-col gap-3">
           {/* Welcome hero — shows on first open, fades when chat starts */}
           {isWelcome && (
-            <div className="mb-2 overflow-hidden rounded-3xl shadow-soft">
-              <div className="relative aspect-[16/10] w-full">
+            <div className="mb-2 overflow-hidden rounded-3xl shadow-soft ring-1 ring-black/5">
+              <div className="relative aspect-[16/11] w-full">
                 <img
                   src={heroImg}
                   alt="Puerto de Alicante al atardecer"
@@ -381,28 +431,34 @@ export function ChatScreen() {
                   className="absolute inset-0 h-full w-full object-cover"
                   style={{ filter: "brightness(1.05) saturate(1.15) contrast(1.08) hue-rotate(-12deg) sepia(0.12)" }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-transparent" />
-                <button
-                  type="button"
-                  onClick={() => setShowQrInfo(true)}
-                  aria-label="Beneficios del QR VAMOS"
-                  className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[12px] font-extrabold text-primary-foreground shadow-soft ring-2 ring-white/70 backdrop-blur active:scale-95"
-                >
-                  <QrCode className="h-3.5 w-3.5" />
-                  QR VAMOS
-                </button>
-                <div className="absolute inset-x-0 bottom-0 p-4 text-white">
-                  <h2 className="leading-none drop-shadow">
-                    <span
-                      className="italic font-black text-[44px] sm:text-[54px] tracking-tight text-[oklch(0.92_0.16_85)] drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)]"
+                <div className="absolute inset-0 bg-gradient-to-r from-white/55 via-white/10 to-transparent" />
+                <div className="absolute inset-y-0 left-0 flex flex-col justify-between p-4 max-w-[60%]">
+                  <div>
+                    <p
+                      className="font-serif italic text-[28px] leading-none text-foreground"
                       style={{ fontFamily: "var(--font-display)" }}
                     >
-                      VAMOS
-                    </span>
-                    <span className="ml-2 align-middle text-2xl font-extrabold text-white">
-                      a Alicante
-                    </span>
-                  </h2>
+                      Descubre
+                    </p>
+                    <p
+                      className="font-serif italic text-[44px] leading-none mt-1 text-foreground"
+                      style={{ fontFamily: "var(--font-display)" }}
+                    >
+                      Alicante
+                    </p>
+                    <p className="mt-3 text-[12px] leading-snug text-foreground/80 max-w-[200px]">
+                      Tu guía inteligente para disfrutar la ciudad como un local.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowQrInfo(true)}
+                    aria-label="Beneficios del QR VAMOS"
+                    className="self-start mt-3 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-[13px] font-extrabold text-primary-foreground shadow-soft active:scale-95"
+                  >
+                    <QrCode className="h-4 w-4" />
+                    QR VAMOS
+                  </button>
                 </div>
               </div>
             </div>
@@ -457,8 +513,8 @@ export function ChatScreen() {
           )}
 
           {isWelcome && !activeSubmenu && (
-            <div className="mt-2 rounded-3xl bg-neutral-200 p-2 shadow-soft ring-1 ring-border/60 backdrop-blur sm:p-4">
-              <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-9 sm:gap-3">
+            <div className="mt-2 rounded-3xl bg-white p-4 shadow-soft ring-1 ring-black/5">
+              <div className="grid grid-cols-3 gap-x-2 gap-y-5 sm:grid-cols-5">
                 {[
                   ...SUGGESTIONS.map((s) => {
                     const match = s.label.match(/^(\p{Extended_Pictographic}+)/u);
@@ -490,19 +546,19 @@ export function ChatScreen() {
                   },
                 ].map((t, idx) => {
                   const style = TILE_STYLES[t.label];
+                  const subtitle = TILE_SUBTITLES[t.label];
                   return (
                     <button
                       key={t.key}
                       onClick={t.onClick}
                       aria-label={t.label}
-                      className="group flex flex-col items-center animate-tile-in"
+                      className="group flex flex-col items-center text-center animate-tile-in"
                       style={{ animationDelay: `${(idx % 9) * 60}ms` }}
                     >
                       <div
-                        className="relative grid aspect-square w-full place-items-center rounded-2xl shadow-md ring-1 ring-black/30 transition-all duration-300 ease-out group-hover:-translate-y-1 group-hover:rotate-[-2deg] group-hover:shadow-xl group-hover:ring-2 group-hover:ring-primary/40 group-active:scale-90 overflow-hidden"
+                        className="relative grid h-16 w-16 place-items-center rounded-full transition-transform duration-300 ease-out group-hover:-translate-y-0.5 group-active:scale-90 overflow-hidden"
                         style={{ backgroundColor: style?.bg ?? "oklch(0.95 0.02 80)" }}
                       >
-                        <span className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-black/10" aria-hidden />
                         {style ? (
                           <img
                             src={style.img}
@@ -511,21 +567,20 @@ export function ChatScreen() {
                             loading="lazy"
                             width={1024}
                             height={1024}
-                            className="h-[82%] w-[82%] object-contain transition-transform duration-300 group-hover:scale-110 group-active:scale-95 drop-shadow-md"
+                            className="h-[70%] w-[70%] object-contain transition-transform duration-300 group-hover:scale-110"
                           />
                         ) : (
-                          <span className="text-[38px] transition-transform duration-300 group-hover:scale-125">{t.emoji}</span>
+                          <span className="text-[28px]">{t.emoji}</span>
                         )}
                       </div>
-                      <span
-                        className={`relative z-10 block w-full text-[11px] font-extrabold leading-tight tracking-tight text-foreground text-center sm:text-[13px] transition-colors group-hover:text-primary ${
-                          t.label === "Turismo, playa y aventuras"
-                            ? "-mt-[22px] sm:-mt-[26px]"
-                            : "mt-1.5"
-                        }`}
-                      >
-                        <span className="block w-full">{t.label}</span>
+                      <span className="mt-1.5 block text-[12px] font-extrabold leading-tight tracking-tight text-foreground">
+                        {t.label}
                       </span>
+                      {subtitle && (
+                        <span className="mt-0.5 block text-[10px] leading-tight text-muted-foreground">
+                          {subtitle}
+                        </span>
+                      )}
                     </button>
                   );
                 })}
@@ -634,6 +689,56 @@ export function ChatScreen() {
           }}
         />
       )}
+      {isWelcome && (
+        <nav className="relative flex items-center justify-around border-t border-border/60 bg-white/95 px-2 pt-2 pb-3 backdrop-blur">
+          <button
+            type="button"
+            onClick={() => {
+              setMessages([GREETING]);
+              setActiveSubmenu(null);
+              setError(null);
+              setInput("");
+            }}
+            className="flex flex-col items-center gap-0.5 px-3 py-1 text-primary"
+            aria-label="Inicio"
+          >
+            <Home className="h-5 w-5" />
+            <span className="text-[10px] font-bold">Inicio</span>
+          </button>
+          <Link
+            to="/threads"
+            className="flex flex-col items-center gap-0.5 px-3 py-1 text-muted-foreground active:scale-95"
+            aria-label="Favoritos"
+          >
+            <Heart className="h-5 w-5" />
+            <span className="text-[10px] font-semibold">Favoritos</span>
+          </Link>
+          <button
+            type="button"
+            onClick={() => setShowQrInfo(true)}
+            aria-label="QR VAMOS"
+            className="-mt-7 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-4 ring-white active:scale-95"
+          >
+            <QrCode className="h-6 w-6" />
+          </button>
+          <Link
+            to="/threads"
+            className="flex flex-col items-center gap-0.5 px-3 py-1 text-muted-foreground active:scale-95"
+            aria-label="Guardado"
+          >
+            <Bookmark className="h-5 w-5" />
+            <span className="text-[10px] font-semibold">Guardado</span>
+          </Link>
+          <Link
+            to="/perfil"
+            className="flex flex-col items-center gap-0.5 px-3 py-1 text-muted-foreground active:scale-95"
+            aria-label="Perfil"
+          >
+            <UserIcon className="h-5 w-5" />
+            <span className="text-[10px] font-semibold">Perfil</span>
+          </Link>
+        </nav>
+      )}
       {showQrInfo && <QrVamosInfo onClose={() => setShowQrInfo(false)} />}
     </div>
   );
@@ -725,17 +830,20 @@ function QrVamosInfo({ onClose }: { onClose: () => void }) {
   );
 }
 
-function ProfileButton() {
+function ProfileButton({ large = false }: { large?: boolean }) {
   const { user, isAuthenticated } = useAuth();
   const initial = user?.name?.trim().charAt(0).toUpperCase();
+  const sizeCls = large
+    ? "h-11 w-11 text-base bg-primary text-primary-foreground border-0"
+    : "h-8 w-8 text-xs bg-card text-primary border border-border";
   if (isAuthenticated) {
     return (
       <Link
         to="/perfil"
         aria-label="Mi perfil"
-        className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-border bg-card text-xs font-bold text-primary shadow-sm active:scale-95"
+        className={`flex items-center justify-center overflow-hidden rounded-full font-bold shadow-sm active:scale-95 ${sizeCls}`}
       >
-        {initial || <UserIcon className="h-4 w-4 text-muted-foreground" />}
+        {initial || <UserIcon className={large ? "h-5 w-5" : "h-4 w-4 text-muted-foreground"} />}
       </Link>
     );
   }
@@ -744,9 +852,9 @@ function ProfileButton() {
       to="/login"
       search={{ redirect: "/perfil" }}
       aria-label="Iniciar sesión"
-      className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-border bg-card shadow-sm active:scale-95"
+      className={`flex items-center justify-center overflow-hidden rounded-full shadow-sm active:scale-95 ${sizeCls}`}
     >
-      <UserIcon className="h-4 w-4 text-muted-foreground" />
+      <UserIcon className={large ? "h-5 w-5" : "h-4 w-4 text-muted-foreground"} />
     </Link>
   );
 }
