@@ -1622,7 +1622,7 @@ out center 400;`;
 function AsianTable({ cards }: { cards: PlaceCardData[] }) {
   const [extra, setExtra] = useState<PlaceCardData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [visible, setVisible] = useState(10);
+  
 
   useEffect(() => {
     let cancelled = false;
