@@ -352,7 +352,7 @@ export function ChatScreen() {
             <ProfileButton large />
             <div className="min-w-0">
               <p className="text-[15px] font-extrabold leading-tight text-foreground truncate">
-                ¡Hola{useAuth().user?.name ? `, ${useAuth().user!.name!.split(" ")[0]}` : ""}!
+                ¡Hola{firstName ? `, ${firstName}` : ""}!
               </p>
               <p className="text-[12px] leading-tight text-muted-foreground truncate">
                 ¿Qué vas a descubrir hoy?
