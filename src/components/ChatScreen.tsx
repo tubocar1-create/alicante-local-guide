@@ -403,9 +403,6 @@ export function ChatScreen() {
                       a Alicante
                     </span>
                   </h2>
-                  <p className="mt-2 text-sm opacity-95 drop-shadow">
-                    Soy tu amigo local. Cuéntame qué te apetece hoy y te llevo a los rincones que adoramos los de aquí.
-                  </p>
                 </div>
               </div>
             </div>
