@@ -2301,6 +2301,7 @@ function DrinksTable({ cards }: { cards: PlaceCardData[] }) {
       c,
       d: c.lat && c.lon ? distKm(ALC_CENTER, { lat: c.lat, lon: c.lon }) : Number.POSITIVE_INFINITY,
     }))
+    .filter((r) => r.d <= 10)
     .sort((a, b) => a.d - b.d);
 
   if (!open) {
