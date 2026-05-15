@@ -214,6 +214,13 @@ function RestaurantDashboard() {
                 </span>
                 <span className="text-[10px] font-medium opacity-80">Te emitimos una invitación</span>
               </button>
+              <button
+                type="button"
+                onClick={() => setBookingOpen(true)}
+                className="flex-1 rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-2.5 text-center text-sm font-semibold text-emerald-200 hover:bg-emerald-500/20"
+              >
+                Reservar
+              </button>
               {place.lat != null && place.lng != null && (
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${place.lat},${place.lng}`}
