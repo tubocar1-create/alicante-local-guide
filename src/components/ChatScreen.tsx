@@ -912,7 +912,7 @@ function Bubble({ role, content }: { role: "user" | "assistant"; content: string
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
         className={[
-          "max-w-[85%] rounded-3xl px-4 py-2.5 text-[15px] leading-relaxed shadow-soft",
+          "max-w-[96%] rounded-3xl px-4 py-2.5 text-[15px] leading-relaxed shadow-soft",
           isUser
             ? "rounded-br-md bg-bubble-user text-bubble-user-foreground whitespace-pre-wrap"
             : "rounded-bl-md bg-bubble-friend text-bubble-friend-foreground",
@@ -1279,7 +1279,7 @@ function BusStopCard({ data }: { data: BusStopCardData }) {
             <span className="text-muted-foreground/60">·</span>
             <span className="text-muted-foreground">#{data.stopCode}</span>
           </div>
-          <h3 className="mt-0.5 truncate text-xl font-extrabold leading-tight text-foreground">
+          <h3 className="mt-0.5 text-lg font-extrabold leading-tight text-foreground break-words">
             {data.stopName}
           </h3>
           {data.lineName && (
@@ -1368,33 +1368,38 @@ function BigLiveEta({ line, stop }: { line: string; stop: string }) {
         Tiempo real · en directo
       </div>
 
-      <div className="relative mt-3 flex items-end justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-            Hora estimada
-          </div>
-          <div className={`mt-1 flex items-baseline font-black leading-none tabular-nums ${isImminent ? "text-primary" : "text-foreground"}`}>
-            <span className="text-6xl sm:text-7xl">{hh}</span>
-            <span className="text-5xl sm:text-6xl opacity-70">:</span>
-            <span className="text-6xl sm:text-7xl">{mm}</span>
-          </div>
+      {/* Hora estimada — bloque grande centrado */}
+      <div className="relative mt-3 text-center">
+        <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          Hora estimada de llegada
         </div>
-        <div className="shrink-0 text-right">
-          <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+        <div className={`mt-1 flex items-baseline justify-center font-black leading-none tabular-nums ${isImminent ? "text-primary" : "text-foreground"}`}>
+          <span className="text-6xl sm:text-7xl">{hh}</span>
+          <span className="text-5xl sm:text-6xl opacity-70">:</span>
+          <span className="text-6xl sm:text-7xl">{mm}</span>
+        </div>
+      </div>
+
+      {/* Faltan — pill debajo, ocupa todo el ancho */}
+      <div className="relative mt-4 flex items-center justify-center">
+        <div
+          className={`inline-flex items-baseline gap-2 rounded-2xl px-5 py-2.5 ${
+            isImminent ? "bg-primary text-primary-foreground" : "bg-background/80 text-foreground border border-border"
+          }`}
+        >
+          <span className="text-[11px] font-bold uppercase tracking-widest opacity-80">
             Faltan
-          </div>
-          <div className={`mt-1 leading-none ${isImminent ? "text-primary" : "text-foreground"}`}>
-            {liveMin == null ? (
-              <span className="text-2xl font-bold">--</span>
-            ) : liveMin <= 0 ? (
-              <span className="text-3xl font-black uppercase tracking-tight">¡Ya!</span>
-            ) : (
-              <>
-                <span className="text-5xl font-black tabular-nums">{liveMin}</span>
-                <span className="ml-1 text-base font-bold uppercase text-muted-foreground">min</span>
-              </>
-            )}
-          </div>
+          </span>
+          {liveMin == null ? (
+            <span className="text-2xl font-bold">—</span>
+          ) : liveMin <= 0 ? (
+            <span className="text-2xl font-black uppercase tracking-tight">¡Llegando!</span>
+          ) : (
+            <>
+              <span className="text-3xl font-black tabular-nums">{liveMin}</span>
+              <span className="text-sm font-bold uppercase opacity-80">min</span>
+            </>
+          )}
         </div>
       </div>
 
