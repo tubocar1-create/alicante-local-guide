@@ -90,14 +90,12 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return stopsWithDistance.slice(0, 30);
-    return stopsWithDistance
-      .filter(
-        (s) =>
-          s.code.includes(q) ||
-          (s.name ?? "").toLowerCase().includes(q),
-      )
-      .slice(0, 30);
+    if (!q) return stopsWithDistance;
+    return stopsWithDistance.filter(
+      (s) =>
+        s.code.includes(q) ||
+        (s.name ?? "").toLowerCase().includes(q),
+    );
   }, [stopsWithDistance, search]);
 
   const nearest = stopsWithDistance.find((s) => s.distM != null) ?? null;
@@ -259,7 +257,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
                 className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground"
               />
             </div>
-            <div className="max-h-56 space-y-1 overflow-y-auto pr-1">
+            <div className="max-h-[60vh] space-y-1 overflow-y-auto overscroll-contain pr-1">
               {filtered.map((s) => (
                 <button
                   key={s.code}
