@@ -437,27 +437,23 @@ export function ChatScreen() {
                   width={1536}
                   height={1024}
                   className="absolute inset-0 h-full w-full object-cover"
-                  style={{ filter: "brightness(1.05) saturate(1.15) contrast(1.08) hue-rotate(-12deg) sepia(0.12)" }}
+                  style={{
+                    filter: "brightness(1.05) saturate(1.2) contrast(1.08) hue-rotate(-12deg) sepia(0.14)",
+                    transform: "scaleX(-1)",
+                  }}
                 />
+                {/* Atardecer: luz cálida entrando desde la derecha hacia la izquierda */}
+                <div className="absolute inset-0 bg-[linear-gradient(270deg,oklch(0.85_0.18_55_/_0.55),transparent_55%)]" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
-                <button
-                  type="button"
-                  onClick={() => setShowQrInfo(true)}
-                  aria-label="Beneficios del QR VAMOS"
-                  className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[12px] font-extrabold text-primary-foreground shadow-soft ring-2 ring-white/70 backdrop-blur active:scale-95"
-                >
-                  <QrCode className="h-3.5 w-3.5" />
-                  QR VAMOS
-                </button>
-                <div className="absolute inset-x-0 bottom-0 p-3 text-white">
+                <div className="absolute left-3 top-3 text-white">
                   <h2 className="leading-none drop-shadow">
                     <span
-                      className="italic font-black text-[40px] sm:text-[50px] tracking-tight text-[oklch(0.92_0.16_85)] drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)]"
+                      className="italic font-black text-[34px] sm:text-[44px] tracking-tight text-[oklch(0.92_0.16_85)] drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)]"
                       style={{ fontFamily: "var(--font-display)" }}
                     >
                       VAMOS
                     </span>
-                    <span className="ml-2 align-middle text-xl font-extrabold text-white">
+                    <span className="ml-2 align-middle text-lg font-extrabold text-white">
                       a Alicante
                     </span>
                   </h2>
