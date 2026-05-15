@@ -620,9 +620,23 @@ export function ChatScreen() {
                         send(opt.prompt, { mode: null });
                       }
                     }}
-                    className="w-full rounded-xl border border-border bg-background/80 px-4 py-3 text-left text-sm shadow-sm transition hover:bg-accent/40"
+                    className="flex w-full items-center gap-2 rounded-lg border border-border bg-background/80 px-3 py-2 text-left text-[13px] shadow-sm transition hover:bg-accent/40"
                   >
-                    {opt.label}
+                    {(() => {
+                      const m = opt.label.match(/^(\p{Extended_Pictographic}(?:\u200d\p{Extended_Pictographic})*\uFE0F?)\s*(.*)$/u);
+                      const icon = m?.[1];
+                      const text = m?.[2] ?? opt.label;
+                      return (
+                        <>
+                          {icon && (
+                            <span className="text-base leading-none" aria-hidden>
+                              {icon}
+                            </span>
+                          )}
+                          <span className="flex-1 truncate">{text}</span>
+                        </>
+                      );
+                    })()}
                   </button>
                 ))}
               </div>
