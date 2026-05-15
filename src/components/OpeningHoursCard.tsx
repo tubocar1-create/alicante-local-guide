@@ -57,7 +57,7 @@ function parseLines(text: string): { day: string; hours: string; idx: number }[]
       continue;
     }
 
-    const last = lines.at(-1);
+    const last = lines[lines.length - 1];
     if (last) last.hours = `${last.hours} · ${segment.replace(/\s+/g, " ").trim()}`;
   }
 
