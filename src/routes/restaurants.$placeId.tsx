@@ -134,7 +134,7 @@ function RestaurantDashboard() {
 
               {place.rating != null && (
                 <a
-                  href={`https://www.google.com/maps/place/?q=place_id:${place.google_place_id}`}
+                  href={`https://search.google.com/local/reviews?placeid=${place.google_place_id}`}
                   target="_blank"
                   rel="noreferrer"
                   className="mt-3 flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 hover:bg-white/[0.08]"
