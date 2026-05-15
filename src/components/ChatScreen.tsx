@@ -2836,7 +2836,7 @@ function ItalianTable({ cards }: { cards: PlaceCardData[] }) {
   return <CategoryTable cards={cards} category="italian" fetcher={fetcher} />;
 }
 
-
+function AssistantContent({ content, userPrompt = "" }: { content: string; userPrompt?: string }) {
 
   const match = content.match(PLACE_RE);
   const placeName = match?.[1]?.trim();
