@@ -520,7 +520,7 @@ function buildFoodRecommendationsResponse(
     .filter((place) => matchesFoodPreference(place, latestUserText));
   const shuffledCandidates = shuffle(candidates);
   const isFirstAsk = !alreadyMentioned.has(normalized(TUMBARANCHO.name));
-  const limit = Math.max(maxOptions, 8);
+  const limit = isFirstAsk ? 4 : 1;
   const selected = isFirstAsk
     ? [TUMBARANCHO, ...shuffledCandidates.slice(0, limit - 1)]
     : shuffledCandidates.slice(0, limit);
