@@ -1,6 +1,29 @@
-import { useMemo, useState } from "react";
-import { ChevronDown, Clock } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { getOpeningStatus } from "@/lib/opening-hours";
+
+function formatMadridTime(date: Date) {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Madrid",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const h = parts.find((p) => p.type === "hour")?.value ?? "00";
+  const m = parts.find((p) => p.type === "minute")?.value ?? "00";
+  return { h, m };
+}
+
+function useLiveMadridTime() {
+  const [now, setNow] = useState(() => formatMadridTime(new Date()));
+  useEffect(() => {
+    const tick = () => setNow(formatMadridTime(new Date()));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+  return now;
+}
 
 type Props = {
   openingHoursText?: string | null;
@@ -51,6 +74,7 @@ export default function OpeningHoursCard({
   rawOpeningHours,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
+  const { h: liveH, m: liveM } = useLiveMadridTime();
 
   const status = useMemo(
     () => getOpeningStatus(rawOpeningHours ?? undefined),
@@ -138,9 +162,17 @@ export default function OpeningHoursCard({
         disabled={lines.length === 0}
         className="relative flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors hover:bg-white/[0.015] disabled:cursor-default"
       >
-        {/* Clock icon */}
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/[0.06] bg-white/[0.02]">
-          <Clock className="h-4 w-4 text-slate-300" strokeWidth={1.5} />
+        {/* Live Madrid time */}
+        <div
+          className={`flex h-11 w-14 shrink-0 flex-col items-center justify-center rounded-xl border bg-white/[0.02] font-mono tabular-nums leading-none transition-colors ${
+            isOpen === true
+              ? "border-emerald-400/20 text-emerald-200 shadow-[inset_0_0_18px_rgba(16,185,129,0.12)]"
+              : "border-white/[0.06] text-slate-300"
+          }`}
+          aria-label={`Hora actual en Madrid ${liveH}:${liveM}`}
+        >
+          <span className="text-[15px] font-semibold tracking-tight">{liveH}</span>
+          <span className="mt-0.5 text-[10px] text-slate-400">{liveM}</span>
         </div>
 
         {/* Texts */}
