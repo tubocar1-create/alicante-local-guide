@@ -23,6 +23,7 @@ export type CachedPlace = {
   website: string | null;
   category: string;
   fetched_at: string;
+  raw?: unknown;
 };
 
 const ALC_CENTER = { lat: 38.3452, lng: -0.481 };
