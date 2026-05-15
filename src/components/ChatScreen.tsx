@@ -422,7 +422,16 @@ export function ChatScreen() {
       {/* Messages */}
       <div ref={scrollRef} className={["relative flex-1 px-4 pt-3 pb-5", isWelcome ? "overflow-hidden" : "overflow-y-auto"].join(" ")}>
         <div className="mx-auto flex max-w-2xl flex-col gap-3">
-          {/* Welcome hero removed by request */}
+          {isWelcome && (
+            <div className="mx-auto mb-1 w-full max-w-[180px] overflow-hidden rounded-xl">
+              <img
+                src={vamosLogoImg}
+                alt="Vamos Alicante"
+                className="h-auto w-full object-contain rounded-xl"
+                loading="eager"
+              />
+            </div>
+          )}
 
           {/* (Tiles render below as Glovo-style row, replacing old chip suggestions) */}
 
@@ -514,16 +523,6 @@ export function ChatScreen() {
                         { mode: null },
                       ),
                   },
-                  {
-                    key: "eventos",
-                    emoji: "🎫",
-                    label: "Eventos",
-                    onClick: () =>
-                      send(
-                        "¿Qué eventos, conciertos, ferias o agenda cultural hay hoy y los próximos días en Alicante?",
-                        { mode: null },
-                      ),
-                  },
                 ].map((t, idx) => {
                   const subtitle = TILE_SUBTITLES[t.label];
                   const Icon = TILE_ICONS[t.label];
@@ -536,7 +535,6 @@ export function ChatScreen() {
                     "Transporte público":  { bg: "oklch(0.93 0.07 190)", fg: "oklch(0.50 0.14 210)" },
                     "Mapa":                { bg: "oklch(0.93 0.07 160)", fg: "oklch(0.48 0.14 165)" },
                     "Servicios sanitarios":{ bg: "oklch(0.94 0.06 25)",  fg: "oklch(0.55 0.18 25)" },
-                    "Eventos":             { bg: "oklch(0.93 0.07 310)", fg: "oklch(0.50 0.18 315)" },
                   };
                   const pastel = PASTEL[t.label] ?? { bg: "oklch(0.95 0.02 80)", fg: "oklch(0.40 0.05 80)" };
                   const displayLabel =
