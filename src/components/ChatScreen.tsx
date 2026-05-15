@@ -516,6 +516,16 @@ export function ChatScreen() {
                         { mode: null },
                       ),
                   },
+                  {
+                    key: "eventos",
+                    emoji: "🎫",
+                    label: "Eventos",
+                    onClick: () =>
+                      send(
+                        "¿Qué eventos, conciertos, ferias o agenda cultural hay hoy y los próximos días en Alicante?",
+                        { mode: null },
+                      ),
+                  },
                 ].map((t, idx) => {
                   const subtitle = TILE_SUBTITLES[t.label];
                   const Icon = TILE_ICONS[t.label];
