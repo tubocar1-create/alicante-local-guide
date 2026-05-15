@@ -1279,7 +1279,7 @@ function BusStopCard({ data }: { data: BusStopCardData }) {
             <span className="text-muted-foreground/60">·</span>
             <span className="text-muted-foreground">#{data.stopCode}</span>
           </div>
-          <h3 className="mt-0.5 truncate text-xl font-extrabold leading-tight text-foreground">
+          <h3 className="mt-0.5 text-lg font-extrabold leading-tight text-foreground break-words">
             {data.stopName}
           </h3>
           {data.lineName && (
