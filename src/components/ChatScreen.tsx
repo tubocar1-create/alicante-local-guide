@@ -950,6 +950,7 @@ type PlaceCardData = {
   cuisine?: string | null;
   address?: string | null;
   closesAt?: string;
+  openingHours?: string | null;
   lat?: number;
   lon?: number;
   vibe?: string;
