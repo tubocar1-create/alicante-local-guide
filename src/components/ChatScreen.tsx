@@ -187,7 +187,8 @@ export function ChatScreen() {
   usePoints();
   const { user: authUser } = useAuth();
   const firstName = authUser?.name?.trim().split(" ")[0];
-  const [messages, setMessages] = useState<Msg[]>(() => readInitialMessages());
+  const [messages, setMessages] = useState<Msg[]>([GREETING]);
+  const restoredReturnRef = useRef(false);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -204,6 +205,13 @@ export function ChatScreen() {
   const [showFlightPicker, setShowFlightPicker] = useState(false);
 
   useEffect(() => {
+    const restored = readInitialMessages();
+    restoredReturnRef.current = true;
+    if (restored.length > 1) setMessages(restored);
+  }, []);
+
+  useEffect(() => {
+    if (!restoredReturnRef.current) return;
     if (typeof window === "undefined") return;
     if (messages.length <= 1) {
       window.sessionStorage.removeItem(CHAT_STATE_KEY);
