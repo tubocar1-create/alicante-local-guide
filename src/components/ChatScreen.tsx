@@ -1597,7 +1597,7 @@ function BusOptionCard({ data }: { data: BusOptionData }) {
 
 const ALC_CENTER = { lat: 38.3452, lon: -0.481 };
 const ASIAN_RE = /asian|japanese|sushi|ramen|chinese|china|thai|tailand|vietnam|korean|coreano|wok|noodle|asiat|japon/i;
-const DRINKS_RE = /\b(tomar algo|copa|copas|coctel|cóctel|cocktail|cerveza|cervezas|cerveceria|cervecería|vinoteca|wine bar|pub|pubs|discoteca|brewery|rooftop|gin tonic|vermut|terraceo|bar de copas)\b/i;
+const DRINKS_RE = /\b(tomar algo|copa|copas|coctel|cóctel|cocktail|cerveza|cervezas|cerveceria|cervecería|vinoteca|wine bar|pub|pubs|discoteca|discotecas|night ?club|nightclub|club nocturno|sala de fiestas|karaoke|karaokes|brewery|rooftop|gin tonic|vermut|terraceo|bar de copas)\b/i;
 
 function isAsianCard(c: PlaceCardData): boolean {
   const hay = `${c.cuisine ?? ""} ${c.name ?? ""} ${c.vibe ?? ""}`;

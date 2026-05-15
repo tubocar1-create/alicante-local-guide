@@ -41,6 +41,7 @@ const DRINKS_QUERIES = [
   "bar",
   "cocktail bar",
   "pub",
+  "irish pub",
   "wine bar",
   "vinoteca",
   "cervecería",
@@ -48,6 +49,12 @@ const DRINKS_QUERIES = [
   "rooftop bar",
   "gin tonic bar",
   "discoteca",
+  "night club",
+  "nightclub",
+  "club nocturno",
+  "sala de fiestas",
+  "karaoke bar",
+  "karaoke",
 ];
 const STALE_MS = 24 * 60 * 60 * 1000; // 24h
 
