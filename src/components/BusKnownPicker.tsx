@@ -29,6 +29,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
   const [line, setLine] = useState<{ code: string; name: string; color: string | null } | null>(null);
   const [direction, setDirection] = useState<1 | 2 | null>(null);
   const [search, setSearch] = useState("");
+  const isStopStep = step === "stop";
 
   const directions = useMemo(() => {
     if (!data || !line) return [] as { dir: 1 | 2; origin: string; headsign: string; count: number }[];
@@ -101,8 +102,15 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
   const nearest = stopsWithDistance.find((s) => s.distM != null) ?? null;
 
   return (
-    <div className="mt-2 rounded-2xl border border-border bg-card/95 p-2.5 shadow-soft backdrop-blur">
-      <div className="mb-3 flex items-center justify-between">
+    <div
+      className={[
+        "rounded-2xl border border-border bg-card/95 p-2.5 shadow-soft backdrop-blur",
+        isStopStep
+          ? "fixed bottom-[5.75rem] left-1/2 top-[4.75rem] z-50 flex w-[calc(100vw-1.5rem)] max-w-2xl -translate-x-1/2 flex-col"
+          : "mt-2",
+      ].join(" ")}
+    >
+      <div className="mb-3 flex shrink-0 items-center justify-between">
         <div className="flex items-center gap-2">
           {step !== "ask" && (
             <button
@@ -212,7 +220,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
       )}
 
       {step === "stop" && line && direction && (
-        <div className="space-y-3">
+        <div className="flex min-h-0 flex-1 flex-col space-y-3">
           <button
             disabled={!nearest}
             onClick={() => {
@@ -247,7 +255,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
             )}
           </button>
 
-          <div>
+          <div className="flex min-h-0 flex-1 flex-col">
             <div className="mb-1.5 flex items-center gap-1.5 rounded-full border border-border bg-background/80 px-2.5 py-1">
               <Search className="h-3 w-3 text-muted-foreground" />
               <input
@@ -257,7 +265,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
                 className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground"
               />
             </div>
-            <div className="max-h-[60vh] space-y-1 overflow-y-auto overscroll-contain pr-1">
+            <div className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain pr-1">
               {filtered.map((s) => (
                 <button
                   key={s.code}
