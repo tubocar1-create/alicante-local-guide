@@ -206,13 +206,16 @@ function RestaurantDashboard() {
 
             {/* Acciones */}
             <section className="flex flex-wrap gap-2 pt-2">
-              <button
-                onClick={() => setBookingOpen(true)}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-400 to-cyan-400 px-4 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-500/20 hover:from-emerald-300 hover:to-cyan-300"
+              <Link
+                to="/business/qr"
+                className="flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl bg-gradient-to-r from-emerald-400 to-cyan-400 px-4 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-500/20 hover:from-emerald-300 hover:to-cyan-300"
               >
-                <CalendarCheck className="h-4 w-4" />
-                ¡VAMOS a reservar!
-              </button>
+                <span className="flex items-center gap-2">
+                  <CalendarCheck className="h-4 w-4" />
+                  ¡VAMOS!
+                </span>
+                <span className="text-[10px] font-medium opacity-80">Te emitimos una invitación</span>
+              </Link>
               {place.lat != null && place.lng != null && (
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${place.lat},${place.lng}`}
