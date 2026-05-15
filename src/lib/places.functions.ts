@@ -172,8 +172,33 @@ export const getPlacePhotos = createServerFn({ method: "GET" })
       .select("raw")
       .eq("google_place_id", data.placeId)
       .maybeSingle();
-    const photos = ((row?.raw as { photos?: Array<{ name: string }> } | null)?.photos ?? []).slice(0, data.max);
-    const urls = await Promise.all(photos.map((p) => resolvePhotoUri(p.name, apiKey)));
+    let photos = ((row?.raw as { photos?: Array<{ name: string }> } | null)?.photos ?? []);
+
+    // Backfill: if no photos cached, fetch Place Details once and persist
+    if (photos.length === 0) {
+      try {
+        const res = await fetch(`https://places.googleapis.com/v1/places/${data.placeId}?languageCode=es`, {
+          headers: { "X-Goog-Api-Key": apiKey, "X-Goog-FieldMask": "photos" },
+        });
+        if (res.ok) {
+          const j = (await res.json()) as { photos?: Array<{ name: string }> };
+          photos = j.photos ?? [];
+          if (photos.length) {
+            const newRaw = { ...(row?.raw as object ?? {}), photos };
+            await supabaseAdmin
+              .from("places_cache")
+              .update({ raw: newRaw as never })
+              .eq("google_place_id", data.placeId);
+          }
+        }
+      } catch (e) {
+        console.error("place details photos fetch failed", e);
+      }
+    }
+
+    const urls = await Promise.all(
+      photos.slice(0, data.max).map((p) => resolvePhotoUri(p.name, apiKey)),
+    );
     return { photos: urls.filter((u): u is string => !!u) };
   });
 
