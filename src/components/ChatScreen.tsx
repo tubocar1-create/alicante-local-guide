@@ -375,13 +375,7 @@ export function ChatScreen() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <div className="flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 ring-1 ring-border/60">
-              <Sun className="h-4 w-4 text-[oklch(0.78_0.16_70)]" />
-              <div className="leading-tight">
-                <p className="text-[12px] font-bold text-foreground">20°</p>
-                <p className="text-[9px] -mt-0.5 text-muted-foreground">Soleado</p>
-              </div>
-            </div>
+            <WeatherChip />
             <Link
               to="/threads"
               aria-label="Mis reservas"
