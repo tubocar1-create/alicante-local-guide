@@ -473,9 +473,10 @@ function DestinationDashboard() {
         {/* 3. Vuelos disponibles */}
         <Card index={3} title="Vuelos disponibles" subtitle="Ordenados por fecha y hora">
           <div className="overflow-hidden rounded-xl border border-slate-800">
-            <div className="grid grid-cols-[auto_auto_auto_auto_auto_auto] gap-x-2 border-b border-slate-800 bg-slate-950/60 px-2 py-1.5 text-[9px] uppercase tracking-wider text-slate-500">
+            <div className="grid grid-cols-[auto_auto_auto_auto_auto_auto_auto] gap-x-2 border-b border-slate-800 bg-slate-950/60 px-2 py-1.5 text-[9px] uppercase tracking-wider text-slate-500">
               <span>Fecha</span>
               <span>Aerolínea</span>
+              <span>Vuelo</span>
               <span>Ruta</span>
               <span>Salida</span>
               <span>Llegada</span>
