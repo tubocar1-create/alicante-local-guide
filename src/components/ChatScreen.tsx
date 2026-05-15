@@ -17,6 +17,7 @@ import { FlightPicker } from "@/components/FlightPicker";
 import { useAuth } from "@/hooks/useAuth";
 import { findPlaceOverride } from "@/data/places";
 import heroImg from "@/assets/alicante-hero.jpg";
+import skylineImg from "@/assets/alicante-skyline.png";
 import vamosLogoImg from "@/assets/logo_vamos_d.png";
 import tileComer from "@/assets/tile_comer.png";
 import tileDormir from "@/assets/tile_dormir.png";
