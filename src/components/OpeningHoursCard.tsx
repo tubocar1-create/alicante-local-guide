@@ -68,7 +68,34 @@ export default function OpeningHoursCard({
   const isOpen =
     status.status === "open" ? true : status.status === "closed" ? false : openNow ?? null;
 
-  const closesAt = status.status === "open" ? status.closesAt : null;
+  // Derive "closes at" from today's hours when status parser doesn't know
+  const closesAt = useMemo(() => {
+    if (status.status === "open") return status.closesAt;
+    if (isOpen !== true) return null;
+    const todayHours = lines[today]?.hours;
+    if (!todayHours) return null;
+    const nowDate = new Date();
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/Madrid",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(nowDate);
+    const h = Number(parts.find((p) => p.type === "hour")?.value ?? "0");
+    const m = Number(parts.find((p) => p.type === "minute")?.value ?? "0");
+    const nowMin = h * 60 + m;
+    const ranges = [...todayHours.matchAll(/(\d{1,2}):(\d{2})\s*[–-]\s*(\d{1,2}):(\d{2})/g)];
+    for (const r of ranges) {
+      const start = Number(r[1]) * 60 + Number(r[2]);
+      let end = Number(r[3]) * 60 + Number(r[4]);
+      if (end <= start) end += 1440;
+      if (nowMin >= start && nowMin < end) {
+        const safe = end % 1440;
+        return `${String(Math.floor(safe / 60)).padStart(2, "0")}:${String(safe % 60).padStart(2, "0")}`;
+      }
+    }
+    return null;
+  }, [status, isOpen, lines, today]);
 
   const stateLabel =
     isOpen === true ? "Abierto ahora" : isOpen === false ? "Cerrado" : "Horario no confirmado";
