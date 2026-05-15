@@ -16,6 +16,9 @@ const WEEKDAY_TO_DAY: Record<string, DayKey> = {
   sun: "Su",
 };
 
+const SPANISH_OPENING_DAY_RE =
+  /\b(?:lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s*:/i;
+
 function madridNow(date = new Date()) {
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Europe/Madrid",
@@ -78,6 +81,7 @@ function parseRanges(rule: string) {
 export function getOpeningStatus(raw?: string, date = new Date()): OpeningStatus {
   if (!raw?.trim()) return { status: "unknown" };
   const clean = raw.replace(/"[^"]*"/g, "").trim();
+  if (SPANISH_OPENING_DAY_RE.test(clean)) return { status: "unknown", raw };
   if (/24\s*\/\s*7/.test(clean)) {
     return { status: "open", raw, closesAt: "24:00", closesInMinutes: 24 * 60 };
   }
@@ -228,6 +232,7 @@ export function resolveOpeningStatus(
   raw?: string | null,
   date = new Date(),
 ): OpeningStatus {
+  if (raw && SPANISH_OPENING_DAY_RE.test(raw)) return getOpeningStatusFromSpanishText(raw, date);
   const osm = getOpeningStatus(raw ?? undefined, date);
   if (osm.status !== "unknown") return osm;
   return getOpeningStatusFromSpanishText(raw, date);
