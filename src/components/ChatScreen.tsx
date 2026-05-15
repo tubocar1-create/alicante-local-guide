@@ -1568,8 +1568,78 @@ function asianEmoji(c: PlaceCardData): string {
   return "🥡";
 }
 
+async function fetchAlicanteAsian(): Promise<PlaceCardData[]> {
+  const radius = 6000; // ~6km around Puerta del Mar
+  const cuisines = "asian|japanese|sushi|ramen|chinese|thai|vietnamese|korean|noodle|wok|izakaya";
+  const q = `[out:json][timeout:25];
+(
+  nwr["amenity"~"^(restaurant|fast_food)$"]["cuisine"~"${cuisines}",i](around:${radius},${ALC_CENTER.lat},${ALC_CENTER.lon});
+);
+out center 400;`;
+  const endpoints = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+  ];
+  for (const url of endpoints) {
+    try {
+      const r = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "data=" + encodeURIComponent(q),
+      });
+      if (!r.ok) continue;
+      const json = (await r.json()) as { elements: Array<{ lat?: number; lon?: number; center?: { lat: number; lon: number }; tags?: Record<string, string> }> };
+      const seen = new Set<string>();
+      const out: PlaceCardData[] = [];
+      for (const el of json.elements) {
+        const t = el.tags ?? {};
+        const name = t.name || t["name:es"] || t["name:en"];
+        if (!name) continue;
+        const lat = el.lat ?? el.center?.lat;
+        const lon = el.lon ?? el.center?.lon;
+        if (lat == null || lon == null) continue;
+        const k = `${name.toLowerCase()}|${lat.toFixed(4)}|${lon.toFixed(4)}`;
+        if (seen.has(k)) continue;
+        seen.add(k);
+        const addr = [t["addr:street"], t["addr:housenumber"]].filter(Boolean).join(" ");
+        out.push({
+          name,
+          cuisine: t.cuisine ?? null,
+          address: addr || null,
+          lat,
+          lon,
+          priceLevel: null,
+        });
+      }
+      return out;
+    } catch {
+      // try next endpoint
+    }
+  }
+  return [];
+}
+
 function AsianTable({ cards }: { cards: PlaceCardData[] }) {
-  const ranked = [...cards]
+  const [extra, setExtra] = useState<PlaceCardData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchAlicanteAsian()
+      .then((r) => { if (!cancelled) setExtra(r); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  // Merge: chat-provided cards (with hours/price) take priority over OSM duplicates.
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  const byKey = new Map<string, PlaceCardData>();
+  for (const c of cards) byKey.set(norm(c.name), c);
+  for (const c of extra) {
+    const k = norm(c.name);
+    if (!byKey.has(k)) byKey.set(k, c);
+  }
+  const ranked = Array.from(byKey.values())
     .map((c) => ({
       c,
       d: c.lat && c.lon ? distKm(ALC_CENTER, { lat: c.lat, lon: c.lon }) : Number.POSITIVE_INFINITY,
@@ -1583,15 +1653,15 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
           Dashboard gastro
         </div>
         <h3 className="mt-1 font-display text-[20px] font-semibold leading-tight text-white">
-          Asiático <span className="text-cyan-300">cerca del centro</span>
+          Asiático <span className="text-cyan-300">en Alicante</span>
         </h3>
         <p className="mt-1 text-[11px] text-slate-400">
-          {ranked.length} restaurantes · ordenados por cercanía a Puerta del Mar
+          {loading ? "Cargando…" : `${ranked.length} restaurantes`} · ordenados por cercanía a Puerta del Mar
         </p>
       </div>
-      <ol className="divide-y divide-[#162038]">
+      <ol className="max-h-[70vh] overflow-y-auto divide-y divide-[#162038]">
         {ranked.map(({ c, d }, i) => {
-          const open = Boolean(c.closesAt);
+          const hasHours = Boolean(c.closesAt);
           const price = priceLabel(c.priceLevel);
           const km = Number.isFinite(d) ? d.toFixed(1) : "—";
           const mapsHref = c.lat && c.lon
@@ -1619,13 +1689,15 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
                     )}
                   </div>
                   <div className="mt-0.5 flex items-center gap-2 text-[11px] text-slate-400">
-                    {open ? (
-                      <span className="text-emerald-400">● Abierto</span>
+                    {hasHours ? (
+                      <>
+                        <span className="text-emerald-400">● Abierto</span>
+                        <span className="text-slate-500">· cierra {c.closesAt}</span>
+                      </>
                     ) : (
-                      <span className="text-rose-400">● Cerrado</span>
+                      <span className="text-slate-500">Horario no confirmado</span>
                     )}
-                    {c.closesAt && <span className="text-slate-500">· cierra {c.closesAt}</span>}
-                    <span className="text-slate-500">· {price.sym} {price.avg}</span>
+                    {c.priceLevel && <span className="text-slate-500">· {price.sym}</span>}
                   </div>
                 </div>
                 <div className="shrink-0 text-right tabular-nums">
