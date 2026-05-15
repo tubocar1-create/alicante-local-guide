@@ -425,7 +425,7 @@ export function ChatScreen() {
       {isWelcome && <AdBanner />}
 
       {/* Messages */}
-      <div ref={scrollRef} className="relative flex-1 overflow-y-auto px-4 pt-3 pb-5">
+      <div ref={scrollRef} className={["relative flex-1 px-4 pt-3 pb-5", isWelcome ? "overflow-hidden" : "overflow-y-auto"].join(" ")}>
         <div className="mx-auto flex max-w-2xl flex-col gap-3">
           {/* Welcome hero — shows on first open, fades when chat starts */}
           {isWelcome && (
