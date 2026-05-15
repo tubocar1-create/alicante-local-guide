@@ -107,13 +107,19 @@ function RestaurantDashboard() {
               </div>
 
               {place.rating != null && (
-                <div className="mt-3 flex items-center gap-1.5 text-sm">
+                <a
+                  href={`https://search.google.com/local/reviews?placeid=${place.google_place_id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-white/5 px-2 py-1 text-sm hover:bg-white/10"
+                >
                   <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                   <span className="font-semibold">{place.rating.toFixed(1)}</span>
                   {place.user_rating_count != null && (
                     <span className="text-slate-400">({place.user_rating_count} reseñas)</span>
                   )}
-                </div>
+                  <MessageSquare className="ml-1 h-3.5 w-3.5 text-slate-400" />
+                </a>
               )}
             </section>
 
