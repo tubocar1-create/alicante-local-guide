@@ -2319,7 +2319,7 @@ function DrinksTable({ cards }: { cards: PlaceCardData[] }) {
 }
 
 
-function AssistantContent({ content }: { content: string }) {
+function AssistantContent({ content, userPrompt = "" }: { content: string; userPrompt?: string }) {
   const match = content.match(PLACE_RE);
   const placeName = match?.[1]?.trim();
   const cleaned = content.replace(/\n?\[\[place:[^\]]+\]\]\n?/i, "").trim();
