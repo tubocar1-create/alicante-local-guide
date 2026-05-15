@@ -17,6 +17,7 @@ import { FlightPicker } from "@/components/FlightPicker";
 import { useAuth } from "@/hooks/useAuth";
 import { findPlaceOverride } from "@/data/places";
 import heroImg from "@/assets/alicante-hero.jpg";
+import skylineImg from "@/assets/alicante-skyline.png";
 import vamosLogoImg from "@/assets/logo_vamos_d.png";
 import tileComer from "@/assets/tile_comer.png";
 import tileDormir from "@/assets/tile_dormir.png";
@@ -418,11 +419,6 @@ export function ChatScreen() {
         </header>
       )}
 
-      {isWelcome && (
-        <div className="px-4">
-          <PointsHud compact />
-        </div>
-      )}
 
       {isWelcome && <AdBanner />}
 
@@ -432,7 +428,7 @@ export function ChatScreen() {
           {/* Welcome hero — shows on first open, fades when chat starts */}
           {isWelcome && (
             <div className="mb-2 overflow-hidden rounded-3xl shadow-soft ring-1 ring-black/5">
-              <div className="relative aspect-[16/11] w-full">
+              <div className="relative aspect-[16/9] w-full">
                 <img
                   src={heroImg}
                   alt="Puerto de Alicante al atardecer"
@@ -441,34 +437,28 @@ export function ChatScreen() {
                   className="absolute inset-0 h-full w-full object-cover"
                   style={{ filter: "brightness(1.05) saturate(1.15) contrast(1.08) hue-rotate(-12deg) sepia(0.12)" }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-r from-white/55 via-white/10 to-transparent" />
-                <div className="absolute inset-y-0 left-0 flex flex-col justify-between p-4 max-w-[60%]">
-                  <div>
-                    <p
-                      className="font-serif italic text-[28px] leading-none text-foreground"
+                <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
+                <button
+                  type="button"
+                  onClick={() => setShowQrInfo(true)}
+                  aria-label="Beneficios del QR VAMOS"
+                  className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[12px] font-extrabold text-primary-foreground shadow-soft ring-2 ring-white/70 backdrop-blur active:scale-95"
+                >
+                  <QrCode className="h-3.5 w-3.5" />
+                  QR VAMOS
+                </button>
+                <div className="absolute inset-x-0 bottom-0 p-3 text-white">
+                  <h2 className="leading-none drop-shadow">
+                    <span
+                      className="italic font-black text-[40px] sm:text-[50px] tracking-tight text-[oklch(0.92_0.16_85)] drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)]"
                       style={{ fontFamily: "var(--font-display)" }}
                     >
-                      Descubre
-                    </p>
-                    <p
-                      className="font-serif italic text-[44px] leading-none mt-1 text-foreground"
-                      style={{ fontFamily: "var(--font-display)" }}
-                    >
-                      Alicante
-                    </p>
-                    <p className="mt-3 text-[12px] leading-snug text-foreground/80 max-w-[200px]">
-                      Tu guía inteligente para disfrutar la ciudad como un local.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowQrInfo(true)}
-                    aria-label="Beneficios del QR VAMOS"
-                    className="self-start mt-3 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-[13px] font-extrabold text-primary-foreground shadow-soft active:scale-95"
-                  >
-                    <QrCode className="h-4 w-4" />
-                    QR VAMOS
-                  </button>
+                      VAMOS
+                    </span>
+                    <span className="ml-2 align-middle text-xl font-extrabold text-white">
+                      a Alicante
+                    </span>
+                  </h2>
                 </div>
               </div>
             </div>
@@ -523,8 +513,8 @@ export function ChatScreen() {
           )}
 
           {isWelcome && !activeSubmenu && (
-            <div className="mt-2 rounded-3xl bg-white p-4 shadow-soft ring-1 ring-black/5">
-              <div className="grid grid-cols-3 gap-x-2 gap-y-5 sm:grid-cols-5">
+            <div className="mt-2 rounded-3xl bg-white p-3 shadow-soft ring-1 ring-black/5">
+              <div className="grid grid-cols-5 gap-x-1 gap-y-3">
                 {[
                   ...SUGGESTIONS.map((s) => {
                     const match = s.label.match(/^(\p{Extended_Pictographic}+)/u);
@@ -558,6 +548,8 @@ export function ChatScreen() {
                   const style = TILE_STYLES[t.label];
                   const subtitle = TILE_SUBTITLES[t.label];
                   const Icon = TILE_ICONS[t.label];
+                  // Shorten the long label to fit the small grid cell.
+                  const displayLabel = t.label === "Turismo, playa y aventuras" ? "Playas" : t.label === "Transporte público" ? "Transporte" : t.label;
                   return (
                     <button
                       key={t.key}
@@ -567,26 +559,38 @@ export function ChatScreen() {
                       style={{ animationDelay: `${(idx % 9) * 60}ms` }}
                     >
                       <div
-                        className="relative grid h-16 w-16 place-items-center rounded-full transition-transform duration-300 ease-out group-hover:-translate-y-0.5 group-active:scale-90"
+                        className="relative grid h-12 w-12 place-items-center rounded-full transition-transform duration-300 ease-out group-active:scale-90"
                         style={{ backgroundColor: style?.bg ?? "oklch(0.95 0.02 80)" }}
                       >
                         {Icon ? (
-                          <Icon className="h-7 w-7 text-foreground" strokeWidth={1.75} />
+                          <Icon className="h-5 w-5 text-foreground" strokeWidth={1.75} />
                         ) : (
-                          <span className="text-[26px]">{t.emoji}</span>
+                          <span className="text-[20px]">{t.emoji}</span>
                         )}
                       </div>
-                      <span className="mt-1.5 block text-[12px] font-extrabold leading-tight tracking-tight text-foreground">
-                        {t.label}
+                      <span className="mt-1 block text-[11px] font-extrabold leading-tight tracking-tight text-foreground">
+                        {displayLabel}
                       </span>
                       {subtitle && (
-                        <span className="mt-0.5 block text-[10px] leading-tight text-muted-foreground">
+                        <span className="mt-0.5 block text-[9px] leading-tight text-muted-foreground">
                           {subtitle}
                         </span>
                       )}
                     </button>
                   );
                 })}
+                {/* Decorative skyline illustration filling the remaining cells */}
+                <div className="col-span-2 flex items-end justify-end -mt-1">
+                  <img
+                    src={skylineImg}
+                    alt=""
+                    aria-hidden
+                    loading="lazy"
+                    width={512}
+                    height={512}
+                    className="h-16 w-auto object-contain opacity-90"
+                  />
+                </div>
               </div>
             </div>
           )}
