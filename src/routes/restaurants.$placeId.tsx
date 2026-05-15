@@ -257,20 +257,20 @@ function RestaurantDashboard() {
               <button
                 type="button"
                 onClick={() => setQrOpen(true)}
-                className="flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl bg-gradient-to-r from-emerald-400 to-cyan-400 px-4 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-500/20 hover:from-emerald-300 hover:to-cyan-300"
+                className="flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl gradient-warm px-4 py-3 text-sm font-bold text-primary-foreground shadow-lg ring-2 ring-white/40 hover:opacity-95"
               >
                 <span className="flex items-center gap-2">
                   <CalendarCheck className="h-4 w-4" />
                   ¡VAMOS!
                 </span>
-                <span className="text-[10px] font-medium opacity-80">
+                <span className="text-[10px] font-medium opacity-90">
                   Te emitimos una invitación
                 </span>
               </button>
               <button
                 type="button"
                 onClick={() => setBookingOpen(true)}
-                className="flex-1 rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-2.5 text-center text-sm font-semibold text-emerald-200 hover:bg-emerald-500/20"
+                className="flex-1 rounded-xl bg-emerald-500 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-emerald-400"
               >
                 Reservar
               </button>
@@ -279,7 +279,7 @@ function RestaurantDashboard() {
                   href={`https://www.google.com/maps/search/?api=1&query=${place.lat},${place.lng}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex-1 rounded-xl bg-cyan-500 px-4 py-2.5 text-center text-sm font-semibold text-slate-950 hover:bg-cyan-400"
+                  className="flex-1 rounded-xl bg-blue-500 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-blue-400"
                 >
                   Cómo llegar
                 </a>
