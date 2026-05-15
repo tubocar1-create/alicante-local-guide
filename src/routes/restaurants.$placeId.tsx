@@ -234,6 +234,16 @@ function RestaurantDashboard() {
           onClose={() => setQrOpen(false)}
         />
       )}
+
+      {lightboxIdx !== null && photos.length > 0 && (
+        <PhotoLightbox
+          photos={photos}
+          index={lightboxIdx}
+          alt={place?.name ?? "Foto"}
+          onClose={() => setLightboxIdx(null)}
+          onIndexChange={setLightboxIdx}
+        />
+      )}
     </div>
   );
 }
