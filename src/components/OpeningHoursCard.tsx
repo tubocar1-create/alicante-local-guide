@@ -46,20 +46,22 @@ function todayIndexMadrid(date = new Date()): number {
 }
 
 function parseLines(text: string): { day: string; hours: string; idx: number }[] {
-  return text
-    .split(" · ")
-    .map((line) => {
-      const m = line.match(/^([^:]+):\s*(.+)$/);
-      if (!m) return null;
-      const dayLower = m[1].trim().toLowerCase();
-      const idx = SPANISH_DAYS.findIndex((d) => dayLower.startsWith(d));
-      return {
-        day: m[1].trim(),
-        hours: m[2].replace(/\s+/g, " ").trim(),
-        idx: idx === -1 ? 0 : idx,
-      };
-    })
-    .filter((x): x is { day: string; hours: string; idx: number } => x !== null);
+  const lines: { day: string; hours: string; idx: number }[] = [];
+
+  for (const segment of text.split(/\s+·\s+/)) {
+    const m = segment.match(/^([^:]+):\s*(.+)$/);
+    const dayLower = m?.[1]?.trim().toLowerCase() ?? "";
+    const idx = SPANISH_DAYS.findIndex((d) => dayLower.startsWith(d));
+    if (m && idx !== -1) {
+      lines.push({ day: m[1].trim(), hours: m[2].replace(/\s+/g, " ").trim(), idx });
+      continue;
+    }
+
+    const last = lines.at(-1);
+    if (last) last.hours = `${last.hours} · ${segment.replace(/\s+/g, " ").trim()}`;
+  }
+
+  return lines;
 }
 
 function parseTimeRanges(hours?: string | null): { start: number; end: number }[] {
