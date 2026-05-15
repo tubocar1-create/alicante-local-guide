@@ -181,7 +181,7 @@ export function getOpeningStatusFromSpanishText(
       perDay[currentDay] = perDay[currentDay] ?? [];
       continue;
     }
-    const ranges = [...body.matchAll(/(\d{1,2}):(\d{2})\s*[–-]\s*(\d{1,2}):(\d{2})/g)];
+    const ranges = [...body.matchAll(/(\d{1,2}):(\d{1,2})\s*[–-]\s*(\d{1,2}):(\d{1,2})/g)];
     for (const r of ranges) {
       const start = Number(r[1]) * 60 + Number(r[2]);
       const end = Number(r[3]) * 60 + Number(r[4]);
@@ -265,7 +265,7 @@ export function getTodayClosingTime(raw?: string | null, date = new Date()): str
         }
       }
       if (!currentDay) continue;
-      const ranges = [...body.matchAll(/(\d{1,2}):(\d{2})\s*[–-]\s*(\d{1,2}):(\d{2})/g)];
+      const ranges = [...body.matchAll(/(\d{1,2}):(\d{1,2})\s*[–-]\s*(\d{1,2}):(\d{1,2})/g)];
       for (const r of ranges) {
         const start = Number(r[1]) * 60 + Number(r[2]);
         const end = Number(r[3]) * 60 + Number(r[4]);
