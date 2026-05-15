@@ -1,10 +1,8 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { getPlaceById, getPlacePhotos } from "@/lib/places.functions";
 import { ArrowLeft, MapPin, Phone, Globe, Star, Clock, Euro, MessageSquare, CalendarCheck } from "lucide-react";
-import BookingDialog from "@/components/BookingDialog";
-import type { Listing } from "@/lib/overpass-listings";
 
 export const Route = createFileRoute("/restaurants/$placeId")({
   head: () => ({
@@ -27,24 +25,6 @@ function RestaurantDashboard() {
   const [photos, setPhotos] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
-  const [bookingOpen, setBookingOpen] = useState(false);
-
-  const bookingListing = useMemo<Listing | null>(() => {
-    if (!place) return null;
-    return {
-      id: place.google_place_id ?? placeId,
-      name: place.name ?? "Restaurante",
-      lat: place.lat ?? 0,
-      lon: place.lng ?? 0,
-      kind: "restaurant",
-      cuisine: place.cuisine ?? undefined,
-      phone: place.phone ?? undefined,
-      website: place.website ?? undefined,
-      address: place.address ?? undefined,
-      openingHours: place.opening_hours_text ?? undefined,
-      tags: {},
-    };
-  }, [place, placeId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -206,13 +186,16 @@ function RestaurantDashboard() {
 
             {/* Acciones */}
             <section className="flex flex-wrap gap-2 pt-2">
-              <button
-                onClick={() => setBookingOpen(true)}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-400 to-cyan-400 px-4 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-500/20 hover:from-emerald-300 hover:to-cyan-300"
+              <Link
+                to="/business/qr"
+                className="flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl bg-gradient-to-r from-emerald-400 to-cyan-400 px-4 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-500/20 hover:from-emerald-300 hover:to-cyan-300"
               >
-                <CalendarCheck className="h-4 w-4" />
-                ¡VAMOS a reservar!
-              </button>
+                <span className="flex items-center gap-2">
+                  <CalendarCheck className="h-4 w-4" />
+                  ¡VAMOS!
+                </span>
+                <span className="text-[10px] font-medium opacity-80">Te emitimos una invitación</span>
+              </Link>
               {place.lat != null && place.lng != null && (
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${place.lat},${place.lng}`}
@@ -233,10 +216,6 @@ function RestaurantDashboard() {
           </div>
         )}
       </main>
-
-      {bookingOpen && bookingListing && (
-        <BookingDialog listing={bookingListing} onClose={() => setBookingOpen(false)} />
-      )}
     </div>
   );
 }
