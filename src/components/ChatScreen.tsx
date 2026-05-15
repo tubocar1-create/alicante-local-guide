@@ -423,7 +423,7 @@ export function ChatScreen() {
       )}
 
 
-      {isWelcome && <div className="mb-5"><AdBanner /></div>}
+      {isWelcome && <div className="mb-2"><AdBanner /></div>}
 
       {/* Messages */}
       <div ref={scrollRef} className={["relative flex-1 px-4 pt-3 pb-5", isWelcome ? "overflow-hidden" : "overflow-y-auto"].join(" ")}>
