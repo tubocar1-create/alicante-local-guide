@@ -103,7 +103,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
   const nearest = stopsWithDistance.find((s) => s.distM != null) ?? null;
 
   return (
-    <div className="mt-2 rounded-3xl border border-border bg-card/95 p-4 shadow-soft backdrop-blur">
+    <div className="mt-2 rounded-2xl border border-border bg-card/95 p-2.5 shadow-soft backdrop-blur">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           {step !== "ask" && (
