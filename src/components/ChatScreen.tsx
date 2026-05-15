@@ -2379,10 +2379,16 @@ function AssistantContent({ content }: { content: string }) {
     .filter((p): p is Extract<AssistantPart, { type: "card" }> => p.type === "card")
     .map((p) => p.data);
   const textHasAsian = ASIAN_RE.test(cleaned);
+  const textHasDrinks = DRINKS_RE.test(cleaned);
   const asianMode =
     cardData.length >= 2 &&
     (cardData.every((c) => isAsianCard(c)) ||
       (textHasAsian && cardData.length >= 2));
+  const drinksMode =
+    !asianMode &&
+    cardData.length >= 2 &&
+    (cardData.every((c) => isDrinksCard(c)) ||
+      (textHasDrinks && cardData.length >= 2));
   let tableInjected = false;
 
   return (
@@ -2394,6 +2400,11 @@ function AssistantContent({ content }: { content: string }) {
             if (tableInjected) return null;
             tableInjected = true;
             return <AsianTable key={i} cards={cardData} />;
+          }
+          if (drinksMode) {
+            if (tableInjected) return null;
+            tableInjected = true;
+            return <DrinksTable key={i} cards={cardData} />;
           }
           return <PlaceCard key={i} data={p.data} />;
         }
