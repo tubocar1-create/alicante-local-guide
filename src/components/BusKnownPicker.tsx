@@ -250,13 +250,13 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
           </button>
 
           <div>
-            <div className="mb-2 flex items-center gap-2 rounded-full border border-border bg-background/80 px-3 py-1.5">
-              <Search className="h-3.5 w-3.5 text-muted-foreground" />
+            <div className="mb-1.5 flex items-center gap-1.5 rounded-full border border-border bg-background/80 px-2.5 py-1">
+              <Search className="h-3 w-3 text-muted-foreground" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar parada por nombre o código…"
-                className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                placeholder="Buscar parada…"
+                className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground"
               />
             </div>
             <div className="max-h-64 space-y-1 overflow-y-auto pr-1">
