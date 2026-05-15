@@ -912,7 +912,7 @@ function Bubble({ role, content }: { role: "user" | "assistant"; content: string
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
         className={[
-          "max-w-[85%] rounded-3xl px-4 py-2.5 text-[15px] leading-relaxed shadow-soft",
+          "max-w-[96%] rounded-3xl px-4 py-2.5 text-[15px] leading-relaxed shadow-soft",
           isUser
             ? "rounded-br-md bg-bubble-user text-bubble-user-foreground whitespace-pre-wrap"
             : "rounded-bl-md bg-bubble-friend text-bubble-friend-foreground",
