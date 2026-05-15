@@ -936,6 +936,7 @@ type PlaceCardData = {
   lon?: number;
   vibe?: string;
   theme?: string;
+  priceLevel?: string | null;
 };
 
 type BusLegData = {
