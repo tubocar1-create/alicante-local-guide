@@ -136,14 +136,26 @@ function RestaurantDashboard() {
                   href={`https://search.google.com/local/reviews?placeid=${place.google_place_id}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-white/5 px-2 py-1 text-sm hover:bg-white/10"
+                  className="mt-3 flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 hover:bg-white/[0.08]"
                 >
-                  <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                  <span className="font-semibold">{place.rating.toFixed(1)}</span>
-                  {place.user_rating_count != null && (
-                    <span className="text-slate-400">({place.user_rating_count} reseñas)</span>
-                  )}
-                  <MessageSquare className="ml-1 h-3.5 w-3.5 text-slate-400" />
+                  <div className="flex items-baseline gap-1">
+                    <Star className="h-5 w-5 self-center fill-amber-400 text-amber-400" />
+                    <span className="text-2xl font-bold leading-none text-white">
+                      {place.rating.toFixed(1)}
+                    </span>
+                    <span className="text-xs text-slate-400">/5</span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    {place.user_rating_count != null && (
+                      <div className="text-sm font-semibold text-slate-200">
+                        {place.user_rating_count.toLocaleString("es-ES")} reseñas
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1 text-[11px] text-cyan-300">
+                      <MessageSquare className="h-3 w-3" />
+                      Ver reseñas en Google
+                    </div>
+                  </div>
                 </a>
               )}
             </section>
