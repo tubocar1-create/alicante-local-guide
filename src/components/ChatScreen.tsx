@@ -436,34 +436,28 @@ export function ChatScreen() {
                   className="absolute inset-0 h-full w-full object-cover"
                   style={{ filter: "brightness(1.05) saturate(1.15) contrast(1.08) hue-rotate(-12deg) sepia(0.12)" }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-r from-white/55 via-white/10 to-transparent" />
-                <div className="absolute inset-y-0 left-0 flex flex-col justify-between p-4 max-w-[60%]">
-                  <div>
-                    <p
-                      className="font-serif italic text-[28px] leading-none text-foreground"
+                <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
+                <button
+                  type="button"
+                  onClick={() => setShowQrInfo(true)}
+                  aria-label="Beneficios del QR VAMOS"
+                  className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[12px] font-extrabold text-primary-foreground shadow-soft ring-2 ring-white/70 backdrop-blur active:scale-95"
+                >
+                  <QrCode className="h-3.5 w-3.5" />
+                  QR VAMOS
+                </button>
+                <div className="absolute inset-x-0 bottom-0 p-3 text-white">
+                  <h2 className="leading-none drop-shadow">
+                    <span
+                      className="italic font-black text-[40px] sm:text-[50px] tracking-tight text-[oklch(0.92_0.16_85)] drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)]"
                       style={{ fontFamily: "var(--font-display)" }}
                     >
-                      Descubre
-                    </p>
-                    <p
-                      className="font-serif italic text-[44px] leading-none mt-1 text-foreground"
-                      style={{ fontFamily: "var(--font-display)" }}
-                    >
-                      Alicante
-                    </p>
-                    <p className="mt-3 text-[12px] leading-snug text-foreground/80 max-w-[200px]">
-                      Tu guía inteligente para disfrutar la ciudad como un local.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowQrInfo(true)}
-                    aria-label="Beneficios del QR VAMOS"
-                    className="self-start mt-3 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-[13px] font-extrabold text-primary-foreground shadow-soft active:scale-95"
-                  >
-                    <QrCode className="h-4 w-4" />
-                    QR VAMOS
-                  </button>
+                      VAMOS
+                    </span>
+                    <span className="ml-2 align-middle text-xl font-extrabold text-white">
+                      a Alicante
+                    </span>
+                  </h2>
                 </div>
               </div>
             </div>
