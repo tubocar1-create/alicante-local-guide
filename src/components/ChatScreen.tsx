@@ -1694,114 +1694,108 @@ function AsianTableInner({ ranked, loading, onClose }: {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-white/[0.08] bg-[rgba(8,12,22,0.7)] p-3 backdrop-blur-xl md:p-4">
-          <div className="mb-3 flex items-baseline justify-between">
-            <p className="text-sm font-semibold text-slate-100">
+        <div className="rounded-2xl border border-white/[0.08] bg-[rgba(8,12,22,0.7)] p-2 backdrop-blur-xl md:p-4">
+          <div className="mb-2 flex items-baseline justify-between gap-2">
+            <p className="text-[12px] font-semibold text-slate-100">
               {loading ? "Cargando…" : `${ranked.length} restaurantes`}
             </p>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-cyan-400/70">
-              estado · cierre · precio · distancia
+            <p className="text-[9px] uppercase tracking-[0.18em] text-cyan-400/70">
+              estado · cierre · precio · dist.
             </p>
           </div>
 
-          <div className="-mx-3 overflow-x-auto md:mx-0">
-            <table className="w-full min-w-[640px] border-separate border-spacing-y-1 text-left text-[12px] text-slate-200">
-              <thead>
-                <tr className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
-                  <th className="px-2 py-1.5 font-medium">#</th>
-                  <th className="px-2 py-1.5 font-medium">Restaurante</th>
-                  <th className="px-2 py-1.5 font-medium">Estado</th>
-                  <th className="px-2 py-1.5 font-medium">Cierra</th>
-                  <th className="px-2 py-1.5 text-right font-medium">Precio</th>
-                  <th className="px-2 py-1.5 text-right font-medium">Distancia</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ranked.map(({ c, d }, i) => {
-                  const status = getOpeningStatus(c.openingHours ?? undefined);
-                  const closesAt =
-                    status.status === "open" ? status.closesAt : c.closesAt ?? null;
-                  const isOpen =
-                    status.status === "open" ||
-                    (!c.openingHours && Boolean(c.closesAt));
-                  const isClosed = status.status === "closed";
-                  const price = priceLabel(c.priceLevel);
-                  const priceAvg =
-                    price.avg !== "s/d" ? price.avg : guessAsianPrice(c);
-                  const meters = Number.isFinite(d) ? Math.round(d * 1000) : null;
-                  const distLabel =
-                    meters == null
-                      ? "—"
-                      : meters >= 1000
-                        ? `${(meters / 1000).toFixed(1)} km`
-                        : `${meters} m`;
-                  const mapsHref =
-                    c.lat && c.lon
-                      ? `https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lon}`
-                      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.name + " Alicante")}`;
-                  return (
-                    <tr
-                      key={i}
-                      className="bg-white/[0.02] hover:bg-cyan-400/5"
-                    >
-                      <td className="rounded-l-md px-2 py-2 align-top font-mono text-[11px] text-slate-500">
-                        {i + 1}
-                      </td>
-                      <td className="px-2 py-2 align-top">
-                        <a
-                          href={mapsHref}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="flex items-start gap-1.5 text-white hover:text-cyan-300"
-                        >
-                          <span className="text-base leading-none">{asianEmoji(c)}</span>
-                          <span className="min-w-0">
-                            <span className="block font-medium">{c.name}</span>
-                            {c.cuisine && (
-                              <span className="block font-mono text-[10px] text-slate-500">
-                                {c.cuisine}
-                              </span>
-                            )}
-                          </span>
-                        </a>
-                      </td>
-                      <td className="px-2 py-2 align-top">
-                        {isOpen ? (
-                          <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300">
-                            ● Abierto
-                          </span>
-                        ) : isClosed ? (
-                          <span className="rounded-full bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-rose-300">
-                            ● Cerrado
-                          </span>
-                        ) : (
-                          <span className="rounded-full bg-slate-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-slate-400">
-                            s/d
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-2 py-2 align-top font-mono text-[11px] text-slate-300">
-                        {closesAt ?? "—"}
-                      </td>
-                      <td className="px-2 py-2 text-right align-top font-mono text-[11px] text-slate-200">
-                        {priceAvg}
-                      </td>
-                      <td className="rounded-r-md px-2 py-2 text-right align-top font-mono text-[12px] font-semibold tabular-nums text-white">
-                        {distLabel}
-                      </td>
-                    </tr>
-                  );
-                })}
-                {!loading && ranked.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="px-2 py-4 text-center text-xs text-slate-500">
-                      Sin datos disponibles.
+          <table className="w-full table-fixed border-separate border-spacing-y-0.5 text-left text-[11px] text-slate-200">
+            <colgroup>
+              <col />
+              <col className="w-[58px]" />
+              <col className="w-[42px]" />
+              <col className="w-[46px]" />
+              <col className="w-[54px]" />
+            </colgroup>
+            <thead>
+              <tr className="text-[9px] uppercase tracking-[0.12em] text-slate-500">
+                <th className="px-1 py-1 font-medium">Restaurante</th>
+                <th className="px-1 py-1 font-medium">Estado</th>
+                <th className="px-1 py-1 font-medium">Cierra</th>
+                <th className="px-1 py-1 text-right font-medium">€/pers</th>
+                <th className="px-1 py-1 text-right font-medium">Dist.</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ranked.map(({ c, d }, i) => {
+                const status = getOpeningStatus(c.openingHours ?? undefined);
+                const closesAt =
+                  status.status === "open" ? status.closesAt : c.closesAt ?? null;
+                const isOpen =
+                  status.status === "open" ||
+                  (!c.openingHours && Boolean(c.closesAt));
+                const isClosed = status.status === "closed";
+                const price = priceLabel(c.priceLevel);
+                const priceAvg =
+                  price.avg !== "s/d" ? price.avg : guessAsianPrice(c);
+                const priceShort = priceAvg.replace(/[~\s€]/g, "") + "€";
+                const meters = Number.isFinite(d) ? Math.round(d * 1000) : null;
+                const distLabel =
+                  meters == null
+                    ? "—"
+                    : meters >= 1000
+                      ? `${(meters / 1000).toFixed(1)}km`
+                      : `${meters}m`;
+                const mapsHref =
+                  c.lat && c.lon
+                    ? `https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lon}`
+                    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.name + " Alicante")}`;
+                return (
+                  <tr key={i} className="bg-white/[0.02]">
+                    <td className="rounded-l-md px-1.5 py-1 align-middle">
+                      <a
+                        href={mapsHref}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-1 text-white hover:text-cyan-300"
+                      >
+                        <span className="text-[13px] leading-none">{asianEmoji(c)}</span>
+                        <span className="min-w-0 truncate text-[11px] font-medium">
+                          {c.name}
+                        </span>
+                      </a>
+                    </td>
+                    <td className="px-1 py-1 align-middle">
+                      {isOpen ? (
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500/15 px-1 py-0.5 text-[9px] font-semibold text-emerald-300">
+                          ● Abre
+                        </span>
+                      ) : isClosed ? (
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-rose-500/15 px-1 py-0.5 text-[9px] font-semibold text-rose-300">
+                          ● Cerr
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-slate-500/15 px-1 py-0.5 text-[9px] font-semibold text-slate-400">
+                          s/d
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-1 py-1 text-center align-middle font-mono text-[10px] text-slate-300">
+                      {closesAt ?? "—"}
+                    </td>
+                    <td className="px-1 py-1 text-right align-middle font-mono text-[10px] text-slate-200">
+                      {priceShort}
+                    </td>
+                    <td className="rounded-r-md px-1 py-1 text-right align-middle font-mono text-[11px] font-semibold tabular-nums text-white">
+                      {distLabel}
                     </td>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                );
+              })}
+              {!loading && ranked.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-2 py-4 text-center text-xs text-slate-500">
+                    Sin datos disponibles.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
