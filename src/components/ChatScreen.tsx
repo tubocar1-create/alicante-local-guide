@@ -2034,13 +2034,6 @@ function DrinksTableInner({ ranked, loading, onClose }: {
   const navigate = useNavigate();
   const resolvePlace = useServerFn(resolvePlaceByName);
   const [resolving, setResolving] = useState<string | null>(null);
-  const [now, setNow] = useState<Date>(() => new Date());
-  useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(t);
-  }, []);
-  const hhmm = now.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit", hour12: false });
-  const ss = now.toLocaleTimeString("es-ES", { second: "2-digit", hour12: false });
 
   const openDashboard = async (c: PlaceCardData) => {
     if (c.placeId) {
@@ -2084,19 +2077,7 @@ function DrinksTableInner({ ranked, loading, onClose }: {
         <div className="absolute bottom-0 right-0 h-[24rem] w-[24rem] rounded-full bg-rose-500/[0.06] blur-3xl" />
       </div>
 
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-16 z-0 flex select-none flex-col items-center justify-center"
-      >
-        <span className="font-display text-[22vw] font-black leading-none tracking-tighter text-amber-100/[0.06] md:text-[14rem]">
-          {hhmm}
-        </span>
-        <span className="-mt-2 font-mono text-[10px] uppercase tracking-[0.6em] text-amber-200/20 md:text-xs">
-          {ss}s · ALC
-        </span>
-      </div>
-
-      <div className="relative z-10 mx-auto max-w-5xl px-4 pb-10 pt-5 md:px-6">
+      <div className="relative mx-auto max-w-5xl px-4 pb-10 pt-5 md:px-6">
         <header className="mb-5 flex items-center justify-between">
           <button
             type="button"
