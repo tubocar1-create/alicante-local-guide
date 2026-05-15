@@ -1622,7 +1622,7 @@ out center 400;`;
 function AsianTable({ cards }: { cards: PlaceCardData[] }) {
   const [extra, setExtra] = useState<PlaceCardData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [visible, setVisible] = useState(10);
+  
 
   useEffect(() => {
     let cancelled = false;
@@ -1704,7 +1704,7 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
           </p>
 
           <ul className="mb-3 space-y-1">
-            {ranked.slice(0, visible).map(({ c, d }, i) => {
+            {ranked.map(({ c, d }, i) => {
               const hasHours = Boolean(c.closesAt);
               const price = priceLabel(c.priceLevel);
               const km = Number.isFinite(d) ? d.toFixed(1) : "—";
@@ -1759,15 +1759,6 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
             )}
           </ul>
 
-          {visible < ranked.length && (
-            <button
-              type="button"
-              onClick={() => setVisible((v) => v + 10)}
-              className="w-full rounded-lg border border-cyan-400/30 bg-cyan-400/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.15em] text-cyan-300 transition hover:bg-cyan-400/10"
-            >
-              Ver 10 más · {ranked.length - visible} restantes
-            </button>
-          )}
         </div>
       </div>
     </div>
