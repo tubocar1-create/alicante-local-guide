@@ -1622,34 +1622,6 @@ out center 400;`;
   return [];
 }
 
-function AsianTable({ cards }: { cards: PlaceCardData[] }) {
-  const [extra, setExtra] = useState<PlaceCardData[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-
-  useEffect(() => {
-    let cancelled = false;
-    fetchAlicanteAsian()
-      .then((r) => { if (!cancelled) setExtra(r); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, []);
-
-  // Merge: chat-provided cards (with hours/price) take priority over OSM duplicates.
-  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
-  const byKey = new Map<string, PlaceCardData>();
-  for (const c of cards) byKey.set(norm(c.name), c);
-  for (const c of extra) {
-    const k = norm(c.name);
-    if (!byKey.has(k)) byKey.set(k, c);
-  }
-  const ranked = Array.from(byKey.values())
-    .map((c) => ({
-      c,
-      d: c.lat && c.lon ? distKm(ALC_CENTER, { lat: c.lat, lon: c.lon }) : Number.POSITIVE_INFINITY,
-    }))
-    .sort((a, b) => a.d - b.d);
-
 function AsianTableInner({ ranked, loading, onClose }: {
   ranked: { c: PlaceCardData; d: number }[];
   loading: boolean;
