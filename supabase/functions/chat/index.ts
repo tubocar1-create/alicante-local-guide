@@ -17,6 +17,7 @@ type FoodPlace = {
   closesInMinutes: number;
   cuisine?: string;
   address?: string;
+  priceLevel?: string;
 };
 type ChatContext = {
   maxOptions?: number;
@@ -455,6 +456,7 @@ function formatFoodPlace(place: FoodPlace, index = 0, usedVibes?: Set<string>) {
     closesAt: place.closesAt,
     lat: place.lat,
     lon: place.lon,
+    priceLevel: place.priceLevel ?? null,
     vibe: vibeFor(place, index, usedVibes),
     theme: THEMES[(seed + index) % THEMES.length],
   };
@@ -571,6 +573,7 @@ type GooglePlace = {
       close?: { day: number; hour: number; minute: number };
     }>;
   };
+  priceLevel?: string;
 };
 
 // Compute "closes at" from Google Places periods using Madrid time.
@@ -639,7 +642,7 @@ async function googlePlacesTextSearch(
         "Content-Type": "application/json",
         "X-Goog-Api-Key": apiKey,
         "X-Goog-FieldMask":
-          "places.displayName,places.formattedAddress,places.location,places.primaryType,places.types,places.regularOpeningHours,places.currentOpeningHours,places.regularOpeningHours.weekdayDescriptions,places.currentOpeningHours.weekdayDescriptions",
+          "places.displayName,places.formattedAddress,places.location,places.primaryType,places.types,places.priceLevel,places.regularOpeningHours,places.currentOpeningHours,places.regularOpeningHours.weekdayDescriptions,places.currentOpeningHours.weekdayDescriptions",
       },
       body: JSON.stringify({
         textQuery: query,
@@ -708,7 +711,7 @@ async function googlePlacesNearbyFood(
           "Content-Type": "application/json",
           "X-Goog-Api-Key": apiKey,
           "X-Goog-FieldMask":
-            "places.id,places.displayName,places.formattedAddress,places.location,places.primaryType,places.types,places.regularOpeningHours,places.currentOpeningHours",
+            "places.id,places.displayName,places.formattedAddress,places.location,places.primaryType,places.types,places.priceLevel,places.regularOpeningHours,places.currentOpeningHours",
         },
         body: JSON.stringify({
           includedTypes: types,
@@ -767,7 +770,7 @@ async function googlePlacesSearchTextMany(
         "Content-Type": "application/json",
         "X-Goog-Api-Key": apiKey,
         "X-Goog-FieldMask":
-          "places.id,places.displayName,places.formattedAddress,places.location,places.primaryType,places.types,places.regularOpeningHours,places.currentOpeningHours",
+          "places.id,places.displayName,places.formattedAddress,places.location,places.primaryType,places.types,places.priceLevel,places.regularOpeningHours,places.currentOpeningHours",
       },
       body: JSON.stringify({
         textQuery: query,
@@ -1128,6 +1131,7 @@ async function fetchConfirmedOpenFoodPlaces(
         closesInMinutes: closes.closesInMinutes,
         cuisine,
         address: g.formattedAddress,
+        priceLevel: g.priceLevel,
       });
     }
     if (out.length > 0) {
