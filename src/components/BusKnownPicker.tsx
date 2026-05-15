@@ -103,7 +103,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
   const nearest = stopsWithDistance.find((s) => s.distM != null) ?? null;
 
   return (
-    <div className="mt-2 rounded-3xl border border-border bg-card/95 p-4 shadow-soft backdrop-blur">
+    <div className="mt-2 rounded-2xl border border-border bg-card/95 p-2.5 shadow-soft backdrop-blur">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           {step !== "ask" && (
@@ -230,15 +230,17 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
                 distanceM: nearest.distM ?? null,
               });
             }}
-            className="flex w-full items-center justify-between gap-2 rounded-2xl border border-primary/40 bg-primary/10 px-4 py-3 text-left text-sm font-semibold shadow-sm hover:bg-primary/15 active:scale-[0.99] disabled:opacity-60"
+            className="flex w-full items-center justify-between gap-2 rounded-xl border border-primary/40 bg-primary/10 px-2.5 py-1.5 text-left text-[12px] font-semibold shadow-sm hover:bg-primary/15 active:scale-[0.99] disabled:opacity-60"
           >
-            <span className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-primary" />
-              {nearest
-                ? `La más cercana: ${nearest.name} (${nearest.code})`
-                : locState.status === "loading"
-                  ? "Buscando tu ubicación…"
-                  : "Activar ubicación para sugerirte la más cercana"}
+            <span className="flex min-w-0 items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5 shrink-0 text-primary" />
+              <span className="truncate">
+                {nearest
+                  ? `Más cercana: ${nearest.name} (${nearest.code})`
+                  : locState.status === "loading"
+                    ? "Buscando ubicación…"
+                    : "Activar ubicación para sugerir parada"}
+              </span>
             </span>
             {nearest?.distM != null && (
               <span className="shrink-0 text-[11px] font-bold text-primary">
@@ -248,16 +250,16 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
           </button>
 
           <div>
-            <div className="mb-2 flex items-center gap-2 rounded-full border border-border bg-background/80 px-3 py-1.5">
-              <Search className="h-3.5 w-3.5 text-muted-foreground" />
+            <div className="mb-1.5 flex items-center gap-1.5 rounded-full border border-border bg-background/80 px-2.5 py-1">
+              <Search className="h-3 w-3 text-muted-foreground" />
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Buscar parada por nombre o código…"
-                className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                placeholder="Buscar parada…"
+                className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground"
               />
             </div>
-            <div className="max-h-64 space-y-1 overflow-y-auto pr-1">
+            <div className="max-h-56 space-y-1 overflow-y-auto pr-1">
               {filtered.map((s) => (
                 <button
                   key={s.code}
@@ -270,14 +272,14 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
                       distanceM: s.distM ?? null,
                     })
                   }
-                  className="flex w-full items-center justify-between rounded-xl border border-border bg-background/70 px-3 py-2 text-left text-sm shadow-sm hover:bg-accent/40 active:scale-[0.99]"
+                  className="flex w-full items-center justify-between rounded-lg border border-border bg-background/70 px-2 py-1.5 text-left text-[12px] shadow-sm hover:bg-accent/40 active:scale-[0.99]"
                 >
                   <span className="min-w-0 truncate">
                     <span className="font-semibold">{s.name}</span>
-                    <span className="ml-1 text-[11px] text-muted-foreground">#{s.code}</span>
+                    <span className="ml-1 text-[10px] text-muted-foreground">#{s.code}</span>
                   </span>
                   {s.distM != null && (
-                    <span className="shrink-0 text-[11px] text-muted-foreground">{s.distM} m</span>
+                    <span className="shrink-0 text-[10px] text-muted-foreground">{s.distM} m</span>
                   )}
                 </button>
               ))}
