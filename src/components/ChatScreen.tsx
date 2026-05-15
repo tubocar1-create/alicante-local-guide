@@ -1644,6 +1644,37 @@ function AsianTableInner({ ranked, loading, onClose }: {
   loading: boolean;
   onClose: () => void;
 }) {
+  const navigate = useNavigate();
+  const resolvePlace = useServerFn(resolvePlaceByName);
+  const [resolving, setResolving] = useState<string | null>(null);
+
+  const openDashboard = async (c: PlaceCardData) => {
+    if (c.placeId) {
+      navigate({ to: "/restaurants/$placeId", params: { placeId: c.placeId } });
+      return;
+    }
+    if (resolving) return;
+    setResolving(c.name);
+    try {
+      const { placeId } = await resolvePlace({
+        data: { name: c.name, lat: c.lat ?? null, lon: c.lon ?? null },
+      });
+      if (placeId) {
+        navigate({ to: "/restaurants/$placeId", params: { placeId } });
+      } else {
+        const href =
+          c.lat && c.lon
+            ? `https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lon}`
+            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.name + " Alicante")}`;
+        window.open(href, "_blank", "noreferrer");
+      }
+    } catch (e) {
+      console.error("resolvePlaceByName failed", e);
+    } finally {
+      setResolving(null);
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 z-[60] overflow-y-auto text-slate-100"
