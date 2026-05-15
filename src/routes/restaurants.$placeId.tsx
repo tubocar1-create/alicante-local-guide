@@ -122,20 +122,17 @@ function RestaurantDashboard() {
               <section className="-mx-4">
                 <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-1">
                   {photos.map((src, i) => (
-                    <a
+                    <div
                       key={src}
-                      href={src}
-                      target="_blank"
-                      rel="noreferrer"
                       className="relative h-44 w-64 shrink-0 snap-start overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]"
                     >
                       <img
                         src={src}
                         alt={`${place.name} foto ${i + 1}`}
                         loading="lazy"
-                        className="h-full w-full object-cover transition-transform hover:scale-105"
+                        className="h-full w-full object-cover"
                       />
-                    </a>
+                    </div>
                   ))}
                 </div>
               </section>
