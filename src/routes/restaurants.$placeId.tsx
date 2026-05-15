@@ -148,7 +148,7 @@ function RestaurantDashboard() {
                       </div>
                     )}
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 gap-2">
                     <a
                       href={`https://search.google.com/local/reviews?placeid=${place.google_place_id}`}
                       target="_blank"
@@ -166,15 +166,6 @@ function RestaurantDashboard() {
                     >
                       <MessageSquare className="h-4 w-4 text-emerald-300" />
                       TripAdvisor
-                    </a>
-                    <a
-                      href={`https://www.thefork.es/search/?cityId=415144&query=${encodeURIComponent(place.name)}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex flex-col items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/[0.04] px-2 py-2.5 text-[11px] font-semibold text-slate-200 hover:bg-white/[0.08]"
-                    >
-                      <MessageSquare className="h-4 w-4 text-rose-300" />
-                      TheFork
                     </a>
                   </div>
                 </div>
