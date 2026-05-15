@@ -281,6 +281,73 @@ export const refreshAsianPlaces = createServerFn({ method: "POST" }).handler(
   },
 );
 
+async function refreshDrinksFromGoogle() {
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  if (!apiKey) throw new Error("GOOGLE_PLACES_API_KEY missing");
+
+  const seen = new Map<string, CachedPlace>();
+  for (const q of DRINKS_QUERIES) {
+    const places = await searchGoogle(q, apiKey);
+    for (const p of places) {
+      const row = toRow(p, "drinks");
+      if (row && !seen.has(row.google_place_id)) {
+        seen.set(row.google_place_id, row);
+      }
+    }
+  }
+  const rows = Array.from(seen.values());
+  if (rows.length === 0) return rows;
+
+  const { error } = await supabaseAdmin
+    .from("places_cache")
+    .upsert(rows as never, { onConflict: "google_place_id" });
+  if (error) {
+    console.error("upsert places_cache (drinks) error", error);
+    throw error;
+  }
+  return rows;
+}
+
+export const getDrinksPlaces = createServerFn({ method: "GET" }).handler(
+  async () => {
+    const { data: existing, error } = await supabaseAdmin
+      .from("places_cache")
+      .select("*")
+      .eq("category", "drinks")
+      .order("name");
+    if (error) throw error;
+
+    const newest = existing?.reduce<number>(
+      (max, r) => Math.max(max, new Date(r.fetched_at as string).getTime()),
+      0,
+    ) ?? 0;
+    const isStale = !existing?.length || Date.now() - newest > STALE_MS;
+
+    if (isStale) {
+      try {
+        await refreshDrinksFromGoogle();
+        const { data: fresh } = await supabaseAdmin
+          .from("places_cache")
+          .select("*")
+          .eq("category", "drinks")
+          .order("name");
+        return { places: fresh ?? [], refreshed: true };
+      } catch (e) {
+        console.error("drinks refresh failed, returning cached", e);
+        return { places: existing ?? [], refreshed: false };
+      }
+    }
+    return { places: existing ?? [], refreshed: false };
+  },
+);
+
+export const refreshDrinksPlaces = createServerFn({ method: "POST" }).handler(
+  async () => {
+    const rows = await refreshDrinksFromGoogle();
+    return { count: rows.length };
+  },
+);
+
 export const getPlaceById = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => {
     const o = d as { placeId?: string };
