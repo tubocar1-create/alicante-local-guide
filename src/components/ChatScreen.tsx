@@ -759,6 +759,38 @@ function VamosLogo() {
   );
 }
 
+function weatherIconFor(code: number): LucideIcon {
+  if ([0, 1].includes(code)) return Sun;
+  if ([2, 3].includes(code)) return Cloud;
+  if ([45, 48].includes(code)) return CloudFog;
+  if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) return CloudRain;
+  if ([71, 73, 75].includes(code)) return CloudSnow;
+  if ([95, 96, 99].includes(code)) return CloudLightning;
+  return Sun;
+}
+
+function WeatherChip() {
+  const { data, loading } = useWeather();
+  const Icon = data ? weatherIconFor(data.code) : Sun;
+  return (
+    <Link
+      to="/clima"
+      aria-label="Ver clima en Alicante"
+      className="flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 ring-1 ring-border/60 active:scale-95 transition"
+    >
+      <Icon className="h-4 w-4 text-[oklch(0.78_0.16_70)]" />
+      <div className="leading-tight text-left">
+        <p className="text-[12px] font-bold text-foreground">
+          {loading || !data ? "—" : `${data.tempC}°`}
+        </p>
+        <p className="text-[9px] -mt-0.5 text-muted-foreground truncate max-w-[80px]">
+          {data?.label ?? "Cargando…"}
+        </p>
+      </div>
+    </Link>
+  );
+}
+
 function QrVamosInfo({ onClose }: { onClose: () => void }) {
   const benefits = [
     { icon: Gift, title: "Descuentos reales", text: "Precios de amigo en bares, restaurantes y planes que de verdad merecen la pena." },
