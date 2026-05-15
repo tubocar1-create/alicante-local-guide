@@ -58,6 +58,7 @@ function RestaurantDashboard() {
       : heroOpeningStatus?.status === "closed"
         ? false
         : (place?.open_now ?? null);
+  const heroClosesAt = heroOpeningStatus?.status === "open" ? heroOpeningStatus.closesAt : null;
 
   useEffect(() => {
     let cancelled = false;
@@ -126,7 +127,7 @@ function RestaurantDashboard() {
                         : "bg-rose-500/15 text-rose-300"
                     }`}
                   >
-                    ● {heroIsOpen ? "Abierto" : "Cerrado"}
+                    ● {heroIsOpen ? `Abierto · cierra ${heroClosesAt ?? "—"}` : "Cerrado"}
                   </span>
                 )}
               </div>
