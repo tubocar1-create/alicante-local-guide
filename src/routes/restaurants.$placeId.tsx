@@ -1,10 +1,11 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { getPlaceById, getPlacePhotos } from "@/lib/places.functions";
 import { ArrowLeft, MapPin, Phone, Globe, Star, Clock, Euro, MessageSquare, CalendarCheck } from "lucide-react";
 import ReferralDialog from "@/components/ReferralDialog";
 import BookingDialog from "@/components/BookingDialog";
+import { resolveOpeningStatus } from "@/lib/opening-hours";
 
 const PlaceLocationMap = lazy(() => import("@/components/PlaceLocationMap"));
 import OpeningHoursCard from "@/components/OpeningHoursCard";
@@ -33,6 +34,17 @@ function RestaurantDashboard() {
   const [qrOpen, setQrOpen] = useState(false);
   const [zoomedIdx, setZoomedIdx] = useState<number | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
+
+  const heroOpeningStatus = useMemo(
+    () => (place ? resolveOpeningStatus(place.opening_hours_text) : null),
+    [place],
+  );
+  const heroIsOpen =
+    heroOpeningStatus?.status === "open"
+      ? true
+      : heroOpeningStatus?.status === "closed"
+        ? false
+        : (place?.open_now ?? null);
 
   useEffect(() => {
     let cancelled = false;
@@ -81,15 +93,15 @@ function RestaurantDashboard() {
                     <p className="mt-0.5 text-sm text-slate-400">{place.cuisine}</p>
                   )}
                 </div>
-                {place.open_now != null && (
+                {heroIsOpen != null && (
                   <span
                     className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold ${
-                      place.open_now
+                      heroIsOpen
                         ? "bg-emerald-500/15 text-emerald-300"
                         : "bg-rose-500/15 text-rose-300"
                     }`}
                   >
-                    ● {place.open_now ? "Abierto" : "Cerrado"}
+                    ● {heroIsOpen ? "Abierto" : "Cerrado"}
                   </span>
                 )}
               </div>
