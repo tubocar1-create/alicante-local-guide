@@ -21,7 +21,7 @@ type Props = {
 // - Nocturnas: código terminado en N (3N, 13N, 22N…)
 // - Interurbanas (TAM): salen de la ciudad (27, 28, 39…)
 // - Urbanas: el resto
-const EXTRAURBAN_CODES = new Set(["27", "28", "39"]);
+const EXTRAURBAN_CODES = new Set(["24", "27", "28", "39"]);
 
 function classifyLine(code: string): "night" | "extraurban" | "urban" {
   if (/N$/i.test(code)) return "night";
