@@ -56,6 +56,43 @@ const DRINKS_QUERIES = [
   "karaoke bar",
   "karaoke",
 ];
+const TYPICAL_QUERIES = [
+  "restaurante típico alicantino",
+  "cocina alicantina",
+  "cocina mediterránea",
+  "restaurante tradicional",
+  "tapas tradicionales",
+  "tasca",
+  "restaurante típico",
+  "cocina española",
+];
+const RICE_FISH_QUERIES = [
+  "arrocería",
+  "paella",
+  "arroz",
+  "arroz a banda",
+  "marisquería",
+  "restaurante de pescado",
+  "pescado fresco",
+  "seafood restaurant",
+  "rice restaurant",
+];
+const ITALIAN_QUERIES = [
+  "italian restaurant",
+  "restaurante italiano",
+  "pizzería",
+  "pizza",
+  "pasta",
+  "trattoria",
+  "ristorante",
+];
+const CATEGORY_QUERIES: Record<string, string[]> = {
+  asian: ASIAN_QUERIES,
+  drinks: DRINKS_QUERIES,
+  typical: TYPICAL_QUERIES,
+  rice_fish: RICE_FISH_QUERIES,
+  italian: ITALIAN_QUERIES,
+};
 const STALE_MS = 24 * 60 * 60 * 1000; // 24h
 
 const FIELD_MASK = [
