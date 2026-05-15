@@ -230,15 +230,17 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
                 distanceM: nearest.distM ?? null,
               });
             }}
-            className="flex w-full items-center justify-between gap-2 rounded-2xl border border-primary/40 bg-primary/10 px-4 py-3 text-left text-sm font-semibold shadow-sm hover:bg-primary/15 active:scale-[0.99] disabled:opacity-60"
+            className="flex w-full items-center justify-between gap-2 rounded-xl border border-primary/40 bg-primary/10 px-2.5 py-1.5 text-left text-[12px] font-semibold shadow-sm hover:bg-primary/15 active:scale-[0.99] disabled:opacity-60"
           >
-            <span className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-primary" />
-              {nearest
-                ? `La más cercana: ${nearest.name} (${nearest.code})`
-                : locState.status === "loading"
-                  ? "Buscando tu ubicación…"
-                  : "Activar ubicación para sugerirte la más cercana"}
+            <span className="flex min-w-0 items-center gap-1.5">
+              <MapPin className="h-3.5 w-3.5 shrink-0 text-primary" />
+              <span className="truncate">
+                {nearest
+                  ? `Más cercana: ${nearest.name} (${nearest.code})`
+                  : locState.status === "loading"
+                    ? "Buscando ubicación…"
+                    : "Activar ubicación para sugerir parada"}
+              </span>
             </span>
             {nearest?.distM != null && (
               <span className="shrink-0 text-[11px] font-bold text-primary">
