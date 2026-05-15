@@ -1792,10 +1792,7 @@ function AsianTableInner({ ranked, loading, onClose }: {
                     : meters >= 1000
                       ? `${(meters / 1000).toFixed(1)}km`
                       : `${meters}m`;
-                const mapsHref =
-                  c.lat && c.lon
-                    ? `https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lon}`
-                    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.name + " Alicante")}`;
+                void c;
                 const nameNode = (
                   <span className="flex items-center gap-1 text-white hover:text-cyan-300">
                     <span className="text-[13px] leading-none">{asianEmoji(c)}</span>
