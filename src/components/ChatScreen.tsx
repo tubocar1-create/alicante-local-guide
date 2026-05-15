@@ -493,9 +493,14 @@ export function ChatScreen() {
 
           {/* (Tiles render below as Glovo-style row, replacing old chip suggestions) */}
 
-          {messages.map((m, i) =>
-            m === GREETING || m.role === "user" ? null : <Bubble key={i} role={m.role} content={m.content} />,
-          )}
+          {messages.map((m, i) => {
+            if (m === GREETING || m.role === "user") return null;
+            let prevUser = "";
+            for (let j = i - 1; j >= 0; j--) {
+              if (messages[j].role === "user") { prevUser = messages[j].content; break; }
+            }
+            return <Bubble key={i} role={m.role} content={m.content} userPrompt={prevUser} />;
+          })}
           {loading && messages[messages.length - 1]?.role === "user" && (
             <div className="flex justify-start">
               <div className="rounded-3xl rounded-bl-md bg-bubble-friend px-4 py-3 shadow-soft">
@@ -975,13 +980,14 @@ function isDrinksBroadcast(content: string): boolean {
   return true;
 }
 
-function Bubble({ role, content }: { role: "user" | "assistant"; content: string }) {
+function Bubble({ role, content, userPrompt = "" }: { role: "user" | "assistant"; content: string; userPrompt?: string }) {
   const isUser = role === "user";
-  // Asian / Drinks dashboards: break out of the bubble and render full-width.
-  if (!isUser && (isAsianBroadcast(content) || isDrinksBroadcast(content))) {
+  const promptHasDrinks = !isUser && DRINKS_RE.test(userPrompt);
+  const promptHasAsian = !isUser && ASIAN_RE.test(userPrompt);
+  if (!isUser && (isAsianBroadcast(content) || isDrinksBroadcast(content) || promptHasDrinks || promptHasAsian)) {
     return (
       <div className="-mx-4 sm:mx-0">
-        <AssistantContent content={content} />
+        <AssistantContent content={content} userPrompt={userPrompt} />
       </div>
     );
   }
@@ -995,7 +1001,7 @@ function Bubble({ role, content }: { role: "user" | "assistant"; content: string
             : "rounded-bl-md bg-bubble-friend text-bubble-friend-foreground",
         ].join(" ")}
       >
-        {isUser ? content : <AssistantContent content={content} />}
+        {isUser ? content : <AssistantContent content={content} userPrompt={userPrompt} />}
       </div>
     </div>
   );
@@ -2313,7 +2319,7 @@ function DrinksTable({ cards }: { cards: PlaceCardData[] }) {
 }
 
 
-function AssistantContent({ content }: { content: string }) {
+function AssistantContent({ content, userPrompt = "" }: { content: string; userPrompt?: string }) {
   const match = content.match(PLACE_RE);
   const placeName = match?.[1]?.trim();
   const cleaned = content.replace(/\n?\[\[place:[^\]]+\]\]\n?/i, "").trim();
@@ -2377,12 +2383,11 @@ function AssistantContent({ content }: { content: string }) {
   const cardData = renderedParts
     .filter((p): p is Extract<AssistantPart, { type: "card" }> => p.type === "card")
     .map((p) => p.data);
-  const textHasAsian = ASIAN_RE.test(cleaned);
-  const textHasDrinks = DRINKS_RE.test(cleaned);
+  const textHasAsian = ASIAN_RE.test(cleaned) || ASIAN_RE.test(userPrompt);
+  const textHasDrinks = DRINKS_RE.test(cleaned) || DRINKS_RE.test(userPrompt);
   const asianMode =
-    cardData.length >= 2 &&
-    (cardData.every((c) => isAsianCard(c)) ||
-      (textHasAsian && cardData.length >= 2));
+    textHasAsian ||
+    (cardData.length >= 2 && cardData.every((c) => isAsianCard(c)));
   const drinksMode =
     !asianMode &&
     (textHasDrinks ||
@@ -2392,9 +2397,8 @@ function AssistantContent({ content }: { content: string }) {
   return (
     <div className="space-y-2 [&>p]:m-0 [&_strong]:font-semibold">
       {placeName && <PlaceImage name={placeName} />}
-      {drinksMode && cardData.length === 0 && (
-        <DrinksTable cards={[]} />
-      )}
+      {asianMode && cardData.length === 0 && <AsianTable cards={[]} />}
+      {drinksMode && cardData.length === 0 && <DrinksTable cards={[]} />}
       {renderedParts.map((p, i) => {
         if (p.type === "card") {
           if (asianMode) {
