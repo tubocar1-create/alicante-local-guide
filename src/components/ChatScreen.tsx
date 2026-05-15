@@ -101,9 +101,9 @@ const SUGGESTIONS: Suggestion[] = [
   {
     label: "🍽️ Comer",
     submenu: [
-      { label: "🥘 Cocina típica", prompt: "Recomiéndame un sitio de cocina típica alicantina abierto ahora" },
-      { label: "🍤 Arroces y pescado", prompt: "Quiero un buen arroz o pescado fresco, ¿dónde voy ahora?" },
-      { label: "🍕 Italiano", prompt: "Apetece italiano, ¿dónde puedo ir ahora?" },
+      { label: "🥘 Cocina típica", prompt: "Recomiéndame un sitio de cocina típica alicantina tradicional abierto ahora" },
+      { label: "🍤 Arroces y pescado", prompt: "Quiero un buen arroz, paella o pescado fresco, ¿dónde voy ahora?" },
+      { label: "🍕 Italiano", prompt: "Apetece italiano (pizza, pasta), ¿dónde puedo ir ahora?" },
       {
         label: "🍔 Comida rápida",
         submenu: [
