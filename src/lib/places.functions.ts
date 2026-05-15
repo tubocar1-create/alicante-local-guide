@@ -54,6 +54,7 @@ const FIELD_MASK = [
   "places.userRatingCount",
   "places.nationalPhoneNumber",
   "places.websiteUri",
+  "places.photos",
 ].join(",");
 
 type GPlace = {
