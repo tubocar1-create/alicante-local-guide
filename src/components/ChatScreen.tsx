@@ -980,13 +980,14 @@ function isDrinksBroadcast(content: string): boolean {
   return true;
 }
 
-function Bubble({ role, content }: { role: "user" | "assistant"; content: string }) {
+function Bubble({ role, content, userPrompt = "" }: { role: "user" | "assistant"; content: string; userPrompt?: string }) {
   const isUser = role === "user";
-  // Asian / Drinks dashboards: break out of the bubble and render full-width.
-  if (!isUser && (isAsianBroadcast(content) || isDrinksBroadcast(content))) {
+  const promptHasDrinks = !isUser && DRINKS_RE.test(userPrompt);
+  const promptHasAsian = !isUser && ASIAN_RE.test(userPrompt);
+  if (!isUser && (isAsianBroadcast(content) || isDrinksBroadcast(content) || promptHasDrinks || promptHasAsian)) {
     return (
       <div className="-mx-4 sm:mx-0">
-        <AssistantContent content={content} />
+        <AssistantContent content={content} userPrompt={userPrompt} />
       </div>
     );
   }
@@ -1000,7 +1001,7 @@ function Bubble({ role, content }: { role: "user" | "assistant"; content: string
             : "rounded-bl-md bg-bubble-friend text-bubble-friend-foreground",
         ].join(" ")}
       >
-        {isUser ? content : <AssistantContent content={content} />}
+        {isUser ? content : <AssistantContent content={content} userPrompt={userPrompt} />}
       </div>
     </div>
   );
