@@ -7,6 +7,7 @@ import ReferralDialog from "@/components/ReferralDialog";
 
 const PlaceLocationMap = lazy(() => import("@/components/PlaceLocationMap"));
 import OpeningHoursCard from "@/components/OpeningHoursCard";
+import PhotoLightbox from "@/components/PhotoLightbox";
 
 export const Route = createFileRoute("/restaurants/$placeId")({
   head: () => ({
