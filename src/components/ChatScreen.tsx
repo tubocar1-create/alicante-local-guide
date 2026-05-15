@@ -18,6 +18,8 @@ import { FlightPicker } from "@/components/FlightPicker";
 import { useAuth } from "@/hooks/useAuth";
 import { findPlaceOverride } from "@/data/places";
 import { getOpeningStatus } from "@/lib/opening-hours";
+import { useServerFn } from "@tanstack/react-start";
+import { getAsianPlaces } from "@/lib/places.functions";
 import heroImg from "@/assets/alicante-hero.jpg";
 import skylineImg from "@/assets/alicante-skyline.png";
 import portadaImg from "@/assets/alicante-portada.jpg";
@@ -956,6 +958,10 @@ type PlaceCardData = {
   vibe?: string;
   theme?: string;
   priceLevel?: string | null;
+  priceRangeMin?: number | null;
+  priceRangeMax?: number | null;
+  rating?: number | null;
+  openNow?: boolean | null;
 };
 
 type BusLegData = {
@@ -1728,12 +1734,20 @@ function AsianTableInner({ ranked, loading, onClose }: {
                   status.status === "open" ? status.closesAt : c.closesAt ?? null;
                 const isOpen =
                   status.status === "open" ||
+                  c.openNow === true ||
                   (!c.openingHours && Boolean(c.closesAt));
-                const isClosed = status.status === "closed";
+                const isClosed = status.status === "closed" || c.openNow === false;
                 const price = priceLabel(c.priceLevel);
+                const priceFromRange =
+                  c.priceRangeMin && c.priceRangeMax
+                    ? `${c.priceRangeMin}–${c.priceRangeMax} €`
+                    : c.priceRangeMin
+                      ? `~${c.priceRangeMin} €`
+                      : null;
                 const priceAvg =
-                  price.avg !== "s/d" ? price.avg : guessAsianPrice(c);
-                const priceShort = priceAvg.replace(/[~\s€]/g, "") + "€";
+                  priceFromRange ??
+                  (price.avg !== "s/d" ? price.avg : guessAsianPrice(c));
+                const priceShort = priceAvg.replace(/[~\s€]/g, "").replace("–", "-") + "€";
                 const meters = Number.isFinite(d) ? Math.round(d * 1000) : null;
                 const distLabel =
                   meters == null
@@ -1808,13 +1822,32 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
 
+  const fetchAsian = useServerFn(getAsianPlaces);
   useEffect(() => {
     let cancelled = false;
-    fetchAlicanteAsian()
-      .then((r) => { if (!cancelled) { extraRef.current = r; setExtra(r); } })
+    fetchAsian()
+      .then((res) => {
+        if (cancelled) return;
+        const mapped: PlaceCardData[] = (res.places ?? []).map((p) => ({
+          name: p.name,
+          cuisine: p.cuisine,
+          address: p.address,
+          openingHours: p.opening_hours_text,
+          lat: p.lat ?? undefined,
+          lon: p.lng ?? undefined,
+          priceLevel: p.price_level,
+          priceRangeMin: p.price_range_min,
+          priceRangeMax: p.price_range_max,
+          rating: p.rating,
+          openNow: p.open_now,
+        }));
+        extraRef.current = mapped;
+        setExtra(mapped);
+      })
+      .catch((e) => console.error("getAsianPlaces failed", e))
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, []);
+  }, [fetchAsian]);
 
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
   const byKey = new Map<string, PlaceCardData>();
