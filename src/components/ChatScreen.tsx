@@ -1661,7 +1661,7 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
         </p>
       </div>
       <ol className="max-h-[70vh] overflow-y-auto divide-y divide-[#162038]">
-        {ranked.map(({ c, d }, i) => {
+        {ranked.slice(0, visible).map(({ c, d }, i) => {
           const hasHours = Boolean(c.closesAt);
           const price = priceLabel(c.priceLevel);
           const km = Number.isFinite(d) ? d.toFixed(1) : "—";
@@ -1710,6 +1710,17 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
           );
         })}
       </ol>
+      {visible < ranked.length && (
+        <div className="border-t border-[#1c2a4a] p-3">
+          <button
+            type="button"
+            onClick={() => setVisible((v) => v + 10)}
+            className="w-full rounded-xl bg-cyan-500/10 px-4 py-2.5 text-[13px] font-semibold text-cyan-300 transition-colors hover:bg-cyan-500/20 active:bg-cyan-500/30"
+          >
+            Ver 10 más · {ranked.length - visible} restantes
+          </button>
+        </div>
+      )}
     </div>
   );
 }
