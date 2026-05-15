@@ -17,6 +17,7 @@ import { BusKnownPicker, type BusStopPick } from "@/components/BusKnownPicker";
 import { FlightPicker } from "@/components/FlightPicker";
 import { useAuth } from "@/hooks/useAuth";
 import { findPlaceOverride } from "@/data/places";
+import { getOpeningStatus } from "@/lib/opening-hours";
 import heroImg from "@/assets/alicante-hero.jpg";
 import skylineImg from "@/assets/alicante-skyline.png";
 import portadaImg from "@/assets/alicante-portada.jpg";
@@ -949,6 +950,7 @@ type PlaceCardData = {
   cuisine?: string | null;
   address?: string | null;
   closesAt?: string;
+  openingHours?: string | null;
   lat?: number;
   lon?: number;
   vibe?: string;
@@ -1606,6 +1608,7 @@ out center 400;`;
           name,
           cuisine: t.cuisine ?? null,
           address: addr || null,
+          openingHours: t.opening_hours ?? null,
           lat,
           lon,
           priceLevel: null,
@@ -1619,37 +1622,14 @@ out center 400;`;
   return [];
 }
 
-function AsianTable({ cards }: { cards: PlaceCardData[] }) {
-  const [extra, setExtra] = useState<PlaceCardData[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-
-  useEffect(() => {
-    let cancelled = false;
-    fetchAlicanteAsian()
-      .then((r) => { if (!cancelled) setExtra(r); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, []);
-
-  // Merge: chat-provided cards (with hours/price) take priority over OSM duplicates.
-  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
-  const byKey = new Map<string, PlaceCardData>();
-  for (const c of cards) byKey.set(norm(c.name), c);
-  for (const c of extra) {
-    const k = norm(c.name);
-    if (!byKey.has(k)) byKey.set(k, c);
-  }
-  const ranked = Array.from(byKey.values())
-    .map((c) => ({
-      c,
-      d: c.lat && c.lon ? distKm(ALC_CENTER, { lat: c.lat, lon: c.lon }) : Number.POSITIVE_INFINITY,
-    }))
-    .sort((a, b) => a.d - b.d);
-
+function AsianTableInner({ ranked, loading, onClose }: {
+  ranked: { c: PlaceCardData; d: number }[];
+  loading: boolean;
+  onClose: () => void;
+}) {
   return (
     <div
-      className="relative -mx-4 sm:mx-0 min-h-[100dvh] text-slate-100 overflow-hidden"
+      className="fixed inset-0 z-[60] overflow-y-auto text-slate-100"
       style={{
         background:
           "linear-gradient(180deg, #020617 0%, #06111f 50%, #020617 100%)",
@@ -1661,14 +1641,15 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
         <div className="absolute bottom-0 right-0 h-[24rem] w-[24rem] rounded-full bg-violet-500/[0.05] blur-3xl" />
       </div>
 
-      <div className="relative mx-auto max-w-7xl px-4 pb-8 pt-5 md:px-6">
+      <div className="relative mx-auto max-w-5xl px-4 pb-10 pt-5 md:px-6">
         <header className="mb-5 flex items-center justify-between">
-          <a
-            href="/"
+          <button
+            type="button"
+            onClick={onClose}
             className="text-[11px] uppercase tracking-[0.25em] text-slate-500 transition hover:text-cyan-300"
           >
-            ← Inicio
-          </a>
+            ← Volver al chat
+          </button>
           <div className="flex items-center gap-2">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
@@ -1677,6 +1658,14 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
             <span className="text-[10px] uppercase tracking-[0.25em] text-emerald-300/80">
               Live · ALC
             </span>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Cerrar"
+              className="ml-2 rounded-full border border-slate-700 p-1.5 text-slate-400 hover:border-cyan-500/50 hover:text-cyan-300"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
         </header>
 
@@ -1691,23 +1680,32 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
             </span>
           </h1>
           <p className="mt-1 text-xs text-cyan-300/80 md:text-sm">
-            Listado completo de restaurantes japoneses, chinos, thai, vietnamitas y otras cocinas asiáticas en la ciudad, ordenados por cercanía a Puerta del Mar.
+            Listado completo · ordenados por cercanía a Puerta del Mar.
           </p>
         </div>
 
         <div className="rounded-2xl border border-white/[0.08] bg-[rgba(8,12,22,0.7)] p-4 backdrop-blur-xl">
           <p className="text-sm font-semibold text-slate-100">
-            Restaurantes asiáticos cercanos
+            {loading ? "Cargando…" : `${ranked.length} restaurantes`}
           </p>
           <p className="mb-3 text-[10px] uppercase tracking-[0.2em] text-cyan-400/70">
-            {loading ? "Cargando…" : `${ranked.length} restaurantes`} · clic para abrir en mapas
+            estado · horario · precio · distancia
           </p>
 
-          <ul className="mb-3 space-y-1">
+          <ul className="space-y-1">
             {ranked.map(({ c, d }, i) => {
-              const hasHours = Boolean(c.closesAt);
+              const status = getOpeningStatus(c.openingHours ?? undefined);
+              const closesAt =
+                status.status === "open" ? status.closesAt : c.closesAt;
+              const isOpen = status.status === "open" || (!c.openingHours && Boolean(c.closesAt));
+              const isClosed = status.status === "closed";
               const price = priceLabel(c.priceLevel);
-              const km = Number.isFinite(d) ? d.toFixed(1) : "—";
+              const meters = Number.isFinite(d) ? Math.round(d * 1000) : null;
+              const distLabel = meters == null
+                ? "—"
+                : meters >= 1000
+                  ? `${(meters / 1000).toFixed(1)} km`
+                  : `${meters} m`;
               const mapsHref = c.lat && c.lon
                 ? `https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lon}`
                 : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.name + " Alicante")}`;
@@ -1717,37 +1715,46 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
                     href={mapsHref}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center gap-2 px-2 py-1.5 text-[12px] text-slate-200 transition hover:text-cyan-300"
+                    className="flex items-start gap-2 px-2 py-2 text-[12px] text-slate-200 transition hover:text-cyan-300"
                   >
-                    <span className="w-5 text-right font-mono text-[11px] text-slate-500">
+                    <span className="w-5 pt-0.5 text-right font-mono text-[11px] text-slate-500">
                       {i + 1}
                     </span>
-                    <span className="text-base leading-none">{asianEmoji(c)}</span>
-                    <span className="flex-1 truncate">
-                      <span className="font-medium text-white">{c.name}</span>
-                      {c.cuisine && (
-                        <span className="ml-1 font-mono text-[10px] text-slate-500">
-                          ({c.cuisine})
-                        </span>
-                      )}
-                      <span className="mt-0.5 block truncate text-[10px] text-slate-500">
-                        {hasHours ? (
-                          <>
-                            <span className="text-emerald-400">● Abierto</span>
-                            <span> · cierra {c.closesAt}</span>
-                          </>
-                        ) : (
-                          "Horario no confirmado"
+                    <span className="pt-0.5 text-base leading-none">{asianEmoji(c)}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate">
+                        <span className="font-medium text-white">{c.name}</span>
+                        {c.cuisine && (
+                          <span className="ml-1 font-mono text-[10px] text-slate-500">
+                            ({c.cuisine})
+                          </span>
                         )}
-                        {c.priceLevel && <span> · {price.sym}</span>}
-                      </span>
-                    </span>
-                    <span className="shrink-0 text-right tabular-nums">
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px]">
+                        {isOpen ? (
+                          <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 font-semibold text-emerald-300">
+                            ● Abierto
+                          </span>
+                        ) : isClosed ? (
+                          <span className="rounded-full bg-rose-500/15 px-1.5 py-0.5 font-semibold text-rose-300">
+                            ● Cerrado
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-slate-500/15 px-1.5 py-0.5 font-semibold text-slate-400">
+                            Horario s/d
+                          </span>
+                        )}
+                        {closesAt && (
+                          <span className="text-slate-400">cierra {closesAt}</span>
+                        )}
+                        <span className="text-slate-400">
+                          {price.avg !== "s/d" ? `${price.avg}/persona` : "Precio s/d"}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="shrink-0 pt-0.5 text-right tabular-nums">
                       <span className="block font-mono text-[15px] font-semibold text-white leading-none">
-                        {km}
-                      </span>
-                      <span className="mt-0.5 block text-[9px] uppercase tracking-wide text-slate-500">
-                        km
+                        {distLabel}
                       </span>
                     </span>
                   </a>
@@ -1758,11 +1765,57 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
               <li className="text-xs text-slate-500">Sin datos disponibles.</li>
             )}
           </ul>
-
         </div>
       </div>
     </div>
   );
+}
+
+function AsianTable({ cards }: { cards: PlaceCardData[] }) {
+  const extraRef = useRef<PlaceCardData[]>([]);
+  const [extra, setExtra] = useState<PlaceCardData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchAlicanteAsian()
+      .then((r) => { if (!cancelled) { extraRef.current = r; setExtra(r); } })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  const byKey = new Map<string, PlaceCardData>();
+  for (const c of cards) byKey.set(norm(c.name), c);
+  for (const c of extra) {
+    const k = norm(c.name);
+    if (!byKey.has(k)) byKey.set(k, c);
+    else {
+      const prev = byKey.get(k)!;
+      byKey.set(k, { ...prev, openingHours: prev.openingHours ?? c.openingHours, lat: prev.lat ?? c.lat, lon: prev.lon ?? c.lon });
+    }
+  }
+  const ranked = Array.from(byKey.values())
+    .map((c) => ({
+      c,
+      d: c.lat && c.lon ? distKm(ALC_CENTER, { lat: c.lat, lon: c.lon }) : Number.POSITIVE_INFINITY,
+    }))
+    .sort((a, b) => a.d - b.d);
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="my-2 w-full rounded-2xl border border-cyan-400/30 bg-cyan-400/5 px-4 py-3 text-[12px] font-semibold uppercase tracking-[0.18em] text-cyan-300 transition hover:bg-cyan-400/10"
+      >
+        Reabrir dashboard asiático ({ranked.length})
+      </button>
+    );
+  }
+
+  return <AsianTableInner ranked={ranked} loading={loading} onClose={() => setOpen(false)} />;
 }
 
 
