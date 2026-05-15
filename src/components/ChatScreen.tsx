@@ -340,7 +340,8 @@ export function ChatScreen() {
       setError(e instanceof Error ? e.message : "Connection issue");
     } finally {
       setLoading(false);
-      inputRef.current?.focus();
+      // No re-enfocar el input automáticamente: en móvil abre el teclado
+      // y empuja la respuesta hacia arriba antes de poder leerla.
     }
   }
 
