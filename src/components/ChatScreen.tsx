@@ -1732,7 +1732,10 @@ function AsianTableInner({ ranked, loading, onClose }: {
               {ranked.map(({ c, d }, i) => {
                 const status = resolveOpeningStatus(c.openingHours ?? undefined);
                 const closesAt =
-                  status.status === "open" ? status.closesAt : c.closesAt ?? null;
+                  (status.status === "open" ? status.closesAt : null) ??
+                  getTodayClosingTime(c.openingHours ?? undefined) ??
+                  c.closesAt ??
+                  null;
                 // Trust parsed schedule first; only fall back to API openNow when schedule is unknown
                 const isOpen =
                   status.status === "open" ||
