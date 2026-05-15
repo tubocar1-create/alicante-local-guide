@@ -304,45 +304,89 @@ export const resolvePlaceByName = createServerFn({ method: "POST" })
     const apiKey = process.env.GOOGLE_PLACES_API_KEY;
     if (!apiKey) return { placeId: null as string | null };
 
-    // Try cache first by name match
+    // Haversine distance in meters
+    const distM = (la1: number, lo1: number, la2: number, lo2: number) => {
+      const R = 6371000;
+      const toRad = (x: number) => (x * Math.PI) / 180;
+      const dLat = toRad(la2 - la1);
+      const dLon = toRad(lo2 - lo1);
+      const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(toRad(la1)) * Math.cos(toRad(la2)) * Math.sin(dLon / 2) ** 2;
+      return 2 * R * Math.asin(Math.sqrt(a));
+    };
+
+    // Normalize a name for fuzzy comparison (strip accents, punctuation, lowercase)
+    const norm = (s: string) =>
+      s
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
+
+    const wantedNorm = norm(data.name);
+    const MAX_DIST_M = 200; // accept only places within 200m of the OSM coords
+
+    // 1) Try cache first — only accept if within distance threshold
     const { data: cached } = await supabaseAdmin
       .from("places_cache")
-      .select("google_place_id,name,lat,lng")
-      .ilike("name", data.name);
-    if (cached && cached.length) {
-      // Pick nearest if coords given
-      if (data.lat != null && data.lon != null) {
-        const best = cached
-          .filter((r) => r.lat != null && r.lng != null)
-          .map((r) => ({
-            id: r.google_place_id as string,
-            d:
-              Math.abs((r.lat as number) - (data.lat as number)) +
-              Math.abs((r.lng as number) - (data.lon as number)),
-          }))
-          .sort((a, b) => a.d - b.d)[0];
-        if (best) return { placeId: best.id };
-      }
-      return { placeId: cached[0].google_place_id as string };
+      .select("google_place_id,name,lat,lng");
+    if (cached && cached.length && data.lat != null && data.lon != null) {
+      const candidates = cached
+        .filter(
+          (r) =>
+            r.lat != null &&
+            r.lng != null &&
+            norm(r.name as string) === wantedNorm,
+        )
+        .map((r) => ({
+          id: r.google_place_id as string,
+          d: distM(
+            data.lat as number,
+            data.lon as number,
+            r.lat as number,
+            r.lng as number,
+          ),
+        }))
+        .sort((a, b) => a.d - b.d);
+      const hit = candidates[0];
+      if (hit && hit.d <= MAX_DIST_M) return { placeId: hit.id };
     }
 
+    // 2) Ask Google Places
     const places = await searchGoogle(data.name, apiKey);
     if (!places.length) return { placeId: null };
 
-    // Pick the result closest to provided coords (if any), otherwise the first
-    let pick: GPlace | undefined = places[0];
+    // Pick the closest to the OSM coords with a name that matches
+    let pick: GPlace | null = null;
+    let pickDist = Infinity;
     if (data.lat != null && data.lon != null) {
-      pick = places
-        .filter((p) => p.location)
-        .map((p) => ({
-          p,
-          d:
-            Math.abs((p.location!.latitude) - (data.lat as number)) +
-            Math.abs((p.location!.longitude) - (data.lon as number)),
-        }))
-        .sort((a, b) => a.d - b.d)[0]?.p ?? places[0];
+      for (const p of places) {
+        if (!p.location) continue;
+        const d = distM(
+          data.lat as number,
+          data.lon as number,
+          p.location.latitude,
+          p.location.longitude,
+        );
+        const nameOk =
+          !p.displayName?.text ||
+          norm(p.displayName.text).includes(wantedNorm) ||
+          wantedNorm.includes(norm(p.displayName.text));
+        if (nameOk && d < pickDist) {
+          pick = p;
+          pickDist = d;
+        }
+      }
+    } else {
+      pick = places[0];
     }
-    if (!pick) return { placeId: null };
+
+    // Reject if too far — likely a different restaurant
+    if (!pick || (data.lat != null && pickDist > MAX_DIST_M)) {
+      return { placeId: null };
+    }
 
     const row = toRow(pick, "lookup");
     if (row) {
