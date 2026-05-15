@@ -188,8 +188,9 @@ function RestaurantDashboard() {
 
             {/* Acciones */}
             <section className="flex flex-wrap gap-2 pt-2">
-              <Link
-                to="/business/qr"
+              <button
+                type="button"
+                onClick={() => setQrOpen(true)}
                 className="flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl bg-gradient-to-r from-emerald-400 to-cyan-400 px-4 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-500/20 hover:from-emerald-300 hover:to-cyan-300"
               >
                 <span className="flex items-center gap-2">
@@ -197,7 +198,7 @@ function RestaurantDashboard() {
                   ¡VAMOS!
                 </span>
                 <span className="text-[10px] font-medium opacity-80">Te emitimos una invitación</span>
-              </Link>
+              </button>
               {place.lat != null && place.lng != null && (
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${place.lat},${place.lng}`}
@@ -218,6 +219,14 @@ function RestaurantDashboard() {
           </div>
         )}
       </main>
+
+      {qrOpen && place && (
+        <ReferralDialog
+          placeId={place.google_place_id ?? placeId}
+          placeName={place.name ?? "Restaurante"}
+          onClose={() => setQrOpen(false)}
+        />
+      )}
     </div>
   );
 }
