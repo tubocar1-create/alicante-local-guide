@@ -80,6 +80,7 @@ type GPlace = {
   userRatingCount?: number;
   nationalPhoneNumber?: string;
   websiteUri?: string;
+  photos?: Array<{ name: string; widthPx?: number; heightPx?: number }>;
 };
 
 async function searchGoogle(textQuery: string, apiKey: string): Promise<GPlace[]> {
