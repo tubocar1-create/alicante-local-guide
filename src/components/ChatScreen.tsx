@@ -19,7 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { findPlaceOverride } from "@/data/places";
 import heroImg from "@/assets/alicante-hero.jpg";
 import skylineImg from "@/assets/alicante-skyline.png";
-import vamosLogoImg from "@/assets/logo_vamos_d.png";
+import portadaImg from "@/assets/alicante-portada.jpg";
 import tileComer from "@/assets/tile_comer.png";
 import tileDormir from "@/assets/tile_dormir.png";
 import tilePlaya from "@/assets/tile_playa.png";
@@ -423,11 +423,11 @@ export function ChatScreen() {
       <div ref={scrollRef} className={["relative flex-1 px-4 pt-3 pb-5", isWelcome ? "overflow-hidden" : "overflow-y-auto"].join(" ")}>
         <div className="mx-auto flex max-w-2xl flex-col gap-3">
           {isWelcome && (
-            <div className="mx-auto mb-1 w-full max-w-[180px] overflow-hidden rounded-xl">
+            <div className="mx-auto mb-1 w-full max-w-[320px] overflow-hidden rounded-xl">
               <img
-                src={vamosLogoImg}
-                alt="Vamos Alicante"
-                className="h-auto w-full object-contain rounded-xl"
+                src={portadaImg}
+                alt="Alicante"
+                className="h-auto w-full object-cover rounded-xl"
                 loading="eager"
               />
             </div>
