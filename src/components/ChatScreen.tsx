@@ -53,6 +53,7 @@ const TILE_SUBTITLES: Record<string, string> = {
   "Transporte público": "Bus, TRAM, taxis",
   "Mapa": "Explora la ciudad",
   "Servicios sanitarios": "Farmacias y hospitales",
+  "Eventos": "Conciertos, ferias y agenda",
 };
 
 const TILE_ICONS: Record<string, LucideIcon> = {
@@ -64,6 +65,7 @@ const TILE_ICONS: Record<string, LucideIcon> = {
   "Transporte público": Bus,
   "Mapa": MapPin,
   "Servicios sanitarios": Stethoscope,
+  "Eventos": CalendarDays,
 };
 
 type Msg = { role: "user" | "assistant"; content: string };
