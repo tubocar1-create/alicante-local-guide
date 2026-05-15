@@ -1657,20 +1657,29 @@ function AssistantContent({ content }: { content: string }) {
     ? parts
     : parseRecommendationListCards(cleaned) ?? parseOpenStatusCards(cleaned) ?? [{ type: "text", value: cleaned }];
 
+  const cardData = renderedParts
+    .filter((p): p is Extract<AssistantPart, { type: "card" }> => p.type === "card")
+    .map((p) => p.data);
+  const asianMode =
+    cardData.length >= 2 && cardData.every((c) => isAsianCard(c));
+  let tableInjected = false;
+
   return (
     <div className="space-y-2 [&>p]:m-0 [&_strong]:font-semibold">
       {placeName && <PlaceImage name={placeName} />}
-      {renderedParts.map((p, i) =>
-        p.type === "card" ? (
-          <PlaceCard key={i} data={p.data} />
-        ) : p.type === "busopt" ? (
-          <BusOptionCard key={i} data={p.data} />
-        ) : p.type === "busstop" ? (
-          <BusStopCard key={i} data={p.data} />
-        ) : (
-          <MarkdownText key={i} text={p.value.replace(/^\n+|\n+$/g, "")} />
-        ),
-      )}
+      {renderedParts.map((p, i) => {
+        if (p.type === "card") {
+          if (asianMode) {
+            if (tableInjected) return null;
+            tableInjected = true;
+            return <AsianTable key={i} cards={cardData} />;
+          }
+          return <PlaceCard key={i} data={p.data} />;
+        }
+        if (p.type === "busopt") return <BusOptionCard key={i} data={p.data} />;
+        if (p.type === "busstop") return <BusStopCard key={i} data={p.data} />;
+        return <MarkdownText key={i} text={p.value.replace(/^\n+|\n+$/g, "")} />;
+      })}
     </div>
   );
 }
