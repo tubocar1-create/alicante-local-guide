@@ -270,7 +270,7 @@ function RestaurantDashboard() {
               <button
                 type="button"
                 onClick={() => setBookingOpen(true)}
-                className="flex-1 rounded-xl bg-emerald-500 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-emerald-400"
+                className="flex flex-1 items-center justify-center rounded-xl bg-emerald-500 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-emerald-400"
               >
                 Reservar
               </button>
