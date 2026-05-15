@@ -2330,7 +2330,514 @@ function DrinksTable({ cards }: { cards: PlaceCardData[] }) {
 }
 
 
-function AssistantContent({ content, userPrompt = "" }: { content: string; userPrompt?: string }) {
+// ============= Generic category dashboard (typical, rice_fish, italian) =============
+
+type CategoryTheme = {
+  bgGradient: string;
+  glow1: string;
+  glow2: string;
+  accentText: string;
+  borderHover: string;
+  liveText: string;
+  liveDot: string;
+  borderBtn: string;
+  eyebrow: string;
+  eyebrowText: string;
+  title: string;
+  titleHighlight: string;
+  titleGradient: string;
+  subtitle: string;
+  cardBg: string;
+  cardBorder: string;
+  countText: string;
+  hint: string;
+  thText: string;
+  rowText: string;
+  hoverName: string;
+  closesText: string;
+  priceText: string;
+  distText: string;
+  emptyText: string;
+  reopenLabel: string;
+  reopenCls: string;
+  priceHeader: string;
+  rowLabel: string;
+};
+
+const CATEGORY_THEMES: Record<"typical" | "rice_fish" | "italian", CategoryTheme & {
+  emoji: (c: PlaceCardData) => string;
+  guessPrice: (c: PlaceCardData) => string;
+  title1: string;
+  title2: string;
+  subtitleText: string;
+  eyebrowLabel: string;
+  rowLabelText: string;
+  priceHeaderText: string;
+}> = {
+  typical: {
+    bgGradient: "linear-gradient(180deg, #1a1410 0%, #2a1f17 50%, #100b07 100%)",
+    glow1: "bg-orange-500/[0.07]",
+    glow2: "bg-yellow-500/[0.05]",
+    accentText: "text-orange-200/70",
+    borderHover: "hover:text-orange-300",
+    liveText: "text-orange-300/80",
+    liveDot: "bg-orange-400",
+    borderBtn: "border-orange-900/60 text-orange-200/70 hover:border-orange-500/50 hover:text-orange-300",
+    eyebrow: "text-orange-400/80",
+    eyebrowText: "Dashboard tradición",
+    title: "text-orange-50",
+    titleHighlight: "Cocina típica",
+    titleGradient: "from-orange-300 via-white to-yellow-300",
+    subtitle: "text-orange-200/80",
+    cardBg: "bg-[rgba(22,14,8,0.7)]",
+    cardBorder: "border-orange-100/[0.08]",
+    countText: "text-orange-50",
+    hint: "text-orange-400/70",
+    thText: "text-orange-200/50",
+    rowText: "text-orange-50",
+    hoverName: "text-orange-50 hover:text-orange-300",
+    closesText: "text-orange-100/80",
+    priceText: "text-orange-50",
+    distText: "text-orange-50",
+    emptyText: "text-orange-200/50",
+    reopenLabel: "Reabrir dashboard típico",
+    reopenCls: "border-orange-400/30 bg-orange-400/5 text-orange-300 hover:bg-orange-400/10",
+    priceHeader: "€/pers",
+    rowLabel: "Restaurante",
+    emoji: (c) => {
+      const hay = `${c.cuisine ?? ""} ${c.name ?? ""}`.toLowerCase();
+      if (/tapa/.test(hay)) return "🥘";
+      if (/tasca|taberna/.test(hay)) return "🍷";
+      return "🥘";
+    },
+    guessPrice: () => "~20 €",
+    title1: "Cocina típica",
+    title2: "en Alicante",
+    subtitleText: "Tradicional · ordenados por cercanía a Puerta del Mar.",
+    eyebrowLabel: "Dashboard tradición",
+    rowLabelText: "Restaurante",
+    priceHeaderText: "€/pers",
+  },
+  rice_fish: {
+    bgGradient: "linear-gradient(180deg, #04101a 0%, #0a1f2e 50%, #020a14 100%)",
+    glow1: "bg-sky-500/[0.07]",
+    glow2: "bg-teal-500/[0.05]",
+    accentText: "text-sky-200/70",
+    borderHover: "hover:text-sky-300",
+    liveText: "text-sky-300/80",
+    liveDot: "bg-sky-400",
+    borderBtn: "border-sky-900/60 text-sky-200/70 hover:border-sky-500/50 hover:text-sky-300",
+    eyebrow: "text-sky-400/80",
+    eyebrowText: "Dashboard marinero",
+    title: "text-sky-50",
+    titleHighlight: "Arroces y pescado",
+    titleGradient: "from-sky-300 via-white to-teal-300",
+    subtitle: "text-sky-200/80",
+    cardBg: "bg-[rgba(6,16,26,0.7)]",
+    cardBorder: "border-sky-100/[0.08]",
+    countText: "text-sky-50",
+    hint: "text-sky-400/70",
+    thText: "text-sky-200/50",
+    rowText: "text-sky-50",
+    hoverName: "text-sky-50 hover:text-sky-300",
+    closesText: "text-sky-100/80",
+    priceText: "text-sky-50",
+    distText: "text-sky-50",
+    emptyText: "text-sky-200/50",
+    reopenLabel: "Reabrir dashboard de arroces",
+    reopenCls: "border-sky-400/30 bg-sky-400/5 text-sky-300 hover:bg-sky-400/10",
+    priceHeader: "€/pers",
+    rowLabel: "Restaurante",
+    emoji: (c) => {
+      const hay = `${c.cuisine ?? ""} ${c.name ?? ""}`.toLowerCase();
+      if (/paella|arroz|arrocer/.test(hay)) return "🥘";
+      if (/marisc/.test(hay)) return "🦐";
+      if (/pescado|seafood|fish/.test(hay)) return "🐟";
+      return "🍤";
+    },
+    guessPrice: (c) => {
+      const hay = `${c.cuisine ?? ""} ${c.name ?? ""}`.toLowerCase();
+      if (/marisc/.test(hay)) return "~35 €";
+      if (/arroz|paella/.test(hay)) return "~22 €";
+      return "~25 €";
+    },
+    title1: "Arroces y pescado",
+    title2: "en Alicante",
+    subtitleText: "Paella, marisco y pescado fresco · cercanía a Puerta del Mar.",
+    eyebrowLabel: "Dashboard marinero",
+    rowLabelText: "Restaurante",
+    priceHeaderText: "€/pers",
+  },
+  italian: {
+    bgGradient: "linear-gradient(180deg, #0a1410 0%, #14271e 50%, #050d09 100%)",
+    glow1: "bg-emerald-500/[0.07]",
+    glow2: "bg-red-500/[0.06]",
+    accentText: "text-emerald-200/70",
+    borderHover: "hover:text-emerald-300",
+    liveText: "text-emerald-300/80",
+    liveDot: "bg-emerald-400",
+    borderBtn: "border-emerald-900/60 text-emerald-200/70 hover:border-emerald-500/50 hover:text-emerald-300",
+    eyebrow: "text-emerald-400/80",
+    eyebrowText: "Dashboard italiano",
+    title: "text-emerald-50",
+    titleHighlight: "Italiano",
+    titleGradient: "from-emerald-300 via-white to-red-300",
+    subtitle: "text-emerald-200/80",
+    cardBg: "bg-[rgba(10,20,16,0.7)]",
+    cardBorder: "border-emerald-100/[0.08]",
+    countText: "text-emerald-50",
+    hint: "text-emerald-400/70",
+    thText: "text-emerald-200/50",
+    rowText: "text-emerald-50",
+    hoverName: "text-emerald-50 hover:text-emerald-300",
+    closesText: "text-emerald-100/80",
+    priceText: "text-emerald-50",
+    distText: "text-emerald-50",
+    emptyText: "text-emerald-200/50",
+    reopenLabel: "Reabrir dashboard italiano",
+    reopenCls: "border-emerald-400/30 bg-emerald-400/5 text-emerald-300 hover:bg-emerald-400/10",
+    priceHeader: "€/pers",
+    rowLabel: "Restaurante",
+    emoji: (c) => {
+      const hay = `${c.cuisine ?? ""} ${c.name ?? ""}`.toLowerCase();
+      if (/pizza/.test(hay)) return "🍕";
+      if (/pasta|spagh|carbon/.test(hay)) return "🍝";
+      if (/gelat|helad/.test(hay)) return "🍨";
+      return "🍕";
+    },
+    guessPrice: (c) => {
+      const hay = `${c.cuisine ?? ""} ${c.name ?? ""}`.toLowerCase();
+      if (/pizza/.test(hay)) return "~14 €";
+      return "~18 €";
+    },
+    title1: "Cocina italiana",
+    title2: "en Alicante",
+    subtitleText: "Pizza, pasta y trattorias · ordenados por cercanía a Puerta del Mar.",
+    eyebrowLabel: "Dashboard italiano",
+    rowLabelText: "Restaurante",
+    priceHeaderText: "€/pers",
+  },
+};
+
+function CategoryTableInner({
+  ranked,
+  loading,
+  onClose,
+  theme,
+}: {
+  ranked: { c: PlaceCardData; d: number }[];
+  loading: boolean;
+  onClose: () => void;
+  theme: (typeof CATEGORY_THEMES)[keyof typeof CATEGORY_THEMES];
+}) {
+  const navigate = useNavigate();
+  const resolvePlace = useServerFn(resolvePlaceByName);
+  const [resolving, setResolving] = useState<string | null>(null);
+
+  const openDashboard = async (c: PlaceCardData) => {
+    if (c.placeId) {
+      markRestaurantReturn();
+      navigate({ to: "/restaurants/$placeId", params: { placeId: c.placeId } });
+      return;
+    }
+    if (resolving) return;
+    setResolving(c.name);
+    try {
+      const { placeId } = await resolvePlace({
+        data: { name: c.name, lat: c.lat ?? null, lon: c.lon ?? null },
+      });
+      if (placeId) {
+        markRestaurantReturn();
+        navigate({ to: "/restaurants/$placeId", params: { placeId } });
+      } else {
+        const href =
+          c.lat && c.lon
+            ? `https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lon}`
+            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.name + " Alicante")}`;
+        window.open(href, "_blank", "noreferrer");
+      }
+    } catch (e) {
+      console.error("resolvePlaceByName failed", e);
+    } finally {
+      setResolving(null);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[60] overflow-y-auto"
+      style={{ background: theme.bgGradient }}
+    >
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className={`absolute -top-40 left-1/2 h-[28rem] w-[28rem] -translate-x-1/2 rounded-full ${theme.glow1} blur-3xl`} />
+        <div className={`absolute bottom-0 right-0 h-[24rem] w-[24rem] rounded-full ${theme.glow2} blur-3xl`} />
+      </div>
+
+      <div className="relative mx-auto max-w-5xl px-4 pb-10 pt-5 md:px-6">
+        <header className="mb-5 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={onClose}
+            className={`text-[11px] uppercase tracking-[0.25em] ${theme.accentText} transition ${theme.borderHover}`}
+          >
+            ← Volver al chat
+          </button>
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className={`absolute inline-flex h-full w-full animate-ping rounded-full ${theme.liveDot} opacity-60`} />
+              <span className={`relative inline-flex h-2 w-2 rounded-full ${theme.liveDot}`} />
+            </span>
+            <span className={`text-[10px] uppercase tracking-[0.25em] ${theme.liveText}`}>
+              Live · ALC
+            </span>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Cerrar"
+              className={`ml-2 rounded-full border p-1.5 ${theme.borderBtn}`}
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </header>
+
+        <div className="mb-5">
+          <p className={`text-[10px] uppercase tracking-[0.3em] ${theme.eyebrow}`}>
+            {theme.eyebrowLabel}
+          </p>
+          <h1 className={`mt-1 font-display text-2xl font-bold tracking-tight ${theme.title} md:text-4xl`}>
+            {theme.title1}{" "}
+            <span className={`bg-gradient-to-r ${theme.titleGradient} bg-clip-text text-transparent`}>
+              {theme.title2}
+            </span>
+          </h1>
+          <p className={`mt-1 text-xs ${theme.subtitle} md:text-sm`}>
+            {theme.subtitleText}
+          </p>
+        </div>
+
+        <div className={`rounded-2xl border ${theme.cardBorder} ${theme.cardBg} p-2 backdrop-blur-xl md:p-4`}>
+          <div className="mb-2 flex items-baseline justify-between gap-2">
+            <p className={`text-[12px] font-semibold ${theme.countText}`}>
+              {loading ? "Cargando…" : `${ranked.length} sitios`}
+            </p>
+            <p className={`text-[9px] uppercase tracking-[0.18em] ${theme.hint}`}>
+              estado · cierre · precio · dist.
+            </p>
+          </div>
+
+          <table className={`w-full table-fixed border-separate border-spacing-y-0.5 text-left text-[11px] ${theme.rowText}`}>
+            <colgroup>
+              <col />
+              <col className="w-[58px]" />
+              <col className="w-[42px]" />
+              <col className="w-[46px]" />
+              <col className="w-[54px]" />
+            </colgroup>
+            <thead>
+              <tr className={`text-[9px] uppercase tracking-[0.12em] ${theme.thText}`}>
+                <th className="px-1 py-1 font-medium">{theme.rowLabelText}</th>
+                <th className="px-1 py-1 font-medium">Estado</th>
+                <th className="px-1 py-1 font-medium">Cierra</th>
+                <th className="px-1 py-1 text-right font-medium">{theme.priceHeaderText}</th>
+                <th className="px-1 py-1 text-right font-medium">Dist.</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ranked.map(({ c, d }, i) => {
+                const status = resolveOpeningStatus(c.openingHours ?? undefined);
+                const closesAt =
+                  (status.status === "open" ? status.closesAt : null) ??
+                  getTodayClosingTime(c.openingHours ?? undefined) ??
+                  c.closesAt ??
+                  null;
+                const isOpen =
+                  status.status === "open" ||
+                  (status.status === "unknown" && c.openNow === true);
+                const isClosed =
+                  status.status === "closed" ||
+                  (status.status === "unknown" && c.openNow === false);
+                const price = priceLabel(c.priceLevel);
+                const priceFromRange =
+                  c.priceRangeMin && c.priceRangeMax
+                    ? `${c.priceRangeMin}–${c.priceRangeMax} €`
+                    : c.priceRangeMin
+                      ? `~${c.priceRangeMin} €`
+                      : null;
+                const priceAvg =
+                  priceFromRange ??
+                  (price.avg !== "s/d" ? price.avg : theme.guessPrice(c));
+                const priceShort = priceAvg.replace(/[~\s€]/g, "").replace("–", "-") + "€";
+                const meters = Number.isFinite(d) ? Math.round(d * 1000) : null;
+                const distLabel =
+                  meters == null
+                    ? "—"
+                    : meters >= 1000
+                      ? `${(meters / 1000).toFixed(1)}km`
+                      : `${meters}m`;
+
+                const nameNode = (
+                  <span className={`flex items-center gap-1 ${theme.hoverName}`}>
+                    <span className="text-[13px] leading-none">{theme.emoji(c)}</span>
+                    <span className="min-w-0 truncate text-[11px] font-medium">
+                      {c.name}
+                    </span>
+                  </span>
+                );
+                return (
+                  <tr key={i} className="bg-white/[0.02]">
+                    <td className="rounded-l-md px-1.5 py-1 align-middle">
+                      {c.placeId ? (
+                        <Link
+                          to="/restaurants/$placeId"
+                          params={{ placeId: c.placeId }}
+                          onClick={markRestaurantReturn}
+                          className="block"
+                        >
+                          {nameNode}
+                        </Link>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => openDashboard(c)}
+                          disabled={resolving === c.name}
+                          className="block w-full text-left disabled:opacity-60"
+                        >
+                          {nameNode}
+                        </button>
+                      )}
+                    </td>
+                    <td className="px-1 py-1 align-middle">
+                      {isOpen ? (
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500/15 px-1 py-0.5 text-[9px] font-semibold text-emerald-300">
+                          ● Abre
+                        </span>
+                      ) : isClosed ? (
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-rose-500/15 px-1 py-0.5 text-[9px] font-semibold text-rose-300">
+                          ● Cerr
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-slate-500/15 px-1 py-0.5 text-[9px] font-semibold text-slate-400">
+                          s/d
+                        </span>
+                      )}
+                    </td>
+                    <td className={`px-1 py-1 text-center align-middle font-mono text-[10px] ${theme.closesText}`}>
+                      {closesAt ?? "—"}
+                    </td>
+                    <td className={`px-1 py-1 text-right align-middle font-mono text-[10px] ${theme.priceText}`}>
+                      {priceShort}
+                    </td>
+                    <td className={`rounded-r-md px-1 py-1 text-right align-middle font-mono text-[11px] font-semibold tabular-nums ${theme.distText}`}>
+                      {distLabel}
+                    </td>
+                  </tr>
+                );
+              })}
+              {!loading && ranked.length === 0 && (
+                <tr>
+                  <td colSpan={5} className={`px-2 py-4 text-center text-xs ${theme.emptyText}`}>
+                    Sin datos disponibles.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CategoryTable({
+  cards,
+  category,
+  fetcher,
+}: {
+  cards: PlaceCardData[];
+  category: "typical" | "rice_fish" | "italian";
+  fetcher: () => Promise<{ places: Array<{ google_place_id: string; name: string; cuisine: string | null; address: string | null; opening_hours_text: string | null; lat: number | null; lng: number | null; price_level: string | null; price_range_min: number | null; price_range_max: number | null; rating: number | null; open_now: boolean | null }> }>;
+}) {
+  const [extra, setExtra] = useState<PlaceCardData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(true);
+  const theme = CATEGORY_THEMES[category];
+
+  useEffect(() => {
+    let cancelled = false;
+    fetcher()
+      .then((res) => {
+        if (cancelled) return;
+        const mapped: PlaceCardData[] = (res.places ?? []).map((p) => ({
+          placeId: p.google_place_id,
+          name: p.name,
+          cuisine: p.cuisine,
+          address: p.address,
+          openingHours: p.opening_hours_text,
+          lat: p.lat ?? undefined,
+          lon: p.lng ?? undefined,
+          priceLevel: p.price_level,
+          priceRangeMin: p.price_range_min,
+          priceRangeMax: p.price_range_max,
+          rating: p.rating,
+          openNow: p.open_now,
+        }));
+        setExtra(mapped);
+      })
+      .catch((e) => console.error(`get ${category} places failed`, e))
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [fetcher, category]);
+
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  const byKey = new Map<string, PlaceCardData>();
+  for (const c of cards) byKey.set(norm(c.name), c);
+  for (const c of extra) {
+    const k = norm(c.name);
+    if (!byKey.has(k)) byKey.set(k, c);
+    else {
+      const prev = byKey.get(k)!;
+      byKey.set(k, { ...prev, openingHours: prev.openingHours ?? c.openingHours, lat: prev.lat ?? c.lat, lon: prev.lon ?? c.lon });
+    }
+  }
+  const ranked = Array.from(byKey.values())
+    .map((c) => ({
+      c,
+      d: c.lat && c.lon ? distKm(ALC_CENTER, { lat: c.lat, lon: c.lon }) : Number.POSITIVE_INFINITY,
+    }))
+    .filter((r) => r.d <= 10)
+    .sort((a, b) => a.d - b.d);
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className={`my-2 w-full rounded-2xl border px-4 py-3 text-[12px] font-semibold uppercase tracking-[0.18em] transition ${theme.reopenCls}`}
+      >
+        {theme.reopenLabel} ({ranked.length})
+      </button>
+    );
+  }
+
+  return <CategoryTableInner ranked={ranked} loading={loading} onClose={() => setOpen(false)} theme={theme} />;
+}
+
+function TypicalTable({ cards }: { cards: PlaceCardData[] }) {
+  const fetcher = useServerFn(getTypicalPlaces);
+  return <CategoryTable cards={cards} category="typical" fetcher={fetcher} />;
+}
+function RiceFishTable({ cards }: { cards: PlaceCardData[] }) {
+  const fetcher = useServerFn(getRiceFishPlaces);
+  return <CategoryTable cards={cards} category="rice_fish" fetcher={fetcher} />;
+}
+function ItalianTable({ cards }: { cards: PlaceCardData[] }) {
+  const fetcher = useServerFn(getItalianPlaces);
+  return <CategoryTable cards={cards} category="italian" fetcher={fetcher} />;
+}
+
+
+
   const match = content.match(PLACE_RE);
   const placeName = match?.[1]?.trim();
   const cleaned = content.replace(/\n?\[\[place:[^\]]+\]\]\n?/i, "").trim();
