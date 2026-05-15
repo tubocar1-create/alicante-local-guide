@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { getOpeningStatus } from "@/lib/opening-hours";
+import { resolveOpeningStatus } from "@/lib/opening-hours";
 
 function formatMadridTime(date: Date) {
   const parts = new Intl.DateTimeFormat("en-GB", {
@@ -76,10 +76,9 @@ export default function OpeningHoursCard({
   const [expanded, setExpanded] = useState(false);
   const { h: liveH, m: liveM } = useLiveMadridTime();
 
-  const status = useMemo(
-    () => getOpeningStatus(rawOpeningHours ?? undefined),
-    [rawOpeningHours],
-  );
+  const scheduleText = rawOpeningHours ?? openingHoursText ?? undefined;
+
+  const status = useMemo(() => resolveOpeningStatus(scheduleText), [scheduleText]);
 
   const lines = useMemo(
     () => (openingHoursText ? parseLines(openingHoursText) : []),
@@ -120,6 +119,16 @@ export default function OpeningHoursCard({
     [todayRanges, nowMin],
   );
 
+  const nextRange = useMemo(
+    () => todayRanges.find((r) => nowMin < r.start) ?? null,
+    [todayRanges, nowMin],
+  );
+
+  const formatMinutes = (minutes: number) => {
+    const safe = ((minutes % 1440) + 1440) % 1440;
+    return `${String(Math.floor(safe / 60)).padStart(2, "0")}:${String(safe % 60).padStart(2, "0")}`;
+  };
+
   // Determine effective open state: prefer parsed schedule, then status parser, then API hint
   const isOpen: boolean | null =
     todayRanges.length > 0
@@ -132,8 +141,7 @@ export default function OpeningHoursCard({
 
   const closesAt = useMemo(() => {
     if (activeRange) {
-      const safe = activeRange.end % 1440;
-      return `${String(Math.floor(safe / 60)).padStart(2, "0")}:${String(safe % 60).padStart(2, "0")}`;
+      return formatMinutes(activeRange.end);
     }
     if (status.status === "open") return status.closesAt;
     return null;
@@ -147,7 +155,9 @@ export default function OpeningHoursCard({
       ? `Cierra a las ${closesAt}`
       : isOpen === false
       ? lines[today]?.hours
-        ? `Hoy: ${lines[today].hours}`
+        ? nextRange
+          ? `Abre ${formatMinutes(nextRange.start)} · cierra ${formatMinutes(nextRange.end)}`
+          : `Hoy: ${lines[today].hours}`
         : "Consulta horarios"
       : "Consulta horarios";
 
