@@ -250,13 +250,19 @@ function RestaurantDashboard() {
         />
       )}
 
-      {lightboxIdx !== null && photos.length > 0 && (
-        <PhotoLightbox
-          photos={photos}
-          index={lightboxIdx}
-          alt={place?.name ?? "Foto"}
-          onClose={() => setLightboxIdx(null)}
-          onIndexChange={setLightboxIdx}
+      {bookingOpen && place && (
+        <BookingDialog
+          listing={{
+            id: place.google_place_id ?? placeId,
+            name: place.name ?? "Restaurante",
+            lat: place.lat ?? 0,
+            lon: place.lng ?? 0,
+            kind: "restaurant",
+            cuisine: place.cuisine ?? undefined,
+            address: place.address ?? undefined,
+            tags: {},
+          }}
+          onClose={() => setBookingOpen(false)}
         />
       )}
     </div>
