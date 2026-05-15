@@ -473,9 +473,10 @@ function DestinationDashboard() {
         {/* 3. Vuelos disponibles */}
         <Card index={3} title="Vuelos disponibles" subtitle="Ordenados por fecha y hora">
           <div className="overflow-hidden rounded-xl border border-slate-800">
-            <div className="grid grid-cols-[auto_auto_auto_auto_auto_auto] gap-x-2 border-b border-slate-800 bg-slate-950/60 px-2 py-1.5 text-[9px] uppercase tracking-wider text-slate-500">
+            <div className="grid grid-cols-[auto_auto_auto_auto_auto_auto_auto] gap-x-2 border-b border-slate-800 bg-slate-950/60 px-2 py-1.5 text-[9px] uppercase tracking-wider text-slate-500">
               <span>Fecha</span>
               <span>Aerolínea</span>
+              <span>Vuelo</span>
               <span>Ruta</span>
               <span>Salida</span>
               <span>Llegada</span>
@@ -495,7 +496,7 @@ function DestinationDashboard() {
                 return (
                   <div
                     key={i}
-                    className="grid grid-cols-[auto_auto_auto_auto_auto_auto] items-center gap-x-2 px-2 py-1.5 text-[11px]"
+                    className="grid grid-cols-[auto_auto_auto_auto_auto_auto_auto] items-center gap-x-2 px-2 py-1.5 text-[11px]"
                   >
                     <span className="text-slate-300">{day}</span>
                     <span
@@ -507,6 +508,7 @@ function DestinationDashboard() {
                     >
                       {airlineName(ac).split(" ")[0]}
                     </span>
+                    <span className="font-mono text-[10px] text-slate-300">{f.numVuelo}</span>
                     <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] font-bold text-cyan-300">
                       {isArrival ? `${code} → ALC` : `ALC → ${code}`}
                     </span>
