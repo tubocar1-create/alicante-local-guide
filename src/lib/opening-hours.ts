@@ -235,6 +235,72 @@ export function resolveOpeningStatus(raw?: string | null, date = new Date()): Op
   return getOpeningStatusFromSpanishText(raw, date);
 }
 
+/**
+ * Returns today's (Madrid TZ) closing time as "HH:mm" if the schedule has any
+ * structured ranges for today — independent of whether the place is currently
+ * open or closed. Picks the latest end time of today's ranges. Falls back to
+ * an overnight range from yesterday that's still active.
+ */
+export function getTodayClosingTime(raw?: string | null, date = new Date()): string | null {
+  if (!raw?.trim()) return null;
+  const { day, minutes } = madridNow(date);
+  const yesterday = previousDay(day);
+
+  // Collect today's ranges from either format
+  const todayEnds: number[] = [];
+
+  if (SPANISH_OPENING_DAY_RE.test(raw)) {
+    // Spanish " · " format
+    const segments = raw.split(/\s+·\s+/);
+    let currentDay: DayKey | null = null;
+    const perDay: Partial<Record<DayKey, { start: number; end: number }[]>> = {};
+    for (const seg of segments) {
+      const labelMatch = seg.match(/^([A-Za-zÁÉÍÓÚÑáéíóúñ]+)\s*:\s*(.*)$/);
+      let body = seg;
+      if (labelMatch) {
+        const key = SPANISH_DAY_TO_KEY[labelMatch[1].toLowerCase()];
+        if (key) {
+          currentDay = key;
+          body = labelMatch[2];
+        }
+      }
+      if (!currentDay) continue;
+      const ranges = [...body.matchAll(/(\d{1,2}):(\d{2})\s*[–-]\s*(\d{1,2}):(\d{2})/g)];
+      for (const r of ranges) {
+        const start = Number(r[1]) * 60 + Number(r[2]);
+        const end = Number(r[3]) * 60 + Number(r[4]);
+        (perDay[currentDay] ??= []).push({ start, end });
+      }
+    }
+    for (const r of perDay[day] ?? []) {
+      todayEnds.push(r.end <= r.start ? r.end + 1440 : r.end);
+    }
+    for (const r of perDay[yesterday] ?? []) {
+      if (r.end <= r.start && minutes < r.end) todayEnds.push(r.end);
+    }
+  } else {
+    // OSM opening_hours
+    const clean = raw.replace(/"[^"]*"/g, "").trim();
+    if (/24\s*\/\s*7/.test(clean)) return "24:00";
+    for (const rule of clean.split(";").map((r) => r.trim()).filter(Boolean)) {
+      const ranges = parseRanges(rule);
+      if (appliesToDay(rule, day)) {
+        for (const range of ranges) {
+          todayEnds.push(range.end <= range.start ? range.end + 1440 : range.end);
+        }
+      }
+      if (appliesToDay(rule, yesterday)) {
+        for (const range of ranges) {
+          if (range.end <= range.start && minutes < range.end) todayEnds.push(range.end);
+        }
+      }
+    }
+  }
+
+  if (todayEnds.length === 0) return null;
+  return minutesToClock(Math.max(...todayEnds));
+}
+
 export function formatOpeningStatus(hours: OpeningStatus) {
   if (hours.status === "open") return `Abierto ahora · cierra a las ${hours.closesAt}`;
   if (hours.status === "closed") return "Cerrado ahora";
