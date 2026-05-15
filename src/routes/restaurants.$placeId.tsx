@@ -4,10 +4,10 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { getPlaceById, getPlacePhotos } from "@/lib/places.functions";
 import { ArrowLeft, MapPin, Phone, Globe, Star, Clock, Euro, MessageSquare, CalendarCheck } from "lucide-react";
 import ReferralDialog from "@/components/ReferralDialog";
+import BookingDialog from "@/components/BookingDialog";
 
 const PlaceLocationMap = lazy(() => import("@/components/PlaceLocationMap"));
 import OpeningHoursCard from "@/components/OpeningHoursCard";
-import PhotoLightbox from "@/components/PhotoLightbox";
 
 export const Route = createFileRoute("/restaurants/$placeId")({
   head: () => ({
@@ -31,7 +31,8 @@ function RestaurantDashboard() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
-  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const [zoomedIdx, setZoomedIdx] = useState<number | null>(null);
+  const [bookingOpen, setBookingOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -114,22 +115,29 @@ function RestaurantDashboard() {
             {photos.length > 0 && (
               <section className="-mx-4">
                 <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-1">
-                  {photos.map((src, i) => (
-                    <button
-                      key={src}
-                      type="button"
-                      onClick={() => setLightboxIdx(i)}
-                      className="group relative h-44 w-64 shrink-0 snap-start overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] transition-transform active:scale-[0.98]"
-                      aria-label={`Ampliar foto ${i + 1}`}
-                    >
-                      <img
-                        src={src}
-                        alt={`${place.name} foto ${i + 1}`}
-                        loading="lazy"
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
-                    </button>
-                  ))}
+                  {photos.map((src, i) => {
+                    const isZoom = zoomedIdx === i;
+                    return (
+                      <button
+                        key={src}
+                        type="button"
+                        onClick={() => setZoomedIdx(isZoom ? null : i)}
+                        className={`group relative shrink-0 snap-start overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] transition-all duration-500 ease-out ${
+                          isZoom ? "h-[22rem] w-[22rem]" : "h-44 w-64"
+                        }`}
+                        aria-label={isZoom ? `Reducir foto ${i + 1}` : `Ampliar foto ${i + 1}`}
+                      >
+                        <img
+                          src={src}
+                          alt={`${place.name} foto ${i + 1}`}
+                          loading="lazy"
+                          className={`h-full w-full object-cover transition-transform duration-500 ${
+                            isZoom ? "scale-110 cursor-zoom-out" : "cursor-zoom-in group-hover:scale-105"
+                          }`}
+                        />
+                      </button>
+                    );
+                  })}
                 </div>
               </section>
             )}
@@ -206,6 +214,13 @@ function RestaurantDashboard() {
                 </span>
                 <span className="text-[10px] font-medium opacity-80">Te emitimos una invitación</span>
               </button>
+              <button
+                type="button"
+                onClick={() => setBookingOpen(true)}
+                className="flex-1 rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-2.5 text-center text-sm font-semibold text-emerald-200 hover:bg-emerald-500/20"
+              >
+                Reservar
+              </button>
               {place.lat != null && place.lng != null && (
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${place.lat},${place.lng}`}
@@ -235,13 +250,19 @@ function RestaurantDashboard() {
         />
       )}
 
-      {lightboxIdx !== null && photos.length > 0 && (
-        <PhotoLightbox
-          photos={photos}
-          index={lightboxIdx}
-          alt={place?.name ?? "Foto"}
-          onClose={() => setLightboxIdx(null)}
-          onIndexChange={setLightboxIdx}
+      {bookingOpen && place && (
+        <BookingDialog
+          listing={{
+            id: place.google_place_id ?? placeId,
+            name: place.name ?? "Restaurante",
+            lat: place.lat ?? 0,
+            lon: place.lng ?? 0,
+            kind: "restaurant",
+            cuisine: place.cuisine ?? undefined,
+            address: place.address ?? undefined,
+            tags: {},
+          }}
+          onClose={() => setBookingOpen(false)}
         />
       )}
     </div>
