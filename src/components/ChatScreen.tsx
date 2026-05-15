@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Mic, MapPin, Home, User as UserIcon, QrCode, X, Gift, Ticket, Sparkles, ShieldCheck, CalendarPlus, CalendarCheck, Sun, Bell, Heart, Bookmark, ChevronRight } from "lucide-react";
+import { Send, Mic, MapPin, Home, User as UserIcon, QrCode, X, Gift, Ticket, Sparkles, ShieldCheck, CalendarPlus, CalendarCheck, Sun, Bell, Heart, Bookmark, ChevronRight, Utensils, Bed, Umbrella, ShoppingBag, Martini, Bus, type LucideIcon } from "lucide-react";
 import BookingDialog from "@/components/BookingDialog";
 import { AdBanner } from "@/components/AdBanner";
 import type { Listing } from "@/lib/overpass-listings";
@@ -50,6 +50,16 @@ const TILE_SUBTITLES: Record<string, string> = {
   "Tomar algo": "Bares y copas",
   "Transporte público": "Bus, TRAM, taxis",
   "Mapa": "Explora la ciudad",
+};
+
+const TILE_ICONS: Record<string, LucideIcon> = {
+  "Comer": Utensils,
+  "Dormir": Bed,
+  "Turismo, playa y aventuras": Umbrella,
+  "Comprar": ShoppingBag,
+  "Tomar algo": Martini,
+  "Transporte público": Bus,
+  "Mapa": MapPin,
 };
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -547,6 +557,7 @@ export function ChatScreen() {
                 ].map((t, idx) => {
                   const style = TILE_STYLES[t.label];
                   const subtitle = TILE_SUBTITLES[t.label];
+                  const Icon = TILE_ICONS[t.label];
                   return (
                     <button
                       key={t.key}
@@ -556,21 +567,13 @@ export function ChatScreen() {
                       style={{ animationDelay: `${(idx % 9) * 60}ms` }}
                     >
                       <div
-                        className="relative grid h-16 w-16 place-items-center rounded-full transition-transform duration-300 ease-out group-hover:-translate-y-0.5 group-active:scale-90 overflow-hidden"
+                        className="relative grid h-16 w-16 place-items-center rounded-full transition-transform duration-300 ease-out group-hover:-translate-y-0.5 group-active:scale-90"
                         style={{ backgroundColor: style?.bg ?? "oklch(0.95 0.02 80)" }}
                       >
-                        {style ? (
-                          <img
-                            src={style.img}
-                            alt=""
-                            aria-hidden
-                            loading="lazy"
-                            width={1024}
-                            height={1024}
-                            className="h-[70%] w-[70%] object-contain transition-transform duration-300 group-hover:scale-110"
-                          />
+                        {Icon ? (
+                          <Icon className="h-7 w-7 text-foreground" strokeWidth={1.75} />
                         ) : (
-                          <span className="text-[28px]">{t.emoji}</span>
+                          <span className="text-[26px]">{t.emoji}</span>
                         )}
                       </div>
                       <span className="mt-1.5 block text-[12px] font-extrabold leading-tight tracking-tight text-foreground">
