@@ -13,7 +13,7 @@ export const Route = createFileRoute("/api/public/bus-eta")({
         const indexRaw = (url.searchParams.get("index") || "0").trim();
         const minRaw = (url.searchParams.get("min") || "").trim();
 
-        if (!/^\d{1,6}$/.test(stop) || !/^\d{1,3}$/.test(line)) {
+        if (!/^\d{1,6}$/.test(stop) || !/^\d{1,3}[A-Za-z]?$/.test(line)) {
           return new Response(JSON.stringify({ error: "bad params" }), {
             status: 400,
             headers: { "Content-Type": "application/json" },

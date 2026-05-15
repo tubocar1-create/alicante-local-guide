@@ -62,7 +62,7 @@ Deno.serve(async (req) => {
   const index = Math.max(0, Math.min(5, parseInt(indexRaw, 10) || 0));
   const minThreshold = minRaw ? parseInt(minRaw, 10) : null;
 
-  if (!/^\d{1,6}$/.test(stop) || !/^\d{1,3}$/.test(line)) {
+  if (!/^\d{1,6}$/.test(stop) || !/^\d{1,3}[A-Za-z]?$/.test(line)) {
     return new Response(JSON.stringify({ error: "bad params" }), {
       status: 400,
       headers: { "Content-Type": "application/json", ...corsHeaders },

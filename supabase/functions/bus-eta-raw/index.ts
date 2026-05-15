@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
   const stop = (url.searchParams.get("stop") || "").trim();
   const line = (url.searchParams.get("line") || "").trim();
 
-  if (!/^\d{3,6}$/.test(stop) || (line && !/^\d{1,3}$/.test(line))) {
+  if (!/^\d{3,6}$/.test(stop) || (line && !/^\d{1,3}[A-Za-z]?$/.test(line))) {
     return new Response(JSON.stringify({ error: "bad params", raw: "" }), {
       status: 400,
       headers: { "Content-Type": "application/json", ...corsHeaders },
