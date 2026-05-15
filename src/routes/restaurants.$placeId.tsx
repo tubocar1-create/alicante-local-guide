@@ -1,8 +1,10 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getPlaceById, getPlacePhotos } from "@/lib/places.functions";
-import { ArrowLeft, MapPin, Phone, Globe, Star, Clock, Euro } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, Globe, Star, Clock, Euro, MessageSquare, CalendarCheck } from "lucide-react";
+import BookingDialog from "@/components/BookingDialog";
+import type { Listing } from "@/lib/overpass-listings";
 
 export const Route = createFileRoute("/restaurants/$placeId")({
   head: () => ({
@@ -25,6 +27,24 @@ function RestaurantDashboard() {
   const [photos, setPhotos] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [bookingOpen, setBookingOpen] = useState(false);
+
+  const bookingListing = useMemo<Listing | null>(() => {
+    if (!place) return null;
+    return {
+      id: place.google_place_id ?? placeId,
+      name: place.name ?? "Restaurante",
+      lat: place.lat ?? 0,
+      lon: place.lng ?? 0,
+      kind: "restaurant",
+      cuisine: place.cuisine ?? undefined,
+      phone: place.phone ?? undefined,
+      website: place.website ?? undefined,
+      address: place.address ?? undefined,
+      openingHours: place.opening_hours_text ?? undefined,
+      tags: {},
+    };
+  }, [place, placeId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -55,7 +75,7 @@ function RestaurantDashboard() {
         </h1>
       </header>
 
-      <main className="mx-auto max-w-2xl px-4 py-5">
+      <main className="w-full px-4 py-5">
         {loading && <p className="text-sm text-slate-400">Cargando información…</p>}
         {err && <p className="text-sm text-rose-400">Error: {err}</p>}
         {!loading && !place && !err && (
@@ -87,13 +107,19 @@ function RestaurantDashboard() {
               </div>
 
               {place.rating != null && (
-                <div className="mt-3 flex items-center gap-1.5 text-sm">
+                <a
+                  href={`https://search.google.com/local/reviews?placeid=${place.google_place_id}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-white/5 px-2 py-1 text-sm hover:bg-white/10"
+                >
                   <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                   <span className="font-semibold">{place.rating.toFixed(1)}</span>
                   {place.user_rating_count != null && (
                     <span className="text-slate-400">({place.user_rating_count} reseñas)</span>
                   )}
-                </div>
+                  <MessageSquare className="ml-1 h-3.5 w-3.5 text-slate-400" />
+                </a>
               )}
             </section>
 
@@ -102,20 +128,17 @@ function RestaurantDashboard() {
               <section className="-mx-4">
                 <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-1">
                   {photos.map((src, i) => (
-                    <a
+                    <div
                       key={src}
-                      href={src}
-                      target="_blank"
-                      rel="noreferrer"
                       className="relative h-44 w-64 shrink-0 snap-start overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]"
                     >
                       <img
                         src={src}
                         alt={`${place.name} foto ${i + 1}`}
                         loading="lazy"
-                        className="h-full w-full object-cover transition-transform hover:scale-105"
+                        className="h-full w-full object-cover"
                       />
-                    </a>
+                    </div>
                   ))}
                 </div>
               </section>
@@ -182,7 +205,14 @@ function RestaurantDashboard() {
             </section>
 
             {/* Acciones */}
-            <section className="flex gap-2 pt-2">
+            <section className="flex flex-wrap gap-2 pt-2">
+              <button
+                onClick={() => setBookingOpen(true)}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-400 to-cyan-400 px-4 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-emerald-500/20 hover:from-emerald-300 hover:to-cyan-300"
+              >
+                <CalendarCheck className="h-4 w-4" />
+                ¡VAMOS a reservar!
+              </button>
               {place.lat != null && place.lng != null && (
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${place.lat},${place.lng}`}
@@ -203,6 +233,10 @@ function RestaurantDashboard() {
           </div>
         )}
       </main>
+
+      {bookingOpen && bookingListing && (
+        <BookingDialog listing={bookingListing} onClose={() => setBookingOpen(false)} />
+      )}
     </div>
   );
 }
