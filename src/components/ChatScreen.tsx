@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Mic, MapPin, Home, User as UserIcon, QrCode, X, Gift, Ticket, Sparkles, ShieldCheck, CalendarPlus, CalendarCheck, Sun, Cloud, CloudRain, CloudSnow, CloudLightning, CloudFog, Bell, Heart, Bookmark, ChevronRight, Utensils, Bed, Umbrella, ShoppingBag, Martini, Bus, Stethoscope, type LucideIcon } from "lucide-react";
+import { Send, Mic, MapPin, Home, User as UserIcon, QrCode, X, Gift, Ticket, Sparkles, ShieldCheck, CalendarPlus, CalendarCheck, CalendarDays, Sun, Cloud, CloudRain, CloudSnow, CloudLightning, CloudFog, Bell, Heart, Bookmark, ChevronRight, Utensils, Bed, Umbrella, ShoppingBag, Martini, Bus, Stethoscope, type LucideIcon } from "lucide-react";
 import { useWeather } from "@/hooks/useWeather";
 import BookingDialog from "@/components/BookingDialog";
 import { AdBanner } from "@/components/AdBanner";
@@ -53,6 +53,7 @@ const TILE_SUBTITLES: Record<string, string> = {
   "Transporte público": "Bus, TRAM, taxis",
   "Mapa": "Explora la ciudad",
   "Servicios sanitarios": "Farmacias y hospitales",
+  "Eventos": "Conciertos y agenda",
 };
 
 const TILE_ICONS: Record<string, LucideIcon> = {
@@ -64,6 +65,7 @@ const TILE_ICONS: Record<string, LucideIcon> = {
   "Transporte público": Bus,
   "Mapa": MapPin,
   "Servicios sanitarios": Stethoscope,
+  "Eventos": CalendarDays,
 };
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -523,6 +525,16 @@ export function ChatScreen() {
                         { mode: null },
                       ),
                   },
+                  {
+                    key: "eventos",
+                    emoji: "🎉",
+                    label: "Eventos",
+                    onClick: () =>
+                      send(
+                        "¿Qué eventos, conciertos, festivales o actividades hay hoy y los próximos días en Alicante?",
+                        { mode: null },
+                      ),
+                  },
                 ].map((t, idx) => {
                   const subtitle = TILE_SUBTITLES[t.label];
                   const Icon = TILE_ICONS[t.label];
@@ -535,6 +547,7 @@ export function ChatScreen() {
                     "Transporte público":  { bg: "oklch(0.93 0.07 190)", fg: "oklch(0.50 0.14 210)" },
                     "Mapa":                { bg: "oklch(0.93 0.07 160)", fg: "oklch(0.48 0.14 165)" },
                     "Servicios sanitarios":{ bg: "oklch(0.94 0.06 25)",  fg: "oklch(0.55 0.18 25)" },
+                    "Eventos":             { bg: "oklch(0.94 0.07 310)", fg: "oklch(0.50 0.18 315)" },
                   };
                   const pastel = PASTEL[t.label] ?? { bg: "oklch(0.95 0.02 80)", fg: "oklch(0.40 0.05 80)" };
                   const displayLabel =
@@ -571,18 +584,6 @@ export function ChatScreen() {
                     </button>
                   );
                 })}
-                {/* Beach + sailboat motif filling the remaining 2 cells of row 2 */}
-                <div className="col-span-2 flex items-end">
-                  <img
-                    src={skylineImg}
-                    alt=""
-                    aria-hidden
-                    loading="lazy"
-                    width={1280}
-                    height={512}
-                    className="h-20 w-full object-cover object-bottom"
-                  />
-                </div>
               </div>
             </div>
           )}
