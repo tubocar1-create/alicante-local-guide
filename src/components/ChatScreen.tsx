@@ -17,7 +17,7 @@ import { BusKnownPicker, type BusStopPick } from "@/components/BusKnownPicker";
 import { FlightPicker } from "@/components/FlightPicker";
 import { useAuth } from "@/hooks/useAuth";
 import { findPlaceOverride } from "@/data/places";
-import { resolveOpeningStatus } from "@/lib/opening-hours";
+import { resolveOpeningStatus, getTodayClosingTime } from "@/lib/opening-hours";
 import { useServerFn } from "@tanstack/react-start";
 import { getAsianPlaces } from "@/lib/places.functions";
 import heroImg from "@/assets/alicante-hero.jpg";
@@ -1732,7 +1732,10 @@ function AsianTableInner({ ranked, loading, onClose }: {
               {ranked.map(({ c, d }, i) => {
                 const status = resolveOpeningStatus(c.openingHours ?? undefined);
                 const closesAt =
-                  status.status === "open" ? status.closesAt : c.closesAt ?? null;
+                  (status.status === "open" ? status.closesAt : null) ??
+                  getTodayClosingTime(c.openingHours ?? undefined) ??
+                  c.closesAt ??
+                  null;
                 // Trust parsed schedule first; only fall back to API openNow when schedule is unknown
                 const isOpen =
                   status.status === "open" ||
