@@ -2034,6 +2034,13 @@ function DrinksTableInner({ ranked, loading, onClose }: {
   const navigate = useNavigate();
   const resolvePlace = useServerFn(resolvePlaceByName);
   const [resolving, setResolving] = useState<string | null>(null);
+  const [now, setNow] = useState<Date>(() => new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const hhmm = now.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit", hour12: false });
+  const ss = now.toLocaleTimeString("es-ES", { second: "2-digit", hour12: false });
 
   const openDashboard = async (c: PlaceCardData) => {
     if (c.placeId) {
