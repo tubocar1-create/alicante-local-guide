@@ -1542,6 +1542,17 @@ function distKm(a: { lat: number; lon: number }, b: { lat: number; lon: number }
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 
+function asianEmoji(c: PlaceCardData): string {
+  const hay = `${c.cuisine ?? ""} ${c.name ?? ""} ${c.vibe ?? ""}`.toLowerCase();
+  if (/ramen|noodle/.test(hay)) return "🍜";
+  if (/sushi|japon|japanese/.test(hay)) return "🍣";
+  if (/thai|tailand/.test(hay)) return "🌶️";
+  if (/korean|coreano/.test(hay)) return "🍱";
+  if (/viet/.test(hay)) return "🍲";
+  if (/chin|wok/.test(hay)) return "🥢";
+  return "🥡";
+}
+
 function AsianTable({ cards }: { cards: PlaceCardData[] }) {
   const ranked = [...cards]
     .map((c) => ({
@@ -1551,52 +1562,70 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
     .sort((a, b) => a.d - b.d);
 
   return (
-    <div className="my-2 w-full overflow-x-auto rounded-2xl border border-border bg-card/80 shadow-soft backdrop-blur">
-      <table className="w-full text-[12px] text-card-foreground">
-        <thead className="bg-muted/60 text-[10px] uppercase tracking-wide text-muted-foreground">
-          <tr>
-            <th className="text-left font-semibold px-2 py-1.5">Restaurante</th>
-            <th className="text-center font-semibold px-1.5 py-1.5">Estado</th>
-            <th className="text-center font-semibold px-1.5 py-1.5">Cierra</th>
-            <th className="text-center font-semibold px-1.5 py-1.5">Precio</th>
-          </tr>
-        </thead>
-        <tbody>
-          {ranked.map(({ c, d }, i) => {
-            const open = Boolean(c.closesAt);
-            const price = priceLabel(c.priceLevel);
-            return (
-              <tr key={i} className="border-t border-border/60 align-top">
-                <td className="px-2 py-1.5">
-                  <div className="font-semibold leading-tight">{c.name}</div>
-                  {Number.isFinite(d) && (
-                    <div className="text-[10px] text-muted-foreground mt-0.5">
-                      📍 {d.toFixed(1)} km del centro
-                    </div>
-                  )}
-                </td>
-                <td className="px-1.5 py-1.5 text-center whitespace-nowrap">
-                  {open ? (
-                    <span className="text-emerald-700 dark:text-emerald-400 font-semibold">● Abierto</span>
-                  ) : (
-                    <span className="text-rose-700 dark:text-rose-400 font-semibold">● Cerrado</span>
-                  )}
-                </td>
-                <td className="px-1.5 py-1.5 text-center whitespace-nowrap font-medium">
-                  {c.closesAt ?? "—"}
-                </td>
-                <td className="px-1.5 py-1.5 text-center whitespace-nowrap">
-                  <div className="font-semibold">{price.sym}</div>
-                  <div className="text-[10px] text-muted-foreground">{price.avg}</div>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+    <div className="my-2 w-full overflow-hidden rounded-3xl border border-[#1c2a4a] bg-gradient-to-b from-[#0b1225] to-[#0a0f1f] text-slate-100 shadow-soft">
+      <div className="px-4 pt-4 pb-3 border-b border-[#1c2a4a]">
+        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-300/80">
+          Dashboard gastro
+        </div>
+        <h3 className="mt-1 font-display text-[20px] font-semibold leading-tight text-white">
+          Asiático <span className="text-cyan-300">cerca del centro</span>
+        </h3>
+        <p className="mt-1 text-[11px] text-slate-400">
+          {ranked.length} restaurantes · ordenados por cercanía a Puerta del Mar
+        </p>
+      </div>
+      <ol className="divide-y divide-[#162038]">
+        {ranked.map(({ c, d }, i) => {
+          const open = Boolean(c.closesAt);
+          const price = priceLabel(c.priceLevel);
+          const km = Number.isFinite(d) ? d.toFixed(1) : "—";
+          const mapsHref = c.lat && c.lon
+            ? `https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lon}`
+            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.name + " Alicante")}`;
+          return (
+            <li key={i}>
+              <a
+                href={mapsHref}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-white/5 active:bg-white/10"
+              >
+                <span className="w-5 shrink-0 text-right text-[13px] font-semibold tabular-nums text-slate-500">
+                  {i + 1}
+                </span>
+                <span className="text-xl leading-none">{asianEmoji(c)}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[14px] font-semibold text-white">
+                    {c.name}
+                    {c.cuisine && (
+                      <span className="ml-1.5 text-[11px] font-normal text-slate-400">
+                        ({c.cuisine})
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-0.5 flex items-center gap-2 text-[11px] text-slate-400">
+                    {open ? (
+                      <span className="text-emerald-400">● Abierto</span>
+                    ) : (
+                      <span className="text-rose-400">● Cerrado</span>
+                    )}
+                    {c.closesAt && <span className="text-slate-500">· cierra {c.closesAt}</span>}
+                    <span className="text-slate-500">· {price.sym} {price.avg}</span>
+                  </div>
+                </div>
+                <div className="shrink-0 text-right tabular-nums">
+                  <div className="text-[18px] font-semibold leading-none text-white">{km}</div>
+                  <div className="mt-0.5 text-[9px] uppercase tracking-wide text-slate-500">km</div>
+                </div>
+              </a>
+            </li>
+          );
+        })}
+      </ol>
     </div>
   );
 }
+
 
 function AssistantContent({ content }: { content: string }) {
   const match = content.match(PLACE_RE);
