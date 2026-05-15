@@ -418,11 +418,6 @@ export function ChatScreen() {
         </header>
       )}
 
-      {isWelcome && (
-        <div className="px-4">
-          <PointsHud compact />
-        </div>
-      )}
 
       {isWelcome && <AdBanner />}
 
