@@ -775,17 +775,20 @@ function QrVamosInfo({ onClose }: { onClose: () => void }) {
   );
 }
 
-function ProfileButton() {
+function ProfileButton({ large = false }: { large?: boolean }) {
   const { user, isAuthenticated } = useAuth();
   const initial = user?.name?.trim().charAt(0).toUpperCase();
+  const sizeCls = large
+    ? "h-11 w-11 text-base bg-primary text-primary-foreground border-0"
+    : "h-8 w-8 text-xs bg-card text-primary border border-border";
   if (isAuthenticated) {
     return (
       <Link
         to="/perfil"
         aria-label="Mi perfil"
-        className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-border bg-card text-xs font-bold text-primary shadow-sm active:scale-95"
+        className={`flex items-center justify-center overflow-hidden rounded-full font-bold shadow-sm active:scale-95 ${sizeCls}`}
       >
-        {initial || <UserIcon className="h-4 w-4 text-muted-foreground" />}
+        {initial || <UserIcon className={large ? "h-5 w-5" : "h-4 w-4 text-muted-foreground"} />}
       </Link>
     );
   }
@@ -794,9 +797,9 @@ function ProfileButton() {
       to="/login"
       search={{ redirect: "/perfil" }}
       aria-label="Iniciar sesión"
-      className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-border bg-card shadow-sm active:scale-95"
+      className={`flex items-center justify-center overflow-hidden rounded-full shadow-sm active:scale-95 ${sizeCls}`}
     >
-      <UserIcon className="h-4 w-4 text-muted-foreground" />
+      <UserIcon className={large ? "h-5 w-5" : "h-4 w-4 text-muted-foreground"} />
     </Link>
   );
 }
