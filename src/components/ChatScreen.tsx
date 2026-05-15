@@ -438,12 +438,11 @@ export function ChatScreen() {
                   height={1024}
                   className="absolute inset-0 h-full w-full object-cover"
                   style={{
-                    filter: "brightness(1.05) saturate(1.2) contrast(1.08) hue-rotate(-12deg) sepia(0.14)",
-                    transform: "scaleX(-1)",
+                    filter: "brightness(1.08) saturate(1.55) contrast(1.12) hue-rotate(-8deg) sepia(0.10)",
                   }}
                 />
-                {/* Atardecer: luz cálida entrando desde la derecha hacia la izquierda */}
-                <div className="absolute inset-0 bg-[linear-gradient(270deg,oklch(0.85_0.18_55_/_0.55),transparent_55%)]" />
+                {/* Atardecer: luz cálida entrando desde la derecha */}
+                <div className="absolute inset-0 bg-[linear-gradient(270deg,oklch(0.88_0.20_55_/_0.55),transparent_60%)]" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-transparent" />
                 <div className="absolute left-3 top-3 text-white">
                   <h2 className="leading-none drop-shadow">
