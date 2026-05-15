@@ -2084,13 +2084,19 @@ function DrinksTableInner({ ranked, loading, onClose }: {
         <div className="absolute bottom-0 right-0 h-[24rem] w-[24rem] rounded-full bg-rose-500/[0.06] blur-3xl" />
       </div>
 
-      <div className="relative mx-auto max-w-5xl px-4 pb-10 pt-5 md:px-6">
-        <header className="mb-5 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={onClose}
-            className="text-[11px] uppercase tracking-[0.25em] text-amber-200/60 transition hover:text-amber-300"
-          >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-16 z-0 flex select-none flex-col items-center justify-center"
+      >
+        <span className="font-display text-[22vw] font-black leading-none tracking-tighter text-amber-100/[0.06] md:text-[14rem]">
+          {hhmm}
+        </span>
+        <span className="-mt-2 font-mono text-[10px] uppercase tracking-[0.6em] text-amber-200/20 md:text-xs">
+          {ss}s · ALC
+        </span>
+      </div>
+
+      <div className="relative z-10 mx-auto max-w-5xl px-4 pb-10 pt-5 md:px-6">
             ← Volver al chat
           </button>
           <div className="flex items-center gap-2">
