@@ -1267,33 +1267,142 @@ function parseBusStopParts(text: string): AssistantPart[] | null {
 
 function BusStopCard({ data }: { data: BusStopCardData }) {
   return (
-    <div className="my-2 overflow-hidden rounded-3xl border border-border bg-card/95 p-4 shadow-soft backdrop-blur">
-      <div className="mb-3 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-primary px-2 text-sm font-bold text-primary-foreground">
-              {data.line}
-            </span>
-            <span className="truncate text-sm font-semibold">
-              {data.stopName}
-              <span className="ml-1 text-[11px] font-medium text-muted-foreground">
-                #{data.stopCode}
-              </span>
-            </span>
+    <div className="my-3 overflow-hidden rounded-[28px] border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-card shadow-xl backdrop-blur">
+      {/* Header band */}
+      <div className="flex items-center gap-3 border-b border-primary/15 bg-primary/5 px-5 py-4">
+        <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary text-2xl font-black text-primary-foreground shadow-lg ring-4 ring-primary/20">
+          {data.line}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-primary/80">
+            <span>🚌 Línea {data.line}</span>
+            <span className="text-muted-foreground/60">·</span>
+            <span className="text-muted-foreground">#{data.stopCode}</span>
           </div>
+          <h3 className="mt-0.5 truncate text-xl font-extrabold leading-tight text-foreground">
+            {data.stopName}
+          </h3>
           {data.lineName && (
-            <p className="mt-1 text-[11px] uppercase tracking-wide text-muted-foreground">
+            <p className="mt-0.5 truncate text-[11px] font-medium text-muted-foreground">
               {data.lineName}
             </p>
           )}
         </div>
         {data.distanceM != null && (
-          <span className="shrink-0 rounded-full bg-muted px-2 py-1 text-[11px] font-bold text-foreground/80">
+          <span className="shrink-0 rounded-full bg-background/80 px-3 py-1.5 text-xs font-bold text-foreground shadow-sm">
             📍 {data.distanceM} m
           </span>
         )}
       </div>
-      <LiveEta line={data.line} stop={data.stopCode} size="lg" />
+
+      {/* Big ETA hero */}
+      <div className="px-5 py-5">
+        <BigLiveEta line={data.line} stop={data.stopCode} />
+      </div>
+    </div>
+  );
+}
+
+function BigLiveEta({ line, stop }: { line: string; stop: string }) {
+  const [eta, setEta] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<number>(Date.now());
+  const [now, setNow] = useState<number>(Date.now());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 15000);
+    return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const tick = async () => {
+      setLoading(true);
+      try {
+        const r = await fetch(`/api/public/bus-eta?stop=${stop}&line=${line}`, { cache: "no-store" });
+        if (r.ok) {
+          const j = await r.json();
+          if (!cancelled) {
+            setEta(typeof j.etaMin === "number" ? j.etaMin : null);
+            setUpdatedAt(Date.now());
+          }
+        }
+      } catch { /* noop */ }
+      finally {
+        if (!cancelled) setLoading(false);
+        if (!cancelled) timer = setTimeout(tick, 30000);
+      }
+    };
+    tick();
+    return () => { cancelled = true; if (timer) clearTimeout(timer); };
+  }, [line, stop]);
+
+  const arrival = eta != null ? new Date(updatedAt + Math.max(0, eta) * 60_000) : null;
+  const liveMin = arrival ? Math.max(0, Math.round((arrival.getTime() - now) / 60000)) : null;
+  const isImminent = liveMin != null && liveMin <= 3;
+  const hh = arrival ? arrival.getHours().toString().padStart(2, "0") : "--";
+  const mm = arrival ? arrival.getMinutes().toString().padStart(2, "0") : "--";
+
+  return (
+    <div
+      className={`relative overflow-hidden rounded-2xl border-2 p-5 transition-colors ${
+        isImminent
+          ? "border-primary bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5"
+          : arrival
+            ? "border-border bg-muted/40"
+            : "border-dashed border-border bg-muted/20"
+      }`}
+    >
+      {/* Decorative pulse */}
+      {isImminent && (
+        <span className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/20 blur-2xl" />
+      )}
+
+      <div className="relative flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+        <span
+          className={`h-2 w-2 rounded-full ${
+            loading ? "bg-amber-500 animate-pulse" : arrival ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground/50"
+          }`}
+        />
+        Tiempo real · en directo
+      </div>
+
+      <div className="relative mt-3 flex items-end justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            Hora estimada
+          </div>
+          <div className={`mt-1 flex items-baseline font-black leading-none tabular-nums ${isImminent ? "text-primary" : "text-foreground"}`}>
+            <span className="text-6xl sm:text-7xl">{hh}</span>
+            <span className="text-5xl sm:text-6xl opacity-70">:</span>
+            <span className="text-6xl sm:text-7xl">{mm}</span>
+          </div>
+        </div>
+        <div className="shrink-0 text-right">
+          <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            Faltan
+          </div>
+          <div className={`mt-1 leading-none ${isImminent ? "text-primary" : "text-foreground"}`}>
+            {liveMin == null ? (
+              <span className="text-2xl font-bold">--</span>
+            ) : liveMin <= 0 ? (
+              <span className="text-3xl font-black uppercase tracking-tight">¡Ya!</span>
+            ) : (
+              <>
+                <span className="text-5xl font-black tabular-nums">{liveMin}</span>
+                <span className="ml-1 text-base font-bold uppercase text-muted-foreground">min</span>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {!arrival && !loading && (
+        <p className="relative mt-3 text-xs text-muted-foreground">
+          Sin próximas salidas ahora mismo.
+        </p>
+      )}
     </div>
   );
 }
