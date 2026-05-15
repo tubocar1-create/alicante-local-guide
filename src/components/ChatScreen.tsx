@@ -1814,13 +1814,32 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
 
+  const fetchAsian = useServerFn(getAsianPlaces);
   useEffect(() => {
     let cancelled = false;
-    fetchAlicanteAsian()
-      .then((r) => { if (!cancelled) { extraRef.current = r; setExtra(r); } })
+    fetchAsian()
+      .then((res) => {
+        if (cancelled) return;
+        const mapped: PlaceCardData[] = (res.places ?? []).map((p) => ({
+          name: p.name,
+          cuisine: p.cuisine,
+          address: p.address,
+          openingHours: p.opening_hours_text,
+          lat: p.lat ?? undefined,
+          lon: p.lng ?? undefined,
+          priceLevel: p.price_level,
+          priceRangeMin: p.price_range_min,
+          priceRangeMax: p.price_range_max,
+          rating: p.rating,
+          openNow: p.open_now,
+        }));
+        extraRef.current = mapped;
+        setExtra(mapped);
+      })
+      .catch((e) => console.error("getAsianPlaces failed", e))
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, []);
+  }, [fetchAsian]);
 
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
   const byKey = new Map<string, PlaceCardData>();
