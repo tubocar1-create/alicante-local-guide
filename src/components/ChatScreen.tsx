@@ -332,7 +332,7 @@ export function ChatScreen() {
     <div
       className={[
         "relative flex h-[100dvh] flex-col transition-colors duration-700",
-        isWelcome ? "bg-black text-white" : "bg-background",
+        isWelcome ? "bg-[oklch(0.97_0.025_75)] text-foreground" : "bg-background",
       ].join(" ")}
     >
       {/* Persistent background photo of Puerto de Alicante (only when chatting) */}
@@ -343,46 +343,84 @@ export function ChatScreen() {
         </div>
       )}
 
-      {/* Compact header (always visible) */}
-      <header className="relative flex items-center justify-between gap-1.5 border-b border-border/60 bg-background/40 px-4 py-3 backdrop-blur">
-        <div className="flex items-center gap-2">
-          <ProfileButton />
-          <Link
-            to="/threads"
-            aria-label="Mis reservas"
-            className="flex h-8 items-center gap-1 rounded-full border border-border bg-card px-2.5 text-[11px] font-semibold text-foreground shadow-sm active:scale-95"
+      {/* Header — formato cabecera tipo app: avatar + saludo + tiempo + campana */}
+      {isWelcome ? (
+        <header className="relative flex items-center justify-between gap-3 px-4 pt-4 pb-2">
+          <div className="flex items-center gap-3 min-w-0">
+            <ProfileButton large />
+            <div className="min-w-0">
+              <p className="text-[15px] font-extrabold leading-tight text-foreground truncate">
+                ¡Hola{useAuth().user?.name ? `, ${useAuth().user!.name!.split(" ")[0]}` : ""}!
+              </p>
+              <p className="text-[12px] leading-tight text-muted-foreground truncate">
+                ¿Qué vas a descubrir hoy?
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 ring-1 ring-border/60">
+              <Sun className="h-4 w-4 text-[oklch(0.78_0.16_70)]" />
+              <div className="leading-tight">
+                <p className="text-[12px] font-bold text-foreground">20°</p>
+                <p className="text-[9px] -mt-0.5 text-muted-foreground">Soleado</p>
+              </div>
+            </div>
+            <Link
+              to="/threads"
+              aria-label="Mis reservas"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/70 ring-1 ring-border/60 text-foreground active:scale-95"
+            >
+              <Bell className="h-4 w-4" />
+            </Link>
+          </div>
+        </header>
+      ) : (
+        <header className="relative flex items-center justify-between gap-1.5 border-b border-border/60 bg-background/40 px-4 py-3 backdrop-blur">
+          <div className="flex items-center gap-2">
+            <ProfileButton />
+            <Link
+              to="/threads"
+              aria-label="Mis reservas"
+              className="flex h-8 items-center gap-1 rounded-full border border-border bg-card px-2.5 text-[11px] font-semibold text-foreground shadow-sm active:scale-95"
+            >
+              <CalendarCheck className="h-3.5 w-3.5 text-primary" />
+              <span>Mis reservas</span>
+            </Link>
+          </div>
+          <div className="flex-1 flex justify-center">
+            <PointsHud compact />
+          </div>
+          <button
+            onClick={() => {
+              setMessages([GREETING]);
+              setActiveSubmenu(null);
+              setError(null);
+              setInput("");
+            }}
+            className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full bg-secondary text-secondary-foreground active:scale-95"
+            aria-label="Inicio"
           >
-            <CalendarCheck className="h-3.5 w-3.5 text-primary" />
-            <span>Mis reservas</span>
-          </Link>
-        </div>
-        <div className="flex-1 flex justify-center">
+            <Home className="h-3 w-3" />
+            Inicio
+          </button>
+        </header>
+      )}
+
+      {isWelcome && (
+        <div className="px-4">
           <PointsHud compact />
         </div>
-        <button
-          onClick={() => {
-            setMessages([GREETING]);
-            setActiveSubmenu(null);
-            setError(null);
-            setInput("");
-          }}
-          className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-full bg-secondary text-secondary-foreground active:scale-95"
-          aria-label="Inicio"
-        >
-          <Home className="h-3 w-3" />
-          Inicio
-        </button>
-      </header>
+      )}
 
       {isWelcome && <AdBanner />}
 
       {/* Messages */}
-      <div ref={scrollRef} className="relative flex-1 overflow-y-auto px-4 pt-6 pb-5">
+      <div ref={scrollRef} className="relative flex-1 overflow-y-auto px-4 pt-3 pb-5">
         <div className="mx-auto flex max-w-2xl flex-col gap-3">
           {/* Welcome hero — shows on first open, fades when chat starts */}
           {isWelcome && (
-            <div className="mb-2 overflow-hidden rounded-3xl shadow-soft">
-              <div className="relative aspect-[16/10] w-full">
+            <div className="mb-2 overflow-hidden rounded-3xl shadow-soft ring-1 ring-black/5">
+              <div className="relative aspect-[16/11] w-full">
                 <img
                   src={heroImg}
                   alt="Puerto de Alicante al atardecer"
