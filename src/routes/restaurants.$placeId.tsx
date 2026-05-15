@@ -89,13 +89,13 @@ function RestaurantDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100">
       <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-white/10 bg-slate-950/80 px-4 py-3 backdrop-blur">
-        <Link
-          to="/eat"
+        <button
+          onClick={() => router.history.back()}
           className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 hover:bg-white/10"
           aria-label="Volver al listado"
         >
           <ArrowLeft className="h-4 w-4" />
-        </Link>
+        </button>
         <h1 className="truncate text-base font-semibold">
           {place?.name ?? (loading ? "Cargando…" : "Restaurante")}
         </h1>
