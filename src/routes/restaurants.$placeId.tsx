@@ -1,8 +1,10 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getPlaceById, getPlacePhotos } from "@/lib/places.functions";
-import { ArrowLeft, MapPin, Phone, Globe, Star, Clock, Euro } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, Globe, Star, Clock, Euro, MessageSquare, CalendarCheck } from "lucide-react";
+import BookingDialog from "@/components/BookingDialog";
+import type { Listing } from "@/lib/overpass-listings";
 
 export const Route = createFileRoute("/restaurants/$placeId")({
   head: () => ({
