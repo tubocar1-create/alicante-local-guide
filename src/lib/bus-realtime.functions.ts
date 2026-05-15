@@ -66,8 +66,9 @@ async function fetchViaEdge(stop: string, line: string): Promise<string> {
 
 async function fetchDirect(stop: string, line: string): Promise<string> {
   try {
+    const lineParam = line ? toVectaliaLineCode(line) : "";
     const res = await fetch(
-      `${VECTALIA_URL}?p=${encodeURIComponent(stop)}&l=${encodeURIComponent(toVectaliaLineCode(line))}`,
+      `${VECTALIA_URL}?p=${encodeURIComponent(stop)}&l=${encodeURIComponent(lineParam)}`,
       {
         headers: {
           "User-Agent":
