@@ -1505,6 +1505,97 @@ function BusOptionCard({ data }: { data: BusOptionData }) {
   );
 }
 
+const ALC_CENTER = { lat: 38.3452, lon: -0.481 };
+const ASIAN_RE = /asian|japanese|sushi|ramen|chinese|china|thai|tailand|vietnam|korean|coreano|wok|noodle|asiat|japon/i;
+
+function isAsianCard(c: PlaceCardData): boolean {
+  const hay = `${c.cuisine ?? ""} ${c.name ?? ""} ${c.vibe ?? ""}`;
+  return ASIAN_RE.test(hay);
+}
+
+function priceLabel(p?: string | null): { sym: string; avg: string } {
+  switch (p) {
+    case "PRICE_LEVEL_FREE":
+    case "PRICE_LEVEL_INEXPENSIVE":
+      return { sym: "€", avg: "~10–15 €" };
+    case "PRICE_LEVEL_MODERATE":
+      return { sym: "€€", avg: "~15–25 €" };
+    case "PRICE_LEVEL_EXPENSIVE":
+      return { sym: "€€€", avg: "~25–45 €" };
+    case "PRICE_LEVEL_VERY_EXPENSIVE":
+      return { sym: "€€€€", avg: "45 €+" };
+    default:
+      return { sym: "—", avg: "s/d" };
+  }
+}
+
+function distKm(a: { lat: number; lon: number }, b: { lat: number; lon: number }) {
+  const R = 6371;
+  const toRad = (x: number) => (x * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLon = toRad(b.lon - a.lon);
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+
+function AsianTable({ cards }: { cards: PlaceCardData[] }) {
+  const ranked = [...cards]
+    .map((c) => ({
+      c,
+      d: c.lat && c.lon ? distKm(ALC_CENTER, { lat: c.lat, lon: c.lon }) : Number.POSITIVE_INFINITY,
+    }))
+    .sort((a, b) => a.d - b.d);
+
+  return (
+    <div className="my-2 w-full overflow-x-auto rounded-2xl border border-border bg-card/80 shadow-soft backdrop-blur">
+      <table className="w-full text-[12px] text-card-foreground">
+        <thead className="bg-muted/60 text-[10px] uppercase tracking-wide text-muted-foreground">
+          <tr>
+            <th className="text-left font-semibold px-2 py-1.5">Restaurante</th>
+            <th className="text-center font-semibold px-1.5 py-1.5">Estado</th>
+            <th className="text-center font-semibold px-1.5 py-1.5">Cierra</th>
+            <th className="text-center font-semibold px-1.5 py-1.5">Precio</th>
+          </tr>
+        </thead>
+        <tbody>
+          {ranked.map(({ c, d }, i) => {
+            const open = Boolean(c.closesAt);
+            const price = priceLabel(c.priceLevel);
+            return (
+              <tr key={i} className="border-t border-border/60 align-top">
+                <td className="px-2 py-1.5">
+                  <div className="font-semibold leading-tight">{c.name}</div>
+                  {Number.isFinite(d) && (
+                    <div className="text-[10px] text-muted-foreground mt-0.5">
+                      📍 {d.toFixed(1)} km del centro
+                    </div>
+                  )}
+                </td>
+                <td className="px-1.5 py-1.5 text-center whitespace-nowrap">
+                  {open ? (
+                    <span className="text-emerald-700 dark:text-emerald-400 font-semibold">● Abierto</span>
+                  ) : (
+                    <span className="text-rose-700 dark:text-rose-400 font-semibold">● Cerrado</span>
+                  )}
+                </td>
+                <td className="px-1.5 py-1.5 text-center whitespace-nowrap font-medium">
+                  {c.closesAt ?? "—"}
+                </td>
+                <td className="px-1.5 py-1.5 text-center whitespace-nowrap">
+                  <div className="font-semibold">{price.sym}</div>
+                  <div className="text-[10px] text-muted-foreground">{price.avg}</div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function AssistantContent({ content }: { content: string }) {
   const match = content.match(PLACE_RE);
   const placeName = match?.[1]?.trim();
