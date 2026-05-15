@@ -279,9 +279,9 @@ function RestaurantDashboard() {
                   href={`https://www.google.com/maps/search/?api=1&query=${place.lat},${place.lng}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex-1 rounded-xl bg-blue-500 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-blue-400"
+                  className="flex flex-1 items-center justify-center rounded-xl bg-blue-500 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-blue-400"
                 >
-                  Cómo llegar
+                  ¿Cómo llegar?
                 </a>
               )}
               <Link
