@@ -27,6 +27,24 @@ function RestaurantDashboard() {
   const [photos, setPhotos] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [bookingOpen, setBookingOpen] = useState(false);
+
+  const bookingListing = useMemo<Listing | null>(() => {
+    if (!place) return null;
+    return {
+      id: place.google_place_id ?? placeId,
+      name: place.name ?? "Restaurante",
+      lat: place.lat ?? 0,
+      lon: place.lng ?? 0,
+      kind: "restaurant",
+      cuisine: place.cuisine ?? undefined,
+      phone: place.phone ?? undefined,
+      website: place.website ?? undefined,
+      address: place.address ?? undefined,
+      openingHours: place.opening_hours_text ?? undefined,
+      tags: {},
+    };
+  }, [place, placeId]);
 
   useEffect(() => {
     let cancelled = false;
