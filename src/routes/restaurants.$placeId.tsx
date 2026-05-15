@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
-import { getPlaceById } from "@/lib/places.functions";
+import { getPlaceById, getPlacePhotos } from "@/lib/places.functions";
 import { ArrowLeft, MapPin, Phone, Globe, Star, Clock, Euro } from "lucide-react";
 
 export const Route = createFileRoute("/restaurants/$placeId")({
