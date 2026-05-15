@@ -17,7 +17,7 @@ import { BusKnownPicker, type BusStopPick } from "@/components/BusKnownPicker";
 import { FlightPicker } from "@/components/FlightPicker";
 import { useAuth } from "@/hooks/useAuth";
 import { findPlaceOverride } from "@/data/places";
-import { getOpeningStatus, resolveOpeningStatus } from "@/lib/opening-hours";
+import { resolveOpeningStatus } from "@/lib/opening-hours";
 import { useServerFn } from "@tanstack/react-start";
 import { getAsianPlaces } from "@/lib/places.functions";
 import heroImg from "@/assets/alicante-hero.jpg";
