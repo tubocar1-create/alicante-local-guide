@@ -97,7 +97,7 @@ export const getStopRealtime = createServerFn({ method: "POST" })
     const code = String(data?.stopCode ?? "").trim();
     if (!/^\d{3,5}$/.test(code)) throw new Error("invalid stopCode");
     const lines = Array.isArray(data?.lines)
-      ? data.lines.filter((l) => /^\d{1,3}$/.test(String(l))).map(String)
+      ? data.lines.filter((l) => /^\d{1,3}[A-Za-z]?$/.test(String(l))).map(String)
       : [];
     return { stopCode: code, lines };
   })
