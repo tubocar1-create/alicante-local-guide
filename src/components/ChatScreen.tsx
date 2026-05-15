@@ -1570,6 +1570,16 @@ function asianEmoji(c: PlaceCardData): string {
   return "🥡";
 }
 
+function guessAsianPrice(c: PlaceCardData): string {
+  const hay = `${c.cuisine ?? ""} ${c.name ?? ""}`.toLowerCase();
+  if (/sushi|japan|izakaya|omakase/.test(hay)) return "~22 €";
+  if (/ramen|noodle|udon|pho/.test(hay)) return "~14 €";
+  if (/korean|coreano|kbbq/.test(hay)) return "~20 €";
+  if (/thai|tailand|viet/.test(hay)) return "~16 €";
+  if (/chin|wok|dim\s?sum/.test(hay)) return "~12 €";
+  return "~15 €";
+}
+
 async function fetchAlicanteAsian(): Promise<PlaceCardData[]> {
   const radius = 6000; // ~6km around Puerta del Mar
   const cuisines = "asian|japanese|sushi|ramen|chinese|thai|vietnamese|korean|noodle|wok|izakaya";
