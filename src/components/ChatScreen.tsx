@@ -1734,12 +1734,20 @@ function AsianTableInner({ ranked, loading, onClose }: {
                   status.status === "open" ? status.closesAt : c.closesAt ?? null;
                 const isOpen =
                   status.status === "open" ||
+                  c.openNow === true ||
                   (!c.openingHours && Boolean(c.closesAt));
-                const isClosed = status.status === "closed";
+                const isClosed = status.status === "closed" || c.openNow === false;
                 const price = priceLabel(c.priceLevel);
+                const priceFromRange =
+                  c.priceRangeMin && c.priceRangeMax
+                    ? `${c.priceRangeMin}–${c.priceRangeMax} €`
+                    : c.priceRangeMin
+                      ? `~${c.priceRangeMin} €`
+                      : null;
                 const priceAvg =
-                  price.avg !== "s/d" ? price.avg : guessAsianPrice(c);
-                const priceShort = priceAvg.replace(/[~\s€]/g, "") + "€";
+                  priceFromRange ??
+                  (price.avg !== "s/d" ? price.avg : guessAsianPrice(c));
+                const priceShort = priceAvg.replace(/[~\s€]/g, "").replace("–", "-") + "€";
                 const meters = Number.isFinite(d) ? Math.round(d * 1000) : null;
                 const distLabel =
                   meters == null
