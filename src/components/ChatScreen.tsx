@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Mic, MapPin, Home, User as UserIcon, QrCode, X, Gift, Ticket, Sparkles, ShieldCheck, CalendarPlus, CalendarCheck, CalendarDays, Sun, Cloud, CloudRain, CloudSnow, CloudLightning, CloudFog, Bell, Heart, Bookmark, ChevronRight, Utensils, Bed, Umbrella, ShoppingBag, Martini, Bus, Stethoscope, type LucideIcon } from "lucide-react";
+import { Send, Mic, MapPin, Home, User as UserIcon, QrCode, X, Gift, Ticket, Sparkles, ShieldCheck, CalendarPlus, CalendarCheck, Sun, Cloud, CloudRain, CloudSnow, CloudLightning, CloudFog, Bell, Heart, Bookmark, ChevronRight, Utensils, Bed, Umbrella, ShoppingBag, Martini, Bus, Stethoscope, type LucideIcon } from "lucide-react";
 import { useWeather } from "@/hooks/useWeather";
 import BookingDialog from "@/components/BookingDialog";
 import { AdBanner } from "@/components/AdBanner";
@@ -53,7 +53,6 @@ const TILE_SUBTITLES: Record<string, string> = {
   "Transporte público": "Bus, TRAM, taxis",
   "Mapa": "Explora la ciudad",
   "Servicios sanitarios": "Farmacias y hospitales",
-  "Eventos": "Conciertos, ferias y agenda",
 };
 
 const TILE_ICONS: Record<string, LucideIcon> = {
@@ -65,7 +64,6 @@ const TILE_ICONS: Record<string, LucideIcon> = {
   "Transporte público": Bus,
   "Mapa": MapPin,
   "Servicios sanitarios": Stethoscope,
-  "Eventos": CalendarDays,
 };
 
 type Msg = { role: "user" | "assistant"; content: string };
