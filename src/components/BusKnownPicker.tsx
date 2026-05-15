@@ -161,7 +161,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
       {step === "line" && (
         <div>
           {loading && <p className="text-sm text-muted-foreground">Cargando líneas…</p>}
-          <div className="grid grid-cols-5 gap-2 sm:grid-cols-7">
+          <div className="grid grid-cols-6 gap-1.5 sm:grid-cols-8">
             {(data?.lines ?? [])
               .slice()
               .sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: "base" }))
@@ -177,7 +177,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
                     if (locState.status === "idle") requestLocation();
                   }}
                   title={l.name}
-                  className="flex h-12 items-center justify-center rounded-xl text-sm font-bold text-white shadow-sm transition active:scale-95"
+                  className="flex h-9 items-center justify-center rounded-lg text-[12px] font-bold text-white shadow-sm transition active:scale-95"
                   style={{ backgroundColor: color }}
                 >
                   {l.code}
