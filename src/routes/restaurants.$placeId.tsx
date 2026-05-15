@@ -6,6 +6,7 @@ import { ArrowLeft, MapPin, Phone, Globe, Star, Clock, Euro, MessageSquare, Cale
 import ReferralDialog from "@/components/ReferralDialog";
 
 const PlaceLocationMap = lazy(() => import("@/components/PlaceLocationMap"));
+import OpeningHoursCard from "@/components/OpeningHoursCard";
 
 export const Route = createFileRoute("/restaurants/$placeId")({
   head: () => ({
