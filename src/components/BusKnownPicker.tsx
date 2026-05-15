@@ -21,7 +21,7 @@ type Props = {
 // - Nocturnas: código terminado en N (3N, 13N, 22N…)
 // - Interurbanas (TAM): salen de la ciudad (27, 28, 39…)
 // - Urbanas: el resto
-const EXTRAURBAN_CODES = new Set(["27", "28", "39"]);
+const EXTRAURBAN_CODES = new Set(["24", "27", "28", "39"]);
 
 function classifyLine(code: string): "night" | "extraurban" | "urban" {
   if (/N$/i.test(code)) return "night";
@@ -45,7 +45,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
   );
   const [direction, setDirection] = useState<1 | 2 | null>(null);
   const [search, setSearch] = useState("");
-  const isStopStep = step === "stop";
+  const isExpanded = step === "stop" || step === "line";
 
   const directions = useMemo(() => {
     if (!data || !line)
@@ -130,7 +130,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
     <div
       className={[
         "rounded-2xl border border-border bg-card/95 p-2.5 shadow-soft backdrop-blur",
-        isStopStep
+        isExpanded
           ? "fixed bottom-[5.75rem] left-1/2 top-[4.75rem] z-50 flex w-[calc(100vw-1.5rem)] max-w-2xl -translate-x-1/2 flex-col"
           : "mt-2",
       ].join(" ")}
@@ -190,7 +190,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
       )}
 
       {step === "line" && (
-        <div className="space-y-3">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pr-1">
           {loading && <p className="text-sm text-muted-foreground">Cargando líneas…</p>}
 
           {(["urban", "extraurban", "night"] as const).map((cat) => {
