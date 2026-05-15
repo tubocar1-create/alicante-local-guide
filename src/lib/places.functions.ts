@@ -284,3 +284,71 @@ export const getPlaceById = createServerFn({ method: "GET" })
     if (error) throw error;
     return { place: row };
   });
+
+/**
+ * Resolve a Google Place by name + coordinates. Used for restaurants from
+ * Overpass/OSM that don't have a google_place_id yet — finds the closest
+ * matching Google Place, caches it, and returns its placeId.
+ */
+export const resolvePlaceByName = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => {
+    const o = d as { name?: string; lat?: number; lon?: number };
+    if (!o?.name || typeof o.name !== "string") throw new Error("name required");
+    return {
+      name: o.name.slice(0, 200),
+      lat: typeof o.lat === "number" ? o.lat : null,
+      lon: typeof o.lon === "number" ? o.lon : null,
+    };
+  })
+  .handler(async ({ data }) => {
+    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+    if (!apiKey) return { placeId: null as string | null };
+
+    // Try cache first by name match
+    const { data: cached } = await supabaseAdmin
+      .from("places_cache")
+      .select("google_place_id,name,lat,lng")
+      .ilike("name", data.name);
+    if (cached && cached.length) {
+      // Pick nearest if coords given
+      if (data.lat != null && data.lon != null) {
+        const best = cached
+          .filter((r) => r.lat != null && r.lng != null)
+          .map((r) => ({
+            id: r.google_place_id as string,
+            d:
+              Math.abs((r.lat as number) - (data.lat as number)) +
+              Math.abs((r.lng as number) - (data.lon as number)),
+          }))
+          .sort((a, b) => a.d - b.d)[0];
+        if (best) return { placeId: best.id };
+      }
+      return { placeId: cached[0].google_place_id as string };
+    }
+
+    const places = await searchGoogle(data.name, apiKey);
+    if (!places.length) return { placeId: null };
+
+    // Pick the result closest to provided coords (if any), otherwise the first
+    let pick: GPlace | undefined = places[0];
+    if (data.lat != null && data.lon != null) {
+      pick = places
+        .filter((p) => p.location)
+        .map((p) => ({
+          p,
+          d:
+            Math.abs((p.location!.latitude) - (data.lat as number)) +
+            Math.abs((p.location!.longitude) - (data.lon as number)),
+        }))
+        .sort((a, b) => a.d - b.d)[0]?.p ?? places[0];
+    }
+    if (!pick) return { placeId: null };
+
+    const row = toRow(pick, "lookup");
+    if (row) {
+      await supabaseAdmin
+        .from("places_cache")
+        .upsert(row as never, { onConflict: "google_place_id" });
+    }
+    return { placeId: pick.id };
+  });

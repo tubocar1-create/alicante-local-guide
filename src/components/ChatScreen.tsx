@@ -4,7 +4,7 @@ import { useWeather } from "@/hooks/useWeather";
 import BookingDialog from "@/components/BookingDialog";
 import { AdBanner } from "@/components/AdBanner";
 import type { Listing } from "@/lib/overpass-listings";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { PlaceImage } from "@/components/PlaceImage";
@@ -19,7 +19,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { findPlaceOverride } from "@/data/places";
 import { resolveOpeningStatus, getTodayClosingTime } from "@/lib/opening-hours";
 import { useServerFn } from "@tanstack/react-start";
-import { getAsianPlaces } from "@/lib/places.functions";
+import { getAsianPlaces, resolvePlaceByName } from "@/lib/places.functions";
 import heroImg from "@/assets/alicante-hero.jpg";
 import skylineImg from "@/assets/alicante-skyline.png";
 import portadaImg from "@/assets/alicante-portada.jpg";
@@ -1644,6 +1644,37 @@ function AsianTableInner({ ranked, loading, onClose }: {
   loading: boolean;
   onClose: () => void;
 }) {
+  const navigate = useNavigate();
+  const resolvePlace = useServerFn(resolvePlaceByName);
+  const [resolving, setResolving] = useState<string | null>(null);
+
+  const openDashboard = async (c: PlaceCardData) => {
+    if (c.placeId) {
+      navigate({ to: "/restaurants/$placeId", params: { placeId: c.placeId } });
+      return;
+    }
+    if (resolving) return;
+    setResolving(c.name);
+    try {
+      const { placeId } = await resolvePlace({
+        data: { name: c.name, lat: c.lat ?? null, lon: c.lon ?? null },
+      });
+      if (placeId) {
+        navigate({ to: "/restaurants/$placeId", params: { placeId } });
+      } else {
+        const href =
+          c.lat && c.lon
+            ? `https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lon}`
+            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.name + " Alicante")}`;
+        window.open(href, "_blank", "noreferrer");
+      }
+    } catch (e) {
+      console.error("resolvePlaceByName failed", e);
+    } finally {
+      setResolving(null);
+    }
+  };
+
   return (
     <div
       className="fixed inset-0 z-[60] overflow-y-auto text-slate-100"
@@ -1761,10 +1792,7 @@ function AsianTableInner({ ranked, loading, onClose }: {
                     : meters >= 1000
                       ? `${(meters / 1000).toFixed(1)}km`
                       : `${meters}m`;
-                const mapsHref =
-                  c.lat && c.lon
-                    ? `https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lon}`
-                    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.name + " Alicante")}`;
+                
                 const nameNode = (
                   <span className="flex items-center gap-1 text-white hover:text-cyan-300">
                     <span className="text-[13px] leading-none">{asianEmoji(c)}</span>
@@ -1785,9 +1813,14 @@ function AsianTableInner({ ranked, loading, onClose }: {
                           {nameNode}
                         </Link>
                       ) : (
-                        <a href={mapsHref} target="_blank" rel="noreferrer" className="block">
+                        <button
+                          type="button"
+                          onClick={() => openDashboard(c)}
+                          disabled={resolving === c.name}
+                          className="block w-full text-left disabled:opacity-60"
+                        >
                           {nameNode}
-                        </a>
+                        </button>
                       )}
                     </td>
                     <td className="px-1 py-1 align-middle">
