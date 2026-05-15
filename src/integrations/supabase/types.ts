@@ -536,6 +536,90 @@ export type Database = {
           },
         ]
       }
+      places_cache: {
+        Row: {
+          address: string | null
+          category: string
+          created_at: string
+          cuisine: string | null
+          fetched_at: string
+          google_place_id: string
+          id: string
+          lat: number | null
+          lng: number | null
+          name: string
+          open_now: boolean | null
+          opening_hours_json: Json | null
+          opening_hours_text: string | null
+          phone: string | null
+          price_currency: string | null
+          price_level: string | null
+          price_range_max: number | null
+          price_range_min: number | null
+          primary_type: string | null
+          rating: number | null
+          raw: Json | null
+          types: string[] | null
+          updated_at: string
+          user_rating_count: number | null
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          category: string
+          created_at?: string
+          cuisine?: string | null
+          fetched_at?: string
+          google_place_id: string
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          name: string
+          open_now?: boolean | null
+          opening_hours_json?: Json | null
+          opening_hours_text?: string | null
+          phone?: string | null
+          price_currency?: string | null
+          price_level?: string | null
+          price_range_max?: number | null
+          price_range_min?: number | null
+          primary_type?: string | null
+          rating?: number | null
+          raw?: Json | null
+          types?: string[] | null
+          updated_at?: string
+          user_rating_count?: number | null
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          category?: string
+          created_at?: string
+          cuisine?: string | null
+          fetched_at?: string
+          google_place_id?: string
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          name?: string
+          open_now?: boolean | null
+          opening_hours_json?: Json | null
+          opening_hours_text?: string | null
+          phone?: string | null
+          price_currency?: string | null
+          price_level?: string | null
+          price_range_max?: number | null
+          price_range_min?: number | null
+          primary_type?: string | null
+          rating?: number | null
+          raw?: Json | null
+          types?: string[] | null
+          updated_at?: string
+          user_rating_count?: number | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
