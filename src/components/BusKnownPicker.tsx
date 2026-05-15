@@ -90,14 +90,12 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return stopsWithDistance.slice(0, 30);
-    return stopsWithDistance
-      .filter(
-        (s) =>
-          s.code.includes(q) ||
-          (s.name ?? "").toLowerCase().includes(q),
-      )
-      .slice(0, 30);
+    if (!q) return stopsWithDistance;
+    return stopsWithDistance.filter(
+      (s) =>
+        s.code.includes(q) ||
+        (s.name ?? "").toLowerCase().includes(q),
+    );
   }, [stopsWithDistance, search]);
 
   const nearest = stopsWithDistance.find((s) => s.distM != null) ?? null;
