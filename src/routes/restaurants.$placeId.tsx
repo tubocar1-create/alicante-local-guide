@@ -40,7 +40,7 @@ function RestaurantDashboard() {
       .then((r) => { if (!cancelled) setPlace(r.place); })
       .catch((e) => { if (!cancelled) setErr(String(e?.message ?? e)); })
       .finally(() => { if (!cancelled) setLoading(false); });
-    fetchPhotos({ data: { placeId, max: 6 } })
+    fetchPhotos({ data: { placeId, max: 10 } })
       .then((r) => { if (!cancelled) setPhotos(r.photos); })
       .catch(() => { /* photos optional */ });
     return () => { cancelled = true; };
