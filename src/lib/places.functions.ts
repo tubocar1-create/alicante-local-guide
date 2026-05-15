@@ -37,6 +37,18 @@ const ASIAN_QUERIES = [
   "vietnamese restaurant",
   "asian restaurant",
 ];
+const DRINKS_QUERIES = [
+  "bar",
+  "cocktail bar",
+  "pub",
+  "wine bar",
+  "vinoteca",
+  "cervecería",
+  "brewery",
+  "rooftop bar",
+  "gin tonic bar",
+  "discoteca",
+];
 const STALE_MS = 24 * 60 * 60 * 1000; // 24h
 
 const FIELD_MASK = [
