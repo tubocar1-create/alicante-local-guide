@@ -133,31 +133,51 @@ function RestaurantDashboard() {
               </div>
 
               {place.rating != null && (
-                <a
-                  href={`https://www.tripadvisor.es/Search?q=${encodeURIComponent(`${place.name} Alicante`)}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-3 flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 hover:bg-white/[0.08]"
-                >
-                  <div className="flex items-baseline gap-1">
-                    <Star className="h-5 w-5 self-center fill-amber-400 text-amber-400" />
-                    <span className="text-2xl font-bold leading-none text-white">
-                      {place.rating.toFixed(1)}
-                    </span>
-                    <span className="text-xs text-slate-400">/5</span>
-                  </div>
-                  <div className="min-w-0 flex-1">
+                <div className="mt-3 space-y-2">
+                  <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5">
+                    <div className="flex items-baseline gap-1">
+                      <Star className="h-5 w-5 self-center fill-amber-400 text-amber-400" />
+                      <span className="text-2xl font-bold leading-none text-white">
+                        {place.rating.toFixed(1)}
+                      </span>
+                      <span className="text-xs text-slate-400">/5</span>
+                    </div>
                     {place.user_rating_count != null && (
                       <div className="text-sm font-semibold text-slate-200">
                         {place.user_rating_count.toLocaleString("es-ES")} reseñas
                       </div>
                     )}
-                    <div className="flex items-center gap-1 text-[11px] text-cyan-300">
-                      <MessageSquare className="h-3 w-3" />
-                      Ver reseñas
-                    </div>
                   </div>
-                </a>
+                  <div className="grid grid-cols-3 gap-2">
+                    <a
+                      href={`https://search.google.com/local/reviews?placeid=${place.google_place_id}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex flex-col items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/[0.04] px-2 py-2.5 text-[11px] font-semibold text-slate-200 hover:bg-white/[0.08]"
+                    >
+                      <MessageSquare className="h-4 w-4 text-cyan-300" />
+                      Google
+                    </a>
+                    <a
+                      href={`https://www.tripadvisor.es/Search?q=${encodeURIComponent(`${place.name} Alicante`)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex flex-col items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/[0.04] px-2 py-2.5 text-[11px] font-semibold text-slate-200 hover:bg-white/[0.08]"
+                    >
+                      <MessageSquare className="h-4 w-4 text-emerald-300" />
+                      TripAdvisor
+                    </a>
+                    <a
+                      href={`https://www.thefork.es/search/?cityId=415144&query=${encodeURIComponent(place.name)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex flex-col items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/[0.04] px-2 py-2.5 text-[11px] font-semibold text-slate-200 hover:bg-white/[0.08]"
+                    >
+                      <MessageSquare className="h-4 w-4 text-rose-300" />
+                      TheFork
+                    </a>
+                  </div>
+                </div>
               )}
             </section>
 
