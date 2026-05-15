@@ -56,6 +56,43 @@ const DRINKS_QUERIES = [
   "karaoke bar",
   "karaoke",
 ];
+const TYPICAL_QUERIES = [
+  "restaurante típico alicantino",
+  "cocina alicantina",
+  "cocina mediterránea",
+  "restaurante tradicional",
+  "tapas tradicionales",
+  "tasca",
+  "restaurante típico",
+  "cocina española",
+];
+const RICE_FISH_QUERIES = [
+  "arrocería",
+  "paella",
+  "arroz",
+  "arroz a banda",
+  "marisquería",
+  "restaurante de pescado",
+  "pescado fresco",
+  "seafood restaurant",
+  "rice restaurant",
+];
+const ITALIAN_QUERIES = [
+  "italian restaurant",
+  "restaurante italiano",
+  "pizzería",
+  "pizza",
+  "pasta",
+  "trattoria",
+  "ristorante",
+];
+const CATEGORY_QUERIES: Record<string, string[]> = {
+  asian: ASIAN_QUERIES,
+  drinks: DRINKS_QUERIES,
+  typical: TYPICAL_QUERIES,
+  rice_fish: RICE_FISH_QUERIES,
+  italian: ITALIAN_QUERIES,
+};
 const STALE_MS = 24 * 60 * 60 * 1000; // 24h
 
 const FIELD_MASK = [
@@ -221,15 +258,17 @@ export const getPlacePhotos = createServerFn({ method: "GET" })
     return { photos: urls.filter((u): u is string => !!u) };
   });
 
-async function refreshAsianFromGoogle() {
+async function refreshCategoryFromGoogle(category: string) {
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
   if (!apiKey) throw new Error("GOOGLE_PLACES_API_KEY missing");
+  const queries = CATEGORY_QUERIES[category];
+  if (!queries) throw new Error(`unknown category: ${category}`);
 
   const seen = new Map<string, CachedPlace>();
-  for (const q of ASIAN_QUERIES) {
+  for (const q of queries) {
     const places = await searchGoogle(q, apiKey);
     for (const p of places) {
-      const row = toRow(p, "asian");
+      const row = toRow(p, category);
       if (row && !seen.has(row.google_place_id)) {
         seen.set(row.google_place_id, row);
       }
@@ -242,118 +281,78 @@ async function refreshAsianFromGoogle() {
     .from("places_cache")
     .upsert(rows as never, { onConflict: "google_place_id" });
   if (error) {
-    console.error("upsert places_cache error", error);
+    console.error(`upsert places_cache (${category}) error`, error);
     throw error;
   }
   return rows;
+}
+
+async function getCategoryPlaces(category: string) {
+  const { data: existing, error } = await supabaseAdmin
+    .from("places_cache")
+    .select("*")
+    .eq("category", category)
+    .order("name");
+  if (error) throw error;
+
+  const newest = existing?.reduce<number>(
+    (max, r) => Math.max(max, new Date(r.fetched_at as string).getTime()),
+    0,
+  ) ?? 0;
+  const isStale = !existing?.length || Date.now() - newest > STALE_MS;
+
+  if (isStale) {
+    try {
+      await refreshCategoryFromGoogle(category);
+      const { data: fresh } = await supabaseAdmin
+        .from("places_cache")
+        .select("*")
+        .eq("category", category)
+        .order("name");
+      return { places: fresh ?? [], refreshed: true };
+    } catch (e) {
+      console.error(`refresh ${category} failed, returning cached`, e);
+      return { places: existing ?? [], refreshed: false };
+    }
+  }
+  return { places: existing ?? [], refreshed: false };
 }
 
 export const getAsianPlaces = createServerFn({ method: "GET" }).handler(
-  async () => {
-    const { data: existing, error } = await supabaseAdmin
-      .from("places_cache")
-      .select("*")
-      .eq("category", "asian")
-      .order("name");
-    if (error) throw error;
-
-    const newest = existing?.reduce<number>(
-      (max, r) => Math.max(max, new Date(r.fetched_at as string).getTime()),
-      0,
-    ) ?? 0;
-    const isStale = !existing?.length || Date.now() - newest > STALE_MS;
-
-    if (isStale) {
-      try {
-        await refreshAsianFromGoogle();
-        const { data: fresh } = await supabaseAdmin
-          .from("places_cache")
-          .select("*")
-          .eq("category", "asian")
-          .order("name");
-        return { places: fresh ?? [], refreshed: true };
-      } catch (e) {
-        console.error("refresh failed, returning cached", e);
-        return { places: existing ?? [], refreshed: false };
-      }
-    }
-    return { places: existing ?? [], refreshed: false };
-  },
+  async () => getCategoryPlaces("asian"),
 );
-
 export const refreshAsianPlaces = createServerFn({ method: "POST" }).handler(
-  async () => {
-    const rows = await refreshAsianFromGoogle();
-    return { count: rows.length };
-  },
+  async () => ({ count: (await refreshCategoryFromGoogle("asian")).length }),
 );
-
-async function refreshDrinksFromGoogle() {
-  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
-  if (!apiKey) throw new Error("GOOGLE_PLACES_API_KEY missing");
-
-  const seen = new Map<string, CachedPlace>();
-  for (const q of DRINKS_QUERIES) {
-    const places = await searchGoogle(q, apiKey);
-    for (const p of places) {
-      const row = toRow(p, "drinks");
-      if (row && !seen.has(row.google_place_id)) {
-        seen.set(row.google_place_id, row);
-      }
-    }
-  }
-  const rows = Array.from(seen.values());
-  if (rows.length === 0) return rows;
-
-  const { error } = await supabaseAdmin
-    .from("places_cache")
-    .upsert(rows as never, { onConflict: "google_place_id" });
-  if (error) {
-    console.error("upsert places_cache (drinks) error", error);
-    throw error;
-  }
-  return rows;
-}
 
 export const getDrinksPlaces = createServerFn({ method: "GET" }).handler(
-  async () => {
-    const { data: existing, error } = await supabaseAdmin
-      .from("places_cache")
-      .select("*")
-      .eq("category", "drinks")
-      .order("name");
-    if (error) throw error;
-
-    const newest = existing?.reduce<number>(
-      (max, r) => Math.max(max, new Date(r.fetched_at as string).getTime()),
-      0,
-    ) ?? 0;
-    const isStale = !existing?.length || Date.now() - newest > STALE_MS;
-
-    if (isStale) {
-      try {
-        await refreshDrinksFromGoogle();
-        const { data: fresh } = await supabaseAdmin
-          .from("places_cache")
-          .select("*")
-          .eq("category", "drinks")
-          .order("name");
-        return { places: fresh ?? [], refreshed: true };
-      } catch (e) {
-        console.error("drinks refresh failed, returning cached", e);
-        return { places: existing ?? [], refreshed: false };
-      }
-    }
-    return { places: existing ?? [], refreshed: false };
-  },
+  async () => getCategoryPlaces("drinks"),
 );
-
 export const refreshDrinksPlaces = createServerFn({ method: "POST" }).handler(
-  async () => {
-    const rows = await refreshDrinksFromGoogle();
-    return { count: rows.length };
-  },
+  async () => ({ count: (await refreshCategoryFromGoogle("drinks")).length }),
 );
+
+export const getTypicalPlaces = createServerFn({ method: "GET" }).handler(
+  async () => getCategoryPlaces("typical"),
+);
+export const refreshTypicalPlaces = createServerFn({ method: "POST" }).handler(
+  async () => ({ count: (await refreshCategoryFromGoogle("typical")).length }),
+);
+
+export const getRiceFishPlaces = createServerFn({ method: "GET" }).handler(
+  async () => getCategoryPlaces("rice_fish"),
+);
+export const refreshRiceFishPlaces = createServerFn({ method: "POST" }).handler(
+  async () => ({ count: (await refreshCategoryFromGoogle("rice_fish")).length }),
+);
+
+export const getItalianPlaces = createServerFn({ method: "GET" }).handler(
+  async () => getCategoryPlaces("italian"),
+);
+export const refreshItalianPlaces = createServerFn({ method: "POST" }).handler(
+  async () => ({ count: (await refreshCategoryFromGoogle("italian")).length }),
+);
+
 
 export const getPlaceById = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => {
