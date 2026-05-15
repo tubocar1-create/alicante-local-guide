@@ -88,38 +88,56 @@ export default function OpeningHoursCard({
 
   const today = todayIndexMadrid();
 
-  // Determine effective open state
-  const isOpen =
-    status.status === "open" ? true : status.status === "closed" ? false : openNow ?? null;
-
-  // Derive "closes at" from today's hours when status parser doesn't know
-  const closesAt = useMemo(() => {
-    if (status.status === "open") return status.closesAt;
-    if (isOpen !== true) return null;
-    const todayHours = lines[today]?.hours;
-    if (!todayHours) return null;
-    const nowDate = new Date();
+  // Compute current Madrid time in minutes
+  const nowMin = useMemo(() => {
     const parts = new Intl.DateTimeFormat("en-GB", {
       timeZone: "Europe/Madrid",
       hour: "2-digit",
       minute: "2-digit",
       hourCycle: "h23",
-    }).formatToParts(nowDate);
+    }).formatToParts(new Date());
     const h = Number(parts.find((p) => p.type === "hour")?.value ?? "0");
     const m = Number(parts.find((p) => p.type === "minute")?.value ?? "0");
-    const nowMin = h * 60 + m;
-    const ranges = [...todayHours.matchAll(/(\d{1,2}):(\d{2})\s*[–-]\s*(\d{1,2}):(\d{2})/g)];
-    for (const r of ranges) {
+    return h * 60 + m;
+    // Re-evaluate every minute via liveM dependency
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [liveM]);
+
+  // Find active range from today's parsed hours (most reliable: ground-truth schedule)
+  const todayRanges = useMemo(() => {
+    const todayHours = lines[today]?.hours;
+    if (!todayHours) return [] as { start: number; end: number }[];
+    return [...todayHours.matchAll(/(\d{1,2}):(\d{2})\s*[–-]\s*(\d{1,2}):(\d{2})/g)].map((r) => {
       const start = Number(r[1]) * 60 + Number(r[2]);
       let end = Number(r[3]) * 60 + Number(r[4]);
       if (end <= start) end += 1440;
-      if (nowMin >= start && nowMin < end) {
-        const safe = end % 1440;
-        return `${String(Math.floor(safe / 60)).padStart(2, "0")}:${String(safe % 60).padStart(2, "0")}`;
-      }
+      return { start, end };
+    });
+  }, [lines, today]);
+
+  const activeRange = useMemo(
+    () => todayRanges.find((r) => nowMin >= r.start && nowMin < r.end) ?? null,
+    [todayRanges, nowMin],
+  );
+
+  // Determine effective open state: prefer parsed schedule, then status parser, then API hint
+  const isOpen: boolean | null =
+    todayRanges.length > 0
+      ? activeRange !== null
+      : status.status === "open"
+      ? true
+      : status.status === "closed"
+      ? false
+      : openNow ?? null;
+
+  const closesAt = useMemo(() => {
+    if (activeRange) {
+      const safe = activeRange.end % 1440;
+      return `${String(Math.floor(safe / 60)).padStart(2, "0")}:${String(safe % 60).padStart(2, "0")}`;
     }
+    if (status.status === "open") return status.closesAt;
     return null;
-  }, [status, isOpen, lines, today]);
+  }, [activeRange, status]);
 
   const stateLabel =
     isOpen === true ? "Abierto ahora" : isOpen === false ? "Cerrado" : "Horario no confirmado";
