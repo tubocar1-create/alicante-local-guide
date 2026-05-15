@@ -1,10 +1,21 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { getPlaceById, getPlacePhotos } from "@/lib/places.functions";
-import { ArrowLeft, MapPin, Phone, Globe, Star, Clock, Euro, MessageSquare, CalendarCheck } from "lucide-react";
+import {
+  ArrowLeft,
+  MapPin,
+  Phone,
+  Globe,
+  Star,
+  Clock,
+  Euro,
+  MessageSquare,
+  CalendarCheck,
+} from "lucide-react";
 import ReferralDialog from "@/components/ReferralDialog";
 import BookingDialog from "@/components/BookingDialog";
+import { resolveOpeningStatus } from "@/lib/opening-hours";
 
 const PlaceLocationMap = lazy(() => import("@/components/PlaceLocationMap"));
 import OpeningHoursCard from "@/components/OpeningHoursCard";
@@ -13,7 +24,10 @@ export const Route = createFileRoute("/restaurants/$placeId")({
   head: () => ({
     meta: [
       { title: "Restaurante — Alicante Friend" },
-      { name: "description", content: "Detalles del restaurante: horario, precio, valoración y ubicación." },
+      {
+        name: "description",
+        content: "Detalles del restaurante: horario, precio, valoración y ubicación.",
+      },
     ],
   }),
   component: RestaurantDashboard,
@@ -34,18 +48,41 @@ function RestaurantDashboard() {
   const [zoomedIdx, setZoomedIdx] = useState<number | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
 
+  const heroOpeningStatus = useMemo(
+    () => (place ? resolveOpeningStatus(place.opening_hours_text) : null),
+    [place],
+  );
+  const heroIsOpen =
+    heroOpeningStatus?.status === "open"
+      ? true
+      : heroOpeningStatus?.status === "closed"
+        ? false
+        : (place?.open_now ?? null);
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setPhotos([]);
     fetchPlace({ data: { placeId } })
-      .then((r) => { if (!cancelled) setPlace(r.place); })
-      .catch((e) => { if (!cancelled) setErr(String(e?.message ?? e)); })
-      .finally(() => { if (!cancelled) setLoading(false); });
+      .then((r) => {
+        if (!cancelled) setPlace(r.place);
+      })
+      .catch((e) => {
+        if (!cancelled) setErr(String(e?.message ?? e));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
     fetchPhotos({ data: { placeId, max: 10 } })
-      .then((r) => { if (!cancelled) setPhotos(r.photos); })
-      .catch(() => { /* photos optional */ });
-    return () => { cancelled = true; };
+      .then((r) => {
+        if (!cancelled) setPhotos(r.photos);
+      })
+      .catch(() => {
+        /* photos optional */
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [fetchPlace, fetchPhotos, placeId]);
 
   return (
@@ -81,15 +118,15 @@ function RestaurantDashboard() {
                     <p className="mt-0.5 text-sm text-slate-400">{place.cuisine}</p>
                   )}
                 </div>
-                {place.open_now != null && (
+                {heroIsOpen != null && (
                   <span
                     className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold ${
-                      place.open_now
+                      heroIsOpen
                         ? "bg-emerald-500/15 text-emerald-300"
                         : "bg-rose-500/15 text-rose-300"
                     }`}
                   >
-                    ● {place.open_now ? "Abierto" : "Cerrado"}
+                    ● {heroIsOpen ? "Abierto" : "Cerrado"}
                   </span>
                 )}
               </div>
@@ -132,7 +169,9 @@ function RestaurantDashboard() {
                           alt={`${place.name} foto ${i + 1}`}
                           loading="lazy"
                           className={`h-full w-full object-cover transition-transform duration-500 ${
-                            isZoom ? "scale-110 cursor-zoom-out" : "cursor-zoom-in group-hover:scale-105"
+                            isZoom
+                              ? "scale-110 cursor-zoom-out"
+                              : "cursor-zoom-in group-hover:scale-105"
                           }`}
                         />
                       </button>
@@ -150,7 +189,7 @@ function RestaurantDashboard() {
                 value={
                   place.price_range_min != null || place.price_range_max != null
                     ? `${place.price_range_min ?? "?"}–${place.price_range_max ?? "?"} ${place.price_currency ?? "€"}`
-                    : place.price_level?.replace("PRICE_LEVEL_", "") ?? "—"
+                    : (place.price_level?.replace("PRICE_LEVEL_", "") ?? "—")
                 }
               />
             </section>
@@ -164,9 +203,7 @@ function RestaurantDashboard() {
 
             {/* Contacto */}
             <section className="space-y-2">
-              {place.address && (
-                <Row icon={<MapPin className="h-4 w-4" />} text={place.address} />
-              )}
+              {place.address && <Row icon={<MapPin className="h-4 w-4" />} text={place.address} />}
               {place.phone && (
                 <Row
                   icon={<Phone className="h-4 w-4" />}
@@ -190,7 +227,9 @@ function RestaurantDashboard() {
                 <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-200">
                   <MapPin className="h-4 w-4" /> Ubicación
                 </h3>
-                <Suspense fallback={<div className="h-56 w-full animate-pulse rounded-2xl bg-white/5" />}>
+                <Suspense
+                  fallback={<div className="h-56 w-full animate-pulse rounded-2xl bg-white/5" />}
+                >
                   <PlaceLocationMap
                     lat={place.lat}
                     lng={place.lng}
@@ -212,7 +251,9 @@ function RestaurantDashboard() {
                   <CalendarCheck className="h-4 w-4" />
                   ¡VAMOS!
                 </span>
-                <span className="text-[10px] font-medium opacity-80">Te emitimos una invitación</span>
+                <span className="text-[10px] font-medium opacity-80">
+                  Te emitimos una invitación
+                </span>
               </button>
               <button
                 type="button"
@@ -282,8 +323,16 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
 }
 
 function Row({
-  icon, text, href, external,
-}: { icon: React.ReactNode; text: string; href?: string; external?: boolean }) {
+  icon,
+  text,
+  href,
+  external,
+}: {
+  icon: React.ReactNode;
+  text: string;
+  href?: string;
+  external?: boolean;
+}) {
   const inner = (
     <span className="flex items-start gap-2 text-sm text-slate-300">
       <span className="mt-0.5 text-slate-400">{icon}</span>
