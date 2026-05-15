@@ -2383,12 +2383,11 @@ function AssistantContent({ content, userPrompt = "" }: { content: string; userP
   const cardData = renderedParts
     .filter((p): p is Extract<AssistantPart, { type: "card" }> => p.type === "card")
     .map((p) => p.data);
-  const textHasAsian = ASIAN_RE.test(cleaned);
-  const textHasDrinks = DRINKS_RE.test(cleaned);
+  const textHasAsian = ASIAN_RE.test(cleaned) || ASIAN_RE.test(userPrompt);
+  const textHasDrinks = DRINKS_RE.test(cleaned) || DRINKS_RE.test(userPrompt);
   const asianMode =
-    cardData.length >= 2 &&
-    (cardData.every((c) => isAsianCard(c)) ||
-      (textHasAsian && cardData.length >= 2));
+    textHasAsian ||
+    (cardData.length >= 2 && cardData.every((c) => isAsianCard(c)));
   const drinksMode =
     !asianMode &&
     (textHasDrinks ||
