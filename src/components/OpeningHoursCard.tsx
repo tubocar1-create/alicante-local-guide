@@ -64,7 +64,7 @@ function parseLines(text: string): { day: string; hours: string; idx: number }[]
 
 function parseTimeRanges(hours?: string | null): { start: number; end: number }[] {
   if (!hours) return [];
-  return [...hours.matchAll(/(\d{1,2}):(\d{2})\s*[–-]\s*(\d{1,2}):(\d{2})/g)].map((r) => {
+  return [...hours.matchAll(/(\d{1,2}):(\d{1,2})\s*[–-]\s*(\d{1,2}):(\d{1,2})/g)].map((r) => {
     const start = Number(r[1]) * 60 + Number(r[2]);
     let end = Number(r[3]) * 60 + Number(r[4]);
     if (end <= start) end += 1440;
