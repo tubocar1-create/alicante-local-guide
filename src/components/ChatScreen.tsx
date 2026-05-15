@@ -17,7 +17,7 @@ import { BusKnownPicker, type BusStopPick } from "@/components/BusKnownPicker";
 import { FlightPicker } from "@/components/FlightPicker";
 import { useAuth } from "@/hooks/useAuth";
 import { findPlaceOverride } from "@/data/places";
-import { getOpeningStatus } from "@/lib/opening-hours";
+import { resolveOpeningStatus } from "@/lib/opening-hours";
 import { useServerFn } from "@tanstack/react-start";
 import { getAsianPlaces } from "@/lib/places.functions";
 import heroImg from "@/assets/alicante-hero.jpg";
@@ -1730,14 +1730,16 @@ function AsianTableInner({ ranked, loading, onClose }: {
             </thead>
             <tbody>
               {ranked.map(({ c, d }, i) => {
-                const status = getOpeningStatus(c.openingHours ?? undefined);
+                const status = resolveOpeningStatus(c.openingHours ?? undefined);
                 const closesAt =
                   status.status === "open" ? status.closesAt : c.closesAt ?? null;
+                // Trust parsed schedule first; only fall back to API openNow when schedule is unknown
                 const isOpen =
                   status.status === "open" ||
-                  c.openNow === true ||
-                  (!c.openingHours && Boolean(c.closesAt));
-                const isClosed = status.status === "closed" || c.openNow === false;
+                  (status.status === "unknown" && c.openNow === true);
+                const isClosed =
+                  status.status === "closed" ||
+                  (status.status === "unknown" && c.openNow === false);
                 const price = priceLabel(c.priceLevel);
                 const priceFromRange =
                   c.priceRangeMin && c.priceRangeMax
