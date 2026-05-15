@@ -513,8 +513,8 @@ export function ChatScreen() {
           )}
 
           {isWelcome && !activeSubmenu && (
-            <div className="mt-2 rounded-3xl bg-neutral-200 p-2 shadow-soft ring-1 ring-border/60 backdrop-blur sm:p-4">
-              <div className="grid grid-cols-5 gap-1.5 sm:grid-cols-9 sm:gap-3">
+            <div className="mt-2 rounded-3xl bg-white p-4 shadow-soft ring-1 ring-black/5">
+              <div className="grid grid-cols-3 gap-x-2 gap-y-5 sm:grid-cols-5">
                 {[
                   ...SUGGESTIONS.map((s) => {
                     const match = s.label.match(/^(\p{Extended_Pictographic}+)/u);
@@ -546,19 +546,19 @@ export function ChatScreen() {
                   },
                 ].map((t, idx) => {
                   const style = TILE_STYLES[t.label];
+                  const subtitle = TILE_SUBTITLES[t.label];
                   return (
                     <button
                       key={t.key}
                       onClick={t.onClick}
                       aria-label={t.label}
-                      className="group flex flex-col items-center animate-tile-in"
+                      className="group flex flex-col items-center text-center animate-tile-in"
                       style={{ animationDelay: `${(idx % 9) * 60}ms` }}
                     >
                       <div
-                        className="relative grid aspect-square w-full place-items-center rounded-2xl shadow-md ring-1 ring-black/30 transition-all duration-300 ease-out group-hover:-translate-y-1 group-hover:rotate-[-2deg] group-hover:shadow-xl group-hover:ring-2 group-hover:ring-primary/40 group-active:scale-90 overflow-hidden"
+                        className="relative grid h-16 w-16 place-items-center rounded-full transition-transform duration-300 ease-out group-hover:-translate-y-0.5 group-active:scale-90 overflow-hidden"
                         style={{ backgroundColor: style?.bg ?? "oklch(0.95 0.02 80)" }}
                       >
-                        <span className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-black/10" aria-hidden />
                         {style ? (
                           <img
                             src={style.img}
@@ -567,21 +567,20 @@ export function ChatScreen() {
                             loading="lazy"
                             width={1024}
                             height={1024}
-                            className="h-[82%] w-[82%] object-contain transition-transform duration-300 group-hover:scale-110 group-active:scale-95 drop-shadow-md"
+                            className="h-[70%] w-[70%] object-contain transition-transform duration-300 group-hover:scale-110"
                           />
                         ) : (
-                          <span className="text-[38px] transition-transform duration-300 group-hover:scale-125">{t.emoji}</span>
+                          <span className="text-[28px]">{t.emoji}</span>
                         )}
                       </div>
-                      <span
-                        className={`relative z-10 block w-full text-[11px] font-extrabold leading-tight tracking-tight text-foreground text-center sm:text-[13px] transition-colors group-hover:text-primary ${
-                          t.label === "Turismo, playa y aventuras"
-                            ? "-mt-[22px] sm:-mt-[26px]"
-                            : "mt-1.5"
-                        }`}
-                      >
-                        <span className="block w-full">{t.label}</span>
+                      <span className="mt-1.5 block text-[12px] font-extrabold leading-tight tracking-tight text-foreground">
+                        {t.label}
                       </span>
+                      {subtitle && (
+                        <span className="mt-0.5 block text-[10px] leading-tight text-muted-foreground">
+                          {subtitle}
+                        </span>
+                      )}
                     </button>
                   );
                 })}
