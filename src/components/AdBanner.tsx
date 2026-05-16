@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQueries } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getAdVariants, type AdVariantsResponse } from "@/lib/ads/ads.functions";
@@ -11,7 +11,6 @@ const CACHE_TTL_MS = 5 * 60 * 1000;
 
 type Cached = { at: number; data: AdVariantsResponse };
 const cacheKey = (id: string) => `banner:${id}:variants:v4`;
-const rotateKey = (id: string) => `banner:${id}:idx`;
 
 function readCache(id: string): AdVariantsResponse | null {
   try {
@@ -31,22 +30,31 @@ function writeCache(id: string, data: AdVariantsResponse) {
     /* ignore */
   }
 }
-function nextIndex(id: string, len: number): number {
+function pickRandomIndex(len: number): number {
   if (len <= 0) return 0;
-  try {
-    const cur = parseInt(localStorage.getItem(rotateKey(id)) ?? "0", 10);
-    const next = (Number.isFinite(cur) ? cur : 0) % len;
-    localStorage.setItem(rotateKey(id), String((next + 1) % len));
-    return next;
-  } catch {
-    return Math.floor(Math.random() * len);
+  return Math.floor(Math.random() * len);
+}
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
   }
+  return a;
 }
 
 export function AdBanner() {
   const fetchAds = useServerFn(getAdVariants);
   const [cycle, setCycle] = useState(0);
   const [open, setOpen] = useState(false);
+
+  // Orden barajado del carrusel: estable durante la vida del componente,
+  // distinto en cada montaje. Es un array de índices sobre ADVERTISERS.
+  const shuffledOrder = useMemo(
+    () => shuffle(ADVERTISERS.map((_, i) => i)),
+    [],
+  );
 
   const queries = useQueries({
     queries: ADVERTISERS.map((a) => ({
@@ -88,18 +96,20 @@ export function AdBanner() {
   if (!allLoaded || !open) return SLOT;
 
   // Filtramos anunciantes sin variantes (banner suspendido, p.ej. Aena sin incidencias)
+  // y respetamos el orden barajado del carrusel.
   const activeIdx: number[] = [];
-  queries.forEach((q, i) => {
-    if (q.data && q.data.variants.length > 0) activeIdx.push(i);
-  });
+  for (const i of shuffledOrder) {
+    const q = queries[i];
+    if (q?.data && q.data.variants.length > 0) activeIdx.push(i);
+  }
   if (activeIdx.length === 0) return SLOT;
 
   const ai = activeIdx[(cycle - 1 + activeIdx.length * 1000) % activeIdx.length];
   const data = queries[ai]?.data;
   if (!data) return SLOT;
+  // Variante aleatoria en cada aparición (la cartelera se enseña al azar).
   const variant =
-    data.variants[nextIndex(ADVERTISERS[ai].id, data.variants.length)] ??
-    data.variants[0];
+    data.variants[pickRandomIndex(data.variants.length)] ?? data.variants[0];
   if (!variant) return SLOT;
   const theme = data.advertiser.theme;
 
