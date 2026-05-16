@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQueries } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getAdVariants, type AdVariantsResponse } from "@/lib/ads/ads.functions";
@@ -11,7 +11,6 @@ const CACHE_TTL_MS = 5 * 60 * 1000;
 
 type Cached = { at: number; data: AdVariantsResponse };
 const cacheKey = (id: string) => `banner:${id}:variants:v4`;
-const rotateKey = (id: string) => `banner:${id}:idx`;
 
 function readCache(id: string): AdVariantsResponse | null {
   try {
