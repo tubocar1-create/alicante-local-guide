@@ -118,7 +118,7 @@ const SUGGESTIONS: Suggestion[] = [
       },
       { label: "🍣 Japonés / Asiático", prompt: "Un japonés o asiático rico abierto ahora" },
       { label: "🌱 Vegano / Saludable", prompt: "Un sitio vegano o saludable abierto ahora" },
-      { label: "🥐 Desayuno / Brunch", prompt: "Un buen desayuno o brunch abierto ahora" },
+      { label: "🥐 Desayuno / Brunch", prompt: "Necesito un buen desayuno o brunch en Alicante abierto ahora" },
       { label: "🍰 Postres / Cafetería", prompt: "Una cafetería con postres ricos abierta ahora" },
       { label: "💸 Barato y rico", prompt: "Algo barato y rico para comer ya, abierto ahora" },
       { label: "✨ Sorpréndeme", prompt: "Sorpréndeme con un sitio rico para comer abierto ahora" },
