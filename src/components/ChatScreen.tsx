@@ -3370,18 +3370,36 @@ function AssistantContent({ content, userPrompt = "" }: { content: string; userP
   const cardData = renderedParts
     .filter((p): p is Extract<AssistantPart, { type: "card" }> => p.type === "card")
     .map((p) => p.data);
-  const textHasAsian = ASIAN_RE.test(cleaned) || ASIAN_RE.test(userPrompt);
-  const textHasDrinks = DRINKS_RE.test(cleaned) || DRINKS_RE.test(userPrompt);
-  const textHasTypical = TYPICAL_RE.test(cleaned) || TYPICAL_RE.test(userPrompt);
-  const textHasRiceFish = RICE_FISH_RE.test(cleaned) || RICE_FISH_RE.test(userPrompt);
-  const textHasItalian = ITALIAN_RE.test(cleaned) || ITALIAN_RE.test(userPrompt);
-  const textHasPizzas = PIZZAS_RE.test(cleaned) || PIZZAS_RE.test(userPrompt);
-  const textHasBrunch = BRUNCH_RE.test(cleaned) || BRUNCH_RE.test(userPrompt);
-  const textHasFastFood = FAST_FOOD_RE.test(cleaned) || FAST_FOOD_RE.test(userPrompt);
-  const textHasVegan = VEGAN_RE.test(cleaned) || VEGAN_RE.test(userPrompt);
-  const textHasDesserts = DESSERTS_RE.test(cleaned) || DESSERTS_RE.test(userPrompt);
-  const textHasCheap = CHEAP_RE.test(cleaned) || CHEAP_RE.test(userPrompt);
-  const textHasInternational = INTERNATIONAL_RE.test(cleaned) || INTERNATIONAL_RE.test(userPrompt);
+  // Intención del usuario (prompt) — tiene prioridad sobre lo que diga la IA en la respuesta
+  const pTypical = TYPICAL_RE.test(userPrompt);
+  const pRiceFish = RICE_FISH_RE.test(userPrompt);
+  const pItalian = ITALIAN_RE.test(userPrompt);
+  const pPizzas = PIZZAS_RE.test(userPrompt);
+  const pBrunch = BRUNCH_RE.test(userPrompt);
+  const pAsian = ASIAN_RE.test(userPrompt);
+  const pDrinks = DRINKS_RE.test(userPrompt);
+  const pFastFood = FAST_FOOD_RE.test(userPrompt);
+  const pVegan = VEGAN_RE.test(userPrompt);
+  const pDesserts = DESSERTS_RE.test(userPrompt);
+  const pCheap = CHEAP_RE.test(userPrompt);
+  const pInternational = INTERNATIONAL_RE.test(userPrompt);
+  const promptLocked =
+    pTypical || pRiceFish || pItalian || pPizzas || pBrunch || pAsian || pDrinks ||
+    pFastFood || pVegan || pDesserts || pCheap || pInternational;
+
+  // Si el prompt ya fijó intención, ignoramos las pistas de la respuesta de la IA
+  const textHasAsian = pAsian || (!promptLocked && ASIAN_RE.test(cleaned));
+  const textHasDrinks = pDrinks || (!promptLocked && DRINKS_RE.test(cleaned));
+  const textHasTypical = pTypical || (!promptLocked && TYPICAL_RE.test(cleaned));
+  const textHasRiceFish = pRiceFish || (!promptLocked && RICE_FISH_RE.test(cleaned));
+  const textHasItalian = pItalian || (!promptLocked && ITALIAN_RE.test(cleaned));
+  const textHasPizzas = pPizzas || (!promptLocked && PIZZAS_RE.test(cleaned));
+  const textHasBrunch = pBrunch || (!promptLocked && BRUNCH_RE.test(cleaned));
+  const textHasFastFood = pFastFood || (!promptLocked && FAST_FOOD_RE.test(cleaned));
+  const textHasVegan = pVegan || (!promptLocked && VEGAN_RE.test(cleaned));
+  const textHasDesserts = pDesserts || (!promptLocked && DESSERTS_RE.test(cleaned));
+  const textHasCheap = pCheap || (!promptLocked && CHEAP_RE.test(cleaned));
+  const textHasInternational = pInternational || (!promptLocked && INTERNATIONAL_RE.test(cleaned));
   const asianMode =
     textHasAsian ||
     (cardData.length >= 2 && cardData.every((c) => isAsianCard(c)));
