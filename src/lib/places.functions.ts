@@ -599,36 +599,47 @@ async function refreshCategoryFromGoogle(category: string) {
 }
 
 
-async function getCategoryPlaces(category: string) {
-  const { data: existing, error } = await supabaseAdmin
+async function fetchByCategoryOrTag(category: string) {
+  // Multi-classification: a place matches if its primary `category` equals X
+  // OR its `ai_tags` array contains X. Reclassification writes main categories
+  // into both columns, so a paella spot can show up in `rice_fish` and `typical`.
+  const { data, error } = await supabaseAdmin
     .from("places_cache")
     .select("*")
-    .eq("category", category)
+    .or(`category.eq.${category},ai_tags.cs.{${category}}`)
     .order("name");
   if (error) throw error;
+  return data ?? [];
+}
 
-  const newest = existing?.reduce<number>(
+async function getCategoryPlaces(category: string) {
+  const existing = await fetchByCategoryOrTag(category);
+
+  const newest = existing.reduce<number>(
     (max, r) => Math.max(max, new Date(r.fetched_at as string).getTime()),
     0,
-  ) ?? 0;
-  const isStale = !existing?.length || Date.now() - newest > STALE_MS;
+  );
+  const isStale = !existing.length || Date.now() - newest > STALE_MS;
 
-  if (isStale) {
+  // `international` has no Google query template — only DB-backed.
+  const isRefreshable = category !== "international";
+
+  if (isStale && isRefreshable) {
     try {
       await refreshCategoryFromGoogle(category);
-      const { data: fresh } = await supabaseAdmin
-        .from("places_cache")
-        .select("*")
-        .eq("category", category)
-        .order("name");
-      return { places: fresh ?? [], refreshed: true };
+      const fresh = await fetchByCategoryOrTag(category);
+      return { places: fresh, refreshed: true };
     } catch (e) {
       console.error(`refresh ${category} failed, returning cached`, e);
-      return { places: existing ?? [], refreshed: false };
+      return { places: existing, refreshed: false };
     }
   }
-  return { places: existing ?? [], refreshed: false };
+  return { places: existing, refreshed: false };
 }
+
+export const getInternationalPlaces = createServerFn({ method: "GET" }).handler(
+  async () => getCategoryPlaces("international"),
+);
 
 export const getAsianPlaces = createServerFn({ method: "GET" }).handler(
   async () => getCategoryPlaces("asian"),
