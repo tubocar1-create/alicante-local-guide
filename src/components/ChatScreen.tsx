@@ -2922,6 +2922,8 @@ const CATEGORY_THEMES: Record<ExtendedCategory, CategoryTheme & {
     priceHeaderText: "€/pers",
   },
 };
+
+function CategoryTableInner({
   ranked,
   loading,
   onClose,
