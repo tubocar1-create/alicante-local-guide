@@ -496,12 +496,13 @@ function FarmaciasPage() {
                     className="flex items-center justify-between gap-2 rounded-lg border border-amber-300/15 bg-white/[0.03] px-2 py-1.5"
                   >
                     <div className="min-w-0">
-                      <p className="truncate text-[11px] font-medium text-amber-50">
-                        💊 {p.name}
+                      <p className="flex items-center gap-1 truncate text-[11px] font-medium text-amber-50">
+                        <PharmacyCross className="h-3 w-3 shrink-0" />
+                        <span className="truncate">{p.name}</span>
                       </p>
                       <p className="truncate text-[10px] text-amber-100/60">
                         {p.address ?? ""}
-                        {p.postal_code ? ` · ${p.postal_code}` : ""}
+                        {p.postal_code ? ` · ${sectorFor(p.postal_code)}` : ""}
                       </p>
                     </div>
                     {p.phone && (
