@@ -15,7 +15,9 @@ import {
   User as UserIcon,
   Power,
   Briefcase,
+  MapPin,
 } from "lucide-react";
+import { isGeoEnabled, setGeoEnabled } from "@/hooks/useUserLocation";
 import { usePoints } from "@/hooks/usePoints";
 import { useAuth } from "@/hooks/useAuth";
 import { listQrs, subscribeQrs, type LocalQr } from "@/lib/qr-storage";
