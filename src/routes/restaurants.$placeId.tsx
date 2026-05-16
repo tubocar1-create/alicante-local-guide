@@ -48,6 +48,33 @@ function RestaurantDashboard() {
   const [qrOpen, setQrOpen] = useState(false);
   const [zoomedIdx, setZoomedIdx] = useState<number | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewText, setReviewText] = useState<string | null>(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewErr, setReviewErr] = useState<string | null>(null);
+  const fetchAiReview = useServerFn(getAiReview);
+
+  async function openReview() {
+    setReviewOpen(true);
+    if (reviewText || reviewLoading) return;
+    setReviewLoading(true);
+    setReviewErr(null);
+    try {
+      const r = await fetchAiReview({
+        data: {
+          name: place?.name ?? "",
+          cuisine: place?.cuisine ?? null,
+          address: place?.address ?? null,
+        },
+      });
+      setReviewText(r.text);
+    } catch (e) {
+      setReviewErr(String((e as Error)?.message ?? e));
+    } finally {
+      setReviewLoading(false);
+    }
+  }
+
 
   const heroOpeningStatus = useMemo(
     () => (place ? resolveOpeningStatus(place.opening_hours_text) : null),
