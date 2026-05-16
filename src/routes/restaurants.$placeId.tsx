@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { getPlaceById, getPlacePhotos } from "@/lib/places.functions";
+import { getAiReview } from "@/lib/ai-review.functions";
+import { Sparkles, X, Loader2 } from "lucide-react";
 import {
   ArrowLeft,
   MapPin,
