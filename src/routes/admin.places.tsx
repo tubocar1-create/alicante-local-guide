@@ -39,6 +39,7 @@ const CATEGORIES: { value: string; label: string }[] = [
   { value: "brunch", label: "Desayunos / Brunch" },
   { value: "asian", label: "Asiático" },
   { value: "drinks", label: "Bebidas / Bares" },
+  { value: "international", label: "Internacional (hindú, latino, árabe…)" },
   { value: "lookup", label: "Otro / Comercio" },
 ];
 
