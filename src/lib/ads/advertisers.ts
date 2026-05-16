@@ -15,7 +15,9 @@ export type BannerKind =
   | "buses"
   | "regional_agenda"
   | "mercadillos"
-  | "news";
+  | "news"
+  | "alicante_press";
+
 
 export type Advertiser = {
   id: string;
@@ -416,6 +418,23 @@ const ADVERTISERS_RAW: Advertiser[] = [
     brief:
       "Titulares destacados de la prensa alicantina de hoy (Google News). Filtramos política y tragedias; nos centramos en contexto urbano, eventos, cultura, gastronomía, deporte y ciencia/tecnología.",
   },
+  {
+    id: "alicante-press",
+    name: "Alicante Press",
+    tagline: "Titulares de Alicante Press",
+    category: "Actualidad",
+    kind: "alicante_press",
+    ctaLabel: "Leer en Alicante Press",
+    ctaUrl: "https://alicantepress.com/",
+    theme: {
+      bg: "bg-gradient-to-r from-slate-100 via-zinc-200 to-stone-200",
+      fg: "text-slate-900",
+      accent: "bg-white text-slate-900",
+      emoji: "🗞️",
+    },
+    brief:
+      "Titulares en directo de alicantepress.com. Selección de noticias urbanas, culturales, deportivas y económicas; filtramos política partidista y sucesos.",
+  },
 ];
 
 // Rotación del carrusel. El orden definitivo se baraja en AdBanner; aquí solo
@@ -446,6 +465,7 @@ const DISPLAY_ORDER: string[] = [
   "buses-alicante",
   "songkick-alicante",
   "vuelos-manana-alicante",
+  "alicante-press",
   "mercadillos-alicante",
 ];
 

@@ -12,6 +12,7 @@ import {
   fetchAenaTomorrowDepartures,
   fetchAlibusAlicante,
   fetchAlicantePressHeadlines,
+  fetchAlicantePressDirect,
   type CulturalEvent,
 } from "./alicante-city.server";
 import {
@@ -462,6 +463,25 @@ export const getAdVariants = createServerFn({ method: "POST" })
       newsCtx = `\n\nTITULARES REALES de la prensa alicantina (Google News, hoy):\n${lines}\n\nGenera UNA variante por titular. Usa SOLO la información del titular; no inventes detalles ni fechas. DESCARTA cualquier titular que sea política partidista, sucesos, accidentes, fallecimientos o tragedias (si quedara alguno colado, omítelo).`;
     }
 
+    let alicantePressCtx = "";
+    if (advertiser.kind === "alicante_press") {
+      const headlines = await fetchAlicantePressDirect();
+      if (!headlines || headlines.length === 0) {
+        return { ...baseResp, variants: [] };
+      }
+      // Barajar para que las variantes salgan en orden aleatorio
+      const shuffled = [...headlines];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      const pick = shuffled.slice(0, Math.max(count, 6));
+      const lines = pick
+        .map((h, i) => `${i + 1}. "${h.title}"`)
+        .join("\n");
+      alicantePressCtx = `\n\nTITULARES REALES de Alicante Press (alicantepress.com, scraping directo de portada):\n${lines}\n\nGenera UNA variante por titular en el MISMO orden que el listado. Usa SOLO la información del titular; no inventes detalles ni fechas. DESCARTA política partidista, sucesos, accidentes, fallecimientos o tragedias (si quedara alguno colado, omítelo).`;
+    }
+
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       return {
@@ -511,6 +531,9 @@ export const getAdVariants = createServerFn({ method: "POST" })
         break;
       case "news":
         userPrompt = `Genera ${count} variantes de tarjeta sobre TITULARES de prensa alicantina de hoy. UNA variante por titular del listado. headline (máx 5 palabras, reescritura corta y neutra del titular real, sin clickbait), body (1 frase de contexto basada SOLO en el titular, máx 95 caracteres, puede citar la fuente entre paréntesis al final), cta "Ver noticias". DESCARTA política partidista, sucesos, accidentes, muertes y tragedias. Tono informativo, sin opinión, sin signos de exclamación.${newsCtx}`;
+        break;
+      case "alicante_press":
+        userPrompt = `Genera ${count} variantes de tarjeta sobre TITULARES de Alicante Press (alicantepress.com). UNA variante por titular del listado, en el MISMO orden que el listado. headline (máx 5 palabras, reescritura corta y neutra del titular real, sin clickbait), body (1 frase de contexto basada SOLO en el titular, máx 95 caracteres), cta "Leer noticia". DESCARTA política partidista, sucesos, accidentes, muertes y tragedias. Tono informativo, sin opinión, sin signos de exclamación.${alicantePressCtx}`;
         break;
       default:
         userPrompt = wiki
