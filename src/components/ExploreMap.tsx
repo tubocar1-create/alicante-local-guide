@@ -222,7 +222,7 @@ export function ExploreMap() {
                     <div className="flex gap-2 pt-1">
                       <a
                         className="text-[11px] font-medium underline text-primary"
-                        href={`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lon}`}
+                        href={`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lon}&travelmode=walking`}
                         target="_blank"
                         rel="noopener noreferrer"
                       >

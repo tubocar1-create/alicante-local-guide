@@ -1160,7 +1160,7 @@ const THEME_STYLES: Record<string, { bg: string; ring: string; badge: string }> 
 function PlaceCard({ data }: { data: PlaceCardData }) {
   const [booking, setBooking] = useState(false);
   const mapsHref = data.lat && data.lon
-    ? `https://www.google.com/maps/dir/?api=1&destination=${data.lat},${data.lon}`
+    ? `https://www.google.com/maps/dir/?api=1&destination=${data.lat},${data.lon}&travelmode=walking`
     : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${data.name} Alicante`)}`;
   const reviewsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${data.name} Alicante`)}`;
   const override = findPlaceOverride(data.name);
