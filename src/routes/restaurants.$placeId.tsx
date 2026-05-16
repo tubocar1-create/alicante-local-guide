@@ -408,9 +408,6 @@ function RestaurantDashboard() {
                 <p className="whitespace-pre-wrap">{reviewText}</p>
               )}
             </div>
-            <p className="mt-4 text-[10px] italic text-slate-500">
-              Reseña generada por IA · puede contener imprecisiones
-            </p>
           </div>
         </div>
       )}
