@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { MapPin, Phone, Search, X } from "lucide-react";
+import { Clock, MapPin, Phone, Search, Sparkles, X } from "lucide-react";
 
 type Pharmacy = {
   id: string;
@@ -11,7 +11,42 @@ type Pharmacy = {
   postal_code: string | null;
   city: string | null;
   phone: string | null;
+  hours: string | null;
+  is_24h: boolean;
+  on_duty: boolean;
 };
+
+// Calcula estado abierto/cerrado a partir de la cadena de horario.
+// Soporta strings tipo "Lu-Vi 09:30-13:30 y 16:30-20:30 · Sa 09:30-13:30".
+function computeOpen(p: Pharmacy): "open" | "closed" | "unknown" {
+  if (p.is_24h) return "open";
+  if (!p.hours) return "unknown";
+  const now = new Date();
+  const dow = now.getDay(); // 0=Dom..6=Sab
+  // map ES short
+  const isWeekday = dow >= 1 && dow <= 5;
+  const isSat = dow === 6;
+  const isSun = dow === 0;
+  const hhmm = now.getHours() * 60 + now.getMinutes();
+  const segments = p.hours.split(/·|;/).map((s) => s.trim());
+  let applicable: string | null = null;
+  for (const seg of segments) {
+    const lower = seg.toLowerCase();
+    if (isWeekday && /lu.?-vi|l-v/.test(lower)) applicable = seg;
+    else if (isSat && /sa/.test(lower)) applicable = seg;
+    else if (isSun && /do/.test(lower)) applicable = seg;
+  }
+  if (!applicable) return isSun ? "closed" : "unknown";
+  const ranges = applicable.match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/g);
+  if (!ranges) return "unknown";
+  for (const r of ranges) {
+    const m = r.match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/)!;
+    const start = Number(m[1]) * 60 + Number(m[2]);
+    const end = Number(m[3]) * 60 + Number(m[4]);
+    if (hhmm >= start && hhmm <= end) return "open";
+  }
+  return "closed";
+}
 
 const SECTORS: Record<string, string> = {
   "03001": "Centro",
