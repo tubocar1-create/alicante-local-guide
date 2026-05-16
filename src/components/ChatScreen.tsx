@@ -2440,7 +2440,12 @@ function DrinksTable({ cards }: { cards: PlaceCardData[] }) {
       d: c.lat && c.lon ? distKm(origin, { lat: c.lat, lon: c.lon }) : Number.POSITIVE_INFINITY,
     }))
     .filter((r) => r.d <= 10)
-    .sort((a, b) => a.d - b.d);
+    .sort((a, b) => {
+      const sa = openStatusRank(a.c.openingHours);
+      const sb = openStatusRank(b.c.openingHours);
+      if (sa !== sb) return sa - sb;
+      return a.d - b.d;
+    });
 
   if (!open) {
     return (
