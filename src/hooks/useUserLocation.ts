@@ -13,6 +13,17 @@ let watchRefs = 0;
 const listeners = new Set<(c: Coords) => void>();
 const errorListeners = new Set<(message: string) => void>();
 
+const GEO_PREF_KEY = "geo:enabled";
+export function isGeoEnabled(): boolean {
+  if (typeof localStorage === "undefined") return true;
+  return localStorage.getItem(GEO_PREF_KEY) !== "0";
+}
+export function setGeoEnabled(enabled: boolean) {
+  if (typeof localStorage === "undefined") return;
+  localStorage.setItem(GEO_PREF_KEY, enabled ? "1" : "0");
+  if (!enabled) releaseLocation();
+}
+
 function notify(c: Coords) {
   cached = c;
   listeners.forEach((l) => l(c));
@@ -21,6 +32,7 @@ function notify(c: Coords) {
 function startWatch() {
   if (watchId !== null) return;
   if (typeof navigator === "undefined" || !navigator.geolocation) return;
+  if (!isGeoEnabled()) return;
   watchId = navigator.geolocation.watchPosition(
     (pos) =>
       notify({
@@ -113,6 +125,10 @@ export function useUserLocation(opts?: { watch?: boolean }) {
   }, [watch]);
 
   function request() {
+    if (!isGeoEnabled()) {
+      setState({ status: "error", message: "Geolocalización desactivada. Actívala en tu perfil." });
+      return;
+    }
     if (typeof navigator === "undefined" || !navigator.geolocation) {
       setState({ status: "error", message: "Geolocalización no disponible en este navegador" });
       return;
