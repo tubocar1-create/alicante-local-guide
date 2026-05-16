@@ -598,6 +598,13 @@ export const refreshBrunchPlaces = createServerFn({ method: "POST" }).handler(
   async () => ({ count: (await refreshCategoryFromGoogle("brunch")).length }),
 );
 
+export const getPizzasPlaces = createServerFn({ method: "GET" }).handler(
+  async () => getCategoryPlaces("pizzas"),
+);
+export const refreshPizzasPlaces = createServerFn({ method: "POST" }).handler(
+  async () => ({ count: (await refreshCategoryFromGoogle("pizzas")).length }),
+);
+
 
 export const getPlaceById = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => {
