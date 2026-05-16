@@ -26,6 +26,7 @@ import {
   getRiceFishPlaces,
   getItalianPlaces,
   getBrunchPlaces,
+  getPizzasPlaces,
   resolvePlaceByName,
 } from "@/lib/places.functions";
 import heroImg from "@/assets/alicante-hero.jpg";
@@ -995,8 +996,9 @@ function Bubble({ role, content, userPrompt = "" }: { role: "user" | "assistant"
   const promptHasTypical = !isUser && TYPICAL_RE.test(userPrompt);
   const promptHasRiceFish = !isUser && RICE_FISH_RE.test(userPrompt);
   const promptHasItalian = !isUser && ITALIAN_RE.test(userPrompt);
+  const promptHasPizzas = !isUser && PIZZAS_RE.test(userPrompt);
   const promptHasBrunch = !isUser && BRUNCH_RE.test(userPrompt);
-  if (!isUser && (isAsianBroadcast(content) || isDrinksBroadcast(content) || promptHasDrinks || promptHasAsian || promptHasTypical || promptHasRiceFish || promptHasItalian || promptHasBrunch)) {
+  if (!isUser && (isAsianBroadcast(content) || isDrinksBroadcast(content) || promptHasDrinks || promptHasAsian || promptHasTypical || promptHasRiceFish || promptHasItalian || promptHasPizzas || promptHasBrunch)) {
     return (
       <div className="-mx-4 sm:mx-0">
         <AssistantContent content={content} userPrompt={userPrompt} />
@@ -1612,7 +1614,8 @@ const ASIAN_RE = /asian|japanese|sushi|ramen|chinese|china|thai|tailand|vietnam|
 const DRINKS_RE = /\b(tomar algo|copa|copas|coctel|cóctel|cocktail|cerveza|cervezas|cerveceria|cervecería|vinoteca|wine bar|pub|pubs|discoteca|discotecas|night ?club|nightclub|club nocturno|sala de fiestas|karaoke|karaokes|brewery|rooftop|gin tonic|vermut|terraceo|bar de copas)\b/i;
 const TYPICAL_RE = /\b(cocina típica|cocina tipica|típic[oa]|tipic[oa]|alicantin[oa]|mediterrane[oa]|mediterráne[oa]|tradicional|tasca|tapas tradicionales|cocina española|cocina espanola)\b/i;
 const RICE_FISH_RE = /\b(arroz|arroces|arrocer[ií]a|paella|pescado|pescados|marisco|mariscos|marisquer[ií]a|seafood)\b/i;
-const ITALIAN_RE = /\b(italian[oa]|italianos|pizza|pizzer[ií]a|pizzas|pasta|trattoria|ristorante)\b/i;
+const ITALIAN_RE = /\b(italian[oa]|italianos|pasta|trattoria|ristorante)\b/i;
+const PIZZAS_RE = /\b(telepizza|domino'?s|papa john'?s?|pizza hut|pizza m[oó]vil|pizza a domicilio|una pizzer[ií]a|pizzer[ií]a abierta|pizzer[ií]a r[aá]pida)\b/i;
 const BRUNCH_RE = /\b(brunch|desayun[oa]s?|breakfast|tortitas|pancakes|waffles?|gofres?|huevos benedictinos|eggs benedict|cafeter[ií]a|caf[eé] especialidad|specialty coffee|bolleria|boller[ií]a|cruasanes?|croissants?)\b/i;
 
 function isAsianCard(c: PlaceCardData): boolean {
@@ -2370,7 +2373,7 @@ type CategoryTheme = {
   rowLabel: string;
 };
 
-const CATEGORY_THEMES: Record<"typical" | "rice_fish" | "italian" | "brunch", CategoryTheme & {
+const CATEGORY_THEMES: Record<"typical" | "rice_fish" | "italian" | "brunch" | "pizzas", CategoryTheme & {
   emoji: (c: PlaceCardData) => string;
   guessPrice: (c: PlaceCardData) => string;
   title1: string;
@@ -2572,6 +2575,55 @@ const CATEGORY_THEMES: Record<"typical" | "rice_fish" | "italian" | "brunch", Ca
     subtitleText: "Cafeterías y brunch · ordenados por cercanía a Puerta del Mar.",
     eyebrowLabel: "Dashboard brunch",
     rowLabelText: "Cafetería",
+    priceHeaderText: "€/pers",
+  },
+  pizzas: {
+    bgGradient: "linear-gradient(180deg, #1a0a08 0%, #2a120c 50%, #100604 100%)",
+    glow1: "bg-red-500/[0.10]",
+    glow2: "bg-yellow-500/[0.07]",
+    accentText: "text-red-200/70",
+    borderHover: "hover:text-red-300",
+    liveText: "text-red-300/80",
+    liveDot: "bg-red-400",
+    borderBtn: "border-red-900/60 text-red-200/70 hover:border-red-500/50 hover:text-red-300",
+    eyebrow: "text-red-400/80",
+    eyebrowText: "Dashboard pizza",
+    title: "text-red-50",
+    titleHighlight: "Pizzas",
+    titleGradient: "from-red-300 via-yellow-200 to-orange-300",
+    subtitle: "text-red-200/80",
+    cardBg: "bg-[rgba(20,10,8,0.7)]",
+    cardBorder: "border-red-100/[0.08]",
+    countText: "text-red-50",
+    hint: "text-red-400/70",
+    thText: "text-red-200/50",
+    rowText: "text-red-50",
+    hoverName: "text-red-50 hover:text-red-300",
+    closesText: "text-red-100/80",
+    priceText: "text-red-50",
+    distText: "text-red-50",
+    emptyText: "text-red-200/50",
+    reopenLabel: "Reabrir dashboard pizzas",
+    reopenCls: "border-red-400/30 bg-red-400/5 text-red-300 hover:bg-red-400/10",
+    priceHeader: "€/pers",
+    rowLabel: "Pizzería",
+    emoji: (c) => {
+      const hay = `${c.cuisine ?? ""} ${c.name ?? ""}`.toLowerCase();
+      if (/telepizza|domino|papa john|pizza hut|móvil|movil|domicilio/.test(hay)) return "🛵";
+      if (/napole|napoli|nap\b/.test(hay)) return "🇮🇹";
+      return "🍕";
+    },
+    guessPrice: (c) => {
+      const hay = `${c.cuisine ?? ""} ${c.name ?? ""}`.toLowerCase();
+      if (/telepizza|domino|papa john|pizza hut|móvil|movil/.test(hay)) return "~12 €";
+      if (/grosso|napole|napoli|nap\b/.test(hay)) return "~15 €";
+      return "~13 €";
+    },
+    title1: "Pizzas",
+    title2: "en Alicante",
+    subtitleText: "Telepizza, Domino's y pizzerías rápidas · ordenados por cercanía a Puerta del Mar.",
+    eyebrowLabel: "Dashboard pizza",
+    rowLabelText: "Pizzería",
     priceHeaderText: "€/pers",
   },
 };
@@ -2812,7 +2864,7 @@ function CategoryTable({
   fetcher,
 }: {
   cards: PlaceCardData[];
-  category: "typical" | "rice_fish" | "italian" | "brunch";
+  category: "typical" | "rice_fish" | "italian" | "brunch" | "pizzas";
   fetcher: () => Promise<{ places: Array<{ google_place_id: string; name: string; cuisine: string | null; address: string | null; opening_hours_text: string | null; lat: number | null; lng: number | null; price_level: string | null; price_range_min: number | null; price_range_max: number | null; rating: number | null; open_now: boolean | null }> }>;
 }) {
   const [extra, setExtra] = useState<PlaceCardData[]>([]);
@@ -2904,6 +2956,10 @@ function BrunchTable({ cards }: { cards: PlaceCardData[] }) {
   const fetcher = useServerFn(getBrunchPlaces);
   return <CategoryTable cards={cards} category="brunch" fetcher={fetcher} />;
 }
+function PizzasTable({ cards }: { cards: PlaceCardData[] }) {
+  const fetcher = useServerFn(getPizzasPlaces);
+  return <CategoryTable cards={cards} category="pizzas" fetcher={fetcher} />;
+}
 
 function AssistantContent({ content, userPrompt = "" }: { content: string; userPrompt?: string }) {
 
@@ -2975,6 +3031,7 @@ function AssistantContent({ content, userPrompt = "" }: { content: string; userP
   const textHasTypical = TYPICAL_RE.test(cleaned) || TYPICAL_RE.test(userPrompt);
   const textHasRiceFish = RICE_FISH_RE.test(cleaned) || RICE_FISH_RE.test(userPrompt);
   const textHasItalian = ITALIAN_RE.test(cleaned) || ITALIAN_RE.test(userPrompt);
+  const textHasPizzas = PIZZAS_RE.test(cleaned) || PIZZAS_RE.test(userPrompt);
   const textHasBrunch = BRUNCH_RE.test(cleaned) || BRUNCH_RE.test(userPrompt);
   const asianMode =
     textHasAsian ||
@@ -2983,24 +3040,26 @@ function AssistantContent({ content, userPrompt = "" }: { content: string; userP
     !asianMode &&
     (textHasDrinks ||
       (cardData.length >= 2 && cardData.every((c) => isDrinksCard(c))));
-  const italianMode = !asianMode && !drinksMode && textHasItalian;
-  const riceFishMode = !asianMode && !drinksMode && !italianMode && textHasRiceFish;
+  const pizzasMode = !asianMode && !drinksMode && textHasPizzas;
+  const italianMode = !asianMode && !drinksMode && !pizzasMode && textHasItalian;
+  const riceFishMode = !asianMode && !drinksMode && !pizzasMode && !italianMode && textHasRiceFish;
   const brunchMode =
-    !asianMode && !drinksMode && !italianMode && !riceFishMode && textHasBrunch;
+    !asianMode && !drinksMode && !pizzasMode && !italianMode && !riceFishMode && textHasBrunch;
   const typicalMode =
-    !asianMode && !drinksMode && !italianMode && !riceFishMode && !brunchMode && textHasTypical;
+    !asianMode && !drinksMode && !pizzasMode && !italianMode && !riceFishMode && !brunchMode && textHasTypical;
   let tableInjected = false;
 
   const renderCategoryTable = (key: number, cd: PlaceCardData[]) => {
     if (asianMode) return <AsianTable key={key} cards={cd} />;
     if (drinksMode) return <DrinksTable key={key} cards={cd} />;
+    if (pizzasMode) return <PizzasTable key={key} cards={cd} />;
     if (italianMode) return <ItalianTable key={key} cards={cd} />;
     if (riceFishMode) return <RiceFishTable key={key} cards={cd} />;
     if (brunchMode) return <BrunchTable key={key} cards={cd} />;
     if (typicalMode) return <TypicalTable key={key} cards={cd} />;
     return null;
   };
-  const anyCategoryMode = asianMode || drinksMode || italianMode || riceFishMode || brunchMode || typicalMode;
+  const anyCategoryMode = asianMode || drinksMode || pizzasMode || italianMode || riceFishMode || brunchMode || typicalMode;
 
   return (
     <div className="space-y-2 [&>p]:m-0 [&_strong]:font-semibold">

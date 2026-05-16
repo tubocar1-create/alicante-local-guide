@@ -86,6 +86,16 @@ const ITALIAN_QUERIES = [
   "trattoria",
   "ristorante",
 ];
+const PIZZAS_QUERIES = [
+  "telepizza",
+  "domino's pizza",
+  "papa john's",
+  "pizza hut",
+  "pizza móvil",
+  "pizzería",
+  "pizza a domicilio",
+  "pizzería rápida",
+];
 const BRUNCH_QUERIES = [
   "brunch",
   "desayunos",
@@ -103,6 +113,7 @@ const CATEGORY_QUERIES: Record<string, string[]> = {
   typical: TYPICAL_QUERIES,
   rice_fish: RICE_FISH_QUERIES,
   italian: ITALIAN_QUERIES,
+  pizzas: PIZZAS_QUERIES,
   brunch: BRUNCH_QUERIES,
 };
 const STALE_MS = 24 * 60 * 60 * 1000; // 24h
@@ -358,6 +369,36 @@ const CURATED_LISTS: Partial<Record<string, string[]>> = {
     "Ristorante Romeo Alicante",
     "Pizzeria Vesuvio Alicante",
   ],
+  pizzas: [
+    "Telepizza Alicante Maisonnave",
+    "Telepizza Alicante Garbinet",
+    "Telepizza Alicante San Blas",
+    "Telepizza Alicante Vistahermosa",
+    "Telepizza Alicante Plaza de los Luceros",
+    "Domino's Pizza Alicante Centro",
+    "Domino's Pizza Alicante Avenida Aguilera",
+    "Domino's Pizza Alicante Babel",
+    "Domino's Pizza Alicante San Blas",
+    "Papa John's Pizza Alicante",
+    "Pizza Hut Alicante Plaza Mar 2",
+    "Pizza Móvil Alicante",
+    "Pizzería Carlos Alicante Maisonnave",
+    "Pizzería Carlos Alicante San Vicente",
+    "La Pizza Nostra Alicante",
+    "Pizza Jardín Alicante",
+    "Pinsa Pizza Alicante",
+    "Grosso Napoletano Alicante",
+    "NAP Neapolitan Authentic Pizza Alicante",
+    "Pomodoro Pizzería Alicante",
+    "La Tagliatella Alicante",
+    "Pizzeria Salerno Alicante",
+    "Pizzeria La Vita è Bella Alicante",
+    "Pizzeria Ciao Ciao Alicante",
+    "Pizzería Mediterránea Alicante",
+    "Pizzería Vesuvio Alicante",
+    "Pizzería La Bella Napoli Alicante",
+    "Pizzería Hawai Alicante",
+  ],
   brunch: [
     "Brunchit Alicante",
     "Manacafé Alicante",
@@ -555,6 +596,13 @@ export const getBrunchPlaces = createServerFn({ method: "GET" }).handler(
 );
 export const refreshBrunchPlaces = createServerFn({ method: "POST" }).handler(
   async () => ({ count: (await refreshCategoryFromGoogle("brunch")).length }),
+);
+
+export const getPizzasPlaces = createServerFn({ method: "GET" }).handler(
+  async () => getCategoryPlaces("pizzas"),
+);
+export const refreshPizzasPlaces = createServerFn({ method: "POST" }).handler(
+  async () => ({ count: (await refreshCategoryFromGoogle("pizzas")).length }),
 );
 
 
