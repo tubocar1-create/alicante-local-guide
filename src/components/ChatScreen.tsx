@@ -1980,15 +1980,9 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
   const [extra, setExtra] = useState<PlaceCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
-  const { state: locState, request: requestLocation } = useUserLocation();
-  const origin = locState.status === "ready" ? { lat: locState.coords.lat, lon: locState.coords.lng } : ALC_CENTER;
-  const originLabel = locState.status === "ready" ? "tu ubicación" : "Puerta del Mar";
+  const { origin, originLabel } = useFoodListOrigin();
 
   const fetchAsian = useServerFn(getAsianPlaces);
-  useEffect(() => {
-    if (locState.status === "idle") requestLocation();
-  }, [locState.status, requestLocation]);
-
   useEffect(() => {
     let cancelled = false;
     fetchAsian()
@@ -2307,12 +2301,7 @@ function DrinksTable({ cards }: { cards: PlaceCardData[] }) {
   const [extra, setExtra] = useState<PlaceCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
-  const { state: locState, request: requestLocation } = useUserLocation();
-  const origin = locState.status === "ready" ? { lat: locState.coords.lat, lon: locState.coords.lng } : ALC_CENTER;
-  const originLabel = locState.status === "ready" ? "tu ubicación" : "Puerta del Mar";
-  useEffect(() => {
-    if (locState.status === "idle") requestLocation();
-  }, [locState.status, requestLocation]);
+  const { origin, originLabel } = useFoodListOrigin();
 
   const fetchDrinks = useServerFn(getDrinksPlaces);
   useEffect(() => {
@@ -2912,12 +2901,7 @@ function CategoryTable({
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
   const theme = CATEGORY_THEMES[category];
-  const { state: locState, request: requestLocation } = useUserLocation();
-  const origin = locState.status === "ready" ? { lat: locState.coords.lat, lon: locState.coords.lng } : ALC_CENTER;
-  const originLabel: CategoryTableOriginLabel = locState.status === "ready" ? "tu ubicación" : "Puerta del Mar";
-  useEffect(() => {
-    if (locState.status === "idle") requestLocation();
-  }, [locState.status, requestLocation]);
+  const { origin, originLabel } = useFoodListOrigin();
 
   useEffect(() => {
     let cancelled = false;
