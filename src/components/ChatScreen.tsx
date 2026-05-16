@@ -125,7 +125,7 @@ const SUGGESTIONS: Suggestion[] = [
       { label: "🥐 Desayuno / Brunch", prompt: "Necesito un buen desayuno o brunch en Alicante abierto ahora" },
       { label: "🍰 Postres / Cafetería", prompt: "Una cafetería con postres ricos abierta ahora" },
       { label: "💸 Barato y rico", prompt: "Algo barato y rico para comer ya, abierto ahora" },
-      { label: "✨ Sorpréndeme", prompt: "Sorpréndeme con un sitio rico para comer abierto ahora" },
+      { label: "🌍 Internacional", prompt: "Quiero comida internacional (hindú, libanés, peruano, mexicano, latino, árabe…), ¿dónde voy ahora?" },
     ],
   },
   { label: "🏨 Dormir", prompt: "¿Dónde puedo dormir esta noche?" },
