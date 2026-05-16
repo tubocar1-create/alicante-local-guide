@@ -3030,6 +3030,7 @@ function AssistantContent({ content, userPrompt = "" }: { content: string; userP
   const textHasTypical = TYPICAL_RE.test(cleaned) || TYPICAL_RE.test(userPrompt);
   const textHasRiceFish = RICE_FISH_RE.test(cleaned) || RICE_FISH_RE.test(userPrompt);
   const textHasItalian = ITALIAN_RE.test(cleaned) || ITALIAN_RE.test(userPrompt);
+  const textHasPizzas = PIZZAS_RE.test(cleaned) || PIZZAS_RE.test(userPrompt);
   const textHasBrunch = BRUNCH_RE.test(cleaned) || BRUNCH_RE.test(userPrompt);
   const asianMode =
     textHasAsian ||
@@ -3038,24 +3039,26 @@ function AssistantContent({ content, userPrompt = "" }: { content: string; userP
     !asianMode &&
     (textHasDrinks ||
       (cardData.length >= 2 && cardData.every((c) => isDrinksCard(c))));
-  const italianMode = !asianMode && !drinksMode && textHasItalian;
-  const riceFishMode = !asianMode && !drinksMode && !italianMode && textHasRiceFish;
+  const pizzasMode = !asianMode && !drinksMode && textHasPizzas;
+  const italianMode = !asianMode && !drinksMode && !pizzasMode && textHasItalian;
+  const riceFishMode = !asianMode && !drinksMode && !pizzasMode && !italianMode && textHasRiceFish;
   const brunchMode =
-    !asianMode && !drinksMode && !italianMode && !riceFishMode && textHasBrunch;
+    !asianMode && !drinksMode && !pizzasMode && !italianMode && !riceFishMode && textHasBrunch;
   const typicalMode =
-    !asianMode && !drinksMode && !italianMode && !riceFishMode && !brunchMode && textHasTypical;
+    !asianMode && !drinksMode && !pizzasMode && !italianMode && !riceFishMode && !brunchMode && textHasTypical;
   let tableInjected = false;
 
   const renderCategoryTable = (key: number, cd: PlaceCardData[]) => {
     if (asianMode) return <AsianTable key={key} cards={cd} />;
     if (drinksMode) return <DrinksTable key={key} cards={cd} />;
+    if (pizzasMode) return <PizzasTable key={key} cards={cd} />;
     if (italianMode) return <ItalianTable key={key} cards={cd} />;
     if (riceFishMode) return <RiceFishTable key={key} cards={cd} />;
     if (brunchMode) return <BrunchTable key={key} cards={cd} />;
     if (typicalMode) return <TypicalTable key={key} cards={cd} />;
     return null;
   };
-  const anyCategoryMode = asianMode || drinksMode || italianMode || riceFishMode || brunchMode || typicalMode;
+  const anyCategoryMode = asianMode || drinksMode || pizzasMode || italianMode || riceFishMode || brunchMode || typicalMode;
 
   return (
     <div className="space-y-2 [&>p]:m-0 [&_strong]:font-semibold">
