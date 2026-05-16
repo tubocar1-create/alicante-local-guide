@@ -2891,6 +2891,10 @@ function ItalianTable({ cards }: { cards: PlaceCardData[] }) {
   const fetcher = useServerFn(getItalianPlaces);
   return <CategoryTable cards={cards} category="italian" fetcher={fetcher} />;
 }
+function BrunchTable({ cards }: { cards: PlaceCardData[] }) {
+  const fetcher = useServerFn(getBrunchPlaces);
+  return <CategoryTable cards={cards} category="brunch" fetcher={fetcher} />;
+}
 
 function AssistantContent({ content, userPrompt = "" }: { content: string; userPrompt?: string }) {
 
