@@ -2811,7 +2811,7 @@ function CategoryTable({
   fetcher,
 }: {
   cards: PlaceCardData[];
-  category: "typical" | "rice_fish" | "italian";
+  category: "typical" | "rice_fish" | "italian" | "brunch";
   fetcher: () => Promise<{ places: Array<{ google_place_id: string; name: string; cuisine: string | null; address: string | null; opening_hours_text: string | null; lat: number | null; lng: number | null; price_level: string | null; price_range_min: number | null; price_range_max: number | null; rating: number | null; open_now: boolean | null }> }>;
 }) {
   const [extra, setExtra] = useState<PlaceCardData[]>([]);
