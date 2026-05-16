@@ -424,7 +424,7 @@ function FarmaciasPage() {
                 />
               </div>
 
-              <div className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain pr-1">
+              <div className="max-h-[55vh] min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain pr-1">
                 <button
                   onClick={() => {
                     setActiveGroup(null);
