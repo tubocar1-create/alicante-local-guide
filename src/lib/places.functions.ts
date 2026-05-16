@@ -86,12 +86,24 @@ const ITALIAN_QUERIES = [
   "trattoria",
   "ristorante",
 ];
+const BRUNCH_QUERIES = [
+  "brunch",
+  "desayunos",
+  "breakfast",
+  "cafetería desayuno",
+  "tortitas",
+  "pancakes",
+  "huevos benedictinos",
+  "café especialidad",
+  "specialty coffee",
+];
 const CATEGORY_QUERIES: Record<string, string[]> = {
   asian: ASIAN_QUERIES,
   drinks: DRINKS_QUERIES,
   typical: TYPICAL_QUERIES,
   rice_fish: RICE_FISH_QUERIES,
   italian: ITALIAN_QUERIES,
+  brunch: BRUNCH_QUERIES,
 };
 const STALE_MS = 24 * 60 * 60 * 1000; // 24h
 
