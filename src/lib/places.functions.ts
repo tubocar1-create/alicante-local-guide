@@ -258,7 +258,102 @@ export const getPlacePhotos = createServerFn({ method: "GET" })
     return { photos: urls.filter((u): u is string => !!u) };
   });
 
+// Curated lists: for categories where Google's text search mixes in unrelated
+// venues (e.g. "tasca" returns pubs), we hand-pick well-known restaurants and
+// then enrich each one with Google Places data by exact name lookup.
+const CURATED_LISTS: Partial<Record<string, string[]>> = {
+  typical: [
+    "Nou Manolín",
+    "Piripi",
+    "La Taberna del Gourmet",
+    "Cervecería Sento Felipe Bergé",
+    "Cervecería Sento Teulada",
+    "Mesón Labradores",
+    "Casa Ibarra",
+    "Govana",
+    "Casa Riquelme",
+    "El Portal Taberna & Wines",
+    "La Ereta",
+    "Pópuli Bistró",
+    "Casa Julio",
+    "Bodega Aurelio",
+    "La Barra de César Anca",
+    "El Chaflán de Aldebarán",
+    "Mesón del Labrador",
+    "Tasca del Pescador",
+    "Restaurante Maestral",
+    "Monastrell",
+    "El Buen Comer",
+    "Restaurante Aldebarán",
+    "Casa Vital",
+    "Quique Dacosta tabernas",
+    "La Vaquería de Castellar",
+  ],
+};
+
+async function searchOne(textQuery: string, apiKey: string): Promise<GPlace | null> {
+  const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": apiKey,
+      "X-Goog-FieldMask": FIELD_MASK,
+    },
+    body: JSON.stringify({
+      textQuery: `${textQuery} Alicante`,
+      languageCode: "es",
+      regionCode: "ES",
+      maxResultCount: 3,
+      locationBias: {
+        circle: {
+          center: { latitude: ALC_CENTER.lat, longitude: ALC_CENTER.lng },
+          radius: 8000,
+        },
+      },
+    }),
+  });
+  if (!res.ok) return null;
+  const json = (await res.json()) as { places?: GPlace[] };
+  return json.places?.[0] ?? null;
+}
+
+async function refreshCuratedCategory(category: string) {
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  if (!apiKey) throw new Error("GOOGLE_PLACES_API_KEY missing");
+  const names = CURATED_LISTS[category];
+  if (!names || !names.length) return [];
+
+  const seen = new Map<string, CachedPlace>();
+  for (const name of names) {
+    try {
+      const p = await searchOne(name, apiKey);
+      if (!p) continue;
+      const row = toRow(p, category);
+      if (row && !seen.has(row.google_place_id)) {
+        seen.set(row.google_place_id, row);
+      }
+    } catch (e) {
+      console.error(`searchOne failed for ${name}`, e);
+    }
+  }
+  const rows = Array.from(seen.values());
+  if (rows.length === 0) return rows;
+
+  // Wipe previous rows in this category so removed names don't linger
+  await supabaseAdmin.from("places_cache").delete().eq("category", category);
+  const { error } = await supabaseAdmin
+    .from("places_cache")
+    .upsert(rows as never, { onConflict: "google_place_id" });
+  if (error) {
+    console.error(`upsert curated ${category} error`, error);
+    throw error;
+  }
+  return rows;
+}
+
 async function refreshCategoryFromGoogle(category: string) {
+  if (CURATED_LISTS[category]) return refreshCuratedCategory(category);
+
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
   if (!apiKey) throw new Error("GOOGLE_PLACES_API_KEY missing");
   const queries = CATEGORY_QUERIES[category];
@@ -286,6 +381,7 @@ async function refreshCategoryFromGoogle(category: string) {
   }
   return rows;
 }
+
 
 async function getCategoryPlaces(category: string) {
   const { data: existing, error } = await supabaseAdmin
