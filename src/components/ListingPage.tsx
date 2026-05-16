@@ -37,6 +37,12 @@ export function ListingPage<K extends string>(props: Props<K>) {
   const PUERTA_DEL_MAR = { lat: 38.3414, lng: -0.4810 };
   const sortOrigin = me ?? PUERTA_DEL_MAR;
 
+  // Solicita ubicación automáticamente al entrar (si el usuario la tiene activa)
+  useEffect(() => {
+    if (state.status === "idle") request();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     const kinds = Array.from(active);
