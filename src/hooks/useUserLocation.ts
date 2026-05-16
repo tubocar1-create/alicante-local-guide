@@ -125,6 +125,10 @@ export function useUserLocation(opts?: { watch?: boolean }) {
   }, [watch]);
 
   function request() {
+    if (!isGeoEnabled()) {
+      setState({ status: "error", message: "Geolocalización desactivada. Actívala en tu perfil." });
+      return;
+    }
     if (typeof navigator === "undefined" || !navigator.geolocation) {
       setState({ status: "error", message: "Geolocalización no disponible en este navegador" });
       return;
