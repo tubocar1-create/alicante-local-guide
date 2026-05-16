@@ -2669,8 +2669,8 @@ function CategoryTableInner({
       } else {
         const href =
           c.lat && c.lon
-            ? `https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lon}`
-            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.name + " Alicante")}`;
+            ? `https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lon}&travelmode=walking`
+            : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.name + " Alicante")}&travelmode=walking`;
         window.open(href, "_blank", "noreferrer");
       }
     } catch (e) {
