@@ -550,6 +550,13 @@ export const refreshItalianPlaces = createServerFn({ method: "POST" }).handler(
   async () => ({ count: (await refreshCategoryFromGoogle("italian")).length }),
 );
 
+export const getBrunchPlaces = createServerFn({ method: "GET" }).handler(
+  async () => getCategoryPlaces("brunch"),
+);
+export const refreshBrunchPlaces = createServerFn({ method: "POST" }).handler(
+  async () => ({ count: (await refreshCategoryFromGoogle("brunch")).length }),
+);
+
 
 export const getPlaceById = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => {
