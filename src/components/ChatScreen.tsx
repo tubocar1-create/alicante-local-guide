@@ -389,6 +389,14 @@ export function ChatScreen() {
 
       if (!resp.ok || !resp.body) {
         const data = await resp.json().catch(() => ({ error: "Something went wrong" }));
+        if (resp.status === 402) {
+          upsert("Se han agotado los créditos de IA del proyecto. Añade créditos en Settings → Workspace → Usage para seguir chateando.");
+          return;
+        }
+        if (resp.status === 429) {
+          upsert("Demasiadas peticiones a la vez. Espera unos segundos e inténtalo de nuevo.");
+          return;
+        }
         throw new Error(data.error || "Failed to reach Alicante Friend");
       }
 
