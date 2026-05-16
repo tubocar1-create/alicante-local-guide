@@ -1634,7 +1634,7 @@ const FAST_FOOD_RE = /\b(comida r[aá]pida|fast ?food|hamburgues[ae]r?[ií]as?|h
 const VEGAN_RE = /\b(vegano[as]?|vegan[a]?|vegetarian[oa]s?|saludable|healthy|poke|bowl|veggie|plant[\s-]?based)\b/i;
 const DESSERTS_RE = /\b(postres?|heladeri?as?|helader[ií]as?|helados?|gelater[ií]as?|pasteler[ií]as?|chocolater[ií]as?|gofres?|waffles?|crepes?|cr[eê]pes?|tartas?|reposter[ií]a|dulce[s]?|cafeter[ií]a con postres)\b/i;
 const CHEAP_RE = /\b(barato|baratos?|baratit[oa]s?|econ[oó]mic[oa]s?|low cost|menu del d[ií]a|men[uú] del d[ií]a|menu diario|men[uú] diario|comer barato|sin gastar)\b/i;
-const SURPRISE_RE = /\b(sorpr[eé]ndeme|sorprende(r?me)?|al azar|aleator[ií]o|donde quieras|elige t[uú]|surprise me)\b/i;
+const INTERNATIONAL_RE = /\b(internacional|hind[uú]e?s?|hindi|indi[oa]s?|india|libanes[ae]?|libano|árabe|arabe|peruan[oa]s?|peru|latino[as]?|latinoameric[oa]n[oa]s?|venezolan[oa]s?|colombian[oa]s?|argentin[oa]s?|cuban[oa]s?|brasil|tex.?mex|marroqu[ií]|griego|griega|turco de mesa|sorpr[eé]ndeme)\b/i;
 
 function isAsianCard(c: PlaceCardData): boolean {
   const hay = `${c.cuisine ?? ""} ${c.name ?? ""} ${c.vibe ?? ""}`;
