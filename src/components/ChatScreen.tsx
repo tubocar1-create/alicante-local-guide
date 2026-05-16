@@ -1612,6 +1612,7 @@ const DRINKS_RE = /\b(tomar algo|copa|copas|coctel|cóctel|cocktail|cerveza|cerv
 const TYPICAL_RE = /\b(cocina típica|cocina tipica|típic[oa]|tipic[oa]|alicantin[oa]|mediterrane[oa]|mediterráne[oa]|tradicional|tasca|tapas tradicionales|cocina española|cocina espanola)\b/i;
 const RICE_FISH_RE = /\b(arroz|arroces|arrocer[ií]a|paella|pescado|pescados|marisco|mariscos|marisquer[ií]a|seafood)\b/i;
 const ITALIAN_RE = /\b(italian[oa]|italianos|pizza|pizzer[ií]a|pizzas|pasta|trattoria|ristorante)\b/i;
+const BRUNCH_RE = /\b(brunch|desayun[oa]s?|breakfast|tortitas|pancakes|waffles?|gofres?|huevos benedictinos|eggs benedict|cafeter[ií]a|caf[eé] especialidad|specialty coffee|bolleria|boller[ií]a|cruasanes?|croissants?)\b/i;
 
 function isAsianCard(c: PlaceCardData): boolean {
   const hay = `${c.cuisine ?? ""} ${c.name ?? ""} ${c.vibe ?? ""}`;
