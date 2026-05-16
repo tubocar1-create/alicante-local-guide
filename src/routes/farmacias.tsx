@@ -410,7 +410,7 @@ function FarmaciasPage() {
               {loading ? "Cargando…" : `${filtered.length} farmacias`}
             </p>
             <p className="text-[9px] uppercase tracking-[0.18em] text-emerald-200/50">
-              estado · horario · zona · tel
+              estado · horario · zona · {userCoords ? "dist" : "tel"}
             </p>
           </div>
 
