@@ -508,8 +508,11 @@ function FarmaciasPage() {
                     {p.phone && (
                       <a
                         href={`tel:${p.phone}`}
-                        className="shrink-0 rounded-full bg-amber-400/90 px-2 py-0.5 font-mono text-[10px] text-amber-950"
+                        role="button"
+                        aria-label={`Llamar a ${p.name}`}
+                        className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-400/90 px-2 py-0.5 font-mono text-[10px] font-semibold text-amber-950 active:scale-95"
                       >
+                        <Phone className="h-2.5 w-2.5" />
                         {p.phone}
                       </a>
                     )}
@@ -613,8 +616,9 @@ function FarmaciasPage() {
                     {p.phone && (
                       <a
                         href={`tel:${p.phone}`}
+                        role="button"
                         aria-label={`Llamar a ${p.name}`}
-                        className="ml-auto inline-flex items-center gap-1 rounded-full bg-emerald-400/90 px-2 py-0.5 font-mono text-[10px] font-semibold text-emerald-950 transition hover:bg-emerald-300"
+                        className="ml-auto inline-flex items-center gap-1 rounded-full bg-emerald-400/90 px-2 py-0.5 font-mono text-[10px] font-semibold text-emerald-950 shadow-sm transition active:scale-95 hover:bg-emerald-300"
                       >
                         <Phone className="h-2.5 w-2.5" />
                         {p.phone}
