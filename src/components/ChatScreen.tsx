@@ -2388,6 +2388,8 @@ type CategoryTheme = {
   rowLabel: string;
 };
 
+type CategoryTableOriginLabel = "tu ubicación" | "Puerta del Mar";
+
 const CATEGORY_THEMES: Record<"typical" | "rice_fish" | "italian" | "brunch" | "pizzas", CategoryTheme & {
   emoji: (c: PlaceCardData) => string;
   guessPrice: (c: PlaceCardData) => string;
