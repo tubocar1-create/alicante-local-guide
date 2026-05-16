@@ -542,8 +542,11 @@ export type Database = {
           city: string | null
           code: string | null
           created_at: string
+          hours: string | null
           id: string
+          is_24h: boolean
           name: string
+          on_duty: boolean
           phone: string | null
           postal_code: string | null
         }
@@ -552,8 +555,11 @@ export type Database = {
           city?: string | null
           code?: string | null
           created_at?: string
+          hours?: string | null
           id?: string
+          is_24h?: boolean
           name: string
+          on_duty?: boolean
           phone?: string | null
           postal_code?: string | null
         }
@@ -562,8 +568,11 @@ export type Database = {
           city?: string | null
           code?: string | null
           created_at?: string
+          hours?: string | null
           id?: string
+          is_24h?: boolean
           name?: string
+          on_duty?: boolean
           phone?: string | null
           postal_code?: string | null
         }
