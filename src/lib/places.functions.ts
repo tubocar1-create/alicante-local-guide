@@ -86,6 +86,16 @@ const ITALIAN_QUERIES = [
   "trattoria",
   "ristorante",
 ];
+const PIZZAS_QUERIES = [
+  "telepizza",
+  "domino's pizza",
+  "papa john's",
+  "pizza hut",
+  "pizza móvil",
+  "pizzería",
+  "pizza a domicilio",
+  "pizzería rápida",
+];
 const BRUNCH_QUERIES = [
   "brunch",
   "desayunos",
