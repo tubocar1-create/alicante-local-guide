@@ -15,7 +15,9 @@ export type BannerKind =
   | "buses"
   | "regional_agenda"
   | "mercadillos"
-  | "news";
+  | "news"
+  | "alicante_press";
+
 
 export type Advertiser = {
   id: string;
