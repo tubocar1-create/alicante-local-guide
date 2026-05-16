@@ -829,6 +829,7 @@ const VALID_CATEGORIES = new Set([
   "italian",
   "pizzas",
   "brunch",
+  "international",
   "lookup",
 ]);
 
