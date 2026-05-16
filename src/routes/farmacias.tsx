@@ -493,20 +493,40 @@ function FarmaciasPage() {
                         <span className="truncate">{p.hours ?? "—"}</span>
                       </span>
                     </td>
-                    <td className="px-1 py-1 align-middle font-mono text-[10px] text-emerald-200/80">
-                      {p.postal_code ?? "—"}
+                    <td className="px-1 py-1 align-middle">
+                      <span className="inline-flex flex-col">
+                        <span className="truncate text-[10px] text-emerald-100/80">
+                          {sectorFor(p.postal_code)}
+                        </span>
+                        <span className="font-mono text-[9px] text-emerald-200/40">
+                          {p.postal_code ?? "—"}
+                        </span>
+                      </span>
                     </td>
                     <td className="rounded-r-md px-1 py-1 text-right align-middle">
+                      {userCoords && (() => {
+                        const d = distFor(p);
+                        return d != null ? (
+                          <div className="inline-flex items-center gap-1 font-mono text-[10px] text-emerald-200">
+                            <Navigation className="h-3 w-3 text-emerald-300/70" />
+                            ≈ {formatMeters(d)}
+                          </div>
+                        ) : (
+                          <span className="text-[10px] text-emerald-200/40">—</span>
+                        );
+                      })()}
                       {p.phone ? (
                         <a
                           href={`tel:${p.phone}`}
-                          className="inline-flex items-center gap-1 font-mono text-[10px] text-emerald-300 hover:text-emerald-200"
+                          className="mt-0.5 flex items-center justify-end gap-1 font-mono text-[10px] text-emerald-300 hover:text-emerald-200"
                         >
                           <Phone className="h-3 w-3" />
                           {p.phone}
                         </a>
                       ) : (
-                        <span className="text-[10px] text-emerald-200/40">—</span>
+                        !userCoords && (
+                          <span className="text-[10px] text-emerald-200/40">—</span>
+                        )
                       )}
                     </td>
                   </tr>
