@@ -555,7 +555,7 @@ function FarmaciasPage() {
                       className="flex min-w-0 flex-1 items-center gap-1.5"
                     >
                       <span className="text-base leading-none">
-                        {p.is_24h ? "🌙" : "💊"}
+                        {p.is_24h ? "🌙" : <PharmacyCross className="h-4 w-4" />}
                       </span>
                       <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-emerald-50">
                         {p.name}
