@@ -56,6 +56,10 @@ function stopWatch() {
   watchId = null;
 }
 
+function pauseLocation() {
+  stopWatch();
+}
+
 /** Fully release geolocation: stop watching and clear any cached coords so
  *  the next time the user opens the app we ask again. */
 export function releaseLocation() {
@@ -71,23 +75,27 @@ export function releaseLocation() {
   });
 }
 
-// Pause geolocation when the app is not in use (tab hidden, app backgrounded,
-// or page closed). Resume automatically when the user returns, but only if
-// some component is still actively watching.
+// Pause geolocation when the app is not in use. Keep the last coordinates in
+// memory so embedded previews (Lovable/editor iframes) do not lose the user's
+// location just because the parent UI changes focus or visibility.
 let lifecycleBound = false;
 function bindLifecycle() {
   if (lifecycleBound || typeof document === "undefined") return;
   lifecycleBound = true;
   const onVisibility = () => {
     if (document.visibilityState === "hidden") {
-      // App backgrounded: fully release so a returning user is asked again.
-      releaseLocation();
+      pauseLocation();
+      return;
+    }
+    if (watchRefs > 0) {
+      startWatch();
     }
   };
   document.addEventListener("visibilitychange", onVisibility);
-  // pagehide fires on tab close / navigation away / mobile app backgrounding
-  window.addEventListener("pagehide", releaseLocation);
-  window.addEventListener("beforeunload", releaseLocation);
+  // pagehide fires on tab close / navigation away / mobile app backgrounding.
+  // Stop GPS tracking, but do not reset the in-session coordinates.
+  window.addEventListener("pagehide", pauseLocation);
+  window.addEventListener("beforeunload", pauseLocation);
 }
 
 export function useUserLocation(opts?: { watch?: boolean }) {
