@@ -490,20 +490,15 @@ function FarmaciasPage() {
                         </span>
                       )}
                     </td>
-                    <td className="hidden px-1 py-1 align-middle text-[10px] text-emerald-100/70 md:table-cell">
-                      <span className="inline-flex items-start gap-1">
+                    <td className="px-1 py-1 align-middle text-[10px] text-emerald-100/70">
+                      <span className="flex items-start gap-1">
                         <Clock className="mt-0.5 h-3 w-3 shrink-0 text-emerald-300/60" />
-                        <span className="truncate">{p.hours ?? "—"}</span>
+                        <span className="line-clamp-2 leading-tight">{p.hours ?? "—"}</span>
                       </span>
                     </td>
                     <td className="px-1 py-1 align-middle">
-                      <span className="inline-flex flex-col">
-                        <span className="truncate text-[10px] text-emerald-100/80">
-                          {sectorFor(p.postal_code)}
-                        </span>
-                        <span className="font-mono text-[9px] text-emerald-200/40">
-                          {p.postal_code ?? "—"}
-                        </span>
+                      <span className="font-mono text-[10px] text-emerald-200/80">
+                        {p.postal_code ?? "—"}
                       </span>
                     </td>
                     <td className="rounded-r-md px-1 py-1 text-right align-middle">
@@ -521,10 +516,11 @@ function FarmaciasPage() {
                       {p.phone ? (
                         <a
                           href={`tel:${p.phone}`}
+                          aria-label={`Llamar a ${p.name}`}
                           className="mt-0.5 flex items-center justify-end gap-1 font-mono text-[10px] text-emerald-300 hover:text-emerald-200"
                         >
                           <Phone className="h-3 w-3" />
-                          {p.phone}
+                          <span className="truncate">{p.phone}</span>
                         </a>
                       ) : (
                         !userCoords && (
