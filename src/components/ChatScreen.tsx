@@ -29,6 +29,8 @@ import {
   getPizzasPlaces,
   resolvePlaceByName,
   discoverNearbyPlaces,
+  getPlacesByTag,
+  getSurprisePlaces,
 } from "@/lib/places.functions";
 import heroImg from "@/assets/alicante-hero.jpg";
 import skylineImg from "@/assets/alicante-skyline.png";
@@ -1628,6 +1630,11 @@ const RICE_FISH_RE = /\b(arroz|arroces|arrocer[ií]a|paella|pescado|pescados|mar
 const ITALIAN_RE = /\b(italian[oa]|italianos|pasta|trattoria|ristorante)\b/i;
 const PIZZAS_RE = /\b(telepizza|domino'?s|papa john'?s?|pizza hut|pizza m[oó]vil|pizza a domicilio|una pizzer[ií]a|pizzer[ií]a abierta|pizzer[ií]a r[aá]pida)\b/i;
 const BRUNCH_RE = /\b(brunch|desayun[oa]s?|breakfast|tortitas|pancakes|waffles?|gofres?|huevos benedictinos|eggs benedict|cafeter[ií]a|caf[eé] especialidad|specialty coffee|bolleria|boller[ií]a|cruasanes?|croissants?)\b/i;
+const FAST_FOOD_RE = /\b(comida r[aá]pida|fast ?food|hamburgues[ae]r?[ií]as?|hamburguesas?|burger|smash ?burger|mcdonald|burger king|goiko|five guys|tgb|kfc|popeyes|pollo frito|pollos asados|montaditos?|100 montaditos|lizarr[aá]n|kebaps?|kebab|d[oö]ner|shawarma|taco bell|tacos?|burritos?|mexican[oa])\b/i;
+const VEGAN_RE = /\b(vegano[as]?|vegan[a]?|vegetarian[oa]s?|saludable|healthy|poke|bowl|veggie|plant[\s-]?based)\b/i;
+const DESSERTS_RE = /\b(postres?|heladeri?as?|helader[ií]as?|helados?|gelater[ií]as?|pasteler[ií]as?|chocolater[ií]as?|gofres?|waffles?|crepes?|cr[eê]pes?|tartas?|reposter[ií]a|dulce[s]?|cafeter[ií]a con postres)\b/i;
+const CHEAP_RE = /\b(barato|baratos?|baratit[oa]s?|econ[oó]mic[oa]s?|low cost|menu del d[ií]a|men[uú] del d[ií]a|menu diario|men[uú] diario|comer barato|sin gastar)\b/i;
+const SURPRISE_RE = /\b(sorpr[eé]ndeme|sorprende(r?me)?|al azar|aleator[ií]o|donde quieras|elige t[uú]|surprise me)\b/i;
 
 function isAsianCard(c: PlaceCardData): boolean {
   const hay = `${c.cuisine ?? ""} ${c.name ?? ""} ${c.vibe ?? ""}`;
@@ -2431,7 +2438,19 @@ type CategoryTheme = {
 
 type CategoryTableOriginLabel = "tu ubicación" | "Puerta del Mar";
 
-const CATEGORY_THEMES: Record<"typical" | "rice_fish" | "italian" | "brunch" | "pizzas", CategoryTheme & {
+type ExtendedCategory =
+  | "typical"
+  | "rice_fish"
+  | "italian"
+  | "brunch"
+  | "pizzas"
+  | "fast_food"
+  | "vegan"
+  | "desserts"
+  | "cheap"
+  | "surprise";
+
+const CATEGORY_THEMES: Record<ExtendedCategory, CategoryTheme & {
   emoji: (c: PlaceCardData) => string;
   guessPrice: (c: PlaceCardData) => string;
   title1: string;
@@ -2684,6 +2703,224 @@ const CATEGORY_THEMES: Record<"typical" | "rice_fish" | "italian" | "brunch" | "
     rowLabelText: "Pizzería",
     priceHeaderText: "€/pers",
   },
+  fast_food: {
+    bgGradient: "linear-gradient(180deg, #1a0f08 0%, #2a1810 50%, #100804 100%)",
+    glow1: "bg-orange-500/[0.10]",
+    glow2: "bg-yellow-500/[0.06]",
+    accentText: "text-orange-200/70",
+    borderHover: "hover:text-orange-300",
+    liveText: "text-orange-300/80",
+    liveDot: "bg-orange-400",
+    borderBtn: "border-orange-900/60 text-orange-200/70 hover:border-orange-500/50 hover:text-orange-300",
+    eyebrow: "text-orange-400/80",
+    eyebrowText: "Dashboard fast food",
+    title: "text-orange-50",
+    titleHighlight: "Comida rápida",
+    titleGradient: "from-orange-300 via-yellow-200 to-red-300",
+    subtitle: "text-orange-200/80",
+    cardBg: "bg-[rgba(20,12,8,0.7)]",
+    cardBorder: "border-orange-100/[0.08]",
+    countText: "text-orange-50",
+    hint: "text-orange-400/70",
+    thText: "text-orange-200/50",
+    rowText: "text-orange-50",
+    hoverName: "text-orange-50 hover:text-orange-300",
+    closesText: "text-orange-100/80",
+    priceText: "text-orange-50",
+    distText: "text-orange-50",
+    emptyText: "text-orange-200/50",
+    reopenLabel: "Reabrir dashboard fast food",
+    reopenCls: "border-orange-400/30 bg-orange-400/5 text-orange-300 hover:bg-orange-400/10",
+    priceHeader: "€/pers",
+    rowLabel: "Sitio",
+    emoji: (c) => {
+      const hay = `${c.cuisine ?? ""} ${c.name ?? ""}`.toLowerCase();
+      if (/burger|hamburgu|goiko|five guys|tgb|mcdonald|burger king|smash/.test(hay)) return "🍔";
+      if (/kebab|kebap|d[oö]ner|shawarma/.test(hay)) return "🌯";
+      if (/kfc|popeyes|pollo/.test(hay)) return "🍗";
+      if (/taco|burrito|mexic/.test(hay)) return "🌮";
+      if (/montadit|lizarr|100 mont/.test(hay)) return "🥖";
+      if (/pizza|telepizza|domino/.test(hay)) return "🍕";
+      return "🍟";
+    },
+    guessPrice: () => "~10 €",
+    title1: "Comida rápida",
+    title2: "en Alicante",
+    subtitleText: "Hamburguesas, kebaps, montaditos, pollo, mexicano · cercanía a Puerta del Mar.",
+    eyebrowLabel: "Dashboard fast food",
+    rowLabelText: "Sitio",
+    priceHeaderText: "€/pers",
+  },
+  vegan: {
+    bgGradient: "linear-gradient(180deg, #06140d 0%, #0c2418 50%, #030a06 100%)",
+    glow1: "bg-green-500/[0.10]",
+    glow2: "bg-lime-500/[0.06]",
+    accentText: "text-green-200/70",
+    borderHover: "hover:text-green-300",
+    liveText: "text-green-300/80",
+    liveDot: "bg-green-400",
+    borderBtn: "border-green-900/60 text-green-200/70 hover:border-green-500/50 hover:text-green-300",
+    eyebrow: "text-green-400/80",
+    eyebrowText: "Dashboard vegano",
+    title: "text-green-50",
+    titleHighlight: "Vegano & saludable",
+    titleGradient: "from-green-300 via-lime-200 to-emerald-300",
+    subtitle: "text-green-200/80",
+    cardBg: "bg-[rgba(6,18,12,0.7)]",
+    cardBorder: "border-green-100/[0.08]",
+    countText: "text-green-50",
+    hint: "text-green-400/70",
+    thText: "text-green-200/50",
+    rowText: "text-green-50",
+    hoverName: "text-green-50 hover:text-green-300",
+    closesText: "text-green-100/80",
+    priceText: "text-green-50",
+    distText: "text-green-50",
+    emptyText: "text-green-200/50",
+    reopenLabel: "Reabrir dashboard vegano",
+    reopenCls: "border-green-400/30 bg-green-400/5 text-green-300 hover:bg-green-400/10",
+    priceHeader: "€/pers",
+    rowLabel: "Sitio",
+    emoji: (c) => {
+      const hay = `${c.cuisine ?? ""} ${c.name ?? ""}`.toLowerCase();
+      if (/poke|bowl/.test(hay)) return "🥗";
+      if (/vegan/.test(hay)) return "🌱";
+      if (/vegeta/.test(hay)) return "🥬";
+      return "🥗";
+    },
+    guessPrice: () => "~14 €",
+    title1: "Vegano & saludable",
+    title2: "en Alicante",
+    subtitleText: "Vegano, vegetariano, bowls y poke · cercanía a Puerta del Mar.",
+    eyebrowLabel: "Dashboard vegano",
+    rowLabelText: "Sitio",
+    priceHeaderText: "€/pers",
+  },
+  desserts: {
+    bgGradient: "linear-gradient(180deg, #1a0a16 0%, #2a1224 50%, #100610 100%)",
+    glow1: "bg-pink-500/[0.10]",
+    glow2: "bg-fuchsia-500/[0.06]",
+    accentText: "text-pink-200/70",
+    borderHover: "hover:text-pink-300",
+    liveText: "text-pink-300/80",
+    liveDot: "bg-pink-400",
+    borderBtn: "border-pink-900/60 text-pink-200/70 hover:border-pink-500/50 hover:text-pink-300",
+    eyebrow: "text-pink-400/80",
+    eyebrowText: "Dashboard postres",
+    title: "text-pink-50",
+    titleHighlight: "Postres & helados",
+    titleGradient: "from-pink-300 via-fuchsia-200 to-rose-300",
+    subtitle: "text-pink-200/80",
+    cardBg: "bg-[rgba(20,8,18,0.7)]",
+    cardBorder: "border-pink-100/[0.08]",
+    countText: "text-pink-50",
+    hint: "text-pink-400/70",
+    thText: "text-pink-200/50",
+    rowText: "text-pink-50",
+    hoverName: "text-pink-50 hover:text-pink-300",
+    closesText: "text-pink-100/80",
+    priceText: "text-pink-50",
+    distText: "text-pink-50",
+    emptyText: "text-pink-200/50",
+    reopenLabel: "Reabrir dashboard de postres",
+    reopenCls: "border-pink-400/30 bg-pink-400/5 text-pink-300 hover:bg-pink-400/10",
+    priceHeader: "€/pers",
+    rowLabel: "Sitio",
+    emoji: (c) => {
+      const hay = `${c.cuisine ?? ""} ${c.name ?? ""}`.toLowerCase();
+      if (/helad|gelat|ice ?cream/.test(hay)) return "🍨";
+      if (/chocolat/.test(hay)) return "🍫";
+      if (/gofre|waffle/.test(hay)) return "🧇";
+      if (/crep|crêp/.test(hay)) return "🥞";
+      if (/pastel|tarta|reposter|bakery|panad/.test(hay)) return "🍰";
+      return "🍮";
+    },
+    guessPrice: () => "~6 €",
+    title1: "Postres & helados",
+    title2: "en Alicante",
+    subtitleText: "Heladerías, pastelerías y cafés con postres · cercanía a Puerta del Mar.",
+    eyebrowLabel: "Dashboard postres",
+    rowLabelText: "Sitio",
+    priceHeaderText: "€/pers",
+  },
+  cheap: {
+    bgGradient: "linear-gradient(180deg, #0d1308 0%, #18230f 50%, #060a04 100%)",
+    glow1: "bg-yellow-500/[0.10]",
+    glow2: "bg-lime-500/[0.06]",
+    accentText: "text-yellow-200/70",
+    borderHover: "hover:text-yellow-300",
+    liveText: "text-yellow-300/80",
+    liveDot: "bg-yellow-400",
+    borderBtn: "border-yellow-900/60 text-yellow-200/70 hover:border-yellow-500/50 hover:text-yellow-300",
+    eyebrow: "text-yellow-400/80",
+    eyebrowText: "Dashboard low cost",
+    title: "text-yellow-50",
+    titleHighlight: "Barato y rico",
+    titleGradient: "from-yellow-300 via-lime-200 to-amber-300",
+    subtitle: "text-yellow-200/80",
+    cardBg: "bg-[rgba(12,16,6,0.7)]",
+    cardBorder: "border-yellow-100/[0.08]",
+    countText: "text-yellow-50",
+    hint: "text-yellow-400/70",
+    thText: "text-yellow-200/50",
+    rowText: "text-yellow-50",
+    hoverName: "text-yellow-50 hover:text-yellow-300",
+    closesText: "text-yellow-100/80",
+    priceText: "text-yellow-50",
+    distText: "text-yellow-50",
+    emptyText: "text-yellow-200/50",
+    reopenLabel: "Reabrir dashboard barato",
+    reopenCls: "border-yellow-400/30 bg-yellow-400/5 text-yellow-300 hover:bg-yellow-400/10",
+    priceHeader: "€/pers",
+    rowLabel: "Sitio",
+    emoji: () => "💸",
+    guessPrice: () => "~10 €",
+    title1: "Barato y rico",
+    title2: "en Alicante",
+    subtitleText: "Sitios económicos para comer ya · cercanía a Puerta del Mar.",
+    eyebrowLabel: "Dashboard low cost",
+    rowLabelText: "Sitio",
+    priceHeaderText: "€/pers",
+  },
+  surprise: {
+    bgGradient: "linear-gradient(180deg, #0d0820 0%, #1a1238 50%, #06040f 100%)",
+    glow1: "bg-violet-500/[0.10]",
+    glow2: "bg-fuchsia-500/[0.06]",
+    accentText: "text-violet-200/70",
+    borderHover: "hover:text-violet-300",
+    liveText: "text-violet-300/80",
+    liveDot: "bg-violet-400",
+    borderBtn: "border-violet-900/60 text-violet-200/70 hover:border-violet-500/50 hover:text-violet-300",
+    eyebrow: "text-violet-400/80",
+    eyebrowText: "Sorpréndeme",
+    title: "text-violet-50",
+    titleHighlight: "Sorpréndeme",
+    titleGradient: "from-violet-300 via-fuchsia-200 to-pink-300",
+    subtitle: "text-violet-200/80",
+    cardBg: "bg-[rgba(12,8,28,0.7)]",
+    cardBorder: "border-violet-100/[0.08]",
+    countText: "text-violet-50",
+    hint: "text-violet-400/70",
+    thText: "text-violet-200/50",
+    rowText: "text-violet-50",
+    hoverName: "text-violet-50 hover:text-violet-300",
+    closesText: "text-violet-100/80",
+    priceText: "text-violet-50",
+    distText: "text-violet-50",
+    emptyText: "text-violet-200/50",
+    reopenLabel: "Reabrir sorpresa",
+    reopenCls: "border-violet-400/30 bg-violet-400/5 text-violet-300 hover:bg-violet-400/10",
+    priceHeader: "€/pers",
+    rowLabel: "Sitio",
+    emoji: () => "✨",
+    guessPrice: () => "~18 €",
+    title1: "Sorpréndeme",
+    title2: "en Alicante",
+    subtitleText: "Selección aleatoria de sitios bien valorados.",
+    eyebrowLabel: "Sorpréndeme",
+    rowLabelText: "Sitio",
+    priceHeaderText: "€/pers",
+  },
 };
 
 function CategoryTableInner({
@@ -2918,13 +3155,15 @@ function CategoryTableInner({
   );
 }
 
+const DISCOVERABLE = new Set(["typical", "rice_fish", "italian", "brunch", "pizzas", "asian", "drinks"]);
+
 function CategoryTable({
   cards,
   category,
   fetcher,
 }: {
   cards: PlaceCardData[];
-  category: "typical" | "rice_fish" | "italian" | "brunch" | "pizzas";
+  category: ExtendedCategory;
   fetcher: () => Promise<{ places: Array<{ google_place_id: string; name: string; cuisine: string | null; address: string | null; opening_hours_text: string | null; lat: number | null; lng: number | null; price_level: string | null; price_range_min: number | null; price_range_max: number | null; rating: number | null; open_now: boolean | null }> }>;
 }) {
   const [extra, setExtra] = useState<PlaceCardData[]>([]);
@@ -2959,7 +3198,17 @@ function CategoryTable({
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [fetcher, category, reloadKey]);
-  useNearbyDiscovery(category, origin, locState.status === "ready", () => setReloadKey((k) => k + 1));
+  // Only the 7 google-backed categories trigger nearby discovery; virtual AI
+  // tag-based categories reuse what's already in the cache.
+  const discoverableCategory = DISCOVERABLE.has(category)
+    ? (category as "typical" | "rice_fish" | "italian" | "brunch" | "pizzas" | "asian" | "drinks")
+    : null;
+  useNearbyDiscovery(
+    discoverableCategory ?? "typical",
+    origin,
+    discoverableCategory != null && locState.status === "ready",
+    () => setReloadKey((k) => k + 1),
+  );
 
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
   const byKey = new Map<string, PlaceCardData>();
@@ -2972,21 +3221,25 @@ function CategoryTable({
       byKey.set(k, { ...prev, openingHours: prev.openingHours ?? c.openingHours, lat: prev.lat ?? c.lat, lon: prev.lon ?? c.lon });
     }
   }
-  const ranked = Array.from(byKey.values())
+  const isSurprise = category === "surprise";
+  let ranked = Array.from(byKey.values())
     .map((c) => ({
       c,
       d: c.lat && c.lon ? distKm(origin, { lat: c.lat, lon: c.lon }) : Number.POSITIVE_INFINITY,
     }))
-    .filter((r) => r.d <= 10)
+    .filter((r) => (isSurprise ? true : r.d <= 10))
     .filter((r) => {
       if (category !== "brunch") return true;
-      // Solo locales que abran a las 11:00 o antes (los que abren más tarde no son sitios de desayuno).
       const open = getTodayOpeningTime(r.c.openingHours ?? undefined);
-      if (!open) return true; // sin datos: no excluimos
+      if (!open) return true;
       const [h, m] = open.split(":").map(Number);
       return h * 60 + m <= 11 * 60;
-    })
-    .sort((a, b) => a.d - b.d);
+    });
+  if (isSurprise) {
+    ranked = ranked.sort(() => Math.random() - 0.5).slice(0, 25);
+  } else {
+    ranked = ranked.sort((a, b) => a.d - b.d);
+  }
 
   if (!open) {
     return (
@@ -3022,6 +3275,30 @@ function BrunchTable({ cards }: { cards: PlaceCardData[] }) {
 function PizzasTable({ cards }: { cards: PlaceCardData[] }) {
   const fetcher = useServerFn(getPizzasPlaces);
   return <CategoryTable cards={cards} category="pizzas" fetcher={fetcher} />;
+}
+function useTagFetcher(tag: string) {
+  const fn = useServerFn(getPlacesByTag);
+  return () => fn({ data: { tag } });
+}
+function FastFoodTable({ cards }: { cards: PlaceCardData[] }) {
+  const fetcher = useTagFetcher("fast_food");
+  return <CategoryTable cards={cards} category="fast_food" fetcher={fetcher} />;
+}
+function VeganTable({ cards }: { cards: PlaceCardData[] }) {
+  const fetcher = useTagFetcher("vegan");
+  return <CategoryTable cards={cards} category="vegan" fetcher={fetcher} />;
+}
+function DessertsTable({ cards }: { cards: PlaceCardData[] }) {
+  const fetcher = useTagFetcher("desserts");
+  return <CategoryTable cards={cards} category="desserts" fetcher={fetcher} />;
+}
+function CheapTable({ cards }: { cards: PlaceCardData[] }) {
+  const fetcher = useTagFetcher("cheap");
+  return <CategoryTable cards={cards} category="cheap" fetcher={fetcher} />;
+}
+function SurpriseTable({ cards }: { cards: PlaceCardData[] }) {
+  const fetcher = useServerFn(getSurprisePlaces);
+  return <CategoryTable cards={cards} category="surprise" fetcher={fetcher} />;
 }
 
 function AssistantContent({ content, userPrompt = "" }: { content: string; userPrompt?: string }) {
@@ -3096,6 +3373,11 @@ function AssistantContent({ content, userPrompt = "" }: { content: string; userP
   const textHasItalian = ITALIAN_RE.test(cleaned) || ITALIAN_RE.test(userPrompt);
   const textHasPizzas = PIZZAS_RE.test(cleaned) || PIZZAS_RE.test(userPrompt);
   const textHasBrunch = BRUNCH_RE.test(cleaned) || BRUNCH_RE.test(userPrompt);
+  const textHasFastFood = FAST_FOOD_RE.test(cleaned) || FAST_FOOD_RE.test(userPrompt);
+  const textHasVegan = VEGAN_RE.test(cleaned) || VEGAN_RE.test(userPrompt);
+  const textHasDesserts = DESSERTS_RE.test(cleaned) || DESSERTS_RE.test(userPrompt);
+  const textHasCheap = CHEAP_RE.test(cleaned) || CHEAP_RE.test(userPrompt);
+  const textHasSurprise = SURPRISE_RE.test(cleaned) || SURPRISE_RE.test(userPrompt);
   const asianMode =
     textHasAsian ||
     (cardData.length >= 2 && cardData.every((c) => isAsianCard(c)));
@@ -3103,18 +3385,26 @@ function AssistantContent({ content, userPrompt = "" }: { content: string; userP
     !asianMode &&
     (textHasDrinks ||
       (cardData.length >= 2 && cardData.every((c) => isDrinksCard(c))));
-  const pizzasMode = !asianMode && !drinksMode && textHasPizzas;
-  const italianMode = !asianMode && !drinksMode && !pizzasMode && textHasItalian;
-  const riceFishMode = !asianMode && !drinksMode && !pizzasMode && !italianMode && textHasRiceFish;
-  const brunchMode =
-    !asianMode && !drinksMode && !pizzasMode && !italianMode && !riceFishMode && textHasBrunch;
-  const typicalMode =
-    !asianMode && !drinksMode && !pizzasMode && !italianMode && !riceFishMode && !brunchMode && textHasTypical;
+  const surpriseMode = !asianMode && !drinksMode && textHasSurprise;
+  const fastFoodMode = !asianMode && !drinksMode && !surpriseMode && textHasFastFood;
+  const veganMode = !asianMode && !drinksMode && !surpriseMode && !fastFoodMode && textHasVegan;
+  const dessertsMode = !asianMode && !drinksMode && !surpriseMode && !fastFoodMode && !veganMode && textHasDesserts;
+  const cheapMode = !asianMode && !drinksMode && !surpriseMode && !fastFoodMode && !veganMode && !dessertsMode && textHasCheap;
+  const pizzasMode = !asianMode && !drinksMode && !surpriseMode && !fastFoodMode && !veganMode && !dessertsMode && !cheapMode && textHasPizzas;
+  const italianMode = !asianMode && !drinksMode && !surpriseMode && !fastFoodMode && !veganMode && !dessertsMode && !cheapMode && !pizzasMode && textHasItalian;
+  const riceFishMode = !asianMode && !drinksMode && !surpriseMode && !fastFoodMode && !veganMode && !dessertsMode && !cheapMode && !pizzasMode && !italianMode && textHasRiceFish;
+  const brunchMode = !asianMode && !drinksMode && !surpriseMode && !fastFoodMode && !veganMode && !dessertsMode && !cheapMode && !pizzasMode && !italianMode && !riceFishMode && textHasBrunch;
+  const typicalMode = !asianMode && !drinksMode && !surpriseMode && !fastFoodMode && !veganMode && !dessertsMode && !cheapMode && !pizzasMode && !italianMode && !riceFishMode && !brunchMode && textHasTypical;
   let tableInjected = false;
 
   const renderCategoryTable = (key: number, cd: PlaceCardData[]) => {
     if (asianMode) return <AsianTable key={key} cards={cd} />;
     if (drinksMode) return <DrinksTable key={key} cards={cd} />;
+    if (surpriseMode) return <SurpriseTable key={key} cards={cd} />;
+    if (fastFoodMode) return <FastFoodTable key={key} cards={cd} />;
+    if (veganMode) return <VeganTable key={key} cards={cd} />;
+    if (dessertsMode) return <DessertsTable key={key} cards={cd} />;
+    if (cheapMode) return <CheapTable key={key} cards={cd} />;
     if (pizzasMode) return <PizzasTable key={key} cards={cd} />;
     if (italianMode) return <ItalianTable key={key} cards={cd} />;
     if (riceFishMode) return <RiceFishTable key={key} cards={cd} />;
@@ -3122,7 +3412,7 @@ function AssistantContent({ content, userPrompt = "" }: { content: string; userP
     if (typicalMode) return <TypicalTable key={key} cards={cd} />;
     return null;
   };
-  const anyCategoryMode = asianMode || drinksMode || pizzasMode || italianMode || riceFishMode || brunchMode || typicalMode;
+  const anyCategoryMode = asianMode || drinksMode || surpriseMode || fastFoodMode || veganMode || dessertsMode || cheapMode || pizzasMode || italianMode || riceFishMode || brunchMode || typicalMode;
 
   return (
     <div className="space-y-2 [&>p]:m-0 [&_strong]:font-semibold">
