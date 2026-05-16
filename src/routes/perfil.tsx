@@ -17,7 +17,8 @@ import {
   Briefcase,
   MapPin,
 } from "lucide-react";
-import { isGeoEnabled, setGeoEnabled } from "@/hooks/useUserLocation";
+import { isGeoEnabled, setGeoEnabled, useUserLocation, formatDistance, distanceKm } from "@/hooks/useUserLocation";
+const PUERTA_DEL_MAR = { lat: 38.3414, lng: -0.481 };
 import { usePoints } from "@/hooks/usePoints";
 import { useAuth } from "@/hooks/useAuth";
 import { listQrs, subscribeQrs, type LocalQr } from "@/lib/qr-storage";
@@ -48,6 +49,7 @@ function PerfilPage() {
   const [qrs, setQrs] = useState<QrRow[]>([]);
   const loadingQrs = false;
   const [geoOn, setGeoOn] = useState<boolean>(true);
+  const { state: locState, request: requestLoc } = useUserLocation({ watch: true });
   useEffect(() => {
     setGeoOn(isGeoEnabled());
   }, []);
@@ -457,6 +459,50 @@ function PerfilPage() {
               }`}
             />
           </button>
+        </div>
+
+        {/* Diagnóstico de ubicación */}
+        <div className="mt-2 rounded-2xl border border-border bg-card/60 p-3 text-xs">
+          <p className="mb-1 font-semibold">Diagnóstico</p>
+          {!geoOn ? (
+            <p className="text-muted-foreground">Activa la geolocalización para probarla.</p>
+          ) : locState.status === "ready" ? (
+            <div className="space-y-0.5 font-mono text-[11px] text-foreground">
+              <p>✅ Ubicación recibida</p>
+              <p>lat: {locState.coords.lat.toFixed(6)}</p>
+              <p>lng: {locState.coords.lng.toFixed(6)}</p>
+              {locState.coords.accuracy != null && (
+                <p>precisión: ±{Math.round(locState.coords.accuracy)} m</p>
+              )}
+              <p className="text-muted-foreground">
+                Distancia a Puerta del Mar: {formatDistance(distanceKm(
+                  { lat: locState.coords.lat, lng: locState.coords.lng },
+                  PUERTA_DEL_MAR,
+                ))}
+              </p>
+            </div>
+          ) : locState.status === "loading" ? (
+            <p className="text-muted-foreground">Solicitando ubicación…</p>
+          ) : locState.status === "error" ? (
+            <div className="space-y-2">
+              <p className="text-destructive">⚠️ {locState.message}</p>
+              <button
+                type="button"
+                onClick={requestLoc}
+                className="rounded-full bg-primary px-3 py-1 text-[11px] font-semibold text-primary-foreground"
+              >
+                Reintentar
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={requestLoc}
+              className="rounded-full bg-primary px-3 py-1 text-[11px] font-semibold text-primary-foreground"
+            >
+              Probar ahora
+            </button>
+          )}
         </div>
       </section>
 
