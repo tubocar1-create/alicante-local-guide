@@ -101,7 +101,10 @@ function FarmaciasPage() {
     (async () => {
       const { data, error } = await supabase
         .from("pharmacies")
-        .select("id, code, name, address, postal_code, city, phone")
+        .select(
+          "id, code, name, address, postal_code, city, phone, hours, is_24h, on_duty",
+        )
+        .order("is_24h", { ascending: false })
         .order("postal_code", { ascending: true })
         .order("name", { ascending: true });
       if (!error && data) setItems(data as Pharmacy[]);
