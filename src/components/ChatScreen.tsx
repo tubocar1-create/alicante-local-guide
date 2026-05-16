@@ -2863,6 +2863,14 @@ function CategoryTable({
       d: c.lat && c.lon ? distKm(ALC_CENTER, { lat: c.lat, lon: c.lon }) : Number.POSITIVE_INFINITY,
     }))
     .filter((r) => r.d <= 10)
+    .filter((r) => {
+      if (category !== "brunch") return true;
+      // Solo locales que abran a las 11:00 o antes (los que abren más tarde no son sitios de desayuno).
+      const open = getTodayOpeningTime(r.c.openingHours ?? undefined);
+      if (!open) return true; // sin datos: no excluimos
+      const [h, m] = open.split(":").map(Number);
+      return h * 60 + m <= 11 * 60;
+    })
     .sort((a, b) => a.d - b.d);
 
   if (!open) {
