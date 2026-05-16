@@ -49,6 +49,13 @@ export function AdBanner() {
   const [cycle, setCycle] = useState(0);
   const [open, setOpen] = useState(false);
 
+  // Orden barajado del carrusel: estable durante la vida del componente,
+  // distinto en cada montaje. Es un array de índices sobre ADVERTISERS.
+  const shuffledOrder = useMemo(
+    () => shuffle(ADVERTISERS.map((_, i) => i)),
+    [],
+  );
+
   const queries = useQueries({
     queries: ADVERTISERS.map((a) => ({
       queryKey: ["banner-variants", a.id],
