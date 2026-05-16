@@ -3515,7 +3515,12 @@ function CategoryTable({
       const [h, m] = open.split(":").map(Number);
       return h * 60 + m <= 11 * 60;
     })
-    .sort((a, b) => a.d - b.d);
+    .sort((a, b) => {
+      const sa = openStatusRank(a.c.openingHours);
+      const sb = openStatusRank(b.c.openingHours);
+      if (sa !== sb) return sa - sb;
+      return a.d - b.d;
+    });
 
   if (!open) {
     return (
