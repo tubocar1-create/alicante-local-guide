@@ -124,6 +124,14 @@ const SECTORS: Record<string, string> = {
 const sectorFor = (cp: string | null) =>
   (cp && SECTORS[cp]) || (cp ? `Zona ${cp}` : "Sin código postal");
 
+// Cruz verde estilo farmacia española
+const PharmacyCross = ({ className = "h-3.5 w-3.5" }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" aria-hidden className={className}>
+    <rect x="9" y="2" width="6" height="20" rx="1" fill="#16a34a" />
+    <rect x="2" y="9" width="20" height="6" rx="1" fill="#16a34a" />
+  </svg>
+);
+
 export const Route = createFileRoute("/farmacias")({
   head: () => ({
     meta: [
@@ -373,8 +381,8 @@ function FarmaciasPage() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="mb-3 flex shrink-0 items-center justify-between">
-                <h3 className="text-sm font-semibold text-emerald-50">
-                  💊 Elige zona
+                <h3 className="flex items-center gap-1.5 text-sm font-semibold text-emerald-50">
+                  <PharmacyCross className="h-4 w-4" /> Elige zona
                 </h3>
                 <button
                   onClick={() => setZoneOpen(false)}
@@ -488,12 +496,13 @@ function FarmaciasPage() {
                     className="flex items-center justify-between gap-2 rounded-lg border border-amber-300/15 bg-white/[0.03] px-2 py-1.5"
                   >
                     <div className="min-w-0">
-                      <p className="truncate text-[11px] font-medium text-amber-50">
-                        💊 {p.name}
+                      <p className="flex items-center gap-1 truncate text-[11px] font-medium text-amber-50">
+                        <PharmacyCross className="h-3 w-3 shrink-0" />
+                        <span className="truncate">{p.name}</span>
                       </p>
                       <p className="truncate text-[10px] text-amber-100/60">
                         {p.address ?? ""}
-                        {p.postal_code ? ` · ${p.postal_code}` : ""}
+                        {p.postal_code ? ` · ${sectorFor(p.postal_code)}` : ""}
                       </p>
                     </div>
                     {p.phone && (
@@ -518,7 +527,7 @@ function FarmaciasPage() {
               {loading ? "Cargando…" : `${filtered.length} farmacias`}
             </p>
             <p className="text-[9px] uppercase tracking-[0.18em] text-emerald-200/50">
-              {userCoords ? "ordenadas por cercanía" : "ordenadas por CP"}
+              {userCoords ? "ordenadas por cercanía" : "ordenadas por zona"}
             </p>
           </div>
 
@@ -546,7 +555,7 @@ function FarmaciasPage() {
                       className="flex min-w-0 flex-1 items-center gap-1.5"
                     >
                       <span className="text-base leading-none">
-                        {p.is_24h ? "🌙" : "💊"}
+                        {p.is_24h ? "🌙" : <PharmacyCross className="h-4 w-4" />}
                       </span>
                       <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-emerald-50">
                         {p.name}
@@ -597,8 +606,8 @@ function FarmaciasPage() {
                       </span>
                     )}
                     {p.postal_code && (
-                      <span className="rounded-full border border-emerald-300/20 bg-white/[0.04] px-1.5 py-0.5 font-mono text-[10px] text-emerald-200/80">
-                        {p.postal_code}
+                      <span className="rounded-full border border-emerald-300/20 bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-emerald-200/80">
+                        {sectorFor(p.postal_code)}
                       </span>
                     )}
                     {p.phone && (
