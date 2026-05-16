@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Clock, MapPin, Navigation, Phone, Search, Sparkles, X } from "lucide-react";
+import { ChevronDown, Clock, MapPin, Navigation, Phone, Search, Sparkles, X } from "lucide-react";
 import { useUserLocation } from "@/hooks/useUserLocation";
 
 // Centroides aproximados por código postal (Alicante) para estimar distancia.
@@ -144,6 +144,8 @@ function FarmaciasPage() {
   const [q, setQ] = useState("");
   const [groupBy, setGroupBy] = useState<"sector" | "postal">("sector");
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
+  const [zoneOpen, setZoneOpen] = useState(false);
+  const [zoneSearch, setZoneSearch] = useState("");
   const { state: geoState, request: requestGeo } = useUserLocation();
   const userCoords = geoState.status === "ready" ? geoState.coords : null;
 
@@ -340,31 +342,132 @@ function FarmaciasPage() {
           </div>
         </div>
 
-        {/* Selector de zona (desplegable) */}
-        <div className="mb-4 flex items-center gap-2">
-          <label className="text-[10px] uppercase tracking-[0.2em] text-emerald-200/60">
-            {groupBy === "sector" ? "Sector" : "CP"}
-          </label>
-          <div className="relative">
-            <select
-              value={activeGroup ?? ""}
-              onChange={(e) => setActiveGroup(e.target.value || null)}
-              className="h-8 appearance-none rounded-full border border-emerald-300/25 bg-white/[0.04] py-1 pl-3 pr-8 text-[11px] text-emerald-50 focus:border-emerald-300/60 focus:outline-none"
-            >
-              <option value="" className="bg-emerald-950">
-                Todas las zonas · {items.length}
-              </option>
-              {groups.map(([name, list]) => (
-                <option key={name} value={name} className="bg-emerald-950">
-                  {name} · {list.length}
-                </option>
-              ))}
-            </select>
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[9px] text-emerald-300/70">
-              ▼
+        {/* Selector de zona estilo BusKnownPicker */}
+        <div className="mb-4">
+          <button
+            onClick={() => setZoneOpen(true)}
+            className="flex w-full items-center justify-between gap-2 rounded-2xl border border-emerald-300/25 bg-white/[0.04] px-3 py-2 text-left backdrop-blur transition hover:border-emerald-300/45"
+          >
+            <span className="flex min-w-0 items-center gap-2">
+              <MapPin className="h-3.5 w-3.5 shrink-0 text-emerald-300" />
+              <span className="flex min-w-0 flex-col">
+                <span className="text-[9px] uppercase tracking-[0.2em] text-emerald-200/60">
+                  {groupBy === "sector" ? "Sector" : "Código postal"}
+                </span>
+                <span className="truncate text-[12px] font-semibold text-emerald-50">
+                  {activeGroup ?? `Todas las zonas · ${items.length}`}
+                </span>
+              </span>
             </span>
-          </div>
+            <ChevronDown className="h-4 w-4 shrink-0 text-emerald-300/80" />
+          </button>
         </div>
+
+        {zoneOpen && (
+          <div
+            className="fixed inset-0 z-[70] flex items-end justify-center bg-black/60 backdrop-blur-sm md:items-center"
+            onClick={() => setZoneOpen(false)}
+          >
+            <div
+              className="flex max-h-[80vh] w-full max-w-md flex-col rounded-t-3xl border border-emerald-300/20 bg-emerald-950/95 p-3 shadow-2xl md:rounded-3xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mb-3 flex shrink-0 items-center justify-between">
+                <h3 className="text-sm font-semibold text-emerald-50">
+                  💊 Elige zona
+                </h3>
+                <button
+                  onClick={() => setZoneOpen(false)}
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-full hover:bg-white/10"
+                  aria-label="Cerrar"
+                >
+                  <X className="h-4 w-4 text-emerald-100" />
+                </button>
+              </div>
+
+              <div className="mb-2 inline-flex shrink-0 items-center gap-1 self-start rounded-full border border-emerald-300/20 bg-white/[0.04] p-0.5 text-[11px]">
+                <button
+                  onClick={() => {
+                    setGroupBy("sector");
+                    setActiveGroup(null);
+                  }}
+                  className={`rounded-full px-3 py-1 transition ${
+                    groupBy === "sector"
+                      ? "bg-emerald-400/90 text-emerald-950"
+                      : "text-emerald-200/70"
+                  }`}
+                >
+                  Por sector
+                </button>
+                <button
+                  onClick={() => {
+                    setGroupBy("postal");
+                    setActiveGroup(null);
+                  }}
+                  className={`rounded-full px-3 py-1 transition ${
+                    groupBy === "postal"
+                      ? "bg-emerald-400/90 text-emerald-950"
+                      : "text-emerald-200/70"
+                  }`}
+                >
+                  Por CP
+                </button>
+              </div>
+
+              <div className="mb-2 flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-300/20 bg-white/[0.04] px-2.5 py-1">
+                <Search className="h-3 w-3 text-emerald-300/70" />
+                <input
+                  value={zoneSearch}
+                  onChange={(e) => setZoneSearch(e.target.value)}
+                  placeholder="Buscar zona…"
+                  className="flex-1 bg-transparent text-[12px] text-emerald-50 outline-none placeholder:text-emerald-200/40"
+                />
+              </div>
+
+              <div className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain pr-1">
+                <button
+                  onClick={() => {
+                    setActiveGroup(null);
+                    setZoneOpen(false);
+                    setZoneSearch("");
+                  }}
+                  className={`flex w-full items-center justify-between rounded-lg border px-2.5 py-2 text-left text-[12px] transition ${
+                    activeGroup === null
+                      ? "border-emerald-300/50 bg-emerald-400/15 text-emerald-50"
+                      : "border-emerald-300/10 bg-white/[0.03] text-emerald-100 hover:bg-white/[0.06]"
+                  }`}
+                >
+                  <span className="font-semibold">Todas las zonas</span>
+                  <span className="text-[10px] text-emerald-200/70">{items.length}</span>
+                </button>
+                {groups
+                  .filter(([name]) =>
+                    name.toLowerCase().includes(zoneSearch.trim().toLowerCase()),
+                  )
+                  .map(([name, list]) => (
+                    <button
+                      key={name}
+                      onClick={() => {
+                        setActiveGroup(name);
+                        setZoneOpen(false);
+                        setZoneSearch("");
+                      }}
+                      className={`flex w-full items-center justify-between rounded-lg border px-2.5 py-2 text-left text-[12px] transition ${
+                        activeGroup === name
+                          ? "border-emerald-300/50 bg-emerald-400/15 text-emerald-50"
+                          : "border-emerald-300/10 bg-white/[0.03] text-emerald-100 hover:bg-white/[0.06]"
+                      }`}
+                    >
+                      <span className="min-w-0 truncate font-semibold">{name}</span>
+                      <span className="ml-2 shrink-0 rounded-full bg-white/[0.06] px-1.5 py-0.5 text-[10px] text-emerald-200/80">
+                        {list.length}
+                      </span>
+                    </button>
+                  ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Banner farmacias 24h */}
         {(() => {
@@ -408,141 +511,116 @@ function FarmaciasPage() {
           );
         })()}
 
-        {/* Tabla estilo dashboard */}
-        <div className="rounded-2xl border border-emerald-300/15 bg-white/[0.03] p-2 backdrop-blur-xl md:p-4">
-          <div className="mb-2 flex items-baseline justify-between gap-2">
+        {/* Lista de farmacias en tarjetas legibles */}
+        <div className="rounded-2xl border border-emerald-300/15 bg-white/[0.03] p-2 backdrop-blur-xl md:p-3">
+          <div className="mb-2 flex items-baseline justify-between gap-2 px-1">
             <p className="text-[12px] font-semibold text-emerald-100">
               {loading ? "Cargando…" : `${filtered.length} farmacias`}
             </p>
             <p className="text-[9px] uppercase tracking-[0.18em] text-emerald-200/50">
-              estado · horario · CP · {userCoords ? "dist" : "tel"}
+              {userCoords ? "ordenadas por cercanía" : "ordenadas por CP"}
             </p>
           </div>
 
-          <table className="w-full table-fixed border-separate border-spacing-y-0.5 text-left text-[11px] text-emerald-50/90">
-            <colgroup>
-              <col />
-              <col className="w-[54px]" />
-              <col className="w-[110px] md:w-[24%]" />
-              <col className="w-[52px]" />
-              <col className="w-[78px]" />
-            </colgroup>
-            <thead>
-              <tr className="text-[9px] uppercase tracking-[0.12em] text-emerald-200/60">
-                <th className="px-1.5 py-1 font-medium">Farmacia</th>
-                <th className="px-1 py-1 font-medium">Estado</th>
-                <th className="px-1 py-1 font-medium">Horario</th>
-                <th className="px-1 py-1 font-medium">CP</th>
-                <th className="px-1 py-1 text-right font-medium">
-                  {userCoords ? "Dist" : "Tel"}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((p) => {
-                const mapsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                  `${p.name} ${p.address ?? ""} Alicante`,
-                )}`;
-                const status = computeOpen(p);
-                const rowCls = p.is_24h
-                  ? "bg-yellow-300/20 ring-1 ring-inset ring-yellow-300/50 hover:bg-yellow-300/25"
-                  : "bg-white/[0.02] hover:bg-white/[0.05]";
-                return (
-                  <tr key={p.id} className={rowCls}>
-                    <td className="rounded-l-md px-1.5 py-1.5 align-middle">
+          <ul className="space-y-1.5">
+            {filtered.map((p) => {
+              const mapsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                `${p.name} ${p.address ?? ""} Alicante`,
+              )}`;
+              const status = computeOpen(p);
+              const dist = distFor(p);
+              const cardCls = p.is_24h
+                ? "border-yellow-300/50 bg-yellow-300/15 ring-1 ring-inset ring-yellow-300/40"
+                : "border-emerald-300/10 bg-white/[0.03] hover:bg-white/[0.06]";
+              return (
+                <li
+                  key={p.id}
+                  className={`rounded-xl border p-2.5 transition ${cardCls}`}
+                >
+                  {/* Línea 1: nombre + badge 24h + distancia */}
+                  <div className="flex items-start justify-between gap-2">
+                    <a
+                      href={mapsHref}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex min-w-0 flex-1 items-center gap-1.5"
+                    >
+                      <span className="text-base leading-none">
+                        {p.is_24h ? "🌙" : "💊"}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-emerald-50">
+                        {p.name}
+                      </span>
+                      {p.is_24h && (
+                        <span className="shrink-0 rounded-full bg-yellow-300 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-yellow-950">
+                          24h
+                        </span>
+                      )}
+                    </a>
+                    {userCoords && dist != null && (
+                      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-400/15 px-1.5 py-0.5 font-mono text-[10px] text-emerald-200">
+                        <Navigation className="h-2.5 w-2.5" />
+                        {formatMeters(dist)}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Línea 2: dirección */}
+                  {p.address && (
+                    <p className="mt-1 flex items-start gap-1 text-[11px] text-emerald-100/70">
+                      <MapPin className="mt-0.5 h-3 w-3 shrink-0 text-emerald-300/60" />
+                      <span className="line-clamp-2">{p.address}</span>
+                    </p>
+                  )}
+
+                  {/* Línea 3: horario */}
+                  {p.hours && (
+                    <p className="mt-1 flex items-start gap-1 text-[11px] text-emerald-100/75">
+                      <Clock className="mt-0.5 h-3 w-3 shrink-0 text-emerald-300/60" />
+                      <span className="line-clamp-2 leading-snug">{p.hours}</span>
+                    </p>
+                  )}
+
+                  {/* Línea 4: estado + CP + tel */}
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                    {status === "open" ? (
+                      <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-300">
+                        ● Abierta
+                      </span>
+                    ) : status === "closed" ? (
+                      <span className="inline-flex items-center gap-0.5 rounded-full bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-rose-300">
+                        ● Cerrada
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-0.5 rounded-full bg-slate-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-slate-400">
+                        s/d
+                      </span>
+                    )}
+                    {p.postal_code && (
+                      <span className="rounded-full border border-emerald-300/20 bg-white/[0.04] px-1.5 py-0.5 font-mono text-[10px] text-emerald-200/80">
+                        {p.postal_code}
+                      </span>
+                    )}
+                    {p.phone && (
                       <a
-                        href={mapsHref}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center gap-1 hover:text-emerald-200"
+                        href={`tel:${p.phone}`}
+                        aria-label={`Llamar a ${p.name}`}
+                        className="ml-auto inline-flex items-center gap-1 rounded-full bg-emerald-400/90 px-2 py-0.5 font-mono text-[10px] font-semibold text-emerald-950 transition hover:bg-emerald-300"
                       >
-                        <span className="text-[13px] leading-none">
-                          {p.is_24h ? "🌙" : "💊"}
-                        </span>
-                        <span className="min-w-0 truncate text-[11px] font-medium">
-                          {p.name}
-                        </span>
-                        {p.is_24h && (
-                          <span className="ml-1 shrink-0 rounded-full bg-yellow-300 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-yellow-950">
-                            24h
-                          </span>
-                        )}
+                        <Phone className="h-2.5 w-2.5" />
+                        {p.phone}
                       </a>
-                      {p.address && (
-                        <p className="mt-0.5 truncate text-[9px] text-emerald-100/50 md:hidden">
-                          <MapPin className="-mt-0.5 mr-0.5 inline h-2.5 w-2.5" />
-                          {p.address}
-                        </p>
-                      )}
-                    </td>
-                    <td className="px-1 py-1 align-middle">
-                      {status === "open" ? (
-                        <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500/15 px-1 py-0.5 text-[9px] font-semibold text-emerald-300">
-                          ● Abre
-                        </span>
-                      ) : status === "closed" ? (
-                        <span className="inline-flex items-center gap-0.5 rounded-full bg-rose-500/15 px-1 py-0.5 text-[9px] font-semibold text-rose-300">
-                          ● Cerr
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-0.5 rounded-full bg-slate-500/15 px-1 py-0.5 text-[9px] font-semibold text-slate-400">
-                          s/d
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-1 py-1 align-middle text-[10px] text-emerald-100/70">
-                      <span className="flex items-start gap-1">
-                        <Clock className="mt-0.5 h-3 w-3 shrink-0 text-emerald-300/60" />
-                        <span className="line-clamp-2 leading-tight">{p.hours ?? "—"}</span>
-                      </span>
-                    </td>
-                    <td className="px-1 py-1 align-middle">
-                      <span className="font-mono text-[10px] text-emerald-200/80">
-                        {p.postal_code ?? "—"}
-                      </span>
-                    </td>
-                    <td className="rounded-r-md px-1 py-1 text-right align-middle">
-                      {userCoords && (() => {
-                        const d = distFor(p);
-                        return d != null ? (
-                          <div className="inline-flex items-center gap-1 font-mono text-[10px] text-emerald-200">
-                            <Navigation className="h-3 w-3 text-emerald-300/70" />
-                            ≈ {formatMeters(d)}
-                          </div>
-                        ) : (
-                          <span className="text-[10px] text-emerald-200/40">—</span>
-                        );
-                      })()}
-                      {p.phone ? (
-                        <a
-                          href={`tel:${p.phone}`}
-                          aria-label={`Llamar a ${p.name}`}
-                          className="mt-0.5 flex items-center justify-end gap-1 font-mono text-[10px] text-emerald-300 hover:text-emerald-200"
-                        >
-                          <Phone className="h-3 w-3" />
-                          <span className="truncate">{p.phone}</span>
-                        </a>
-                      ) : (
-                        !userCoords && (
-                          <span className="text-[10px] text-emerald-200/40">—</span>
-                        )
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-              {!loading && filtered.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-2 py-4 text-center text-xs text-emerald-200/60"
-                  >
-                    Sin resultados.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+            {!loading && filtered.length === 0 && (
+              <li className="px-2 py-4 text-center text-xs text-emerald-200/60">
+                Sin resultados.
+              </li>
+            )}
+          </ul>
         </div>
       </div>
     </div>
