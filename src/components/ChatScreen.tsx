@@ -239,6 +239,18 @@ export function ChatScreen() {
   }, []);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handler = () => {
+      setMessages([GREETING]);
+      const comer = SUGGESTIONS.find((s) => s.label.includes("Comer"));
+      setSubmenuStack(comer ? [comer] : []);
+      window.sessionStorage.removeItem(CHAT_STATE_KEY);
+    };
+    window.addEventListener("comer:back-to-menu", handler);
+    return () => window.removeEventListener("comer:back-to-menu", handler);
+  }, []);
+
+  useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail as { name?: string } | undefined;
       if (detail?.name) {
@@ -1840,10 +1852,13 @@ function AsianTableInner({ ranked, loading, originLabel, onClose }: {
         <header className="mb-5 flex items-center justify-between">
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => {
+              window.dispatchEvent(new Event("comer:back-to-menu"));
+              onClose();
+            }}
             className="text-[11px] uppercase tracking-[0.25em] text-slate-500 transition hover:text-cyan-300"
           >
-            ← Volver al chat
+            ← Volver al menú
           </button>
           <div className="flex items-center gap-2">
             <span className="relative flex h-2 w-2">
@@ -3204,10 +3219,13 @@ function CategoryTableInner({
         <header className="mb-5 flex items-center justify-between">
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => {
+              window.dispatchEvent(new Event("comer:back-to-menu"));
+              onClose();
+            }}
             className={`text-[11px] uppercase tracking-[0.25em] ${theme.accentText} transition ${theme.borderHover}`}
           >
-            ← Volver al chat
+            ← Volver al menú
           </button>
           <div className="flex items-center gap-2">
             <span className="relative flex h-2 w-2">
