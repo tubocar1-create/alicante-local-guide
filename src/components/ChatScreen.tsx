@@ -1723,9 +1723,10 @@ out center 400;`;
   return [];
 }
 
-function AsianTableInner({ ranked, loading, onClose }: {
+function AsianTableInner({ ranked, loading, originLabel, onClose }: {
   ranked: { c: PlaceCardData; d: number }[];
   loading: boolean;
+  originLabel: string;
   onClose: () => void;
 }) {
   const navigate = useNavigate();
@@ -1814,7 +1815,7 @@ function AsianTableInner({ ranked, loading, onClose }: {
             </span>
           </h1>
           <p className="mt-1 text-xs text-cyan-300/80 md:text-sm">
-            Listado completo · ordenados por cercanía a Puerta del Mar.
+            Listado completo · ordenados por cercanía a {originLabel}.
           </p>
         </div>
 
@@ -1957,8 +1958,15 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
   const [extra, setExtra] = useState<PlaceCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
+  const { state: locState, request: requestLocation } = useUserLocation();
+  const origin = locState.status === "ready" ? { lat: locState.coords.lat, lon: locState.coords.lng } : ALC_CENTER;
+  const originLabel = locState.status === "ready" ? "tu ubicación" : "Puerta del Mar";
 
   const fetchAsian = useServerFn(getAsianPlaces);
+  useEffect(() => {
+    if (locState.status === "idle") requestLocation();
+  }, [locState.status, requestLocation]);
+
   useEffect(() => {
     let cancelled = false;
     fetchAsian()
@@ -2000,7 +2008,7 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
   const ranked = Array.from(byKey.values())
     .map((c) => ({
       c,
-      d: c.lat && c.lon ? distKm(ALC_CENTER, { lat: c.lat, lon: c.lon }) : Number.POSITIVE_INFINITY,
+      d: c.lat != null && c.lon != null ? distKm(origin, { lat: c.lat, lon: c.lon }) : Number.POSITIVE_INFINITY,
     }))
     .sort((a, b) => a.d - b.d);
 
@@ -2016,7 +2024,7 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
     );
   }
 
-  return <AsianTableInner ranked={ranked} loading={loading} onClose={() => setOpen(false)} />;
+  return <AsianTableInner ranked={ranked} loading={loading} originLabel={originLabel} onClose={() => setOpen(false)} />;
 }
 
 
