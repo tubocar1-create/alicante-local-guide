@@ -47,10 +47,12 @@ function AdminPlacesPage() {
   const addManual = useServerFn(addPlaceManual);
   const listFn = useServerFn(listPlacesByCategory);
   const delFn = useServerFn(deletePlace);
+  const reclassifyFn = useServerFn(reclassifyAllCategories);
 
   const [tab, setTab] = useState<"url" | "manual">("url");
   const [category, setCategory] = useState("typical");
   const [busy, setBusy] = useState(false);
+  const [reclassifying, setReclassifying] = useState(false);
 
   // URL form
   const [urlInput, setUrlInput] = useState("");
