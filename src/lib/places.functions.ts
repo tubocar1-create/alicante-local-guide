@@ -1238,3 +1238,124 @@ export const getSurprisePlaces = createServerFn({ method: "GET" }).handler(async
   const shuffled = (rows ?? []).slice().sort(() => Math.random() - 0.5);
   return { places: shuffled.slice(0, 80) };
 });
+
+// ============= AI re-classification of main category =============
+// Walks the entire places_cache and asks Lovable AI to assign the best
+// main category (typical, rice_fish, italian, pizzas, brunch, asian, drinks)
+// based on the place's "ficha" (name, cuisine, primary_type, types, address).
+
+const MAIN_CATEGORIES = [
+  "typical",
+  "rice_fish",
+  "italian",
+  "pizzas",
+  "brunch",
+  "asian",
+  "drinks",
+] as const;
+type MainCategory = (typeof MAIN_CATEGORIES)[number];
+
+const RECLASSIFY_BATCH = 40;
+const RECLASSIFY_SYSTEM = `Eres un clasificador de restaurantes/bares/cafés de Alicante.
+Asignas a CADA sitio UNA sola categoría de esta lista cerrada: ${MAIN_CATEGORIES.join(", ")}.
+
+Definiciones:
+- "typical": comida típica alicantina/española, tapas, mediterránea tradicional.
+- "rice_fish": arrocerías, paellas, mariscos, pescados.
+- "italian": cocina italiana en general (pasta, trattorias) que NO sea solo pizzería.
+- "pizzas": pizzerías cuyo producto principal es la pizza.
+- "brunch": brunch, desayunos, cafeterías de especialidad, tortitas, bowls saludables.
+- "asian": japonés, chino, tailandés, coreano, vietnamita, sushi, ramen, wok, indio.
+- "drinks": bares, pubs, coctelerías, cervecerías, vinotecas (consumo principalmente de bebida).
+
+Reglas:
+- Devuelve SIEMPRE una categoría (la que mejor encaje). Nunca null ni vacía.
+- Si un sitio podría ser varias, elige la dominante según el nombre/tipo principal.
+Responde SOLO JSON: { "results": [ { "id": "<google_place_id>", "category": "<una-de-la-lista>" }, ... ] }`;
+
+async function reclassifyBatch(
+  rows: ClassifyRow[],
+  apiKey: string,
+): Promise<Map<string, MainCategory>> {
+  const out = new Map<string, MainCategory>();
+  const payload = rows.map((r) => ({
+    id: r.google_place_id,
+    name: r.name,
+    cuisine: r.cuisine,
+    primary_type: r.primary_type,
+    types: r.types?.slice(0, 8) ?? null,
+    address: r.address,
+    current: r.category,
+  }));
+  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-flash",
+      messages: [
+        { role: "system", content: RECLASSIFY_SYSTEM },
+        { role: "user", content: JSON.stringify(payload) },
+      ],
+      response_format: { type: "json_object" },
+    }),
+  });
+  if (!res.ok) {
+    console.error("AI reclassify error", res.status, await res.text());
+    return out;
+  }
+  const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+  const content = json.choices?.[0]?.message?.content ?? "";
+  try {
+    const parsed = JSON.parse(content) as {
+      results?: Array<{ id: string; category: string }>;
+    };
+    const valid = new Set<string>(MAIN_CATEGORIES as readonly string[]);
+    for (const r of parsed.results ?? []) {
+      if (valid.has(r.category)) out.set(r.id, r.category as MainCategory);
+    }
+  } catch (e) {
+    console.error("AI reclassify parse error", e, content.slice(0, 200));
+  }
+  return out;
+}
+
+export const reclassifyAllCategories = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => {
+    const o = (d ?? {}) as { limit?: number };
+    return { limit: Math.max(10, Math.min(o.limit ?? 1000, 5000)) };
+  })
+  .handler(async ({ data }) => {
+    const apiKey = process.env.LOVABLE_API_KEY;
+    if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
+    const { data: rows, error } = await supabaseAdmin
+      .from("places_cache")
+      .select("google_place_id,name,cuisine,primary_type,types,price_level,address,category")
+      .neq("category", "lookup")
+      .limit(data.limit);
+    if (error) throw error;
+    if (!rows || rows.length === 0) return { processed: 0, updated: 0 };
+
+    let processed = 0;
+    let updated = 0;
+    const changes: Record<string, number> = {};
+    for (let i = 0; i < rows.length; i += RECLASSIFY_BATCH) {
+      const batch = rows.slice(i, i + RECLASSIFY_BATCH) as ClassifyRow[];
+      const assigned = await reclassifyBatch(batch, apiKey);
+      const updates: Array<Promise<unknown>> = [];
+      for (const r of batch) {
+        processed++;
+        const newCat = assigned.get(r.google_place_id);
+        if (!newCat || newCat === r.category) continue;
+        updated++;
+        changes[`${r.category}→${newCat}`] = (changes[`${r.category}→${newCat}`] ?? 0) + 1;
+        updates.push(
+          supabaseAdmin
+            .from("places_cache")
+            .update({ category: newCat } as never)
+            .eq("google_place_id", r.google_place_id),
+        );
+      }
+      await Promise.all(updates);
+    }
+    return { processed, updated, changes };
+  });
