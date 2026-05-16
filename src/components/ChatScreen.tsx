@@ -2576,6 +2576,55 @@ const CATEGORY_THEMES: Record<"typical" | "rice_fish" | "italian" | "brunch" | "
     rowLabelText: "Cafetería",
     priceHeaderText: "€/pers",
   },
+  pizzas: {
+    bgGradient: "linear-gradient(180deg, #1a0a08 0%, #2a120c 50%, #100604 100%)",
+    glow1: "bg-red-500/[0.10]",
+    glow2: "bg-yellow-500/[0.07]",
+    accentText: "text-red-200/70",
+    borderHover: "hover:text-red-300",
+    liveText: "text-red-300/80",
+    liveDot: "bg-red-400",
+    borderBtn: "border-red-900/60 text-red-200/70 hover:border-red-500/50 hover:text-red-300",
+    eyebrow: "text-red-400/80",
+    eyebrowText: "Dashboard pizza",
+    title: "text-red-50",
+    titleHighlight: "Pizzas",
+    titleGradient: "from-red-300 via-yellow-200 to-orange-300",
+    subtitle: "text-red-200/80",
+    cardBg: "bg-[rgba(20,10,8,0.7)]",
+    cardBorder: "border-red-100/[0.08]",
+    countText: "text-red-50",
+    hint: "text-red-400/70",
+    thText: "text-red-200/50",
+    rowText: "text-red-50",
+    hoverName: "text-red-50 hover:text-red-300",
+    closesText: "text-red-100/80",
+    priceText: "text-red-50",
+    distText: "text-red-50",
+    emptyText: "text-red-200/50",
+    reopenLabel: "Reabrir dashboard pizzas",
+    reopenCls: "border-red-400/30 bg-red-400/5 text-red-300 hover:bg-red-400/10",
+    priceHeader: "€/pers",
+    rowLabel: "Pizzería",
+    emoji: (c) => {
+      const hay = `${c.cuisine ?? ""} ${c.name ?? ""}`.toLowerCase();
+      if (/telepizza|domino|papa john|pizza hut|móvil|movil|domicilio/.test(hay)) return "🛵";
+      if (/napole|napoli|nap\b/.test(hay)) return "🇮🇹";
+      return "🍕";
+    },
+    guessPrice: (c) => {
+      const hay = `${c.cuisine ?? ""} ${c.name ?? ""}`.toLowerCase();
+      if (/telepizza|domino|papa john|pizza hut|móvil|movil/.test(hay)) return "~12 €";
+      if (/grosso|napole|napoli|nap\b/.test(hay)) return "~15 €";
+      return "~13 €";
+    },
+    title1: "Pizzas",
+    title2: "en Alicante",
+    subtitleText: "Telepizza, Domino's y pizzerías rápidas · ordenados por cercanía a Puerta del Mar.",
+    eyebrowLabel: "Dashboard pizza",
+    rowLabelText: "Pizzería",
+    priceHeaderText: "€/pers",
+  },
 };
 
 function CategoryTableInner({
