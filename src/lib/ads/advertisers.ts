@@ -452,15 +452,18 @@ const DISPLAY_ORDER: string[] = [
 export const ADVERTISERS: Advertiser[] = (() => {
   const byId = new Map(ADVERTISERS_RAW.map((a) => [a.id, a]));
   const ordered: Advertiser[] = [];
+  const used = new Set<string>();
   for (const id of DISPLAY_ORDER) {
     const a = byId.get(id);
     if (a) {
       ordered.push(a);
-      byId.delete(id);
+      used.add(id);
     }
   }
-  // Cualquiera nuevo que se añada y no esté en DISPLAY_ORDER va al final.
-  for (const a of byId.values()) ordered.push(a);
+  // Cualquier anunciante nuevo que no esté en DISPLAY_ORDER va al final.
+  for (const [id, a] of byId.entries()) {
+    if (!used.has(id)) ordered.push(a);
+  }
   return ordered;
 })();
 
