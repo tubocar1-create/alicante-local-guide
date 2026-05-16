@@ -1095,7 +1095,7 @@ type ClassifyRow = {
   category: string;
 };
 
-const CLASSIFY_BATCH = 25;
+const CLASSIFY_BATCH = 40;
 const TAGS_LIST = VIRTUAL_TAGS.join(", ");
 const SYSTEM_PROMPT = `Eres un clasificador de restaurantes/bares/cafés de Alicante.
 Devuelves SOLO etiquetas de esta lista cerrada: ${TAGS_LIST}.
