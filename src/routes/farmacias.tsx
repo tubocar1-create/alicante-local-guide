@@ -124,6 +124,14 @@ const SECTORS: Record<string, string> = {
 const sectorFor = (cp: string | null) =>
   (cp && SECTORS[cp]) || (cp ? `Zona ${cp}` : "Sin código postal");
 
+// Cruz verde estilo farmacia española
+const PharmacyCross = ({ className = "h-3.5 w-3.5" }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" aria-hidden className={className}>
+    <rect x="9" y="2" width="6" height="20" rx="1" fill="#16a34a" />
+    <rect x="2" y="9" width="20" height="6" rx="1" fill="#16a34a" />
+  </svg>
+);
+
 export const Route = createFileRoute("/farmacias")({
   head: () => ({
     meta: [
