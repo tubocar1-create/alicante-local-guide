@@ -13,6 +13,17 @@ let watchRefs = 0;
 const listeners = new Set<(c: Coords) => void>();
 const errorListeners = new Set<(message: string) => void>();
 
+const GEO_PREF_KEY = "geo:enabled";
+export function isGeoEnabled(): boolean {
+  if (typeof localStorage === "undefined") return true;
+  return localStorage.getItem(GEO_PREF_KEY) !== "0";
+}
+export function setGeoEnabled(enabled: boolean) {
+  if (typeof localStorage === "undefined") return;
+  localStorage.setItem(GEO_PREF_KEY, enabled ? "1" : "0");
+  if (!enabled) releaseLocation();
+}
+
 function notify(c: Coords) {
   cached = c;
   listeners.forEach((l) => l(c));
