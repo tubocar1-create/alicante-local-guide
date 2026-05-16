@@ -3229,25 +3229,21 @@ function CategoryTable({
       byKey.set(k, { ...prev, openingHours: prev.openingHours ?? c.openingHours, lat: prev.lat ?? c.lat, lon: prev.lon ?? c.lon });
     }
   }
-  const isSurprise = category === "surprise";
+  const isInternational = category === "international";
   let ranked = Array.from(byKey.values())
     .map((c) => ({
       c,
       d: c.lat && c.lon ? distKm(origin, { lat: c.lat, lon: c.lon }) : Number.POSITIVE_INFINITY,
     }))
-    .filter((r) => (isSurprise ? true : r.d <= 10))
+    .filter((r) => (isInternational ? true : r.d <= 10))
     .filter((r) => {
       if (category !== "brunch") return true;
       const open = getTodayOpeningTime(r.c.openingHours ?? undefined);
       if (!open) return true;
       const [h, m] = open.split(":").map(Number);
       return h * 60 + m <= 11 * 60;
-    });
-  if (isSurprise) {
-    ranked = ranked.sort(() => Math.random() - 0.5).slice(0, 25);
-  } else {
-    ranked = ranked.sort((a, b) => a.d - b.d);
-  }
+    })
+    .sort((a, b) => a.d - b.d);
 
   if (!open) {
     return (
