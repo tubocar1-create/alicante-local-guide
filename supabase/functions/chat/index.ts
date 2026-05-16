@@ -518,13 +518,9 @@ function buildFoodRecommendationsResponse(
   const alreadyMentioned = previousAssistantPlaceNames(messages);
   const candidates = openFoodPlaces
     .filter((place) => !alreadyMentioned.has(normalized(place.name)))
-    .filter((place) => normalized(place.name) !== normalized(TUMBARANCHO.name))
     .filter((place) => matchesFoodPreference(place, latestUserText));
-  const isFirstAsk = !alreadyMentioned.has(normalized(TUMBARANCHO.name));
-  const limit = isFirstAsk ? 4 : 1;
-  const selected = isFirstAsk
-    ? [TUMBARANCHO, ...candidates.slice(0, limit - 1)]
-    : candidates.slice(0, limit);
+  const limit = Math.max(1, Math.min(maxOptions, 4));
+  const selected = candidates.slice(0, limit);
 
   const sub = detectFastFoodSub(latestUserText);
   const intro = selected.length >= 3
