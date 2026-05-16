@@ -123,7 +123,7 @@ export function ListingPage<K extends string>(props: Props<K>) {
                   className={`rounded-full px-3 py-1.5 ${
                     sort === s ? "bg-secondary text-secondary-foreground" : "hover:bg-muted"
                   }`}
-                  disabled={s === "distance" && !me}
+                  
                 >
                   {s === "distance" ? "Cercanía" : s === "rating" ? "★" : "A-Z"}
                 </button>
@@ -157,7 +157,7 @@ export function ListingPage<K extends string>(props: Props<K>) {
                   className={`rounded-full px-2 py-1 ${
                     sort === s ? "bg-secondary text-secondary-foreground" : "hover:bg-muted"
                   }`}
-                  disabled={s === "distance" && !me}
+                  
                 >
                   {s === "distance" ? "Cercanía" : s === "rating" ? "★" : "A-Z"}
                 </button>
