@@ -1349,10 +1349,12 @@ export const reclassifyAllCategories = createServerFn({ method: "POST" })
         updated++;
         changes[`${r.category}→${newCat}`] = (changes[`${r.category}→${newCat}`] ?? 0) + 1;
         updates.push(
-          supabaseAdmin
-            .from("places_cache")
-            .update({ category: newCat } as never)
-            .eq("google_place_id", r.google_place_id),
+          (async () => {
+            await supabaseAdmin
+              .from("places_cache")
+              .update({ category: newCat } as never)
+              .eq("google_place_id", r.google_place_id);
+          })(),
         );
       }
       await Promise.all(updates);
