@@ -2955,6 +2955,10 @@ function BrunchTable({ cards }: { cards: PlaceCardData[] }) {
   const fetcher = useServerFn(getBrunchPlaces);
   return <CategoryTable cards={cards} category="brunch" fetcher={fetcher} />;
 }
+function PizzasTable({ cards }: { cards: PlaceCardData[] }) {
+  const fetcher = useServerFn(getPizzasPlaces);
+  return <CategoryTable cards={cards} category="pizzas" fetcher={fetcher} />;
+}
 
 function AssistantContent({ content, userPrompt = "" }: { content: string; userPrompt?: string }) {
 
