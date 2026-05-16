@@ -70,15 +70,15 @@ export function ListingPage<K extends string>(props: Props<K>) {
     arr = [...arr].sort((a, b) => {
       if (sort === "name") return a.name.localeCompare(b.name);
       if (sort === "rating") return (b.stars ?? 0) - (a.stars ?? 0);
-      if (sort === "distance" && me) {
-        const da = distanceKm(me, { lat: a.lat, lng: a.lon });
-        const db = distanceKm(me, { lat: b.lat, lng: b.lon });
+      if (sort === "distance") {
+        const da = distanceKm(sortOrigin, { lat: a.lat, lng: a.lon });
+        const db = distanceKm(sortOrigin, { lat: b.lat, lng: b.lon });
         return da - db;
       }
       return 0;
     });
     return arr.slice(0, 200);
-  }, [items, search, sort, me]);
+  }, [items, search, sort, me, sortOrigin]);
 
   function toggle(k: K) {
     setActive((prev) => {
