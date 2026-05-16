@@ -103,7 +103,7 @@ const SECTORS: Record<string, string> = {
   "03004": "Centro – Alfonso X",
   "03005": "Pla del Bon Repós",
   "03006": "Benalúa · Babel",
-  "03007": "Carolinas Bajas · Florida",
+  "03007": "Carolinas Bajas",
   "03008": "Carolinas Altas",
   "03009": "Pla · Garbinet",
   "03010": "Virgen del Remedio",
@@ -154,7 +154,6 @@ function FarmaciasPage() {
         .select(
           "id, code, name, address, postal_code, city, phone, hours, is_24h, on_duty",
         )
-        .order("is_24h", { ascending: false })
         .order("postal_code", { ascending: true })
         .order("name", { ascending: true });
       if (!error && data) setItems(data as Pharmacy[]);
@@ -190,13 +189,20 @@ function FarmaciasPage() {
     }
     if (userCoords) {
       base = [...base].sort((a, b) => {
-        if (a.is_24h !== b.is_24h) return a.is_24h ? -1 : 1;
         const da = distFor(a);
         const db = distFor(b);
-        if (da == null && db == null) return 0;
+        if (da == null && db == null) {
+          return (a.postal_code ?? "").localeCompare(b.postal_code ?? "");
+        }
         if (da == null) return 1;
         if (db == null) return -1;
         return da - db;
+      });
+    } else {
+      base = [...base].sort((a, b) => {
+        const cp = (a.postal_code ?? "zzz").localeCompare(b.postal_code ?? "zzz");
+        if (cp !== 0) return cp;
+        return a.name.localeCompare(b.name, "es");
       });
     }
     return base;
@@ -442,7 +448,7 @@ function FarmaciasPage() {
                 )}`;
                 const status = computeOpen(p);
                 const rowCls = p.is_24h
-                  ? "bg-amber-400/10 ring-1 ring-inset ring-amber-300/30 hover:bg-amber-400/15"
+                  ? "bg-yellow-300/20 ring-1 ring-inset ring-yellow-300/50 hover:bg-yellow-300/25"
                   : "bg-white/[0.02] hover:bg-white/[0.05]";
                 return (
                   <tr key={p.id} className={rowCls}>
@@ -460,7 +466,7 @@ function FarmaciasPage() {
                           {p.name}
                         </span>
                         {p.is_24h && (
-                          <span className="ml-1 shrink-0 rounded-full bg-amber-400/90 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-amber-950">
+                          <span className="ml-1 shrink-0 rounded-full bg-yellow-300 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-yellow-950">
                             24h
                           </span>
                         )}
