@@ -2930,7 +2930,7 @@ function CategoryTable({
   const ranked = Array.from(byKey.values())
     .map((c) => ({
       c,
-      d: c.lat && c.lon ? distKm(ALC_CENTER, { lat: c.lat, lon: c.lon }) : Number.POSITIVE_INFINITY,
+      d: c.lat && c.lon ? distKm(origin, { lat: c.lat, lon: c.lon }) : Number.POSITIVE_INFINITY,
     }))
     .filter((r) => r.d <= 10)
     .filter((r) => {
