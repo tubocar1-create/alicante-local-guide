@@ -6,6 +6,7 @@ import {
   addPlaceManual,
   listPlacesByCategory,
   deletePlace,
+  reclassifyAllCategories,
 } from "@/lib/places.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,10 +47,12 @@ function AdminPlacesPage() {
   const addManual = useServerFn(addPlaceManual);
   const listFn = useServerFn(listPlacesByCategory);
   const delFn = useServerFn(deletePlace);
+  const reclassifyFn = useServerFn(reclassifyAllCategories);
 
   const [tab, setTab] = useState<"url" | "manual">("url");
   const [category, setCategory] = useState("typical");
   const [busy, setBusy] = useState(false);
+  const [reclassifying, setReclassifying] = useState(false);
 
   // URL form
   const [urlInput, setUrlInput] = useState("");
@@ -179,6 +182,27 @@ function AdminPlacesPage() {
     }
   };
 
+  const handleReclassify = async () => {
+    if (
+      !confirm(
+        "Reclasificar todos los sitios con IA según su ficha. Puede tardar 1-2 minutos. ¿Continuar?",
+      )
+    )
+      return;
+    setReclassifying(true);
+    try {
+      const res = await reclassifyFn({ data: { limit: 2000 } });
+      toast.success(
+        `Procesados ${res.processed} · ${res.updated} reasignados`,
+      );
+      refreshList(listCat);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Error");
+    } finally {
+      setReclassifying(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 max-w-3xl mx-auto">
       <h1 className="text-2xl font-bold mb-2">Añadir sitios a la BD</h1>
@@ -186,6 +210,21 @@ function AdminPlacesPage() {
         Pega un enlace de Google Maps o introduce los datos a mano. El sitio
         aparecerá en el Dashboard correspondiente según su categoría.
       </p>
+
+      <div className="mb-6 rounded-lg border border-border bg-card p-4 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-medium">Reclasificar con IA</p>
+          <p className="text-xs text-muted-foreground">
+            Revisa cada ficha y reasigna su categoría automáticamente.
+          </p>
+        </div>
+        <Button onClick={handleReclassify} disabled={reclassifying}>
+          {reclassifying ? (
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          ) : null}
+          Reclasificar
+        </Button>
+      </div>
 
       <div className="space-y-4 rounded-lg border border-border bg-card p-4">
         <div className="grid gap-2">
