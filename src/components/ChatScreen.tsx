@@ -1660,6 +1660,18 @@ function distKm(a: { lat: number; lon: number }, b: { lat: number; lon: number }
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 
+function useFoodListOrigin() {
+  const { state: locState, request: requestLocation } = useUserLocation({ watch: true });
+  useEffect(() => {
+    if (locState.status === "idle") requestLocation();
+  }, [locState.status, requestLocation]);
+  return {
+    locState,
+    origin: locState.status === "ready" ? { lat: locState.coords.lat, lon: locState.coords.lng } : ALC_CENTER,
+    originLabel: locState.status === "ready" ? "tu ubicación" : "Puerta del Mar",
+  };
+}
+
 function asianEmoji(c: PlaceCardData): string {
   const hay = `${c.cuisine ?? ""} ${c.name ?? ""} ${c.vibe ?? ""}`.toLowerCase();
   if (/ramen|noodle/.test(hay)) return "🍜";
