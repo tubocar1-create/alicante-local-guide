@@ -2112,7 +2112,12 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
       c,
       d: c.lat != null && c.lon != null ? distKm(origin, { lat: c.lat, lon: c.lon }) : Number.POSITIVE_INFINITY,
     }))
-    .sort((a, b) => a.d - b.d);
+    .sort((a, b) => {
+      const sa = openStatusRank(a.c.openingHours);
+      const sb = openStatusRank(b.c.openingHours);
+      if (sa !== sb) return sa - sb;
+      return a.d - b.d;
+    });
 
   if (!open) {
     return (
