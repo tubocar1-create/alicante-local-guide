@@ -144,6 +144,8 @@ function FarmaciasPage() {
   const [q, setQ] = useState("");
   const [groupBy, setGroupBy] = useState<"sector" | "postal">("sector");
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
+  const [zoneOpen, setZoneOpen] = useState(false);
+  const [zoneSearch, setZoneSearch] = useState("");
   const { state: geoState, request: requestGeo } = useUserLocation();
   const userCoords = geoState.status === "ready" ? geoState.coords : null;
 
