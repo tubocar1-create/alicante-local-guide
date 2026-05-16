@@ -17,7 +17,8 @@ import {
   Briefcase,
   MapPin,
 } from "lucide-react";
-import { isGeoEnabled, setGeoEnabled } from "@/hooks/useUserLocation";
+import { isGeoEnabled, setGeoEnabled, useUserLocation, formatDistance, distanceKm } from "@/hooks/useUserLocation";
+import { ALC_CENTER } from "@/lib/alicante";
 import { usePoints } from "@/hooks/usePoints";
 import { useAuth } from "@/hooks/useAuth";
 import { listQrs, subscribeQrs, type LocalQr } from "@/lib/qr-storage";
