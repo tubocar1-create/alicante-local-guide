@@ -1631,6 +1631,11 @@ const ITALIAN_RE = /\b(italian[oa]|italianos|pasta|trattoria|ristorante)\b/i;
 const PIZZAS_RE = /\b(telepizza|domino'?s|papa john'?s?|pizza hut|pizza m[oó]vil|pizza a domicilio|una pizzer[ií]a|pizzer[ií]a abierta|pizzer[ií]a r[aá]pida)\b/i;
 const BRUNCH_RE = /\b(brunch|desayun[oa]s?|breakfast|tortitas|pancakes|waffles?|gofres?|huevos benedictinos|eggs benedict|cafeter[ií]a|caf[eé] especialidad|specialty coffee|bolleria|boller[ií]a|cruasanes?|croissants?)\b/i;
 const FAST_FOOD_RE = /\b(comida r[aá]pida|fast ?food|hamburgues[ae]r?[ií]as?|hamburguesas?|burger|smash ?burger|mcdonald|burger king|goiko|five guys|tgb|kfc|popeyes|pollo frito|pollos asados|montaditos?|100 montaditos|lizarr[aá]n|kebaps?|kebab|d[oö]ner|shawarma|taco bell|tacos?|burritos?|mexican[oa])\b/i;
+const BURGERS_RE = /\b(hamburgues[ae]r?[ií]as?|hamburguesas?|burger|smash ?burger|mcdonald|burger king|goiko|five guys|tgb)\b/i;
+const MONTADITOS_RE = /\b(montaditos?|100 montaditos|lizarr[aá]n)\b/i;
+const KEBAB_RE = /\b(kebaps?|kebab|d[oö]ner|shawarma)\b/i;
+const FRIED_CHICKEN_RE = /\b(kfc|popeyes|pollo frito|pollos asados|poller[ií]a)\b/i;
+const MEXICAN_RE = /\b(mexican[oa]s?|taco bell|tacos?|burritos?|tex.?mex|taquer[ií]a)\b/i;
 const VEGAN_RE = /\b(vegano[as]?|vegan[a]?|vegetarian[oa]s?|saludable|healthy|poke|bowl|veggie|plant[\s-]?based)\b/i;
 const DESSERTS_RE = /\b(postres?|heladeri?as?|helader[ií]as?|helados?|gelater[ií]as?|pasteler[ií]as?|chocolater[ií]as?|gofres?|waffles?|crepes?|cr[eê]pes?|tartas?|reposter[ií]a|dulce[s]?|cafeter[ií]a con postres)\b/i;
 const CHEAP_RE = /\b(barato|baratos?|baratit[oa]s?|econ[oó]mic[oa]s?|low cost|menu del d[ií]a|men[uú] del d[ií]a|menu diario|men[uú] diario|comer barato|sin gastar)\b/i;
@@ -2445,6 +2450,11 @@ type ExtendedCategory =
   | "brunch"
   | "pizzas"
   | "fast_food"
+  | "burgers"
+  | "montaditos"
+  | "kebab"
+  | "fried_chicken"
+  | "mexican"
   | "vegan"
   | "desserts"
   | "cheap"
@@ -2929,7 +2939,210 @@ const CATEGORY_THEMES: Record<ExtendedCategory, CategoryTheme & {
     rowLabelText: "Restaurante",
     priceHeaderText: "€/pers",
   },
+  ...buildFastFoodSubThemes(),
 };
+
+type FastFoodSubKey = "burgers" | "montaditos" | "kebab" | "fried_chicken" | "mexican";
+
+function buildFastFoodSubThemes(): Record<FastFoodSubKey, (typeof CATEGORY_THEMES)[ExtendedCategory]> {
+  type Spec = {
+    color: string; // tailwind hue
+    bg: [string, string, string]; // bg gradient stops
+    cardBg: string;
+    title1: string;
+    titleHighlight: string;
+    titleGradient: string;
+    emoji: (c: PlaceCardData) => string;
+    guessPrice: (c: PlaceCardData) => string;
+    subtitleText: string;
+    eyebrowText: string;
+    reopenLabel: string;
+    rowLabel: string;
+  };
+  const specs: Record<FastFoodSubKey, Spec> = {
+    burgers: {
+      color: "amber",
+      bg: ["#1a0f06", "#2a1a0c", "#100804"],
+      cardBg: "bg-[rgba(20,12,6,0.7)]",
+      title1: "Hamburguesas",
+      titleHighlight: "Hamburguesas",
+      titleGradient: "from-amber-300 via-yellow-200 to-orange-300",
+      emoji: () => "🍔",
+      guessPrice: (c) => {
+        const hay = `${c.cuisine ?? ""} ${c.name ?? ""}`.toLowerCase();
+        if (/goiko|five guys|tgb|smash/.test(hay)) return "~14 €";
+        if (/mcdonald|burger king/.test(hay)) return "~9 €";
+        return "~11 €";
+      },
+      subtitleText: "Smash, premium y cadenas · cercanía a Puerta del Mar.",
+      eyebrowText: "Dashboard burger",
+      reopenLabel: "Reabrir dashboard hamburguesas",
+      rowLabel: "Hamburguesería",
+    },
+    montaditos: {
+      color: "yellow",
+      bg: ["#1a1408", "#2a200c", "#100a04"],
+      cardBg: "bg-[rgba(20,16,8,0.7)]",
+      title1: "Montaditos",
+      titleHighlight: "Montaditos",
+      titleGradient: "from-yellow-300 via-amber-200 to-orange-300",
+      emoji: () => "🥖",
+      guessPrice: () => "~8 €",
+      subtitleText: "100 Montaditos, Lizarrán y similares · cercanía a Puerta del Mar.",
+      eyebrowText: "Dashboard montaditos",
+      reopenLabel: "Reabrir dashboard montaditos",
+      rowLabel: "Cervecería",
+    },
+    kebab: {
+      color: "lime",
+      bg: ["#0c1408", "#16240c", "#060a04"],
+      cardBg: "bg-[rgba(12,20,8,0.7)]",
+      title1: "Kebaps",
+      titleHighlight: "Kebaps",
+      titleGradient: "from-lime-300 via-yellow-200 to-orange-300",
+      emoji: () => "🌯",
+      guessPrice: () => "~7 €",
+      subtitleText: "Kebap, döner y shawarma · cercanía a Puerta del Mar.",
+      eyebrowText: "Dashboard kebap",
+      reopenLabel: "Reabrir dashboard kebap",
+      rowLabel: "Kebap",
+    },
+    fried_chicken: {
+      color: "rose",
+      bg: ["#1a0a0c", "#2a1014", "#100406"],
+      cardBg: "bg-[rgba(20,10,12,0.7)]",
+      title1: "Pollo frito",
+      titleHighlight: "Pollo frito",
+      titleGradient: "from-rose-300 via-yellow-200 to-orange-300",
+      emoji: () => "🍗",
+      guessPrice: (c) => {
+        const hay = `${c.cuisine ?? ""} ${c.name ?? ""}`.toLowerCase();
+        if (/kfc|popeyes/.test(hay)) return "~10 €";
+        return "~12 €";
+      },
+      subtitleText: "KFC, Popeyes y pollos asados · cercanía a Puerta del Mar.",
+      eyebrowText: "Dashboard pollo",
+      reopenLabel: "Reabrir dashboard pollo frito",
+      rowLabel: "Pollería",
+    },
+    mexican: {
+      color: "emerald",
+      bg: ["#06140d", "#0c2418", "#030a06"],
+      cardBg: "bg-[rgba(6,20,12,0.7)]",
+      title1: "Comida mexicana",
+      titleHighlight: "Mexicano",
+      titleGradient: "from-emerald-300 via-yellow-200 to-red-300",
+      emoji: () => "🌮",
+      guessPrice: (c) => {
+        const hay = `${c.cuisine ?? ""} ${c.name ?? ""}`.toLowerCase();
+        if (/taco bell/.test(hay)) return "~9 €";
+        return "~13 €";
+      },
+      subtitleText: "Taco Bell, taquerías y tex-mex · cercanía a Puerta del Mar.",
+      eyebrowText: "Dashboard mexicano",
+      reopenLabel: "Reabrir dashboard mexicano",
+      rowLabel: "Mexicano",
+    },
+  };
+  // Literal class strings per color so Tailwind v4 can detect them.
+  // Keep all classes as full literal strings (no template interpolation).
+  const palettes: Record<string, Omit<CategoryTheme, "eyebrowText" | "titleHighlight" | "titleGradient" | "cardBg" | "bgGradient" | "reopenLabel" | "rowLabel">> = {
+    amber: {
+      glow1: "bg-amber-500/[0.10]", glow2: "bg-amber-500/[0.06]",
+      accentText: "text-amber-200/70", borderHover: "hover:text-amber-300",
+      liveText: "text-amber-300/80", liveDot: "bg-amber-400",
+      borderBtn: "border-amber-900/60 text-amber-200/70 hover:border-amber-500/50 hover:text-amber-300",
+      eyebrow: "text-amber-400/80", title: "text-amber-50",
+      subtitle: "text-amber-200/80", cardBorder: "border-amber-100/[0.08]",
+      countText: "text-amber-50", hint: "text-amber-400/70",
+      thText: "text-amber-200/50", rowText: "text-amber-50",
+      hoverName: "text-amber-50 hover:text-amber-300", closesText: "text-amber-100/80",
+      priceText: "text-amber-50", distText: "text-amber-50", emptyText: "text-amber-200/50",
+      reopenCls: "border-amber-400/30 bg-amber-400/5 text-amber-300 hover:bg-amber-400/10",
+      priceHeader: "€/pers",
+    },
+    yellow: {
+      glow1: "bg-yellow-500/[0.10]", glow2: "bg-yellow-500/[0.06]",
+      accentText: "text-yellow-200/70", borderHover: "hover:text-yellow-300",
+      liveText: "text-yellow-300/80", liveDot: "bg-yellow-400",
+      borderBtn: "border-yellow-900/60 text-yellow-200/70 hover:border-yellow-500/50 hover:text-yellow-300",
+      eyebrow: "text-yellow-400/80", title: "text-yellow-50",
+      subtitle: "text-yellow-200/80", cardBorder: "border-yellow-100/[0.08]",
+      countText: "text-yellow-50", hint: "text-yellow-400/70",
+      thText: "text-yellow-200/50", rowText: "text-yellow-50",
+      hoverName: "text-yellow-50 hover:text-yellow-300", closesText: "text-yellow-100/80",
+      priceText: "text-yellow-50", distText: "text-yellow-50", emptyText: "text-yellow-200/50",
+      reopenCls: "border-yellow-400/30 bg-yellow-400/5 text-yellow-300 hover:bg-yellow-400/10",
+      priceHeader: "€/pers",
+    },
+    lime: {
+      glow1: "bg-lime-500/[0.10]", glow2: "bg-lime-500/[0.06]",
+      accentText: "text-lime-200/70", borderHover: "hover:text-lime-300",
+      liveText: "text-lime-300/80", liveDot: "bg-lime-400",
+      borderBtn: "border-lime-900/60 text-lime-200/70 hover:border-lime-500/50 hover:text-lime-300",
+      eyebrow: "text-lime-400/80", title: "text-lime-50",
+      subtitle: "text-lime-200/80", cardBorder: "border-lime-100/[0.08]",
+      countText: "text-lime-50", hint: "text-lime-400/70",
+      thText: "text-lime-200/50", rowText: "text-lime-50",
+      hoverName: "text-lime-50 hover:text-lime-300", closesText: "text-lime-100/80",
+      priceText: "text-lime-50", distText: "text-lime-50", emptyText: "text-lime-200/50",
+      reopenCls: "border-lime-400/30 bg-lime-400/5 text-lime-300 hover:bg-lime-400/10",
+      priceHeader: "€/pers",
+    },
+    rose: {
+      glow1: "bg-rose-500/[0.10]", glow2: "bg-rose-500/[0.06]",
+      accentText: "text-rose-200/70", borderHover: "hover:text-rose-300",
+      liveText: "text-rose-300/80", liveDot: "bg-rose-400",
+      borderBtn: "border-rose-900/60 text-rose-200/70 hover:border-rose-500/50 hover:text-rose-300",
+      eyebrow: "text-rose-400/80", title: "text-rose-50",
+      subtitle: "text-rose-200/80", cardBorder: "border-rose-100/[0.08]",
+      countText: "text-rose-50", hint: "text-rose-400/70",
+      thText: "text-rose-200/50", rowText: "text-rose-50",
+      hoverName: "text-rose-50 hover:text-rose-300", closesText: "text-rose-100/80",
+      priceText: "text-rose-50", distText: "text-rose-50", emptyText: "text-rose-200/50",
+      reopenCls: "border-rose-400/30 bg-rose-400/5 text-rose-300 hover:bg-rose-400/10",
+      priceHeader: "€/pers",
+    },
+    emerald: {
+      glow1: "bg-emerald-500/[0.10]", glow2: "bg-emerald-500/[0.06]",
+      accentText: "text-emerald-200/70", borderHover: "hover:text-emerald-300",
+      liveText: "text-emerald-300/80", liveDot: "bg-emerald-400",
+      borderBtn: "border-emerald-900/60 text-emerald-200/70 hover:border-emerald-500/50 hover:text-emerald-300",
+      eyebrow: "text-emerald-400/80", title: "text-emerald-50",
+      subtitle: "text-emerald-200/80", cardBorder: "border-emerald-100/[0.08]",
+      countText: "text-emerald-50", hint: "text-emerald-400/70",
+      thText: "text-emerald-200/50", rowText: "text-emerald-50",
+      hoverName: "text-emerald-50 hover:text-emerald-300", closesText: "text-emerald-100/80",
+      priceText: "text-emerald-50", distText: "text-emerald-50", emptyText: "text-emerald-200/50",
+      reopenCls: "border-emerald-400/30 bg-emerald-400/5 text-emerald-300 hover:bg-emerald-400/10",
+      priceHeader: "€/pers",
+    },
+  };
+  const out = {} as Record<FastFoodSubKey, (typeof CATEGORY_THEMES)[ExtendedCategory]>;
+  (Object.keys(specs) as FastFoodSubKey[]).forEach((k) => {
+    const s = specs[k];
+    const p = palettes[s.color];
+    out[k] = {
+      ...p,
+      bgGradient: `linear-gradient(180deg, ${s.bg[0]} 0%, ${s.bg[1]} 50%, ${s.bg[2]} 100%)`,
+      eyebrowText: s.eyebrowText,
+      titleHighlight: s.titleHighlight,
+      titleGradient: s.titleGradient,
+      cardBg: s.cardBg,
+      reopenLabel: s.reopenLabel,
+      rowLabel: s.rowLabel,
+      emoji: s.emoji,
+      guessPrice: s.guessPrice,
+      title1: s.title1,
+      title2: "en Alicante",
+      subtitleText: s.subtitleText,
+      eyebrowLabel: s.eyebrowText,
+      rowLabelText: s.rowLabel,
+      priceHeaderText: "€/pers",
+    };
+  });
+  return out;
+}
 
 function CategoryTableInner({
   ranked,
@@ -3288,6 +3501,36 @@ function FastFoodTable({ cards }: { cards: PlaceCardData[] }) {
   const fetcher = useTagFetcher("fast_food");
   return <CategoryTable cards={cards} category="fast_food" fetcher={fetcher} />;
 }
+function useFastFoodSubFetcher(pattern: RegExp) {
+  const fn = useServerFn(getPlacesByTag);
+  return async () => {
+    const res = await fn({ data: { tag: "fast_food" } });
+    const places = (res.places ?? []).filter((p) =>
+      pattern.test(`${p.name ?? ""} ${p.cuisine ?? ""}`.toLowerCase()),
+    );
+    return { places };
+  };
+}
+function BurgersTable({ cards }: { cards: PlaceCardData[] }) {
+  const fetcher = useFastFoodSubFetcher(/burger|hamburgu|goiko|five guys|tgb|mcdonald|burger king|smash/i);
+  return <CategoryTable cards={cards} category="burgers" fetcher={fetcher} />;
+}
+function MontaditosTable({ cards }: { cards: PlaceCardData[] }) {
+  const fetcher = useFastFoodSubFetcher(/montadit|lizarr|100 mont/i);
+  return <CategoryTable cards={cards} category="montaditos" fetcher={fetcher} />;
+}
+function KebabTable({ cards }: { cards: PlaceCardData[] }) {
+  const fetcher = useFastFoodSubFetcher(/kebab|kebap|d[oö]ner|shawarma/i);
+  return <CategoryTable cards={cards} category="kebab" fetcher={fetcher} />;
+}
+function FriedChickenTable({ cards }: { cards: PlaceCardData[] }) {
+  const fetcher = useFastFoodSubFetcher(/kfc|popeyes|pollo frito|pollos asados|poller/i);
+  return <CategoryTable cards={cards} category="fried_chicken" fetcher={fetcher} />;
+}
+function MexicanTable({ cards }: { cards: PlaceCardData[] }) {
+  const fetcher = useFastFoodSubFetcher(/taco|burrito|mexic|tex.?mex|taquer/i);
+  return <CategoryTable cards={cards} category="mexican" fetcher={fetcher} />;
+}
 function VeganTable({ cards }: { cards: PlaceCardData[] }) {
   const fetcher = useTagFetcher("vegan");
   return <CategoryTable cards={cards} category="vegan" fetcher={fetcher} />;
@@ -3379,13 +3622,19 @@ function AssistantContent({ content, userPrompt = "" }: { content: string; userP
   const pAsian = ASIAN_RE.test(userPrompt);
   const pDrinks = DRINKS_RE.test(userPrompt);
   const pFastFood = FAST_FOOD_RE.test(userPrompt);
+  const pBurgers = BURGERS_RE.test(userPrompt);
+  const pMontaditos = MONTADITOS_RE.test(userPrompt);
+  const pKebab = KEBAB_RE.test(userPrompt);
+  const pFriedChicken = FRIED_CHICKEN_RE.test(userPrompt);
+  const pMexican = MEXICAN_RE.test(userPrompt);
   const pVegan = VEGAN_RE.test(userPrompt);
   const pDesserts = DESSERTS_RE.test(userPrompt);
   const pCheap = CHEAP_RE.test(userPrompt);
   const pInternational = INTERNATIONAL_RE.test(userPrompt);
   const promptLocked =
     pTypical || pRiceFish || pItalian || pPizzas || pBrunch || pAsian || pDrinks ||
-    pFastFood || pVegan || pDesserts || pCheap || pInternational;
+    pFastFood || pBurgers || pMontaditos || pKebab || pFriedChicken || pMexican ||
+    pVegan || pDesserts || pCheap || pInternational;
 
   // Si el prompt ya fijó intención, ignoramos las pistas de la respuesta de la IA
   const textHasAsian = pAsian || (!promptLocked && ASIAN_RE.test(cleaned));
@@ -3396,6 +3645,11 @@ function AssistantContent({ content, userPrompt = "" }: { content: string; userP
   const textHasPizzas = pPizzas || (!promptLocked && PIZZAS_RE.test(cleaned));
   const textHasBrunch = pBrunch || (!promptLocked && BRUNCH_RE.test(cleaned));
   const textHasFastFood = pFastFood || (!promptLocked && FAST_FOOD_RE.test(cleaned));
+  const textHasBurgers = pBurgers;
+  const textHasMontaditos = pMontaditos;
+  const textHasKebab = pKebab;
+  const textHasFriedChicken = pFriedChicken;
+  const textHasMexican = pMexican;
   const textHasVegan = pVegan || (!promptLocked && VEGAN_RE.test(cleaned));
   const textHasDesserts = pDesserts || (!promptLocked && DESSERTS_RE.test(cleaned));
   const textHasCheap = pCheap || (!promptLocked && CHEAP_RE.test(cleaned));
@@ -3408,21 +3662,33 @@ function AssistantContent({ content, userPrompt = "" }: { content: string; userP
     (textHasDrinks ||
       (cardData.length >= 2 && cardData.every((c) => isDrinksCard(c))));
   const internationalMode = !asianMode && !drinksMode && textHasInternational;
-  const fastFoodMode = !asianMode && !drinksMode && !internationalMode && textHasFastFood;
-  const veganMode = !asianMode && !drinksMode && !internationalMode && !fastFoodMode && textHasVegan;
-  const dessertsMode = !asianMode && !drinksMode && !internationalMode && !fastFoodMode && !veganMode && textHasDesserts;
-  const cheapMode = !asianMode && !drinksMode && !internationalMode && !fastFoodMode && !veganMode && !dessertsMode && textHasCheap;
-  const pizzasMode = !asianMode && !drinksMode && !internationalMode && !fastFoodMode && !veganMode && !dessertsMode && !cheapMode && textHasPizzas;
-  const italianMode = !asianMode && !drinksMode && !internationalMode && !fastFoodMode && !veganMode && !dessertsMode && !cheapMode && !pizzasMode && textHasItalian;
-  const riceFishMode = !asianMode && !drinksMode && !internationalMode && !fastFoodMode && !veganMode && !dessertsMode && !cheapMode && !pizzasMode && !italianMode && textHasRiceFish;
-  const brunchMode = !asianMode && !drinksMode && !internationalMode && !fastFoodMode && !veganMode && !dessertsMode && !cheapMode && !pizzasMode && !italianMode && !riceFishMode && textHasBrunch;
-  const typicalMode = !asianMode && !drinksMode && !internationalMode && !fastFoodMode && !veganMode && !dessertsMode && !cheapMode && !pizzasMode && !italianMode && !riceFishMode && !brunchMode && textHasTypical;
+  // Subcategorías de comida rápida — se evalúan ANTES que fast_food para abrir su propio dashboard
+  const burgersMode = !asianMode && !drinksMode && !internationalMode && textHasBurgers;
+  const montaditosMode = !asianMode && !drinksMode && !internationalMode && !burgersMode && textHasMontaditos;
+  const kebabMode = !asianMode && !drinksMode && !internationalMode && !burgersMode && !montaditosMode && textHasKebab;
+  const friedChickenMode = !asianMode && !drinksMode && !internationalMode && !burgersMode && !montaditosMode && !kebabMode && textHasFriedChicken;
+  const mexicanMode = !asianMode && !drinksMode && !internationalMode && !burgersMode && !montaditosMode && !kebabMode && !friedChickenMode && textHasMexican;
+  const anySubFastFood = burgersMode || montaditosMode || kebabMode || friedChickenMode || mexicanMode;
+  const fastFoodMode = !asianMode && !drinksMode && !internationalMode && !anySubFastFood && textHasFastFood;
+  const veganMode = !asianMode && !drinksMode && !internationalMode && !fastFoodMode && !anySubFastFood && textHasVegan;
+  const dessertsMode = !asianMode && !drinksMode && !internationalMode && !fastFoodMode && !anySubFastFood && !veganMode && textHasDesserts;
+  const cheapMode = !asianMode && !drinksMode && !internationalMode && !fastFoodMode && !anySubFastFood && !veganMode && !dessertsMode && textHasCheap;
+  const pizzasMode = !asianMode && !drinksMode && !internationalMode && !fastFoodMode && !anySubFastFood && !veganMode && !dessertsMode && !cheapMode && textHasPizzas;
+  const italianMode = !asianMode && !drinksMode && !internationalMode && !fastFoodMode && !anySubFastFood && !veganMode && !dessertsMode && !cheapMode && !pizzasMode && textHasItalian;
+  const riceFishMode = !asianMode && !drinksMode && !internationalMode && !fastFoodMode && !anySubFastFood && !veganMode && !dessertsMode && !cheapMode && !pizzasMode && !italianMode && textHasRiceFish;
+  const brunchMode = !asianMode && !drinksMode && !internationalMode && !fastFoodMode && !anySubFastFood && !veganMode && !dessertsMode && !cheapMode && !pizzasMode && !italianMode && !riceFishMode && textHasBrunch;
+  const typicalMode = !asianMode && !drinksMode && !internationalMode && !fastFoodMode && !anySubFastFood && !veganMode && !dessertsMode && !cheapMode && !pizzasMode && !italianMode && !riceFishMode && !brunchMode && textHasTypical;
   let tableInjected = false;
 
   const renderCategoryTable = (key: number, cd: PlaceCardData[]) => {
     if (asianMode) return <AsianTable key={key} cards={cd} />;
     if (drinksMode) return <DrinksTable key={key} cards={cd} />;
     if (internationalMode) return <InternationalTable key={key} cards={cd} />;
+    if (burgersMode) return <BurgersTable key={key} cards={cd} />;
+    if (montaditosMode) return <MontaditosTable key={key} cards={cd} />;
+    if (kebabMode) return <KebabTable key={key} cards={cd} />;
+    if (friedChickenMode) return <FriedChickenTable key={key} cards={cd} />;
+    if (mexicanMode) return <MexicanTable key={key} cards={cd} />;
     if (fastFoodMode) return <FastFoodTable key={key} cards={cd} />;
     if (veganMode) return <VeganTable key={key} cards={cd} />;
     if (dessertsMode) return <DessertsTable key={key} cards={cd} />;
@@ -3434,7 +3700,7 @@ function AssistantContent({ content, userPrompt = "" }: { content: string; userP
     if (typicalMode) return <TypicalTable key={key} cards={cd} />;
     return null;
   };
-  const anyCategoryMode = asianMode || drinksMode || internationalMode || fastFoodMode || veganMode || dessertsMode || cheapMode || pizzasMode || italianMode || riceFishMode || brunchMode || typicalMode;
+  const anyCategoryMode = asianMode || drinksMode || internationalMode || fastFoodMode || anySubFastFood || veganMode || dessertsMode || cheapMode || pizzasMode || italianMode || riceFishMode || brunchMode || typicalMode;
 
   return (
     <div className="space-y-2 [&>p]:m-0 [&_strong]:font-semibold">
