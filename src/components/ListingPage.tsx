@@ -33,6 +33,9 @@ export function ListingPage<K extends string>(props: Props<K>) {
   const [sort, setSort] = useState<Sort>("distance");
   const { state, request } = useUserLocation();
   const me = state.status === "ready" ? state.coords : null;
+  // Fallback de cercanía: Puerta del Mar (Alicante) cuando no hay geolocalización
+  const PUERTA_DEL_MAR = { lat: 38.3414, lng: -0.4810 };
+  const sortOrigin = me ?? PUERTA_DEL_MAR;
 
   useEffect(() => {
     let cancelled = false;
@@ -67,15 +70,15 @@ export function ListingPage<K extends string>(props: Props<K>) {
     arr = [...arr].sort((a, b) => {
       if (sort === "name") return a.name.localeCompare(b.name);
       if (sort === "rating") return (b.stars ?? 0) - (a.stars ?? 0);
-      if (sort === "distance" && me) {
-        const da = distanceKm(me, { lat: a.lat, lng: a.lon });
-        const db = distanceKm(me, { lat: b.lat, lng: b.lon });
+      if (sort === "distance") {
+        const da = distanceKm(sortOrigin, { lat: a.lat, lng: a.lon });
+        const db = distanceKm(sortOrigin, { lat: b.lat, lng: b.lon });
         return da - db;
       }
       return 0;
     });
     return arr.slice(0, 200);
-  }, [items, search, sort, me]);
+  }, [items, search, sort, me, sortOrigin]);
 
   function toggle(k: K) {
     setActive((prev) => {
@@ -120,7 +123,7 @@ export function ListingPage<K extends string>(props: Props<K>) {
                   className={`rounded-full px-3 py-1.5 ${
                     sort === s ? "bg-secondary text-secondary-foreground" : "hover:bg-muted"
                   }`}
-                  disabled={s === "distance" && !me}
+                  
                 >
                   {s === "distance" ? "Cercanía" : s === "rating" ? "★" : "A-Z"}
                 </button>
@@ -154,7 +157,7 @@ export function ListingPage<K extends string>(props: Props<K>) {
                   className={`rounded-full px-2 py-1 ${
                     sort === s ? "bg-secondary text-secondary-foreground" : "hover:bg-muted"
                   }`}
-                  disabled={s === "distance" && !me}
+                  
                 >
                   {s === "distance" ? "Cercanía" : s === "rating" ? "★" : "A-Z"}
                 </button>
