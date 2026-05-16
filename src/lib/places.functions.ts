@@ -1095,7 +1095,7 @@ type ClassifyRow = {
   category: string;
 };
 
-const CLASSIFY_BATCH = 25;
+const CLASSIFY_BATCH = 40;
 const TAGS_LIST = VIRTUAL_TAGS.join(", ");
 const SYSTEM_PROMPT = `Eres un clasificador de restaurantes/bares/cafés de Alicante.
 Devuelves SOLO etiquetas de esta lista cerrada: ${TAGS_LIST}.
@@ -1161,7 +1161,7 @@ async function classifyBatch(rows: ClassifyRow[], apiKey: string): Promise<Map<s
   return out;
 }
 
-async function ensureClassified(limit = 200): Promise<{ classified: number }> {
+async function ensureClassified(limit = 2000): Promise<{ classified: number }> {
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) {
     console.warn("LOVABLE_API_KEY missing — skipping AI classification");
@@ -1181,7 +1181,6 @@ async function ensureClassified(limit = 200): Promise<{ classified: number }> {
     const tagged = await classifyBatch(batch, apiKey);
     const updates: Array<{ id: string; tags: string[] }> = [];
     tagged.forEach((tags, id) => updates.push({ id, tags }));
-    // Update one by one (no upsert with partial cols on conflict).
     await Promise.all(
       updates.map((u) =>
         supabaseAdmin
@@ -1198,7 +1197,7 @@ async function ensureClassified(limit = 200): Promise<{ classified: number }> {
 export const classifyPlacesAi = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => {
     const o = (d ?? {}) as { limit?: number };
-    return { limit: Math.max(10, Math.min(o.limit ?? 200, 500)) };
+    return { limit: Math.max(10, Math.min(o.limit ?? 2000, 5000)) };
   })
   .handler(async ({ data }) => ensureClassified(data.limit));
 
@@ -1211,27 +1210,31 @@ export const getPlacesByTag = createServerFn({ method: "GET" })
     return { tag: o.tag };
   })
   .handler(async ({ data }) => {
-    // Trigger lazy classification in the background (don't block response).
-    ensureClassified(100).catch((e) => console.error("ensureClassified bg error", e));
+    // Classify ALL pending rows synchronously so the dashboard reflects the entire DB.
+    try {
+      await ensureClassified(2000);
+    } catch (e) {
+      console.error("ensureClassified error", e);
+    }
 
     const { data: rows, error } = await supabaseAdmin
       .from("places_cache")
       .select("*")
       .contains("ai_tags", [data.tag])
-      .order("name");
+      .order("name")
+      .limit(1000);
     if (error) throw error;
     return { places: rows ?? [] };
   });
 
 export const getSurprisePlaces = createServerFn({ method: "GET" }).handler(async () => {
-  // Random sample of well-rated places across all food categories.
+  // Random sample of well-rated places across the ENTIRE database.
   const { data: rows, error } = await supabaseAdmin
     .from("places_cache")
     .select("*")
-    .gte("rating", 4.3)
-    .in("category", ["typical", "rice_fish", "italian", "brunch", "asian", "pizzas"])
-    .limit(400);
+    .gte("rating", 4.2)
+    .limit(1000);
   if (error) throw error;
   const shuffled = (rows ?? []).slice().sort(() => Math.random() - 0.5);
-  return { places: shuffled.slice(0, 40) };
+  return { places: shuffled.slice(0, 80) };
 });
