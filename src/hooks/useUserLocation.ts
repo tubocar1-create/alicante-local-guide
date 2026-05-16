@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export type Coords = { lat: number; lng: number; accuracy?: number };
 export type LocationState =
@@ -124,7 +124,7 @@ export function useUserLocation(opts?: { watch?: boolean }) {
     };
   }, [watch]);
 
-  function request() {
+  const request = useCallback(() => {
     if (!isGeoEnabled()) {
       setState({ status: "error", message: "Geolocalización desactivada. Actívala en tu perfil." });
       return;
@@ -188,7 +188,7 @@ export function useUserLocation(opts?: { watch?: boolean }) {
     } else {
       tryGet();
     }
-  }
+  }, []);
 
   return { state, request };
 }

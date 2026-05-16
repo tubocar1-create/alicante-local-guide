@@ -2053,9 +2053,10 @@ function guessDrinksPrice(c: PlaceCardData): string {
   return "~6 €";
 }
 
-function DrinksTableInner({ ranked, loading, onClose }: {
+function DrinksTableInner({ ranked, loading, originLabel, onClose }: {
   ranked: { c: PlaceCardData; d: number }[];
   loading: boolean;
+  originLabel: string;
   onClose: () => void;
 }) {
   const navigate = useNavigate();
@@ -2143,7 +2144,7 @@ function DrinksTableInner({ ranked, loading, onClose }: {
             </span>
           </h1>
           <p className="mt-1 text-xs text-amber-200/80 md:text-sm">
-            Bares, copas y cervecerías · ordenados por cercanía a Puerta del Mar.
+            Bares, copas y cervecerías · ordenados por cercanía a {originLabel}.
           </p>
         </div>
 
@@ -2286,6 +2287,7 @@ function DrinksTable({ cards }: { cards: PlaceCardData[] }) {
   const [open, setOpen] = useState(true);
   const { state: locState, request: requestLocation } = useUserLocation();
   const origin = locState.status === "ready" ? { lat: locState.coords.lat, lon: locState.coords.lng } : ALC_CENTER;
+  const originLabel = locState.status === "ready" ? "tu ubicación" : "Puerta del Mar";
   useEffect(() => {
     if (locState.status === "idle") requestLocation();
   }, [locState.status, requestLocation]);
@@ -2348,7 +2350,7 @@ function DrinksTable({ cards }: { cards: PlaceCardData[] }) {
     );
   }
 
-  return <DrinksTableInner ranked={ranked} loading={loading} onClose={() => setOpen(false)} />;
+  return <DrinksTableInner ranked={ranked} loading={loading} originLabel={originLabel} onClose={() => setOpen(false)} />;
 }
 
 
@@ -2385,6 +2387,8 @@ type CategoryTheme = {
   priceHeader: string;
   rowLabel: string;
 };
+
+type CategoryTableOriginLabel = "tu ubicación" | "Puerta del Mar";
 
 const CATEGORY_THEMES: Record<"typical" | "rice_fish" | "italian" | "brunch" | "pizzas", CategoryTheme & {
   emoji: (c: PlaceCardData) => string;
@@ -2646,11 +2650,13 @@ function CategoryTableInner({
   loading,
   onClose,
   theme,
+  originLabel,
 }: {
   ranked: { c: PlaceCardData; d: number }[];
   loading: boolean;
   onClose: () => void;
   theme: (typeof CATEGORY_THEMES)[keyof typeof CATEGORY_THEMES];
+  originLabel: CategoryTableOriginLabel;
 }) {
   const navigate = useNavigate();
   const resolvePlace = useServerFn(resolvePlaceByName);
@@ -2734,7 +2740,7 @@ function CategoryTableInner({
             </span>
           </h1>
           <p className={`mt-1 text-xs ${theme.subtitle} md:text-sm`}>
-            {theme.subtitleText}
+            {theme.subtitleText.replace("Puerta del Mar", originLabel)}
           </p>
         </div>
 
@@ -2886,6 +2892,7 @@ function CategoryTable({
   const theme = CATEGORY_THEMES[category];
   const { state: locState, request: requestLocation } = useUserLocation();
   const origin = locState.status === "ready" ? { lat: locState.coords.lat, lon: locState.coords.lng } : ALC_CENTER;
+  const originLabel: CategoryTableOriginLabel = locState.status === "ready" ? "tu ubicación" : "Puerta del Mar";
   useEffect(() => {
     if (locState.status === "idle") requestLocation();
   }, [locState.status, requestLocation]);
@@ -2955,7 +2962,7 @@ function CategoryTable({
     );
   }
 
-  return <CategoryTableInner ranked={ranked} loading={loading} onClose={() => setOpen(false)} theme={theme} />;
+  return <CategoryTableInner ranked={ranked} loading={loading} onClose={() => setOpen(false)} theme={theme} originLabel={originLabel} />;
 }
 
 function TypicalTable({ cards }: { cards: PlaceCardData[] }) {

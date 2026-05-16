@@ -1,7 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect } from "react";
 import { ChatScreen } from "@/components/ChatScreen";
-import { releaseLocation } from "@/hooks/useUserLocation";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -23,11 +21,6 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  // Make sure no leftover geolocation watcher keeps running while the user
-  // is on the home screen planning routes.
-  useEffect(() => {
-    releaseLocation();
-  }, []);
   return <ChatScreen />;
 }
 
