@@ -2892,6 +2892,7 @@ function CategoryTable({
   const theme = CATEGORY_THEMES[category];
   const { state: locState, request: requestLocation } = useUserLocation();
   const origin = locState.status === "ready" ? { lat: locState.coords.lat, lon: locState.coords.lng } : ALC_CENTER;
+  const originLabel: CategoryTableOriginLabel = locState.status === "ready" ? "tu ubicación" : "Puerta del Mar";
   useEffect(() => {
     if (locState.status === "idle") requestLocation();
   }, [locState.status, requestLocation]);
@@ -2961,7 +2962,7 @@ function CategoryTable({
     );
   }
 
-  return <CategoryTableInner ranked={ranked} loading={loading} onClose={() => setOpen(false)} theme={theme} />;
+  return <CategoryTableInner ranked={ranked} loading={loading} onClose={() => setOpen(false)} theme={theme} originLabel={originLabel} />;
 }
 
 function TypicalTable({ cards }: { cards: PlaceCardData[] }) {
