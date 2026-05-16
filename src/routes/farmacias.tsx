@@ -606,8 +606,8 @@ function FarmaciasPage() {
                       </span>
                     )}
                     {p.postal_code && (
-                      <span className="rounded-full border border-emerald-300/20 bg-white/[0.04] px-1.5 py-0.5 font-mono text-[10px] text-emerald-200/80">
-                        {p.postal_code}
+                      <span className="rounded-full border border-emerald-300/20 bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-emerald-200/80">
+                        {sectorFor(p.postal_code)}
                       </span>
                     )}
                     {p.phone && (
