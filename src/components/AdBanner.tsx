@@ -105,9 +105,14 @@ export function AdBanner() {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pt-2">
-      <div
+      <a
         key={cycle}
-        className={`flex h-[44px] items-center gap-2.5 overflow-hidden rounded-2xl px-3 ${theme.bg} ${theme.fg} shadow-sm ring-1 ring-black/5 animate-in fade-in slide-in-from-top-1 duration-300`}
+        href={data.advertiser.ctaUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        title={`Ver fuente · ${data.advertiser.name}`}
+        aria-label={`${data.advertiser.name}: ${variant.headline}. Abrir fuente en nueva pestaña.`}
+        className={`flex h-[44px] items-center gap-2.5 overflow-hidden rounded-2xl px-3 ${theme.bg} ${theme.fg} shadow-sm ring-1 ring-black/5 animate-in fade-in slide-in-from-top-1 duration-300 transition hover:shadow-md hover:ring-black/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-black/30 cursor-pointer no-underline`}
       >
         <div className="text-lg leading-none shrink-0">{theme.emoji}</div>
         <div className="min-w-0 flex-1">
@@ -123,7 +128,13 @@ export function AdBanner() {
             {variant.body}
           </p>
         </div>
-      </div>
+        <span
+          aria-hidden="true"
+          className="shrink-0 text-[11px] font-semibold opacity-70"
+        >
+          ↗
+        </span>
+      </a>
     </div>
   );
 }
