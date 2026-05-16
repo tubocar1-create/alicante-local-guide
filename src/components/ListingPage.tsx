@@ -33,6 +33,9 @@ export function ListingPage<K extends string>(props: Props<K>) {
   const [sort, setSort] = useState<Sort>("distance");
   const { state, request } = useUserLocation();
   const me = state.status === "ready" ? state.coords : null;
+  // Fallback de cercanía: Puerta del Mar (Alicante) cuando no hay geolocalización
+  const PUERTA_DEL_MAR = { lat: 38.3414, lng: -0.4810 };
+  const sortOrigin = me ?? PUERTA_DEL_MAR;
 
   useEffect(() => {
     let cancelled = false;
