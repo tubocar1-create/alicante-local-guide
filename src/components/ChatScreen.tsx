@@ -26,6 +26,7 @@ import {
   getRiceFishPlaces,
   getItalianPlaces,
   getBrunchPlaces,
+  getPizzasPlaces,
   resolvePlaceByName,
 } from "@/lib/places.functions";
 import heroImg from "@/assets/alicante-hero.jpg";
