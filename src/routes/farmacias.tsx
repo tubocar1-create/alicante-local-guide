@@ -415,28 +415,26 @@ function FarmaciasPage() {
               {loading ? "Cargando…" : `${filtered.length} farmacias`}
             </p>
             <p className="text-[9px] uppercase tracking-[0.18em] text-emerald-200/50">
-              estado · horario · zona · {userCoords ? "dist" : "tel"}
+              estado · horario · CP · {userCoords ? "dist" : "tel"}
             </p>
           </div>
 
           <table className="w-full table-fixed border-separate border-spacing-y-0.5 text-left text-[11px] text-emerald-50/90">
             <colgroup>
               <col />
-              <col className="w-[58px]" />
-              <col className="hidden md:table-column md:w-[26%]" />
-              <col className="w-[88px]" />
+              <col className="w-[54px]" />
+              <col className="w-[110px] md:w-[24%]" />
+              <col className="w-[52px]" />
               <col className="w-[78px]" />
             </colgroup>
             <thead>
               <tr className="text-[9px] uppercase tracking-[0.12em] text-emerald-200/60">
                 <th className="px-1.5 py-1 font-medium">Farmacia</th>
                 <th className="px-1 py-1 font-medium">Estado</th>
-                <th className="hidden px-1 py-1 font-medium md:table-cell">
-                  Horario
-                </th>
-                <th className="px-1 py-1 font-medium">Zona</th>
+                <th className="px-1 py-1 font-medium">Horario</th>
+                <th className="px-1 py-1 font-medium">CP</th>
                 <th className="px-1 py-1 text-right font-medium">
-                  {userCoords ? "Distancia" : "Tel"}
+                  {userCoords ? "Dist" : "Tel"}
                 </th>
               </tr>
             </thead>
