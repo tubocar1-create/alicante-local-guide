@@ -40,6 +40,7 @@ const CATEGORIES: { value: string; label: string }[] = [
   { value: "asian", label: "Asiático" },
   { value: "drinks", label: "Bebidas / Bares" },
   { value: "international", label: "Internacional (hindú, latino, árabe…)" },
+  { value: "chains", label: "Cadenas (McDonald's, BK, Starbucks…)" },
   { value: "lookup", label: "Otro / Comercio" },
 ];
 
