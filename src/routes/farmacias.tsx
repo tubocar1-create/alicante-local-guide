@@ -1,7 +1,55 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Clock, MapPin, Phone, Search, Sparkles, X } from "lucide-react";
+import { Clock, MapPin, Navigation, Phone, Search, Sparkles, X } from "lucide-react";
+import { useUserLocation } from "@/hooks/useUserLocation";
+
+// Centroides aproximados por código postal (Alicante) para estimar distancia.
+const CP_CENTROIDS: Record<string, [number, number]> = {
+  "03001": [38.3452, -0.4810],
+  "03002": [38.3470, -0.4790],
+  "03003": [38.3430, -0.4870],
+  "03004": [38.3490, -0.4855],
+  "03005": [38.3530, -0.4830],
+  "03006": [38.3380, -0.4900],
+  "03007": [38.3550, -0.4895],
+  "03008": [38.3585, -0.4870],
+  "03009": [38.3640, -0.4810],
+  "03010": [38.3700, -0.4900],
+  "03011": [38.3640, -0.4980],
+  "03012": [38.3580, -0.4760],
+  "03013": [38.3565, -0.4710],
+  "03014": [38.3625, -0.4660],
+  "03015": [38.3590, -0.4400],
+  "03016": [38.3490, -0.4310],
+  "03112": [38.3800, -0.5050],
+  "03113": [38.4000, -0.5100],
+  "03540": [38.3650, -0.4150],
+  "03550": [38.3960, -0.4380],
+  "03690": [38.4200, -0.5400],
+  "03699": [38.4150, -0.5800],
+};
+
+function haversineMeters(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number },
+): number {
+  const R = 6371000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+function formatMeters(m: number): string {
+  if (m < 1000) return `${Math.round(m / 10) * 10} m`;
+  return `${(m / 1000).toFixed(1)} km`;
+}
 
 type Pharmacy = {
   id: string;
@@ -96,6 +144,8 @@ function FarmaciasPage() {
   const [q, setQ] = useState("");
   const [groupBy, setGroupBy] = useState<"sector" | "postal">("sector");
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
+  const { state: geoState, request: requestGeo } = useUserLocation();
+  const userCoords = geoState.status === "ready" ? geoState.coords : null;
 
   useEffect(() => {
     (async () => {
@@ -111,6 +161,13 @@ function FarmaciasPage() {
       setLoading(false);
     })();
   }, []);
+
+  const distFor = (p: Pharmacy): number | null => {
+    if (!userCoords || !p.postal_code) return null;
+    const c = CP_CENTROIDS[p.postal_code];
+    if (!c) return null;
+    return haversineMeters(userCoords, { lat: c[0], lng: c[1] });
+  };
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -131,8 +188,20 @@ function FarmaciasPage() {
         return key === activeGroup;
       });
     }
+    if (userCoords) {
+      base = [...base].sort((a, b) => {
+        if (a.is_24h !== b.is_24h) return a.is_24h ? -1 : 1;
+        const da = distFor(a);
+        const db = distFor(b);
+        if (da == null && db == null) return 0;
+        if (da == null) return 1;
+        if (db == null) return -1;
+        return da - db;
+      });
+    }
     return base;
-  }, [items, q, activeGroup, groupBy]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, q, activeGroup, groupBy, userCoords]);
 
   const groups = useMemo(() => {
     const map = new Map<string, Pharmacy[]>();
@@ -238,6 +307,22 @@ function FarmaciasPage() {
               Por CP
             </button>
           </div>
+          <button
+            onClick={requestGeo}
+            className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[11px] transition ${
+              userCoords
+                ? "border-emerald-300/40 bg-emerald-400/15 text-emerald-100"
+                : "border-emerald-300/20 bg-white/[0.04] text-emerald-200/80 hover:text-emerald-100"
+            }`}
+            title={geoState.status === "error" ? geoState.message : "Ordenar por cercanía"}
+          >
+            <Navigation className="h-3 w-3" />
+            {geoState.status === "loading"
+              ? "Localizando…"
+              : userCoords
+                ? "Cerca de ti"
+                : "Usar mi ubicación"}
+          </button>
           <div className="relative ml-auto w-full max-w-xs">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-emerald-300/60" />
             <input
@@ -325,7 +410,7 @@ function FarmaciasPage() {
               {loading ? "Cargando…" : `${filtered.length} farmacias`}
             </p>
             <p className="text-[9px] uppercase tracking-[0.18em] text-emerald-200/50">
-              estado · horario · zona · tel
+              estado · horario · zona · {userCoords ? "dist" : "tel"}
             </p>
           </div>
 
@@ -333,8 +418,8 @@ function FarmaciasPage() {
             <colgroup>
               <col />
               <col className="w-[58px]" />
-              <col className="hidden md:table-column md:w-[32%]" />
-              <col className="w-[52px]" />
+              <col className="hidden md:table-column md:w-[26%]" />
+              <col className="w-[88px]" />
               <col className="w-[78px]" />
             </colgroup>
             <thead>
@@ -344,8 +429,10 @@ function FarmaciasPage() {
                 <th className="hidden px-1 py-1 font-medium md:table-cell">
                   Horario
                 </th>
-                <th className="px-1 py-1 font-medium">CP</th>
-                <th className="px-1 py-1 text-right font-medium">Tel</th>
+                <th className="px-1 py-1 font-medium">Zona</th>
+                <th className="px-1 py-1 text-right font-medium">
+                  {userCoords ? "Distancia" : "Tel"}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -406,20 +493,40 @@ function FarmaciasPage() {
                         <span className="truncate">{p.hours ?? "—"}</span>
                       </span>
                     </td>
-                    <td className="px-1 py-1 align-middle font-mono text-[10px] text-emerald-200/80">
-                      {p.postal_code ?? "—"}
+                    <td className="px-1 py-1 align-middle">
+                      <span className="inline-flex flex-col">
+                        <span className="truncate text-[10px] text-emerald-100/80">
+                          {sectorFor(p.postal_code)}
+                        </span>
+                        <span className="font-mono text-[9px] text-emerald-200/40">
+                          {p.postal_code ?? "—"}
+                        </span>
+                      </span>
                     </td>
                     <td className="rounded-r-md px-1 py-1 text-right align-middle">
+                      {userCoords && (() => {
+                        const d = distFor(p);
+                        return d != null ? (
+                          <div className="inline-flex items-center gap-1 font-mono text-[10px] text-emerald-200">
+                            <Navigation className="h-3 w-3 text-emerald-300/70" />
+                            ≈ {formatMeters(d)}
+                          </div>
+                        ) : (
+                          <span className="text-[10px] text-emerald-200/40">—</span>
+                        );
+                      })()}
                       {p.phone ? (
                         <a
                           href={`tel:${p.phone}`}
-                          className="inline-flex items-center gap-1 font-mono text-[10px] text-emerald-300 hover:text-emerald-200"
+                          className="mt-0.5 flex items-center justify-end gap-1 font-mono text-[10px] text-emerald-300 hover:text-emerald-200"
                         >
                           <Phone className="h-3 w-3" />
                           {p.phone}
                         </a>
                       ) : (
-                        <span className="text-[10px] text-emerald-200/40">—</span>
+                        !userCoords && (
+                          <span className="text-[10px] text-emerald-200/40">—</span>
+                        )
                       )}
                     </td>
                   </tr>
