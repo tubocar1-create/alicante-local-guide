@@ -116,7 +116,7 @@ const CATEGORY_QUERIES: Record<string, string[]> = {
   pizzas: PIZZAS_QUERIES,
   brunch: BRUNCH_QUERIES,
 };
-const STALE_MS = 24 * 60 * 60 * 1000; // 24h
+const STALE_MS = 60 * 24 * 60 * 60 * 1000; // 60 días
 
 const FIELD_MASK = [
   "places.id",
