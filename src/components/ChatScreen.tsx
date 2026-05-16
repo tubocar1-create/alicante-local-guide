@@ -2930,8 +2930,9 @@ function CategoryTable({
   const [extra, setExtra] = useState<PlaceCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
+  const [reloadKey, setReloadKey] = useState(0);
   const theme = CATEGORY_THEMES[category];
-  const { origin, originLabel } = useFoodListOrigin();
+  const { locState, origin, originLabel } = useFoodListOrigin();
 
   useEffect(() => {
     let cancelled = false;
@@ -2957,7 +2958,8 @@ function CategoryTable({
       .catch((e) => console.error(`get ${category} places failed`, e))
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [fetcher, category]);
+  }, [fetcher, category, reloadKey]);
+  useNearbyDiscovery(category, origin, locState.status === "ready", () => setReloadKey((k) => k + 1));
 
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
   const byKey = new Map<string, PlaceCardData>();
