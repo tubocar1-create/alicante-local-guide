@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Loader2, Navigation } from "lucide-react";
 import { fetchListings, type Listing } from "@/lib/overpass-listings";
 import { useUserLocation, distanceKm } from "@/hooks/useUserLocation";
+import { resolveOpeningStatus } from "@/lib/opening-hours";
 import ReferralDialog from "@/components/ReferralDialog";
 import { ListingCard } from "@/components/ListingCard";
 
@@ -73,15 +74,19 @@ export function ListingPage<K extends string>(props: Props<K>) {
           i.address?.toLowerCase().includes(q),
       );
     }
+    const statusRank = (it: Listing) => {
+      const s = resolveOpeningStatus(it.openingHours ?? undefined).status;
+      return s === "open" ? 0 : s === "unknown" ? 1 : 2;
+    };
     arr = [...arr].sort((a, b) => {
+      const sa = statusRank(a);
+      const sb = statusRank(b);
+      if (sa !== sb) return sa - sb;
       if (sort === "name") return a.name.localeCompare(b.name);
       if (sort === "rating") return (b.stars ?? 0) - (a.stars ?? 0);
-      if (sort === "distance") {
-        const da = distanceKm(sortOrigin, { lat: a.lat, lng: a.lon });
-        const db = distanceKm(sortOrigin, { lat: b.lat, lng: b.lon });
-        return da - db;
-      }
-      return 0;
+      const da = distanceKm(sortOrigin, { lat: a.lat, lng: a.lon });
+      const db = distanceKm(sortOrigin, { lat: b.lat, lng: b.lon });
+      return da - db;
     });
     return arr.slice(0, 200);
   }, [items, search, sort, me, sortOrigin]);
