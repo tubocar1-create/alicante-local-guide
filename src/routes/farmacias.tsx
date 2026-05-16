@@ -340,31 +340,30 @@ function FarmaciasPage() {
           </div>
         </div>
 
-        {/* Chips de sectores */}
-        <div className="mb-4 flex flex-wrap gap-1.5">
-          <button
-            onClick={() => setActiveGroup(null)}
-            className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-wider transition ${
-              activeGroup == null
-                ? "border-emerald-300/60 bg-emerald-400/20 text-emerald-100"
-                : "border-emerald-300/15 bg-white/[0.02] text-emerald-200/60 hover:text-emerald-100"
-            }`}
-          >
-            Todas · {items.length}
-          </button>
-          {groups.map(([name, list]) => (
-            <button
-              key={name}
-              onClick={() => setActiveGroup(name === activeGroup ? null : name)}
-              className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-wider transition ${
-                activeGroup === name
-                  ? "border-emerald-300/60 bg-emerald-400/20 text-emerald-100"
-                  : "border-emerald-300/15 bg-white/[0.02] text-emerald-200/60 hover:text-emerald-100"
-              }`}
+        {/* Selector de zona (desplegable) */}
+        <div className="mb-4 flex items-center gap-2">
+          <label className="text-[10px] uppercase tracking-[0.2em] text-emerald-200/60">
+            {groupBy === "sector" ? "Sector" : "CP"}
+          </label>
+          <div className="relative">
+            <select
+              value={activeGroup ?? ""}
+              onChange={(e) => setActiveGroup(e.target.value || null)}
+              className="h-8 appearance-none rounded-full border border-emerald-300/25 bg-white/[0.04] py-1 pl-3 pr-8 text-[11px] text-emerald-50 focus:border-emerald-300/60 focus:outline-none"
             >
-              {name} · {list.length}
-            </button>
-          ))}
+              <option value="" className="bg-emerald-950">
+                Todas las zonas · {items.length}
+              </option>
+              {groups.map(([name, list]) => (
+                <option key={name} value={name} className="bg-emerald-950">
+                  {name} · {list.length}
+                </option>
+              ))}
+            </select>
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[9px] text-emerald-300/70">
+              ▼
+            </span>
+          </div>
         </div>
 
         {/* Banner farmacias 24h */}
@@ -416,28 +415,26 @@ function FarmaciasPage() {
               {loading ? "Cargando…" : `${filtered.length} farmacias`}
             </p>
             <p className="text-[9px] uppercase tracking-[0.18em] text-emerald-200/50">
-              estado · horario · zona · {userCoords ? "dist" : "tel"}
+              estado · horario · CP · {userCoords ? "dist" : "tel"}
             </p>
           </div>
 
           <table className="w-full table-fixed border-separate border-spacing-y-0.5 text-left text-[11px] text-emerald-50/90">
             <colgroup>
               <col />
-              <col className="w-[58px]" />
-              <col className="hidden md:table-column md:w-[26%]" />
-              <col className="w-[88px]" />
+              <col className="w-[54px]" />
+              <col className="w-[110px] md:w-[24%]" />
+              <col className="w-[52px]" />
               <col className="w-[78px]" />
             </colgroup>
             <thead>
               <tr className="text-[9px] uppercase tracking-[0.12em] text-emerald-200/60">
                 <th className="px-1.5 py-1 font-medium">Farmacia</th>
                 <th className="px-1 py-1 font-medium">Estado</th>
-                <th className="hidden px-1 py-1 font-medium md:table-cell">
-                  Horario
-                </th>
-                <th className="px-1 py-1 font-medium">Zona</th>
+                <th className="px-1 py-1 font-medium">Horario</th>
+                <th className="px-1 py-1 font-medium">CP</th>
                 <th className="px-1 py-1 text-right font-medium">
-                  {userCoords ? "Distancia" : "Tel"}
+                  {userCoords ? "Dist" : "Tel"}
                 </th>
               </tr>
             </thead>
@@ -493,20 +490,15 @@ function FarmaciasPage() {
                         </span>
                       )}
                     </td>
-                    <td className="hidden px-1 py-1 align-middle text-[10px] text-emerald-100/70 md:table-cell">
-                      <span className="inline-flex items-start gap-1">
+                    <td className="px-1 py-1 align-middle text-[10px] text-emerald-100/70">
+                      <span className="flex items-start gap-1">
                         <Clock className="mt-0.5 h-3 w-3 shrink-0 text-emerald-300/60" />
-                        <span className="truncate">{p.hours ?? "—"}</span>
+                        <span className="line-clamp-2 leading-tight">{p.hours ?? "—"}</span>
                       </span>
                     </td>
                     <td className="px-1 py-1 align-middle">
-                      <span className="inline-flex flex-col">
-                        <span className="truncate text-[10px] text-emerald-100/80">
-                          {sectorFor(p.postal_code)}
-                        </span>
-                        <span className="font-mono text-[9px] text-emerald-200/40">
-                          {p.postal_code ?? "—"}
-                        </span>
+                      <span className="font-mono text-[10px] text-emerald-200/80">
+                        {p.postal_code ?? "—"}
                       </span>
                     </td>
                     <td className="rounded-r-md px-1 py-1 text-right align-middle">
@@ -524,10 +516,11 @@ function FarmaciasPage() {
                       {p.phone ? (
                         <a
                           href={`tel:${p.phone}`}
+                          aria-label={`Llamar a ${p.name}`}
                           className="mt-0.5 flex items-center justify-end gap-1 font-mono text-[10px] text-emerald-300 hover:text-emerald-200"
                         >
                           <Phone className="h-3 w-3" />
-                          {p.phone}
+                          <span className="truncate">{p.phone}</span>
                         </a>
                       ) : (
                         !userCoords && (
