@@ -32,6 +32,7 @@ function notify(c: Coords) {
 function startWatch() {
   if (watchId !== null) return;
   if (typeof navigator === "undefined" || !navigator.geolocation) return;
+  if (!isGeoEnabled()) return;
   watchId = navigator.geolocation.watchPosition(
     (pos) =>
       notify({
