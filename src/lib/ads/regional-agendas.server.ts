@@ -205,6 +205,10 @@ const TEATRO_PRINCIPAL_2026: Array<{ date: string; end?: string; title: string }
   { date: "2026-06-06", title: "La vida extraordinaria" },
   { date: "2026-06-12", title: "Monaguillo" },
   { date: "2026-06-13", title: "Orquesta de jóvenes de la provincia de Alicante, concierto extraordinario" },
+  // Segunda mitad 2026 (de teatroprincipaldealicante.com/en/current-schedule/).
+  { date: "2026-07-25", title: "Stars Gala" },
+  { date: "2026-10-28", title: "Beret" },
+  { date: "2026-11-12", title: "JULIO IGLESIAS Experience por Julio Iglesias Jr." },
 ];
 
 export async function fetchTeatroPrincipalAgenda(): Promise<RegionalEvent[] | null> {
