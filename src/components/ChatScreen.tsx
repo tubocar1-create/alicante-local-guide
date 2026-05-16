@@ -2372,7 +2372,7 @@ type CategoryTheme = {
   rowLabel: string;
 };
 
-const CATEGORY_THEMES: Record<"typical" | "rice_fish" | "italian" | "brunch", CategoryTheme & {
+const CATEGORY_THEMES: Record<"typical" | "rice_fish" | "italian" | "brunch" | "pizzas", CategoryTheme & {
   emoji: (c: PlaceCardData) => string;
   guessPrice: (c: PlaceCardData) => string;
   title1: string;
