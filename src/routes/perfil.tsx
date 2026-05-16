@@ -49,6 +49,7 @@ function PerfilPage() {
   const [qrs, setQrs] = useState<QrRow[]>([]);
   const loadingQrs = false;
   const [geoOn, setGeoOn] = useState<boolean>(true);
+  const { state: locState, request: requestLoc } = useUserLocation({ watch: true });
   useEffect(() => {
     setGeoOn(isGeoEnabled());
   }, []);
