@@ -326,7 +326,7 @@ export function EatNearby({ onClose, initialQuery }: Props) {
               <ul className="flex flex-col gap-3">
                 {shown.map(({ i, d }: { i: Listing; d: number }, idx: number) => {
                   const hours = getOpeningStatus(i.openingHours);
-                  const mapsHref = `https://www.google.com/maps/dir/?api=1&destination=${i.lat},${i.lon}`;
+                  const mapsHref = `https://www.google.com/maps/dir/?api=1&destination=${i.lat},${i.lon}&travelmode=walking`;
                   const reviewsHref = `https://www.google.com/search?q=${encodeURIComponent(
                     `${i.name} Alicante reseñas`,
                   )}`;

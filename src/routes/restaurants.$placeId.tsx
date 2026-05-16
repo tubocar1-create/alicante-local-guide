@@ -287,7 +287,7 @@ function RestaurantDashboard() {
               </button>
               {place.lat != null && place.lng != null && (
                 <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${place.lat},${place.lng}`}
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}&travelmode=walking`}
                   target="_blank"
                   rel="noreferrer"
                   className="flex flex-1 items-center justify-center rounded-xl bg-blue-500 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-blue-400"

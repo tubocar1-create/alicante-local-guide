@@ -85,7 +85,7 @@ export function ListingCard({ it, me, onWantToGo }: Props) {
 
   const dist = me ? distanceKm(me, { lat: it.lat, lng: it.lon }) : null;
   const minutes = dist != null ? walkMinutes(dist) : null;
-  const mapsHref = `https://www.google.com/maps/dir/?api=1&destination=${it.lat},${it.lon}`;
+  const mapsHref = `https://www.google.com/maps/dir/?api=1&destination=${it.lat},${it.lon}&travelmode=walking`;
   const wikiSlug = it.wikipedia?.split(":")[1];
 
   return (
