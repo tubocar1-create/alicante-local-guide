@@ -1659,7 +1659,13 @@ function BusOptionCard({ data }: { data: BusOptionData }) {
   );
 }
 
-const ALC_CENTER = { lat: 38.3452, lon: -0.481 };
+// Puerta del Mar (Alicante) — fallback de cercanía cuando no hay geolocalización
+const ALC_CENTER = { lat: 38.3414, lon: -0.481 };
+
+function openStatusRank(hours?: string | null) {
+  const s = resolveOpeningStatus(hours ?? undefined).status;
+  return s === "open" ? 0 : s === "unknown" ? 1 : 2;
+}
 const ASIAN_RE = /asian|japanese|sushi|ramen|chinese|china|thai|tailand|vietnam|korean|coreano|wok|noodle|asiat|japon/i;
 const DRINKS_RE = /\b(tomar algo|copa|copas|coctel|cóctel|cocktail|cerveza|cervezas|cerveceria|cervecería|vinoteca|wine bar|pub|pubs|discoteca|discotecas|night ?club|nightclub|club nocturno|sala de fiestas|karaoke|karaokes|brewery|rooftop|gin tonic|vermut|terraceo|bar de copas)\b/i;
 const TYPICAL_RE = /\b(cocina típica|cocina tipica|típic[oa]|tipic[oa]|alicantin[oa]|mediterrane[oa]|mediterráne[oa]|tradicional|tasca|tapas tradicionales|cocina española|cocina espanola)\b/i;
@@ -2106,7 +2112,12 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
       c,
       d: c.lat != null && c.lon != null ? distKm(origin, { lat: c.lat, lon: c.lon }) : Number.POSITIVE_INFINITY,
     }))
-    .sort((a, b) => a.d - b.d);
+    .sort((a, b) => {
+      const sa = openStatusRank(a.c.openingHours);
+      const sb = openStatusRank(b.c.openingHours);
+      if (sa !== sb) return sa - sb;
+      return a.d - b.d;
+    });
 
   if (!open) {
     return (
@@ -2429,7 +2440,12 @@ function DrinksTable({ cards }: { cards: PlaceCardData[] }) {
       d: c.lat && c.lon ? distKm(origin, { lat: c.lat, lon: c.lon }) : Number.POSITIVE_INFINITY,
     }))
     .filter((r) => r.d <= 10)
-    .sort((a, b) => a.d - b.d);
+    .sort((a, b) => {
+      const sa = openStatusRank(a.c.openingHours);
+      const sb = openStatusRank(b.c.openingHours);
+      if (sa !== sb) return sa - sb;
+      return a.d - b.d;
+    });
 
   if (!open) {
     return (
@@ -3499,7 +3515,12 @@ function CategoryTable({
       const [h, m] = open.split(":").map(Number);
       return h * 60 + m <= 11 * 60;
     })
-    .sort((a, b) => a.d - b.d);
+    .sort((a, b) => {
+      const sa = openStatusRank(a.c.openingHours);
+      const sb = openStatusRank(b.c.openingHours);
+      if (sa !== sb) return sa - sb;
+      return a.d - b.d;
+    });
 
   if (!open) {
     return (
