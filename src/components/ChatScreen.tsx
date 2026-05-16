@@ -622,10 +622,27 @@ export function ChatScreen() {
                     emoji: "🩺",
                     label: "Servicios sanitarios",
                     onClick: () =>
-                      send(
-                        "¿Dónde encuentro servicios sanitarios cercanos en Alicante? Farmacias de guardia, centros de salud y hospitales abiertos ahora.",
-                        { mode: null },
-                      ),
+                      setActiveSubmenu({
+                        label: "Salud",
+                        submenu: [
+                          { label: "💊 Farmacias", href: "/farmacias" },
+                          {
+                            label: "🏥 Centros de salud",
+                            prompt:
+                              "¿Dónde está el centro de salud más cercano en Alicante abierto ahora?",
+                          },
+                          {
+                            label: "🚑 Hospitales",
+                            prompt:
+                              "¿Qué hospitales hay en Alicante y cuál es el más cercano?",
+                          },
+                          {
+                            label: "🌙 Farmacias de guardia",
+                            prompt:
+                              "¿Qué farmacias están de guardia hoy en Alicante?",
+                          },
+                        ],
+                      }),
                   },
                   {
                     key: "eventos",
