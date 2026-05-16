@@ -3219,10 +3219,13 @@ function CategoryTableInner({
         <header className="mb-5 flex items-center justify-between">
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => {
+              window.dispatchEvent(new Event("comer:back-to-menu"));
+              onClose();
+            }}
             className={`text-[11px] uppercase tracking-[0.25em] ${theme.accentText} transition ${theme.borderHover}`}
           >
-            ← Volver al chat
+            ← Volver al menú
           </button>
           <div className="flex items-center gap-2">
             <span className="relative flex h-2 w-2">
