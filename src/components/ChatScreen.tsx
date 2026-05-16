@@ -311,6 +311,15 @@ export function ChatScreen() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, loading]);
 
+  const requestLocationForPrompt = (prompt: string) => {
+    if (!/(comer|restaurante|cocina|arroz|pescado|italian|pizza|desayun|brunch|japon|asi[aá]tic|bar|tomar algo|copa|caf[eé])/i.test(prompt)) {
+      return;
+    }
+    if (locState.status !== "ready" && locState.status !== "loading") {
+      requestLocation();
+    }
+  };
+
   async function send(text: string, opts?: { mode?: "transit" | null }) {
     const trimmed = text.trim();
     if (!trimmed || loading) return;
@@ -688,6 +697,7 @@ export function ChatScreen() {
                         window.location.href = opt.href;
                       } else if (opt.prompt) {
                         setSubmenuStack([]);
+                        requestLocationForPrompt(opt.prompt);
                         send(opt.prompt, { mode: null });
                       }
                     }}
