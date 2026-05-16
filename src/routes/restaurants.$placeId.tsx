@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { getPlaceById, getPlacePhotos } from "@/lib/places.functions";
+import { getAiReview } from "@/lib/ai-review.functions";
+import { Sparkles, X, Loader2 } from "lucide-react";
 import {
   ArrowLeft,
   MapPin,
@@ -46,6 +48,33 @@ function RestaurantDashboard() {
   const [qrOpen, setQrOpen] = useState(false);
   const [zoomedIdx, setZoomedIdx] = useState<number | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewText, setReviewText] = useState<string | null>(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewErr, setReviewErr] = useState<string | null>(null);
+  const fetchAiReview = useServerFn(getAiReview);
+
+  async function openReview() {
+    setReviewOpen(true);
+    if (reviewText || reviewLoading) return;
+    setReviewLoading(true);
+    setReviewErr(null);
+    try {
+      const r = await fetchAiReview({
+        data: {
+          name: place?.name ?? "",
+          cuisine: place?.cuisine ?? null,
+          address: place?.address ?? null,
+        },
+      });
+      setReviewText(r.text);
+    } catch (e) {
+      setReviewErr(String((e as Error)?.message ?? e));
+    } finally {
+      setReviewLoading(false);
+    }
+  }
+
 
   const heroOpeningStatus = useMemo(
     () => (place ? resolveOpeningStatus(place.opening_hours_text) : null),
@@ -147,7 +176,7 @@ function RestaurantDashboard() {
                       </div>
                     )}
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-3 gap-2">
                     <a
                       href={`https://search.google.com/local/reviews?placeid=${place.google_place_id}`}
                       target="_blank"
@@ -166,7 +195,16 @@ function RestaurantDashboard() {
                       <MessageSquare className="h-4 w-4 text-emerald-300" />
                       TripAdvisor
                     </a>
+                    <button
+                      type="button"
+                      onClick={openReview}
+                      className="flex flex-col items-center justify-center gap-1 rounded-xl border border-amber-300/30 bg-amber-400/10 px-2 py-2.5 text-[11px] font-semibold text-amber-100 hover:bg-amber-400/20"
+                    >
+                      <Sparkles className="h-4 w-4 text-amber-300" />
+                      Nuestra reseña
+                    </button>
                   </div>
+
                 </div>
               )}
             </section>
@@ -329,7 +367,55 @@ function RestaurantDashboard() {
           onClose={() => setBookingOpen(false)}
         />
       )}
+
+      {reviewOpen && place && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center"
+          onClick={() => setReviewOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-md overflow-hidden rounded-2xl border border-amber-300/20 bg-gradient-to-b from-slate-900 to-slate-950 p-5 shadow-2xl"
+          >
+            <button
+              type="button"
+              onClick={() => setReviewOpen(false)}
+              className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-slate-300 hover:bg-white/10"
+              aria-label="Cerrar"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <div className="mb-3 flex items-center gap-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-400/15 text-amber-300">
+                <Sparkles className="h-4 w-4" />
+              </span>
+              <div>
+                <h3 className="text-sm font-semibold text-amber-100">Nuestra reseña</h3>
+                <p className="text-[11px] text-slate-400">{place.name}</p>
+              </div>
+            </div>
+            <div className="min-h-[8rem] text-sm leading-relaxed text-slate-200">
+              {reviewLoading && (
+                <div className="flex items-center gap-2 text-slate-400">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Pensando en {place.name}…
+                </div>
+              )}
+              {reviewErr && !reviewLoading && (
+                <p className="text-rose-300">No pudimos generar la reseña: {reviewErr}</p>
+              )}
+              {reviewText && !reviewLoading && (
+                <p className="whitespace-pre-wrap">{reviewText}</p>
+              )}
+            </div>
+            <p className="mt-4 text-[10px] italic text-slate-500">
+              Reseña generada por IA · puede contener imprecisiones
+            </p>
+          </div>
+        </div>
+      )}
     </div>
+
   );
 }
 
