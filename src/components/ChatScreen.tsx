@@ -1630,6 +1630,11 @@ const RICE_FISH_RE = /\b(arroz|arroces|arrocer[ií]a|paella|pescado|pescados|mar
 const ITALIAN_RE = /\b(italian[oa]|italianos|pasta|trattoria|ristorante)\b/i;
 const PIZZAS_RE = /\b(telepizza|domino'?s|papa john'?s?|pizza hut|pizza m[oó]vil|pizza a domicilio|una pizzer[ií]a|pizzer[ií]a abierta|pizzer[ií]a r[aá]pida)\b/i;
 const BRUNCH_RE = /\b(brunch|desayun[oa]s?|breakfast|tortitas|pancakes|waffles?|gofres?|huevos benedictinos|eggs benedict|cafeter[ií]a|caf[eé] especialidad|specialty coffee|bolleria|boller[ií]a|cruasanes?|croissants?)\b/i;
+const FAST_FOOD_RE = /\b(comida r[aá]pida|fast ?food|hamburgues[ae]r?[ií]as?|hamburguesas?|burger|smash ?burger|mcdonald|burger king|goiko|five guys|tgb|kfc|popeyes|pollo frito|pollos asados|montaditos?|100 montaditos|lizarr[aá]n|kebaps?|kebab|d[oö]ner|shawarma|taco bell|tacos?|burritos?|mexican[oa])\b/i;
+const VEGAN_RE = /\b(vegano[as]?|vegan[a]?|vegetarian[oa]s?|saludable|healthy|poke|bowl|veggie|plant[\s-]?based)\b/i;
+const DESSERTS_RE = /\b(postres?|heladeri?as?|helader[ií]as?|helados?|gelater[ií]as?|pasteler[ií]as?|chocolater[ií]as?|gofres?|waffles?|crepes?|cr[eê]pes?|tartas?|reposter[ií]a|dulce[s]?|cafeter[ií]a con postres)\b/i;
+const CHEAP_RE = /\b(barato|baratos?|baratit[oa]s?|econ[oó]mic[oa]s?|low cost|menu del d[ií]a|men[uú] del d[ií]a|menu diario|men[uú] diario|comer barato|sin gastar)\b/i;
+const SURPRISE_RE = /\b(sorpr[eé]ndeme|sorprende(r?me)?|al azar|aleator[ií]o|donde quieras|elige t[uú]|surprise me)\b/i;
 
 function isAsianCard(c: PlaceCardData): boolean {
   const hay = `${c.cuisine ?? ""} ${c.name ?? ""} ${c.vibe ?? ""}`;
