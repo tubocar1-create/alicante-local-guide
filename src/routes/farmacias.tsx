@@ -418,8 +418,8 @@ function FarmaciasPage() {
             <colgroup>
               <col />
               <col className="w-[58px]" />
-              <col className="hidden md:table-column md:w-[32%]" />
-              <col className="w-[52px]" />
+              <col className="hidden md:table-column md:w-[26%]" />
+              <col className="w-[88px]" />
               <col className="w-[78px]" />
             </colgroup>
             <thead>
@@ -429,8 +429,10 @@ function FarmaciasPage() {
                 <th className="hidden px-1 py-1 font-medium md:table-cell">
                   Horario
                 </th>
-                <th className="px-1 py-1 font-medium">CP</th>
-                <th className="px-1 py-1 text-right font-medium">Tel</th>
+                <th className="px-1 py-1 font-medium">Zona</th>
+                <th className="px-1 py-1 text-right font-medium">
+                  {userCoords ? "Distancia" : "Tel"}
+                </th>
               </tr>
             </thead>
             <tbody>
