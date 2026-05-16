@@ -424,6 +424,42 @@ function PerfilPage() {
         </div>
       )}
 
+      {/* Geolocalización */}
+      <section className="mt-6">
+        <div className="flex w-full items-center gap-3 rounded-2xl border border-border bg-card/80 p-3 shadow-sm">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <MapPin className="h-5 w-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-semibold">Geolocalización</span>
+            <span className="block truncate text-xs text-muted-foreground">
+              {geoOn
+                ? "Usaremos tu ubicación para priorizar resultados cercanos."
+                : "Desactivada. Se usará Puerta del Mar como referencia."}
+            </span>
+          </span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={geoOn}
+            onClick={() => {
+              const next = !geoOn;
+              setGeoEnabled(next);
+              setGeoOn(next);
+            }}
+            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition ${
+              geoOn ? "bg-primary" : "bg-muted-foreground/30"
+            }`}
+          >
+            <span
+              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition ${
+                geoOn ? "translate-x-5" : "translate-x-1"
+              }`}
+            />
+          </button>
+        </div>
+      </section>
+
       {/* Módulo profesional */}
       <section className="mt-6">
         <Link
