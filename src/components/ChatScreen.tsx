@@ -3300,9 +3300,9 @@ function CheapTable({ cards }: { cards: PlaceCardData[] }) {
   const fetcher = useTagFetcher("cheap");
   return <CategoryTable cards={cards} category="cheap" fetcher={fetcher} />;
 }
-function SurpriseTable({ cards }: { cards: PlaceCardData[] }) {
-  const fetcher = useServerFn(getSurprisePlaces);
-  return <CategoryTable cards={cards} category="surprise" fetcher={fetcher} />;
+function InternationalTable({ cards }: { cards: PlaceCardData[] }) {
+  const fetcher = useServerFn(getInternationalPlaces);
+  return <CategoryTable cards={cards} category="international" fetcher={fetcher} />;
 }
 
 function AssistantContent({ content, userPrompt = "" }: { content: string; userPrompt?: string }) {
