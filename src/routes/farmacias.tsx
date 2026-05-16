@@ -1,7 +1,55 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Clock, MapPin, Phone, Search, Sparkles, X } from "lucide-react";
+import { Clock, MapPin, Navigation, Phone, Search, Sparkles, X } from "lucide-react";
+import { useUserLocation } from "@/hooks/useUserLocation";
+
+// Centroides aproximados por código postal (Alicante) para estimar distancia.
+const CP_CENTROIDS: Record<string, [number, number]> = {
+  "03001": [38.3452, -0.4810],
+  "03002": [38.3470, -0.4790],
+  "03003": [38.3430, -0.4870],
+  "03004": [38.3490, -0.4855],
+  "03005": [38.3530, -0.4830],
+  "03006": [38.3380, -0.4900],
+  "03007": [38.3550, -0.4895],
+  "03008": [38.3585, -0.4870],
+  "03009": [38.3640, -0.4810],
+  "03010": [38.3700, -0.4900],
+  "03011": [38.3640, -0.4980],
+  "03012": [38.3580, -0.4760],
+  "03013": [38.3565, -0.4710],
+  "03014": [38.3625, -0.4660],
+  "03015": [38.3590, -0.4400],
+  "03016": [38.3490, -0.4310],
+  "03112": [38.3800, -0.5050],
+  "03113": [38.4000, -0.5100],
+  "03540": [38.3650, -0.4150],
+  "03550": [38.3960, -0.4380],
+  "03690": [38.4200, -0.5400],
+  "03699": [38.4150, -0.5800],
+};
+
+function haversineMeters(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number },
+): number {
+  const R = 6371000;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+function formatMeters(m: number): string {
+  if (m < 1000) return `${Math.round(m / 10) * 10} m`;
+  return `${(m / 1000).toFixed(1)} km`;
+}
 
 type Pharmacy = {
   id: string;
