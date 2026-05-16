@@ -817,3 +817,59 @@ export async function fetchAlicantePressHeadlines(): Promise<NewsHeadline[] | nu
   });
   return (fresh.length ? fresh : all).slice(0, 12);
 }
+
+// ============================================================================
+// Alicante Press — scraping directo de alicantepress.com.
+// Extraemos los titulares de la portada (enlaces /art/{id}/{slug}).
+// ============================================================================
+
+export type AlicantePressHeadline = {
+  title: string;
+  url: string;
+};
+
+// Cache en memoria del Worker. El cron de las 03:00 calienta este cache;
+// el resto de peticiones del día lo reutilizan. TTL 24h por si el cron falla.
+let AP_CACHE: { at: number; data: AlicantePressHeadline[] } | null = null;
+const AP_TTL_MS = 24 * 3600 * 1000;
+
+export async function fetchAlicantePressDirect(
+  opts: { force?: boolean } = {},
+): Promise<AlicantePressHeadline[] | null> {
+  if (!opts.force && AP_CACHE && Date.now() - AP_CACHE.at < AP_TTL_MS) {
+    return AP_CACHE.data;
+  }
+  try {
+    const r = await fetch("https://alicantepress.com/", {
+      headers: { "User-Agent": UA, Accept: "text/html" },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!r.ok) return AP_CACHE?.data ?? null;
+    const html = await r.text();
+    const re =
+      /<a[^>]*href="https:\/\/alicantepress\.com\/art\/(\d+)\/[^"]+"[^>]*>([^<]{8,220})<\/a>/g;
+    const seen = new Set<string>();
+    const out: AlicantePressHeadline[] = [];
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(html))) {
+      const id = m[1];
+      const title = decodeXmlEntities(m[2])
+        .replace(/&nbsp;/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (!title || title.length < 12) continue;
+      if (NEWS_BAD_RE.test(title)) continue;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      const url = `https://alicantepress.com/art/${id}/`;
+      out.push({ title, url });
+      if (out.length >= 30) break;
+    }
+    if (!out.length) return AP_CACHE?.data ?? null;
+    AP_CACHE = { at: Date.now(), data: out };
+    return out;
+  } catch {
+    return AP_CACHE?.data ?? null;
+  }
+}
+
