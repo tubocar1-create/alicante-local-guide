@@ -1064,3 +1064,174 @@ export const deletePlace = createServerFn({ method: "POST" })
     if (error) throw error;
     return { ok: true as const };
   });
+
+// ============= AI-tagged virtual categories =============
+// Reuses places_cache rows (any category) and adds free-form ai_tags assigned
+// by the Lovable AI gateway. No new Google Places calls are made.
+
+export const VIRTUAL_TAGS = [
+  "fast_food",
+  "fast_food:burger",
+  "fast_food:pizza",
+  "fast_food:montaditos",
+  "fast_food:kebab",
+  "fast_food:chicken",
+  "fast_food:mexican",
+  "vegan",
+  "desserts",
+  "desserts:icecream",
+  "cheap",
+] as const;
+export type VirtualTag = (typeof VIRTUAL_TAGS)[number];
+
+type ClassifyRow = {
+  google_place_id: string;
+  name: string;
+  cuisine: string | null;
+  primary_type: string | null;
+  types: string[] | null;
+  price_level: string | null;
+  address: string | null;
+  category: string;
+};
+
+const CLASSIFY_BATCH = 25;
+const TAGS_LIST = VIRTUAL_TAGS.join(", ");
+const SYSTEM_PROMPT = `Eres un clasificador de restaurantes/bares/cafés de Alicante.
+Devuelves SOLO etiquetas de esta lista cerrada: ${TAGS_LIST}.
+
+Reglas:
+- "fast_food" agrupa hamburgueserías, pizzerías de cadena, montaditos, kebaps, pollo frito, mexicano rápido.
+  Si aplica, añade además la sub-etiqueta (p.ej. ["fast_food","fast_food:burger"]).
+- "vegan" sólo si el sitio es vegano, vegetariano o claramente "saludable / bowls / poke".
+- "desserts" para heladerías, pastelerías, cafeterías con postres, chocolaterías, gofres, crepes.
+  Las heladerías llevan SIEMPRE además "desserts:icecream".
+- "cheap" si price_level es FREE/INEXPENSIVE, o el nombre/tipo indica menú barato, fast food, comida callejera.
+- Devuelve [] si NO encaja en ninguna etiqueta.
+Responde SOLO JSON: { "results": [ { "id": "<google_place_id>", "tags": ["..."] }, ... ] }`;
+
+async function classifyBatch(rows: ClassifyRow[], apiKey: string): Promise<Map<string, string[]>> {
+  const out = new Map<string, string[]>();
+  const userPayload = rows.map((r) => ({
+    id: r.google_place_id,
+    name: r.name,
+    cuisine: r.cuisine,
+    primary_type: r.primary_type,
+    types: r.types?.slice(0, 6) ?? null,
+    price_level: r.price_level,
+    address: r.address,
+    category: r.category,
+  }));
+  const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-flash",
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: JSON.stringify(userPayload) },
+      ],
+      response_format: { type: "json_object" },
+    }),
+  });
+  if (!res.ok) {
+    console.error("AI classify error", res.status, await res.text());
+    return out;
+  }
+  const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+  const content = json.choices?.[0]?.message?.content ?? "";
+  try {
+    const parsed = JSON.parse(content) as { results?: Array<{ id: string; tags: string[] }> };
+    const valid = new Set<string>(VIRTUAL_TAGS as readonly string[]);
+    for (const r of parsed.results ?? []) {
+      const tags = (r.tags ?? []).filter((t) => valid.has(t));
+      out.set(r.id, tags);
+    }
+  } catch (e) {
+    console.error("AI classify parse error", e, content.slice(0, 200));
+  }
+  // Ensure rows that had no tag assigned still get an empty array
+  // so we don't reclassify them on every call.
+  for (const r of rows) {
+    if (!out.has(r.google_place_id)) out.set(r.google_place_id, []);
+  }
+  return out;
+}
+
+async function ensureClassified(limit = 200): Promise<{ classified: number }> {
+  const apiKey = process.env.LOVABLE_API_KEY;
+  if (!apiKey) {
+    console.warn("LOVABLE_API_KEY missing — skipping AI classification");
+    return { classified: 0 };
+  }
+  const { data: rows, error } = await supabaseAdmin
+    .from("places_cache")
+    .select("google_place_id,name,cuisine,primary_type,types,price_level,address,category")
+    .is("ai_tags", null)
+    .limit(limit);
+  if (error) throw error;
+  if (!rows || rows.length === 0) return { classified: 0 };
+
+  let total = 0;
+  for (let i = 0; i < rows.length; i += CLASSIFY_BATCH) {
+    const batch = rows.slice(i, i + CLASSIFY_BATCH) as ClassifyRow[];
+    const tagged = await classifyBatch(batch, apiKey);
+    const updates: Array<{ id: string; tags: string[] }> = [];
+    tagged.forEach((tags, id) => updates.push({ id, tags }));
+    // Update one by one (no upsert with partial cols on conflict).
+    await Promise.all(
+      updates.map((u) =>
+        supabaseAdmin
+          .from("places_cache")
+          .update({ ai_tags: u.tags } as never)
+          .eq("google_place_id", u.id),
+      ),
+    );
+    total += updates.length;
+  }
+  return { classified: total };
+}
+
+export const classifyPlacesAi = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => {
+    const o = (d ?? {}) as { limit?: number };
+    return { limit: Math.max(10, Math.min(o.limit ?? 200, 500)) };
+  })
+  .handler(async ({ data }) => ensureClassified(data.limit));
+
+export const getPlacesByTag = createServerFn({ method: "GET" })
+  .inputValidator((d: unknown) => {
+    const o = d as { tag?: string };
+    if (!o?.tag || !(VIRTUAL_TAGS as readonly string[]).includes(o.tag)) {
+      throw new Error("tag inválido");
+    }
+    return { tag: o.tag };
+  })
+  .handler(async ({ data }) => {
+    // Trigger lazy classification in the background (don't block response).
+    ensureClassified(100).catch((e) => console.error("ensureClassified bg error", e));
+
+    const { data: rows, error } = await supabaseAdmin
+      .from("places_cache")
+      .select("*")
+      .contains("ai_tags", [data.tag])
+      .order("name");
+    if (error) throw error;
+    return { places: rows ?? [] };
+  });
+
+export const getSurprisePlaces = createServerFn({ method: "GET" }).handler(async () => {
+  // Random sample of well-rated places across all food categories.
+  const { data: rows, error } = await supabaseAdmin
+    .from("places_cache")
+    .select("*")
+    .gte("rating", 4.3)
+    .in("category", ["typical", "rice_fish", "italian", "brunch", "asian", "pizzas"])
+    .limit(400);
+  if (error) throw error;
+  const shuffled = (rows ?? []).slice().sort(() => Math.random() - 0.5);
+  return { places: shuffled.slice(0, 40) };
+});
