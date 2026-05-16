@@ -307,6 +307,22 @@ function FarmaciasPage() {
               Por CP
             </button>
           </div>
+          <button
+            onClick={requestGeo}
+            className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[11px] transition ${
+              userCoords
+                ? "border-emerald-300/40 bg-emerald-400/15 text-emerald-100"
+                : "border-emerald-300/20 bg-white/[0.04] text-emerald-200/80 hover:text-emerald-100"
+            }`}
+            title={geoState.status === "error" ? geoState.message : "Ordenar por cercanía"}
+          >
+            <Navigation className="h-3 w-3" />
+            {geoState.status === "loading"
+              ? "Localizando…"
+              : userCoords
+                ? "Cerca de ti"
+                : "Usar mi ubicación"}
+          </button>
           <div className="relative ml-auto w-full max-w-xs">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-emerald-300/60" />
             <input
