@@ -2934,7 +2934,6 @@ const CATEGORY_THEMES: Record<ExtendedCategory, CategoryTheme & {
     rowLabelText: "Restaurante",
     priceHeaderText: "€/pers",
   },
-  ...(["burgers", "montaditos", "kebab", "fried_chicken", "mexican"] as const).reduce((acc) => acc, {} as Record<string, never>),
   ...buildFastFoodSubThemes(),
 };
 
