@@ -1668,7 +1668,9 @@ function useFoodListOrigin() {
   return {
     locState,
     origin: locState.status === "ready" ? { lat: locState.coords.lat, lon: locState.coords.lng } : ALC_CENTER,
-    originLabel: locState.status === "ready" ? "tu ubicación" : "Puerta del Mar",
+    originLabel: (locState.status === "ready" ? "tu ubicación" : "Puerta del Mar") as
+      | "tu ubicación"
+      | "Puerta del Mar",
   };
 }
 
