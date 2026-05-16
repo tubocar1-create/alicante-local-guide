@@ -3373,6 +3373,11 @@ function AssistantContent({ content, userPrompt = "" }: { content: string; userP
   const textHasItalian = ITALIAN_RE.test(cleaned) || ITALIAN_RE.test(userPrompt);
   const textHasPizzas = PIZZAS_RE.test(cleaned) || PIZZAS_RE.test(userPrompt);
   const textHasBrunch = BRUNCH_RE.test(cleaned) || BRUNCH_RE.test(userPrompt);
+  const textHasFastFood = FAST_FOOD_RE.test(cleaned) || FAST_FOOD_RE.test(userPrompt);
+  const textHasVegan = VEGAN_RE.test(cleaned) || VEGAN_RE.test(userPrompt);
+  const textHasDesserts = DESSERTS_RE.test(cleaned) || DESSERTS_RE.test(userPrompt);
+  const textHasCheap = CHEAP_RE.test(cleaned) || CHEAP_RE.test(userPrompt);
+  const textHasSurprise = SURPRISE_RE.test(cleaned) || SURPRISE_RE.test(userPrompt);
   const asianMode =
     textHasAsian ||
     (cardData.length >= 2 && cardData.every((c) => isAsianCard(c)));
@@ -3380,18 +3385,26 @@ function AssistantContent({ content, userPrompt = "" }: { content: string; userP
     !asianMode &&
     (textHasDrinks ||
       (cardData.length >= 2 && cardData.every((c) => isDrinksCard(c))));
-  const pizzasMode = !asianMode && !drinksMode && textHasPizzas;
-  const italianMode = !asianMode && !drinksMode && !pizzasMode && textHasItalian;
-  const riceFishMode = !asianMode && !drinksMode && !pizzasMode && !italianMode && textHasRiceFish;
-  const brunchMode =
-    !asianMode && !drinksMode && !pizzasMode && !italianMode && !riceFishMode && textHasBrunch;
-  const typicalMode =
-    !asianMode && !drinksMode && !pizzasMode && !italianMode && !riceFishMode && !brunchMode && textHasTypical;
+  const surpriseMode = !asianMode && !drinksMode && textHasSurprise;
+  const fastFoodMode = !asianMode && !drinksMode && !surpriseMode && textHasFastFood;
+  const veganMode = !asianMode && !drinksMode && !surpriseMode && !fastFoodMode && textHasVegan;
+  const dessertsMode = !asianMode && !drinksMode && !surpriseMode && !fastFoodMode && !veganMode && textHasDesserts;
+  const cheapMode = !asianMode && !drinksMode && !surpriseMode && !fastFoodMode && !veganMode && !dessertsMode && textHasCheap;
+  const pizzasMode = !asianMode && !drinksMode && !surpriseMode && !fastFoodMode && !veganMode && !dessertsMode && !cheapMode && textHasPizzas;
+  const italianMode = !asianMode && !drinksMode && !surpriseMode && !fastFoodMode && !veganMode && !dessertsMode && !cheapMode && !pizzasMode && textHasItalian;
+  const riceFishMode = !asianMode && !drinksMode && !surpriseMode && !fastFoodMode && !veganMode && !dessertsMode && !cheapMode && !pizzasMode && !italianMode && textHasRiceFish;
+  const brunchMode = !asianMode && !drinksMode && !surpriseMode && !fastFoodMode && !veganMode && !dessertsMode && !cheapMode && !pizzasMode && !italianMode && !riceFishMode && textHasBrunch;
+  const typicalMode = !asianMode && !drinksMode && !surpriseMode && !fastFoodMode && !veganMode && !dessertsMode && !cheapMode && !pizzasMode && !italianMode && !riceFishMode && !brunchMode && textHasTypical;
   let tableInjected = false;
 
   const renderCategoryTable = (key: number, cd: PlaceCardData[]) => {
     if (asianMode) return <AsianTable key={key} cards={cd} />;
     if (drinksMode) return <DrinksTable key={key} cards={cd} />;
+    if (surpriseMode) return <SurpriseTable key={key} cards={cd} />;
+    if (fastFoodMode) return <FastFoodTable key={key} cards={cd} />;
+    if (veganMode) return <VeganTable key={key} cards={cd} />;
+    if (dessertsMode) return <DessertsTable key={key} cards={cd} />;
+    if (cheapMode) return <CheapTable key={key} cards={cd} />;
     if (pizzasMode) return <PizzasTable key={key} cards={cd} />;
     if (italianMode) return <ItalianTable key={key} cards={cd} />;
     if (riceFishMode) return <RiceFishTable key={key} cards={cd} />;
@@ -3399,7 +3412,7 @@ function AssistantContent({ content, userPrompt = "" }: { content: string; userP
     if (typicalMode) return <TypicalTable key={key} cards={cd} />;
     return null;
   };
-  const anyCategoryMode = asianMode || drinksMode || pizzasMode || italianMode || riceFishMode || brunchMode || typicalMode;
+  const anyCategoryMode = asianMode || drinksMode || surpriseMode || fastFoodMode || veganMode || dessertsMode || cheapMode || pizzasMode || italianMode || riceFishMode || brunchMode || typicalMode;
 
   return (
     <div className="space-y-2 [&>p]:m-0 [&_strong]:font-semibold">
