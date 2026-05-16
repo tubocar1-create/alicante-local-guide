@@ -276,6 +276,48 @@ function FarmaciasPage() {
           ))}
         </div>
 
+        {/* Banner farmacias 24h */}
+        {(() => {
+          const h24 = items.filter((p) => p.is_24h);
+          if (h24.length === 0) return null;
+          return (
+            <div className="mb-4 rounded-2xl border border-amber-300/30 bg-gradient-to-br from-amber-400/10 via-orange-400/5 to-transparent p-3 backdrop-blur-xl">
+              <div className="mb-2 flex items-center gap-2">
+                <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+                <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-amber-200">
+                  Turno 24 horas · {h24.length}
+                </p>
+              </div>
+              <ul className="grid grid-cols-1 gap-1.5 md:grid-cols-2">
+                {h24.map((p) => (
+                  <li
+                    key={p.id}
+                    className="flex items-center justify-between gap-2 rounded-lg border border-amber-300/15 bg-white/[0.03] px-2 py-1.5"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-[11px] font-medium text-amber-50">
+                        💊 {p.name}
+                      </p>
+                      <p className="truncate text-[10px] text-amber-100/60">
+                        {p.address ?? ""}
+                        {p.postal_code ? ` · ${p.postal_code}` : ""}
+                      </p>
+                    </div>
+                    {p.phone && (
+                      <a
+                        href={`tel:${p.phone}`}
+                        className="shrink-0 rounded-full bg-amber-400/90 px-2 py-0.5 font-mono text-[10px] text-amber-950"
+                      >
+                        {p.phone}
+                      </a>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })()}
+
         {/* Tabla estilo dashboard */}
         <div className="rounded-2xl border border-emerald-300/15 bg-white/[0.03] p-2 backdrop-blur-xl md:p-4">
           <div className="mb-2 flex items-baseline justify-between gap-2">
@@ -283,24 +325,26 @@ function FarmaciasPage() {
               {loading ? "Cargando…" : `${filtered.length} farmacias`}
             </p>
             <p className="text-[9px] uppercase tracking-[0.18em] text-emerald-200/50">
-              nombre · zona · dirección · tel
+              estado · horario · zona · tel
             </p>
           </div>
 
           <table className="w-full table-fixed border-separate border-spacing-y-0.5 text-left text-[11px] text-emerald-50/90">
             <colgroup>
               <col />
-              <col className="w-[70px]" />
-              <col className="hidden md:table-column md:w-[40%]" />
+              <col className="w-[58px]" />
+              <col className="hidden md:table-column md:w-[32%]" />
+              <col className="w-[52px]" />
               <col className="w-[78px]" />
             </colgroup>
             <thead>
               <tr className="text-[9px] uppercase tracking-[0.12em] text-emerald-200/60">
                 <th className="px-1.5 py-1 font-medium">Farmacia</th>
-                <th className="px-1 py-1 font-medium">CP</th>
+                <th className="px-1 py-1 font-medium">Estado</th>
                 <th className="hidden px-1 py-1 font-medium md:table-cell">
-                  Dirección
+                  Horario
                 </th>
+                <th className="px-1 py-1 font-medium">CP</th>
                 <th className="px-1 py-1 text-right font-medium">Tel</th>
               </tr>
             </thead>
@@ -309,8 +353,12 @@ function FarmaciasPage() {
                 const mapsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
                   `${p.name} ${p.address ?? ""} Alicante`,
                 )}`;
+                const status = computeOpen(p);
+                const rowCls = p.is_24h
+                  ? "bg-amber-400/10 ring-1 ring-inset ring-amber-300/30 hover:bg-amber-400/15"
+                  : "bg-white/[0.02] hover:bg-white/[0.05]";
                 return (
-                  <tr key={p.id} className="bg-white/[0.02] hover:bg-white/[0.05]">
+                  <tr key={p.id} className={rowCls}>
                     <td className="rounded-l-md px-1.5 py-1.5 align-middle">
                       <a
                         href={mapsHref}
@@ -318,25 +366,48 @@ function FarmaciasPage() {
                         rel="noreferrer"
                         className="flex items-center gap-1 hover:text-emerald-200"
                       >
-                        <span className="text-[13px] leading-none">💊</span>
+                        <span className="text-[13px] leading-none">
+                          {p.is_24h ? "🌙" : "💊"}
+                        </span>
                         <span className="min-w-0 truncate text-[11px] font-medium">
                           {p.name}
                         </span>
+                        {p.is_24h && (
+                          <span className="ml-1 shrink-0 rounded-full bg-amber-400/90 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-amber-950">
+                            24h
+                          </span>
+                        )}
                       </a>
+                      {p.address && (
+                        <p className="mt-0.5 truncate text-[9px] text-emerald-100/50 md:hidden">
+                          <MapPin className="-mt-0.5 mr-0.5 inline h-2.5 w-2.5" />
+                          {p.address}
+                        </p>
+                      )}
+                    </td>
+                    <td className="px-1 py-1 align-middle">
+                      {status === "open" ? (
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500/15 px-1 py-0.5 text-[9px] font-semibold text-emerald-300">
+                          ● Abre
+                        </span>
+                      ) : status === "closed" ? (
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-rose-500/15 px-1 py-0.5 text-[9px] font-semibold text-rose-300">
+                          ● Cerr
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-slate-500/15 px-1 py-0.5 text-[9px] font-semibold text-slate-400">
+                          s/d
+                        </span>
+                      )}
+                    </td>
+                    <td className="hidden px-1 py-1 align-middle text-[10px] text-emerald-100/70 md:table-cell">
+                      <span className="inline-flex items-start gap-1">
+                        <Clock className="mt-0.5 h-3 w-3 shrink-0 text-emerald-300/60" />
+                        <span className="truncate">{p.hours ?? "—"}</span>
+                      </span>
                     </td>
                     <td className="px-1 py-1 align-middle font-mono text-[10px] text-emerald-200/80">
                       {p.postal_code ?? "—"}
-                    </td>
-                    <td className="hidden px-1 py-1 align-middle text-[10px] text-emerald-100/70 md:table-cell">
-                      <a
-                        href={mapsHref}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-start gap-1 hover:text-emerald-200"
-                      >
-                        <MapPin className="mt-0.5 h-3 w-3 shrink-0 text-emerald-300/60" />
-                        <span className="truncate">{p.address ?? "—"}</span>
-                      </a>
                     </td>
                     <td className="rounded-r-md px-1 py-1 text-right align-middle">
                       {p.phone ? (
@@ -357,7 +428,7 @@ function FarmaciasPage() {
               {!loading && filtered.length === 0 && (
                 <tr>
                   <td
-                    colSpan={4}
+                    colSpan={5}
                     className="px-2 py-4 text-center text-xs text-emerald-200/60"
                   >
                     Sin resultados.
