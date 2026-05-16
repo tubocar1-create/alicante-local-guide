@@ -2448,7 +2448,7 @@ type ExtendedCategory =
   | "vegan"
   | "desserts"
   | "cheap"
-  | "surprise";
+  | "international";
 
 const CATEGORY_THEMES: Record<ExtendedCategory, CategoryTheme & {
   emoji: (c: PlaceCardData) => string;
