@@ -3501,6 +3501,36 @@ function FastFoodTable({ cards }: { cards: PlaceCardData[] }) {
   const fetcher = useTagFetcher("fast_food");
   return <CategoryTable cards={cards} category="fast_food" fetcher={fetcher} />;
 }
+function useFastFoodSubFetcher(pattern: RegExp) {
+  const fn = useServerFn(getPlacesByTag);
+  return async () => {
+    const res = await fn({ data: { tag: "fast_food" } });
+    const places = (res.places ?? []).filter((p) =>
+      pattern.test(`${p.name ?? ""} ${p.cuisine ?? ""}`.toLowerCase()),
+    );
+    return { places };
+  };
+}
+function BurgersTable({ cards }: { cards: PlaceCardData[] }) {
+  const fetcher = useFastFoodSubFetcher(/burger|hamburgu|goiko|five guys|tgb|mcdonald|burger king|smash/i);
+  return <CategoryTable cards={cards} category="burgers" fetcher={fetcher} />;
+}
+function MontaditosTable({ cards }: { cards: PlaceCardData[] }) {
+  const fetcher = useFastFoodSubFetcher(/montadit|lizarr|100 mont/i);
+  return <CategoryTable cards={cards} category="montaditos" fetcher={fetcher} />;
+}
+function KebabTable({ cards }: { cards: PlaceCardData[] }) {
+  const fetcher = useFastFoodSubFetcher(/kebab|kebap|d[oö]ner|shawarma/i);
+  return <CategoryTable cards={cards} category="kebab" fetcher={fetcher} />;
+}
+function FriedChickenTable({ cards }: { cards: PlaceCardData[] }) {
+  const fetcher = useFastFoodSubFetcher(/kfc|popeyes|pollo frito|pollos asados|poller/i);
+  return <CategoryTable cards={cards} category="fried_chicken" fetcher={fetcher} />;
+}
+function MexicanTable({ cards }: { cards: PlaceCardData[] }) {
+  const fetcher = useFastFoodSubFetcher(/taco|burrito|mexic|tex.?mex|taquer/i);
+  return <CategoryTable cards={cards} category="mexican" fetcher={fetcher} />;
+}
 function VeganTable({ cards }: { cards: PlaceCardData[] }) {
   const fetcher = useTagFetcher("vegan");
   return <CategoryTable cards={cards} category="vegan" fetcher={fetcher} />;
