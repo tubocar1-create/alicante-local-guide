@@ -463,6 +463,25 @@ export const getAdVariants = createServerFn({ method: "POST" })
       newsCtx = `\n\nTITULARES REALES de la prensa alicantina (Google News, hoy):\n${lines}\n\nGenera UNA variante por titular. Usa SOLO la información del titular; no inventes detalles ni fechas. DESCARTA cualquier titular que sea política partidista, sucesos, accidentes, fallecimientos o tragedias (si quedara alguno colado, omítelo).`;
     }
 
+    let alicantePressCtx = "";
+    if (advertiser.kind === "alicante_press") {
+      const headlines = await fetchAlicantePressDirect();
+      if (!headlines || headlines.length === 0) {
+        return { ...baseResp, variants: [] };
+      }
+      // Barajar para que las variantes salgan en orden aleatorio
+      const shuffled = [...headlines];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      const pick = shuffled.slice(0, Math.max(count, 6));
+      const lines = pick
+        .map((h, i) => `${i + 1}. "${h.title}"`)
+        .join("\n");
+      alicantePressCtx = `\n\nTITULARES REALES de Alicante Press (alicantepress.com, scraping directo de portada):\n${lines}\n\nGenera UNA variante por titular en el MISMO orden que el listado. Usa SOLO la información del titular; no inventes detalles ni fechas. DESCARTA política partidista, sucesos, accidentes, fallecimientos o tragedias (si quedara alguno colado, omítelo).`;
+    }
+
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       return {
