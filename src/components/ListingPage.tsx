@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Loader2, Navigation } from "lucide-react";
 import { fetchListings, type Listing } from "@/lib/overpass-listings";
 import { useUserLocation, distanceKm } from "@/hooks/useUserLocation";
+import { resolveOpeningStatus } from "@/lib/opening-hours";
 import ReferralDialog from "@/components/ReferralDialog";
 import { ListingCard } from "@/components/ListingCard";
 
