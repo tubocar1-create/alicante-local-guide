@@ -96,18 +96,20 @@ export function AdBanner() {
   if (!allLoaded || !open) return SLOT;
 
   // Filtramos anunciantes sin variantes (banner suspendido, p.ej. Aena sin incidencias)
+  // y respetamos el orden barajado del carrusel.
   const activeIdx: number[] = [];
-  queries.forEach((q, i) => {
-    if (q.data && q.data.variants.length > 0) activeIdx.push(i);
-  });
+  for (const i of shuffledOrder) {
+    const q = queries[i];
+    if (q?.data && q.data.variants.length > 0) activeIdx.push(i);
+  }
   if (activeIdx.length === 0) return SLOT;
 
   const ai = activeIdx[(cycle - 1 + activeIdx.length * 1000) % activeIdx.length];
   const data = queries[ai]?.data;
   if (!data) return SLOT;
+  // Variante aleatoria en cada aparición (la cartelera se enseña al azar).
   const variant =
-    data.variants[nextIndex(ADVERTISERS[ai].id, data.variants.length)] ??
-    data.variants[0];
+    data.variants[pickRandomIndex(data.variants.length)] ?? data.variants[0];
   if (!variant) return SLOT;
   const theme = data.advertiser.theme;
 
