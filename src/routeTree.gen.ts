@@ -38,6 +38,7 @@ import { Route as BusLinesRouteImport } from './routes/bus.lines'
 import { Route as BusinessInboxIdRouteImport } from './routes/business.inbox.$id'
 import { Route as BusLinesCodeRouteImport } from './routes/bus.lines.$code'
 import { Route as ApiPublicRefreshNewsRouteImport } from './routes/api/public/refresh-news'
+import { Route as ApiPublicRefreshAlicantePressRouteImport } from './routes/api/public/refresh-alicante-press'
 import { Route as ApiPublicQrValidateRouteImport } from './routes/api/public/qr-validate'
 import { Route as ApiPublicQrIssueRouteImport } from './routes/api/public/qr-issue'
 import { Route as ApiPublicBusEtaRouteImport } from './routes/api/public/bus-eta'
@@ -190,6 +191,12 @@ const ApiPublicRefreshNewsRoute = ApiPublicRefreshNewsRouteImport.update({
   path: '/api/public/refresh-news',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicRefreshAlicantePressRoute =
+  ApiPublicRefreshAlicantePressRouteImport.update({
+    id: '/api/public/refresh-alicante-press',
+    path: '/api/public/refresh-alicante-press',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicQrValidateRoute = ApiPublicQrValidateRouteImport.update({
   id: '/api/public/qr-validate',
   path: '/api/public/qr-validate',
@@ -253,6 +260,7 @@ export interface FileRoutesByFullPath {
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
   '/api/public/qr-issue': typeof ApiPublicQrIssueRoute
   '/api/public/qr-validate': typeof ApiPublicQrValidateRoute
+  '/api/public/refresh-alicante-press': typeof ApiPublicRefreshAlicantePressRoute
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
@@ -289,6 +297,7 @@ export interface FileRoutesByTo {
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
   '/api/public/qr-issue': typeof ApiPublicQrIssueRoute
   '/api/public/qr-validate': typeof ApiPublicQrValidateRoute
+  '/api/public/refresh-alicante-press': typeof ApiPublicRefreshAlicantePressRoute
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
@@ -327,6 +336,7 @@ export interface FileRoutesById {
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
   '/api/public/qr-issue': typeof ApiPublicQrIssueRoute
   '/api/public/qr-validate': typeof ApiPublicQrValidateRoute
+  '/api/public/refresh-alicante-press': typeof ApiPublicRefreshAlicantePressRoute
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
@@ -366,6 +376,7 @@ export interface FileRouteTypes {
     | '/api/public/bus-eta'
     | '/api/public/qr-issue'
     | '/api/public/qr-validate'
+    | '/api/public/refresh-alicante-press'
     | '/api/public/refresh-news'
     | '/bus/lines/$code'
     | '/business/inbox/$id'
@@ -402,6 +413,7 @@ export interface FileRouteTypes {
     | '/api/public/bus-eta'
     | '/api/public/qr-issue'
     | '/api/public/qr-validate'
+    | '/api/public/refresh-alicante-press'
     | '/api/public/refresh-news'
     | '/bus/lines/$code'
     | '/business/inbox/$id'
@@ -439,6 +451,7 @@ export interface FileRouteTypes {
     | '/api/public/bus-eta'
     | '/api/public/qr-issue'
     | '/api/public/qr-validate'
+    | '/api/public/refresh-alicante-press'
     | '/api/public/refresh-news'
     | '/bus/lines/$code'
     | '/business/inbox/$id'
@@ -465,6 +478,7 @@ export interface RootRouteChildren {
   ApiPublicBusEtaRoute: typeof ApiPublicBusEtaRoute
   ApiPublicQrIssueRoute: typeof ApiPublicQrIssueRoute
   ApiPublicQrValidateRoute: typeof ApiPublicQrValidateRoute
+  ApiPublicRefreshAlicantePressRoute: typeof ApiPublicRefreshAlicantePressRoute
   ApiPublicRefreshNewsRoute: typeof ApiPublicRefreshNewsRoute
   ApiPublicHooksAenaSyncRoute: typeof ApiPublicHooksAenaSyncRoute
 }
@@ -674,6 +688,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicRefreshNewsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/refresh-alicante-press': {
+      id: '/api/public/refresh-alicante-press'
+      path: '/api/public/refresh-alicante-press'
+      fullPath: '/api/public/refresh-alicante-press'
+      preLoaderRoute: typeof ApiPublicRefreshAlicantePressRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/qr-validate': {
       id: '/api/public/qr-validate'
       path: '/api/public/qr-validate'
@@ -814,6 +835,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicBusEtaRoute: ApiPublicBusEtaRoute,
   ApiPublicQrIssueRoute: ApiPublicQrIssueRoute,
   ApiPublicQrValidateRoute: ApiPublicQrValidateRoute,
+  ApiPublicRefreshAlicantePressRoute: ApiPublicRefreshAlicantePressRoute,
   ApiPublicRefreshNewsRoute: ApiPublicRefreshNewsRoute,
   ApiPublicHooksAenaSyncRoute: ApiPublicHooksAenaSyncRoute,
 }
