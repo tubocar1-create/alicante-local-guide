@@ -239,6 +239,18 @@ export function ChatScreen() {
   }, []);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handler = () => {
+      setMessages([GREETING]);
+      const comer = SUGGESTIONS.find((s) => s.label.includes("Comer"));
+      setSubmenuStack(comer ? [comer] : []);
+      window.sessionStorage.removeItem(CHAT_STATE_KEY);
+    };
+    window.addEventListener("comer:back-to-menu", handler);
+    return () => window.removeEventListener("comer:back-to-menu", handler);
+  }, []);
+
+  useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail as { name?: string } | undefined;
       if (detail?.name) {
