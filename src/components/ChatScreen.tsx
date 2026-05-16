@@ -1751,8 +1751,8 @@ function AsianTableInner({ ranked, loading, originLabel, onClose }: {
       } else {
         const href =
           c.lat && c.lon
-            ? `https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lon}`
-            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.name + " Alicante")}`;
+            ? `https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lon}&travelmode=walking`
+            : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.name + " Alicante")}&travelmode=walking`;
         window.open(href, "_blank", "noreferrer");
       }
     } catch (e) {
@@ -2080,8 +2080,8 @@ function DrinksTableInner({ ranked, loading, onClose }: {
       } else {
         const href =
           c.lat && c.lon
-            ? `https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lon}`
-            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.name + " Alicante")}`;
+            ? `https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lon}&travelmode=walking`
+            : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.name + " Alicante")}&travelmode=walking`;
         window.open(href, "_blank", "noreferrer");
       }
     } catch (e) {
@@ -2284,6 +2284,11 @@ function DrinksTable({ cards }: { cards: PlaceCardData[] }) {
   const [extra, setExtra] = useState<PlaceCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
+  const { state: locState, request: requestLocation } = useUserLocation();
+  const origin = locState.status === "ready" ? { lat: locState.coords.lat, lon: locState.coords.lng } : ALC_CENTER;
+  useEffect(() => {
+    if (locState.status === "idle") requestLocation();
+  }, [locState.status, requestLocation]);
 
   const fetchDrinks = useServerFn(getDrinksPlaces);
   useEffect(() => {
@@ -2326,7 +2331,7 @@ function DrinksTable({ cards }: { cards: PlaceCardData[] }) {
   const ranked = Array.from(byKey.values())
     .map((c) => ({
       c,
-      d: c.lat && c.lon ? distKm(ALC_CENTER, { lat: c.lat, lon: c.lon }) : Number.POSITIVE_INFINITY,
+      d: c.lat && c.lon ? distKm(origin, { lat: c.lat, lon: c.lon }) : Number.POSITIVE_INFINITY,
     }))
     .filter((r) => r.d <= 10)
     .sort((a, b) => a.d - b.d);
@@ -2669,8 +2674,8 @@ function CategoryTableInner({
       } else {
         const href =
           c.lat && c.lon
-            ? `https://www.google.com/maps/search/?api=1&query=${c.lat},${c.lon}`
-            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.name + " Alicante")}`;
+            ? `https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lon}&travelmode=walking`
+            : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.name + " Alicante")}&travelmode=walking`;
         window.open(href, "_blank", "noreferrer");
       }
     } catch (e) {
@@ -2879,6 +2884,11 @@ function CategoryTable({
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
   const theme = CATEGORY_THEMES[category];
+  const { state: locState, request: requestLocation } = useUserLocation();
+  const origin = locState.status === "ready" ? { lat: locState.coords.lat, lon: locState.coords.lng } : ALC_CENTER;
+  useEffect(() => {
+    if (locState.status === "idle") requestLocation();
+  }, [locState.status, requestLocation]);
 
   useEffect(() => {
     let cancelled = false;
@@ -2920,7 +2930,7 @@ function CategoryTable({
   const ranked = Array.from(byKey.values())
     .map((c) => ({
       c,
-      d: c.lat && c.lon ? distKm(ALC_CENTER, { lat: c.lat, lon: c.lon }) : Number.POSITIVE_INFINITY,
+      d: c.lat && c.lon ? distKm(origin, { lat: c.lat, lon: c.lon }) : Number.POSITIVE_INFINITY,
     }))
     .filter((r) => r.d <= 10)
     .filter((r) => {
