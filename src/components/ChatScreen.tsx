@@ -995,7 +995,8 @@ function Bubble({ role, content, userPrompt = "" }: { role: "user" | "assistant"
   const promptHasTypical = !isUser && TYPICAL_RE.test(userPrompt);
   const promptHasRiceFish = !isUser && RICE_FISH_RE.test(userPrompt);
   const promptHasItalian = !isUser && ITALIAN_RE.test(userPrompt);
-  if (!isUser && (isAsianBroadcast(content) || isDrinksBroadcast(content) || promptHasDrinks || promptHasAsian || promptHasTypical || promptHasRiceFish || promptHasItalian)) {
+  const promptHasBrunch = !isUser && BRUNCH_RE.test(userPrompt);
+  if (!isUser && (isAsianBroadcast(content) || isDrinksBroadcast(content) || promptHasDrinks || promptHasAsian || promptHasTypical || promptHasRiceFish || promptHasItalian || promptHasBrunch)) {
     return (
       <div className="-mx-4 sm:mx-0">
         <AssistantContent content={content} userPrompt={userPrompt} />
