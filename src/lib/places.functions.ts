@@ -113,6 +113,7 @@ const CATEGORY_QUERIES: Record<string, string[]> = {
   typical: TYPICAL_QUERIES,
   rice_fish: RICE_FISH_QUERIES,
   italian: ITALIAN_QUERIES,
+  pizzas: PIZZAS_QUERIES,
   brunch: BRUNCH_QUERIES,
 };
 const STALE_MS = 24 * 60 * 60 * 1000; // 24h
