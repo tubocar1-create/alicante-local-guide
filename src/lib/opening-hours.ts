@@ -301,6 +301,48 @@ export function getTodayClosingTime(raw?: string | null, date = new Date()): str
   return minutesToClock(Math.max(...todayEnds));
 }
 
+/** Earliest opening time today (HH:MM) or null if closed today / unknown. */
+export function getTodayOpeningTime(raw?: string | null, date = new Date()): string | null {
+  if (!raw?.trim()) return null;
+  const { day } = madridNow(date);
+  const todayStarts: number[] = [];
+
+  if (SPANISH_OPENING_DAY_RE.test(raw)) {
+    const segments = raw.split(/\s+·\s+/);
+    let currentDay: DayKey | null = null;
+    const perDay: Partial<Record<DayKey, { start: number; end: number }[]>> = {};
+    for (const seg of segments) {
+      const labelMatch = seg.match(/^([A-Za-zÁÉÍÓÚÑáéíóúñ]+)\s*:\s*(.*)$/);
+      let body = seg;
+      if (labelMatch) {
+        const key = SPANISH_DAY_TO_KEY[labelMatch[1].toLowerCase()];
+        if (key) {
+          currentDay = key;
+          body = labelMatch[2];
+        }
+      }
+      if (!currentDay) continue;
+      const ranges = [...body.matchAll(/(\d{1,2}):(\d{1,2})\s*[–-]\s*(\d{1,2}):(\d{1,2})/g)];
+      for (const r of ranges) {
+        const start = Number(r[1]) * 60 + Number(r[2]);
+        const end = Number(r[3]) * 60 + Number(r[4]);
+        (perDay[currentDay] ??= []).push({ start, end });
+      }
+    }
+    for (const r of perDay[day] ?? []) todayStarts.push(r.start);
+  } else {
+    const clean = raw.replace(/"[^"]*"/g, "").trim();
+    if (/24\s*\/\s*7/.test(clean)) return "00:00";
+    for (const rule of clean.split(";").map((r) => r.trim()).filter(Boolean)) {
+      if (!appliesToDay(rule, day)) continue;
+      for (const range of parseRanges(rule)) todayStarts.push(range.start);
+    }
+  }
+
+  if (todayStarts.length === 0) return null;
+  return minutesToClock(Math.min(...todayStarts));
+}
+
 export function formatOpeningStatus(hours: OpeningStatus) {
   if (hours.status === "open") return `Abierto ahora · cierra a las ${hours.closesAt}`;
   if (hours.status === "closed") return "Cerrado ahora";
