@@ -162,6 +162,13 @@ function FarmaciasPage() {
     })();
   }, []);
 
+  const distFor = (p: Pharmacy): number | null => {
+    if (!userCoords || !p.postal_code) return null;
+    const c = CP_CENTROIDS[p.postal_code];
+    if (!c) return null;
+    return haversineMeters(userCoords, { lat: c[0], lng: c[1] });
+  };
+
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
     let base = items;
@@ -181,8 +188,20 @@ function FarmaciasPage() {
         return key === activeGroup;
       });
     }
+    if (userCoords) {
+      base = [...base].sort((a, b) => {
+        if (a.is_24h !== b.is_24h) return a.is_24h ? -1 : 1;
+        const da = distFor(a);
+        const db = distFor(b);
+        if (da == null && db == null) return 0;
+        if (da == null) return 1;
+        if (db == null) return -1;
+        return da - db;
+      });
+    }
     return base;
-  }, [items, q, activeGroup, groupBy]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, q, activeGroup, groupBy, userCoords]);
 
   const groups = useMemo(() => {
     const map = new Map<string, Pharmacy[]>();
