@@ -2650,11 +2650,13 @@ function CategoryTableInner({
   loading,
   onClose,
   theme,
+  originLabel,
 }: {
   ranked: { c: PlaceCardData; d: number }[];
   loading: boolean;
   onClose: () => void;
   theme: (typeof CATEGORY_THEMES)[keyof typeof CATEGORY_THEMES];
+  originLabel: CategoryTableOriginLabel;
 }) {
   const navigate = useNavigate();
   const resolvePlace = useServerFn(resolvePlaceByName);
@@ -2738,7 +2740,7 @@ function CategoryTableInner({
             </span>
           </h1>
           <p className={`mt-1 text-xs ${theme.subtitle} md:text-sm`}>
-            {theme.subtitleText}
+            {theme.subtitleText.replace("Puerta del Mar", originLabel)}
           </p>
         </div>
 
