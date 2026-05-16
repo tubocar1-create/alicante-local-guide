@@ -539,6 +539,7 @@ export type Database = {
       places_cache: {
         Row: {
           address: string | null
+          ai_tags: string[] | null
           category: string
           created_at: string
           cuisine: string | null
@@ -566,6 +567,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          ai_tags?: string[] | null
           category: string
           created_at?: string
           cuisine?: string | null
@@ -593,6 +595,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          ai_tags?: string[] | null
           category?: string
           created_at?: string
           cuisine?: string | null
