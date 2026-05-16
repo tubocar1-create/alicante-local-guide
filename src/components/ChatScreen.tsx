@@ -2006,7 +2006,8 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
   const [extra, setExtra] = useState<PlaceCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
-  const { origin, originLabel } = useFoodListOrigin();
+  const [reloadKey, setReloadKey] = useState(0);
+  const { locState, origin, originLabel } = useFoodListOrigin();
 
   const fetchAsian = useServerFn(getAsianPlaces);
   useEffect(() => {
@@ -2034,7 +2035,8 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
       .catch((e) => console.error("getAsianPlaces failed", e))
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [fetchAsian]);
+  }, [fetchAsian, reloadKey]);
+  useNearbyDiscovery("asian", origin, locState.status === "ready", () => setReloadKey((k) => k + 1));
 
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
   const byKey = new Map<string, PlaceCardData>();
