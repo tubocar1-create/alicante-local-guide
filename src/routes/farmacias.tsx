@@ -381,8 +381,8 @@ function FarmaciasPage() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="mb-3 flex shrink-0 items-center justify-between">
-                <h3 className="text-sm font-semibold text-emerald-50">
-                  💊 Elige zona
+                <h3 className="flex items-center gap-1.5 text-sm font-semibold text-emerald-50">
+                  <PharmacyCross className="h-4 w-4" /> Elige zona
                 </h3>
                 <button
                   onClick={() => setZoneOpen(false)}
