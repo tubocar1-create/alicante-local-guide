@@ -2284,6 +2284,11 @@ function DrinksTable({ cards }: { cards: PlaceCardData[] }) {
   const [extra, setExtra] = useState<PlaceCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
+  const { state: locState, request: requestLocation } = useUserLocation();
+  const origin = locState.status === "ready" ? { lat: locState.coords.lat, lon: locState.coords.lng } : ALC_CENTER;
+  useEffect(() => {
+    if (locState.status === "idle") requestLocation();
+  }, [locState.status, requestLocation]);
 
   const fetchDrinks = useServerFn(getDrinksPlaces);
   useEffect(() => {
