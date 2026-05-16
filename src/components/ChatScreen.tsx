@@ -30,7 +30,7 @@ import {
   resolvePlaceByName,
   discoverNearbyPlaces,
   getPlacesByTag,
-  getSurprisePlaces,
+  getInternationalPlaces,
 } from "@/lib/places.functions";
 import heroImg from "@/assets/alicante-hero.jpg";
 import skylineImg from "@/assets/alicante-skyline.png";
