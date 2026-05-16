@@ -2882,7 +2882,7 @@ const CATEGORY_THEMES: Record<ExtendedCategory, CategoryTheme & {
     rowLabelText: "Sitio",
     priceHeaderText: "€/pers",
   },
-  surprise: {
+  international: {
     bgGradient: "linear-gradient(180deg, #0d0820 0%, #1a1238 50%, #06040f 100%)",
     glow1: "bg-violet-500/[0.10]",
     glow2: "bg-fuchsia-500/[0.06]",
@@ -2892,9 +2892,9 @@ const CATEGORY_THEMES: Record<ExtendedCategory, CategoryTheme & {
     liveDot: "bg-violet-400",
     borderBtn: "border-violet-900/60 text-violet-200/70 hover:border-violet-500/50 hover:text-violet-300",
     eyebrow: "text-violet-400/80",
-    eyebrowText: "Sorpréndeme",
+    eyebrowText: "Dashboard internacional",
     title: "text-violet-50",
-    titleHighlight: "Sorpréndeme",
+    titleHighlight: "Internacional",
     titleGradient: "from-violet-300 via-fuchsia-200 to-pink-300",
     subtitle: "text-violet-200/80",
     cardBg: "bg-[rgba(12,8,28,0.7)]",
@@ -2908,17 +2908,25 @@ const CATEGORY_THEMES: Record<ExtendedCategory, CategoryTheme & {
     priceText: "text-violet-50",
     distText: "text-violet-50",
     emptyText: "text-violet-200/50",
-    reopenLabel: "Reabrir sorpresa",
+    reopenLabel: "Reabrir dashboard internacional",
     reopenCls: "border-violet-400/30 bg-violet-400/5 text-violet-300 hover:bg-violet-400/10",
     priceHeader: "€/pers",
-    rowLabel: "Sitio",
-    emoji: () => "✨",
-    guessPrice: () => "~18 €",
-    title1: "Sorpréndeme",
+    rowLabel: "Restaurante",
+    emoji: (c) => {
+      const hay = `${c.cuisine ?? ""} ${c.name ?? ""}`.toLowerCase();
+      if (/indi|hind/.test(hay)) return "🇮🇳";
+      if (/liban|árabe|arabe|marroq/.test(hay)) return "🥙";
+      if (/peruan|peru/.test(hay)) return "🇵🇪";
+      if (/mexican|tex.?mex/.test(hay)) return "🌮";
+      if (/venezolan|colombian|argentin|cuban|brasil|latino/.test(hay)) return "🌎";
+      return "🌍";
+    },
+    guessPrice: () => "~20 €",
+    title1: "Internacional",
     title2: "en Alicante",
-    subtitleText: "Selección aleatoria de sitios bien valorados.",
-    eyebrowLabel: "Sorpréndeme",
-    rowLabelText: "Sitio",
+    subtitleText: "Cocinas del mundo · ordenados por cercanía a Puerta del Mar.",
+    eyebrowLabel: "Dashboard internacional",
+    rowLabelText: "Restaurante",
     priceHeaderText: "€/pers",
   },
 };
