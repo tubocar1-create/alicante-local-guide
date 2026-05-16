@@ -3155,13 +3155,15 @@ function CategoryTableInner({
   );
 }
 
+const DISCOVERABLE = new Set(["typical", "rice_fish", "italian", "brunch", "pizzas", "asian", "drinks"]);
+
 function CategoryTable({
   cards,
   category,
   fetcher,
 }: {
   cards: PlaceCardData[];
-  category: "typical" | "rice_fish" | "italian" | "brunch" | "pizzas";
+  category: ExtendedCategory;
   fetcher: () => Promise<{ places: Array<{ google_place_id: string; name: string; cuisine: string | null; address: string | null; opening_hours_text: string | null; lat: number | null; lng: number | null; price_level: string | null; price_range_min: number | null; price_range_max: number | null; rating: number | null; open_now: boolean | null }> }>;
 }) {
   const [extra, setExtra] = useState<PlaceCardData[]>([]);
@@ -3196,7 +3198,17 @@ function CategoryTable({
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [fetcher, category, reloadKey]);
-  useNearbyDiscovery(category, origin, locState.status === "ready", () => setReloadKey((k) => k + 1));
+  // Only the 7 google-backed categories trigger nearby discovery; virtual AI
+  // tag-based categories reuse what's already in the cache.
+  const discoverableCategory = DISCOVERABLE.has(category)
+    ? (category as "typical" | "rice_fish" | "italian" | "brunch" | "pizzas" | "asian" | "drinks")
+    : null;
+  useNearbyDiscovery(
+    discoverableCategory ?? "typical",
+    origin,
+    discoverableCategory != null && locState.status === "ready",
+    () => setReloadKey((k) => k + 1),
+  );
 
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
   const byKey = new Map<string, PlaceCardData>();
@@ -3209,21 +3221,25 @@ function CategoryTable({
       byKey.set(k, { ...prev, openingHours: prev.openingHours ?? c.openingHours, lat: prev.lat ?? c.lat, lon: prev.lon ?? c.lon });
     }
   }
-  const ranked = Array.from(byKey.values())
+  const isSurprise = category === "surprise";
+  let ranked = Array.from(byKey.values())
     .map((c) => ({
       c,
       d: c.lat && c.lon ? distKm(origin, { lat: c.lat, lon: c.lon }) : Number.POSITIVE_INFINITY,
     }))
-    .filter((r) => r.d <= 10)
+    .filter((r) => (isSurprise ? true : r.d <= 10))
     .filter((r) => {
       if (category !== "brunch") return true;
-      // Solo locales que abran a las 11:00 o antes (los que abren más tarde no son sitios de desayuno).
       const open = getTodayOpeningTime(r.c.openingHours ?? undefined);
-      if (!open) return true; // sin datos: no excluimos
+      if (!open) return true;
       const [h, m] = open.split(":").map(Number);
       return h * 60 + m <= 11 * 60;
-    })
-    .sort((a, b) => a.d - b.d);
+    });
+  if (isSurprise) {
+    ranked = ranked.sort(() => Math.random() - 0.5).slice(0, 25);
+  } else {
+    ranked = ranked.sort((a, b) => a.d - b.d);
+  }
 
   if (!open) {
     return (
@@ -3259,6 +3275,30 @@ function BrunchTable({ cards }: { cards: PlaceCardData[] }) {
 function PizzasTable({ cards }: { cards: PlaceCardData[] }) {
   const fetcher = useServerFn(getPizzasPlaces);
   return <CategoryTable cards={cards} category="pizzas" fetcher={fetcher} />;
+}
+function useTagFetcher(tag: string) {
+  const fn = useServerFn(getPlacesByTag);
+  return () => fn({ data: { tag } });
+}
+function FastFoodTable({ cards }: { cards: PlaceCardData[] }) {
+  const fetcher = useTagFetcher("fast_food");
+  return <CategoryTable cards={cards} category="fast_food" fetcher={fetcher} />;
+}
+function VeganTable({ cards }: { cards: PlaceCardData[] }) {
+  const fetcher = useTagFetcher("vegan");
+  return <CategoryTable cards={cards} category="vegan" fetcher={fetcher} />;
+}
+function DessertsTable({ cards }: { cards: PlaceCardData[] }) {
+  const fetcher = useTagFetcher("desserts");
+  return <CategoryTable cards={cards} category="desserts" fetcher={fetcher} />;
+}
+function CheapTable({ cards }: { cards: PlaceCardData[] }) {
+  const fetcher = useTagFetcher("cheap");
+  return <CategoryTable cards={cards} category="cheap" fetcher={fetcher} />;
+}
+function SurpriseTable({ cards }: { cards: PlaceCardData[] }) {
+  const fetcher = useServerFn(getSurprisePlaces);
+  return <CategoryTable cards={cards} category="surprise" fetcher={fetcher} />;
 }
 
 function AssistantContent({ content, userPrompt = "" }: { content: string; userPrompt?: string }) {
