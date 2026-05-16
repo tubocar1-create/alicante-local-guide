@@ -3381,7 +3381,7 @@ function AssistantContent({ content, userPrompt = "" }: { content: string; userP
   const textHasVegan = VEGAN_RE.test(cleaned) || VEGAN_RE.test(userPrompt);
   const textHasDesserts = DESSERTS_RE.test(cleaned) || DESSERTS_RE.test(userPrompt);
   const textHasCheap = CHEAP_RE.test(cleaned) || CHEAP_RE.test(userPrompt);
-  const textHasSurprise = SURPRISE_RE.test(cleaned) || SURPRISE_RE.test(userPrompt);
+  const textHasInternational = INTERNATIONAL_RE.test(cleaned) || INTERNATIONAL_RE.test(userPrompt);
   const asianMode =
     textHasAsian ||
     (cardData.length >= 2 && cardData.every((c) => isAsianCard(c)));
@@ -3389,22 +3389,22 @@ function AssistantContent({ content, userPrompt = "" }: { content: string; userP
     !asianMode &&
     (textHasDrinks ||
       (cardData.length >= 2 && cardData.every((c) => isDrinksCard(c))));
-  const surpriseMode = !asianMode && !drinksMode && textHasSurprise;
-  const fastFoodMode = !asianMode && !drinksMode && !surpriseMode && textHasFastFood;
-  const veganMode = !asianMode && !drinksMode && !surpriseMode && !fastFoodMode && textHasVegan;
-  const dessertsMode = !asianMode && !drinksMode && !surpriseMode && !fastFoodMode && !veganMode && textHasDesserts;
-  const cheapMode = !asianMode && !drinksMode && !surpriseMode && !fastFoodMode && !veganMode && !dessertsMode && textHasCheap;
-  const pizzasMode = !asianMode && !drinksMode && !surpriseMode && !fastFoodMode && !veganMode && !dessertsMode && !cheapMode && textHasPizzas;
-  const italianMode = !asianMode && !drinksMode && !surpriseMode && !fastFoodMode && !veganMode && !dessertsMode && !cheapMode && !pizzasMode && textHasItalian;
-  const riceFishMode = !asianMode && !drinksMode && !surpriseMode && !fastFoodMode && !veganMode && !dessertsMode && !cheapMode && !pizzasMode && !italianMode && textHasRiceFish;
-  const brunchMode = !asianMode && !drinksMode && !surpriseMode && !fastFoodMode && !veganMode && !dessertsMode && !cheapMode && !pizzasMode && !italianMode && !riceFishMode && textHasBrunch;
-  const typicalMode = !asianMode && !drinksMode && !surpriseMode && !fastFoodMode && !veganMode && !dessertsMode && !cheapMode && !pizzasMode && !italianMode && !riceFishMode && !brunchMode && textHasTypical;
+  const internationalMode = !asianMode && !drinksMode && textHasInternational;
+  const fastFoodMode = !asianMode && !drinksMode && !internationalMode && textHasFastFood;
+  const veganMode = !asianMode && !drinksMode && !internationalMode && !fastFoodMode && textHasVegan;
+  const dessertsMode = !asianMode && !drinksMode && !internationalMode && !fastFoodMode && !veganMode && textHasDesserts;
+  const cheapMode = !asianMode && !drinksMode && !internationalMode && !fastFoodMode && !veganMode && !dessertsMode && textHasCheap;
+  const pizzasMode = !asianMode && !drinksMode && !internationalMode && !fastFoodMode && !veganMode && !dessertsMode && !cheapMode && textHasPizzas;
+  const italianMode = !asianMode && !drinksMode && !internationalMode && !fastFoodMode && !veganMode && !dessertsMode && !cheapMode && !pizzasMode && textHasItalian;
+  const riceFishMode = !asianMode && !drinksMode && !internationalMode && !fastFoodMode && !veganMode && !dessertsMode && !cheapMode && !pizzasMode && !italianMode && textHasRiceFish;
+  const brunchMode = !asianMode && !drinksMode && !internationalMode && !fastFoodMode && !veganMode && !dessertsMode && !cheapMode && !pizzasMode && !italianMode && !riceFishMode && textHasBrunch;
+  const typicalMode = !asianMode && !drinksMode && !internationalMode && !fastFoodMode && !veganMode && !dessertsMode && !cheapMode && !pizzasMode && !italianMode && !riceFishMode && !brunchMode && textHasTypical;
   let tableInjected = false;
 
   const renderCategoryTable = (key: number, cd: PlaceCardData[]) => {
     if (asianMode) return <AsianTable key={key} cards={cd} />;
     if (drinksMode) return <DrinksTable key={key} cards={cd} />;
-    if (surpriseMode) return <SurpriseTable key={key} cards={cd} />;
+    if (internationalMode) return <InternationalTable key={key} cards={cd} />;
     if (fastFoodMode) return <FastFoodTable key={key} cards={cd} />;
     if (veganMode) return <VeganTable key={key} cards={cd} />;
     if (dessertsMode) return <DessertsTable key={key} cards={cd} />;
@@ -3416,7 +3416,7 @@ function AssistantContent({ content, userPrompt = "" }: { content: string; userP
     if (typicalMode) return <TypicalTable key={key} cards={cd} />;
     return null;
   };
-  const anyCategoryMode = asianMode || drinksMode || surpriseMode || fastFoodMode || veganMode || dessertsMode || cheapMode || pizzasMode || italianMode || riceFishMode || brunchMode || typicalMode;
+  const anyCategoryMode = asianMode || drinksMode || internationalMode || fastFoodMode || veganMode || dessertsMode || cheapMode || pizzasMode || italianMode || riceFishMode || brunchMode || typicalMode;
 
   return (
     <div className="space-y-2 [&>p]:m-0 [&_strong]:font-semibold">
