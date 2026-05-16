@@ -465,6 +465,7 @@ const DISPLAY_ORDER: string[] = [
   "buses-alicante",
   "songkick-alicante",
   "vuelos-manana-alicante",
+  "alicante-press",
   "mercadillos-alicante",
 ];
 
