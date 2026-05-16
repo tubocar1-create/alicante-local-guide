@@ -90,6 +90,7 @@ function pauseLocation() {
 export function releaseLocation() {
   stopWatch();
   cached = null;
+  if (typeof localStorage !== "undefined") localStorage.removeItem(GEO_CACHE_KEY);
   // Reset every active subscriber back to idle so the UI re-prompts
   listeners.forEach((l) => {
     try {
@@ -126,7 +127,7 @@ function bindLifecycle() {
 export function useUserLocation(opts?: { watch?: boolean }) {
   const watch = !!opts?.watch;
   const [state, setState] = useState<LocationState>(
-    cached ? { status: "ready", coords: cached } : { status: "idle" },
+    readStoredCoords() ? { status: "ready", coords: readStoredCoords()! } : { status: "idle" },
   );
 
   useEffect(() => {
