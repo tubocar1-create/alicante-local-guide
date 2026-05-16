@@ -47,6 +47,10 @@ function PerfilPage() {
   );
   const [qrs, setQrs] = useState<QrRow[]>([]);
   const loadingQrs = false;
+  const [geoOn, setGeoOn] = useState<boolean>(true);
+  useEffect(() => {
+    setGeoOn(isGeoEnabled());
+  }, []);
 
   const badges = AFP_LEVELS.filter((l) => points >= l.min);
 
