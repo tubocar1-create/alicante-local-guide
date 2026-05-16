@@ -18,7 +18,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { isGeoEnabled, setGeoEnabled, useUserLocation, formatDistance, distanceKm } from "@/hooks/useUserLocation";
-import { ALC_CENTER } from "@/lib/alicante";
+const PUERTA_DEL_MAR = { lat: 38.3414, lng: -0.481 };
 import { usePoints } from "@/hooks/usePoints";
 import { useAuth } from "@/hooks/useAuth";
 import { listQrs, subscribeQrs, type LocalQr } from "@/lib/qr-storage";
