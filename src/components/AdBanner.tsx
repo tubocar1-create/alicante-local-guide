@@ -30,16 +30,18 @@ function writeCache(id: string, data: AdVariantsResponse) {
     /* ignore */
   }
 }
-function nextIndex(id: string, len: number): number {
+function pickRandomIndex(len: number): number {
   if (len <= 0) return 0;
-  try {
-    const cur = parseInt(localStorage.getItem(rotateKey(id)) ?? "0", 10);
-    const next = (Number.isFinite(cur) ? cur : 0) % len;
-    localStorage.setItem(rotateKey(id), String((next + 1) % len));
-    return next;
-  } catch {
-    return Math.floor(Math.random() * len);
+  return Math.floor(Math.random() * len);
+}
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
   }
+  return a;
 }
 
 export function AdBanner() {
