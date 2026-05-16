@@ -17,7 +17,7 @@ import { BusKnownPicker, type BusStopPick } from "@/components/BusKnownPicker";
 import { FlightPicker } from "@/components/FlightPicker";
 import { useAuth } from "@/hooks/useAuth";
 import { findPlaceOverride } from "@/data/places";
-import { resolveOpeningStatus, getTodayClosingTime } from "@/lib/opening-hours";
+import { resolveOpeningStatus, getTodayClosingTime, getTodayOpeningTime } from "@/lib/opening-hours";
 import { useServerFn } from "@tanstack/react-start";
 import {
   getAsianPlaces,
