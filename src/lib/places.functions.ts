@@ -433,6 +433,80 @@ const CURATED_LISTS: Partial<Record<string, string[]>> = {
   ],
 };
 
+async function searchGoogleNear(
+  textQuery: string,
+  apiKey: string,
+  center: { lat: number; lng: number },
+  radius = 3000,
+): Promise<GPlace[]> {
+  const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": apiKey,
+      "X-Goog-FieldMask": FIELD_MASK,
+    },
+    body: JSON.stringify({
+      textQuery,
+      languageCode: "es",
+      regionCode: "ES",
+      maxResultCount: 20,
+      locationBias: {
+        circle: {
+          center: { latitude: center.lat, longitude: center.lng },
+          radius,
+        },
+      },
+    }),
+  });
+  if (!res.ok) {
+    console.error("Google Places nearby error", res.status, await res.text());
+    return [];
+  }
+  const json = (await res.json()) as { places?: GPlace[] };
+  return json.places ?? [];
+}
+
+export const discoverNearbyPlaces = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => {
+    const o = d as { lat?: number; lng?: number; category?: string; radius?: number };
+    if (typeof o?.lat !== "number" || typeof o?.lng !== "number") {
+      throw new Error("lat/lng required");
+    }
+    if (!o.category || !CATEGORY_QUERIES[o.category]) {
+      throw new Error("valid category required");
+    }
+    return {
+      lat: o.lat,
+      lng: o.lng,
+      category: o.category,
+      radius: Math.max(500, Math.min(o.radius ?? 3000, 8000)),
+    };
+  })
+  .handler(async ({ data }) => {
+    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+    if (!apiKey) return { added: 0 };
+    const queries = CATEGORY_QUERIES[data.category]!;
+    const seen = new Map<string, CachedPlace>();
+    for (const q of queries) {
+      const places = await searchGoogleNear(q, apiKey, { lat: data.lat, lng: data.lng }, data.radius);
+      for (const p of places) {
+        const row = toRow(p, data.category);
+        if (row && !seen.has(row.google_place_id)) seen.set(row.google_place_id, row);
+      }
+    }
+    const rows = Array.from(seen.values());
+    if (rows.length === 0) return { added: 0 };
+    const { error } = await supabaseAdmin
+      .from("places_cache")
+      .upsert(rows as never, { onConflict: "google_place_id" });
+    if (error) {
+      console.error(`upsert nearby ${data.category} error`, error);
+      throw error;
+    }
+    return { added: rows.length };
+  });
+
 async function searchOne(textQuery: string, apiKey: string): Promise<GPlace | null> {
   const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
     method: "POST",

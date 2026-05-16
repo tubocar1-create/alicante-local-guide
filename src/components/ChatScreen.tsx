@@ -28,6 +28,7 @@ import {
   getBrunchPlaces,
   getPizzasPlaces,
   resolvePlaceByName,
+  discoverNearbyPlaces,
 } from "@/lib/places.functions";
 import heroImg from "@/assets/alicante-hero.jpg";
 import skylineImg from "@/assets/alicante-skyline.png";
@@ -1674,6 +1675,29 @@ function useFoodListOrigin() {
   };
 }
 
+// Track which (category, coarse-location) combos we've already enriched this session
+const discoveredCategoryZones = new Set<string>();
+function useNearbyDiscovery(
+  category: "asian" | "drinks" | "typical" | "rice_fish" | "italian" | "brunch" | "pizzas",
+  origin: { lat: number; lon: number },
+  isUserLocation: boolean,
+  onDiscovered: () => void,
+) {
+  const discoverFn = useServerFn(discoverNearbyPlaces);
+  useEffect(() => {
+    if (!isUserLocation) return;
+    // Coarse-grain coords to ~250 m to avoid re-querying on every GPS jitter
+    const key = `${category}:${origin.lat.toFixed(3)}:${origin.lon.toFixed(3)}`;
+    if (discoveredCategoryZones.has(key)) return;
+    discoveredCategoryZones.add(key);
+    discoverFn({ data: { lat: origin.lat, lng: origin.lon, category } })
+      .then((res) => {
+        if ((res?.added ?? 0) > 0) onDiscovered();
+      })
+      .catch((e) => console.error(`discoverNearbyPlaces ${category} failed`, e));
+  }, [category, origin.lat, origin.lon, isUserLocation, discoverFn, onDiscovered]);
+}
+
 function asianEmoji(c: PlaceCardData): string {
   const hay = `${c.cuisine ?? ""} ${c.name ?? ""} ${c.vibe ?? ""}`.toLowerCase();
   if (/ramen|noodle/.test(hay)) return "🍜";
@@ -1982,7 +2006,8 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
   const [extra, setExtra] = useState<PlaceCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
-  const { origin, originLabel } = useFoodListOrigin();
+  const [reloadKey, setReloadKey] = useState(0);
+  const { locState, origin, originLabel } = useFoodListOrigin();
 
   const fetchAsian = useServerFn(getAsianPlaces);
   useEffect(() => {
@@ -2010,7 +2035,8 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
       .catch((e) => console.error("getAsianPlaces failed", e))
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [fetchAsian]);
+  }, [fetchAsian, reloadKey]);
+  useNearbyDiscovery("asian", origin, locState.status === "ready", () => setReloadKey((k) => k + 1));
 
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
   const byKey = new Map<string, PlaceCardData>();
@@ -2303,7 +2329,8 @@ function DrinksTable({ cards }: { cards: PlaceCardData[] }) {
   const [extra, setExtra] = useState<PlaceCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
-  const { origin, originLabel } = useFoodListOrigin();
+  const [reloadKey, setReloadKey] = useState(0);
+  const { locState, origin, originLabel } = useFoodListOrigin();
 
   const fetchDrinks = useServerFn(getDrinksPlaces);
   useEffect(() => {
@@ -2330,7 +2357,8 @@ function DrinksTable({ cards }: { cards: PlaceCardData[] }) {
       .catch((e) => console.error("getDrinksPlaces failed", e))
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [fetchDrinks]);
+  }, [fetchDrinks, reloadKey]);
+  useNearbyDiscovery("drinks", origin, locState.status === "ready", () => setReloadKey((k) => k + 1));
 
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
   const byKey = new Map<string, PlaceCardData>();
@@ -2902,8 +2930,9 @@ function CategoryTable({
   const [extra, setExtra] = useState<PlaceCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
+  const [reloadKey, setReloadKey] = useState(0);
   const theme = CATEGORY_THEMES[category];
-  const { origin, originLabel } = useFoodListOrigin();
+  const { locState, origin, originLabel } = useFoodListOrigin();
 
   useEffect(() => {
     let cancelled = false;
@@ -2929,7 +2958,8 @@ function CategoryTable({
       .catch((e) => console.error(`get ${category} places failed`, e))
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [fetcher, category]);
+  }, [fetcher, category, reloadKey]);
+  useNearbyDiscovery(category, origin, locState.status === "ready", () => setReloadKey((k) => k + 1));
 
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
   const byKey = new Map<string, PlaceCardData>();
