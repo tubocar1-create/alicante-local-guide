@@ -14,6 +14,31 @@ const listeners = new Set<(c: Coords) => void>();
 const errorListeners = new Set<(message: string) => void>();
 
 const GEO_PREF_KEY = "geo:enabled";
+const GEO_CACHE_KEY = "geo:last-coords";
+const GEO_CACHE_MAX_AGE = 12 * 60 * 60 * 1000;
+
+function readStoredCoords(): Coords | null {
+  if (cached) return cached;
+  if (typeof localStorage === "undefined") return null;
+  try {
+    const parsed = JSON.parse(localStorage.getItem(GEO_CACHE_KEY) ?? "null") as
+      | (Coords & { savedAt?: number })
+      | null;
+    if (!parsed || typeof parsed.lat !== "number" || typeof parsed.lng !== "number") return null;
+    if (parsed.savedAt && Date.now() - parsed.savedAt > GEO_CACHE_MAX_AGE) return null;
+    cached = { lat: parsed.lat, lng: parsed.lng, accuracy: parsed.accuracy };
+    return cached;
+  } catch {
+    return null;
+  }
+}
+
+function rememberCoords(c: Coords) {
+  cached = c;
+  if (typeof localStorage === "undefined") return;
+  localStorage.setItem(GEO_CACHE_KEY, JSON.stringify({ ...c, savedAt: Date.now() }));
+}
+
 export function isGeoEnabled(): boolean {
   if (typeof localStorage === "undefined") return true;
   return localStorage.getItem(GEO_PREF_KEY) !== "0";
@@ -25,7 +50,7 @@ export function setGeoEnabled(enabled: boolean) {
 }
 
 function notify(c: Coords) {
-  cached = c;
+  rememberCoords(c);
   listeners.forEach((l) => l(c));
 }
 
@@ -65,6 +90,7 @@ function pauseLocation() {
 export function releaseLocation() {
   stopWatch();
   cached = null;
+  if (typeof localStorage !== "undefined") localStorage.removeItem(GEO_CACHE_KEY);
   // Reset every active subscriber back to idle so the UI re-prompts
   listeners.forEach((l) => {
     try {
@@ -101,7 +127,7 @@ function bindLifecycle() {
 export function useUserLocation(opts?: { watch?: boolean }) {
   const watch = !!opts?.watch;
   const [state, setState] = useState<LocationState>(
-    cached ? { status: "ready", coords: cached } : { status: "idle" },
+    readStoredCoords() ? { status: "ready", coords: readStoredCoords()! } : { status: "idle" },
   );
 
   useEffect(() => {
@@ -170,8 +196,9 @@ export function useUserLocation(opts?: { watch?: boolean }) {
       );
     };
 
-    if (cached) {
-      setState({ status: "ready", coords: cached });
+    const stored = readStoredCoords();
+    if (stored) {
+      setState({ status: "ready", coords: stored });
       startWatch();
       return;
     }

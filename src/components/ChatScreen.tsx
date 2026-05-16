@@ -1660,6 +1660,20 @@ function distKm(a: { lat: number; lon: number }, b: { lat: number; lon: number }
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 
+function useFoodListOrigin() {
+  const { state: locState, request: requestLocation } = useUserLocation({ watch: true });
+  useEffect(() => {
+    if (locState.status === "idle") requestLocation();
+  }, [locState.status, requestLocation]);
+  return {
+    locState,
+    origin: locState.status === "ready" ? { lat: locState.coords.lat, lon: locState.coords.lng } : ALC_CENTER,
+    originLabel: (locState.status === "ready" ? "tu ubicación" : "Puerta del Mar") as
+      | "tu ubicación"
+      | "Puerta del Mar",
+  };
+}
+
 function asianEmoji(c: PlaceCardData): string {
   const hay = `${c.cuisine ?? ""} ${c.name ?? ""} ${c.vibe ?? ""}`.toLowerCase();
   if (/ramen|noodle/.test(hay)) return "🍜";
@@ -1968,15 +1982,9 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
   const [extra, setExtra] = useState<PlaceCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
-  const { state: locState, request: requestLocation } = useUserLocation();
-  const origin = locState.status === "ready" ? { lat: locState.coords.lat, lon: locState.coords.lng } : ALC_CENTER;
-  const originLabel = locState.status === "ready" ? "tu ubicación" : "Puerta del Mar";
+  const { origin, originLabel } = useFoodListOrigin();
 
   const fetchAsian = useServerFn(getAsianPlaces);
-  useEffect(() => {
-    if (locState.status === "idle") requestLocation();
-  }, [locState.status, requestLocation]);
-
   useEffect(() => {
     let cancelled = false;
     fetchAsian()
@@ -2295,12 +2303,7 @@ function DrinksTable({ cards }: { cards: PlaceCardData[] }) {
   const [extra, setExtra] = useState<PlaceCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
-  const { state: locState, request: requestLocation } = useUserLocation();
-  const origin = locState.status === "ready" ? { lat: locState.coords.lat, lon: locState.coords.lng } : ALC_CENTER;
-  const originLabel = locState.status === "ready" ? "tu ubicación" : "Puerta del Mar";
-  useEffect(() => {
-    if (locState.status === "idle") requestLocation();
-  }, [locState.status, requestLocation]);
+  const { origin, originLabel } = useFoodListOrigin();
 
   const fetchDrinks = useServerFn(getDrinksPlaces);
   useEffect(() => {
@@ -2900,12 +2903,7 @@ function CategoryTable({
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
   const theme = CATEGORY_THEMES[category];
-  const { state: locState, request: requestLocation } = useUserLocation();
-  const origin = locState.status === "ready" ? { lat: locState.coords.lat, lon: locState.coords.lng } : ALC_CENTER;
-  const originLabel: CategoryTableOriginLabel = locState.status === "ready" ? "tu ubicación" : "Puerta del Mar";
-  useEffect(() => {
-    if (locState.status === "idle") requestLocation();
-  }, [locState.status, requestLocation]);
+  const { origin, originLabel } = useFoodListOrigin();
 
   useEffect(() => {
     let cancelled = false;

@@ -497,18 +497,6 @@ function buildMentionedPlacesResponse(mentionedPlaces: MentionedPlace[], openFoo
   return lines.join("\n\n");
 }
 
-const TUMBARANCHO: FoodPlace = {
-  name: "Tumbarancho",
-  kind: "burger",
-  lat: 38.3452,
-  lon: -0.4839,
-  openingHours: "13:00–16:30, 20:00–23:30",
-  closesAt: "23:30",
-  closesInMinutes: 600,
-  cuisine: "Hamburguesería",
-  address: "Calle San Francisco, Alicante",
-};
-
 function buildFoodRecommendationsResponse(
   messages: Array<{ role: string; content: string }>,
   latestUserText: string,
@@ -518,14 +506,9 @@ function buildFoodRecommendationsResponse(
   const alreadyMentioned = previousAssistantPlaceNames(messages);
   const candidates = openFoodPlaces
     .filter((place) => !alreadyMentioned.has(normalized(place.name)))
-    .filter((place) => normalized(place.name) !== normalized(TUMBARANCHO.name))
     .filter((place) => matchesFoodPreference(place, latestUserText));
-  const shuffledCandidates = shuffle(candidates);
-  const isFirstAsk = !alreadyMentioned.has(normalized(TUMBARANCHO.name));
-  const limit = isFirstAsk ? 4 : 1;
-  const selected = isFirstAsk
-    ? [TUMBARANCHO, ...shuffledCandidates.slice(0, limit - 1)]
-    : shuffledCandidates.slice(0, limit);
+  const limit = Math.max(1, Math.min(maxOptions, 4));
+  const selected = candidates.slice(0, limit);
 
   const sub = detectFastFoodSub(latestUserText);
   const intro = selected.length >= 3
@@ -1135,15 +1118,13 @@ async function fetchConfirmedOpenFoodPlaces(
       });
     }
     if (out.length > 0) {
-      return shuffle(
-        out
-          .sort(
-            (a, b) =>
-              distanceKm(center, { lat: a.lat, lng: a.lon }) -
-              distanceKm(center, { lat: b.lat, lng: b.lon }),
-          )
-          .slice(0, 80),
-      ).slice(0, 30);
+      return out
+        .sort(
+          (a, b) =>
+            distanceKm(center, { lat: a.lat, lng: a.lon }) -
+            distanceKm(center, { lat: b.lat, lng: b.lon }),
+        )
+        .slice(0, 30);
     }
   }
 
@@ -1197,15 +1178,13 @@ out center 180;`;
         });
       }
 
-      return shuffle(
-        places
-          .sort(
-            (a, b) =>
-              distanceKm(center, { lat: a.lat, lng: a.lon }) -
-              distanceKm(center, { lat: b.lat, lng: b.lon }),
-          )
-          .slice(0, 40),
-      ).slice(0, 16);
+      return places
+        .sort(
+          (a, b) =>
+            distanceKm(center, { lat: a.lat, lng: a.lon }) -
+            distanceKm(center, { lat: b.lat, lng: b.lon }),
+        )
+        .slice(0, 16);
     } catch (e) {
       lastErr = e;
     }
