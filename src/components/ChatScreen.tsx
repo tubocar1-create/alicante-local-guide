@@ -2934,7 +2934,158 @@ const CATEGORY_THEMES: Record<ExtendedCategory, CategoryTheme & {
     rowLabelText: "Restaurante",
     priceHeaderText: "€/pers",
   },
+  ...(["burgers", "montaditos", "kebab", "fried_chicken", "mexican"] as const).reduce((acc) => acc, {} as Record<string, never>),
+  ...buildFastFoodSubThemes(),
 };
+
+type FastFoodSubKey = "burgers" | "montaditos" | "kebab" | "fried_chicken" | "mexican";
+
+function buildFastFoodSubThemes(): Record<FastFoodSubKey, (typeof CATEGORY_THEMES)[ExtendedCategory]> {
+  type Spec = {
+    color: string; // tailwind hue
+    bg: [string, string, string]; // bg gradient stops
+    cardBg: string;
+    title1: string;
+    titleHighlight: string;
+    titleGradient: string;
+    emoji: (c: PlaceCardData) => string;
+    guessPrice: (c: PlaceCardData) => string;
+    subtitleText: string;
+    eyebrowText: string;
+    reopenLabel: string;
+    rowLabel: string;
+  };
+  const specs: Record<FastFoodSubKey, Spec> = {
+    burgers: {
+      color: "amber",
+      bg: ["#1a0f06", "#2a1a0c", "#100804"],
+      cardBg: "bg-[rgba(20,12,6,0.7)]",
+      title1: "Hamburguesas",
+      titleHighlight: "Hamburguesas",
+      titleGradient: "from-amber-300 via-yellow-200 to-orange-300",
+      emoji: () => "🍔",
+      guessPrice: (c) => {
+        const hay = `${c.cuisine ?? ""} ${c.name ?? ""}`.toLowerCase();
+        if (/goiko|five guys|tgb|smash/.test(hay)) return "~14 €";
+        if (/mcdonald|burger king/.test(hay)) return "~9 €";
+        return "~11 €";
+      },
+      subtitleText: "Smash, premium y cadenas · cercanía a Puerta del Mar.",
+      eyebrowText: "Dashboard burger",
+      reopenLabel: "Reabrir dashboard hamburguesas",
+      rowLabel: "Hamburguesería",
+    },
+    montaditos: {
+      color: "yellow",
+      bg: ["#1a1408", "#2a200c", "#100a04"],
+      cardBg: "bg-[rgba(20,16,8,0.7)]",
+      title1: "Montaditos",
+      titleHighlight: "Montaditos",
+      titleGradient: "from-yellow-300 via-amber-200 to-orange-300",
+      emoji: () => "🥖",
+      guessPrice: () => "~8 €",
+      subtitleText: "100 Montaditos, Lizarrán y similares · cercanía a Puerta del Mar.",
+      eyebrowText: "Dashboard montaditos",
+      reopenLabel: "Reabrir dashboard montaditos",
+      rowLabel: "Cervecería",
+    },
+    kebab: {
+      color: "lime",
+      bg: ["#0c1408", "#16240c", "#060a04"],
+      cardBg: "bg-[rgba(12,20,8,0.7)]",
+      title1: "Kebaps",
+      titleHighlight: "Kebaps",
+      titleGradient: "from-lime-300 via-yellow-200 to-orange-300",
+      emoji: () => "🌯",
+      guessPrice: () => "~7 €",
+      subtitleText: "Kebap, döner y shawarma · cercanía a Puerta del Mar.",
+      eyebrowText: "Dashboard kebap",
+      reopenLabel: "Reabrir dashboard kebap",
+      rowLabel: "Kebap",
+    },
+    fried_chicken: {
+      color: "rose",
+      bg: ["#1a0a0c", "#2a1014", "#100406"],
+      cardBg: "bg-[rgba(20,10,12,0.7)]",
+      title1: "Pollo frito",
+      titleHighlight: "Pollo frito",
+      titleGradient: "from-rose-300 via-yellow-200 to-orange-300",
+      emoji: () => "🍗",
+      guessPrice: (c) => {
+        const hay = `${c.cuisine ?? ""} ${c.name ?? ""}`.toLowerCase();
+        if (/kfc|popeyes/.test(hay)) return "~10 €";
+        return "~12 €";
+      },
+      subtitleText: "KFC, Popeyes y pollos asados · cercanía a Puerta del Mar.",
+      eyebrowText: "Dashboard pollo",
+      reopenLabel: "Reabrir dashboard pollo frito",
+      rowLabel: "Pollería",
+    },
+    mexican: {
+      color: "emerald",
+      bg: ["#06140d", "#0c2418", "#030a06"],
+      cardBg: "bg-[rgba(6,20,12,0.7)]",
+      title1: "Comida mexicana",
+      titleHighlight: "Mexicano",
+      titleGradient: "from-emerald-300 via-yellow-200 to-red-300",
+      emoji: () => "🌮",
+      guessPrice: (c) => {
+        const hay = `${c.cuisine ?? ""} ${c.name ?? ""}`.toLowerCase();
+        if (/taco bell/.test(hay)) return "~9 €";
+        return "~13 €";
+      },
+      subtitleText: "Taco Bell, taquerías y tex-mex · cercanía a Puerta del Mar.",
+      eyebrowText: "Dashboard mexicano",
+      reopenLabel: "Reabrir dashboard mexicano",
+      rowLabel: "Mexicano",
+    },
+  };
+  const out = {} as Record<FastFoodSubKey, (typeof CATEGORY_THEMES)[ExtendedCategory]>;
+  (Object.keys(specs) as FastFoodSubKey[]).forEach((k) => {
+    const s = specs[k];
+    const c = s.color;
+    out[k] = {
+      bgGradient: `linear-gradient(180deg, ${s.bg[0]} 0%, ${s.bg[1]} 50%, ${s.bg[2]} 100%)`,
+      glow1: `bg-${c}-500/[0.10]`,
+      glow2: `bg-${c}-500/[0.06]`,
+      accentText: `text-${c}-200/70`,
+      borderHover: `hover:text-${c}-300`,
+      liveText: `text-${c}-300/80`,
+      liveDot: `bg-${c}-400`,
+      borderBtn: `border-${c}-900/60 text-${c}-200/70 hover:border-${c}-500/50 hover:text-${c}-300`,
+      eyebrow: `text-${c}-400/80`,
+      eyebrowText: s.eyebrowText,
+      title: `text-${c}-50`,
+      titleHighlight: s.titleHighlight,
+      titleGradient: s.titleGradient,
+      subtitle: `text-${c}-200/80`,
+      cardBg: s.cardBg,
+      cardBorder: `border-${c}-100/[0.08]`,
+      countText: `text-${c}-50`,
+      hint: `text-${c}-400/70`,
+      thText: `text-${c}-200/50`,
+      rowText: `text-${c}-50`,
+      hoverName: `text-${c}-50 hover:text-${c}-300`,
+      closesText: `text-${c}-100/80`,
+      priceText: `text-${c}-50`,
+      distText: `text-${c}-50`,
+      emptyText: `text-${c}-200/50`,
+      reopenLabel: s.reopenLabel,
+      reopenCls: `border-${c}-400/30 bg-${c}-400/5 text-${c}-300 hover:bg-${c}-400/10`,
+      priceHeader: "€/pers",
+      rowLabel: s.rowLabel,
+      emoji: s.emoji,
+      guessPrice: s.guessPrice,
+      title1: s.title1,
+      title2: "en Alicante",
+      subtitleText: s.subtitleText,
+      eyebrowLabel: s.eyebrowText,
+      rowLabelText: s.rowLabel,
+      priceHeaderText: "€/pers",
+    };
+  });
+  return out;
+}
 
 function CategoryTableInner({
   ranked,
