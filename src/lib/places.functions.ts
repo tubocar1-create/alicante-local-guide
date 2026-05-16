@@ -807,3 +807,260 @@ export const resolvePlaceByName = createServerFn({ method: "POST" })
     }
     return { placeId: pick.id };
   });
+
+// ============= Manual additions to places_cache =============
+
+const VALID_CATEGORIES = new Set([
+  "asian",
+  "drinks",
+  "typical",
+  "rice_fish",
+  "italian",
+  "pizzas",
+  "brunch",
+  "lookup",
+]);
+
+async function followRedirect(url: string): Promise<string> {
+  // maps.app.goo.gl / goo.gl/maps short URLs redirect to the long URL.
+  // Use GET with redirect: "manual" once, then return the Location header (or the original if none).
+  try {
+    let current = url;
+    for (let i = 0; i < 4; i++) {
+      const res = await fetch(current, {
+        method: "GET",
+        redirect: "manual",
+        headers: { "User-Agent": "Mozilla/5.0" },
+      });
+      const loc = res.headers.get("location");
+      if (!loc) return current;
+      current = loc.startsWith("http") ? loc : new URL(loc, current).toString();
+    }
+    return current;
+  } catch {
+    return url;
+  }
+}
+
+function parseMapsUrl(longUrl: string): { name?: string; lat?: number; lng?: number } {
+  const out: { name?: string; lat?: number; lng?: number } = {};
+  try {
+    const u = new URL(longUrl);
+    // /maps/place/<NAME>/@lat,lng,...
+    const m = u.pathname.match(/\/place\/([^/]+)\/?/);
+    if (m) {
+      try {
+        out.name = decodeURIComponent(m[1]).replace(/\+/g, " ");
+      } catch {
+        out.name = m[1].replace(/\+/g, " ");
+      }
+    }
+    const c = u.pathname.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (c) {
+      out.lat = Number(c[1]);
+      out.lng = Number(c[2]);
+    }
+  } catch {
+    // ignore
+  }
+  return out;
+}
+
+async function fetchPlaceDetailsById(placeId: string, apiKey: string): Promise<GPlace | null> {
+  const res = await fetch(
+    `https://places.googleapis.com/v1/places/${placeId}?languageCode=es&regionCode=ES`,
+    {
+      headers: {
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask": FIELD_MASK.replace(/places\./g, ""),
+      },
+    },
+  );
+  if (!res.ok) {
+    console.error("place details error", res.status, await res.text());
+    return null;
+  }
+  return (await res.json()) as GPlace;
+}
+
+async function searchNearOne(
+  textQuery: string,
+  apiKey: string,
+  center: { lat: number; lng: number },
+  radius = 200,
+): Promise<GPlace | null> {
+  const places = await searchGoogleNear(textQuery, apiKey, center, radius);
+  return places[0] ?? null;
+}
+
+export const addPlaceFromGoogle = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => {
+    const o = d as { input?: string; category?: string };
+    if (!o?.input || typeof o.input !== "string" || o.input.trim().length < 3) {
+      throw new Error("URL o Place ID requerido");
+    }
+    if (!o.category || !VALID_CATEGORIES.has(o.category)) {
+      throw new Error("Categoría inválida");
+    }
+    return { input: o.input.trim(), category: o.category };
+  })
+  .handler(async ({ data }) => {
+    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+    if (!apiKey) throw new Error("GOOGLE_PLACES_API_KEY no configurada");
+
+    let place: GPlace | null = null;
+
+    // Case 1: looks like a raw Place ID (starts with "ChIJ" or "GhIJ")
+    if (/^[A-Za-z0-9_-]{20,}$/.test(data.input) && !data.input.includes("/")) {
+      place = await fetchPlaceDetailsById(data.input, apiKey);
+    }
+
+    // Case 2: URL — follow redirect, parse, then look up
+    if (!place && /^https?:\/\//i.test(data.input)) {
+      const longUrl = await followRedirect(data.input);
+      const parsed = parseMapsUrl(longUrl);
+      if (parsed.name) {
+        if (parsed.lat != null && parsed.lng != null) {
+          place = await searchNearOne(
+            parsed.name,
+            apiKey,
+            { lat: parsed.lat, lng: parsed.lng },
+            300,
+          );
+        }
+        if (!place) place = await searchOne(parsed.name, apiKey);
+      }
+    }
+
+    // Case 3: plain text — search it
+    if (!place) {
+      place = await searchOne(data.input, apiKey);
+    }
+
+    if (!place) {
+      return { ok: false, reason: "not_found" as const };
+    }
+
+    const row = toRow(place, data.category);
+    if (!row) return { ok: false, reason: "bad_data" as const };
+
+    const { error } = await supabaseAdmin
+      .from("places_cache")
+      .upsert(row as never, { onConflict: "google_place_id" });
+    if (error) {
+      console.error("addPlaceFromGoogle upsert error", error);
+      throw error;
+    }
+    return {
+      ok: true as const,
+      place: {
+        google_place_id: row.google_place_id,
+        name: row.name,
+        address: row.address,
+        category: row.category,
+        rating: row.rating,
+        lat: row.lat,
+        lng: row.lng,
+      },
+    };
+  });
+
+export const addPlaceManual = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => {
+    const o = d as {
+      name?: string;
+      category?: string;
+      address?: string;
+      lat?: number;
+      lng?: number;
+      phone?: string;
+      website?: string;
+      rating?: number;
+      cuisine?: string;
+    };
+    if (!o?.name || o.name.trim().length < 2) throw new Error("Nombre requerido");
+    if (!o.category || !VALID_CATEGORIES.has(o.category)) throw new Error("Categoría inválida");
+    return {
+      name: o.name.trim().slice(0, 200),
+      category: o.category,
+      address: o.address?.trim().slice(0, 400) ?? null,
+      lat: typeof o.lat === "number" ? o.lat : null,
+      lng: typeof o.lng === "number" ? o.lng : null,
+      phone: o.phone?.trim().slice(0, 40) ?? null,
+      website: o.website?.trim().slice(0, 400) ?? null,
+      rating: typeof o.rating === "number" ? o.rating : null,
+      cuisine: o.cuisine?.trim().slice(0, 80) ?? null,
+    };
+  })
+  .handler(async ({ data }) => {
+    // Synthesize a stable id for manual entries
+    const slug = data.name
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 60);
+    const google_place_id = `manual:${data.category}:${slug}`;
+
+    const row: CachedPlace = {
+      google_place_id,
+      name: data.name,
+      cuisine: data.cuisine,
+      primary_type: null,
+      types: null,
+      address: data.address,
+      lat: data.lat,
+      lng: data.lng,
+      opening_hours_text: null,
+      opening_hours_json: null,
+      open_now: null,
+      price_level: null,
+      price_range_min: null,
+      price_range_max: null,
+      price_currency: null,
+      rating: data.rating,
+      user_rating_count: null,
+      phone: data.phone,
+      website: data.website,
+      category: data.category,
+      fetched_at: new Date().toISOString(),
+      raw: { source: "manual" },
+    };
+    const { error } = await supabaseAdmin
+      .from("places_cache")
+      .upsert(row as never, { onConflict: "google_place_id" });
+    if (error) throw error;
+    return { ok: true as const, place: { google_place_id, name: data.name, category: data.category } };
+  });
+
+export const listPlacesByCategory = createServerFn({ method: "GET" })
+  .inputValidator((d: unknown) => {
+    const o = d as { category?: string };
+    if (!o?.category || !VALID_CATEGORIES.has(o.category)) throw new Error("Categoría inválida");
+    return { category: o.category };
+  })
+  .handler(async ({ data }) => {
+    const { data: rows, error } = await supabaseAdmin
+      .from("places_cache")
+      .select("google_place_id,name,address,rating,lat,lng,category,fetched_at")
+      .eq("category", data.category)
+      .order("name");
+    if (error) throw error;
+    return { places: rows ?? [] };
+  });
+
+export const deletePlace = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => {
+    const o = d as { placeId?: string };
+    if (!o?.placeId) throw new Error("placeId requerido");
+    return { placeId: o.placeId };
+  })
+  .handler(async ({ data }) => {
+    const { error } = await supabaseAdmin
+      .from("places_cache")
+      .delete()
+      .eq("google_place_id", data.placeId);
+    if (error) throw error;
+    return { ok: true as const };
+  });

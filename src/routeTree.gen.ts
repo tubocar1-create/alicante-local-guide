@@ -35,6 +35,7 @@ import { Route as BusinessInboxRouteImport } from './routes/business.inbox'
 import { Route as BusinessBookingsRouteImport } from './routes/business.bookings'
 import { Route as BusPlannerRouteImport } from './routes/bus.planner'
 import { Route as BusLinesRouteImport } from './routes/bus.lines'
+import { Route as AdminPlacesRouteImport } from './routes/admin.places'
 import { Route as BusinessInboxIdRouteImport } from './routes/business.inbox.$id'
 import { Route as BusLinesCodeRouteImport } from './routes/bus.lines.$code'
 import { Route as ApiPublicRefreshNewsRouteImport } from './routes/api/public/refresh-news'
@@ -176,6 +177,11 @@ const BusLinesRoute = BusLinesRouteImport.update({
   path: '/lines',
   getParentRoute: () => BusRoute,
 } as any)
+const AdminPlacesRoute = AdminPlacesRouteImport.update({
+  id: '/admin/places',
+  path: '/admin/places',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BusinessInboxIdRoute = BusinessInboxIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -241,6 +247,7 @@ export interface FileRoutesByFullPath {
   '/stay': typeof StayRoute
   '/threads': typeof ThreadsRouteWithChildren
   '/vuelos': typeof VuelosRoute
+  '/admin/places': typeof AdminPlacesRoute
   '/bus/lines': typeof BusLinesRouteWithChildren
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
@@ -278,6 +285,7 @@ export interface FileRoutesByTo {
   '/stay': typeof StayRoute
   '/threads': typeof ThreadsRouteWithChildren
   '/vuelos': typeof VuelosRoute
+  '/admin/places': typeof AdminPlacesRoute
   '/bus/lines': typeof BusLinesRouteWithChildren
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
@@ -317,6 +325,7 @@ export interface FileRoutesById {
   '/stay': typeof StayRoute
   '/threads': typeof ThreadsRouteWithChildren
   '/vuelos': typeof VuelosRoute
+  '/admin/places': typeof AdminPlacesRoute
   '/bus/lines': typeof BusLinesRouteWithChildren
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
@@ -357,6 +366,7 @@ export interface FileRouteTypes {
     | '/stay'
     | '/threads'
     | '/vuelos'
+    | '/admin/places'
     | '/bus/lines'
     | '/bus/planner'
     | '/business/bookings'
@@ -394,6 +404,7 @@ export interface FileRouteTypes {
     | '/stay'
     | '/threads'
     | '/vuelos'
+    | '/admin/places'
     | '/bus/lines'
     | '/bus/planner'
     | '/business/bookings'
@@ -432,6 +443,7 @@ export interface FileRouteTypes {
     | '/stay'
     | '/threads'
     | '/vuelos'
+    | '/admin/places'
     | '/bus/lines'
     | '/bus/planner'
     | '/business/bookings'
@@ -471,6 +483,7 @@ export interface RootRouteChildren {
   StayRoute: typeof StayRoute
   ThreadsRoute: typeof ThreadsRouteWithChildren
   VuelosRoute: typeof VuelosRoute
+  AdminPlacesRoute: typeof AdminPlacesRoute
   RestaurantsPlaceIdRoute: typeof RestaurantsPlaceIdRoute
   VuelosIataRoute: typeof VuelosIataRoute
   ApiPublicAenaFlightsRoute: typeof ApiPublicAenaFlightsRoute
@@ -667,6 +680,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BusLinesRouteImport
       parentRoute: typeof BusRoute
     }
+    '/admin/places': {
+      id: '/admin/places'
+      path: '/admin/places'
+      fullPath: '/admin/places'
+      preLoaderRoute: typeof AdminPlacesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/business/inbox/$id': {
       id: '/business/inbox/$id'
       path: '/$id'
@@ -828,6 +848,7 @@ const rootRouteChildren: RootRouteChildren = {
   StayRoute: StayRoute,
   ThreadsRoute: ThreadsRouteWithChildren,
   VuelosRoute: VuelosRoute,
+  AdminPlacesRoute: AdminPlacesRoute,
   RestaurantsPlaceIdRoute: RestaurantsPlaceIdRoute,
   VuelosIataRoute: VuelosIataRoute,
   ApiPublicAenaFlightsRoute: ApiPublicAenaFlightsRoute,
