@@ -1263,32 +1263,36 @@ const MAIN_CATEGORIES = [
   "brunch",
   "asian",
   "drinks",
+  "international",
 ] as const;
 type MainCategory = (typeof MAIN_CATEGORIES)[number];
 
 const RECLASSIFY_BATCH = 40;
 const RECLASSIFY_SYSTEM = `Eres un clasificador de restaurantes/bares/cafés de Alicante.
-Asignas a CADA sitio UNA sola categoría de esta lista cerrada: ${MAIN_CATEGORIES.join(", ")}.
+Asignas a CADA sitio entre 1 y 3 categorías de esta lista cerrada: ${MAIN_CATEGORIES.join(", ")}.
 
 Definiciones:
-- "typical": comida típica alicantina/española, tapas, mediterránea tradicional.
-- "rice_fish": arrocerías, paellas, mariscos, pescados.
-- "italian": cocina italiana en general (pasta, trattorias) que NO sea solo pizzería.
+- "typical": comida típica alicantina/española, tapas, mediterránea tradicional, tascas, mesones.
+- "rice_fish": arrocerías, paellas, mariscos, pescados, marisquerías.
+- "italian": cocina italiana general (pasta, trattorias, ristorantes).
 - "pizzas": pizzerías cuyo producto principal es la pizza.
 - "brunch": brunch, desayunos, cafeterías de especialidad, tortitas, bowls saludables.
-- "asian": japonés, chino, tailandés, coreano, vietnamita, sushi, ramen, wok, indio.
-- "drinks": bares, pubs, coctelerías, cervecerías, vinotecas (consumo principalmente de bebida).
+- "asian": japonés, chino, tailandés, coreano, vietnamita, sushi, ramen, wok.
+- "drinks": bares, pubs, coctelerías, cervecerías, vinotecas (consumo principalmente bebida).
+- "international": cocinas extranjeras NO incluidas en italian/asian — hindú/indio, libanés, árabe, peruano, mexicano de mesa, latinoamericano (venezolano, colombiano, argentino, cubano, brasileño), turco de mesa, marroquí, griego, etc.
 
 Reglas:
-- Devuelve SIEMPRE una categoría (la que mejor encaje). Nunca null ni vacía.
-- Si un sitio podría ser varias, elige la dominante según el nombre/tipo principal.
-Responde SOLO JSON: { "results": [ { "id": "<google_place_id>", "category": "<una-de-la-lista>" }, ... ] }`;
+- Devuelve SIEMPRE al menos UNA categoría (la dominante primero).
+- Si el sitio encaja claramente en varias, devuélvelas todas (máx. 3). Ej: una arrocería tradicional alicantina → ["rice_fish","typical"]. Un sushi-bar con cócteles → ["asian","drinks"]. Una taberna que sirve paellas → ["typical","rice_fish"].
+- "international" SOLO para cocinas extranjeras de mesa (no fast food). Un kebap rápido NO es international.
+- La primera categoría del array es la PRIMARIA.
+Responde SOLO JSON: { "results": [ { "id": "<google_place_id>", "categories": ["<primaria>", "<otra>", ...] }, ... ] }`;
 
 async function reclassifyBatch(
   rows: ClassifyRow[],
   apiKey: string,
-): Promise<Map<string, MainCategory>> {
-  const out = new Map<string, MainCategory>();
+): Promise<Map<string, MainCategory[]>> {
+  const out = new Map<string, MainCategory[]>();
   const payload = rows.map((r) => ({
     id: r.google_place_id,
     name: r.name,
@@ -1318,17 +1322,23 @@ async function reclassifyBatch(
   const content = json.choices?.[0]?.message?.content ?? "";
   try {
     const parsed = JSON.parse(content) as {
-      results?: Array<{ id: string; category: string }>;
+      results?: Array<{ id: string; categories?: string[]; category?: string }>;
     };
     const valid = new Set<string>(MAIN_CATEGORIES as readonly string[]);
     for (const r of parsed.results ?? []) {
-      if (valid.has(r.category)) out.set(r.id, r.category as MainCategory);
+      const list = (r.categories ?? (r.category ? [r.category] : []))
+        .filter((c): c is string => typeof c === "string" && valid.has(c));
+      const dedup = Array.from(new Set(list)) as MainCategory[];
+      if (dedup.length > 0) out.set(r.id, dedup.slice(0, 3));
     }
   } catch (e) {
     console.error("AI reclassify parse error", e, content.slice(0, 200));
   }
   return out;
 }
+
+const VIRTUAL_SET = new Set<string>(VIRTUAL_TAGS as readonly string[]);
+const MAIN_SET = new Set<string>(MAIN_CATEGORIES as readonly string[]);
 
 export const reclassifyAllCategories = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => {
@@ -1340,7 +1350,7 @@ export const reclassifyAllCategories = createServerFn({ method: "POST" })
     if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
     const { data: rows, error } = await supabaseAdmin
       .from("places_cache")
-      .select("google_place_id,name,cuisine,primary_type,types,price_level,address,category")
+      .select("google_place_id,name,cuisine,primary_type,types,price_level,address,category,ai_tags")
       .neq("category", "lookup")
       .limit(data.limit);
     if (error) throw error;
@@ -1348,27 +1358,33 @@ export const reclassifyAllCategories = createServerFn({ method: "POST" })
 
     let processed = 0;
     let updated = 0;
-    const changes: Record<string, number> = {};
     for (let i = 0; i < rows.length; i += RECLASSIFY_BATCH) {
-      const batch = rows.slice(i, i + RECLASSIFY_BATCH) as ClassifyRow[];
+      const batch = rows.slice(i, i + RECLASSIFY_BATCH) as Array<
+        ClassifyRow & { ai_tags: string[] | null }
+      >;
       const assigned = await reclassifyBatch(batch, apiKey);
       const updates: Array<Promise<unknown>> = [];
       for (const r of batch) {
         processed++;
-        const newCat = assigned.get(r.google_place_id);
-        if (!newCat || newCat === r.category) continue;
+        const cats = assigned.get(r.google_place_id);
+        if (!cats || cats.length === 0) continue;
+        const primary = cats[0];
+        // Preserve existing virtual tags (fast_food, vegan, desserts, cheap…),
+        // strip stale main-category tags, and write the freshly assigned ones.
+        const existing = r.ai_tags ?? [];
+        const virtual = existing.filter((t) => VIRTUAL_SET.has(t) && !MAIN_SET.has(t));
+        const newTags = Array.from(new Set([...cats, ...virtual]));
         updated++;
-        changes[`${r.category}→${newCat}`] = (changes[`${r.category}→${newCat}`] ?? 0) + 1;
         updates.push(
           (async () => {
             await supabaseAdmin
               .from("places_cache")
-              .update({ category: newCat } as never)
+              .update({ category: primary, ai_tags: newTags } as never)
               .eq("google_place_id", r.google_place_id);
           })(),
         );
       }
       await Promise.all(updates);
     }
-    return { processed, updated, changes };
+    return { processed, updated };
   });
