@@ -6,6 +6,7 @@ import {
   addPlaceManual,
   listPlacesByCategory,
   deletePlace,
+  reclassifyAllCategories,
 } from "@/lib/places.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
