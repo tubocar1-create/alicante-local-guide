@@ -367,7 +367,55 @@ function RestaurantDashboard() {
           onClose={() => setBookingOpen(false)}
         />
       )}
+
+      {reviewOpen && place && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center"
+          onClick={() => setReviewOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-md overflow-hidden rounded-2xl border border-amber-300/20 bg-gradient-to-b from-slate-900 to-slate-950 p-5 shadow-2xl"
+          >
+            <button
+              type="button"
+              onClick={() => setReviewOpen(false)}
+              className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-slate-300 hover:bg-white/10"
+              aria-label="Cerrar"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <div className="mb-3 flex items-center gap-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-400/15 text-amber-300">
+                <Sparkles className="h-4 w-4" />
+              </span>
+              <div>
+                <h3 className="text-sm font-semibold text-amber-100">Nuestra reseña</h3>
+                <p className="text-[11px] text-slate-400">{place.name}</p>
+              </div>
+            </div>
+            <div className="min-h-[8rem] text-sm leading-relaxed text-slate-200">
+              {reviewLoading && (
+                <div className="flex items-center gap-2 text-slate-400">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Pensando en {place.name}…
+                </div>
+              )}
+              {reviewErr && !reviewLoading && (
+                <p className="text-rose-300">No pudimos generar la reseña: {reviewErr}</p>
+              )}
+              {reviewText && !reviewLoading && (
+                <p className="whitespace-pre-wrap">{reviewText}</p>
+              )}
+            </div>
+            <p className="mt-4 text-[10px] italic text-slate-500">
+              Reseña generada por IA · puede contener imprecisiones
+            </p>
+          </div>
+        </div>
+      )}
     </div>
+
   );
 }
 
