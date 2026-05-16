@@ -196,8 +196,9 @@ export function useUserLocation(opts?: { watch?: boolean }) {
       );
     };
 
-    if (cached) {
-      setState({ status: "ready", coords: cached });
+    const stored = readStoredCoords();
+    if (stored) {
+      setState({ status: "ready", coords: stored });
       startWatch();
       return;
     }
