@@ -418,10 +418,13 @@ const ADVERTISERS_RAW: Advertiser[] = [
   },
 ];
 
-// Orden de aparición en el carrusel: intercalamos musicales/cultura con
-// datos en vivo (clima, tráfico, transporte) para que no salgan en bloque.
+// Rotación del carrusel. El orden definitivo se baraja en AdBanner; aquí solo
+// declaramos qué anunciantes participan y cuántas posiciones ocupa cada uno.
+// Teatro Principal aparece DOS veces para tener mayor presencia (variante
+// aleatoria distinta en cada slot).
 const DISPLAY_ORDER: string[] = [
   "clima-alicante",
+  "teatro-principal",
   "teatro-principal",
   "mar-alicante",
   "muelle-live",
