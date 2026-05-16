@@ -340,31 +340,30 @@ function FarmaciasPage() {
           </div>
         </div>
 
-        {/* Chips de sectores */}
-        <div className="mb-4 flex flex-wrap gap-1.5">
-          <button
-            onClick={() => setActiveGroup(null)}
-            className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-wider transition ${
-              activeGroup == null
-                ? "border-emerald-300/60 bg-emerald-400/20 text-emerald-100"
-                : "border-emerald-300/15 bg-white/[0.02] text-emerald-200/60 hover:text-emerald-100"
-            }`}
-          >
-            Todas · {items.length}
-          </button>
-          {groups.map(([name, list]) => (
-            <button
-              key={name}
-              onClick={() => setActiveGroup(name === activeGroup ? null : name)}
-              className={`rounded-full border px-2.5 py-1 text-[10px] uppercase tracking-wider transition ${
-                activeGroup === name
-                  ? "border-emerald-300/60 bg-emerald-400/20 text-emerald-100"
-                  : "border-emerald-300/15 bg-white/[0.02] text-emerald-200/60 hover:text-emerald-100"
-              }`}
+        {/* Selector de zona (desplegable) */}
+        <div className="mb-4 flex items-center gap-2">
+          <label className="text-[10px] uppercase tracking-[0.2em] text-emerald-200/60">
+            {groupBy === "sector" ? "Sector" : "CP"}
+          </label>
+          <div className="relative">
+            <select
+              value={activeGroup ?? ""}
+              onChange={(e) => setActiveGroup(e.target.value || null)}
+              className="h-8 appearance-none rounded-full border border-emerald-300/25 bg-white/[0.04] py-1 pl-3 pr-8 text-[11px] text-emerald-50 focus:border-emerald-300/60 focus:outline-none"
             >
-              {name} · {list.length}
-            </button>
-          ))}
+              <option value="" className="bg-emerald-950">
+                Todas las zonas · {items.length}
+              </option>
+              {groups.map(([name, list]) => (
+                <option key={name} value={name} className="bg-emerald-950">
+                  {name} · {list.length}
+                </option>
+              ))}
+            </select>
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[9px] text-emerald-300/70">
+              ▼
+            </span>
+          </div>
         </div>
 
         {/* Banner farmacias 24h */}
