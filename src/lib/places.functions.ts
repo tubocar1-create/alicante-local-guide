@@ -86,12 +86,24 @@ const ITALIAN_QUERIES = [
   "trattoria",
   "ristorante",
 ];
+const BRUNCH_QUERIES = [
+  "brunch",
+  "desayunos",
+  "breakfast",
+  "cafetería desayuno",
+  "tortitas",
+  "pancakes",
+  "huevos benedictinos",
+  "café especialidad",
+  "specialty coffee",
+];
 const CATEGORY_QUERIES: Record<string, string[]> = {
   asian: ASIAN_QUERIES,
   drinks: DRINKS_QUERIES,
   typical: TYPICAL_QUERIES,
   rice_fish: RICE_FISH_QUERIES,
   italian: ITALIAN_QUERIES,
+  brunch: BRUNCH_QUERIES,
 };
 const STALE_MS = 24 * 60 * 60 * 1000; // 24h
 
@@ -346,6 +358,38 @@ const CURATED_LISTS: Partial<Record<string, string[]>> = {
     "Ristorante Romeo Alicante",
     "Pizzeria Vesuvio Alicante",
   ],
+  brunch: [
+    "Brunchit Alicante",
+    "El Portal Brunch & Wines Alicante",
+    "Mauro & Sensai Alicante",
+    "La Marmita Alicante",
+    "Manacafé Alicante",
+    "Café del Mar Alicante",
+    "Cervecería Sento Felipe Bergé",
+    "Pópuli Bistró Alicante",
+    "Le Pain Quotidien Alicante",
+    "La Cremerie Alicante",
+    "Santagloria Coffee & Bakery Alicante",
+    "Cafetería Mendoza Alicante",
+    "El Granaíno Alicante",
+    "Velázquez Café Alicante",
+    "Café Madrid Alicante",
+    "La Mascletà Café Alicante",
+    "Toast Café Alicante",
+    "Mercado Central Alicante",
+    "Panaria Alicante",
+    "Cafetería Eden Alicante",
+    "Cafetería Versalles Alicante",
+    "Sanissimo Alicante",
+    "Hummus Cafe Alicante",
+    "Brunch & Cake Alicante",
+    "Cafés Valiente Alicante",
+    "Granier Alicante",
+    "La Pastelería Alicante",
+    "Cafetería Lizarrán Alicante",
+    "Café Mercado Alicante",
+    "Boulangerie Alicante",
+  ],
 };
 
 async function searchOne(textQuery: string, apiKey: string): Promise<GPlace | null> {
@@ -504,6 +548,13 @@ export const getItalianPlaces = createServerFn({ method: "GET" }).handler(
 );
 export const refreshItalianPlaces = createServerFn({ method: "POST" }).handler(
   async () => ({ count: (await refreshCategoryFromGoogle("italian")).length }),
+);
+
+export const getBrunchPlaces = createServerFn({ method: "GET" }).handler(
+  async () => getCategoryPlaces("brunch"),
+);
+export const refreshBrunchPlaces = createServerFn({ method: "POST" }).handler(
+  async () => ({ count: (await refreshCategoryFromGoogle("brunch")).length }),
 );
 
 
