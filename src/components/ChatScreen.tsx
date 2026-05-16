@@ -29,6 +29,8 @@ import {
   getPizzasPlaces,
   resolvePlaceByName,
   discoverNearbyPlaces,
+  getPlacesByTag,
+  getSurprisePlaces,
 } from "@/lib/places.functions";
 import heroImg from "@/assets/alicante-hero.jpg";
 import skylineImg from "@/assets/alicante-skyline.png";
