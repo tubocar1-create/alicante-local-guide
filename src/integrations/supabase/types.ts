@@ -536,6 +536,39 @@ export type Database = {
           },
         ]
       }
+      pharmacies: {
+        Row: {
+          address: string | null
+          city: string | null
+          code: string | null
+          created_at: string
+          id: string
+          name: string
+          phone: string | null
+          postal_code: string | null
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          code?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          phone?: string | null
+          postal_code?: string | null
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          code?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          postal_code?: string | null
+        }
+        Relationships: []
+      }
       places_cache: {
         Row: {
           address: string | null
