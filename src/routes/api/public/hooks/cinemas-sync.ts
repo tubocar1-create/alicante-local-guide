@@ -261,6 +261,7 @@ async function upsertFilm(s: ParsedShow): Promise<string | null> {
     age_rating: s.age_rating,
     poster_url: s.poster_url,
     director: s.director,
+    external_ids: { publicine_pid: s.film_pid, publicine_slug: s.film_slug },
   };
 
   if (existing?.id) {
