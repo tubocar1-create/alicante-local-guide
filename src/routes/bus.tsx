@@ -43,6 +43,7 @@ export const Route = createFileRoute("/bus")({
           "Mapa de paradas de Alicante con tiempos de paso en vivo. Encuentra las paradas más cercanas y consulta los próximos buses.",
       },
     ],
+    links: [LEAFLET_HEAD_LINK],
   }),
   component: BusPage,
 });
