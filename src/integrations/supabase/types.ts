@@ -429,6 +429,66 @@ export type Database = {
         }
         Relationships: []
       }
+      health_centers: {
+        Row: {
+          address: string | null
+          associated_services: string[]
+          created_at: string
+          health_department: string | null
+          id: string
+          lat: number | null
+          lng: number | null
+          municipality: string
+          name: string
+          notes: string | null
+          phone: string | null
+          schedule: string | null
+          service_type: string
+          source_url: string | null
+          specialties: string[]
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          associated_services?: string[]
+          created_at?: string
+          health_department?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          municipality: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          schedule?: string | null
+          service_type: string
+          source_url?: string | null
+          specialties?: string[]
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          associated_services?: string[]
+          created_at?: string
+          health_department?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          municipality?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          schedule?: string | null
+          service_type?: string
+          source_url?: string | null
+          specialties?: string[]
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       interaction_events: {
         Row: {
           business_id: string | null
