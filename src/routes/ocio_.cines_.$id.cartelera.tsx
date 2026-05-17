@@ -7,7 +7,7 @@ import { getCinemaWithShowtimes } from "@/lib/ocio.functions";
 
 const ACCENT = "#f472b6";
 
-export const Route = createFileRoute("/ocio_/cines_/$id/cartelera")({
+export const Route = createFileRoute("/ocio_/cines/$id/cartelera")({
   head: () => ({
     meta: [{ title: "Cartelera del cine · Alicante" }],
   }),
