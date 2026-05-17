@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Film as FilmIcon, X } from "lucide-react";
-import { listCartelera } from "@/lib/ocio.functions";
+import { useMemo, useState } from "react";
+import { ArrowLeft, Film as FilmIcon, Ticket, X } from "lucide-react";
+import { getCinemaWithShowtimes } from "@/lib/ocio.functions";
 
 const ACCENT = "#f472b6";
 
@@ -13,28 +14,82 @@ export const Route = createFileRoute("/ocio_/cines/$id/cartelera")({
   component: CinemaCartelera,
 });
 
-function fmtDay(iso: string | null): string {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString("es-ES", {
-    weekday: "short",
+function madridParts(iso: string) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Madrid",
+    year: "numeric",
+    month: "2-digit",
     day: "2-digit",
-    month: "short",
+  }).formatToParts(new Date(iso));
+  const get = (t: string) => parts.find((p) => p.type === t)!.value;
+  return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
+function fmtTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString("es-ES", {
     hour: "2-digit",
     minute: "2-digit",
     timeZone: "Europe/Madrid",
   });
 }
 
+function fmtDayChip(key: string, todayKey: string, tomorrowKey: string): string {
+  if (key === todayKey) return "Hoy";
+  if (key === tomorrowKey) return "Mañana";
+  const d = new Date(`${key}T12:00:00Z`);
+  return d.toLocaleDateString("es-ES", {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+    timeZone: "Europe/Madrid",
+  });
+}
+
 function CinemaCartelera() {
   const { id } = Route.useParams();
-  const fetchList = useServerFn(listCartelera);
+  const fetchCinema = useServerFn(getCinemaWithShowtimes);
   const { data, isLoading } = useQuery({
-    queryKey: ["cartelera", "cinema", id],
-    queryFn: () => fetchList({ data: { cinemaSlug: id } }),
+    queryKey: ["cinema-cartelera", id],
+    queryFn: () => fetchCinema({ data: { slug: id } }),
+    refetchInterval: 60_000,
   });
 
-  const items = data?.items ?? [];
   const cinema = data?.cinema ?? null;
+  const showtimes = data?.showtimes ?? [];
+  const films = data?.films ?? [];
+  const filmById = useMemo(
+    () => new Map(films.map((f) => [f.id, f])),
+    [films],
+  );
+
+  const todayKey = useMemo(() => madridParts(new Date().toISOString()), []);
+  const tomorrowKey = useMemo(
+    () =>
+      madridParts(new Date(Date.now() + 24 * 3600_000).toISOString()),
+    [],
+  );
+
+  // Agrupar por día (Madrid)
+  const days = useMemo(() => {
+    const map = new Map<string, typeof showtimes>();
+    for (const s of showtimes) {
+      const k = madridParts(s.starts_at);
+      if (!map.has(k)) map.set(k, []);
+      map.get(k)!.push(s);
+    }
+    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
+  }, [showtimes]);
+
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const activeDay = selectedDay ?? days[0]?.[0] ?? todayKey;
+  const sessions = days.find(([k]) => k === activeDay)?.[1] ?? [];
+  const nowMs = Date.now();
+  const filmsToday = useMemo(() => {
+    const ids = new Set(sessions.map((s) => s.film_id));
+    return Array.from(ids)
+      .map((fid) => filmById.get(fid))
+      .filter((f): f is NonNullable<typeof f> => Boolean(f));
+  }, [sessions, filmById]);
 
   return (
     <div
@@ -70,37 +125,59 @@ function CinemaCartelera() {
           </Link>
         </header>
 
-        <div className="mb-5">
+        <div className="mb-4">
           <p
             className="text-[10px] uppercase tracking-[0.3em]"
             style={{ color: ACCENT }}
           >
-            Cartelera del cine
+            Dashboard de sesiones
           </p>
           <h1 className="mt-1 font-display text-2xl font-bold tracking-tight text-white md:text-4xl">
             {cinema?.name ?? "Cartelera"}
           </h1>
           <p className="mt-1 text-xs text-white/70 md:text-sm">
-            Películas en cartel en este cine.
+            Todas las funciones del día. Las pasadas aparecen atenuadas.
           </p>
         </div>
 
-        {isLoading ? (
-          <p className="py-12 text-center text-sm text-white/60">Cargando…</p>
-        ) : items.length === 0 ? (
-          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-8 text-center text-sm text-white/60">
-            Aún no hay pases publicados para este cine.
+        {/* Carrusel de días */}
+        {days.length > 0 && (
+          <div className="mb-3 -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {days.map(([k, arr]) => {
+              const isActive = k === activeDay;
+              return (
+                <button
+                  key={k}
+                  type="button"
+                  onClick={() => setSelectedDay(k)}
+                  className="shrink-0 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider transition"
+                  style={{
+                    borderColor: isActive ? ACCENT : "rgba(255,255,255,0.18)",
+                    background: isActive ? `${ACCENT}22` : "rgba(255,255,255,0.04)",
+                    color: isActive ? ACCENT : "rgba(255,255,255,0.75)",
+                  }}
+                >
+                  {fmtDayChip(k, todayKey, tomorrowKey)}
+                  <span className="ml-1.5 text-[9px] opacity-70">
+                    {arr.length}
+                  </span>
+                </button>
+              );
+            })}
           </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {items.map((f) => (
+        )}
+
+        {/* Carrusel de películas del día */}
+        {filmsToday.length > 0 && (
+          <div className="mb-4 -mx-1 flex gap-2 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {filmsToday.map((f) => (
               <Link
                 key={f.id}
                 to="/ocio/pelicula/$id"
                 params={{ id: f.slug }}
-                className="group flex flex-col overflow-hidden rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-xl transition hover:border-white/30 hover:bg-white/[0.08]"
+                className="group w-24 shrink-0"
               >
-                <div className="relative aspect-[2/3] w-full bg-black/40">
+                <div className="aspect-[2/3] w-full overflow-hidden rounded-lg border border-white/10 bg-black/40">
                   {f.poster_url ? (
                     <img
                       src={f.poster_url}
@@ -110,42 +187,160 @@ function CinemaCartelera() {
                     />
                   ) : (
                     <div className="grid h-full w-full place-items-center">
-                      <FilmIcon className="h-10 w-10 text-white/30" />
+                      <FilmIcon className="h-6 w-6 text-white/30" />
                     </div>
                   )}
-                  {f.age_rating && (
-                    <span className="absolute right-1.5 top-1.5 rounded bg-black/70 px-1.5 py-0.5 text-[9px] font-bold text-white">
-                      +{f.age_rating}
-                    </span>
-                  )}
                 </div>
-                <div className="flex flex-1 flex-col gap-1 p-2.5">
-                  <h3 className="line-clamp-2 text-[12px] font-semibold leading-tight text-white group-hover:underline">
-                    {f.title}
-                  </h3>
-                  <p className="text-[10px] text-white/55">
-                    {[
-                      f.duration_min ? `${f.duration_min} min` : null,
-                      f.genre,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </p>
-                  <div className="mt-auto flex items-center justify-between gap-1 pt-1 text-[9px] uppercase tracking-wider">
-                    <span style={{ color: ACCENT }}>
-                      {f.showtime_count} pases
-                    </span>
-                  </div>
-                  {f.next_show_at && (
-                    <p className="text-[9px] text-white/40">
-                      Próx: {fmtDay(f.next_show_at)}
-                    </p>
-                  )}
-                </div>
+                <p className="mt-1 line-clamp-2 text-[10px] leading-tight text-white/80 group-hover:text-white">
+                  {f.title}
+                </p>
               </Link>
             ))}
           </div>
         )}
+
+        {/* Tabla de sesiones (mismo formato que dashboard de cines) */}
+        <div className="rounded-2xl border border-white/10 bg-black/30 p-2 backdrop-blur-xl md:p-4">
+          <div className="mb-2 flex items-baseline justify-between px-1">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-white">
+              {sessions.length} sesiones
+            </p>
+            <p
+              className="text-[9px] uppercase tracking-[0.2em]"
+              style={{ color: `${ACCENT}99` }}
+            >
+              Hora · Película · Sala
+            </p>
+          </div>
+
+          {isLoading ? (
+            <p className="py-12 text-center text-sm text-white/60">Cargando…</p>
+          ) : sessions.length === 0 ? (
+            <p className="py-10 text-center text-sm text-white/60">
+              Sin funciones programadas para este día.
+            </p>
+          ) : (
+            <table className="w-full table-fixed border-separate border-spacing-y-0.5 text-left text-[11px] text-white">
+              <colgroup>
+                <col className="w-[52px]" />
+                <col />
+                <col className="w-[64px]" />
+                <col className="w-[48px]" />
+              </colgroup>
+              <thead>
+                <tr
+                  className="text-[9px] uppercase tracking-[0.12em]"
+                  style={{ color: `${ACCENT}99` }}
+                >
+                  <th className="px-1 py-1 font-medium">Hora</th>
+                  <th className="px-1 py-1 font-medium">Película</th>
+                  <th className="px-1 py-1 text-center font-medium">Form.</th>
+                  <th className="px-1 py-1 text-right font-medium">Tic.</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sessions.map((s) => {
+                  const f = filmById.get(s.film_id);
+                  const isPast = new Date(s.starts_at).getTime() < nowMs;
+                  const tag = [s.format, s.version].filter(Boolean).join(" ");
+                  return (
+                    <tr
+                      key={s.id}
+                      className={isPast ? "bg-white/[0.015]" : "bg-white/[0.04]"}
+                      style={{ opacity: isPast ? 0.42 : 1 }}
+                    >
+                      <td className="rounded-l-md px-1.5 py-1.5 align-middle">
+                        <span
+                          className="inline-flex items-center rounded-md border px-1.5 py-0.5 font-mono text-[11px] font-bold"
+                          style={{
+                            borderColor: isPast
+                              ? "rgba(255,255,255,0.15)"
+                              : `${ACCENT}55`,
+                            color: isPast ? "rgba(255,255,255,0.7)" : ACCENT,
+                            textDecoration: isPast ? "line-through" : "none",
+                          }}
+                        >
+                          {fmtTime(s.starts_at)}
+                        </span>
+                      </td>
+                      <td className="px-1 py-1 align-middle">
+                        {f ? (
+                          <Link
+                            to="/ocio/pelicula/$id"
+                            params={{ id: f.slug }}
+                            className="flex items-start gap-1.5 hover:opacity-80"
+                          >
+                            <div className="h-8 w-6 shrink-0 overflow-hidden rounded-sm border border-white/10 bg-black/40">
+                              {f.poster_url ? (
+                                <img
+                                  src={f.poster_url}
+                                  alt={f.title}
+                                  loading="lazy"
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <div className="grid h-full w-full place-items-center">
+                                  <FilmIcon className="h-3 w-3 text-white/30" />
+                                </div>
+                              )}
+                            </div>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-[11px] font-medium text-white">
+                                {f.title}
+                              </span>
+                              {(f.duration_min || f.age_rating) && (
+                                <span className="block truncate text-[9px] text-white/50">
+                                  {[
+                                    f.duration_min ? `${f.duration_min}'` : null,
+                                    f.age_rating ? `+${f.age_rating}` : null,
+                                    s.room,
+                                  ]
+                                    .filter(Boolean)
+                                    .join(" · ")}
+                                </span>
+                              )}
+                            </span>
+                          </Link>
+                        ) : (
+                          <span className="text-white/50">—</span>
+                        )}
+                      </td>
+                      <td className="px-1 py-1 text-center align-middle">
+                        {tag ? (
+                          <span className="inline-flex rounded-full bg-white/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-white/80">
+                            {tag}
+                          </span>
+                        ) : (
+                          <span className="text-white/30">—</span>
+                        )}
+                      </td>
+                      <td className="rounded-r-md px-1 py-1 text-right align-middle">
+                        {s.ticket_url && !isPast ? (
+                          <a
+                            href={s.ticket_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            aria-label="Comprar entrada"
+                            className="inline-flex h-6 w-6 items-center justify-center rounded-full border transition hover:bg-white/10"
+                            style={{ borderColor: `${ACCENT}55`, color: ACCENT }}
+                          >
+                            <Ticket className="h-3 w-3" />
+                          </a>
+                        ) : isPast ? (
+                          <span className="text-[9px] uppercase tracking-wider text-white/40">
+                            Fin
+                          </span>
+                        ) : (
+                          <span className="text-white/30">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
     </div>
   );

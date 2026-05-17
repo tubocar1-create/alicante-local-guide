@@ -1,6 +1,31 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+function madridStartOfTodayUtcIso(): string {
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Madrid",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const get = (t: string) => parts.find((p) => p.type === t)!.value;
+  const y = get("year");
+  const m = get("month");
+  const d = get("day");
+  // Madrid offset (min) at this UTC moment
+  const utcMidnight = new Date(`${y}-${m}-${d}T00:00:00Z`);
+  const madridStr = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Madrid",
+    hour12: false,
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(utcMidnight);
+  const [hh, mm] = madridStr.split(":").map(Number);
+  const offsetMin = hh * 60 + mm;
+  return new Date(utcMidnight.getTime() - offsetMin * 60000).toISOString();
+}
+
 export type CinemaDTO = {
   id: string;
   slug: string;
@@ -66,12 +91,13 @@ export const getCinemaWithShowtimes = createServerFn({ method: "POST" })
     if (ec) throw ec;
     if (!cinema) return { cinema: null, showtimes: [], films: [] };
 
-    const nowIso = new Date().toISOString();
+    // Desde el inicio del día (zona Madrid) para incluir sesiones pasadas de hoy
+    const startIso = madridStartOfTodayUtcIso();
     const { data: shows, error: es } = await supabaseAdmin
       .from("showtimes")
       .select("*")
       .eq("cinema_id", cinema.id)
-      .gte("starts_at", nowIso)
+      .gte("starts_at", startIso)
       .order("starts_at");
     if (es) throw es;
     const showtimes = (shows ?? []) as ShowtimeDTO[];
