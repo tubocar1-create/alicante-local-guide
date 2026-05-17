@@ -166,7 +166,7 @@ function CinemasPage() {
                 style={{ color: `${ACCENT}99` }}
               >
                 <th className="px-1 py-1 font-medium">Cine · Dirección</th>
-                <th className="px-1 py-1 text-center font-medium">Cartelera</th>
+                <th className="px-1 py-1 text-center font-medium">Ficha</th>
                 <th className="px-1 py-1 text-center font-medium">Est.</th>
                 <th className="px-1 py-1 text-right font-medium">Dist.</th>
               </tr>
@@ -190,7 +190,7 @@ function CinemasPage() {
                   <tr key={p.id} className="bg-white/[0.03]">
                     <td className="rounded-l-md px-1.5 py-1.5 align-middle">
                       <Link
-                        to="/ocio/cines/$id"
+                        to="/ocio/cines/$id/cartelera"
                         params={{ id: p.slug }}
                         className="flex items-start gap-1.5 hover:opacity-80"
                       >
@@ -212,15 +212,14 @@ function CinemasPage() {
                     </td>
                     <td className="px-1 py-1 text-center align-middle">
                       <Link
-                        to="/ocio/cines/$id/cartelera"
+                        to="/ocio/cines/$id"
                         params={{ id: p.slug }}
-                        aria-label={`Cartelera de ${p.name}`}
-                        title="Ver cartelera de este cine"
-                        className="inline-flex h-7 items-center justify-center gap-1 rounded-full border px-2 text-[10px] font-semibold transition hover:bg-white/10"
-                        style={{ borderColor: `${ACCENT}55`, color: ACCENT }}
+                        aria-label={`Ficha de ${p.name}`}
+                        title="Ver ficha del cine"
+                        className="inline-flex h-7 items-center justify-center rounded-full border px-2 text-[10px] font-semibold transition hover:bg-white/10"
+                        style={{ borderColor: "rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.75)" }}
                       >
-                        <Clapperboard className="h-3.5 w-3.5" />
-                        Ver
+                        Ficha
                       </Link>
                     </td>
                     <td className="px-1 py-1 text-center align-middle">
