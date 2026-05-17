@@ -132,13 +132,32 @@ export type CarteleraItemDTO = FilmDTO & {
 };
 
 // Listado global de cartelera: todas las películas con pases futuros.
-export const listCartelera = createServerFn({ method: "GET" }).handler(async () => {
+export const listCartelera = createServerFn({ method: "GET" })
+  .inputValidator((data: { cinemaSlug?: string } | undefined) => data ?? {})
+  .handler(async ({ data }) => {
   const nowIso = new Date().toISOString();
-  const { data: shows, error: es } = await supabaseAdmin
+
+  let cinemaFilterId: string | null = null;
+  let cinemaInfo: { id: string; slug: string; name: string } | null = null;
+  if (data?.cinemaSlug) {
+    const { data: c, error: ec } = await supabaseAdmin
+      .from("cinemas")
+      .select("id, slug, name")
+      .eq("slug", data.cinemaSlug)
+      .maybeSingle();
+    if (ec) throw ec;
+    if (!c) return { cinema: null, items: [] as CarteleraItemDTO[] };
+    cinemaFilterId = c.id;
+    cinemaInfo = c;
+  }
+
+  let q = supabaseAdmin
     .from("showtimes")
     .select("film_id, cinema_id, starts_at")
     .gte("starts_at", nowIso)
     .order("starts_at");
+  if (cinemaFilterId) q = q.eq("cinema_id", cinemaFilterId);
+  const { data: shows, error: es } = await q;
   if (es) throw es;
   const rows = shows ?? [];
   if (rows.length === 0) return [] as CarteleraItemDTO[];
