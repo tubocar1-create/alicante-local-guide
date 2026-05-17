@@ -29,7 +29,7 @@ import { Route as BusinessIndexRouteImport } from './routes/business.index'
 import { Route as VuelosIataRouteImport } from './routes/vuelos_.$iata'
 import { Route as ThreadsIdRouteImport } from './routes/threads.$id'
 import { Route as RestaurantsPlaceIdRouteImport } from './routes/restaurants.$placeId'
-import { Route as HospitalesIdRouteImport } from './routes/hospitales.$id'
+import { Route as HospitalesIdRouteImport } from './routes/hospitales_.$id'
 import { Route as BusinessReferralsRouteImport } from './routes/business.referrals'
 import { Route as BusinessQrRouteImport } from './routes/business.qr'
 import { Route as BusinessOnboardingRouteImport } from './routes/business.onboarding'
@@ -153,9 +153,9 @@ const RestaurantsPlaceIdRoute = RestaurantsPlaceIdRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const HospitalesIdRoute = HospitalesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => HospitalesRoute,
+  id: '/hospitales_/$id',
+  path: '/hospitales/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const BusinessReferralsRoute = BusinessReferralsRouteImport.update({
   id: '/referrals',
@@ -272,7 +272,7 @@ export interface FileRoutesByFullPath {
   '/eat': typeof EatRoute
   '/explore': typeof ExploreRoute
   '/farmacias': typeof FarmaciasRoute
-  '/hospitales': typeof HospitalesRouteWithChildren
+  '/hospitales': typeof HospitalesRoute
   '/login': typeof LoginRoute
   '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
@@ -315,7 +315,7 @@ export interface FileRoutesByTo {
   '/eat': typeof EatRoute
   '/explore': typeof ExploreRoute
   '/farmacias': typeof FarmaciasRoute
-  '/hospitales': typeof HospitalesRouteWithChildren
+  '/hospitales': typeof HospitalesRoute
   '/login': typeof LoginRoute
   '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
@@ -360,7 +360,7 @@ export interface FileRoutesById {
   '/eat': typeof EatRoute
   '/explore': typeof ExploreRoute
   '/farmacias': typeof FarmaciasRoute
-  '/hospitales': typeof HospitalesRouteWithChildren
+  '/hospitales': typeof HospitalesRoute
   '/login': typeof LoginRoute
   '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
@@ -380,7 +380,7 @@ export interface FileRoutesById {
   '/business/onboarding': typeof BusinessOnboardingRoute
   '/business/qr': typeof BusinessQrRoute
   '/business/referrals': typeof BusinessReferralsRoute
-  '/hospitales/$id': typeof HospitalesIdRoute
+  '/hospitales_/$id': typeof HospitalesIdRoute
   '/restaurants/$placeId': typeof RestaurantsPlaceIdRoute
   '/threads/$id': typeof ThreadsIdRoute
   '/vuelos_/$iata': typeof VuelosIataRoute
@@ -513,7 +513,7 @@ export interface FileRouteTypes {
     | '/business/onboarding'
     | '/business/qr'
     | '/business/referrals'
-    | '/hospitales/$id'
+    | '/hospitales_/$id'
     | '/restaurants/$placeId'
     | '/threads/$id'
     | '/vuelos_/$iata'
@@ -538,7 +538,7 @@ export interface RootRouteChildren {
   EatRoute: typeof EatRoute
   ExploreRoute: typeof ExploreRoute
   FarmaciasRoute: typeof FarmaciasRoute
-  HospitalesRoute: typeof HospitalesRouteWithChildren
+  HospitalesRoute: typeof HospitalesRoute
   LoginRoute: typeof LoginRoute
   PerfilRoute: typeof PerfilRoute
   RepoRoute: typeof RepoRoute
@@ -548,6 +548,7 @@ export interface RootRouteChildren {
   ThreadsRoute: typeof ThreadsRouteWithChildren
   VuelosRoute: typeof VuelosRoute
   AdminPlacesRoute: typeof AdminPlacesRoute
+  HospitalesIdRoute: typeof HospitalesIdRoute
   RestaurantsPlaceIdRoute: typeof RestaurantsPlaceIdRoute
   VuelosIataRoute: typeof VuelosIataRoute
   ApiPublicAenaFlightsRoute: typeof ApiPublicAenaFlightsRoute
@@ -702,12 +703,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RestaurantsPlaceIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/hospitales/$id': {
-      id: '/hospitales/$id'
-      path: '/$id'
+    '/hospitales_/$id': {
+      id: '/hospitales_/$id'
+      path: '/hospitales/$id'
       fullPath: '/hospitales/$id'
       preLoaderRoute: typeof HospitalesIdRouteImport
-      parentRoute: typeof HospitalesRoute
+      parentRoute: typeof rootRouteImport
     }
     '/business/referrals': {
       id: '/business/referrals'
@@ -923,18 +924,6 @@ const BusinessRouteWithChildren = BusinessRoute._addFileChildren(
   BusinessRouteChildren,
 )
 
-interface HospitalesRouteChildren {
-  HospitalesIdRoute: typeof HospitalesIdRoute
-}
-
-const HospitalesRouteChildren: HospitalesRouteChildren = {
-  HospitalesIdRoute: HospitalesIdRoute,
-}
-
-const HospitalesRouteWithChildren = HospitalesRoute._addFileChildren(
-  HospitalesRouteChildren,
-)
-
 interface ThreadsRouteChildren {
   ThreadsIdRoute: typeof ThreadsIdRoute
 }
@@ -954,7 +943,7 @@ const rootRouteChildren: RootRouteChildren = {
   EatRoute: EatRoute,
   ExploreRoute: ExploreRoute,
   FarmaciasRoute: FarmaciasRoute,
-  HospitalesRoute: HospitalesRouteWithChildren,
+  HospitalesRoute: HospitalesRoute,
   LoginRoute: LoginRoute,
   PerfilRoute: PerfilRoute,
   RepoRoute: RepoRoute,
@@ -964,6 +953,7 @@ const rootRouteChildren: RootRouteChildren = {
   ThreadsRoute: ThreadsRouteWithChildren,
   VuelosRoute: VuelosRoute,
   AdminPlacesRoute: AdminPlacesRoute,
+  HospitalesIdRoute: HospitalesIdRoute,
   RestaurantsPlaceIdRoute: RestaurantsPlaceIdRoute,
   VuelosIataRoute: VuelosIataRoute,
   ApiPublicAenaFlightsRoute: ApiPublicAenaFlightsRoute,
@@ -978,3 +968,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
