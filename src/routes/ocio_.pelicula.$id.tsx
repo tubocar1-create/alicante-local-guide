@@ -302,8 +302,8 @@ function FilmDetail() {
                               {todayEntries.length > 0 ? (
                                 todayEntries.map(([d, s]) => renderDay(d, s))
                               ) : (
-                                <p className="text-[11px] italic text-white/45">
-                                  Hoy no quedan sesiones disponibles.
+                                <p className="text-[11px] italic text-yellow-300">
+                                  Hoy no quedan funciones disponibles.
                                 </p>
                               )}
                               {laterEntries.length > 0 && (
