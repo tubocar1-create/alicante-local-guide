@@ -1,0 +1,101 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { ArrowLeft, Download, Loader2 } from "lucide-react";
+import { HEALTH_CATEGORIES } from "@/lib/health-categories";
+import { populateHealthCategory } from "@/lib/health.functions";
+
+export const Route = createFileRoute("/admin/salud")({
+  head: () => ({ meta: [{ title: "Admin · Poblar salud" }] }),
+  component: AdminSaludPage,
+});
+
+function AdminSaludPage() {
+  const populate = useServerFn(populateHealthCategory);
+  const [status, setStatus] = useState<
+    Record<string, { loading: boolean; msg?: string; error?: string }>
+  >({});
+
+  async function run(slug: string, query: string) {
+    setStatus((s) => ({ ...s, [slug]: { loading: true } }));
+    try {
+      const r = await populate({ data: { category: slug, query } });
+      setStatus((s) => ({
+        ...s,
+        [slug]: {
+          loading: false,
+          msg: `${r.inserted}/${r.total} guardados`,
+        },
+      }));
+    } catch (e) {
+      setStatus((s) => ({
+        ...s,
+        [slug]: { loading: false, error: (e as Error).message },
+      }));
+    }
+  }
+
+  return (
+    <main className="mx-auto max-w-3xl px-4 py-6">
+      <Link
+        to="/salud"
+        className="mb-4 inline-flex items-center gap-1.5 text-[11px] uppercase tracking-widest text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" /> Volver a Salud
+      </Link>
+
+      <h1 className="font-display text-2xl font-bold text-foreground">
+        Poblar categorías de salud
+      </h1>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Cada botón llama a Google Places y guarda hasta <strong>10</strong>{" "}
+        resultados por categoría en la base de datos. Solo admins.
+      </p>
+
+      <ul className="mt-6 space-y-2">
+        {HEALTH_CATEGORIES.map((c) => {
+          const s = status[c.slug];
+          return (
+            <li
+              key={c.slug}
+              className="flex items-center gap-3 rounded-xl border border-border bg-card p-3"
+            >
+              <div
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-xl"
+                style={{ background: c.bg, color: c.fg }}
+              >
+                {c.emoji}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-foreground">
+                  {c.label}
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  Query: {c.query}
+                </p>
+                {s?.msg && (
+                  <p className="text-[11px] text-emerald-600">{s.msg}</p>
+                )}
+                {s?.error && (
+                  <p className="text-[11px] text-rose-600">{s.error}</p>
+                )}
+              </div>
+              <button
+                onClick={() => run(c.slug, c.query)}
+                disabled={s?.loading}
+                className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[11px] font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
+              >
+                {s?.loading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Download className="h-3.5 w-3.5" />
+                )}
+                Poblar
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </main>
+  );
+}

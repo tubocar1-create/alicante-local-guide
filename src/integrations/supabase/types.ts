@@ -489,6 +489,69 @@ export type Database = {
         }
         Relationships: []
       }
+      health_providers: {
+        Row: {
+          address: string | null
+          category: string
+          created_at: string
+          google_place_id: string | null
+          id: string
+          lat: number | null
+          lng: number | null
+          name: string
+          notes: string | null
+          opening_hours: Json | null
+          phone: string | null
+          photos: string[]
+          price_level: string | null
+          rating: number | null
+          source: string
+          updated_at: string
+          user_ratings_total: number | null
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          category: string
+          created_at?: string
+          google_place_id?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          name: string
+          notes?: string | null
+          opening_hours?: Json | null
+          phone?: string | null
+          photos?: string[]
+          price_level?: string | null
+          rating?: number | null
+          source?: string
+          updated_at?: string
+          user_ratings_total?: number | null
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          category?: string
+          created_at?: string
+          google_place_id?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          name?: string
+          notes?: string | null
+          opening_hours?: Json | null
+          phone?: string | null
+          photos?: string[]
+          price_level?: string | null
+          rating?: number | null
+          source?: string
+          updated_at?: string
+          user_ratings_total?: number | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       interaction_events: {
         Row: {
           business_id: string | null
