@@ -149,10 +149,7 @@ function CarteleraPage() {
                       .filter(Boolean)
                       .join(" · ")}
                   </p>
-                  <div className="mt-auto flex items-center justify-between gap-1 pt-1 text-[9px] uppercase tracking-wider">
-                    <span style={{ color: ACCENT }}>
-                      {f.showtime_count} pases
-                    </span>
+                  <div className="mt-auto flex items-center justify-end gap-1 pt-1 text-[9px] uppercase tracking-wider">
                     <span className="text-white/50">
                       {f.cinema_count}{" "}
                       {f.cinema_count === 1 ? "cine" : "cines"}
