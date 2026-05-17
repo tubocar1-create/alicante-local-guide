@@ -2,7 +2,7 @@ import { createFileRoute, Link, Outlet, notFound } from "@tanstack/react-router"
 import { useMemo } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { Phone, Star, X } from "lucide-react";
+import { X } from "lucide-react";
 import { getCategory } from "@/lib/health-categories";
 import {
   listHealthProviders,
