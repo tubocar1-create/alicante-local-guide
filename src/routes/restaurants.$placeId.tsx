@@ -32,6 +32,7 @@ export const Route = createFileRoute("/restaurants/$placeId")({
         content: "Detalles del restaurante: horario, precio, valoración y ubicación.",
       },
     ],
+    links: [LEAFLET_HEAD_LINK],
   }),
   component: RestaurantDashboard,
 });
