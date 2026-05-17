@@ -34,7 +34,7 @@ import {
 } from "@/lib/places.functions";
 import heroImg from "@/assets/alicante-hero.jpg";
 import portadaImg from "@/assets/alicante-portada.jpg";
-import { DraggableHogueras } from "@/components/DraggableHogueras";
+import hoguerasIcon from "@/assets/hogueras-alicante.png";
 
 const TILE_SUBTITLES: Record<string, string> = {
   "Comer": "Restaurantes y tapas",
@@ -46,6 +46,7 @@ const TILE_SUBTITLES: Record<string, string> = {
   "Mapa": "Explora la ciudad",
   "Servicios sanitarios": "Farmacias y hospitales",
   "Ocio": "Cines, teatros y conciertos",
+  "Fiestas de Alicante": "Hogueras y mascletá",
 };
 
 const TILE_ICONS: Record<string, LucideIcon> = {
@@ -509,7 +510,7 @@ export function ChatScreen() {
                 fetchPriority="high"
                 decoding="async"
               />
-              <DraggableHogueras onOpen={() => navigate({ to: "/fiestas" })} />
+              
             </div>
           )}
 
@@ -610,6 +611,12 @@ export function ChatScreen() {
                     label: "Ocio",
                     onClick: () => navigate({ to: "/ocio" }),
                   },
+                  {
+                    key: "fiestas",
+                    emoji: "🎆",
+                    label: "Fiestas de Alicante",
+                    onClick: () => navigate({ to: "/fiestas" }),
+                  },
                 ].map((t, idx) => {
                   const subtitle = TILE_SUBTITLES[t.label];
                   const Icon = TILE_ICONS[t.label];
@@ -623,12 +630,14 @@ export function ChatScreen() {
                     "Mapa":                { bg: "oklch(0.93 0.07 160)", fg: "oklch(0.48 0.14 165)" },
                     "Servicios sanitarios":{ bg: "oklch(0.94 0.06 25)",  fg: "oklch(0.55 0.18 25)" },
                     "Ocio":                { bg: "oklch(0.94 0.07 310)", fg: "oklch(0.50 0.18 315)" },
+                    "Fiestas de Alicante": { bg: "oklch(0.93 0.08 55)",  fg: "oklch(0.55 0.18 50)" },
                   };
                   const pastel = PASTEL[t.label] ?? { bg: "oklch(0.95 0.02 80)", fg: "oklch(0.40 0.05 80)" };
                   const displayLabel =
                     t.label === "Turismo, playa y aventuras" ? "Playas"
                     : t.label === "Transporte público" ? "Transporte"
                     : t.label === "Servicios sanitarios" ? "Salud"
+                    : t.label === "Fiestas de Alicante" ? "Fiestas"
                     : t.label;
                   return (
                     <button
@@ -642,7 +651,9 @@ export function ChatScreen() {
                         className="relative grid h-12 w-12 place-items-center rounded-full transition-transform duration-300 ease-out group-active:scale-90"
                         style={{ backgroundColor: pastel.bg }}
                       >
-                        {Icon ? (
+                        {t.label === "Fiestas de Alicante" ? (
+                          <img src={hoguerasIcon} alt="" className="h-7 w-7 rounded-full object-cover ring-2 ring-amber-300/80" />
+                        ) : Icon ? (
                           <Icon className="h-5 w-5" strokeWidth={1.9} style={{ color: pastel.fg }} />
                         ) : (
                           <span className="text-[20px]">{t.emoji}</span>
