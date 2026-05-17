@@ -9,7 +9,7 @@ export const Route = createFileRoute("/sistema-sanitario")({
       {
         name: "description",
         content:
-          "Guía oficial del sistema sanitario público de Alicante: hospitales, centros de salud, urgencias y especialidades por departamento y municipio.",
+          "Guía oficial del sistema sanitario público de Alicante: atención primaria, hospitales, especialidades, urgencias, salud mental y trámites.",
       },
     ],
   }),
@@ -32,20 +32,203 @@ type HealthCenter = {
   notes: string | null;
 };
 
-const TYPE_LABELS: Record<string, { label: string; emoji: string; desc: string }> = {
-  hospital: { label: "Hospital", emoji: "🏥", desc: "Atención hospitalaria y urgencias 24h" },
-  centro_salud: { label: "Centro de salud", emoji: "🩺", desc: "Atención primaria y pediatría" },
-  consultorio: { label: "Consultorio", emoji: "🏡", desc: "Consultas en pedanías y municipios pequeños" },
-  urgencias: { label: "Urgencias / PAC", emoji: "🚑", desc: "Atención fuera del horario habitual" },
-  especialidades: { label: "Centro de especialidades", emoji: "🔬", desc: "Consultas externas por derivación" },
-  farmacia: { label: "Farmacia", emoji: "💊", desc: "Farmacias y guardias" },
+// ─── Árbol de categorías ──────────────────────────────────────────────
+type SubCat = {
+  key: string;
+  label: string;
+  emoji?: string;
+  // filtros aplicados sobre health_centers
+  service_types?: string[];
+  specialty_any?: string[]; // coincide si la especialidad contiene cualquier término
+  staticInfo?: { title: string; body: React.ReactNode };
 };
 
-type Step = "tipo" | "departamento" | "municipio" | "resultados" | "detalle";
+type Category = {
+  key: string;
+  label: string;
+  emoji: string;
+  desc: string;
+  subs: SubCat[];
+};
+
+const CATEGORIES: Category[] = [
+  {
+    key: "primaria",
+    label: "Atención Primaria",
+    emoji: "🩺",
+    desc: "Tu centro de salud de referencia",
+    subs: [
+      { key: "centros", label: "Centros de Salud", emoji: "🏥", service_types: ["centro_salud", "consultorio"] },
+      { key: "pediatria", label: "Pediatría", emoji: "👶", service_types: ["centro_salud"], specialty_any: ["Pediatría"] },
+      { key: "familia", label: "Medicina Familiar", emoji: "👨‍⚕️", service_types: ["centro_salud"], specialty_any: ["Medicina familiar"] },
+      { key: "enfermeria", label: "Enfermería", emoji: "💉", service_types: ["centro_salud"], specialty_any: ["Enfermería", "Matrona"] },
+    ],
+  },
+  {
+    key: "hospitales",
+    label: "Hospitales",
+    emoji: "🏨",
+    desc: "Hospitales públicos de la provincia",
+    subs: [
+      { key: "all", label: "Todos los hospitales", emoji: "🏨", service_types: ["hospital"] },
+      { key: "balmis", label: "Hospital Dr. Balmis", emoji: "⭐", service_types: ["hospital"], specialty_any: [] },
+      { key: "santjoan", label: "Hospital Sant Joan", emoji: "⭐", service_types: ["hospital"], specialty_any: [] },
+      { key: "elche", label: "Hospital de Elche", emoji: "⭐", service_types: ["hospital"], specialty_any: [] },
+      { key: "elda", label: "Hospital de Elda", emoji: "⭐", service_types: ["hospital"], specialty_any: [] },
+    ],
+  },
+  {
+    key: "especialidades",
+    label: "Especialidades",
+    emoji: "🔬",
+    desc: "Consultas externas por derivación",
+    subs: [
+      { key: "all", label: "Todas las especialidades", emoji: "🔬", service_types: ["especialidades", "hospital"] },
+      { key: "cardio", label: "Cardiología", emoji: "❤️", specialty_any: ["Cardiología"] },
+      { key: "trauma", label: "Traumatología", emoji: "🦴", specialty_any: ["Traumatología"] },
+      { key: "derma", label: "Dermatología", emoji: "🧴", specialty_any: ["Dermatología"] },
+      { key: "neuro", label: "Neurología", emoji: "🧠", specialty_any: ["Neurología"] },
+      { key: "gine", label: "Ginecología", emoji: "🌸", specialty_any: ["Ginecología"] },
+      { key: "oftal", label: "Oftalmología", emoji: "👁️", specialty_any: ["Oftalmología"] },
+      { key: "orl", label: "Otorrinolaringología", emoji: "👂", specialty_any: ["Otorrinolaringología"] },
+      { key: "onco", label: "Oncología", emoji: "🎗️", specialty_any: ["Oncología"] },
+    ],
+  },
+  {
+    key: "urgencias",
+    label: "Urgencias",
+    emoji: "🚑",
+    desc: "Atención urgente y emergencias",
+    subs: [
+      {
+        key: "samu",
+        label: "SAMU · 112",
+        emoji: "🚨",
+        staticInfo: {
+          title: "SAMU — Emergencias sanitarias",
+          body: (
+            <>
+              <p>Para emergencias graves (pérdida de conocimiento, dolor torácico, accidente, hemorragia importante…) llama al <strong>112</strong>.</p>
+              <p className="mt-2">El SAMU envía ambulancias medicalizadas con soporte vital avanzado. Servicio público y gratuito 24h.</p>
+              <a href="tel:112" className="inline-block mt-3 bg-red-600 text-white text-sm font-semibold px-4 py-2 rounded-lg">📞 Llamar al 112</a>
+            </>
+          ),
+        },
+      },
+      { key: "pac", label: "PAC · Punto de Atención Continuada", emoji: "🌙", service_types: ["urgencias"] },
+      { key: "hosp", label: "Urgencias Hospitalarias 24h", emoji: "🏨", service_types: ["hospital"], specialty_any: ["Urgencias 24h"] },
+    ],
+  },
+  {
+    key: "mental",
+    label: "Salud Mental",
+    emoji: "🧠",
+    desc: "Psicología, psiquiatría y unidades especializadas",
+    subs: [
+      { key: "all", label: "Unidades de Salud Mental", emoji: "🧠", service_types: ["salud_mental"] },
+      { key: "psico", label: "Psicología", emoji: "💭", specialty_any: ["Psicología", "Psicología infantil"] },
+      { key: "psiq", label: "Psiquiatría", emoji: "💊", specialty_any: ["Psiquiatría", "Psiquiatría infantil"] },
+      { key: "infantil", label: "Infanto-Juvenil", emoji: "🧒", specialty_any: ["Psicología infantil", "Psiquiatría infantil"] },
+    ],
+  },
+  {
+    key: "admin",
+    label: "Administración",
+    emoji: "📋",
+    desc: "Trámites: cita previa, tarjeta SIP, departamentos",
+    subs: [
+      {
+        key: "cita",
+        label: "Cita Previa",
+        emoji: "📅",
+        staticInfo: {
+          title: "Cita Previa — Conselleria de Sanitat",
+          body: (
+            <>
+              <p>Puedes pedir cita con tu médico de familia, pediatra o enfermería por estos canales:</p>
+              <ul className="list-disc pl-5 mt-2 space-y-1">
+                <li>App oficial <strong>GVA + Salut</strong> (Android / iOS)</li>
+                <li>Web: <a className="text-sky-700 underline" href="https://citaprevia.gva.es" target="_blank" rel="noreferrer">citaprevia.gva.es</a></li>
+                <li>Teléfono automático: <a className="text-sky-700 underline" href="tel:966592100">966 592 100</a></li>
+                <li>Mostrador de tu centro de salud</li>
+              </ul>
+            </>
+          ),
+        },
+      },
+      {
+        key: "sip",
+        label: "Tarjeta Sanitaria (SIP)",
+        emoji: "💳",
+        staticInfo: {
+          title: "Tarjeta SIP",
+          body: (
+            <>
+              <p>La tarjeta <strong>SIP</strong> es tu identificación sanitaria en la Comunitat Valenciana.</p>
+              <p className="mt-2">Para solicitarla, renovarla o cambiar de centro acude al mostrador de tu centro de salud con DNI/NIE y certificado de empadronamiento.</p>
+              <a className="inline-block mt-3 bg-sky-600 text-white text-sm font-semibold px-4 py-2 rounded-lg" href="https://san.gva.es/es/sip" target="_blank" rel="noreferrer">Más información</a>
+            </>
+          ),
+        },
+      },
+      {
+        key: "deptos",
+        label: "Departamentos de Salud",
+        emoji: "🗺️",
+        staticInfo: {
+          title: "Departamentos de Salud en Alicante",
+          body: (
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Dpto. Alicante — Hospital General Dr. Balmis</li>
+              <li>Dpto. Sant Joan d'Alacant — Hospital Universitari Sant Joan</li>
+              <li>Dpto. Elche — Hospital General</li>
+              <li>Dpto. Elche-Crevillent — Hospital del Vinalopó</li>
+              <li>Dpto. Elda — Hospital General de Elda</li>
+              <li>Dpto. Marina Baixa — Hospital de la Vila Joiosa</li>
+              <li>Dpto. Orihuela — Hospital Vega Baja</li>
+              <li>Dpto. Torrevieja — Hospital de Torrevieja</li>
+              <li>Dpto. Dénia — Hospital de Dénia</li>
+              <li>Dpto. Alcoi — Hospital Verge dels Lliris</li>
+            </ul>
+          ),
+        },
+      },
+      {
+        key: "contactos",
+        label: "Contactos útiles",
+        emoji: "📞",
+        staticInfo: {
+          title: "Teléfonos útiles",
+          body: (
+            <ul className="space-y-1">
+              <li>🚨 Emergencias: <a className="text-sky-700 underline" href="tel:112">112</a></li>
+              <li>📅 Cita previa: <a className="text-sky-700 underline" href="tel:966592100">966 592 100</a></li>
+              <li>☎️ Información Sanitat: <a className="text-sky-700 underline" href="tel:900161161">900 161 161</a></li>
+              <li>💊 Farmacia de guardia: consulta <Link to="/farmacias" className="text-sky-700 underline">/farmacias</Link></li>
+            </ul>
+          ),
+        },
+      },
+    ],
+  },
+];
+
+const TYPE_LABELS: Record<string, { label: string; emoji: string }> = {
+  hospital: { label: "Hospital", emoji: "🏨" },
+  centro_salud: { label: "Centro de salud", emoji: "🩺" },
+  consultorio: { label: "Consultorio", emoji: "🏡" },
+  urgencias: { label: "Urgencias / PAC", emoji: "🚑" },
+  especialidades: { label: "C. Especialidades", emoji: "🔬" },
+  salud_mental: { label: "Salud Mental", emoji: "🧠" },
+  farmacia: { label: "Farmacia", emoji: "💊" },
+};
+
+type Step = "categoria" | "subcategoria" | "departamento" | "municipio" | "resultados" | "detalle" | "info";
 
 function SistemaSanitarioPage() {
-  const [step, setStep] = useState<Step>("tipo");
-  const [tipo, setTipo] = useState<string | null>(null);
+  const [step, setStep] = useState<Step>("categoria");
+  const [cat, setCat] = useState<Category | null>(null);
+  const [sub, setSub] = useState<SubCat | null>(null);
   const [departamento, setDepartamento] = useState<string | null>(null);
   const [municipio, setMunicipio] = useState<string | null>(null);
   const [selected, setSelected] = useState<HealthCenter | null>(null);
@@ -64,49 +247,51 @@ function SistemaSanitarioPage() {
       setData((data as HealthCenter[]) ?? []);
       setLoading(false);
     })();
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, []);
 
-  const tipos = useMemo(() => {
-    const s = new Set(data.map((d) => d.service_type));
-    return Array.from(s);
-  }, [data]);
+  // Centros filtrados por sub-categoría (sin filtros aún de depto/municipio)
+  const baseFiltered = useMemo(() => {
+    if (!sub) return [];
+    let list = data;
+    if (sub.service_types?.length) list = list.filter((d) => sub.service_types!.includes(d.service_type));
+    if (sub.specialty_any?.length) {
+      const terms = sub.specialty_any.map((t) => t.toLowerCase());
+      list = list.filter((d) => d.specialties?.some((s) => terms.some((t) => s.toLowerCase().includes(t))));
+    }
+    // sub-categorías de hospital específico
+    if (cat?.key === "hospitales" && sub.key !== "all") {
+      const map: Record<string, RegExp> = {
+        balmis: /balmis|general universitario de alicante|general d'alacant/i,
+        santjoan: /sant joan|san juan/i,
+        elche: /elche|elx/i,
+        elda: /elda/i,
+      };
+      const re = map[sub.key];
+      if (re) list = list.filter((d) => re.test(d.name));
+    }
+    return list;
+  }, [data, sub, cat]);
 
-  const departamentos = useMemo(() => {
-    const s = new Set(
-      data.filter((d) => !tipo || d.service_type === tipo).map((d) => d.health_department ?? "Otros"),
-    );
-    return Array.from(s).sort();
-  }, [data, tipo]);
-
-  const municipios = useMemo(() => {
-    const s = new Set(
-      data
-        .filter((d) => (!tipo || d.service_type === tipo) && (!departamento || d.health_department === departamento))
-        .map((d) => d.municipality),
-    );
-    return Array.from(s).sort();
-  }, [data, tipo, departamento]);
-
+  const departamentos = useMemo(() => Array.from(new Set(baseFiltered.map((d) => d.health_department ?? "Otros"))).sort(), [baseFiltered]);
+  const municipios = useMemo(
+    () => Array.from(new Set(baseFiltered.filter((d) => !departamento || d.health_department === departamento).map((d) => d.municipality))).sort(),
+    [baseFiltered, departamento],
+  );
   const resultados = useMemo(
-    () =>
-      data.filter(
-        (d) =>
-          (!tipo || d.service_type === tipo) &&
-          (!departamento || d.health_department === departamento) &&
-          (!municipio || d.municipality === municipio),
-      ),
-    [data, tipo, departamento, municipio],
+    () => baseFiltered.filter((d) => (!departamento || d.health_department === departamento) && (!municipio || d.municipality === municipio)),
+    [baseFiltered, departamento, municipio],
   );
 
   const reset = () => {
-    setStep("tipo");
-    setTipo(null);
-    setDepartamento(null);
-    setMunicipio(null);
-    setSelected(null);
+    setStep("categoria"); setCat(null); setSub(null);
+    setDepartamento(null); setMunicipio(null); setSelected(null);
+  };
+
+  const chooseSub = (s: SubCat) => {
+    setSub(s); setDepartamento(null); setMunicipio(null); setSelected(null);
+    if (s.staticInfo) setStep("info");
+    else setStep("departamento");
   };
 
   return (
@@ -115,17 +300,15 @@ function SistemaSanitarioPage() {
         <Link to="/" className="text-sm text-sky-700 hover:underline">← Volver al inicio</Link>
         <h1 className="text-2xl font-bold text-slate-900 mt-2">🏥 Sistema Sanitario de Alicante</h1>
         <p className="text-sm text-slate-600 mt-1">
-          Información oficial extraída de los portales{" "}
-          <a className="underline" href="https://san.gva.es" target="_blank" rel="noreferrer">san.gva.es</a>,{" "}
-          <a className="underline" href="https://alicante.san.gva.es" target="_blank" rel="noreferrer">alicante.san.gva.es</a> y{" "}
-          <a className="underline" href="https://sanjuan.san.gva.es" target="_blank" rel="noreferrer">sanjuan.san.gva.es</a>.
+          Guía oficial: atención primaria, hospitales, especialidades, urgencias, salud mental y trámites administrativos.
         </p>
 
-        {/* Breadcrumb / pasos */}
+        {/* Breadcrumb */}
         <nav className="flex flex-wrap items-center gap-1 text-xs mt-4 text-slate-500">
-          <button onClick={reset} className="hover:text-sky-700">1. Tipo</button>
-          {tipo && <><span>›</span><button onClick={() => setStep("departamento")} className="hover:text-sky-700">{TYPE_LABELS[tipo]?.label ?? tipo}</button></>}
-          {departamento && <><span>›</span><button onClick={() => setStep("municipio")} className="hover:text-sky-700">{departamento}</button></>}
+          <button onClick={reset} className="hover:text-sky-700">Inicio</button>
+          {cat && <><span>›</span><button onClick={() => { setSub(null); setStep("subcategoria"); }} className="hover:text-sky-700">{cat.label}</button></>}
+          {sub && <><span>›</span><span className="text-slate-700">{sub.label}</span></>}
+          {departamento && <><span>›</span><span className="text-slate-700">{departamento}</span></>}
           {municipio && <><span>›</span><span className="text-slate-700">{municipio}</span></>}
         </nav>
       </header>
@@ -133,36 +316,63 @@ function SistemaSanitarioPage() {
       <main className="px-4 pb-12 max-w-2xl mx-auto">
         {loading && <p className="text-slate-500">Cargando…</p>}
 
-        {!loading && step === "tipo" && (
+        {!loading && step === "categoria" && (
           <section className="space-y-3">
-            <h2 className="text-lg font-semibold text-slate-800">¿Qué tipo de servicio necesitas?</h2>
-            {tipos.map((t) => {
-              const meta = TYPE_LABELS[t] ?? { label: t, emoji: "•", desc: "" };
-              return (
-                <button
-                  key={t}
-                  onClick={() => { setTipo(t); setStep("departamento"); }}
-                  className="w-full text-left bg-white border border-slate-200 rounded-xl p-4 hover:border-sky-400 hover:shadow-sm transition"
-                >
-                  <div className="text-base font-medium text-slate-900">
-                    <span className="mr-2">{meta.emoji}</span>{meta.label}
-                  </div>
-                  <div className="text-xs text-slate-500 mt-0.5">{meta.desc}</div>
-                </button>
-              );
-            })}
+            <h2 className="text-lg font-semibold text-slate-800">¿Qué necesitas?</h2>
+            {CATEGORIES.map((c) => (
+              <button
+                key={c.key}
+                onClick={() => { setCat(c); setStep("subcategoria"); }}
+                className="w-full text-left bg-white border border-slate-200 rounded-xl p-4 hover:border-sky-400 hover:shadow-sm transition"
+              >
+                <div className="text-base font-semibold text-slate-900">
+                  <span className="mr-2">{c.emoji}</span>{c.label}
+                </div>
+                <div className="text-xs text-slate-500 mt-0.5">{c.desc}</div>
+              </button>
+            ))}
+          </section>
+        )}
+
+        {!loading && step === "subcategoria" && cat && (
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold text-slate-800">{cat.emoji} {cat.label}</h2>
+            {cat.subs.map((s) => (
+              <button
+                key={s.key}
+                onClick={() => chooseSub(s)}
+                className="w-full text-left bg-white border border-slate-200 rounded-xl p-3 hover:border-sky-400 transition"
+              >
+                <div className="text-sm font-medium text-slate-900">
+                  <span className="mr-2">{s.emoji}</span>{s.label}
+                </div>
+              </button>
+            ))}
+          </section>
+        )}
+
+        {!loading && step === "info" && sub?.staticInfo && (
+          <section className="bg-white border border-slate-200 rounded-2xl p-5 space-y-3">
+            <h2 className="text-xl font-bold text-slate-900">{sub.staticInfo.title}</h2>
+            <div className="text-sm text-slate-700 leading-relaxed">{sub.staticInfo.body}</div>
+            <button onClick={() => setStep("subcategoria")} className="mt-2 text-sm text-slate-600 px-4 py-2 rounded-lg border border-slate-200">← Volver</button>
           </section>
         )}
 
         {!loading && step === "departamento" && (
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-slate-800">¿En qué departamento de salud?</h2>
-            <button
-              onClick={() => { setDepartamento(null); setStep("municipio"); }}
-              className="w-full text-left bg-sky-50 border border-sky-200 rounded-xl p-3 text-sm text-sky-800 hover:bg-sky-100"
-            >
-              Cualquier departamento →
-            </button>
+            {baseFiltered.length === 0 && (
+              <p className="text-sm text-slate-500">Aún no hay centros registrados para esta opción.</p>
+            )}
+            {baseFiltered.length > 0 && (
+              <button
+                onClick={() => { setDepartamento(null); setStep("municipio"); }}
+                className="w-full text-left bg-sky-50 border border-sky-200 rounded-xl p-3 text-sm text-sky-800 hover:bg-sky-100"
+              >
+                Cualquier departamento →
+              </button>
+            )}
             {departamentos.map((d) => (
               <button
                 key={d}
@@ -216,7 +426,7 @@ function SistemaSanitarioPage() {
                 <div className="text-xs text-slate-500 mt-1">{c.municipality} · {c.health_department}</div>
                 {c.specialties?.length > 0 && (
                   <div className="text-xs text-slate-600 mt-1 line-clamp-1">
-                    {c.specialties.slice(0, 3).join(" · ")}
+                    {c.specialties.slice(0, 4).join(" · ")}
                   </div>
                 )}
               </button>
@@ -239,45 +449,35 @@ function SistemaSanitarioPage() {
               {selected.schedule && <Row k="Horario" v={selected.schedule} />}
               {selected.health_department && <Row k="Departamento" v={selected.health_department} />}
               {selected.specialties?.length > 0 && <Row k="Especialidades" v={selected.specialties.join(", ")} />}
-              {selected.associated_services?.length > 0 && <Row k="Servicios asociados" v={selected.associated_services.join(", ")} />}
+              {selected.associated_services?.length > 0 && <Row k="Servicios" v={selected.associated_services.join(", ")} />}
               {selected.notes && <Row k="Notas" v={selected.notes} />}
             </dl>
 
             <div className="flex flex-wrap gap-2 pt-2">
               {selected.phone && (
-                <a href={`tel:${selected.phone}`} className="bg-emerald-600 text-white text-sm font-medium px-4 py-2 rounded-lg">
-                  📞 Llamar
-                </a>
+                <a href={`tel:${selected.phone}`} className="bg-emerald-600 text-white text-sm font-medium px-4 py-2 rounded-lg">📞 Llamar</a>
               )}
               {selected.address && (
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${selected.name}, ${selected.address}, ${selected.municipality}`)}`}
                   target="_blank" rel="noreferrer"
                   className="bg-sky-600 text-white text-sm font-medium px-4 py-2 rounded-lg"
-                >
-                  🗺️ Cómo llegar
-                </a>
+                >🗺️ Cómo llegar</a>
               )}
               {selected.website && (
                 <a href={selected.website} target="_blank" rel="noreferrer"
-                   className="bg-slate-100 text-slate-700 text-sm font-medium px-4 py-2 rounded-lg border border-slate-200">
-                  🌐 Web oficial
-                </a>
+                   className="bg-slate-100 text-slate-700 text-sm font-medium px-4 py-2 rounded-lg border border-slate-200">🌐 Web oficial</a>
               )}
               <button
                 onClick={() => { setSelected(null); setStep("resultados"); }}
                 className="text-sm text-slate-600 px-4 py-2 rounded-lg border border-slate-200"
-              >
-                ← Volver
-              </button>
+              >← Volver</button>
             </div>
           </section>
         )}
 
-        {!loading && step !== "tipo" && step !== "detalle" && (
-          <button onClick={reset} className="mt-6 text-xs text-slate-500 hover:text-sky-700">
-            ↺ Empezar de nuevo
-          </button>
+        {!loading && step !== "categoria" && step !== "detalle" && step !== "info" && (
+          <button onClick={reset} className="mt-6 text-xs text-slate-500 hover:text-sky-700">↺ Empezar de nuevo</button>
         )}
       </main>
     </div>
