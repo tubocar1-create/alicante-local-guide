@@ -3,8 +3,10 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-// Tope duro: máximo 10 resultados por categoría
-const MAX_RESULTS = 10;
+// Tope duro: máximo 50 resultados por categoría (sólo privados verificados con web)
+const MAX_RESULTS = 50;
+const AI_CANDIDATES = 60; // pedimos algunos extra para tolerar descartes
+const SCRAPE_CONCURRENCY = 6;
 
 export type HealthProviderDTO = {
   id: string;
@@ -76,199 +78,189 @@ export const getHealthProvider = createServerFn({ method: "GET" })
     return row ? toDTO(row) : null;
   });
 
-// ---- Populate from deterministic AI seed ----
-// Solo admins, máximo 10 fichas por categoría. No usa Google Places.
+// ---- Populate: IA genera candidatos reales + Firecrawl verifica con scraping ----
+// Sólo admins. Hasta 50 fichas por categoría. Descarta negocios sin web o
+// cuya web no aporta teléfono/dirección/horario verificables.
 
-const AI_CATEGORY_PROFILES: Record<
-  string,
-  { label: string; lat: number; lng: number; note: string }
-> = {
-  "centros-salud": {
-    label: "Centro de Salud",
-    lat: 38.3452,
-    lng: -0.481,
-    note: "Atención primaria pública con medicina familiar, enfermería, pediatría, vacunación ordinaria y trámites sanitarios básicos.",
-  },
-  especialidades: {
-    label: "Especialidades Médicas",
-    lat: 38.3607,
-    lng: -0.4867,
-    note: "Consultas ambulatorias de especialidades médicas y quirúrgicas con derivación desde atención primaria u hospitalaria.",
-  },
-  urgencias: {
-    label: "Urgencias Sanitarias",
-    lat: 38.3609,
-    lng: -0.4869,
-    note: "Atención urgente pública, puntos de atención continuada, coordinación 112 y circuitos hospitalarios.",
-  },
-  "salud-mental": {
-    label: "Salud Mental",
-    lat: 38.3548,
-    lng: -0.4867,
-    note: "Evaluación psicológica y psiquiátrica, seguimiento comunitario y coordinación con atención primaria.",
-  },
-  "admin-sip": {
-    label: "Administración SIP",
-    lat: 38.3452,
-    lng: -0.481,
-    note: "Gestión administrativa sanitaria: tarjeta SIP, cita previa, asignación de médico y actualización de datos.",
-  },
-  "hospitales-privados": {
-    label: "Hospital Privado",
-    lat: 38.3657,
-    lng: -0.4548,
-    note: "Hospital o centro médico privado con consultas externas, diagnóstico, cirugía ambulatoria y especialidades.",
-  },
-  odontologia: {
-    label: "Clínica Dental",
-    lat: 38.3443,
-    lng: -0.4895,
-    note: "Odontología general, estética dental, implantes, ortodoncia, periodoncia y revisiones preventivas.",
-  },
-  opticas: {
-    label: "Óptica",
-    lat: 38.3448,
-    lng: -0.4904,
-    note: "Graduación visual, gafas, lentes de contacto, progresivos y asesoramiento óptico personalizado.",
-  },
-  rehabilitacion: {
-    label: "Fisioterapia y Rehabilitación",
-    lat: 38.35,
-    lng: -0.49,
-    note: "Fisioterapia, terapia manual, readaptación funcional, recuperación de lesiones y ejercicio terapéutico.",
-  },
-  psicologia: {
-    label: "Psicología",
-    lat: 38.346,
-    lng: -0.486,
-    note: "Psicoterapia individual, evaluación psicológica, acompañamiento emocional y seguimiento clínico.",
-  },
-  "terapia-familiar": {
-    label: "Terapia Familiar",
-    lat: 38.352,
-    lng: -0.488,
-    note: "Terapia de pareja, intervención familiar, mediación, crianza y trabajo con adolescentes.",
-  },
-  "pediatria-privada": {
-    label: "Pediatría Privada",
-    lat: 38.361,
-    lng: -0.462,
-    note: "Consulta pediátrica privada, revisiones del niño sano, lactancia, vacunación y seguimiento infantil.",
-  },
-  ginecologia: {
-    label: "Ginecología",
-    lat: 38.357,
-    lng: -0.471,
-    note: "Revisiones ginecológicas, obstetricia, ecografías, fertilidad y salud integral de la mujer.",
-  },
-  "analisis-clinicos": {
-    label: "Laboratorio de Análisis Clínicos",
-    lat: 38.344,
-    lng: -0.489,
-    note: "Extracciones, analíticas, perfiles preventivos, pruebas clínicas y entrega digital de resultados.",
-  },
-  "diagnostico-imagen": {
-    label: "Diagnóstico por Imagen",
-    lat: 38.366,
-    lng: -0.458,
-    note: "Radiología, ecografía, resonancia magnética, TAC, mamografía y pruebas diagnósticas ambulatorias.",
-  },
-  audiologia: {
-    label: "Audiología",
-    lat: 38.349,
-    lng: -0.486,
-    note: "Revisión auditiva, adaptación de audífonos, seguimiento audioprotésico y orientación al paciente.",
-  },
-  nutricion: {
-    label: "Nutrición y Dietética",
-    lat: 38.347,
-    lng: -0.484,
-    note: "Dietética clínica, nutrición deportiva, control de peso, educación alimentaria y planes personalizados.",
-  },
-  "estetica-medica": {
-    label: "Medicina Estética",
-    lat: 38.355,
-    lng: -0.476,
-    note: "Tratamientos médico-estéticos, dermocosmética, láser, antiaging y seguimiento sanitario.",
-  },
-  traumatologia: {
-    label: "Traumatología",
-    lat: 38.365,
-    lng: -0.459,
-    note: "Valoración de lesiones, aparato locomotor, cirugía ortopédica, infiltraciones y seguimiento funcional.",
-  },
-  cardiologia: {
-    label: "Cardiología",
-    lat: 38.36,
-    lng: -0.466,
-    note: "Consulta cardiológica, electrocardiograma, ecocardiograma, prevención cardiovascular y seguimiento.",
-  },
-  oftalmologia: {
-    label: "Oftalmología",
-    lat: 38.35,
-    lng: -0.483,
-    note: "Revisión ocular, retina, glaucoma, cirugía refractiva, graduación clínica y control oftalmológico.",
-  },
-  vacunacion: {
-    label: "Vacunación",
-    lat: 38.345,
-    lng: -0.481,
-    note: "Vacunación del viajero, calendarios vacunales, medicina preventiva y asesoramiento sanitario.",
-  },
-  veterinarios: {
-    label: "Clínica Veterinaria",
-    lat: 38.354,
-    lng: -0.493,
-    note: "Medicina veterinaria, vacunación animal, cirugía menor, diagnóstico, urgencias y seguimiento preventivo.",
-  },
+const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const FIRECRAWL_URL = "https://api.firecrawl.dev/v2/scrape";
+
+type AiCandidate = {
+  name: string;
+  website: string;
+  address?: string | null;
+  area?: string | null;
 };
 
-const AI_AREAS = [
-  ["Centro", "Avenida Maisonnave, Alicante"],
-  ["Rambla", "Rambla Méndez Núñez, Alicante"],
-  ["San Blas", "Barrio San Blas, Alicante"],
-  ["Vistahermosa", "Avenida de Denia, Alicante"],
-  ["Playa San Juan", "Avenida Costa Blanca, Alicante"],
-  ["Benalúa", "Barrio Benalúa, Alicante"],
-  ["Florida-Babel", "Florida-Babel, Alicante"],
-  ["Cabo Huertas", "Cabo de las Huertas, Alicante"],
-  ["San Vicente", "San Vicente del Raspeig"],
-  ["Sant Joan", "Sant Joan d'Alacant"],
-] as const;
+type ScrapedFields = {
+  phone: string | null;
+  address: string | null;
+  hours: string[] | null;
+  email: string | null;
+  summary: string | null;
+};
 
-function buildAiSeed(category: string) {
-  const profile = AI_CATEGORY_PROFILES[category];
-  if (!profile) throw new Error("Categoría sanitaria no configurada para IA");
-  return AI_AREAS.map(([area, address], index) => {
-    const n = index + 1;
-    return {
-      category,
-      name: `${profile.label} ${area}`,
-      address,
-      phone: category === "urgencias" && [1, 2, 3, 4, 5, 10].includes(n)
-        ? "112"
-        : `965 ${String(20 + n).padStart(2, "0")} ${String(30 + n).padStart(2, "0")} ${String(40 + n).padStart(2, "0")}`,
-      website: ["centros-salud", "especialidades", "urgencias", "salud-mental", "admin-sip"].includes(category)
-        ? "https://www.san.gva.es/"
-        : null,
-      lat: profile.lat + (n - 5) * 0.004,
-      lng: profile.lng + ((n % 5) - 2) * 0.006,
-      rating: 4.2 + (n % 8) / 10,
-      user_ratings_total: 18 + n * 13,
-      photos: [] as string[],
-      google_place_id: `ai-${category}-${String(n).padStart(2, "0")}`,
-      opening_hours: {
-        weekdayDescriptions: [
-          "Lunes a viernes: 09:00–14:00",
-          "Tardes: consultar cita previa",
-          "Urgencias: según disponibilidad del centro",
-        ],
-      } as unknown as never,
-      price_level: null,
-      source: "ai",
-      notes: profile.note,
-    };
+const CATEGORY_PROMPTS: Record<string, string> = {
+  "hospitales-privados": "hospitales y clínicas hospitalarias privadas (Vithas, Quirónsalud, HLA, IMED, Perpetuo Socorro, San Carlos, etc.)",
+  odontologia: "clínicas dentales y odontólogos privados",
+  opticas: "ópticas (cadenas y locales independientes)",
+  rehabilitacion: "centros de fisioterapia y rehabilitación privados",
+  psicologia: "consultas de psicología clínica privada",
+  "terapia-familiar": "centros de terapia familiar, de pareja y mediación",
+  "pediatria-privada": "consultas de pediatría privada y clínicas pediátricas",
+  ginecologia: "clínicas ginecológicas y obstétricas privadas",
+  "analisis-clinicos": "laboratorios de análisis clínicos privados",
+  "diagnostico-imagen": "centros de diagnóstico por imagen (radiología, RMN, TAC, ecografía) privados",
+  audiologia: "centros auditivos y de audiología (audífonos)",
+  nutricion: "consultas privadas de nutrición y dietética",
+  "estetica-medica": "clínicas de medicina y dermatología estética",
+  traumatologia: "consultas y clínicas privadas de traumatología",
+  cardiologia: "consultas y clínicas privadas de cardiología",
+  oftalmologia: "clínicas oftalmológicas privadas (cirugía refractiva, revisiones)",
+  vacunacion: "centros de vacunación internacional y medicina del viajero",
+  veterinarios: "clínicas veterinarias",
+};
+
+async function aiCandidates(
+  category: string,
+  label: string,
+): Promise<AiCandidate[]> {
+  const apiKey = process.env.LOVABLE_API_KEY;
+  if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
+  const focus = CATEGORY_PROMPTS[category] ?? label;
+  const prompt = `Lista hasta ${AI_CANDIDATES} negocios REALES de ${focus} ubicados en Alicante ciudad o municipios cercanos (San Vicente del Raspeig, Sant Joan d'Alacant, El Campello, Mutxamel). Para cada uno devuelve nombre comercial exacto, URL OFICIAL de su sitio web (https://...) y dirección aproximada si la conoces. NO inventes webs: si no estás seguro de la web oficial, omite ese negocio. Prioriza negocios con presencia online real.`;
+
+  const res = await fetch(LOVABLE_AI_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-flash",
+      messages: [
+        { role: "system", content: "Eres un asistente experto en negocios locales de la provincia de Alicante. Devuelve sólo datos verificables." },
+        { role: "user", content: prompt },
+      ],
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: "submit_candidates",
+            description: "Lista de candidatos con web oficial",
+            parameters: {
+              type: "object",
+              properties: {
+                candidates: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      name: { type: "string" },
+                      website: { type: "string", description: "URL absoluta https://..." },
+                      address: { type: "string" },
+                      area: { type: "string", description: "Barrio o municipio" },
+                    },
+                    required: ["name", "website"],
+                  },
+                },
+              },
+              required: ["candidates"],
+            },
+          },
+        },
+      ],
+      tool_choice: { type: "function", function: { name: "submit_candidates" } },
+    }),
   });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Lovable AI ${res.status}: ${body.slice(0, 200)}`);
+  }
+  const json = (await res.json()) as {
+    choices?: Array<{
+      message?: { tool_calls?: Array<{ function?: { arguments?: string } }> };
+    }>;
+  };
+  const argsStr = json.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
+  if (!argsStr) return [];
+  try {
+    const parsed = JSON.parse(argsStr) as { candidates?: AiCandidate[] };
+    return (parsed.candidates ?? []).filter((c) => c.name && c.website?.startsWith("http"));
+  } catch {
+    return [];
+  }
+}
+
+async function scrapeWebsite(url: string): Promise<ScrapedFields | null> {
+  const apiKey = process.env.FIRECRAWL_API_KEY;
+  if (!apiKey) throw new Error("FIRECRAWL_API_KEY missing");
+  try {
+    const res = await fetch(FIRECRAWL_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        url,
+        onlyMainContent: true,
+        timeout: 25000,
+        formats: [
+          "summary",
+          {
+            type: "json",
+            schema: {
+              type: "object",
+              properties: {
+                phone: { type: "string", description: "Teléfono principal en formato +34 ... o 9XX XXX XXX" },
+                address: { type: "string", description: "Dirección postal completa con ciudad" },
+                hours: {
+                  type: "array",
+                  items: { type: "string" },
+                  description: "Horario por días de la semana, una línea por día",
+                },
+                email: { type: "string" },
+              },
+            },
+          },
+        ],
+      }),
+    });
+    if (!res.ok) return null;
+    const json = (await res.json()) as {
+      data?: { json?: Partial<ScrapedFields>; summary?: string };
+    };
+    const d = json.data ?? {};
+    const extracted = d.json ?? {};
+    return {
+      phone: extracted.phone ?? null,
+      address: extracted.address ?? null,
+      hours: Array.isArray(extracted.hours) && extracted.hours.length ? extracted.hours : null,
+      email: extracted.email ?? null,
+      summary: d.summary ?? null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function runWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let cursor = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (true) {
+      const i = cursor++;
+      if (i >= items.length) return;
+      results[i] = await fn(items[i], i);
+    }
+  });
+  await Promise.all(workers);
+  return results;
 }
 
 export const populateHealthCategory = createServerFn({ method: "POST" })
@@ -288,11 +280,80 @@ export const populateHealthCategory = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!roleRow) throw new Error("Forbidden: admin role required");
 
-    const rows = buildAiSeed(data.category).slice(0, MAX_RESULTS);
+    const label = data.query ?? data.category;
+    const candidates = await aiCandidates(data.category, label);
+    if (!candidates.length) {
+      return { inserted: 0, total: 0, source: "ai+web", discarded: 0, reason: "no candidates" };
+    }
+
+    // Deduplicar por host
+    const seen = new Set<string>();
+    const unique = candidates.filter((c) => {
+      try {
+        const h = new URL(c.website).host.replace(/^www\./, "");
+        if (seen.has(h)) return false;
+        seen.add(h);
+        return true;
+      } catch {
+        return false;
+      }
+    });
+
+    const scraped = await runWithConcurrency(unique, SCRAPE_CONCURRENCY, async (c) => {
+      const fields = await scrapeWebsite(c.website);
+      return { candidate: c, fields };
+    });
+
+    const rows = scraped
+      .filter((s) => s.fields && (s.fields.phone || s.fields.address))
+      .slice(0, MAX_RESULTS)
+      .map(({ candidate, fields }, i) => {
+        const f = fields!;
+        const host = (() => {
+          try { return new URL(candidate.website).host.replace(/^www\./, ""); }
+          catch { return `unknown-${i}`; }
+        })();
+        return {
+          category: data.category,
+          name: candidate.name,
+          // Prioridad a datos scrapeados de la web propia
+          address: f.address ?? candidate.address ?? null,
+          phone: f.phone ?? null,
+          website: candidate.website,
+          lat: null as number | null,
+          lng: null as number | null,
+          rating: null as number | null,
+          user_ratings_total: null as number | null,
+          photos: [] as string[],
+          google_place_id: `web-${data.category}-${host}`,
+          opening_hours: f.hours
+            ? ({ weekdayDescriptions: f.hours } as unknown as never)
+            : null,
+          price_level: null as string | null,
+          source: "ai+web",
+          notes: f.summary ?? null,
+        };
+      });
+
+    if (!rows.length) {
+      return {
+        inserted: 0,
+        total: unique.length,
+        discarded: unique.length,
+        source: "ai+web",
+        reason: "no website verified",
+      };
+    }
+
     const { error } = await supabaseAdmin
       .from("health_providers")
       .upsert(rows, { onConflict: "google_place_id" });
     if (error) throw new Error(error.message);
 
-    return { inserted: rows.length, total: rows.length, source: "ai" };
+    return {
+      inserted: rows.length,
+      total: unique.length,
+      discarded: unique.length - rows.length,
+      source: "ai+web",
+    };
   });

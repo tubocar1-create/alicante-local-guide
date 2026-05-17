@@ -20,18 +20,19 @@ function AdminSaludPage() {
     setStatus((s) => ({ ...s, [slug]: { loading: true } }));
     try {
       const r = (await populate({ data: { category: slug, query } })) as
-        | { inserted?: number; total?: number; result?: { inserted?: number; total?: number } }
+        | { inserted?: number; total?: number; discarded?: number; reason?: string; result?: { inserted?: number; total?: number; discarded?: number } }
         | undefined;
       const inserted = r?.inserted ?? r?.result?.inserted;
       const total = r?.total ?? r?.result?.total;
+      const discarded = r?.discarded ?? r?.result?.discarded;
       setStatus((s) => ({
         ...s,
         [slug]: {
           loading: false,
           msg:
-            inserted == null || total == null
+            inserted == null
               ? `Respuesta: ${JSON.stringify(r)}`
-              : `${inserted}/${total} guardados`,
+              : `${inserted} guardados · ${discarded ?? 0} descartados (sin web verificable) · ${total ?? inserted} candidatos IA${r?.reason ? ` · ${r.reason}` : ""}`,
         },
       }));
     } catch (e) {
@@ -52,11 +53,13 @@ function AdminSaludPage() {
       </Link>
 
       <h1 className="font-display text-2xl font-bold text-foreground">
-        Poblar sector salud con IA
+        Poblar sector salud (IA + scraping)
       </h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Carga hasta 10 fichas por categoría usando datos generados por IA. No
-        usa Google Places y no modifica la base de farmacias.
+        Hasta 50 fichas por categoría. La IA propone negocios reales con web
+        oficial y Firecrawl verifica teléfono, dirección y horario en cada
+        sitio. Los negocios sin web verificable se descartan. Cada categoría
+        puede tardar 1–3 minutos.
       </p>
 
       <ul className="mt-6 space-y-2">
