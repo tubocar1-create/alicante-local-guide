@@ -156,7 +156,7 @@ function CinemasPage() {
           <table className="w-full table-fixed border-separate border-spacing-y-0.5 text-left text-[11px] text-white">
             <colgroup>
               <col />
-              <col className="w-[36px]" />
+              <col className="w-[92px]" />
               <col className="w-[44px]" />
               <col className="w-[48px]" />
             </colgroup>
@@ -166,7 +166,7 @@ function CinemasPage() {
                 style={{ color: `${ACCENT}99` }}
               >
                 <th className="px-1 py-1 font-medium">Cine · Dirección</th>
-                <th className="px-1 py-1 text-center font-medium">Cart.</th>
+                <th className="px-1 py-1 text-center font-medium">Cartelera</th>
                 <th className="px-1 py-1 text-center font-medium">Est.</th>
                 <th className="px-1 py-1 text-right font-medium">Dist.</th>
               </tr>
@@ -216,10 +216,11 @@ function CinemasPage() {
                         params={{ id: p.slug }}
                         aria-label={`Cartelera de ${p.name}`}
                         title="Ver cartelera de este cine"
-                        className="inline-flex h-7 w-7 items-center justify-center rounded-full border transition hover:bg-white/10"
+                        className="inline-flex h-7 items-center justify-center gap-1 rounded-full border px-2 text-[10px] font-semibold transition hover:bg-white/10"
                         style={{ borderColor: `${ACCENT}55`, color: ACCENT }}
                       >
                         <Clapperboard className="h-3.5 w-3.5" />
+                        Ver
                       </Link>
                     </td>
                     <td className="px-1 py-1 text-center align-middle">
