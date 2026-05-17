@@ -554,9 +554,14 @@ function DestinationDashboard() {
                       {airlineName(ac).split(" ")[0]}
                     </span>
                     <span className="font-mono text-[10px] text-slate-300">{f.numVuelo}</span>
-                    <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] font-bold text-cyan-300">
+                    <button
+                      type="button"
+                      onClick={() => setPopup({ airlineCode: ac })}
+                      className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] font-bold text-cyan-300 transition hover:bg-cyan-500/20 hover:text-cyan-200 hover:ring-1 hover:ring-cyan-400/40"
+                      title="Ver info del destino"
+                    >
                       {isArrival ? `${code} → ALC` : `ALC → ${code}`}
-                    </span>
+                    </button>
                     <span className="font-mono text-slate-200">{salida}</span>
                     <span className="font-mono text-slate-400">{llegada}</span>
                     <span className="font-mono text-slate-400">{dur.label}</span>
