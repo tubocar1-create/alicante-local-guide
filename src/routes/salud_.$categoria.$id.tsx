@@ -42,10 +42,37 @@ function ProviderDetailPage() {
   const { categoria, id } = Route.useParams();
   const cat = getCategory(categoria)!;
   const get = useServerFn(getHealthProvider);
+  const fetchAiReview = useServerFn(getAiReview);
   const { data: p, isLoading } = useQuery({
     queryKey: ["health-provider", id],
     queryFn: () => get({ data: { id } }),
   });
+
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewText, setReviewText] = useState<string | null>(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewErr, setReviewErr] = useState<string | null>(null);
+
+  async function openReview() {
+    setReviewOpen(true);
+    if (reviewText || reviewLoading) return;
+    setReviewLoading(true);
+    setReviewErr(null);
+    try {
+      const r = await fetchAiReview({
+        data: {
+          name: p?.name ?? "",
+          kind: cat.label,
+          address: p?.address ?? null,
+        },
+      });
+      setReviewText(r.text);
+    } catch (e) {
+      setReviewErr(String((e as Error)?.message ?? e));
+    } finally {
+      setReviewLoading(false);
+    }
+  }
 
   if (!isLoading && !p) throw notFound();
 
