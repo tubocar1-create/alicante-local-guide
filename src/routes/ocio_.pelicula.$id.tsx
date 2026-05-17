@@ -67,25 +67,7 @@ function FilmDetail() {
     return m;
   }, [showtimes]);
 
-  // Próxima sesión y cine (para botones de cabecera)
-  const nextSession = useMemo(() => {
-    const now = Date.now();
-    return (
-      showtimes.find((s) => new Date(s.starts_at).getTime() >= now) ??
-      showtimes[0] ??
-      null
-    );
-  }, [showtimes]);
-  const primaryCinema = nextSession
-    ? cinemaById.get(nextSession.cinema_id) ?? null
-    : cinemas[0] ?? null;
-  const primaryDirHref = primaryCinema
-    ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-        `${primaryCinema.name} ${primaryCinema.address ?? ""}`,
-      )}&travelmode=driving`
-    : null;
-  const primaryTicketHref =
-    nextSession?.ticket_url ?? primaryCinema?.ticket_url ?? null;
+  // (acciones por cine se gestionan dentro de cada tarjeta)
 
   // Diálogo de IA
   const [aiOpen, setAiOpen] = useState(false);
