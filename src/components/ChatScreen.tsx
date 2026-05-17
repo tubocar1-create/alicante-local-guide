@@ -651,7 +651,9 @@ export function ChatScreen() {
                         className="relative grid h-12 w-12 place-items-center rounded-full transition-transform duration-300 ease-out group-active:scale-90"
                         style={{ backgroundColor: pastel.bg }}
                       >
-                        {Icon ? (
+                        {t.label === "Fiestas de Alicante" ? (
+                          <img src={hoguerasIcon} alt="" className="h-7 w-7 rounded-full object-cover ring-2 ring-amber-300/80" />
+                        ) : Icon ? (
                           <Icon className="h-5 w-5" strokeWidth={1.9} style={{ color: pastel.fg }} />
                         ) : (
                           <span className="text-[20px]">{t.emoji}</span>
