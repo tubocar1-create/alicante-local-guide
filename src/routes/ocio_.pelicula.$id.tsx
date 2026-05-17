@@ -62,35 +62,6 @@ function FilmDetail() {
 
   // (acciones por cine se gestionan dentro de cada tarjeta)
 
-  // Diálogo de IA y sinopsis
-  const [aiOpen, setAiOpen] = useState(false);
-  const [synopsisOpen, setSynopsisOpen] = useState(false);
-  const fetchSynopsis = useServerFn(getFilmSynopsis);
-  const { data: synData, isLoading: synLoading } = useQuery({
-    queryKey: ["film-synopsis", film?.slug],
-    queryFn: () => fetchSynopsis({ data: { slug: film!.slug } }),
-    enabled: !!film,
-    staleTime: 1000 * 60 * 60,
-  });
-  const synopsisText = synData?.synopsis ?? film?.synopsis ?? null;
-
-  const fetchAI = useServerFn(getFilmAIInsight);
-  const { data: aiData, isLoading: aiLoading, error: aiError } = useQuery({
-    queryKey: ["film-ai", film?.id, synopsisText],
-    queryFn: () =>
-      fetchAI({
-        data: {
-          title: film!.title,
-          originalTitle: film!.original_title,
-          director: film!.director,
-          cast: film!.cast_list,
-          genre: film!.genre,
-          synopsis: synopsisText,
-        },
-      }),
-    enabled: aiOpen && !!film,
-    staleTime: 1000 * 60 * 60,
-  });
 
   if (!isLoading && !film) throw notFound();
 
