@@ -470,7 +470,9 @@ function FilmDetail() {
             </DialogTitle>
           </DialogHeader>
           <div className="mt-2 max-h-[60vh] overflow-y-auto pr-1 text-[13px] leading-relaxed text-white/85">
-            {film?.synopsis ?? "Sin sinopsis disponible."}
+            {synLoading && !synopsisText
+              ? "Cargando sinopsis…"
+              : synopsisText ?? "Sin sinopsis disponible."}
           </div>
         </DialogContent>
       </Dialog>
