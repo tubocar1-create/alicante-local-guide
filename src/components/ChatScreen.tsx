@@ -603,6 +603,7 @@ export function ChatScreen() {
                       setActiveSubmenu({
                         label: "Salud",
                         submenu: [
+                          { label: "🏥 Sistema Sanitario de Alicante", href: "/sistema-sanitario" },
                           { label: "💊 Farmacias", href: "/farmacias" },
                           {
                             label: "🏥 Centros de salud",
