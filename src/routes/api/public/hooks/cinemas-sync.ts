@@ -33,25 +33,25 @@ const SOURCES: CinemaSource[] = [
     slug: "kinepolis-plaza-mar-2",
     url: "https://www.kinepolis.es/cines/kinepolis-plaza-mar-2/cartelera",
     prompt:
-      "Extrae todos los pases de la cartelera de Kinepolis Plaza Mar 2. Para cada pase devuelve título, duración, género, calificación por edad, póster, fecha y hora exacta (ISO con zona horaria de Madrid, Europe/Madrid), sala, versión (VOSE/Doblada), formato (2D/3D/IMAX/VIP) y url de compra de entrada.",
+      "Extrae todos los pases de la cartelera de Kinepolis Plaza Mar 2 (Alicante). Para cada pase: título, duración (min), género, calificación por edad, póster (URL), fecha+hora ISO, sala, versión (VOSE/Doblada), formato (2D/3D/IMAX/VIP) y URL de compra.",
   },
   {
     slug: "yelmo-puerta-alicante",
-    url: "https://www.yelmocines.es/cartelera/alicante",
+    url: "https://www.yelmocines.es/cartelera/alicante/yelmo-cines-puerta-alicante-3d",
     prompt:
-      "Extrae todos los pases del cine 'Yelmo Puerta de Alicante' (Alicante). Para cada pase: título, duración, género, calificación, póster, fecha+hora ISO en Europe/Madrid, sala, versión (VOSE/Doblada), formato y url de compra.",
+      "Extrae los pases de Yelmo Cines Puerta de Alicante. La página agrupa por película; cada película muestra una lista de horarios HH:MM con un link de compra. Las fechas aparecen como '17 mayo', '18 mayo' (día + mes en español). Para cada pase devuelve: título de la película, póster (URL absoluta), versión (ej. '2D ESPAÑOL'), formato (2D/3D), fecha+hora (ISO), y URL de compra (https://compra.yelmocines.es/...).",
   },
   {
     slug: "aana-cinemas",
-    url: "https://www.cinesaana.com/",
+    url: "https://cine.entradas.com/cine/sant-joan-d-alacant/cines-aana-san-juan/sesiones",
     prompt:
-      "Extrae todos los pases de Cines Aana (Alicante). Devuelve título, duración, género, calificación, póster, fecha+hora ISO en Europe/Madrid, sala, versión, formato y url de compra.",
+      "Extrae los pases de Cines Aana San Juan. La página lista películas y para cada una una tabla con columnas de fecha ('Hoy', 'lun, 18/05', 'mar, 19/05'...) y horas HH:MM cada una con un enlace tipo /evento/NNNN. Para cada combinación película+fecha+hora devuelve: título, póster (URL absoluta), duración en minutos, género, calificación por edad, tecnología/formato ('Digital'), fecha+hora ISO y URL de compra absoluta.",
   },
   {
     slug: "odeon-multicines-alicante",
     url: "https://odeonmulticines.com/odeon-alicante/peliculas",
     prompt:
-      "Extrae todos los pases de Odeon Multicines Alicante. Devuelve título, duración, género, calificación, póster, fecha+hora ISO en Europe/Madrid, sala, versión, formato y url de compra.",
+      "Extrae los pases programados en Odeon Multicines Alicante. Para cada pase: título de la película, póster (URL absoluta), duración, género, calificación, fecha+hora ISO, sala, versión, formato y URL de compra (https://odeonmulticines.com/producto/...).",
   },
 ];
 
