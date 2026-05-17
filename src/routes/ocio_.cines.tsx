@@ -166,7 +166,7 @@ function CinemasPage() {
                 style={{ color: `${ACCENT}99` }}
               >
                 <th className="px-1 py-1 font-medium">Cine · Dirección</th>
-                <th className="px-1 py-1 text-center font-medium">Cartelera</th>
+                <th className="px-1 py-1 text-center font-medium">Ficha</th>
                 <th className="px-1 py-1 text-center font-medium">Est.</th>
                 <th className="px-1 py-1 text-right font-medium">Dist.</th>
               </tr>
