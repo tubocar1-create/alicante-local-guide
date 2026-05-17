@@ -21,7 +21,7 @@ export const Route = createFileRoute("/ocio")({
 });
 
 type Sub = {
-  slug: "cines" | "teatros" | "conciertos";
+  slug: "cartelera" | "cines" | "teatros" | "conciertos";
   label: string;
   emoji: string;
   description: string;
@@ -32,10 +32,19 @@ type Sub = {
 
 const SUBS: Sub[] = [
   {
+    slug: "cartelera",
+    label: "Cartelera",
+    emoji: "🎞️",
+    description: "Todas las películas en cartel ahora",
+    accent: "#f9a8d4",
+    Icon: Clapperboard,
+    ready: true,
+  },
+  {
     slug: "cines",
     label: "Cines",
     emoji: "🎬",
-    description: "Cartelera, horarios y compra de entradas",
+    description: "Por cine: sesiones, horarios y compra",
     accent: "#f472b6",
     Icon: Film,
     ready: true,
