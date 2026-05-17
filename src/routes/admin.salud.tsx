@@ -20,18 +20,19 @@ function AdminSaludPage() {
     setStatus((s) => ({ ...s, [slug]: { loading: true } }));
     try {
       const r = (await populate({ data: { category: slug, query } })) as
-        | { inserted?: number; total?: number; result?: { inserted?: number; total?: number } }
+        | { inserted?: number; total?: number; discarded?: number; reason?: string; result?: { inserted?: number; total?: number; discarded?: number } }
         | undefined;
       const inserted = r?.inserted ?? r?.result?.inserted;
       const total = r?.total ?? r?.result?.total;
+      const discarded = r?.discarded ?? r?.result?.discarded;
       setStatus((s) => ({
         ...s,
         [slug]: {
           loading: false,
           msg:
-            inserted == null || total == null
+            inserted == null
               ? `Respuesta: ${JSON.stringify(r)}`
-              : `${inserted}/${total} guardados`,
+              : `${inserted} guardados · ${discarded ?? 0} descartados (sin web verificable) · ${total ?? inserted} candidatos IA${r?.reason ? ` · ${r.reason}` : ""}`,
         },
       }));
     } catch (e) {
