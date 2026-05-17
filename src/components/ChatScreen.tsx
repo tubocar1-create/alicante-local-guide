@@ -781,7 +781,7 @@ export function ChatScreen() {
         <>
           <button
             onClick={() => navigate({ to: "/ocio" })}
-            className="absolute bottom-[4.5rem] right-4 z-20 flex items-center gap-2 rounded-full bg-gradient-to-r from-[oklch(0.55_0.14_280)] to-[oklch(0.6_0.16_310)] px-4 py-3 text-sm font-bold text-white shadow-lg shadow-[oklch(0.55_0.14_280)]/30 ring-2 ring-white/60 transition active:scale-95"
+            className="fixed bottom-20 right-4 z-50 flex items-center gap-2 rounded-full gradient-warm px-4 py-3 text-sm font-bold text-primary-foreground shadow-soft ring-2 ring-white/60 transition active:scale-95"
             aria-label="Fiestas en Alicante"
           >
             <Sparkles className="h-5 w-5" />
