@@ -19,12 +19,19 @@ function AdminSaludPage() {
   async function run(slug: string, query: string) {
     setStatus((s) => ({ ...s, [slug]: { loading: true } }));
     try {
-      const r = await populate({ data: { category: slug, query } });
+      const r = (await populate({ data: { category: slug, query } })) as
+        | { inserted?: number; total?: number; result?: { inserted?: number; total?: number } }
+        | undefined;
+      const inserted = r?.inserted ?? r?.result?.inserted;
+      const total = r?.total ?? r?.result?.total;
       setStatus((s) => ({
         ...s,
         [slug]: {
           loading: false,
-          msg: `${r.inserted}/${r.total} guardados`,
+          msg:
+            inserted == null || total == null
+              ? `Respuesta: ${JSON.stringify(r)}`
+              : `${inserted}/${total} guardados`,
         },
       }));
     } catch (e) {
