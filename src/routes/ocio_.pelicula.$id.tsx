@@ -205,48 +205,15 @@ function FilmDetail() {
             </div>
 
             {/* Acciones rápidas */}
-            <div className="mb-4 grid grid-cols-3 gap-2">
-              {primaryDirHref ? (
-                <a
-                  href={primaryDirHref}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex flex-col items-center justify-center gap-1 rounded-2xl px-3 py-3 text-black shadow-lg transition active:scale-95"
-                  style={{ background: ACCENT }}
-                >
-                  <Car className="h-5 w-5" />
-                  <span className="text-[11px] font-bold">Cómo llegar</span>
-                  {primaryCinema && (
-                    <span className="line-clamp-1 text-[9px] opacity-80">
-                      {primaryCinema.name}
-                    </span>
-                  )}
-                </a>
-              ) : (
-                <div className="rounded-2xl border border-white/10 bg-white/[0.02]" />
-              )}
-              {primaryTicketHref ? (
-                <a
-                  href={primaryTicketHref}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 px-3 py-3 text-white shadow-lg transition active:scale-95"
-                >
-                  <Ticket className="h-5 w-5" />
-                  <span className="text-[11px] font-bold">Comprar</span>
-                  <span className="text-[9px] opacity-80">Entradas</span>
-                </a>
-              ) : (
-                <div className="rounded-2xl border border-white/10 bg-white/[0.02]" />
-              )}
+            <div className="mb-4">
               <button
                 type="button"
                 onClick={() => setAiOpen(true)}
-                className="flex flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-amber-300 to-pink-400 px-3 py-3 text-amber-950 shadow-lg transition active:scale-95"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-amber-300 to-pink-400 px-4 py-3 text-amber-950 shadow-lg transition active:scale-[0.98]"
               >
                 <Sparkles className="h-5 w-5" />
-                <span className="text-[11px] font-bold">Más con IA</span>
-                <span className="text-[9px] opacity-80">Ficha completa</span>
+                <span className="text-sm font-bold">Nuestra opinión</span>
+                <span className="text-[10px] opacity-80">· con IA</span>
               </button>
             </div>
 
