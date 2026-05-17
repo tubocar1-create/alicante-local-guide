@@ -29,8 +29,12 @@ const SOURCES: CinemaSource[] = [
   { slug: "aana-cinemas",          ecartelera_id: 181 },
   { slug: "kinepolis-plaza-mar-2", ecartelera_id: 184 },
   { slug: "yelmo-puerta-alicante", ecartelera_id: 187 },
-  // Odeon no está en ecartelera; lo cubriremos en una fase posterior.
 ];
+
+// Odeon Alicante tiene parser propio (web propia con cookie default_center).
+const ODEON_SLUG = "odeon-multicines-alicante";
+const ODEON_BASE = "https://odeonmulticines.com";
+const ODEON_COOKIE = "default_center=odeon-alicante";
 
 const DAY_HORIZON = 7;
 
@@ -284,24 +288,35 @@ async function syncCinema(source: CinemaSource) {
   const now = Date.now();
   const valid = allShows.filter((p) => p.starts_at_ms > now - 60 * 60 * 1000);
 
+  const { inserted, lastError } = await persistShows(cinema.id, valid, "ecartelera", now);
+
+  return {
+    slug: source.slug,
+    ok: true,
+    scraped: allShows.length,
+    inserted,
+    days: dayResults,
+    ...(lastError ? { last_error: lastError } : {}),
+  };
+}
+
+// ===== Persistencia compartida (borra futuros y reinserta) =====
+async function persistShows(
+  cinemaId: string,
+  valid: ParsedShow[],
+  source: string,
+  now: number,
+): Promise<{ inserted: number; lastError: string | null }> {
   if (valid.length === 0) {
-    return {
-      slug: source.slug,
-      ok: true,
-      scraped: allShows.length,
-      inserted: 0,
-      days: dayResults,
-    };
+    return { inserted: 0, lastError: null };
   }
 
-  // Borra futuros del cine para evitar pases obsoletos
   await supabaseAdmin
     .from("showtimes")
     .delete()
-    .eq("cinema_id", cinema.id)
+    .eq("cinema_id", cinemaId)
     .gte("starts_at", new Date(now - 60 * 60 * 1000).toISOString());
 
-  // Cache films por slug para no repetir lookups
   const filmCache = new Map<string, string>();
   let inserted = 0;
   let lastError: string | null = null;
@@ -318,11 +333,12 @@ async function syncCinema(source: CinemaSource) {
       .from("showtimes")
       .upsert(
         {
-          cinema_id: cinema.id,
+          cinema_id: cinemaId,
           film_id,
           starts_at: new Date(s.starts_at_ms).toISOString(),
           ticket_url: s.ticket_url,
-          source: "ecartelera",
+          format: (s as ParsedShow & { format?: string | null }).format ?? null,
+          source,
         },
         { onConflict: "cinema_id,film_id,starts_at" },
       );
@@ -332,22 +348,167 @@ async function syncCinema(source: CinemaSource) {
       inserted++;
     }
   }
+  return { inserted, lastError };
+}
+
+// ===== Odeon Multicines Alicante =====
+// Estrategia: enumerar /odeon-alicante/peliculas para sacar los slugs de
+// /producto/{slug}; en cada producto extraer bloques day-YYYY-MM-DD con
+// botones .btn_sesion que llevan a /odeon-alicante/sesion?pid=...&sesion=...
+async function fetchOdeon(path: string): Promise<string> {
+  const res = await fetch(`${ODEON_BASE}${path}`, {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (compatible; AlicanteLocalGuide/1.0; +https://alicante-local-guide.lovable.app)",
+      Accept: "text/html,application/xhtml+xml",
+      "Accept-Language": "es-ES,es;q=0.9",
+      Cookie: ODEON_COOKIE,
+    },
+  });
+  if (!res.ok) throw new Error(`odeon ${path}: HTTP ${res.status}`);
+  return res.text();
+}
+
+function parseOdeonProduct(html: string, productSlug: string): ParsedShow[] {
+  // Título: <h5>TITLE</h5> (en la ficha) o el primer <h3 class="my-auto p-2">
+  let title = "";
+  const h5 = html.match(/<h5[^>]*>([^<]+)<\/h5>/);
+  if (h5) title = decodeHtml(h5[1]).trim();
+  if (!title) {
+    const h3 = html.match(/<h3[^>]*class="[^"]*my-auto[^"]*"[^>]*>([^<]+)<\/h3>/);
+    if (h3) title = decodeHtml(h3[1]).trim();
+  }
+  if (!title) title = productSlug.replace(/-/g, " ");
+
+  // Póster
+  let poster_url: string | null = null;
+  const pm = html.match(/(https:\/\/odeon-cdn\.b-cdn\.net\/show-posters\/[^"?\s]+\.(?:jpg|png|webp))/);
+  if (pm) poster_url = pm[1];
+
+  // Duración
+  let duration_min: number | null = null;
+  const dm = html.match(/>(\d{2,3})\s*min</);
+  if (dm) duration_min = +dm[1];
+
+  // Género: primer texto razonable después del icono genre-icon
+  let genre: string | null = null;
+  const gm = html.match(/genre-icon[^>]*>[\s\S]{0,200}?>([A-Za-zÁÉÍÓÚÑáéíóúñ ]{3,30})</);
+  if (gm) genre = decodeHtml(gm[1]).trim();
+
+  // Calificación por edad: alt del icono ari_X.gif
+  let age_rating: string | null = null;
+  const am = html.match(/age-rating-icons\/[a-z]+\/ari_\d+\.gif[^"]*"[^>]*alt="([^"]+)"/);
+  if (am) {
+    age_rating = decodeHtml(am[1]).trim();
+  } else {
+    const am2 = html.match(/alt="([^"]+)"[^>]*src="[^"]*age-rating-icons/);
+    if (am2) age_rating = decodeHtml(am2[1]).trim();
+  }
+
+  // Pases por día: <div class="day-YYYY-MM-DD ..."> ... </div>
+  // Capturamos el bloque hasta el siguiente <div class="day- o cierre del contenedor padre.
+  const out: ParsedShow[] = [];
+  const dayRe = /<div class="day-(\d{4})-(\d{2})-(\d{2})[^"]*"[^>]*>([\s\S]*?)(?=<div class="day-\d{4}-\d{2}-\d{2}|<\/div>\s*<\/div>\s*<!--\s*SHOW INFO|<!-- SHOW INFO)/g;
+  let dm2: RegExpExecArray | null;
+  while ((dm2 = dayRe.exec(html)) !== null) {
+    const y = +dm2[1];
+    const m = +dm2[2];
+    const d = +dm2[3];
+    const dayBlock = dm2[4];
+
+    // Formato (Digital / Cinity / 3D ...)
+    const fmtMatch = dayBlock.match(/data-format="([^"]+)"/);
+    const format = fmtMatch ? decodeHtml(fmtMatch[1]).trim() : null;
+
+    // Botones de sesión: <a class="btn_sesion ..." href="...sesion?pid=X&sesion=Y">HH:MM</a>
+    const sessRe =
+      /<a[^>]*class="btn_sesion[^"]*"[^>]*href="([^"]+)"[^>]*>\s*(\d{1,2}):(\d{2})\s*<\/a>/g;
+    let sm: RegExpExecArray | null;
+    while ((sm = sessRe.exec(dayBlock)) !== null) {
+      const ticket_url = decodeHtml(sm[1]);
+      const hh = +sm[2];
+      const mm = +sm[3];
+      const ts = madridDateTimeToUtcMs(y, m, d, hh, mm);
+      out.push({
+        film_title: title,
+        film_slug: productSlug,
+        poster_url,
+        duration_min,
+        genre,
+        age_rating,
+        starts_at_ms: ts,
+        ticket_url,
+        // @ts-expect-error -- extra optional field consumido por persistShows
+        format,
+      });
+    }
+  }
+  return out;
+}
+
+async function syncOdeon() {
+  const { data: cinema } = await supabaseAdmin
+    .from("cinemas")
+    .select("id, slug")
+    .eq("slug", ODEON_SLUG)
+    .maybeSingle();
+  if (!cinema?.id) {
+    return { slug: ODEON_SLUG, ok: false, error: "cine no encontrado en BD" };
+  }
+
+  let listHtml: string;
+  try {
+    listHtml = await fetchOdeon("/odeon-alicante/peliculas");
+  } catch (e) {
+    return { slug: ODEON_SLUG, ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+
+  const slugs = Array.from(
+    new Set(
+      [...listHtml.matchAll(/odeonmulticines\.com\/producto\/([a-z0-9-]+)/g)].map((m) => m[1]),
+    ),
+  );
+
+  const allShows: ParsedShow[] = [];
+  const perFilm: { slug: string; count: number; error?: string }[] = [];
+
+  for (const slug of slugs) {
+    try {
+      const html = await fetchOdeon(`/producto/${slug}`);
+      const shows = parseOdeonProduct(html, slug);
+      allShows.push(...shows);
+      perFilm.push({ slug, count: shows.length });
+    } catch (e) {
+      perFilm.push({ slug, count: 0, error: e instanceof Error ? e.message : String(e) });
+    }
+  }
+
+  const now = Date.now();
+  const valid = allShows.filter((p) => p.starts_at_ms > now - 60 * 60 * 1000);
+  const { inserted, lastError } = await persistShows(cinema.id, valid, "odeon", now);
 
   return {
-    slug: source.slug,
+    slug: ODEON_SLUG,
     ok: true,
+    films: slugs.length,
     scraped: allShows.length,
     inserted,
-    days: dayResults,
+    detail: perFilm,
     ...(lastError ? { last_error: lastError } : {}),
   };
 }
 
 async function runAll(only?: string) {
-  const targets = only ? SOURCES.filter((s) => s.slug === only) : SOURCES;
   const results: unknown[] = [];
+  // ecartelera-backed cinemas
+  const targets = only ? SOURCES.filter((s) => s.slug === only) : SOURCES;
   for (const src of targets) {
     const r = await syncCinema(src);
+    results.push(r);
+  }
+  // Odeon (parser propio)
+  if (!only || only === ODEON_SLUG) {
+    const r = await syncOdeon();
     results.push(r);
   }
   return results;
