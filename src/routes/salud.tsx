@@ -35,6 +35,8 @@ const PUBLIC_SYSTEM: Tile[] = [
   { emoji: "🏨", label: "Centros de salud", sublabel: "Atención primaria", categoria: "centros-salud", accent: "#10b981" },
   { emoji: "🩺", label: "Especialidades", sublabel: "Consultas externas", categoria: "especialidades", accent: "#38bdf8" },
   { emoji: "🚑", label: "Urgencias", sublabel: "SAMU 112, PAC, hospitales", categoria: "urgencias", accent: "#ef4444" },
+  { emoji: "🌙", label: "PAC", sublabel: "Punto de Atención Continuada", href: "/sistema-sanitario", accent: "#fb7185" },
+  { emoji: "🩹", label: "PAS", sublabel: "Punto de Atención Sanitaria", href: "/sistema-sanitario", accent: "#fbbf24" },
   { emoji: "🧠", label: "Salud mental", sublabel: "USM y unidades especializadas", categoria: "salud-mental", accent: "#a78bfa" },
   { emoji: "📋", label: "Administración SIP", sublabel: "Cita previa, tarjeta sanitaria", categoria: "admin-sip", accent: "#eab308" },
 ];
