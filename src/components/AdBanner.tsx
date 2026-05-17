@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQueries } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getAdVariants, type AdVariantsResponse } from "@/lib/ads/ads.functions";
+import { getAdVariants, type AdVariantsResponse, type AdCopy } from "@/lib/ads/ads.functions";
+import { getAdComment } from "@/lib/ad-comment.functions";
 import { ADVERTISERS } from "@/lib/ads/advertisers";
+import { X, Loader2, Sparkles } from "lucide-react";
 
 const FREQUENCY_MS = 10 * 1000; // 10 s entre apariciones
 const VISIBLE_MS = 10 * 1000; // 10 s visible
@@ -44,13 +46,26 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+type CommentTarget = {
+  advertiserName: string;
+  category: string;
+  ctaUrl: string;
+  headline: string;
+  body: string;
+};
+
 export function AdBanner() {
   const fetchAds = useServerFn(getAdVariants);
+  const fetchComment = useServerFn(getAdComment);
   const [cycle, setCycle] = useState(0);
   const [open, setOpen] = useState(false);
 
-  // Orden barajado del carrusel: estable durante la vida del componente,
-  // distinto en cada montaje. Es un array de índices sobre ADVERTISERS.
+  // Popup state
+  const [target, setTarget] = useState<CommentTarget | null>(null);
+  const [commentText, setCommentText] = useState("");
+  const [commentLoading, setCommentLoading] = useState(false);
+  const [commentErr, setCommentErr] = useState<string | null>(null);
+
   const shuffledOrder = useMemo(
     () => shuffle(ADVERTISERS.map((_, i) => i)),
     [],
@@ -86,17 +101,58 @@ export function AdBanner() {
     };
   }, [allLoaded]);
 
-  // Reservamos siempre el alto del banner para que no salte el layout.
+  // Cerrar popup con Escape
+  useEffect(() => {
+    if (!target) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setTarget(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [target]);
+
+  async function openComment(t: CommentTarget) {
+    setTarget(t);
+    setCommentText("");
+    setCommentErr(null);
+    setCommentLoading(true);
+    try {
+      const res = await fetchComment({
+        data: {
+          advertiserName: t.advertiserName,
+          category: t.category,
+          headline: t.headline,
+          body: t.body,
+        },
+      });
+      setCommentText(res.text || "");
+    } catch (e) {
+      setCommentErr(e instanceof Error ? e.message : "Error desconocido");
+    } finally {
+      setCommentLoading(false);
+    }
+  }
+
+  // Reservamos siempre el alto del banner.
   const SLOT = (
     <div className="mx-auto w-full max-w-2xl px-4 pt-2" aria-hidden={!open}>
       <div className="h-[44px]" />
     </div>
   );
 
-  if (!allLoaded || !open) return SLOT;
+  if (!allLoaded || !open) return target ? (
+    <>
+      {SLOT}
+      <CommentPopup
+        target={target}
+        text={commentText}
+        loading={commentLoading}
+        err={commentErr}
+        onClose={() => setTarget(null)}
+      />
+    </>
+  ) : SLOT;
 
-  // Filtramos anunciantes sin variantes (banner suspendido, p.ej. Aena sin incidencias)
-  // y respetamos el orden barajado del carrusel.
   const activeIdx: number[] = [];
   for (const i of shuffledOrder) {
     const q = queries[i];
@@ -107,44 +163,134 @@ export function AdBanner() {
   const ai = activeIdx[(cycle - 1 + activeIdx.length * 1000) % activeIdx.length];
   const data = queries[ai]?.data;
   if (!data) return SLOT;
-  // Variante aleatoria en cada aparición (la cartelera se enseña al azar).
-  const variant =
+  const variant: AdCopy | undefined =
     data.variants[pickRandomIndex(data.variants.length)] ?? data.variants[0];
   if (!variant) return SLOT;
   const theme = data.advertiser.theme;
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 pt-2">
-      <a
-        key={cycle}
-        href={data.advertiser.ctaUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        title={`Ver fuente · ${data.advertiser.name}`}
-        aria-label={`${data.advertiser.name}: ${variant.headline}. Abrir fuente en nueva pestaña.`}
-        className={`flex h-[44px] items-center gap-2.5 overflow-hidden rounded-2xl px-3 ${theme.bg} ${theme.fg} shadow-sm ring-1 ring-black/5 animate-in fade-in slide-in-from-top-1 duration-300 transition hover:shadow-md hover:ring-black/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-black/30 cursor-pointer no-underline`}
-      >
-        <div className="text-lg leading-none shrink-0">{theme.emoji}</div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-1.5 leading-tight">
-            <span className="text-[10px] font-semibold uppercase tracking-wide opacity-90 shrink-0">
-              {data.advertiser.name}
-            </span>
-            <span className="truncate text-[12px] font-bold">
-              {variant.headline}
-            </span>
-          </div>
-          <p className="truncate text-[11px] opacity-95 leading-tight">
-            {variant.body}
-          </p>
-        </div>
-        <span
-          aria-hidden="true"
-          className="shrink-0 text-[11px] font-semibold opacity-70"
+    <>
+      <div className="mx-auto w-full max-w-2xl px-4 pt-2">
+        <button
+          key={cycle}
+          type="button"
+          onClick={() =>
+            openComment({
+              advertiserName: data.advertiser.name,
+              category: data.advertiser.name,
+              ctaUrl: data.advertiser.ctaUrl,
+              headline: variant.headline,
+              body: variant.body,
+            })
+          }
+          title={`Comentario sobre ${data.advertiser.name}`}
+          aria-label={`${data.advertiser.name}: ${variant.headline}. Abrir comentario.`}
+          className={`flex h-[44px] w-full items-center gap-2.5 overflow-hidden rounded-2xl px-3 text-left ${theme.bg} ${theme.fg} shadow-sm ring-1 ring-black/5 animate-in fade-in slide-in-from-top-1 duration-300 transition hover:shadow-md hover:ring-black/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-black/30 cursor-pointer`}
         >
-          ↗
-        </span>
-      </a>
+          <div className="text-lg leading-none shrink-0">{theme.emoji}</div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-baseline gap-1.5 leading-tight">
+              <span className="text-[10px] font-semibold uppercase tracking-wide opacity-90 shrink-0">
+                {data.advertiser.name}
+              </span>
+              <span className="truncate text-[12px] font-bold">
+                {variant.headline}
+              </span>
+            </div>
+            <p className="truncate text-[11px] opacity-95 leading-tight">
+              {variant.body}
+            </p>
+          </div>
+          <span
+            aria-hidden="true"
+            className="shrink-0 text-[11px] font-semibold opacity-70"
+          >
+            ↗
+          </span>
+        </button>
+      </div>
+      {target && (
+        <CommentPopup
+          target={target}
+          text={commentText}
+          loading={commentLoading}
+          err={commentErr}
+          onClose={() => setTarget(null)}
+        />
+      )}
+    </>
+  );
+}
+
+function CommentPopup({
+  target,
+  text,
+  loading,
+  err,
+  onClose,
+}: {
+  target: CommentTarget;
+  text: string;
+  loading: boolean;
+  err: string | null;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Comentario sobre ${target.advertiserName}`}
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 animate-in fade-in duration-150"
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900 to-slate-950 p-5 shadow-2xl"
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-slate-300 hover:bg-white/10"
+          aria-label="Cerrar"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <div className="mb-3 flex items-center gap-2 pr-8">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100/10 text-slate-200">
+            <Sparkles className="h-4 w-4" />
+          </span>
+          <div className="min-w-0">
+            <h3 className="truncate text-sm font-semibold text-slate-100">
+              {target.advertiserName}
+            </h3>
+            <p className="truncate text-[11px] text-slate-400">{target.headline}</p>
+          </div>
+        </div>
+        <div className="min-h-[8rem] text-sm leading-relaxed text-slate-200">
+          {loading && (
+            <div className="flex items-center gap-2 text-slate-400">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Analizando…
+            </div>
+          )}
+          {err && !loading && (
+            <p className="text-rose-300">No pudimos generar el comentario: {err}</p>
+          )}
+          {text && !loading && <p className="whitespace-pre-wrap">{text}</p>}
+        </div>
+        {target.ctaUrl && (
+          <div className="mt-4 flex justify-end border-t border-white/5 pt-3">
+            <a
+              href={target.ctaUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[12px] font-medium text-slate-300 hover:text-white"
+            >
+              Ver fuente original ↗
+            </a>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
