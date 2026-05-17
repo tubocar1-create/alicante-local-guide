@@ -132,16 +132,35 @@ export type CarteleraItemDTO = FilmDTO & {
 };
 
 // Listado global de cartelera: todas las películas con pases futuros.
-export const listCartelera = createServerFn({ method: "GET" }).handler(async () => {
+export const listCartelera = createServerFn({ method: "GET" })
+  .inputValidator((data: { cinemaSlug?: string } | undefined) => data ?? {})
+  .handler(async ({ data }): Promise<{ cinema: { id: string; slug: string; name: string } | null; items: CarteleraItemDTO[] }> => {
   const nowIso = new Date().toISOString();
-  const { data: shows, error: es } = await supabaseAdmin
+
+  let cinemaFilterId: string | null = null;
+  let cinemaInfo: { id: string; slug: string; name: string } | null = null;
+  if (data?.cinemaSlug) {
+    const { data: c, error: ec } = await supabaseAdmin
+      .from("cinemas")
+      .select("id, slug, name")
+      .eq("slug", data.cinemaSlug)
+      .maybeSingle();
+    if (ec) throw ec;
+    if (!c) return { cinema: null, items: [] as CarteleraItemDTO[] };
+    cinemaFilterId = c.id;
+    cinemaInfo = c;
+  }
+
+  let q = supabaseAdmin
     .from("showtimes")
     .select("film_id, cinema_id, starts_at")
     .gte("starts_at", nowIso)
     .order("starts_at");
+  if (cinemaFilterId) q = q.eq("cinema_id", cinemaFilterId);
+  const { data: shows, error: es } = await q;
   if (es) throw es;
   const rows = shows ?? [];
-  if (rows.length === 0) return [] as CarteleraItemDTO[];
+  if (rows.length === 0) return { cinema: cinemaInfo, items: [] as CarteleraItemDTO[] };
 
   const filmIds = Array.from(new Set(rows.map((s) => s.film_id)));
   const { data: films, error: ef } = await supabaseAdmin
@@ -186,5 +205,5 @@ export const listCartelera = createServerFn({ method: "GET" }).handler(async () 
     return a.next_show_at.localeCompare(b.next_show_at);
   });
 
-  return items;
+  return { cinema: cinemaInfo, items };
 });

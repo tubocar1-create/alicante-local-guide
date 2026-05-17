@@ -1,23 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { X, Film as FilmIcon } from "lucide-react";
+import { ArrowLeft, Film as FilmIcon, X } from "lucide-react";
 import { listCartelera } from "@/lib/ocio.functions";
 
 const ACCENT = "#f472b6";
 
-export const Route = createFileRoute("/ocio_/cartelera")({
+export const Route = createFileRoute("/ocio_/cines/$id/cartelera")({
   head: () => ({
-    meta: [
-      { title: "Cartelera de cines · Alicante" },
-      {
-        name: "description",
-        content:
-          "Cartelera completa de los cines de Alicante: Kinepolis, Yelmo, Aana y Odeon. Horarios y compra de entradas.",
-      },
-    ],
+    meta: [{ title: "Cartelera del cine · Alicante" }],
   }),
-  component: CarteleraPage,
+  component: CinemaCartelera,
 });
 
 function fmtDay(iso: string | null): string {
@@ -32,14 +25,16 @@ function fmtDay(iso: string | null): string {
   });
 }
 
-function CarteleraPage() {
+function CinemaCartelera() {
+  const { id } = Route.useParams();
   const fetchList = useServerFn(listCartelera);
   const { data, isLoading } = useQuery({
-    queryKey: ["cartelera"],
-    queryFn: () => fetchList(),
+    queryKey: ["cartelera", "cinema", id],
+    queryFn: () => fetchList({ data: { cinemaSlug: id } }),
   });
 
   const items = data?.items ?? [];
+  const cinema = data?.cinema ?? null;
 
   return (
     <div
@@ -59,13 +54,15 @@ function CarteleraPage() {
       <div className="relative mx-auto max-w-5xl px-4 pb-10 pt-5 md:px-6">
         <header className="mb-5 flex items-center justify-between">
           <Link
-            to="/ocio"
-            className="text-[11px] uppercase tracking-[0.25em] text-white/60 transition hover:text-white"
+            to="/ocio/cines/$id"
+            params={{ id }}
+            className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/[0.04] px-3 py-1.5 text-[11px] font-semibold text-white/80 hover:border-white/40 hover:text-white"
           >
-            ← Volver a Ocio
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Volver al cine
           </Link>
           <Link
-            to="/ocio"
+            to="/ocio/cines"
             aria-label="Cerrar"
             className="rounded-full border border-white/20 p-1.5 text-white/70 hover:border-white/40 hover:text-white"
           >
@@ -78,27 +75,13 @@ function CarteleraPage() {
             className="text-[10px] uppercase tracking-[0.3em]"
             style={{ color: ACCENT }}
           >
-            Cartelera global
+            Cartelera del cine
           </p>
           <h1 className="mt-1 font-display text-2xl font-bold tracking-tight text-white md:text-4xl">
-            Cartelera{" "}
-            <span
-              className="bg-clip-text text-transparent"
-              style={{
-                backgroundImage: `linear-gradient(90deg, ${ACCENT}, #ffffff)`,
-              }}
-            >
-              de Alicante
-            </span>
+            {cinema?.name ?? "Cartelera"}
           </h1>
           <p className="mt-1 text-xs text-white/70 md:text-sm">
-            Todas las películas en cartel.{" "}
-            <Link
-              to="/ocio/cines"
-              className="underline underline-offset-2 hover:text-white"
-            >
-              Ver por cine →
-            </Link>
+            Películas en cartel en este cine.
           </p>
         </div>
 
@@ -106,8 +89,7 @@ function CarteleraPage() {
           <p className="py-12 text-center text-sm text-white/60">Cargando…</p>
         ) : items.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-8 text-center text-sm text-white/60">
-            Aún no hay películas en cartelera. El scraping diario actualizará
-            los pases automáticamente.
+            Aún no hay pases publicados para este cine.
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
@@ -127,7 +109,7 @@ function CarteleraPage() {
                       className="h-full w-full object-cover transition group-hover:scale-105"
                     />
                   ) : (
-                    <div className="grid h-full w-full place-items-center text-4xl">
+                    <div className="grid h-full w-full place-items-center">
                       <FilmIcon className="h-10 w-10 text-white/30" />
                     </div>
                   )}
@@ -152,10 +134,6 @@ function CarteleraPage() {
                   <div className="mt-auto flex items-center justify-between gap-1 pt-1 text-[9px] uppercase tracking-wider">
                     <span style={{ color: ACCENT }}>
                       {f.showtime_count} pases
-                    </span>
-                    <span className="text-white/50">
-                      {f.cinema_count}{" "}
-                      {f.cinema_count === 1 ? "cine" : "cines"}
                     </span>
                   </div>
                   {f.next_show_at && (
