@@ -2,7 +2,7 @@ import { createFileRoute, Link, Outlet, notFound } from "@tanstack/react-router"
 import { useMemo } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { Phone, Star, X } from "lucide-react";
+import { X } from "lucide-react";
 import { getCategory } from "@/lib/health-categories";
 import {
   listHealthProviders,
@@ -47,12 +47,6 @@ function fmtDist(km: number | null): string {
   const m = Math.round(km * 1000);
   if (m >= 1000) return `${(m / 1000).toFixed(1)}km`;
   return `${m}m`;
-}
-
-function shortPhone(p: string | null): string {
-  if (!p) return "—";
-  // Keep last 9 digits compact
-  return p.replace(/\s+/g, " ").trim();
 }
 
 function CategoryDashboard() {
@@ -186,16 +180,14 @@ function CategoryDashboard() {
               className="text-[9px] uppercase tracking-[0.18em]"
               style={{ color: `${cat.accent}cc` }}
             >
-              local · tel · ★ · dist.
+              local · estado · dirección · dist.
             </p>
           </div>
 
           <table className="w-full table-fixed border-separate border-spacing-y-0.5 text-left text-[11px] text-white">
             <colgroup>
               <col />
-              <col className="w-[62px]" />
-              <col className="w-[78px]" />
-              <col className="w-[34px]" />
+              <col className="w-[44px]" />
               <col className="w-[48px]" />
             </colgroup>
             <thead>
@@ -203,16 +195,13 @@ function CategoryDashboard() {
                 className="text-[9px] uppercase tracking-[0.12em]"
                 style={{ color: `${cat.accent}99` }}
               >
-                <th className="px-1 py-1 font-medium">Local</th>
-                <th className="px-1 py-1 font-medium">Estado</th>
-                <th className="px-1 py-1 font-medium">Tel</th>
-                <th className="px-1 py-1 text-right font-medium">★</th>
+                <th className="px-1 py-1 font-medium">Local · Dirección</th>
+                <th className="px-1 py-1 text-center font-medium">Est.</th>
                 <th className="px-1 py-1 text-right font-medium">Dist.</th>
               </tr>
             </thead>
             <tbody>
               {ranked.map(({ p, d }) => {
-                const tel = p.phone ? p.phone.replace(/\s/g, "") : null;
                 const status = computeOpenStatus(p.opening_hours);
                 const statusStyle =
                   status === "open"
@@ -222,9 +211,9 @@ function CategoryDashboard() {
                     : "bg-white/5 text-white/40";
                 const statusLabel =
                   status === "open"
-                    ? "Abierto"
+                    ? "Abto"
                     : status === "closed"
-                    ? "Cerrado"
+                    ? "Cerr"
                     : "—";
                 return (
                   <tr key={p.id} className="bg-white/[0.03]">
@@ -232,17 +221,24 @@ function CategoryDashboard() {
                       <Link
                         to="/salud/$categoria/$id"
                         params={{ categoria, id: p.id }}
-                        className="flex items-center gap-1.5 hover:opacity-80"
+                        className="flex items-start gap-1.5 hover:opacity-80"
                       >
-                        <span aria-hidden className="text-[13px] leading-none">
+                        <span aria-hidden className="mt-0.5 text-[13px] leading-none">
                           {cat.emoji}
                         </span>
-                        <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-white">
-                          {p.name}
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-[11px] font-medium text-white">
+                            {p.name}
+                          </span>
+                          {p.address && (
+                            <span className="block truncate text-[10px] text-white/55">
+                              {p.address}
+                            </span>
+                          )}
                         </span>
                       </Link>
                     </td>
-                    <td className="px-1 py-1 align-middle">
+                    <td className="px-1 py-1 text-center align-middle">
                       <span
                         className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${statusStyle}`}
                       >
@@ -259,30 +255,6 @@ function CategoryDashboard() {
                         {statusLabel}
                       </span>
                     </td>
-                    <td className="px-1 py-1 align-middle">
-                      {tel ? (
-                        <a
-                          href={`tel:${tel}`}
-                          aria-label={`Llamar a ${p.name}`}
-                          className="inline-flex items-center gap-1 rounded-full bg-amber-400/15 px-1.5 py-0.5 font-mono text-[9px] font-semibold text-amber-200"
-                        >
-                          <Phone className="h-2.5 w-2.5" />
-                          <span className="truncate">{shortPhone(p.phone)}</span>
-                        </a>
-                      ) : (
-                        <span className="text-[10px] text-white/30">—</span>
-                      )}
-                    </td>
-                    <td className="px-1 py-1 text-right align-middle font-mono text-[10px]">
-                      {p.rating != null ? (
-                        <span className="inline-flex items-center gap-0.5 text-amber-300">
-                          <Star className="h-2.5 w-2.5 fill-amber-300" />
-                          {p.rating.toFixed(1)}
-                        </span>
-                      ) : (
-                        <span className="text-white/30">—</span>
-                      )}
-                    </td>
                     <td className="rounded-r-md px-1 py-1 text-right align-middle font-mono text-[11px] font-semibold tabular-nums text-white">
                       {fmtDist(d)}
                     </td>
@@ -292,7 +264,7 @@ function CategoryDashboard() {
               {!isLoading && ranked.length === 0 && (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={3}
                     className="px-2 py-6 text-center text-xs text-white/50"
                   >
                     Aún no hay datos para esta categoría.
