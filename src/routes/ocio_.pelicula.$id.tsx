@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Car, Clock, Film as FilmIcon, Sparkles, Ticket, X } from "lucide-react";
 import { getFilmWithShowtimes } from "@/lib/ocio.functions";
 import { getFilmAIInsight } from "@/lib/film-ai.functions";
+import { getFilmSynopsis } from "@/lib/film-synopsis.functions";
 import {
   Dialog,
   DialogContent,
@@ -69,12 +70,21 @@ function FilmDetail() {
 
   // (acciones por cine se gestionan dentro de cada tarjeta)
 
-  // Diálogo de IA
+  // Diálogo de IA y sinopsis
   const [aiOpen, setAiOpen] = useState(false);
   const [synopsisOpen, setSynopsisOpen] = useState(false);
+  const fetchSynopsis = useServerFn(getFilmSynopsis);
+  const { data: synData, isLoading: synLoading } = useQuery({
+    queryKey: ["film-synopsis", film?.slug],
+    queryFn: () => fetchSynopsis({ data: { slug: film!.slug } }),
+    enabled: !!film,
+    staleTime: 1000 * 60 * 60,
+  });
+  const synopsisText = synData?.synopsis ?? film?.synopsis ?? null;
+
   const fetchAI = useServerFn(getFilmAIInsight);
   const { data: aiData, isLoading: aiLoading, error: aiError } = useQuery({
-    queryKey: ["film-ai", film?.id],
+    queryKey: ["film-ai", film?.id, synopsisText],
     queryFn: () =>
       fetchAI({
         data: {
@@ -83,7 +93,7 @@ function FilmDetail() {
           director: film!.director,
           cast: film!.cast_list,
           genre: film!.genre,
-          synopsis: film!.synopsis,
+          synopsis: synopsisText,
         },
       }),
     enabled: aiOpen && !!film,
@@ -211,16 +221,14 @@ function FilmDetail() {
 
             {/* Acciones rápidas */}
             <div className="mb-4 grid gap-2">
-              {film.synopsis && (
-                <button
-                  type="button"
-                  onClick={() => setSynopsisOpen(true)}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/[0.06] px-4 py-3 text-white shadow-sm transition hover:bg-white/[0.12] active:scale-[0.98]"
-                >
-                  <FilmIcon className="h-4 w-4" style={{ color: ACCENT }} />
-                  <span className="text-sm font-bold">Sinopsis</span>
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => setSynopsisOpen(true)}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/[0.06] px-4 py-3 text-white shadow-sm transition hover:bg-white/[0.12] active:scale-[0.98]"
+              >
+                <FilmIcon className="h-4 w-4" style={{ color: ACCENT }} />
+                <span className="text-sm font-bold">Sinopsis</span>
+              </button>
               <button
                 type="button"
                 onClick={() => setAiOpen(true)}
@@ -462,7 +470,9 @@ function FilmDetail() {
             </DialogTitle>
           </DialogHeader>
           <div className="mt-2 max-h-[60vh] overflow-y-auto pr-1 text-[13px] leading-relaxed text-white/85">
-            {film?.synopsis ?? "Sin sinopsis disponible."}
+            {synLoading && !synopsisText
+              ? "Cargando sinopsis…"
+              : synopsisText ?? "Sin sinopsis disponible."}
           </div>
         </DialogContent>
       </Dialog>
