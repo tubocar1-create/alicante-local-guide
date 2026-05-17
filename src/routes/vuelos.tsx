@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Plane, Clock, X, Sparkles, Building2, TrendingUp, Calendar } from "lucide-react";
+import { Plane, Clock, X, Sparkles, Building2, TrendingUp, Calendar, ExternalLink } from "lucide-react";
+import { getDestinationComment } from "@/lib/destination-comment.functions";
 import { geoMercator, geoPath } from "d3-geo";
 import { feature } from "topojson-client";
 import type { Topology } from "topojson-specification";
