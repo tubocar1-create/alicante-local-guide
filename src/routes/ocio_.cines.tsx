@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
@@ -258,6 +258,7 @@ function CinemasPage() {
             </tbody>
           </table>
         </div>
+        <Outlet />
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, notFound } from "@tanstack/react-router";
 import { lazy, Suspense, useMemo } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
@@ -371,6 +371,7 @@ function CinemaDetail() {
             )}
           </>
         )}
+        <Outlet />
       </div>
     </div>
   );
