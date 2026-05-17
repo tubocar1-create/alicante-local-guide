@@ -184,6 +184,30 @@ function FilmDetail() {
                     {film.cast_list.slice(0, 4).join(", ")}
                   </p>
                 )}
+                {cinemas.length > 0 && (
+                  <div className="mt-2.5">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/40">
+                      Se proyecta en
+                    </p>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {cinemas.map((c) => (
+                        <Link
+                          key={c.id}
+                          to="/ocio/cines/$id/cartelera"
+                          params={{ id: c.slug }}
+                          className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-white/10"
+                          style={{
+                            borderColor: `${ACCENT}55`,
+                            background: `${ACCENT}18`,
+                          }}
+                        >
+                          <FilmIcon className="h-3 w-3" style={{ color: ACCENT }} />
+                          {c.name}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
