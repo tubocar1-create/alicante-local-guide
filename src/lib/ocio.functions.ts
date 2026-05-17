@@ -134,7 +134,7 @@ export type CarteleraItemDTO = FilmDTO & {
 // Listado global de cartelera: todas las películas con pases futuros.
 export const listCartelera = createServerFn({ method: "GET" })
   .inputValidator((data: { cinemaSlug?: string } | undefined) => data ?? {})
-  .handler(async ({ data }) => {
+  .handler(async ({ data }): Promise<{ cinema: { id: string; slug: string; name: string } | null; items: CarteleraItemDTO[] }> => {
   const nowIso = new Date().toISOString();
 
   let cinemaFilterId: string | null = null;
