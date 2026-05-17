@@ -32,7 +32,7 @@ type Tile = {
 };
 
 const PUBLIC_SYSTEM: Tile[] = [
-  { emoji: "🏥", label: "Hospitales públicos", sublabel: "Balmis, Sant Joan, Elche, Elda", href: "/sistema-sanitario", search: { cat: "hospitales" }, bg: "oklch(0.94 0.06 25)", fg: "oklch(0.50 0.18 25)" },
+  { emoji: "🏥", label: "Hospitales", sublabel: "Públicos y privados + ubicación", href: "/hospitales", bg: "oklch(0.94 0.06 25)", fg: "oklch(0.50 0.18 25)" },
   { emoji: "🏨", label: "Centros de salud", sublabel: "Atención primaria", href: "/sistema-sanitario", search: { cat: "primaria" }, bg: "oklch(0.94 0.07 145)", fg: "oklch(0.45 0.15 150)" },
   { emoji: "🩺", label: "Especialidades", sublabel: "Cardio, traumato, dermato…", href: "/sistema-sanitario", search: { cat: "especialidades" }, bg: "oklch(0.94 0.07 220)", fg: "oklch(0.48 0.16 230)" },
   { emoji: "🚑", label: "Urgencias", sublabel: "SAMU 112, PAC, hospitales", href: "/sistema-sanitario", search: { cat: "urgencias" }, bg: "oklch(0.93 0.10 28)", fg: "oklch(0.50 0.20 28)" },
