@@ -697,3 +697,122 @@ function WeekRange({ week }: { week: { date: Date; airlines: string[] }[] }) {
     </div>
   );
 }
+
+function DestinationPopup({
+  iata,
+  city,
+  country,
+  airlineCode,
+  onClose,
+}: {
+  iata: string;
+  city: string;
+  country: string;
+  airlineCode: string;
+  onClose: () => void;
+}) {
+  const fetchComment = useServerFn(getDestinationComment);
+  const [text, setText] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const cacheKey = `dest-comment:${iata}`;
+    const cached = typeof window !== "undefined" ? sessionStorage.getItem(cacheKey) : null;
+    if (cached) {
+      setText(cached);
+      setLoading(false);
+      return;
+    }
+    let cancel = false;
+    setLoading(true);
+    fetchComment({ data: { city, country, iata } })
+      .then((r) => {
+        if (cancel) return;
+        setText(r.text);
+        try {
+          sessionStorage.setItem(cacheKey, r.text);
+        } catch {}
+      })
+      .catch((e) => !cancel && setError(String(e?.message ?? e)))
+      .finally(() => !cancel && setLoading(false));
+    return () => {
+      cancel = true;
+    };
+  }, [iata, city, country, fetchComment]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const tripUrl = `https://www.tripadvisor.es/Search?q=${encodeURIComponent(city)}`;
+  const airUrl = airlineUrl(airlineCode);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-md overflow-hidden rounded-2xl border border-slate-700/60 bg-gradient-to-br from-[#1e2a44] via-[#243352] to-[#2d2a4a] p-5 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Cerrar"
+          className="absolute right-3 top-3 rounded-full bg-slate-900/60 p-1.5 text-slate-300 transition hover:bg-slate-900 hover:text-white"
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        <div className="mb-2 flex items-center gap-2">
+          <span className="text-2xl">{flagEmoji(iata)}</span>
+          <div>
+            <h3 className="text-base font-semibold text-white">
+              {city}{" "}
+              <span className="font-mono text-xs text-slate-400">({iata})</span>
+            </h3>
+            <p className="text-[11px] text-slate-400">{country}</p>
+          </div>
+        </div>
+
+        <div className="min-h-[80px] rounded-xl border border-slate-700/40 bg-slate-950/30 p-3 text-[13px] leading-relaxed text-slate-100">
+          {loading && (
+            <div className="flex items-center gap-2 text-slate-400">
+              <span className="h-3 w-3 animate-spin rounded-full border-2 border-cyan-500/30 border-t-cyan-400" />
+              Preparando recomendación…
+            </div>
+          )}
+          {error && <p className="text-rose-300">No se pudo cargar el comentario.</p>}
+          {!loading && !error && <p>{text}</p>}
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <a
+            href={airUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-slate-900 transition hover:opacity-90"
+            style={{ background: colorFor(airlineCode, 0) }}
+          >
+            <Plane className="h-3.5 w-3.5" />
+            {airlineName(airlineCode)}
+            <ExternalLink className="h-3 w-3 opacity-70" />
+          </a>
+          <a
+            href={tripUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-2 text-[12px] font-semibold text-slate-900 transition hover:bg-emerald-400"
+          >
+            TripAdvisor
+            <ExternalLink className="h-3 w-3 opacity-70" />
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
