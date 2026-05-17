@@ -308,6 +308,7 @@ function HospitalesPage() {
                       {h.health_department}
                     </p>
                   )}
+                  </Link>
 
                   {/* Acciones: Ir + teléfono (estilo farmacia) */}
                   <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
