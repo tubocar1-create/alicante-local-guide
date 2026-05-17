@@ -34,7 +34,7 @@ import {
 } from "@/lib/places.functions";
 import heroImg from "@/assets/alicante-hero.jpg";
 import portadaImg from "@/assets/alicante-portada.jpg";
-import { DraggableHogueras } from "@/components/DraggableHogueras";
+import hoguerasIcon from "@/assets/hogueras-alicante.png";
 
 const TILE_SUBTITLES: Record<string, string> = {
   "Comer": "Restaurantes y tapas",
