@@ -71,6 +71,7 @@ function FilmDetail() {
 
   // Diálogo de IA
   const [aiOpen, setAiOpen] = useState(false);
+  const [synopsisOpen, setSynopsisOpen] = useState(false);
   const fetchAI = useServerFn(getFilmAIInsight);
   const { data: aiData, isLoading: aiLoading, error: aiError } = useQuery({
     queryKey: ["film-ai", film?.id],
@@ -82,7 +83,7 @@ function FilmDetail() {
           director: film!.director,
           cast: film!.cast_list,
           genre: film!.genre,
-          posterUrl: film!.poster_url,
+          synopsis: film!.synopsis,
         },
       }),
     enabled: aiOpen && !!film,
