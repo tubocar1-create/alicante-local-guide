@@ -9,6 +9,7 @@ export const getFilmAIInsight = createServerFn({ method: "POST" })
     cast?: string[];
     genre?: string | null;
     year?: number | null;
+    posterUrl?: string | null;
   }) =>
     z
       .object({
@@ -18,6 +19,7 @@ export const getFilmAIInsight = createServerFn({ method: "POST" })
         cast: z.array(z.string().max(200)).max(20).optional(),
         genre: z.string().max(120).nullish(),
         year: z.number().int().nullish(),
+        posterUrl: z.string().url().max(2000).nullish(),
       })
       .parse(input),
   )
@@ -26,13 +28,13 @@ export const getFilmAIInsight = createServerFn({ method: "POST" })
     if (!apiKey) throw new Error("LOVABLE_API_KEY no configurada");
 
     const ctx = [
-      `Película: "${data.title}"`,
+      `Título en cartelera: "${data.title}"`,
       data.originalTitle && data.originalTitle !== data.title
-        ? `Título original: "${data.originalTitle}"`
+        ? `Título original indicado: "${data.originalTitle}"`
         : null,
-      data.director ? `Dirección: ${data.director}` : null,
+      data.director ? `Dirección indicada: ${data.director}` : null,
       data.cast && data.cast.length
-        ? `Reparto: ${data.cast.slice(0, 8).join(", ")}`
+        ? `Reparto indicado: ${data.cast.slice(0, 8).join(", ")}`
         : null,
       data.genre ? `Género: ${data.genre}` : null,
       data.year ? `Año aproximado: ${data.year}` : null,
@@ -40,16 +42,28 @@ export const getFilmAIInsight = createServerFn({ method: "POST" })
       .filter(Boolean)
       .join("\n");
 
-    const prompt = `${ctx}
+    const instructions = `Eres un cinéfilo cercano y entusiasta que recomienda películas a un amigo, en español, en tono cálido y amable. Rigor con los datos: si no estás razonablemente seguro de un dato concreto (presupuesto, premio, etc.), lo omites antes que inventarlo.
 
-Escribe "Nuestra opinión" sobre esta película en español, en tono cálido, cercano y entusiasta — como una recomendación a un amigo. 200-280 palabras en 4 párrafos breves, separados por línea en blanco, encabezados así:
+Tarea:
+1) Primero, IDENTIFICA con seguridad de qué película y de qué VERSIÓN/AÑO se trata. Usa el póster adjunto como evidencia principal (créditos, director, reparto, logos de estudio, estética visual y año si aparece). Cruza con los metadatos que te paso a continuación. Si hay varias versiones (remakes, adaptaciones), elige la que muestra el póster, no la más famosa. Si tras analizar sigue habiendo ambigüedad, dilo brevemente al inicio y limita la opinión a lo verificable.
+2) Luego escribe "Nuestra opinión" sobre ESA versión concreta. 200-280 palabras en 4 párrafos breves, separados por línea en blanco, encabezados así:
 
-Producción. Estudio/productora, país, año, presupuesto aproximado o coste de producción si es conocido, y algún dato curioso del rodaje o estreno.
-Dirección. Quién dirige, su estilo y un par de películas previas relevantes.
+Producción. Estudio/productora, país, año, presupuesto aproximado o coste si es conocido, y algún dato curioso del rodaje o estreno.
+Dirección. Quién dirige (de la versión correcta), su estilo y un par de películas previas relevantes.
 Reparto. Principales intérpretes y papeles destacados que les conocemos.
-Acogida. Cómo ha sido recibida por crítica y público (premios, nominaciones, taquilla, valoraciones generales). Cierra con una frase amable que invite a verla.
+Acogida. Cómo ha sido recibida por crítica y público (premios, nominaciones, taquilla, valoraciones). Cierra con una frase amable que invite a verla.
 
-Sin emojis, sin markdown, sin viñetas, sin almohadillas. Si un dato concreto no es verificable, omítelo en lugar de inventar.`;
+Sin emojis, sin markdown, sin viñetas, sin almohadillas. Si un dato concreto no es verificable, omítelo en lugar de inventar.
+
+Datos de cartelera:
+${ctx}`;
+
+    const userContent: Array<
+      { type: "text"; text: string } | { type: "image_url"; image_url: { url: string } }
+    > = [{ type: "text", text: instructions }];
+    if (data.posterUrl) {
+      userContent.push({ type: "image_url", image_url: { url: data.posterUrl } });
+    }
 
     const res = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
@@ -60,14 +74,14 @@ Sin emojis, sin markdown, sin viñetas, sin almohadillas. Si un dato concreto no
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: "google/gemini-2.5-pro",
           messages: [
             {
               role: "system",
               content:
-                "Eres un cinéfilo cercano y entusiasta que recomienda películas a un amigo. Tono cálido y amable, riguroso con los datos: si no estás razonablemente seguro de un dato concreto, lo omites en lugar de inventarlo.",
+                "Eres un cinéfilo cercano y entusiasta. Identificas la película y su versión exacta a partir del póster antes de opinar. Si dudas de un dato concreto, lo omites en lugar de inventarlo.",
             },
-            { role: "user", content: prompt },
+            { role: "user", content: userContent },
           ],
         }),
       },
