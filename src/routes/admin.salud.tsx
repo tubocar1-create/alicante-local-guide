@@ -84,6 +84,47 @@ function AdminSaludPage() {
         puede tardar 1–3 minutos.
       </p>
 
+      <section className="mt-6 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4">
+        <h2 className="text-sm font-bold text-emerald-700">
+          Sistema público · Google Places
+        </h2>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Importa Puntos de Atención Continuada (PAC) y Puntos de Atención
+          Sanitaria (PAS) de toda la provincia directamente desde la API de
+          Google Places. Se guardan en la BD del sistema sanitario.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {(["pac", "pas"] as const).map((k) => {
+            const s = status[`google-${k}`];
+            return (
+              <button
+                key={k}
+                onClick={() => runGoogle(k)}
+                disabled={s?.loading}
+                className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+              >
+                {s?.loading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Download className="h-3.5 w-3.5" />
+                )}
+                Poblar {k.toUpperCase()}
+                {s?.msg && (
+                  <span className="ml-2 text-[10px] font-normal opacity-90">
+                    · {s.msg}
+                  </span>
+                )}
+                {s?.error && (
+                  <span className="ml-2 text-[10px] font-normal text-rose-100">
+                    · {s.error}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
       <ul className="mt-6 space-y-2">
         {HEALTH_CATEGORIES.map((c) => {
           const s = status[c.slug];
