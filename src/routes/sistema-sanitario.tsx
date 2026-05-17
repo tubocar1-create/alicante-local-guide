@@ -3,6 +3,9 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/sistema-sanitario")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    cat: typeof search.cat === "string" ? (search.cat as string) : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Sistema Sanitario de Alicante | Hospitales y Centros de Salud" },
@@ -226,6 +229,7 @@ const TYPE_LABELS: Record<string, { label: string; emoji: string }> = {
 type Step = "categoria" | "subcategoria" | "departamento" | "municipio" | "resultados" | "detalle" | "info";
 
 function SistemaSanitarioPage() {
+  const { cat: catParam } = Route.useSearch();
   const [step, setStep] = useState<Step>("categoria");
   const [cat, setCat] = useState<Category | null>(null);
   const [sub, setSub] = useState<SubCat | null>(null);
@@ -234,6 +238,13 @@ function SistemaSanitarioPage() {
   const [selected, setSelected] = useState<HealthCenter | null>(null);
   const [data, setData] = useState<HealthCenter[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!catParam) return;
+    const c = CATEGORIES.find((x) => x.key === catParam);
+    if (c) { setCat(c); setStep("subcategoria"); }
+  }, [catParam]);
+
 
   useEffect(() => {
     let mounted = true;
