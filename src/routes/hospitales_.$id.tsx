@@ -99,6 +99,14 @@ const EXTRAS: Record<string, HospitalExtras> = {
     photos: [
       "https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=900&q=70",
       "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1631217868264-e6641e2ee4d6?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1504439468489-c8920d796a29?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1666214277657-e30d40789cb6?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1551076805-e1869033e561?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1530026405186-ed1f139313f8?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1583912267550-d6c2ac3196c0?auto=format&fit=crop&w=900&q=70",
     ],
   },
   // Hospital General Universitario de Elche
