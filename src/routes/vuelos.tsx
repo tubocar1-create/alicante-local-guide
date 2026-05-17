@@ -1279,7 +1279,69 @@ function CityDetail({
           </span>
         </div>
 
-        {perDay.length > 1 && (
+        {/* AI destination comment + links */}
+        <div className="mb-4 rounded-xl border border-slate-700/60 bg-gradient-to-br from-[#1e2a44] via-[#243352] to-[#2d2a4a] p-3">
+          <div className="mb-2 flex items-center gap-1.5">
+            <Sparkles className="h-3 w-3 text-cyan-300" />
+            <p className="text-[10px] uppercase tracking-[0.2em] text-cyan-300/80">
+              Sobre {cleanCityNamePublic(city.ciudad)}
+            </p>
+          </div>
+          <div className="min-h-[60px] text-[12.5px] leading-relaxed text-slate-100">
+            {aiLoading && (
+              <div className="flex items-center gap-2 text-slate-400">
+                <span className="h-3 w-3 animate-spin rounded-full border-2 border-cyan-500/30 border-t-cyan-400" />
+                Preparando recomendación…
+              </div>
+            )}
+            {aiError && <p className="text-rose-300">No se pudo cargar el comentario.</p>}
+            {!aiLoading && !aiError && <p>{aiText}</p>}
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {topAirline && (
+              <a
+                href={
+                  ({
+                    FR: "https://www.ryanair.com", VY: "https://www.vueling.com",
+                    IB: "https://www.iberia.com", I2: "https://www.iberiaexpress.com",
+                    UX: "https://www.aireuropa.com", U2: "https://www.easyjet.com",
+                    EJU: "https://www.easyjet.com", W6: "https://wizzair.com",
+                    HV: "https://www.transavia.com", TO: "https://www.transavia.com",
+                    KL: "https://www.klm.com", AF: "https://www.airfrance.com",
+                    LH: "https://www.lufthansa.com", EW: "https://www.eurowings.com",
+                    BA: "https://www.britishairways.com", AY: "https://www.finnair.com",
+                    SK: "https://www.flysas.com", DY: "https://www.norwegian.com",
+                    TP: "https://www.flytap.com", AZ: "https://www.ita-airways.com",
+                    LX: "https://www.swiss.com", OS: "https://www.austrian.com",
+                    TK: "https://www.turkishairlines.com", EI: "https://www.aerlingus.com",
+                    PC: "https://www.flypgs.com", XQ: "https://www.sunexpress.com",
+                    LS: "https://www.jet2.com", BY: "https://www.tui.com",
+                    QR: "https://www.qatarairways.com",
+                  } as Record<string, string>)[topAirline] ??
+                  `https://www.google.com/search?q=${encodeURIComponent(airlineName(topAirline) + " vuelos")}`
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-[11px] font-semibold text-slate-900 transition hover:opacity-90"
+                style={{ background: airlineColor(topAirline, 0) }}
+              >
+                <Plane className="h-3 w-3" />
+                {airlineName(topAirline)}
+                <ExternalLink className="h-3 w-3 opacity-70" />
+              </a>
+            )}
+            <a
+              href={`https://www.tripadvisor.es/Search?q=${encodeURIComponent(cleanCityNamePublic(city.ciudad))}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-2 text-[11px] font-semibold text-slate-900 transition hover:bg-emerald-400"
+            >
+              TripAdvisor
+              <ExternalLink className="h-3 w-3 opacity-70" />
+            </a>
+          </div>
+        </div>
+
           <div className="mb-4 rounded-xl border border-slate-800/60 bg-slate-950/60 p-3">
             <div className="mb-2 flex items-center gap-1.5">
               <Calendar className="h-3 w-3 text-cyan-300" />
