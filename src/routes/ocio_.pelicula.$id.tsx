@@ -335,22 +335,27 @@ function FilmDetail() {
                                 </p>
                               )}
                               {laterEntries.length > 0 && (
-                                <div className="mt-2 border-t border-white/10 pt-2">
-                                  <p className="mb-1.5 flex items-center justify-between text-[9px] font-semibold uppercase tracking-[0.25em] text-white/50">
-                                    <span>Próximos días</span>
-                                    <span style={{ color: ACCENT }}>↓ desliza</span>
-                                  </p>
+                                <details className="group mt-2 border-t border-white/10 pt-2">
+                                  <summary className="flex cursor-pointer list-none items-center justify-between rounded-md bg-white/[0.04] px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/70 hover:bg-white/[0.08]">
+                                    <span>Próximos días ({laterEntries.length})</span>
+                                    <span
+                                      className="transition-transform group-open:rotate-180"
+                                      style={{ color: ACCENT }}
+                                    >
+                                      ▾
+                                    </span>
+                                  </summary>
                                   <div
-                                    className="space-y-1.5 overflow-y-scroll rounded-md border border-white/10 bg-black/20 p-2 pr-2"
+                                    className="mt-2 space-y-1.5 overflow-y-scroll rounded-md border border-white/10 bg-black/20 p-2"
                                     style={{
-                                      maxHeight: "8rem",
+                                      maxHeight: "10rem",
                                       scrollbarWidth: "thin",
                                       scrollbarColor: `${ACCENT} transparent`,
                                     }}
                                   >
                                     {laterEntries.map(([d, s]) => renderDay(d, s))}
                                   </div>
-                                </div>
+                                </details>
                               )}
                             </div>
                           );
