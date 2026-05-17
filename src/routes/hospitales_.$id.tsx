@@ -236,6 +236,9 @@ function HospitalDetailPage() {
   const mapsHref = `https://www.google.com/maps/search/?api=1&query=${query}`;
   const services = extras?.services ?? h?.associated_services ?? [];
   const specialties = h?.specialties ?? [];
+  const centralitaHref = h?.phone ? `tel:${toPhoneDial(h.phone)}` : "";
+  const emergencyPhone = extras?.emergency_phone ?? "112";
+  const emergencyHref = `tel:${toPhoneDial(emergencyPhone)}`;
 
   return (
     <div
@@ -353,27 +356,24 @@ function HospitalDetailPage() {
                 <span className="text-[11px] font-bold">Cómo llegar</span>
               </button>
               {h.phone && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const tel = `tel:${h.phone!.replace(/\s/g, "")}`;
-                    window.open(tel, "_self");
-                  }}
+                <a
+                  href={centralitaHref}
                   className="flex flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 px-3 py-3 text-amber-950 shadow-lg shadow-amber-900/30 transition active:scale-95"
+                  aria-label={`Llamar a centralita ${h.phone}`}
                 >
                   <Phone className="h-5 w-5" />
                   <span className="text-[11px] font-bold">Centralita</span>
                   <span className="text-[9px] font-mono opacity-80">{h.phone}</span>
-                </button>
+                </a>
               )}
-              <button
-                type="button"
-                onClick={() => window.open("tel:112", "_self")}
+              <a
+                href={emergencyHref}
                 className="flex flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-rose-500 to-red-600 px-3 py-3 text-white shadow-lg shadow-rose-900/30 transition active:scale-95"
+                aria-label={`Llamar a emergencias ${emergencyPhone}`}
               >
                 <Siren className="h-5 w-5" />
-                <span className="text-[11px] font-bold">112 Urgencias</span>
-              </button>
+                <span className="text-[11px] font-bold">{emergencyPhone} Urgencias</span>
+              </a>
             </div>
 
             {/* Datos de contacto */}
@@ -503,6 +503,10 @@ function HospitalDetailPage() {
       </div>
     </div>
   );
+}
+
+function toPhoneDial(phone: string) {
+  return phone.replace(/[^+\d]/g, "");
 }
 
 function Stat({
