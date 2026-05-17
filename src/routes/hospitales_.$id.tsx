@@ -63,6 +63,14 @@ const EXTRAS: Record<string, HospitalExtras> = {
     photos: [
       "https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=900&q=70",
       "https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1551076805-e1869033e561?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1530026405186-ed1f139313f8?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1504439468489-c8920d796a29?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1583912267550-d6c2ac3196c0?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1631815588090-d4bfec5b1ccb?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1666214280557-f1b5022eb634?auto=format&fit=crop&w=900&q=70",
     ],
   },
   // Hospital Universitario de Sant Joan d'Alacant
@@ -91,6 +99,14 @@ const EXTRAS: Record<string, HospitalExtras> = {
     photos: [
       "https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=900&q=70",
       "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1631217868264-e6641e2ee4d6?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1504439468489-c8920d796a29?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1666214277657-e30d40789cb6?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1551076805-e1869033e561?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1530026405186-ed1f139313f8?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1583912267550-d6c2ac3196c0?auto=format&fit=crop&w=900&q=70",
     ],
   },
   // Hospital General Universitario de Elche
@@ -119,6 +135,14 @@ const EXTRAS: Record<string, HospitalExtras> = {
     photos: [
       "https://images.unsplash.com/photo-1504439468489-c8920d796a29?auto=format&fit=crop&w=900&q=70",
       "https://images.unsplash.com/photo-1551076805-e1869033e561?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1530026405186-ed1f139313f8?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1583912267550-d6c2ac3196c0?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1666214280557-f1b5022eb634?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1631815588090-d4bfec5b1ccb?auto=format&fit=crop&w=900&q=70",
     ],
   },
   // Hospital General Universitario de Elda
@@ -147,6 +171,14 @@ const EXTRAS: Record<string, HospitalExtras> = {
     photos: [
       "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=900&q=70",
       "https://images.unsplash.com/photo-1612824093904-2c0a9e0c0c5d?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1538108149393-fbbd81895907?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1551076805-e1869033e561?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1530026405186-ed1f139313f8?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1504439468489-c8920d796a29?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=900&q=70",
+      "https://images.unsplash.com/photo-1583912267550-d6c2ac3196c0?auto=format&fit=crop&w=900&q=70",
     ],
   },
 };
@@ -259,18 +291,30 @@ function HospitalDetailPage() {
               )}
             </div>
 
-            {/* Fotos */}
+            {/* Fotos (hasta 10) */}
             {extras?.photos?.length ? (
-              <div className="mb-4 grid grid-cols-2 gap-2">
-                {extras.photos.map((src, i) => (
-                  <img
-                    key={i}
-                    src={src}
-                    alt={`${h.name} - foto ${i + 1}`}
-                    loading="lazy"
-                    className="h-32 w-full rounded-xl border border-emerald-300/10 object-cover md:h-44"
-                  />
-                ))}
+              <div className="mb-4 -mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div className="flex snap-x snap-mandatory gap-2">
+                  {extras.photos.slice(0, 10).map((src, i) => (
+                    <a
+                      key={i}
+                      href={src}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="relative block h-44 w-64 shrink-0 snap-start overflow-hidden rounded-2xl border border-emerald-300/15 md:h-56 md:w-80"
+                    >
+                      <img
+                        src={src}
+                        alt={`${h.name} - foto ${i + 1}`}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+                      />
+                      <span className="absolute bottom-2 right-2 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur">
+                        {i + 1}/{Math.min(extras.photos.length, 10)}
+                      </span>
+                    </a>
+                  ))}
+                </div>
               </div>
             ) : null}
 
@@ -302,7 +346,7 @@ function HospitalDetailPage() {
             <div className="mb-4 grid grid-cols-3 gap-2">
               <a
                 href={dirHref}
-                target="_blank"
+                target="_top"
                 rel="noreferrer"
                 className="flex flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 px-3 py-3 text-emerald-950 shadow-lg shadow-emerald-900/30 transition active:scale-95"
               >
@@ -312,6 +356,7 @@ function HospitalDetailPage() {
               {h.phone && (
                 <a
                   href={`tel:${h.phone.replace(/\s/g, "")}`}
+                  target="_top"
                   className="flex flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 px-3 py-3 text-amber-950 shadow-lg shadow-amber-900/30 transition active:scale-95"
                 >
                   <Phone className="h-5 w-5" />
@@ -320,6 +365,7 @@ function HospitalDetailPage() {
               )}
               <a
                 href="tel:112"
+                target="_top"
                 className="flex flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-rose-500 to-red-600 px-3 py-3 text-white shadow-lg shadow-rose-900/30 transition active:scale-95"
               >
                 <Siren className="h-5 w-5" />
