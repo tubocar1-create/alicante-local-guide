@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Film, Drama, Music2, Clapperboard, X } from "lucide-react";
+import { Film, Drama, Music2, Clapperboard, X, Ticket } from "lucide-react";
 
 export const Route = createFileRoute("/ocio")({
   head: () => ({
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/ocio")({
 });
 
 type Sub = {
-  slug: "cartelera" | "cines" | "teatros" | "conciertos";
+  slug: "teatros" | "conciertos";
   label: string;
   emoji: string;
   description: string;
@@ -31,15 +31,6 @@ type Sub = {
 };
 
 const SUBS: Sub[] = [
-  {
-    slug: "cartelera",
-    label: "Cartelera",
-    emoji: "🎞️",
-    description: "Elige cine y mira las sesiones de hoy",
-    accent: "#f9a8d4",
-    Icon: Clapperboard,
-    ready: true,
-  },
   {
     slug: "teatros",
     label: "Teatros",
