@@ -504,6 +504,8 @@ export function ChatScreen() {
                 alt="Alicante"
                 className="h-auto w-full object-cover rounded-xl"
                 loading="eager"
+                fetchPriority="high"
+                decoding="async"
               />
             </div>
           )}
