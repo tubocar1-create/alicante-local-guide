@@ -121,14 +121,19 @@ const CATEGORY_PROMPTS: Record<string, string> = {
   veterinarios: "clínicas veterinarias",
 };
 
-async function aiCandidates(
+async function aiCandidatesBatch(
   category: string,
   label: string,
+  exclude: string[],
+  batchSize: number,
 ): Promise<AiCandidate[]> {
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
   const focus = CATEGORY_PROMPTS[category] ?? label;
-  const prompt = `Lista hasta ${AI_CANDIDATES} negocios REALES de ${focus} ubicados en Alicante ciudad o municipios cercanos (San Vicente del Raspeig, Sant Joan d'Alacant, El Campello, Mutxamel). Para cada uno devuelve nombre comercial exacto, URL OFICIAL de su sitio web (https://...) y dirección aproximada si la conoces. NO inventes webs: si no estás seguro de la web oficial, omite ese negocio. Prioriza negocios con presencia online real.`;
+  const excludeText = exclude.length
+    ? ` NO repitas estos negocios ya listados: ${exclude.slice(0, 60).join(", ")}.`
+    : "";
+  const prompt = `Lista ${batchSize} negocios REALES y DISTINTOS de ${focus} ubicados en la provincia de Alicante (Alicante ciudad, San Vicente del Raspeig, Sant Joan d'Alacant, El Campello, Mutxamel, Elche, Santa Pola, San Juan Playa, Playa de San Juan, Albufereta, etc.). Para cada uno devuelve nombre comercial exacto, URL OFICIAL de su sitio web (https://...) y dirección aproximada si la conoces. NO inventes webs: si no estás seguro de la web oficial, omite ese negocio. Prioriza negocios con presencia online real.${excludeText}`;
 
   const res = await fetch(LOVABLE_AI_URL, {
     method: "POST",
