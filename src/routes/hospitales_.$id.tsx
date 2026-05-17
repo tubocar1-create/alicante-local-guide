@@ -358,6 +358,9 @@ function HospitalDetailPage() {
               {h.phone && (
                 <a
                   href={centralitaHref}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => openPhoneDialer(centralitaHref)}
                   className="flex flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 px-3 py-3 text-amber-950 shadow-lg shadow-amber-900/30 transition active:scale-95"
                   aria-label={`Llamar a centralita ${h.phone}`}
                 >
@@ -368,6 +371,9 @@ function HospitalDetailPage() {
               )}
               <a
                 href={emergencyHref}
+                target="_blank"
+                rel="noreferrer"
+                onClick={() => openPhoneDialer(emergencyHref)}
                 className="flex flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-rose-500 to-red-600 px-3 py-3 text-white shadow-lg shadow-rose-900/30 transition active:scale-95"
                 aria-label={`Llamar a emergencias ${emergencyPhone}`}
               >
@@ -506,7 +512,22 @@ function HospitalDetailPage() {
 }
 
 function toPhoneDial(phone: string) {
-  return phone.replace(/[^+\d]/g, "");
+  const firstPhone = phone.split(/[\/;,]/)[0]?.trim() ?? phone;
+  const dial = firstPhone.replace(/[^+\d]/g, "");
+
+  if (dial.length === 9 && /^[689]/.test(dial)) {
+    return `+34${dial}`;
+  }
+
+  return dial;
+}
+
+function openPhoneDialer(href: string) {
+  try {
+    window.top?.location.assign(href);
+  } catch {
+    window.location.assign(href);
+  }
 }
 
 function Stat({
