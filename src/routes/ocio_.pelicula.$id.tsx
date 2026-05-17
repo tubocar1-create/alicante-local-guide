@@ -221,16 +221,14 @@ function FilmDetail() {
 
             {/* Acciones rápidas */}
             <div className="mb-4 grid gap-2">
-              {film.synopsis && (
-                <button
-                  type="button"
-                  onClick={() => setSynopsisOpen(true)}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/[0.06] px-4 py-3 text-white shadow-sm transition hover:bg-white/[0.12] active:scale-[0.98]"
-                >
-                  <FilmIcon className="h-4 w-4" style={{ color: ACCENT }} />
-                  <span className="text-sm font-bold">Sinopsis</span>
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => setSynopsisOpen(true)}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/[0.06] px-4 py-3 text-white shadow-sm transition hover:bg-white/[0.12] active:scale-[0.98]"
+              >
+                <FilmIcon className="h-4 w-4" style={{ color: ACCENT }} />
+                <span className="text-sm font-bold">Sinopsis</span>
+              </button>
               <button
                 type="button"
                 onClick={() => setAiOpen(true)}
