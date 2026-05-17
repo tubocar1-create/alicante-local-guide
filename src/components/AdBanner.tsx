@@ -240,7 +240,7 @@ function CommentPopup({
       role="dialog"
       aria-modal="true"
       aria-label={`Comentario sobre ${target.advertiserName}`}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 animate-in fade-in duration-150"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 p-4 animate-in fade-in duration-150"
       onClick={onClose}
     >
       <div
