@@ -245,7 +245,7 @@ function CommentPopup({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900 to-slate-950 p-5 shadow-2xl"
+        className="relative w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-[#162032] to-[#0d1a2d] p-5 shadow-2xl"
       >
         <button
           type="button"
