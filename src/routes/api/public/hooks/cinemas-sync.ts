@@ -1,0 +1,280 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+// Scraping diario de cines (Alicante). Usa Firecrawl con extracción JSON
+// (LLM) para tolerar layouts heterogéneos en cada web oficial.
+// Para cada cine:
+//   1) scrape de la URL de cartelera con un schema JSON.
+//   2) upsert de cada película (por slug derivado del título).
+//   3) borra los pases futuros del cine y reinserta los nuevos.
+
+type ScrapedShow = {
+  film_title: string;
+  original_title?: string | null;
+  duration_min?: number | null;
+  genre?: string | null;
+  age_rating?: string | null;
+  poster_url?: string | null;
+  starts_at: string; // ISO 8601 con TZ
+  room?: string | null;
+  version?: string | null; // VOSE / Doblada / etc.
+  format?: string | null;  // 2D / 3D / IMAX / VIP
+  ticket_url?: string | null;
+};
+
+type CinemaSource = {
+  slug: string;
+  url: string;
+  prompt: string;
+};
+
+const SOURCES: CinemaSource[] = [
+  {
+    slug: "kinepolis-plaza-mar-2",
+    url: "https://www.kinepolis.es/cines/kinepolis-plaza-mar-2/cartelera",
+    prompt:
+      "Extrae todos los pases de la cartelera de Kinepolis Plaza Mar 2. Para cada pase devuelve título, duración, género, calificación por edad, póster, fecha y hora exacta (ISO con zona horaria de Madrid, Europe/Madrid), sala, versión (VOSE/Doblada), formato (2D/3D/IMAX/VIP) y url de compra de entrada.",
+  },
+  {
+    slug: "yelmo-puerta-alicante",
+    url: "https://www.yelmocines.es/cartelera/alicante",
+    prompt:
+      "Extrae todos los pases del cine 'Yelmo Puerta de Alicante' (Alicante). Para cada pase: título, duración, género, calificación, póster, fecha+hora ISO en Europe/Madrid, sala, versión (VOSE/Doblada), formato y url de compra.",
+  },
+  {
+    slug: "aana-cinemas",
+    url: "https://www.cinesaana.com/",
+    prompt:
+      "Extrae todos los pases de Cines Aana (Alicante). Devuelve título, duración, género, calificación, póster, fecha+hora ISO en Europe/Madrid, sala, versión, formato y url de compra.",
+  },
+  {
+    slug: "odeon-multicines-alicante",
+    url: "https://odeonmulticines.com/odeon-alicante/peliculas",
+    prompt:
+      "Extrae todos los pases de Odeon Multicines Alicante. Devuelve título, duración, género, calificación, póster, fecha+hora ISO en Europe/Madrid, sala, versión, formato y url de compra.",
+  },
+];
+
+const SHOW_SCHEMA = {
+  type: "object",
+  properties: {
+    shows: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          film_title: { type: "string" },
+          original_title: { type: "string" },
+          duration_min: { type: "number" },
+          genre: { type: "string" },
+          age_rating: { type: "string" },
+          poster_url: { type: "string" },
+          starts_at: { type: "string", description: "ISO 8601 con zona Europe/Madrid" },
+          room: { type: "string" },
+          version: { type: "string" },
+          format: { type: "string" },
+          ticket_url: { type: "string" },
+        },
+        required: ["film_title", "starts_at"],
+      },
+    },
+  },
+  required: ["shows"],
+};
+
+function slugify(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 80);
+}
+
+async function firecrawlScrape(url: string, prompt: string): Promise<ScrapedShow[]> {
+  const apiKey = process.env.FIRECRAWL_API_KEY;
+  if (!apiKey) throw new Error("FIRECRAWL_API_KEY no configurada");
+
+  const res = await fetch("https://api.firecrawl.dev/v2/scrape", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      url,
+      formats: [{ type: "json", prompt, schema: SHOW_SCHEMA }],
+      onlyMainContent: true,
+      waitFor: 2500,
+      location: { country: "ES", languages: ["es"] },
+    }),
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(`Firecrawl ${res.status}: ${txt.slice(0, 300)}`);
+  }
+  const body = (await res.json()) as {
+    data?: { json?: { shows?: ScrapedShow[] } };
+    json?: { shows?: ScrapedShow[] };
+  };
+  const shows = body.data?.json?.shows ?? body.json?.shows ?? [];
+  return Array.isArray(shows) ? shows : [];
+}
+
+async function upsertFilm(s: ScrapedShow): Promise<string | null> {
+  const title = (s.film_title || "").trim();
+  if (!title) return null;
+  const slug = slugify(title);
+  if (!slug) return null;
+
+  const { data: existing } = await supabaseAdmin
+    .from("films")
+    .select("id")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (existing?.id) {
+    await supabaseAdmin
+      .from("films")
+      .update({
+        title,
+        original_title: s.original_title ?? undefined,
+        duration_min: s.duration_min ?? undefined,
+        genre: s.genre ?? undefined,
+        age_rating: s.age_rating ?? undefined,
+        poster_url: s.poster_url ?? undefined,
+      })
+      .eq("id", existing.id);
+    return existing.id;
+  }
+
+  const { data: inserted, error } = await supabaseAdmin
+    .from("films")
+    .insert({
+      slug,
+      title,
+      original_title: s.original_title ?? null,
+      duration_min: s.duration_min ?? null,
+      genre: s.genre ?? null,
+      age_rating: s.age_rating ?? null,
+      poster_url: s.poster_url ?? null,
+      active: true,
+    })
+    .select("id")
+    .single();
+  if (error) {
+    console.error("[cinemas-sync] insert film failed", slug, error.message);
+    return null;
+  }
+  return inserted?.id ?? null;
+}
+
+async function syncCinema(source: CinemaSource) {
+  const { data: cinema } = await supabaseAdmin
+    .from("cinemas")
+    .select("id, slug")
+    .eq("slug", source.slug)
+    .maybeSingle();
+  if (!cinema?.id) {
+    return { slug: source.slug, ok: false, error: "cine no encontrado en BD" };
+  }
+
+  let shows: ScrapedShow[];
+  try {
+    shows = await firecrawlScrape(source.url, source.prompt);
+  } catch (e) {
+    return {
+      slug: source.slug,
+      ok: false,
+      error: e instanceof Error ? e.message : String(e),
+    };
+  }
+
+  // Solo pases con fecha futura válida
+  const now = Date.now();
+  const horizon = now + 14 * 24 * 60 * 60 * 1000;
+  const valid = shows.filter((s) => {
+    const ts = Date.parse(s.starts_at);
+    return Number.isFinite(ts) && ts > now - 60 * 60 * 1000 && ts < horizon;
+  });
+
+  // Borra pases futuros del cine para evitar pases obsoletos
+  await supabaseAdmin
+    .from("showtimes")
+    .delete()
+    .eq("cinema_id", cinema.id)
+    .gte("starts_at", new Date(now - 60 * 60 * 1000).toISOString());
+
+  let inserted = 0;
+  for (const s of valid) {
+    const film_id = await upsertFilm(s);
+    if (!film_id) continue;
+    const { error } = await supabaseAdmin
+      .from("showtimes")
+      .upsert(
+        {
+          cinema_id: cinema.id,
+          film_id,
+          starts_at: new Date(s.starts_at).toISOString(),
+          room: s.room ?? null,
+          version: s.version ?? null,
+          format: s.format ?? null,
+          ticket_url: s.ticket_url ?? null,
+          source: source.url,
+        },
+        { onConflict: "cinema_id,film_id,starts_at" },
+      );
+    if (!error) inserted++;
+  }
+
+  return { slug: source.slug, ok: true, scraped: shows.length, inserted };
+}
+
+async function runAll(only?: string) {
+  const targets = only
+    ? SOURCES.filter((s) => s.slug === only)
+    : SOURCES;
+  const results: unknown[] = [];
+  for (const src of targets) {
+    // Secuencial para no saturar Firecrawl y evitar throttling
+    const r = await syncCinema(src);
+    results.push(r);
+  }
+  return results;
+}
+
+export const Route = createFileRoute("/api/public/hooks/cinemas-sync")({
+  server: {
+    handlers: {
+      POST: async ({ request }) => {
+        const url = new URL(request.url);
+        const only = url.searchParams.get("cinema") || undefined;
+        try {
+          const results = await runAll(only ?? undefined);
+          return Response.json({ ok: true, results });
+        } catch (e) {
+          console.error("[cinemas-sync] failed", e);
+          return Response.json(
+            { ok: false, error: e instanceof Error ? e.message : String(e) },
+            { status: 500 },
+          );
+        }
+      },
+      GET: async ({ request }) => {
+        const url = new URL(request.url);
+        const only = url.searchParams.get("cinema") || undefined;
+        try {
+          const results = await runAll(only ?? undefined);
+          return Response.json({ ok: true, results });
+        } catch (e) {
+          console.error("[cinemas-sync] failed", e);
+          return Response.json(
+            { ok: false, error: e instanceof Error ? e.message : String(e) },
+            { status: 500 },
+          );
+        }
+      },
+    },
+  },
+});
