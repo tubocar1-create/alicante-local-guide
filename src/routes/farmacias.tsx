@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ChevronDown, Clock, MapPin, Navigation, Phone, Search, Sparkles, X } from "lucide-react";
+import { Car, ChevronDown, Clock, MapPin, Navigation, Phone, Search, Sparkles, X } from "lucide-react";
 import { useUserLocation } from "@/hooks/useUserLocation";
 
 // Centroides aproximados por código postal (Alicante) para estimar distancia.
