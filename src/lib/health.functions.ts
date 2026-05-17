@@ -128,11 +128,11 @@ function parseScheduleToPeriods(
 
 function healthCenterToDTO(row: Record<string, unknown>, category: string): HealthProviderDTO {
   const hours = (row.schedule as string | null) ?? null;
-  const periods = hours ? parseScheduleToPeriods(hours) : [];
+  const periods = hours ? parseScheduleToPeriods(hours) : undefined;
   const opening = hours
     ? ({
         weekdayDescriptions: [hours],
-        periods: periods.length > 0 ? periods : undefined,
+        periods: periods && periods.length > 0 ? periods : undefined,
       } as HealthProviderDTO["opening_hours"])
     : null;
   return {
