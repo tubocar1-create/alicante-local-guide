@@ -3,8 +3,10 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-// Tope duro: máximo 10 resultados por categoría
-const MAX_RESULTS = 10;
+// Tope duro: máximo 50 resultados por categoría (sólo privados verificados con web)
+const MAX_RESULTS = 50;
+const AI_CANDIDATES = 60; // pedimos algunos extra para tolerar descartes
+const SCRAPE_CONCURRENCY = 6;
 
 export type HealthProviderDTO = {
   id: string;
