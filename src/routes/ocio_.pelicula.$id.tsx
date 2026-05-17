@@ -67,6 +67,45 @@ function FilmDetail() {
     return m;
   }, [showtimes]);
 
+  // Próxima sesión y cine (para botones de cabecera)
+  const nextSession = useMemo(() => {
+    const now = Date.now();
+    return (
+      showtimes.find((s) => new Date(s.starts_at).getTime() >= now) ??
+      showtimes[0] ??
+      null
+    );
+  }, [showtimes]);
+  const primaryCinema = nextSession
+    ? cinemaById.get(nextSession.cinema_id) ?? null
+    : cinemas[0] ?? null;
+  const primaryDirHref = primaryCinema
+    ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+        `${primaryCinema.name} ${primaryCinema.address ?? ""}`,
+      )}&travelmode=driving`
+    : null;
+  const primaryTicketHref =
+    nextSession?.ticket_url ?? primaryCinema?.ticket_url ?? null;
+
+  // Diálogo de IA
+  const [aiOpen, setAiOpen] = useState(false);
+  const fetchAI = useServerFn(getFilmAIInsight);
+  const { data: aiData, isLoading: aiLoading, error: aiError } = useQuery({
+    queryKey: ["film-ai", film?.id],
+    queryFn: () =>
+      fetchAI({
+        data: {
+          title: film!.title,
+          originalTitle: film!.original_title,
+          director: film!.director,
+          cast: film!.cast_list,
+          genre: film!.genre,
+        },
+      }),
+    enabled: aiOpen && !!film,
+    staleTime: 1000 * 60 * 60,
+  });
+
   if (!isLoading && !film) throw notFound();
 
   return (
