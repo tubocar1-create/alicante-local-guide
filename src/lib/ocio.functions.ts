@@ -12,7 +12,7 @@ export type CinemaDTO = {
   phone: string | null;
   website: string | null;
   ticket_url: string | null;
-  opening_hours: unknown;
+  opening_hours: { weekdayDescriptions?: string[] } | null;
   photos: string[];
   notes: string | null;
 };
