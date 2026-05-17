@@ -835,7 +835,7 @@ export function ChatScreen() {
             <span className="text-[10px] font-semibold">Perfil</span>
           </Link>
         </nav>
-      )}
+      </>)}
       {showQrInfo && <QrVamosInfo onClose={() => setShowQrInfo(false)} />}
     </div>
   );
