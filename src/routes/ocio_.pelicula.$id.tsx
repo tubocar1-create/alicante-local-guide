@@ -130,7 +130,7 @@ function FilmDetail() {
             className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/[0.04] px-3 py-1.5 text-[11px] font-semibold text-white/80 transition hover:border-white/40 hover:text-white"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            Cines
+            Cartelera
           </Link>
           <span
             className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-white"
