@@ -240,12 +240,12 @@ function CommentPopup({
       role="dialog"
       aria-modal="true"
       aria-label={`Comentario sobre ${target.advertiserName}`}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 animate-in fade-in duration-150"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 p-4 animate-in fade-in duration-150"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900 to-slate-950 p-5 shadow-2xl"
+        className="relative w-full max-w-md overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-[#162032] to-[#0d1a2d] p-5 shadow-2xl"
       >
         <button
           type="button"

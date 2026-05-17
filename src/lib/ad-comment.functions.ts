@@ -25,7 +25,7 @@ export const getAdComment = createServerFn({ method: "POST" })
 Titular: "${data.headline}"
 Detalle: "${data.body}"
 
-Escribe un comentario serio, breve (70-110 palabras), en español, sobre lo que aporta esa información para alguien en Alicante: contexto, interpretación práctica y, si procede, una recomendación prudente. Sin saludos, sin listas, sin markdown, sin emojis. Solo prosa fluida. No inventes datos concretos que no estén en el titular/detalle.`;
+Escribe un comentario muy corto (40-70 palabras), en español, con tono cercano, amable y simpático — como si se lo contaras a un amigo que acaba de llegar a Alicante. Sin saludos, sin listas, sin markdown, sin emojis. Solo prosa fluida y natural. No inventes datos concretos que no estén en el titular/detalle.`;
 
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
