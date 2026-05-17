@@ -286,34 +286,48 @@ export const populateHealthCategory = createServerFn({ method: "POST" })
     if (!roleRow) throw new Error("Forbidden: admin role required");
 
     const label = data.query ?? data.category;
-    const candidates = await aiCandidates(data.category, label);
-    if (!candidates.length) {
+
+    // Multi-batch: Gemini suele devolver 10-15 por llamada. Pedimos en tandas hasta llegar a AI_CANDIDATES.
+    const BATCH_SIZE = 25;
+    const MAX_BATCHES = 4;
+    const seen = new Set<string>();
+    const unique: AiCandidate[] = [];
+    for (let b = 0; b < MAX_BATCHES && unique.length < AI_CANDIDATES; b++) {
+      const batch = await aiCandidatesBatch(
+        data.category,
+        label,
+        unique.map((u) => u.name),
+        BATCH_SIZE,
+      );
+      let added = 0;
+      for (const c of batch) {
+        try {
+          const h = new URL(c.website).host.replace(/^www\./, "");
+          if (seen.has(h)) continue;
+          seen.add(h);
+          unique.push(c);
+          added++;
+        } catch {
+          continue;
+        }
+      }
+      if (added === 0) break;
+    }
+
+    if (!unique.length) {
       return { inserted: 0, total: 0, source: "ai+web", discarded: 0, reason: "no candidates" };
     }
 
-    // Deduplicar por host
-    const seen = new Set<string>();
-    const unique = candidates.filter((c) => {
-      try {
-        const h = new URL(c.website).host.replace(/^www\./, "");
-        if (seen.has(h)) return false;
-        seen.add(h);
-        return true;
-      } catch {
-        return false;
-      }
-    });
-
-    const scraped = await runWithConcurrency(unique, SCRAPE_CONCURRENCY, async (c) => {
+    const scraped = await runWithConcurrency(unique, SCRAPE_CONCURRENCY, async (c: AiCandidate) => {
       const fields = await scrapeWebsite(c.website);
       return { candidate: c, fields };
     });
 
     const rows = scraped
-      .filter((s) => s.fields && (s.fields.phone || s.fields.address))
+      // Conservamos todos los candidatos con web válida. Si el scraping falla, mantenemos la ficha con web y dirección IA.
       .slice(0, MAX_RESULTS)
-      .map(({ candidate, fields }, i) => {
-        const f = fields!;
+      .map(({ candidate, fields }: { candidate: AiCandidate; fields: ScrapedFields | null }, i: number) => {
+        const f: ScrapedFields = fields ?? { phone: null, address: null, hours: null, email: null, summary: null };
         const host = (() => {
           try { return new URL(candidate.website).host.replace(/^www\./, ""); }
           catch { return `unknown-${i}`; }
