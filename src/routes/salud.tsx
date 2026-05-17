@@ -58,7 +58,6 @@ const PRIVATE_AND_OTHERS: Tile[] = [
   { emoji: "❤️", label: "Cardiología privada", sublabel: "Pruebas y consultas", categoria: "cardiologia", accent: "#f87171" },
   { emoji: "👁️", label: "Oftalmología", sublabel: "Cirugía ocular y revisiones", categoria: "oftalmologia", accent: "#93c5fd" },
   { emoji: "💉", label: "Vacunación", sublabel: "Centros de vacunación internacional", categoria: "vacunacion", accent: "#2dd4bf" },
-  { emoji: "🩸", label: "Donación de sangre", sublabel: "Centro de Transfusión CV", external: "https://www.donantescv.org/", accent: "#fb7185" },
   { emoji: "🐾", label: "Veterinarios", sublabel: "Clínicas y urgencias 24h", categoria: "veterinarios", accent: "#fbbf24" },
 ];
 
