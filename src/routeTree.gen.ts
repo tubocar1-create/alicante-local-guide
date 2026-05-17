@@ -16,6 +16,7 @@ import { Route as SistemaSanitarioRouteImport } from './routes/sistema-sanitario
 import { Route as SaludRouteImport } from './routes/salud'
 import { Route as RepoRouteImport } from './routes/repo'
 import { Route as PerfilRouteImport } from './routes/perfil'
+import { Route as OcioRouteImport } from './routes/ocio'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HospitalesRouteImport } from './routes/hospitales'
 import { Route as FarmaciasRouteImport } from './routes/farmacias'
@@ -30,6 +31,9 @@ import { Route as VuelosIataRouteImport } from './routes/vuelos_.$iata'
 import { Route as ThreadsIdRouteImport } from './routes/threads.$id'
 import { Route as SaludCategoriaRouteImport } from './routes/salud_.$categoria'
 import { Route as RestaurantsPlaceIdRouteImport } from './routes/restaurants.$placeId'
+import { Route as OcioTeatrosRouteImport } from './routes/ocio_.teatros'
+import { Route as OcioConciertosRouteImport } from './routes/ocio_.conciertos'
+import { Route as OcioCinesRouteImport } from './routes/ocio_.cines'
 import { Route as HospitalesIdRouteImport } from './routes/hospitales_.$id'
 import { Route as BusinessReferralsRouteImport } from './routes/business.referrals'
 import { Route as BusinessQrRouteImport } from './routes/business.qr'
@@ -44,6 +48,8 @@ import { Route as BusLinesRouteImport } from './routes/bus.lines'
 import { Route as AdminSaludRouteImport } from './routes/admin.salud'
 import { Route as AdminPlacesRouteImport } from './routes/admin.places'
 import { Route as SaludCategoriaIdRouteImport } from './routes/salud_.$categoria.$id'
+import { Route as OcioPeliculaIdRouteImport } from './routes/ocio_.pelicula.$id'
+import { Route as OcioCinesIdRouteImport } from './routes/ocio_.cines.$id'
 import { Route as BusinessInboxIdRouteImport } from './routes/business.inbox.$id'
 import { Route as BusLinesCodeRouteImport } from './routes/bus.lines.$code'
 import { Route as ApiPublicRefreshNewsRouteImport } from './routes/api/public/refresh-news'
@@ -88,6 +94,11 @@ const RepoRoute = RepoRouteImport.update({
 const PerfilRoute = PerfilRouteImport.update({
   id: '/perfil',
   path: '/perfil',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OcioRoute = OcioRouteImport.update({
+  id: '/ocio',
+  path: '/ocio',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -160,6 +171,21 @@ const RestaurantsPlaceIdRoute = RestaurantsPlaceIdRouteImport.update({
   path: '/restaurants/$placeId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OcioTeatrosRoute = OcioTeatrosRouteImport.update({
+  id: '/ocio_/teatros',
+  path: '/ocio/teatros',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OcioConciertosRoute = OcioConciertosRouteImport.update({
+  id: '/ocio_/conciertos',
+  path: '/ocio/conciertos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OcioCinesRoute = OcioCinesRouteImport.update({
+  id: '/ocio_/cines',
+  path: '/ocio/cines',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HospitalesIdRoute = HospitalesIdRouteImport.update({
   id: '/hospitales_/$id',
   path: '/hospitales/$id',
@@ -230,6 +256,16 @@ const SaludCategoriaIdRoute = SaludCategoriaIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => SaludCategoriaRoute,
 } as any)
+const OcioPeliculaIdRoute = OcioPeliculaIdRouteImport.update({
+  id: '/ocio_/pelicula/$id',
+  path: '/ocio/pelicula/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OcioCinesIdRoute = OcioCinesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => OcioCinesRoute,
+} as any)
 const BusinessInboxIdRoute = BusinessInboxIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -292,6 +328,7 @@ export interface FileRoutesByFullPath {
   '/farmacias': typeof FarmaciasRoute
   '/hospitales': typeof HospitalesRoute
   '/login': typeof LoginRoute
+  '/ocio': typeof OcioRoute
   '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
   '/salud': typeof SaludRoute
@@ -312,6 +349,9 @@ export interface FileRoutesByFullPath {
   '/business/qr': typeof BusinessQrRoute
   '/business/referrals': typeof BusinessReferralsRoute
   '/hospitales/$id': typeof HospitalesIdRoute
+  '/ocio/cines': typeof OcioCinesRouteWithChildren
+  '/ocio/conciertos': typeof OcioConciertosRoute
+  '/ocio/teatros': typeof OcioTeatrosRoute
   '/restaurants/$placeId': typeof RestaurantsPlaceIdRoute
   '/salud/$categoria': typeof SaludCategoriaRouteWithChildren
   '/threads/$id': typeof ThreadsIdRoute
@@ -326,6 +366,8 @@ export interface FileRoutesByFullPath {
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
+  '/ocio/cines/$id': typeof OcioCinesIdRoute
+  '/ocio/pelicula/$id': typeof OcioPeliculaIdRoute
   '/salud/$categoria/$id': typeof SaludCategoriaIdRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
 }
@@ -338,6 +380,7 @@ export interface FileRoutesByTo {
   '/farmacias': typeof FarmaciasRoute
   '/hospitales': typeof HospitalesRoute
   '/login': typeof LoginRoute
+  '/ocio': typeof OcioRoute
   '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
   '/salud': typeof SaludRoute
@@ -358,6 +401,9 @@ export interface FileRoutesByTo {
   '/business/qr': typeof BusinessQrRoute
   '/business/referrals': typeof BusinessReferralsRoute
   '/hospitales/$id': typeof HospitalesIdRoute
+  '/ocio/cines': typeof OcioCinesRouteWithChildren
+  '/ocio/conciertos': typeof OcioConciertosRoute
+  '/ocio/teatros': typeof OcioTeatrosRoute
   '/restaurants/$placeId': typeof RestaurantsPlaceIdRoute
   '/salud/$categoria': typeof SaludCategoriaRouteWithChildren
   '/threads/$id': typeof ThreadsIdRoute
@@ -372,6 +418,8 @@ export interface FileRoutesByTo {
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
+  '/ocio/cines/$id': typeof OcioCinesIdRoute
+  '/ocio/pelicula/$id': typeof OcioPeliculaIdRoute
   '/salud/$categoria/$id': typeof SaludCategoriaIdRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
 }
@@ -386,6 +434,7 @@ export interface FileRoutesById {
   '/farmacias': typeof FarmaciasRoute
   '/hospitales': typeof HospitalesRoute
   '/login': typeof LoginRoute
+  '/ocio': typeof OcioRoute
   '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
   '/salud': typeof SaludRoute
@@ -406,6 +455,9 @@ export interface FileRoutesById {
   '/business/qr': typeof BusinessQrRoute
   '/business/referrals': typeof BusinessReferralsRoute
   '/hospitales_/$id': typeof HospitalesIdRoute
+  '/ocio_/cines': typeof OcioCinesRouteWithChildren
+  '/ocio_/conciertos': typeof OcioConciertosRoute
+  '/ocio_/teatros': typeof OcioTeatrosRoute
   '/restaurants/$placeId': typeof RestaurantsPlaceIdRoute
   '/salud_/$categoria': typeof SaludCategoriaRouteWithChildren
   '/threads/$id': typeof ThreadsIdRoute
@@ -420,6 +472,8 @@ export interface FileRoutesById {
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
+  '/ocio_/cines/$id': typeof OcioCinesIdRoute
+  '/ocio_/pelicula/$id': typeof OcioPeliculaIdRoute
   '/salud_/$categoria/$id': typeof SaludCategoriaIdRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
 }
@@ -435,6 +489,7 @@ export interface FileRouteTypes {
     | '/farmacias'
     | '/hospitales'
     | '/login'
+    | '/ocio'
     | '/perfil'
     | '/repo'
     | '/salud'
@@ -455,6 +510,9 @@ export interface FileRouteTypes {
     | '/business/qr'
     | '/business/referrals'
     | '/hospitales/$id'
+    | '/ocio/cines'
+    | '/ocio/conciertos'
+    | '/ocio/teatros'
     | '/restaurants/$placeId'
     | '/salud/$categoria'
     | '/threads/$id'
@@ -469,6 +527,8 @@ export interface FileRouteTypes {
     | '/api/public/refresh-news'
     | '/bus/lines/$code'
     | '/business/inbox/$id'
+    | '/ocio/cines/$id'
+    | '/ocio/pelicula/$id'
     | '/salud/$categoria/$id'
     | '/api/public/hooks/aena-sync'
   fileRoutesByTo: FileRoutesByTo
@@ -481,6 +541,7 @@ export interface FileRouteTypes {
     | '/farmacias'
     | '/hospitales'
     | '/login'
+    | '/ocio'
     | '/perfil'
     | '/repo'
     | '/salud'
@@ -501,6 +562,9 @@ export interface FileRouteTypes {
     | '/business/qr'
     | '/business/referrals'
     | '/hospitales/$id'
+    | '/ocio/cines'
+    | '/ocio/conciertos'
+    | '/ocio/teatros'
     | '/restaurants/$placeId'
     | '/salud/$categoria'
     | '/threads/$id'
@@ -515,6 +579,8 @@ export interface FileRouteTypes {
     | '/api/public/refresh-news'
     | '/bus/lines/$code'
     | '/business/inbox/$id'
+    | '/ocio/cines/$id'
+    | '/ocio/pelicula/$id'
     | '/salud/$categoria/$id'
     | '/api/public/hooks/aena-sync'
   id:
@@ -528,6 +594,7 @@ export interface FileRouteTypes {
     | '/farmacias'
     | '/hospitales'
     | '/login'
+    | '/ocio'
     | '/perfil'
     | '/repo'
     | '/salud'
@@ -548,6 +615,9 @@ export interface FileRouteTypes {
     | '/business/qr'
     | '/business/referrals'
     | '/hospitales_/$id'
+    | '/ocio_/cines'
+    | '/ocio_/conciertos'
+    | '/ocio_/teatros'
     | '/restaurants/$placeId'
     | '/salud_/$categoria'
     | '/threads/$id'
@@ -562,6 +632,8 @@ export interface FileRouteTypes {
     | '/api/public/refresh-news'
     | '/bus/lines/$code'
     | '/business/inbox/$id'
+    | '/ocio_/cines/$id'
+    | '/ocio_/pelicula/$id'
     | '/salud_/$categoria/$id'
     | '/api/public/hooks/aena-sync'
   fileRoutesById: FileRoutesById
@@ -576,6 +648,7 @@ export interface RootRouteChildren {
   FarmaciasRoute: typeof FarmaciasRoute
   HospitalesRoute: typeof HospitalesRoute
   LoginRoute: typeof LoginRoute
+  OcioRoute: typeof OcioRoute
   PerfilRoute: typeof PerfilRoute
   RepoRoute: typeof RepoRoute
   SaludRoute: typeof SaludRoute
@@ -586,6 +659,9 @@ export interface RootRouteChildren {
   AdminPlacesRoute: typeof AdminPlacesRoute
   AdminSaludRoute: typeof AdminSaludRoute
   HospitalesIdRoute: typeof HospitalesIdRoute
+  OcioCinesRoute: typeof OcioCinesRouteWithChildren
+  OcioConciertosRoute: typeof OcioConciertosRoute
+  OcioTeatrosRoute: typeof OcioTeatrosRoute
   RestaurantsPlaceIdRoute: typeof RestaurantsPlaceIdRoute
   SaludCategoriaRoute: typeof SaludCategoriaRouteWithChildren
   VuelosIataRoute: typeof VuelosIataRoute
@@ -596,6 +672,7 @@ export interface RootRouteChildren {
   ApiPublicQrValidateRoute: typeof ApiPublicQrValidateRoute
   ApiPublicRefreshAlicantePressRoute: typeof ApiPublicRefreshAlicantePressRoute
   ApiPublicRefreshNewsRoute: typeof ApiPublicRefreshNewsRoute
+  OcioPeliculaIdRoute: typeof OcioPeliculaIdRoute
   ApiPublicHooksAenaSyncRoute: typeof ApiPublicHooksAenaSyncRoute
 }
 
@@ -648,6 +725,13 @@ declare module '@tanstack/react-router' {
       path: '/perfil'
       fullPath: '/perfil'
       preLoaderRoute: typeof PerfilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ocio': {
+      id: '/ocio'
+      path: '/ocio'
+      fullPath: '/ocio'
+      preLoaderRoute: typeof OcioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -748,6 +832,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RestaurantsPlaceIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ocio_/teatros': {
+      id: '/ocio_/teatros'
+      path: '/ocio/teatros'
+      fullPath: '/ocio/teatros'
+      preLoaderRoute: typeof OcioTeatrosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ocio_/conciertos': {
+      id: '/ocio_/conciertos'
+      path: '/ocio/conciertos'
+      fullPath: '/ocio/conciertos'
+      preLoaderRoute: typeof OcioConciertosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ocio_/cines': {
+      id: '/ocio_/cines'
+      path: '/ocio/cines'
+      fullPath: '/ocio/cines'
+      preLoaderRoute: typeof OcioCinesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/hospitales_/$id': {
       id: '/hospitales_/$id'
       path: '/hospitales/$id'
@@ -845,6 +950,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/salud/$categoria/$id'
       preLoaderRoute: typeof SaludCategoriaIdRouteImport
       parentRoute: typeof SaludCategoriaRoute
+    }
+    '/ocio_/pelicula/$id': {
+      id: '/ocio_/pelicula/$id'
+      path: '/ocio/pelicula/$id'
+      fullPath: '/ocio/pelicula/$id'
+      preLoaderRoute: typeof OcioPeliculaIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ocio_/cines/$id': {
+      id: '/ocio_/cines/$id'
+      path: '/$id'
+      fullPath: '/ocio/cines/$id'
+      preLoaderRoute: typeof OcioCinesIdRouteImport
+      parentRoute: typeof OcioCinesRoute
     }
     '/business/inbox/$id': {
       id: '/business/inbox/$id'
@@ -994,6 +1113,18 @@ const ThreadsRouteChildren: ThreadsRouteChildren = {
 const ThreadsRouteWithChildren =
   ThreadsRoute._addFileChildren(ThreadsRouteChildren)
 
+interface OcioCinesRouteChildren {
+  OcioCinesIdRoute: typeof OcioCinesIdRoute
+}
+
+const OcioCinesRouteChildren: OcioCinesRouteChildren = {
+  OcioCinesIdRoute: OcioCinesIdRoute,
+}
+
+const OcioCinesRouteWithChildren = OcioCinesRoute._addFileChildren(
+  OcioCinesRouteChildren,
+)
+
 interface SaludCategoriaRouteChildren {
   SaludCategoriaIdRoute: typeof SaludCategoriaIdRoute
 }
@@ -1016,6 +1147,7 @@ const rootRouteChildren: RootRouteChildren = {
   FarmaciasRoute: FarmaciasRoute,
   HospitalesRoute: HospitalesRoute,
   LoginRoute: LoginRoute,
+  OcioRoute: OcioRoute,
   PerfilRoute: PerfilRoute,
   RepoRoute: RepoRoute,
   SaludRoute: SaludRoute,
@@ -1026,6 +1158,9 @@ const rootRouteChildren: RootRouteChildren = {
   AdminPlacesRoute: AdminPlacesRoute,
   AdminSaludRoute: AdminSaludRoute,
   HospitalesIdRoute: HospitalesIdRoute,
+  OcioCinesRoute: OcioCinesRouteWithChildren,
+  OcioConciertosRoute: OcioConciertosRoute,
+  OcioTeatrosRoute: OcioTeatrosRoute,
   RestaurantsPlaceIdRoute: RestaurantsPlaceIdRoute,
   SaludCategoriaRoute: SaludCategoriaRouteWithChildren,
   VuelosIataRoute: VuelosIataRoute,
@@ -1036,18 +1171,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicQrValidateRoute: ApiPublicQrValidateRoute,
   ApiPublicRefreshAlicantePressRoute: ApiPublicRefreshAlicantePressRoute,
   ApiPublicRefreshNewsRoute: ApiPublicRefreshNewsRoute,
+  OcioPeliculaIdRoute: OcioPeliculaIdRoute,
   ApiPublicHooksAenaSyncRoute: ApiPublicHooksAenaSyncRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

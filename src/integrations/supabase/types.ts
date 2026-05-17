@@ -393,6 +393,63 @@ export type Database = {
           },
         ]
       }
+      cinemas: {
+        Row: {
+          active: boolean
+          address: string | null
+          brand: string | null
+          created_at: string
+          id: string
+          lat: number | null
+          lng: number | null
+          name: string
+          notes: string | null
+          opening_hours: Json | null
+          phone: string | null
+          photos: string[]
+          slug: string
+          ticket_url: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          active?: boolean
+          address?: string | null
+          brand?: string | null
+          created_at?: string
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          name: string
+          notes?: string | null
+          opening_hours?: Json | null
+          phone?: string | null
+          photos?: string[]
+          slug: string
+          ticket_url?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          active?: boolean
+          address?: string | null
+          brand?: string | null
+          created_at?: string
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          name?: string
+          notes?: string | null
+          opening_hours?: Json | null
+          phone?: string | null
+          photos?: string[]
+          slug?: string
+          ticket_url?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       conversation_threads: {
         Row: {
           booking_id: string
@@ -426,6 +483,69 @@ export type Database = {
           last_message_at?: string
           status?: Database["public"]["Enums"]["thread_status"]
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      films: {
+        Row: {
+          active: boolean
+          age_rating: string | null
+          cast_list: string[]
+          created_at: string
+          director: string | null
+          duration_min: number | null
+          external_ids: Json
+          genre: string | null
+          id: string
+          language: string | null
+          original_title: string | null
+          poster_url: string | null
+          release_date: string | null
+          slug: string
+          synopsis: string | null
+          title: string
+          trailer_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          age_rating?: string | null
+          cast_list?: string[]
+          created_at?: string
+          director?: string | null
+          duration_min?: number | null
+          external_ids?: Json
+          genre?: string | null
+          id?: string
+          language?: string | null
+          original_title?: string | null
+          poster_url?: string | null
+          release_date?: string | null
+          slug: string
+          synopsis?: string | null
+          title: string
+          trailer_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          age_rating?: string | null
+          cast_list?: string[]
+          created_at?: string
+          director?: string | null
+          duration_min?: number | null
+          external_ids?: Json
+          genre?: string | null
+          id?: string
+          language?: string | null
+          original_title?: string | null
+          poster_url?: string | null
+          release_date?: string | null
+          slug?: string
+          synopsis?: string | null
+          title?: string
+          trailer_url?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -997,6 +1117,63 @@ export type Database = {
             columns: ["business_id"]
             isOneToOne: false
             referencedRelation: "businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      showtimes: {
+        Row: {
+          cinema_id: string
+          created_at: string
+          film_id: string
+          format: string | null
+          id: string
+          price_eur: number | null
+          room: string | null
+          source: string | null
+          starts_at: string
+          ticket_url: string | null
+          version: string | null
+        }
+        Insert: {
+          cinema_id: string
+          created_at?: string
+          film_id: string
+          format?: string | null
+          id?: string
+          price_eur?: number | null
+          room?: string | null
+          source?: string | null
+          starts_at: string
+          ticket_url?: string | null
+          version?: string | null
+        }
+        Update: {
+          cinema_id?: string
+          created_at?: string
+          film_id?: string
+          format?: string | null
+          id?: string
+          price_eur?: number | null
+          room?: string | null
+          source?: string | null
+          starts_at?: string
+          ticket_url?: string | null
+          version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "showtimes_cinema_id_fkey"
+            columns: ["cinema_id"]
+            isOneToOne: false
+            referencedRelation: "cinemas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "showtimes_film_id_fkey"
+            columns: ["film_id"]
+            isOneToOne: false
+            referencedRelation: "films"
             referencedColumns: ["id"]
           },
         ]
