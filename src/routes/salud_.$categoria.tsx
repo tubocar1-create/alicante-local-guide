@@ -49,12 +49,6 @@ function fmtDist(km: number | null): string {
   return `${m}m`;
 }
 
-function shortPhone(p: string | null): string {
-  if (!p) return "—";
-  // Keep last 9 digits compact
-  return p.replace(/\s+/g, " ").trim();
-}
-
 function CategoryDashboard() {
   const { categoria } = Route.useParams();
   const cat = getCategory(categoria)!;
