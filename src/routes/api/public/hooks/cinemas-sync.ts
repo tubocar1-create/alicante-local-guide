@@ -1,42 +1,36 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-// Scraping diario de cines usando ecartelera.com como fuente unificada.
-// ecartelera publica todas las sesiones por cine y por día en HTML estable,
-// así que basta con fetch + regex (sin LLM, sin alucinaciones de fecha).
-//
-// URL pattern: https://www.ecartelera.com/cines/{id},{dayOffset},1.html
-//   dayOffset 0 = hoy (Europe/Madrid), 1 = mañana, ... hasta 13 disponibles.
-// Recorremos 0..7 (1 semana) por cine.
+// Scraping diario de cines usando publicine.net como fuente unificada.
+// publicine publica la semana completa por sala en una sola página HTML,
+// con horarios, formato (Digital/VOSE/3D) y URL de compra (base64 en data-href).
+// Cubre las 4 salas de Alicante: Aana, Kinépolis, Yelmo y Odeón.
 
 type ParsedShow = {
+  film_pid: string;          // id numérico publicine (estable)
+  film_slug: string;         // slug publicine
   film_title: string;
-  film_slug: string;
   poster_url: string | null;
   duration_min: number | null;
   genre: string | null;
   age_rating: string | null;
+  director: string | null;
   starts_at_ms: number;
-  ticket_url: string;
+  ticket_url: string | null;
+  format: string | null;
 };
 
 type CinemaSource = {
-  slug: string;          // slug en nuestra BD
-  ecartelera_id: number; // id numérico en ecartelera
+  slug: string;         // slug en nuestra BD
+  publicine_path: string; // path bajo /cartelera-cine/
 };
 
 const SOURCES: CinemaSource[] = [
-  { slug: "aana-cinemas",          ecartelera_id: 181 },
-  { slug: "kinepolis-plaza-mar-2", ecartelera_id: 184 },
-  { slug: "yelmo-puerta-alicante", ecartelera_id: 187 },
+  { slug: "aana-cinemas",              publicine_path: "alacant-alicante/cines-aana-alicante" },
+  { slug: "kinepolis-plaza-mar-2",     publicine_path: "alacant-alicante/kinepolis-alicante-plaza-mar-2" },
+  { slug: "yelmo-puerta-alicante",     publicine_path: "alacant-alicante/yelmo-cines-puerta-de-alicante" },
+  { slug: "odeon-multicines-alicante", publicine_path: "sant-vicent-del-raspeig/odeon-multicines-alicante" },
 ];
-
-// Odeon Alicante tiene parser propio (web propia con cookie default_center).
-const ODEON_SLUG = "odeon-multicines-alicante";
-const ODEON_BASE = "https://odeonmulticines.com";
-const ODEON_COOKIE = "default_center=odeon-alicante";
-
-const DAY_HORIZON = 7;
 
 function slugify(s: string): string {
   return s
@@ -71,7 +65,6 @@ function decodeHtml(s: string): string {
     .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(+n));
 }
 
-// Devuelve la fecha "hoy" en Europe/Madrid como {y,m,d}.
 function madridToday(): { y: number; m: number; d: number } {
   const fmt = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Madrid",
@@ -79,8 +72,7 @@ function madridToday(): { y: number; m: number; d: number } {
     month: "2-digit",
     day: "2-digit",
   });
-  const parts = fmt.format(new Date()); // YYYY-MM-DD
-  const [y, m, d] = parts.split("-").map(Number);
+  const [y, m, d] = fmt.format(new Date()).split("-").map(Number);
   return { y, m, d };
 }
 
@@ -95,7 +87,6 @@ function isMadridDst(y: number, mo: number, d: number): boolean {
   return d < lastSunday(y, 10);
 }
 
-// Combina fecha en Madrid + HH:MM en hora local Madrid → timestamp UTC ms.
 function madridDateTimeToUtcMs(
   y: number, m: number, d: number, hh: number, mm: number,
 ): number {
@@ -103,101 +94,36 @@ function madridDateTimeToUtcMs(
   return Date.UTC(y, m - 1, d, hh - offsetHours, mm, 0);
 }
 
-// Avanza una fecha Y/M/D en N días (ignorando DST; suficiente para offsets cortos).
-function addDays(y: number, m: number, d: number, days: number) {
-  const dt = new Date(Date.UTC(y, m - 1, d));
-  dt.setUTCDate(dt.getUTCDate() + days);
-  return {
-    y: dt.getUTCFullYear(),
-    m: dt.getUTCMonth() + 1,
-    d: dt.getUTCDate(),
-  };
+// Dado DD/MM (sin año), decide el año más cercano a hoy en Madrid.
+function inferYear(dd: number, mm: number, today: { y: number; m: number; d: number }): number {
+  // publicine muestra la semana actual; los meses estarán cerca de hoy.
+  // Si la diferencia es > 6 meses, asumimos cruce de año.
+  let y = today.y;
+  const diff = (mm - today.m + 12) % 12; // meses hacia adelante
+  if (diff > 6) y -= 1;
+  // Si estamos en diciembre y vemos enero, sumar año.
+  if (today.m === 12 && mm === 1) y = today.y + 1;
+  return y;
 }
 
-// Extrae sesiones de un HTML de página de cine de ecartelera.
-function parseEcarteleraDay(
-  html: string,
-  date: { y: number; m: number; d: number },
-): ParsedShow[] {
-  const out: ParsedShow[] = [];
-  // Cada película es un bloque <div class="titem" ...> ... </div> hasta el siguiente titem
-  const blocks = html.split(/<div class="titem"/).slice(1);
-  for (const raw of blocks) {
-    // Cortamos en el siguiente cierre razonable (próximo titem ya removido)
-    const block = raw;
-
-    // Título + slug interno de ecartelera (sirve para slug estable)
-    const titMatch = block.match(
-      /<p class="tit"><a href="https:\/\/www\.ecartelera\.com\/peliculas\/([^/]+)\/[^"]*"[^>]*>([^<]+)<\/a>/,
-    );
-    if (!titMatch) continue;
-    const film_slug = titMatch[1];
-    const film_title = decodeHtml(titMatch[2]).trim();
-    if (!film_title) continue;
-
-    // Póster: preferimos webp y lo cambiamos a jpg (más universal)
-    let poster_url: string | null = null;
-    const posterMatch = block.match(
-      /srcset="(https:\/\/www\.ecartelera\.com\/carteles\/[^"]+\.(?:webp|jpg|png))"/,
-    );
-    if (posterMatch) {
-      poster_url = posterMatch[1].replace(/\.webp$/, ".jpg");
-    }
-
-    // Datos: <p class="data"><span>98 min.</span> <span>Japón</span> <span>Animación</span> <span>TP</span></p>
-    let duration_min: number | null = null;
-    let genre: string | null = null;
-    let age_rating: string | null = null;
-    const dataMatch = block.match(/<p class="data">([\s\S]*?)<\/p>/);
-    if (dataMatch) {
-      const spans = [...dataMatch[1].matchAll(/<span>([^<]+)<\/span>/g)].map(
-        (m) => decodeHtml(m[1]).trim(),
-      );
-      for (const s of spans) {
-        const dm = s.match(/^(\d+)\s*min/i);
-        if (dm) {
-          duration_min = +dm[1];
-          continue;
-        }
-        // Calificación por edad típica en España
-        if (/^(TP|\+?\d{1,2}|NR|X)$/i.test(s)) {
-          age_rating = s;
-          continue;
-        }
-        // País típico (corto, sin tilde mayoritariamente). Lo ignoramos.
-        // El resto lo tratamos como género (primer match no asignado).
-        if (!genre && s.length > 2 && !/^(EE\.UU\.|España|Japón|Francia|Italia|Reino Unido|Alemania|Corea del Sur|China|México|Argentina|Brasil|Canadá|Australia|India|Suecia|Dinamarca|Noruega|Finlandia)$/i.test(s)) {
-          genre = s;
-        }
-      }
-    }
-
-    // Showtimes del día: <a href=".../comprar/ID/..." data-session-time="HH:MM" ...>HH:MM</a>
-    const showRe =
-      /<a href="(https:\/\/www\.ecartelera\.com\/cines\/comprar\/[^"]+)"[^>]*data-session-time="(\d{2}):(\d{2})"/g;
-    let sm: RegExpExecArray | null;
-    while ((sm = showRe.exec(block)) !== null) {
-      const ticket_url = decodeHtml(sm[1]);
-      const hh = +sm[2];
-      const mm = +sm[3];
-      const ts = madridDateTimeToUtcMs(date.y, date.m, date.d, hh, mm);
-      out.push({
-        film_title,
-        film_slug,
-        poster_url,
-        duration_min,
-        genre,
-        age_rating,
-        starts_at_ms: ts,
-        ticket_url,
-      });
-    }
+// Decodifica el data-href de publicine para obtener la URL real de compra.
+// Formato: /venda/{filmId}/{cinemaCode}/{base64UrlSafe}
+function decodeTicketUrl(dataHref: string): string | null {
+  const m = dataHref.match(/\/venda\/\d+\/\d+\/([A-Za-z0-9_-]+)/);
+  if (!m) return null;
+  try {
+    const b64 = m[1].replace(/-/g, "+").replace(/_/g, "/");
+    const pad = b64.length % 4 === 0 ? "" : "=".repeat(4 - (b64.length % 4));
+    const decoded = atob(b64 + pad);
+    if (/^https?:\/\//.test(decoded)) return decoded;
+  } catch {
+    // fallthrough
   }
-  return out;
+  return null;
 }
 
-async function fetchDay(cinemaId: number, dayOffset: number): Promise<string> {
-  const url = `https://www.ecartelera.com/cines/${cinemaId},${dayOffset},1.html`;
+async function fetchPublicine(path: string): Promise<string> {
+  const url = `https://www.publicine.net/cartelera-cine/${path}`;
   const res = await fetch(url, {
     headers: {
       "User-Agent":
@@ -206,8 +132,116 @@ async function fetchDay(cinemaId: number, dayOffset: number): Promise<string> {
       "Accept-Language": "es-ES,es;q=0.9",
     },
   });
-  if (!res.ok) throw new Error(`ecartelera ${cinemaId} day ${dayOffset}: HTTP ${res.status}`);
-  return res.text();
+  if (!res.ok) throw new Error(`publicine ${path}: HTTP ${res.status}`);
+  // publicine devuelve latin1; usamos Buffer para decodificar correctamente.
+  const buf = new Uint8Array(await res.arrayBuffer());
+  // Detecta charset; si no hay UTF-8 BOM, decodifica como latin1.
+  const text = new TextDecoder("iso-8859-1").decode(buf);
+  return text;
+}
+
+function parsePublicine(html: string, today: { y: number; m: number; d: number }): ParsedShow[] {
+  const out: ParsedShow[] = [];
+
+  // Localiza cada bloque de película por su título-link: /pelicula/{id}/{slug}'><h2>TITLE</h2>
+  const filmHeaderRe = /href='\/pelicula\/(\d+)\/([a-z0-9-]+)'><h2>([^<]+)<\/h2>/g;
+  const headers: { pid: string; slug: string; title: string; start: number }[] = [];
+  let hm: RegExpExecArray | null;
+  while ((hm = filmHeaderRe.exec(html)) !== null) {
+    headers.push({
+      pid: hm[1],
+      slug: hm[2],
+      title: decodeHtml(hm[3]).trim(),
+      start: hm.index,
+    });
+  }
+
+  for (let i = 0; i < headers.length; i++) {
+    const h = headers[i];
+    const blockEnd = i + 1 < headers.length ? headers[i + 1].start : html.length;
+    const block = html.slice(h.start, blockEnd);
+
+    // Poster: <img alt='TITLE' src='/img/pel/full/{pid}f_...webp'>
+    let poster_url: string | null = null;
+    // El poster aparece justo antes del header en publicine. Busca en una ventana previa.
+    const winStart = Math.max(0, h.start - 1500);
+    const window = html.slice(winStart, h.start + 300);
+    const pm = window.match(
+      new RegExp(`src='(/img/pel/full/${h.pid}f_[^']+\\.(?:webp|jpg|png))'`),
+    );
+    if (pm) {
+      poster_url = `https://www.publicine.net${pm[1]}`;
+    }
+
+    // Metadatos
+    let director: string | null = null;
+    const dmm = block.match(/<span class='up'>DIRECTOR<\/span>([^<]+)</);
+    if (dmm) director = decodeHtml(dmm[1]).trim();
+
+    let genre: string | null = null;
+    const gmm = block.match(/<span class='up'>GÉNERO<\/span>([^<]+)</);
+    if (gmm) genre = decodeHtml(gmm[1]).trim();
+
+    let duration_min: number | null = null;
+    const durmm = block.match(/<span class='up'>DURACIÓN<\/span>\s*(\d+)\s*min/);
+    if (durmm) duration_min = +durmm[1];
+
+    let age_rating: string | null = null;
+    const ammm = block.match(/<span class='up'>CLASIFICACIÓN<\/span>([^<]+)</);
+    if (ammm) {
+      const raw = decodeHtml(ammm[1]).trim();
+      const num = raw.match(/(\d+)/);
+      if (num) age_rating = num[1];
+      else if (/apta|todos|tp/i.test(raw)) age_rating = "TP";
+    }
+
+    // Días: box_dia con "Hoy<br/>DD/MM" o "Lunes<br/>DD/MM" seguido de box_projeccions.
+    // Capturamos pares (DD/MM, projecciones-block).
+    const dayRe =
+      /<span class='dia'>[^<]*<br\/>(\d{2})\/(\d{2})<\/span>[\s\S]*?<div class='box_projeccions'>([\s\S]*?)(?=<div class='box_dia'>|<div class='box ' class='clearfix'>|<\/div>\s*<\/div>\s*<div class='botiga'|<\/div>\s*<\/div>\s*<\/div>\s*<\/div>)/g;
+    let dym: RegExpExecArray | null;
+    while ((dym = dayRe.exec(block)) !== null) {
+      const dd = +dym[1];
+      const mo = +dym[2];
+      const projBlock = dym[3];
+      const yr = inferYear(dd, mo, today);
+
+      // Cada sesión es <div class='horari_pelicula'>HH.MM<div class='versio_pelicula'>FORMAT</div></div>
+      // o <div class='horari_pelicula_old'><span class='old'>HH.MM</span><div class='versio_pelicula'>FORMAT</div></div>
+      // Algunos están envueltos en <a ... data-href='/venda/...' target='_blank'>...</a>.
+      const sessRe =
+        /(?:<a[^>]*data-href='([^']+)'[^>]*>)?\s*<div class='horari_pelicula(_old)?'>\s*(?:<span class='old'>)?(\d{1,2})[.:](\d{2})(?:<\/span>)?\s*<div class='versio_pelicula'>([^<]+)<\/div>\s*<\/div>\s*(?:<\/a>)?/g;
+      let sm: RegExpExecArray | null;
+      while ((sm = sessRe.exec(projBlock)) !== null) {
+        const dataHref = sm[1];
+        const isOld = !!sm[2];
+        const hh = +sm[3];
+        const mm = +sm[4];
+        const format = decodeHtml(sm[5]).trim();
+        const starts_at_ms = madridDateTimeToUtcMs(yr, mo, dd, hh, mm);
+        // Filtra pases pasados (>1h atrás).
+        if (starts_at_ms < Date.now() - 60 * 60 * 1000) continue;
+        // Si es _old y la fecha es hoy, probablemente ya pasó; igualmente filtrado por timestamp.
+        void isOld;
+        const ticket_url = dataHref ? decodeTicketUrl(dataHref) : null;
+        out.push({
+          film_pid: h.pid,
+          film_slug: h.slug,
+          film_title: h.title,
+          poster_url,
+          duration_min,
+          genre,
+          age_rating,
+          director,
+          starts_at_ms,
+          ticket_url,
+          format: format || null,
+        });
+      }
+    }
+  }
+
+  return out;
 }
 
 async function upsertFilm(s: ParsedShow): Promise<string | null> {
@@ -220,31 +254,26 @@ async function upsertFilm(s: ParsedShow): Promise<string | null> {
     .eq("slug", slug)
     .maybeSingle();
 
+  const fields = {
+    title: s.film_title,
+    duration_min: s.duration_min,
+    genre: s.genre,
+    age_rating: s.age_rating,
+    poster_url: s.poster_url,
+    director: s.director,
+  };
+
   if (existing?.id) {
     await supabaseAdmin
       .from("films")
-      .update({
-        title: s.film_title,
-        duration_min: s.duration_min ?? undefined,
-        genre: s.genre ?? undefined,
-        age_rating: s.age_rating ?? undefined,
-        poster_url: s.poster_url ?? undefined,
-      })
+      .update(fields)
       .eq("id", existing.id);
     return existing.id;
   }
 
   const { data: inserted, error } = await supabaseAdmin
     .from("films")
-    .insert({
-      slug,
-      title: s.film_title,
-      duration_min: s.duration_min,
-      genre: s.genre,
-      age_rating: s.age_rating,
-      poster_url: s.poster_url,
-      active: true,
-    })
+    .insert({ slug, active: true, ...fields })
     .select("id")
     .single();
   if (error) {
@@ -254,68 +283,19 @@ async function upsertFilm(s: ParsedShow): Promise<string | null> {
   return inserted?.id ?? null;
 }
 
-async function syncCinema(source: CinemaSource) {
-  const { data: cinema } = await supabaseAdmin
-    .from("cinemas")
-    .select("id, slug")
-    .eq("slug", source.slug)
-    .maybeSingle();
-  if (!cinema?.id) {
-    return { slug: source.slug, ok: false, error: "cine no encontrado en BD" };
-  }
-
-  const today = madridToday();
-  const allShows: ParsedShow[] = [];
-  const dayResults: { day: number; count: number; error?: string }[] = [];
-
-  for (let off = 0; off <= DAY_HORIZON; off++) {
-    try {
-      const html = await fetchDay(source.ecartelera_id, off);
-      const date = addDays(today.y, today.m, today.d, off);
-      const shows = parseEcarteleraDay(html, date);
-      allShows.push(...shows);
-      dayResults.push({ day: off, count: shows.length });
-    } catch (e) {
-      dayResults.push({
-        day: off,
-        count: 0,
-        error: e instanceof Error ? e.message : String(e),
-      });
-    }
-  }
-
-  // Filtra pases futuros (margen -1h por ediciones tardías)
-  const now = Date.now();
-  const valid = allShows.filter((p) => p.starts_at_ms > now - 60 * 60 * 1000);
-
-  const { inserted, lastError } = await persistShows(cinema.id, valid, "ecartelera", now);
-
-  return {
-    slug: source.slug,
-    ok: true,
-    scraped: allShows.length,
-    inserted,
-    days: dayResults,
-    ...(lastError ? { last_error: lastError } : {}),
-  };
-}
-
-// ===== Persistencia compartida (borra futuros y reinserta) =====
 async function persistShows(
   cinemaId: string,
   valid: ParsedShow[],
-  source: string,
   now: number,
 ): Promise<{ inserted: number; lastError: string | null }> {
-  if (valid.length === 0) {
-    return { inserted: 0, lastError: null };
-  }
-
+  // Limpia pases futuros del cine para reflejar el estado actual.
   await supabaseAdmin
     .from("showtimes")
     .delete()
     .eq("cinema_id", cinemaId)
     .gte("starts_at", new Date(now - 60 * 60 * 1000).toISOString());
+
+  if (valid.length === 0) return { inserted: 0, lastError: null };
 
   const filmCache = new Map<string, string>();
   let inserted = 0;
@@ -337,179 +317,53 @@ async function persistShows(
           film_id,
           starts_at: new Date(s.starts_at_ms).toISOString(),
           ticket_url: s.ticket_url,
-          format: (s as ParsedShow & { format?: string | null }).format ?? null,
-          source,
+          format: s.format,
+          source: "publicine",
         },
         { onConflict: "cinema_id,film_id,starts_at" },
       );
-    if (error) {
-      lastError = error.message;
-    } else {
-      inserted++;
-    }
+    if (error) lastError = error.message;
+    else inserted++;
   }
   return { inserted, lastError };
 }
 
-// ===== Odeon Multicines Alicante =====
-// Estrategia: enumerar /odeon-alicante/peliculas para sacar los slugs de
-// /producto/{slug}; en cada producto extraer bloques day-YYYY-MM-DD con
-// botones .btn_sesion que llevan a /odeon-alicante/sesion?pid=...&sesion=...
-async function fetchOdeon(path: string): Promise<string> {
-  const res = await fetch(`${ODEON_BASE}${path}`, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (compatible; AlicanteLocalGuide/1.0; +https://alicante-local-guide.lovable.app)",
-      Accept: "text/html,application/xhtml+xml",
-      "Accept-Language": "es-ES,es;q=0.9",
-      Cookie: ODEON_COOKIE,
-    },
-  });
-  if (!res.ok) throw new Error(`odeon ${path}: HTTP ${res.status}`);
-  return res.text();
-}
-
-function parseOdeonProduct(html: string, productSlug: string): ParsedShow[] {
-  // Título: <h5>TITLE</h5> (en la ficha) o el primer <h3 class="my-auto p-2">
-  let title = "";
-  const h5 = html.match(/<h5[^>]*>([^<]+)<\/h5>/);
-  if (h5) title = decodeHtml(h5[1]).trim();
-  if (!title) {
-    const h3 = html.match(/<h3[^>]*class="[^"]*my-auto[^"]*"[^>]*>([^<]+)<\/h3>/);
-    if (h3) title = decodeHtml(h3[1]).trim();
-  }
-  if (!title) title = productSlug.replace(/-/g, " ");
-
-  // Póster
-  let poster_url: string | null = null;
-  const pm = html.match(/(https:\/\/odeon-cdn\.b-cdn\.net\/show-posters\/[^"?\s]+\.(?:jpg|png|webp))/);
-  if (pm) poster_url = pm[1];
-
-  // Duración
-  let duration_min: number | null = null;
-  const dm = html.match(/>(\d{2,3})\s*min</);
-  if (dm) duration_min = +dm[1];
-
-  // Género: primer texto razonable después del icono genre-icon
-  let genre: string | null = null;
-  const gm = html.match(/genre-icon[^>]*>[\s\S]{0,200}?>([A-Za-zÁÉÍÓÚÑáéíóúñ ]{3,30})</);
-  if (gm) genre = decodeHtml(gm[1]).trim();
-
-  // Calificación por edad: alt del icono ari_X.gif
-  let age_rating: string | null = null;
-  const am = html.match(/age-rating-icons\/[a-z]+\/ari_\d+\.gif[^"]*"[^>]*alt="([^"]+)"/);
-  if (am) {
-    age_rating = decodeHtml(am[1]).trim();
-  } else {
-    const am2 = html.match(/alt="([^"]+)"[^>]*src="[^"]*age-rating-icons/);
-    if (am2) age_rating = decodeHtml(am2[1]).trim();
-  }
-
-  // Pases por día: <div class="day-YYYY-MM-DD ..."> ... </div>
-  // Capturamos el bloque hasta el siguiente <div class="day- o cierre del contenedor padre.
-  const out: ParsedShow[] = [];
-  const dayRe = /<div class="day-(\d{4})-(\d{2})-(\d{2})[^"]*"[^>]*>([\s\S]*?)(?=<div class="day-\d{4}-\d{2}-\d{2}|<\/div>\s*<\/div>\s*<!--\s*SHOW INFO|<!-- SHOW INFO)/g;
-  let dm2: RegExpExecArray | null;
-  while ((dm2 = dayRe.exec(html)) !== null) {
-    const y = +dm2[1];
-    const m = +dm2[2];
-    const d = +dm2[3];
-    const dayBlock = dm2[4];
-
-    // Formato (Digital / Cinity / 3D ...)
-    const fmtMatch = dayBlock.match(/data-format="([^"]+)"/);
-    const format = fmtMatch ? decodeHtml(fmtMatch[1]).trim() : null;
-
-    // Botones de sesión: <a class="btn_sesion ..." href="...sesion?pid=X&sesion=Y">HH:MM</a>
-    const sessRe =
-      /<a[^>]*class="btn_sesion[^"]*"[^>]*href="([^"]+)"[^>]*>\s*(\d{1,2}):(\d{2})\s*<\/a>/g;
-    let sm: RegExpExecArray | null;
-    while ((sm = sessRe.exec(dayBlock)) !== null) {
-      const ticket_url = decodeHtml(sm[1]);
-      const hh = +sm[2];
-      const mm = +sm[3];
-      const ts = madridDateTimeToUtcMs(y, m, d, hh, mm);
-      out.push({
-        film_title: title,
-        film_slug: productSlug,
-        poster_url,
-        duration_min,
-        genre,
-        age_rating,
-        starts_at_ms: ts,
-        ticket_url,
-        // @ts-expect-error -- extra optional field consumido por persistShows
-        format,
-      });
-    }
-  }
-  return out;
-}
-
-async function syncOdeon() {
+async function syncCinema(source: CinemaSource) {
   const { data: cinema } = await supabaseAdmin
     .from("cinemas")
     .select("id, slug")
-    .eq("slug", ODEON_SLUG)
+    .eq("slug", source.slug)
     .maybeSingle();
   if (!cinema?.id) {
-    return { slug: ODEON_SLUG, ok: false, error: "cine no encontrado en BD" };
+    return { slug: source.slug, ok: false, error: "cine no encontrado en BD" };
   }
 
-  let listHtml: string;
+  let html: string;
   try {
-    listHtml = await fetchOdeon("/odeon-alicante/peliculas");
+    html = await fetchPublicine(source.publicine_path);
   } catch (e) {
-    return { slug: ODEON_SLUG, ok: false, error: e instanceof Error ? e.message : String(e) };
+    return { slug: source.slug, ok: false, error: e instanceof Error ? e.message : String(e) };
   }
 
-  const slugs = Array.from(
-    new Set(
-      [...listHtml.matchAll(/odeonmulticines\.com\/producto\/([a-z0-9-]+)/g)].map((m) => m[1]),
-    ),
-  );
-
-  const allShows: ParsedShow[] = [];
-  const perFilm: { slug: string; count: number; error?: string }[] = [];
-
-  for (const slug of slugs) {
-    try {
-      const html = await fetchOdeon(`/producto/${slug}`);
-      const shows = parseOdeonProduct(html, slug);
-      allShows.push(...shows);
-      perFilm.push({ slug, count: shows.length });
-    } catch (e) {
-      perFilm.push({ slug, count: 0, error: e instanceof Error ? e.message : String(e) });
-    }
-  }
-
+  const today = madridToday();
+  const shows = parsePublicine(html, today);
   const now = Date.now();
-  const valid = allShows.filter((p) => p.starts_at_ms > now - 60 * 60 * 1000);
-  const { inserted, lastError } = await persistShows(cinema.id, valid, "odeon", now);
+  const { inserted, lastError } = await persistShows(cinema.id, shows, now);
 
   return {
-    slug: ODEON_SLUG,
+    slug: source.slug,
     ok: true,
-    films: slugs.length,
-    scraped: allShows.length,
+    scraped: shows.length,
     inserted,
-    detail: perFilm,
     ...(lastError ? { last_error: lastError } : {}),
   };
 }
 
 async function runAll(only?: string) {
-  const results: unknown[] = [];
-  // ecartelera-backed cinemas
   const targets = only ? SOURCES.filter((s) => s.slug === only) : SOURCES;
+  const results: unknown[] = [];
   for (const src of targets) {
-    const r = await syncCinema(src);
-    results.push(r);
-  }
-  // Odeon (parser propio)
-  if (!only || only === ODEON_SLUG) {
-    const r = await syncOdeon();
-    results.push(r);
+    results.push(await syncCinema(src));
   }
   return results;
 }
@@ -521,7 +375,7 @@ export const Route = createFileRoute("/api/public/hooks/cinemas-sync")({
         const url = new URL(request.url);
         const only = url.searchParams.get("cinema") || undefined;
         try {
-          const results = await runAll(only ?? undefined);
+          const results = await runAll(only);
           return Response.json({ ok: true, results });
         } catch (e) {
           console.error("[cinemas-sync] failed", e);
@@ -535,7 +389,7 @@ export const Route = createFileRoute("/api/public/hooks/cinemas-sync")({
         const url = new URL(request.url);
         const only = url.searchParams.get("cinema") || undefined;
         try {
-          const results = await runAll(only ?? undefined);
+          const results = await runAll(only);
           return Response.json({ ok: true, results });
         } catch (e) {
           console.error("[cinemas-sync] failed", e);
