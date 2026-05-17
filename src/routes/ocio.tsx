@@ -151,13 +151,6 @@ function OcioDashboard() {
             );
             if (s.ready && s.slug === "cartelera") {
               return (
-                <Link key={s.slug} to="/ocio/cartelera" className="block">
-                  {card}
-                </Link>
-              );
-            }
-            if (s.ready && s.slug === "cines") {
-              return (
                 <Link key={s.slug} to="/ocio/cines" className="block">
                   {card}
                 </Link>
