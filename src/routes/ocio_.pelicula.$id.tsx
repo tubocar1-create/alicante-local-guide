@@ -1,17 +1,9 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Car, Clock, Film as FilmIcon, Sparkles, Ticket, X } from "lucide-react";
+import { ArrowLeft, Car, Clock, Film as FilmIcon, Ticket } from "lucide-react";
 import { getFilmWithShowtimes } from "@/lib/ocio.functions";
-import { getFilmAIInsight } from "@/lib/film-ai.functions";
-import { getFilmSynopsis } from "@/lib/film-synopsis.functions";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 const ACCENT = "#f472b6";
 
@@ -70,35 +62,6 @@ function FilmDetail() {
 
   // (acciones por cine se gestionan dentro de cada tarjeta)
 
-  // Diálogo de IA y sinopsis
-  const [aiOpen, setAiOpen] = useState(false);
-  const [synopsisOpen, setSynopsisOpen] = useState(false);
-  const fetchSynopsis = useServerFn(getFilmSynopsis);
-  const { data: synData, isLoading: synLoading } = useQuery({
-    queryKey: ["film-synopsis", film?.slug],
-    queryFn: () => fetchSynopsis({ data: { slug: film!.slug } }),
-    enabled: !!film,
-    staleTime: 1000 * 60 * 60,
-  });
-  const synopsisText = synData?.synopsis ?? film?.synopsis ?? null;
-
-  const fetchAI = useServerFn(getFilmAIInsight);
-  const { data: aiData, isLoading: aiLoading, error: aiError } = useQuery({
-    queryKey: ["film-ai", film?.id, synopsisText],
-    queryFn: () =>
-      fetchAI({
-        data: {
-          title: film!.title,
-          originalTitle: film!.original_title,
-          director: film!.director,
-          cast: film!.cast_list,
-          genre: film!.genre,
-          synopsis: synopsisText,
-        },
-      }),
-    enabled: aiOpen && !!film,
-    staleTime: 1000 * 60 * 60,
-  });
 
   if (!isLoading && !film) throw notFound();
 
@@ -219,25 +182,7 @@ function FilmDetail() {
               </div>
             </div>
 
-            {/* Acciones rápidas */}
-            <div className="mb-4 grid gap-2">
-              <button
-                type="button"
-                onClick={() => setSynopsisOpen(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/[0.06] px-4 py-3 text-white shadow-sm transition hover:bg-white/[0.12] active:scale-[0.98]"
-              >
-                <FilmIcon className="h-4 w-4" style={{ color: ACCENT }} />
-                <span className="text-sm font-bold">Sinopsis</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setAiOpen(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-amber-300 to-pink-400 px-4 py-3 text-amber-950 shadow-lg transition active:scale-[0.98]"
-              >
-                <Sparkles className="h-5 w-5" />
-                <span className="text-sm font-bold">Nuestra opinión</span>
-              </button>
-            </div>
+
 
             <div className="rounded-2xl border border-white/15 bg-white/[0.04] p-4 backdrop-blur-xl">
               <p
@@ -397,85 +342,6 @@ function FilmDetail() {
         )}
       </div>
 
-      <Dialog open={aiOpen} onOpenChange={setAiOpen}>
-        <DialogContent
-          className="max-w-lg border-white/15 text-white"
-          style={{
-            background:
-              "linear-gradient(160deg, #2a0a2e 0%, #4a1238 50%, #1a0820 100%)",
-          }}
-        >
-          <DialogHeader>
-            <div className="flex items-center gap-2">
-              <span
-                className="grid h-8 w-8 place-items-center rounded-full"
-                style={{ background: `${ACCENT}22`, border: `1px solid ${ACCENT}55`, color: ACCENT }}
-              >
-                <Sparkles className="h-4 w-4" />
-              </span>
-              <div className="min-w-0">
-                <p
-                  className="text-[9px] font-semibold uppercase tracking-[0.3em]"
-                  style={{ color: ACCENT }}
-                >
-                  Nuestra opinión · producción, reparto y acogida
-                </p>
-                <DialogTitle className="truncate text-base font-bold text-white">
-                  {film?.title ?? "Película"}
-                </DialogTitle>
-              </div>
-            </div>
-          </DialogHeader>
-          <div className="mt-2 max-h-[60vh] overflow-y-auto pr-1 text-[13px] leading-relaxed text-white/85">
-            {aiLoading && (
-              <p className="py-6 text-center text-white/60">
-                Consultando referencias…
-              </p>
-            )}
-            {aiError && (
-              <p className="rounded-md border border-rose-400/30 bg-rose-400/10 p-3 text-[12px] text-rose-200">
-                No se pudo generar la ficha IA. Inténtalo de nuevo en unos
-                segundos.
-              </p>
-            )}
-            {!aiLoading && aiData?.text && (
-              <div className="space-y-3 whitespace-pre-wrap">
-                {aiData.text.trim()}
-              </div>
-            )}
-          </div>
-          <p className="mt-3 text-[9px] uppercase tracking-[0.2em] text-white/40">
-            Información generada por IA. Puede contener imprecisiones.
-          </p>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={synopsisOpen} onOpenChange={setSynopsisOpen}>
-        <DialogContent
-          className="max-w-lg border-white/15 text-white"
-          style={{
-            background:
-              "linear-gradient(160deg, #2a0a2e 0%, #4a1238 50%, #1a0820 100%)",
-          }}
-        >
-          <DialogHeader>
-            <p
-              className="text-[9px] font-semibold uppercase tracking-[0.3em]"
-              style={{ color: ACCENT }}
-            >
-              Sinopsis
-            </p>
-            <DialogTitle className="truncate text-base font-bold text-white">
-              {film?.title ?? "Película"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="mt-2 max-h-[60vh] overflow-y-auto pr-1 text-[13px] leading-relaxed text-white/85">
-            {synLoading && !synopsisText
-              ? "Cargando sinopsis…"
-              : synopsisText ?? "Sin sinopsis disponible."}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
