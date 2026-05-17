@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Film, Drama, Music2, X } from "lucide-react";
+import { Film, Drama, Music2, Clapperboard, X } from "lucide-react";
 
 export const Route = createFileRoute("/ocio")({
   head: () => ({
