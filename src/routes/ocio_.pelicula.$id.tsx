@@ -182,25 +182,7 @@ function FilmDetail() {
               </div>
             </div>
 
-            {/* Acciones rápidas */}
-            <div className="mb-4 grid gap-2">
-              <button
-                type="button"
-                onClick={() => setSynopsisOpen(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/[0.06] px-4 py-3 text-white shadow-sm transition hover:bg-white/[0.12] active:scale-[0.98]"
-              >
-                <FilmIcon className="h-4 w-4" style={{ color: ACCENT }} />
-                <span className="text-sm font-bold">Sinopsis</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setAiOpen(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-amber-300 to-pink-400 px-4 py-3 text-amber-950 shadow-lg transition active:scale-[0.98]"
-              >
-                <Sparkles className="h-5 w-5" />
-                <span className="text-sm font-bold">Nuestra opinión</span>
-              </button>
-            </div>
+
 
             <div className="rounded-2xl border border-white/15 bg-white/[0.04] p-4 backdrop-blur-xl">
               <p
