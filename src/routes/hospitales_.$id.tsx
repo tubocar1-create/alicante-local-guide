@@ -167,7 +167,7 @@ type Hospital = {
   lng: number | null;
 };
 
-export const Route = createFileRoute("/hospitales_/$id")({
+export const Route = createFileRoute("/hospitales_/$id" as "/hospitales/$id")({
   head: () => ({
     meta: [{ title: "Ficha hospitalaria · Alicante" }],
     links: [LEAFLET_HEAD_LINK],
