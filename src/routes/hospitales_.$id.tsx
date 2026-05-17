@@ -291,18 +291,30 @@ function HospitalDetailPage() {
               )}
             </div>
 
-            {/* Fotos */}
+            {/* Fotos (hasta 10) */}
             {extras?.photos?.length ? (
-              <div className="mb-4 grid grid-cols-2 gap-2">
-                {extras.photos.map((src, i) => (
-                  <img
-                    key={i}
-                    src={src}
-                    alt={`${h.name} - foto ${i + 1}`}
-                    loading="lazy"
-                    className="h-32 w-full rounded-xl border border-emerald-300/10 object-cover md:h-44"
-                  />
-                ))}
+              <div className="mb-4 -mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div className="flex snap-x snap-mandatory gap-2">
+                  {extras.photos.slice(0, 10).map((src, i) => (
+                    <a
+                      key={i}
+                      href={src}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="relative block h-44 w-64 shrink-0 snap-start overflow-hidden rounded-2xl border border-emerald-300/15 md:h-56 md:w-80"
+                    >
+                      <img
+                        src={src}
+                        alt={`${h.name} - foto ${i + 1}`}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+                      />
+                      <span className="absolute bottom-2 right-2 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur">
+                        {i + 1}/{Math.min(extras.photos.length, 10)}
+                      </span>
+                    </a>
+                  ))}
+                </div>
               </div>
             ) : null}
 
@@ -334,7 +346,7 @@ function HospitalDetailPage() {
             <div className="mb-4 grid grid-cols-3 gap-2">
               <a
                 href={dirHref}
-                target="_blank"
+                target="_top"
                 rel="noreferrer"
                 className="flex flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 px-3 py-3 text-emerald-950 shadow-lg shadow-emerald-900/30 transition active:scale-95"
               >
@@ -344,6 +356,7 @@ function HospitalDetailPage() {
               {h.phone && (
                 <a
                   href={`tel:${h.phone.replace(/\s/g, "")}`}
+                  target="_top"
                   className="flex flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 px-3 py-3 text-amber-950 shadow-lg shadow-amber-900/30 transition active:scale-95"
                 >
                   <Phone className="h-5 w-5" />
@@ -352,6 +365,7 @@ function HospitalDetailPage() {
               )}
               <a
                 href="tel:112"
+                target="_top"
                 className="flex flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-rose-500 to-red-600 px-3 py-3 text-white shadow-lg shadow-rose-900/30 transition active:scale-95"
               >
                 <Siren className="h-5 w-5" />
