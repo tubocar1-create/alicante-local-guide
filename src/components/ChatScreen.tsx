@@ -648,11 +648,11 @@ export function ChatScreen() {
                       style={{ animationDelay: `${(idx % 9) * 60}ms` }}
                     >
                       <div
-                        className="relative grid h-12 w-12 place-items-center rounded-full transition-transform duration-300 ease-out group-active:scale-90"
-                        style={{ backgroundColor: pastel.bg }}
+                        className="relative grid h-12 w-12 place-items-center rounded-full transition-transform duration-300 ease-out group-active:scale-90 overflow-hidden"
+                        style={{ backgroundColor: t.label === "Fiestas de Alicante" ? "transparent" : pastel.bg }}
                       >
                         {t.label === "Fiestas de Alicante" ? (
-                          <img src={hoguerasIcon} alt="" className="h-7 w-7 rounded-full object-cover" />
+                          <img src={hoguerasIcon} alt="" className="h-full w-full rounded-full object-cover" />
                         ) : Icon ? (
                           <Icon className="h-5 w-5" strokeWidth={1.9} style={{ color: pastel.fg }} />
                         ) : (
