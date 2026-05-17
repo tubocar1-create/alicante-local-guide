@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { X, Film as FilmIcon } from "lucide-react";
+import { X, Film as FilmIcon, Clapperboard } from "lucide-react";
 import { listCinemas } from "@/lib/ocio.functions";
 import { computeOpenStatus } from "@/lib/opening-status";
 import {
@@ -156,6 +156,7 @@ function CinemasPage() {
           <table className="w-full table-fixed border-separate border-spacing-y-0.5 text-left text-[11px] text-white">
             <colgroup>
               <col />
+              <col className="w-[36px]" />
               <col className="w-[44px]" />
               <col className="w-[48px]" />
             </colgroup>
@@ -165,6 +166,7 @@ function CinemasPage() {
                 style={{ color: `${ACCENT}99` }}
               >
                 <th className="px-1 py-1 font-medium">Cine · Dirección</th>
+                <th className="px-1 py-1 text-center font-medium">Cart.</th>
                 <th className="px-1 py-1 text-center font-medium">Est.</th>
                 <th className="px-1 py-1 text-right font-medium">Dist.</th>
               </tr>
@@ -209,6 +211,18 @@ function CinemasPage() {
                       </Link>
                     </td>
                     <td className="px-1 py-1 text-center align-middle">
+                      <Link
+                        to="/ocio/cines/$id/cartelera"
+                        params={{ id: p.slug }}
+                        aria-label={`Cartelera de ${p.name}`}
+                        title="Ver cartelera de este cine"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-full border transition hover:bg-white/10"
+                        style={{ borderColor: `${ACCENT}55`, color: ACCENT }}
+                      >
+                        <Clapperboard className="h-3.5 w-3.5" />
+                      </Link>
+                    </td>
+                    <td className="px-1 py-1 text-center align-middle">
                       <span
                         className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${statusStyle}`}
                       >
@@ -234,7 +248,7 @@ function CinemasPage() {
               {!isLoading && ranked.length === 0 && (
                 <tr>
                   <td
-                    colSpan={3}
+                    colSpan={4}
                     className="px-2 py-6 text-center text-xs text-white/50"
                   >
                     Aún no hay cines disponibles.
