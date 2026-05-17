@@ -49,7 +49,7 @@ function toDTO(row: Record<string, unknown>): HealthProviderDTO {
     photos: (row.photos as string[]) ?? [],
     google_place_id: (row.google_place_id as string) ?? null,
     opening_hours:
-      (row.opening_hours as { weekdayDescriptions?: string[] }) ?? null,
+      (row.opening_hours as HealthProviderDTO["opening_hours"]) ?? null,
     price_level: (row.price_level as string) ?? null,
     notes: (row.notes as string) ?? null,
     source: (row.source as string) ?? "google",
