@@ -1183,6 +1183,42 @@ function CityDetail({
   const perDayCity = city.total / dayCount;
   const freq = inferFreqLabel(perDayCity);
   const airlineList = [...city.airlines.entries()].sort((a, b) => b[1] - a[1]);
+  const topAirline = airlineList[0]?.[0] ?? "";
+  const countryName = COUNTRY_NAME[IATA_COUNTRY[city.iata] ?? ""] ?? "—";
+
+  // AI comment del destino
+  const fetchComment = useServerFn(getDestinationComment);
+  const [aiText, setAiText] = useState<string>("");
+  const [aiLoading, setAiLoading] = useState(true);
+  const [aiError, setAiError] = useState<string | null>(null);
+  useEffect(() => {
+    const key = `dest-comment:${city.iata}`;
+    const cached = typeof window !== "undefined" ? sessionStorage.getItem(key) : null;
+    if (cached) {
+      setAiText(cached);
+      setAiLoading(false);
+      return;
+    }
+    let cancel = false;
+    setAiLoading(true);
+    setAiError(null);
+    fetchComment({
+      data: {
+        city: cleanCityNamePublic(city.ciudad),
+        country: countryName,
+        iata: city.iata,
+      },
+    })
+      .then((r) => {
+        if (cancel) return;
+        setAiText(r.text);
+        try { sessionStorage.setItem(key, r.text); } catch {}
+      })
+      .catch((e) => !cancel && setAiError(String(e?.message ?? e)))
+      .finally(() => !cancel && setAiLoading(false));
+    return () => { cancel = true; };
+  }, [city.iata, city.ciudad, countryName, fetchComment]);
+
 
   // per-day distribution for this city
   const perDay = useMemo(() => {
