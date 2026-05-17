@@ -44,7 +44,7 @@ const TILE_SUBTITLES: Record<string, string> = {
   "Transporte público": "Bus, TRAM, taxis",
   "Mapa": "Explora la ciudad",
   "Servicios sanitarios": "Farmacias y hospitales",
-  "Eventos": "Conciertos y agenda",
+  "Ocio": "Cines, teatros y conciertos",
 };
 
 const TILE_ICONS: Record<string, LucideIcon> = {
@@ -56,7 +56,7 @@ const TILE_ICONS: Record<string, LucideIcon> = {
   "Transporte público": Bus,
   "Mapa": MapPin,
   "Servicios sanitarios": Stethoscope,
-  "Eventos": CalendarDays,
+  "Ocio": CalendarDays,
 };
 
 type Msg = { role: "user" | "assistant"; content: string };
@@ -603,14 +603,10 @@ export function ChatScreen() {
                     onClick: () => navigate({ to: "/salud" }),
                   },
                   {
-                    key: "eventos",
-                    emoji: "🎉",
-                    label: "Eventos",
-                    onClick: () =>
-                      send(
-                        "¿Qué eventos, conciertos, festivales o actividades hay hoy y los próximos días en Alicante?",
-                        { mode: null },
-                      ),
+                    key: "ocio",
+                    emoji: "🎬",
+                    label: "Ocio",
+                    onClick: () => navigate({ to: "/ocio" }),
                   },
                 ].map((t, idx) => {
                   const subtitle = TILE_SUBTITLES[t.label];
@@ -624,7 +620,7 @@ export function ChatScreen() {
                     "Transporte público":  { bg: "oklch(0.93 0.07 190)", fg: "oklch(0.50 0.14 210)" },
                     "Mapa":                { bg: "oklch(0.93 0.07 160)", fg: "oklch(0.48 0.14 165)" },
                     "Servicios sanitarios":{ bg: "oklch(0.94 0.06 25)",  fg: "oklch(0.55 0.18 25)" },
-                    "Eventos":             { bg: "oklch(0.94 0.07 310)", fg: "oklch(0.50 0.18 315)" },
+                    "Ocio":                { bg: "oklch(0.94 0.07 310)", fg: "oklch(0.50 0.18 315)" },
                   };
                   const pastel = PASTEL[t.label] ?? { bg: "oklch(0.95 0.02 80)", fg: "oklch(0.40 0.05 80)" };
                   const displayLabel =

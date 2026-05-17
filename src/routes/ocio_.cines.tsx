@@ -164,11 +164,7 @@ function CinemasPage() {
             </thead>
             <tbody>
               {ranked.map(({ p, d }) => {
-                const status = computeOpenStatus(
-                  p.opening_hours as Parameters<
-                    typeof computeOpenStatus
-                  >[0],
-                );
+                const status = computeOpenStatus(p.opening_hours);
                 const statusStyle =
                   status === "open"
                     ? "bg-emerald-400/15 text-emerald-300"
