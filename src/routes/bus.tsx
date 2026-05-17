@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { LEAFLET_HEAD_LINK } from "@/lib/leaflet-head";
 import { useEffect, useMemo, useState, lazy, Suspense } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, Bus, ExternalLink, Search, MapPin, Loader2, RefreshCw } from "lucide-react";
@@ -42,6 +43,7 @@ export const Route = createFileRoute("/bus")({
           "Mapa de paradas de Alicante con tiempos de paso en vivo. Encuentra las paradas más cercanas y consulta los próximos buses.",
       },
     ],
+    links: [LEAFLET_HEAD_LINK],
   }),
   component: BusPage,
 });

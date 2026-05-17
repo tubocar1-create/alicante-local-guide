@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { LEAFLET_HEAD_LINK } from "@/lib/leaflet-head";
 import { useServerFn } from "@tanstack/react-start";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { getPlaceById, getPlacePhotos } from "@/lib/places.functions";
@@ -31,6 +32,7 @@ export const Route = createFileRoute("/restaurants/$placeId")({
         content: "Detalles del restaurante: horario, precio, valoración y ubicación.",
       },
     ],
+    links: [LEAFLET_HEAD_LINK],
   }),
   component: RestaurantDashboard,
 });

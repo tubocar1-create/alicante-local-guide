@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { LEAFLET_HEAD_LINK } from "@/lib/leaflet-head";
 
 export const Route = createFileRoute("/explore")({
   head: () => ({
@@ -17,6 +18,7 @@ export const Route = createFileRoute("/explore")({
           "Descubre cultura, naturaleza, playas y miradores en la provincia de Alicante con un mapa abierto.",
       },
     ],
+    links: [LEAFLET_HEAD_LINK],
   }),
   component: ExplorePage,
 });

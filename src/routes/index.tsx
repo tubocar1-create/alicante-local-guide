@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ChatScreen } from "@/components/ChatScreen";
+import portadaImg from "@/assets/alicante-portada.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -16,6 +17,9 @@ export const Route = createFileRoute("/")({
         content: "Your friendly local AI companion for Alicante, Spain.",
       },
     ],
+    links: [
+      { rel: "preload", as: "image", href: portadaImg, fetchpriority: "high" },
+    ],
   }),
   component: Index,
 });
@@ -23,4 +27,3 @@ export const Route = createFileRoute("/")({
 function Index() {
   return <ChatScreen />;
 }
-
