@@ -67,7 +67,7 @@ const QUERY_MAP: Record<string, string[]> = {
 async function searchTextNear(
   textQuery: string,
   apiKey: string,
-  center: { lat: number; lng: number },
+  center: { name?: string; lat: number; lng: number },
   radius = 12000,
 ): Promise<GPlace[]> {
   const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
