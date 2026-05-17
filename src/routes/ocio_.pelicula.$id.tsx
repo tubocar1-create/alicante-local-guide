@@ -281,8 +281,12 @@ function FilmDetail() {
                             {c.address}
                           </p>
                         )}
-                        <div className="space-y-1.5">
-                          {Array.from(days.entries()).map(([day, shows]) => (
+                        {(() => {
+                          const todayKey = dayKey(new Date().toISOString());
+                          const entries = Array.from(days.entries());
+                          const todayEntries = entries.filter(([d]) => d === todayKey);
+                          const laterEntries = entries.filter(([d]) => d !== todayKey);
+                          const renderDay = (day: string, shows: typeof showtimes) => (
                             <div
                               key={day}
                               className="flex flex-wrap items-center gap-1.5"
@@ -321,8 +325,29 @@ function FilmDetail() {
                                 );
                               })}
                             </div>
-                          ))}
-                        </div>
+                          );
+                          return (
+                            <div className="space-y-1.5">
+                              {todayEntries.length > 0 ? (
+                                todayEntries.map(([d, s]) => renderDay(d, s))
+                              ) : (
+                                <p className="text-[11px] italic text-white/45">
+                                  Hoy no quedan sesiones disponibles.
+                                </p>
+                              )}
+                              {laterEntries.length > 0 && (
+                                <div className="mt-2 border-t border-white/10 pt-2">
+                                  <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-[0.25em] text-white/40">
+                                    Próximos días · desliza
+                                  </p>
+                                  <div className="max-h-44 space-y-1.5 overflow-y-auto pr-1">
+                                    {laterEntries.map(([d, s]) => renderDay(d, s))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     );
                   })}
