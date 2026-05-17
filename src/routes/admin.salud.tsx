@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, Download, Loader2 } from "lucide-react";
 import { HEALTH_CATEGORIES } from "@/lib/health-categories";
 import { populateHealthCategory } from "@/lib/health.functions";
+import { populateAtencionContinuada } from "@/lib/health-google.functions";
 
 export const Route = createFileRoute("/admin/salud")({
   head: () => ({ meta: [{ title: "Admin · Poblar salud" }] }),
