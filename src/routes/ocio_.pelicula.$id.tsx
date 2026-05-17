@@ -379,7 +379,7 @@ function FilmDetail() {
                   className="text-[9px] font-semibold uppercase tracking-[0.3em]"
                   style={{ color: ACCENT }}
                 >
-                  Ficha IA · Producción, dirección y reparto
+                  Nuestra opinión · producción, reparto y acogida
                 </p>
                 <DialogTitle className="truncate text-base font-bold text-white">
                   {film?.title ?? "Película"}
