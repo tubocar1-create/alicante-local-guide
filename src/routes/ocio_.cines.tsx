@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { X, Film as FilmIcon } from "lucide-react";
+import { X, Film as FilmIcon, Clapperboard } from "lucide-react";
 import { listCinemas } from "@/lib/ocio.functions";
 import { computeOpenStatus } from "@/lib/opening-status";
 import {
