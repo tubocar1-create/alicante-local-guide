@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, notFound } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
@@ -164,6 +164,13 @@ function CategoryDashboard() {
                 </Link>
 
                 <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                  <Link
+                    to="/salud/$categoria/$id"
+                    params={{ categoria, id: p.id }}
+                    className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-slate-950 shadow-sm transition active:scale-95"
+                  >
+                    Ficha técnica
+                  </Link>
                   <a
                     href={dirHref}
                     target="_blank"
@@ -191,6 +198,7 @@ function CategoryDashboard() {
           })}
         </ul>
       </div>
+      <Outlet />
     </div>
   );
 }
