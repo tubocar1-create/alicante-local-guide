@@ -744,7 +744,7 @@ function DestinationPopup({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  const tripUrl = `https://www.tripadvisor.es/Search?q=${encodeURIComponent(city)}`;
+  const skyUrl = `https://www.skyscanner.es/transporte/vuelos/alci/${iata.toLowerCase()}/?adultsv2=1&cabinclass=economy&childrenv2=&ref=home&rtn=0&preferdirects=false&outboundaltsenabled=false&inboundaltsenabled=false`;
   const airUrl = airlineUrl(airlineCode);
 
   return (
