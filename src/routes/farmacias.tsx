@@ -622,12 +622,25 @@ function FarmaciasPage() {
                         {sectorFor(p.postal_code)}
                       </span>
                     )}
+                    <a
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+                        `${p.name} ${p.address ?? ""} Alicante`,
+                      )}&travelmode=driving`}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`Cómo llegar a ${p.name}`}
+                      title="Cómo llegar en coche"
+                      className={`${p.phone ? "" : "ml-auto "}inline-flex items-center gap-1 rounded-full bg-emerald-400/90 px-2 py-0.5 text-[10px] font-semibold text-emerald-950 shadow-sm transition active:scale-95 hover:bg-emerald-300`}
+                    >
+                      <Car className="h-2.5 w-2.5" />
+                      Ir
+                    </a>
                     {p.phone && (
                       <a
                         href={`tel:${p.phone}`}
                         role="button"
                         aria-label={`Llamar a ${p.name}`}
-                        className="ml-auto inline-flex items-center gap-1 rounded-full bg-emerald-400/90 px-2 py-0.5 font-mono text-[10px] font-semibold text-emerald-950 shadow-sm transition active:scale-95 hover:bg-emerald-300"
+                        className="ml-auto inline-flex items-center gap-1 rounded-full bg-amber-400/90 px-2 py-0.5 font-mono text-[10px] font-semibold text-amber-950 shadow-sm transition active:scale-95 hover:bg-amber-300"
                       >
                         <Phone className="h-2.5 w-2.5" />
                         {p.phone}
