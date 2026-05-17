@@ -160,7 +160,7 @@ export const listCartelera = createServerFn({ method: "GET" })
   const { data: shows, error: es } = await q;
   if (es) throw es;
   const rows = shows ?? [];
-  if (rows.length === 0) return [] as CarteleraItemDTO[];
+  if (rows.length === 0) return { cinema: cinemaInfo, items: [] as CarteleraItemDTO[] };
 
   const filmIds = Array.from(new Set(rows.map((s) => s.film_id)));
   const { data: films, error: ef } = await supabaseAdmin
@@ -205,5 +205,5 @@ export const listCartelera = createServerFn({ method: "GET" })
     return a.next_show_at.localeCompare(b.next_show_at);
   });
 
-  return items;
+  return { cinema: cinemaInfo, items };
 });
