@@ -582,6 +582,16 @@ function DestinationDashboard() {
         Actualizado:{" "}
         {new Date().toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })}
       </p>
+
+      {popup && (
+        <DestinationPopup
+          iata={code}
+          city={ciudad}
+          country={pais}
+          airlineCode={popup.airlineCode}
+          onClose={() => setPopup(null)}
+        />
+      )}
     </Shell>
   );
 }
