@@ -249,9 +249,6 @@ function HospitalesPage() {
 
           <ul className="space-y-1.5">
             {sorted.map((h) => {
-              const mapsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                `${h.name} ${h.address ?? ""} ${h.municipality}`,
-              )}`;
               const dirHref = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
                 `${h.name} ${h.address ?? ""} ${h.municipality}`,
               )}&travelmode=driving`;
@@ -263,14 +260,13 @@ function HospitalesPage() {
                 <li key={h.id} className={`rounded-xl border p-2.5 transition ${cardCls}`}>
                   {/* Línea 1: nombre + 24h + distancia */}
                   <div className="flex items-start justify-between gap-2">
-                    <a
-                      href={mapsHref}
-                      target="_blank"
-                      rel="noreferrer"
+                    <Link
+                      to="/hospitales/$id"
+                      params={{ id: h.id }}
                       className="flex min-w-0 flex-1 items-center gap-1.5"
                     >
                       <HospitalCross className="h-4 w-4 shrink-0" />
-                      <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-emerald-50">
+                      <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-emerald-50 underline-offset-2 hover:underline">
                         {h.name}
                       </span>
                       {h.has_urgencias && (
@@ -278,7 +274,7 @@ function HospitalesPage() {
                           24h
                         </span>
                       )}
-                    </a>
+                    </Link>
                     {userCoords && dist != null && (
                       <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-400/15 px-1.5 py-0.5 font-mono text-[10px] text-emerald-200">
                         <Navigation className="h-2.5 w-2.5" />
