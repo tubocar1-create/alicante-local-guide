@@ -637,6 +637,7 @@ export function ChatScreen() {
                     t.label === "Turismo, playa y aventuras" ? "Playas"
                     : t.label === "Transporte público" ? "Transporte"
                     : t.label === "Servicios sanitarios" ? "Salud"
+                    : t.label === "Fiestas de Alicante" ? "Fiestas"
                     : t.label;
                   return (
                     <button
