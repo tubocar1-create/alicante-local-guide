@@ -13,9 +13,30 @@ export const Route = createFileRoute("/admin/salud")({
 
 function AdminSaludPage() {
   const populate = useServerFn(populateHealthCategory);
+  const populateGoogle = useServerFn(populateAtencionContinuada);
   const [status, setStatus] = useState<
     Record<string, { loading: boolean; msg?: string; error?: string }>
   >({});
+
+  async function runGoogle(kind: "pac" | "pas") {
+    const key = `google-${kind}`;
+    setStatus((s) => ({ ...s, [key]: { loading: true } }));
+    try {
+      const r = await populateGoogle({ data: { kind } });
+      setStatus((s) => ({
+        ...s,
+        [key]: {
+          loading: false,
+          msg: `${r.inserted} ${kind.toUpperCase()} guardados (Google Places)`,
+        },
+      }));
+    } catch (e) {
+      setStatus((s) => ({
+        ...s,
+        [key]: { loading: false, error: (e as Error).message },
+      }));
+    }
+  }
 
   async function run(slug: string, query: string) {
     setStatus((s) => ({ ...s, [slug]: { loading: true } }));
