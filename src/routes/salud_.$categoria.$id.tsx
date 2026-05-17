@@ -144,17 +144,6 @@ function ProviderDetailPage() {
               <h1 className="mt-1 font-display text-2xl font-bold leading-tight text-white md:text-3xl">
                 {p.name}
               </h1>
-              {p.rating != null && (
-                <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-amber-400/20 px-2 py-0.5 text-[12px] font-semibold text-amber-200">
-                  <Star className="h-3 w-3 fill-amber-300" />
-                  {p.rating.toFixed(1)}
-                  {p.user_ratings_total != null && (
-                    <span className="opacity-70">
-                      · {p.user_ratings_total} reseñas
-                    </span>
-                  )}
-                </div>
-              )}
 
               {cat.group === "privado" && (
                 <div className="mt-3 grid grid-cols-3 gap-2">
