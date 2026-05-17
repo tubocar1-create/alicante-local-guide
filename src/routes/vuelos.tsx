@@ -1331,12 +1331,12 @@ function CityDetail({
               </a>
             )}
             <a
-              href={`https://www.tripadvisor.es/Search?q=${encodeURIComponent(cleanCityNamePublic(city.ciudad))}`}
+              href={`https://www.skyscanner.es/transporte/vuelos/alci/${city.iata.toLowerCase()}/?adultsv2=1&cabinclass=economy&childrenv2=&ref=home&rtn=0&preferdirects=false&outboundaltsenabled=false&inboundaltsenabled=false`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-2 text-[11px] font-semibold text-slate-900 transition hover:bg-emerald-400"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-sky-600 px-3 py-2 text-[11px] font-semibold text-white transition hover:bg-sky-500"
             >
-              TripAdvisor
+              Skyscanner
               <ExternalLink className="h-3 w-3 opacity-70" />
             </a>
           </div>

@@ -744,7 +744,7 @@ function DestinationPopup({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  const tripUrl = `https://www.tripadvisor.es/Search?q=${encodeURIComponent(city)}`;
+  const skyUrl = `https://www.skyscanner.es/transporte/vuelos/alci/${iata.toLowerCase()}/?adultsv2=1&cabinclass=economy&childrenv2=&ref=home&rtn=0&preferdirects=false&outboundaltsenabled=false&inboundaltsenabled=false`;
   const airUrl = airlineUrl(airlineCode);
 
   return (
@@ -800,12 +800,12 @@ function DestinationPopup({
             <ExternalLink className="h-3 w-3 opacity-70" />
           </a>
           <a
-            href={tripUrl}
+            href={skyUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-2 text-[12px] font-semibold text-slate-900 transition hover:bg-emerald-400"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-sky-600 px-3 py-2 text-[12px] font-semibold text-white transition hover:bg-sky-500"
           >
-            TripAdvisor
+            Skyscanner
             <ExternalLink className="h-3 w-3 opacity-70" />
           </a>
         </div>
