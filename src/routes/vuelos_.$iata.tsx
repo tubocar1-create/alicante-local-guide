@@ -701,12 +701,14 @@ function DestinationPopup({
   city,
   country,
   airlineCode,
+  originIata,
   onClose,
 }: {
   iata: string;
   city: string;
   country: string;
   airlineCode: string;
+  originIata: string;
   onClose: () => void;
 }) {
   const fetchComment = useServerFn(getDestinationComment);
@@ -745,7 +747,7 @@ function DestinationPopup({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  const skyUrl = `https://www.skyscanner.es/transporte/vuelos/alci/${iata.toLowerCase()}/?adultsv2=1&cabinclass=economy&childrenv2=&ref=home&rtn=0&preferdirects=false&outboundaltsenabled=false&inboundaltsenabled=false`;
+  const skyUrl = `https://www.skyscanner.es/transporte/vuelos/${originIata.toLowerCase()}/${iata.toLowerCase()}/?adultsv2=1&cabinclass=economy&childrenv2=&ref=home&rtn=0&preferdirects=false&outboundaltsenabled=false&inboundaltsenabled=false`;
   const airUrl = airlineUrl(airlineCode);
 
   return (
