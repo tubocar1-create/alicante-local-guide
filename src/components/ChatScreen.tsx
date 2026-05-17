@@ -509,7 +509,7 @@ export function ChatScreen() {
                 fetchPriority="high"
                 decoding="async"
               />
-              <DraggableHogueras onOpen={() => navigate({ to: "/ocio" })} />
+              <DraggableHogueras onOpen={() => navigate({ to: "/fiestas" })} />
             </div>
           )}
 
