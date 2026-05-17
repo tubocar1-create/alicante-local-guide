@@ -65,7 +65,7 @@ Sin emojis, sin markdown, sin viñetas, sin almohadillas. Si un dato concreto no
             {
               role: "system",
               content:
-                "Eres un crítico de cine riguroso. Solo expones datos plausibles y verificables sobre producción, dirección y reparto. Si dudas, omites.",
+                "Eres un cinéfilo cercano y entusiasta que recomienda películas a un amigo. Tono cálido y amable, riguroso con los datos: si no estás razonablemente seguro de un dato concreto, lo omites en lugar de inventarlo.",
             },
             { role: "user", content: prompt },
           ],
