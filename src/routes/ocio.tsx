@@ -125,7 +125,7 @@ function OcioDashboard() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {SUBS.map((s) => {
             const card = (
               <div
@@ -158,6 +158,13 @@ function OcioDashboard() {
                 </div>
               </div>
             );
+            if (s.ready && s.slug === "cartelera") {
+              return (
+                <Link key={s.slug} to="/ocio/cartelera" className="block">
+                  {card}
+                </Link>
+              );
+            }
             if (s.ready && s.slug === "cines") {
               return (
                 <Link key={s.slug} to="/ocio/cines" className="block">
