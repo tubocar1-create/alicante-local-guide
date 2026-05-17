@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Car, Clock, Film as FilmIcon, Sparkles, Ticket, X } from "lucide-react";
 import { getFilmWithShowtimes } from "@/lib/ocio.functions";
 import { getFilmAIInsight } from "@/lib/film-ai.functions";
+import { getFilmSynopsis } from "@/lib/film-synopsis.functions";
 import {
   Dialog,
   DialogContent,
