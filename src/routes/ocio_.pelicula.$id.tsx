@@ -1,9 +1,16 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Car, Clock, Film as FilmIcon, Ticket } from "lucide-react";
+import { ArrowLeft, Car, Clock, Film as FilmIcon, Sparkles, Ticket, X } from "lucide-react";
 import { getFilmWithShowtimes } from "@/lib/ocio.functions";
+import { getFilmAIInsight } from "@/lib/film-ai.functions";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const ACCENT = "#f472b6";
 
@@ -60,6 +67,45 @@ function FilmDetail() {
     return m;
   }, [showtimes]);
 
+  // Próxima sesión y cine (para botones de cabecera)
+  const nextSession = useMemo(() => {
+    const now = Date.now();
+    return (
+      showtimes.find((s) => new Date(s.starts_at).getTime() >= now) ??
+      showtimes[0] ??
+      null
+    );
+  }, [showtimes]);
+  const primaryCinema = nextSession
+    ? cinemaById.get(nextSession.cinema_id) ?? null
+    : cinemas[0] ?? null;
+  const primaryDirHref = primaryCinema
+    ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+        `${primaryCinema.name} ${primaryCinema.address ?? ""}`,
+      )}&travelmode=driving`
+    : null;
+  const primaryTicketHref =
+    nextSession?.ticket_url ?? primaryCinema?.ticket_url ?? null;
+
+  // Diálogo de IA
+  const [aiOpen, setAiOpen] = useState(false);
+  const fetchAI = useServerFn(getFilmAIInsight);
+  const { data: aiData, isLoading: aiLoading, error: aiError } = useQuery({
+    queryKey: ["film-ai", film?.id],
+    queryFn: () =>
+      fetchAI({
+        data: {
+          title: film!.title,
+          originalTitle: film!.original_title,
+          director: film!.director,
+          cast: film!.cast_list,
+          genre: film!.genre,
+        },
+      }),
+    enabled: aiOpen && !!film,
+    staleTime: 1000 * 60 * 60,
+  });
+
   if (!isLoading && !film) throw notFound();
 
   return (
@@ -84,7 +130,7 @@ function FilmDetail() {
             className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/[0.04] px-3 py-1.5 text-[11px] font-semibold text-white/80 transition hover:border-white/40 hover:text-white"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            Cines
+            Cartelera
           </Link>
           <span
             className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-white"
@@ -156,6 +202,52 @@ function FilmDetail() {
                   </p>
                 )}
               </div>
+            </div>
+
+            {/* Acciones rápidas */}
+            <div className="mb-4 grid grid-cols-3 gap-2">
+              {primaryDirHref ? (
+                <a
+                  href={primaryDirHref}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex flex-col items-center justify-center gap-1 rounded-2xl px-3 py-3 text-black shadow-lg transition active:scale-95"
+                  style={{ background: ACCENT }}
+                >
+                  <Car className="h-5 w-5" />
+                  <span className="text-[11px] font-bold">Cómo llegar</span>
+                  {primaryCinema && (
+                    <span className="line-clamp-1 text-[9px] opacity-80">
+                      {primaryCinema.name}
+                    </span>
+                  )}
+                </a>
+              ) : (
+                <div className="rounded-2xl border border-white/10 bg-white/[0.02]" />
+              )}
+              {primaryTicketHref ? (
+                <a
+                  href={primaryTicketHref}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 px-3 py-3 text-white shadow-lg transition active:scale-95"
+                >
+                  <Ticket className="h-5 w-5" />
+                  <span className="text-[11px] font-bold">Comprar</span>
+                  <span className="text-[9px] opacity-80">Entradas</span>
+                </a>
+              ) : (
+                <div className="rounded-2xl border border-white/10 bg-white/[0.02]" />
+              )}
+              <button
+                type="button"
+                onClick={() => setAiOpen(true)}
+                className="flex flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-amber-300 to-pink-400 px-3 py-3 text-amber-950 shadow-lg transition active:scale-95"
+              >
+                <Sparkles className="h-5 w-5" />
+                <span className="text-[11px] font-bold">Más con IA</span>
+                <span className="text-[9px] opacity-80">Ficha completa</span>
+              </button>
             </div>
 
             {film.synopsis && (
@@ -291,6 +383,59 @@ function FilmDetail() {
           </>
         )}
       </div>
+
+      <Dialog open={aiOpen} onOpenChange={setAiOpen}>
+        <DialogContent
+          className="max-w-lg border-white/15 text-white"
+          style={{
+            background:
+              "linear-gradient(160deg, #2a0a2e 0%, #4a1238 50%, #1a0820 100%)",
+          }}
+        >
+          <DialogHeader>
+            <div className="flex items-center gap-2">
+              <span
+                className="grid h-8 w-8 place-items-center rounded-full"
+                style={{ background: `${ACCENT}22`, border: `1px solid ${ACCENT}55`, color: ACCENT }}
+              >
+                <Sparkles className="h-4 w-4" />
+              </span>
+              <div className="min-w-0">
+                <p
+                  className="text-[9px] font-semibold uppercase tracking-[0.3em]"
+                  style={{ color: ACCENT }}
+                >
+                  Ficha IA · Producción, dirección y reparto
+                </p>
+                <DialogTitle className="truncate text-base font-bold text-white">
+                  {film?.title ?? "Película"}
+                </DialogTitle>
+              </div>
+            </div>
+          </DialogHeader>
+          <div className="mt-2 max-h-[60vh] overflow-y-auto pr-1 text-[13px] leading-relaxed text-white/85">
+            {aiLoading && (
+              <p className="py-6 text-center text-white/60">
+                Consultando referencias…
+              </p>
+            )}
+            {aiError && (
+              <p className="rounded-md border border-rose-400/30 bg-rose-400/10 p-3 text-[12px] text-rose-200">
+                No se pudo generar la ficha IA. Inténtalo de nuevo en unos
+                segundos.
+              </p>
+            )}
+            {!aiLoading && aiData?.text && (
+              <div className="space-y-3 whitespace-pre-wrap">
+                {aiData.text.trim()}
+              </div>
+            )}
+          </div>
+          <p className="mt-3 text-[9px] uppercase tracking-[0.2em] text-white/40">
+            Información generada por IA. Puede contener imprecisiones.
+          </p>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

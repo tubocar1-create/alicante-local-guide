@@ -2,7 +2,7 @@ import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { X, Film as FilmIcon, Clapperboard } from "lucide-react";
+import { X, Film as FilmIcon } from "lucide-react";
 import { listCinemas } from "@/lib/ocio.functions";
 import { computeOpenStatus } from "@/lib/opening-status";
 import {
@@ -101,21 +101,21 @@ function CinemasPage() {
             className="text-[10px] uppercase tracking-[0.3em]"
             style={{ color: ACCENT }}
           >
-            Dashboard de cines
+            Cartelera · elige tu cine
           </p>
           <h1 className="mt-1 font-display text-2xl font-bold tracking-tight text-white md:text-4xl">
-            Cines{" "}
+            Cartelera{" "}
             <span
               className="bg-clip-text text-transparent"
               style={{
                 backgroundImage: `linear-gradient(90deg, ${ACCENT}, #ffffff)`,
               }}
             >
-              en Alicante
+              de Alicante
             </span>
           </h1>
           <p className="mt-1 text-xs text-white/70 md:text-sm">
-            Cartelera, horarios y compra online ·{" "}
+            Elige un cine para ver las funciones de hoy ·{" "}
             {hasGeo
               ? "ordenados por cercanía a tu ubicación."
               : "ordenados por cercanía al centro de Alicante."}{" "}
@@ -129,13 +129,6 @@ function CinemasPage() {
               </button>
             )}
           </p>
-          <Link
-            to="/ocio/cartelera"
-            className="mt-2 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-semibold transition hover:bg-white/10"
-            style={{ borderColor: `${ACCENT}55`, color: ACCENT }}
-          >
-            🎞️ Ver cartelera completa →
-          </Link>
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-black/30 p-2 backdrop-blur-xl md:p-4">

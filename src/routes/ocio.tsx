@@ -35,18 +35,9 @@ const SUBS: Sub[] = [
     slug: "cartelera",
     label: "Cartelera",
     emoji: "🎞️",
-    description: "Todas las películas en cartel ahora",
+    description: "Elige cine y mira las sesiones de hoy",
     accent: "#f9a8d4",
     Icon: Clapperboard,
-    ready: true,
-  },
-  {
-    slug: "cines",
-    label: "Cines",
-    emoji: "🎬",
-    description: "Por cine: sesiones, horarios y compra",
-    accent: "#f472b6",
-    Icon: Film,
     ready: true,
   },
   {
@@ -159,13 +150,6 @@ function OcioDashboard() {
               </div>
             );
             if (s.ready && s.slug === "cartelera") {
-              return (
-                <Link key={s.slug} to="/ocio/cartelera" className="block">
-                  {card}
-                </Link>
-              );
-            }
-            if (s.ready && s.slug === "cines") {
               return (
                 <Link key={s.slug} to="/ocio/cines" className="block">
                   {card}
