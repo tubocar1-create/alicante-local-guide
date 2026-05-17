@@ -284,25 +284,6 @@ function RestaurantDashboard() {
               )}
             </section>
 
-            {/* Mapa de ubicación */}
-            {place.lat != null && place.lng != null && (
-              <section className="space-y-2">
-                <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-200">
-                  <MapPin className="h-4 w-4" /> Ubicación
-                </h3>
-                <Suspense
-                  fallback={<div className="h-56 w-full animate-pulse rounded-2xl bg-white/5" />}
-                >
-                  <PlaceLocationMap
-                    lat={place.lat}
-                    lng={place.lng}
-                    name={place.name ?? "Restaurante"}
-                    address={place.address}
-                  />
-                </Suspense>
-              </section>
-            )}
-
             {/* Acciones */}
             <section className="flex flex-wrap gap-2 pt-2">
               <button
@@ -342,6 +323,25 @@ function RestaurantDashboard() {
                 Volver al listado
               </Link>
             </section>
+
+            {/* Mapa de ubicación */}
+            {place.lat != null && place.lng != null && (
+              <section className="space-y-2">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-200">
+                  <MapPin className="h-4 w-4" /> Ubicación
+                </h3>
+                <Suspense
+                  fallback={<div className="h-56 w-full animate-pulse rounded-2xl bg-white/5" />}
+                >
+                  <PlaceLocationMap
+                    lat={place.lat}
+                    lng={place.lng}
+                    name={place.name ?? "Restaurante"}
+                    address={place.address}
+                  />
+                </Suspense>
+              </section>
+            )}
           </div>
         )}
       </main>
