@@ -220,132 +220,110 @@ function CinemaCartelera() {
               Sin funciones programadas para este día.
             </p>
           ) : (
-            <>
-              <style>{`
-                @keyframes carteleraScroll {
-                  0% { transform: translateY(0); }
-                  100% { transform: translateY(-50%); }
-                }
-                .cartelera-marquee:hover .cartelera-track { animation-play-state: paused; }
-              `}</style>
-              <div
-                className="cartelera-marquee relative overflow-hidden"
-                style={{
-                  height: "min(70vh, 560px)",
-                  maskImage:
-                    "linear-gradient(to bottom, transparent 0, #000 36px, #000 calc(100% - 36px), transparent 100%)",
-                  WebkitMaskImage:
-                    "linear-gradient(to bottom, transparent 0, #000 36px, #000 calc(100% - 36px), transparent 100%)",
-                }}
-              >
-                <div
-                  className="cartelera-track flex flex-col gap-1"
-                  style={{
-                    animation: `carteleraScroll ${Math.max(14, sessions.length * 2)}s linear infinite`,
-                  }}
-                >
-                  {[0, 1].map((loop) => (
-                    <div key={loop} className="flex flex-col gap-1" aria-hidden={loop === 1}>
-                      {sessions.map((s) => {
-                        const f = filmById.get(s.film_id);
-                        const isPast = new Date(s.starts_at).getTime() < nowMs;
-                        const tag = [s.format, s.version].filter(Boolean).join(" ");
-                        return (
-                          <div
-                            key={`${loop}-${s.id}`}
-                            className="grid grid-cols-[52px_1fr_64px_48px] items-center gap-1 rounded-md px-1.5 py-1.5 text-[11px] text-white"
-                            style={{
-                              background: isPast ? "rgba(255,255,255,0.015)" : "rgba(255,255,255,0.04)",
-                              opacity: isPast ? 0.42 : 1,
-                            }}
-                          >
-                            <span
-                              className="inline-flex items-center justify-center rounded-md border px-1.5 py-0.5 font-mono text-[11px] font-bold"
-                              style={{
-                                borderColor: isPast ? "rgba(255,255,255,0.15)" : `${ACCENT}55`,
-                                color: isPast ? "rgba(255,255,255,0.7)" : ACCENT,
-                                textDecoration: isPast ? "line-through" : "none",
-                              }}
-                            >
-                              {fmtTime(s.starts_at)}
+            <div className="flex flex-col gap-1">
+              {sessions.map((s) => {
+                const f = filmById.get(s.film_id);
+                const isPast = new Date(s.starts_at).getTime() < nowMs;
+                const tag = [s.format, s.version].filter(Boolean).join(" ");
+                return (
+                  <div
+                    key={s.id}
+                    className="grid grid-cols-[52px_1fr_64px_48px] items-center gap-1 rounded-md px-1.5 py-1.5 text-[11px] text-white"
+                    style={{
+                      background: isPast
+                        ? "rgba(255,255,255,0.015)"
+                        : "rgba(255,255,255,0.04)",
+                      opacity: isPast ? 0.42 : 1,
+                    }}
+                  >
+                    <span
+                      className="inline-flex items-center justify-center rounded-md border px-1.5 py-0.5 font-mono text-[11px] font-bold"
+                      style={{
+                        borderColor: isPast
+                          ? "rgba(255,255,255,0.15)"
+                          : `${ACCENT}55`,
+                        color: isPast ? "rgba(255,255,255,0.7)" : ACCENT,
+                        textDecoration: isPast ? "line-through" : "none",
+                      }}
+                    >
+                      {fmtTime(s.starts_at)}
+                    </span>
+                    {f ? (
+                      <Link
+                        to="/ocio/pelicula/$id"
+                        params={{ id: f.slug }}
+                        className="flex min-w-0 items-start gap-1.5 hover:opacity-80"
+                      >
+                        <div className="h-8 w-6 shrink-0 overflow-hidden rounded-sm border border-white/10 bg-black/40">
+                          {f.poster_url ? (
+                            <img
+                              src={f.poster_url}
+                              alt={f.title}
+                              loading="lazy"
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="grid h-full w-full place-items-center">
+                              <FilmIcon className="h-3 w-3 text-white/30" />
+                            </div>
+                          )}
+                        </div>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-[11px] font-medium text-white">
+                            {f.title}
+                          </span>
+                          {(f.duration_min || f.age_rating || s.room) && (
+                            <span className="block truncate text-[9px] text-white/50">
+                              {[
+                                f.duration_min ? `${f.duration_min}'` : null,
+                                f.age_rating ? `+${f.age_rating}` : null,
+                                s.room,
+                              ]
+                                .filter(Boolean)
+                                .join(" · ")}
                             </span>
-                            {f ? (
-                              <Link
-                                to="/ocio/pelicula/$id"
-                                params={{ id: f.slug }}
-                                className="flex min-w-0 items-start gap-1.5 hover:opacity-80"
-                              >
-                                <div className="h-8 w-6 shrink-0 overflow-hidden rounded-sm border border-white/10 bg-black/40">
-                                  {f.poster_url ? (
-                                    <img
-                                      src={f.poster_url}
-                                      alt={f.title}
-                                      loading="lazy"
-                                      className="h-full w-full object-cover"
-                                    />
-                                  ) : (
-                                    <div className="grid h-full w-full place-items-center">
-                                      <FilmIcon className="h-3 w-3 text-white/30" />
-                                    </div>
-                                  )}
-                                </div>
-                                <span className="min-w-0 flex-1">
-                                  <span className="block truncate text-[11px] font-medium text-white">
-                                    {f.title}
-                                  </span>
-                                  {(f.duration_min || f.age_rating || s.room) && (
-                                    <span className="block truncate text-[9px] text-white/50">
-                                      {[
-                                        f.duration_min ? `${f.duration_min}'` : null,
-                                        f.age_rating ? `+${f.age_rating}` : null,
-                                        s.room,
-                                      ]
-                                        .filter(Boolean)
-                                        .join(" · ")}
-                                    </span>
-                                  )}
-                                </span>
-                              </Link>
-                            ) : (
-                              <span className="text-white/50">—</span>
-                            )}
-                            <div className="text-center">
-                              {tag ? (
-                                <span className="inline-flex rounded-full bg-white/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-white/80">
-                                  {tag}
-                                </span>
-                              ) : (
-                                <span className="text-white/30">—</span>
-                              )}
-                            </div>
-                            <div className="text-right">
-                              {s.ticket_url && !isPast ? (
-                                <a
-                                  href={s.ticket_url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  aria-label="Comprar entrada"
-                                  className="inline-flex h-6 w-6 items-center justify-center rounded-full border transition hover:bg-white/10"
-                                  style={{ borderColor: `${ACCENT}55`, color: ACCENT }}
-                                >
-                                  <Ticket className="h-3 w-3" />
-                                </a>
-                              ) : isPast ? (
-                                <span className="text-[9px] uppercase tracking-wider text-white/40">
-                                  Fin
-                                </span>
-                              ) : (
-                                <span className="text-white/30">—</span>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
+                          )}
+                        </span>
+                      </Link>
+                    ) : (
+                      <span className="text-white/50">—</span>
+                    )}
+                    <div className="text-center">
+                      {tag ? (
+                        <span className="inline-flex rounded-full bg-white/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-white/80">
+                          {tag}
+                        </span>
+                      ) : (
+                        <span className="text-white/30">—</span>
+                      )}
                     </div>
-                  ))}
-                </div>
-              </div>
-            </>
+                    <div className="text-right">
+                      {s.ticket_url && !isPast ? (
+                        <a
+                          href={s.ticket_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label="Comprar entrada"
+                          className="inline-flex h-6 w-6 items-center justify-center rounded-full border transition hover:bg-white/10"
+                          style={{
+                            borderColor: `${ACCENT}55`,
+                            color: ACCENT,
+                          }}
+                        >
+                          <Ticket className="h-3 w-3" />
+                        </a>
+                      ) : isPast ? (
+                        <span className="text-[9px] uppercase tracking-wider text-white/40">
+                          Fin
+                        </span>
+                      ) : (
+                        <span className="text-white/30">—</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       </div>
