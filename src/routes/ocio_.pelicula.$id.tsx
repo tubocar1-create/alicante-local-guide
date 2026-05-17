@@ -1,9 +1,16 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Car, Clock, Film as FilmIcon, Ticket } from "lucide-react";
+import { ArrowLeft, Car, Clock, Film as FilmIcon, Sparkles, Ticket, X } from "lucide-react";
 import { getFilmWithShowtimes } from "@/lib/ocio.functions";
+import { getFilmAIInsight } from "@/lib/film-ai.functions";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const ACCENT = "#f472b6";
 
