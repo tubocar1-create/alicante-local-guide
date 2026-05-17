@@ -126,7 +126,7 @@ function FilmDetail() {
       <div className="relative mx-auto max-w-3xl px-4 pb-12 pt-5">
         <header className="mb-4 flex items-center justify-between">
           <Link
-            to="/ocio/cines"
+            to="/ocio/cartelera"
             className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/[0.04] px-3 py-1.5 text-[11px] font-semibold text-white/80 transition hover:border-white/40 hover:text-white"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
@@ -294,7 +294,7 @@ function FilmDetail() {
                       >
                         <div className="mb-2 flex items-center justify-between gap-2">
                           <Link
-                            to="/ocio/cines/$id"
+                            to="/ocio/cines/$id/cartelera"
                             params={{ id: c.slug }}
                             className="flex items-center gap-1.5 text-sm font-semibold text-white hover:underline"
                           >
