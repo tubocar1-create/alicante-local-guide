@@ -39,7 +39,7 @@ function CarteleraPage() {
     queryFn: () => fetchList(),
   });
 
-  const items = data ?? [];
+  const items = data?.items ?? [];
 
   return (
     <div
