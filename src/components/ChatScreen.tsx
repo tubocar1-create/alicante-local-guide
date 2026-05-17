@@ -34,6 +34,7 @@ import {
 } from "@/lib/places.functions";
 import heroImg from "@/assets/alicante-hero.jpg";
 import portadaImg from "@/assets/alicante-portada.jpg";
+import { DraggableHogueras } from "@/components/DraggableHogueras";
 
 const TILE_SUBTITLES: Record<string, string> = {
   "Comer": "Restaurantes y tapas",
@@ -508,16 +509,7 @@ export function ChatScreen() {
                 fetchPriority="high"
                 decoding="async"
               />
-              <button
-                type="button"
-                onClick={() => navigate({ to: "/ocio" })}
-                aria-label="Fiestas en Alicante"
-                title="Fiestas en Alicante"
-                className="group absolute right-2 top-[18%] z-20 flex h-12 w-12 items-center justify-center rounded-full gradient-warm text-primary-foreground shadow-[0_6px_20px_-4px_rgba(234,88,12,0.6)] ring-2 ring-white/80 transition hover:scale-110 active:scale-95 animate-pulse"
-              >
-                <span className="absolute inset-0 rounded-full bg-amber-400/40 blur-md -z-10" aria-hidden />
-                <Sparkles className="h-6 w-6 drop-shadow" />
-              </button>
+              <DraggableHogueras onOpen={() => navigate({ to: "/ocio" })} />
             </div>
           )}
 
