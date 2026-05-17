@@ -97,23 +97,13 @@ type PlaceNew = {
 };
 
 export const populateHealthCategory = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
     z.object({
       category: z.string().min(1).max(64),
       query: z.string().min(2).max(200),
     }).parse(data),
   )
-  .handler(async ({ data, context }) => {
-    // Check admin role
-    const { data: roleRow } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId)
-      .eq("role", "admin")
-      .maybeSingle();
-    if (!roleRow) throw new Error("Forbidden: admin role required");
-
+  .handler(async ({ data }) => {
     const apiKey = process.env.GOOGLE_PLACES_API_KEY;
     if (!apiKey) throw new Error("GOOGLE_PLACES_API_KEY not configured");
 
