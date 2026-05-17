@@ -599,29 +599,7 @@ export function ChatScreen() {
                     key: "servicios-sanitarios",
                     emoji: "🩺",
                     label: "Servicios sanitarios",
-                    onClick: () =>
-                      setActiveSubmenu({
-                        label: "Salud",
-                        submenu: [
-                          { label: "🏥 Sistema Sanitario de Alicante", href: "/sistema-sanitario" },
-                          { label: "💊 Farmacias", href: "/farmacias" },
-                          {
-                            label: "🏥 Centros de salud",
-                            prompt:
-                              "¿Dónde está el centro de salud más cercano en Alicante abierto ahora?",
-                          },
-                          {
-                            label: "🚑 Hospitales",
-                            prompt:
-                              "¿Qué hospitales hay en Alicante y cuál es el más cercano?",
-                          },
-                          {
-                            label: "🌙 Farmacias de guardia",
-                            prompt:
-                              "¿Qué farmacias están de guardia hoy en Alicante?",
-                          },
-                        ],
-                      }),
+                    onClick: () => navigate({ to: "/salud" }),
                   },
                   {
                     key: "eventos",
