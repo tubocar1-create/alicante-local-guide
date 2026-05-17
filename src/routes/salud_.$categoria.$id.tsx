@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -7,13 +7,18 @@ import {
   Car,
   Clock,
   Globe,
+  Loader2,
   MapPin,
+  MessageSquare,
   Phone,
+  Sparkles,
   Star,
+  X,
 } from "lucide-react";
 import { LEAFLET_HEAD_LINK } from "@/lib/leaflet-head";
 import { getCategory } from "@/lib/health-categories";
 import { getHealthProvider } from "@/lib/health.functions";
+import { getAiReview } from "@/lib/ai-review.functions";
 
 const PlaceLocationMap = lazy(() => import("@/components/PlaceLocationMap"));
 
