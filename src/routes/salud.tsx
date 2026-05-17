@@ -67,7 +67,7 @@ const PRIVATE_AND_OTHERS: Tile[] = [
 
 function TileButton({ t }: { t: Tile }) {
   const content = (
-    <div className="group flex items-center gap-3 rounded-2xl border border-border bg-card p-3 text-left shadow-sm transition-all hover:shadow-md active:scale-[0.98]">
+    <div className="group flex h-full w-44 flex-col gap-2 rounded-2xl border border-border bg-card p-3 text-left shadow-sm transition-all hover:shadow-md active:scale-[0.98]">
       <div
         className="grid h-12 w-12 shrink-0 place-items-center rounded-full text-xl"
         style={{ backgroundColor: t.bg, color: t.fg }}
@@ -75,9 +75,9 @@ function TileButton({ t }: { t: Tile }) {
         <span aria-hidden>{t.emoji}</span>
       </div>
       <div className="min-w-0 flex-1">
-        <div className="truncate text-sm font-semibold text-foreground">{t.label}</div>
+        <div className="text-sm font-semibold leading-tight text-foreground">{t.label}</div>
         {t.sublabel ? (
-          <div className="truncate text-xs text-muted-foreground">{t.sublabel}</div>
+          <div className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{t.sublabel}</div>
         ) : null}
       </div>
     </div>
@@ -85,28 +85,54 @@ function TileButton({ t }: { t: Tile }) {
 
   if (t.href) {
     return (
-      <Link to={t.href} className="block">
+      <Link to={t.href} className="block shrink-0">
         {content}
       </Link>
     );
   }
   return (
-    <a href={t.external} target="_blank" rel="noopener noreferrer" className="block">
+    <a href={t.external} target="_blank" rel="noopener noreferrer" className="block shrink-0">
       {content}
     </a>
   );
 }
 
-function Section({ title, tiles }: { title: string; tiles: Tile[] }) {
+function ScrollSection({
+  kicker,
+  title,
+  description,
+  tiles,
+  accent,
+}: {
+  kicker: string;
+  title: string;
+  description: string;
+  tiles: Tile[];
+  accent: string;
+}) {
   return (
-    <section className="space-y-2">
-      <h2 className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        {title}
-      </h2>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        {tiles.map((t) => (
-          <TileButton key={t.label} t={t} />
-        ))}
+    <section
+      className="space-y-3 rounded-3xl border border-border p-3"
+      style={{ backgroundColor: accent }}
+    >
+      <div className="flex items-end justify-between gap-2 px-1">
+        <div>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            {kicker}
+          </div>
+          <h2 className="text-base font-bold text-foreground">{title}</h2>
+          <p className="text-xs text-muted-foreground">{description}</p>
+        </div>
+        <span className="rounded-full bg-card px-2 py-1 text-[10px] font-semibold text-muted-foreground">
+          {tiles.length}
+        </span>
+      </div>
+      <div className="-mx-1 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]">
+        <div className="flex gap-2">
+          {tiles.map((t) => (
+            <TileButton key={t.label} t={t} />
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -114,7 +140,7 @@ function Section({ title, tiles }: { title: string; tiles: Tile[] }) {
 
 function SaludDashboard() {
   return (
-    <main className="mx-auto max-w-3xl space-y-5 px-4 pb-24 pt-4">
+    <main className="mx-auto max-w-3xl space-y-4 px-4 pb-24 pt-4">
       <header className="flex items-center gap-2">
         <Link
           to="/"
@@ -126,13 +152,25 @@ function SaludDashboard() {
         <div>
           <h1 className="text-xl font-bold text-foreground">Salud en Alicante</h1>
           <p className="text-xs text-muted-foreground">
-            Sistema público, farmacias y servicios privados
+            Público y privado, desliza para explorar
           </p>
         </div>
       </header>
 
-      <Section title="Sistema sanitario público" tiles={PUBLIC_SYSTEM} />
-      <Section title="Farmacias y servicios privados" tiles={PRIVATE_AND_OTHERS} />
+      <ScrollSection
+        kicker="Público · SNS"
+        title="Sistema sanitario público"
+        description="Hospitales, centros de salud, urgencias y administración SIP"
+        tiles={PUBLIC_SYSTEM}
+        accent="oklch(0.96 0.04 150)"
+      />
+      <ScrollSection
+        kicker="Privado · Otros"
+        title="Farmacias y servicios privados"
+        description="Clínicas, especialidades y profesionales en Alicante"
+        tiles={PRIVATE_AND_OTHERS}
+        accent="oklch(0.96 0.03 250)"
+      />
 
       <p className="px-1 pt-2 text-[11px] leading-relaxed text-muted-foreground">
         Los enlaces externos abren búsquedas en Google Maps con resultados actualizados de
