@@ -652,7 +652,7 @@ export function ChatScreen() {
                         style={{ backgroundColor: pastel.bg }}
                       >
                         {t.label === "Fiestas de Alicante" ? (
-                          <img src={hoguerasIcon} alt="" className="h-7 w-7 rounded-full object-cover ring-2 ring-amber-300/80" />
+                          <img src={hoguerasIcon} alt="" className="h-7 w-7 rounded-full object-cover" />
                         ) : Icon ? (
                           <Icon className="h-5 w-5" strokeWidth={1.9} style={{ color: pastel.fg }} />
                         ) : (
