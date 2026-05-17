@@ -1342,6 +1342,7 @@ function CityDetail({
           </div>
         </div>
 
+        {perDay.length > 1 && (
           <div className="mb-4 rounded-xl border border-slate-800/60 bg-slate-950/60 p-3">
             <div className="mb-2 flex items-center gap-1.5">
               <Calendar className="h-3 w-3 text-cyan-300" />
