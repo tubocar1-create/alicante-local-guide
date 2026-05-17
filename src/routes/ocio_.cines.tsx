@@ -190,7 +190,7 @@ function CinemasPage() {
                   <tr key={p.id} className="bg-white/[0.03]">
                     <td className="rounded-l-md px-1.5 py-1.5 align-middle">
                       <Link
-                        to="/ocio/cines/$id"
+                        to="/ocio/cines/$id/cartelera"
                         params={{ id: p.slug }}
                         className="flex items-start gap-1.5 hover:opacity-80"
                       >
