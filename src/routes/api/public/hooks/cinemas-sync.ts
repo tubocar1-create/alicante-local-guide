@@ -29,8 +29,12 @@ const SOURCES: CinemaSource[] = [
   { slug: "aana-cinemas",          ecartelera_id: 181 },
   { slug: "kinepolis-plaza-mar-2", ecartelera_id: 184 },
   { slug: "yelmo-puerta-alicante", ecartelera_id: 187 },
-  // Odeon no está en ecartelera; lo cubriremos en una fase posterior.
 ];
+
+// Odeon Alicante tiene parser propio (web propia con cookie default_center).
+const ODEON_SLUG = "odeon-multicines-alicante";
+const ODEON_BASE = "https://odeonmulticines.com";
+const ODEON_COOKIE = "default_center=odeon-alicante";
 
 const DAY_HORIZON = 7;
 
