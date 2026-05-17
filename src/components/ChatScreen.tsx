@@ -611,6 +611,12 @@ export function ChatScreen() {
                     label: "Ocio",
                     onClick: () => navigate({ to: "/ocio" }),
                   },
+                  {
+                    key: "fiestas",
+                    emoji: "🎆",
+                    label: "Fiestas de Alicante",
+                    onClick: () => navigate({ to: "/fiestas" }),
+                  },
                 ].map((t, idx) => {
                   const subtitle = TILE_SUBTITLES[t.label];
                   const Icon = TILE_ICONS[t.label];
