@@ -71,6 +71,7 @@ function FilmDetail() {
 
   // Diálogo de IA
   const [aiOpen, setAiOpen] = useState(false);
+  const [synopsisOpen, setSynopsisOpen] = useState(false);
   const fetchAI = useServerFn(getFilmAIInsight);
   const { data: aiData, isLoading: aiLoading, error: aiError } = useQuery({
     queryKey: ["film-ai", film?.id],
@@ -82,7 +83,7 @@ function FilmDetail() {
           director: film!.director,
           cast: film!.cast_list,
           genre: film!.genre,
-          posterUrl: film!.poster_url,
+          synopsis: film!.synopsis,
         },
       }),
     enabled: aiOpen && !!film,
@@ -209,7 +210,17 @@ function FilmDetail() {
             </div>
 
             {/* Acciones rápidas */}
-            <div className="mb-4">
+            <div className="mb-4 grid gap-2">
+              {film.synopsis && (
+                <button
+                  type="button"
+                  onClick={() => setSynopsisOpen(true)}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/20 bg-white/[0.06] px-4 py-3 text-white shadow-sm transition hover:bg-white/[0.12] active:scale-[0.98]"
+                >
+                  <FilmIcon className="h-4 w-4" style={{ color: ACCENT }} />
+                  <span className="text-sm font-bold">Sinopsis</span>
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setAiOpen(true)}
@@ -219,20 +230,6 @@ function FilmDetail() {
                 <span className="text-sm font-bold">Nuestra opinión</span>
               </button>
             </div>
-
-            {film.synopsis && (
-              <div className="mb-4 rounded-2xl border border-white/15 bg-white/[0.04] p-4 backdrop-blur-xl">
-                <p
-                  className="text-[10px] font-semibold uppercase tracking-[0.3em]"
-                  style={{ color: ACCENT }}
-                >
-                  Sinopsis
-                </p>
-                <p className="mt-2 text-sm leading-relaxed text-white/85">
-                  {film.synopsis}
-                </p>
-              </div>
-            )}
 
             <div className="rounded-2xl border border-white/15 bg-white/[0.04] p-4 backdrop-blur-xl">
               <p
@@ -442,6 +439,31 @@ function FilmDetail() {
           <p className="mt-3 text-[9px] uppercase tracking-[0.2em] text-white/40">
             Información generada por IA. Puede contener imprecisiones.
           </p>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={synopsisOpen} onOpenChange={setSynopsisOpen}>
+        <DialogContent
+          className="max-w-lg border-white/15 text-white"
+          style={{
+            background:
+              "linear-gradient(160deg, #2a0a2e 0%, #4a1238 50%, #1a0820 100%)",
+          }}
+        >
+          <DialogHeader>
+            <p
+              className="text-[9px] font-semibold uppercase tracking-[0.3em]"
+              style={{ color: ACCENT }}
+            >
+              Sinopsis
+            </p>
+            <DialogTitle className="truncate text-base font-bold text-white">
+              {film?.title ?? "Película"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-2 max-h-[60vh] overflow-y-auto pr-1 text-[13px] leading-relaxed text-white/85">
+            {film?.synopsis ?? "Sin sinopsis disponible."}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
