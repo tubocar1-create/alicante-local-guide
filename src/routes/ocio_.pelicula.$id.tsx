@@ -153,9 +153,30 @@ function FilmDetail() {
                 >
                   Ficha de película
                 </p>
-                <h1 className="mt-1 font-display text-2xl font-bold leading-tight text-white md:text-3xl">
-                  {film.title}
-                </h1>
+                <div className="mt-1 flex flex-wrap items-start justify-between gap-2">
+                  <h1 className="min-w-0 flex-1 font-display text-2xl font-bold leading-tight text-white md:text-3xl">
+                    {film.title}
+                  </h1>
+                  {cinemas.length > 0 && (
+                    <div className="flex max-w-[55%] flex-wrap justify-end gap-1">
+                      {cinemas.map((c) => (
+                        <Link
+                          key={c.id}
+                          to="/ocio/cines/$id/cartelera"
+                          params={{ id: c.slug }}
+                          className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold text-white transition hover:bg-white/10"
+                          style={{
+                            borderColor: `${ACCENT}55`,
+                            background: `${ACCENT}18`,
+                          }}
+                        >
+                          <FilmIcon className="h-2.5 w-2.5" style={{ color: ACCENT }} />
+                          {c.name}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 {film.original_title &&
                   film.original_title !== film.title && (
                     <p className="mt-0.5 text-[12px] italic text-white/60">
@@ -183,30 +204,6 @@ function FilmDetail() {
                     <span className="text-white/40">Reparto: </span>
                     {film.cast_list.slice(0, 4).join(", ")}
                   </p>
-                )}
-                {cinemas.length > 0 && (
-                  <div className="mt-2.5">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/40">
-                      Se proyecta en
-                    </p>
-                    <div className="mt-1.5 flex flex-wrap gap-1.5">
-                      {cinemas.map((c) => (
-                        <Link
-                          key={c.id}
-                          to="/ocio/cines/$id/cartelera"
-                          params={{ id: c.slug }}
-                          className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-white/10"
-                          style={{
-                            borderColor: `${ACCENT}55`,
-                            background: `${ACCENT}18`,
-                          }}
-                        >
-                          <FilmIcon className="h-3 w-3" style={{ color: ACCENT }} />
-                          {c.name}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
                 )}
               </div>
             </div>
