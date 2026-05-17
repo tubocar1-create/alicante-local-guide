@@ -249,9 +249,6 @@ function HospitalesPage() {
 
           <ul className="space-y-1.5">
             {sorted.map((h) => {
-              const mapsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                `${h.name} ${h.address ?? ""} ${h.municipality}`,
-              )}`;
               const dirHref = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
                 `${h.name} ${h.address ?? ""} ${h.municipality}`,
               )}&travelmode=driving`;
