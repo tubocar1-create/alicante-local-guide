@@ -344,33 +344,36 @@ function HospitalDetailPage() {
 
             {/* Acciones */}
             <div className="mb-4 grid grid-cols-3 gap-2">
-              <a
-                href={dirHref}
-                target="_top"
-                rel="noreferrer"
+              <button
+                type="button"
+                onClick={() => window.open(dirHref, "_blank", "noopener,noreferrer")}
                 className="flex flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-500 px-3 py-3 text-emerald-950 shadow-lg shadow-emerald-900/30 transition active:scale-95"
               >
                 <Car className="h-5 w-5" />
                 <span className="text-[11px] font-bold">Cómo llegar</span>
-              </a>
+              </button>
               {h.phone && (
-                <a
-                  href={`tel:${h.phone.replace(/\s/g, "")}`}
-                  target="_top"
+                <button
+                  type="button"
+                  onClick={() => {
+                    const tel = `tel:${h.phone!.replace(/\s/g, "")}`;
+                    window.open(tel, "_self");
+                  }}
                   className="flex flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 px-3 py-3 text-amber-950 shadow-lg shadow-amber-900/30 transition active:scale-95"
                 >
                   <Phone className="h-5 w-5" />
                   <span className="text-[11px] font-bold">Centralita</span>
-                </a>
+                  <span className="text-[9px] font-mono opacity-80">{h.phone}</span>
+                </button>
               )}
-              <a
-                href="tel:112"
-                target="_top"
+              <button
+                type="button"
+                onClick={() => window.open("tel:112", "_self")}
                 className="flex flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-rose-500 to-red-600 px-3 py-3 text-white shadow-lg shadow-rose-900/30 transition active:scale-95"
               >
                 <Siren className="h-5 w-5" />
                 <span className="text-[11px] font-bold">112 Urgencias</span>
-              </a>
+              </button>
             </div>
 
             {/* Datos de contacto */}
