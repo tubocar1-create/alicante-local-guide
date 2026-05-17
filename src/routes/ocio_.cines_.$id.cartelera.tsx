@@ -241,7 +241,7 @@ function CinemaCartelera() {
                 <div
                   className="cartelera-track flex flex-col gap-1"
                   style={{
-                    animation: `carteleraScroll ${Math.max(20, sessions.length * 3)}s linear infinite`,
+                    animation: `carteleraScroll ${Math.max(14, sessions.length * 2)}s linear infinite`,
                     animationDirection: "reverse",
                   }}
                 >
