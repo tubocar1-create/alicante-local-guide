@@ -441,6 +441,31 @@ function FilmDetail() {
           </p>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={synopsisOpen} onOpenChange={setSynopsisOpen}>
+        <DialogContent
+          className="max-w-lg border-white/15 text-white"
+          style={{
+            background:
+              "linear-gradient(160deg, #2a0a2e 0%, #4a1238 50%, #1a0820 100%)",
+          }}
+        >
+          <DialogHeader>
+            <p
+              className="text-[9px] font-semibold uppercase tracking-[0.3em]"
+              style={{ color: ACCENT }}
+            >
+              Sinopsis
+            </p>
+            <DialogTitle className="truncate text-base font-bold text-white">
+              {film?.title ?? "Película"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-2 max-h-[60vh] overflow-y-auto pr-1 text-[13px] leading-relaxed text-white/85">
+            {film?.synopsis ?? "Sin sinopsis disponible."}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
