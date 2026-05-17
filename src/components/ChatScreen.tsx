@@ -173,6 +173,7 @@ function markRestaurantReturn() {
 export function ChatScreen() {
   // Activa el sistema de puntos (también dispara el streak diario al montar).
   usePoints();
+  const navigate = useNavigate();
   const { user: authUser } = useAuth();
   const firstName = authUser?.name?.trim().split(" ")[0];
   const [messages, setMessages] = useState<Msg[]>([GREETING]);
