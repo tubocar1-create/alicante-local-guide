@@ -56,6 +56,36 @@ function toDTO(row: Record<string, unknown>): HealthProviderDTO {
   };
 }
 
+// Mapa de slug de categoría → service_types de health_centers (BD pública)
+const PUBLIC_CENTERS_BY_CATEGORY: Record<string, string[]> = {
+  "centros-salud": ["centro_salud", "consultorio"],
+  urgencias: ["urgencias"],
+  especialidades: ["especialidades"],
+  "salud-mental": ["salud_mental"],
+};
+
+function healthCenterToDTO(row: Record<string, unknown>, category: string): HealthProviderDTO {
+  const hours = (row.schedule as string | null) ?? null;
+  return {
+    id: row.id as string,
+    category,
+    name: row.name as string,
+    address: (row.address as string) ?? null,
+    phone: (row.phone as string) ?? null,
+    website: (row.website as string) ?? null,
+    lat: (row.lat as number) ?? null,
+    lng: (row.lng as number) ?? null,
+    rating: null,
+    user_ratings_total: null,
+    photos: [],
+    google_place_id: null,
+    opening_hours: hours ? ({ weekdayDescriptions: [hours] } as HealthProviderDTO["opening_hours"]) : null,
+    price_level: null,
+    notes: (row.notes as string) ?? null,
+    source: "public",
+  };
+}
+
 export const listHealthProviders = createServerFn({ method: "GET" })
   .inputValidator((data: unknown) =>
     z.object({ category: z.string().min(1).max(64) }).parse(data),
@@ -68,7 +98,19 @@ export const listHealthProviders = createServerFn({ method: "GET" })
       .order("rating", { ascending: false, nullsFirst: false })
       .order("name");
     if (error) throw new Error(error.message);
-    return (rows ?? []).map(toDTO);
+    const providers = (rows ?? []).map(toDTO);
+
+    const serviceTypes = PUBLIC_CENTERS_BY_CATEGORY[data.category];
+    if (serviceTypes) {
+      const { data: centers } = await supabaseAdmin
+        .from("health_centers")
+        .select("*")
+        .in("service_type", serviceTypes)
+        .order("name");
+      const publicDtos = (centers ?? []).map((r) => healthCenterToDTO(r, data.category));
+      return [...publicDtos, ...providers];
+    }
+    return providers;
   });
 
 export const getHealthProvider = createServerFn({ method: "GET" })
@@ -82,7 +124,14 @@ export const getHealthProvider = createServerFn({ method: "GET" })
       .eq("id", data.id)
       .maybeSingle();
     if (error) throw new Error(error.message);
-    return row ? toDTO(row) : null;
+    if (row) return toDTO(row);
+    // Fallback: puede ser un centro público (health_centers)
+    const { data: center } = await supabaseAdmin
+      .from("health_centers")
+      .select("*")
+      .eq("id", data.id)
+      .maybeSingle();
+    return center ? healthCenterToDTO(center, (center.service_type as string) ?? "publico") : null;
   });
 
 // ---- Populate: IA genera candidatos reales + Firecrawl verifica con scraping ----
