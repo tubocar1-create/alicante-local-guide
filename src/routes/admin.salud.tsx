@@ -45,15 +45,16 @@ function AdminSaludPage() {
       </Link>
 
       <h1 className="font-display text-2xl font-bold text-foreground">
-        Poblar categorías de salud
+        Poblar categorías de salud privada
       </h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Cada botón llama a Google Places y guarda hasta <strong>10</strong>{" "}
-        resultados por categoría en la base de datos. Solo admins.
+        Solo se pueblan categorías <strong>privadas</strong> vía Google Places
+        (hasta 10 por categoría). Los datos del sistema público ya están
+        cargados internamente.
       </p>
 
       <ul className="mt-6 space-y-2">
-        {HEALTH_CATEGORIES.map((c) => {
+        {HEALTH_CATEGORIES.filter((c) => c.group === "privado").map((c) => {
           const s = status[c.slug];
           return (
             <li
