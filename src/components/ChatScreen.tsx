@@ -46,6 +46,7 @@ const TILE_SUBTITLES: Record<string, string> = {
   "Mapa": "Explora la ciudad",
   "Servicios sanitarios": "Farmacias y hospitales",
   "Ocio": "Cines, teatros y conciertos",
+  "Fiestas de Alicante": "Hogueras y mascletá",
 };
 
 const TILE_ICONS: Record<string, LucideIcon> = {
