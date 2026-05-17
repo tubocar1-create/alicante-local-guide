@@ -248,7 +248,7 @@ function CinemasPage() {
               {!isLoading && ranked.length === 0 && (
                 <tr>
                   <td
-                    colSpan={3}
+                    colSpan={4}
                     className="px-2 py-6 text-center text-xs text-white/50"
                   >
                     Aún no hay cines disponibles.
