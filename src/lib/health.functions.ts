@@ -64,8 +64,77 @@ const PUBLIC_CENTERS_BY_CATEGORY: Record<string, string[]> = {
   "salud-mental": ["salud_mental"],
 };
 
+// Convierte horarios abreviados estilo GVA ("L-V 8:00-20:00", "24h",
+// "fines de semana y festivos 24h") a periods de Google para que
+// computeOpenStatus pueda evaluar abierto/cerrado.
+function parseScheduleToPeriods(
+  raw: string,
+): NonNullable<HealthProviderDTO["opening_hours"]>["periods"] {
+  const text = raw.toLowerCase().trim();
+  // 24h puro → un único periodo abierto siempre
+  if (/^24\s*h?$/.test(text) || /^abierto\s*24/.test(text)) {
+    return [{ open: { day: 0, hour: 0, minute: 0 } }];
+  }
+  const periods: NonNullable<HealthProviderDTO["opening_hours"]>["periods"] = [];
+  const segments = text.split(",").map((s) => s.trim());
+  for (const seg of segments) {
+    // Detecta días: "l-v", "lun-vie", "s-d", "fines de semana", "festivos", "todos los dias"
+    let days: number[] = [];
+    if (/fines\s+de\s+semana/.test(seg)) days.push(6, 0);
+    if (/festivos|domingos/.test(seg) && !days.includes(0)) days.push(0);
+    if (/todos\s+los\s+d[ií]as|diario|cada\s+d[ií]a/.test(seg))
+      days = [0, 1, 2, 3, 4, 5, 6];
+    const dr = seg.match(/\b([ldmjvsx])\s*-\s*([ldmjvsx])\b/);
+    const dayCode: Record<string, number> = { d: 0, l: 1, m: 2, x: 3, j: 4, v: 5, s: 6 };
+    if (dr) {
+      const a = dayCode[dr[1]];
+      const b = dayCode[dr[2]];
+      if (a != null && b != null) {
+        let i = a;
+        for (let k = 0; k < 7; k++) {
+          days.push(i);
+          if (i === b) break;
+          i = (i + 1) % 7;
+        }
+      }
+    }
+    if (days.length === 0) continue;
+
+    const is24 = /24\s*h|24\s*horas/.test(seg);
+    if (is24) {
+      for (const d of days) periods.push({ open: { day: d, hour: 0, minute: 0 }, close: { day: d, hour: 23, minute: 59 } });
+      continue;
+    }
+    const rg = seg.match(/(\d{1,2})[:.h]?(\d{2})?\s*-\s*(\d{1,2})[:.h]?(\d{2})?/);
+    if (!rg) continue;
+    const oh = Number(rg[1]);
+    const om = Number(rg[2] ?? 0);
+    const ch = Number(rg[3]);
+    const cm = Number(rg[4] ?? 0);
+    for (const d of days) {
+      const crossesMidnight = ch * 60 + cm <= oh * 60 + om;
+      periods.push({
+        open: { day: d, hour: oh, minute: om },
+        close: {
+          day: crossesMidnight ? (d + 1) % 7 : d,
+          hour: ch,
+          minute: cm,
+        },
+      });
+    }
+  }
+  return periods;
+}
+
 function healthCenterToDTO(row: Record<string, unknown>, category: string): HealthProviderDTO {
   const hours = (row.schedule as string | null) ?? null;
+  const periods = hours ? parseScheduleToPeriods(hours) : [];
+  const opening = hours
+    ? ({
+        weekdayDescriptions: [hours],
+        periods: periods.length > 0 ? periods : undefined,
+      } as HealthProviderDTO["opening_hours"])
+    : null;
   return {
     id: row.id as string,
     category,
@@ -79,7 +148,7 @@ function healthCenterToDTO(row: Record<string, unknown>, category: string): Heal
     user_ratings_total: null,
     photos: [],
     google_place_id: null,
-    opening_hours: hours ? ({ weekdayDescriptions: [hours] } as HealthProviderDTO["opening_hours"]) : null,
+    opening_hours: opening,
     price_level: null,
     notes: (row.notes as string) ?? null,
     source: "public",
