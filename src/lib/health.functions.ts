@@ -105,7 +105,6 @@ export const populateHealthCategory = createServerFn({ method: "POST" })
     }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    // Check admin role
     const { data: roleRow } = await supabaseAdmin
       .from("user_roles")
       .select("role")
