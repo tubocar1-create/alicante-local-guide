@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { LEAFLET_HEAD_LINK } from "@/lib/leaflet-head";
 import { useServerFn } from "@tanstack/react-start";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { getPlaceById, getPlacePhotos } from "@/lib/places.functions";
