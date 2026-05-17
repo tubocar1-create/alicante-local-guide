@@ -82,6 +82,7 @@ function FilmDetail() {
           director: film!.director,
           cast: film!.cast_list,
           genre: film!.genre,
+          posterUrl: film!.poster_url,
         },
       }),
     enabled: aiOpen && !!film,
