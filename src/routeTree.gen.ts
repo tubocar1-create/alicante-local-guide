@@ -60,6 +60,7 @@ import { Route as ApiPublicQrIssueRouteImport } from './routes/api/public/qr-iss
 import { Route as ApiPublicBusEtaRouteImport } from './routes/api/public/bus-eta'
 import { Route as ApiPublicBookingCreateRouteImport } from './routes/api/public/booking-create'
 import { Route as ApiPublicAenaFlightsRouteImport } from './routes/api/public/aena-flights'
+import { Route as OcioCinesIdCarteleraRouteImport } from './routes/ocio_.cines.$id.cartelera'
 import { Route as ApiPublicHooksCinemasSyncRouteImport } from './routes/api/public/hooks/cinemas-sync'
 import { Route as ApiPublicHooksAenaSyncRouteImport } from './routes/api/public/hooks/aena-sync'
 
@@ -319,6 +320,11 @@ const ApiPublicAenaFlightsRoute = ApiPublicAenaFlightsRouteImport.update({
   path: '/api/public/aena-flights',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OcioCinesIdCarteleraRoute = OcioCinesIdCarteleraRouteImport.update({
+  id: '/cartelera',
+  path: '/cartelera',
+  getParentRoute: () => OcioCinesIdRoute,
+} as any)
 const ApiPublicHooksCinemasSyncRoute =
   ApiPublicHooksCinemasSyncRouteImport.update({
     id: '/api/public/hooks/cinemas-sync',
@@ -380,11 +386,12 @@ export interface FileRoutesByFullPath {
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
-  '/ocio/cines/$id': typeof OcioCinesIdRoute
+  '/ocio/cines/$id': typeof OcioCinesIdRouteWithChildren
   '/ocio/pelicula/$id': typeof OcioPeliculaIdRoute
   '/salud/$categoria/$id': typeof SaludCategoriaIdRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
+  '/ocio/cines/$id/cartelera': typeof OcioCinesIdCarteleraRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -434,11 +441,12 @@ export interface FileRoutesByTo {
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
-  '/ocio/cines/$id': typeof OcioCinesIdRoute
+  '/ocio/cines/$id': typeof OcioCinesIdRouteWithChildren
   '/ocio/pelicula/$id': typeof OcioPeliculaIdRoute
   '/salud/$categoria/$id': typeof SaludCategoriaIdRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
+  '/ocio/cines/$id/cartelera': typeof OcioCinesIdCarteleraRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -490,11 +498,12 @@ export interface FileRoutesById {
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
-  '/ocio_/cines/$id': typeof OcioCinesIdRoute
+  '/ocio_/cines/$id': typeof OcioCinesIdRouteWithChildren
   '/ocio_/pelicula/$id': typeof OcioPeliculaIdRoute
   '/salud_/$categoria/$id': typeof SaludCategoriaIdRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
+  '/ocio_/cines/$id/cartelera': typeof OcioCinesIdCarteleraRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -552,6 +561,7 @@ export interface FileRouteTypes {
     | '/salud/$categoria/$id'
     | '/api/public/hooks/aena-sync'
     | '/api/public/hooks/cinemas-sync'
+    | '/ocio/cines/$id/cartelera'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -606,6 +616,7 @@ export interface FileRouteTypes {
     | '/salud/$categoria/$id'
     | '/api/public/hooks/aena-sync'
     | '/api/public/hooks/cinemas-sync'
+    | '/ocio/cines/$id/cartelera'
   id:
     | '__root__'
     | '/'
@@ -661,6 +672,7 @@ export interface FileRouteTypes {
     | '/salud_/$categoria/$id'
     | '/api/public/hooks/aena-sync'
     | '/api/public/hooks/cinemas-sync'
+    | '/ocio_/cines/$id/cartelera'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1062,6 +1074,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAenaFlightsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ocio_/cines/$id/cartelera': {
+      id: '/ocio_/cines/$id/cartelera'
+      path: '/cartelera'
+      fullPath: '/ocio/cines/$id/cartelera'
+      preLoaderRoute: typeof OcioCinesIdCarteleraRouteImport
+      parentRoute: typeof OcioCinesIdRoute
+    }
     '/api/public/hooks/cinemas-sync': {
       id: '/api/public/hooks/cinemas-sync'
       path: '/api/public/hooks/cinemas-sync'
@@ -1154,12 +1173,24 @@ const ThreadsRouteChildren: ThreadsRouteChildren = {
 const ThreadsRouteWithChildren =
   ThreadsRoute._addFileChildren(ThreadsRouteChildren)
 
+interface OcioCinesIdRouteChildren {
+  OcioCinesIdCarteleraRoute: typeof OcioCinesIdCarteleraRoute
+}
+
+const OcioCinesIdRouteChildren: OcioCinesIdRouteChildren = {
+  OcioCinesIdCarteleraRoute: OcioCinesIdCarteleraRoute,
+}
+
+const OcioCinesIdRouteWithChildren = OcioCinesIdRoute._addFileChildren(
+  OcioCinesIdRouteChildren,
+)
+
 interface OcioCinesRouteChildren {
-  OcioCinesIdRoute: typeof OcioCinesIdRoute
+  OcioCinesIdRoute: typeof OcioCinesIdRouteWithChildren
 }
 
 const OcioCinesRouteChildren: OcioCinesRouteChildren = {
-  OcioCinesIdRoute: OcioCinesIdRoute,
+  OcioCinesIdRoute: OcioCinesIdRouteWithChildren,
 }
 
 const OcioCinesRouteWithChildren = OcioCinesRoute._addFileChildren(

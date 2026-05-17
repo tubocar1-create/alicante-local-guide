@@ -152,6 +152,14 @@ function CinemaDetail() {
                   {cinema.brand}
                 </p>
               )}
+              <Link
+                to="/ocio/cines/$id/cartelera"
+                params={{ id }}
+                className="mt-3 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-semibold transition hover:bg-white/10"
+                style={{ borderColor: `${ACCENT}55`, color: ACCENT }}
+              >
+                🎞️ Ver cartelera de este cine →
+              </Link>
             </div>
 
             <div className="mb-4 grid grid-cols-3 gap-2">
