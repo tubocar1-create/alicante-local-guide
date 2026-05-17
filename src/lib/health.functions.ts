@@ -113,6 +113,59 @@ export const listHealthProviders = createServerFn({ method: "GET" })
     return providers;
   });
 
+async function fetchGooglePhotosForCenter(
+  name: string,
+  address: string | null,
+  municipality: string | null,
+): Promise<{ photos: string[]; placeId: string | null }> {
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  if (!apiKey) return { photos: [], placeId: null };
+  try {
+    const textQuery = [name, address, municipality].filter(Boolean).join(", ");
+    const searchRes = await fetch("https://places.googleapis.com/v1/places:searchText", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask": "places.id,places.displayName,places.photos",
+      },
+      body: JSON.stringify({
+        textQuery,
+        languageCode: "es",
+        regionCode: "ES",
+        maxResultCount: 1,
+      }),
+    });
+    if (!searchRes.ok) return { photos: [], placeId: null };
+    const sj = (await searchRes.json()) as {
+      places?: Array<{ id?: string; photos?: Array<{ name: string }> }>;
+    };
+    const place = sj.places?.[0];
+    if (!place?.photos?.length) return { photos: [], placeId: place?.id ?? null };
+    const photoNames = place.photos.slice(0, 6).map((p) => p.name);
+    const photos = await Promise.all(
+      photoNames.map(async (pn) => {
+        try {
+          const r = await fetch(
+            `https://places.googleapis.com/v1/${pn}/media?maxWidthPx=1600&skipHttpRedirect=true&key=${apiKey}`,
+          );
+          if (!r.ok) return null;
+          const j = (await r.json()) as { photoUri?: string };
+          return j.photoUri ?? null;
+        } catch {
+          return null;
+        }
+      }),
+    );
+    return {
+      photos: photos.filter((x): x is string => !!x),
+      placeId: place.id ?? null,
+    };
+  } catch {
+    return { photos: [], placeId: null };
+  }
+}
+
 export const getHealthProvider = createServerFn({ method: "GET" })
   .inputValidator((data: unknown) =>
     z.object({ id: z.string().uuid() }).parse(data),
@@ -131,7 +184,14 @@ export const getHealthProvider = createServerFn({ method: "GET" })
       .select("*")
       .eq("id", data.id)
       .maybeSingle();
-    return center ? healthCenterToDTO(center, (center.service_type as string) ?? "publico") : null;
+    if (!center) return null;
+    const dto = healthCenterToDTO(center, (center.service_type as string) ?? "publico");
+    const { photos, placeId } = await fetchGooglePhotosForCenter(
+      center.name as string,
+      (center.address as string) ?? null,
+      (center.municipality as string) ?? null,
+    );
+    return { ...dto, photos, google_place_id: placeId };
   });
 
 // ---- Populate: IA genera candidatos reales + Firecrawl verifica con scraping ----

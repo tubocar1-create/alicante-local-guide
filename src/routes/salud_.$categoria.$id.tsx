@@ -182,28 +182,48 @@ function ProviderDetailPage() {
             </div>
 
             {p.photos.length > 0 && (
-              <div className="mb-4 -mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                <div className="flex snap-x snap-mandatory gap-2">
-                  {p.photos.slice(0, 10).map((src, i) => (
-                    <a
-                      key={i}
-                      href={src}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="relative block h-44 w-64 shrink-0 snap-start overflow-hidden rounded-2xl border border-white/15 md:h-56 md:w-80"
-                    >
-                      <img
-                        src={src}
-                        alt={`${p.name} - foto ${i + 1}`}
-                        loading="lazy"
-                        className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
-                      />
-                      <span className="absolute bottom-2 right-2 rounded-full bg-black/50 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur">
-                        {i + 1}/{Math.min(p.photos.length, 10)}
-                      </span>
-                    </a>
-                  ))}
-                </div>
+              <div className="mb-4 space-y-2">
+                <a
+                  href={p.photos[0]}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="relative block aspect-[4/3] w-full overflow-hidden rounded-2xl border border-white/15 sm:aspect-[16/10]"
+                >
+                  <img
+                    src={p.photos[0]}
+                    alt={`${p.name} - foto principal`}
+                    className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+                  />
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/70 to-transparent" />
+                  <span className="absolute bottom-2 left-3 text-[11px] font-semibold text-white/90">
+                    {p.name}
+                  </span>
+                  <span className="absolute bottom-2 right-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-white backdrop-blur">
+                    1/{Math.min(p.photos.length, 10)}
+                  </span>
+                </a>
+                {p.photos.length > 1 && (
+                  <div className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    <div className="flex snap-x snap-mandatory gap-2">
+                      {p.photos.slice(1, 10).map((src, i) => (
+                        <a
+                          key={i}
+                          href={src}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="relative block h-28 w-40 shrink-0 snap-start overflow-hidden rounded-xl border border-white/15 sm:h-32 sm:w-48"
+                        >
+                          <img
+                            src={src}
+                            alt={`${p.name} - foto ${i + 2}`}
+                            loading="lazy"
+                            className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
