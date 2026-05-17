@@ -499,15 +499,25 @@ export function ChatScreen() {
       <div ref={scrollRef} className={["relative flex-1 px-4 pt-3 pb-5", isWelcome ? "overflow-hidden" : "overflow-y-auto"].join(" ")}>
         <div className="mx-auto flex max-w-2xl flex-col gap-3">
           {isWelcome && (
-            <div className="mx-auto mb-1 w-full max-w-[320px] overflow-hidden rounded-xl">
+            <div className="relative mx-auto mb-1 w-full max-w-[320px] overflow-visible rounded-xl">
               <img
                 src={portadaImg}
                 alt="Alicante"
-                className="h-auto w-full object-cover rounded-xl"
+                className="h-auto w-full rounded-xl object-cover"
                 loading="eager"
                 fetchPriority="high"
                 decoding="async"
               />
+              <button
+                type="button"
+                onClick={() => navigate({ to: "/ocio" })}
+                aria-label="Fiestas en Alicante"
+                title="Fiestas en Alicante"
+                className="group absolute right-2 top-[18%] z-20 flex h-12 w-12 items-center justify-center rounded-full gradient-warm text-primary-foreground shadow-[0_6px_20px_-4px_rgba(234,88,12,0.6)] ring-2 ring-white/80 transition hover:scale-110 active:scale-95 animate-pulse"
+              >
+                <span className="absolute inset-0 rounded-full bg-amber-400/40 blur-md -z-10" aria-hidden />
+                <Sparkles className="h-6 w-6 drop-shadow" />
+              </button>
             </div>
           )}
 
@@ -779,14 +789,6 @@ export function ChatScreen() {
       )}
       {isWelcome && (
         <>
-          <button
-            onClick={() => navigate({ to: "/ocio" })}
-            className="fixed bottom-20 right-4 z-50 flex items-center gap-2 rounded-full gradient-warm px-4 py-3 text-sm font-bold text-primary-foreground shadow-soft ring-2 ring-white/60 transition active:scale-95"
-            aria-label="Fiestas en Alicante"
-          >
-            <Sparkles className="h-5 w-5" />
-            <span>Fiestas en Alicante</span>
-          </button>
           <nav className="relative flex items-center justify-around border-t border-border/60 bg-[oklch(0.985_0.018_88)]/95 px-2 pt-2 pb-3 backdrop-blur">
           <button
             type="button"
