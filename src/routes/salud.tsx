@@ -183,8 +183,8 @@ function SaludDashboard() {
       />
 
       <p className="px-1 pt-2 text-[11px] leading-relaxed text-muted-foreground">
-        Los enlaces externos abren búsquedas en Google Maps con resultados actualizados de
-        clínicas y profesionales en Alicante. En caso de urgencia vital llama al{" "}
+        Las categorías sanitarias abren un dashboard con fichas técnicas por
+        centro. En caso de urgencia vital llama al{" "}
         <a href="tel:112" className="font-semibold text-foreground underline">112</a>.
       </p>
     </main>

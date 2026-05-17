@@ -52,16 +52,15 @@ function AdminSaludPage() {
       </Link>
 
       <h1 className="font-display text-2xl font-bold text-foreground">
-        Poblar categorías de salud privada
+        Poblar sector salud con IA
       </h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Solo se pueblan categorías <strong>privadas</strong> vía Google Places
-        (hasta 10 por categoría). Los datos del sistema público ya están
-        cargados internamente.
+        Carga hasta 10 fichas por categoría usando datos generados por IA. No
+        usa Google Places y no modifica la base de farmacias.
       </p>
 
       <ul className="mt-6 space-y-2">
-        {HEALTH_CATEGORIES.filter((c) => c.group === "privado").map((c) => {
+        {HEALTH_CATEGORIES.map((c) => {
           const s = status[c.slug];
           return (
             <li
@@ -79,7 +78,7 @@ function AdminSaludPage() {
                   {c.label}
                 </p>
                 <p className="text-[11px] text-muted-foreground">
-                  Query: {c.query}
+                  {c.group === "publico" ? "Sistema público" : "Sector privado"} · IA
                 </p>
                 {s?.msg && (
                   <p className="text-[11px] text-emerald-600">{s.msg}</p>
