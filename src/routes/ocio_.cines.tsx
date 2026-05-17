@@ -211,6 +211,18 @@ function CinemasPage() {
                       </Link>
                     </td>
                     <td className="px-1 py-1 text-center align-middle">
+                      <Link
+                        to="/ocio/cines/$id/cartelera"
+                        params={{ id: p.slug }}
+                        aria-label={`Cartelera de ${p.name}`}
+                        title="Ver cartelera de este cine"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-full border transition hover:bg-white/10"
+                        style={{ borderColor: `${ACCENT}55`, color: ACCENT }}
+                      >
+                        <Clapperboard className="h-3.5 w-3.5" />
+                      </Link>
+                    </td>
+                    <td className="px-1 py-1 text-center align-middle">
                       <span
                         className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${statusStyle}`}
                       >
