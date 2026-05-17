@@ -778,7 +778,16 @@ export function ChatScreen() {
         />
       )}
       {isWelcome && (
-        <nav className="relative flex items-center justify-around border-t border-border/60 bg-[oklch(0.985_0.018_88)]/95 px-2 pt-2 pb-3 backdrop-blur">
+        <>
+          <button
+            onClick={() => navigate({ to: "/ocio" })}
+            className="absolute bottom-[4.5rem] right-4 z-20 flex items-center gap-2 rounded-full bg-gradient-to-r from-[oklch(0.55_0.14_280)] to-[oklch(0.6_0.16_310)] px-4 py-3 text-sm font-bold text-white shadow-lg shadow-[oklch(0.55_0.14_280)]/30 ring-2 ring-white/60 transition active:scale-95"
+            aria-label="Fiestas en Alicante"
+          >
+            <Sparkles className="h-5 w-5" />
+            <span>Fiestas en Alicante</span>
+          </button>
+          <nav className="relative flex items-center justify-around border-t border-border/60 bg-[oklch(0.985_0.018_88)]/95 px-2 pt-2 pb-3 backdrop-blur">
           <button
             type="button"
             onClick={() => {
