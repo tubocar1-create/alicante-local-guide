@@ -86,7 +86,7 @@ function TileButton({ t }: { t: Tile }) {
 
   if (t.href) {
     return (
-      <Link to={t.href} className="block shrink-0">
+      <Link to={t.href} search={t.search as never} className="block shrink-0">
         {content}
       </Link>
     );
