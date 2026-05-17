@@ -42,13 +42,14 @@ export const getFilmAIInsight = createServerFn({ method: "POST" })
 
     const prompt = `${ctx}
 
-Redacta una ficha breve en español (180-260 palabras) con tres bloques claros separados por línea en blanco, en este orden:
+Escribe "Nuestra opinión" sobre esta película en español, en tono cálido, cercano y entusiasta — como una recomendación a un amigo. 200-280 palabras en 4 párrafos breves, separados por línea en blanco, encabezados así:
 
-1) Producción: estudio/productora, país, año, datos relevantes de rodaje o estreno.
-2) Dirección: trayectoria del director/a, estilo, películas anteriores destacadas.
-3) Reparto: papeles principales y trabajos previos conocidos del reparto listado.
+Producción. Estudio/productora, país, año, presupuesto aproximado o coste de producción si es conocido, y algún dato curioso del rodaje o estreno.
+Dirección. Quién dirige, su estilo y un par de películas previas relevantes.
+Reparto. Principales intérpretes y papeles destacados que les conocemos.
+Acogida. Cómo ha sido recibida por crítica y público (premios, nominaciones, taquilla, valoraciones generales). Cierra con una frase amable que invite a verla.
 
-Tono informativo, conciso y elegante. Sin emojis, sin markdown, sin listas con viñetas, sin titulares con almohadilla. Usa los nombres de bloque en negrita simulada escribiendo "Producción.", "Dirección.", "Reparto." al inicio de cada párrafo. Si algún dato no es verificable, omítelo en lugar de inventar.`;
+Sin emojis, sin markdown, sin viñetas, sin almohadillas. Si un dato concreto no es verificable, omítelo en lugar de inventar.`;
 
     const res = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
@@ -64,7 +65,7 @@ Tono informativo, conciso y elegante. Sin emojis, sin markdown, sin listas con v
             {
               role: "system",
               content:
-                "Eres un crítico de cine riguroso. Solo expones datos plausibles y verificables sobre producción, dirección y reparto. Si dudas, omites.",
+                "Eres un cinéfilo cercano y entusiasta que recomienda películas a un amigo. Tono cálido y amable, riguroso con los datos: si no estás razonablemente seguro de un dato concreto, lo omites en lugar de inventarlo.",
             },
             { role: "user", content: prompt },
           ],

@@ -67,25 +67,7 @@ function FilmDetail() {
     return m;
   }, [showtimes]);
 
-  // Próxima sesión y cine (para botones de cabecera)
-  const nextSession = useMemo(() => {
-    const now = Date.now();
-    return (
-      showtimes.find((s) => new Date(s.starts_at).getTime() >= now) ??
-      showtimes[0] ??
-      null
-    );
-  }, [showtimes]);
-  const primaryCinema = nextSession
-    ? cinemaById.get(nextSession.cinema_id) ?? null
-    : cinemas[0] ?? null;
-  const primaryDirHref = primaryCinema
-    ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-        `${primaryCinema.name} ${primaryCinema.address ?? ""}`,
-      )}&travelmode=driving`
-    : null;
-  const primaryTicketHref =
-    nextSession?.ticket_url ?? primaryCinema?.ticket_url ?? null;
+  // (acciones por cine se gestionan dentro de cada tarjeta)
 
   // Diálogo de IA
   const [aiOpen, setAiOpen] = useState(false);
@@ -205,48 +187,15 @@ function FilmDetail() {
             </div>
 
             {/* Acciones rápidas */}
-            <div className="mb-4 grid grid-cols-3 gap-2">
-              {primaryDirHref ? (
-                <a
-                  href={primaryDirHref}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex flex-col items-center justify-center gap-1 rounded-2xl px-3 py-3 text-black shadow-lg transition active:scale-95"
-                  style={{ background: ACCENT }}
-                >
-                  <Car className="h-5 w-5" />
-                  <span className="text-[11px] font-bold">Cómo llegar</span>
-                  {primaryCinema && (
-                    <span className="line-clamp-1 text-[9px] opacity-80">
-                      {primaryCinema.name}
-                    </span>
-                  )}
-                </a>
-              ) : (
-                <div className="rounded-2xl border border-white/10 bg-white/[0.02]" />
-              )}
-              {primaryTicketHref ? (
-                <a
-                  href={primaryTicketHref}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 px-3 py-3 text-white shadow-lg transition active:scale-95"
-                >
-                  <Ticket className="h-5 w-5" />
-                  <span className="text-[11px] font-bold">Comprar</span>
-                  <span className="text-[9px] opacity-80">Entradas</span>
-                </a>
-              ) : (
-                <div className="rounded-2xl border border-white/10 bg-white/[0.02]" />
-              )}
+            <div className="mb-4">
               <button
                 type="button"
                 onClick={() => setAiOpen(true)}
-                className="flex flex-col items-center justify-center gap-1 rounded-2xl bg-gradient-to-br from-amber-300 to-pink-400 px-3 py-3 text-amber-950 shadow-lg transition active:scale-95"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-br from-amber-300 to-pink-400 px-4 py-3 text-amber-950 shadow-lg transition active:scale-[0.98]"
               >
                 <Sparkles className="h-5 w-5" />
-                <span className="text-[11px] font-bold">Más con IA</span>
-                <span className="text-[9px] opacity-80">Ficha completa</span>
+                <span className="text-sm font-bold">Nuestra opinión</span>
+                <span className="text-[10px] opacity-80">· con IA</span>
               </button>
             </div>
 
@@ -332,8 +281,12 @@ function FilmDetail() {
                             {c.address}
                           </p>
                         )}
-                        <div className="space-y-1.5">
-                          {Array.from(days.entries()).map(([day, shows]) => (
+                        {(() => {
+                          const todayKey = dayKey(new Date().toISOString());
+                          const entries = Array.from(days.entries());
+                          const todayEntries = entries.filter(([d]) => d === todayKey);
+                          const laterEntries = entries.filter(([d]) => d !== todayKey);
+                          const renderDay = (day: string, shows: typeof showtimes) => (
                             <div
                               key={day}
                               className="flex flex-wrap items-center gap-1.5"
@@ -372,8 +325,29 @@ function FilmDetail() {
                                 );
                               })}
                             </div>
-                          ))}
-                        </div>
+                          );
+                          return (
+                            <div className="space-y-1.5">
+                              {todayEntries.length > 0 ? (
+                                todayEntries.map(([d, s]) => renderDay(d, s))
+                              ) : (
+                                <p className="text-[11px] italic text-white/45">
+                                  Hoy no quedan sesiones disponibles.
+                                </p>
+                              )}
+                              {laterEntries.length > 0 && (
+                                <div className="mt-2 border-t border-white/10 pt-2">
+                                  <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-[0.25em] text-white/40">
+                                    Próximos días · desliza
+                                  </p>
+                                  <div className="max-h-44 space-y-1.5 overflow-y-auto pr-1">
+                                    {laterEntries.map(([d, s]) => renderDay(d, s))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     );
                   })}
@@ -405,7 +379,7 @@ function FilmDetail() {
                   className="text-[9px] font-semibold uppercase tracking-[0.3em]"
                   style={{ color: ACCENT }}
                 >
-                  Ficha IA · Producción, dirección y reparto
+                  Nuestra opinión · producción, reparto y acogida
                 </p>
                 <DialogTitle className="truncate text-base font-bold text-white">
                   {film?.title ?? "Película"}
