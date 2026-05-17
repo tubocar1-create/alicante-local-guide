@@ -8,6 +8,7 @@ import {
   listHealthProviders,
   type HealthProviderDTO,
 } from "@/lib/health.functions";
+import { computeOpenStatus } from "@/lib/opening-status";
 import {
   useUserLocation,
   distanceKm,
@@ -192,9 +193,10 @@ function CategoryDashboard() {
           <table className="w-full table-fixed border-separate border-spacing-y-0.5 text-left text-[11px] text-white">
             <colgroup>
               <col />
-              <col className="w-[88px]" />
-              <col className="w-[40px]" />
-              <col className="w-[54px]" />
+              <col className="w-[62px]" />
+              <col className="w-[78px]" />
+              <col className="w-[34px]" />
+              <col className="w-[48px]" />
             </colgroup>
             <thead>
               <tr
@@ -202,6 +204,7 @@ function CategoryDashboard() {
                 style={{ color: `${cat.accent}99` }}
               >
                 <th className="px-1 py-1 font-medium">Local</th>
+                <th className="px-1 py-1 font-medium">Estado</th>
                 <th className="px-1 py-1 font-medium">Tel</th>
                 <th className="px-1 py-1 text-right font-medium">★</th>
                 <th className="px-1 py-1 text-right font-medium">Dist.</th>
@@ -210,6 +213,19 @@ function CategoryDashboard() {
             <tbody>
               {ranked.map(({ p, d }) => {
                 const tel = p.phone ? p.phone.replace(/\s/g, "") : null;
+                const status = computeOpenStatus(p.opening_hours);
+                const statusStyle =
+                  status === "open"
+                    ? "bg-emerald-400/15 text-emerald-300"
+                    : status === "closed"
+                    ? "bg-rose-400/15 text-rose-300"
+                    : "bg-white/5 text-white/40";
+                const statusLabel =
+                  status === "open"
+                    ? "Abierto"
+                    : status === "closed"
+                    ? "Cerrado"
+                    : "—";
                 return (
                   <tr key={p.id} className="bg-white/[0.03]">
                     <td className="rounded-l-md px-1.5 py-1.5 align-middle">
@@ -225,6 +241,23 @@ function CategoryDashboard() {
                           {p.name}
                         </span>
                       </Link>
+                    </td>
+                    <td className="px-1 py-1 align-middle">
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${statusStyle}`}
+                      >
+                        <span
+                          aria-hidden
+                          className={`h-1.5 w-1.5 rounded-full ${
+                            status === "open"
+                              ? "bg-emerald-400"
+                              : status === "closed"
+                              ? "bg-rose-400"
+                              : "bg-white/30"
+                          }`}
+                        />
+                        {statusLabel}
+                      </span>
                     </td>
                     <td className="px-1 py-1 align-middle">
                       {tel ? (
@@ -259,7 +292,7 @@ function CategoryDashboard() {
               {!isLoading && ranked.length === 0 && (
                 <tr>
                   <td
-                    colSpan={4}
+                    colSpan={5}
                     className="px-2 py-6 text-center text-xs text-white/50"
                   >
                     Aún no hay datos para esta categoría.

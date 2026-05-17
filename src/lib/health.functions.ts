@@ -21,7 +21,14 @@ export type HealthProviderDTO = {
   user_ratings_total: number | null;
   photos: string[];
   google_place_id: string | null;
-  opening_hours: { weekdayDescriptions?: string[] } | null;
+  opening_hours: {
+    weekdayDescriptions?: string[];
+    periods?: Array<{
+      open?: { day?: number; hour?: number; minute?: number };
+      close?: { day?: number; hour?: number; minute?: number };
+    }>;
+    openNow?: boolean;
+  } | null;
   price_level: string | null;
   notes: string | null;
   source: string;
@@ -42,7 +49,7 @@ function toDTO(row: Record<string, unknown>): HealthProviderDTO {
     photos: (row.photos as string[]) ?? [],
     google_place_id: (row.google_place_id as string) ?? null,
     opening_hours:
-      (row.opening_hours as { weekdayDescriptions?: string[] }) ?? null,
+      (row.opening_hours as HealthProviderDTO["opening_hours"]) ?? null,
     price_level: (row.price_level as string) ?? null,
     notes: (row.notes as string) ?? null,
     source: (row.source as string) ?? "google",
