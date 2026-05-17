@@ -28,6 +28,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as BusinessIndexRouteImport } from './routes/business.index'
 import { Route as VuelosIataRouteImport } from './routes/vuelos_.$iata'
 import { Route as ThreadsIdRouteImport } from './routes/threads.$id'
+import { Route as SaludCategoriaRouteImport } from './routes/salud_.$categoria'
 import { Route as RestaurantsPlaceIdRouteImport } from './routes/restaurants.$placeId'
 import { Route as HospitalesIdRouteImport } from './routes/hospitales_.$id'
 import { Route as BusinessReferralsRouteImport } from './routes/business.referrals'
@@ -40,7 +41,9 @@ import { Route as BusinessInboxRouteImport } from './routes/business.inbox'
 import { Route as BusinessBookingsRouteImport } from './routes/business.bookings'
 import { Route as BusPlannerRouteImport } from './routes/bus.planner'
 import { Route as BusLinesRouteImport } from './routes/bus.lines'
+import { Route as AdminSaludRouteImport } from './routes/admin.salud'
 import { Route as AdminPlacesRouteImport } from './routes/admin.places'
+import { Route as SaludCategoriaIdRouteImport } from './routes/salud_.$categoria.$id'
 import { Route as BusinessInboxIdRouteImport } from './routes/business.inbox.$id'
 import { Route as BusLinesCodeRouteImport } from './routes/bus.lines.$code'
 import { Route as ApiPublicRefreshNewsRouteImport } from './routes/api/public/refresh-news'
@@ -147,6 +150,11 @@ const ThreadsIdRoute = ThreadsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => ThreadsRoute,
 } as any)
+const SaludCategoriaRoute = SaludCategoriaRouteImport.update({
+  id: '/salud_/$categoria',
+  path: '/salud/$categoria',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RestaurantsPlaceIdRoute = RestaurantsPlaceIdRouteImport.update({
   id: '/restaurants/$placeId',
   path: '/restaurants/$placeId',
@@ -207,10 +215,20 @@ const BusLinesRoute = BusLinesRouteImport.update({
   path: '/lines',
   getParentRoute: () => BusRoute,
 } as any)
+const AdminSaludRoute = AdminSaludRouteImport.update({
+  id: '/admin/salud',
+  path: '/admin/salud',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminPlacesRoute = AdminPlacesRouteImport.update({
   id: '/admin/places',
   path: '/admin/places',
   getParentRoute: () => rootRouteImport,
+} as any)
+const SaludCategoriaIdRoute = SaludCategoriaIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => SaludCategoriaRoute,
 } as any)
 const BusinessInboxIdRoute = BusinessInboxIdRouteImport.update({
   id: '/$id',
@@ -282,6 +300,7 @@ export interface FileRoutesByFullPath {
   '/threads': typeof ThreadsRouteWithChildren
   '/vuelos': typeof VuelosRoute
   '/admin/places': typeof AdminPlacesRoute
+  '/admin/salud': typeof AdminSaludRoute
   '/bus/lines': typeof BusLinesRouteWithChildren
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
@@ -294,6 +313,7 @@ export interface FileRoutesByFullPath {
   '/business/referrals': typeof BusinessReferralsRoute
   '/hospitales/$id': typeof HospitalesIdRoute
   '/restaurants/$placeId': typeof RestaurantsPlaceIdRoute
+  '/salud/$categoria': typeof SaludCategoriaRouteWithChildren
   '/threads/$id': typeof ThreadsIdRoute
   '/vuelos/$iata': typeof VuelosIataRoute
   '/business/': typeof BusinessIndexRoute
@@ -306,6 +326,7 @@ export interface FileRoutesByFullPath {
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
+  '/salud/$categoria/$id': typeof SaludCategoriaIdRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
 }
 export interface FileRoutesByTo {
@@ -325,6 +346,7 @@ export interface FileRoutesByTo {
   '/threads': typeof ThreadsRouteWithChildren
   '/vuelos': typeof VuelosRoute
   '/admin/places': typeof AdminPlacesRoute
+  '/admin/salud': typeof AdminSaludRoute
   '/bus/lines': typeof BusLinesRouteWithChildren
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
@@ -337,6 +359,7 @@ export interface FileRoutesByTo {
   '/business/referrals': typeof BusinessReferralsRoute
   '/hospitales/$id': typeof HospitalesIdRoute
   '/restaurants/$placeId': typeof RestaurantsPlaceIdRoute
+  '/salud/$categoria': typeof SaludCategoriaRouteWithChildren
   '/threads/$id': typeof ThreadsIdRoute
   '/vuelos/$iata': typeof VuelosIataRoute
   '/business': typeof BusinessIndexRoute
@@ -349,6 +372,7 @@ export interface FileRoutesByTo {
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
+  '/salud/$categoria/$id': typeof SaludCategoriaIdRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
 }
 export interface FileRoutesById {
@@ -370,6 +394,7 @@ export interface FileRoutesById {
   '/threads': typeof ThreadsRouteWithChildren
   '/vuelos': typeof VuelosRoute
   '/admin/places': typeof AdminPlacesRoute
+  '/admin/salud': typeof AdminSaludRoute
   '/bus/lines': typeof BusLinesRouteWithChildren
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
@@ -382,6 +407,7 @@ export interface FileRoutesById {
   '/business/referrals': typeof BusinessReferralsRoute
   '/hospitales_/$id': typeof HospitalesIdRoute
   '/restaurants/$placeId': typeof RestaurantsPlaceIdRoute
+  '/salud_/$categoria': typeof SaludCategoriaRouteWithChildren
   '/threads/$id': typeof ThreadsIdRoute
   '/vuelos_/$iata': typeof VuelosIataRoute
   '/business/': typeof BusinessIndexRoute
@@ -394,6 +420,7 @@ export interface FileRoutesById {
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
+  '/salud_/$categoria/$id': typeof SaludCategoriaIdRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
 }
 export interface FileRouteTypes {
@@ -416,6 +443,7 @@ export interface FileRouteTypes {
     | '/threads'
     | '/vuelos'
     | '/admin/places'
+    | '/admin/salud'
     | '/bus/lines'
     | '/bus/planner'
     | '/business/bookings'
@@ -428,6 +456,7 @@ export interface FileRouteTypes {
     | '/business/referrals'
     | '/hospitales/$id'
     | '/restaurants/$placeId'
+    | '/salud/$categoria'
     | '/threads/$id'
     | '/vuelos/$iata'
     | '/business/'
@@ -440,6 +469,7 @@ export interface FileRouteTypes {
     | '/api/public/refresh-news'
     | '/bus/lines/$code'
     | '/business/inbox/$id'
+    | '/salud/$categoria/$id'
     | '/api/public/hooks/aena-sync'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -459,6 +489,7 @@ export interface FileRouteTypes {
     | '/threads'
     | '/vuelos'
     | '/admin/places'
+    | '/admin/salud'
     | '/bus/lines'
     | '/bus/planner'
     | '/business/bookings'
@@ -471,6 +502,7 @@ export interface FileRouteTypes {
     | '/business/referrals'
     | '/hospitales/$id'
     | '/restaurants/$placeId'
+    | '/salud/$categoria'
     | '/threads/$id'
     | '/vuelos/$iata'
     | '/business'
@@ -483,6 +515,7 @@ export interface FileRouteTypes {
     | '/api/public/refresh-news'
     | '/bus/lines/$code'
     | '/business/inbox/$id'
+    | '/salud/$categoria/$id'
     | '/api/public/hooks/aena-sync'
   id:
     | '__root__'
@@ -503,6 +536,7 @@ export interface FileRouteTypes {
     | '/threads'
     | '/vuelos'
     | '/admin/places'
+    | '/admin/salud'
     | '/bus/lines'
     | '/bus/planner'
     | '/business/bookings'
@@ -515,6 +549,7 @@ export interface FileRouteTypes {
     | '/business/referrals'
     | '/hospitales_/$id'
     | '/restaurants/$placeId'
+    | '/salud_/$categoria'
     | '/threads/$id'
     | '/vuelos_/$iata'
     | '/business/'
@@ -527,6 +562,7 @@ export interface FileRouteTypes {
     | '/api/public/refresh-news'
     | '/bus/lines/$code'
     | '/business/inbox/$id'
+    | '/salud_/$categoria/$id'
     | '/api/public/hooks/aena-sync'
   fileRoutesById: FileRoutesById
 }
@@ -548,8 +584,10 @@ export interface RootRouteChildren {
   ThreadsRoute: typeof ThreadsRouteWithChildren
   VuelosRoute: typeof VuelosRoute
   AdminPlacesRoute: typeof AdminPlacesRoute
+  AdminSaludRoute: typeof AdminSaludRoute
   HospitalesIdRoute: typeof HospitalesIdRoute
   RestaurantsPlaceIdRoute: typeof RestaurantsPlaceIdRoute
+  SaludCategoriaRoute: typeof SaludCategoriaRouteWithChildren
   VuelosIataRoute: typeof VuelosIataRoute
   ApiPublicAenaFlightsRoute: typeof ApiPublicAenaFlightsRoute
   ApiPublicBookingCreateRoute: typeof ApiPublicBookingCreateRoute
@@ -696,6 +734,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ThreadsIdRouteImport
       parentRoute: typeof ThreadsRoute
     }
+    '/salud_/$categoria': {
+      id: '/salud_/$categoria'
+      path: '/salud/$categoria'
+      fullPath: '/salud/$categoria'
+      preLoaderRoute: typeof SaludCategoriaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/restaurants/$placeId': {
       id: '/restaurants/$placeId'
       path: '/restaurants/$placeId'
@@ -780,12 +825,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BusLinesRouteImport
       parentRoute: typeof BusRoute
     }
+    '/admin/salud': {
+      id: '/admin/salud'
+      path: '/admin/salud'
+      fullPath: '/admin/salud'
+      preLoaderRoute: typeof AdminSaludRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/places': {
       id: '/admin/places'
       path: '/admin/places'
       fullPath: '/admin/places'
       preLoaderRoute: typeof AdminPlacesRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/salud_/$categoria/$id': {
+      id: '/salud_/$categoria/$id'
+      path: '/$id'
+      fullPath: '/salud/$categoria/$id'
+      preLoaderRoute: typeof SaludCategoriaIdRouteImport
+      parentRoute: typeof SaludCategoriaRoute
     }
     '/business/inbox/$id': {
       id: '/business/inbox/$id'
@@ -935,6 +994,18 @@ const ThreadsRouteChildren: ThreadsRouteChildren = {
 const ThreadsRouteWithChildren =
   ThreadsRoute._addFileChildren(ThreadsRouteChildren)
 
+interface SaludCategoriaRouteChildren {
+  SaludCategoriaIdRoute: typeof SaludCategoriaIdRoute
+}
+
+const SaludCategoriaRouteChildren: SaludCategoriaRouteChildren = {
+  SaludCategoriaIdRoute: SaludCategoriaIdRoute,
+}
+
+const SaludCategoriaRouteWithChildren = SaludCategoriaRoute._addFileChildren(
+  SaludCategoriaRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BusRoute: BusRouteWithChildren,
@@ -953,8 +1024,10 @@ const rootRouteChildren: RootRouteChildren = {
   ThreadsRoute: ThreadsRouteWithChildren,
   VuelosRoute: VuelosRoute,
   AdminPlacesRoute: AdminPlacesRoute,
+  AdminSaludRoute: AdminSaludRoute,
   HospitalesIdRoute: HospitalesIdRoute,
   RestaurantsPlaceIdRoute: RestaurantsPlaceIdRoute,
+  SaludCategoriaRoute: SaludCategoriaRouteWithChildren,
   VuelosIataRoute: VuelosIataRoute,
   ApiPublicAenaFlightsRoute: ApiPublicAenaFlightsRoute,
   ApiPublicBookingCreateRoute: ApiPublicBookingCreateRoute,

@@ -19,7 +19,7 @@ export type HealthProviderDTO = {
   user_ratings_total: number | null;
   photos: string[];
   google_place_id: string | null;
-  opening_hours: Record<string, unknown> | null;
+  opening_hours: { weekdayDescriptions?: string[] } | null;
   price_level: string | null;
   notes: string | null;
   source: string;
@@ -40,7 +40,7 @@ function toDTO(row: Record<string, unknown>): HealthProviderDTO {
     photos: (row.photos as string[]) ?? [],
     google_place_id: (row.google_place_id as string) ?? null,
     opening_hours:
-      (row.opening_hours as Record<string, unknown>) ?? null,
+      (row.opening_hours as { weekdayDescriptions?: string[] }) ?? null,
     price_level: (row.price_level as string) ?? null,
     notes: (row.notes as string) ?? null,
     source: (row.source as string) ?? "google",
@@ -187,7 +187,10 @@ export const populateHealthCategory = createServerFn({ method: "POST" })
           photos,
           google_place_id: p.id,
           opening_hours: p.regularOpeningHours
-            ? (p.regularOpeningHours as unknown as Record<string, unknown>)
+            ? ({
+                weekdayDescriptions:
+                  p.regularOpeningHours.weekdayDescriptions ?? [],
+              } as unknown as never)
             : null,
           price_level: p.priceLevel ?? null,
           source: "google",
