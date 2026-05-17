@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -7,13 +7,18 @@ import {
   Car,
   Clock,
   Globe,
+  Loader2,
   MapPin,
+  MessageSquare,
   Phone,
+  Sparkles,
   Star,
+  X,
 } from "lucide-react";
 import { LEAFLET_HEAD_LINK } from "@/lib/leaflet-head";
 import { getCategory } from "@/lib/health-categories";
 import { getHealthProvider } from "@/lib/health.functions";
+import { getAiReview } from "@/lib/ai-review.functions";
 
 const PlaceLocationMap = lazy(() => import("@/components/PlaceLocationMap"));
 
@@ -37,10 +42,37 @@ function ProviderDetailPage() {
   const { categoria, id } = Route.useParams();
   const cat = getCategory(categoria)!;
   const get = useServerFn(getHealthProvider);
+  const fetchAiReview = useServerFn(getAiReview);
   const { data: p, isLoading } = useQuery({
     queryKey: ["health-provider", id],
     queryFn: () => get({ data: { id } }),
   });
+
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewText, setReviewText] = useState<string | null>(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewErr, setReviewErr] = useState<string | null>(null);
+
+  async function openReview() {
+    setReviewOpen(true);
+    if (reviewText || reviewLoading) return;
+    setReviewLoading(true);
+    setReviewErr(null);
+    try {
+      const r = await fetchAiReview({
+        data: {
+          name: p?.name ?? "",
+          kind: cat.label,
+          address: p?.address ?? null,
+        },
+      });
+      setReviewText(r.text);
+    } catch (e) {
+      setReviewErr(String((e as Error)?.message ?? e));
+    } finally {
+      setReviewLoading(false);
+    }
+  }
 
   if (!isLoading && !p) throw notFound();
 
@@ -121,6 +153,41 @@ function ProviderDetailPage() {
                       · {p.user_ratings_total} reseñas
                     </span>
                   )}
+                </div>
+              )}
+
+              {cat.group === "privado" && (
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  <a
+                    href={
+                      p.google_place_id
+                        ? `https://search.google.com/local/reviews?placeid=${p.google_place_id}`
+                        : `https://www.google.com/search?q=${encodeURIComponent(`${p.name} ${p.address ?? "Alicante"} reseñas`)}`
+                    }
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex flex-col items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/[0.04] px-2 py-2.5 text-[11px] font-semibold text-white/85 hover:bg-white/[0.08]"
+                  >
+                    <MessageSquare className="h-4 w-4 text-cyan-300" />
+                    Google
+                  </a>
+                  <a
+                    href={`https://www.tripadvisor.es/Search?q=${encodeURIComponent(`${p.name} Alicante`)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex flex-col items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/[0.04] px-2 py-2.5 text-[11px] font-semibold text-white/85 hover:bg-white/[0.08]"
+                  >
+                    <MessageSquare className="h-4 w-4 text-emerald-300" />
+                    TripAdvisor
+                  </a>
+                  <button
+                    type="button"
+                    onClick={openReview}
+                    className="flex flex-col items-center justify-center gap-1 rounded-xl border border-amber-300/30 bg-amber-400/10 px-2 py-2.5 text-[11px] font-semibold text-amber-100 hover:bg-amber-400/20"
+                  >
+                    <Sparkles className="h-4 w-4 text-amber-300" />
+                    Nuestra reseña
+                  </button>
                 </div>
               )}
             </div>
@@ -243,6 +310,50 @@ function ProviderDetailPage() {
           </>
         )}
       </div>
+
+      {reviewOpen && p && (
+        <div
+          className="fixed inset-0 z-[70] flex items-end justify-center bg-black/70 p-4 backdrop-blur-sm sm:items-center"
+          onClick={() => setReviewOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-md overflow-hidden rounded-2xl border border-amber-300/20 bg-gradient-to-b from-slate-900 to-slate-950 p-5 shadow-2xl"
+          >
+            <button
+              type="button"
+              onClick={() => setReviewOpen(false)}
+              className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-slate-300 hover:bg-white/10"
+              aria-label="Cerrar"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <div className="mb-3 flex items-center gap-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-400/15 text-amber-300">
+                <Sparkles className="h-4 w-4" />
+              </span>
+              <div>
+                <h3 className="text-sm font-semibold text-amber-100">Nuestra reseña</h3>
+                <p className="text-[11px] text-slate-400">{p.name}</p>
+              </div>
+            </div>
+            <div className="min-h-[8rem] text-sm leading-relaxed text-slate-200">
+              {reviewLoading && (
+                <div className="flex items-center gap-2 text-slate-400">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Pensando en {p.name}…
+                </div>
+              )}
+              {reviewErr && !reviewLoading && (
+                <p className="text-rose-300">No pudimos generar la reseña: {reviewErr}</p>
+              )}
+              {reviewText && !reviewLoading && (
+                <p className="whitespace-pre-wrap">{reviewText}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
