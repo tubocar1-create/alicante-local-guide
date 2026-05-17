@@ -66,12 +66,13 @@ export const getCinemaWithShowtimes = createServerFn({ method: "POST" })
     if (ec) throw ec;
     if (!cinema) return { cinema: null, showtimes: [], films: [] };
 
-    const nowIso = new Date().toISOString();
+    // Desde el inicio del día (zona Madrid) para incluir sesiones pasadas de hoy
+    const startIso = madridStartOfTodayUtcIso();
     const { data: shows, error: es } = await supabaseAdmin
       .from("showtimes")
       .select("*")
       .eq("cinema_id", cinema.id)
-      .gte("starts_at", nowIso)
+      .gte("starts_at", startIso)
       .order("starts_at");
     if (es) throw es;
     const showtimes = (shows ?? []) as ShowtimeDTO[];
