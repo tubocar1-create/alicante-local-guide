@@ -13,6 +13,7 @@ import { Route as VuelosRouteImport } from './routes/vuelos'
 import { Route as ThreadsRouteImport } from './routes/threads'
 import { Route as StayRouteImport } from './routes/stay'
 import { Route as SistemaSanitarioRouteImport } from './routes/sistema-sanitario'
+import { Route as SaludRouteImport } from './routes/salud'
 import { Route as RepoRouteImport } from './routes/repo'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as LoginRouteImport } from './routes/login'
@@ -67,6 +68,11 @@ const StayRoute = StayRouteImport.update({
 const SistemaSanitarioRoute = SistemaSanitarioRouteImport.update({
   id: '/sistema-sanitario',
   path: '/sistema-sanitario',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SaludRoute = SaludRouteImport.update({
+  id: '/salud',
+  path: '/salud',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RepoRoute = RepoRouteImport.update({
@@ -257,6 +263,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
+  '/salud': typeof SaludRoute
   '/sistema-sanitario': typeof SistemaSanitarioRoute
   '/stay': typeof StayRoute
   '/threads': typeof ThreadsRouteWithChildren
@@ -297,6 +304,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
+  '/salud': typeof SaludRoute
   '/sistema-sanitario': typeof SistemaSanitarioRoute
   '/stay': typeof StayRoute
   '/threads': typeof ThreadsRouteWithChildren
@@ -339,6 +347,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
+  '/salud': typeof SaludRoute
   '/sistema-sanitario': typeof SistemaSanitarioRoute
   '/stay': typeof StayRoute
   '/threads': typeof ThreadsRouteWithChildren
@@ -382,6 +391,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/perfil'
     | '/repo'
+    | '/salud'
     | '/sistema-sanitario'
     | '/stay'
     | '/threads'
@@ -422,6 +432,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/perfil'
     | '/repo'
+    | '/salud'
     | '/sistema-sanitario'
     | '/stay'
     | '/threads'
@@ -463,6 +474,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/perfil'
     | '/repo'
+    | '/salud'
     | '/sistema-sanitario'
     | '/stay'
     | '/threads'
@@ -505,6 +517,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PerfilRoute: typeof PerfilRoute
   RepoRoute: typeof RepoRoute
+  SaludRoute: typeof SaludRoute
   SistemaSanitarioRoute: typeof SistemaSanitarioRoute
   StayRoute: typeof StayRoute
   ThreadsRoute: typeof ThreadsRouteWithChildren
@@ -550,6 +563,13 @@ declare module '@tanstack/react-router' {
       path: '/sistema-sanitario'
       fullPath: '/sistema-sanitario'
       preLoaderRoute: typeof SistemaSanitarioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/salud': {
+      id: '/salud'
+      path: '/salud'
+      fullPath: '/salud'
+      preLoaderRoute: typeof SaludRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/repo': {
@@ -886,6 +906,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PerfilRoute: PerfilRoute,
   RepoRoute: RepoRoute,
+  SaludRoute: SaludRoute,
   SistemaSanitarioRoute: SistemaSanitarioRoute,
   StayRoute: StayRoute,
   ThreadsRoute: ThreadsRouteWithChildren,

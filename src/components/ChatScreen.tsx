@@ -173,6 +173,7 @@ function markRestaurantReturn() {
 export function ChatScreen() {
   // Activa el sistema de puntos (también dispara el streak diario al montar).
   usePoints();
+  const navigate = useNavigate();
   const { user: authUser } = useAuth();
   const firstName = authUser?.name?.trim().split(" ")[0];
   const [messages, setMessages] = useState<Msg[]>([GREETING]);
@@ -599,29 +600,7 @@ export function ChatScreen() {
                     key: "servicios-sanitarios",
                     emoji: "🩺",
                     label: "Servicios sanitarios",
-                    onClick: () =>
-                      setActiveSubmenu({
-                        label: "Salud",
-                        submenu: [
-                          { label: "🏥 Sistema Sanitario de Alicante", href: "/sistema-sanitario" },
-                          { label: "💊 Farmacias", href: "/farmacias" },
-                          {
-                            label: "🏥 Centros de salud",
-                            prompt:
-                              "¿Dónde está el centro de salud más cercano en Alicante abierto ahora?",
-                          },
-                          {
-                            label: "🚑 Hospitales",
-                            prompt:
-                              "¿Qué hospitales hay en Alicante y cuál es el más cercano?",
-                          },
-                          {
-                            label: "🌙 Farmacias de guardia",
-                            prompt:
-                              "¿Qué farmacias están de guardia hoy en Alicante?",
-                          },
-                        ],
-                      }),
+                    onClick: () => navigate({ to: "/salud" }),
                   },
                   {
                     key: "eventos",
