@@ -582,10 +582,11 @@ function DestinationDashboard() {
 
       {popup && (
         <DestinationPopup
-          iata={code}
-          city={ciudad}
-          country={pais}
+          iata={isArrival ? "ALC" : code}
+          city={isArrival ? "Alicante" : ciudad}
+          country={isArrival ? "España" : pais}
           airlineCode={popup.airlineCode}
+          originIata={isArrival ? code : "ALC"}
           onClose={() => setPopup(null)}
         />
       )}
