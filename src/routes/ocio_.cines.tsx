@@ -129,6 +129,13 @@ function CinemasPage() {
               </button>
             )}
           </p>
+          <Link
+            to="/ocio/cartelera"
+            className="mt-2 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-semibold transition hover:bg-white/10"
+            style={{ borderColor: `${ACCENT}55`, color: ACCENT }}
+          >
+            🎞️ Ver cartelera completa →
+          </Link>
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-black/30 p-2 backdrop-blur-xl md:p-4">

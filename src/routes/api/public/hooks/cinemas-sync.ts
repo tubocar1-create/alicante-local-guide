@@ -191,13 +191,29 @@ async function syncCinema(source: CinemaSource) {
     };
   }
 
-  // Solo pases con fecha futura válida
+  // Solo pases con fecha futura válida (ventana 30 días)
   const now = Date.now();
-  const horizon = now + 14 * 24 * 60 * 60 * 1000;
-  const valid = shows.filter((s) => {
-    const ts = Date.parse(s.starts_at);
-    return Number.isFinite(ts) && ts > now - 60 * 60 * 1000 && ts < horizon;
+  const horizon = now + 30 * 24 * 60 * 60 * 1000;
+  const parsed = shows.map((s) => {
+    const ts = parseShowDate(s.starts_at);
+    return { s, ts };
   });
+  const valid = parsed.filter(
+    (p) =>
+      p.ts != null &&
+      p.ts > now - 60 * 60 * 1000 &&
+      p.ts < horizon,
+  );
+
+  if (valid.length === 0) {
+    return {
+      slug: source.slug,
+      ok: true,
+      scraped: shows.length,
+      inserted: 0,
+      sample_dates: shows.slice(0, 3).map((s) => s.starts_at),
+    };
+  }
 
   // Borra pases futuros del cine para evitar pases obsoletos
   await supabaseAdmin
@@ -207,7 +223,8 @@ async function syncCinema(source: CinemaSource) {
     .gte("starts_at", new Date(now - 60 * 60 * 1000).toISOString());
 
   let inserted = 0;
-  for (const s of valid) {
+  let lastError: string | null = null;
+  for (const { s, ts } of valid) {
     const film_id = await upsertFilm(s);
     if (!film_id) continue;
     const { error } = await supabaseAdmin
@@ -216,7 +233,7 @@ async function syncCinema(source: CinemaSource) {
         {
           cinema_id: cinema.id,
           film_id,
-          starts_at: new Date(s.starts_at).toISOString(),
+          starts_at: new Date(ts!).toISOString(),
           room: s.room ?? null,
           version: s.version ?? null,
           format: s.format ?? null,
@@ -225,10 +242,65 @@ async function syncCinema(source: CinemaSource) {
         },
         { onConflict: "cinema_id,film_id,starts_at" },
       );
-    if (!error) inserted++;
+    if (error) {
+      lastError = error.message;
+    } else {
+      inserted++;
+    }
   }
 
-  return { slug: source.slug, ok: true, scraped: shows.length, inserted };
+  return {
+    slug: source.slug,
+    ok: true,
+    scraped: shows.length,
+    inserted,
+    ...(lastError ? { last_error: lastError } : {}),
+  };
+}
+
+// Parser robusto: acepta ISO, ISO sin TZ (asume Europe/Madrid),
+// "YYYY-MM-DD HH:mm" y similares.
+function parseShowDate(raw: string | null | undefined): number | null {
+  if (!raw) return null;
+  const s = String(raw).trim();
+  // Caso 1: ISO con zona (Z o ±HH:MM)
+  if (/[zZ]|[+-]\d{2}:?\d{2}$/.test(s)) {
+    const t = Date.parse(s);
+    return Number.isFinite(t) ? t : null;
+  }
+  // Caso 2: YYYY-MM-DD[T ]HH:mm(:ss)? sin TZ → asumir Europe/Madrid
+  const m = s.match(
+    /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?$/,
+  );
+  if (m) {
+    const [, y, mo, d, hh, mm, ss] = m;
+    // Madrid en mayo-octubre = UTC+2, resto = UTC+1
+    const offsetHours = isMadridDst(+y, +mo, +d) ? 2 : 1;
+    const utcMs = Date.UTC(
+      +y,
+      +mo - 1,
+      +d,
+      +hh - offsetHours,
+      +mm,
+      ss ? +ss : 0,
+    );
+    return utcMs;
+  }
+  // Fallback: parse nativo
+  const t = Date.parse(s);
+  return Number.isFinite(t) ? t : null;
+}
+
+function isMadridDst(y: number, mo: number, d: number): boolean {
+  // Aprox: DST en España de último domingo marzo a último domingo octubre
+  if (mo > 3 && mo < 10) return true;
+  if (mo < 3 || mo > 10) return false;
+  const lastSunday = (year: number, month: number) => {
+    const last = new Date(Date.UTC(year, month, 0));
+    return last.getUTCDate() - last.getUTCDay();
+  };
+  if (mo === 3) return d >= lastSunday(y, 3);
+  return d < lastSunday(y, 10);
 }
 
 async function runAll(only?: string) {

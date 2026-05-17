@@ -124,3 +124,67 @@ export const getFilmWithShowtimes = createServerFn({ method: "POST" })
 
     return { film: film as FilmDTO, showtimes, cinemas };
   });
+
+export type CarteleraItemDTO = FilmDTO & {
+  showtime_count: number;
+  cinema_count: number;
+  next_show_at: string | null;
+};
+
+// Listado global de cartelera: todas las películas con pases futuros.
+export const listCartelera = createServerFn({ method: "GET" }).handler(async () => {
+  const nowIso = new Date().toISOString();
+  const { data: shows, error: es } = await supabaseAdmin
+    .from("showtimes")
+    .select("film_id, cinema_id, starts_at")
+    .gte("starts_at", nowIso)
+    .order("starts_at");
+  if (es) throw es;
+  const rows = shows ?? [];
+  if (rows.length === 0) return [] as CarteleraItemDTO[];
+
+  const filmIds = Array.from(new Set(rows.map((s) => s.film_id)));
+  const { data: films, error: ef } = await supabaseAdmin
+    .from("films")
+    .select("*")
+    .in("id", filmIds);
+  if (ef) throw ef;
+
+  const byFilm = new Map<
+    string,
+    { count: number; cinemas: Set<string>; next: string }
+  >();
+  for (const s of rows) {
+    const cur = byFilm.get(s.film_id);
+    if (!cur) {
+      byFilm.set(s.film_id, {
+        count: 1,
+        cinemas: new Set([s.cinema_id]),
+        next: s.starts_at,
+      });
+    } else {
+      cur.count++;
+      cur.cinemas.add(s.cinema_id);
+      if (s.starts_at < cur.next) cur.next = s.starts_at;
+    }
+  }
+
+  const items: CarteleraItemDTO[] = (films ?? []).map((f) => {
+    const agg = byFilm.get(f.id);
+    return {
+      ...(f as FilmDTO),
+      showtime_count: agg?.count ?? 0,
+      cinema_count: agg?.cinemas.size ?? 0,
+      next_show_at: agg?.next ?? null,
+    };
+  });
+
+  // Ordena por próximo pase (más cercano primero)
+  items.sort((a, b) => {
+    if (!a.next_show_at) return 1;
+    if (!b.next_show_at) return -1;
+    return a.next_show_at.localeCompare(b.next_show_at);
+  });
+
+  return items;
+});

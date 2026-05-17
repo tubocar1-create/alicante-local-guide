@@ -34,6 +34,7 @@ import { Route as RestaurantsPlaceIdRouteImport } from './routes/restaurants.$pl
 import { Route as OcioTeatrosRouteImport } from './routes/ocio_.teatros'
 import { Route as OcioConciertosRouteImport } from './routes/ocio_.conciertos'
 import { Route as OcioCinesRouteImport } from './routes/ocio_.cines'
+import { Route as OcioCarteleraRouteImport } from './routes/ocio_.cartelera'
 import { Route as HospitalesIdRouteImport } from './routes/hospitales_.$id'
 import { Route as BusinessReferralsRouteImport } from './routes/business.referrals'
 import { Route as BusinessQrRouteImport } from './routes/business.qr'
@@ -185,6 +186,11 @@ const OcioConciertosRoute = OcioConciertosRouteImport.update({
 const OcioCinesRoute = OcioCinesRouteImport.update({
   id: '/ocio_/cines',
   path: '/ocio/cines',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OcioCarteleraRoute = OcioCarteleraRouteImport.update({
+  id: '/ocio_/cartelera',
+  path: '/ocio/cartelera',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HospitalesIdRoute = HospitalesIdRouteImport.update({
@@ -356,6 +362,7 @@ export interface FileRoutesByFullPath {
   '/business/qr': typeof BusinessQrRoute
   '/business/referrals': typeof BusinessReferralsRoute
   '/hospitales/$id': typeof HospitalesIdRoute
+  '/ocio/cartelera': typeof OcioCarteleraRoute
   '/ocio/cines': typeof OcioCinesRouteWithChildren
   '/ocio/conciertos': typeof OcioConciertosRoute
   '/ocio/teatros': typeof OcioTeatrosRoute
@@ -409,6 +416,7 @@ export interface FileRoutesByTo {
   '/business/qr': typeof BusinessQrRoute
   '/business/referrals': typeof BusinessReferralsRoute
   '/hospitales/$id': typeof HospitalesIdRoute
+  '/ocio/cartelera': typeof OcioCarteleraRoute
   '/ocio/cines': typeof OcioCinesRouteWithChildren
   '/ocio/conciertos': typeof OcioConciertosRoute
   '/ocio/teatros': typeof OcioTeatrosRoute
@@ -464,6 +472,7 @@ export interface FileRoutesById {
   '/business/qr': typeof BusinessQrRoute
   '/business/referrals': typeof BusinessReferralsRoute
   '/hospitales_/$id': typeof HospitalesIdRoute
+  '/ocio_/cartelera': typeof OcioCarteleraRoute
   '/ocio_/cines': typeof OcioCinesRouteWithChildren
   '/ocio_/conciertos': typeof OcioConciertosRoute
   '/ocio_/teatros': typeof OcioTeatrosRoute
@@ -520,6 +529,7 @@ export interface FileRouteTypes {
     | '/business/qr'
     | '/business/referrals'
     | '/hospitales/$id'
+    | '/ocio/cartelera'
     | '/ocio/cines'
     | '/ocio/conciertos'
     | '/ocio/teatros'
@@ -573,6 +583,7 @@ export interface FileRouteTypes {
     | '/business/qr'
     | '/business/referrals'
     | '/hospitales/$id'
+    | '/ocio/cartelera'
     | '/ocio/cines'
     | '/ocio/conciertos'
     | '/ocio/teatros'
@@ -627,6 +638,7 @@ export interface FileRouteTypes {
     | '/business/qr'
     | '/business/referrals'
     | '/hospitales_/$id'
+    | '/ocio_/cartelera'
     | '/ocio_/cines'
     | '/ocio_/conciertos'
     | '/ocio_/teatros'
@@ -672,6 +684,7 @@ export interface RootRouteChildren {
   AdminPlacesRoute: typeof AdminPlacesRoute
   AdminSaludRoute: typeof AdminSaludRoute
   HospitalesIdRoute: typeof HospitalesIdRoute
+  OcioCarteleraRoute: typeof OcioCarteleraRoute
   OcioCinesRoute: typeof OcioCinesRouteWithChildren
   OcioConciertosRoute: typeof OcioConciertosRoute
   OcioTeatrosRoute: typeof OcioTeatrosRoute
@@ -865,6 +878,13 @@ declare module '@tanstack/react-router' {
       path: '/ocio/cines'
       fullPath: '/ocio/cines'
       preLoaderRoute: typeof OcioCinesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ocio_/cartelera': {
+      id: '/ocio_/cartelera'
+      path: '/ocio/cartelera'
+      fullPath: '/ocio/cartelera'
+      preLoaderRoute: typeof OcioCarteleraRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/hospitales_/$id': {
@@ -1179,6 +1199,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminPlacesRoute: AdminPlacesRoute,
   AdminSaludRoute: AdminSaludRoute,
   HospitalesIdRoute: HospitalesIdRoute,
+  OcioCarteleraRoute: OcioCarteleraRoute,
   OcioCinesRoute: OcioCinesRouteWithChildren,
   OcioConciertosRoute: OcioConciertosRoute,
   OcioTeatrosRoute: OcioTeatrosRoute,
