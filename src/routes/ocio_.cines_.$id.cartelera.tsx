@@ -109,12 +109,11 @@ function CinemaCartelera() {
       <div className="relative mx-auto max-w-5xl px-4 pb-10 pt-5 md:px-6">
         <header className="mb-5 flex items-center justify-between">
           <Link
-            to="/ocio/cines/$id"
-            params={{ id }}
+            to="/ocio/cines"
             className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/[0.04] px-3 py-1.5 text-[11px] font-semibold text-white/80 hover:border-white/40 hover:text-white"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            Volver al cine
+            Cambiar de cine
           </Link>
           <Link
             to="/ocio/cines"
