@@ -336,10 +336,18 @@ function FilmDetail() {
                               )}
                               {laterEntries.length > 0 && (
                                 <div className="mt-2 border-t border-white/10 pt-2">
-                                  <p className="mb-1.5 text-[9px] font-semibold uppercase tracking-[0.25em] text-white/40">
-                                    Próximos días · desliza
+                                  <p className="mb-1.5 flex items-center justify-between text-[9px] font-semibold uppercase tracking-[0.25em] text-white/50">
+                                    <span>Próximos días</span>
+                                    <span style={{ color: ACCENT }}>↓ desliza</span>
                                   </p>
-                                  <div className="max-h-44 space-y-1.5 overflow-y-auto pr-1">
+                                  <div
+                                    className="space-y-1.5 overflow-y-scroll rounded-md border border-white/10 bg-black/20 p-2 pr-2"
+                                    style={{
+                                      maxHeight: "8rem",
+                                      scrollbarWidth: "thin",
+                                      scrollbarColor: `${ACCENT} transparent`,
+                                    }}
+                                  >
                                     {laterEntries.map(([d, s]) => renderDay(d, s))}
                                   </div>
                                 </div>
