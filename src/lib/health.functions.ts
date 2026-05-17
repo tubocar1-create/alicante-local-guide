@@ -121,14 +121,19 @@ const CATEGORY_PROMPTS: Record<string, string> = {
   veterinarios: "clínicas veterinarias",
 };
 
-async function aiCandidates(
+async function aiCandidatesBatch(
   category: string,
   label: string,
+  exclude: string[],
+  batchSize: number,
 ): Promise<AiCandidate[]> {
   const apiKey = process.env.LOVABLE_API_KEY;
   if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
   const focus = CATEGORY_PROMPTS[category] ?? label;
-  const prompt = `Lista hasta ${AI_CANDIDATES} negocios REALES de ${focus} ubicados en Alicante ciudad o municipios cercanos (San Vicente del Raspeig, Sant Joan d'Alacant, El Campello, Mutxamel). Para cada uno devuelve nombre comercial exacto, URL OFICIAL de su sitio web (https://...) y dirección aproximada si la conoces. NO inventes webs: si no estás seguro de la web oficial, omite ese negocio. Prioriza negocios con presencia online real.`;
+  const excludeText = exclude.length
+    ? ` NO repitas estos negocios ya listados: ${exclude.slice(0, 60).join(", ")}.`
+    : "";
+  const prompt = `Lista ${batchSize} negocios REALES y DISTINTOS de ${focus} ubicados en la provincia de Alicante (Alicante ciudad, San Vicente del Raspeig, Sant Joan d'Alacant, El Campello, Mutxamel, Elche, Santa Pola, San Juan Playa, Playa de San Juan, Albufereta, etc.). Para cada uno devuelve nombre comercial exacto, URL OFICIAL de su sitio web (https://...) y dirección aproximada si la conoces. NO inventes webs: si no estás seguro de la web oficial, omite ese negocio. Prioriza negocios con presencia online real.${excludeText}`;
 
   const res = await fetch(LOVABLE_AI_URL, {
     method: "POST",
@@ -281,34 +286,48 @@ export const populateHealthCategory = createServerFn({ method: "POST" })
     if (!roleRow) throw new Error("Forbidden: admin role required");
 
     const label = data.query ?? data.category;
-    const candidates = await aiCandidates(data.category, label);
-    if (!candidates.length) {
+
+    // Multi-batch: Gemini suele devolver 10-15 por llamada. Pedimos en tandas hasta llegar a AI_CANDIDATES.
+    const BATCH_SIZE = 25;
+    const MAX_BATCHES = 4;
+    const seen = new Set<string>();
+    const unique: AiCandidate[] = [];
+    for (let b = 0; b < MAX_BATCHES && unique.length < AI_CANDIDATES; b++) {
+      const batch = await aiCandidatesBatch(
+        data.category,
+        label,
+        unique.map((u) => u.name),
+        BATCH_SIZE,
+      );
+      let added = 0;
+      for (const c of batch) {
+        try {
+          const h = new URL(c.website).host.replace(/^www\./, "");
+          if (seen.has(h)) continue;
+          seen.add(h);
+          unique.push(c);
+          added++;
+        } catch {
+          continue;
+        }
+      }
+      if (added === 0) break;
+    }
+
+    if (!unique.length) {
       return { inserted: 0, total: 0, source: "ai+web", discarded: 0, reason: "no candidates" };
     }
 
-    // Deduplicar por host
-    const seen = new Set<string>();
-    const unique = candidates.filter((c) => {
-      try {
-        const h = new URL(c.website).host.replace(/^www\./, "");
-        if (seen.has(h)) return false;
-        seen.add(h);
-        return true;
-      } catch {
-        return false;
-      }
-    });
-
-    const scraped = await runWithConcurrency(unique, SCRAPE_CONCURRENCY, async (c) => {
+    const scraped = await runWithConcurrency(unique, SCRAPE_CONCURRENCY, async (c: AiCandidate) => {
       const fields = await scrapeWebsite(c.website);
       return { candidate: c, fields };
     });
 
     const rows = scraped
-      .filter((s) => s.fields && (s.fields.phone || s.fields.address))
+      // Conservamos todos los candidatos con web válida. Si el scraping falla, mantenemos la ficha con web y dirección IA.
       .slice(0, MAX_RESULTS)
-      .map(({ candidate, fields }, i) => {
-        const f = fields!;
+      .map(({ candidate, fields }: { candidate: AiCandidate; fields: ScrapedFields | null }, i: number) => {
+        const f: ScrapedFields = fields ?? { phone: null, address: null, hours: null, email: null, summary: null };
         const host = (() => {
           try { return new URL(candidate.website).host.replace(/^www\./, ""); }
           catch { return `unknown-${i}`; }
