@@ -257,31 +257,32 @@ function HospitalesPage() {
                 ? "border-yellow-300/40 bg-yellow-300/10 ring-1 ring-inset ring-yellow-300/30"
                 : "border-emerald-300/10 bg-white/[0.03] hover:bg-white/[0.06]";
               return (
-                <li key={h.id} className={`rounded-xl border p-2.5 transition ${cardCls}`}>
-                  {/* Línea 1: nombre + 24h + distancia */}
-                  <div className="flex items-start justify-between gap-2">
-                    <Link
-                      to="/hospitales/$id"
-                      params={{ id: h.id }}
-                      className="flex min-w-0 flex-1 items-center gap-1.5"
-                    >
-                      <HospitalCross className="h-4 w-4 shrink-0" />
-                      <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-emerald-50 underline-offset-2 hover:underline">
-                        {h.name}
-                      </span>
-                      {h.has_urgencias && (
-                        <span className="shrink-0 rounded-full bg-yellow-300 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-yellow-950">
-                          24h
+              <li key={h.id} className={`rounded-xl border p-2.5 transition ${cardCls}`}>
+                  <Link
+                    to="/hospitales/$id"
+                    params={{ id: h.id }}
+                    className="block"
+                  >
+                    {/* Línea 1: nombre + 24h + distancia */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                        <HospitalCross className="h-4 w-4 shrink-0" />
+                        <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-emerald-50 underline-offset-2 hover:underline">
+                          {h.name}
+                        </span>
+                        {h.has_urgencias && (
+                          <span className="shrink-0 rounded-full bg-yellow-300 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-yellow-950">
+                            24h
+                          </span>
+                        )}
+                      </div>
+                      {userCoords && dist != null && (
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-400/15 px-1.5 py-0.5 font-mono text-[10px] text-emerald-200">
+                          <Navigation className="h-2.5 w-2.5" />
+                          {formatMeters(dist)}
                         </span>
                       )}
-                    </Link>
-                    {userCoords && dist != null && (
-                      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-400/15 px-1.5 py-0.5 font-mono text-[10px] text-emerald-200">
-                        <Navigation className="h-2.5 w-2.5" />
-                        {formatMeters(dist)}
-                      </span>
-                    )}
-                  </div>
+                    </div>
 
                   {/* Dirección */}
                   {(h.address || h.municipality) && (
