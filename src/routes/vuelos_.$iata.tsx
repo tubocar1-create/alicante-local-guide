@@ -261,6 +261,7 @@ function DestinationDashboard() {
   const [flights, setFlights] = useState<Flight[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [popup, setPopup] = useState<{ airlineCode: string } | null>(null);
 
   useEffect(() => {
     let cancel = false;
