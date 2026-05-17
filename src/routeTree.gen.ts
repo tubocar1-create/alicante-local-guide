@@ -17,6 +17,7 @@ import { Route as SaludRouteImport } from './routes/salud'
 import { Route as RepoRouteImport } from './routes/repo'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as HospitalesRouteImport } from './routes/hospitales'
 import { Route as FarmaciasRouteImport } from './routes/farmacias'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as EatRouteImport } from './routes/eat'
@@ -88,6 +89,11 @@ const PerfilRoute = PerfilRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HospitalesRoute = HospitalesRouteImport.update({
+  id: '/hospitales',
+  path: '/hospitales',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FarmaciasRoute = FarmaciasRouteImport.update({
@@ -260,6 +266,7 @@ export interface FileRoutesByFullPath {
   '/eat': typeof EatRoute
   '/explore': typeof ExploreRoute
   '/farmacias': typeof FarmaciasRoute
+  '/hospitales': typeof HospitalesRoute
   '/login': typeof LoginRoute
   '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
@@ -301,6 +308,7 @@ export interface FileRoutesByTo {
   '/eat': typeof EatRoute
   '/explore': typeof ExploreRoute
   '/farmacias': typeof FarmaciasRoute
+  '/hospitales': typeof HospitalesRoute
   '/login': typeof LoginRoute
   '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
@@ -344,6 +352,7 @@ export interface FileRoutesById {
   '/eat': typeof EatRoute
   '/explore': typeof ExploreRoute
   '/farmacias': typeof FarmaciasRoute
+  '/hospitales': typeof HospitalesRoute
   '/login': typeof LoginRoute
   '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
@@ -388,6 +397,7 @@ export interface FileRouteTypes {
     | '/eat'
     | '/explore'
     | '/farmacias'
+    | '/hospitales'
     | '/login'
     | '/perfil'
     | '/repo'
@@ -429,6 +439,7 @@ export interface FileRouteTypes {
     | '/eat'
     | '/explore'
     | '/farmacias'
+    | '/hospitales'
     | '/login'
     | '/perfil'
     | '/repo'
@@ -471,6 +482,7 @@ export interface FileRouteTypes {
     | '/eat'
     | '/explore'
     | '/farmacias'
+    | '/hospitales'
     | '/login'
     | '/perfil'
     | '/repo'
@@ -514,6 +526,7 @@ export interface RootRouteChildren {
   EatRoute: typeof EatRoute
   ExploreRoute: typeof ExploreRoute
   FarmaciasRoute: typeof FarmaciasRoute
+  HospitalesRoute: typeof HospitalesRoute
   LoginRoute: typeof LoginRoute
   PerfilRoute: typeof PerfilRoute
   RepoRoute: typeof RepoRoute
@@ -591,6 +604,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hospitales': {
+      id: '/hospitales'
+      path: '/hospitales'
+      fullPath: '/hospitales'
+      preLoaderRoute: typeof HospitalesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/farmacias': {
@@ -903,6 +923,7 @@ const rootRouteChildren: RootRouteChildren = {
   EatRoute: EatRoute,
   ExploreRoute: ExploreRoute,
   FarmaciasRoute: FarmaciasRoute,
+  HospitalesRoute: HospitalesRoute,
   LoginRoute: LoginRoute,
   PerfilRoute: PerfilRoute,
   RepoRoute: RepoRoute,
