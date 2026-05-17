@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Film, Drama, Music2, Clapperboard, X } from "lucide-react";
+import { Film, Drama, Music2, Clapperboard, X, Ticket } from "lucide-react";
 
 export const Route = createFileRoute("/ocio")({
   head: () => ({
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/ocio")({
 });
 
 type Sub = {
-  slug: "cartelera" | "cines" | "teatros" | "conciertos";
+  slug: "teatros" | "conciertos";
   label: string;
   emoji: string;
   description: string;
@@ -31,15 +31,6 @@ type Sub = {
 };
 
 const SUBS: Sub[] = [
-  {
-    slug: "cartelera",
-    label: "Cartelera",
-    emoji: "🎞️",
-    description: "Elige cine y mira las sesiones de hoy",
-    accent: "#f9a8d4",
-    Icon: Clapperboard,
-    ready: true,
-  },
   {
     slug: "teatros",
     label: "Teatros",
@@ -116,7 +107,79 @@ function OcioDashboard() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Cartelera — Destacado */}
+        <Link
+          to="/ocio/cartelera"
+          className="group relative block overflow-hidden rounded-2xl border-0"
+        >
+          {/* Glow exterior */}
+          <div
+            className="absolute -inset-0.5 rounded-2xl opacity-60 blur-sm transition duration-500 group-hover:opacity-100 group-hover:blur-md"
+            style={{
+              background:
+                "linear-gradient(135deg, #f9a8d4 0%, #f472b6 40%, #c084fc 100%)",
+            }}
+          />
+          <div className="relative flex items-center gap-5 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.08] to-white/[0.03] p-5 backdrop-blur-xl transition-all group-hover:from-white/[0.12] group-hover:to-white/[0.05] active:scale-[0.98]">
+            {/* Icono grande con brillo */}
+            <div className="relative shrink-0">
+              <div
+                className="absolute inset-0 rounded-2xl blur-lg transition duration-500 group-hover:blur-xl"
+                style={{ background: "#f9a8d4", opacity: 0.35 }}
+              />
+              <div
+                className="relative grid h-16 w-16 place-items-center rounded-2xl border"
+                style={{
+                  background: "linear-gradient(135deg, #f9a8d422, #f472b622)",
+                  borderColor: "#f9a8d488",
+                  boxShadow: "0 0 20px -4px #f9a8d466",
+                }}
+              >
+                <Clapperboard
+                  className="h-8 w-8 transition-transform duration-500 group-hover:scale-110"
+                  style={{ color: "#f9a8d4" }}
+                />
+              </div>
+            </div>
+
+            {/* Texto */}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-pink-400 opacity-70" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-pink-300" />
+                </span>
+                <span
+                  className="text-[10px] font-bold uppercase tracking-[0.2em]"
+                  style={{ color: "#f9a8d4" }}
+                >
+                  En vivo
+                </span>
+              </div>
+              <div className="mt-1 text-xl font-bold leading-tight tracking-tight text-white">
+                Cartelera de cines
+              </div>
+              <div className="mt-1 text-[11px] text-white/55">
+                Elige cine y mira las sesiones de hoy
+              </div>
+            </div>
+
+            {/* Flecha / ticket */}
+            <div className="shrink-0">
+              <div
+                className="grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.05] transition-all duration-500 group-hover:border-white/25 group-hover:bg-white/[0.10]"
+              >
+                <Ticket
+                  className="h-5 w-5 rotate-[-15deg] transition-transform duration-500 group-hover:rotate-0"
+                  style={{ color: "#f9a8d4" }}
+                />
+              </div>
+            </div>
+          </div>
+        </Link>
+
+        {/* Otros sectores */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {SUBS.map((s) => {
             const card = (
               <div
@@ -149,13 +212,6 @@ function OcioDashboard() {
                 </div>
               </div>
             );
-            if (s.ready && s.slug === "cartelera") {
-              return (
-                <Link key={s.slug} to="/ocio/cartelera" className="block">
-                  {card}
-                </Link>
-              );
-            }
             return (
               <div key={s.slug} className="block opacity-60">
                 {card}
