@@ -96,6 +96,11 @@ async function firecrawlScrape(url: string, prompt: string): Promise<ScrapedShow
   const apiKey = process.env.FIRECRAWL_API_KEY;
   if (!apiKey) throw new Error("FIRECRAWL_API_KEY no configurada");
 
+  const today = new Date();
+  const todayIso = today.toISOString().slice(0, 10);
+  const dateContext = `HOY es ${todayIso} (zona Europe/Madrid). SOLO devuelve pases con fecha >= ${todayIso}. NUNCA inventes fechas: usa EXACTAMENTE las fechas y horas que aparecen visiblemente en la página. Si una fila muestra solo el día de la semana (ej. "Vie") o un día sin año, asume el año ${today.getUTCFullYear()} y la próxima ocurrencia futura de ese día. Formato obligatorio: "YYYY-MM-DDTHH:MM" (sin zona, se asume Europe/Madrid). Si no encuentras pases reales con fecha, devuelve shows: [].`;
+  const fullPrompt = `${prompt}\n\n${dateContext}`;
+
   const res = await fetch("https://api.firecrawl.dev/v2/scrape", {
     method: "POST",
     headers: {
@@ -104,9 +109,9 @@ async function firecrawlScrape(url: string, prompt: string): Promise<ScrapedShow
     },
     body: JSON.stringify({
       url,
-      formats: [{ type: "json", prompt, schema: SHOW_SCHEMA }],
-      onlyMainContent: true,
-      waitFor: 2500,
+      formats: [{ type: "json", prompt: fullPrompt, schema: SHOW_SCHEMA }],
+      onlyMainContent: false,
+      waitFor: 4000,
       location: { country: "ES", languages: ["es"] },
     }),
   });
