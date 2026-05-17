@@ -8,6 +8,7 @@ import {
   listHealthProviders,
   type HealthProviderDTO,
 } from "@/lib/health.functions";
+import { computeOpenStatus } from "@/lib/opening-status";
 import {
   useUserLocation,
   distanceKm,
