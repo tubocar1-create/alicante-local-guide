@@ -195,7 +195,6 @@ function FilmDetail() {
               >
                 <Sparkles className="h-5 w-5" />
                 <span className="text-sm font-bold">Nuestra opinión</span>
-                <span className="text-[10px] opacity-80">· con IA</span>
               </button>
             </div>
 
