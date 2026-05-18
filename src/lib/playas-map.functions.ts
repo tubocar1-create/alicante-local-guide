@@ -2,47 +2,91 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { MAP_BEACHES, getBeachBySlug, type MapBeach } from "./playas-map-data";
 
-const UA = "AlicanteFriend/1.0 (https://alicante-local-guide.lovable.app)";
+const GATEWAY = "https://connector-gateway.lovable.dev/google_maps";
 
-async function fetchSummary(title: string): Promise<{ extract: string; photo: string | null }> {
+function gwHeaders(extra?: Record<string, string>) {
+  const lovable = process.env.LOVABLE_API_KEY;
+  const gmaps = process.env.GOOGLE_MAPS_API_KEY;
+  if (!lovable) throw new Error("LOVABLE_API_KEY missing");
+  if (!gmaps) throw new Error("GOOGLE_MAPS_API_KEY missing");
+  return {
+    Authorization: `Bearer ${lovable}`,
+    "X-Connection-Api-Key": gmaps,
+    "Content-Type": "application/json",
+    ...(extra ?? {}),
+  };
+}
+
+async function findPlaceId(beach: MapBeach): Promise<string | null> {
   try {
-    const url = `https://es.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
-    const res = await fetch(url, { headers: { "User-Agent": UA } });
-    if (!res.ok) return { extract: "", photo: null };
+    const res = await fetch(`${GATEWAY}/places/v1/places:searchText`, {
+      method: "POST",
+      headers: gwHeaders({ "X-Goog-FieldMask": "places.id,places.displayName" }),
+      body: JSON.stringify({
+        textQuery: `${beach.name} Alicante`,
+        locationBias: { circle: { center: { latitude: beach.lat, longitude: beach.lng }, radius: 3000 } },
+        maxResultCount: 1,
+        languageCode: "es",
+      }),
+    });
+    if (!res.ok) return null;
     const j: any = await res.json();
-    return {
-      extract: (j.extract as string) ?? "",
-      photo: (j.originalimage?.source as string) ?? (j.thumbnail?.source as string) ?? null,
-    };
+    return (j.places?.[0]?.id as string) ?? null;
   } catch {
-    return { extract: "", photo: null };
+    return null;
   }
 }
 
-async function fetchMediaList(title: string, limit: number): Promise<string[]> {
+async function photoMediaUri(photoName: string, maxWidthPx = 1600): Promise<string | null> {
   try {
-    const url = `https://es.wikipedia.org/api/rest_v1/page/media-list/${encodeURIComponent(title)}`;
-    const res = await fetch(url, { headers: { "User-Agent": UA } });
-    if (!res.ok) return [];
+    const url = `${GATEWAY}/places/v1/${photoName}/media?maxWidthPx=${maxWidthPx}&skipHttpRedirect=true`;
+    const res = await fetch(url, { headers: gwHeaders() });
+    if (!res.ok) return null;
     const j: any = await res.json();
-    const items = (j.items || []) as any[];
-    const out: string[] = [];
-    for (const it of items) {
-      if (it.type !== "image") continue;
-      const raw: string = it.title || "";
-      const file = raw.replace(/^File:/i, "").replace(/^Archivo:/i, "");
-      if (!file) continue;
-      const ext = file.split(".").pop()?.toLowerCase() ?? "";
-      if (!["jpg", "jpeg", "png", "webp"].includes(ext)) continue;
-      if (/logo|icon|escudo|coat[-_ ]of[-_ ]arms|bandera|flag|wiki|commons/i.test(file)) continue;
-      out.push(
-        `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(file)}?width=1200`,
-      );
-      if (out.length >= limit) break;
-    }
-    return out;
+    return (j.photoUri as string) ?? null;
   } catch {
-    return [];
+    return null;
+  }
+}
+
+type PlaceDetails = {
+  id: string;
+  photoNames: string[];
+  reviews: Array<{ author: string; rating: number; text: string; relativeTime?: string }>;
+  rating?: number;
+  userRatingCount?: number;
+  googleMapsUri?: string;
+  formattedAddress?: string;
+};
+
+async function getPlaceDetails(placeId: string): Promise<PlaceDetails | null> {
+  try {
+    const res = await fetch(`${GATEWAY}/places/v1/places/${encodeURIComponent(placeId)}?languageCode=es`, {
+      headers: gwHeaders({
+        "X-Goog-FieldMask":
+          "id,photos,reviews,rating,userRatingCount,googleMapsUri,formattedAddress",
+      }),
+    });
+    if (!res.ok) return null;
+    const j: any = await res.json();
+    const photos: any[] = j.photos ?? [];
+    const reviews: any[] = j.reviews ?? [];
+    return {
+      id: j.id,
+      photoNames: photos.map((p) => p.name).filter(Boolean),
+      reviews: reviews.slice(0, 5).map((r) => ({
+        author: r.authorAttribution?.displayName ?? "Visitante",
+        rating: Number(r.rating) || 0,
+        text: r.text?.text ?? r.originalText?.text ?? "",
+        relativeTime: r.relativePublishTimeDescription,
+      })),
+      rating: typeof j.rating === "number" ? j.rating : undefined,
+      userRatingCount: typeof j.userRatingCount === "number" ? j.userRatingCount : undefined,
+      googleMapsUri: j.googleMapsUri,
+      formattedAddress: j.formattedAddress,
+    };
+  } catch {
+    return null;
   }
 }
 
@@ -52,11 +96,12 @@ export const getMapBeaches = createServerFn({ method: "GET" }).handler(
   async (): Promise<MapBeachWithCover[]> => {
     const results = await Promise.all(
       MAP_BEACHES.map(async (b) => {
-        const s = await fetchSummary(b.wikiTitle);
-        let photo = s.photo;
-        if (!photo) {
-          const list = await fetchMediaList(b.wikiTitle, 1);
-          photo = list[0] ?? null;
+        const placeId = await findPlaceId(b);
+        let photo: string | null = null;
+        if (placeId) {
+          const details = await getPlaceDetails(placeId);
+          const firstPhoto = details?.photoNames?.[0];
+          if (firstPhoto) photo = await photoMediaUri(firstPhoto, 1200);
         }
         return { ...b, photo };
       }),
@@ -65,10 +110,17 @@ export const getMapBeaches = createServerFn({ method: "GET" }).handler(
   },
 );
 
+export type BeachReview = { author: string; rating: number; text: string; relativeTime?: string };
+
 export type BeachDetail = {
   beach: MapBeach;
   photos: string[];
   review: string;
+  reviews: BeachReview[];
+  rating?: number;
+  userRatingCount?: number;
+  googleMapsUri?: string;
+  formattedAddress?: string;
 };
 
 async function aiBeachReview(beach: MapBeach): Promise<string> {
@@ -103,33 +155,36 @@ export const getBeachDetail = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<BeachDetail | null> => {
     const beach = getBeachBySlug(data.slug);
     if (!beach) return null;
-    const [summary, media, review] = await Promise.all([
-      fetchSummary(beach.wikiTitle),
-      fetchMediaList(beach.wikiTitle, 8),
-      aiBeachReview(beach),
-    ]);
-    const photos: string[] = [];
-    const seen = new Set<string>();
-    if (summary.photo) {
-      photos.push(summary.photo);
-      seen.add(summary.photo);
+    const [placeId, review] = await Promise.all([findPlaceId(beach), aiBeachReview(beach)]);
+    let photos: string[] = [];
+    let reviews: BeachReview[] = [];
+    let rating: number | undefined;
+    let userRatingCount: number | undefined;
+    let googleMapsUri: string | undefined;
+    let formattedAddress: string | undefined;
+    if (placeId) {
+      const details = await getPlaceDetails(placeId);
+      if (details) {
+        reviews = details.reviews;
+        rating = details.rating;
+        userRatingCount = details.userRatingCount;
+        googleMapsUri = details.googleMapsUri;
+        formattedAddress = details.formattedAddress;
+        const photoNames = details.photoNames.slice(0, 5);
+        const uris = await Promise.all(photoNames.map((n) => photoMediaUri(n, 1600)));
+        photos = uris.filter((u): u is string => !!u);
+      }
     }
-    for (const p of media) {
-      if (seen.has(p)) continue;
-      photos.push(p);
-      seen.add(p);
-      if (photos.length >= 5) break;
-    }
-    return { beach, photos, review };
+    return { beach, photos, review, reviews, rating, userRatingCount, googleMapsUri, formattedAddress };
   });
 
 export const getCoastIntro = createServerFn({ method: "GET" }).handler(async (): Promise<{ text: string }> => {
   const apiKey = process.env.LOVABLE_API_KEY;
   const fallback =
-    "La costa de Alicante es un buffet libre: castillo arriba, calas con peces curiosos, kilómetros de arena y dunas al sur. Desliza, elige y nos vemos en la orilla.";
+    "Bienvenido al carrusel de la costa alicantina: aquí caben el Castillo mirando desde arriba como un cotilla, las calas del Cabo donde los peces te saludan en plan vecinos curiosos, San Juan con sus kilómetros de arena para perderse y volver tarde, y al sur, dunas tranquilas para fingir que estás de retiro espiritual. Desliza, elige víctima, y nos vemos con los pies en remojo.";
   if (!apiKey) return { text: fallback };
   const prompt =
-    "Escribe UN comentario muy breve (25-40 palabras), divertido y con chispa, en español, sobre la costa de Alicante y la variedad de sus playas. Tono cercano, como un amigo. Una o dos frases. Sin listas, sin markdown, sin emojis.";
+    "Escribe un comentario amplio (90-130 palabras), divertido, jocoso y muy agradable, en español, sobre la costa de Alicante y la variedad de sus 17 playas (Postiguet bajo el Castillo, San Juan-Muchavista, calas del Cabo de las Huertas como Cantalar, Palmera, Judíos y Tío Ximo, Albufereta, Almadraba, Saladar-Urbanova, Agua Amarga, Altet, Arenales del Sol y Carabassí al sur). Tono cercano, como un amigo guasón pero cariñoso. Permite algún chiste suave. Sin listas, sin markdown, sin emojis. Termina invitando a deslizar las fotos y abrir el mapa.";
   try {
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -137,7 +192,7 @@ export const getCoastIntro = createServerFn({ method: "GET" }).handler(async ():
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: "Eres un guía local alicantino, cercano y simpático." },
+          { role: "system", content: "Eres un guía local alicantino, cercano, divertido y con chispa." },
           { role: "user", content: prompt },
         ],
       }),
