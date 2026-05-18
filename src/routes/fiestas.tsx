@@ -24,6 +24,7 @@ import ofrenda1 from "@/assets/fiestas-ofrenda-1.jpg";
 import banya1 from "@/assets/fiestas-banya-1.jpg";
 import aerea1 from "@/assets/fiestas-aerea-1.jpg";
 import aerea2 from "@/assets/fiestas-aerea-2.jpg";
+import arroz1 from "@/assets/fiestas-arroz-1.jpg";
 
 import {
   PROGRAMA_2026, PREVIA_2026, MASCLETAS_2026, FUEGOS_2026,
@@ -757,13 +758,20 @@ function Relato() {
         ring: "ring-yellow-300/50",
         cap: "from-yellow-500/80 to-amber-400/80",
       },
+      {
+        src: mascleta2,
+        alt: "Humo de mascletà sobre Alicante",
+        caption: "💨 Pólvora a mediodía — el momento justo antes de comer",
+        ring: "ring-yellow-300/50",
+        cap: "from-yellow-500/80 to-amber-500/80",
+      },
     ],
     {
-      src: mascleta2,
-      alt: "Humo de mascletà sobre Alicante",
-      caption: "💨 Pólvora a mediodía — el momento justo antes de comer",
-      ring: "ring-yellow-300/50",
-      cap: "from-yellow-500/80 to-amber-500/80",
+      src: arroz1,
+      alt: "Arroz a banda en paella",
+      caption: "🥘 Arroz a banda — territorio sagrado en la sobremesa alicantina",
+      ring: "ring-orange-300/50",
+      cap: "from-orange-500/80 to-amber-500/80",
     },
     {
       src: bunuelos1,
