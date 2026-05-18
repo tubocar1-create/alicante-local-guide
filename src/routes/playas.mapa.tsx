@@ -48,10 +48,10 @@ const BEACHES: Beach[] = [
 ];
 
 function MapaPlayasPage() {
-  const [Map, setMap] = useState<null | typeof import("./_mapa-leaflet")>(null);
+  const [Map, setMap] = useState<null | typeof import("@/components/LeafletBeachMap")>(null);
 
   useEffect(() => {
-    import("./_mapa-leaflet").then(setMap);
+    import("@/components/LeafletBeachMap").then(setMap);
   }, []);
 
   return (
