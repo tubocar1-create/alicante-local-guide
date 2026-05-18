@@ -60,10 +60,10 @@ function HotelDetail() {
     const y = today.getFullYear();
     const m = today.getMonth();
     const start = new Date(Date.UTC(y, m, today.getDate()));
-    const end = new Date(Date.UTC(y, m + 3, 0)); // last day of (current+2)
+    const end = new Date(Date.UTC(y, m + 4, 0)); // last day of (current+3)
     const fmt = (d: Date) => d.toISOString().slice(0, 10);
     const ms: Array<{ year: number; month: number; firstDay: number; daysInMonth: number; firstWeekday: number }> = [];
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 4; i++) {
       const monthStart = new Date(Date.UTC(y, m + i, 1));
       const monthEnd = new Date(Date.UTC(y, m + i + 1, 0));
       const firstDay = i === 0 ? today.getDate() : 1;
@@ -302,7 +302,7 @@ function HotelDetail() {
             {/* Calendarios mensuales (mes actual + 2 siguientes) */}
             <div className="mt-4 rounded-2xl border border-amber-100/[0.08] bg-[rgba(20,10,4,0.7)] p-4 backdrop-blur-xl md:p-5">
               <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.3em] text-amber-400/80">
-                <CalendarDays className="h-3 w-3" /> Disponibilidad · próximos 3 meses
+                <CalendarDays className="h-3 w-3" /> Disponibilidad · próximos 4 meses
               </p>
               <p className="mt-1 text-[10px] text-amber-200/60">
                 Verde = hay habitaciones · rojo = sin disponibilidad. Precio mostrado: habitación
