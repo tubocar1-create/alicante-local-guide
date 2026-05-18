@@ -16,6 +16,13 @@ import {
 } from "lucide-react";
 import { getHotel, getHotelCalendar, getHotelPhotos } from "@/lib/hotels.functions";
 import { getAiReview } from "@/lib/ai-review.functions";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/hotel/$id")({
   component: HotelDetail,
@@ -124,7 +131,7 @@ function HotelDetail() {
       className="fixed inset-0 z-[60] overflow-y-auto text-amber-50"
       style={{
         background:
-          "linear-gradient(180deg, #1a0f05 0%, #2a1607 50%, #120800 100%)",
+          "linear-gradient(180deg, #050b1f 0%, #0a1638 50%, #03081a 100%)",
       }}
     >
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -169,6 +176,40 @@ function HotelDetail() {
                 <div className="flex h-40 items-center justify-center text-5xl opacity-30">🏨</div>
               )}
               <div className="p-4 md:p-5">
+                <div className="mb-2 flex justify-end">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-500/10 px-3 py-1.5 text-[11px] font-semibold text-amber-200 hover:bg-amber-500/20"
+                      >
+                        <Sparkles className="h-3 w-3" /> Nuestra reseña
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md border-amber-100/10 bg-[#0a1638] text-amber-50">
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center gap-1.5 text-amber-200">
+                          <Sparkles className="h-4 w-4" /> Nuestra reseña
+                        </DialogTitle>
+                      </DialogHeader>
+                      {review.isLoading ? (
+                        <div className="space-y-2">
+                          <div className="h-3 w-full animate-pulse rounded bg-amber-100/10" />
+                          <div className="h-3 w-5/6 animate-pulse rounded bg-amber-100/10" />
+                          <div className="h-3 w-4/6 animate-pulse rounded bg-amber-100/10" />
+                        </div>
+                      ) : review.data?.text ? (
+                        <p className="text-sm leading-relaxed text-amber-100/90">
+                          {review.data.text}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-amber-200/60">
+                          No hemos podido generar la reseña ahora mismo.
+                        </p>
+                      )}
+                    </DialogContent>
+                  </Dialog>
+                </div>
                 <p className="text-[10px] uppercase tracking-[0.3em] text-amber-400/80">
                   {h.hotel_type ?? "Alojamiento"}
                 </p>
@@ -415,27 +456,6 @@ function HotelDetail() {
               </div>
             </div>
 
-            {/* AI Review */}
-            <div className="mt-4 rounded-2xl border border-amber-100/[0.08] bg-[rgba(20,10,4,0.7)] p-4 backdrop-blur-xl md:p-5">
-              <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.3em] text-amber-400/80">
-                <Sparkles className="h-3 w-3" /> Nuestra reseña
-              </p>
-              {review.isLoading ? (
-                <div className="mt-2 space-y-2">
-                  <div className="h-3 w-full animate-pulse rounded bg-amber-100/[0.08]" />
-                  <div className="h-3 w-5/6 animate-pulse rounded bg-amber-100/[0.08]" />
-                  <div className="h-3 w-4/6 animate-pulse rounded bg-amber-100/[0.08]" />
-                </div>
-              ) : review.data?.text ? (
-                <p className="mt-2 text-sm leading-relaxed text-amber-100/90">
-                  {review.data.text}
-                </p>
-              ) : (
-                <p className="mt-2 text-xs text-amber-200/60">
-                  No hemos podido generar la reseña ahora mismo.
-                </p>
-              )}
-            </div>
           </>
         )}
       </div>
