@@ -61,10 +61,9 @@ function LoginPage() {
         <p className="inline-flex items-center gap-1 rounded-full bg-white/25 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest">
           <Sparkles className="h-3 w-3" /> Beta
         </p>
-        <h2 className="mt-2 text-lg font-semibold">¡Hola! Cuéntanos quién eres</h2>
+        <h2 className="mt-2 text-lg font-semibold">¡Hola! Crea tu cuenta</h2>
         <p className="mt-1 text-sm opacity-95">
-          Solo el nombre es obligatorio. Apellido, email y teléfono son opcionales y
-          ayudan al local a reconocerte cuando valide tu QR. 🤙
+          Tu email será tu usuario para iniciar sesión. 🤙
         </p>
       </section>
 
@@ -77,7 +76,7 @@ function LoginPage() {
             minLength={2}
             maxLength={60}
             autoFocus
-            placeholder="Nombre *"
+            placeholder="Nombre"
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="w-full bg-transparent text-sm outline-none"
@@ -88,8 +87,10 @@ function LoginPage() {
           <UserIcon className="h-4 w-4 text-muted-foreground" />
           <input
             type="text"
+            required
+            minLength={2}
             maxLength={60}
-            placeholder="Apellido (opcional)"
+            placeholder="Apellido"
             value={surname}
             onChange={(e) => setSurname(e.target.value)}
             className="w-full bg-transparent text-sm outline-none"
@@ -100,22 +101,11 @@ function LoginPage() {
           <Mail className="h-4 w-4 text-muted-foreground" />
           <input
             type="email"
+            required
             maxLength={120}
-            placeholder="Email (opcional)"
+            placeholder="Email (será tu usuario)"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full bg-transparent text-sm outline-none"
-          />
-        </label>
-
-        <label className="flex items-center gap-2 rounded-2xl border border-border bg-card px-3 py-2.5">
-          <Phone className="h-4 w-4 text-muted-foreground" />
-          <input
-            type="tel"
-            maxLength={30}
-            placeholder="Teléfono (opcional)"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
             className="w-full bg-transparent text-sm outline-none"
           />
         </label>
