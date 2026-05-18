@@ -80,6 +80,7 @@ type Suggestion = {
   href?: string;
 };
 const BEACH_GUIDE_PROMPT = "Hazme la charla IA sobre las playas de Alicante basada en las páginas web suministradas.";
+const BEACH_GUIDE_RE = /\b(playa|playas|cala|calas|costa blanca|postiguet|san juan|albufereta|urbanova|cabo de las huertas)\b/i;
 
 const BEACH_GUIDE_RESPONSE = `# 🏖️ Playas de Alicante: charla IA de la Costa Blanca
 
@@ -428,8 +429,8 @@ export function ChatScreen() {
     setSubmenuStack([]);
     setInput("");
     setMode(null);
-    setMessages((prev) => [
-      ...prev,
+    setMessages([
+      GREETING,
       { role: "user", content: BEACH_GUIDE_PROMPT },
       { role: "assistant", content: BEACH_GUIDE_RESPONSE },
     ]);
