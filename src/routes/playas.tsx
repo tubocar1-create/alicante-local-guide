@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { ArrowLeft, MapPin, ExternalLink, Waves, Compass, Backpack, Lightbulb } from "lucide-react";
-import { getPlayasContent, type PlayaInfo } from "@/lib/playas.functions";
+import { getPlayasBeaches, getPlayasGuide, type PlayaInfo } from "@/lib/playas.functions";
+import { PLAYAS } from "@/lib/playas-data";
 
 export const Route = createFileRoute("/playas")({
   head: () => ({
@@ -17,27 +18,46 @@ export const Route = createFileRoute("/playas")({
       { property: "og:title", content: "Playas de Alicante — Guía local" },
       {
         property: "og:description",
-        content: "Arenales urbanos y calas salvajes de la Costa Blanca con fotos reales y consejos prácticos.",
+        content:
+          "Arenales urbanos y calas salvajes de la Costa Blanca con fotos reales y consejos prácticos.",
       },
     ],
   }),
   component: PlayasPage,
 });
 
+// Seed list shown instantly while Wikipedia photos/extracts load.
+const SEED_BEACHES: PlayaInfo[] = PLAYAS.map((p) => ({
+  slug: p.slug,
+  name: p.name,
+  town: p.town,
+  category: p.category,
+  extract: "",
+  photo: null,
+  wikiUrl: `https://es.wikipedia.org/wiki/${encodeURIComponent(p.wikiTitle)}`,
+  lat: p.lat,
+  lng: p.lng,
+}));
+
 function PlayasPage() {
-  const fetchContent = useServerFn(getPlayasContent);
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["playas-content"],
-    queryFn: () => fetchContent(),
-    staleTime: 1000 * 60 * 60, // 1h
+  const fetchBeaches = useServerFn(getPlayasBeaches);
+  const fetchGuide = useServerFn(getPlayasGuide);
+
+  const beachesQ = useQuery({
+    queryKey: ["playas-beaches"],
+    queryFn: () => fetchBeaches(),
+    staleTime: 1000 * 60 * 60,
+  });
+  const guideQ = useQuery({
+    queryKey: ["playas-guide"],
+    queryFn: () => fetchGuide(),
+    staleTime: 1000 * 60 * 60,
   });
 
   const [tab, setTab] = useState<"populares" | "escondidas">("populares");
 
-  const list = useMemo(
-    () => (data?.playas ?? []).filter((p) => p.category === tab),
-    [data, tab],
-  );
+  const beaches = beachesQ.data ?? SEED_BEACHES;
+  const list = useMemo(() => beaches.filter((p) => p.category === tab), [beaches, tab]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-50 via-cyan-50 to-white text-slate-900">
@@ -75,13 +95,15 @@ function PlayasPage() {
       <main className="mx-auto max-w-3xl px-4 pb-20 -mt-4">
         {/* Intro */}
         <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-          {isLoading ? (
-            <div className="h-24 animate-pulse rounded bg-slate-100" />
-          ) : error ? (
-            <p className="text-sm text-red-600">No se pudo cargar la guía. Reintenta en un momento.</p>
+          {guideQ.isLoading ? (
+            <div className="space-y-2">
+              <div className="h-3 animate-pulse rounded bg-slate-100" />
+              <div className="h-3 animate-pulse rounded bg-slate-100" />
+              <div className="h-3 w-2/3 animate-pulse rounded bg-slate-100" />
+            </div>
           ) : (
             <p className="whitespace-pre-line text-[15px] leading-relaxed text-slate-700">
-              {data?.guide.intro}
+              {guideQ.data?.intro}
             </p>
           )}
         </section>
@@ -108,21 +130,19 @@ function PlayasPage() {
 
         {/* Beach grid */}
         <section className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {isLoading
-            ? Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-72 animate-pulse rounded-2xl bg-slate-100" />
-              ))
-            : list.map((p) => <PlayaCard key={p.slug} p={p} />)}
+          {list.map((p) => (
+            <PlayaCard key={p.slug} p={p} />
+          ))}
         </section>
 
         {/* Guide */}
-        {data?.guide && (
+        {guideQ.data && (
           <section className="mt-10 space-y-4">
             <h2 className="text-xl font-bold text-slate-800">Guía práctica</h2>
-            <GuideBlock icon={<Compass className="h-5 w-5" />} title="Cómo ir" body={data.guide.comoIr} tone="sky" />
-            <GuideBlock icon={<Backpack className="h-5 w-5" />} title="Qué llevar" body={data.guide.queLlevar} tone="amber" />
-            <GuideBlock icon={<Waves className="h-5 w-5" />} title="Qué hacer" body={data.guide.queHacer} tone="cyan" />
-            <GuideBlock icon={<Lightbulb className="h-5 w-5" />} title="Consejos locales" body={data.guide.consejos} tone="emerald" />
+            <GuideBlock icon={<Compass className="h-5 w-5" />} title="Cómo ir" body={guideQ.data.comoIr} tone="sky" />
+            <GuideBlock icon={<Backpack className="h-5 w-5" />} title="Qué llevar" body={guideQ.data.queLlevar} tone="amber" />
+            <GuideBlock icon={<Waves className="h-5 w-5" />} title="Qué hacer" body={guideQ.data.queHacer} tone="cyan" />
+            <GuideBlock icon={<Lightbulb className="h-5 w-5" />} title="Consejos locales" body={guideQ.data.consejos} tone="emerald" />
           </section>
         )}
       </main>

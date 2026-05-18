@@ -24,52 +24,65 @@ export type PlayasGuide = {
 async function fetchWiki(title: string) {
   try {
     const url = `https://es.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
-    const res = await fetch(url, { headers: { "User-Agent": "AlicanteFriend/1.0 (contact: hello@lovable.dev)" } });
+    const res = await fetch(url, {
+      headers: { "User-Agent": "AlicanteFriend/1.0 (contact: hello@lovable.dev)" },
+    });
     if (!res.ok) return null;
     const j = await res.json();
     return {
       extract: (j.extract as string) ?? "",
       photo: (j.originalimage?.source as string) ?? (j.thumbnail?.source as string) ?? null,
-      wikiUrl: (j.content_urls?.desktop?.page as string) ?? `https://es.wikipedia.org/wiki/${encodeURIComponent(title)}`,
+      wikiUrl:
+        (j.content_urls?.desktop?.page as string) ??
+        `https://es.wikipedia.org/wiki/${encodeURIComponent(title)}`,
     };
   } catch {
     return null;
   }
 }
 
-async function buildPlayas(): Promise<PlayaInfo[]> {
-  const results = await Promise.all(
-    PLAYAS.map(async (p: PlayaSeed) => {
-      const w = await fetchWiki(p.wikiTitle);
-      return {
-        slug: p.slug,
-        name: p.name,
-        town: p.town,
-        category: p.category,
-        extract: w?.extract ?? "",
-        photo: w?.photo ?? null,
-        wikiUrl: w?.wikiUrl ?? `https://es.wikipedia.org/wiki/${encodeURIComponent(p.wikiTitle)}`,
-        lat: p.lat,
-        lng: p.lng,
-      };
-    }),
-  );
-  return results;
-}
+export const getPlayasBeaches = createServerFn({ method: "GET" }).handler(
+  async (): Promise<PlayaInfo[]> => {
+    const results = await Promise.all(
+      PLAYAS.map(async (p: PlayaSeed) => {
+        const w = await fetchWiki(p.wikiTitle);
+        return {
+          slug: p.slug,
+          name: p.name,
+          town: p.town,
+          category: p.category,
+          extract: w?.extract ?? "",
+          photo: w?.photo ?? null,
+          wikiUrl:
+            w?.wikiUrl ?? `https://es.wikipedia.org/wiki/${encodeURIComponent(p.wikiTitle)}`,
+          lat: p.lat,
+          lng: p.lng,
+        };
+      }),
+    );
+    return results;
+  },
+);
 
-async function generateGuide(): Promise<PlayasGuide> {
-  const apiKey = process.env.LOVABLE_API_KEY;
-  if (!apiKey) {
-    return {
-      intro: "La costa alicantina combina arenales urbanos, calas salvajes y un mar transparente.",
-      comoIr: "TRAM línea 1/3 a las playas urbanas y autobús/coche para las calas escondidas.",
-      queLlevar: "Crema solar, agua, calzado de roca para las calas, gorra y toalla.",
-      queHacer: "Snorkel en las calas, paseos al atardecer y chiringuitos en los arenales.",
-      consejos: "Madruga en julio-agosto: el parking en las calas se llena antes de las 10:00.",
+export const getPlayasGuide = createServerFn({ method: "GET" }).handler(
+  async (): Promise<PlayasGuide> => {
+    const apiKey = process.env.LOVABLE_API_KEY;
+    const fallback: PlayasGuide = {
+      intro:
+        "La costa de Alicante regala más de 200 km de litoral con aguas cristalinas, cala tras cala. De los arenales urbanos del Postiguet y San Juan a las calas vírgenes de Jávea, Moraira o Benitatxell, la Costa Blanca combina sol todo el año, posidonia que mantiene el agua transparente y un microclima envidiable.",
+      comoIr:
+        "Desde Alicante, el TRAM línea 1, 3 y 9 conecta directo con las playas urbanas y costeras (San Juan, Albufereta, Muchavista, El Campello, Villajoyosa, Benidorm, Calp, Altea). Para calas escondidas (Granadella, Moraig, Tío Ximo) lo mejor es coche: parkings de pago en verano, llega antes de las 10:00. Vectalia y Alsa tienen buses a Santa Pola, Guardamar y Torrevieja.",
+      queLlevar:
+        "Crema solar reef-safe, agua abundante, escarpines o cangrejeras para calas de roca y guijarro, gafas y tubo de snorkel, sombrilla en arenales sin sombra (Muchavista, San Juan sur), neverita pequeña, bolsa para llevarte la basura y dinero suelto para parking y chiringuito.",
+      queHacer:
+        "Snorkel en Cala Granadella, Cala del Moraig y Cantalars (visibilidad espectacular). Kayak y paddle surf desde Calp con el Peñón de Ifach al fondo. Paseo del faro del Albir al atardecer. Chiringuitos al sunset en Postiguet, Muchavista y Levante de Benidorm. Ruta de las Calas de Benissa por la vía verde.",
+      consejos:
+        "De julio a agosto madruga: la Granadella cierra acceso por aforo a media mañana. Mejor época: mayo, junio y septiembre. Si sopla tramontana, las playas de levante se enturbian (cámbiate a las de poniente). Descarga la app del Ayto. de Alicante con banderas en tiempo real. Y respeta la posidonia: no fondear sobre verde.",
     };
-  }
 
-  const prompt = `Eres guía local de Alicante. Genera una guía cálida, cercana y útil sobre las playas y calas de la provincia de Alicante (Costa Blanca: Alicante, Campello, Villajoyosa, Benidorm, Calp, Benissa, Teulada-Moraira, Benitatxell, Jávea, Dénia, Santa Pola, Guardamar, Torrevieja…). Devuelve EXACTAMENTE este JSON con strings en español, sin markdown ni emojis dentro de los valores:
+    if (!apiKey) return fallback;
+
+    const prompt = `Eres guía local de Alicante. Genera una guía cálida, cercana y útil sobre las playas y calas de la provincia de Alicante (Costa Blanca: Alicante, Campello, Villajoyosa, Benidorm, Calp, Benissa, Teulada-Moraira, Benitatxell, Jávea, Dénia, Santa Pola, Guardamar, Torrevieja…). Devuelve EXACTAMENTE este JSON con strings en español, sin markdown ni emojis dentro de los valores:
 
 {
   "intro": "180-250 palabras describiendo la costa alicantina: arenales urbanos vs calas escondidas, color del agua, posidonia, microclima, banderas azules.",
@@ -81,38 +94,30 @@ async function generateGuide(): Promise<PlayasGuide> {
 
 Solo el JSON, sin texto extra.`;
 
-  try {
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: "Eres guía local experto de la Costa Blanca. Devuelves siempre JSON válido." },
-          { role: "user", content: prompt },
-        ],
-        response_format: { type: "json_object" },
-      }),
-    });
-    if (!res.ok) throw new Error(`AI ${res.status}`);
-    const j = await res.json();
-    const txt: string = j.choices?.[0]?.message?.content ?? "{}";
-    const cleaned = txt.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "");
-    return JSON.parse(cleaned) as PlayasGuide;
-  } catch {
-    return {
-      intro: "La costa alicantina combina arenales urbanos, calas salvajes y un mar transparente.",
-      comoIr: "TRAM línea 1/3 a las playas urbanas y autobús/coche para las calas escondidas.",
-      queLlevar: "Crema solar, agua, calzado de roca, gafas de snorkel y sombrilla.",
-      queHacer: "Snorkel en calas, kayak en Calp, paseos al atardecer y chiringuitos.",
-      consejos: "Madruga en julio-agosto y respeta la posidonia.",
-    };
-  }
-}
-
-export const getPlayasContent = createServerFn({ method: "GET" }).handler(
-  async (): Promise<{ playas: PlayaInfo[]; guide: PlayasGuide }> => {
-    const [playas, guide] = await Promise.all([buildPlayas(), generateGuide()]);
-    return { playas, guide };
+    try {
+      const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            {
+              role: "system",
+              content:
+                "Eres guía local experto de la Costa Blanca. Devuelves siempre JSON válido.",
+            },
+            { role: "user", content: prompt },
+          ],
+          response_format: { type: "json_object" },
+        }),
+      });
+      if (!res.ok) throw new Error(`AI ${res.status}`);
+      const j = await res.json();
+      const txt: string = j.choices?.[0]?.message?.content ?? "{}";
+      const cleaned = txt.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "");
+      return JSON.parse(cleaned) as PlayasGuide;
+    } catch {
+      return fallback;
+    }
   },
 );
