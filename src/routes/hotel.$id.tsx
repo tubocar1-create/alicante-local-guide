@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -10,13 +11,24 @@ import {
   Footprints,
   Sparkles,
   ExternalLink,
+  AlertTriangle,
+  CalendarDays,
 } from "lucide-react";
-import { getHotel } from "@/lib/hotels.functions";
+import { getHotel, getHotelCalendar } from "@/lib/hotels.functions";
 import { getAiReview } from "@/lib/ai-review.functions";
 
 export const Route = createFileRoute("/hotel/$id")({
   component: HotelDetail,
 });
+
+const ROOM_LABELS_CLIENT: Record<string, string> = {
+  single: "Sencilla",
+  double: "Doble",
+  triple: "Triple",
+  quadruple: "Cuádruple",
+  suite: "Suite",
+  other: "Otra",
+};
 
 function HotelDetail() {
   const { id } = Route.useParams();
