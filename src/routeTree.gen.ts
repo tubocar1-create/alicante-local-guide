@@ -17,6 +17,7 @@ import { Route as SaludRouteImport } from './routes/salud'
 import { Route as RepoRouteImport } from './routes/repo'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as OcioRouteImport } from './routes/ocio'
+import { Route as MagicRouteImport } from './routes/magic'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HospitalesRouteImport } from './routes/hospitales'
 import { Route as FiestasRouteImport } from './routes/fiestas'
@@ -103,6 +104,11 @@ const PerfilRoute = PerfilRouteImport.update({
 const OcioRoute = OcioRouteImport.update({
   id: '/ocio',
   path: '/ocio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MagicRoute = MagicRouteImport.update({
+  id: '/magic',
+  path: '/magic',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -354,6 +360,7 @@ export interface FileRoutesByFullPath {
   '/fiestas': typeof FiestasRoute
   '/hospitales': typeof HospitalesRoute
   '/login': typeof LoginRoute
+  '/magic': typeof MagicRoute
   '/ocio': typeof OcioRoute
   '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
@@ -410,6 +417,7 @@ export interface FileRoutesByTo {
   '/fiestas': typeof FiestasRoute
   '/hospitales': typeof HospitalesRoute
   '/login': typeof LoginRoute
+  '/magic': typeof MagicRoute
   '/ocio': typeof OcioRoute
   '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
@@ -468,6 +476,7 @@ export interface FileRoutesById {
   '/fiestas': typeof FiestasRoute
   '/hospitales': typeof HospitalesRoute
   '/login': typeof LoginRoute
+  '/magic': typeof MagicRoute
   '/ocio': typeof OcioRoute
   '/perfil': typeof PerfilRoute
   '/repo': typeof RepoRoute
@@ -527,6 +536,7 @@ export interface FileRouteTypes {
     | '/fiestas'
     | '/hospitales'
     | '/login'
+    | '/magic'
     | '/ocio'
     | '/perfil'
     | '/repo'
@@ -583,6 +593,7 @@ export interface FileRouteTypes {
     | '/fiestas'
     | '/hospitales'
     | '/login'
+    | '/magic'
     | '/ocio'
     | '/perfil'
     | '/repo'
@@ -640,6 +651,7 @@ export interface FileRouteTypes {
     | '/fiestas'
     | '/hospitales'
     | '/login'
+    | '/magic'
     | '/ocio'
     | '/perfil'
     | '/repo'
@@ -698,6 +710,7 @@ export interface RootRouteChildren {
   FiestasRoute: typeof FiestasRoute
   HospitalesRoute: typeof HospitalesRoute
   LoginRoute: typeof LoginRoute
+  MagicRoute: typeof MagicRoute
   OcioRoute: typeof OcioRoute
   PerfilRoute: typeof PerfilRoute
   RepoRoute: typeof RepoRoute
@@ -785,6 +798,13 @@ declare module '@tanstack/react-router' {
       path: '/ocio'
       fullPath: '/ocio'
       preLoaderRoute: typeof OcioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/magic': {
+      id: '/magic'
+      path: '/magic'
+      fullPath: '/magic'
+      preLoaderRoute: typeof MagicRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -1229,6 +1249,7 @@ const rootRouteChildren: RootRouteChildren = {
   FiestasRoute: FiestasRoute,
   HospitalesRoute: HospitalesRoute,
   LoginRoute: LoginRoute,
+  MagicRoute: MagicRoute,
   OcioRoute: OcioRoute,
   PerfilRoute: PerfilRoute,
   RepoRoute: RepoRoute,
