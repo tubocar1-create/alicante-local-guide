@@ -638,6 +638,9 @@ export function ChatScreen() {
                       onClick: () => {
                         if (s.label === "🏖️ Turismo, playa y aventuras") {
                           navigate({ to: "/playas" });
+                        } else if (s.href) {
+                          if (s.href.startsWith("/")) navigate({ to: s.href });
+                          else window.location.href = s.href;
                         } else if (s.submenu) setActiveSubmenu(s);
                         else if (s.prompt) send(s.prompt, { mode: null });
                       },
