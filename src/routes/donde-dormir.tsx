@@ -164,7 +164,7 @@ function DondeDormirPage() {
                   Array.isArray(d?.room_types) ? d.room_types : [];
                 const open = openId === h.id;
                 return (
-                  <>
+                  <Fragment key={h.id}>
                     <tr key={h.id} className="bg-white/[0.02]">
                       <td className="rounded-l-md px-0.5 py-1 align-middle">
                         <button
@@ -255,7 +255,7 @@ function DondeDormirPage() {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 );
               })}
               {!isLoading && ranked.length === 0 && (
