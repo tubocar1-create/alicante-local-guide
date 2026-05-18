@@ -80,7 +80,7 @@ function BeachDetailPage() {
         {photos.length > 1 && (
           <section className="-mt-4">
             <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2">
-              {photos.slice(1).map((src, i) => (
+              {photos.slice(1).map((src: string, i: number) => (
                 <img
                   key={src}
                   src={src}
