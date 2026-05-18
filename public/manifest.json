@@ -1,0 +1,16 @@
+{
+  "name": "Vamos Alicante",
+  "short_name": "Vamos Alicante",
+  "description": "Tu guía local en Alicante: fiestas, transporte, ocio, salud y más.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FDF6E8",
+  "theme_color": "#F39021",
+  "lang": "es",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
