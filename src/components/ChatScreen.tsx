@@ -3727,6 +3727,10 @@ function AssistantContent({ content, userPrompt = "" }: { content: string; userP
   const placeName = match?.[1]?.trim();
   const cleaned = content.replace(/\n?\[\[place:[^\]]+\]\]\n?/i, "").trim();
 
+  if (isBeachGuidePrompt(userPrompt) || (BEACH_GUIDE_RE.test(userPrompt) && BEACH_GUIDE_RE.test(cleaned))) {
+    return <MarkdownText text={cleaned} />;
+  }
+
   // Bus stop card takes precedence (UI-injected, no AI involved)
   const stopParts = parseBusStopParts(cleaned);
   if (stopParts) {
