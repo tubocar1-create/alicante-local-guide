@@ -42,10 +42,10 @@ export const getHotel = createServerFn({ method: "GET" })
   });
 
 export const getHotelCalendar = createServerFn({ method: "GET" })
-  .inputValidator((d: { id: string; startDate: string }) => d)
+  .inputValidator((d: { id: string; startDate: string; endDate?: string }) => d)
   .handler(async ({ data }) => {
     try {
-      const res = await fetchHotelCalendarImpl(data.id, data.startDate);
+      const res = await fetchHotelCalendarImpl(data.id, data.startDate, data.endDate);
       return { ok: true as const, ...res };
     } catch (e: any) {
       console.error("getHotelCalendar failed", e);
