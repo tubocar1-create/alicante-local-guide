@@ -1863,7 +1863,10 @@ function AsianTableInner({ ranked, loading, originLabel, onClose }: {
             </span>
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => {
+                window.dispatchEvent(new Event("comer:back-to-menu"));
+                onClose();
+              }}
               aria-label="Cerrar"
               className="ml-2 rounded-full border border-slate-700 p-1.5 text-slate-400 hover:border-cyan-500/50 hover:text-cyan-300"
             >
