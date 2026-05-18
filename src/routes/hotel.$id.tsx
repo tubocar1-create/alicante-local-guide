@@ -119,6 +119,19 @@ function HotelDetail() {
   const roomTypes: Array<{ type: string; price: number; currency: string; label?: string }> =
     Array.isArray(d?.room_types) ? d.room_types : [];
 
+  // Distancia: geolocalización del usuario si existe, en su defecto a Puerta del Mar
+  const { state: geo } = useUserLocation();
+  const distance = useMemo(() => {
+    if (!h?.lat || !h?.lng) return null;
+    if (geo.status === "ready") {
+      return { km: distanceKm(geo.coords, { lat: h.lat, lng: h.lng }), source: "tú" as const };
+    }
+    return {
+      km: distanceKm(PUERTA_DEL_MAR, { lat: h.lat, lng: h.lng }),
+      source: "Puerta del Mar" as const,
+    };
+  }, [geo, h?.lat, h?.lng]);
+
   const mapsHref = h
     ? h.lat && h.lng
       ? `https://www.google.com/maps/dir/?api=1&destination=${h.lat},${h.lng}&travelmode=walking`
@@ -132,7 +145,7 @@ function HotelDetail() {
 
   return (
     <div
-      className="fixed inset-0 z-[60] overflow-y-auto text-amber-50"
+      className="fixed inset-0 z-40 overflow-y-auto text-amber-50"
       style={{
         background:
           "linear-gradient(180deg, #050b1f 0%, #0a1638 50%, #03081a 100%)",
