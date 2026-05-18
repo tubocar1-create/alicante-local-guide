@@ -72,12 +72,11 @@ export function LeafletMap({ beaches }: { beaches: Beach[] }) {
         }
       });
 
-      const info = new google.maps.InfoWindow({ disableAutoPan: true });
       beaches.forEach((b) => {
         const marker = new google.maps.Marker({
           position: { lat: b.lat, lng: b.lng },
           map,
-          title: b.name,
+          title: `${b.name} — ${b.description}`,
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
             scale: 10,
@@ -89,14 +88,7 @@ export function LeafletMap({ beaches }: { beaches: Beach[] }) {
           label: { text: "🏖️", fontSize: "14px" },
         });
         marker.addListener("click", () => {
-          info.setContent(
-            `<div style="min-width:200px;font-family:system-ui">
-              <strong style="color:#1565c0;font-size:14px">${b.name}</strong>
-              <p style="margin:4px 0 8px;font-size:12px;color:#475569">${b.description}</p>
-              <a href="/playas/${b.slug}" style="display:inline-block;background:#0891b2;color:#fff;padding:6px 12px;border-radius:9999px;font-size:12px;font-weight:800;text-decoration:none">Abrir playa →</a>
-            </div>`,
-          );
-          info.open({ anchor: marker, map });
+          window.location.href = `/playas/${b.slug}`;
         });
       });
     });
