@@ -88,7 +88,7 @@ function PlayasPage() {
               <Link
                 key={b.slug}
                 to="/playas/mapa"
-                className="group relative h-56 w-44 flex-none snap-start overflow-hidden rounded-2xl bg-slate-200 shadow ring-1 ring-sky-100 sm:h-64 sm:w-52"
+                className="group relative h-[80vh] w-[85vw] max-w-[520px] flex-none snap-center overflow-hidden rounded-3xl bg-slate-200 shadow-xl ring-1 ring-sky-100"
               >
                 {b.photo ? (
                   <img
