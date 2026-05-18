@@ -177,8 +177,9 @@ export function getBeachBySlug(slug: string): MapBeach | undefined {
 export const LOCAL_BEACH_PHOTOS: Record<string, string[]> = {
   "arenales-del-sol": ["/playas/photo1.jpg", "/playas/photo2.jpg"],
   "muchavista": ["/playas/photo3.jpg"],
-  "san-juan": ["/playas/photo4.jpg"],
+  "san-juan": [],
   "cala-cantalar": [
+    "/playas/photo4.jpg",
     "/playas/photo5.jpg",
     "/playas/photo6.jpg",
     "/playas/photo7.jpg",
