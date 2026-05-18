@@ -4,19 +4,16 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   X,
-  Navigation,
   Coffee,
   ShieldCheck,
   Star,
-  Footprints,
   Sparkles,
   ExternalLink,
-  
   CalendarDays,
 } from "lucide-react";
 import { getHotel, getHotelCalendar, getHotelPhotos } from "@/lib/hotels.functions";
 import { getAiReview } from "@/lib/ai-review.functions";
-import { useUserLocation, distanceKm, formatDistance } from "@/hooks/useUserLocation";
+import { useUserLocation, distanceKm } from "@/hooks/useUserLocation";
 import {
   Dialog,
   DialogContent,
@@ -328,14 +325,8 @@ function HotelDetail() {
                     className="col-span-1 flex flex-col items-center justify-center gap-0.5 rounded-xl bg-amber-200 px-2 py-2 text-[11px] font-semibold text-amber-950 hover:bg-amber-100"
                   >
                     <span className="inline-flex items-center gap-1">
-                      <Navigation className="h-3 w-3" /> Cómo ir
+                      🚶 Cómo ir
                     </span>
-                    {distance && (
-                      <span className="inline-flex items-center gap-1 text-[9px] font-normal text-amber-900/80 text-center leading-tight">
-                        <Footprints className="h-2.5 w-2.5" />
-                        {formatDistance(distance.km)}
-                      </span>
-                    )}
                   </a>
 
                   <div className="col-span-2 flex flex-col gap-2">
@@ -345,7 +336,7 @@ function HotelDetail() {
                         href={op.href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-amber-200 px-3 py-2 text-[12px] font-semibold text-amber-950 hover:bg-amber-100"
+                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-200 to-red-200 px-3 py-2 text-[12px] font-semibold text-amber-950 hover:opacity-90"
                       >
                         {op.label} <ExternalLink className="h-3 w-3" />
                       </a>
