@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -10,13 +11,24 @@ import {
   Footprints,
   Sparkles,
   ExternalLink,
+  AlertTriangle,
+  CalendarDays,
 } from "lucide-react";
-import { getHotel } from "@/lib/hotels.functions";
+import { getHotel, getHotelCalendar } from "@/lib/hotels.functions";
 import { getAiReview } from "@/lib/ai-review.functions";
 
 export const Route = createFileRoute("/hotel/$id")({
   component: HotelDetail,
 });
+
+const ROOM_LABELS_CLIENT: Record<string, string> = {
+  single: "Sencilla",
+  double: "Doble",
+  triple: "Triple",
+  quadruple: "Cuádruple",
+  suite: "Suite",
+  other: "Otra",
+};
 
 function HotelDetail() {
   const { id } = Route.useParams();
@@ -42,6 +54,18 @@ function HotelDetail() {
         },
       }),
   });
+
+  const startDate = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const fetchCalendar = useServerFn(getHotelCalendar);
+  const calendar = useQuery({
+    queryKey: ["hotel-calendar", id, startDate],
+    staleTime: 60 * 60 * 1000,
+    queryFn: () => fetchCalendar({ data: { id, startDate } }),
+  });
+  const days: Array<{ date: string; available: boolean; price_double: number | null; price_min: number | null; currency: string }> =
+    calendar.data?.days ?? [];
+  const roomTypes: Array<{ type: string; price: number; currency: string; label?: string }> =
+    Array.isArray(d?.room_types) ? d.room_types : [];
 
   const mapsHref = h
     ? h.lat && h.lng
@@ -213,6 +237,90 @@ function HotelDetail() {
                   </a>
                 </div>
               </div>
+            </div>
+
+            {/* Tipos de habitación */}
+            {roomTypes.length > 0 && (
+              <div className="mt-4 rounded-2xl border border-amber-100/[0.08] bg-[rgba(20,10,4,0.7)] p-4 backdrop-blur-xl md:p-5">
+                <p className="text-[10px] uppercase tracking-[0.3em] text-amber-400/80">
+                  Habitaciones y tarifas
+                </p>
+                <ul className="mt-2 divide-y divide-amber-100/[0.06]">
+                  {roomTypes.map((rt, i) => (
+                    <li key={i} className="flex items-center justify-between py-2 text-sm">
+                      <span className="text-amber-100/90">
+                        {ROOM_LABELS_CLIENT[rt.type] ?? rt.label ?? rt.type}
+                      </span>
+                      <span className="font-mono font-semibold tabular-nums text-amber-50">
+                        {Math.round(rt.price)} {rt.currency || "EUR"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Warning de precios */}
+            <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/[0.06] p-3 text-[11px] text-amber-100/90">
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-amber-300" />
+              <p>
+                Los precios varían según la temporada y la disponibilidad. Nosotros sólo damos
+                información orientativa: la reserva y el precio final se confirman en el operador
+                que elijas.
+              </p>
+            </div>
+
+            {/* Calendario 30 días */}
+            <div className="mt-4 rounded-2xl border border-amber-100/[0.08] bg-[rgba(20,10,4,0.7)] p-4 backdrop-blur-xl md:p-5">
+              <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.3em] text-amber-400/80">
+                <CalendarDays className="h-3 w-3" /> Disponibilidad · próximos 30 días
+              </p>
+              <p className="mt-1 text-[10px] text-amber-200/60">
+                Verde = hay habitaciones · rojo = sin disponibilidad. El precio mostrado es de la
+                habitación doble.
+              </p>
+              {calendar.isLoading ? (
+                <div className="mt-3 grid grid-cols-7 gap-1">
+                  {Array.from({ length: 30 }).map((_, i) => (
+                    <div key={i} className="h-12 animate-pulse rounded bg-amber-100/[0.06]" />
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-3 grid grid-cols-7 gap-1">
+                  {days.map((dy) => {
+                    const dt = new Date(dy.date + "T00:00:00Z");
+                    const day = dt.getUTCDate();
+                    const dow = dt.toLocaleDateString("es-ES", {
+                      weekday: "short",
+                      timeZone: "UTC",
+                    });
+                    const priceLabel =
+                      dy.price_double != null
+                        ? `${Math.round(dy.price_double)}€`
+                        : dy.price_min != null
+                          ? `${Math.round(dy.price_min)}€`
+                          : "—";
+                    return (
+                      <div
+                        key={dy.date}
+                        className={
+                          "flex h-12 flex-col items-center justify-center rounded text-[10px] leading-tight " +
+                          (dy.available
+                            ? "bg-emerald-500/20 text-emerald-100"
+                            : "bg-rose-500/15 text-rose-200/80")
+                        }
+                        title={`${dy.date} · ${dy.available ? "disponible" : "sin disponibilidad"}`}
+                      >
+                        <span className="text-[8px] uppercase tracking-wide opacity-70">{dow}</span>
+                        <span className="font-mono font-semibold">{day}</span>
+                        <span className="font-mono text-[9px] tabular-nums opacity-90">
+                          {priceLabel}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* AI Review */}

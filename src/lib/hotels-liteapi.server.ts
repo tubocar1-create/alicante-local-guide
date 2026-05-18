@@ -41,6 +41,29 @@ function nameScore(a: string, b: string) {
   return inter / Math.min(ta.size, tb.size);
 }
 
+const ROOM_ORDER = ["single", "double", "triple", "quadruple", "suite", "other"] as const;
+type RoomCat = (typeof ROOM_ORDER)[number];
+
+function classifyRoom(name: string): RoomCat {
+  const s = normalize(name);
+  if (/\bsuite|junior\b/.test(s)) return "suite";
+  if (/\btriple|tres |3 pax\b/.test(s)) return "triple";
+  if (/\bquad|cuadrupl|family|familiar|4 pax\b/.test(s)) return "quadruple";
+  if (/\bdoubl|doble|twin|matrim/.test(s)) return "double";
+  if (/\bsingl|individual|sencill|1 pax\b/.test(s)) return "single";
+  return "other";
+}
+
+const ROOM_LABELS: Record<RoomCat, string> = {
+  single: "Sencilla",
+  double: "Doble",
+  triple: "Triple",
+  quadruple: "Cuádruple",
+  suite: "Suite",
+  other: "Otra",
+};
+export { ROOM_LABELS };
+
 /** Fetch all LiteAPI hotels in Alicante area */
 async function fetchLiteApiHotels() {
   const url = new URL(`${LITEAPI_BASE}/data/hotels`);
@@ -172,15 +195,16 @@ export async function refreshDynamicHotelsImpl() {
     const item = idToData[r.liteapi_id!];
     const allRates: any[] = [];
     for (const rt of item?.roomTypes ?? []) {
-      for (const rate of rt?.rates ?? []) allRates.push(rate);
+      for (const rate of rt?.rates ?? []) allRates.push({ rate, roomName: rt?.name ?? rate?.name });
     }
-    for (const rate of item?.rates ?? []) allRates.push(rate);
+    for (const rate of item?.rates ?? []) allRates.push({ rate, roomName: rate?.name });
 
     let cheapest: any = null;
     let cheapestPrice = Infinity;
     let anyBreakfast = false;
     let anyRefundable = false;
-    for (const rate of allRates) {
+    const byType: Record<string, { price: number; currency: string; label: string }> = {};
+    for (const { rate, roomName } of allRates) {
       const p = ratePrice(rate);
       if (p != null && p < cheapestPrice) {
         cheapestPrice = p;
@@ -188,7 +212,17 @@ export async function refreshDynamicHotelsImpl() {
       }
       if (hasBreakfast(rate)) anyBreakfast = true;
       if (isRefundable(rate)) anyRefundable = true;
+      const cat = classifyRoom(roomName ?? "");
+      if (p != null) {
+        const cur = rateCurrency(rate);
+        if (!byType[cat] || p < byType[cat].price) {
+          byType[cat] = { price: p, currency: cur, label: roomName ?? cat };
+        }
+      }
     }
+    const room_types = ROOM_ORDER.flatMap((k) =>
+      byType[k] ? [{ type: k, price: byType[k].price, currency: byType[k].currency, label: byType[k].label }] : [],
+    );
 
     return {
       hotel_id: r.id,
@@ -198,6 +232,7 @@ export async function refreshDynamicHotelsImpl() {
       breakfast_included: anyBreakfast,
       free_cancellation: anyRefundable,
       rooms_available: item?.roomTypes?.length ?? null,
+      room_types,
       raw: item ?? null,
       updated_at: new Date().toISOString(),
     };
@@ -241,4 +276,133 @@ export async function liveCheckHotelImpl(hotelId: string, checkin: string, check
   const json = (await res.json()) as { data?: any[] };
   const item = json.data?.[0];
   return { ok: true as const, item, booking_url: row.booking_url };
+}
+
+/** Fetch (or refresh from cache) a month of nightly availability for a hotel.
+ *  Returns 30 nights starting at `startDate` (YYYY-MM-DD). Uses 24h cache. */
+export async function fetchHotelCalendarImpl(hotelId: string, startDate: string) {
+  const { data: row } = await supabaseAdmin
+    .from("hotels_static")
+    .select("liteapi_id")
+    .eq("id", hotelId)
+    .maybeSingle();
+
+  const start = new Date(startDate + "T00:00:00Z");
+  const days: string[] = [];
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(start.getTime() + i * 86400000);
+    days.push(d.toISOString().slice(0, 10));
+  }
+  const endDate = days[days.length - 1];
+
+  // Read existing cache rows
+  const { data: cached } = await supabaseAdmin
+    .from("hotels_calendar")
+    .select("date, available, price_double, price_min, currency, updated_at")
+    .eq("hotel_id", hotelId)
+    .gte("date", startDate)
+    .lte("date", endDate);
+
+  const cacheMap: Record<string, any> = {};
+  for (const c of cached ?? []) cacheMap[c.date as string] = c;
+
+  const STALE_MS = 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  const missing = days.filter((d) => {
+    const c = cacheMap[d];
+    if (!c) return true;
+    return now - new Date(c.updated_at).getTime() > STALE_MS;
+  });
+
+  if (row?.liteapi_id && missing.length > 0) {
+    // Fetch in parallel but cap concurrency
+    const CONCURRENCY = 6;
+    const upserts: any[] = [];
+    let idx = 0;
+    async function worker() {
+      while (idx < missing.length) {
+        const day = missing[idx++];
+        const checkout = new Date(new Date(day + "T00:00:00Z").getTime() + 86400000)
+          .toISOString()
+          .slice(0, 10);
+        try {
+          const res = await fetch(`${LITEAPI_BASE}/hotels/rates`, {
+            method: "POST",
+            headers: liteHeaders(),
+            body: JSON.stringify({
+              hotelIds: [row!.liteapi_id],
+              checkin: day,
+              checkout,
+              currency: "EUR",
+              guestNationality: "ES",
+              occupancies: [{ adults: 2 }],
+            }),
+          });
+          if (!res.ok) {
+            upserts.push({ hotel_id: hotelId, date: day, available: false, updated_at: new Date().toISOString() });
+            continue;
+          }
+          const json = (await res.json()) as { data?: any[] };
+          const item = json.data?.[0];
+          let minPrice = Infinity;
+          let doublePrice: number | null = null;
+          let currency = "EUR";
+          for (const rt of item?.roomTypes ?? []) {
+            const cat = classifyRoom(rt?.name ?? "");
+            for (const rate of rt?.rates ?? []) {
+              const p =
+                rate?.retailRate?.total?.[0]?.amount ??
+                rate?.retailRate?.total?.amount ??
+                rate?.totalPrice ??
+                rate?.price ??
+                null;
+              if (p == null) continue;
+              const np = Number(p);
+              currency =
+                rate?.retailRate?.total?.[0]?.currency ??
+                rate?.retailRate?.total?.currency ??
+                rate?.currency ??
+                "EUR";
+              if (np < minPrice) minPrice = np;
+              if (cat === "double" && (doublePrice == null || np < doublePrice)) {
+                doublePrice = np;
+              }
+            }
+          }
+          const available = isFinite(minPrice);
+          upserts.push({
+            hotel_id: hotelId,
+            date: day,
+            available,
+            price_double: doublePrice,
+            price_min: available ? minPrice : null,
+            currency,
+            updated_at: new Date().toISOString(),
+          });
+        } catch (e) {
+          upserts.push({ hotel_id: hotelId, date: day, available: false, updated_at: new Date().toISOString() });
+        }
+      }
+    }
+    await Promise.all(Array.from({ length: CONCURRENCY }, () => worker()));
+
+    if (upserts.length > 0) {
+      await supabaseAdmin.from("hotels_calendar").upsert(upserts, { onConflict: "hotel_id,date" });
+      for (const u of upserts) cacheMap[u.date] = u;
+    }
+  }
+
+  return {
+    hotel_id: hotelId,
+    days: days.map((d) => {
+      const c = cacheMap[d];
+      return {
+        date: d,
+        available: !!c?.available,
+        price_double: c?.price_double ?? null,
+        price_min: c?.price_min ?? null,
+        currency: c?.currency ?? "EUR",
+      };
+    }),
+  };
 }

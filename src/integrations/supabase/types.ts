@@ -672,6 +672,36 @@ export type Database = {
         }
         Relationships: []
       }
+      hotels_calendar: {
+        Row: {
+          available: boolean
+          currency: string | null
+          date: string
+          hotel_id: string
+          price_double: number | null
+          price_min: number | null
+          updated_at: string
+        }
+        Insert: {
+          available?: boolean
+          currency?: string | null
+          date: string
+          hotel_id: string
+          price_double?: number | null
+          price_min?: number | null
+          updated_at?: string
+        }
+        Update: {
+          available?: boolean
+          currency?: string | null
+          date?: string
+          hotel_id?: string
+          price_double?: number | null
+          price_min?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       hotels_dynamic: {
         Row: {
           available: boolean
@@ -681,6 +711,7 @@ export type Database = {
           free_cancellation: boolean | null
           hotel_id: string
           raw: Json | null
+          room_types: Json
           rooms_available: number | null
           updated_at: string
         }
@@ -692,6 +723,7 @@ export type Database = {
           free_cancellation?: boolean | null
           hotel_id: string
           raw?: Json | null
+          room_types?: Json
           rooms_available?: number | null
           updated_at?: string
         }
@@ -703,6 +735,7 @@ export type Database = {
           free_cancellation?: boolean | null
           hotel_id?: string
           raw?: Json | null
+          room_types?: Json
           rooms_available?: number | null
           updated_at?: string
         }
