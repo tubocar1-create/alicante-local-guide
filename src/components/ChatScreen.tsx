@@ -110,7 +110,7 @@ const SUGGESTIONS: Suggestion[] = [
     label: "🏖️ Turismo, playa y aventuras",
     submenu: [
       { label: "🏛️ Turismo", prompt: "¿Qué sitios turísticos imprescindibles puedo visitar en Alicante hoy?" },
-      { label: "🏖️ Playa", prompt: "¿Qué playa me recomiendas?" },
+      { label: "🏖️ Playa", href: "/playas" },
       { label: "🌳 Parque", prompt: "¿Qué parque o zona verde me recomiendas?" },
       { label: "🧗 Aventuras", prompt: "¿Qué planes de aventura o actividades al aire libre puedo hacer hoy en Alicante o alrededores?" },
     ],
