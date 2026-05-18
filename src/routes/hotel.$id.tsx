@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { getHotel, getHotelCalendar, getHotelPhotos } from "@/lib/hotels.functions";
 import { getAiReview } from "@/lib/ai-review.functions";
+import { useUserLocation, distanceKm, formatDistance } from "@/hooks/useUserLocation";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+
+// Puerta del Mar, Alicante (fallback reference point)
+const PUERTA_DEL_MAR = { lat: 38.3404, lng: -0.4811 };
 
 export const Route = createFileRoute("/hotel/$id")({
   component: HotelDetail,
