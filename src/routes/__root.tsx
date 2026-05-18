@@ -8,6 +8,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { InstallPWA } from "@/components/InstallPWA";
 
 import appCss from "../styles.css?url";
 import "@/integrations/supabase/server-fn-fetch";
