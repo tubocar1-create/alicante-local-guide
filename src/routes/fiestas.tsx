@@ -781,7 +781,7 @@ function FiestasPage() {
               loading="lazy"
               width={1280}
               height={896}
-              height-attr="undefined"
+              
               className="h-56 w-full object-cover"
             />
             <figcaption className="bg-gradient-to-r from-pink-500/80 to-purple-500/80 px-3 py-2 text-sm font-semibold text-white">
