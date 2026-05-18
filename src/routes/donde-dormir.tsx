@@ -186,12 +186,13 @@ function DondeDormirPage() {
                           params={{ id: h.id }}
                           className="block hover:text-amber-300"
                         >
-                          <span className="flex items-center gap-1">
+                          <span className="flex items-center gap-1.5">
+                            <span className={`h-2 w-2 flex-shrink-0 rounded-full ${dotColor}`} />
                             <span className="text-[13px] leading-none">{hotelEmoji(h.hotel_type)}</span>
                             <span className="min-w-0 truncate text-[11px] font-medium">{h.name}</span>
                           </span>
                           {h.address && (
-                            <span className="mt-0.5 block truncate pl-[18px] text-[9px] text-amber-100/60">
+                            <span className="mt-0.5 block truncate pl-[22px] text-[9px] text-amber-100/60">
                               {h.address}
                             </span>
                           )}
