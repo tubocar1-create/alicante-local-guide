@@ -176,9 +176,10 @@ export function getBeachBySlug(slug: string): MapBeach | undefined {
 // Fotos locales subidas por el usuario, mostradas antes que las de Google.
 export const LOCAL_BEACH_PHOTOS: Record<string, string[]> = {
   "arenales-del-sol": ["/playas/photo1.jpg", "/playas/photo2.jpg"],
-  "muchavista": ["/playas/photo3.jpg"],
+  "muchavista": [],
   "san-juan": [],
   "cala-cantalar": [
+    "/playas/photo3.jpg",
     "/playas/photo4.jpg",
     "/playas/photo5.jpg",
     "/playas/photo6.jpg",
