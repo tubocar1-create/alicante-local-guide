@@ -193,7 +193,7 @@ function PlayasPage() {
           ))}
         </section>
 
-        <AlicanteBeachMap />
+        
 
         <section className="mt-8 grid gap-4 sm:grid-cols-2">
           {BEACHES.map((beach) => (
@@ -234,6 +234,20 @@ function PlayasPage() {
           <InfoBlock icon={<Train className="h-5 w-5" />} title="Sin coche" text="Postiguet, Albufereta, San Juan y parte del Cabo funcionan muy bien con TRAM y bus." />
           <InfoBlock icon={<Footprints className="h-5 w-5" />} title="Calas" text="Para Cabo y Cantalar lleva escarpines, agua y poco peso. La sombra es limitada." />
           <InfoBlock icon={<Camera className="h-5 w-5" />} title="Mejor luz" text="Postiguet al amanecer, Almadraba al atardecer y San Juan en horas suaves." />
+        </section>
+
+        <section className="mt-12 overflow-hidden rounded-3xl bg-gradient-to-br from-cyan-600 via-sky-600 to-indigo-700 p-6 text-white shadow-xl">
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-100">Cuando quieras situarte</p>
+          <h2 className="mt-2 text-3xl font-black leading-tight">Abre el mapa interactivo a página completa</h2>
+          <p className="mt-3 max-w-2xl text-sm font-semibold text-white/90">
+            Ya tienes la charla y las recomendaciones. Despliega el mapa entero para ver dónde está cada playa y elegir tu plan de un vistazo.
+          </p>
+          <Link
+            to="/playas/mapa"
+            className="mt-5 inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-black text-cyan-700 shadow-lg transition hover:scale-[1.02]"
+          >
+            <MapPin className="h-4 w-4" /> Ver mapa completo
+          </Link>
         </section>
       </main>
     </div>
@@ -282,51 +296,3 @@ function InfoBlock({ icon, title, text }: { icon: React.ReactNode; title: string
   );
 }
 
-const MAP_BEACHES = [
-  { name: "Playa del Postiguet", position: { top: "58%", left: "48%" }, description: "Playa urbana junto al Castillo de Santa Bárbara." },
-  { name: "Playa de San Juan", position: { top: "30%", left: "70%" }, description: "La playa más grande y famosa de Alicante." },
-  { name: "Playa de la Albufereta", position: { top: "46%", left: "60%" }, description: "Cala tranquila entre Alicante y San Juan." },
-  { name: "Cabo de las Huertas", position: { top: "38%", left: "78%" }, description: "Calas rocosas ideales para snorkel." },
-  { name: "Playa de Urbanova", position: { top: "82%", left: "30%" }, description: "Arena amplia cerca del aeropuerto y dunas." },
-];
-
-function AlicanteBeachMap() {
-  return (
-    <section className="mt-10">
-      <div className="mb-4">
-        <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-700">Mapa interactivo</p>
-        <h2 className="mt-1 text-2xl font-black text-slate-950">Costa alicantina de un vistazo</h2>
-        <p className="mt-2 max-w-2xl text-sm font-semibold text-slate-600">
-          Pulsa o pasa el cursor sobre cada punto naranja para descubrir la playa.
-        </p>
-      </div>
-
-      <div className="relative w-full aspect-[16/9] overflow-hidden rounded-3xl border border-orange-200 bg-gradient-to-r from-sky-300 via-cyan-200 to-amber-100 shadow-2xl">
-        <img
-          src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Playa_de_San_Juan_-_Alicante.jpg/1600px-Playa_de_San_Juan_-_Alicante.jpg"
-          alt="Costa de Alicante vista desde el aire"
-          className="absolute inset-0 h-full w-full object-cover opacity-80"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-sky-900/25 to-cyan-400/10" />
-
-        {MAP_BEACHES.map((beach) => (
-          <div key={beach.name} className="group absolute" style={beach.position}>
-            <div className="relative">
-              <button
-                type="button"
-                aria-label={beach.name}
-                className="h-6 w-6 animate-pulse rounded-full border-4 border-white bg-orange-500 shadow-lg transition-transform hover:scale-125"
-              />
-              <div className="pointer-events-none absolute left-8 top-1/2 z-20 -translate-y-1/2 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100 group-active:opacity-100">
-                <div className="w-64 rounded-2xl border border-orange-100 bg-white p-4 shadow-xl">
-                  <h3 className="mb-1 text-lg font-black text-[oklch(0.62_0.17_45)]">{beach.name}</h3>
-                  <p className="text-sm text-slate-600">{beach.description}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
