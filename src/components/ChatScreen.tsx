@@ -696,7 +696,11 @@ export function ChatScreen() {
                         setShowFlightPicker(true);
                       } else if (opt.href) {
                         setSubmenuStack([]);
-                        window.location.href = opt.href;
+                        if (opt.href.startsWith("/")) {
+                          navigate({ to: opt.href });
+                        } else {
+                          window.location.href = opt.href;
+                        }
                       } else if (opt.prompt) {
                         setSubmenuStack([]);
                         requestLocationForPrompt(opt.prompt);
