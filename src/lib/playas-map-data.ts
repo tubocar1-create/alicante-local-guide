@@ -178,6 +178,7 @@ export const LOCAL_BEACH_PHOTOS: Record<string, string[]> = {
   "postiguet": ["/playas/postiguet1.jpg", "/playas/postiguet2.jpg", "/playas/postiguet5.jpg"],
   "arenales-del-sol": ["/playas/photo1.jpg", "/playas/photo2.jpg"],
   "muchavista": [],
+  "cala-lanuza": ["/playas/cala-lanuza1.jpg"],
   "san-juan": ["/playas/sanjuan6.jpg"],
   "cala-cantalar": [
     "/playas/photo3.jpg",
