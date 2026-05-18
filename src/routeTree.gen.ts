@@ -42,6 +42,7 @@ import { Route as OcioTeatrosRouteImport } from './routes/ocio_.teatros'
 import { Route as OcioConciertosRouteImport } from './routes/ocio_.conciertos'
 import { Route as OcioCinesRouteImport } from './routes/ocio_.cines'
 import { Route as OcioCarteleraRouteImport } from './routes/ocio_.cartelera'
+import { Route as HotelIdRouteImport } from './routes/hotel.$id'
 import { Route as HospitalesIdRouteImport } from './routes/hospitales_.$id'
 import { Route as BusinessReferralsRouteImport } from './routes/business.referrals'
 import { Route as BusinessQrRouteImport } from './routes/business.qr'
@@ -238,6 +239,11 @@ const OcioCarteleraRoute = OcioCarteleraRouteImport.update({
   path: '/ocio/cartelera',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HotelIdRoute = HotelIdRouteImport.update({
+  id: '/hotel/$id',
+  path: '/hotel/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HospitalesIdRoute = HospitalesIdRouteImport.update({
   id: '/hospitales_/$id',
   path: '/hospitales/$id',
@@ -429,6 +435,7 @@ export interface FileRoutesByFullPath {
   '/business/qr': typeof BusinessQrRoute
   '/business/referrals': typeof BusinessReferralsRoute
   '/hospitales/$id': typeof HospitalesIdRoute
+  '/hotel/$id': typeof HotelIdRoute
   '/ocio/cartelera': typeof OcioCarteleraRoute
   '/ocio/cines': typeof OcioCinesRouteWithChildren
   '/ocio/conciertos': typeof OcioConciertosRoute
@@ -493,6 +500,7 @@ export interface FileRoutesByTo {
   '/business/qr': typeof BusinessQrRoute
   '/business/referrals': typeof BusinessReferralsRoute
   '/hospitales/$id': typeof HospitalesIdRoute
+  '/hotel/$id': typeof HotelIdRoute
   '/ocio/cartelera': typeof OcioCarteleraRoute
   '/ocio/cines': typeof OcioCinesRouteWithChildren
   '/ocio/conciertos': typeof OcioConciertosRoute
@@ -559,6 +567,7 @@ export interface FileRoutesById {
   '/business/qr': typeof BusinessQrRoute
   '/business/referrals': typeof BusinessReferralsRoute
   '/hospitales_/$id': typeof HospitalesIdRoute
+  '/hotel/$id': typeof HotelIdRoute
   '/ocio_/cartelera': typeof OcioCarteleraRoute
   '/ocio_/cines': typeof OcioCinesRouteWithChildren
   '/ocio_/conciertos': typeof OcioConciertosRoute
@@ -626,6 +635,7 @@ export interface FileRouteTypes {
     | '/business/qr'
     | '/business/referrals'
     | '/hospitales/$id'
+    | '/hotel/$id'
     | '/ocio/cartelera'
     | '/ocio/cines'
     | '/ocio/conciertos'
@@ -690,6 +700,7 @@ export interface FileRouteTypes {
     | '/business/qr'
     | '/business/referrals'
     | '/hospitales/$id'
+    | '/hotel/$id'
     | '/ocio/cartelera'
     | '/ocio/cines'
     | '/ocio/conciertos'
@@ -755,6 +766,7 @@ export interface FileRouteTypes {
     | '/business/qr'
     | '/business/referrals'
     | '/hospitales_/$id'
+    | '/hotel/$id'
     | '/ocio_/cartelera'
     | '/ocio_/cines'
     | '/ocio_/conciertos'
@@ -811,6 +823,7 @@ export interface RootRouteChildren {
   AdminPlacesRoute: typeof AdminPlacesRoute
   AdminSaludRoute: typeof AdminSaludRoute
   HospitalesIdRoute: typeof HospitalesIdRoute
+  HotelIdRoute: typeof HotelIdRoute
   OcioCarteleraRoute: typeof OcioCarteleraRoute
   OcioCinesRoute: typeof OcioCinesRouteWithChildren
   OcioConciertosRoute: typeof OcioConciertosRoute
@@ -1064,6 +1077,13 @@ declare module '@tanstack/react-router' {
       path: '/ocio/cartelera'
       fullPath: '/ocio/cartelera'
       preLoaderRoute: typeof OcioCarteleraRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hotel/$id': {
+      id: '/hotel/$id'
+      path: '/hotel/$id'
+      fullPath: '/hotel/$id'
+      preLoaderRoute: typeof HotelIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/hospitales_/$id': {
@@ -1417,6 +1437,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminPlacesRoute: AdminPlacesRoute,
   AdminSaludRoute: AdminSaludRoute,
   HospitalesIdRoute: HospitalesIdRoute,
+  HotelIdRoute: HotelIdRoute,
   OcioCarteleraRoute: OcioCarteleraRoute,
   OcioCinesRoute: OcioCinesRouteWithChildren,
   OcioConciertosRoute: OcioConciertosRoute,
