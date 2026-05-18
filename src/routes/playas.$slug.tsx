@@ -12,7 +12,9 @@ export const Route = createFileRoute("/playas/$slug")({
     const extras = getBeachExtras({ data: { slug: params.slug } });
     return { quick, extras };
   },
-  staleTime: 5 * 60 * 1000,
+  staleTime: Infinity,
+  gcTime: Infinity,
+  shouldReload: false,
   head: ({ params }) => {
     const b = getBeachBySlug(params.slug);
     const name = b?.name ?? "Playa de Alicante";
