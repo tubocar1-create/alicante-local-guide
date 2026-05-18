@@ -54,21 +54,11 @@ export const Route = createFileRoute("/fiestas")({
 
 type Photo = { src: string; caption: string };
 
-// Las fotos del relato NO se repiten aquí: estas tiras son fotos extra.
+// Cada foto se usa UNA sola vez en toda la página.
 const HOGUERAS_PHOTOS: Photo[] = [
-  { src: hoguera1, caption: "La cremà: la noche en que arde la ciudad" },
   { src: hoguera2, caption: "Monumentos de hasta 20 metros de altura" },
   { src: desfile1, caption: "Desfiles por todas las calles" },
-];
-
-const MASCLETAS_PHOTOS: Photo[] = [
-  { src: mascleta2, caption: "Humo de colores sobre Luceros" },
-  { src: fuegos2, caption: "Pirotecnia sobre Santa Bárbara" },
-];
-
-const TRADICIONES_PHOTOS: Photo[] = [
   { src: playa1, caption: "Hoguera en la playa de San Juan" },
-  { src: belleas1, caption: "Trajes valencianos bordados a mano" },
 ];
 
 function PhotoStrip({ photos, accent }: { photos: Photo[]; accent: string }) {
