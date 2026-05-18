@@ -176,6 +176,40 @@ function HotelDetail() {
                 <div className="flex h-40 items-center justify-center text-5xl opacity-30">🏨</div>
               )}
               <div className="p-4 md:p-5">
+                <div className="mb-2 flex justify-end">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-amber-500/10 px-3 py-1.5 text-[11px] font-semibold text-amber-200 hover:bg-amber-500/20"
+                      >
+                        <Sparkles className="h-3 w-3" /> Nuestra reseña
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md border-amber-100/10 bg-[#0a1638] text-amber-50">
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center gap-1.5 text-amber-200">
+                          <Sparkles className="h-4 w-4" /> Nuestra reseña
+                        </DialogTitle>
+                      </DialogHeader>
+                      {review.isLoading ? (
+                        <div className="space-y-2">
+                          <div className="h-3 w-full animate-pulse rounded bg-amber-100/10" />
+                          <div className="h-3 w-5/6 animate-pulse rounded bg-amber-100/10" />
+                          <div className="h-3 w-4/6 animate-pulse rounded bg-amber-100/10" />
+                        </div>
+                      ) : review.data?.text ? (
+                        <p className="text-sm leading-relaxed text-amber-100/90">
+                          {review.data.text}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-amber-200/60">
+                          No hemos podido generar la reseña ahora mismo.
+                        </p>
+                      )}
+                    </DialogContent>
+                  </Dialog>
+                </div>
                 <p className="text-[10px] uppercase tracking-[0.3em] text-amber-400/80">
                   {h.hotel_type ?? "Alojamiento"}
                 </p>
