@@ -60,10 +60,10 @@ function HotelDetail() {
     const y = today.getFullYear();
     const m = today.getMonth();
     const start = new Date(Date.UTC(y, m, today.getDate()));
-    const end = new Date(Date.UTC(y, m + 3, 0)); // last day of (current+2)
+    const end = new Date(Date.UTC(y, m + 4, 0)); // last day of (current+3)
     const fmt = (d: Date) => d.toISOString().slice(0, 10);
     const ms: Array<{ year: number; month: number; firstDay: number; daysInMonth: number; firstWeekday: number }> = [];
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 4; i++) {
       const monthStart = new Date(Date.UTC(y, m + i, 1));
       const monthEnd = new Date(Date.UTC(y, m + i + 1, 0));
       const firstDay = i === 0 ? today.getDate() : 1;
