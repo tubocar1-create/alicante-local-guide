@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
-import { ArrowLeft, User as UserIcon, Sparkles, Mail, Phone } from "lucide-react";
+import { ArrowLeft, User as UserIcon, Sparkles, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { signInWithName } from "@/hooks/useAuth";
 
