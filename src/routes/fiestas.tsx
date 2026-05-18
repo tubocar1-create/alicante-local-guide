@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
   Flame, Sparkles, ArrowLeft, PartyPopper, Send, Bot,
@@ -32,6 +32,10 @@ import bunuelos1 from "@/assets/fiestas-bunuelos-1.jpg";
 import crema1 from "@/assets/fiestas-crema-1.jpg";
 import banya1 from "@/assets/fiestas-banya-1.jpg";
 import ofrenda1 from "@/assets/fiestas-ofrenda-1.jpg";
+import arroz1 from "@/assets/fiestas-arroz-1.jpg";
+import cultura1 from "@/assets/fiestas-cultura-1.jpg";
+import cala1 from "@/assets/fiestas-cala-1.jpg";
+import taller1 from "@/assets/fiestas-taller-1.jpg";
 import hoguerasIcon from "@/assets/hogueras-alicante.png";
 import { askFiestasAI } from "@/lib/fiestas-ai.functions";
 
@@ -57,27 +61,20 @@ export const Route = createFileRoute("/fiestas")({
 
 type Photo = { src: string; caption: string };
 
+// Las fotos del relato NO se repiten aquí: estas tiras son fotos extra.
 const HOGUERAS_PHOTOS: Photo[] = [
   { src: hoguera1, caption: "La cremà: la noche en que arde la ciudad" },
-  { src: ninot1, caption: "Ninots gigantes con personalidad propia" },
   { src: hoguera2, caption: "Monumentos de hasta 20 metros de altura" },
-  { src: belleas1, caption: "Belleas del Foc y damas de honor" },
   { src: desfile1, caption: "Desfiles por todas las calles" },
-  { src: crema1, caption: "Llamas que rozan los balcones" },
-  { src: playa1, caption: "Hoguera en la playa de San Juan" },
 ];
 
 const MASCLETAS_PHOTOS: Photo[] = [
-  { src: mascleta1, caption: "La mascletà: pólvora que se siente en el pecho" },
   { src: mascleta2, caption: "Humo de colores sobre Luceros" },
-  { src: fuegos1, caption: "Castillos de fuegos sobre el puerto" },
   { src: fuegos2, caption: "Pirotecnia sobre Santa Bárbara" },
 ];
 
 const TRADICIONES_PHOTOS: Photo[] = [
-  { src: ofrenda1, caption: "Ofrenda de Flores a la Virgen del Remedio" },
-  { src: bunuelos1, caption: "Buñuelos y churros recién hechos" },
-  { src: banya1, caption: "La Banyà: los bomberos te mojan ¡y te ríes!" },
+  { src: playa1, caption: "Hoguera en la playa de San Juan" },
   { src: belleas1, caption: "Trajes valencianos bordados a mano" },
 ];
 
@@ -609,6 +606,349 @@ function FiestasChat() {
   );
 }
 
+// ============================================================
+// RELATO EN 3 ACTOS — ANTES · DURANTE · DESPUÉS
+// Dinámico: la fase actual se ilumina, las otras se ven en off
+// ============================================================
+
+type RelatoFoto = { src: string; alt: string; caption: string; ring: string; cap: string };
+
+function ActoBloque({
+  numero,
+  fase,
+  activo,
+  pretitulo,
+  titulo,
+  acento,
+  parrafos,
+  fotos,
+}: {
+  numero: string;
+  fase: "previa" | "semana-grande" | "fuegos-postiguet" | "nostalgia";
+  activo: boolean;
+  pretitulo: string;
+  titulo: string;
+  acento: string; // ej: "from-amber-400 to-orange-500"
+  parrafos: ReactNode[];
+  fotos: RelatoFoto[];
+}) {
+  // Intercalamos foto entre párrafos
+  const bloques: ReactNode[] = [];
+  parrafos.forEach((p, i) => {
+    bloques.push(
+      <p key={`p-${i}`} className="text-sm leading-relaxed text-amber-50/95">
+        {p}
+      </p>,
+    );
+    const foto = fotos[i];
+    if (foto) {
+      bloques.push(
+        <figure
+          key={`f-${i}`}
+          className={`overflow-hidden rounded-3xl ring-2 ${foto.ring} animate-rise`}
+        >
+          <img
+            src={foto.src}
+            alt={foto.alt}
+            loading="lazy"
+            width={1280}
+            height={896}
+            className="h-56 w-full object-cover transition-transform duration-700 hover:scale-105"
+          />
+          <figcaption
+            className={`bg-gradient-to-r ${foto.cap} px-3 py-2 text-sm font-semibold text-white`}
+          >
+            {foto.caption}
+          </figcaption>
+        </figure>,
+      );
+    }
+  });
+
+  return (
+    <section
+      className={`relative space-y-4 rounded-3xl p-4 ring-1 transition-all ${
+        activo
+          ? "bg-black/30 ring-amber-300/60 shadow-[0_15px_50px_-15px_rgba(251,191,36,0.5)]"
+          : "bg-black/20 ring-white/10 opacity-90"
+      }`}
+    >
+      <header className="flex items-center gap-3">
+        <div
+          className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br ${acento} text-xl font-black text-white shadow-lg ${
+            activo ? "animate-fire-glow" : ""
+          }`}
+        >
+          {numero}
+        </div>
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-amber-200/80">
+            {pretitulo}
+          </p>
+          <h3 className="text-2xl font-black leading-tight text-amber-50 drop-shadow">
+            {titulo}
+          </h3>
+        </div>
+        {activo && (
+          <span className="ml-auto animate-pulse rounded-full bg-amber-300 px-2 py-0.5 text-[10px] font-black text-[#2a0a14]">
+            AHORA
+          </span>
+        )}
+      </header>
+      {bloques}
+    </section>
+  );
+}
+
+function Relato() {
+  const fase = useMemo(() => calcularFase(), []);
+
+  const antes: ReactNode[] = [
+    <>
+      Empieza a notarse en mayo. La ciudad cuchichea, los <strong>foguerers</strong>
+      cierran talleres con llave y empiezan a aparecer <strong>carteles con
+      las Belleas del Foc</strong> en los escaparates. <em>Algo grande viene</em>,
+      y todo Alicante lo sabe.
+    </>,
+    <>
+      En los talleres, ninots de seis metros esperan boca abajo a que les
+      pinten la última ceja. Suena un transistor de fondo, huele a cola y
+      virutas. <strong>Un año entero de trabajo</strong> para arder en una
+      sola noche. Eso, en Alicante, no es tristeza: es <strong>poesía</strong>.
+    </>,
+    <>
+      Llega el <strong>Pregón</strong> (5 de junio). Desfile, música y de
+      repente toda la ciudad <em>cambia el chip</em>. A partir de ahí,
+      cuenta atrás real: <strong>Cabalgata del Ninot</strong>, primera
+      mascletà de aviso, <strong>Arribada del Foc</strong> con luz y
+      pirotecnia… y el corazón ya late distinto.
+    </>,
+  ];
+
+  const antesFotos: RelatoFoto[] = [
+    {
+      src: belleas1,
+      alt: "Bellea del Foc",
+      caption: "👑 Las Belleas del Foc — el primer aviso de que viene la fiesta",
+      ring: "ring-rose-300/50",
+      cap: "from-rose-500/80 to-pink-500/80",
+    },
+    {
+      src: taller1,
+      alt: "Taller de ninots",
+      caption: "🎨 El taller — un año de trabajo para una sola noche",
+      ring: "ring-amber-300/50",
+      cap: "from-amber-500/80 to-orange-500/80",
+    },
+  ];
+
+  const durante: ReactNode[] = [
+    <>
+      Y un día, a las 14:00, suena. La <strong>Plaza de los Luceros</strong>
+      se llena hasta los balcones y la <strong>mascletà</strong> arranca
+      lenta, sube, sube, y termina en un <strong>terremoto seco</strong> que
+      te golpea el pecho. Hay quien aplaude llorando. Es normal.
+    </>,
+    <>
+      Después, comer en serio. Estás en territorio sagrado del{" "}
+      <strong>arroz</strong>: <em>arroz a banda</em>, <em>del senyoret</em>,
+      <em> arroz negro</em> con alioli, o una <em>fideuà</em> que aquí se
+      respeta como hermana del arroz. Acompañas con un{" "}
+      <strong>Monastrell</strong> del Vinalopó o cerveza fría con{" "}
+      <em>quisquillas de Santa Pola</em> y <em>salazones</em>. Sobremesa
+      larga, sin reloj.
+    </>,
+    <>
+      Por la tarde, los <strong>ninots</strong> ya están plantados en cada
+      esquina y caminar por el centro es una <strong>visita a un museo al
+      aire libre</strong>. Una banda toca un pasodoble, una <em>dansà</em>
+      improvisada, alguien te invita a un <em>buñuelo de calabaza</em>
+      caliente con azúcar. El olor a aceite y azúcar es la firma oficial
+      de las Hogueras.
+    </>,
+    <>
+      Cae el sol y empieza la <strong>Ofrenda de Flores</strong>: miles de
+      personas con trajes valencianos bordados a mano caminando desde
+      Alfonso X hasta la Concatedral con ramos para la{" "}
+      <strong>Virgen del Remedio</strong>. Es lento, es bonito, es{" "}
+      <em>profundamente emocional</em>. Aunque no seas creyente, hay algo
+      ahí que te toca.
+    </>,
+    <>
+      Si te queda aire, subes al <strong>Castillo de Santa Bárbara</strong>
+      con la ciudad encendida a tus pies, te pierdes por el barrio de{" "}
+      <strong>Santa Cruz</strong> entre flores y casas blancas, o te
+      asomas al <strong>MARQ</strong> o el <strong>MACA</strong>. Cultura
+      sin prisa, con la brisa de mar en la cara.
+    </>,
+    <>
+      Y por la noche… <strong>las barracas</strong>. Carpas inmensas
+      montadas por las comisiones, con cocina propia, barra y DJ. Los{" "}
+      <strong>racós</strong> son la versión de barrio. Cenas tipo tapeo,
+      conciertos pequeños, gente bailando con cincuenta años y gente
+      bailando con dieciocho, mezclados. <strong>No cierran hasta que sale
+      el sol</strong>, literalmente.
+    </>,
+  ];
+
+  const duranteFotos: RelatoFoto[] = [
+    {
+      src: mascleta1,
+      alt: "Mascletà en Luceros",
+      caption: "💥 La mascletà — pólvora que se siente en el pecho",
+      ring: "ring-orange-300/50",
+      cap: "from-orange-500/80 to-red-500/80",
+    },
+    {
+      src: arroz1,
+      alt: "Arroz a banda con vino Monastrell",
+      caption: "🍤 Arroz a banda con Monastrell — el ritual de la sobremesa",
+      ring: "ring-yellow-300/50",
+      cap: "from-yellow-500/80 to-amber-500/80",
+    },
+    {
+      src: bunuelos1,
+      alt: "Buñuelos de calabaza",
+      caption: "🍩 Bunyols de carabassa — el olor oficial de las fiestas",
+      ring: "ring-amber-300/50",
+      cap: "from-amber-500/80 to-orange-400/80",
+    },
+    {
+      src: ofrenda1,
+      alt: "Ofrenda de Flores",
+      caption: "👑 Ofrenda de Flores — el corazón emocional de las Hogueras",
+      ring: "ring-rose-300/50",
+      cap: "from-rose-500/80 to-pink-500/80",
+    },
+    {
+      src: cultura1,
+      alt: "Castillo de Santa Bárbara desde el casco antiguo",
+      caption: "🏛️ Santa Bárbara y Santa Cruz — cultura con vistas",
+      ring: "ring-cyan-300/50",
+      cap: "from-cyan-500/80 to-blue-500/80",
+    },
+    {
+      src: ninot1,
+      alt: "Ninot plantado",
+      caption: "🎭 Ninots — sátira y arte a 20 metros de altura",
+      ring: "ring-pink-300/50",
+      cap: "from-pink-500/80 to-purple-500/80",
+    },
+  ];
+
+  const despues: ReactNode[] = [
+    <>
+      Madrugada del 24 al 25. <strong>La Cremà</strong>. A las 00:00 una{" "}
+      <strong>palmera de fuegos</strong> sale disparada desde el Castillo
+      y, a partir de ahí, todas las hogueras de la ciudad arden a la vez.
+      El cielo se pinta de naranja, el aire es puro humo y, de pronto,
+      llegan los bomberos con las mangueras: <strong>la Banyà</strong>.
+      Te empapan mientras gritas y te ríes. Quien lo vive una vez, vuelve.
+    </>,
+    <>
+      Cuando crees que se acabó, no. Quedan <strong>cinco noches más de
+      castillos pirotécnicos</strong> sobre la <strong>Playa del
+      Postiguet</strong>, del 25 al 29 de junio, siempre a medianoche.
+      Toalla, cerveza fría, los pies en la arena, el mar de fondo y el
+      cielo pintado de fuego. <em>Ése</em> es el verdadero adiós.
+    </>,
+    <>
+      Y aún queda Alicante en bandeja: TRAM a <strong>San Juan</strong>,{" "}
+      <strong>Albufereta</strong> o <strong>Cabo Huertas</strong>, calas
+      turquesas, agua a 22 grados y nadie con prisa. La fiesta termina,
+      pero el verano arranca aquí mismo.
+    </>,
+    <>
+      Y luego… silencio. Las calles quedan vacías, queda olor a humo
+      durante dos días y los foguerers ya están <em>pensando en el
+      monumento del año que viene</em>. Por eso decimos que las Hogueras
+      no terminan nunca: <strong>se descansan</strong>.
+    </>,
+  ];
+
+  const despuesFotos: RelatoFoto[] = [
+    {
+      src: crema1,
+      alt: "La Cremà",
+      caption: "🔥 La Cremà — la noche en que arde Alicante entera",
+      ring: "ring-red-300/50",
+      cap: "from-red-500/80 to-orange-500/80",
+    },
+    {
+      src: fuegos1,
+      alt: "Castillo de fuegos sobre el Postiguet",
+      caption: "🎆 Castillos en el Postiguet — cinco noches más de fuego",
+      ring: "ring-purple-300/50",
+      cap: "from-purple-500/80 to-pink-500/80",
+    },
+    {
+      src: cala1,
+      alt: "Calas de Cabo de las Huertas",
+      caption: "🏖️ Cabo Huertas — agua turquesa a 15 minutos en TRAM",
+      ring: "ring-cyan-300/50",
+      cap: "from-cyan-500/80 to-teal-500/80",
+    },
+    {
+      src: banya1,
+      alt: "La Banyà",
+      caption: "💦 La Banyà — bomberos, risas y el final más mojado",
+      ring: "ring-blue-300/50",
+      cap: "from-blue-500/80 to-indigo-500/80",
+    },
+  ];
+
+  return (
+    <div className="space-y-6 animate-rise">
+      <div className="rounded-3xl bg-gradient-to-br from-yellow-300/20 via-pink-500/20 to-orange-500/20 p-5 ring-1 ring-yellow-300/40">
+        <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-yellow-200">
+          El relato de las Hogueras
+        </p>
+        <h2 className="mt-1 text-3xl font-black leading-tight text-amber-50 drop-shadow">
+          Antes · Durante · Después
+        </h2>
+        <p className="mt-2 text-sm leading-relaxed text-amber-100/95">
+          Alicante no se vive: <strong>se celebra</strong>. Y la celebración
+          tiene tres tiempos. Te los cuento en orden, como pasan — y se
+          ilumina el que estamos viviendo ahora mismo ✨
+        </p>
+      </div>
+
+      <ActoBloque
+        numero="I"
+        fase="previa"
+        activo={fase === "previa"}
+        pretitulo="Acto I — La cuenta atrás"
+        titulo="Antes: huele a algo que viene"
+        acento="from-amber-400 to-orange-500"
+        parrafos={antes}
+        fotos={antesFotos}
+      />
+
+      <ActoBloque
+        numero="II"
+        fase="semana-grande"
+        activo={fase === "semana-grande"}
+        pretitulo="Acto II — La explosión"
+        titulo="Durante: siete días que duran un año"
+        acento="from-orange-500 to-red-600"
+        parrafos={durante}
+        fotos={duranteFotos}
+      />
+
+      <ActoBloque
+        numero="III"
+        fase="fuegos-postiguet"
+        activo={fase === "fuegos-postiguet" || fase === "nostalgia"}
+        pretitulo="Acto III — El eco"
+        titulo="Después: el fuego no se apaga del todo"
+        acento="from-pink-500 to-purple-600"
+        parrafos={despues}
+        fotos={despuesFotos}
+      />
+    </div>
+  );
+}
+
 function FiestasPage() {
   return (
     <div
@@ -678,225 +1018,8 @@ function FiestasPage() {
       </div>
 
       <main className="space-y-8 px-4 py-6 pb-28">
-        {/* RESEÑA AMPLIADA — entrelazada con fotos y temas */}
-        <div className="space-y-4 animate-rise">
-          <p className="text-base leading-relaxed text-amber-50">
-            Alicante no se vive: <strong>se celebra</strong>. Y en junio, esa
-            celebración se llama <strong>Hogueras de San Juan</strong> —Fiesta de
-            Interés Turístico Internacional desde 1983—. Pero quedarse solo con
-            las hogueras es perderse la mitad: las fiestas también son{" "}
-            <strong>playa, mar templado, terrazas hasta las tantas, arroces, vino
-            de la tierra y un cielo que casi nunca falla</strong> ✨
-          </p>
-
-          <figure className="overflow-hidden rounded-3xl ring-2 ring-yellow-300/50 shadow-[0_15px_40px_-10px_rgba(236,72,153,0.4)]">
-            <img
-              src={playa1}
-              alt="Playa del Postiguet en junio"
-              loading="lazy"
-              width={1280}
-              height={896}
-              className="h-56 w-full object-cover"
-            />
-            <figcaption className="bg-gradient-to-r from-cyan-500/80 to-blue-500/80 px-3 py-2 text-sm font-semibold text-white">
-              🏖️ Playa del Postiguet — la fiesta también se vive con los pies en la arena
-            </figcaption>
-          </figure>
-
-          <p className="text-sm leading-relaxed text-amber-50/95">
-            Pongámonos en situación: estás en Alicante a mediados de junio.
-            Amanece a las siete con un cielo limpio, <strong>27 grados al
-            mediodía</strong>, brisa del este y el mar a <strong>22 grados</strong>:
-            puedes desayunar churros con chocolate en el Mercado Central, bajar a
-            darte un baño en el <strong>Postiguet</strong> en diez minutos andando
-            y subir luego al <strong>Castillo de Santa Bárbara</strong> con una
-            vista de la bahía que quita el sentido. Y todo eso… antes de comer.
-          </p>
-
-          <p className="text-sm leading-relaxed text-amber-50/95">
-            A las 14:00 la <strong>Plaza de los Luceros</strong> se convierte en
-            el corazón pirotécnico de España. La <strong>mascletà</strong> no se
-            escucha, <strong>se siente en el pecho</strong>: un ritmo de pólvora
-            que arranca lento, sube, sube, y termina en un terremoto seco que te
-            hace sonreír sin querer. Hay quien aplaude llorando. Es normal.
-          </p>
-
-          <figure className="overflow-hidden rounded-3xl ring-2 ring-orange-300/50">
-            <img
-              src={mascleta1}
-              alt="Mascletà en Luceros"
-              loading="lazy"
-              width={1280}
-              height={896}
-              className="h-56 w-full object-cover"
-            />
-            <figcaption className="bg-gradient-to-r from-orange-500/80 to-red-500/80 px-3 py-2 text-sm font-semibold text-white">
-              💥 La mascletà — pólvora, ritmo y un terremoto seco que te enamora
-            </figcaption>
-          </figure>
-
-          <p className="text-sm leading-relaxed text-amber-50/95">
-            Después de la mascletà toca <strong>comer en serio</strong>. Aquí
-            estás en territorio de <strong>arroz</strong>: el clásico{" "}
-            <em>arroz a banda</em>, el <em>arroz del senyoret</em> (pelado,
-            cómodo, no hay que ensuciarse las manos), el <em>arroz negro</em> con
-            alioli, o si te dejas llevar, una <em>fideuà</em> que en Alicante se
-            entiende como una hermana del arroz, no como un sustituto. Acompañas
-            con <strong>vino de Alicante</strong> —los tintos de Monastrell del
-            Vinalopó son una bestia— o, si aprieta el calor, con una{" "}
-            <strong>cerveza muy fría</strong> y un plato de <em>quisquillas de
-            Santa Pola</em>, <em>salazones</em> o un <em>cocido alicantino con
-            pelotas</em> si caes en mesa de abuela.
-          </p>
-
-          <figure className="overflow-hidden rounded-3xl ring-2 ring-amber-300/50">
-            <img
-              src={bunuelos1}
-              alt="Buñuelos de calabaza recién hechos"
-              loading="lazy"
-              width={1280}
-              height={896}
-              className="h-52 w-full object-cover"
-            />
-            <figcaption className="bg-gradient-to-r from-amber-500/80 to-yellow-500/80 px-3 py-2 text-sm font-semibold text-white">
-              🍩 Buñuelos de calabaza — el olor oficial de las Hogueras
-            </figcaption>
-          </figure>
-
-          <p className="text-sm leading-relaxed text-amber-50/95">
-            Por la tarde la ciudad cambia de marcha. Los <strong>ninots</strong>
-            —monumentos satíricos de hasta veinte metros— se plantan en cada
-            esquina y caminar por el centro se convierte en una <strong>visita a
-            un museo al aire libre</strong>. Hay obras tiernas, otras
-            descaradas, otras tan grandes que tienes que cruzar la calle para
-            verlas enteras. Mientras paseas, te paran cinco veces: una banda de
-            música tocando un pasodoble, una <em>dansà</em> improvisada, alguien
-            que te invita a probar un buñuelo de calabaza con azúcar.
-          </p>
-
-          <figure className="overflow-hidden rounded-3xl ring-2 ring-pink-300/50">
-            <img
-              src={ninot1}
-              alt="Ninot de Hoguera plantado en la calle"
-              loading="lazy"
-              width={1280}
-              height={896}
-              
-              className="h-56 w-full object-cover"
-            />
-            <figcaption className="bg-gradient-to-r from-pink-500/80 to-purple-500/80 px-3 py-2 text-sm font-semibold text-white">
-              🎨 Ninots — sátira y arte a 20 metros de altura
-            </figcaption>
-          </figure>
-
-          <p className="text-sm leading-relaxed text-amber-50/95">
-            Cae el sol y empieza la <strong>Ofrenda de Flores</strong>. Miles de
-            personas con trajes valencianos bordados a mano caminan desde Alfonso X
-            hasta la Concatedral de San Nicolás llevando ramos a la{" "}
-            <strong>Virgen del Remedio</strong>. Es lento, es bonito, es{" "}
-            <em>profundamente emocional</em>: aunque no seas creyente, hay algo
-            ahí que te toca.
-          </p>
-
-          <figure className="overflow-hidden rounded-3xl ring-2 ring-rose-300/50">
-            <img
-              src={ofrenda1}
-              alt="Ofrenda de Flores"
-              loading="lazy"
-              width={1280}
-              height={896}
-              className="h-56 w-full object-cover"
-            />
-            <figcaption className="bg-gradient-to-r from-rose-500/80 to-pink-500/80 px-3 py-2 text-sm font-semibold text-white">
-              👑 Ofrenda de Flores — el corazón emocional de las fiestas
-            </figcaption>
-          </figure>
-
-          <p className="text-sm leading-relaxed text-amber-50/95">
-            Y por la noche… llegan las <strong>barracas</strong>. Son carpas
-            inmensas montadas por las comisiones, con cocina propia, barra, DJ y
-            verbenas hasta el amanecer. Los <strong>racós</strong> son su
-            versión más íntima, de barrio. Aquí pasa de todo: cenas tipo
-            tapeo, parrilladas, conciertos pequeños, gente bailando con
-            cincuenta años y gente bailando con dieciocho, mezclados. <strong>No
-            cierran hasta que sale el sol</strong>, literalmente.
-          </p>
-
-          <figure className="overflow-hidden rounded-3xl ring-2 ring-orange-300/50">
-            <img
-              src={barraca1}
-              alt="Barraca de Hogueras"
-              loading="lazy"
-              width={1280}
-              height={896}
-              className="h-52 w-full object-cover"
-            />
-            <figcaption className="bg-gradient-to-r from-orange-500/80 to-amber-500/80 px-3 py-2 text-sm font-semibold text-white">
-              🏕️ Barracas y racós — la noche que no quiere terminar
-            </figcaption>
-          </figure>
-
-          <p className="text-sm leading-relaxed text-amber-50/95">
-            La <strong>Cremà</strong>, la madrugada del 24 al 25, es el clímax.
-            A las 00:00 una <strong>palmera de fuegos</strong> sale disparada
-            desde el <strong>Castillo de Santa Bárbara</strong> y, a partir de
-            ahí, todas las hogueras de la ciudad arden a la vez. El cielo se
-            pone naranja, el aire es puro humo y bomberos, y aparece la{" "}
-            <strong>Banyà</strong>: te empapan con la manguera mientras gritas
-            y te ríes. Quien lo vive una vez, vuelve.
-          </p>
-
-          <figure className="overflow-hidden rounded-3xl ring-2 ring-red-300/50">
-            <img
-              src={crema1}
-              alt="La Cremà"
-              loading="lazy"
-              width={1280}
-              height={896}
-              className="h-56 w-full object-cover"
-            />
-            <figcaption className="bg-gradient-to-r from-red-500/80 to-orange-500/80 px-3 py-2 text-sm font-semibold text-white">
-              🔥 La Cremà — la noche en que arde Alicante entera
-            </figcaption>
-          </figure>
-
-          <p className="text-sm leading-relaxed text-amber-50/95">
-            Y cuando crees que se acabó, no. Quedan <strong>cinco noches más de
-            castillos pirotécnicos</strong> sobre la <strong>Playa del
-            Postiguet</strong>, del 25 al 29 de junio, siempre a medianoche.
-            Toalla, una cerveza, los pies en la arena, el mar de fondo y el
-            cielo pintado de fuego. <em>Ése</em> es el verdadero adiós.
-          </p>
-
-          <p className="text-sm leading-relaxed text-amber-50/95 pt-2">
-            Y todo esto pasa con el mejor clima posible: <strong>25–30 °C</strong>,
-            el mar a 22 °C y casi sin lluvia. Junio en Alicante es oro puro ☀️.
-            Sales de la <strong>mascletà</strong> sudando pólvora y en cinco
-            minutos andando estás metiendo los pies en el <strong>Postiguet</strong>;
-            si quieres más calma, coges el TRAM y te plantas en <strong>San Juan</strong>,
-            <strong> Albufereta</strong> o <strong>Cabo Huertas</strong> 🏖️.
-          </p>
-
-          <p className="text-sm leading-relaxed text-amber-50/95">
-            Entre acto y acto se come, claro. Un <strong>arroz a banda</strong> o
-            una <strong>fideuà</strong> a pie de playa, <strong>quisquillas</strong> de
-            Santa Pola, <strong>salazones</strong> con una copa de vino de
-            <strong> Monastrell</strong>, y de postre <em>bunyols</em> calientes con
-            chocolate en cualquier puesto del centro 🍤. Cuando baja el sol, toca
-            cultura sin prisa: subir al <strong>Castillo de Santa Bárbara</strong>
-            con la ciudad encendida a tus pies, perderse por el casco antiguo y
-            <strong> Santa Cruz</strong>, asomarse a la <strong>Concatedral</strong>,
-            el <strong>MARQ</strong> o el <strong>MACA</strong> 🏛️.
-          </p>
-
-          <p className="text-sm leading-relaxed text-amber-50/95">
-            Por eso decimos que las Hogueras son <strong>la mejor semana del
-            año</strong>: porque mezclan lo mejor de Alicante en siete días.
-            Sales de la mascletà y te bañas. Sales del baño y cenas un arroz.
-            Sales del arroz y bailas en la barraca. Bailas hasta el amanecer y
-            te bañas otra vez. Y al día siguiente, otra vez.
-          </p>
-        </div>
+        {/* RELATO EN 3 ACTOS — antes, durante, después */}
+        <Relato />
 
         {/* Chat IA — solo input fijo + popover */}
         <FiestasChat />
