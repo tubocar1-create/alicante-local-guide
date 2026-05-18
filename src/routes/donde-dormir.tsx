@@ -183,18 +183,18 @@ function DondeDormirPage() {
                     <td className="px-1 py-1 text-right align-middle font-mono text-[11px] font-semibold tabular-nums text-amber-50">
                       {price != null ? `${Math.round(price)}€` : "—"}
                     </td>
-                    <td className="px-1 py-1 text-center align-middle text-[12px]">
+                    <td className="px-1 py-1 text-center align-middle text-[10px] font-medium text-amber-50">
                       {d?.breakfast_included ? (
-                        <span title="Desayuno incluido">☕</span>
+                        <span className="text-emerald-300">Sí</span>
                       ) : (
-                        <span className="text-amber-200/20">·</span>
+                        <span className="text-amber-200/30">No</span>
                       )}
                     </td>
-                    <td className="px-1 py-1 text-center align-middle text-[12px]">
+                    <td className="px-1 py-1 text-center align-middle text-[10px] font-medium text-amber-50">
                       {d?.free_cancellation ? (
-                        <span title="Cancelación gratis">🛡️</span>
+                        <span className="text-emerald-300">Sí</span>
                       ) : (
-                        <span className="text-amber-200/20">·</span>
+                        <span className="text-amber-200/30">No</span>
                       )}
                     </td>
                     <td className="rounded-r-md px-1 py-1 text-right align-middle font-mono text-[10px] tabular-nums text-amber-100/80">
