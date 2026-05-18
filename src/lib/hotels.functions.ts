@@ -1,0 +1,27 @@
+import { createServerFn } from "@tanstack/react-start";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { syncStaticHotelsImpl } from "./hotels.server";
+
+export const syncStaticHotels = createServerFn({ method: "POST" }).handler(
+  async () => {
+    try {
+      const result = await syncStaticHotelsImpl();
+      return { ok: true as const, ...result };
+    } catch (e: any) {
+      console.error("syncStaticHotels failed", e);
+      return { ok: false as const, error: e?.message ?? "unknown" };
+    }
+  },
+);
+
+export const listHotels = createServerFn({ method: "GET" }).handler(async () => {
+  const { data, error } = await supabaseAdmin
+    .from("hotels_static")
+    .select(
+      "id, liteapi_hotel_id, name, address, stars, hotel_type, neighborhood, distance_km, main_image, booking_url, hotels_dynamic(available, current_price, currency, breakfast_included, free_cancellation, rooms_available, updated_at)",
+    )
+    .order("stars", { ascending: false, nullsFirst: false })
+    .limit(500);
+  if (error) return { hotels: [], error: error.message };
+  return { hotels: data ?? [], error: null };
+});
