@@ -142,6 +142,17 @@ function HotelDetail() {
   const expediaHref = `https://www.expedia.es/Hotel-Search?destination=${q}`;
   const hotelsHref = `https://es.hotels.com/Hotel-Search?destination=${q}`;
   const triHref = `https://www.trivago.es/?query=${q}`;
+  const googleHotelsHref = `https://www.google.com/travel/hotels?q=${q}`;
+  const agodaHref = `https://www.agoda.com/search?city=&query=${q}`;
+
+  const operators: { label: string; href: string }[] = [
+    { label: "Booking", href: bookingHref },
+    { label: "Expedia", href: expediaHref },
+    { label: "Hotels.com", href: hotelsHref },
+    { label: "Trivago", href: triHref },
+    { label: "Google Hoteles", href: googleHotelsHref },
+    { label: "Agoda", href: agodaHref },
+  ];
 
   return (
     <div
