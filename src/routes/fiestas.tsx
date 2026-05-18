@@ -895,13 +895,6 @@ function Relato() {
       ring: "ring-cyan-300/50",
       cap: "from-cyan-500/80 to-teal-500/80",
     },
-    {
-      src: banya1,
-      alt: "La Banyà",
-      caption: "💦 La Banyà — bomberos, risas y el final más mojado",
-      ring: "ring-blue-300/50",
-      cap: "from-blue-500/80 to-indigo-500/80",
-    },
   ];
 
   return (
