@@ -3,7 +3,7 @@ import {
   Ticket,
   ShieldCheck,
   Clock,
-  AlertTriangle,
+  
   Copy,
   Check,
   LogIn,
