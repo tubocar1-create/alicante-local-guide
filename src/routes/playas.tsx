@@ -193,6 +193,8 @@ function PlayasPage() {
           ))}
         </section>
 
+        <AlicanteBeachMap />
+
         <section className="mt-8 grid gap-4 sm:grid-cols-2">
           {BEACHES.map((beach) => (
             <BeachCard key={beach.name} beach={beach} />
