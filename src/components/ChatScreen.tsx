@@ -79,6 +79,117 @@ type Suggestion = {
   action?: "bus-picker" | "flight-picker";
   href?: string;
 };
+const BEACH_GUIDE_PROMPT = "Hazme la charla IA sobre las playas de Alicante basada en las páginas web suministradas.";
+
+const BEACH_GUIDE_RESPONSE = `# 🏖️ Playas de Alicante: charla IA de la Costa Blanca
+
+![Playa del Postiguet con el Castillo de Santa Bárbara](https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Alicante_-_Playa_del_Postiguet.jpg/1280px-Alicante_-_Playa_del_Postiguet.jpg)
+
+Alicante tiene una costa muy fácil de disfrutar: playas urbanas con TRAM y bus, paseos marítimos con servicios, agua mediterránea clara y calas rocosas donde el plan cambia de “tomar el sol” a **snorkel, paseo y mirador**. Basándome en las guías turísticas oficiales y páginas de referencia que compartiste, esta es la selección práctica para elegir bien según el día.
+
+## ⭐ Playas populares
+
+### 🏰 Playa del Postiguet
+![Playa del Postiguet](https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Postiguet_Beach_Alicante_Spain.jpg/1280px-Postiguet_Beach_Alicante_Spain.jpg)
+
+La playa más icónica para empezar: está al pie del Castillo de Santa Bárbara y pegada al centro. Es perfecta si quieres **baño rápido, paseo, fotos y plan urbano** sin moverte demasiado.
+
+- **Cómo ir:** andando desde el centro; TRAM y buses urbanos hacia la zona de Puerta del Mar / Postiguet.
+- **Qué tiene:** arena fina, paseo marítimo, duchas, vigilancia en temporada, accesos cómodos y servicios cercanos.
+- **Ideal para:** familias, primera visita, atardecer, combinar playa + casco antiguo + Explanada.
+
+### 🌊 Playa de San Juan
+![Playa de San Juan](https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Playa_de_San_Juan_-_Alicante.jpg/1280px-Playa_de_San_Juan_-_Alicante.jpg)
+
+La gran playa alicantina: larga, abierta, con muchísimo espacio y ambiente de verano. Si buscas arena, mar y un día completo, esta suele ser la apuesta segura.
+
+- **Cómo ir:** TRAM hacia Playa de San Juan / Costa Blanca; también bus urbano y coche.
+- **Qué tiene:** paseo, zonas deportivas, restaurantes, chiringuitos de temporada, vigilancia y servicios.
+- **Ideal para:** pasar el día entero, caminar junto al mar, deporte, grupos y familias.
+
+### 🐚 Playa de la Albufereta
+![Playa de la Albufereta](https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Albufereta_beach_Alicante.jpg/1280px-Albufereta_beach_Alicante.jpg)
+
+Más recogida que San Juan y más tranquila que Postiguet. Tiene un punto local y cómodo, con una bahía protegida que suele apetecer cuando quieres algo menos masivo.
+
+- **Cómo ir:** TRAM y bus desde Alicante; en coche suele ser más sencillo fuera de horas punta.
+- **Qué tiene:** arena, aguas generalmente calmadas, paseo y servicios básicos.
+- **Ideal para:** baño relajado, familias, mañana tranquila y planes sin mucha logística.
+
+### 🌅 Saladar-Urbanova
+![Urbanova](https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Playa_de_Urbanova%2C_Alicante.jpg/1280px-Playa_de_Urbanova%2C_Alicante.jpg)
+
+Al sur de la ciudad, amplia y menos céntrica. Es buena opción si te apetece una playa abierta, con sensación de horizonte y menos presión urbana.
+
+- **Cómo ir:** bus hacia Urbanova o coche.
+- **Qué tiene:** arena, paseo, servicios de temporada y zonas amplias.
+- **Ideal para:** desconectar, caminar, ir con espacio y evitar el centro.
+
+## 🧭 Playas y calas escondidas
+
+### 🤿 Cala Cantalar
+![Cabo de las Huertas](https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Cabo_de_las_Huertas_Alicante.jpg/1280px-Cabo_de_las_Huertas_Alicante.jpg)
+
+Una cala rocosa del entorno del Cabo de las Huertas. Aquí el plan no es sombrilla clásica: es **calzado de agua, gafas de snorkel y paciencia para encontrar tu rincón**.
+
+- **Cómo ir:** TRAM/bus hasta zona Cabo-Huertas y caminar; en coche, aparcar con tiempo.
+- **Qué llevar:** escarpines, agua, gafas de snorkel, protección solar y bolsa para basura.
+- **Ideal para:** snorkel, fotos, baño tranquilo y gente que prefiere roca a arena.
+
+### 🌿 Calas de Agua Amarga
+![Agua Amarga](https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Alicante_-_Agua_Amarga.jpg/1280px-Alicante_-_Agua_Amarga.jpg)
+
+Zona costera al sur, diferente a la postal clásica de Alicante. Interesa si buscas algo menos típico y quieres explorar otro tramo del litoral.
+
+- **Cómo ir:** mejor en coche o bus según temporada y punto exacto.
+- **Qué llevar:** agua, calzado cómodo, protección solar y algo de comida ligera.
+- **Ideal para:** paseo costero, baño tranquilo y plan menos turístico.
+
+### 🪨 Cabo de las Huertas
+![Cabo de las Huertas](https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Cabo_de_la_Huerta%2C_Alicante.jpg/1280px-Cabo_de_la_Huerta%2C_Alicante.jpg)
+
+El Cabo de las Huertas es el gran “modo cala” de Alicante: pequeñas entradas al mar, roca, agua clara y ambiente más salvaje. No esperes todos los servicios de una playa urbana; ahí está parte de su encanto.
+
+- **Cómo ir:** TRAM o bus hasta las paradas cercanas y caminar; coche con aparcamiento limitado.
+- **Qué tiene:** paisaje rocoso, zonas de baño y puntos buenos para ver el mar.
+- **Ideal para:** snorkel, amanecer, atardecer y rutas suaves por la costa.
+
+## 🎒 Qué llevar
+
+- **Protector solar alto**, gorra y gafas: el sol pega fuerte incluso con brisa.
+- **Agua suficiente**: especialmente en calas, donde no siempre hay servicios.
+- **Escarpines** para Cabo de las Huertas, Cala Cantalar y zonas rocosas.
+- **Sombrilla ligera** si vas a San Juan, Urbanova o Postiguet en horas centrales.
+- **Bolsa para residuos**: en calas pequeñas se nota muchísimo cuidar el entorno.
+
+## 🕘 Mejores horas
+
+- **Mañana temprano:** agua más tranquila, menos gente y mejor aparcamiento.
+- **Tarde:** luz bonita y temperatura más suave.
+- **Evita 12:00–17:00 en julio/agosto** si vas con niños o sin sombra.
+
+## 🚩 Seguridad y banderas
+
+- **Bandera verde:** baño permitido.
+- **Bandera amarilla:** precaución; ojo con corrientes y oleaje.
+- **Bandera roja:** no bañarse.
+- En calas rocosas, entra despacio: puede haber piedras, erizos o escalones naturales.
+
+## 🚊 Cómo organizarte
+
+- **Sin coche:** Postiguet, Albufereta y San Juan son las más cómodas por transporte público.
+- **Con coche:** Urbanova y las calas dan más libertad, pero madruga para aparcar.
+- **Plan completo:** Postiguet + Castillo + Explanada; o San Juan + paseo largo + atardecer; o Cabo de las Huertas + snorkel + miradores.
+
+## ✅ Mi recomendación rápida
+
+- Si es tu **primera vez**: Postiguet.
+- Si quieres **la mejor playa larga**: San Juan.
+- Si buscas **tranquilidad cómoda**: Albufereta.
+- Si quieres **aventura y agua clara**: Cabo de las Huertas / Cala Cantalar.
+- Si quieres **espacio y desconexión**: Saladar-Urbanova.
+`;
+
 const SUGGESTIONS: Suggestion[] = [
   {
     label: "🍽️ Comer",
@@ -110,7 +221,7 @@ const SUGGESTIONS: Suggestion[] = [
     label: "🏖️ Turismo, playa y aventuras",
     submenu: [
       { label: "🏛️ Turismo", prompt: "¿Qué sitios turísticos imprescindibles puedo visitar en Alicante hoy?" },
-      { label: "🏖️ Playa", prompt: "Hazme una guía completa y detallada de las playas de Alicante: incluye una introducción a la Costa Blanca, las playas urbanas más populares (Postiguet, San Juan, Albufereta, Saladar-Urbanova), las calas escondidas más bonitas (Cala Cantalar, Calas de Agua Amarga, Cabo de las Huertas), y para cada una indica cómo llegar (bus, TRAM, coche), servicios disponibles y qué la hace especial. Añade consejos prácticos: qué llevar, mejores horas, banderas y seguridad, y planes que se pueden hacer (snorkel, paddle surf, chiringuitos). Usa emojis y un formato claro y atractivo." },
+      { label: "🏖️ Playa", prompt: BEACH_GUIDE_PROMPT },
       { label: "🌳 Parque", prompt: "¿Qué parque o zona verde me recomiendas?" },
       { label: "🧗 Aventuras", prompt: "¿Qué planes de aventura o actividades al aire libre puedo hacer hoy en Alicante o alrededores?" },
     ],
@@ -311,9 +422,26 @@ export function ChatScreen() {
     }
   };
 
+  function sendBeachGuide() {
+    if (loading) return;
+    setError(null);
+    setSubmenuStack([]);
+    setInput("");
+    setMode(null);
+    setMessages((prev) => [
+      ...prev,
+      { role: "user", content: BEACH_GUIDE_PROMPT },
+      { role: "assistant", content: BEACH_GUIDE_RESPONSE },
+    ]);
+  }
+
   async function send(text: string, opts?: { mode?: "transit" | "guide" | null }) {
     const trimmed = text.trim();
     if (!trimmed || loading) return;
+    if (opts?.mode === "guide" || trimmed === BEACH_GUIDE_PROMPT) {
+      sendBeachGuide();
+      return;
+    }
     const effectiveMode = opts?.mode !== undefined ? opts.mode : mode;
     if (opts?.mode !== undefined && opts.mode !== "guide") setMode(opts.mode);
     setError(null);
@@ -577,7 +705,7 @@ export function ChatScreen() {
                         if (s.label === "🏖️ Turismo, playa y aventuras") {
                           const playa = s.submenu?.find((o) => o.label === "🏖️ Playa");
                           if (playa?.prompt) {
-                            send(playa.prompt, { mode: "guide" });
+                            sendBeachGuide();
                             return;
                           }
                         }
@@ -712,7 +840,7 @@ export function ChatScreen() {
                         setSubmenuStack([]);
                         requestLocationForPrompt(opt.prompt);
                         const isBeachGuide = opt.label === "🏖️ Playa";
-                        send(opt.prompt, { mode: isBeachGuide ? "guide" : null });
+                        isBeachGuide ? sendBeachGuide() : send(opt.prompt, { mode: null });
                       }
                     }}
                     className="flex w-full items-center gap-1.5 rounded-lg border border-border bg-background/80 px-2 py-1.5 text-left text-[12px] shadow-sm transition hover:bg-accent/40"
