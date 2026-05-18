@@ -219,11 +219,9 @@ function DondeDormirPage() {
                       <td className="px-1 py-1 text-right align-middle font-mono text-[11px] font-semibold tabular-nums text-amber-50">
                         {price != null ? (
                           `${Math.round(price)}€`
-                        ) : (() => {
-                          const s = Number(h.stars) || 0;
-                          const est = s >= 4.5 ? 180 : s >= 4 ? 120 : s >= 3 ? 80 : s >= 2 ? 55 : 45;
-                          return <span className="font-normal text-amber-200/60">~{est}€</span>;
-                        })()}
+                        ) : (
+                          <span className="font-normal text-amber-200/40">—</span>
+                        )}
                       </td>
                       <td className="px-1 py-1 text-center align-middle text-[10px] font-medium text-amber-50">
                         {d?.breakfast_included ? (
