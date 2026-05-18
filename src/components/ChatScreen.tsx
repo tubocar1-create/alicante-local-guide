@@ -447,8 +447,8 @@ export function ChatScreen() {
       sendBeachGuide();
       return;
     }
-    const effectiveMode = opts?.mode !== undefined ? opts.mode : mode;
-    if (opts?.mode !== undefined) setMode(opts.mode);
+    const effectiveMode = opts?.mode === "guide" ? null : opts?.mode !== undefined ? opts.mode : mode;
+    if (opts?.mode !== undefined) setMode(effectiveMode);
     setError(null);
     const userMsg: Msg = { role: "user", content: trimmed };
     const next = [...messages, userMsg];
