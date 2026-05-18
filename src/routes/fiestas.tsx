@@ -477,21 +477,16 @@ type Msg = { role: "user" | "assistant"; content: string };
 
 function FiestasChat() {
   const ask = useServerFn(askFiestasAI);
-  const [messages, setMessages] = useState<Msg[]>([
-    {
-      role: "assistant",
-      content:
-        "¡Hola! 🔥 Soy tu guía de las **Fiestas de Alicante**. Pregúntame por hogueras, mascletás, fechas, sitios para verlo todo… ¡vamos a vivirlo! 🎆",
-    },
-  ]);
+  const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, loading]);
+  }, [messages, loading, open]);
 
   async function send(text: string) {
     const clean = text.trim();
@@ -501,6 +496,7 @@ function FiestasChat() {
     setInput("");
     setLoading(true);
     setError(null);
+    setOpen(true);
     try {
       const res = await ask({ data: { messages: next.slice(-12) } });
       setMessages((m) => [...m, { role: "assistant", content: res.text || "…" }]);
@@ -511,90 +507,104 @@ function FiestasChat() {
     }
   }
 
+  const hasMessages = messages.length > 0;
+
   return (
     <>
-    <section
-      id="chat-fiestas"
-      className="rounded-3xl bg-white/5 p-3 ring-1 ring-amber-300/30 backdrop-blur"
-    >
-      <header className="mb-2 flex items-center gap-2 px-1">
-        <div className="grid h-9 w-9 place-items-center rounded-full bg-amber-400 text-black animate-fire-glow">
-          <Bot className="h-5 w-5" />
-        </div>
-        <div>
-          <h4 className="text-base font-extrabold leading-tight text-amber-100">
-            Pregunta a la IA de Fiestas
-          </h4>
-          <p className="text-[11px] text-amber-200/80">Hogueras, mascletás, ofrenda, banyà…</p>
-        </div>
-      </header>
-
-      <div
-        ref={scrollRef}
-        className="max-h-72 space-y-2 overflow-y-auto rounded-2xl bg-black/30 p-3"
-      >
-        {messages.map((m, i) => (
-          <div
-            key={i}
-            className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} animate-rise`}
-          >
-            <div
-              className={
-                m.role === "user"
-                  ? "max-w-[80%] rounded-2xl rounded-br-md bg-amber-400 px-3 py-2 text-sm font-medium text-black"
-                  : "prose prose-invert prose-sm max-w-[85%] rounded-2xl rounded-bl-md bg-white/10 px-3 py-2 text-sm text-amber-50"
-              }
-            >
-              {m.role === "assistant" ? (
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
-              ) : (
-                m.content
-              )}
-            </div>
-          </div>
-        ))}
-        {loading && (
-          <div className="flex justify-start">
-            <div className="rounded-2xl rounded-bl-md bg-white/10 px-3 py-2">
-              <div className="flex items-end gap-1">
-                <span className="typing-dot" />
-                <span className="typing-dot" />
-                <span className="typing-dot" />
+      {/* Panel flotante con respuestas, solo visible cuando hay conversación */}
+      {hasMessages && open && (
+        <div
+          className="fixed inset-x-2 bottom-[68px] z-30 rounded-3xl border border-amber-300/40 bg-gradient-to-br from-[#3a0a14]/95 to-[#7a2410]/95 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.7)] backdrop-blur-xl animate-rise"
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 0.25rem)" }}
+        >
+          <header className="flex items-center justify-between gap-2 border-b border-amber-300/20 px-3 py-2">
+            <div className="flex items-center gap-2">
+              <div className="grid h-7 w-7 place-items-center rounded-full bg-amber-400 text-black animate-fire-glow">
+                <Bot className="h-4 w-4" />
               </div>
+              <p className="text-sm font-extrabold text-amber-100">IA de Fiestas</p>
             </div>
+            <button
+              onClick={() => setOpen(false)}
+              className="rounded-full px-3 py-1 text-xs font-bold text-amber-200 hover:bg-white/10"
+              aria-label="Cerrar"
+            >
+              Cerrar ✕
+            </button>
+          </header>
+          <div ref={scrollRef} className="max-h-[55vh] space-y-2 overflow-y-auto p-3">
+            {messages.map((m, i) => (
+              <div
+                key={i}
+                className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} animate-rise`}
+              >
+                <div
+                  className={
+                    m.role === "user"
+                      ? "max-w-[80%] rounded-2xl rounded-br-md bg-gradient-to-br from-amber-300 to-orange-400 px-3 py-2 text-sm font-medium text-black"
+                      : "prose prose-invert prose-sm max-w-[85%] rounded-2xl rounded-bl-md bg-white/10 px-3 py-2 text-sm text-amber-50"
+                  }
+                >
+                  {m.role === "assistant" ? (
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
+                  ) : (
+                    m.content
+                  )}
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div className="flex justify-start">
+                <div className="rounded-2xl rounded-bl-md bg-white/10 px-3 py-2">
+                  <div className="flex items-end gap-1">
+                    <span className="typing-dot" />
+                    <span className="typing-dot" />
+                    <span className="typing-dot" />
+                  </div>
+                </div>
+              </div>
+            )}
+            {error && (
+              <p className="rounded-md bg-red-500/20 px-2 py-1 text-xs text-red-100">{error}</p>
+            )}
           </div>
-        )}
-        {error && (
-          <p className="rounded-md bg-red-500/20 px-2 py-1 text-xs text-red-100">{error}</p>
-        )}
-      </div>
+        </div>
+      )}
 
-    </section>
-
-    {/* Input fijo abajo */}
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        void send(input);
-      }}
-      className="fixed inset-x-0 bottom-0 z-30 flex items-center gap-2 border-t border-amber-300/20 bg-black/80 px-3 py-2 backdrop-blur-md pb-[calc(env(safe-area-inset-bottom)+0.5rem)]"
-    >
-      <input
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        placeholder="Pregunta sobre las fiestas…"
-        className="flex-1 rounded-full bg-white/10 px-4 py-2 text-sm text-amber-50 placeholder:text-amber-200/60 outline-none ring-1 ring-amber-300/30 focus:ring-amber-300/70"
-        disabled={loading}
-      />
-      <button
-        type="submit"
-        disabled={loading || !input.trim()}
-        aria-label="Enviar"
-        className="grid h-10 w-10 place-items-center rounded-full bg-amber-400 text-black shadow active:scale-95 disabled:opacity-50"
+      {/* Input fijo abajo */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          void send(input);
+        }}
+        className="fixed inset-x-0 bottom-0 z-30 flex items-center gap-2 border-t border-amber-300/30 bg-gradient-to-r from-[#ff6b35]/95 via-[#ec4899]/95 to-[#f59e0b]/95 px-3 py-2 backdrop-blur-md pb-[calc(env(safe-area-inset-bottom)+0.5rem)]"
       >
-        <Send className="h-4 w-4" />
-      </button>
-    </form>
+        {hasMessages && !open && (
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            aria-label="Ver respuesta"
+            className="grid h-10 w-10 place-items-center rounded-full bg-white/20 text-white active:scale-95"
+          >
+            <Bot className="h-5 w-5" />
+          </button>
+        )}
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Pregunta sobre las fiestas…"
+          className="flex-1 rounded-full bg-white/95 px-4 py-2 text-sm text-[#2a0a14] placeholder:text-[#7a2410]/60 outline-none ring-1 ring-white/40 focus:ring-white"
+          disabled={loading}
+        />
+        <button
+          type="submit"
+          disabled={loading || !input.trim()}
+          aria-label="Enviar"
+          className="grid h-10 w-10 place-items-center rounded-full bg-white text-[#ec4899] shadow active:scale-95 disabled:opacity-50"
+        >
+          <Send className="h-4 w-4" />
+        </button>
+      </form>
     </>
   );
 }
