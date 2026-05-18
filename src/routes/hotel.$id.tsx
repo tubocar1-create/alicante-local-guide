@@ -356,15 +356,6 @@ function HotelDetail() {
             </div>
 
 
-            {/* Warning de precios */}
-            <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/[0.06] p-3 text-[11px] text-amber-100/90">
-              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-amber-300" />
-              <p>
-                Los precios varían según la temporada y la disponibilidad. Nosotros sólo damos
-                información orientativa: la reserva y el precio final se confirman en el operador
-                que elijas.
-              </p>
-            </div>
 
             {/* Calendarios mensuales (mes actual + 2 siguientes) */}
             <div className="mt-4 rounded-2xl border border-amber-100/[0.08] bg-[rgba(20,10,4,0.7)] p-4 backdrop-blur-xl md:p-5">
