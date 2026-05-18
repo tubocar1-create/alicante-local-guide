@@ -1,7 +1,12 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
-import { ArrowLeft, MapPin, Waves, Navigation, Camera, Car, Train, Footprints } from "lucide-react";
+import { ArrowLeft, MapPin, Waves, Navigation, Camera, Car, Train, Footprints, Sparkles, ChevronRight } from "lucide-react";
+import { getMapBeaches, getCoastIntro } from "@/lib/playas-map.functions";
 
 export const Route = createFileRoute("/playas")({
+  loader: async () => {
+    const [beaches, intro] = await Promise.all([getMapBeaches(), getCoastIntro()]);
+    return { beaches, intro };
+  },
   head: () => ({
     meta: [
       { title: "Playas de Alicante — Guía visual con fotos reales" },
