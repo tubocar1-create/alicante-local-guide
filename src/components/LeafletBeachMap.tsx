@@ -44,12 +44,14 @@ export function LeafletMap({ beaches }: { beaches: Beach[] }) {
     loadGoogleMaps().then(() => {
       if (cancelled || !ref.current || !window.google?.maps) return;
       const google = window.google;
+      const fixedCenter = { lat: 38.335, lng: -0.47 };
       const map = new google.maps.Map(ref.current, {
-        center: { lat: 38.335, lng: -0.47 },
+        center: fixedCenter,
         zoom: 11,
         minZoom: 11,
         maxZoom: 11,
         disableDefaultUI: true,
+        clickableIcons: false,
         gestureHandling: "none",
         keyboardShortcuts: false,
         zoomControl: false,
@@ -58,7 +60,18 @@ export function LeafletMap({ beaches }: { beaches: Beach[] }) {
         draggable: false,
       });
 
-      const info = new google.maps.InfoWindow();
+      google.maps.event.addListener(map, "center_changed", () => {
+        const center = map.getCenter();
+        if (!center) return;
+        if (
+          Math.abs(center.lat() - fixedCenter.lat) > 0.00001 ||
+          Math.abs(center.lng() - fixedCenter.lng) > 0.00001
+        ) {
+          map.setCenter(fixedCenter);
+        }
+      });
+
+      const info = new google.maps.InfoWindow({ disableAutoPan: true });
       beaches.forEach((b) => {
         const marker = new google.maps.Marker({
           position: { lat: b.lat, lng: b.lng },

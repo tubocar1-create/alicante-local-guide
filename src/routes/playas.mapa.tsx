@@ -30,22 +30,108 @@ type Beach = {
 };
 
 const BEACHES: Beach[] = [
-  { name: "Cala Lanuza", lat: 38.4410, lng: -0.3905, description: "Pequeña cala rocosa al norte de El Campello." },
-  { name: "Playa Carrer la Mar", lat: 38.4360, lng: -0.3970, description: "Playa céntrica de El Campello." },
-  { name: "Playa de Muchavista", lat: 38.4280, lng: -0.4040, description: "Larga playa de arena dorada entre El Campello y San Juan." },
-  { name: "Playa de San Juan", lat: 38.4020, lng: -0.4170, description: "La playa más famosa y extensa de Alicante." },
-  { name: "Cala Cantalar", lat: 38.3905, lng: -0.4080, description: "Cala virgen en el Cabo de las Huertas." },
-  { name: "Cala Palmera", lat: 38.3865, lng: -0.4045, description: "Cala rocosa ideal para snorkel." },
-  { name: "Cala de los Judíos", lat: 38.3825, lng: -0.4055, description: "Cala virgen en el Cabo de las Huertas." },
-  { name: "Cala del Tío Ximo", lat: 38.3775, lng: -0.4115, description: "Cala protegida entre rocas." },
-  { name: "Playa de la Almadraba", lat: 38.3735, lng: -0.4180, description: "Playa familiar al pie del Cabo de las Huertas." },
-  { name: "Playa de la Albufereta", lat: 38.3680, lng: -0.4260, description: "Playa urbana en forma de concha." },
-  { name: "Playa del Postiguet", lat: 38.3445, lng: -0.4750, description: "Playa urbana junto al Castillo de Santa Bárbara." },
-  { name: "Playa del Saladar", lat: 38.3110, lng: -0.5130, description: "Larga playa abierta de Urbanova." },
-  { name: "Playa de Urbanova", lat: 38.2960, lng: -0.5260, description: "Arena fina cerca del aeropuerto." },
-  { name: "Playa del Altet", lat: 38.2740, lng: -0.5440, description: "Playa de arena junto a Gran Alacant." },
-  { name: "Playa de los Arenales del Sol", lat: 38.2560, lng: -0.5490, description: "Amplia playa de arena fina con dunas." },
-  { name: "Playa del Carabassí", lat: 38.2340, lng: -0.5530, description: "Dunas protegidas y aguas cristalinas." },
+  {
+    name: "Cala Lanuza",
+    lat: 38.441,
+    lng: -0.3905,
+    description: "Pequeña cala rocosa al norte de El Campello.",
+  },
+  {
+    name: "Playa Carrer la Mar",
+    lat: 38.436,
+    lng: -0.397,
+    description: "Playa céntrica de El Campello.",
+  },
+  {
+    name: "Playa de Muchavista",
+    lat: 38.428,
+    lng: -0.404,
+    description: "Larga playa de arena dorada entre El Campello y San Juan.",
+  },
+  {
+    name: "Playa de San Juan",
+    lat: 38.402,
+    lng: -0.417,
+    description: "La playa más famosa y extensa de Alicante.",
+  },
+  {
+    name: "Cala Cantalar",
+    lat: 38.3905,
+    lng: -0.408,
+    description: "Cala virgen en el Cabo de las Huertas.",
+  },
+  {
+    name: "Cala Palmera",
+    lat: 38.3865,
+    lng: -0.4045,
+    description: "Cala rocosa ideal para snorkel.",
+  },
+  {
+    name: "Cala de los Judíos",
+    lat: 38.3825,
+    lng: -0.4055,
+    description: "Cala virgen en el Cabo de las Huertas.",
+  },
+  {
+    name: "Cala del Tío Ximo",
+    lat: 38.3775,
+    lng: -0.4115,
+    description: "Cala protegida entre rocas.",
+  },
+  {
+    name: "Playa de la Almadraba",
+    lat: 38.3735,
+    lng: -0.418,
+    description: "Playa familiar al pie del Cabo de las Huertas.",
+  },
+  {
+    name: "Playa de la Albufereta",
+    lat: 38.368,
+    lng: -0.426,
+    description: "Playa urbana en forma de concha.",
+  },
+  {
+    name: "Playa del Postiguet",
+    lat: 38.3445,
+    lng: -0.475,
+    description: "Playa urbana junto al Castillo de Santa Bárbara.",
+  },
+  {
+    name: "Playa de Agua Amarga",
+    lat: 38.3188,
+    lng: -0.5127,
+    description: "Tramo litoral al sur de Alicante.",
+  },
+  {
+    name: "Playa del Saladar",
+    lat: 38.3038,
+    lng: -0.5198,
+    description: "Larga playa abierta de Urbanova.",
+  },
+  {
+    name: "Playa de Urbanova",
+    lat: 38.2916,
+    lng: -0.5283,
+    description: "Arena fina cerca del aeropuerto.",
+  },
+  {
+    name: "Playa del Altet",
+    lat: 38.272,
+    lng: -0.5458,
+    description: "Playa de arena junto a Gran Alacant.",
+  },
+  {
+    name: "Playa de los Arenales del Sol",
+    lat: 38.2474,
+    lng: -0.5207,
+    description: "Amplia playa de arena fina con dunas.",
+  },
+  {
+    name: "Playa del Carabassí",
+    lat: 38.231,
+    lng: -0.5179,
+    description: "Dunas protegidas y aguas cristalinas.",
+  },
 ];
 
 function MapaPlayasPage() {
@@ -57,7 +143,9 @@ function MapaPlayasPage() {
 
   return (
     <div className="relative h-screen w-full overflow-hidden">
-      {Map ? <Map.LeafletMap beaches={BEACHES} /> : (
+      {Map ? (
+        <Map.LeafletMap beaches={BEACHES} />
+      ) : (
         <div className="flex h-full w-full items-center justify-center bg-[oklch(0.74_0.12_205)] text-white">
           Cargando mapa…
         </div>
