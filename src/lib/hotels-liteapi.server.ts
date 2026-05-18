@@ -278,9 +278,14 @@ export async function liveCheckHotelImpl(hotelId: string, checkin: string, check
   return { ok: true as const, item, booking_url: row.booking_url };
 }
 
-/** Fetch (or refresh from cache) a month of nightly availability for a hotel.
- *  Returns 30 nights starting at `startDate` (YYYY-MM-DD). Uses 24h cache. */
-export async function fetchHotelCalendarImpl(hotelId: string, startDate: string) {
+/** Fetch (or refresh from cache) a date range of nightly availability for a hotel.
+ *  Returns all nights from `startDate` to `endDate` inclusive (YYYY-MM-DD). Uses 24h cache.
+ *  If `endDate` omitted, defaults to 30 nights from start. */
+export async function fetchHotelCalendarImpl(
+  hotelId: string,
+  startDate: string,
+  endDate?: string,
+) {
   const { data: row } = await supabaseAdmin
     .from("hotels_static")
     .select("liteapi_id")
@@ -288,12 +293,16 @@ export async function fetchHotelCalendarImpl(hotelId: string, startDate: string)
     .maybeSingle();
 
   const start = new Date(startDate + "T00:00:00Z");
+  const end = endDate
+    ? new Date(endDate + "T00:00:00Z")
+    : new Date(start.getTime() + 29 * 86400000);
+  const totalDays = Math.max(1, Math.round((end.getTime() - start.getTime()) / 86400000) + 1);
   const days: string[] = [];
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < totalDays; i++) {
     const d = new Date(start.getTime() + i * 86400000);
     days.push(d.toISOString().slice(0, 10));
   }
-  const endDate = days[days.length - 1];
+  const lastDate = days[days.length - 1];
 
   // Read existing cache rows
   const { data: cached } = await supabaseAdmin
