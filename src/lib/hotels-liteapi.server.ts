@@ -310,7 +310,7 @@ export async function fetchHotelCalendarImpl(
     .select("date, available, price_double, price_min, currency, updated_at")
     .eq("hotel_id", hotelId)
     .gte("date", startDate)
-    .lte("date", endDate);
+    .lte("date", lastDate);
 
   const cacheMap: Record<string, any> = {};
   for (const c of cached ?? []) cacheMap[c.date as string] = c;
