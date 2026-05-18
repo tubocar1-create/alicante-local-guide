@@ -876,10 +876,17 @@ function Relato() {
     },
     {
       src: fuegos1,
-      alt: "Castillo de fuegos sobre el Postiguet",
-      caption: "🎆 Castillos en el Postiguet — cinco noches más de fuego",
+      alt: "Castillo de fuegos sobre la bahía de Alicante",
+      caption: "🎆 Castillos del Postiguet — foto real desde la bahía",
       ring: "ring-purple-300/50",
       cap: "from-purple-500/80 to-pink-500/80",
+    },
+    {
+      src: fuegos2,
+      alt: "Fuegos artificiales sobre el mar de Alicante",
+      caption: "🎇 La pólvora cae al agua — cinco noches a medianoche",
+      ring: "ring-pink-300/50",
+      cap: "from-pink-500/80 to-rose-500/80",
     },
     {
       src: cala1,
