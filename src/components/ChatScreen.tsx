@@ -79,120 +79,161 @@ type Suggestion = {
   action?: "bus-picker" | "flight-picker";
   href?: string;
 };
-const BEACH_GUIDE_PROMPT = "Hazme la charla IA sobre las playas de Alicante basada en las páginas web suministradas.";
+const BEACH_GUIDE_PROMPT = "Quiero una guía visual de las playas alrededor de Alicante, con mapa por zonas y muchas fotos reales.";
 const BEACH_GUIDE_RE = /\b(playa|playas|cala|calas|costa blanca|postiguet|san juan|albufereta|urbanova|cabo de las huertas)\b/i;
 
 function isBeachGuidePrompt(text: string) {
-  return text === BEACH_GUIDE_PROMPT || (/charla\s+ia/i.test(text) && BEACH_GUIDE_RE.test(text));
+  return text === BEACH_GUIDE_PROMPT || (/charla\s+ia|gu[ií]a\s+visual|mapa|mapeo/i.test(text) && BEACH_GUIDE_RE.test(text));
 }
 
-const BEACH_GUIDE_RESPONSE = `# 🏖️ Playas de Alicante: charla IA de la Costa Blanca
+const BEACH_GUIDE_RESPONSE = `# 🏖️ Playas alrededor de Alicante
 
-![Playa del Postiguet con el Castillo de Santa Bárbara](https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Alicante_-_Playa_del_Postiguet.jpg/1280px-Alicante_-_Playa_del_Postiguet.jpg)
+![Panorámica de la Playa del Postiguet y el Castillo de Santa Bárbara](https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Alicante_-_Playa_del_Postiguet.jpg/1280px-Alicante_-_Playa_del_Postiguet.jpg)
 
-Alicante tiene una costa muy fácil de disfrutar: playas urbanas con TRAM y bus, paseos marítimos con servicios, agua mediterránea clara y calas rocosas donde el plan cambia de “tomar el sol” a **snorkel, paseo y mirador**. Basándome en las guías turísticas oficiales y páginas de referencia que compartiste, esta es la selección práctica para elegir bien según el día.
+Te hago un **mapeo visual para elegir playa según zona, tiempo y plan**. Alicante ciudad tiene playas urbanas muy fáciles y, alrededor, calas y arenales de la Costa Blanca para pasar medio día o una escapada completa.
 
-## ⭐ Playas populares
+## 🧭 Mapa mental rápido
 
-### 🏰 Playa del Postiguet
+- **Centro:** Postiguet — la playa más cómoda si estás por el casco antiguo, Explanada o puerto.
+- **Norte cercano:** Albufereta, Almadraba y Cabo de las Huertas — bahías tranquilas, roca, snorkel y atardeceres.
+- **Norte amplio:** Playa de San Juan y Muchavista — arena larga, TRAM, paseo y día entero de playa.
+- **Sur de la ciudad:** Saladar-Urbanova y Agua Amarga — más espacio, horizonte abierto y ambiente menos céntrico.
+- **Escapadas Costa Blanca:** El Campello, Villajoyosa, Santa Pola, Tabarca, Jávea y Calpe — para cuando apetece “plan playa especial”.
+
+---
+
+## 📍 1. Playa del Postiguet — centro de Alicante
+
 ![Playa del Postiguet](https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Postiguet_Beach_Alicante_Spain.jpg/1280px-Postiguet_Beach_Alicante_Spain.jpg)
 
-La playa más icónica para empezar: está al pie del Castillo de Santa Bárbara y pegada al centro. Es perfecta si quieres **baño rápido, paseo, fotos y plan urbano** sin moverte demasiado.
+La postal más directa de Alicante: arena, mar y el Castillo de Santa Bárbara encima. Es perfecta para una primera visita o para bañarte sin organizar demasiado.
 
-- **Cómo ir:** andando desde el centro; TRAM y buses urbanos hacia la zona de Puerta del Mar / Postiguet.
-- **Qué tiene:** arena fina, paseo marítimo, duchas, vigilancia en temporada, accesos cómodos y servicios cercanos.
-- **Ideal para:** familias, primera visita, atardecer, combinar playa + casco antiguo + Explanada.
+- **Ideal para:** primer día, familias, fotos, baño rápido, paseo por la Explanada.
+- **Cómo llegar:** andando desde el centro; TRAM y bus hasta zona Postiguet / Puerta del Mar.
+- **Consejo local:** ve a primera hora o al atardecer; al mediodía en verano se llena.
+- [Abrir ubicación aproximada](https://www.google.com/maps/search/?api=1&query=Playa%20del%20Postiguet%20Alicante)
 
-### 🌊 Playa de San Juan
+---
+
+## 📍 2. Playa de San Juan — la gran playa alicantina
+
 ![Playa de San Juan](https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Playa_de_San_Juan_-_Alicante.jpg/1280px-Playa_de_San_Juan_-_Alicante.jpg)
 
-La gran playa alicantina: larga, abierta, con muchísimo espacio y ambiente de verano. Si buscas arena, mar y un día completo, esta suele ser la apuesta segura.
+Larga, luminosa y con muchísimo espacio. Si quieres “día completo de playa”, esta suele ser la apuesta segura.
 
-- **Cómo ir:** TRAM hacia Playa de San Juan / Costa Blanca; también bus urbano y coche.
-- **Qué tiene:** paseo, zonas deportivas, restaurantes, chiringuitos de temporada, vigilancia y servicios.
-- **Ideal para:** pasar el día entero, caminar junto al mar, deporte, grupos y familias.
+![Arena y paseo de Playa de San Juan](https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Platja_de_Sant_Joan%2C_Alacant.JPG/1280px-Platja_de_Sant_Joan%2C_Alacant.JPG)
 
-### 🐚 Playa de la Albufereta
+- **Ideal para:** grupos, niños, deporte, caminar por el paseo, chiringuitos de temporada.
+- **Cómo llegar:** TRAM hacia Playa de San Juan / Costa Blanca; también bus urbano.
+- **Consejo local:** si sopla viento, revisa bandera; al ser abierta puede cambiar el mar.
+- [Abrir ubicación aproximada](https://www.google.com/maps/search/?api=1&query=Playa%20de%20San%20Juan%20Alicante)
+
+---
+
+## 📍 3. Playa de la Albufereta — cómoda y más recogida
+
 ![Playa de la Albufereta](https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Albufereta_beach_Alicante.jpg/1280px-Albufereta_beach_Alicante.jpg)
 
-Más recogida que San Juan y más tranquila que Postiguet. Tiene un punto local y cómodo, con una bahía protegida que suele apetecer cuando quieres algo menos masivo.
+Una bahía más tranquila que San Juan y menos intensa que Postiguet. Buena para una mañana relajada sin irte lejos.
 
-- **Cómo ir:** TRAM y bus desde Alicante; en coche suele ser más sencillo fuera de horas punta.
-- **Qué tiene:** arena, aguas generalmente calmadas, paseo y servicios básicos.
-- **Ideal para:** baño relajado, familias, mañana tranquila y planes sin mucha logística.
+- **Ideal para:** baño calmado, familias, plan corto, gente que quiere algo práctico.
+- **Cómo llegar:** TRAM o bus desde Alicante; coche fuera de horas punta.
+- **Consejo local:** combina bien con un paseo hacia la zona de la Almadraba.
+- [Abrir ubicación aproximada](https://www.google.com/maps/search/?api=1&query=Playa%20de%20la%20Albufereta%20Alicante)
 
-### 🌅 Saladar-Urbanova
-![Urbanova](https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Playa_de_Urbanova%2C_Alicante.jpg/1280px-Playa_de_Urbanova%2C_Alicante.jpg)
+---
 
-Al sur de la ciudad, amplia y menos céntrica. Es buena opción si te apetece una playa abierta, con sensación de horizonte y menos presión urbana.
+## 📍 4. Cala de la Almadraba — atardecer tranquilo
 
-- **Cómo ir:** bus hacia Urbanova o coche.
-- **Qué tiene:** arena, paseo, servicios de temporada y zonas amplias.
-- **Ideal para:** desconectar, caminar, ir con espacio y evitar el centro.
+![Cala de la Almadraba](https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Playa_de_la_Almadraba%2C_Alicante%2C_Espa%C3%B1a%2C_2014-07-04%2C_DD_01.JPG/1280px-Playa_de_la_Almadraba%2C_Alicante%2C_Espa%C3%B1a%2C_2014-07-04%2C_DD_01.JPG)
 
-## 🧭 Playas y calas escondidas
+Pequeña, local y con un punto muy bonito al caer la tarde. No es la playa para correr o hacer kilómetros: es para sentarte, mirar el mar y bajar el ritmo.
 
-### 🤿 Cala Cantalar
+- **Ideal para:** puesta de sol, parejas, baño corto, lectura, plan sin ruido.
+- **Cómo llegar:** TRAM/bus hacia la zona Albufereta-Cabo.
+- **Consejo local:** lleva agua; no tiene la misma cantidad de servicios que San Juan.
+- [Abrir ubicación aproximada](https://www.google.com/maps/search/?api=1&query=Cala%20de%20la%20Almadraba%20Alicante)
+
+---
+
+## 📍 5. Cabo de las Huertas — calas, roca y snorkel
+
 ![Cabo de las Huertas](https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Cabo_de_las_Huertas_Alicante.jpg/1280px-Cabo_de_las_Huertas_Alicante.jpg)
 
-Una cala rocosa del entorno del Cabo de las Huertas. Aquí el plan no es sombrilla clásica: es **calzado de agua, gafas de snorkel y paciencia para encontrar tu rincón**.
+Aquí Alicante cambia de modo: menos playa clásica y más **cala rocosa, agua clara y sensación salvaje**. Es el sitio para gafas de snorkel y escarpines.
 
-- **Cómo ir:** TRAM/bus hasta zona Cabo-Huertas y caminar; en coche, aparcar con tiempo.
-- **Qué llevar:** escarpines, agua, gafas de snorkel, protección solar y bolsa para basura.
-- **Ideal para:** snorkel, fotos, baño tranquilo y gente que prefiere roca a arena.
+![Calas del Cabo de las Huertas](https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Cabo_de_la_Huerta%2C_Alicante.jpg/1280px-Cabo_de_la_Huerta%2C_Alicante.jpg)
 
-### 🌿 Calas de Agua Amarga
-![Agua Amarga](https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Alicante_-_Agua_Amarga.jpg/1280px-Alicante_-_Agua_Amarga.jpg)
+- **Ideal para:** snorkel, fotos, amanecer, atardecer, aventura suave.
+- **Cómo llegar:** TRAM o bus hasta paradas cercanas y luego caminar.
+- **Qué llevar:** escarpines, agua, protección solar y bolsa para residuos.
+- [Abrir ubicación aproximada](https://www.google.com/maps/search/?api=1&query=Cabo%20de%20las%20Huertas%20Alicante)
 
-Zona costera al sur, diferente a la postal clásica de Alicante. Interesa si buscas algo menos típico y quieres explorar otro tramo del litoral.
+---
 
-- **Cómo ir:** mejor en coche o bus según temporada y punto exacto.
-- **Qué llevar:** agua, calzado cómodo, protección solar y algo de comida ligera.
-- **Ideal para:** paseo costero, baño tranquilo y plan menos turístico.
+## 📍 6. Cala Cantalar — rincón rocoso para agua clara
 
-### 🪨 Cabo de las Huertas
-![Cabo de las Huertas](https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Cabo_de_la_Huerta%2C_Alicante.jpg/1280px-Cabo_de_la_Huerta%2C_Alicante.jpg)
+![Cala Cantalar y entorno del Cabo](https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Cala_Cantalar%2C_Cabo_de_la_Huerta%2C_Alicante.jpg/1280px-Cala_Cantalar%2C_Cabo_de_la_Huerta%2C_Alicante.jpg)
 
-El Cabo de las Huertas es el gran “modo cala” de Alicante: pequeñas entradas al mar, roca, agua clara y ambiente más salvaje. No esperes todos los servicios de una playa urbana; ahí está parte de su encanto.
+Una de las calas más buscadas del Cabo. No vayas esperando hamaca y arena fina: aquí el encanto está en encontrar tu roca, entrar con cuidado y disfrutar del fondo marino.
 
-- **Cómo ir:** TRAM o bus hasta las paradas cercanas y caminar; coche con aparcamiento limitado.
-- **Qué tiene:** paisaje rocoso, zonas de baño y puntos buenos para ver el mar.
-- **Ideal para:** snorkel, amanecer, atardecer y rutas suaves por la costa.
+- **Ideal para:** snorkel, agua clara, plan adulto, poca logística si vas ligero.
+- **Cómo llegar:** transporte hasta Cabo Huertas + paseo; aparcamiento limitado.
+- **Consejo local:** evita horas centrales en agosto: hay poca sombra.
+- [Abrir ubicación aproximada](https://www.google.com/maps/search/?api=1&query=Cala%20Cantalar%20Alicante)
 
-## 🎒 Qué llevar
+---
 
-- **Protector solar alto**, gorra y gafas: el sol pega fuerte incluso con brisa.
-- **Agua suficiente**: especialmente en calas, donde no siempre hay servicios.
-- **Escarpines** para Cabo de las Huertas, Cala Cantalar y zonas rocosas.
-- **Sombrilla ligera** si vas a San Juan, Urbanova o Postiguet en horas centrales.
-- **Bolsa para residuos**: en calas pequeñas se nota muchísimo cuidar el entorno.
+## 📍 7. Saladar-Urbanova — sur, amplitud y horizonte
 
-## 🕘 Mejores horas
+![Playa de Urbanova](https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Playa_de_Urbanova%2C_Alicante.jpg/1280px-Playa_de_Urbanova%2C_Alicante.jpg)
 
-- **Mañana temprano:** agua más tranquila, menos gente y mejor aparcamiento.
-- **Tarde:** luz bonita y temperatura más suave.
-- **Evita 12:00–17:00 en julio/agosto** si vas con niños o sin sombra.
+Al sur de Alicante, con una sensación más abierta y menos urbana. Buena si quieres arena amplia y desconectar del centro.
 
-## 🚩 Seguridad y banderas
+- **Ideal para:** caminar, ir con espacio, familias, plan tranquilo.
+- **Cómo llegar:** bus hacia Urbanova o coche.
+- **Consejo local:** mira el viento antes de ir; al estar más abierta se nota más.
+- [Abrir ubicación aproximada](https://www.google.com/maps/search/?api=1&query=Playa%20del%20Saladar%20Urbanova%20Alicante)
 
-- **Bandera verde:** baño permitido.
-- **Bandera amarilla:** precaución; ojo con corrientes y oleaje.
-- **Bandera roja:** no bañarse.
-- En calas rocosas, entra despacio: puede haber piedras, erizos o escalones naturales.
+---
 
-## 🚊 Cómo organizarte
+## 📍 8. Agua Amarga — costa diferente al sur
 
-- **Sin coche:** Postiguet, Albufereta y San Juan son las más cómodas por transporte público.
-- **Con coche:** Urbanova y las calas dan más libertad, pero madruga para aparcar.
-- **Plan completo:** Postiguet + Castillo + Explanada; o San Juan + paseo largo + atardecer; o Cabo de las Huertas + snorkel + miradores.
+![Agua Amarga Alicante](https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Alicante_-_Agua_Amarga.jpg/1280px-Alicante_-_Agua_Amarga.jpg)
 
-## ✅ Mi recomendación rápida
+Un tramo menos típico para quien quiere explorar otra cara del litoral alicantino. Interesa más como paseo y descubrimiento que como playa urbana de servicios.
 
-- Si es tu **primera vez**: Postiguet.
-- Si quieres **la mejor playa larga**: San Juan.
-- Si buscas **tranquilidad cómoda**: Albufereta.
-- Si quieres **aventura y agua clara**: Cabo de las Huertas / Cala Cantalar.
-- Si quieres **espacio y desconexión**: Saladar-Urbanova.
+- **Ideal para:** explorar, caminar, fotos, plan alternativo.
+- **Cómo llegar:** mejor coche o bus según temporada y punto exacto.
+- **Consejo local:** lleva calzado cómodo y agua.
+- [Abrir ubicación aproximada](https://www.google.com/maps/search/?api=1&query=Agua%20Amarga%20Alicante)
+
+---
+
+## 🚊 Ruta fácil sin coche
+
+1. **Mañana:** Postiguet para empezar suave.
+2. **Mediodía:** TRAM hacia Albufereta o San Juan.
+3. **Tarde:** paseo por Cabo de las Huertas o Almadraba para la luz bonita.
+
+## 🚗 Ruta con coche para descubrir más
+
+- **Media jornada:** Urbanova + Agua Amarga.
+- **Día completo:** Alicante → El Campello → Villajoyosa.
+- **Escapada top:** Jávea / Granadella / Calpe si quieres Costa Blanca de postal.
+
+![Cala Granadella en Jávea](https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Playa_de_la_Granadella_-_Javea.jpg/1280px-Playa_de_la_Granadella_-_Javea.jpg)
+
+![Peñón de Ifach y costa de Calpe](https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Calpe_-_Pe%C3%B1%C3%B3n_de_Ifach.jpg/1280px-Calpe_-_Pe%C3%B1%C3%B3n_de_Ifach.jpg)
+
+## ✅ Elección rápida
+
+- **Más fácil desde el centro:** Postiguet.
+- **Mejor playa larga:** San Juan.
+- **Más tranquila y cercana:** Albufereta.
+- **Mejor para snorkel:** Cabo de las Huertas / Cala Cantalar.
+- **Más espacio al sur:** Saladar-Urbanova.
+- **Más especial para escapada:** Granadella, Villajoyosa o Calpe.
 `;
 
 const SUGGESTIONS: Suggestion[] = [
