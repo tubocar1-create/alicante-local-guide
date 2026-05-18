@@ -181,6 +181,16 @@ function PerfilPage() {
             </ul>
           )}
         </section>
+
+        {isAuthenticated && (
+          <button
+            onClick={signOut}
+            className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-full border border-border bg-card px-4 py-3 text-sm font-semibold text-destructive active:scale-95"
+          >
+            <LogOut className="h-4 w-4" />
+            Cerrar sesión
+          </button>
+        )}
       </main>
     </div>
   );
