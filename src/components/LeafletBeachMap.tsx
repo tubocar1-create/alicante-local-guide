@@ -72,39 +72,17 @@ export function LeafletMap({ beaches }: { beaches: Beach[] }) {
         }
       });
 
-      class BeachLabel extends google.maps.OverlayView {
-        private div: HTMLDivElement | null = null;
-        constructor(private position: any, private beach: Beach) {
-          super();
-        }
-        onAdd() {
-          const div = document.createElement("div");
-          div.style.cssText =
-            "position:absolute;transform:translate(-50%,8px);background:rgba(255,255,255,0.95);padding:4px 8px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.2);font-family:system-ui;text-align:center;min-width:90px;max-width:160px;cursor:pointer;pointer-events:auto;";
-          div.innerHTML = `<div style="font-size:11px;font-weight:800;color:#1565c0;line-height:1.1">${this.beach.name}</div><div style="font-size:9px;color:#475569;line-height:1.15;margin-top:2px">${this.beach.description}</div>`;
-          div.addEventListener("click", () => {
-            window.location.href = `/playas/${this.beach.slug}`;
-          });
-          this.div = div;
-          this.getPanes()!.overlayMouseTarget.appendChild(div);
-        }
-        draw() {
-          if (!this.div) return;
-          const p = this.getProjection().fromLatLngToDivPixel(this.position);
-          if (!p) return;
-          this.div.style.left = `${p.x}px`;
-          this.div.style.top = `${p.y}px`;
-        }
-        onRemove() {
-          this.div?.remove();
-          this.div = null;
-        }
-      }
+      // Single floating tooltip, follows touch/mouse and shows the nearest beach
+      const tooltip = document.createElement("div");
+      tooltip.style.cssText =
+        "position:absolute;pointer-events:none;transform:translate(-50%,-100%);background:rgba(255,255,255,0.97);padding:6px 10px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.25);font-family:system-ui;text-align:center;min-width:110px;max-width:200px;opacity:0;transition:opacity .12s;z-index:10;margin-top:-14px;";
+      ref.current!.style.position = "relative";
+      ref.current!.appendChild(tooltip);
 
+      const markers: { beach: Beach; marker: any }[] = [];
       beaches.forEach((b) => {
-        const pos = new google.maps.LatLng(b.lat, b.lng);
         const marker = new google.maps.Marker({
-          position: pos,
+          position: { lat: b.lat, lng: b.lng },
           map,
           title: b.name,
           icon: {
@@ -120,9 +98,52 @@ export function LeafletMap({ beaches }: { beaches: Beach[] }) {
         marker.addListener("click", () => {
           window.location.href = `/playas/${b.slug}`;
         });
-        const label = new BeachLabel(pos, b);
-        label.setMap(map);
+        markers.push({ beach: b, marker });
       });
+
+      // Cached container pixel positions (map is locked, so compute once on idle)
+      let pixelCache: { beach: Beach; x: number; y: number }[] = [];
+      const overlay = new google.maps.OverlayView();
+      overlay.onAdd = () => {};
+      overlay.draw = () => {
+        const proj = overlay.getProjection();
+        if (!proj) return;
+        pixelCache = markers.map(({ beach, marker }) => {
+          const p = proj.fromLatLngToContainerPixel(marker.getPosition()!);
+          return { beach, x: p?.x ?? 0, y: p?.y ?? 0 };
+        });
+      };
+      overlay.onRemove = () => {};
+      overlay.setMap(map);
+
+      const onMove = (ev: PointerEvent) => {
+        const rect = ref.current!.getBoundingClientRect();
+        const x = ev.clientX - rect.left;
+        const y = ev.clientY - rect.top;
+        let best: { beach: Beach; x: number; y: number } | null = null;
+        let bestD = Infinity;
+        for (const p of pixelCache) {
+          const d = (p.x - x) ** 2 + (p.y - y) ** 2;
+          if (d < bestD) {
+            bestD = d;
+            best = p;
+          }
+        }
+        if (best && bestD < 70 * 70) {
+          tooltip.innerHTML = `<div style="font-size:12px;font-weight:800;color:#1565c0;line-height:1.15">${best.beach.name}</div><div style="font-size:10px;color:#475569;line-height:1.2;margin-top:2px">${best.beach.description}</div>`;
+          tooltip.style.left = `${best.x}px`;
+          tooltip.style.top = `${best.y}px`;
+          tooltip.style.opacity = "1";
+        } else {
+          tooltip.style.opacity = "0";
+        }
+      };
+      const onLeave = () => {
+        tooltip.style.opacity = "0";
+      };
+      ref.current!.addEventListener("pointermove", onMove);
+      ref.current!.addEventListener("pointerdown", onMove);
+      ref.current!.addEventListener("pointerleave", onLeave);
     });
     return () => {
       cancelled = true;
