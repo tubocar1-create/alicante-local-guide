@@ -2666,18 +2666,19 @@ serve(async (req) => {
       [...messages].reverse().find((m: { role: string; content: string }) => m.role === "user")
         ?.content ?? "";
     const transitMode = context?.mode === "transit";
-    const foodRequest = !transitMode && isFoodOrDrinkRequest(messages);
+    const guideMode = context?.mode === "guide";
+    const foodRequest = !transitMode && !guideMode && isFoodOrDrinkRequest(messages);
     const mayNeedFoodFallbacks =
-      !transitMode && (foodRequest || extractMentionedNames(latestUserText).length > 0);
+      !transitMode && !guideMode && (foodRequest || extractMentionedNames(latestUserText).length > 0);
     const [openFoodPlaces, mentionedPlaces] = await Promise.all([
       mayNeedFoodFallbacks
         ? fetchConfirmedOpenFoodPlaces(context, latestUserText)
         : Promise.resolve([] as FoodPlace[]),
-      transitMode
+      (transitMode || guideMode)
         ? Promise.resolve([] as MentionedPlace[])
         : fetchMentionedPlaces(latestUserText).catch(() => [] as MentionedPlace[]),
     ]);
-    if (!transitMode && mentionedPlaces.length > 0) {
+    if (!transitMode && !guideMode && mentionedPlaces.length > 0) {
       return streamChatText(buildMentionedPlacesResponse(mentionedPlaces, openFoodPlaces));
     }
     if (foodRequest) {
@@ -2725,8 +2726,8 @@ serve(async (req) => {
           .join(" \n ")
       : latestUserText;
     let originTextForTransit: string | null = null;
-    const destTextForTransit = extractTransitDestination(transitText);
-    if (transitMode || detectTransitIntent(transitText)) {
+    const destTextForTransit = guideMode ? null : extractTransitDestination(transitText);
+    if (!guideMode && (transitMode || detectTransitIntent(transitText))) {
       originTextForTransit = extractTransitOrigin(transitText);
       if (originTextForTransit) {
         const g = await geocodeAlicante(originTextForTransit).catch(() => null);
@@ -2734,13 +2735,13 @@ serve(async (req) => {
       }
     }
     const [transitResult, vectaliaTrips] = await Promise.all([
-      transitMode
+      (transitMode || guideMode)
         ? Promise.resolve(null)
         : buildTransitResult(userOriginForTransit, transitText).catch((err) => {
             console.error("transit lookup error:", err);
             return null;
           }),
-      (transitMode || detectTransitIntent(transitText))
+      (!guideMode && (transitMode || detectTransitIntent(transitText)))
         ? buildChosenVectaliaTransit(latestUserText)
             .then((chosen) => chosen ?? buildVectaliaTransit(originTextForTransit, destTextForTransit, userOriginForTransit))
             .catch((err) => {
@@ -2751,7 +2752,7 @@ serve(async (req) => {
     ]);
     const transitLine = transitResult ? formatTransitResult(transitResult) : "";
     const vectaliaLine = vectaliaTrips ? formatVectaliaTransit(vectaliaTrips) : "";
-    if (transitMode || detectTransitIntent(transitText)) {
+    if (!guideMode && (transitMode || detectTransitIntent(transitText))) {
       if (vectaliaTrips) {
         return streamChatText(
           extractChosenDirectBus(latestUserText)
@@ -2793,7 +2794,17 @@ ESTILO OBLIGATORIO en este modo:
 - Si VECTALIA_TRIPS está vacío y TRANSIT_RESULT también: di en una frase que no localizas con precisión esa dirección y pide al usuario que sea más específico (ej. "¿Puedes darme el nombre de la calle y el número, o un punto de referencia cercano como un colegio, hospital o plaza?"). NUNCA inventes paradas ni líneas.
 - **NUNCA inventes** líneas, códigos ni nombres de parada. Si no aparece en VECTALIA_TRIPS, no existe.`
       : "";
-    const runtimeContext = `RUNTIME CONTEXT (use this when relevant):\nTODAY: ${todayStr} (zona horaria Europe/Madrid)\nMAX_NEARBY_OPTIONS: ${context?.maxOptions ?? 4}\n${locationLine}${transitModeLine}${verifiedOpenLine}${mentionedLine}${vectaliaLine}${transitLine}`;
+    const guideModeLine = guideMode
+      ? `\nGUIDE_MODE: ON. El usuario ha pedido una GUÍA EXTENSA Y DETALLADA (en este caso, sobre las playas de Alicante).
+ESTILO OBLIGATORIO en este modo:
+- NO uses tarjetas [[card:...]], [[place:...]], [[busopt:...]] ni ningún marcador especial. Esto es una guía narrativa, no recomendaciones de sitios para comer.
+- NO digas "no me sale en mi mapa" ni hables de horarios: las playas, calas y monumentos son sitios públicos, no necesitan verificación de horario.
+- NO sugieras restaurantes ni bares como alternativa: el usuario quiere una guía de playas, no comer.
+- Escribe en español, con formato Markdown rico: títulos (##, ###), listas, negritas y emojis para que sea visual y atractivo.
+- Estructura sugerida: introducción a la Costa Blanca → playas urbanas más populares (una por una) → calas escondidas (una por una) → para cada playa indica cómo llegar (bus, TRAM, coche), servicios y qué la hace especial → consejos prácticos (qué llevar, mejores horas, banderas y seguridad) → planes que se pueden hacer (snorkel, paddle surf, chiringuitos).
+- Responde con texto extenso y útil, sin pedirle al usuario más datos antes de empezar.`
+      : "";
+    const runtimeContext = `RUNTIME CONTEXT (use this when relevant):\nTODAY: ${todayStr} (zona horaria Europe/Madrid)\nMAX_NEARBY_OPTIONS: ${context?.maxOptions ?? 4}\n${locationLine}${transitModeLine}${guideModeLine}${verifiedOpenLine}${mentionedLine}${vectaliaLine}${transitLine}`;
 
     const gatewayBody = {
       model: "google/gemini-3-flash-preview",
