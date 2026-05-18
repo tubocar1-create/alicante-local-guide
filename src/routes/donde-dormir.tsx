@@ -125,7 +125,7 @@ function DondeDormirPage() {
                 : `${availableCount} disponibles · ${ranked.length} alojamientos`}
             </p>
             <p className="text-[9px] uppercase tracking-[0.18em] text-amber-400/70">
-              estado · €/noche · des · canc · dist
+              €/noche · des · canc · dist
             </p>
           </div>
 
@@ -133,7 +133,6 @@ function DondeDormirPage() {
             <colgroup>
               <col className="w-[18px]" />
               <col />
-              <col className="w-[44px]" />
               <col className="w-[50px]" />
               <col className="w-[34px]" />
               <col className="w-[40px]" />
@@ -143,7 +142,6 @@ function DondeDormirPage() {
               <tr className="text-[9px] uppercase tracking-[0.12em] text-amber-200/50">
                 <th className="px-0.5 py-1" />
                 <th className="px-1 py-1 font-medium">Hotel</th>
-                <th className="px-1 py-1 font-medium">Estado</th>
                 <th className="px-1 py-1 text-right font-medium">€/noche</th>
                 <th className="px-1 py-1 text-center font-medium">Des.</th>
                 <th className="px-1 py-1 text-center font-medium">Canc.</th>
@@ -163,9 +161,12 @@ function DondeDormirPage() {
                 const roomTypes: Array<{ type: string; price: number; currency: string; label?: string }> =
                   Array.isArray(d?.room_types) ? d.room_types : [];
                 const open = openId === h.id;
+                const rowBg = d?.available
+                  ? "bg-emerald-500/20 hover:bg-emerald-500/25"
+                  : "bg-rose-500/15 hover:bg-rose-500/20";
                 return (
                   <Fragment key={h.id}>
-                    <tr key={h.id} className="bg-white/[0.02]">
+                    <tr key={h.id} className={rowBg}>
                       <td className="rounded-l-md px-0.5 py-1 align-middle">
                         <button
                           type="button"
@@ -192,41 +193,30 @@ function DondeDormirPage() {
                             <span className="min-w-0 truncate text-[11px] font-medium">{h.name}</span>
                           </span>
                           {h.address && (
-                            <span className="mt-0.5 block truncate pl-[18px] text-[9px] text-amber-200/40">
+                            <span className="mt-0.5 block truncate pl-[18px] text-[9px] text-amber-100/60">
                               {h.address}
                             </span>
                           )}
                         </Link>
-                      </td>
-                      <td className="px-1 py-1 align-middle">
-                        {d?.available ? (
-                          <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500/15 px-1 py-0.5 text-[9px] font-semibold text-emerald-300">
-                            ● Libre
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-0.5 rounded-full bg-rose-500/15 px-1 py-0.5 text-[9px] font-semibold text-rose-300/80">
-                            s/d
-                          </span>
-                        )}
                       </td>
                       <td className="px-1 py-1 text-right align-middle font-mono text-[11px] font-semibold tabular-nums text-amber-50">
                         {price != null ? `${Math.round(price)}€` : "—"}
                       </td>
                       <td className="px-1 py-1 text-center align-middle text-[10px] font-medium text-amber-50">
                         {d?.breakfast_included ? (
-                          <span className="text-emerald-300">Sí</span>
+                          <span className="text-emerald-200">Sí</span>
                         ) : (
-                          <span className="text-amber-200/30">No</span>
+                          <span className="text-amber-100/40">No</span>
                         )}
                       </td>
                       <td className="px-1 py-1 text-center align-middle text-[10px] font-medium text-amber-50">
                         {d?.free_cancellation ? (
-                          <span className="text-emerald-300">Sí</span>
+                          <span className="text-emerald-200">Sí</span>
                         ) : (
-                          <span className="text-amber-200/30">No</span>
+                          <span className="text-amber-100/40">No</span>
                         )}
                       </td>
-                      <td className="rounded-r-md px-1 py-1 text-right align-middle font-mono text-[10px] tabular-nums text-amber-100/80">
+                      <td className="rounded-r-md px-1 py-1 text-right align-middle font-mono text-[10px] tabular-nums text-amber-100/90">
                         {distLabel}
                       </td>
                     </tr>
