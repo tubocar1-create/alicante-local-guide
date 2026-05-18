@@ -234,6 +234,11 @@ Un tramo menos típico para quien quiere explorar otra cara del litoral alicanti
 - **Mejor para snorkel:** Cabo de las Huertas / Cala Cantalar.
 - **Más espacio al sur:** Saladar-Urbanova.
 - **Más especial para escapada:** Granadella, Villajoyosa o Calpe.
+
+## 🗺️ Después de la charla
+
+- [Abrir mapa interactivo a página completa](/playas/mapa)
+- [Ver recomendaciones con fotos reales](/playas)
 `;
 
 const SUGGESTIONS: Suggestion[] = [
@@ -331,7 +336,8 @@ function markRestaurantReturn() {
 export function ChatScreen() {
   const navigate = useNavigate();
   const { user: authUser } = useAuth();
-  const firstName = authUser?.name?.trim().split(" ")[0];
+  const [canShowPersonalName, setCanShowPersonalName] = useState(false);
+  const firstName = canShowPersonalName ? authUser?.name?.trim().split(" ")[0] : "";
   const [messages, setMessages] = useState<Msg[]>([GREETING]);
   const restoredReturnRef = useRef(false);
   const [input, setInput] = useState("");
@@ -348,6 +354,10 @@ export function ChatScreen() {
   const [mode, setMode] = useState<"transit" | null>(null);
   const [showBusPicker, setShowBusPicker] = useState(false);
   const [showFlightPicker, setShowFlightPicker] = useState(false);
+
+  useEffect(() => {
+    setCanShowPersonalName(true);
+  }, []);
 
   useEffect(() => {
     const restored = readInitialMessages();
@@ -748,10 +758,6 @@ export function ChatScreen() {
                       emoji: match?.[1] ?? "✨",
                       label: cleanLabel || s.label,
                       onClick: () => {
-                        if (s.label === "🏖️ Turismo, playa y aventuras") {
-                          navigate({ to: "/playas" });
-                          return;
-                        }
                         if (s.submenu) setActiveSubmenu(s);
                         else if (s.prompt) send(s.prompt, { mode: null });
                       },
@@ -883,7 +889,7 @@ export function ChatScreen() {
                         setSubmenuStack([]);
                         requestLocationForPrompt(opt.prompt);
                         const isBeachGuide = opt.label === "🏖️ Playa";
-                        isBeachGuide ? navigate({ to: "/playas" }) : send(opt.prompt, { mode: null });
+                        isBeachGuide ? sendBeachGuide() : send(opt.prompt, { mode: null });
                       }
                     }}
                     className="flex w-full items-center gap-1.5 rounded-lg border border-border bg-background/80 px-2 py-1.5 text-left text-[12px] shadow-sm transition hover:bg-accent/40"
@@ -1439,6 +1445,7 @@ function PlaceCard({ data }: { data: PlaceCardData }) {
 }
 
 function MarkdownText({ text }: { text: string }) {
+  const navigate = useNavigate();
   if (!text.trim()) return null;
   return (
     <ReactMarkdown
@@ -1486,6 +1493,21 @@ function MarkdownText({ text }: { text: string }) {
                 className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full gradient-warm text-primary-foreground shadow-soft active:scale-95 align-middle ml-1"
               >
                 🎟️ VAMOS
+              </button>
+            );
+          }
+          if (url.startsWith("/")) {
+            return (
+              <button
+                type="button"
+                onClick={() => {
+                  if (url === "/playas/mapa") navigate({ to: "/playas/mapa" });
+                  else if (url === "/playas") navigate({ to: "/playas" });
+                  else window.location.assign(url);
+                }}
+                className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-[11px] font-bold text-primary-foreground shadow-soft active:scale-95"
+              >
+                {children}
               </button>
             );
           }

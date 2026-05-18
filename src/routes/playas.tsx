@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { ArrowLeft, MapPin, Waves, Navigation, Camera, Car, Train, Footprints } from "lucide-react";
 
 export const Route = createFileRoute("/playas")({
@@ -151,6 +151,12 @@ const zoneSummary = [
 ];
 
 function PlayasPage() {
+  const location = useLocation();
+
+  if (location.pathname !== "/playas") {
+    return <Outlet />;
+  }
+
   return (
     <div className="min-h-screen bg-[oklch(0.98_0.018_205)] text-[oklch(0.18_0.04_235)]">
       <header className="relative min-h-[72vh] overflow-hidden">
