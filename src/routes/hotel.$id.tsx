@@ -396,17 +396,15 @@ function HotelDetail() {
                     { month: "long", year: "numeric", timeZone: "UTC" },
                   );
                   const cells: Array<{ key: string; kind: "blank" | "out" | "day"; date?: string; dayNum?: number }> = [];
-                  // Leading blanks for weekday alignment (Mon=0)
-                  for (let i = 0; i < mo.firstWeekday; i++) {
+                  // Weekday of the first visible day (mo.firstDay), Mon=0..Sun=6
+                  const firstVisibleJs = new Date(Date.UTC(mo.year, mo.month, mo.firstDay)).getUTCDay();
+                  const firstVisibleWeekday = (firstVisibleJs + 6) % 7;
+                  for (let i = 0; i < firstVisibleWeekday; i++) {
                     cells.push({ key: `b-${mo.year}-${mo.month}-${i}`, kind: "blank" });
                   }
-                  for (let d = 1; d <= mo.daysInMonth; d++) {
+                  for (let d = mo.firstDay; d <= mo.daysInMonth; d++) {
                     const dateStr = `${mo.year}-${String(mo.month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-                    if (d < mo.firstDay) {
-                      cells.push({ key: dateStr, kind: "out", dayNum: d });
-                    } else {
-                      cells.push({ key: dateStr, kind: "day", date: dateStr, dayNum: d });
-                    }
+                    cells.push({ key: dateStr, kind: "day", date: dateStr, dayNum: d });
                   }
                   return (
                     <div key={`${mo.year}-${mo.month}`}>
