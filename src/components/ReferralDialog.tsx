@@ -289,12 +289,6 @@ export default function ReferralDialog({ placeId, placeName, autoCelebrate, onCl
                     Lo tienes guardado en <b>perfil → Mis QR</b>.
                   </span>
                 </li>
-                <li className="flex gap-2">
-                  <Ticket className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                  <span>
-                    Lo tienes guardado en <b>perfil → Mis QR</b>.
-                  </span>
-                </li>
               </ul>
             </div>
 
