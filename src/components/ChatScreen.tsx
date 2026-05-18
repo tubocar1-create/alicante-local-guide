@@ -749,11 +749,8 @@ export function ChatScreen() {
                       label: cleanLabel || s.label,
                       onClick: () => {
                         if (s.label === "🏖️ Turismo, playa y aventuras") {
-                          const playa = s.submenu?.find((o) => o.label === "🏖️ Playa");
-                          if (playa?.prompt) {
-                            sendBeachGuide();
-                            return;
-                          }
+                          navigate({ to: "/playas" });
+                          return;
                         }
                         if (s.submenu) setActiveSubmenu(s);
                         else if (s.prompt) send(s.prompt, { mode: null });
@@ -886,7 +883,7 @@ export function ChatScreen() {
                         setSubmenuStack([]);
                         requestLocationForPrompt(opt.prompt);
                         const isBeachGuide = opt.label === "🏖️ Playa";
-                        isBeachGuide ? sendBeachGuide() : send(opt.prompt, { mode: null });
+                        isBeachGuide ? navigate({ to: "/playas" }) : send(opt.prompt, { mode: null });
                       }
                     }}
                     className="flex w-full items-center gap-1.5 rounded-lg border border-border bg-background/80 px-2 py-1.5 text-left text-[12px] shadow-sm transition hover:bg-accent/40"
