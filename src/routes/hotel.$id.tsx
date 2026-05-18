@@ -55,6 +55,18 @@ function HotelDetail() {
       }),
   });
 
+  const startDate = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const fetchCalendar = useServerFn(getHotelCalendar);
+  const calendar = useQuery({
+    queryKey: ["hotel-calendar", id, startDate],
+    staleTime: 60 * 60 * 1000,
+    queryFn: () => fetchCalendar({ data: { id, startDate } }),
+  });
+  const days: Array<{ date: string; available: boolean; price_double: number | null; price_min: number | null; currency: string }> =
+    calendar.data?.days ?? [];
+  const roomTypes: Array<{ type: string; price: number; currency: string; label?: string }> =
+    Array.isArray(d?.room_types) ? d.room_types : [];
+
   const mapsHref = h
     ? h.lat && h.lng
       ? `https://www.google.com/maps/dir/?api=1&destination=${h.lat},${h.lng}&travelmode=walking`
