@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { MAP_BEACHES, getBeachBySlug, LOCAL_BEACH_PHOTOS, type MapBeach } from "./playas-map-data";
+import { MAP_BEACHES, getBeachBySlug, LOCAL_BEACH_PHOTOS, GOOGLE_PHOTO_SKIP, type MapBeach } from "./playas-map-data";
 
 const GATEWAY = "https://connector-gateway.lovable.dev/google_maps";
 
@@ -170,7 +170,10 @@ export const getBeachDetail = createServerFn({ method: "POST" })
         userRatingCount = details.userRatingCount;
         googleMapsUri = details.googleMapsUri;
         formattedAddress = details.formattedAddress;
-        const photoNames = details.photoNames.slice(0, 5);
+        const local = LOCAL_BEACH_PHOTOS[beach.slug] ?? [];
+        const skip = GOOGLE_PHOTO_SKIP[beach.slug] ?? 0;
+        const maxGoogle = Math.max(0, 20 - local.length);
+        const photoNames = details.photoNames.slice(skip, skip + maxGoogle);
         const uris = await Promise.all(photoNames.map((n) => photoMediaUri(n, 1600)));
         photos = uris.filter((u): u is string => !!u);
       }

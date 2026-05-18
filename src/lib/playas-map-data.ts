@@ -178,7 +178,7 @@ export const LOCAL_BEACH_PHOTOS: Record<string, string[]> = {
   "postiguet": ["/playas/postiguet1.jpg", "/playas/postiguet2.jpg", "/playas/postiguet3.jpg"],
   "arenales-del-sol": ["/playas/photo1.jpg", "/playas/photo2.jpg"],
   "muchavista": [],
-  "san-juan": [],
+  "san-juan": ["/playas/sanjuan4.jpg", "/playas/sanjuan5.jpg", "/playas/sanjuan6.jpg"],
   "cala-cantalar": [
     "/playas/photo3.jpg",
     "/playas/photo4.jpg",
@@ -188,4 +188,10 @@ export const LOCAL_BEACH_PHOTOS: Record<string, string[]> = {
     "/playas/photo8.jpg",
     "/playas/photo9.jpg",
   ],
+};
+
+// Skip the first N Google-sourced photos for a beach (when those photos
+// are mislabeled in Google and have been re-attributed locally).
+export const GOOGLE_PHOTO_SKIP: Record<string, number> = {
+  "postiguet": 3,
 };
