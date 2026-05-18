@@ -884,14 +884,9 @@ function WeatherChip() {
       className="flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 ring-1 ring-border/60 active:scale-95 transition"
     >
       <Icon className="h-4 w-4 text-[oklch(0.78_0.16_70)]" />
-      <div className="leading-tight text-left">
-        <p className="text-[12px] font-bold text-foreground">
-          {loading || !data ? "—" : `${data.tempC}°`}
-        </p>
-        <p className="text-[9px] -mt-0.5 text-muted-foreground truncate max-w-[80px]">
-          {data?.label ?? "Cargando…"}
-        </p>
-      </div>
+      <p className="text-[12px] font-bold text-foreground leading-tight">
+        {loading || !data ? "—" : `${data.tempC}°`}
+      </p>
     </Link>
   );
 }
