@@ -636,7 +636,7 @@ export function ChatScreen() {
                       label: cleanLabel || s.label,
                       onClick: () => {
                         if (s.label === "🏖️ Turismo, playa y aventuras") {
-                          sendBeachGuide();
+                          navigate({ to: "/playas" });
                         } else if (s.submenu) setActiveSubmenu(s);
                         else if (s.prompt) send(s.prompt, { mode: null });
                       },
