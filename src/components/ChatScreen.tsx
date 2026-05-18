@@ -311,11 +311,11 @@ export function ChatScreen() {
     }
   };
 
-  async function send(text: string, opts?: { mode?: "transit" | null }) {
+  async function send(text: string, opts?: { mode?: "transit" | "guide" | null }) {
     const trimmed = text.trim();
     if (!trimmed || loading) return;
     const effectiveMode = opts?.mode !== undefined ? opts.mode : mode;
-    if (opts?.mode !== undefined) setMode(opts.mode);
+    if (opts?.mode !== undefined && opts.mode !== "guide") setMode(opts.mode);
     setError(null);
     const userMsg: Msg = { role: "user", content: trimmed };
     const next = [...messages, userMsg];
