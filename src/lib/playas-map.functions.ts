@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { MAP_BEACHES, getBeachBySlug, type MapBeach } from "./playas-map-data";
+import { MAP_BEACHES, getBeachBySlug, LOCAL_BEACH_PHOTOS, type MapBeach } from "./playas-map-data";
 
 const GATEWAY = "https://connector-gateway.lovable.dev/google_maps";
 
@@ -175,7 +175,9 @@ export const getBeachDetail = createServerFn({ method: "POST" })
         photos = uris.filter((u): u is string => !!u);
       }
     }
-    return { beach, photos, review, reviews, rating, userRatingCount, googleMapsUri, formattedAddress };
+    const local = LOCAL_BEACH_PHOTOS[beach.slug] ?? [];
+    const merged = [...local, ...photos.filter((p) => !local.includes(p))];
+    return { beach, photos: merged, review, reviews, rating, userRatingCount, googleMapsUri, formattedAddress };
   });
 
 export const getCoastIntro = createServerFn({ method: "GET" }).handler(async (): Promise<{ text: string }> => {
