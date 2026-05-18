@@ -30,7 +30,8 @@ function PerfilPage() {
   const { user, isAuthenticated, signOut } = useAuth();
   const [qrs, setQrs] = useState<LocalQr[]>([]);
   const [geoEnabled, setGeoEnabledState] = useState(false);
-  const { coords } = useUserLocation();
+  const loc = useUserLocation();
+  const coords = loc.state.status === "ready" ? loc.state.coords : null;
 
   useEffect(() => {
     setGeoEnabledState(isGeoEnabled());
