@@ -130,21 +130,19 @@ function PlayasPage() {
 
         {/* Beach grid */}
         <section className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {isLoading
-            ? Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-72 animate-pulse rounded-2xl bg-slate-100" />
-              ))
-            : list.map((p) => <PlayaCard key={p.slug} p={p} />)}
+          {list.map((p) => (
+            <PlayaCard key={p.slug} p={p} />
+          ))}
         </section>
 
         {/* Guide */}
-        {data?.guide && (
+        {guideQ.data && (
           <section className="mt-10 space-y-4">
             <h2 className="text-xl font-bold text-slate-800">Guía práctica</h2>
-            <GuideBlock icon={<Compass className="h-5 w-5" />} title="Cómo ir" body={data.guide.comoIr} tone="sky" />
-            <GuideBlock icon={<Backpack className="h-5 w-5" />} title="Qué llevar" body={data.guide.queLlevar} tone="amber" />
-            <GuideBlock icon={<Waves className="h-5 w-5" />} title="Qué hacer" body={data.guide.queHacer} tone="cyan" />
-            <GuideBlock icon={<Lightbulb className="h-5 w-5" />} title="Consejos locales" body={data.guide.consejos} tone="emerald" />
+            <GuideBlock icon={<Compass className="h-5 w-5" />} title="Cómo ir" body={guideQ.data.comoIr} tone="sky" />
+            <GuideBlock icon={<Backpack className="h-5 w-5" />} title="Qué llevar" body={guideQ.data.queLlevar} tone="amber" />
+            <GuideBlock icon={<Waves className="h-5 w-5" />} title="Qué hacer" body={guideQ.data.queHacer} tone="cyan" />
+            <GuideBlock icon={<Lightbulb className="h-5 w-5" />} title="Consejos locales" body={guideQ.data.consejos} tone="emerald" />
           </section>
         )}
       </main>
