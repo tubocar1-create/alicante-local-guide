@@ -4,14 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   X,
-  Navigation,
   Coffee,
   ShieldCheck,
   Star,
-  Footprints,
   Sparkles,
   ExternalLink,
-  
   CalendarDays,
 } from "lucide-react";
 import { getHotel, getHotelCalendar, getHotelPhotos } from "@/lib/hotels.functions";
