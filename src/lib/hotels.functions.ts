@@ -3,8 +3,8 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { syncStaticHotelsImpl } from "./hotels.server";
 import { fetchHotelCalendarImpl } from "./hotels-liteapi.server";
 
-export const syncStaticHotels = createServerFn({ method: "POST" }).handler(
-  async () => {
+export const syncStaticHotels = createServerFn({ method: "POST" })
+  .handler(async () => {
     try {
       const result = await syncStaticHotelsImpl();
       return { ok: true as const, ...result };
@@ -12,8 +12,7 @@ export const syncStaticHotels = createServerFn({ method: "POST" }).handler(
       console.error("syncStaticHotels failed", e);
       return { ok: false as const, error: e?.message ?? "unknown" };
     }
-  },
-);
+  });
 
 export const listHotels = createServerFn({ method: "GET" })
   .handler(async () => {
