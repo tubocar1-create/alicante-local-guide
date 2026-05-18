@@ -9,9 +9,9 @@ export const getAiReview = createServerFn({ method: "POST" })
     const isHealth = data.kind === "health";
     const isHotel = data.kind === "hotel" || /hotel|hostal|hostel|apartam|pension|pensión|guest|resort/i.test(data.cuisine ?? "");
     const prompt = isHotel
-      ? `Escribe una breve reseña (90-130 palabras) en español sobre el alojamiento "${data.name}"${
-          data.cuisine ? `, tipo: ${data.cuisine}` : ""
-        }${data.address ? `, ubicado en ${data.address}` : ""}, en Alicante. Tono cercano y honesto, basado en lo que conoces de este alojamiento o de otros similares de la zona. Menciona ubicación, ambiente, tipo de habitación o servicios destacables y a qué tipo de viajero le encajaría. Si no tienes información específica, sé prudente y no inventes datos verificables (no inventes precios, estrellas ni servicios concretos). Sin listas ni markdown, solo prosa fluida.`
+      ? `Escribe una reseña sincera (90-130 palabras) en español sobre la UBICACIÓN del alojamiento "${data.name}"${
+          data.address ? `, en ${data.address}` : ""
+        }, en Alicante, a efectos turísticos. Valora con honestidad qué tan buena es la zona para un turista: cercanía a la playa (Postiguet, San Juan), al casco antiguo/Barrio, al Castillo de Santa Bárbara, a la Explanada y al puerto; conexiones de transporte (TRAM, autobús, aeropuerto), ambiente del barrio (animado/tranquilo, seguro, ruidoso de noche), oferta cercana de restaurantes y tapas, y para qué perfil de viajero encaja mejor (familias, parejas, fiesta, negocios). Si la zona tiene inconvenientes (lejos del centro, polígono, zona ruidosa, mala conexión), dilo claramente. No hables de precios, estrellas ni servicios internos del hotel. Sin listas ni markdown, solo prosa fluida.`
       : isHealth
 
       ? `Escribe una breve reseña (90-130 palabras) en español sobre "${data.name}"${
@@ -31,7 +31,7 @@ export const getAiReview = createServerFn({ method: "POST" })
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: isHotel
-            ? "Eres un guía local de Alicante experto en alojamientos, cercano, honesto y prudente. No inventes datos verificables."
+            ? "Eres un guía local de Alicante especializado en turismo. Evalúas la ubicación de los alojamientos con honestidad para que el viajero sepa si la zona le conviene. No inventes datos verificables y no maquilles inconvenientes."
             : isHealth
             ? "Eres un guía local de Alicante experto en servicios sanitarios y de bienestar, cercano, honesto y prudente. No inventes datos verificables."
             : "Eres un crítico gastronómico local de Alicante, cercano, honesto y prudente. No inventes datos verificables." },
