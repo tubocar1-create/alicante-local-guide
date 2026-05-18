@@ -161,12 +161,10 @@ function DondeDormirPage() {
                 const roomTypes: Array<{ type: string; price: number; currency: string; label?: string }> =
                   Array.isArray(d?.room_types) ? d.room_types : [];
                 const open = openId === h.id;
-                const rowBg = d?.available
-                  ? "bg-emerald-500/20 hover:bg-emerald-500/25"
-                  : "bg-rose-500/15 hover:bg-rose-500/20";
+                const dotColor = d?.available ? "bg-emerald-400" : "bg-rose-400";
                 return (
                   <Fragment key={h.id}>
-                    <tr key={h.id} className={rowBg}>
+                    <tr key={h.id}>
                       <td className="rounded-l-md px-0.5 py-1 align-middle">
                         <button
                           type="button"
