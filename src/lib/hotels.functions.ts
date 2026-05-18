@@ -25,6 +25,8 @@ export const listHotels = createServerFn({ method: "GET" }).handler(async () => 
     .limit(500);
   if (error) return { hotels: [], error: error.message };
   return { hotels: data ?? [], error: null };
+});
+
 export const getHotel = createServerFn({ method: "GET" })
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data }) => {
