@@ -14,7 +14,7 @@ import {
   AlertTriangle,
   CalendarDays,
 } from "lucide-react";
-import { getHotel, getHotelCalendar } from "@/lib/hotels.functions";
+import { getHotel, getHotelCalendar, getHotelPhotos } from "@/lib/hotels.functions";
 import { getAiReview } from "@/lib/ai-review.functions";
 
 export const Route = createFileRoute("/hotel/$id")({
