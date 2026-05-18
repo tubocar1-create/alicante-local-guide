@@ -32,6 +32,10 @@ import bunuelos1 from "@/assets/fiestas-bunuelos-1.jpg";
 import crema1 from "@/assets/fiestas-crema-1.jpg";
 import banya1 from "@/assets/fiestas-banya-1.jpg";
 import ofrenda1 from "@/assets/fiestas-ofrenda-1.jpg";
+import arroz1 from "@/assets/fiestas-arroz-1.jpg";
+import cultura1 from "@/assets/fiestas-cultura-1.jpg";
+import cala1 from "@/assets/fiestas-cala-1.jpg";
+import taller1 from "@/assets/fiestas-taller-1.jpg";
 import hoguerasIcon from "@/assets/hogueras-alicante.png";
 import { askFiestasAI } from "@/lib/fiestas-ai.functions";
 
