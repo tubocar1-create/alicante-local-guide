@@ -346,16 +346,6 @@ function MorosCristianosSection() {
         <h3 className="text-2xl font-extrabold">Moros y Cristianos</h3>
       </div>
 
-      <div className="overflow-hidden rounded-2xl ring-1 ring-amber-300/30">
-        <img
-          src={moros1}
-          alt="Desfile mora con tambores"
-          loading="lazy"
-          width={1280}
-          height={896}
-          className="h-56 w-full object-cover"
-        />
-      </div>
 
       <p className="text-sm leading-relaxed text-amber-100">
         Si las Hogueras son la cara internacional de Alicante, los{" "}
