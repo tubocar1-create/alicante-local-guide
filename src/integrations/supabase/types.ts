@@ -727,6 +727,7 @@ export type Database = {
           id: string
           lat: number | null
           liteapi_hotel_id: string
+          liteapi_id: string | null
           lng: number | null
           main_image: string | null
           name: string
@@ -745,6 +746,7 @@ export type Database = {
           id?: string
           lat?: number | null
           liteapi_hotel_id: string
+          liteapi_id?: string | null
           lng?: number | null
           main_image?: string | null
           name: string
@@ -763,6 +765,7 @@ export type Database = {
           id?: string
           lat?: number | null
           liteapi_hotel_id?: string
+          liteapi_id?: string | null
           lng?: number | null
           main_image?: string | null
           name?: string
