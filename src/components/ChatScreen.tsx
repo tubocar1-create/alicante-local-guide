@@ -3243,7 +3243,10 @@ function CategoryTableInner({
             </span>
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => {
+                window.dispatchEvent(new Event("comer:back-to-menu"));
+                onClose();
+              }}
               aria-label="Cerrar"
               className={`ml-2 rounded-full border p-1.5 ${theme.borderBtn}`}
             >
