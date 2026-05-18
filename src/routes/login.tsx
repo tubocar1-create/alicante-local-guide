@@ -161,7 +161,7 @@ function LoginPage() {
         </section>
       )}
 
-      <form onSubmit={handleSubmit} className="mt-5 space-y-3">
+      <form onSubmit={handleSubmit} className={`mt-5 space-y-3 ${welcomeNew && !needsSignup ? "hidden" : ""}`}>
         <label className="flex items-center gap-2 rounded-2xl border border-border bg-card px-3 py-2.5">
           <Mail className="h-4 w-4 text-muted-foreground" />
           <input
