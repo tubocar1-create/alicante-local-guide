@@ -868,39 +868,28 @@ function FiestasPage() {
             cielo pintado de fuego. <em>Ése</em> es el verdadero adiós.
           </p>
 
-          {/* Bloque de cultura/clima/gastro como tarjetas festivas */}
-          <div className="grid grid-cols-2 gap-3 pt-2">
-            <div className="rounded-2xl bg-gradient-to-br from-cyan-500/30 to-blue-600/30 p-3 ring-1 ring-cyan-300/40">
-              <p className="text-2xl">☀️</p>
-              <p className="mt-1 text-sm font-extrabold text-cyan-50">Clima</p>
-              <p className="text-xs text-cyan-100/90">
-                25–30 °C, mar a 22 °C, casi sin lluvia. Junio es oro puro.
-              </p>
-            </div>
-            <div className="rounded-2xl bg-gradient-to-br from-amber-500/30 to-orange-600/30 p-3 ring-1 ring-amber-300/40">
-              <p className="text-2xl">🍤</p>
-              <p className="mt-1 text-sm font-extrabold text-amber-50">Gastro</p>
-              <p className="text-xs text-amber-100/90">
-                Arroz a banda, fideuà, quisquillas, salazones, vino de Monastrell.
-              </p>
-            </div>
-            <div className="rounded-2xl bg-gradient-to-br from-pink-500/30 to-rose-600/30 p-3 ring-1 ring-pink-300/40">
-              <p className="text-2xl">🏛️</p>
-              <p className="mt-1 text-sm font-extrabold text-pink-50">Cultura</p>
-              <p className="text-xs text-pink-100/90">
-                Santa Bárbara, MARQ, MACA, Concatedral, casco antiguo.
-              </p>
-            </div>
-            <div className="rounded-2xl bg-gradient-to-br from-teal-500/30 to-emerald-600/30 p-3 ring-1 ring-teal-300/40">
-              <p className="text-2xl">🏖️</p>
-              <p className="mt-1 text-sm font-extrabold text-teal-50">Playa</p>
-              <p className="text-xs text-teal-100/90">
-                Postiguet a 5 min andando; San Juan, Albufereta, Cabo Huertas.
-              </p>
-            </div>
-          </div>
-
           <p className="text-sm leading-relaxed text-amber-50/95 pt-2">
+            Y todo esto pasa con el mejor clima posible: <strong>25–30 °C</strong>,
+            el mar a 22 °C y casi sin lluvia. Junio en Alicante es oro puro ☀️.
+            Sales de la <strong>mascletà</strong> sudando pólvora y en cinco
+            minutos andando estás metiendo los pies en el <strong>Postiguet</strong>;
+            si quieres más calma, coges el TRAM y te plantas en <strong>San Juan</strong>,
+            <strong> Albufereta</strong> o <strong>Cabo Huertas</strong> 🏖️.
+          </p>
+
+          <p className="text-sm leading-relaxed text-amber-50/95">
+            Entre acto y acto se come, claro. Un <strong>arroz a banda</strong> o
+            una <strong>fideuà</strong> a pie de playa, <strong>quisquillas</strong> de
+            Santa Pola, <strong>salazones</strong> con una copa de vino de
+            <strong> Monastrell</strong>, y de postre <em>bunyols</em> calientes con
+            chocolate en cualquier puesto del centro 🍤. Cuando baja el sol, toca
+            cultura sin prisa: subir al <strong>Castillo de Santa Bárbara</strong>
+            con la ciudad encendida a tus pies, perderse por el casco antiguo y
+            <strong> Santa Cruz</strong>, asomarse a la <strong>Concatedral</strong>,
+            el <strong>MARQ</strong> o el <strong>MACA</strong> 🏛️.
+          </p>
+
+          <p className="text-sm leading-relaxed text-amber-50/95">
             Por eso decimos que las Hogueras son <strong>la mejor semana del
             año</strong>: porque mezclan lo mejor de Alicante en siete días.
             Sales de la mascletà y te bañas. Sales del baño y cenas un arroz.
