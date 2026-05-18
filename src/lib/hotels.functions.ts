@@ -52,3 +52,32 @@ export const getHotelCalendar = createServerFn({ method: "GET" })
       return { ok: false as const, error: e?.message ?? "unknown", days: [] };
     }
   });
+
+export const getHotelPhotos = createServerFn({ method: "GET" })
+  .inputValidator((d: { id: string }) => d)
+  .handler(async ({ data }) => {
+    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+    if (!apiKey) return { photos: [] as string[] };
+    const { data: row } = await supabaseAdmin
+      .from("hotels_static")
+      .select("raw")
+      .eq("id", data.id)
+      .maybeSingle();
+    const photos = ((row?.raw as { photos?: Array<{ name: string }> } | null)?.photos ?? []).slice(0, 20);
+    if (!photos.length) return { photos: [] as string[] };
+    const urls = await Promise.all(
+      photos.map(async (p) => {
+        try {
+          const r = await fetch(
+            `https://places.googleapis.com/v1/${p.name}/media?maxWidthPx=1200&skipHttpRedirect=true&key=${apiKey}`,
+          );
+          if (!r.ok) return null;
+          const j = (await r.json()) as { photoUri?: string };
+          return j.photoUri ?? null;
+        } catch {
+          return null;
+        }
+      }),
+    );
+    return { photos: urls.filter((u): u is string => !!u) };
+  });

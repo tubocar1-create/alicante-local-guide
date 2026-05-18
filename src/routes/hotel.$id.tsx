@@ -14,7 +14,7 @@ import {
   AlertTriangle,
   CalendarDays,
 } from "lucide-react";
-import { getHotel, getHotelCalendar } from "@/lib/hotels.functions";
+import { getHotel, getHotelCalendar, getHotelPhotos } from "@/lib/hotels.functions";
 import { getAiReview } from "@/lib/ai-review.functions";
 
 export const Route = createFileRoute("/hotel/$id")({
@@ -86,6 +86,18 @@ function HotelDetail() {
     staleTime: 60 * 60 * 1000,
     queryFn: () => fetchCalendar({ data: { id, startDate, endDate } }),
   });
+
+  const fetchPhotos = useServerFn(getHotelPhotos);
+  const photosQ = useQuery({
+    queryKey: ["hotel-photos", id],
+    staleTime: 24 * 60 * 60 * 1000,
+    queryFn: () => fetchPhotos({ data: { id } }),
+  });
+  const gallery: string[] = useMemo(() => {
+    const arr = photosQ.data?.photos ?? [];
+    if (arr.length) return arr;
+    return h?.main_image ? [h.main_image] : [];
+  }, [photosQ.data, h?.main_image]);
   const days: Array<{ date: string; available: boolean; price_double: number | null; price_min: number | null; currency: string }> =
     calendar.data?.days ?? [];
   const daysByDate = useMemo(() => {
@@ -141,12 +153,18 @@ function HotelDetail() {
         ) : (
           <>
             <div className="overflow-hidden rounded-2xl border border-amber-100/[0.08] bg-[rgba(20,10,4,0.7)] backdrop-blur-xl">
-              {h.main_image ? (
-                <img
-                  src={h.main_image}
-                  alt={h.name}
-                  className="h-56 w-full object-cover md:h-72"
-                />
+              {gallery.length > 0 ? (
+                <div className="flex h-56 snap-x snap-mandatory gap-1 overflow-x-auto md:h-72 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {gallery.map((src, i) => (
+                    <img
+                      key={i}
+                      src={src}
+                      alt={`${h.name} foto ${i + 1}`}
+                      loading={i === 0 ? "eager" : "lazy"}
+                      className="h-full w-[88%] flex-none snap-start object-cover md:w-[60%]"
+                    />
+                  ))}
+                </div>
               ) : (
                 <div className="flex h-40 items-center justify-center text-5xl opacity-30">🏨</div>
               )}
