@@ -672,6 +672,107 @@ export type Database = {
         }
         Relationships: []
       }
+      hotels_dynamic: {
+        Row: {
+          available: boolean
+          breakfast_included: boolean | null
+          currency: string | null
+          current_price: number | null
+          free_cancellation: boolean | null
+          hotel_id: string
+          raw: Json | null
+          rooms_available: number | null
+          updated_at: string
+        }
+        Insert: {
+          available?: boolean
+          breakfast_included?: boolean | null
+          currency?: string | null
+          current_price?: number | null
+          free_cancellation?: boolean | null
+          hotel_id: string
+          raw?: Json | null
+          rooms_available?: number | null
+          updated_at?: string
+        }
+        Update: {
+          available?: boolean
+          breakfast_included?: boolean | null
+          currency?: string | null
+          current_price?: number | null
+          free_cancellation?: boolean | null
+          hotel_id?: string
+          raw?: Json | null
+          rooms_available?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hotels_dynamic_hotel_id_fkey"
+            columns: ["hotel_id"]
+            isOneToOne: true
+            referencedRelation: "hotels_static"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hotels_static: {
+        Row: {
+          address: string | null
+          amenities: Json
+          booking_url: string | null
+          created_at: string
+          distance_km: number | null
+          hotel_type: string | null
+          id: string
+          lat: number | null
+          liteapi_hotel_id: string
+          lng: number | null
+          main_image: string | null
+          name: string
+          neighborhood: string | null
+          raw: Json | null
+          stars: number | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          amenities?: Json
+          booking_url?: string | null
+          created_at?: string
+          distance_km?: number | null
+          hotel_type?: string | null
+          id?: string
+          lat?: number | null
+          liteapi_hotel_id: string
+          lng?: number | null
+          main_image?: string | null
+          name: string
+          neighborhood?: string | null
+          raw?: Json | null
+          stars?: number | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          amenities?: Json
+          booking_url?: string | null
+          created_at?: string
+          distance_km?: number | null
+          hotel_type?: string | null
+          id?: string
+          lat?: number | null
+          liteapi_hotel_id?: string
+          lng?: number | null
+          main_image?: string | null
+          name?: string
+          neighborhood?: string | null
+          raw?: Json | null
+          stars?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       interaction_events: {
         Row: {
           business_id: string | null
