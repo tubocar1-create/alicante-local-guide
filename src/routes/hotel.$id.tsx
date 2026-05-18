@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { getHotel, getHotelCalendar, getHotelPhotos } from "@/lib/hotels.functions";
 import { getAiReview } from "@/lib/ai-review.functions";
+import { useUserLocation, distanceKm, formatDistance } from "@/hooks/useUserLocation";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+
+// Puerta del Mar, Alicante (fallback reference point)
+const PUERTA_DEL_MAR = { lat: 38.3404, lng: -0.4811 };
 
 export const Route = createFileRoute("/hotel/$id")({
   component: HotelDetail,
@@ -115,6 +119,19 @@ function HotelDetail() {
   const roomTypes: Array<{ type: string; price: number; currency: string; label?: string }> =
     Array.isArray(d?.room_types) ? d.room_types : [];
 
+  // Distancia: geolocalización del usuario si existe, en su defecto a Puerta del Mar
+  const { state: geo } = useUserLocation();
+  const distance = useMemo(() => {
+    if (!h?.lat || !h?.lng) return null;
+    if (geo.status === "ready") {
+      return { km: distanceKm(geo.coords, { lat: h.lat, lng: h.lng }), source: "tú" as const };
+    }
+    return {
+      km: distanceKm(PUERTA_DEL_MAR, { lat: h.lat, lng: h.lng }),
+      source: "Puerta del Mar" as const,
+    };
+  }, [geo, h?.lat, h?.lng]);
+
   const mapsHref = h
     ? h.lat && h.lng
       ? `https://www.google.com/maps/dir/?api=1&destination=${h.lat},${h.lng}&travelmode=walking`
@@ -128,7 +145,7 @@ function HotelDetail() {
 
   return (
     <div
-      className="fixed inset-0 z-[60] overflow-y-auto text-amber-50"
+      className="fixed inset-0 z-40 overflow-y-auto text-amber-50"
       style={{
         background:
           "linear-gradient(180deg, #050b1f 0%, #0a1638 50%, #03081a 100%)",
@@ -227,14 +244,6 @@ function HotelDetail() {
                       {Number(h.stars).toFixed(1)}
                     </span>
                   )}
-                  {h.distance_km != null && (
-                    <span className="inline-flex items-center gap-0.5 rounded-full bg-white/[0.05] px-2 py-0.5 text-amber-100/80">
-                      <Footprints className="h-3 w-3" />
-                      {h.distance_km < 1
-                        ? `${Math.round(h.distance_km * 1000)} m`
-                        : `${Number(h.distance_km).toFixed(1)} km`}
-                    </span>
-                  )}
                   {h.neighborhood && (
                     <span className="rounded-full bg-white/[0.05] px-2 py-0.5 text-amber-100/80">
                       {h.neighborhood}
@@ -242,40 +251,61 @@ function HotelDetail() {
                   )}
                 </div>
 
-                {/* Live availability */}
+                {/* Tarifas por tipo de habitación */}
                 <div className="mt-4 rounded-xl border border-amber-100/[0.08] bg-black/30 p-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-[10px] uppercase tracking-[0.2em] text-amber-300/70">
-                        Esta noche
-                      </p>
-                      {d?.current_price != null ? (
-                        <p className="mt-0.5">
-                          <span className="font-display text-2xl font-bold">
-                            {Math.round(d.current_price)}€
-                          </span>
-                          <span className="ml-1 text-[11px] text-amber-200/60">/noche</span>
-                        </p>
-                      ) : (
-                        <p className="mt-0.5 text-sm text-amber-200/60">Sin precio en directo</p>
-                      )}
-                    </div>
-                    <div className="flex flex-col gap-1 text-right text-[10px]">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-amber-300/70">
+                      Habitaciones y tarifas
+                    </p>
+                    <div className="flex gap-2 text-[10px]">
                       {d?.breakfast_included && (
-                        <span className="inline-flex items-center justify-end gap-1 text-emerald-300">
+                        <span className="inline-flex items-center gap-1 text-emerald-300">
                           <Coffee className="h-3 w-3" /> Desayuno
                         </span>
                       )}
                       {d?.free_cancellation && (
-                        <span className="inline-flex items-center justify-end gap-1 text-sky-300">
-                          <ShieldCheck className="h-3 w-3" /> Cancelable gratis
+                        <span className="inline-flex items-center gap-1 text-sky-300">
+                          <ShieldCheck className="h-3 w-3" /> Cancelable
                         </span>
-                      )}
-                      {d?.available === false && (
-                        <span className="text-rose-300">No disponible</span>
                       )}
                     </div>
                   </div>
+                  {roomTypes.length > 0 ? (
+                    <ul className="mt-2 divide-y divide-amber-100/[0.06]">
+                      {roomTypes.map((rt, i) => (
+                        <li
+                          key={i}
+                          className="flex items-center justify-between py-1.5 text-sm"
+                        >
+                          <span className="text-amber-100/90">
+                            {ROOM_LABELS_CLIENT[rt.type] ?? rt.label ?? rt.type}
+                          </span>
+                          <span className="font-mono font-semibold tabular-nums text-amber-50">
+                            {Math.round(rt.price)} {rt.currency || "EUR"}
+                            <span className="ml-1 text-[10px] font-normal text-amber-200/60">
+                              /noche
+                            </span>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : d?.current_price != null ? (
+                    <p className="mt-2 text-sm text-amber-100/90">
+                      <span className="font-display text-xl font-bold">
+                        {Math.round(d.current_price)}€
+                      </span>
+                      <span className="ml-1 text-[11px] text-amber-200/60">
+                        /noche (doble)
+                      </span>
+                    </p>
+                  ) : (
+                    <p className="mt-2 text-sm text-amber-200/60">
+                      Sin tarifas en directo
+                    </p>
+                  )}
+                  {d?.available === false && (
+                    <p className="mt-2 text-[11px] text-rose-300">No disponible</p>
+                  )}
                 </div>
 
                 {/* Actions */}
@@ -284,9 +314,20 @@ function HotelDetail() {
                     href={mapsHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-white/[0.06] px-3 py-2.5 text-[12px] font-semibold text-amber-50 hover:bg-white/[0.1]"
+                    className="inline-flex flex-col items-center justify-center gap-0.5 rounded-xl bg-white/[0.06] px-3 py-2 text-[12px] font-semibold text-amber-50 hover:bg-white/[0.1]"
                   >
-                    <Navigation className="h-3.5 w-3.5" /> Cómo ir
+                    <span className="inline-flex items-center gap-1.5">
+                      <Navigation className="h-3.5 w-3.5" /> Cómo ir
+                    </span>
+                    {distance && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-normal text-amber-200/70">
+                        <Footprints className="h-3 w-3" />
+                        {formatDistance(distance.km)}
+                        <span className="text-amber-200/50">
+                          · desde {distance.source}
+                        </span>
+                      </span>
+                    )}
                   </a>
                   <a
                     href={bookingHref}
@@ -327,26 +368,6 @@ function HotelDetail() {
               </div>
             </div>
 
-            {/* Tipos de habitación */}
-            {roomTypes.length > 0 && (
-              <div className="mt-4 rounded-2xl border border-amber-100/[0.08] bg-[rgba(20,10,4,0.7)] p-4 backdrop-blur-xl md:p-5">
-                <p className="text-[10px] uppercase tracking-[0.3em] text-amber-400/80">
-                  Habitaciones y tarifas
-                </p>
-                <ul className="mt-2 divide-y divide-amber-100/[0.06]">
-                  {roomTypes.map((rt, i) => (
-                    <li key={i} className="flex items-center justify-between py-2 text-sm">
-                      <span className="text-amber-100/90">
-                        {ROOM_LABELS_CLIENT[rt.type] ?? rt.label ?? rt.type}
-                      </span>
-                      <span className="font-mono font-semibold tabular-nums text-amber-50">
-                        {Math.round(rt.price)} {rt.currency || "EUR"}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
 
             {/* Warning de precios */}
             <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/[0.06] p-3 text-[11px] text-amber-100/90">
