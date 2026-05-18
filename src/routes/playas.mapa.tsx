@@ -31,14 +31,23 @@ type Beach = {
 
 const BEACHES: Beach[] = [
   { name: "Playa de Muchavista", lat: 38.4256, lng: -0.4108, description: "El Campello, larga playa de arena dorada." },
+  { name: "Playa Carrer la Mar", lat: 38.4347, lng: -0.4011, description: "Playa céntrica de El Campello." },
+  { name: "Cala Lanuza", lat: 38.4398, lng: -0.3950, description: "Pequeña cala rocosa en El Campello." },
+  { name: "Cala del Amerador", lat: 38.4445, lng: -0.3886, description: "Cala tranquila al norte de El Campello." },
   { name: "Playa de San Juan", lat: 38.4044, lng: -0.4222, description: "La playa más famosa y extensa de Alicante." },
   { name: "Cala Cantalar", lat: 38.3922, lng: -0.4117, description: "Pequeña cala virgen en el Cabo de las Huertas." },
+  { name: "Cala Palmera", lat: 38.3878, lng: -0.4083, description: "Cala rocosa ideal para snorkel." },
+  { name: "Cala de los Judíos", lat: 38.3833, lng: -0.4072, description: "Cala virgen en el Cabo de las Huertas." },
+  { name: "Cala Calabarda", lat: 38.3792, lng: -0.4108, description: "Pequeña cala con aguas cristalinas." },
+  { name: "Cala del Tío Ximo", lat: 38.3756, lng: -0.4172, description: "Cala protegida entre rocas." },
+  { name: "Playa de la Almadraba", lat: 38.3736, lng: -0.4244, description: "Playa familiar al pie del Cabo de las Huertas." },
   { name: "Playa de la Albufereta", lat: 38.3717, lng: -0.4319, description: "Playa urbana tranquila en forma de concha." },
   { name: "Playa del Postiguet", lat: 38.3447, lng: -0.4775, description: "Playa urbana junto al Castillo de Santa Bárbara." },
-  { name: "Playa de la Almadraba", lat: 38.3194, lng: -0.5036, description: "Playa familiar al sur de Alicante." },
-  { name: "Playa del Carabassí", lat: 38.2806, lng: -0.5331, description: "Dunas protegidas y aguas cristalinas." },
-  { name: "Playa de los Arenales del Sol", lat: 38.2611, lng: -0.5444, description: "Amplia playa de arena fina con dunas." },
+  { name: "Playa del Saladar", lat: 38.3194, lng: -0.5036, description: "Playa de Urbanova, larga y abierta." },
+  { name: "Playa de Urbanova", lat: 38.3056, lng: -0.5158, description: "Arena fina cerca del aeropuerto." },
   { name: "Playa del Altet", lat: 38.2731, lng: -0.5392, description: "Playa de arena cerca del aeropuerto." },
+  { name: "Playa de los Arenales del Sol", lat: 38.2611, lng: -0.5444, description: "Amplia playa de arena fina con dunas." },
+  { name: "Playa del Carabassí", lat: 38.2456, lng: -0.5586, description: "Dunas protegidas y aguas cristalinas." },
 ];
 
 function MapaPlayasPage() {

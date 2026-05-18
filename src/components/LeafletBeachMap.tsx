@@ -47,9 +47,15 @@ export function LeafletMap({ beaches }: { beaches: Beach[] }) {
       const map = new google.maps.Map(ref.current, {
         center: { lat: 38.345, lng: -0.48 },
         zoom: 12,
-        mapTypeControl: true,
-        streetViewControl: false,
-        fullscreenControl: true,
+        minZoom: 12,
+        maxZoom: 12,
+        disableDefaultUI: true,
+        gestureHandling: "none",
+        keyboardShortcuts: false,
+        zoomControl: false,
+        scrollwheel: false,
+        disableDoubleClickZoom: true,
+        draggable: true,
       });
 
       const info = new google.maps.InfoWindow();
