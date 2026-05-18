@@ -38,8 +38,8 @@ function PlayasPage() {
     <div className="min-h-screen bg-[oklch(0.98_0.018_205)] text-[oklch(0.18_0.04_235)]">
       <header className="relative min-h-[58vh] overflow-hidden">
         <img
-          src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Alicante_-_Playa_del_Postiguet.jpg/1600px-Alicante_-_Playa_del_Postiguet.jpg"
-          alt="Playa del Postiguet de Alicante con el Castillo de Santa Bárbara"
+          src="/playas/coast-intro.jpg"
+          alt="Vista panorámica de la costa de Alicante"
           className="absolute inset-0 h-full w-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/15 to-[oklch(0.98_0.018_205)]" />
