@@ -892,7 +892,7 @@ function QrVamosInfo({ onClose }: { onClose: () => void }) {
   const benefits = [
     { icon: Gift, title: "Descuentos reales", text: "Precios de amigo en bares, restaurantes y planes que de verdad merecen la pena." },
     { icon: Ticket, title: "Acceso a experiencias", text: "Catas, tours, rutas y eventos pensados para quienes viven Alicante como un local." },
-    { icon: Sparkles, title: "Suma puntos AFP", text: "Cada QR validado en sitio te da puntos para canjear por más ventajas." },
+    { icon: Sparkles, title: "Trato de amigo local", text: "Detalles, sorpresas y atención preferente en los sitios que recomienda tu amigo local." },
     { icon: ShieldCheck, title: "Único e intransferible", text: "Tu QR, tu día, tu plan. Sin intermediarios, sin trampas, sin spam." },
   ];
   return (
