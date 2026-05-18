@@ -12,7 +12,7 @@ import hoguera1 from "@/assets/fiestas-hoguera-1.jpg";
 import moros1 from "@/assets/fiestas-moros-1.jpg";
 import cristianos1 from "@/assets/fiestas-cristianos-1.jpg";
 import morosBatalla from "@/assets/fiestas-moros-batalla.jpg";
-import barraca1 from "@/assets/fiestas-barraca-1.jpg";
+
 import {
   PROGRAMA_2026, PREVIA_2026, MASCLETAS_2026, FUEGOS_2026,
   COSO_MULTICOLOR_2026, calcularFase,
