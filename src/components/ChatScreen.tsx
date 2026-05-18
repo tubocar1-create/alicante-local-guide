@@ -3632,7 +3632,12 @@ function AssistantContent({ content, userPrompt = "" }: { content: string; userP
   const cleaned = content.replace(/\n?\[\[place:[^\]]+\]\]\n?/i, "").trim();
 
   if (isBeachGuidePrompt(userPrompt) || (BEACH_GUIDE_RE.test(userPrompt) && BEACH_GUIDE_RE.test(cleaned))) {
-    return <MarkdownText text={cleaned} />;
+    return (
+      <div className="space-y-3">
+        <MarkdownText text={cleaned} />
+        <BeachScrollGallery />
+      </div>
+    );
   }
 
   // Bus stop card takes precedence (UI-injected, no AI involved)
