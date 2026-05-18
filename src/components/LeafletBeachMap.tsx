@@ -45,17 +45,17 @@ export function LeafletMap({ beaches }: { beaches: Beach[] }) {
       if (cancelled || !ref.current || !window.google?.maps) return;
       const google = window.google;
       const map = new google.maps.Map(ref.current, {
-        center: { lat: 38.345, lng: -0.48 },
-        zoom: 12,
-        minZoom: 12,
-        maxZoom: 12,
+        center: { lat: 38.335, lng: -0.47 },
+        zoom: 11,
+        minZoom: 11,
+        maxZoom: 11,
         disableDefaultUI: true,
         gestureHandling: "none",
         keyboardShortcuts: false,
         zoomControl: false,
         scrollwheel: false,
         disableDoubleClickZoom: true,
-        draggable: true,
+        draggable: false,
       });
 
       const info = new google.maps.InfoWindow();
