@@ -35,6 +35,7 @@ import { Route as VuelosIataRouteImport } from './routes/vuelos_.$iata'
 import { Route as ThreadsIdRouteImport } from './routes/threads.$id'
 import { Route as SaludCategoriaRouteImport } from './routes/salud_.$categoria'
 import { Route as RestaurantsPlaceIdRouteImport } from './routes/restaurants.$placeId'
+import { Route as PlayasMapaRouteImport } from './routes/playas.mapa'
 import { Route as OcioTeatrosRouteImport } from './routes/ocio_.teatros'
 import { Route as OcioConciertosRouteImport } from './routes/ocio_.conciertos'
 import { Route as OcioCinesRouteImport } from './routes/ocio_.cines'
@@ -197,6 +198,11 @@ const RestaurantsPlaceIdRoute = RestaurantsPlaceIdRouteImport.update({
   id: '/restaurants/$placeId',
   path: '/restaurants/$placeId',
   getParentRoute: () => rootRouteImport,
+} as any)
+const PlayasMapaRoute = PlayasMapaRouteImport.update({
+  id: '/mapa',
+  path: '/mapa',
+  getParentRoute: () => PlayasRoute,
 } as any)
 const OcioTeatrosRoute = OcioTeatrosRouteImport.update({
   id: '/ocio_/teatros',
@@ -375,7 +381,7 @@ export interface FileRoutesByFullPath {
   '/magic': typeof MagicRoute
   '/ocio': typeof OcioRoute
   '/perfil': typeof PerfilRoute
-  '/playas': typeof PlayasRoute
+  '/playas': typeof PlayasRouteWithChildren
   '/repo': typeof RepoRoute
   '/salud': typeof SaludRoute
   '/sistema-sanitario': typeof SistemaSanitarioRoute
@@ -400,6 +406,7 @@ export interface FileRoutesByFullPath {
   '/ocio/cines': typeof OcioCinesRouteWithChildren
   '/ocio/conciertos': typeof OcioConciertosRoute
   '/ocio/teatros': typeof OcioTeatrosRoute
+  '/playas/mapa': typeof PlayasMapaRoute
   '/restaurants/$placeId': typeof RestaurantsPlaceIdRoute
   '/salud/$categoria': typeof SaludCategoriaRouteWithChildren
   '/threads/$id': typeof ThreadsIdRoute
@@ -434,7 +441,7 @@ export interface FileRoutesByTo {
   '/magic': typeof MagicRoute
   '/ocio': typeof OcioRoute
   '/perfil': typeof PerfilRoute
-  '/playas': typeof PlayasRoute
+  '/playas': typeof PlayasRouteWithChildren
   '/repo': typeof RepoRoute
   '/salud': typeof SaludRoute
   '/sistema-sanitario': typeof SistemaSanitarioRoute
@@ -459,6 +466,7 @@ export interface FileRoutesByTo {
   '/ocio/cines': typeof OcioCinesRouteWithChildren
   '/ocio/conciertos': typeof OcioConciertosRoute
   '/ocio/teatros': typeof OcioTeatrosRoute
+  '/playas/mapa': typeof PlayasMapaRoute
   '/restaurants/$placeId': typeof RestaurantsPlaceIdRoute
   '/salud/$categoria': typeof SaludCategoriaRouteWithChildren
   '/threads/$id': typeof ThreadsIdRoute
@@ -495,7 +503,7 @@ export interface FileRoutesById {
   '/magic': typeof MagicRoute
   '/ocio': typeof OcioRoute
   '/perfil': typeof PerfilRoute
-  '/playas': typeof PlayasRoute
+  '/playas': typeof PlayasRouteWithChildren
   '/repo': typeof RepoRoute
   '/salud': typeof SaludRoute
   '/sistema-sanitario': typeof SistemaSanitarioRoute
@@ -520,6 +528,7 @@ export interface FileRoutesById {
   '/ocio_/cines': typeof OcioCinesRouteWithChildren
   '/ocio_/conciertos': typeof OcioConciertosRoute
   '/ocio_/teatros': typeof OcioTeatrosRoute
+  '/playas/mapa': typeof PlayasMapaRoute
   '/restaurants/$placeId': typeof RestaurantsPlaceIdRoute
   '/salud_/$categoria': typeof SaludCategoriaRouteWithChildren
   '/threads/$id': typeof ThreadsIdRoute
@@ -582,6 +591,7 @@ export interface FileRouteTypes {
     | '/ocio/cines'
     | '/ocio/conciertos'
     | '/ocio/teatros'
+    | '/playas/mapa'
     | '/restaurants/$placeId'
     | '/salud/$categoria'
     | '/threads/$id'
@@ -641,6 +651,7 @@ export interface FileRouteTypes {
     | '/ocio/cines'
     | '/ocio/conciertos'
     | '/ocio/teatros'
+    | '/playas/mapa'
     | '/restaurants/$placeId'
     | '/salud/$categoria'
     | '/threads/$id'
@@ -701,6 +712,7 @@ export interface FileRouteTypes {
     | '/ocio_/cines'
     | '/ocio_/conciertos'
     | '/ocio_/teatros'
+    | '/playas/mapa'
     | '/restaurants/$placeId'
     | '/salud_/$categoria'
     | '/threads/$id'
@@ -737,7 +749,7 @@ export interface RootRouteChildren {
   MagicRoute: typeof MagicRoute
   OcioRoute: typeof OcioRoute
   PerfilRoute: typeof PerfilRoute
-  PlayasRoute: typeof PlayasRoute
+  PlayasRoute: typeof PlayasRouteWithChildren
   RepoRoute: typeof RepoRoute
   SaludRoute: typeof SaludRoute
   SistemaSanitarioRoute: typeof SistemaSanitarioRoute
@@ -951,6 +963,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/restaurants/$placeId'
       preLoaderRoute: typeof RestaurantsPlaceIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/playas/mapa': {
+      id: '/playas/mapa'
+      path: '/mapa'
+      fullPath: '/playas/mapa'
+      preLoaderRoute: typeof PlayasMapaRouteImport
+      parentRoute: typeof PlayasRoute
     }
     '/ocio_/teatros': {
       id: '/ocio_/teatros'
@@ -1243,6 +1262,17 @@ const BusinessRouteWithChildren = BusinessRoute._addFileChildren(
   BusinessRouteChildren,
 )
 
+interface PlayasRouteChildren {
+  PlayasMapaRoute: typeof PlayasMapaRoute
+}
+
+const PlayasRouteChildren: PlayasRouteChildren = {
+  PlayasMapaRoute: PlayasMapaRoute,
+}
+
+const PlayasRouteWithChildren =
+  PlayasRoute._addFileChildren(PlayasRouteChildren)
+
 interface ThreadsRouteChildren {
   ThreadsIdRoute: typeof ThreadsIdRoute
 }
@@ -1292,7 +1322,7 @@ const rootRouteChildren: RootRouteChildren = {
   MagicRoute: MagicRoute,
   OcioRoute: OcioRoute,
   PerfilRoute: PerfilRoute,
-  PlayasRoute: PlayasRoute,
+  PlayasRoute: PlayasRouteWithChildren,
   RepoRoute: RepoRoute,
   SaludRoute: SaludRoute,
   SistemaSanitarioRoute: SistemaSanitarioRoute,
