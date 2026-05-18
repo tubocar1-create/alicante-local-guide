@@ -284,10 +284,9 @@ export default function ReferralDialog({ placeId, placeName, autoCelebrate, onCl
                   </span>
                 </li>
                 <li className="flex gap-2">
-                  <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+                  <Ticket className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
                   <span>
-                    <b>Sin validación del local, no hay puntos.</b> Los AFP llegan cuando lo
-                    escaneen en sitio.
+                    Lo tienes guardado en <b>perfil → Mis QR</b>.
                   </span>
                 </li>
                 <li className="flex gap-2">
