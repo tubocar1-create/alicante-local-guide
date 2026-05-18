@@ -235,6 +235,20 @@ function PlayasPage() {
           <InfoBlock icon={<Footprints className="h-5 w-5" />} title="Calas" text="Para Cabo y Cantalar lleva escarpines, agua y poco peso. La sombra es limitada." />
           <InfoBlock icon={<Camera className="h-5 w-5" />} title="Mejor luz" text="Postiguet al amanecer, Almadraba al atardecer y San Juan en horas suaves." />
         </section>
+
+        <section className="mt-12 overflow-hidden rounded-3xl bg-gradient-to-br from-cyan-600 via-sky-600 to-indigo-700 p-6 text-white shadow-xl">
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-100">Cuando quieras situarte</p>
+          <h2 className="mt-2 text-3xl font-black leading-tight">Abre el mapa interactivo a página completa</h2>
+          <p className="mt-3 max-w-2xl text-sm font-semibold text-white/90">
+            Ya tienes la charla y las recomendaciones. Despliega el mapa entero para ver dónde está cada playa y elegir tu plan de un vistazo.
+          </p>
+          <Link
+            to="/playas/mapa"
+            className="mt-5 inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-black text-cyan-700 shadow-lg transition hover:scale-[1.02]"
+          >
+            <MapPin className="h-4 w-4" /> Ver mapa completo
+          </Link>
+        </section>
       </main>
     </div>
   );
