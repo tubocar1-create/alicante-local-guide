@@ -9,9 +9,13 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { InstallPWA } from "@/components/InstallPWA";
+import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
 
 import appCss from "../styles.css?url";
 import "@/integrations/supabase/server-fn-fetch";
+
+const PUBLIC_ROUTES = ["/login", "/magic"];
 
 
 function NotFoundComponent() {
@@ -132,9 +136,39 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <AuthGate>
+        <Outlet />
+      </AuthGate>
       <Toaster />
       <InstallPWA />
     </QueryClientProvider>
   );
+}
+
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, loading } = useAuth();
+
+  useEffect(() => {
+    if (typeof window === "undefined" || loading) return;
+    const path = window.location.pathname;
+    const isPublic =
+      PUBLIC_ROUTES.includes(path) ||
+      path.startsWith("/api/") ||
+      path.startsWith("/business");
+    if (!isAuthenticated && !isPublic) {
+      const redirect = encodeURIComponent(path + window.location.search);
+      window.location.replace(`/login?redirect=${redirect}`);
+    }
+  }, [isAuthenticated, loading]);
+
+  if (typeof window !== "undefined" && !loading && !isAuthenticated) {
+    const path = window.location.pathname;
+    const isPublic =
+      PUBLIC_ROUTES.includes(path) ||
+      path.startsWith("/api/") ||
+      path.startsWith("/business");
+    if (!isPublic) return null;
+  }
+
+  return <>{children}</>;
 }
