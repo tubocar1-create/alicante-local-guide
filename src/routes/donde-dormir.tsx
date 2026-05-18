@@ -250,7 +250,7 @@ function DondeDormirPage() {
               })}
               {!isLoading && ranked.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-2 py-4 text-center text-xs text-amber-200/50">
+                  <td colSpan={6} className="px-2 py-4 text-center text-xs text-amber-200/50">
                     Sin alojamientos.
                   </td>
                 </tr>
