@@ -172,3 +172,17 @@ export const MAP_BEACHES: MapBeach[] = [
 export function getBeachBySlug(slug: string): MapBeach | undefined {
   return MAP_BEACHES.find((b) => b.slug === slug);
 }
+
+// Fotos locales subidas por el usuario, mostradas antes que las de Google.
+export const LOCAL_BEACH_PHOTOS: Record<string, string[]> = {
+  "arenales-del-sol": ["/playas/photo1.jpg", "/playas/photo2.jpg"],
+  "muchavista": ["/playas/photo3.jpg"],
+  "san-juan": ["/playas/photo4.jpg"],
+  "cala-cantalar": [
+    "/playas/photo5.jpg",
+    "/playas/photo6.jpg",
+    "/playas/photo7.jpg",
+    "/playas/photo8.jpg",
+    "/playas/photo9.jpg",
+  ],
+};
