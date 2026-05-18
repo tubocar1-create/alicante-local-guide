@@ -428,8 +428,8 @@ function HotelDetail() {
                               className={
                                 "flex h-12 flex-col items-center justify-center rounded text-[10px] leading-tight " +
                                 (available
-                                  ? "bg-emerald-500/20 text-emerald-100"
-                                  : "bg-rose-500/15 text-rose-200/80")
+                                  ? "bg-green-500 text-white"
+                                  : "bg-red-500 text-white")
                               }
                             >
                               <span className="font-mono font-semibold">{c.dayNum}</span>
