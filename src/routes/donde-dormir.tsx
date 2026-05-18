@@ -115,6 +115,9 @@ function DondeDormirPage() {
           <p className="mt-1 text-xs text-amber-200/80 md:text-sm">
             Toca un hotel para ver tarifas por tipo de habitación.
           </p>
+          <p className="mt-1 text-[11px] italic text-amber-200/60">
+            Precios orientativos por habitación doble. El precio final dependerá del operador que usted seleccione.
+          </p>
         </div>
 
         <div className="rounded-2xl border border-amber-100/[0.08] bg-[rgba(20,10,4,0.7)] p-2 backdrop-blur-xl md:p-4">
