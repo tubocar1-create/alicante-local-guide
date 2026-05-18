@@ -9,9 +9,13 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { InstallPWA } from "@/components/InstallPWA";
+import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
 
 import appCss from "../styles.css?url";
 import "@/integrations/supabase/server-fn-fetch";
+
+const PUBLIC_ROUTES = ["/login", "/magic"];
 
 
 function NotFoundComponent() {
