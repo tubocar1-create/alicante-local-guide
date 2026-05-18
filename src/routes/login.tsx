@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { createFileRoute, Link, useSearch } from "@tanstack/react-router";
-import { ArrowLeft, User as UserIcon, Sparkles, Mail } from "lucide-react";
+import { ArrowLeft, User as UserIcon, Sparkles, Mail, KeyRound, Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { signInOrSignUp } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/login")({
   validateSearch: (s: Record<string, unknown>) => ({
