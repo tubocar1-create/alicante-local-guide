@@ -9,9 +9,19 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import hoguera1 from "@/assets/fiestas-hoguera-1.jpg";
-import moros1 from "@/assets/fiestas-moros-1.jpg";
-import cristianos1 from "@/assets/fiestas-cristianos-1.jpg";
-import morosBatalla from "@/assets/fiestas-moros-batalla.jpg";
+import hoguera2 from "@/assets/fiestas-hoguera-2.jpg";
+import mascleta1 from "@/assets/fiestas-mascleta-1.jpg";
+import mascleta2 from "@/assets/fiestas-mascleta-2.jpg";
+import fuegos1 from "@/assets/fiestas-fuegos-1.jpg";
+import fuegos2 from "@/assets/fiestas-fuegos-2.jpg";
+import desfile1 from "@/assets/fiestas-desfile-1.jpg";
+import playa1 from "@/assets/fiestas-playa-1.jpg";
+import ninot1 from "@/assets/fiestas-ninot-1.jpg";
+import belleas1 from "@/assets/fiestas-belleas-1.jpg";
+import bunuelos1 from "@/assets/fiestas-bunuelos-1.jpg";
+import crema1 from "@/assets/fiestas-crema-1.jpg";
+import ofrenda1 from "@/assets/fiestas-ofrenda-1.jpg";
+import banya1 from "@/assets/fiestas-banya-1.jpg";
 
 import {
   PROGRAMA_2026, PREVIA_2026, MASCLETAS_2026, FUEGOS_2026,
@@ -19,23 +29,6 @@ import {
   type Acto, type Jornada,
 } from "@/data/fiestas-program";
 import { MOROS_BARRIOS, MOROS_ELEMENTOS } from "@/data/moros-cristianos";
-import hoguera2 from "@/assets/fiestas-hoguera-2.jpg";
-import mascleta1 from "@/assets/fiestas-mascleta-1.jpg";
-import mascleta2 from "@/assets/fiestas-mascleta-2.jpg";
-import fuegos1 from "@/assets/fiestas-fuegos-real-1.jpg";
-import fuegos2 from "@/assets/fiestas-fuegos-real-2.jpg";
-import desfile1 from "@/assets/fiestas-desfile-1.jpg";
-import playa1 from "@/assets/fiestas-playa-1.jpg";
-import ninot1 from "@/assets/fiestas-ninot-1.jpg";
-import belleas1 from "@/assets/fiestas-belleas-1.jpg";
-import bunuelos1 from "@/assets/fiestas-bunuelos-1.jpg";
-import crema1 from "@/assets/fiestas-crema-1.jpg";
-
-import ofrenda1 from "@/assets/fiestas-ofrenda-1.jpg";
-import arroz1 from "@/assets/fiestas-arroz-1.jpg";
-import cultura1 from "@/assets/fiestas-cultura-1.jpg";
-import cala1 from "@/assets/fiestas-cala-1.jpg";
-import taller1 from "@/assets/fiestas-taller-1.jpg";
 import hoguerasIcon from "@/assets/hogueras-alicante.png";
 import { askFiestasAI } from "@/lib/fiestas-ai.functions";
 
