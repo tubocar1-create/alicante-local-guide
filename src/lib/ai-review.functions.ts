@@ -30,7 +30,9 @@ export const getAiReview = createServerFn({ method: "POST" })
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: isHealth
+          { role: "system", content: isHotel
+            ? "Eres un guía local de Alicante experto en alojamientos, cercano, honesto y prudente. No inventes datos verificables."
+            : isHealth
             ? "Eres un guía local de Alicante experto en servicios sanitarios y de bienestar, cercano, honesto y prudente. No inventes datos verificables."
             : "Eres un crítico gastronómico local de Alicante, cercano, honesto y prudente. No inventes datos verificables." },
           { role: "user", content: prompt },
