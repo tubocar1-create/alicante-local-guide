@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowLeft, MapPin, Navigation, Sparkles } from "lucide-react";
+import { ArrowLeft, MapPin, Navigation, Sparkles, Star } from "lucide-react";
 import { getBeachDetail } from "@/lib/playas-map.functions";
 import { getBeachBySlug } from "@/lib/playas-map-data";
 
@@ -14,8 +14,8 @@ export const Route = createFileRoute("/playas/$slug")({
     const name = b?.name ?? "Playa de Alicante";
     return {
       meta: [
-        { title: `${name} — Guía visual con fotos reales` },
-        { name: "description", content: b?.description ?? "Ficha visual de una playa de Alicante." },
+        { title: `${name} — Fotos, reseñas y cómo ir` },
+        { name: "description", content: b?.description ?? "Playa de Alicante con fotos reales, reseñas y cómo llegar." },
         { property: "og:title", content: `${name} — Playas de Alicante` },
         { property: "og:description", content: b?.description ?? "" },
       ],
@@ -34,7 +34,7 @@ export const Route = createFileRoute("/playas/$slug")({
   errorComponent: ({ error }) => (
     <div className="flex min-h-screen items-center justify-center bg-sky-50 p-6 text-center">
       <div>
-        <h1 className="text-xl font-black text-slate-900">No pudimos cargar la ficha</h1>
+        <h1 className="text-xl font-black text-slate-900">No pudimos cargar esta playa</h1>
         <p className="mt-2 text-sm text-slate-600">{error.message}</p>
         <Link to="/playas/mapa" className="mt-4 inline-flex items-center gap-2 rounded-full bg-cyan-600 px-4 py-2 text-sm font-bold text-white">
           <MapPin className="h-4 w-4" /> Volver al mapa
@@ -45,9 +45,23 @@ export const Route = createFileRoute("/playas/$slug")({
   component: BeachDetailPage,
 });
 
+function Stars({ value }: { value: number }) {
+  const full = Math.round(value);
+  return (
+    <div className="inline-flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Star key={i} className={`h-3.5 w-3.5 ${i <= full ? "fill-amber-400 text-amber-400" : "text-slate-300"}`} />
+      ))}
+    </div>
+  );
+}
+
 function BeachDetailPage() {
-  const { beach, photos, review } = Route.useLoaderData();
-  const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${beach.lat},${beach.lng}&destination_place_id=${encodeURIComponent(beach.mapsQuery)}`;
+  const { beach, photos, review, reviews, rating, userRatingCount, googleMapsUri, formattedAddress } =
+    Route.useLoaderData();
+  const directionsUrl =
+    googleMapsUri ??
+    `https://www.google.com/maps/dir/?api=1&destination=${beach.lat},${beach.lng}&destination_place_id=${encodeURIComponent(beach.mapsQuery)}`;
   const cover = photos[0];
 
   return (
@@ -72,6 +86,13 @@ function BeachDetailPage() {
             </div>
             <h1 className="mt-3 text-3xl font-black leading-tight sm:text-5xl">{beach.name}</h1>
             <p className="mt-2 max-w-2xl text-sm font-semibold text-white/95 sm:text-base">{beach.description}</p>
+            {typeof rating === "number" && (
+              <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-black/30 px-3 py-1 text-xs font-bold backdrop-blur">
+                <Stars value={rating} />
+                <span>{rating.toFixed(1)}</span>
+                {userRatingCount ? <span className="text-white/75">· {userRatingCount} reseñas</span> : null}
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -100,6 +121,40 @@ function BeachDetailPage() {
           </div>
           <p className="mt-3 whitespace-pre-line text-[15px] font-medium leading-relaxed text-slate-800">{review}</p>
         </section>
+
+        {reviews.length > 0 && (
+          <section className="mt-6">
+            <div className="mb-3 flex items-end justify-between gap-3">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-700">Reseñas de Google</p>
+                <h2 className="mt-1 text-xl font-black text-slate-950">Qué dicen quienes han ido</h2>
+              </div>
+            </div>
+            <div className="space-y-3">
+              {reviews.map((r: typeof reviews[number], i: number) => (
+                <article key={i} className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-sky-100">
+                  <header className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-black text-slate-900">{r.author}</p>
+                    <Stars value={r.rating} />
+                  </header>
+                  {r.relativeTime && (
+                    <p className="mt-0.5 text-[11px] text-slate-500">{r.relativeTime}</p>
+                  )}
+                  <p className="mt-2 line-clamp-6 whitespace-pre-line text-sm leading-relaxed text-slate-700">
+                    {r.text}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {formattedAddress && (
+          <p className="mt-6 text-sm text-slate-600">
+            <span className="font-black text-slate-900">Dirección: </span>
+            {formattedAddress}
+          </p>
+        )}
 
         <section className="mt-6 flex flex-col gap-3 sm:flex-row">
           <a
