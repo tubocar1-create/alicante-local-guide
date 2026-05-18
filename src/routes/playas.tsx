@@ -95,13 +95,15 @@ function PlayasPage() {
       <main className="mx-auto max-w-3xl px-4 pb-20 -mt-4">
         {/* Intro */}
         <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-          {isLoading ? (
-            <div className="h-24 animate-pulse rounded bg-slate-100" />
-          ) : error ? (
-            <p className="text-sm text-red-600">No se pudo cargar la guía. Reintenta en un momento.</p>
+          {guideQ.isLoading ? (
+            <div className="space-y-2">
+              <div className="h-3 animate-pulse rounded bg-slate-100" />
+              <div className="h-3 animate-pulse rounded bg-slate-100" />
+              <div className="h-3 w-2/3 animate-pulse rounded bg-slate-100" />
+            </div>
           ) : (
             <p className="whitespace-pre-line text-[15px] leading-relaxed text-slate-700">
-              {data?.guide.intro}
+              {guideQ.data?.intro}
             </p>
           )}
         </section>
