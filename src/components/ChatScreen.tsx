@@ -18,7 +18,6 @@ import { findPlaceOverride } from "@/data/places";
 import { resolveOpeningStatus, getTodayClosingTime, getTodayOpeningTime } from "@/lib/opening-hours";
 import { useServerFn } from "@tanstack/react-start";
 import { getMapBeaches } from "@/lib/playas-map.functions";
-import { MapPin as MapPinIcon } from "lucide-react";
 import {
   getAsianPlaces,
   getDrinksPlaces,
