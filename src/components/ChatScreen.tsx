@@ -1440,6 +1440,7 @@ function PlaceCard({ data }: { data: PlaceCardData }) {
 }
 
 function MarkdownText({ text }: { text: string }) {
+  const navigate = useNavigate();
   if (!text.trim()) return null;
   return (
     <ReactMarkdown
@@ -1487,6 +1488,17 @@ function MarkdownText({ text }: { text: string }) {
                 className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full gradient-warm text-primary-foreground shadow-soft active:scale-95 align-middle ml-1"
               >
                 🎟️ VAMOS
+              </button>
+            );
+          }
+          if (url.startsWith("/")) {
+            return (
+              <button
+                type="button"
+                onClick={() => navigate({ to: url })}
+                className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-[11px] font-bold text-primary-foreground shadow-soft active:scale-95"
+              >
+                {children}
               </button>
             );
           }
