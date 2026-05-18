@@ -1,15 +1,41 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-const LITEAPI_BASE = "https://api.liteapi.travel/v3.0";
 const ALICANTE_LAT = 38.3452;
 const ALICANTE_LNG = -0.481;
 const RADIUS_M = 10000;
 
-function authHeaders() {
-  const key = process.env.LITEAPI_KEY;
-  if (!key) throw new Error("LITEAPI_KEY not configured");
-  return { "X-API-Key": key, accept: "application/json" };
-}
+// Google Places (New) – Nearby Search v1
+const PLACES_URL = "https://places.googleapis.com/v1/places:searchNearby";
+
+const INCLUDED_TYPES = [
+  "hotel",
+  "lodging",
+  "resort_hotel",
+  "extended_stay_hotel",
+  "bed_and_breakfast",
+  "guest_house",
+  "hostel",
+  "motel",
+  "inn",
+  "cottage",
+  "private_guest_room",
+];
+
+const FIELD_MASK = [
+  "places.id",
+  "places.displayName",
+  "places.formattedAddress",
+  "places.location",
+  "places.rating",
+  "places.userRatingCount",
+  "places.priceLevel",
+  "places.primaryType",
+  "places.types",
+  "places.googleMapsUri",
+  "places.websiteUri",
+  "places.photos",
+  "places.shortFormattedAddress",
+].join(",");
 
 function distanceKm(lat: number, lng: number) {
   const R = 6371;
@@ -23,51 +49,102 @@ function distanceKm(lat: number, lng: number) {
   return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 10) / 10;
 }
 
-export async function syncStaticHotelsImpl() {
-  const url = new URL(`${LITEAPI_BASE}/data/hotels`);
-  url.searchParams.set("countryCode", "ES");
-  url.searchParams.set("cityName", "Alicante");
-  url.searchParams.set("latitude", String(ALICANTE_LAT));
-  url.searchParams.set("longitude", String(ALICANTE_LNG));
-  url.searchParams.set("distance", String(RADIUS_M));
-  url.searchParams.set("limit", "1000");
+function photoUrl(name: string | undefined, apiKey: string) {
+  if (!name) return null;
+  return `https://places.googleapis.com/v1/${name}/media?maxHeightPx=600&key=${apiKey}`;
+}
 
-  const res = await fetch(url, { headers: authHeaders() });
+async function nearbyPage(apiKey: string) {
+  const res = await fetch(PLACES_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": apiKey,
+      "X-Goog-FieldMask": FIELD_MASK,
+    },
+    body: JSON.stringify({
+      includedTypes: INCLUDED_TYPES,
+      maxResultCount: 20,
+      locationRestriction: {
+        circle: {
+          center: { latitude: ALICANTE_LAT, longitude: ALICANTE_LNG },
+          radius: RADIUS_M,
+        },
+      },
+    }),
+  });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`LiteAPI ${res.status}: ${text.slice(0, 300)}`);
+    throw new Error(`Google Places ${res.status}: ${text.slice(0, 300)}`);
   }
-  const json = (await res.json()) as { data?: any[] };
-  const hotels = json.data ?? [];
+  return (await res.json()) as { places?: any[] };
+}
 
-  if (hotels.length === 0) return { fetched: 0, upserted: 0 };
+export async function syncStaticHotelsImpl() {
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  if (!apiKey) throw new Error("GOOGLE_PLACES_API_KEY not configured");
 
-  const rows = hotels.map((h: any) => {
-    const lat = Number(h.latitude ?? h.lat);
-    const lng = Number(h.longitude ?? h.lng);
+  // Single call: Places (New) Nearby returns up to 20 by type+location.
+  // For wider coverage we issue per-type calls and dedupe by place id.
+  const seen = new Map<string, any>();
+  for (const type of INCLUDED_TYPES) {
+    const res = await fetch(PLACES_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask": FIELD_MASK,
+      },
+      body: JSON.stringify({
+        includedTypes: [type],
+        maxResultCount: 20,
+        locationRestriction: {
+          circle: {
+            center: { latitude: ALICANTE_LAT, longitude: ALICANTE_LNG },
+            radius: RADIUS_M,
+          },
+        },
+      }),
+    });
+    if (!res.ok) continue;
+    const json = (await res.json()) as { places?: any[] };
+    for (const p of json.places ?? []) {
+      if (p?.id) seen.set(p.id, p);
+    }
+  }
+
+  const places = Array.from(seen.values());
+  if (places.length === 0) return { fetched: 0, upserted: 0 };
+
+  const rows = places.map((p: any) => {
+    const lat = Number(p.location?.latitude);
+    const lng = Number(p.location?.longitude);
+    const name = p.displayName?.text ?? "Alojamiento";
     return {
-      liteapi_hotel_id: String(h.id ?? h.hotelId),
-      name: h.name ?? "Hotel sin nombre",
-      address: h.address ?? h.hotelDescription?.address ?? null,
+      // We reuse the column name liteapi_hotel_id as the external id slot.
+      // Prefix to avoid collisions if we later import LiteAPI ids.
+      liteapi_hotel_id: `gp:${p.id}`,
+      name,
+      address: p.formattedAddress ?? p.shortFormattedAddress ?? null,
       lat: isFinite(lat) ? lat : null,
       lng: isFinite(lng) ? lng : null,
-      stars: h.stars ?? h.starRating ?? null,
-      hotel_type: h.hotelType ?? h.type ?? null,
-      neighborhood: h.zone ?? h.neighborhood ?? null,
+      stars: typeof p.rating === "number" ? p.rating : null,
+      hotel_type: p.primaryType ?? null,
+      neighborhood: null,
       distance_km: isFinite(lat) && isFinite(lng) ? distanceKm(lat, lng) : null,
-      main_image: h.main_photo ?? h.thumbnail ?? h.images?.[0]?.url ?? null,
+      main_image: photoUrl(p.photos?.[0]?.name, apiKey),
       booking_url: `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(
-        `${h.name ?? ""} Alicante`,
+        `${name} Alicante`,
       )}`,
-      amenities: h.amenities ?? h.hotelFacilities ?? [],
-      raw: h,
+      amenities: p.types ?? [],
+      raw: p,
     };
   });
 
   const { error } = await supabaseAdmin
     .from("hotels_static")
     .upsert(rows, { onConflict: "liteapi_hotel_id" });
-
   if (error) throw new Error(`Upsert failed: ${error.message}`);
-  return { fetched: hotels.length, upserted: rows.length };
+
+  return { fetched: places.length, upserted: rows.length };
 }
