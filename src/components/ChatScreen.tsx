@@ -363,7 +363,6 @@ export function ChatScreen() {
     setInput("");
     setMode(null);
     setMessages([
-      GREETING,
       { role: "user", content: BEACH_GUIDE_PROMPT },
       { role: "assistant", content: BEACH_GUIDE_RESPONSE },
     ]);
