@@ -122,8 +122,8 @@ function DondeDormirPage() {
               <col />
               <col className="w-[50px]" />
               <col className="w-[54px]" />
-              <col className="w-[28px]" />
-              <col className="w-[28px]" />
+              <col className="w-[40px]" />
+              <col className="w-[48px]" />
               <col className="w-[48px]" />
             </colgroup>
             <thead>
