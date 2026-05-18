@@ -269,10 +269,10 @@ function ProgramaSection() {
 
       <div className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
         <p className="text-sm leading-relaxed text-amber-100">
-          Te lo cuento como se lo cuento a mi primo de Madrid cuando viene por primera vez:
-          las Hogueras <strong>no empiezan el 20 de junio</strong>. Empiezan en abril,
-          en silencio, cuando se elige la <strong>Bellea del Foc</strong> y los artistas
-          empiezan a moldear los ninots. Luego vienen el Pregón, la Cabalgata… y un día,
+          Te lo cuento como se lo cuento a quien viene por primera vez: las Hogueras{" "}
+          <strong>no empiezan el 20 de junio</strong>. Empiezan en abril, en silencio,
+          cuando se elige la <strong>Bellea del Foc</strong> y los artistas empiezan
+          a moldear los ninots. Luego vienen el Pregón, la Cabalgata… y un día,
           de repente, suena la primera mascletà y ya no hay marcha atrás.
         </p>
         <ul className="mt-3 space-y-1 text-[13px] text-amber-100/90">
@@ -391,14 +391,14 @@ function MorosCristianosSection() {
         Si las Hogueras son la cara internacional de Alicante, los{" "}
         <strong>Moros y Cristianos</strong> son su <strong>alma de barrio</strong>.
         Aquí no hay turistas con cámaras enormes: hay vecinos que llevan toda la
-        vida en la misma comparsa, abuelos que les enseñaron a sus nietos a marcar
-        el paso, y barrios enteros que se vuelcan en una sola semana.
+        vida en la misma comparsa, generaciones que se pasan el paso de unos a otros,
+        y barrios enteros que se vuelcan en una sola semana.
       </p>
 
       <p className="text-sm leading-relaxed text-amber-100">
         Recuerdan la <strong>Reconquista</strong> de la ciudad allá por el siglo XIII,
         pero más que una clase de historia son <em>una excusa para vivir</em>:
-        para ponerse un traje espectacular, beber con los amigos en la kábila,
+        para ponerse un traje espectacular, beber con la gente del barrio en la kábila,
         oír la banda de música y disparar arcabuces hasta que huele a pólvora
         durante días.
       </p>
@@ -474,12 +474,6 @@ function MorosCristianosSection() {
 
 type Msg = { role: "user" | "assistant"; content: string };
 
-const QUICK_PROMPTS = [
-  "¿Cuándo es la Cremà?",
-  "¿Dónde veo la mascletà?",
-  "¿Qué es la Banyà?",
-  "¿Qué comer en fiestas?",
-];
 
 function FiestasChat() {
   const ask = useServerFn(askFiestasAI);
@@ -518,6 +512,7 @@ function FiestasChat() {
   }
 
   return (
+    <>
     <section
       id="chat-fiestas"
       className="rounded-3xl bg-white/5 p-3 ring-1 ring-amber-300/30 backdrop-blur"
@@ -574,46 +569,33 @@ function FiestasChat() {
         )}
       </div>
 
-      {/* Quick prompts */}
-      <div className="mt-2 flex flex-wrap gap-1.5">
-        {QUICK_PROMPTS.map((q) => (
-          <button
-            key={q}
-            type="button"
-            onClick={() => send(q)}
-            disabled={loading}
-            className="rounded-full bg-amber-400/15 px-3 py-1 text-[11px] font-semibold text-amber-100 ring-1 ring-amber-300/30 active:scale-95 disabled:opacity-50"
-          >
-            {q}
-          </button>
-        ))}
-      </div>
-
-      {/* Input */}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          void send(input);
-        }}
-        className="mt-2 flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 ring-1 ring-amber-300/30 focus-within:ring-amber-300/70"
-      >
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Pregunta sobre las fiestas…"
-          className="flex-1 bg-transparent text-sm text-amber-50 placeholder:text-amber-200/60 outline-none"
-          disabled={loading}
-        />
-        <button
-          type="submit"
-          disabled={loading || !input.trim()}
-          aria-label="Enviar"
-          className="grid h-9 w-9 place-items-center rounded-full bg-amber-400 text-black shadow active:scale-95 disabled:opacity-50"
-        >
-          <Send className="h-4 w-4" />
-        </button>
-      </form>
     </section>
+
+    {/* Input fijo abajo */}
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        void send(input);
+      }}
+      className="fixed inset-x-0 bottom-0 z-30 flex items-center gap-2 border-t border-amber-300/20 bg-black/80 px-3 py-2 backdrop-blur-md pb-[calc(env(safe-area-inset-bottom)+0.5rem)]"
+    >
+      <input
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder="Pregunta sobre las fiestas…"
+        className="flex-1 rounded-full bg-white/10 px-4 py-2 text-sm text-amber-50 placeholder:text-amber-200/60 outline-none ring-1 ring-amber-300/30 focus:ring-amber-300/70"
+        disabled={loading}
+      />
+      <button
+        type="submit"
+        disabled={loading || !input.trim()}
+        aria-label="Enviar"
+        className="grid h-10 w-10 place-items-center rounded-full bg-amber-400 text-black shadow active:scale-95 disabled:opacity-50"
+      >
+        <Send className="h-4 w-4" />
+      </button>
+    </form>
+    </>
   );
 }
 
@@ -689,13 +671,37 @@ function FiestasPage() {
         </div>
       </div>
 
-      <main className="space-y-8 px-4 py-6">
-        <p className="text-base leading-relaxed text-amber-100 animate-rise">
-          Alicante no se vive: <strong>se celebra</strong>. Del 20 al 24 de junio
-          la ciudad entera arde de alegría con las <strong>Hogueras de San
-          Juan</strong>, declaradas Fiesta de Interés Turístico Internacional.
-          Música, desfiles, pólvora y olor a buñuelos en cada esquina ✨
-        </p>
+      <main className="space-y-8 px-4 py-6 pb-28">
+        <div className="space-y-3 animate-rise">
+          <p className="text-base leading-relaxed text-amber-100">
+            Alicante no se vive: <strong>se celebra</strong>. Del 20 al 24 de junio
+            la ciudad entera arde de alegría con las <strong>Hogueras de San
+            Juan</strong>, declaradas Fiesta de Interés Turístico Internacional.
+            Música, desfiles, pólvora y olor a buñuelos en cada esquina ✨
+          </p>
+          <p className="text-sm leading-relaxed text-amber-100/90">
+            Durante una semana entera la rutina desaparece. Las calles se llenan de{" "}
+            <strong>ninots</strong> gigantes —monumentos satíricos de hasta 20 metros—,
+            las bandas de música tocan en cada plaza y la <strong>Plaza de los Luceros</strong>
+            {" "}se convierte cada mediodía en el corazón pirotécnico de España con las{" "}
+            <strong>mascletàs</strong> de 14:00 h.
+          </p>
+          <p className="text-sm leading-relaxed text-amber-100/90">
+            Por la tarde, la <strong>Ofrenda de Flores</strong> tiñe la ciudad de
+            color camino de la Concatedral; por la noche, las <strong>barracas</strong>
+            {" "}y <strong>racós</strong> abren sus puertas con verbenas que duran hasta
+            el amanecer. Y la madrugada del 24 al 25, la <strong>Cremà</strong>: todas
+            las hogueras arden a la vez mientras los bomberos te empapan en la
+            mítica <strong>Banyà</strong>. Vas a reír, vas a emocionarte y vas a
+            volver al año siguiente. Está garantizado 🔥
+          </p>
+          <p className="text-sm leading-relaxed text-amber-100/90">
+            Y cuando se apagan los rescoldos, todavía quedan <strong>cinco noches
+            de castillos pirotécnicos</strong> sobre la playa del Postiguet. Ése es
+            el verdadero adiós: arena bajo los pies, mar de fondo y el cielo pintado
+            de fuego. Bienvenido a la mejor semana del año.
+          </p>
+        </div>
 
         {/* Chat IA */}
         <FiestasChat />
