@@ -299,57 +299,102 @@ function HotelDetail() {
               </p>
             </div>
 
-            {/* Calendario 30 días */}
+            {/* Calendarios mensuales (mes actual + 2 siguientes) */}
             <div className="mt-4 rounded-2xl border border-amber-100/[0.08] bg-[rgba(20,10,4,0.7)] p-4 backdrop-blur-xl md:p-5">
               <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.3em] text-amber-400/80">
-                <CalendarDays className="h-3 w-3" /> Disponibilidad · próximos 30 días
+                <CalendarDays className="h-3 w-3" /> Disponibilidad · próximos 3 meses
               </p>
               <p className="mt-1 text-[10px] text-amber-200/60">
-                Verde = hay habitaciones · rojo = sin disponibilidad. El precio mostrado es de la
-                habitación doble.
+                Verde = hay habitaciones · rojo = sin disponibilidad. Precio mostrado: habitación
+                doble.
               </p>
-              {calendar.isLoading ? (
-                <div className="mt-3 grid grid-cols-7 gap-1">
-                  {Array.from({ length: 30 }).map((_, i) => (
-                    <div key={i} className="h-12 animate-pulse rounded bg-amber-100/[0.06]" />
-                  ))}
-                </div>
-              ) : (
-                <div className="mt-3 grid grid-cols-7 gap-1">
-                  {days.map((dy) => {
-                    const dt = new Date(dy.date + "T00:00:00Z");
-                    const day = dt.getUTCDate();
-                    const dow = dt.toLocaleDateString("es-ES", {
-                      weekday: "short",
-                      timeZone: "UTC",
-                    });
-                    const priceLabel =
-                      dy.price_double != null
-                        ? `${Math.round(dy.price_double)}€`
-                        : dy.price_min != null
-                          ? `${Math.round(dy.price_min)}€`
-                          : "—";
-                    return (
-                      <div
-                        key={dy.date}
-                        className={
-                          "flex h-12 flex-col items-center justify-center rounded text-[10px] leading-tight " +
-                          (dy.available
-                            ? "bg-emerald-500/20 text-emerald-100"
-                            : "bg-rose-500/15 text-rose-200/80")
-                        }
-                        title={`${dy.date} · ${dy.available ? "disponible" : "sin disponibilidad"}`}
-                      >
-                        <span className="text-[8px] uppercase tracking-wide opacity-70">{dow}</span>
-                        <span className="font-mono font-semibold">{day}</span>
-                        <span className="font-mono text-[9px] tabular-nums opacity-90">
-                          {priceLabel}
-                        </span>
+
+              <div className="mt-3 space-y-5">
+                {months.map((mo) => {
+                  const monthName = new Date(Date.UTC(mo.year, mo.month, 1)).toLocaleDateString(
+                    "es-ES",
+                    { month: "long", year: "numeric", timeZone: "UTC" },
+                  );
+                  const cells: Array<{ key: string; kind: "blank" | "out" | "day"; date?: string; dayNum?: number }> = [];
+                  // Leading blanks for weekday alignment (Mon=0)
+                  for (let i = 0; i < mo.firstWeekday; i++) {
+                    cells.push({ key: `b-${mo.year}-${mo.month}-${i}`, kind: "blank" });
+                  }
+                  for (let d = 1; d <= mo.daysInMonth; d++) {
+                    const dateStr = `${mo.year}-${String(mo.month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+                    if (d < mo.firstDay) {
+                      cells.push({ key: dateStr, kind: "out", dayNum: d });
+                    } else {
+                      cells.push({ key: dateStr, kind: "day", date: dateStr, dayNum: d });
+                    }
+                  }
+                  return (
+                    <div key={`${mo.year}-${mo.month}`}>
+                      <p className="mb-1.5 text-[11px] font-semibold capitalize tracking-wide text-amber-100/90">
+                        {monthName}
+                      </p>
+                      <div className="grid grid-cols-7 gap-0.5 text-center text-[8px] uppercase tracking-wide text-amber-200/50">
+                        {["L", "M", "X", "J", "V", "S", "D"].map((d) => (
+                          <div key={d} className="py-0.5">
+                            {d}
+                          </div>
+                        ))}
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+                      <div className="mt-0.5 grid grid-cols-7 gap-0.5">
+                        {cells.map((c) => {
+                          if (c.kind === "blank") {
+                            return <div key={c.key} className="h-12 rounded" />;
+                          }
+                          if (c.kind === "out") {
+                            return (
+                              <div
+                                key={c.key}
+                                className="flex h-12 items-center justify-center rounded bg-white/[0.02] text-[10px] text-amber-200/25"
+                              >
+                                {c.dayNum}
+                              </div>
+                            );
+                          }
+                          const dy = daysByDate[c.date!];
+                          const loading = calendar.isLoading;
+                          if (loading) {
+                            return (
+                              <div
+                                key={c.key}
+                                className="h-12 animate-pulse rounded bg-amber-100/[0.06]"
+                              />
+                            );
+                          }
+                          const available = !!dy?.available;
+                          const priceLabel =
+                            dy?.price_double != null
+                              ? `${Math.round(dy.price_double)}€`
+                              : dy?.price_min != null
+                                ? `${Math.round(dy.price_min)}€`
+                                : "—";
+                          return (
+                            <div
+                              key={c.key}
+                              title={`${c.date} · ${available ? "disponible" : "sin disponibilidad"}`}
+                              className={
+                                "flex h-12 flex-col items-center justify-center rounded text-[10px] leading-tight " +
+                                (available
+                                  ? "bg-emerald-500/20 text-emerald-100"
+                                  : "bg-rose-500/15 text-rose-200/80")
+                              }
+                            >
+                              <span className="font-mono font-semibold">{c.dayNum}</span>
+                              <span className="font-mono text-[9px] tabular-nums opacity-90">
+                                {priceLabel}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             {/* AI Review */}
