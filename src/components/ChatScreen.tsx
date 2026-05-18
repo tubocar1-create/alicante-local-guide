@@ -444,13 +444,14 @@ export function ChatScreen() {
               <p className="text-[15px] font-extrabold leading-tight text-foreground truncate">
                 ¡Hola{firstName ? `, ${firstName}` : ""}!
               </p>
-              <p className="text-[12px] leading-tight text-muted-foreground truncate flex items-center gap-1">
-                ¿Qué
-                <img
-                  src={vamosLogo}
-                  alt="VAMOS"
-                  className="inline-block h-3.5 w-auto align-middle"
-                />
+              <p className="text-[12px] leading-tight text-muted-foreground truncate">
+                ¿Qué{" "}
+                <span
+                  className="font-bold uppercase tracking-tight text-primary"
+                  style={{ fontFamily: "'Quicksand', sans-serif" }}
+                >
+                  VAMOS
+                </span>{" "}
                 a descubrir hoy?
               </p>
             </div>
