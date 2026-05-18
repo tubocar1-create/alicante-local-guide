@@ -1,7 +1,9 @@
-// Beta auth: pedimos nombre y datos de contacto opcionales (apellido, email, teléfono)
-// y los guardamos en localStorage. Cuando salgamos de beta, esto se reemplaza por
-// auth real (Google, email…).
+// Beta auth respaldada por la tabla `test_users` en Supabase.
+// Email = usuario. Si el email existe -> login. Si no, se requieren
+// nombre + apellido y se crea un nuevo test_user.
+// Cuando lancemos, se reemplazará por auth real (Supabase Auth).
 import { useEffect, useState, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const KEY = "beta_user_v1";
 const EVT = "beta-user-changed";
@@ -32,32 +34,63 @@ function write(u: BetaUser | null) {
   window.dispatchEvent(new Event(EVT));
 }
 
-export function signInWithName(
-  name: string,
-  extra?: { surname?: string; email?: string; phone?: string },
-): BetaUser {
-  const trimmed = name.trim().slice(0, 60);
-  const existing = read();
-  const merged: BetaUser = existing
-    ? {
-        ...existing,
-        name: trimmed,
-        surname: extra?.surname?.trim().slice(0, 60) || existing.surname,
-        email: extra?.email?.trim().slice(0, 120) || existing.email,
-        phone: extra?.phone?.trim().slice(0, 30) || existing.phone,
-      }
-    : {
-        id:
-          (globalThis.crypto?.randomUUID?.() ??
-            `beta_${Math.random().toString(36).slice(2, 10)}`),
-        name: trimmed,
-        surname: extra?.surname?.trim().slice(0, 60) || undefined,
-        email: extra?.email?.trim().slice(0, 120) || undefined,
-        phone: extra?.phone?.trim().slice(0, 30) || undefined,
-        createdAt: new Date().toISOString(),
-      };
-  write(merged);
-  return merged;
+/**
+ * Iniciar sesión o registrarse con email.
+ * - Si el email existe en `test_users` -> login (devuelve el usuario).
+ * - Si NO existe y se proveen name+surname -> registro (inserta y devuelve).
+ * - Si no existe y faltan datos -> lanza Error("SIGNUP_REQUIRED").
+ */
+export async function signInOrSignUp(input: {
+  email: string;
+  name?: string;
+  surname?: string;
+}): Promise<BetaUser> {
+  const email = input.email.trim().toLowerCase();
+  if (!email) throw new Error("Email requerido");
+
+  const { data: existing, error: selErr } = await supabase
+    .from("test_users")
+    .select("id, name, surname, email, created_at")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (selErr) throw selErr;
+
+  if (existing) {
+    const user: BetaUser = {
+      id: existing.id,
+      name: existing.name,
+      surname: existing.surname ?? undefined,
+      email: existing.email ?? undefined,
+      createdAt: existing.created_at,
+    };
+    write(user);
+    return user;
+  }
+
+  const name = input.name?.trim() ?? "";
+  const surname = input.surname?.trim() ?? "";
+  if (name.length < 2 || surname.length < 2) {
+    throw new Error("SIGNUP_REQUIRED");
+  }
+
+  const { data: created, error: insErr } = await supabase
+    .from("test_users")
+    .insert({ name, surname, email })
+    .select("id, name, surname, email, created_at")
+    .single();
+
+  if (insErr || !created) throw insErr ?? new Error("No se pudo crear el usuario");
+
+  const user: BetaUser = {
+    id: created.id,
+    name: created.name,
+    surname: created.surname ?? undefined,
+    email: created.email ?? undefined,
+    createdAt: created.created_at,
+  };
+  write(user);
+  return user;
 }
 
 export function signOutBeta() {
