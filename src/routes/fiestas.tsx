@@ -22,8 +22,8 @@ import { MOROS_BARRIOS, MOROS_ELEMENTOS } from "@/data/moros-cristianos";
 import hoguera2 from "@/assets/fiestas-hoguera-2.jpg";
 import mascleta1 from "@/assets/fiestas-mascleta-1.jpg";
 import mascleta2 from "@/assets/fiestas-mascleta-2.jpg";
-import fuegos1 from "@/assets/fiestas-fuegos-1.jpg";
-import fuegos2 from "@/assets/fiestas-fuegos-2.jpg";
+import fuegos1 from "@/assets/fiestas-fuegos-real-1.jpg";
+import fuegos2 from "@/assets/fiestas-fuegos-real-2.jpg";
 import desfile1 from "@/assets/fiestas-desfile-1.jpg";
 import playa1 from "@/assets/fiestas-playa-1.jpg";
 import ninot1 from "@/assets/fiestas-ninot-1.jpg";
@@ -876,10 +876,17 @@ function Relato() {
     },
     {
       src: fuegos1,
-      alt: "Castillo de fuegos sobre el Postiguet",
-      caption: "🎆 Castillos en el Postiguet — cinco noches más de fuego",
+      alt: "Castillo de fuegos sobre la bahía de Alicante",
+      caption: "🎆 Castillos del Postiguet — foto real desde la bahía",
       ring: "ring-purple-300/50",
       cap: "from-purple-500/80 to-pink-500/80",
+    },
+    {
+      src: fuegos2,
+      alt: "Fuegos artificiales sobre el mar de Alicante",
+      caption: "🎇 La pólvora cae al agua — cinco noches a medianoche",
+      ring: "ring-pink-300/50",
+      cap: "from-pink-500/80 to-rose-500/80",
     },
     {
       src: cala1,
