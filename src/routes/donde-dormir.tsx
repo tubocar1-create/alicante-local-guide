@@ -1,16 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import {
-  Star,
-  Coffee,
-  ShieldCheck,
-  Navigation,
-  Footprints,
-  ExternalLink,
-  Filter,
-} from "lucide-react";
+import { X } from "lucide-react";
 import { listHotels } from "@/lib/hotels.functions";
 
 export const Route = createFileRoute("/donde-dormir")({
@@ -20,14 +12,21 @@ export const Route = createFileRoute("/donde-dormir")({
       {
         name: "description",
         content:
-          "Hoteles, hostales y apartamentos en Alicante con precio para esta noche, desayuno y cancelación gratis. Datos en directo.",
+          "Dashboard nocturno con hoteles de Alicante: precio para esta noche, desayuno, cancelación gratis y distancia.",
       },
     ],
   }),
   component: DondeDormirPage,
 });
 
-type SortKey = "price" | "rating" | "distance";
+function hotelEmoji(t?: string | null) {
+  const s = (t ?? "").toLowerCase();
+  if (s.includes("hostel") || s.includes("hostal")) return "🛏️";
+  if (s.includes("apart")) return "🏢";
+  if (s.includes("pension") || s.includes("pensión") || s.includes("guest")) return "🏠";
+  if (s.includes("resort") || s.includes("spa")) return "🌴";
+  return "🏨";
+}
 
 function DondeDormirPage() {
   const fetchHotels = useServerFn(listHotels);
@@ -36,251 +35,185 @@ function DondeDormirPage() {
     queryFn: () => fetchHotels(),
   });
 
-  const [sort, setSort] = useState<SortKey>("price");
-  const [onlyAvailable, setOnlyAvailable] = useState(true);
-  const [breakfast, setBreakfast] = useState(false);
-  const [refundable, setRefundable] = useState(false);
-  const [maxPrice, setMaxPrice] = useState<number | null>(null);
-
-  const hotels = useMemo(() => {
+  const ranked = useMemo(() => {
     const all = (data?.hotels ?? []).map((h: any) => ({
       ...h,
       dyn: Array.isArray(h.hotels_dynamic) ? h.hotels_dynamic[0] : h.hotels_dynamic,
     }));
-    let list = all.filter((h: any) => {
-      if (onlyAvailable && !h.dyn?.available) return false;
-      if (breakfast && !h.dyn?.breakfast_included) return false;
-      if (refundable && !h.dyn?.free_cancellation) return false;
-      if (maxPrice && (h.dyn?.current_price ?? Infinity) > maxPrice) return false;
-      return true;
+    all.sort((a: any, b: any) => {
+      const aAv = a.dyn?.available ? 1 : 0;
+      const bAv = b.dyn?.available ? 1 : 0;
+      if (aAv !== bAv) return bAv - aAv;
+      const pa = a.dyn?.current_price ?? Infinity;
+      const pb = b.dyn?.current_price ?? Infinity;
+      return pa - pb;
     });
-    list.sort((a: any, b: any) => {
-      if (sort === "price") {
-        const pa = a.dyn?.current_price ?? Infinity;
-        const pb = b.dyn?.current_price ?? Infinity;
-        return pa - pb;
-      }
-      if (sort === "rating") return (b.stars ?? 0) - (a.stars ?? 0);
-      return (a.distance_km ?? 99) - (b.distance_km ?? 99);
-    });
-    return list;
-  }, [data, sort, onlyAvailable, breakfast, refundable, maxPrice]);
+    return all;
+  }, [data]);
 
-  const availableCount = (data?.hotels ?? []).filter((h: any) => {
-    const d = Array.isArray(h.hotels_dynamic) ? h.hotels_dynamic[0] : h.hotels_dynamic;
-    return d?.available;
-  }).length;
+  const availableCount = ranked.filter((h: any) => h.dyn?.available).length;
 
   return (
-    <div className="mx-auto max-w-md space-y-3 p-3 pb-24">
-      <header className="space-y-1">
-        <h1 className="font-display text-2xl font-bold tracking-tight">
-          Dónde dormir
-        </h1>
-        <p className="text-xs text-muted-foreground">
-          Precios para esta noche · {availableCount} disponibles ·{" "}
-          {data?.hotels?.length ?? 0} alojamientos
-        </p>
-      </header>
-
-      {/* Filters */}
-      <div className="sticky top-0 z-10 -mx-3 border-b border-border/40 bg-background/95 px-3 py-2 backdrop-blur">
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted-foreground shrink-0">
-            <Filter className="h-3 w-3" /> Orden
-          </span>
-          {(
-            [
-              ["price", "💸 Precio"],
-              ["rating", "⭐ Valoración"],
-              ["distance", "📍 Cerca"],
-            ] as [SortKey, string][]
-          ).map(([k, label]) => (
-            <button
-              key={k}
-              onClick={() => setSort(k)}
-              className={`shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold transition ${
-                sort === k
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-secondary-foreground"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-        <div className="mt-1.5 flex items-center gap-1.5 overflow-x-auto">
-          <Toggle active={breakfast} onClick={() => setBreakfast((v) => !v)}>
-            <Coffee className="h-3 w-3" /> Desayuno
-          </Toggle>
-          <Toggle active={refundable} onClick={() => setRefundable((v) => !v)}>
-            <ShieldCheck className="h-3 w-3" /> Cancelación gratis
-          </Toggle>
-          <Toggle active={onlyAvailable} onClick={() => setOnlyAvailable((v) => !v)}>
-            Solo disponibles
-          </Toggle>
-          <select
-            value={maxPrice ?? ""}
-            onChange={(e) => setMaxPrice(e.target.value ? Number(e.target.value) : null)}
-            className="shrink-0 rounded-full bg-secondary px-3 py-1 text-[11px] font-semibold text-secondary-foreground"
-          >
-            <option value="">Sin límite €</option>
-            <option value="80">≤ 80€</option>
-            <option value="120">≤ 120€</option>
-            <option value="200">≤ 200€</option>
-          </select>
-        </div>
-      </div>
-
-      {/* List */}
-      {isLoading ? (
-        <div className="space-y-2">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-28 animate-pulse rounded-2xl bg-muted" />
-          ))}
-        </div>
-      ) : hotels.length === 0 ? (
-        <p className="py-10 text-center text-sm text-muted-foreground">
-          No hay alojamientos con esos filtros.
-        </p>
-      ) : (
-        <ul className="space-y-2">
-          {hotels.map((h: any) => (
-            <HotelRow key={h.id} h={h} />
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-function Toggle({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-[11px] font-semibold transition ${
-        active
-          ? "bg-primary text-primary-foreground"
-          : "bg-secondary text-secondary-foreground"
-      }`}
+    <div
+      className="fixed inset-0 z-[60] overflow-y-auto text-amber-50"
+      style={{
+        background:
+          "linear-gradient(180deg, #1a0f05 0%, #2a1607 50%, #120800 100%)",
+      }}
     >
-      {children}
-    </button>
-  );
-}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 left-1/2 h-[28rem] w-[28rem] -translate-x-1/2 rounded-full bg-amber-500/[0.08] blur-3xl" />
+        <div className="absolute bottom-0 right-0 h-[24rem] w-[24rem] rounded-full bg-rose-500/[0.06] blur-3xl" />
+      </div>
 
-function HotelRow({ h }: { h: any }) {
-  const d = h.dyn;
-  const price = d?.current_price;
-  const mapsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-    h.name + " Alicante",
-  )}`;
-  const bookingHref =
-    h.booking_url ||
-    `https://www.booking.com/searchresults.es.html?ss=${encodeURIComponent(
-      h.name + " Alicante",
-    )}`;
+      <div className="relative mx-auto max-w-5xl px-4 pb-10 pt-5 md:px-6">
+        <header className="mb-5 flex items-center justify-between">
+          <Link
+            to="/"
+            className="text-[11px] uppercase tracking-[0.25em] text-amber-200/60 transition hover:text-amber-300"
+          >
+            ← Volver al chat
+          </Link>
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-400" />
+            </span>
+            <span className="text-[10px] uppercase tracking-[0.25em] text-amber-300/80">
+              Live · ALC
+            </span>
+            <Link
+              to="/"
+              aria-label="Cerrar"
+              className="ml-2 rounded-full border border-amber-900/60 p-1.5 text-amber-200/70 hover:border-amber-500/50 hover:text-amber-300"
+            >
+              <X className="h-4 w-4" />
+            </Link>
+          </div>
+        </header>
 
-  return (
-    <li className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-soft">
-      <div className="flex gap-3 p-3">
-        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-secondary to-accent/40">
-          {h.main_image ? (
-            <img
-              src={h.main_image}
-              alt={h.name}
-              loading="lazy"
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-3xl opacity-40">
-              🏨
-            </div>
-          )}
+        <div className="mb-5">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-amber-400/80">
+            Dashboard nocturno
+          </p>
+          <h1 className="mt-1 font-display text-2xl font-bold tracking-tight text-amber-50 md:text-4xl">
+            Dónde dormir{" "}
+            <span className="bg-gradient-to-r from-amber-300 via-white to-rose-300 bg-clip-text text-transparent">
+              en Alicante
+            </span>
+          </h1>
+          <p className="mt-1 text-xs text-amber-200/80 md:text-sm">
+            Hoteles, hostales y apartamentos · precios para esta noche, ordenados por disponibilidad.
+          </p>
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="font-display text-[14px] font-semibold leading-tight tracking-tight line-clamp-2">
-              {h.name}
-            </h3>
-            {h.stars ? (
-              <span className="inline-flex items-center gap-0.5 rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-bold text-accent-foreground shrink-0">
-                <Star className="h-2.5 w-2.5 fill-current" />
-                {Number(h.stars).toFixed(1)}
-              </span>
-            ) : null}
+
+        <div className="rounded-2xl border border-amber-100/[0.08] bg-[rgba(20,10,4,0.7)] p-2 backdrop-blur-xl md:p-4">
+          <div className="mb-2 flex items-baseline justify-between gap-2">
+            <p className="text-[12px] font-semibold text-amber-50">
+              {isLoading ? "Cargando…" : `${availableCount} disponibles · ${ranked.length} alojamientos`}
+            </p>
+            <p className="text-[9px] uppercase tracking-[0.18em] text-amber-400/70">
+              estado · €/noche · desayuno · cancela · dist.
+            </p>
           </div>
 
-          <div className="mt-0.5 flex flex-wrap items-center gap-1 text-[10px] text-muted-foreground">
-            {h.hotel_type && <span className="capitalize">{h.hotel_type}</span>}
-            {h.distance_km != null && (
-              <span className="inline-flex items-center gap-0.5">
-                <Footprints className="h-2.5 w-2.5" />
-                {h.distance_km < 1
-                  ? `${Math.round(h.distance_km * 1000)} m`
-                  : `${h.distance_km.toFixed(1)} km`}
-              </span>
-            )}
-          </div>
-
-          <div className="mt-1 flex flex-wrap gap-1">
-            {d?.breakfast_included && (
-              <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
-                <Coffee className="h-2.5 w-2.5" /> Desayuno
-              </span>
-            )}
-            {d?.free_cancellation && (
-              <span className="inline-flex items-center gap-0.5 rounded-full bg-sky-500/10 px-1.5 py-0.5 text-[10px] font-bold text-sky-700">
-                <ShieldCheck className="h-2.5 w-2.5" /> Cancelable
-              </span>
-            )}
-          </div>
-
-          <div className="mt-1.5 flex items-end justify-between gap-2">
-            <div>
-              {price != null ? (
-                <>
-                  <span className="font-display text-lg font-bold leading-none">
-                    {Math.round(price)}€
-                  </span>
-                  <span className="ml-1 text-[10px] text-muted-foreground">/noche</span>
-                </>
-              ) : (
-                <span className="text-[11px] text-muted-foreground">
-                  Sin precio en directo
-                </span>
+          <table className="w-full table-fixed border-separate border-spacing-y-0.5 text-left text-[11px] text-amber-50">
+            <colgroup>
+              <col />
+              <col className="w-[50px]" />
+              <col className="w-[54px]" />
+              <col className="w-[28px]" />
+              <col className="w-[28px]" />
+              <col className="w-[48px]" />
+            </colgroup>
+            <thead>
+              <tr className="text-[9px] uppercase tracking-[0.12em] text-amber-200/50">
+                <th className="px-1 py-1 font-medium">Local</th>
+                <th className="px-1 py-1 font-medium">Estado</th>
+                <th className="px-1 py-1 text-right font-medium">€/noche</th>
+                <th className="px-1 py-1 text-center font-medium">Des.</th>
+                <th className="px-1 py-1 text-center font-medium">Canc.</th>
+                <th className="px-1 py-1 text-right font-medium">Dist.</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ranked.map((h: any) => {
+                const d = h.dyn;
+                const price = d?.current_price;
+                const distLabel =
+                  h.distance_km == null
+                    ? "—"
+                    : h.distance_km < 1
+                      ? `${Math.round(h.distance_km * 1000)}m`
+                      : `${Number(h.distance_km).toFixed(1)}km`;
+                return (
+                  <tr key={h.id} className="bg-white/[0.02]">
+                    <td className="rounded-l-md px-1.5 py-1 align-middle">
+                      <Link
+                        to="/hotel/$id"
+                        params={{ id: h.id }}
+                        className="block hover:text-amber-300"
+                      >
+                        <span className="flex items-center gap-1">
+                          <span className="text-[13px] leading-none">
+                            {hotelEmoji(h.hotel_type)}
+                          </span>
+                          <span className="min-w-0 truncate text-[11px] font-medium">
+                            {h.name}
+                          </span>
+                        </span>
+                        {h.address && (
+                          <span className="mt-0.5 block truncate pl-[18px] text-[9px] text-amber-200/40">
+                            {h.address}
+                          </span>
+                        )}
+                      </Link>
+                    </td>
+                    <td className="px-1 py-1 align-middle">
+                      {d?.available ? (
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500/15 px-1 py-0.5 text-[9px] font-semibold text-emerald-300">
+                          ● Libre
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-0.5 rounded-full bg-rose-500/15 px-1 py-0.5 text-[9px] font-semibold text-rose-300/80">
+                          s/d
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-1 py-1 text-right align-middle font-mono text-[11px] font-semibold tabular-nums text-amber-50">
+                      {price != null ? `${Math.round(price)}€` : "—"}
+                    </td>
+                    <td className="px-1 py-1 text-center align-middle text-[12px]">
+                      {d?.breakfast_included ? (
+                        <span title="Desayuno incluido">☕</span>
+                      ) : (
+                        <span className="text-amber-200/20">·</span>
+                      )}
+                    </td>
+                    <td className="px-1 py-1 text-center align-middle text-[12px]">
+                      {d?.free_cancellation ? (
+                        <span title="Cancelación gratis">🛡️</span>
+                      ) : (
+                        <span className="text-amber-200/20">·</span>
+                      )}
+                    </td>
+                    <td className="rounded-r-md px-1 py-1 text-right align-middle font-mono text-[10px] tabular-nums text-amber-100/80">
+                      {distLabel}
+                    </td>
+                  </tr>
+                );
+              })}
+              {!isLoading && ranked.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-2 py-4 text-center text-xs text-amber-200/50">
+                    Sin alojamientos.
+                  </td>
+                </tr>
               )}
-            </div>
-            <div className="flex gap-1">
-              <a
-                href={mapsHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Cómo llegar"
-                className="grid h-8 w-8 place-items-center rounded-full bg-secondary text-secondary-foreground"
-              >
-                <Navigation className="h-3.5 w-3.5" />
-              </a>
-              <a
-                href={bookingHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-[11px] font-bold text-primary-foreground active:scale-95"
-              >
-                Reservar <ExternalLink className="h-3 w-3" />
-              </a>
-            </div>
-          </div>
+            </tbody>
+          </table>
         </div>
       </div>
-    </li>
+    </div>
   );
 }
