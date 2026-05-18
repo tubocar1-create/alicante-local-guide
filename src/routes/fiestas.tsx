@@ -828,13 +828,6 @@ function Relato() {
       ring: "ring-pink-300/50",
       cap: "from-pink-500/80 to-rose-500/80",
     },
-    {
-      src: cala1,
-      alt: "Calas de Cabo de las Huertas",
-      caption: "🏖️ Cabo Huertas — agua turquesa a 15 minutos en TRAM",
-      ring: "ring-cyan-300/50",
-      cap: "from-cyan-500/80 to-teal-500/80",
-    },
   ];
 
   return (
