@@ -87,7 +87,8 @@ function PlayasPage() {
             {mapBeaches.map((b: typeof mapBeaches[number]) => (
               <Link
                 key={b.slug}
-                to="/playas/mapa"
+                to="/playas/$slug"
+                params={{ slug: b.slug }}
                 className="group relative h-[80vh] w-[85vw] max-w-[520px] flex-none snap-center overflow-hidden rounded-3xl bg-slate-200 shadow-xl ring-1 ring-sky-100"
               >
                 {b.photo ? (
@@ -105,7 +106,7 @@ function PlayasPage() {
                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-100">Playa</p>
                   <p className="mt-1 text-sm font-black leading-tight">{b.name}</p>
                   <p className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-cyan-100">
-                    <MapPin className="h-3 w-3" /> Ver en el mapa
+                    Ver ficha
                   </p>
                 </div>
               </Link>
