@@ -234,6 +234,11 @@ Un tramo menos típico para quien quiere explorar otra cara del litoral alicanti
 - **Mejor para snorkel:** Cabo de las Huertas / Cala Cantalar.
 - **Más espacio al sur:** Saladar-Urbanova.
 - **Más especial para escapada:** Granadella, Villajoyosa o Calpe.
+
+## 🗺️ Después de la charla
+
+- [Abrir mapa interactivo a página completa](/playas/mapa)
+- [Ver recomendaciones con fotos reales](/playas)
 `;
 
 const SUGGESTIONS: Suggestion[] = [
@@ -748,10 +753,6 @@ export function ChatScreen() {
                       emoji: match?.[1] ?? "✨",
                       label: cleanLabel || s.label,
                       onClick: () => {
-                        if (s.label === "🏖️ Turismo, playa y aventuras") {
-                          navigate({ to: "/playas" });
-                          return;
-                        }
                         if (s.submenu) setActiveSubmenu(s);
                         else if (s.prompt) send(s.prompt, { mode: null });
                       },
@@ -883,7 +884,7 @@ export function ChatScreen() {
                         setSubmenuStack([]);
                         requestLocationForPrompt(opt.prompt);
                         const isBeachGuide = opt.label === "🏖️ Playa";
-                        isBeachGuide ? navigate({ to: "/playas" }) : send(opt.prompt, { mode: null });
+                        isBeachGuide ? sendBeachGuide() : send(opt.prompt, { mode: null });
                       }
                     }}
                     className="flex w-full items-center gap-1.5 rounded-lg border border-border bg-background/80 px-2 py-1.5 text-left text-[12px] shadow-sm transition hover:bg-accent/40"
