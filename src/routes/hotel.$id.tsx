@@ -11,7 +11,7 @@ import {
   Footprints,
   Sparkles,
   ExternalLink,
-  AlertTriangle,
+  
   CalendarDays,
 } from "lucide-react";
 import { getHotel, getHotelCalendar, getHotelPhotos } from "@/lib/hotels.functions";
