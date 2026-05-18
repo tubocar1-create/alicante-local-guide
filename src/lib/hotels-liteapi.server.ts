@@ -159,7 +159,7 @@ export async function refreshDynamicHotelsImpl() {
     "EUR";
   const hasBreakfast = (r: any) => {
     const board = `${r?.boardName ?? ""} ${r?.boardType ?? ""}`.toLowerCase();
-    return /breakfast|desayuno/.test(board) || /^(bb|hb|fb|ai)$/i.test(r?.boardType ?? "");
+    return /breakfast|desayuno/.test(board) || /^(bb|bi|hb|fb|ai)$/i.test(r?.boardType ?? "");
   };
   const isRefundable = (r: any) => {
     const tag = r?.cancellationPolicies?.refundableTag;
