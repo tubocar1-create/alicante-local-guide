@@ -175,7 +175,7 @@ export function getBeachBySlug(slug: string): MapBeach | undefined {
 
 // Fotos locales subidas por el usuario, mostradas antes que las de Google.
 export const LOCAL_BEACH_PHOTOS: Record<string, string[]> = {
-  "postiguet": ["/playas/postiguet1.jpg", "/playas/postiguet2.jpg", "/playas/postiguet3.jpg", "/playas/postiguet4.jpg", "/playas/postiguet5.jpg"],
+  "postiguet": ["/playas/postiguet1.jpg", "/playas/postiguet2.jpg", "/playas/postiguet5.jpg"],
   "arenales-del-sol": ["/playas/photo1.jpg", "/playas/photo2.jpg"],
   "muchavista": [],
   "san-juan": ["/playas/sanjuan6.jpg"],
