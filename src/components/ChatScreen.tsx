@@ -154,7 +154,7 @@ const SUGGESTIONS: Suggestion[] = [
       { label: "🌍 Internacional", prompt: "Quiero comida internacional (hindú, libanés, peruano, mexicano, latino, árabe…), ¿dónde voy ahora?" },
     ],
   },
-  { label: "🏨 Dormir", href: "/stay" },
+  { label: "🏨 Dormir", href: "/donde-dormir" },
   { label: "🏖️ Turismo, playa y aventuras", prompt: BEACH_GUIDE_PROMPT },
   { label: "🛍️ Comprar", prompt: "¿Dónde puedo ir de compras?" },
   { label: "🍹 Tomar algo", prompt: "¿Dónde voy a tomar algo abierto ahora?" },
