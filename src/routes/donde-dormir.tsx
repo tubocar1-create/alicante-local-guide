@@ -223,7 +223,7 @@ function DondeDormirPage() {
                     {open && roomTypes.length > 0 && (
                       <tr key={h.id + "-rooms"} className="bg-amber-500/[0.04]">
                         <td className="rounded-l-md" />
-                        <td colSpan={6} className="rounded-r-md px-2 py-2">
+                        <td colSpan={5} className="rounded-r-md px-2 py-2">
                           <ul className="flex flex-col divide-y divide-amber-100/[0.06]">
                             {roomTypes.map((rt, i) => (
                               <li
