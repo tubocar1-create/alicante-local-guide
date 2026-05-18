@@ -19,10 +19,13 @@ export const listHotels = createServerFn({ method: "GET" }).handler(async () => 
   const { data, error } = await supabaseAdmin
     .from("hotels_static")
     .select(
-      "id, liteapi_hotel_id, name, address, stars, hotel_type, neighborhood, distance_km, main_image, booking_url, lat, lng, hotels_dynamic(available, current_price, currency, breakfast_included, free_cancellation, rooms_available, updated_at)",
+      "id, liteapi_hotel_id, name, address, stars, hotel_type, neighborhood, distance_km, main_image, booking_url, lat, lng, hotels_dynamic(available, current_price, currency, breakfast_included, free_cancellation, rooms_available, room_types, updated_at)",
     )
     .order("stars", { ascending: false, nullsFirst: false })
     .limit(500);
+  if (error) return { hotels: [], error: error.message };
+  return { hotels: data ?? [], error: null };
+});
   if (error) return { hotels: [], error: error.message };
   return { hotels: data ?? [], error: null };
 });
