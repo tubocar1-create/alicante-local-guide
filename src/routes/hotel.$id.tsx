@@ -86,6 +86,18 @@ function HotelDetail() {
     staleTime: 60 * 60 * 1000,
     queryFn: () => fetchCalendar({ data: { id, startDate, endDate } }),
   });
+
+  const fetchPhotos = useServerFn(getHotelPhotos);
+  const photosQ = useQuery({
+    queryKey: ["hotel-photos", id],
+    staleTime: 24 * 60 * 60 * 1000,
+    queryFn: () => fetchPhotos({ data: { id } }),
+  });
+  const gallery: string[] = useMemo(() => {
+    const arr = photosQ.data?.photos ?? [];
+    if (arr.length) return arr;
+    return h?.main_image ? [h.main_image] : [];
+  }, [photosQ.data, h?.main_image]);
   const days: Array<{ date: string; available: boolean; price_double: number | null; price_min: number | null; currency: string }> =
     calendar.data?.days ?? [];
   const daysByDate = useMemo(() => {
