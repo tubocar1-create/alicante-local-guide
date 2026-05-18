@@ -72,11 +72,41 @@ export function LeafletMap({ beaches }: { beaches: Beach[] }) {
         }
       });
 
+      class BeachLabel extends google.maps.OverlayView {
+        private div: HTMLDivElement | null = null;
+        constructor(private position: any, private beach: Beach) {
+          super();
+        }
+        onAdd() {
+          const div = document.createElement("div");
+          div.style.cssText =
+            "position:absolute;transform:translate(-50%,8px);background:rgba(255,255,255,0.95);padding:4px 8px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.2);font-family:system-ui;text-align:center;min-width:90px;max-width:160px;cursor:pointer;pointer-events:auto;";
+          div.innerHTML = `<div style="font-size:11px;font-weight:800;color:#1565c0;line-height:1.1">${this.beach.name}</div><div style="font-size:9px;color:#475569;line-height:1.15;margin-top:2px">${this.beach.description}</div>`;
+          div.addEventListener("click", () => {
+            window.location.href = `/playas/${this.beach.slug}`;
+          });
+          this.div = div;
+          this.getPanes()!.overlayMouseTarget.appendChild(div);
+        }
+        draw() {
+          if (!this.div) return;
+          const p = this.getProjection().fromLatLngToDivPixel(this.position);
+          if (!p) return;
+          this.div.style.left = `${p.x}px`;
+          this.div.style.top = `${p.y}px`;
+        }
+        onRemove() {
+          this.div?.remove();
+          this.div = null;
+        }
+      }
+
       beaches.forEach((b) => {
+        const pos = new google.maps.LatLng(b.lat, b.lng);
         const marker = new google.maps.Marker({
-          position: { lat: b.lat, lng: b.lng },
+          position: pos,
           map,
-          title: `${b.name} — ${b.description}`,
+          title: b.name,
           icon: {
             path: google.maps.SymbolPath.CIRCLE,
             scale: 10,
