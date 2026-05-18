@@ -91,6 +91,42 @@ const BEACH_GUIDE_RESPONSE = `La costa alicantina es un buffet libre: castillo a
 
 [Abrir mapa interactivo](/playas/mapa)`;
 
+function BeachScrollGallery() {
+  const navigate = useNavigate();
+  const fetcher = useServerFn(getMapBeaches);
+  const [beaches, setBeaches] = useState<Awaited<ReturnType<typeof getMapBeaches>>>([]);
+  useEffect(() => {
+    let cancelled = false;
+    fetcher().then((res) => {
+      if (!cancelled) setBeaches(res);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [fetcher]);
+  if (beaches.length === 0) return null;
+  return (
+    <div className="-mx-3 flex snap-x snap-mandatory gap-2 overflow-x-auto px-3 pb-1">
+      {beaches.map((b) => (
+        <button
+          key={b.slug}
+          type="button"
+          onClick={() => navigate({ to: "/playas/mapa" })}
+          className="group relative h-40 w-32 flex-none snap-start overflow-hidden rounded-2xl bg-slate-200 shadow ring-1 ring-sky-100"
+        >
+          {b.photo ? (
+            <img src={b.photo} alt={b.name} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-sky-600" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent" />
+          <p className="absolute inset-x-0 bottom-0 p-2 text-left text-[11px] font-black leading-tight text-white">
+            {b.name}
+          </p>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 const SUGGESTIONS: Suggestion[] = [
   {
     label: "🍽️ Comer",
