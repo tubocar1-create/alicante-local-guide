@@ -12,7 +12,7 @@ import hoguera1 from "@/assets/fiestas-hoguera-1.jpg";
 import moros1 from "@/assets/fiestas-moros-1.jpg";
 import cristianos1 from "@/assets/fiestas-cristianos-1.jpg";
 import morosBatalla from "@/assets/fiestas-moros-batalla.jpg";
-import barraca1 from "@/assets/fiestas-barraca-1.jpg";
+
 import {
   PROGRAMA_2026, PREVIA_2026, MASCLETAS_2026, FUEGOS_2026,
   COSO_MULTICOLOR_2026, calcularFase,
@@ -30,7 +30,7 @@ import ninot1 from "@/assets/fiestas-ninot-1.jpg";
 import belleas1 from "@/assets/fiestas-belleas-1.jpg";
 import bunuelos1 from "@/assets/fiestas-bunuelos-1.jpg";
 import crema1 from "@/assets/fiestas-crema-1.jpg";
-import banya1 from "@/assets/fiestas-banya-1.jpg";
+
 import ofrenda1 from "@/assets/fiestas-ofrenda-1.jpg";
 import arroz1 from "@/assets/fiestas-arroz-1.jpg";
 import cultura1 from "@/assets/fiestas-cultura-1.jpg";
@@ -339,7 +339,7 @@ function ProgramaSection() {
 
       <div className="overflow-hidden rounded-2xl ring-1 ring-amber-300/30">
         <img
-          src={barraca1}
+          src={desfile1}
           alt="Barraca de Hogueras de noche"
           loading="lazy"
           width={1280}
@@ -894,13 +894,6 @@ function Relato() {
       caption: "🏖️ Cabo Huertas — agua turquesa a 15 minutos en TRAM",
       ring: "ring-cyan-300/50",
       cap: "from-cyan-500/80 to-teal-500/80",
-    },
-    {
-      src: banya1,
-      alt: "La Banyà",
-      caption: "💦 La Banyà — bomberos, risas y el final más mojado",
-      ring: "ring-blue-300/50",
-      cap: "from-blue-500/80 to-indigo-500/80",
     },
   ];
 
