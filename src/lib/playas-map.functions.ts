@@ -112,8 +112,13 @@ export const getMapBeaches = createServerFn({ method: "GET" }).handler(
 
 export type BeachReview = { author: string; rating: number; text: string; relativeTime?: string };
 
-export type BeachDetail = {
+export type BeachQuick = {
   beach: MapBeach;
+  cover: string | null;
+  googleMapsUri?: string;
+};
+
+export type BeachExtras = {
   photos: string[];
   review: string;
   reviews: BeachReview[];
@@ -133,7 +138,7 @@ async function aiBeachReview(beach: MapBeach): Promise<string> {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-flash-lite",
         messages: [
           { role: "system", content: "Eres un guía local de Alicante, cercano y honesto, especialista en playas y calas." },
           { role: "user", content: prompt },
@@ -148,11 +153,33 @@ async function aiBeachReview(beach: MapBeach): Promise<string> {
   }
 }
 
-export const getBeachDetail = createServerFn({ method: "POST" })
+// Fast: returns beach info + a cover photo (local first; only hits Google if no local).
+export const getBeachQuick = createServerFn({ method: "POST" })
   .inputValidator((input: { slug: string }) =>
     z.object({ slug: z.string().min(1).max(80).regex(/^[a-z0-9-]+$/) }).parse(input),
   )
-  .handler(async ({ data }): Promise<BeachDetail | null> => {
+  .handler(async ({ data }): Promise<BeachQuick | null> => {
+    const beach = getBeachBySlug(data.slug);
+    if (!beach) return null;
+    const local = LOCAL_BEACH_PHOTOS[beach.slug] ?? [];
+    if (local.length > 0) {
+      return { beach, cover: local[0] };
+    }
+    const placeId = await findPlaceId(beach);
+    if (!placeId) return { beach, cover: null };
+    const details = await getPlaceDetails(placeId);
+    const skip = GOOGLE_PHOTO_SKIP[beach.slug] ?? 0;
+    const first = details?.photoNames?.[skip];
+    const cover = first ? await photoMediaUri(first, 1200) : null;
+    return { beach, cover, googleMapsUri: details?.googleMapsUri };
+  });
+
+// Slow: photos beyond cover, AI review, Google reviews, address.
+export const getBeachExtras = createServerFn({ method: "POST" })
+  .inputValidator((input: { slug: string }) =>
+    z.object({ slug: z.string().min(1).max(80).regex(/^[a-z0-9-]+$/) }).parse(input),
+  )
+  .handler(async ({ data }): Promise<BeachExtras | null> => {
     const beach = getBeachBySlug(data.slug);
     if (!beach) return null;
     const [placeId, review] = await Promise.all([findPlaceId(beach), aiBeachReview(beach)]);
@@ -180,8 +207,9 @@ export const getBeachDetail = createServerFn({ method: "POST" })
     }
     const local = LOCAL_BEACH_PHOTOS[beach.slug] ?? [];
     const merged = [...local, ...photos.filter((p) => !local.includes(p))];
-    return { beach, photos: merged, review, reviews, rating, userRatingCount, googleMapsUri, formattedAddress };
+    return { photos: merged, review, reviews, rating, userRatingCount, googleMapsUri, formattedAddress };
   });
+
 
 export const getCoastIntro = createServerFn({ method: "GET" }).handler(async (): Promise<{ text: string }> => {
   const apiKey = process.env.LOVABLE_API_KEY;
