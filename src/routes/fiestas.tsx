@@ -740,8 +740,8 @@ function Relato() {
     },
     {
       src: mascleta2,
-      alt: "Mascletà — humo de colores sobre Luceros",
-      caption: "💨 Humo de colores en Luceros — el momento justo antes de comer",
+      alt: "Humo de mascletà sobre Alicante",
+      caption: "💨 Pólvora a mediodía — el momento justo antes de comer",
       ring: "ring-yellow-300/50",
       cap: "from-yellow-500/80 to-amber-500/80",
     },
@@ -817,7 +817,7 @@ function Relato() {
     {
       src: fuegos1,
       alt: "Castillo de fuegos sobre la bahía de Alicante",
-      caption: "🎆 Castillos del Postiguet — foto real desde la bahía",
+      caption: "🎆 Castillos del Postiguet — pólvora sobre la bahía",
       ring: "ring-purple-300/50",
       cap: "from-purple-500/80 to-pink-500/80",
     },
