@@ -162,7 +162,21 @@ function AuthGate({ children }: { children: React.ReactNode }) {
         // @ts-expect-error iOS
         window.navigator.standalone === true;
       const welcomed = localStorage.getItem(WELCOMED_KEY) === "1";
-      const target = !isStandalone && !welcomed ? "/welcome" : "/login";
+      // Skip the install/welcome step in the Lovable preview (iframe or lovable host).
+      // It only applies to real https navigation in production.
+      let inPreview = false;
+      try {
+        inPreview = window.self !== window.top;
+      } catch {
+        inPreview = true;
+      }
+      const host = window.location.hostname;
+      const isLovableHost =
+        host.endsWith("lovable.app") ||
+        host.endsWith("lovableproject.com") ||
+        host === "localhost";
+      const skipWelcome = inPreview || isLovableHost;
+      const target = !skipWelcome && !isStandalone && !welcomed ? "/welcome" : "/login";
       const redirect = encodeURIComponent(path + window.location.search);
       window.location.replace(`${target}?redirect=${redirect}`);
     }
