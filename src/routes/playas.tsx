@@ -157,6 +157,7 @@ const zoneSummary = [
 
 function PlayasPage() {
   const location = useLocation();
+  const { beaches: mapBeaches, intro } = Route.useLoaderData();
 
   if (location.pathname !== "/playas") {
     return <Outlet />;
