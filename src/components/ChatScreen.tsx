@@ -82,6 +82,10 @@ type Suggestion = {
 const BEACH_GUIDE_PROMPT = "Hazme la charla IA sobre las playas de Alicante basada en las páginas web suministradas.";
 const BEACH_GUIDE_RE = /\b(playa|playas|cala|calas|costa blanca|postiguet|san juan|albufereta|urbanova|cabo de las huertas)\b/i;
 
+function isBeachGuidePrompt(text: string) {
+  return text === BEACH_GUIDE_PROMPT || (/charla\s+ia/i.test(text) && BEACH_GUIDE_RE.test(text));
+}
+
 const BEACH_GUIDE_RESPONSE = `# 🏖️ Playas de Alicante: charla IA de la Costa Blanca
 
 ![Playa del Postiguet con el Castillo de Santa Bárbara](https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Alicante_-_Playa_del_Postiguet.jpg/1280px-Alicante_-_Playa_del_Postiguet.jpg)
@@ -439,12 +443,12 @@ export function ChatScreen() {
   async function send(text: string, opts?: { mode?: "transit" | "guide" | null }) {
     const trimmed = text.trim();
     if (!trimmed || loading) return;
-    if (opts?.mode === "guide" || trimmed === BEACH_GUIDE_PROMPT) {
+    if (opts?.mode === "guide" || isBeachGuidePrompt(trimmed)) {
       sendBeachGuide();
       return;
     }
     const effectiveMode = opts?.mode !== undefined ? opts.mode : mode;
-    if (opts?.mode !== undefined && opts.mode !== "guide") setMode(opts.mode);
+    if (opts?.mode !== undefined) setMode(opts.mode);
     setError(null);
     const userMsg: Msg = { role: "user", content: trimmed };
     const next = [...messages, userMsg];
