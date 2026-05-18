@@ -142,6 +142,17 @@ function HotelDetail() {
   const expediaHref = `https://www.expedia.es/Hotel-Search?destination=${q}`;
   const hotelsHref = `https://es.hotels.com/Hotel-Search?destination=${q}`;
   const triHref = `https://www.trivago.es/?query=${q}`;
+  const googleHotelsHref = `https://www.google.com/travel/hotels?q=${q}`;
+  const agodaHref = `https://www.agoda.com/search?city=&query=${q}`;
+
+  const operators: { label: string; href: string }[] = [
+    { label: "Booking", href: bookingHref },
+    { label: "Expedia", href: expediaHref },
+    { label: "Hotels.com", href: hotelsHref },
+    { label: "Trivago", href: triHref },
+    { label: "Google Hoteles", href: googleHotelsHref },
+    { label: "Agoda", href: agodaHref },
+  ];
 
   return (
     <div
@@ -308,19 +319,19 @@ function HotelDetail() {
                   )}
                 </div>
 
-                {/* Actions */}
-                <div className="mt-4 grid grid-cols-2 gap-2">
+                {/* Actions: left = Cómo ir, right = stacked operators */}
+                <div className="mt-4 grid grid-cols-2 gap-2 items-stretch">
                   <a
                     href={mapsHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex flex-col items-center justify-center gap-0.5 rounded-xl bg-white/[0.06] px-3 py-2 text-[12px] font-semibold text-amber-50 hover:bg-white/[0.1]"
+                    className="flex flex-col items-center justify-center gap-1 rounded-xl bg-white/[0.06] px-3 py-3 text-[12px] font-semibold text-amber-50 hover:bg-white/[0.1]"
                   >
                     <span className="inline-flex items-center gap-1.5">
                       <Navigation className="h-3.5 w-3.5" /> Cómo ir
                     </span>
                     {distance && (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-normal text-amber-200/70">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-normal text-amber-200/70 text-center">
                         <Footprints className="h-3 w-3" />
                         {formatDistance(distance.km)}
                         <span className="text-amber-200/50">
@@ -329,41 +340,20 @@ function HotelDetail() {
                       </span>
                     )}
                   </a>
-                  <a
-                    href={bookingHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-rose-400 px-3 py-2.5 text-[12px] font-bold text-amber-950 hover:brightness-110"
-                  >
-                    Reservar en Booking <ExternalLink className="h-3 w-3" />
-                  </a>
-                </div>
 
-                <div className="mt-2 grid grid-cols-3 gap-2">
-                  <a
-                    href={expediaHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-xl bg-white/[0.04] px-2 py-2 text-center text-[11px] font-semibold text-amber-100/90 hover:bg-white/[0.08]"
-                  >
-                    Expedia
-                  </a>
-                  <a
-                    href={hotelsHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-xl bg-white/[0.04] px-2 py-2 text-center text-[11px] font-semibold text-amber-100/90 hover:bg-white/[0.08]"
-                  >
-                    Hotels.com
-                  </a>
-                  <a
-                    href={triHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-xl bg-white/[0.04] px-2 py-2 text-center text-[11px] font-semibold text-amber-100/90 hover:bg-white/[0.08]"
-                  >
-                    Trivago
-                  </a>
+                  <div className="flex flex-col gap-2">
+                    {operators.map((op) => (
+                      <a
+                        key={op.label}
+                        href={op.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-white/[0.06] px-3 py-2 text-[12px] font-semibold text-amber-100 hover:bg-white/[0.1]"
+                      >
+                        {op.label} <ExternalLink className="h-3 w-3" />
+                      </a>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
