@@ -126,10 +126,10 @@ export const getBeachDetail = createServerFn({ method: "POST" })
 export const getCoastIntro = createServerFn({ method: "GET" }).handler(async (): Promise<{ text: string }> => {
   const apiKey = process.env.LOVABLE_API_KEY;
   const fallback =
-    "La costa alicantina es un buffet: playa urbana junto al castillo, kilómetros de arena dorada en San Juan, calas con agua transparente en el Cabo de las Huertas y dunas tranquilas hacia el sur. En menos de media hora cambias de plan tres veces. Desliza las fotos y elige la tuya.";
+    "La costa de Alicante es un buffet libre: castillo arriba, calas con peces curiosos, kilómetros de arena y dunas al sur. Desliza, elige y nos vemos en la orilla.";
   if (!apiKey) return { text: fallback };
   const prompt =
-    "Escribe un comentario breve (55-85 palabras), simpático y agradable, en español, sobre la costa de Alicante y la variedad de sus playas (Postiguet, San Juan, calas del Cabo de las Huertas, sur hacia Urbanova y Arenales). Tono cercano, como una recomendación a un amigo. Termina invitando a deslizar las fotos para descubrirlas. Sin listas, sin markdown, sin emojis.";
+    "Escribe UN comentario muy breve (25-40 palabras), divertido y con chispa, en español, sobre la costa de Alicante y la variedad de sus playas. Tono cercano, como un amigo. Una o dos frases. Sin listas, sin markdown, sin emojis.";
   try {
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
