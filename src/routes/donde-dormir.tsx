@@ -161,12 +161,10 @@ function DondeDormirPage() {
                 const roomTypes: Array<{ type: string; price: number; currency: string; label?: string }> =
                   Array.isArray(d?.room_types) ? d.room_types : [];
                 const open = openId === h.id;
-                const rowBg = d?.available
-                  ? "bg-emerald-500/20 hover:bg-emerald-500/25"
-                  : "bg-rose-500/15 hover:bg-rose-500/20";
+                const dotColor = d?.available ? "bg-emerald-400" : "bg-rose-400";
                 return (
                   <Fragment key={h.id}>
-                    <tr key={h.id} className={rowBg}>
+                    <tr key={h.id}>
                       <td className="rounded-l-md px-0.5 py-1 align-middle">
                         <button
                           type="button"
@@ -188,12 +186,13 @@ function DondeDormirPage() {
                           params={{ id: h.id }}
                           className="block hover:text-amber-300"
                         >
-                          <span className="flex items-center gap-1">
+                          <span className="flex items-center gap-1.5">
+                            <span className={`h-2 w-2 flex-shrink-0 rounded-full ${dotColor}`} />
                             <span className="text-[13px] leading-none">{hotelEmoji(h.hotel_type)}</span>
                             <span className="min-w-0 truncate text-[11px] font-medium">{h.name}</span>
                           </span>
                           {h.address && (
-                            <span className="mt-0.5 block truncate pl-[18px] text-[9px] text-amber-100/60">
+                            <span className="mt-0.5 block truncate pl-[22px] text-[9px] text-amber-100/60">
                               {h.address}
                             </span>
                           )}
