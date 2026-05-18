@@ -54,13 +54,9 @@ function CoastMapArtwork() {
 
 function MapaPlayasPage() {
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-sky-300 via-cyan-200 to-amber-100">
-      <img
-        src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Playa_de_San_Juan_-_Alicante.jpg/1600px-Playa_de_San_Juan_-_Alicante.jpg"
-        alt="Costa de Alicante vista desde el aire"
-        className="absolute inset-0 h-full w-full object-cover opacity-80"
-      />
-      <div className="absolute inset-0 bg-gradient-to-br from-sky-900/35 via-sky-700/15 to-cyan-300/10" />
+    <div className="relative min-h-screen w-full overflow-hidden bg-[oklch(0.74_0.12_205)]">
+      <CoastMapArtwork />
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/24 via-transparent to-slate-950/10" />
 
       {MAP_BEACHES.map((beach) => (
         <div key={beach.name} className="group absolute z-20" style={beach.position}>
