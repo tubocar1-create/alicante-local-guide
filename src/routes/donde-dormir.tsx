@@ -124,9 +124,16 @@ function DondeDormirPage() {
                 ? "Cargando…"
                 : `${availableCount} disponibles · ${ranked.length} alojamientos`}
             </p>
-            <p className="text-[9px] uppercase tracking-[0.18em] text-amber-400/70">
-              €/noche · des · canc · dist
-            </p>
+          </div>
+
+          {/* Leyenda */}
+          <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[9px] text-amber-200/70">
+            <span className="inline-flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Disponible</span>
+            <span className="inline-flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-rose-400" /> Sin disponibilidad</span>
+            <span className="inline-flex items-center gap-1"><Euro className="h-2.5 w-2.5" /> Precio/noche</span>
+            <span className="inline-flex items-center gap-1"><Coffee className="h-2.5 w-2.5" /> Desayuno</span>
+            <span className="inline-flex items-center gap-1"><ShieldCheck className="h-2.5 w-2.5" /> Cancelación gratis</span>
+            <span className="inline-flex items-center gap-1"><MapPin className="h-2.5 w-2.5" /> Distancia</span>
           </div>
 
           <table className="w-full table-fixed border-separate border-spacing-y-0.5 text-left text-[11px] text-amber-50">
@@ -139,13 +146,21 @@ function DondeDormirPage() {
               <col className="w-[42px]" />
             </colgroup>
             <thead>
-              <tr className="text-[9px] uppercase tracking-[0.12em] text-amber-200/50">
+              <tr className="text-amber-200/60">
                 <th className="px-0.5 py-1" />
-                <th className="px-1 py-1 font-medium">Hotel</th>
-                <th className="px-1 py-1 text-right font-medium">€/noche</th>
-                <th className="px-1 py-1 text-center font-medium">Des.</th>
-                <th className="px-1 py-1 text-center font-medium">Canc.</th>
-                <th className="px-1 py-1 text-right font-medium">Dist.</th>
+                <th className="px-1 py-1 text-[9px] font-medium uppercase tracking-[0.12em]">Hotel</th>
+                <th className="px-1 py-1 text-right" aria-label="Precio por noche">
+                  <Euro className="ml-auto h-3 w-3" />
+                </th>
+                <th className="px-1 py-1 text-center" aria-label="Desayuno incluido">
+                  <Coffee className="mx-auto h-3 w-3" />
+                </th>
+                <th className="px-1 py-1 text-center" aria-label="Cancelación gratis">
+                  <ShieldCheck className="mx-auto h-3 w-3" />
+                </th>
+                <th className="px-1 py-1 text-right" aria-label="Distancia">
+                  <MapPin className="ml-auto h-3 w-3" />
+                </th>
               </tr>
             </thead>
             <tbody>
