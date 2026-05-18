@@ -59,6 +59,7 @@ const HOGUERAS_PHOTOS: Photo[] = [
   { src: hoguera2, caption: "Monumentos de hasta 20 metros de altura" },
   { src: desfile1, caption: "Desfiles por todas las calles" },
   { src: playa1, caption: "Hoguera en la playa de San Juan" },
+  { src: banya1, caption: "La Banyà — los bomberos te mojan entre risas" },
 ];
 
 function PhotoStrip({ photos, accent }: { photos: Photo[]; accent: string }) {
