@@ -128,6 +128,9 @@ export function LeafletMap({ beaches }: { beaches: Beach[] }) {
         const rect = ref.current!.getBoundingClientRect();
         const x = ev.clientX - rect.left;
         const y = ev.clientY - rect.top;
+        arrow.style.left = `${x}px`;
+        arrow.style.top = `${y}px`;
+        arrow.style.opacity = "1";
         let best: { beach: Beach; x: number; y: number } | null = null;
         let bestD = Infinity;
         for (const p of pixelCache) {
@@ -148,6 +151,7 @@ export function LeafletMap({ beaches }: { beaches: Beach[] }) {
       };
       const onLeave = () => {
         tooltip.style.opacity = "0";
+        arrow.style.opacity = "0";
       };
       ref.current!.addEventListener("pointermove", onMove);
       ref.current!.addEventListener("pointerdown", onMove);
