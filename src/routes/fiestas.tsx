@@ -474,12 +474,6 @@ function MorosCristianosSection() {
 
 type Msg = { role: "user" | "assistant"; content: string };
 
-const QUICK_PROMPTS = [
-  "¿Cuándo es la Cremà?",
-  "¿Dónde veo la mascletà?",
-  "¿Qué es la Banyà?",
-  "¿Qué comer en fiestas?",
-];
 
 function FiestasChat() {
   const ask = useServerFn(askFiestasAI);
