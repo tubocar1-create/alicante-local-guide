@@ -188,7 +188,7 @@ function BeachDetailPage() {
 
       <main className="mx-auto max-w-5xl px-4 pb-16">
         <Suspense fallback={<ExtrasSkeleton />}>
-          <Await promise={extras}>
+          <Await promise={extras as unknown as Promise<BeachExtras | null>}>
             {(data) => (data ? <ExtrasBlock data={data} beachName={beach.name} /> : null)}
           </Await>
         </Suspense>
