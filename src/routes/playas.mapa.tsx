@@ -18,12 +18,6 @@ export const Route = createFileRoute("/playas/mapa")({
         content: "Explora la costa alicantina sobre un mapa real e interactivo.",
       },
     ],
-    links: [
-      {
-        rel: "stylesheet",
-        href: "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
-      },
-    ],
   }),
   component: MapaPlayasPage,
 });
