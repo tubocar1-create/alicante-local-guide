@@ -574,46 +574,33 @@ function FiestasChat() {
         )}
       </div>
 
-      {/* Quick prompts */}
-      <div className="mt-2 flex flex-wrap gap-1.5">
-        {QUICK_PROMPTS.map((q) => (
-          <button
-            key={q}
-            type="button"
-            onClick={() => send(q)}
-            disabled={loading}
-            className="rounded-full bg-amber-400/15 px-3 py-1 text-[11px] font-semibold text-amber-100 ring-1 ring-amber-300/30 active:scale-95 disabled:opacity-50"
-          >
-            {q}
-          </button>
-        ))}
-      </div>
-
-      {/* Input */}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          void send(input);
-        }}
-        className="mt-2 flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 ring-1 ring-amber-300/30 focus-within:ring-amber-300/70"
-      >
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Pregunta sobre las fiestas…"
-          className="flex-1 bg-transparent text-sm text-amber-50 placeholder:text-amber-200/60 outline-none"
-          disabled={loading}
-        />
-        <button
-          type="submit"
-          disabled={loading || !input.trim()}
-          aria-label="Enviar"
-          className="grid h-9 w-9 place-items-center rounded-full bg-amber-400 text-black shadow active:scale-95 disabled:opacity-50"
-        >
-          <Send className="h-4 w-4" />
-        </button>
-      </form>
     </section>
+
+    {/* Input fijo abajo */}
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        void send(input);
+      }}
+      className="fixed inset-x-0 bottom-0 z-30 flex items-center gap-2 border-t border-amber-300/20 bg-black/80 px-3 py-2 backdrop-blur-md pb-[calc(env(safe-area-inset-bottom)+0.5rem)]"
+    >
+      <input
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder="Pregunta sobre las fiestas…"
+        className="flex-1 rounded-full bg-white/10 px-4 py-2 text-sm text-amber-50 placeholder:text-amber-200/60 outline-none ring-1 ring-amber-300/30 focus:ring-amber-300/70"
+        disabled={loading}
+      />
+      <button
+        type="submit"
+        disabled={loading || !input.trim()}
+        aria-label="Enviar"
+        className="grid h-10 w-10 place-items-center rounded-full bg-amber-400 text-black shadow active:scale-95 disabled:opacity-50"
+      >
+        <Send className="h-4 w-4" />
+      </button>
+    </form>
+    </>
   );
 }
 
