@@ -2726,8 +2726,8 @@ serve(async (req) => {
           .join(" \n ")
       : latestUserText;
     let originTextForTransit: string | null = null;
-    const destTextForTransit = extractTransitDestination(transitText);
-    if (transitMode || detectTransitIntent(transitText)) {
+    const destTextForTransit = guideMode ? null : extractTransitDestination(transitText);
+    if (!guideMode && (transitMode || detectTransitIntent(transitText))) {
       originTextForTransit = extractTransitOrigin(transitText);
       if (originTextForTransit) {
         const g = await geocodeAlicante(originTextForTransit).catch(() => null);
@@ -2735,13 +2735,13 @@ serve(async (req) => {
       }
     }
     const [transitResult, vectaliaTrips] = await Promise.all([
-      transitMode
+      (transitMode || guideMode)
         ? Promise.resolve(null)
         : buildTransitResult(userOriginForTransit, transitText).catch((err) => {
             console.error("transit lookup error:", err);
             return null;
           }),
-      (transitMode || detectTransitIntent(transitText))
+      (!guideMode && (transitMode || detectTransitIntent(transitText)))
         ? buildChosenVectaliaTransit(latestUserText)
             .then((chosen) => chosen ?? buildVectaliaTransit(originTextForTransit, destTextForTransit, userOriginForTransit))
             .catch((err) => {
@@ -2752,7 +2752,7 @@ serve(async (req) => {
     ]);
     const transitLine = transitResult ? formatTransitResult(transitResult) : "";
     const vectaliaLine = vectaliaTrips ? formatVectaliaTransit(vectaliaTrips) : "";
-    if (transitMode || detectTransitIntent(transitText)) {
+    if (!guideMode && (transitMode || detectTransitIntent(transitText))) {
       if (vectaliaTrips) {
         return streamChatText(
           extractChosenDirectBus(latestUserText)
