@@ -55,15 +55,44 @@ function HotelDetail() {
       }),
   });
 
-  const startDate = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const { startDate, endDate, months } = useMemo(() => {
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = today.getMonth();
+    const start = new Date(Date.UTC(y, m, today.getDate()));
+    const end = new Date(Date.UTC(y, m + 3, 0)); // last day of (current+2)
+    const fmt = (d: Date) => d.toISOString().slice(0, 10);
+    const ms: Array<{ year: number; month: number; firstDay: number; daysInMonth: number; firstWeekday: number }> = [];
+    for (let i = 0; i < 3; i++) {
+      const monthStart = new Date(Date.UTC(y, m + i, 1));
+      const monthEnd = new Date(Date.UTC(y, m + i + 1, 0));
+      const firstDay = i === 0 ? today.getDate() : 1;
+      const jsDow = monthStart.getUTCDay(); // 0=Sun
+      const firstWeekday = (jsDow + 6) % 7; // Mon=0
+      ms.push({
+        year: monthStart.getUTCFullYear(),
+        month: monthStart.getUTCMonth(),
+        firstDay,
+        daysInMonth: monthEnd.getUTCDate(),
+        firstWeekday,
+      });
+    }
+    return { startDate: fmt(start), endDate: fmt(end), months: ms };
+  }, []);
+
   const fetchCalendar = useServerFn(getHotelCalendar);
   const calendar = useQuery({
-    queryKey: ["hotel-calendar", id, startDate],
+    queryKey: ["hotel-calendar", id, startDate, endDate],
     staleTime: 60 * 60 * 1000,
-    queryFn: () => fetchCalendar({ data: { id, startDate } }),
+    queryFn: () => fetchCalendar({ data: { id, startDate, endDate } }),
   });
   const days: Array<{ date: string; available: boolean; price_double: number | null; price_min: number | null; currency: string }> =
     calendar.data?.days ?? [];
+  const daysByDate = useMemo(() => {
+    const map: Record<string, (typeof days)[number]> = {};
+    for (const d of days) map[d.date] = d;
+    return map;
+  }, [days]);
   const roomTypes: Array<{ type: string; price: number; currency: string; label?: string }> =
     Array.isArray(d?.room_types) ? d.room_types : [];
 
