@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { ArrowLeft, MapPin, ExternalLink, Waves, Compass, Backpack, Lightbulb } from "lucide-react";
-import { getPlayasContent, type PlayaInfo } from "@/lib/playas.functions";
+import { getPlayasBeaches, getPlayasGuide, type PlayaInfo } from "@/lib/playas.functions";
+import { PLAYAS } from "@/lib/playas-data";
 
 export const Route = createFileRoute("/playas")({
   head: () => ({
@@ -17,27 +18,46 @@ export const Route = createFileRoute("/playas")({
       { property: "og:title", content: "Playas de Alicante — Guía local" },
       {
         property: "og:description",
-        content: "Arenales urbanos y calas salvajes de la Costa Blanca con fotos reales y consejos prácticos.",
+        content:
+          "Arenales urbanos y calas salvajes de la Costa Blanca con fotos reales y consejos prácticos.",
       },
     ],
   }),
   component: PlayasPage,
 });
 
+// Seed list shown instantly while Wikipedia photos/extracts load.
+const SEED_BEACHES: PlayaInfo[] = PLAYAS.map((p) => ({
+  slug: p.slug,
+  name: p.name,
+  town: p.town,
+  category: p.category,
+  extract: "",
+  photo: null,
+  wikiUrl: `https://es.wikipedia.org/wiki/${encodeURIComponent(p.wikiTitle)}`,
+  lat: p.lat,
+  lng: p.lng,
+}));
+
 function PlayasPage() {
-  const fetchContent = useServerFn(getPlayasContent);
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["playas-content"],
-    queryFn: () => fetchContent(),
-    staleTime: 1000 * 60 * 60, // 1h
+  const fetchBeaches = useServerFn(getPlayasBeaches);
+  const fetchGuide = useServerFn(getPlayasGuide);
+
+  const beachesQ = useQuery({
+    queryKey: ["playas-beaches"],
+    queryFn: () => fetchBeaches(),
+    staleTime: 1000 * 60 * 60,
+  });
+  const guideQ = useQuery({
+    queryKey: ["playas-guide"],
+    queryFn: () => fetchGuide(),
+    staleTime: 1000 * 60 * 60,
   });
 
   const [tab, setTab] = useState<"populares" | "escondidas">("populares");
 
-  const list = useMemo(
-    () => (data?.playas ?? []).filter((p) => p.category === tab),
-    [data, tab],
-  );
+  const beaches = beachesQ.data ?? SEED_BEACHES;
+  const list = useMemo(() => beaches.filter((p) => p.category === tab), [beaches, tab]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-50 via-cyan-50 to-white text-slate-900">
