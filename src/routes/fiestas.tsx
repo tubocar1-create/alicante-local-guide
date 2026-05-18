@@ -391,14 +391,14 @@ function MorosCristianosSection() {
         Si las Hogueras son la cara internacional de Alicante, los{" "}
         <strong>Moros y Cristianos</strong> son su <strong>alma de barrio</strong>.
         Aquí no hay turistas con cámaras enormes: hay vecinos que llevan toda la
-        vida en la misma comparsa, abuelos que les enseñaron a sus nietos a marcar
-        el paso, y barrios enteros que se vuelcan en una sola semana.
+        vida en la misma comparsa, generaciones que se pasan el paso de unos a otros,
+        y barrios enteros que se vuelcan en una sola semana.
       </p>
 
       <p className="text-sm leading-relaxed text-amber-100">
         Recuerdan la <strong>Reconquista</strong> de la ciudad allá por el siglo XIII,
         pero más que una clase de historia son <em>una excusa para vivir</em>:
-        para ponerse un traje espectacular, beber con los amigos en la kábila,
+        para ponerse un traje espectacular, beber con la gente del barrio en la kábila,
         oír la banda de música y disparar arcabuces hasta que huele a pólvora
         durante días.
       </p>
