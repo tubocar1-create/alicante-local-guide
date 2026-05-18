@@ -320,25 +320,15 @@ function ProgramaSection() {
         <p className="mt-2 text-sm text-amber-100/90">{COSO_MULTICOLOR_2026.descripcion}</p>
       </div>
 
-      <div className="overflow-hidden rounded-2xl ring-1 ring-amber-300/30">
-        <img
-          src={desfile1}
-          alt="Barraca de Hogueras de noche"
-          loading="lazy"
-          width={1280}
-          height={896}
-          className="h-44 w-full object-cover"
-        />
-        <div className="bg-black/50 p-4">
-          <h4 className="text-lg font-extrabold text-amber-50">🏕️ Barracas y racós</h4>
-          <p className="mt-1 text-sm text-amber-100/90">
-            Las <strong>barracas</strong> abren el 20 por la noche y son <em>la fiesta</em>:
-            música hasta el amanecer, comida casera, cerveza, amigos y desconocidos que
-            terminan abrazados. Los <strong>racós</strong> son su versión pequeña, más
-            de barrio. Si quieres entender por qué los alicantinos no duermen en
-            junio, métete en una.
-          </p>
-        </div>
+      <div className="overflow-hidden rounded-2xl bg-black/50 p-4 ring-1 ring-amber-300/30">
+        <h4 className="text-lg font-extrabold text-amber-50">🏕️ Barracas y racós</h4>
+        <p className="mt-1 text-sm text-amber-100/90">
+          Las <strong>barracas</strong> abren el 20 por la noche y son <em>la fiesta</em>:
+          música hasta el amanecer, comida casera, cerveza, amigos y desconocidos que
+          terminan abrazados. Los <strong>racós</strong> son su versión pequeña, más
+          de barrio. Si quieres entender por qué los alicantinos no duermen en
+          junio, métete en una.
+        </p>
       </div>
     </section>
   );
