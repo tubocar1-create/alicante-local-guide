@@ -41,6 +41,29 @@ function nameScore(a: string, b: string) {
   return inter / Math.min(ta.size, tb.size);
 }
 
+const ROOM_ORDER = ["single", "double", "triple", "quadruple", "suite", "other"] as const;
+type RoomCat = (typeof ROOM_ORDER)[number];
+
+function classifyRoom(name: string): RoomCat {
+  const s = normalize(name);
+  if (/\bsuite|junior\b/.test(s)) return "suite";
+  if (/\btriple|tres |3 pax\b/.test(s)) return "triple";
+  if (/\bquad|cuadrupl|family|familiar|4 pax\b/.test(s)) return "quadruple";
+  if (/\bdoubl|doble|twin|matrim/.test(s)) return "double";
+  if (/\bsingl|individual|sencill|1 pax\b/.test(s)) return "single";
+  return "other";
+}
+
+const ROOM_LABELS: Record<RoomCat, string> = {
+  single: "Sencilla",
+  double: "Doble",
+  triple: "Triple",
+  quadruple: "Cuádruple",
+  suite: "Suite",
+  other: "Otra",
+};
+export { ROOM_LABELS };
+
 /** Fetch all LiteAPI hotels in Alicante area */
 async function fetchLiteApiHotels() {
   const url = new URL(`${LITEAPI_BASE}/data/hotels`);
