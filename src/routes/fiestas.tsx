@@ -518,6 +518,7 @@ function FiestasChat() {
   }
 
   return (
+    <>
     <section
       id="chat-fiestas"
       className="rounded-3xl bg-white/5 p-3 ring-1 ring-amber-300/30 backdrop-blur"
