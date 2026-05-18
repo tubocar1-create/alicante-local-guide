@@ -3,7 +3,7 @@ import {
   Ticket,
   ShieldCheck,
   Clock,
-  AlertTriangle,
+  
   Copy,
   Check,
   LogIn,
@@ -209,13 +209,6 @@ export default function ReferralDialog({ placeId, placeName, autoCelebrate, onCl
                 </span>
               </li>
               <li className="flex gap-2">
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-                <span>
-                  Generarlo <b>no suma puntos</b>. Los AFP llegarán cuando el local valide tu QR en
-                  sitio (eso se hará desde la app de locales).
-                </span>
-              </li>
-              <li className="flex gap-2">
                 <Ticket className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                 <span>
                   Lo encontrarás guardado en tu <b>perfil → Mis QR</b> hasta que se use o caduque.
@@ -255,7 +248,7 @@ export default function ReferralDialog({ placeId, placeName, autoCelebrate, onCl
             )}
             <h3 className="text-base font-semibold leading-tight">Tu QR para {placeName}</h3>
             <p className="mt-1 text-[11px] text-muted-foreground">
-              Enséñalo en el local hoy. Cuando lo escaneen y validen, sumarás tus AFP.
+              Enséñalo en el local hoy para que validen tu visita.
             </p>
 
             <div className="mt-4 flex flex-col items-center gap-3">
@@ -288,13 +281,6 @@ export default function ReferralDialog({ placeId, placeName, autoCelebrate, onCl
                   <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
                   <span>
                     <b>Único e intransferible.</b> Solo lo puedes usar tú.
-                  </span>
-                </li>
-                <li className="flex gap-2">
-                  <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
-                  <span>
-                    <b>Sin validación del local, no hay puntos.</b> Los AFP llegan cuando lo
-                    escaneen en sitio.
                   </span>
                 </li>
                 <li className="flex gap-2">

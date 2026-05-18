@@ -8,8 +8,6 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { PlaceImage } from "@/components/PlaceImage";
-import { PointsHud } from "@/components/PointsHud";
-import { usePoints } from "@/hooks/usePoints";
 import { useUserLocation, distanceKm } from "@/hooks/useUserLocation";
 import ReferralDialog from "@/components/ReferralDialog";
 import { LiveEta } from "@/components/LiveEta";
@@ -173,8 +171,6 @@ function markRestaurantReturn() {
 }
 
 export function ChatScreen() {
-  // Activa el sistema de puntos (también dispara el streak diario al montar).
-  usePoints();
   const navigate = useNavigate();
   const { user: authUser } = useAuth();
   const firstName = authUser?.name?.trim().split(" ")[0];
@@ -476,9 +472,7 @@ export function ChatScreen() {
               <span>Mis reservas</span>
             </Link>
           </div>
-          <div className="flex-1 flex justify-center">
-            <PointsHud compact />
-          </div>
+          <div className="flex-1" />
           <button
             onClick={() => {
               setMessages([GREETING]);
@@ -898,7 +892,7 @@ function QrVamosInfo({ onClose }: { onClose: () => void }) {
   const benefits = [
     { icon: Gift, title: "Descuentos reales", text: "Precios de amigo en bares, restaurantes y planes que de verdad merecen la pena." },
     { icon: Ticket, title: "Acceso a experiencias", text: "Catas, tours, rutas y eventos pensados para quienes viven Alicante como un local." },
-    { icon: Sparkles, title: "Suma puntos AFP", text: "Cada QR validado en sitio te da puntos para canjear por más ventajas." },
+    { icon: Sparkles, title: "Trato de amigo local", text: "Detalles, sorpresas y atención preferente en los sitios que recomienda tu amigo local." },
     { icon: ShieldCheck, title: "Único e intransferible", text: "Tu QR, tu día, tu plan. Sin intermediarios, sin trampas, sin spam." },
   ];
   return (
