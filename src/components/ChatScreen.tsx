@@ -574,6 +574,13 @@ export function ChatScreen() {
                       emoji: match?.[1] ?? "✨",
                       label: cleanLabel || s.label,
                       onClick: () => {
+                        if (s.label === "🏖️ Turismo, playa y aventuras") {
+                          const playa = s.submenu?.find((o) => o.label === "🏖️ Playa");
+                          if (playa?.prompt) {
+                            send(playa.prompt, { mode: null });
+                            return;
+                          }
+                        }
                         if (s.submenu) setActiveSubmenu(s);
                         else if (s.prompt) send(s.prompt, { mode: null });
                       },
