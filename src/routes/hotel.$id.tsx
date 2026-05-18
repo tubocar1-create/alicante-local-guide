@@ -426,14 +426,7 @@ function HotelDetail() {
                             return <div key={c.key} className="h-12 rounded" />;
                           }
                           if (c.kind === "out") {
-                            return (
-                              <div
-                                key={c.key}
-                                className="flex h-12 items-center justify-center rounded bg-white/[0.02] text-[10px] text-amber-200/25"
-                              >
-                                {c.dayNum}
-                              </div>
-                            );
+                            return <div key={c.key} className="h-12 rounded" />;
                           }
                           const dy = daysByDate[c.date!];
                           const loading = calendar.isLoading;
