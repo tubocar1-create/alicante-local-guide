@@ -131,7 +131,7 @@ function HotelDetail() {
       className="fixed inset-0 z-[60] overflow-y-auto text-amber-50"
       style={{
         background:
-          "linear-gradient(180deg, #1a0f05 0%, #2a1607 50%, #120800 100%)",
+          "linear-gradient(180deg, #050b1f 0%, #0a1638 50%, #03081a 100%)",
       }}
     >
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
