@@ -209,13 +209,6 @@ export default function ReferralDialog({ placeId, placeName, autoCelebrate, onCl
                 </span>
               </li>
               <li className="flex gap-2">
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-                <span>
-                  Generarlo <b>no suma puntos</b>. Los AFP llegarán cuando el local valide tu QR en
-                  sitio (eso se hará desde la app de locales).
-                </span>
-              </li>
-              <li className="flex gap-2">
                 <Ticket className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                 <span>
                   Lo encontrarás guardado en tu <b>perfil → Mis QR</b> hasta que se use o caduque.
