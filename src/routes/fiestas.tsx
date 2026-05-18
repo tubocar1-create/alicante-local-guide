@@ -671,13 +671,37 @@ function FiestasPage() {
         </div>
       </div>
 
-      <main className="space-y-8 px-4 py-6">
-        <p className="text-base leading-relaxed text-amber-100 animate-rise">
-          Alicante no se vive: <strong>se celebra</strong>. Del 20 al 24 de junio
-          la ciudad entera arde de alegría con las <strong>Hogueras de San
-          Juan</strong>, declaradas Fiesta de Interés Turístico Internacional.
-          Música, desfiles, pólvora y olor a buñuelos en cada esquina ✨
-        </p>
+      <main className="space-y-8 px-4 py-6 pb-28">
+        <div className="space-y-3 animate-rise">
+          <p className="text-base leading-relaxed text-amber-100">
+            Alicante no se vive: <strong>se celebra</strong>. Del 20 al 24 de junio
+            la ciudad entera arde de alegría con las <strong>Hogueras de San
+            Juan</strong>, declaradas Fiesta de Interés Turístico Internacional.
+            Música, desfiles, pólvora y olor a buñuelos en cada esquina ✨
+          </p>
+          <p className="text-sm leading-relaxed text-amber-100/90">
+            Durante una semana entera la rutina desaparece. Las calles se llenan de{" "}
+            <strong>ninots</strong> gigantes —monumentos satíricos de hasta 20 metros—,
+            las bandas de música tocan en cada plaza y la <strong>Plaza de los Luceros</strong>
+            {" "}se convierte cada mediodía en el corazón pirotécnico de España con las{" "}
+            <strong>mascletàs</strong> de 14:00 h.
+          </p>
+          <p className="text-sm leading-relaxed text-amber-100/90">
+            Por la tarde, la <strong>Ofrenda de Flores</strong> tiñe la ciudad de
+            color camino de la Concatedral; por la noche, las <strong>barracas</strong>
+            {" "}y <strong>racós</strong> abren sus puertas con verbenas que duran hasta
+            el amanecer. Y la madrugada del 24 al 25, la <strong>Cremà</strong>: todas
+            las hogueras arden a la vez mientras los bomberos te empapan en la
+            mítica <strong>Banyà</strong>. Vas a reír, vas a emocionarte y vas a
+            volver al año siguiente. Está garantizado 🔥
+          </p>
+          <p className="text-sm leading-relaxed text-amber-100/90">
+            Y cuando se apagan los rescoldos, todavía quedan <strong>cinco noches
+            de castillos pirotécnicos</strong> sobre la playa del Postiguet. Ése es
+            el verdadero adiós: arena bajo los pies, mar de fondo y el cielo pintado
+            de fuego. Bienvenido a la mejor semana del año.
+          </p>
+        </div>
 
         {/* Chat IA */}
         <FiestasChat />
