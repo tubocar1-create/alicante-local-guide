@@ -1495,7 +1495,11 @@ function MarkdownText({ text }: { text: string }) {
             return (
               <button
                 type="button"
-                onClick={() => navigate({ to: url })}
+                onClick={() => {
+                  if (url === "/playas/mapa") navigate({ to: "/playas/mapa" });
+                  else if (url === "/playas") navigate({ to: "/playas" });
+                  else window.location.assign(url);
+                }}
                 className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-[11px] font-bold text-primary-foreground shadow-soft active:scale-95"
               >
                 {children}
