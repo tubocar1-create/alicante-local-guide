@@ -63,7 +63,10 @@ export function LeafletMap({ beaches }: { beaches: Beach[] }) {
       google.maps.event.addListener(map, "center_changed", () => {
         const center = map.getCenter();
         if (!center) return;
-        if (Math.abs(center.lat() - fixedCenter.lat) > 0.00001 || Math.abs(center.lng() - fixedCenter.lng) > 0.00001) {
+        if (
+          Math.abs(center.lat() - fixedCenter.lat) > 0.00001 ||
+          Math.abs(center.lng() - fixedCenter.lng) > 0.00001
+        ) {
           map.setCenter(fixedCenter);
         }
       });
