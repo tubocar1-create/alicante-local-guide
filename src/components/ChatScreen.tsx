@@ -711,7 +711,8 @@ export function ChatScreen() {
                       } else if (opt.prompt) {
                         setSubmenuStack([]);
                         requestLocationForPrompt(opt.prompt);
-                        send(opt.prompt, { mode: null });
+                        const isBeachGuide = opt.label === "🏖️ Playa";
+                        send(opt.prompt, { mode: isBeachGuide ? "guide" : null });
                       }
                     }}
                     className="flex w-full items-center gap-1.5 rounded-lg border border-border bg-background/80 px-2 py-1.5 text-left text-[12px] shadow-sm transition hover:bg-accent/40"
