@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -16,6 +16,13 @@ import {
 } from "lucide-react";
 import { getHotel, getHotelCalendar, getHotelPhotos } from "@/lib/hotels.functions";
 import { getAiReview } from "@/lib/ai-review.functions";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/hotel/$id")({
   component: HotelDetail,
