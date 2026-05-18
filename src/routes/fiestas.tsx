@@ -679,13 +679,6 @@ function Relato() {
       ring: "ring-rose-300/50",
       cap: "from-rose-500/80 to-pink-500/80",
     },
-    {
-      src: taller1,
-      alt: "Taller de ninots",
-      caption: "🎨 El taller — un año de trabajo para una sola noche",
-      ring: "ring-amber-300/50",
-      cap: "from-amber-500/80 to-orange-500/80",
-    },
   ];
 
   const durante: ReactNode[] = [
