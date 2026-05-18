@@ -75,10 +75,10 @@ function BeachDetailPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/15 to-[oklch(0.98_0.018_205)]" />
         <div className="relative mx-auto flex h-full max-w-5xl flex-col justify-between px-4 py-5">
           <Link
-            to="/playas/mapa"
+            to="/playas"
             className="inline-flex w-fit items-center gap-2 rounded-full bg-white/95 px-3 py-2 text-sm font-bold text-slate-800 shadow"
           >
-            <ArrowLeft className="h-4 w-4" /> Volver al mapa
+            <ArrowLeft className="h-4 w-4" /> Volver
           </Link>
           <div className="pb-6 text-white drop-shadow-lg">
             <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-[11px] font-black uppercase tracking-[0.22em] backdrop-blur">
