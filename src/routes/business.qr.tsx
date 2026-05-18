@@ -1,3 +1,4 @@
+import { VamosWord } from "@/components/VamosWord";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
@@ -107,7 +108,7 @@ function QrReaderPage() {
       <div>
         <h1 className="text-xl font-semibold">Validar QR</h1>
         <p className="mt-1 text-xs text-muted-foreground">
-          Lee el QR que el usuario emitió desde la app VAMOS para confirmar su visita.
+          Lee el QR que el usuario emitió desde la app <VamosWord /> para confirmar su visita.
         </p>
       </div>
 

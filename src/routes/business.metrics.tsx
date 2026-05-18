@@ -1,3 +1,4 @@
+import { VamosWord } from "@/components/VamosWord";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -115,7 +116,7 @@ function MetricsPage() {
         </h2>
         <p className="mt-2 text-2xl font-semibold">{s?.bookings ?? 0}</p>
         <p className="text-[11px] text-muted-foreground">
-          Canal independiente al embudo VAMOS
+          Canal independiente al embudo <VamosWord />
         </p>
       </section>
 
