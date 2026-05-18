@@ -322,10 +322,10 @@ function HotelDetail() {
                     href={mapsHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="col-span-1 flex flex-col items-center justify-center gap-0.5 rounded-xl bg-amber-200 px-2 py-2 text-[11px] font-semibold text-amber-950 hover:bg-amber-100"
+                    className="col-span-1 flex flex-col items-center justify-center gap-0.5 rounded-xl bg-amber-200 px-1 py-1 text-[10px] font-semibold text-amber-950 hover:bg-amber-100"
                   >
                     <span className="inline-flex items-center gap-1">
-                      🚶 Cómo ir
+                      <span className="text-base">🚶</span> Cómo ir
                     </span>
                   </a>
 
