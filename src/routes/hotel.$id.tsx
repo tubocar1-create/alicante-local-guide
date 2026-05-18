@@ -189,14 +189,14 @@ function HotelDetail() {
           <>
             <div className="overflow-hidden rounded-2xl border border-amber-100/[0.08] bg-[rgba(20,10,4,0.7)] backdrop-blur-xl">
               {gallery.length > 0 ? (
-                <div className="flex h-56 snap-x snap-mandatory gap-1 overflow-x-auto md:h-72 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div className="flex h-[60vh] max-h-[640px] min-h-[320px] snap-x snap-mandatory gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {gallery.map((src, i) => (
                     <img
                       key={i}
                       src={src}
                       alt={`${h.name} foto ${i + 1}`}
                       loading={i === 0 ? "eager" : "lazy"}
-                      className="h-full w-[88%] flex-none snap-start object-cover md:w-[60%]"
+                      className="h-full w-full flex-none snap-start object-cover"
                     />
                   ))}
                 </div>
@@ -325,13 +325,13 @@ function HotelDetail() {
                     href={mapsHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="col-span-1 flex flex-col items-center justify-center gap-0.5 rounded-xl bg-white/[0.06] px-2 py-2 text-[11px] font-semibold text-amber-50 hover:bg-white/[0.1]"
+                    className="col-span-1 flex flex-col items-center justify-center gap-0.5 rounded-xl bg-amber-400/90 px-2 py-2 text-[11px] font-semibold text-amber-950 hover:bg-amber-300"
                   >
                     <span className="inline-flex items-center gap-1">
                       <Navigation className="h-3 w-3" /> Cómo ir
                     </span>
                     {distance && (
-                      <span className="inline-flex items-center gap-1 text-[9px] font-normal text-amber-200/70 text-center leading-tight">
+                      <span className="inline-flex items-center gap-1 text-[9px] font-normal text-amber-900/80 text-center leading-tight">
                         <Footprints className="h-2.5 w-2.5" />
                         {formatDistance(distance.km)}
                       </span>
@@ -345,7 +345,7 @@ function HotelDetail() {
                         href={op.href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-white/[0.06] px-3 py-2 text-[12px] font-semibold text-amber-100 hover:bg-white/[0.1]"
+                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-amber-400/90 px-3 py-2 text-[12px] font-semibold text-amber-950 hover:bg-amber-300"
                       >
                         {op.label} <ExternalLink className="h-3 w-3" />
                       </a>
