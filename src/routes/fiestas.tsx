@@ -700,6 +700,9 @@ function FiestasPage() {
         {/* Chat IA */}
         <FiestasChat />
 
+        {/* Programa 2026 verificado */}
+        <ProgramaSection />
+
         {/* Hogueras */}
         <section className="animate-rise">
           <div className="mb-3 flex items-center gap-2">
@@ -744,6 +747,9 @@ function FiestasPage() {
           </p>
           <PhotoStrip photos={TRADICIONES_PHOTOS} accent="#fbbf24" />
         </section>
+
+        {/* Moros y Cristianos — alma de barrio */}
+        <MorosCristianosSection />
 
         {/* Tips */}
         <section className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10 animate-rise">
