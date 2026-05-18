@@ -739,9 +739,9 @@ function Relato() {
       cap: "from-orange-500/80 to-red-500/80",
     },
     {
-      src: arroz1,
-      alt: "Arroz a banda con vino Monastrell",
-      caption: "🍤 Arroz a banda con Monastrell — el ritual de la sobremesa",
+      src: mascleta2,
+      alt: "Mascletà — humo de colores sobre Luceros",
+      caption: "💨 Humo de colores en Luceros — el momento justo antes de comer",
       ring: "ring-yellow-300/50",
       cap: "from-yellow-500/80 to-amber-500/80",
     },
@@ -759,12 +759,13 @@ function Relato() {
       ring: "ring-rose-300/50",
       cap: "from-rose-500/80 to-pink-500/80",
     },
+    // índice 4 (Santa Bárbara / Santa Cruz) sin foto — solo texto
     {
-      src: cultura1,
-      alt: "Castillo de Santa Bárbara desde el casco antiguo",
-      caption: "🏛️ Santa Bárbara y Santa Cruz — cultura con vistas",
-      ring: "ring-cyan-300/50",
-      cap: "from-cyan-500/80 to-blue-500/80",
+      src: "",
+      alt: "",
+      caption: "",
+      ring: "",
+      cap: "",
     },
     {
       src: ninot1,
