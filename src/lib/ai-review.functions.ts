@@ -6,8 +6,14 @@ export const getAiReview = createServerFn({ method: "POST" })
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("LOVABLE_API_KEY no configurada");
 
-    const isHealth = !!data.kind;
-    const prompt = isHealth
+    const isHealth = data.kind === "health";
+    const isHotel = data.kind === "hotel" || /hotel|hostal|hostel|apartam|pension|pensión|guest|resort/i.test(data.cuisine ?? "");
+    const prompt = isHotel
+      ? `Escribe una breve reseña (90-130 palabras) en español sobre el alojamiento "${data.name}"${
+          data.cuisine ? `, tipo: ${data.cuisine}` : ""
+        }${data.address ? `, ubicado en ${data.address}` : ""}, en Alicante. Tono cercano y honesto, basado en lo que conoces de este alojamiento o de otros similares de la zona. Menciona ubicación, ambiente, tipo de habitación o servicios destacables y a qué tipo de viajero le encajaría. Si no tienes información específica, sé prudente y no inventes datos verificables (no inventes precios, estrellas ni servicios concretos). Sin listas ni markdown, solo prosa fluida.`
+      : isHealth
+
       ? `Escribe una breve reseña (90-130 palabras) en español sobre "${data.name}"${
           data.kind ? `, categoría: ${data.kind}` : ""
         }${data.address ? `, ubicado en ${data.address}` : ""}, en Alicante. Tono cercano, profesional y honesto, basado en lo que conoces de este centro o de centros similares de la zona. Menciona trato, especialidades o servicios destacables y a quién le encajaría. Si no tienes información específica, sé prudente y no inventes datos concretos (no inventes médicos ni precios). Sin listas ni markdown, solo prosa fluida.`
@@ -24,7 +30,9 @@ export const getAiReview = createServerFn({ method: "POST" })
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "system", content: isHealth
+          { role: "system", content: isHotel
+            ? "Eres un guía local de Alicante experto en alojamientos, cercano, honesto y prudente. No inventes datos verificables."
+            : isHealth
             ? "Eres un guía local de Alicante experto en servicios sanitarios y de bienestar, cercano, honesto y prudente. No inventes datos verificables."
             : "Eres un crítico gastronómico local de Alicante, cercano, honesto y prudente. No inventes datos verificables." },
           { role: "user", content: prompt },
