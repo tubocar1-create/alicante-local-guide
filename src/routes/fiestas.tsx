@@ -22,6 +22,8 @@ import bunuelos1 from "@/assets/fiestas-bunuelos-1.jpg";
 import crema1 from "@/assets/fiestas-crema-1.jpg";
 import ofrenda1 from "@/assets/fiestas-ofrenda-1.jpg";
 import banya1 from "@/assets/fiestas-banya-1.jpg";
+import aerea1 from "@/assets/fiestas-aerea-1.jpg";
+import aerea2 from "@/assets/fiestas-aerea-2.jpg";
 
 import {
   PROGRAMA_2026, PREVIA_2026, MASCLETAS_2026, FUEGOS_2026,
@@ -576,7 +578,7 @@ function ActoBloque({
   titulo: string;
   acento: string; // ej: "from-amber-400 to-orange-500"
   parrafos: ReactNode[];
-  fotos: RelatoFoto[];
+  fotos: (RelatoFoto | RelatoFoto[])[];
 }) {
   // Intercalamos foto entre párrafos
   const bloques: ReactNode[] = [];
@@ -586,11 +588,13 @@ function ActoBloque({
         {p}
       </p>,
     );
-    const foto = fotos[i];
-    if (foto && foto.src) {
+    const slot = fotos[i];
+    const list = Array.isArray(slot) ? slot : slot ? [slot] : [];
+    list.forEach((foto, j) => {
+      if (!foto.src) return;
       bloques.push(
         <figure
-          key={`f-${i}`}
+          key={`f-${i}-${j}`}
           className={`overflow-hidden rounded-3xl ring-2 ${foto.ring} animate-rise`}
         >
           <img
@@ -608,7 +612,7 @@ function ActoBloque({
           </figcaption>
         </figure>,
       );
-    }
+    });
   });
 
   return (
@@ -730,14 +734,30 @@ function Relato() {
     </>,
   ];
 
-  const duranteFotos: RelatoFoto[] = [
-    {
-      src: mascleta1,
-      alt: "Mascletà en Luceros",
-      caption: "💥 La mascletà — pólvora que se siente en el pecho",
-      ring: "ring-orange-300/50",
-      cap: "from-orange-500/80 to-red-500/80",
-    },
+  const duranteFotos: (RelatoFoto | RelatoFoto[])[] = [
+    [
+      {
+        src: mascleta1,
+        alt: "Mascletà en Luceros",
+        caption: "💥 La mascletà — pólvora que se siente en el pecho",
+        ring: "ring-orange-300/50",
+        cap: "from-orange-500/80 to-red-500/80",
+      },
+      {
+        src: aerea1,
+        alt: "Vista aérea de la mascletà en Luceros",
+        caption: "🚁 Luceros desde el aire — la pólvora envolviendo la fuente",
+        ring: "ring-amber-300/50",
+        cap: "from-amber-500/80 to-orange-500/80",
+      },
+      {
+        src: aerea2,
+        alt: "Mascletà vista desde arriba con humo blanco",
+        caption: "☁️ Toda la plaza desaparece bajo el humo blanco",
+        ring: "ring-yellow-300/50",
+        cap: "from-yellow-500/80 to-amber-400/80",
+      },
+    ],
     {
       src: mascleta2,
       alt: "Humo de mascletà sobre Alicante",
