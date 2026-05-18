@@ -325,7 +325,7 @@ function HotelDetail() {
                     href={mapsHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="col-span-1 flex flex-col items-center justify-center gap-0.5 rounded-xl bg-amber-400/90 px-2 py-2 text-[11px] font-semibold text-amber-950 hover:bg-amber-300"
+                    className="col-span-1 flex flex-col items-center justify-center gap-0.5 rounded-xl bg-amber-200 px-2 py-2 text-[11px] font-semibold text-amber-950 hover:bg-amber-100"
                   >
                     <span className="inline-flex items-center gap-1">
                       <Navigation className="h-3 w-3" /> Cómo ir
@@ -345,7 +345,7 @@ function HotelDetail() {
                         href={op.href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-amber-400/90 px-3 py-2 text-[12px] font-semibold text-amber-950 hover:bg-amber-300"
+                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-amber-200 px-3 py-2 text-[12px] font-semibold text-amber-950 hover:bg-amber-100"
                       >
                         {op.label} <ExternalLink className="h-3 w-3" />
                       </a>
