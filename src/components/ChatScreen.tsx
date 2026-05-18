@@ -110,7 +110,7 @@ const SUGGESTIONS: Suggestion[] = [
     label: "🏖️ Turismo, playa y aventuras",
     submenu: [
       { label: "🏛️ Turismo", prompt: "¿Qué sitios turísticos imprescindibles puedo visitar en Alicante hoy?" },
-      { label: "🏖️ Playa", href: "/playas" },
+      { label: "🏖️ Playa", prompt: "Hazme una guía completa y detallada de las playas de Alicante: incluye una introducción a la Costa Blanca, las playas urbanas más populares (Postiguet, San Juan, Albufereta, Saladar-Urbanova), las calas escondidas más bonitas (Cala Cantalar, Calas de Agua Amarga, Cabo de las Huertas), y para cada una indica cómo llegar (bus, TRAM, coche), servicios disponibles y qué la hace especial. Añade consejos prácticos: qué llevar, mejores horas, banderas y seguridad, y planes que se pueden hacer (snorkel, paddle surf, chiringuitos). Usa emojis y un formato claro y atractivo." },
       { label: "🌳 Parque", prompt: "¿Qué parque o zona verde me recomiendas?" },
       { label: "🧗 Aventuras", prompt: "¿Qué planes de aventura o actividades al aire libre puedo hacer hoy en Alicante o alrededores?" },
     ],
