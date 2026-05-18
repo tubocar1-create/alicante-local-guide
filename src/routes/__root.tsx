@@ -15,7 +15,7 @@ import { useEffect } from "react";
 import appCss from "../styles.css?url";
 import "@/integrations/supabase/server-fn-fetch";
 
-const PUBLIC_ROUTES = ["/login", "/magic", "/welcome", "/playas"];
+const PUBLIC_ROUTES = ["/login", "/magic", "/welcome", "/playas", "/playas/mapa"];
 const WELCOMED_KEY = "vamos-welcomed-v1";
 
 
