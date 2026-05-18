@@ -7,6 +7,9 @@ export const Route = createFileRoute("/playas")({
     const [beaches, intro] = await Promise.all([getMapBeaches(), getCoastIntro()]);
     return { beaches, intro };
   },
+  staleTime: Infinity,
+  gcTime: Infinity,
+  shouldReload: false,
   head: () => ({
     meta: [
       { title: "Playas de Alicante — Guía visual con fotos reales" },
