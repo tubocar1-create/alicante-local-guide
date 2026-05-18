@@ -67,6 +67,7 @@ import { Route as ApiPublicBusEtaRouteImport } from './routes/api/public/bus-eta
 import { Route as ApiPublicBookingCreateRouteImport } from './routes/api/public/booking-create'
 import { Route as ApiPublicAenaFlightsRouteImport } from './routes/api/public/aena-flights'
 import { Route as OcioCinesIdCarteleraRouteImport } from './routes/ocio_.cines_.$id.cartelera'
+import { Route as ApiPublicHooksSyncHotelsStaticRouteImport } from './routes/api/public/hooks/sync-hotels-static'
 import { Route as ApiPublicHooksCinemasSyncRouteImport } from './routes/api/public/hooks/cinemas-sync'
 import { Route as ApiPublicHooksAenaSyncRouteImport } from './routes/api/public/hooks/aena-sync'
 
@@ -361,6 +362,12 @@ const OcioCinesIdCarteleraRoute = OcioCinesIdCarteleraRouteImport.update({
   path: '/ocio/cines/$id/cartelera',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksSyncHotelsStaticRoute =
+  ApiPublicHooksSyncHotelsStaticRouteImport.update({
+    id: '/api/public/hooks/sync-hotels-static',
+    path: '/api/public/hooks/sync-hotels-static',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksCinemasSyncRoute =
   ApiPublicHooksCinemasSyncRouteImport.update({
     id: '/api/public/hooks/cinemas-sync',
@@ -433,6 +440,7 @@ export interface FileRoutesByFullPath {
   '/salud/$categoria/$id': typeof SaludCategoriaIdRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
+  '/api/public/hooks/sync-hotels-static': typeof ApiPublicHooksSyncHotelsStaticRoute
   '/ocio/cines/$id/cartelera': typeof OcioCinesIdCarteleraRoute
 }
 export interface FileRoutesByTo {
@@ -494,6 +502,7 @@ export interface FileRoutesByTo {
   '/salud/$categoria/$id': typeof SaludCategoriaIdRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
+  '/api/public/hooks/sync-hotels-static': typeof ApiPublicHooksSyncHotelsStaticRoute
   '/ocio/cines/$id/cartelera': typeof OcioCinesIdCarteleraRoute
 }
 export interface FileRoutesById {
@@ -557,6 +566,7 @@ export interface FileRoutesById {
   '/salud_/$categoria/$id': typeof SaludCategoriaIdRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
+  '/api/public/hooks/sync-hotels-static': typeof ApiPublicHooksSyncHotelsStaticRoute
   '/ocio_/cines_/$id/cartelera': typeof OcioCinesIdCarteleraRoute
 }
 export interface FileRouteTypes {
@@ -621,6 +631,7 @@ export interface FileRouteTypes {
     | '/salud/$categoria/$id'
     | '/api/public/hooks/aena-sync'
     | '/api/public/hooks/cinemas-sync'
+    | '/api/public/hooks/sync-hotels-static'
     | '/ocio/cines/$id/cartelera'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -682,6 +693,7 @@ export interface FileRouteTypes {
     | '/salud/$categoria/$id'
     | '/api/public/hooks/aena-sync'
     | '/api/public/hooks/cinemas-sync'
+    | '/api/public/hooks/sync-hotels-static'
     | '/ocio/cines/$id/cartelera'
   id:
     | '__root__'
@@ -744,6 +756,7 @@ export interface FileRouteTypes {
     | '/salud_/$categoria/$id'
     | '/api/public/hooks/aena-sync'
     | '/api/public/hooks/cinemas-sync'
+    | '/api/public/hooks/sync-hotels-static'
     | '/ocio_/cines_/$id/cartelera'
   fileRoutesById: FileRoutesById
 }
@@ -789,6 +802,7 @@ export interface RootRouteChildren {
   OcioPeliculaIdRoute: typeof OcioPeliculaIdRoute
   ApiPublicHooksAenaSyncRoute: typeof ApiPublicHooksAenaSyncRoute
   ApiPublicHooksCinemasSyncRoute: typeof ApiPublicHooksCinemasSyncRoute
+  ApiPublicHooksSyncHotelsStaticRoute: typeof ApiPublicHooksSyncHotelsStaticRoute
   OcioCinesIdCarteleraRoute: typeof OcioCinesIdCarteleraRoute
 }
 
@@ -1200,6 +1214,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OcioCinesIdCarteleraRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/sync-hotels-static': {
+      id: '/api/public/hooks/sync-hotels-static'
+      path: '/api/public/hooks/sync-hotels-static'
+      fullPath: '/api/public/hooks/sync-hotels-static'
+      preLoaderRoute: typeof ApiPublicHooksSyncHotelsStaticRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/cinemas-sync': {
       id: '/api/public/hooks/cinemas-sync'
       path: '/api/public/hooks/cinemas-sync'
@@ -1371,6 +1392,7 @@ const rootRouteChildren: RootRouteChildren = {
   OcioPeliculaIdRoute: OcioPeliculaIdRoute,
   ApiPublicHooksAenaSyncRoute: ApiPublicHooksAenaSyncRoute,
   ApiPublicHooksCinemasSyncRoute: ApiPublicHooksCinemasSyncRoute,
+  ApiPublicHooksSyncHotelsStaticRoute: ApiPublicHooksSyncHotelsStaticRoute,
   OcioCinesIdCarteleraRoute: OcioCinesIdCarteleraRoute,
 }
 export const routeTree = rootRouteImport
