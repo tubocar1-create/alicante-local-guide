@@ -1,3 +1,4 @@
+import { VamosWord } from "@/components/VamosWord";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";

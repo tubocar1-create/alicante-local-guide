@@ -1,3 +1,4 @@
+import { VamosWord } from "@/components/VamosWord";
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
