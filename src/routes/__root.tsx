@@ -8,6 +8,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { InstallPWA } from "@/components/InstallPWA";
 
 import appCss from "../styles.css?url";
 import "@/integrations/supabase/server-fn-fetch";
@@ -87,9 +88,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:description", content: "Your friendly local AI guide in Alicante, Spain." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/093254f8-3ab2-40aa-af9e-c02f37b4a16e/id-preview-b19d7e32--a8ec37f9-59bf-4ebb-a372-974e51dc0567.lovable.app-1778306557524.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/093254f8-3ab2-40aa-af9e-c02f37b4a16e/id-preview-b19d7e32--a8ec37f9-59bf-4ebb-a372-974e51dc0567.lovable.app-1778306557524.png" },
+      { name: "theme-color", content: "#F39021" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "apple-mobile-web-app-title", content: "Vamos Alicante" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.json" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icon-192.png" },
+      { rel: "icon", type: "image/png", sizes: "512x512", href: "/icon-512.png" },
+      { rel: "apple-touch-icon", href: "/icon-180.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
@@ -125,6 +134,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <Outlet />
       <Toaster />
+      <InstallPWA />
     </QueryClientProvider>
   );
 }
