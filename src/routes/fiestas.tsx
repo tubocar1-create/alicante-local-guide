@@ -9,9 +9,19 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import hoguera1 from "@/assets/fiestas-hoguera-1.jpg";
-import moros1 from "@/assets/fiestas-moros-1.jpg";
-import cristianos1 from "@/assets/fiestas-cristianos-1.jpg";
-import morosBatalla from "@/assets/fiestas-moros-batalla.jpg";
+import hoguera2 from "@/assets/fiestas-hoguera-2.jpg";
+import mascleta1 from "@/assets/fiestas-mascleta-1.jpg";
+import mascleta2 from "@/assets/fiestas-mascleta-2.jpg";
+import fuegos1 from "@/assets/fiestas-fuegos-1.jpg";
+import fuegos2 from "@/assets/fiestas-fuegos-2.jpg";
+import desfile1 from "@/assets/fiestas-desfile-1.jpg";
+import playa1 from "@/assets/fiestas-playa-1.jpg";
+import ninot1 from "@/assets/fiestas-ninot-1.jpg";
+import belleas1 from "@/assets/fiestas-belleas-1.jpg";
+import bunuelos1 from "@/assets/fiestas-bunuelos-1.jpg";
+import crema1 from "@/assets/fiestas-crema-1.jpg";
+import ofrenda1 from "@/assets/fiestas-ofrenda-1.jpg";
+import banya1 from "@/assets/fiestas-banya-1.jpg";
 
 import {
   PROGRAMA_2026, PREVIA_2026, MASCLETAS_2026, FUEGOS_2026,
@@ -19,23 +29,6 @@ import {
   type Acto, type Jornada,
 } from "@/data/fiestas-program";
 import { MOROS_BARRIOS, MOROS_ELEMENTOS } from "@/data/moros-cristianos";
-import hoguera2 from "@/assets/fiestas-hoguera-2.jpg";
-import mascleta1 from "@/assets/fiestas-mascleta-1.jpg";
-import mascleta2 from "@/assets/fiestas-mascleta-2.jpg";
-import fuegos1 from "@/assets/fiestas-fuegos-real-1.jpg";
-import fuegos2 from "@/assets/fiestas-fuegos-real-2.jpg";
-import desfile1 from "@/assets/fiestas-desfile-1.jpg";
-import playa1 from "@/assets/fiestas-playa-1.jpg";
-import ninot1 from "@/assets/fiestas-ninot-1.jpg";
-import belleas1 from "@/assets/fiestas-belleas-1.jpg";
-import bunuelos1 from "@/assets/fiestas-bunuelos-1.jpg";
-import crema1 from "@/assets/fiestas-crema-1.jpg";
-
-import ofrenda1 from "@/assets/fiestas-ofrenda-1.jpg";
-import arroz1 from "@/assets/fiestas-arroz-1.jpg";
-import cultura1 from "@/assets/fiestas-cultura-1.jpg";
-import cala1 from "@/assets/fiestas-cala-1.jpg";
-import taller1 from "@/assets/fiestas-taller-1.jpg";
 import hoguerasIcon from "@/assets/hogueras-alicante.png";
 import { askFiestasAI } from "@/lib/fiestas-ai.functions";
 
@@ -61,21 +54,12 @@ export const Route = createFileRoute("/fiestas")({
 
 type Photo = { src: string; caption: string };
 
-// Las fotos del relato NO se repiten aquí: estas tiras son fotos extra.
+// Cada foto se usa UNA sola vez en toda la página.
 const HOGUERAS_PHOTOS: Photo[] = [
-  { src: hoguera1, caption: "La cremà: la noche en que arde la ciudad" },
   { src: hoguera2, caption: "Monumentos de hasta 20 metros de altura" },
   { src: desfile1, caption: "Desfiles por todas las calles" },
-];
-
-const MASCLETAS_PHOTOS: Photo[] = [
-  { src: mascleta2, caption: "Humo de colores sobre Luceros" },
-  { src: fuegos2, caption: "Pirotecnia sobre Santa Bárbara" },
-];
-
-const TRADICIONES_PHOTOS: Photo[] = [
   { src: playa1, caption: "Hoguera en la playa de San Juan" },
-  { src: belleas1, caption: "Trajes valencianos bordados a mano" },
+  { src: banya1, caption: "La Banyà — los bomberos te mojan entre risas" },
 ];
 
 function PhotoStrip({ photos, accent }: { photos: Photo[]; accent: string }) {
@@ -337,25 +321,15 @@ function ProgramaSection() {
         <p className="mt-2 text-sm text-amber-100/90">{COSO_MULTICOLOR_2026.descripcion}</p>
       </div>
 
-      <div className="overflow-hidden rounded-2xl ring-1 ring-amber-300/30">
-        <img
-          src={desfile1}
-          alt="Barraca de Hogueras de noche"
-          loading="lazy"
-          width={1280}
-          height={896}
-          className="h-44 w-full object-cover"
-        />
-        <div className="bg-black/50 p-4">
-          <h4 className="text-lg font-extrabold text-amber-50">🏕️ Barracas y racós</h4>
-          <p className="mt-1 text-sm text-amber-100/90">
-            Las <strong>barracas</strong> abren el 20 por la noche y son <em>la fiesta</em>:
-            música hasta el amanecer, comida casera, cerveza, amigos y desconocidos que
-            terminan abrazados. Los <strong>racós</strong> son su versión pequeña, más
-            de barrio. Si quieres entender por qué los alicantinos no duermen en
-            junio, métete en una.
-          </p>
-        </div>
+      <div className="overflow-hidden rounded-2xl bg-black/50 p-4 ring-1 ring-amber-300/30">
+        <h4 className="text-lg font-extrabold text-amber-50">🏕️ Barracas y racós</h4>
+        <p className="mt-1 text-sm text-amber-100/90">
+          Las <strong>barracas</strong> abren el 20 por la noche y son <em>la fiesta</em>:
+          música hasta el amanecer, comida casera, cerveza, amigos y desconocidos que
+          terminan abrazados. Los <strong>racós</strong> son su versión pequeña, más
+          de barrio. Si quieres entender por qué los alicantinos no duermen en
+          junio, métete en una.
+        </p>
       </div>
     </section>
   );
@@ -373,16 +347,6 @@ function MorosCristianosSection() {
         <h3 className="text-2xl font-extrabold">Moros y Cristianos</h3>
       </div>
 
-      <div className="overflow-hidden rounded-2xl ring-1 ring-amber-300/30">
-        <img
-          src={moros1}
-          alt="Desfile mora con tambores"
-          loading="lazy"
-          width={1280}
-          height={896}
-          className="h-56 w-full object-cover"
-        />
-      </div>
 
       <p className="text-sm leading-relaxed text-amber-100">
         Si las Hogueras son la cara internacional de Alicante, los{" "}
@@ -421,24 +385,6 @@ function MorosCristianosSection() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        <img
-          src={cristianos1}
-          alt="Comparsa cristiana"
-          loading="lazy"
-          width={1280}
-          height={896}
-          className="h-40 w-full rounded-xl object-cover ring-1 ring-amber-300/30"
-        />
-        <img
-          src={morosBatalla}
-          alt="Reconstrucción de batalla nocturna"
-          loading="lazy"
-          width={1280}
-          height={896}
-          className="h-40 w-full rounded-xl object-cover ring-1 ring-amber-300/30"
-        />
-      </div>
 
       <h4 className="pt-2 text-lg font-extrabold text-amber-200">
         Cómo se vive (las claves)
@@ -641,7 +587,7 @@ function ActoBloque({
       </p>,
     );
     const foto = fotos[i];
-    if (foto) {
+    if (foto && foto.src) {
       bloques.push(
         <figure
           key={`f-${i}`}
@@ -733,13 +679,6 @@ function Relato() {
       ring: "ring-rose-300/50",
       cap: "from-rose-500/80 to-pink-500/80",
     },
-    {
-      src: taller1,
-      alt: "Taller de ninots",
-      caption: "🎨 El taller — un año de trabajo para una sola noche",
-      ring: "ring-amber-300/50",
-      cap: "from-amber-500/80 to-orange-500/80",
-    },
   ];
 
   const durante: ReactNode[] = [
@@ -800,9 +739,9 @@ function Relato() {
       cap: "from-orange-500/80 to-red-500/80",
     },
     {
-      src: arroz1,
-      alt: "Arroz a banda con vino Monastrell",
-      caption: "🍤 Arroz a banda con Monastrell — el ritual de la sobremesa",
+      src: mascleta2,
+      alt: "Mascletà — humo de colores sobre Luceros",
+      caption: "💨 Humo de colores en Luceros — el momento justo antes de comer",
       ring: "ring-yellow-300/50",
       cap: "from-yellow-500/80 to-amber-500/80",
     },
@@ -820,12 +759,13 @@ function Relato() {
       ring: "ring-rose-300/50",
       cap: "from-rose-500/80 to-pink-500/80",
     },
+    // índice 4 (Santa Bárbara / Santa Cruz) sin foto — solo texto
     {
-      src: cultura1,
-      alt: "Castillo de Santa Bárbara desde el casco antiguo",
-      caption: "🏛️ Santa Bárbara y Santa Cruz — cultura con vistas",
-      ring: "ring-cyan-300/50",
-      cap: "from-cyan-500/80 to-blue-500/80",
+      src: "",
+      alt: "",
+      caption: "",
+      ring: "",
+      cap: "",
     },
     {
       src: ninot1,
@@ -887,13 +827,6 @@ function Relato() {
       caption: "🎇 La pólvora cae al agua — cinco noches a medianoche",
       ring: "ring-pink-300/50",
       cap: "from-pink-500/80 to-rose-500/80",
-    },
-    {
-      src: cala1,
-      alt: "Calas de Cabo de las Huertas",
-      caption: "🏖️ Cabo Huertas — agua turquesa a 15 minutos en TRAM",
-      ring: "ring-cyan-300/50",
-      cap: "from-cyan-500/80 to-teal-500/80",
     },
   ];
 
@@ -1043,34 +976,6 @@ function FiestasPage() {
           <PhotoStrip photos={HOGUERAS_PHOTOS} accent="#f97316" />
         </section>
 
-        {/* Mascletás */}
-        <section className="animate-rise">
-          <div className="mb-3 flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-pink-300 animate-spark" />
-            <h3 className="text-2xl font-extrabold drop-shadow">Mascletás y fuegos</h3>
-          </div>
-          <p className="mb-3 text-sm text-amber-50/95">
-            Cada día a las <strong>14:00 h</strong> en la <strong>Plaza de los
-            Luceros</strong>, la <em>mascletà</em> hace temblar el suelo. No se
-            escucha: <strong>se siente</strong> en el pecho. Y al caer la noche,
-            los castillos de fuegos sobre el puerto te dejarán sin palabras 🎆
-          </p>
-          <PhotoStrip photos={MASCLETAS_PHOTOS} accent="#ec4899" />
-        </section>
-
-        {/* Tradiciones */}
-        <section className="animate-rise">
-          <div className="mb-3 flex items-center gap-2">
-            <PartyPopper className="h-6 w-6 text-yellow-300 animate-spark" />
-            <h3 className="text-2xl font-extrabold drop-shadow">Tradiciones que enamoran</h3>
-          </div>
-          <p className="mb-3 text-sm text-amber-50/95">
-            Trajes valencianos bordados, ríos de flores hacia la Virgen del
-            Remedio, churros calentitos y bomberos que te mojan entre risas.
-            Cada rincón huele a pólvora, azúcar y alegría 💛
-          </p>
-          <PhotoStrip photos={TRADICIONES_PHOTOS} accent="#fbbf24" />
-        </section>
 
         {/* Moros y Cristianos — alma de barrio */}
         <MorosCristianosSection />
