@@ -384,24 +384,6 @@ function MorosCristianosSection() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        <img
-          src={cristianos1}
-          alt="Comparsa cristiana"
-          loading="lazy"
-          width={1280}
-          height={896}
-          className="h-40 w-full rounded-xl object-cover ring-1 ring-amber-300/30"
-        />
-        <img
-          src={morosBatalla}
-          alt="Reconstrucción de batalla nocturna"
-          loading="lazy"
-          width={1280}
-          height={896}
-          className="h-40 w-full rounded-xl object-cover ring-1 ring-amber-300/30"
-        />
-      </div>
 
       <h4 className="pt-2 text-lg font-extrabold text-amber-200">
         Cómo se vive (las claves)
