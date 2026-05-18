@@ -269,10 +269,10 @@ function ProgramaSection() {
 
       <div className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
         <p className="text-sm leading-relaxed text-amber-100">
-          Te lo cuento como se lo cuento a mi primo de Madrid cuando viene por primera vez:
-          las Hogueras <strong>no empiezan el 20 de junio</strong>. Empiezan en abril,
-          en silencio, cuando se elige la <strong>Bellea del Foc</strong> y los artistas
-          empiezan a moldear los ninots. Luego vienen el Pregón, la Cabalgata… y un día,
+          Te lo cuento como se lo cuento a quien viene por primera vez: las Hogueras{" "}
+          <strong>no empiezan el 20 de junio</strong>. Empiezan en abril, en silencio,
+          cuando se elige la <strong>Bellea del Foc</strong> y los artistas empiezan
+          a moldear los ninots. Luego vienen el Pregón, la Cabalgata… y un día,
           de repente, suena la primera mascletà y ya no hay marcha atrás.
         </p>
         <ul className="mt-3 space-y-1 text-[13px] text-amber-100/90">
