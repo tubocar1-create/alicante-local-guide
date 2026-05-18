@@ -21,6 +21,7 @@ function LoginPage() {
   const [name, setName] = useState("");
   const [surname, setSurname] = useState("");
   const [needsSignup, setNeedsSignup] = useState(false);
+  const [welcomeNew, setWelcomeNew] = useState(false);
   const [busy, setBusy] = useState(false);
   const [recoverOpen, setRecoverOpen] = useState(false);
   const [recoverEmail, setRecoverEmail] = useState("");
@@ -90,10 +91,7 @@ function LoginPage() {
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Error";
       if (msg === "SIGNUP_REQUIRED") {
-        setNeedsSignup(true);
-        toast.message("Cuenta nueva", {
-          description: "Completa nombre y apellido para registrarte.",
-        });
+        setWelcomeNew(true);
       } else {
         toast.error(msg);
       }
@@ -112,26 +110,58 @@ function LoginPage() {
           <ArrowLeft className="h-3.5 w-3.5" /> Volver
         </Link>
         <h1 className="text-base font-semibold">
-          {needsSignup ? "Crear cuenta" : "Entrar"}
+          {welcomeNew && !needsSignup ? "¡Hola!" : needsSignup ? "Crear cuenta" : "Entrar"}
         </h1>
         <span className="w-[64px]" />
       </header>
 
-      <section className="rounded-3xl gradient-warm p-5 text-primary-foreground shadow-soft">
-        <p className="inline-flex items-center gap-1 rounded-full bg-white/25 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest">
-          <Sparkles className="h-3 w-3" /> Beta
-        </p>
-        <h2 className="mt-2 text-lg font-semibold">
-          {needsSignup ? "¡Bienvenido/a! Completa tus datos" : "Inicia sesión con tu email"}
-        </h2>
-        <p className="mt-1 text-sm opacity-95">
-          {needsSignup
-            ? "Tu email será tu usuario para futuros inicios de sesión. 🤙"
-            : "Si ya estás registrado, entrarás directamente. Si no, te pediremos nombre y apellido."}
-        </p>
-      </section>
+      {welcomeNew && !needsSignup ? (
+        <section className="rounded-3xl gradient-warm p-6 text-primary-foreground shadow-soft">
+          <p className="inline-flex items-center gap-1 rounded-full bg-white/25 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest">
+            <Sparkles className="h-3 w-3" /> Nueva por aquí
+          </p>
+          <h2 className="mt-3 text-2xl font-semibold leading-tight">
+            ¡Bienvenido/a a Alicante Friend! 👋
+          </h2>
+          <p className="mt-2 text-sm opacity-95">
+            Aún no tienes cuenta con <span className="font-semibold">{email}</span>.
+            Tardas menos de 10 segundos en crearla y empezamos a explorar Alicante juntos.
+          </p>
+          <button
+            type="button"
+            onClick={() => setNeedsSignup(true)}
+            className="mt-5 w-full rounded-full bg-white py-3 text-sm font-semibold text-primary shadow-soft active:scale-95"
+          >
+            Crear mi cuenta
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setWelcomeNew(false);
+              setEmail("");
+            }}
+            className="mt-2 w-full rounded-full bg-white/15 py-2.5 text-xs font-medium text-primary-foreground active:scale-95"
+          >
+            Usar otro email
+          </button>
+        </section>
+      ) : (
+        <section className="rounded-3xl gradient-warm p-5 text-primary-foreground shadow-soft">
+          <p className="inline-flex items-center gap-1 rounded-full bg-white/25 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest">
+            <Sparkles className="h-3 w-3" /> Beta
+          </p>
+          <h2 className="mt-2 text-lg font-semibold">
+            {needsSignup ? "¡Bienvenido/a! Completa tus datos" : "Inicia sesión con tu email"}
+          </h2>
+          <p className="mt-1 text-sm opacity-95">
+            {needsSignup
+              ? "Tu email será tu usuario para futuros inicios de sesión. 🤙"
+              : "Si ya estás registrado, entrarás directamente. Si no, te damos la bienvenida."}
+          </p>
+        </section>
+      )}
 
-      <form onSubmit={handleSubmit} className="mt-5 space-y-3">
+      <form onSubmit={handleSubmit} className={`mt-5 space-y-3 ${welcomeNew && !needsSignup ? "hidden" : ""}`}>
         <label className="flex items-center gap-2 rounded-2xl border border-border bg-card px-3 py-2.5">
           <Mail className="h-4 w-4 text-muted-foreground" />
           <input
