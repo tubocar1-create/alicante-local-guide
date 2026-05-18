@@ -120,6 +120,8 @@ export function LeafletMap({ beaches }: { beaches: Beach[] }) {
         marker.addListener("click", () => {
           window.location.href = `/playas/${b.slug}`;
         });
+        const label = new BeachLabel(pos, b);
+        label.setMap(map);
       });
     });
     return () => {
