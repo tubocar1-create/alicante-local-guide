@@ -41,11 +41,12 @@ const BEACHES: Beach[] = [
   { name: "Playa de la Almadraba", lat: 38.3735, lng: -0.4180, description: "Playa familiar al pie del Cabo de las Huertas." },
   { name: "Playa de la Albufereta", lat: 38.3680, lng: -0.4260, description: "Playa urbana en forma de concha." },
   { name: "Playa del Postiguet", lat: 38.3445, lng: -0.4750, description: "Playa urbana junto al Castillo de Santa Bárbara." },
-  { name: "Playa del Saladar", lat: 38.3110, lng: -0.5130, description: "Larga playa abierta de Urbanova." },
-  { name: "Playa de Urbanova", lat: 38.2960, lng: -0.5260, description: "Arena fina cerca del aeropuerto." },
-  { name: "Playa del Altet", lat: 38.2740, lng: -0.5440, description: "Playa de arena junto a Gran Alacant." },
-  { name: "Playa de los Arenales del Sol", lat: 38.2560, lng: -0.5490, description: "Amplia playa de arena fina con dunas." },
-  { name: "Playa del Carabassí", lat: 38.2340, lng: -0.5530, description: "Dunas protegidas y aguas cristalinas." },
+  { name: "Playa de Agua Amarga", lat: 38.3188, lng: -0.5127, description: "Tramo litoral al sur de Alicante." },
+  { name: "Playa del Saladar", lat: 38.3038, lng: -0.5198, description: "Larga playa abierta de Urbanova." },
+  { name: "Playa de Urbanova", lat: 38.2916, lng: -0.5283, description: "Arena fina cerca del aeropuerto." },
+  { name: "Playa del Altet", lat: 38.2720, lng: -0.5458, description: "Playa de arena junto a Gran Alacant." },
+  { name: "Playa de los Arenales del Sol", lat: 38.2474, lng: -0.5207, description: "Amplia playa de arena fina con dunas." },
+  { name: "Playa del Carabassí", lat: 38.2310, lng: -0.5179, description: "Dunas protegidas y aguas cristalinas." },
 ];
 
 function MapaPlayasPage() {
