@@ -629,11 +629,11 @@ function ActoBloque({
   pretitulo: string;
   titulo: string;
   acento: string; // ej: "from-amber-400 to-orange-500"
-  parrafos: React.ReactNode[];
+  parrafos: ReactNode[];
   fotos: RelatoFoto[];
 }) {
   // Intercalamos foto entre párrafos
-  const bloques: React.ReactNode[] = [];
+  const bloques: ReactNode[] = [];
   parrafos.forEach((p, i) => {
     bloques.push(
       <p key={`p-${i}`} className="text-sm leading-relaxed text-amber-50/95">
@@ -703,7 +703,7 @@ function ActoBloque({
 function Relato() {
   const fase = useMemo(() => calcularFase(), []);
 
-  const antes: React.ReactNode[] = [
+  const antes: ReactNode[] = [
     <>
       Empieza a notarse en mayo. La ciudad cuchichea, los <strong>foguerers</strong>
       cierran talleres con llave y empiezan a aparecer <strong>carteles con
@@ -742,7 +742,7 @@ function Relato() {
     },
   ];
 
-  const durante: React.ReactNode[] = [
+  const durante: ReactNode[] = [
     <>
       Y un día, a las 14:00, suena. La <strong>Plaza de los Luceros</strong>
       se llena hasta los balcones y la <strong>mascletà</strong> arranca
@@ -836,7 +836,7 @@ function Relato() {
     },
   ];
 
-  const despues: React.ReactNode[] = [
+  const despues: ReactNode[] = [
     <>
       Madrugada del 24 al 25. <strong>La Cremà</strong>. A las 00:00 una{" "}
       <strong>palmera de fuegos</strong> sale disparada desde el Castillo
