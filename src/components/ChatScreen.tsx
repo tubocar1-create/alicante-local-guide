@@ -268,15 +268,7 @@ const SUGGESTIONS: Suggestion[] = [
     ],
   },
   { label: "🏨 Dormir", prompt: "¿Dónde puedo dormir esta noche?" },
-  {
-    label: "🏖️ Turismo, playa y aventuras",
-    submenu: [
-      { label: "🏛️ Turismo", prompt: "¿Qué sitios turísticos imprescindibles puedo visitar en Alicante hoy?" },
-      { label: "🏖️ Playa", prompt: BEACH_GUIDE_PROMPT },
-      { label: "🌳 Parque", prompt: "¿Qué parque o zona verde me recomiendas?" },
-      { label: "🧗 Aventuras", prompt: "¿Qué planes de aventura o actividades al aire libre puedo hacer hoy en Alicante o alrededores?" },
-    ],
-  },
+  { label: "🏖️ Turismo, playa y aventuras", prompt: BEACH_GUIDE_PROMPT },
   { label: "🛍️ Comprar", prompt: "¿Dónde puedo ir de compras?" },
   { label: "🍹 Tomar algo", prompt: "¿Dónde voy a tomar algo abierto ahora?" },
   {
