@@ -143,32 +143,60 @@ export async function refreshDynamicHotelsImpl() {
     }
   }
 
+  const ratePrice = (r: any): number | null => {
+    const p =
+      r?.retailRate?.total?.[0]?.amount ??
+      r?.retailRate?.total?.amount ??
+      r?.totalPrice ??
+      r?.price ??
+      null;
+    return p != null ? Number(p) : null;
+  };
+  const rateCurrency = (r: any): string =>
+    r?.retailRate?.total?.[0]?.currency ??
+    r?.retailRate?.total?.currency ??
+    r?.currency ??
+    "EUR";
+  const hasBreakfast = (r: any) => {
+    const board = `${r?.boardName ?? ""} ${r?.boardType ?? ""}`.toLowerCase();
+    return /breakfast|desayuno/.test(board) || /^(bb|bi|hb|fb|ai)$/i.test(r?.boardType ?? "");
+  };
+  const isRefundable = (r: any) => {
+    const tag = r?.cancellationPolicies?.refundableTag;
+    if (tag === "RFN") return true;
+    const infos = r?.cancellationPolicies?.cancelPolicyInfos ?? [];
+    return infos.some((i: any) => Number(i?.amount ?? 0) === 0);
+  };
+
   const upserts = rows.map((r) => {
     const item = idToData[r.liteapi_id!];
-    const cheapest = item?.roomTypes?.[0]?.rates?.[0] ?? item?.rates?.[0];
-    const price =
-      cheapest?.retailRate?.total?.[0]?.amount ??
-      cheapest?.retailRate?.total?.amount ??
-      cheapest?.totalPrice ??
-      cheapest?.price ??
-      null;
-    const currency =
-      cheapest?.retailRate?.total?.[0]?.currency ??
-      cheapest?.retailRate?.total?.currency ??
-      cheapest?.currency ??
-      "EUR";
-    const cancellation = cheapest?.cancellationPolicies?.refundableTag === "RFN"
-      || /free/i.test(cheapest?.cancellationPolicies?.cancelPolicyInfos?.[0]?.description ?? "");
-    const breakfast = /breakfast|desayuno/i.test(
-      cheapest?.boardName ?? cheapest?.boardType ?? "",
-    );
+    const allRates: any[] = [];
+    for (const rt of item?.roomTypes ?? []) {
+      for (const rate of rt?.rates ?? []) allRates.push(rate);
+    }
+    for (const rate of item?.rates ?? []) allRates.push(rate);
+
+    let cheapest: any = null;
+    let cheapestPrice = Infinity;
+    let anyBreakfast = false;
+    let anyRefundable = false;
+    for (const rate of allRates) {
+      const p = ratePrice(rate);
+      if (p != null && p < cheapestPrice) {
+        cheapestPrice = p;
+        cheapest = rate;
+      }
+      if (hasBreakfast(rate)) anyBreakfast = true;
+      if (isRefundable(rate)) anyRefundable = true;
+    }
+
     return {
       hotel_id: r.id,
-      available: !!cheapest && price != null,
-      current_price: price != null ? Number(price) : null,
-      currency,
-      breakfast_included: breakfast,
-      free_cancellation: !!cancellation,
+      available: !!cheapest,
+      current_price: cheapest ? cheapestPrice : null,
+      currency: cheapest ? rateCurrency(cheapest) : "EUR",
+      breakfast_included: anyBreakfast,
+      free_cancellation: anyRefundable,
       rooms_available: item?.roomTypes?.length ?? null,
       raw: item ?? null,
       updated_at: new Date().toISOString(),
