@@ -1,11 +1,24 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Flame, Sparkles, ArrowLeft, PartyPopper, Send, Bot } from "lucide-react";
+import {
+  Flame, Sparkles, ArrowLeft, PartyPopper, Send, Bot,
+  CalendarDays, Clock, MapPin, Swords, Heart,
+} from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import hoguera1 from "@/assets/fiestas-hoguera-1.jpg";
+import moros1 from "@/assets/fiestas-moros-1.jpg";
+import cristianos1 from "@/assets/fiestas-cristianos-1.jpg";
+import morosBatalla from "@/assets/fiestas-moros-batalla.jpg";
+import barraca1 from "@/assets/fiestas-barraca-1.jpg";
+import {
+  PROGRAMA_2026, PREVIA_2026, MASCLETAS_2026, FUEGOS_2026,
+  COSO_MULTICOLOR_2026, calcularFase,
+  type Acto, type Jornada,
+} from "@/data/fiestas-program";
+import { MOROS_BARRIOS, MOROS_ELEMENTOS } from "@/data/moros-cristianos";
 import hoguera2 from "@/assets/fiestas-hoguera-2.jpg";
 import mascleta1 from "@/assets/fiestas-mascleta-1.jpg";
 import mascleta2 from "@/assets/fiestas-mascleta-2.jpg";
