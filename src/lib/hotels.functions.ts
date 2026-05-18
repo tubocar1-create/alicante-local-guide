@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { syncStaticHotelsImpl } from "./hotels.server";
+import { fetchHotelCalendarImpl } from "./hotels-liteapi.server";
 
 export const syncStaticHotels = createServerFn({ method: "POST" }).handler(
   async () => {
