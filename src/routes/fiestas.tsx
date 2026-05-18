@@ -587,7 +587,7 @@ function ActoBloque({
       </p>,
     );
     const foto = fotos[i];
-    if (foto) {
+    if (foto && foto.src) {
       bloques.push(
         <figure
           key={`f-${i}`}
