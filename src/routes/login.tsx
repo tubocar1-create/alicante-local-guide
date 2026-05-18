@@ -19,19 +19,28 @@ function LoginPage() {
   const [name, setName] = useState("");
   const [surname, setSurname] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const trimmed = name.trim();
-    if (trimmed.length < 2) {
-      toast.error("Pon al menos 2 letras 🙃");
+    const n = name.trim();
+    const s = surname.trim();
+    const em = email.trim();
+    if (n.length < 2) {
+      toast.error("Pon al menos 2 letras en el nombre 🙃");
+      return;
+    }
+    if (s.length < 2) {
+      toast.error("Necesitamos tu apellido");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) {
+      toast.error("Email no válido");
       return;
     }
     setBusy(true);
-    signInWithName(trimmed, { surname, email, phone });
-    toast.success(`¡Bienvenido/a, ${trimmed}!`);
+    signInWithName(n, { surname: s, email: em });
+    toast.success(`¡Bienvenido/a, ${n}!`);
     window.location.assign(redirect);
   }
 
