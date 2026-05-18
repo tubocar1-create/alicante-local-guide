@@ -172,15 +172,16 @@ export async function refreshDynamicHotelsImpl() {
     const item = idToData[r.liteapi_id!];
     const allRates: any[] = [];
     for (const rt of item?.roomTypes ?? []) {
-      for (const rate of rt?.rates ?? []) allRates.push(rate);
+      for (const rate of rt?.rates ?? []) allRates.push({ rate, roomName: rt?.name ?? rate?.name });
     }
-    for (const rate of item?.rates ?? []) allRates.push(rate);
+    for (const rate of item?.rates ?? []) allRates.push({ rate, roomName: rate?.name });
 
     let cheapest: any = null;
     let cheapestPrice = Infinity;
     let anyBreakfast = false;
     let anyRefundable = false;
-    for (const rate of allRates) {
+    const byType: Record<string, { price: number; currency: string; label: string }> = {};
+    for (const { rate, roomName } of allRates) {
       const p = ratePrice(rate);
       if (p != null && p < cheapestPrice) {
         cheapestPrice = p;
@@ -188,7 +189,17 @@ export async function refreshDynamicHotelsImpl() {
       }
       if (hasBreakfast(rate)) anyBreakfast = true;
       if (isRefundable(rate)) anyRefundable = true;
+      const cat = classifyRoom(roomName ?? "");
+      if (p != null) {
+        const cur = rateCurrency(rate);
+        if (!byType[cat] || p < byType[cat].price) {
+          byType[cat] = { price: p, currency: cur, label: roomName ?? cat };
+        }
+      }
     }
+    const room_types = ROOM_ORDER.flatMap((k) =>
+      byType[k] ? [{ type: k, price: byType[k].price, currency: byType[k].currency, label: byType[k].label }] : [],
+    );
 
     return {
       hotel_id: r.id,
@@ -198,6 +209,7 @@ export async function refreshDynamicHotelsImpl() {
       breakfast_included: anyBreakfast,
       free_cancellation: anyRefundable,
       rooms_available: item?.roomTypes?.length ?? null,
+      room_types,
       raw: item ?? null,
       updated_at: new Date().toISOString(),
     };
