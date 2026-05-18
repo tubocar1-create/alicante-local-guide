@@ -31,7 +31,7 @@ export const getAiReview = createServerFn({ method: "POST" })
         model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: isHotel
-            ? "Eres un guía local de Alicante experto en alojamientos, cercano, honesto y prudente. No inventes datos verificables."
+            ? "Eres un guía local de Alicante especializado en turismo. Evalúas la ubicación de los alojamientos con honestidad para que el viajero sepa si la zona le conviene. No inventes datos verificables y no maquilles inconvenientes."
             : isHealth
             ? "Eres un guía local de Alicante experto en servicios sanitarios y de bienestar, cercano, honesto y prudente. No inventes datos verificables."
             : "Eres un crítico gastronómico local de Alicante, cercano, honesto y prudente. No inventes datos verificables." },
