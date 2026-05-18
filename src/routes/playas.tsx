@@ -1,7 +1,12 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
-import { ArrowLeft, MapPin, Waves, Navigation, Camera, Car, Train, Footprints } from "lucide-react";
+import { ArrowLeft, MapPin, Waves, Navigation, Camera, Car, Train, Footprints, Sparkles, ChevronRight } from "lucide-react";
+import { getMapBeaches, getCoastIntro } from "@/lib/playas-map.functions";
 
 export const Route = createFileRoute("/playas")({
+  loader: async () => {
+    const [beaches, intro] = await Promise.all([getMapBeaches(), getCoastIntro()]);
+    return { beaches, intro };
+  },
   head: () => ({
     meta: [
       { title: "Playas de Alicante — Guía visual con fotos reales" },
@@ -152,6 +157,7 @@ const zoneSummary = [
 
 function PlayasPage() {
   const location = useLocation();
+  const { beaches: mapBeaches, intro } = Route.useLoaderData();
 
   if (location.pathname !== "/playas") {
     return <Outlet />;
@@ -199,7 +205,58 @@ function PlayasPage() {
           ))}
         </section>
 
-        
+
+        <section className="mt-8 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-sky-100">
+          <div className="flex items-center gap-2 text-cyan-700">
+            <Sparkles className="h-4 w-4" />
+            <p className="text-[11px] font-black uppercase tracking-[0.2em]">Comentario IA</p>
+          </div>
+          <p className="mt-3 text-[15px] font-medium leading-relaxed text-slate-800">{intro.text}</p>
+        </section>
+
+        <section className="mt-6">
+          <div className="mb-3 flex items-end justify-between gap-3">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-700">17 playas del mapa</p>
+              <h2 className="mt-1 text-2xl font-black text-slate-950">Desliza y elige tu playa</h2>
+            </div>
+            <Link
+              to="/playas/mapa"
+              className="inline-flex items-center gap-1 rounded-full bg-cyan-600 px-3 py-2 text-xs font-black text-white shadow"
+            >
+              <MapPin className="h-3.5 w-3.5" /> Mapa
+            </Link>
+          </div>
+          <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-3">
+            {mapBeaches.map((b: typeof mapBeaches[number]) => (
+              <Link
+                key={b.slug}
+                to="/playas/$slug"
+                params={{ slug: b.slug }}
+                className="group relative h-56 w-44 flex-none snap-start overflow-hidden rounded-2xl bg-slate-200 shadow ring-1 ring-sky-100 sm:h-64 sm:w-52"
+              >
+                {b.photo ? (
+                  <img
+                    src={b.photo}
+                    alt={b.name}
+                    loading="lazy"
+                    className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-sky-600" />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 p-3 text-white">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-100">Playa</p>
+                  <p className="mt-1 text-sm font-black leading-tight">{b.name}</p>
+                  <p className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-cyan-100">
+                    Ver ficha <ChevronRight className="h-3 w-3" />
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
 
         <section className="mt-8 grid gap-4 sm:grid-cols-2">
           {BEACHES.map((beach) => (

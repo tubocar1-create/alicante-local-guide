@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 
 export type Beach = {
+  slug: string;
   name: string;
   lat: number;
   lng: number;
@@ -89,9 +90,10 @@ export function LeafletMap({ beaches }: { beaches: Beach[] }) {
         });
         marker.addListener("click", () => {
           info.setContent(
-            `<div style="min-width:180px;font-family:system-ui">
+            `<div style="min-width:200px;font-family:system-ui">
               <strong style="color:#1565c0;font-size:14px">${b.name}</strong>
-              <p style="margin:4px 0 0;font-size:12px;color:#475569">${b.description}</p>
+              <p style="margin:4px 0 8px;font-size:12px;color:#475569">${b.description}</p>
+              <a href="/playas/${b.slug}" style="display:inline-block;background:#0891b2;color:#fff;padding:6px 12px;border-radius:9999px;font-size:12px;font-weight:800;text-decoration:none">Ver ficha →</a>
             </div>`,
           );
           info.open({ anchor: marker, map });

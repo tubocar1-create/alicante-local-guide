@@ -36,6 +36,7 @@ import { Route as ThreadsIdRouteImport } from './routes/threads.$id'
 import { Route as SaludCategoriaRouteImport } from './routes/salud_.$categoria'
 import { Route as RestaurantsPlaceIdRouteImport } from './routes/restaurants.$placeId'
 import { Route as PlayasMapaRouteImport } from './routes/playas.mapa'
+import { Route as PlayasSlugRouteImport } from './routes/playas.$slug'
 import { Route as OcioTeatrosRouteImport } from './routes/ocio_.teatros'
 import { Route as OcioConciertosRouteImport } from './routes/ocio_.conciertos'
 import { Route as OcioCinesRouteImport } from './routes/ocio_.cines'
@@ -202,6 +203,11 @@ const RestaurantsPlaceIdRoute = RestaurantsPlaceIdRouteImport.update({
 const PlayasMapaRoute = PlayasMapaRouteImport.update({
   id: '/mapa',
   path: '/mapa',
+  getParentRoute: () => PlayasRoute,
+} as any)
+const PlayasSlugRoute = PlayasSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
   getParentRoute: () => PlayasRoute,
 } as any)
 const OcioTeatrosRoute = OcioTeatrosRouteImport.update({
@@ -406,6 +412,7 @@ export interface FileRoutesByFullPath {
   '/ocio/cines': typeof OcioCinesRouteWithChildren
   '/ocio/conciertos': typeof OcioConciertosRoute
   '/ocio/teatros': typeof OcioTeatrosRoute
+  '/playas/$slug': typeof PlayasSlugRoute
   '/playas/mapa': typeof PlayasMapaRoute
   '/restaurants/$placeId': typeof RestaurantsPlaceIdRoute
   '/salud/$categoria': typeof SaludCategoriaRouteWithChildren
@@ -466,6 +473,7 @@ export interface FileRoutesByTo {
   '/ocio/cines': typeof OcioCinesRouteWithChildren
   '/ocio/conciertos': typeof OcioConciertosRoute
   '/ocio/teatros': typeof OcioTeatrosRoute
+  '/playas/$slug': typeof PlayasSlugRoute
   '/playas/mapa': typeof PlayasMapaRoute
   '/restaurants/$placeId': typeof RestaurantsPlaceIdRoute
   '/salud/$categoria': typeof SaludCategoriaRouteWithChildren
@@ -528,6 +536,7 @@ export interface FileRoutesById {
   '/ocio_/cines': typeof OcioCinesRouteWithChildren
   '/ocio_/conciertos': typeof OcioConciertosRoute
   '/ocio_/teatros': typeof OcioTeatrosRoute
+  '/playas/$slug': typeof PlayasSlugRoute
   '/playas/mapa': typeof PlayasMapaRoute
   '/restaurants/$placeId': typeof RestaurantsPlaceIdRoute
   '/salud_/$categoria': typeof SaludCategoriaRouteWithChildren
@@ -591,6 +600,7 @@ export interface FileRouteTypes {
     | '/ocio/cines'
     | '/ocio/conciertos'
     | '/ocio/teatros'
+    | '/playas/$slug'
     | '/playas/mapa'
     | '/restaurants/$placeId'
     | '/salud/$categoria'
@@ -651,6 +661,7 @@ export interface FileRouteTypes {
     | '/ocio/cines'
     | '/ocio/conciertos'
     | '/ocio/teatros'
+    | '/playas/$slug'
     | '/playas/mapa'
     | '/restaurants/$placeId'
     | '/salud/$categoria'
@@ -712,6 +723,7 @@ export interface FileRouteTypes {
     | '/ocio_/cines'
     | '/ocio_/conciertos'
     | '/ocio_/teatros'
+    | '/playas/$slug'
     | '/playas/mapa'
     | '/restaurants/$placeId'
     | '/salud_/$categoria'
@@ -969,6 +981,13 @@ declare module '@tanstack/react-router' {
       path: '/mapa'
       fullPath: '/playas/mapa'
       preLoaderRoute: typeof PlayasMapaRouteImport
+      parentRoute: typeof PlayasRoute
+    }
+    '/playas/$slug': {
+      id: '/playas/$slug'
+      path: '/$slug'
+      fullPath: '/playas/$slug'
+      preLoaderRoute: typeof PlayasSlugRouteImport
       parentRoute: typeof PlayasRoute
     }
     '/ocio_/teatros': {
@@ -1263,10 +1282,12 @@ const BusinessRouteWithChildren = BusinessRoute._addFileChildren(
 )
 
 interface PlayasRouteChildren {
+  PlayasSlugRoute: typeof PlayasSlugRoute
   PlayasMapaRoute: typeof PlayasMapaRoute
 }
 
 const PlayasRouteChildren: PlayasRouteChildren = {
+  PlayasSlugRoute: PlayasSlugRoute,
   PlayasMapaRoute: PlayasMapaRoute,
 }
 
