@@ -248,7 +248,7 @@ export default function ReferralDialog({ placeId, placeName, autoCelebrate, onCl
             )}
             <h3 className="text-base font-semibold leading-tight">Tu QR para {placeName}</h3>
             <p className="mt-1 text-[11px] text-muted-foreground">
-              Enséñalo en el local hoy. Cuando lo escaneen y validen, sumarás tus AFP.
+              Enséñalo en el local hoy para que validen tu visita.
             </p>
 
             <div className="mt-4 flex flex-col items-center gap-3">
