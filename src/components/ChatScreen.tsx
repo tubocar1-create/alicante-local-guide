@@ -336,7 +336,8 @@ function markRestaurantReturn() {
 export function ChatScreen() {
   const navigate = useNavigate();
   const { user: authUser } = useAuth();
-  const firstName = authUser?.name?.trim().split(" ")[0];
+  const [canShowPersonalName, setCanShowPersonalName] = useState(false);
+  const firstName = canShowPersonalName ? authUser?.name?.trim().split(" ")[0] : "";
   const [messages, setMessages] = useState<Msg[]>([GREETING]);
   const restoredReturnRef = useRef(false);
   const [input, setInput] = useState("");
@@ -353,6 +354,10 @@ export function ChatScreen() {
   const [mode, setMode] = useState<"transit" | null>(null);
   const [showBusPicker, setShowBusPicker] = useState(false);
   const [showFlightPicker, setShowFlightPicker] = useState(false);
+
+  useEffect(() => {
+    setCanShowPersonalName(true);
+  }, []);
 
   useEffect(() => {
     const restored = readInitialMessages();
