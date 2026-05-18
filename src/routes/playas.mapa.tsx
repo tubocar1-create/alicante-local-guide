@@ -5,6 +5,9 @@ import { MAP_BEACHES } from "@/lib/playas-map-data";
 
 export const Route = createFileRoute("/playas/mapa")({
   ssr: false,
+  staleTime: Infinity,
+  gcTime: Infinity,
+  shouldReload: false,
   head: () => ({
     meta: [
       { title: "Mapa interactivo de las playas de Alicante" },
