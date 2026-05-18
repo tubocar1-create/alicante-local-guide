@@ -153,12 +153,18 @@ function HotelDetail() {
         ) : (
           <>
             <div className="overflow-hidden rounded-2xl border border-amber-100/[0.08] bg-[rgba(20,10,4,0.7)] backdrop-blur-xl">
-              {h.main_image ? (
-                <img
-                  src={h.main_image}
-                  alt={h.name}
-                  className="h-56 w-full object-cover md:h-72"
-                />
+              {gallery.length > 0 ? (
+                <div className="flex h-56 snap-x snap-mandatory gap-1 overflow-x-auto md:h-72 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {gallery.map((src, i) => (
+                    <img
+                      key={i}
+                      src={src}
+                      alt={`${h.name} foto ${i + 1}`}
+                      loading={i === 0 ? "eager" : "lazy"}
+                      className="h-full w-[88%] flex-none snap-start object-cover md:w-[60%]"
+                    />
+                  ))}
+                </div>
               ) : (
                 <div className="flex h-40 items-center justify-center text-5xl opacity-30">🏨</div>
               )}
