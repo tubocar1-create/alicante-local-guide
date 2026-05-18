@@ -1,11 +1,24 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Flame, Sparkles, ArrowLeft, PartyPopper, Send, Bot } from "lucide-react";
+import {
+  Flame, Sparkles, ArrowLeft, PartyPopper, Send, Bot,
+  CalendarDays, Clock, MapPin, Swords, Heart,
+} from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 import hoguera1 from "@/assets/fiestas-hoguera-1.jpg";
+import moros1 from "@/assets/fiestas-moros-1.jpg";
+import cristianos1 from "@/assets/fiestas-cristianos-1.jpg";
+import morosBatalla from "@/assets/fiestas-moros-batalla.jpg";
+import barraca1 from "@/assets/fiestas-barraca-1.jpg";
+import {
+  PROGRAMA_2026, PREVIA_2026, MASCLETAS_2026, FUEGOS_2026,
+  COSO_MULTICOLOR_2026, calcularFase,
+  type Acto, type Jornada,
+} from "@/data/fiestas-program";
+import { MOROS_BARRIOS, MOROS_ELEMENTOS } from "@/data/moros-cristianos";
 import hoguera2 from "@/assets/fiestas-hoguera-2.jpg";
 import mascleta1 from "@/assets/fiestas-mascleta-1.jpg";
 import mascleta2 from "@/assets/fiestas-mascleta-2.jpg";
@@ -129,6 +142,333 @@ function FloatingEmojis() {
         </span>
       ))}
     </div>
+  );
+}
+
+// ============================================================
+// PROGRAMA 2026 — datos verificados, voz de alicantino
+// ============================================================
+
+function FaseBanner({ fase }: { fase: ReturnType<typeof calcularFase> }) {
+  const conf = {
+    "previa": {
+      bg: "from-amber-500/30 to-orange-600/20",
+      ring: "ring-amber-300/50",
+      emoji: "⏳",
+      titulo: "Aún quedan días… y se nota",
+      texto:
+        "Estamos en cuenta atrás. Las comisiones ya están ensayando, los ninots casi listos en los talleres y los foguerers no duermen. Mira la guía y elige qué vivir.",
+    },
+    "semana-grande": {
+      bg: "from-orange-500/40 to-red-600/30",
+      ring: "ring-orange-300/60 animate-fire-glow",
+      emoji: "🔥",
+      titulo: "¡Estamos en plena semana grande!",
+      texto:
+        "Hoy Alicante huele a pólvora y a buñuelos. Cada hora hay algo. Sal a la calle, no te lo pienses.",
+    },
+    "fuegos-postiguet": {
+      bg: "from-pink-500/30 to-purple-600/20",
+      ring: "ring-pink-300/60",
+      emoji: "🎆",
+      titulo: "Castillos en el Postiguet",
+      texto:
+        "Las hogueras ya ardieron, pero la pólvora sigue: cinco noches de castillos sobre la playa. Llévate una toalla y la mejor compañía.",
+    },
+    "nostalgia": {
+      bg: "from-indigo-500/20 to-amber-500/10",
+      ring: "ring-amber-300/30",
+      emoji: "🕯️",
+      titulo: "Y ya está… hasta el año que viene",
+      texto:
+        "El olor a humo se ha ido, pero la palmera de Santa Bárbara sigue viva en la cabeza. Aquí te dejo el recuerdo del programa 2026, para que cuentes los días hasta las próximas.",
+    },
+  }[fase];
+
+  return (
+    <div className={`rounded-2xl bg-gradient-to-br ${conf.bg} p-4 ring-1 ${conf.ring}`}>
+      <div className="flex items-start gap-3">
+        <span className="text-3xl">{conf.emoji}</span>
+        <div>
+          <h4 className="text-base font-extrabold text-amber-50">{conf.titulo}</h4>
+          <p className="mt-1 text-sm leading-relaxed text-amber-100/90">{conf.texto}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ActoRow({ acto }: { acto: Acto }) {
+  const tipoColor: Record<string, string> = {
+    pirotecnia: "bg-orange-500/20 text-orange-200 ring-orange-400/40",
+    desfile: "bg-pink-500/20 text-pink-200 ring-pink-400/40",
+    ofrenda: "bg-amber-400/20 text-amber-200 ring-amber-300/40",
+    crema: "bg-red-500/20 text-red-200 ring-red-400/40",
+    noche: "bg-indigo-500/20 text-indigo-200 ring-indigo-400/40",
+    dia: "bg-white/10 text-amber-100 ring-white/20",
+  };
+  const cls = tipoColor[acto.tipo ?? "dia"];
+  return (
+    <li className="flex gap-3 border-l-2 border-amber-300/30 pl-3">
+      <div className="flex min-w-[52px] items-center gap-1 pt-0.5 text-xs font-bold text-amber-200">
+        <Clock className="h-3 w-3" /> {acto.hora}
+      </div>
+      <div className="flex-1">
+        <p className="text-sm font-semibold text-amber-50">{acto.titulo}</p>
+        {acto.lugar && (
+          <p className="mt-0.5 flex items-center gap-1 text-[11px] text-amber-200/70">
+            <MapPin className="h-3 w-3" /> {acto.lugar}
+          </p>
+        )}
+        {acto.tipo && (
+          <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ${cls}`}>
+            {acto.tipo}
+          </span>
+        )}
+      </div>
+    </li>
+  );
+}
+
+function JornadaCard({ jornada, destacar }: { jornada: Jornada; destacar?: boolean }) {
+  return (
+    <article
+      className={`shrink-0 w-[86vw] max-w-[380px] snap-start rounded-2xl bg-black/40 p-4 ring-1 ${
+        destacar ? "ring-amber-300/70 shadow-[0_0_30px_-5px_rgba(251,191,36,0.5)]" : "ring-white/10"
+      }`}
+    >
+      <header className="mb-3">
+        <p className="text-[11px] font-bold uppercase tracking-widest text-amber-300">
+          {jornada.etiqueta}
+        </p>
+        {jornada.titular && (
+          <h5 className="mt-0.5 text-lg font-extrabold leading-tight text-amber-50">
+            {jornada.titular}
+          </h5>
+        )}
+      </header>
+      <ul className="space-y-2.5">
+        {jornada.actos.map((a, i) => <ActoRow key={i} acto={a} />)}
+      </ul>
+    </article>
+  );
+}
+
+function ProgramaSection() {
+  const fase = useMemo(() => calcularFase(), []);
+  const hoy = new Date().toISOString().slice(0, 10);
+
+  return (
+    <section className="space-y-4 animate-rise">
+      <div className="flex items-center gap-2">
+        <CalendarDays className="h-6 w-6 text-amber-300 animate-spark" />
+        <h3 className="text-2xl font-extrabold">Programa Hogueras 2026</h3>
+      </div>
+
+      <FaseBanner fase={fase} />
+
+      <div className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
+        <p className="text-sm leading-relaxed text-amber-100">
+          Te lo cuento como se lo cuento a mi primo de Madrid cuando viene por primera vez:
+          las Hogueras <strong>no empiezan el 20 de junio</strong>. Empiezan en abril,
+          en silencio, cuando se elige la <strong>Bellea del Foc</strong> y los artistas
+          empiezan a moldear los ninots. Luego vienen el Pregón, la Cabalgata… y un día,
+          de repente, suena la primera mascletà y ya no hay marcha atrás.
+        </p>
+        <ul className="mt-3 space-y-1 text-[13px] text-amber-100/90">
+          {PREVIA_2026.map((p, i) => (
+            <li key={i} className="flex gap-2"><span className="text-amber-300">•</span>{p}</li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="-mx-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex snap-x snap-mandatory gap-3 px-4">
+          {PROGRAMA_2026.map((j) => (
+            <JornadaCard key={j.fecha} jornada={j} destacar={j.fecha === hoy} />
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-2xl bg-gradient-to-br from-orange-600/30 to-red-700/20 p-4 ring-1 ring-orange-400/40">
+        <h4 className="mb-2 flex items-center gap-2 text-lg font-extrabold text-amber-50">
+          💥 Las mascletàs de Luceros · 14:00 h
+        </h4>
+        <p className="mb-3 text-sm text-amber-100/90">
+          Una al día, del 18 al 24 de junio. Llega <strong>una hora antes</strong> mínimo
+          y no te pongas justo delante si es tu primera vez —el suelo tiembla.
+        </p>
+        <ul className="grid grid-cols-2 gap-1.5 text-xs">
+          {MASCLETAS_2026.map((m) => (
+            <li key={m.dia} className="rounded-lg bg-black/30 px-2 py-1.5 ring-1 ring-white/10">
+              <span className="font-bold text-amber-200">{m.dia}</span>{" "}
+              <span className="text-amber-100/90">{m.pirotecnico}</span>
+              {m.nota && <span className="text-amber-200/60"> · {m.nota}</span>}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="rounded-2xl bg-gradient-to-br from-pink-600/30 to-purple-700/20 p-4 ring-1 ring-pink-400/40">
+        <h4 className="mb-2 flex items-center gap-2 text-lg font-extrabold text-amber-50">
+          🎆 Castillos del Postiguet · 00:00 h
+        </h4>
+        <p className="mb-3 text-sm text-amber-100/90">
+          Las hogueras ya ardieron, pero la fiesta continúa. Cinco noches de pirotecnia
+          sobre la <strong>Playa del Postiguet / Cocó</strong>. Llévate la toalla y siéntate
+          en la arena: es de las cosas más bonitas que vas a vivir.
+        </p>
+        <ul className="grid grid-cols-1 gap-1.5 text-xs">
+          {FUEGOS_2026.map((f) => (
+            <li key={f.dia} className="flex justify-between rounded-lg bg-black/30 px-2 py-1.5 ring-1 ring-white/10">
+              <span className="font-bold text-amber-200">{f.dia}</span>
+              <span className="text-amber-100/90">{f.pirotecnico}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="rounded-2xl bg-white/5 p-4 ring-1 ring-amber-300/30">
+        <h4 className="flex items-center gap-2 text-lg font-extrabold text-amber-50">
+          🎉 Coso Multicolor — el adiós oficial
+        </h4>
+        <p className="mt-1 text-sm text-amber-100/90">
+          <strong>{COSO_MULTICOLOR_2026.etiqueta} · {COSO_MULTICOLOR_2026.hora} h</strong>
+          <br />
+          {COSO_MULTICOLOR_2026.recorrido}
+        </p>
+        <p className="mt-2 text-sm text-amber-100/90">{COSO_MULTICOLOR_2026.descripcion}</p>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl ring-1 ring-amber-300/30">
+        <img
+          src={barraca1}
+          alt="Barraca de Hogueras de noche"
+          loading="lazy"
+          width={1280}
+          height={896}
+          className="h-44 w-full object-cover"
+        />
+        <div className="bg-black/50 p-4">
+          <h4 className="text-lg font-extrabold text-amber-50">🏕️ Barracas y racós</h4>
+          <p className="mt-1 text-sm text-amber-100/90">
+            Las <strong>barracas</strong> abren el 20 por la noche y son <em>la fiesta</em>:
+            música hasta el amanecer, comida casera, cerveza, amigos y desconocidos que
+            terminan abrazados. Los <strong>racós</strong> son su versión pequeña, más
+            de barrio. Si quieres entender por qué los alicantinos no duermen en
+            junio, métete en una.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ============================================================
+// MOROS Y CRISTIANOS — capítulo aparte, alma de barrio
+// ============================================================
+
+function MorosCristianosSection() {
+  return (
+    <section className="space-y-4 animate-rise">
+      <div className="flex items-center gap-2">
+        <Swords className="h-6 w-6 text-amber-300 animate-spark" />
+        <h3 className="text-2xl font-extrabold">Moros y Cristianos</h3>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl ring-1 ring-amber-300/30">
+        <img
+          src={moros1}
+          alt="Desfile mora con tambores"
+          loading="lazy"
+          width={1280}
+          height={896}
+          className="h-56 w-full object-cover"
+        />
+      </div>
+
+      <p className="text-sm leading-relaxed text-amber-100">
+        Si las Hogueras son la cara internacional de Alicante, los{" "}
+        <strong>Moros y Cristianos</strong> son su <strong>alma de barrio</strong>.
+        Aquí no hay turistas con cámaras enormes: hay vecinos que llevan toda la
+        vida en la misma comparsa, abuelos que les enseñaron a sus nietos a marcar
+        el paso, y barrios enteros que se vuelcan en una sola semana.
+      </p>
+
+      <p className="text-sm leading-relaxed text-amber-100">
+        Recuerdan la <strong>Reconquista</strong> de la ciudad allá por el siglo XIII,
+        pero más que una clase de historia son <em>una excusa para vivir</em>:
+        para ponerse un traje espectacular, beber con los amigos en la kábila,
+        oír la banda de música y disparar arcabuces hasta que huele a pólvora
+        durante días.
+      </p>
+
+      <h4 className="pt-2 text-lg font-extrabold text-amber-200">
+        Los barrios que la viven
+      </h4>
+      <div className="-mx-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex snap-x snap-mandatory gap-3 px-4">
+          {MOROS_BARRIOS.map((b) => (
+            <article
+              key={b.barrio}
+              className="shrink-0 w-[78vw] max-w-[330px] snap-start rounded-2xl bg-black/40 p-4 ring-1 ring-amber-300/20"
+            >
+              <p className="text-[11px] font-bold uppercase tracking-widest text-amber-300">
+                {b.cuando}
+              </p>
+              <h5 className="mt-0.5 text-lg font-extrabold text-amber-50">{b.barrio}</h5>
+              <p className="mt-1 text-xs italic text-amber-200/80">{b.caracter}</p>
+              <p className="mt-2 text-sm text-amber-100/90">{b.detalle}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <img
+          src={cristianos1}
+          alt="Comparsa cristiana"
+          loading="lazy"
+          width={1280}
+          height={896}
+          className="h-40 w-full rounded-xl object-cover ring-1 ring-amber-300/30"
+        />
+        <img
+          src={morosBatalla}
+          alt="Reconstrucción de batalla nocturna"
+          loading="lazy"
+          width={1280}
+          height={896}
+          className="h-40 w-full rounded-xl object-cover ring-1 ring-amber-300/30"
+        />
+      </div>
+
+      <h4 className="pt-2 text-lg font-extrabold text-amber-200">
+        Cómo se vive (las claves)
+      </h4>
+      <div className="space-y-2">
+        {MOROS_ELEMENTOS.map((el) => (
+          <div
+            key={el.titulo}
+            className="rounded-2xl bg-white/5 p-3 ring-1 ring-white/10"
+          >
+            <p className="text-sm font-extrabold text-amber-100">{el.titulo}</p>
+            <p className="mt-1 text-[13px] text-amber-100/90">{el.descripcion}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="rounded-2xl bg-amber-500/15 p-4 ring-1 ring-amber-300/40">
+        <p className="flex items-start gap-2 text-sm text-amber-100">
+          <Heart className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+          <span>
+            Si vas a alguna, no te quedes solo en el desfile: <strong>busca la
+            kábila</strong>, pide permiso para asomarte y déjate invitar a una
+            cerveza. Eso es Alicante. Eso es lo que no sale en las guías.
+          </span>
+        </p>
+      </div>
+    </section>
   );
 }
 
@@ -360,6 +700,9 @@ function FiestasPage() {
         {/* Chat IA */}
         <FiestasChat />
 
+        {/* Programa 2026 verificado */}
+        <ProgramaSection />
+
         {/* Hogueras */}
         <section className="animate-rise">
           <div className="mb-3 flex items-center gap-2">
@@ -404,6 +747,9 @@ function FiestasPage() {
           </p>
           <PhotoStrip photos={TRADICIONES_PHOTOS} accent="#fbbf24" />
         </section>
+
+        {/* Moros y Cristianos — alma de barrio */}
+        <MorosCristianosSection />
 
         {/* Tips */}
         <section className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10 animate-rise">
