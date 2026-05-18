@@ -577,7 +577,7 @@ export function ChatScreen() {
                         if (s.label === "🏖️ Turismo, playa y aventuras") {
                           const playa = s.submenu?.find((o) => o.label === "🏖️ Playa");
                           if (playa?.prompt) {
-                            send(playa.prompt, { mode: null });
+                            send(playa.prompt, { mode: "guide" });
                             return;
                           }
                         }
