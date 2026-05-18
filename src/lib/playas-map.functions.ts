@@ -96,6 +96,8 @@ export const getMapBeaches = createServerFn({ method: "GET" }).handler(
   async (): Promise<MapBeachWithCover[]> => {
     const results = await Promise.all(
       MAP_BEACHES.map(async (b) => {
+        const local = LOCAL_BEACH_PHOTOS[b.slug] ?? [];
+        if (local.length > 0) return { ...b, photo: local[0] };
         const placeId = await findPlaceId(b);
         let photo: string | null = null;
         if (placeId) {
