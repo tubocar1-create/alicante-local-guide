@@ -339,7 +339,7 @@ function ProgramaSection() {
 
       <div className="overflow-hidden rounded-2xl ring-1 ring-amber-300/30">
         <img
-          src={barraca1}
+          src={desfile1}
           alt="Barraca de Hogueras de noche"
           loading="lazy"
           width={1280}
