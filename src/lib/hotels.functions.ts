@@ -53,6 +53,37 @@ export const getHotelCalendar = createServerFn({ method: "GET" })
     }
   });
 
+async function hasForegroundPerson(url: string, aiKey: string): Promise<boolean> {
+  try {
+    const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${aiKey}` },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text:
+                  "Does this photo show one or more people as the main subject in the foreground (close-up portraits, selfies, group shots, staff/guests posing)? Answer with a single word: YES or NO. Small distant people in the background count as NO.",
+              },
+              { type: "image_url", image_url: { url } },
+            ],
+          },
+        ],
+      }),
+    });
+    if (!r.ok) return false;
+    const j = (await r.json()) as { choices?: Array<{ message?: { content?: string } }> };
+    const t = (j.choices?.[0]?.message?.content ?? "").toString().trim().toUpperCase();
+    return t.startsWith("Y");
+  } catch {
+    return false;
+  }
+}
+
 export const getHotelPhotos = createServerFn({ method: "GET" })
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data }) => {
@@ -63,9 +94,15 @@ export const getHotelPhotos = createServerFn({ method: "GET" })
       .select("raw")
       .eq("id", data.id)
       .maybeSingle();
-    const photos = ((row?.raw as { photos?: Array<{ name: string }> } | null)?.photos ?? []).slice(0, 20);
+    const raw = (row?.raw ?? {}) as {
+      photos?: Array<{ name: string }>;
+      photo_filter?: Record<string, "ok" | "person">;
+    };
+    const photos = (raw.photos ?? []).slice(0, 20);
     if (!photos.length) return { photos: [] as string[] };
-    const urls = await Promise.all(
+
+    // Resolve URLs in parallel
+    const resolved = await Promise.all(
       photos.map(async (p) => {
         try {
           const r = await fetch(
@@ -73,11 +110,33 @@ export const getHotelPhotos = createServerFn({ method: "GET" })
           );
           if (!r.ok) return null;
           const j = (await r.json()) as { photoUri?: string };
-          return j.photoUri ?? null;
+          return j.photoUri ? { name: p.name, url: j.photoUri } : null;
         } catch {
           return null;
         }
       }),
     );
-    return { photos: urls.filter((u): u is string => !!u) };
+    const ok = resolved.filter((x): x is { name: string; url: string } => !!x);
+
+    // Classify (cached per photo name) — drop foreground people
+    const aiKey = process.env.LOVABLE_API_KEY;
+    const cache = { ...(raw.photo_filter ?? {}) };
+    if (aiKey) {
+      const toCheck = ok.filter((p) => !cache[p.name]);
+      const verdicts = await Promise.all(
+        toCheck.map(async (p) => ({
+          name: p.name,
+          person: await hasForegroundPerson(p.url, aiKey),
+        })),
+      );
+      for (const v of verdicts) cache[v.name] = v.person ? "person" : "ok";
+      if (verdicts.length) {
+        await supabaseAdmin
+          .from("hotels_static")
+          .update({ raw: { ...raw, photo_filter: cache } as never })
+          .eq("id", data.id);
+      }
+    }
+
+    return { photos: ok.filter((p) => cache[p.name] !== "person").map((p) => p.url) };
   });
