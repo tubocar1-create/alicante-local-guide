@@ -38,6 +38,24 @@ function MapaPlayasPage() {
       />
       <div className="absolute inset-0 bg-gradient-to-br from-sky-900/35 via-sky-700/15 to-cyan-300/10" />
 
+      {MAP_BEACHES.map((beach) => (
+        <div key={beach.name} className="group absolute z-20" style={beach.position}>
+          <div className="relative">
+            <button
+              type="button"
+              aria-label={beach.name}
+              className="h-7 w-7 animate-pulse rounded-full border-4 border-white bg-orange-500 shadow-lg transition-transform hover:scale-125 focus:scale-125"
+            />
+            <div className="pointer-events-none absolute left-1/2 top-9 z-30 w-64 -translate-x-1/2 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100 group-active:opacity-100 sm:left-10 sm:top-1/2 sm:w-72 sm:translate-x-0 sm:-translate-y-1/2">
+              <div className="rounded-2xl border border-orange-100 bg-white p-4 shadow-xl">
+                <h3 className="mb-1 text-lg font-black text-[oklch(0.62_0.17_45)]">{beach.name}</h3>
+                <p className="text-sm text-slate-600">{beach.description}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+
       <header className="relative z-10 mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 pt-5">
         <Link
           to="/playas"
@@ -55,28 +73,6 @@ function MapaPlayasPage() {
         <p className="mt-2 max-w-2xl text-sm font-semibold text-white/95 sm:text-base">
           Pulsa o pasa el cursor sobre cada punto naranja para descubrir la playa.
         </p>
-      </div>
-
-      <div className="relative z-10 mx-auto mt-6 h-[78vh] w-full max-w-6xl px-4 pb-10">
-        <div className="relative h-full w-full overflow-hidden rounded-3xl border border-white/40 bg-white/10 shadow-2xl backdrop-blur-sm">
-          {MAP_BEACHES.map((beach) => (
-            <div key={beach.name} className="group absolute" style={beach.position}>
-              <div className="relative">
-                <button
-                  type="button"
-                  aria-label={beach.name}
-                  className="h-7 w-7 animate-pulse rounded-full border-4 border-white bg-orange-500 shadow-lg transition-transform hover:scale-125 focus:scale-125"
-                />
-                <div className="pointer-events-none absolute left-10 top-1/2 z-20 -translate-y-1/2 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100 group-active:opacity-100">
-                  <div className="w-72 rounded-2xl border border-orange-100 bg-white p-4 shadow-xl">
-                    <h3 className="mb-1 text-lg font-black text-[oklch(0.62_0.17_45)]">{beach.name}</h3>
-                    <p className="text-sm text-slate-600">{beach.description}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   );
