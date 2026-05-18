@@ -61,27 +61,20 @@ export const Route = createFileRoute("/fiestas")({
 
 type Photo = { src: string; caption: string };
 
+// Las fotos del relato NO se repiten aquí: estas tiras son fotos extra.
 const HOGUERAS_PHOTOS: Photo[] = [
   { src: hoguera1, caption: "La cremà: la noche en que arde la ciudad" },
-  { src: ninot1, caption: "Ninots gigantes con personalidad propia" },
   { src: hoguera2, caption: "Monumentos de hasta 20 metros de altura" },
-  { src: belleas1, caption: "Belleas del Foc y damas de honor" },
   { src: desfile1, caption: "Desfiles por todas las calles" },
-  { src: crema1, caption: "Llamas que rozan los balcones" },
-  { src: playa1, caption: "Hoguera en la playa de San Juan" },
 ];
 
 const MASCLETAS_PHOTOS: Photo[] = [
-  { src: mascleta1, caption: "La mascletà: pólvora que se siente en el pecho" },
   { src: mascleta2, caption: "Humo de colores sobre Luceros" },
-  { src: fuegos1, caption: "Castillos de fuegos sobre el puerto" },
   { src: fuegos2, caption: "Pirotecnia sobre Santa Bárbara" },
 ];
 
 const TRADICIONES_PHOTOS: Photo[] = [
-  { src: ofrenda1, caption: "Ofrenda de Flores a la Virgen del Remedio" },
-  { src: bunuelos1, caption: "Buñuelos y churros recién hechos" },
-  { src: banya1, caption: "La Banyà: los bomberos te mojan ¡y te ríes!" },
+  { src: playa1, caption: "Hoguera en la playa de San Juan" },
   { src: belleas1, caption: "Trajes valencianos bordados a mano" },
 ];
 
