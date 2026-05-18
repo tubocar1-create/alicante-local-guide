@@ -33,7 +33,7 @@ import {
 import heroImg from "@/assets/alicante-hero.jpg";
 import portadaImg from "@/assets/alicante-portada.jpg";
 import hoguerasIcon from "@/assets/hogueras-alicante.png";
-import vamosLogo from "@/assets/vamos-logo.png";
+import { VamosWord } from "@/components/VamosWord";
 
 const TILE_SUBTITLES: Record<string, string> = {
   "Comer": "Restaurantes y tapas",
@@ -445,14 +445,7 @@ export function ChatScreen() {
                 ¡Hola{firstName ? `, ${firstName}` : ""}!
               </p>
               <p className="text-[12px] leading-tight text-muted-foreground truncate">
-                ¿Qué{" "}
-                <span
-                  className="font-bold uppercase tracking-tight text-primary"
-                  style={{ fontFamily: "'Quicksand', sans-serif" }}
-                >
-                  VAMOS
-                </span>{" "}
-                a descubrir hoy?
+                ¿Qué <VamosWord /> a descubrir hoy?
               </p>
             </div>
           </div>
@@ -920,7 +913,7 @@ function QrVamosInfo({ onClose }: { onClose: () => void }) {
           </div>
           <div className="min-w-0">
             <h3 className="text-lg font-extrabold leading-tight">
-              <span className="text-primary">QR VAMOS</span>
+              QR <VamosWord />
             </h3>
             <p className="text-[11px] text-muted-foreground">
               Tu llave de amigo local en Alicante
@@ -929,7 +922,7 @@ function QrVamosInfo({ onClose }: { onClose: () => void }) {
         </div>
 
         <p className="mt-3 text-sm text-foreground/90">
-          Con un <b>QR VAMOS</b> entras como un local, no como un turista. Esto es lo que te llevas:
+          Con un <b>QR <VamosWord /></b> entras como un local, no como un turista. Esto es lo que te llevas:
         </p>
 
         <ul className="mt-3 space-y-2.5">
@@ -947,7 +940,7 @@ function QrVamosInfo({ onClose }: { onClose: () => void }) {
         </ul>
 
         <p className="mt-3 text-[11px] text-muted-foreground">
-          ¿Cómo se consigue? Pulsa <b>VAMOS</b> en cualquier sitio que te recomiende tu amigo local y generas tu QR del día.
+          ¿Cómo se consigue? Pulsa <VamosWord /> en cualquier sitio que te recomiende tu amigo local y generas tu QR del día.
         </p>
 
         <button

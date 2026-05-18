@@ -144,7 +144,7 @@ function PerfilPage() {
           </div>
           {qrs.length === 0 ? (
             <p className="text-xs text-muted-foreground">
-              Aún no has generado ningún QR. Pulsa <b>VAMOS</b> en una recomendación para crear uno.
+              Aún no has generado ningún QR. Pulsa <VamosWord /> en una recomendación para crear uno.
             </p>
           ) : (
             <ul className="space-y-2">
