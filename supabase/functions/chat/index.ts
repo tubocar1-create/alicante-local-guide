@@ -2666,18 +2666,19 @@ serve(async (req) => {
       [...messages].reverse().find((m: { role: string; content: string }) => m.role === "user")
         ?.content ?? "";
     const transitMode = context?.mode === "transit";
-    const foodRequest = !transitMode && isFoodOrDrinkRequest(messages);
+    const guideMode = context?.mode === "guide";
+    const foodRequest = !transitMode && !guideMode && isFoodOrDrinkRequest(messages);
     const mayNeedFoodFallbacks =
-      !transitMode && (foodRequest || extractMentionedNames(latestUserText).length > 0);
+      !transitMode && !guideMode && (foodRequest || extractMentionedNames(latestUserText).length > 0);
     const [openFoodPlaces, mentionedPlaces] = await Promise.all([
       mayNeedFoodFallbacks
         ? fetchConfirmedOpenFoodPlaces(context, latestUserText)
         : Promise.resolve([] as FoodPlace[]),
-      transitMode
+      (transitMode || guideMode)
         ? Promise.resolve([] as MentionedPlace[])
         : fetchMentionedPlaces(latestUserText).catch(() => [] as MentionedPlace[]),
     ]);
-    if (!transitMode && mentionedPlaces.length > 0) {
+    if (!transitMode && !guideMode && mentionedPlaces.length > 0) {
       return streamChatText(buildMentionedPlacesResponse(mentionedPlaces, openFoodPlaces));
     }
     if (foodRequest) {
