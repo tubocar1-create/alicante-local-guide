@@ -33,6 +33,7 @@ import {
 import heroImg from "@/assets/alicante-hero.jpg";
 import portadaImg from "@/assets/alicante-portada.jpg";
 import hoguerasIcon from "@/assets/hogueras-alicante.png";
+import vamosLogo from "@/assets/vamos-logo.png";
 
 const TILE_SUBTITLES: Record<string, string> = {
   "Comer": "Restaurantes y tapas",
@@ -443,8 +444,14 @@ export function ChatScreen() {
               <p className="text-[15px] font-extrabold leading-tight text-foreground truncate">
                 ¡Hola{firstName ? `, ${firstName}` : ""}!
               </p>
-              <p className="text-[12px] leading-tight text-muted-foreground truncate">
-                ¿Qué vas a descubrir hoy?
+              <p className="text-[12px] leading-tight text-muted-foreground truncate flex items-center gap-1">
+                ¿Qué
+                <img
+                  src={vamosLogo}
+                  alt="VAMOS"
+                  className="inline-block h-3.5 w-auto align-middle"
+                />
+                a descubrir hoy?
               </p>
             </div>
           </div>
