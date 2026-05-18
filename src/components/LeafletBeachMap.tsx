@@ -77,7 +77,15 @@ export function LeafletMap({ beaches }: { beaches: Beach[] }) {
       tooltip.style.cssText =
         "position:absolute;pointer-events:none;transform:translate(-50%,-100%);background:rgba(255,255,255,0.97);padding:6px 10px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.25);font-family:system-ui;text-align:center;min-width:110px;max-width:200px;opacity:0;transition:opacity .12s;z-index:10;margin-top:-14px;";
       ref.current!.style.position = "relative";
+      ref.current!.style.cursor = "pointer";
       ref.current!.appendChild(tooltip);
+
+      // Floating arrow cursor that follows pointer / finger
+      const arrow = document.createElement("div");
+      arrow.style.cssText =
+        "position:absolute;pointer-events:none;transform:translate(-10%,-10%);font-size:28px;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,0.45));opacity:0;transition:opacity .12s;z-index:11;";
+      arrow.textContent = "👆";
+      ref.current!.appendChild(arrow);
 
       const markers: { beach: Beach; marker: any }[] = [];
       beaches.forEach((b) => {
@@ -120,6 +128,9 @@ export function LeafletMap({ beaches }: { beaches: Beach[] }) {
         const rect = ref.current!.getBoundingClientRect();
         const x = ev.clientX - rect.left;
         const y = ev.clientY - rect.top;
+        arrow.style.left = `${x}px`;
+        arrow.style.top = `${y}px`;
+        arrow.style.opacity = "1";
         let best: { beach: Beach; x: number; y: number } | null = null;
         let bestD = Infinity;
         for (const p of pixelCache) {
@@ -140,6 +151,7 @@ export function LeafletMap({ beaches }: { beaches: Beach[] }) {
       };
       const onLeave = () => {
         tooltip.style.opacity = "0";
+        arrow.style.opacity = "0";
       };
       ref.current!.addEventListener("pointermove", onMove);
       ref.current!.addEventListener("pointerdown", onMove);
