@@ -34,6 +34,7 @@ import {
 import heroImg from "@/assets/alicante-hero.jpg";
 import portadaImg from "@/assets/alicante-portada.jpg";
 import hoguerasIcon from "@/assets/hogueras-alicante.png";
+import busAlicanteIcon from "@/assets/bus-alicante.png";
 import { VamosWord } from "@/components/VamosWord";
 
 const TILE_SUBTITLES: Record<string, string> = {
