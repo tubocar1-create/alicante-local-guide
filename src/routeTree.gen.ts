@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as VuelosRouteImport } from './routes/vuelos'
 import { Route as ThreadsRouteImport } from './routes/threads'
 import { Route as StayRouteImport } from './routes/stay'
@@ -66,6 +67,11 @@ import { Route as OcioCinesIdCarteleraRouteImport } from './routes/ocio_.cines_.
 import { Route as ApiPublicHooksCinemasSyncRouteImport } from './routes/api/public/hooks/cinemas-sync'
 import { Route as ApiPublicHooksAenaSyncRouteImport } from './routes/api/public/hooks/aena-sync'
 
+const WelcomeRoute = WelcomeRouteImport.update({
+  id: '/welcome',
+  path: '/welcome',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VuelosRoute = VuelosRouteImport.update({
   id: '/vuelos',
   path: '/vuelos',
@@ -369,6 +375,7 @@ export interface FileRoutesByFullPath {
   '/stay': typeof StayRoute
   '/threads': typeof ThreadsRouteWithChildren
   '/vuelos': typeof VuelosRoute
+  '/welcome': typeof WelcomeRoute
   '/admin/places': typeof AdminPlacesRoute
   '/admin/salud': typeof AdminSaludRoute
   '/bus/lines': typeof BusLinesRouteWithChildren
@@ -426,6 +433,7 @@ export interface FileRoutesByTo {
   '/stay': typeof StayRoute
   '/threads': typeof ThreadsRouteWithChildren
   '/vuelos': typeof VuelosRoute
+  '/welcome': typeof WelcomeRoute
   '/admin/places': typeof AdminPlacesRoute
   '/admin/salud': typeof AdminSaludRoute
   '/bus/lines': typeof BusLinesRouteWithChildren
@@ -485,6 +493,7 @@ export interface FileRoutesById {
   '/stay': typeof StayRoute
   '/threads': typeof ThreadsRouteWithChildren
   '/vuelos': typeof VuelosRoute
+  '/welcome': typeof WelcomeRoute
   '/admin/places': typeof AdminPlacesRoute
   '/admin/salud': typeof AdminSaludRoute
   '/bus/lines': typeof BusLinesRouteWithChildren
@@ -545,6 +554,7 @@ export interface FileRouteTypes {
     | '/stay'
     | '/threads'
     | '/vuelos'
+    | '/welcome'
     | '/admin/places'
     | '/admin/salud'
     | '/bus/lines'
@@ -602,6 +612,7 @@ export interface FileRouteTypes {
     | '/stay'
     | '/threads'
     | '/vuelos'
+    | '/welcome'
     | '/admin/places'
     | '/admin/salud'
     | '/bus/lines'
@@ -660,6 +671,7 @@ export interface FileRouteTypes {
     | '/stay'
     | '/threads'
     | '/vuelos'
+    | '/welcome'
     | '/admin/places'
     | '/admin/salud'
     | '/bus/lines'
@@ -719,6 +731,7 @@ export interface RootRouteChildren {
   StayRoute: typeof StayRoute
   ThreadsRoute: typeof ThreadsRouteWithChildren
   VuelosRoute: typeof VuelosRoute
+  WelcomeRoute: typeof WelcomeRoute
   AdminPlacesRoute: typeof AdminPlacesRoute
   AdminSaludRoute: typeof AdminSaludRoute
   HospitalesIdRoute: typeof HospitalesIdRoute
@@ -744,6 +757,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/welcome': {
+      id: '/welcome'
+      path: '/welcome'
+      fullPath: '/welcome'
+      preLoaderRoute: typeof WelcomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/vuelos': {
       id: '/vuelos'
       path: '/vuelos'
@@ -1258,6 +1278,7 @@ const rootRouteChildren: RootRouteChildren = {
   StayRoute: StayRoute,
   ThreadsRoute: ThreadsRouteWithChildren,
   VuelosRoute: VuelosRoute,
+  WelcomeRoute: WelcomeRoute,
   AdminPlacesRoute: AdminPlacesRoute,
   AdminSaludRoute: AdminSaludRoute,
   HospitalesIdRoute: HospitalesIdRoute,

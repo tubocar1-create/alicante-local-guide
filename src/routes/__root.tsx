@@ -15,7 +15,8 @@ import { useEffect } from "react";
 import appCss from "../styles.css?url";
 import "@/integrations/supabase/server-fn-fetch";
 
-const PUBLIC_ROUTES = ["/login", "/magic"];
+const PUBLIC_ROUTES = ["/login", "/magic", "/welcome"];
+const WELCOMED_KEY = "vamos-welcomed-v1";
 
 
 function NotFoundComponent() {
@@ -156,8 +157,14 @@ function AuthGate({ children }: { children: React.ReactNode }) {
       path.startsWith("/api/") ||
       path.startsWith("/business");
     if (!isAuthenticated && !isPublic) {
+      const isStandalone =
+        window.matchMedia("(display-mode: standalone)").matches ||
+        // @ts-expect-error iOS
+        window.navigator.standalone === true;
+      const welcomed = localStorage.getItem(WELCOMED_KEY) === "1";
+      const target = !isStandalone && !welcomed ? "/welcome" : "/login";
       const redirect = encodeURIComponent(path + window.location.search);
-      window.location.replace(`/login?redirect=${redirect}`);
+      window.location.replace(`${target}?redirect=${redirect}`);
     }
   }, [isAuthenticated, loading]);
 
