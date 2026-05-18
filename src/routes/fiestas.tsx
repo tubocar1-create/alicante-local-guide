@@ -477,21 +477,16 @@ type Msg = { role: "user" | "assistant"; content: string };
 
 function FiestasChat() {
   const ask = useServerFn(askFiestasAI);
-  const [messages, setMessages] = useState<Msg[]>([
-    {
-      role: "assistant",
-      content:
-        "¡Hola! 🔥 Soy tu guía de las **Fiestas de Alicante**. Pregúntame por hogueras, mascletás, fechas, sitios para verlo todo… ¡vamos a vivirlo! 🎆",
-    },
-  ]);
+  const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, loading]);
+  }, [messages, loading, open]);
 
   async function send(text: string) {
     const clean = text.trim();
@@ -501,6 +496,7 @@ function FiestasChat() {
     setInput("");
     setLoading(true);
     setError(null);
+    setOpen(true);
     try {
       const res = await ask({ data: { messages: next.slice(-12) } });
       setMessages((m) => [...m, { role: "assistant", content: res.text || "…" }]);
@@ -511,90 +507,104 @@ function FiestasChat() {
     }
   }
 
+  const hasMessages = messages.length > 0;
+
   return (
     <>
-    <section
-      id="chat-fiestas"
-      className="rounded-3xl bg-white/5 p-3 ring-1 ring-amber-300/30 backdrop-blur"
-    >
-      <header className="mb-2 flex items-center gap-2 px-1">
-        <div className="grid h-9 w-9 place-items-center rounded-full bg-amber-400 text-black animate-fire-glow">
-          <Bot className="h-5 w-5" />
-        </div>
-        <div>
-          <h4 className="text-base font-extrabold leading-tight text-amber-100">
-            Pregunta a la IA de Fiestas
-          </h4>
-          <p className="text-[11px] text-amber-200/80">Hogueras, mascletás, ofrenda, banyà…</p>
-        </div>
-      </header>
-
-      <div
-        ref={scrollRef}
-        className="max-h-72 space-y-2 overflow-y-auto rounded-2xl bg-black/30 p-3"
-      >
-        {messages.map((m, i) => (
-          <div
-            key={i}
-            className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} animate-rise`}
-          >
-            <div
-              className={
-                m.role === "user"
-                  ? "max-w-[80%] rounded-2xl rounded-br-md bg-amber-400 px-3 py-2 text-sm font-medium text-black"
-                  : "prose prose-invert prose-sm max-w-[85%] rounded-2xl rounded-bl-md bg-white/10 px-3 py-2 text-sm text-amber-50"
-              }
-            >
-              {m.role === "assistant" ? (
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
-              ) : (
-                m.content
-              )}
-            </div>
-          </div>
-        ))}
-        {loading && (
-          <div className="flex justify-start">
-            <div className="rounded-2xl rounded-bl-md bg-white/10 px-3 py-2">
-              <div className="flex items-end gap-1">
-                <span className="typing-dot" />
-                <span className="typing-dot" />
-                <span className="typing-dot" />
+      {/* Panel flotante con respuestas, solo visible cuando hay conversación */}
+      {hasMessages && open && (
+        <div
+          className="fixed inset-x-2 bottom-[68px] z-30 rounded-3xl border border-amber-300/40 bg-gradient-to-br from-[#3a0a14]/95 to-[#7a2410]/95 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.7)] backdrop-blur-xl animate-rise"
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 0.25rem)" }}
+        >
+          <header className="flex items-center justify-between gap-2 border-b border-amber-300/20 px-3 py-2">
+            <div className="flex items-center gap-2">
+              <div className="grid h-7 w-7 place-items-center rounded-full bg-amber-400 text-black animate-fire-glow">
+                <Bot className="h-4 w-4" />
               </div>
+              <p className="text-sm font-extrabold text-amber-100">IA de Fiestas</p>
             </div>
+            <button
+              onClick={() => setOpen(false)}
+              className="rounded-full px-3 py-1 text-xs font-bold text-amber-200 hover:bg-white/10"
+              aria-label="Cerrar"
+            >
+              Cerrar ✕
+            </button>
+          </header>
+          <div ref={scrollRef} className="max-h-[55vh] space-y-2 overflow-y-auto p-3">
+            {messages.map((m, i) => (
+              <div
+                key={i}
+                className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} animate-rise`}
+              >
+                <div
+                  className={
+                    m.role === "user"
+                      ? "max-w-[80%] rounded-2xl rounded-br-md bg-gradient-to-br from-amber-300 to-orange-400 px-3 py-2 text-sm font-medium text-black"
+                      : "prose prose-invert prose-sm max-w-[85%] rounded-2xl rounded-bl-md bg-white/10 px-3 py-2 text-sm text-amber-50"
+                  }
+                >
+                  {m.role === "assistant" ? (
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
+                  ) : (
+                    m.content
+                  )}
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div className="flex justify-start">
+                <div className="rounded-2xl rounded-bl-md bg-white/10 px-3 py-2">
+                  <div className="flex items-end gap-1">
+                    <span className="typing-dot" />
+                    <span className="typing-dot" />
+                    <span className="typing-dot" />
+                  </div>
+                </div>
+              </div>
+            )}
+            {error && (
+              <p className="rounded-md bg-red-500/20 px-2 py-1 text-xs text-red-100">{error}</p>
+            )}
           </div>
-        )}
-        {error && (
-          <p className="rounded-md bg-red-500/20 px-2 py-1 text-xs text-red-100">{error}</p>
-        )}
-      </div>
+        </div>
+      )}
 
-    </section>
-
-    {/* Input fijo abajo */}
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        void send(input);
-      }}
-      className="fixed inset-x-0 bottom-0 z-30 flex items-center gap-2 border-t border-amber-300/20 bg-black/80 px-3 py-2 backdrop-blur-md pb-[calc(env(safe-area-inset-bottom)+0.5rem)]"
-    >
-      <input
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        placeholder="Pregunta sobre las fiestas…"
-        className="flex-1 rounded-full bg-white/10 px-4 py-2 text-sm text-amber-50 placeholder:text-amber-200/60 outline-none ring-1 ring-amber-300/30 focus:ring-amber-300/70"
-        disabled={loading}
-      />
-      <button
-        type="submit"
-        disabled={loading || !input.trim()}
-        aria-label="Enviar"
-        className="grid h-10 w-10 place-items-center rounded-full bg-amber-400 text-black shadow active:scale-95 disabled:opacity-50"
+      {/* Input fijo abajo */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          void send(input);
+        }}
+        className="fixed inset-x-0 bottom-0 z-30 flex items-center gap-2 border-t border-amber-300/30 bg-gradient-to-r from-[#ff6b35]/95 via-[#ec4899]/95 to-[#f59e0b]/95 px-3 py-2 backdrop-blur-md pb-[calc(env(safe-area-inset-bottom)+0.5rem)]"
       >
-        <Send className="h-4 w-4" />
-      </button>
-    </form>
+        {hasMessages && !open && (
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            aria-label="Ver respuesta"
+            className="grid h-10 w-10 place-items-center rounded-full bg-white/20 text-white active:scale-95"
+          >
+            <Bot className="h-5 w-5" />
+          </button>
+        )}
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Pregunta sobre las fiestas…"
+          className="flex-1 rounded-full bg-white/95 px-4 py-2 text-sm text-[#2a0a14] placeholder:text-[#7a2410]/60 outline-none ring-1 ring-white/40 focus:ring-white"
+          disabled={loading}
+        />
+        <button
+          type="submit"
+          disabled={loading || !input.trim()}
+          aria-label="Enviar"
+          className="grid h-10 w-10 place-items-center rounded-full bg-white text-[#ec4899] shadow active:scale-95 disabled:opacity-50"
+        >
+          <Send className="h-4 w-4" />
+        </button>
+      </form>
     </>
   );
 }
@@ -605,29 +615,23 @@ function FiestasPage() {
       className="fixed inset-0 z-[60] overflow-y-auto text-white"
       style={{
         background:
-          "linear-gradient(180deg,#2a0a14 0%, #4a1418 35%, #7a2410 70%, #2a0a14 100%)",
+          "linear-gradient(180deg,#ff6b35 0%, #ec4899 30%, #a21caf 55%, #7a2410 80%, #2a0a14 100%)",
       }}
     >
       {/* Header */}
-      <header className="sticky top-0 z-20 flex items-center justify-between border-b border-white/10 bg-black/40 px-3 py-3 backdrop-blur">
+      <header className="sticky top-0 z-20 flex items-center justify-between border-b border-white/20 bg-gradient-to-r from-[#ff6b35]/90 via-[#ec4899]/90 to-[#f59e0b]/90 px-3 py-3 backdrop-blur">
         <Link
           to="/"
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 active:scale-95"
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 active:scale-95"
           aria-label="Volver"
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="flex items-center gap-2">
           <img src={hoguerasIcon} alt="" className="h-8 w-8 rounded-full" />
-          <h1 className="text-lg font-extrabold tracking-tight">Fiestas de Alicante</h1>
+          <h1 className="text-lg font-extrabold tracking-tight drop-shadow">Fiestas de Alicante</h1>
         </div>
-        <a
-          href="#chat-fiestas"
-          aria-label="Preguntar a la IA"
-          className="grid h-9 w-9 place-items-center rounded-full bg-amber-400 text-black animate-fire-glow"
-        >
-          <Bot className="h-5 w-5" />
-        </a>
+        <div className="h-9 w-9" />
       </header>
 
       {/* Hero animado */}
@@ -639,15 +643,15 @@ function FiestasPage() {
           height={896}
           className="h-72 w-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#2a0a14] via-[#2a0a14]/30 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#7a2410] via-[#ec4899]/20 to-transparent" />
         <FloatingEmojis />
         <div className="absolute bottom-3 left-4 right-4">
-          <div className="inline-flex items-center gap-2 rounded-full bg-amber-500/95 px-3 py-1 text-xs font-bold text-black shadow animate-fire-glow">
+          <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-yellow-300 via-pink-400 to-orange-400 px-3 py-1 text-xs font-bold text-[#2a0a14] shadow animate-fire-glow">
             <PartyPopper className="h-4 w-4 animate-spark" /> ¡Bienvenidos a la fiesta!
           </div>
           <h2 className="mt-2 text-3xl font-black leading-tight drop-shadow-[0_4px_10px_rgba(0,0,0,0.7)]">
             Fuego, pólvora <br />
-            <span className="bg-gradient-to-r from-amber-300 via-orange-400 to-pink-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-yellow-200 via-pink-300 to-orange-300 bg-clip-text text-transparent">
               y mucho corazón
             </span>{" "}
             🔥
@@ -656,8 +660,8 @@ function FiestasPage() {
       </section>
 
       {/* Marquee */}
-      <div className="border-y border-amber-300/20 bg-black/30 py-2 overflow-hidden">
-        <div className="flex animate-marquee whitespace-nowrap text-sm font-bold text-amber-200">
+      <div className="border-y border-yellow-300/40 bg-gradient-to-r from-orange-500/40 via-pink-500/40 to-amber-400/40 py-2 overflow-hidden">
+        <div className="flex animate-marquee whitespace-nowrap text-sm font-bold text-yellow-100 drop-shadow">
           {Array.from({ length: 2 }).map((_, k) => (
             <div key={k} className="flex shrink-0 gap-8 pr-8">
               <span>🔥 La Cremà · 24 junio medianoche</span>
@@ -666,44 +670,246 @@ function FiestasPage() {
               <span>🎆 Castillos en el puerto</span>
               <span>🌊 La Banyà</span>
               <span>💃 Belleas del Foc</span>
+              <span>🏖️ Playa del Postiguet</span>
+              <span>🍤 Arroz a banda</span>
             </div>
           ))}
         </div>
       </div>
 
       <main className="space-y-8 px-4 py-6 pb-28">
-        <div className="space-y-3 animate-rise">
-          <p className="text-base leading-relaxed text-amber-100">
-            Alicante no se vive: <strong>se celebra</strong>. Del 20 al 24 de junio
-            la ciudad entera arde de alegría con las <strong>Hogueras de San
-            Juan</strong>, declaradas Fiesta de Interés Turístico Internacional.
-            Música, desfiles, pólvora y olor a buñuelos en cada esquina ✨
+        {/* RESEÑA AMPLIADA — entrelazada con fotos y temas */}
+        <div className="space-y-4 animate-rise">
+          <p className="text-base leading-relaxed text-amber-50">
+            Alicante no se vive: <strong>se celebra</strong>. Y en junio, esa
+            celebración se llama <strong>Hogueras de San Juan</strong> —Fiesta de
+            Interés Turístico Internacional desde 1983—. Pero quedarse solo con
+            las hogueras es perderse la mitad: las fiestas también son{" "}
+            <strong>playa, mar templado, terrazas hasta las tantas, arroces, vino
+            de la tierra y un cielo que casi nunca falla</strong> ✨
           </p>
-          <p className="text-sm leading-relaxed text-amber-100/90">
-            Durante una semana entera la rutina desaparece. Las calles se llenan de{" "}
-            <strong>ninots</strong> gigantes —monumentos satíricos de hasta 20 metros—,
-            las bandas de música tocan en cada plaza y la <strong>Plaza de los Luceros</strong>
-            {" "}se convierte cada mediodía en el corazón pirotécnico de España con las{" "}
-            <strong>mascletàs</strong> de 14:00 h.
+
+          <figure className="overflow-hidden rounded-3xl ring-2 ring-yellow-300/50 shadow-[0_15px_40px_-10px_rgba(236,72,153,0.4)]">
+            <img
+              src={playa1}
+              alt="Playa del Postiguet en junio"
+              loading="lazy"
+              width={1280}
+              height={896}
+              className="h-56 w-full object-cover"
+            />
+            <figcaption className="bg-gradient-to-r from-cyan-500/80 to-blue-500/80 px-3 py-2 text-sm font-semibold text-white">
+              🏖️ Playa del Postiguet — la fiesta también se vive con los pies en la arena
+            </figcaption>
+          </figure>
+
+          <p className="text-sm leading-relaxed text-amber-50/95">
+            Pongámonos en situación: estás en Alicante a mediados de junio.
+            Amanece a las siete con un cielo limpio, <strong>27 grados al
+            mediodía</strong>, brisa del este y el mar a <strong>22 grados</strong>:
+            puedes desayunar churros con chocolate en el Mercado Central, bajar a
+            darte un baño en el <strong>Postiguet</strong> en diez minutos andando
+            y subir luego al <strong>Castillo de Santa Bárbara</strong> con una
+            vista de la bahía que quita el sentido. Y todo eso… antes de comer.
           </p>
-          <p className="text-sm leading-relaxed text-amber-100/90">
-            Por la tarde, la <strong>Ofrenda de Flores</strong> tiñe la ciudad de
-            color camino de la Concatedral; por la noche, las <strong>barracas</strong>
-            {" "}y <strong>racós</strong> abren sus puertas con verbenas que duran hasta
-            el amanecer. Y la madrugada del 24 al 25, la <strong>Cremà</strong>: todas
-            las hogueras arden a la vez mientras los bomberos te empapan en la
-            mítica <strong>Banyà</strong>. Vas a reír, vas a emocionarte y vas a
-            volver al año siguiente. Está garantizado 🔥
+
+          <p className="text-sm leading-relaxed text-amber-50/95">
+            A las 14:00 la <strong>Plaza de los Luceros</strong> se convierte en
+            el corazón pirotécnico de España. La <strong>mascletà</strong> no se
+            escucha, <strong>se siente en el pecho</strong>: un ritmo de pólvora
+            que arranca lento, sube, sube, y termina en un terremoto seco que te
+            hace sonreír sin querer. Hay quien aplaude llorando. Es normal.
           </p>
-          <p className="text-sm leading-relaxed text-amber-100/90">
-            Y cuando se apagan los rescoldos, todavía quedan <strong>cinco noches
-            de castillos pirotécnicos</strong> sobre la playa del Postiguet. Ése es
-            el verdadero adiós: arena bajo los pies, mar de fondo y el cielo pintado
-            de fuego. Bienvenido a la mejor semana del año.
+
+          <figure className="overflow-hidden rounded-3xl ring-2 ring-orange-300/50">
+            <img
+              src={mascleta1}
+              alt="Mascletà en Luceros"
+              loading="lazy"
+              width={1280}
+              height={896}
+              className="h-56 w-full object-cover"
+            />
+            <figcaption className="bg-gradient-to-r from-orange-500/80 to-red-500/80 px-3 py-2 text-sm font-semibold text-white">
+              💥 La mascletà — pólvora, ritmo y un terremoto seco que te enamora
+            </figcaption>
+          </figure>
+
+          <p className="text-sm leading-relaxed text-amber-50/95">
+            Después de la mascletà toca <strong>comer en serio</strong>. Aquí
+            estás en territorio de <strong>arroz</strong>: el clásico{" "}
+            <em>arroz a banda</em>, el <em>arroz del senyoret</em> (pelado,
+            cómodo, no hay que ensuciarse las manos), el <em>arroz negro</em> con
+            alioli, o si te dejas llevar, una <em>fideuà</em> que en Alicante se
+            entiende como una hermana del arroz, no como un sustituto. Acompañas
+            con <strong>vino de Alicante</strong> —los tintos de Monastrell del
+            Vinalopó son una bestia— o, si aprieta el calor, con una{" "}
+            <strong>cerveza muy fría</strong> y un plato de <em>quisquillas de
+            Santa Pola</em>, <em>salazones</em> o un <em>cocido alicantino con
+            pelotas</em> si caes en mesa de abuela.
+          </p>
+
+          <figure className="overflow-hidden rounded-3xl ring-2 ring-amber-300/50">
+            <img
+              src={bunuelos1}
+              alt="Buñuelos de calabaza recién hechos"
+              loading="lazy"
+              width={1280}
+              height={896}
+              className="h-52 w-full object-cover"
+            />
+            <figcaption className="bg-gradient-to-r from-amber-500/80 to-yellow-500/80 px-3 py-2 text-sm font-semibold text-white">
+              🍩 Buñuelos de calabaza — el olor oficial de las Hogueras
+            </figcaption>
+          </figure>
+
+          <p className="text-sm leading-relaxed text-amber-50/95">
+            Por la tarde la ciudad cambia de marcha. Los <strong>ninots</strong>
+            —monumentos satíricos de hasta veinte metros— se plantan en cada
+            esquina y caminar por el centro se convierte en una <strong>visita a
+            un museo al aire libre</strong>. Hay obras tiernas, otras
+            descaradas, otras tan grandes que tienes que cruzar la calle para
+            verlas enteras. Mientras paseas, te paran cinco veces: una banda de
+            música tocando un pasodoble, una <em>dansà</em> improvisada, alguien
+            que te invita a probar un buñuelo de calabaza con azúcar.
+          </p>
+
+          <figure className="overflow-hidden rounded-3xl ring-2 ring-pink-300/50">
+            <img
+              src={ninot1}
+              alt="Ninot de Hoguera plantado en la calle"
+              loading="lazy"
+              width={1280}
+              height={896}
+              
+              className="h-56 w-full object-cover"
+            />
+            <figcaption className="bg-gradient-to-r from-pink-500/80 to-purple-500/80 px-3 py-2 text-sm font-semibold text-white">
+              🎨 Ninots — sátira y arte a 20 metros de altura
+            </figcaption>
+          </figure>
+
+          <p className="text-sm leading-relaxed text-amber-50/95">
+            Cae el sol y empieza la <strong>Ofrenda de Flores</strong>. Miles de
+            personas con trajes valencianos bordados a mano caminan desde Alfonso X
+            hasta la Concatedral de San Nicolás llevando ramos a la{" "}
+            <strong>Virgen del Remedio</strong>. Es lento, es bonito, es{" "}
+            <em>profundamente emocional</em>: aunque no seas creyente, hay algo
+            ahí que te toca.
+          </p>
+
+          <figure className="overflow-hidden rounded-3xl ring-2 ring-rose-300/50">
+            <img
+              src={ofrenda1}
+              alt="Ofrenda de Flores"
+              loading="lazy"
+              width={1280}
+              height={896}
+              className="h-56 w-full object-cover"
+            />
+            <figcaption className="bg-gradient-to-r from-rose-500/80 to-pink-500/80 px-3 py-2 text-sm font-semibold text-white">
+              👑 Ofrenda de Flores — el corazón emocional de las fiestas
+            </figcaption>
+          </figure>
+
+          <p className="text-sm leading-relaxed text-amber-50/95">
+            Y por la noche… llegan las <strong>barracas</strong>. Son carpas
+            inmensas montadas por las comisiones, con cocina propia, barra, DJ y
+            verbenas hasta el amanecer. Los <strong>racós</strong> son su
+            versión más íntima, de barrio. Aquí pasa de todo: cenas tipo
+            tapeo, parrilladas, conciertos pequeños, gente bailando con
+            cincuenta años y gente bailando con dieciocho, mezclados. <strong>No
+            cierran hasta que sale el sol</strong>, literalmente.
+          </p>
+
+          <figure className="overflow-hidden rounded-3xl ring-2 ring-orange-300/50">
+            <img
+              src={barraca1}
+              alt="Barraca de Hogueras"
+              loading="lazy"
+              width={1280}
+              height={896}
+              className="h-52 w-full object-cover"
+            />
+            <figcaption className="bg-gradient-to-r from-orange-500/80 to-amber-500/80 px-3 py-2 text-sm font-semibold text-white">
+              🏕️ Barracas y racós — la noche que no quiere terminar
+            </figcaption>
+          </figure>
+
+          <p className="text-sm leading-relaxed text-amber-50/95">
+            La <strong>Cremà</strong>, la madrugada del 24 al 25, es el clímax.
+            A las 00:00 una <strong>palmera de fuegos</strong> sale disparada
+            desde el <strong>Castillo de Santa Bárbara</strong> y, a partir de
+            ahí, todas las hogueras de la ciudad arden a la vez. El cielo se
+            pone naranja, el aire es puro humo y bomberos, y aparece la{" "}
+            <strong>Banyà</strong>: te empapan con la manguera mientras gritas
+            y te ríes. Quien lo vive una vez, vuelve.
+          </p>
+
+          <figure className="overflow-hidden rounded-3xl ring-2 ring-red-300/50">
+            <img
+              src={crema1}
+              alt="La Cremà"
+              loading="lazy"
+              width={1280}
+              height={896}
+              className="h-56 w-full object-cover"
+            />
+            <figcaption className="bg-gradient-to-r from-red-500/80 to-orange-500/80 px-3 py-2 text-sm font-semibold text-white">
+              🔥 La Cremà — la noche en que arde Alicante entera
+            </figcaption>
+          </figure>
+
+          <p className="text-sm leading-relaxed text-amber-50/95">
+            Y cuando crees que se acabó, no. Quedan <strong>cinco noches más de
+            castillos pirotécnicos</strong> sobre la <strong>Playa del
+            Postiguet</strong>, del 25 al 29 de junio, siempre a medianoche.
+            Toalla, una cerveza, los pies en la arena, el mar de fondo y el
+            cielo pintado de fuego. <em>Ése</em> es el verdadero adiós.
+          </p>
+
+          {/* Bloque de cultura/clima/gastro como tarjetas festivas */}
+          <div className="grid grid-cols-2 gap-3 pt-2">
+            <div className="rounded-2xl bg-gradient-to-br from-cyan-500/30 to-blue-600/30 p-3 ring-1 ring-cyan-300/40">
+              <p className="text-2xl">☀️</p>
+              <p className="mt-1 text-sm font-extrabold text-cyan-50">Clima</p>
+              <p className="text-xs text-cyan-100/90">
+                25–30 °C, mar a 22 °C, casi sin lluvia. Junio es oro puro.
+              </p>
+            </div>
+            <div className="rounded-2xl bg-gradient-to-br from-amber-500/30 to-orange-600/30 p-3 ring-1 ring-amber-300/40">
+              <p className="text-2xl">🍤</p>
+              <p className="mt-1 text-sm font-extrabold text-amber-50">Gastro</p>
+              <p className="text-xs text-amber-100/90">
+                Arroz a banda, fideuà, quisquillas, salazones, vino de Monastrell.
+              </p>
+            </div>
+            <div className="rounded-2xl bg-gradient-to-br from-pink-500/30 to-rose-600/30 p-3 ring-1 ring-pink-300/40">
+              <p className="text-2xl">🏛️</p>
+              <p className="mt-1 text-sm font-extrabold text-pink-50">Cultura</p>
+              <p className="text-xs text-pink-100/90">
+                Santa Bárbara, MARQ, MACA, Concatedral, casco antiguo.
+              </p>
+            </div>
+            <div className="rounded-2xl bg-gradient-to-br from-teal-500/30 to-emerald-600/30 p-3 ring-1 ring-teal-300/40">
+              <p className="text-2xl">🏖️</p>
+              <p className="mt-1 text-sm font-extrabold text-teal-50">Playa</p>
+              <p className="text-xs text-teal-100/90">
+                Postiguet a 5 min andando; San Juan, Albufereta, Cabo Huertas.
+              </p>
+            </div>
+          </div>
+
+          <p className="text-sm leading-relaxed text-amber-50/95 pt-2">
+            Por eso decimos que las Hogueras son <strong>la mejor semana del
+            año</strong>: porque mezclan lo mejor de Alicante en siete días.
+            Sales de la mascletà y te bañas. Sales del baño y cenas un arroz.
+            Sales del arroz y bailas en la barraca. Bailas hasta el amanecer y
+            te bañas otra vez. Y al día siguiente, otra vez.
           </p>
         </div>
 
-        {/* Chat IA */}
+        {/* Chat IA — solo input fijo + popover */}
         <FiestasChat />
 
         {/* Programa 2026 verificado */}
@@ -712,10 +918,10 @@ function FiestasPage() {
         {/* Hogueras */}
         <section className="animate-rise">
           <div className="mb-3 flex items-center gap-2">
-            <Flame className="h-6 w-6 text-orange-400 animate-spark" />
-            <h3 className="text-2xl font-extrabold">Hogueras de San Juan</h3>
+            <Flame className="h-6 w-6 text-orange-300 animate-spark" />
+            <h3 className="text-2xl font-extrabold drop-shadow">Hogueras de San Juan</h3>
           </div>
-          <p className="mb-3 text-sm text-amber-100/90">
+          <p className="mb-3 text-sm text-amber-50/95">
             Más de 90 monumentos artísticos —los <em>ninots</em>— se plantan por
             toda la ciudad y la noche del 24 arden todos a la vez en la mágica{" "}
             <strong>Cremà</strong>. Es el momento más esperado del año:
@@ -728,10 +934,10 @@ function FiestasPage() {
         {/* Mascletás */}
         <section className="animate-rise">
           <div className="mb-3 flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-pink-400 animate-spark" />
-            <h3 className="text-2xl font-extrabold">Mascletás y fuegos</h3>
+            <Sparkles className="h-6 w-6 text-pink-300 animate-spark" />
+            <h3 className="text-2xl font-extrabold drop-shadow">Mascletás y fuegos</h3>
           </div>
-          <p className="mb-3 text-sm text-amber-100/90">
+          <p className="mb-3 text-sm text-amber-50/95">
             Cada día a las <strong>14:00 h</strong> en la <strong>Plaza de los
             Luceros</strong>, la <em>mascletà</em> hace temblar el suelo. No se
             escucha: <strong>se siente</strong> en el pecho. Y al caer la noche,
@@ -743,10 +949,10 @@ function FiestasPage() {
         {/* Tradiciones */}
         <section className="animate-rise">
           <div className="mb-3 flex items-center gap-2">
-            <PartyPopper className="h-6 w-6 text-amber-300 animate-spark" />
-            <h3 className="text-2xl font-extrabold">Tradiciones que enamoran</h3>
+            <PartyPopper className="h-6 w-6 text-yellow-300 animate-spark" />
+            <h3 className="text-2xl font-extrabold drop-shadow">Tradiciones que enamoran</h3>
           </div>
-          <p className="mb-3 text-sm text-amber-100/90">
+          <p className="mb-3 text-sm text-amber-50/95">
             Trajes valencianos bordados, ríos de flores hacia la Virgen del
             Remedio, churros calentitos y bomberos que te mojan entre risas.
             Cada rincón huele a pólvora, azúcar y alegría 💛
@@ -758,20 +964,21 @@ function FiestasPage() {
         <MorosCristianosSection />
 
         {/* Tips */}
-        <section className="rounded-2xl bg-white/5 p-4 ring-1 ring-white/10 animate-rise">
-          <h4 className="mb-2 text-lg font-bold text-amber-200">
+        <section className="rounded-2xl bg-gradient-to-br from-yellow-400/20 via-pink-500/20 to-orange-500/20 p-4 ring-1 ring-yellow-300/40 animate-rise">
+          <h4 className="mb-2 text-lg font-bold text-yellow-100">
             🎉 No te pierdas
           </h4>
-          <ul className="space-y-2 text-sm text-amber-100">
+          <ul className="space-y-2 text-sm text-amber-50">
             <li>🌅 <strong>La Plantà</strong> (19–20 jun): se levantan los monumentos.</li>
             <li>💥 <strong>Mascletà</strong> (cada día 14:00 h, Luceros).</li>
             <li>👑 <strong>Ofrenda de Flores</strong> a la Virgen del Remedio.</li>
             <li>🔥 <strong>La Cremà</strong> (24 jun, medianoche): ¡todo arde!</li>
             <li>🌊 <strong>Banyà</strong>: los bomberos te mojan, ¡prepárate a reír!</li>
+            <li>🏖️ <strong>Castillos del Postiguet</strong> (25–29 jun, 00:00 h).</li>
           </ul>
         </section>
 
-        <p className="pt-2 text-center text-xs text-amber-200/70">
+        <p className="pt-2 text-center text-xs text-yellow-100/80">
           Hecho con 🔥 desde Alicante
         </p>
       </main>
