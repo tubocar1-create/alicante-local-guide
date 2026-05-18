@@ -976,34 +976,6 @@ function FiestasPage() {
           <PhotoStrip photos={HOGUERAS_PHOTOS} accent="#f97316" />
         </section>
 
-        {/* Mascletás */}
-        <section className="animate-rise">
-          <div className="mb-3 flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-pink-300 animate-spark" />
-            <h3 className="text-2xl font-extrabold drop-shadow">Mascletás y fuegos</h3>
-          </div>
-          <p className="mb-3 text-sm text-amber-50/95">
-            Cada día a las <strong>14:00 h</strong> en la <strong>Plaza de los
-            Luceros</strong>, la <em>mascletà</em> hace temblar el suelo. No se
-            escucha: <strong>se siente</strong> en el pecho. Y al caer la noche,
-            los castillos de fuegos sobre el puerto te dejarán sin palabras 🎆
-          </p>
-          <PhotoStrip photos={MASCLETAS_PHOTOS} accent="#ec4899" />
-        </section>
-
-        {/* Tradiciones */}
-        <section className="animate-rise">
-          <div className="mb-3 flex items-center gap-2">
-            <PartyPopper className="h-6 w-6 text-yellow-300 animate-spark" />
-            <h3 className="text-2xl font-extrabold drop-shadow">Tradiciones que enamoran</h3>
-          </div>
-          <p className="mb-3 text-sm text-amber-50/95">
-            Trajes valencianos bordados, ríos de flores hacia la Virgen del
-            Remedio, churros calentitos y bomberos que te mojan entre risas.
-            Cada rincón huele a pólvora, azúcar y alegría 💛
-          </p>
-          <PhotoStrip photos={TRADICIONES_PHOTOS} accent="#fbbf24" />
-        </section>
 
         {/* Moros y Cristianos — alma de barrio */}
         <MorosCristianosSection />
