@@ -472,9 +472,7 @@ export function ChatScreen() {
               <span>Mis reservas</span>
             </Link>
           </div>
-          <div className="flex-1 flex justify-center">
-            <PointsHud compact />
-          </div>
+          <div className="flex-1" />
           <button
             onClick={() => {
               setMessages([GREETING]);
