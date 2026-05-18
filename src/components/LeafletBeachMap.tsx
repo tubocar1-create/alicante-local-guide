@@ -93,7 +93,7 @@ export function LeafletMap({ beaches }: { beaches: Beach[] }) {
             `<div style="min-width:200px;font-family:system-ui">
               <strong style="color:#1565c0;font-size:14px">${b.name}</strong>
               <p style="margin:4px 0 8px;font-size:12px;color:#475569">${b.description}</p>
-              <a href="/playas/${b.slug}" style="display:inline-block;background:#0891b2;color:#fff;padding:6px 12px;border-radius:9999px;font-size:12px;font-weight:800;text-decoration:none">Ver ficha →</a>
+              <a href="/playas/${b.slug}" style="display:inline-block;background:#0891b2;color:#fff;padding:6px 12px;border-radius:9999px;font-size:12px;font-weight:800;text-decoration:none">Abrir playa →</a>
             </div>`,
           );
           info.open({ anchor: marker, map });
