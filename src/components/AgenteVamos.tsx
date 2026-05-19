@@ -524,6 +524,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const greetedRef = useRef(__vaGetGreetingSpoken());
   useEffect(() => {
     if (!open || mode !== "voice") return;
+    if (__vaGetGreetingSpoken()) greetedRef.current = true;
     const SRClass = getSpeechRecognition();
     if (!SRClass) {
       setVoiceError("Tu navegador no soporta reconocimiento de voz. Cambia a modo texto.");
@@ -542,12 +543,6 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         return;
       }
       setSpeaking(false);
-      if (!greetedRef.current && !pausedRef.current) {
-        // No external greeting played (e.g. switched from text to voice).
-        greetedRef.current = true;
-        speak(getGreetingText());
-        return;
-      }
       if (shouldAutoListen()) startListening();
     };
 
