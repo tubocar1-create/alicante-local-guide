@@ -599,6 +599,20 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     [playAudioClip, shouldAutoListen],
   );
 
+  const speakExternalSummary = useCallback(
+    (text: string) => {
+      setMsgs((m) => {
+        const last = m[m.length - 1];
+        if (last?.role === "assistant" && (/^Abro el Dashboard/i.test(last.content) || /^Te he conseguido/i.test(last.content))) {
+          return m.map((msg, i) => (i === m.length - 1 ? { ...msg, content: text } : msg));
+        }
+        return [...m, { role: "assistant", content: text }];
+      });
+      if (modeRef.current === "voice") speak(text);
+    },
+    [speak],
+  );
+
   const send = useCallback(
     async (text: string, viaVoice = false) => {
       const clean = text.trim();
