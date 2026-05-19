@@ -3396,9 +3396,8 @@ function CategoryTableInner({
       const s = resolveOpeningStatus(c.openingHours ?? undefined);
       return s.status === "open" || (s.status === "unknown" && c.openNow === true);
     }).length;
-    // theme.title1 ej.: "Cocina típica", "Italiano", "Vegano", "Postres".
-    const raw = (theme.title1 || "").toLowerCase().trim();
-    const label = raw ? `de ${raw}` : "";
+    // theme.title1 ej.: "Cocina típica", "Comida italiana", "Vegano", "Postres".
+    const label = (theme.title1 || "").toLowerCase().trim();
     window.dispatchEvent(
       new CustomEvent("vamos:food-summary", {
         detail: { count: ranked.length, openCount, label, pluralKind: "sitios" },
