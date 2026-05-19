@@ -612,11 +612,20 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
   const speakExternalSummary = useCallback(
     (text: string) => {
+      // Cancela el acuse "Voy a por ello…" si estaba programado y reinicia
+      // el estado de espera.
+      if (ackTimerRef.current) {
+        clearTimeout(ackTimerRef.current);
+        ackTimerRef.current = null;
+      }
+      awaitingSummaryRef.current = false;
+      setLoading(false);
       setMsgs((m) => {
         const last = m[m.length - 1];
         if (
           last?.role === "assistant" &&
-          (/^Abro el Dashboard/i.test(last.content) || /^Te he conseguido/i.test(last.content))
+          (/^Abro el Dashboard/i.test(last.content) || /^Te he conseguido/i.test(last.content) ||
+            /^No tengo restaurantes/i.test(last.content) || /^Ahora mismo no encuentro/i.test(last.content))
         ) {
           return m.map((msg, i) => (i === m.length - 1 ? { ...msg, content: text } : msg));
         }
@@ -642,11 +651,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         .replace(/^cocina\s+/, "")
         .trim();
       const foodLabel = `comida ${categoryLabel || rawLabel}`;
+      // B5: cerrar el turno con una invitación al siguiente paso.
       const text =
         detail.openCount > 0
-          ? `Te he conseguido ${detail.openCount} restaurantes abiertos de ${foodLabel}.`
+          ? `Te he conseguido ${detail.openCount} restaurantes abiertos de ${foodLabel}. ¿Te abro el primero o probamos otra cocina?`
           : detail.count > 0
-            ? `No tengo restaurantes abiertos de ${foodLabel} ahora mismo, pero te dejo los ${detail.count} del listado por si quieres reservar.`
+            ? `No tengo restaurantes abiertos de ${foodLabel} ahora mismo, pero te dejo los ${detail.count} del listado. ¿Probamos otra categoría?`
             : `Ahora mismo no encuentro restaurantes de ${foodLabel} cercanos. ¿Probamos otra categoría?`;
       speakExternalSummary(text);
     };
