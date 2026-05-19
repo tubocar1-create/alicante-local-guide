@@ -1,133 +1,75 @@
-ns
-# Módulo de Coordinación Urbana Contextual Inteligente
+# Revisión del diálogo hablado del Agente Vamos
 
-Diseño de comunicación **operacional, contextual y atada a un servicio**. No es un chat social. Cada conversación nace de una reserva o interacción concreta y muere cuando esa interacción se cierra.
+## Diagnóstico (estado actual)
 
-## 1. Principios de diseño (no negociables)
+El diálogo funciona pero le falta forma conversacional. Una conversación entre dos partes necesita: **apertura → turnos claros → cierre**. Hoy hay vacíos en cada fase.
 
-- 1 reserva = 1 hilo. No existe chat libre.
-- Mensajes mayoritariamente **estructurados** (quick replies). Texto libre limitado a 280 chars y solo cuando el hilo está activo.
-- El hilo **caduca** automáticamente al completarse / cancelarse el servicio (+ ventana corta post-servicio para feedback).
-- Mobile-first, una sola pantalla, acciones grandes.
-- Cada mensaje puede llevar **payload contextual** (ETA, ubicación, QR, slot propuesto) — no solo texto.
+### 1. Inicio (apertura)
+- Saludo correcto y abierto: *"Buenas tardes Leopoldo, ¿qué vamos a hacer hoy?"* y queda escuchando. **OK.**
+- Pero si el usuario abre el panel en modo texto, el saludo aparece escrito y también se habla (cambio reciente). Coherente con la regla "habla lo que escribe".
 
-## 2. Modelo de datos (nuevas tablas)
+### 2. Secuencia (turnos)
+Problemas detectados:
 
-```text
-conversation_threads
- ├─ id (uuid)
- ├─ booking_id (uuid, FK bookings)         ← raíz contextual
- ├─ business_id (uuid)
- ├─ user_id (uuid)
- ├─ status: open | awaiting_user | awaiting_business | closed | expired
- ├─ last_message_at, created_at, closed_at
- └─ context_snapshot jsonb (servicio, hora, party_size)
+- **Doble emisión del agente sin esperar al usuario**: tras la pregunta del usuario ("Comer tacos") el agente escribe primero un placeholder *"Abro el Dashboard…"* y luego lo sustituye por el resumen *"Te he conseguido N restaurantes…"*. En texto se ve bien (una sola burbuja final), pero conceptualmente son dos respuestas encadenadas del mismo lado sin turno del usuario en medio.
+- **Sin acuse de recibo verbal**: el agente no dice nada entre la petición y el resumen final (que tarda ~1-2 s mientras carga datos). El usuario no sabe si fue escuchado.
+- **Sin invitación al siguiente turno**: tras el resumen el agente queda mudo. En voz vuelve a escuchar (silencio), pero no propone qué viene ("¿Quieres que te abra el primero?", "¿Reservo?", "¿Otra categoría?"). Eso rompe la secuencia: el usuario no sabe si la conversación sigue.
+- **Eco de voz cuando habla y escucha a la vez**: `shouldAutoListen` se reactiva en `onend` del TTS, pero si el TTS se corta o falla, puede haber solape micro+voz.
 
-messages
- ├─ id, thread_id
- ├─ sender_type: user | business | system | ai
- ├─ message_type: quick_reply | free_text | system_event | eta_update | location | qr | slot_proposal
- ├─ template_key (ej. 'business.confirm', 'user.on_my_way')
- ├─ text (nullable, ≤280)
- ├─ payload jsonb (slot, eta_minutes, lat/lng, qr_code_id, …)
- ├─ created_at, read_at
- └─ requires_action boolean
+### 3. Fin (cierre)
+- No hay despedida. El diálogo termina por:
+  - Pulsar la X → cierre brusco, corta el TTS a mitad.
+  - Timeout de 60 s de inactividad → cierre silencioso.
+  - Navegar fuera → panel sigue abierto pero contexto cambia.
+- Falta un cierre verbal del tipo *"Si necesitas algo más, vuélveme a llamar."* antes de cerrar por inactividad.
 
-booking_requests  (extiende bookings con estado de negociación)
- └─ ya cubierto por bookings + nueva columna negotiation_state
-```
-
-RLS: hilo visible solo a `user_id`, miembros del `business_id`, y admin. Insert de mensajes: solo participantes del hilo y solo si `status != closed`. Trigger crea `conversation_thread` automáticamente al insertar `bookings` (status=pending).
-
-Realtime: `ALTER PUBLICATION supabase_realtime ADD TABLE messages, conversation_threads`.
-
-## 3. Catálogo de mensajes estructurados
-
-**Negocio → Usuario**: `confirm`, `propose_slot` (payload: nuevo `scheduled_at`), `decline` (payload: motivo), `service_ready`, `running_late` (payload: `delay_minutes`), `request_clarification`.
-
-**Usuario → Negocio**: `accept`, `reject_proposal`, `on_my_way` (payload: ETA calculada), `running_late`, `arrived` (payload: lat/lng + QR), `cancel`.
-
-**Sistema (auto)**: `booking_created`, `eta_update` (cada N min si usuario en tránsito), `qr_validated`, `thread_closed`, `reminder_pre_arrival` (T-15min).
-
-**IA (futuro)**: `suggested_reply`, `auto_confirm` (cuando reglas del negocio lo permiten).
-
-## 4. Integraciones urbanas
-
-- **ETA / Bus**: cuando usuario envía `on_my_way`, server fn `computeUserEta` usa `useUserLocation` + `bus-eta` y emite `eta_update` periódicos hasta llegada o timeout. Negocio ve countdown en vivo.
-- **QR**: `arrived` se cierra validando el QR del negocio (`/api/public/qr-validate`). Esto dispara `system_event: qr_validated` y mueve `booking.status = completed`.
-- **Disponibilidad**: cuando negocio responde `propose_slot`, sistema chequea `services` + huecos ocupados antes de permitir el envío.
-- **Métricas**: cada mensaje genera `interaction_event` (type según `message_type`) — alimenta el panel existente.
-
-## 5. Estados del hilo (máquina simple)
-
-```text
-open → awaiting_business (user creó reserva)
-awaiting_business → awaiting_user (negocio propone/pide aclaración)
-awaiting_user ↔ awaiting_business (ping-pong negociación)
-cualquiera → closed (booking confirmed+completed | cancelled | no_show)
-inactividad >24h en awaiting_* → expired (auto vía cron)
-```
-
-## 6. UX / superficies
-
-- **Usuario**: ruta `/threads` (lista compacta de reservas activas) y `/threads/$id` (timeline + barra de quick-replies contextual al estado).
-- **Negocio**: nueva pestaña en bottom nav `Bandeja`, badge con count de `awaiting_business`. Cada item muestra: cliente, servicio, hora propuesta, tiempo desde último mensaje (SLA visible).
-- **Composer**: 90% botones (chips), 10% texto libre. Sin emojis pickers, sin attachments, sin grupos.
-- **Sin notificaciones intrusivas**: in-app realtime + push opcional para `requires_action=true`.
-
-## 7. Métricas nuevas (panel negocio)
-
-- Tiempo medio de respuesta del negocio (P50, P95).
-- Tasa de confirmación / rechazo / contrapropuesta.
-- Tasa de llegadas confirmadas vs no-show.
-- Diferencia ETA prometido vs real.
-- Reservas completadas por hilo.
-
-## 8. Arquitectura de código
-
-```text
-src/lib/coord/
- ├─ threads.functions.ts      createThread, listThreads, getThread, closeThread
- ├─ messages.functions.ts     sendMessage (valida template + payload), markRead
- ├─ templates.ts              catálogo de message_type + schemas Zod
- ├─ eta-bridge.ts             integra bus-eta + useUserLocation
- └─ state-machine.ts          transiciones de thread/booking
-src/routes/
- ├─ threads.tsx               layout (lista + outlet)
- ├─ threads.$id.tsx           timeline
- └─ business.inbox.tsx        bandeja del negocio
-src/components/coord/
- ├─ Timeline.tsx
- ├─ QuickReplyBar.tsx         renderiza chips según state + role
- ├─ MessageBubble.tsx         variantes por message_type
- ├─ EtaLive.tsx               countdown realtime
- └─ SlotProposalCard.tsx
-```
-
-Realtime con `supabase.channel('thread:'+id)` filtrado por `thread_id`.
-
-## 9. Preparación para IA y futuro
-
-- Cada mensaje guarda `template_key` → fácil entrenar/auto-completar.
-- Hook `onIncomingMessage` con punto de extensión para "auto-confirm si regla cumplida" (ej. negocio activa "auto-aceptar reservas <2 personas en horario X").
-- `context_snapshot` permite pasar contexto completo a un LLM sin reconsultar DB.
-- Multi-vertical: `service_id` ya existe, los templates son agnósticos del vertical.
-- Multi-ciudad: nada del módulo asume Alicante.
-
-## 10. Plan de entrega por fases
-
-**Fase 1 – Núcleo (este sprint)**
-Migración tablas + RLS + trigger auto-thread, server fns CRUD, ruta `/threads/$id` y `/business/inbox`, templates básicos (confirm / propose_slot / accept / cancel / arrived), realtime. Cierre de hilo al completarse el booking.
-
-**Fase 2 – Urbano**
-ETA en vivo (`on_my_way` + `eta_update`), integración QR en `arrived`, recordatorio T-15.
-
-**Fase 3 – Métricas + SLAs**
-Panel de tiempos de respuesta, badge de SLA en bandeja del negocio, alertas (Brevo WhatsApp ya planteado) para `awaiting_business >X min`.
-
-**Fase 4 – IA y reglas**
-Auto-confirm, sugerencias de respuesta, detección de no-show probable.
+### 4. Otros detalles
+- El placeholder *"Abro el Dashboard…"* no aporta valor escrito porque siempre se sobrescribe. Es ruido visual.
+- En modo texto, hablar la respuesta siempre puede molestar; el toggle de altavoz lo silencia, pero el estado por defecto debería ser **mute en texto / unmute en voz**.
 
 ---
 
-¿Arranco por la **Fase 1** (migración + hilo atado a booking + bandeja del negocio + 5 templates básicos + realtime)? Si prefieres, puedo empezar solo por el modelo de datos y la bandeja, y dejar la UX del usuario para después.
+## Propuesta de cambios
+
+### A. Inicio
+1. Mantener el saludo actual.
+2. En modo **texto**, arrancar **muted = true** (no habla salvo que el usuario active altavoz). En modo **voz**, muted = false.
+
+### B. Turnos
+3. **Eliminar el placeholder escrito** *"Abro el Dashboard…"*: no añadir burbuja intermedia; mostrar sólo un indicador de "pensando" (puntos) hasta que llegue el resumen real.
+4. **Acuse breve hablado** mientras se carga el Dashboard, sólo en voz: una frase corta tipo *"Voy a por ello…"* (≤2 palabras, 1 s) para mantener el turno. Solo se reproduce si el resumen tarda más de ~800 ms.
+5. **Cerrar el turno con invitación**: tras el resumen, añadir una segunda frase corta que invite al siguiente turno, en función del contexto:
+   - Cartelera con resultados: *"¿Te abro el primero o probamos otra cocina?"*
+   - Sin resultados abiertos: *"¿Probamos otra categoría?"*
+   - Dashboard genérico: *"¿Algo más?"*
+   Esta frase se habla y se escribe como parte del mismo mensaje del agente (no burbuja aparte).
+
+### C. Fin
+6. **Cierre verbal por inactividad**: cuando salte el timeout de 60 s, antes de cerrar, hablar/escribir *"Si necesitas algo más, vuélveme a llamar."* y cerrar al terminar el TTS (no a mitad).
+7. **Cierre por X**: si el agente está hablando, dejar terminar la frase actual antes de cerrar visualmente; o cortar limpio sin reabrir audio.
+8. **Detección de despedida del usuario**: si el usuario dice/escribe "gracias", "nada más", "adiós", "hasta luego" → el agente responde *"Hasta luego, Leopoldo."* y cierra el panel.
+
+### D. Anti-eco
+9. Asegurar que `stopListening()` se llama **antes** de cada `speak()` y `startListening()` sólo en `onend`/`onerror` del TTS, no en paralelo.
+
+---
+
+## Detalles técnicos
+
+Archivo único afectado: `src/components/AgenteVamos.tsx` (más una pequeña adición al evento de resumen en `ChatScreen.tsx` para enviar `categoryLabel` ya formateado si hace falta).
+
+- **A2 (mute por defecto)**: en el efecto que detecta apertura (`open && !wasOpenRef.current`), setear `setMuted(mode === "text")`. Hoy `mode` se fuerza a `"voice"` al abrir; añadir lectura del modo elegido por el usuario.
+- **B3 (sin placeholder)**: en `send()` línea ~704, no insertar el `reply` placeholder cuando hay `forwardPrompt || pendingSubmenu`. En su lugar, mantener el estado `loading=true` (ya pinta indicador en línea ~1229) hasta que el handler de `vamos:food-summary` inserte el resumen.
+- **B4 (acuse "Voy a por ello…")**: tras `setLoading(true)` y si `modeRef.current === "voice"`, programar un `setTimeout(800ms)` que llame `speak("Voy a por ello.")` sólo si el resumen aún no ha llegado. Cancelar el timeout cuando llegue el resumen.
+- **B5 (invitación al siguiente turno)**: en `speakExternalSummary`, concatenar al `text` una segunda frase según el caso (`openCount > 0` → invitar a abrir el primero; `count > 0` → otra categoría; `0` → otra categoría). Mostrar y hablar como un único mensaje.
+- **C6 (cierre por inactividad)**: en `bumpIdle`, antes del `onClose()`, llamar a un nuevo `speakFarewell()` que habla el mensaje de despedida y al `onend` ejecuta `onClose()`. Si está muted, sólo escribe la frase y cierra tras 1.5 s.
+- **C7 (cierre por X)**: en el handler de la X, si `speakingRef.current`, llamar a `stopSpeaking()` limpiamente (ya existe) y luego `onClose()`.
+- **C8 (despedida del usuario)**: en `send()`, antes de llamar al servidor, comprobar si `clean` matchea `/^(gracias|nada m[aá]s|adi[oó]s|hasta luego|chao|chau)\b/i`. Si sí, responder local con *"Hasta luego, Leopoldo."*, hablarlo y cerrar tras `onend`.
+- **D9 (anti-eco)**: revisar que `speak()` llama `stopListening()` al inicio (ya lo hace `send()`, pero el resumen externo no pasa por `send()`). Añadir `stopListening()` al principio de `speak()`.
+
+No se tocan rutas, ni estructura de páginas, ni componentes fuera del agente. Se respeta la **regla de oro** del proyecto.
+
+## Fuera de alcance (no se hace ahora)
+- Cambiar la voz TTS (sigue siendo Web Speech del dispositivo o el clip pregrabado si existe).
+- Persistir histórico entre sesiones (sigue limpiándose al cerrar, como ya está).
+- Reordenar el menú o los Dashboards.

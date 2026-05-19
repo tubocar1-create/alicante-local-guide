@@ -406,6 +406,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const wasOpenRef = useRef(open);
   const turnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Acuse "Voy a por ello…" mientras carga el Dashboard tras una navegación.
+  const ackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Marca que estamos esperando un resumen externo (vamos:food-summary).
+  const awaitingSummaryRef = useRef(false);
 
   const IDLE_MS = 60_000;
   const bumpIdle = useCallback(() => {
@@ -417,9 +421,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         bumpIdle();
         return;
       }
-      onClose();
+      // Cierre con despedida hablada (C6)
+      speakFarewellRef.current();
     }, IDLE_MS);
-  }, [onClose]);
+  }, []);
+  // Forward ref para la despedida (definida más abajo) — evita ciclos de deps.
+  const speakFarewellRef = useRef<() => void>(() => {});
   useEffect(() => {
     modeRef.current = mode;
   }, [mode]);
@@ -557,6 +564,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
   const speak = useCallback(
     (text: string, audio?: AgentAudioClip, onEnd?: () => void) => {
+      // Anti-eco (D9): cortamos cualquier escucha activa antes de hablar.
+      try {
+        recogRef.current?.abort?.();
+      } catch {}
       if (audio && playAudioClip(audio, text, onEnd)) return;
       if (mutedRef.current || typeof window === "undefined" || !window.speechSynthesis) {
         if (!mutedRef.current) setTapToSpeak({ text, audio });
@@ -601,11 +612,20 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
   const speakExternalSummary = useCallback(
     (text: string) => {
+      // Cancela el acuse "Voy a por ello…" si estaba programado y reinicia
+      // el estado de espera.
+      if (ackTimerRef.current) {
+        clearTimeout(ackTimerRef.current);
+        ackTimerRef.current = null;
+      }
+      awaitingSummaryRef.current = false;
+      setLoading(false);
       setMsgs((m) => {
         const last = m[m.length - 1];
         if (
           last?.role === "assistant" &&
-          (/^Abro el Dashboard/i.test(last.content) || /^Te he conseguido/i.test(last.content))
+          (/^Abro el Dashboard/i.test(last.content) || /^Te he conseguido/i.test(last.content) ||
+            /^No tengo restaurantes/i.test(last.content) || /^Ahora mismo no encuentro/i.test(last.content))
         ) {
           return m.map((msg, i) => (i === m.length - 1 ? { ...msg, content: text } : msg));
         }
@@ -631,11 +651,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         .replace(/^cocina\s+/, "")
         .trim();
       const foodLabel = `comida ${categoryLabel || rawLabel}`;
+      // B5: cerrar el turno con una invitación al siguiente paso.
       const text =
         detail.openCount > 0
-          ? `Te he conseguido ${detail.openCount} restaurantes abiertos de ${foodLabel}.`
+          ? `Te he conseguido ${detail.openCount} restaurantes abiertos de ${foodLabel}. ¿Te abro el primero o probamos otra cocina?`
           : detail.count > 0
-            ? `No tengo restaurantes abiertos de ${foodLabel} ahora mismo, pero te dejo los ${detail.count} del listado por si quieres reservar.`
+            ? `No tengo restaurantes abiertos de ${foodLabel} ahora mismo, pero te dejo los ${detail.count} del listado. ¿Probamos otra categoría?`
             : `Ahora mismo no encuentro restaurantes de ${foodLabel} cercanos. ¿Probamos otra categoría?`;
       speakExternalSummary(text);
     };
@@ -643,12 +664,47 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     return () => window.removeEventListener("vamos:food-summary", handler as EventListener);
   }, [speakExternalSummary]);
 
+  // C6: despedida hablada al cerrar por inactividad.
+  const speakFarewell = useCallback(() => {
+    if (!openRef.current) return;
+    const text = "Si necesitas algo más, vuélveme a llamar.";
+    setMsgs((m) => [...m, { role: "assistant", content: text }]);
+    if (mutedRef.current || typeof window === "undefined" || !window.speechSynthesis) {
+      setTimeout(() => onClose(), 1500);
+      return;
+    }
+    speak(text, undefined, () => {
+      setTimeout(() => onClose(), 200);
+    });
+  }, [speak, onClose]);
+  useEffect(() => {
+    speakFarewellRef.current = speakFarewell;
+  }, [speakFarewell]);
+
+
+
   const send = useCallback(
     async (text: string, viaVoice = false) => {
       const clean = text.trim();
       if (!clean || loadingRef.current) return;
       bumpIdle();
       stopListening();
+
+      // C8: despedida del usuario — responde local, habla y cierra.
+      if (/^(gracias|graci[ao]s|nada m[aá]s|adi[oó]s|hasta luego|chao|chau|hasta otra|me voy)\b/i.test(clean)) {
+        setMsgs((m) => [
+          ...m,
+          { role: "user", content: clean },
+          { role: "assistant", content: "Hasta luego, Leopoldo." },
+        ]);
+        setInput("");
+        setInterim("");
+        speak("Hasta luego, Leopoldo.", undefined, () => {
+          setTimeout(() => onClose(), 200);
+        });
+        return;
+      }
+
       const next = [...msgs, { role: "user" as const, content: clean }];
       setMsgs(next);
       setInput("");
@@ -701,8 +757,15 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           // si falla el servidor, nos quedamos con la respuesta local
         }
 
-        setMsgs((m) => [...m, { role: "assistant", content: reply }]);
         const pendingSubmenu = typeof window !== "undefined" ? window.sessionStorage.getItem("afp:openSubmenu") : null;
+        const navigatingToDashboard = Boolean(forwardPrompt || pendingSubmenu);
+
+        // B3: cuando vamos a un Dashboard, NO insertamos el placeholder
+        // "Abro el Dashboard…" — mantenemos el indicador "pensando…" hasta
+        // que llegue el resumen real vía vamos:food-summary.
+        if (!navigatingToDashboard) {
+          setMsgs((m) => [...m, { role: "assistant", content: reply }]);
+        }
 
         // Navegación tolerante: acepta paths con query string y rutas dinámicas
         // de BD (p.ej. /hotel/<uuid>, /vuelos?destino=amsterdam). Si TanStack
@@ -741,12 +804,28 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           }
         };
 
-        if (forwardPrompt || pendingSubmenu) {
-          if ((forwardPrompt || pendingSubmenu) && typeof window !== "undefined") {
+        if (navigatingToDashboard) {
+          if (typeof window !== "undefined") {
             try {
               window.sessionStorage.setItem("afp:voiceFoodSummaryPending", "1");
             } catch {}
           }
+          // Mantenemos loading=true hasta que llegue el resumen (B3).
+          awaitingSummaryRef.current = true;
+          // B4: acuse breve hablado si el resumen tarda > 800ms.
+          if (ackTimerRef.current) clearTimeout(ackTimerRef.current);
+          ackTimerRef.current = setTimeout(() => {
+            if (awaitingSummaryRef.current && !mutedRef.current) {
+              speak("Voy a por ello.");
+            }
+          }, 800);
+          // Seguridad: si el resumen nunca llega, libera el spinner a los 8s.
+          setTimeout(() => {
+            if (awaitingSummaryRef.current) {
+              awaitingSummaryRef.current = false;
+              setLoading(false);
+            }
+          }, 8000);
           setTimeout(() => {
             try {
               const done = target && target !== path ? goTo(target) : undefined;
@@ -757,29 +836,20 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                 if (pendingSubmenu) {
                   window.dispatchEvent(new CustomEvent("afp:open-submenu", { detail: { path: pendingSubmenu } }));
                 }
-                // No cerramos el diálogo: el agente debe seguir activo para
-                // verbalizar el resumen ("Te he conseguido N restaurantes…")
-                // y permitir continuar la conversación.
               });
             } catch {}
           }, 350);
+          // No tocamos loading aquí — lo limpia speakExternalSummary o el timeout.
+          return;
         } else if (target && target !== path) {
           setTimeout(() => {
             goTo(target);
           }, 350);
         }
-        // Si vamos a abrir un Dashboard en ChatScreen (forwardPrompt/openSubmenu),
-        // NO hablamos el placeholder "Abro el Dashboard…" aquí, porque sería
-        // cortado al cerrar el panel (stopSpeaking) y bloquearía el TTS del
-        // resumen real. ChatScreen hablará el resumen final ("Te he conseguido
-        // N sitios…") cuando los datos carguen.
-        // Hablar también en modo texto: el agente verbaliza lo que escribe.
-        // El usuario puede silenciar con el botón de altavoz (mutedRef).
-        if (!forwardPrompt && !pendingSubmenu) {
-          speak(reply, fallback.audio);
-        }
+        // Habla la respuesta normal (no navegación a Dashboard).
+        speak(reply, fallback.audio);
       } finally {
-        setLoading(false);
+        if (!awaitingSummaryRef.current) setLoading(false);
       }
     },
     [msgs, path, navigate, speak, stopListening, bumpIdle, askAgent, onClose],
@@ -918,6 +988,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       stopSpeaking();
       setPaused(false);
       setInterim("");
+      setLoading(false);
+      awaitingSummaryRef.current = false;
+      if (ackTimerRef.current) {
+        clearTimeout(ackTimerRef.current);
+        ackTimerRef.current = null;
+      }
       // Limpia caché del diálogo: el próximo se abre desde cero.
       if (typeof window !== "undefined") {
         try {
@@ -934,6 +1010,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   useEffect(() => {
     if (open && !wasOpenRef.current) {
       setMode("voice");
+      setMuted(false); // A2: voz por defecto al abrir → no muted
       setPaused(false);
       setVoiceError(null);
       bumpIdle();
@@ -1042,9 +1119,11 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                   stopListening();
                   stopSpeaking();
                   setMode("text");
+                  setMuted(true); // A2: en modo texto, silenciar por defecto
                 } else {
                   primeSpanishUtterances();
                   setMode("voice");
+                  setMuted(false); // A2: en modo voz, activar audio
                   greetedRef.current = true; // don't re-greet on switch
                 }
               }}
@@ -1194,6 +1273,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                     stopListening();
                     stopSpeaking();
                     setMode("text");
+                    setMuted(true);
                   }}
                   className="rounded-full border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
                 >
