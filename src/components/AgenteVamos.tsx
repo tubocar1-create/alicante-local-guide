@@ -989,6 +989,18 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       let lastTranscript = "";
       let handled = false;
       rec.onresult = (e: any) => {
+        // Anti-eco: si el agente está hablando o cargando, descarta lo
+        // captado por el micro (es el propio TTS realimentándose).
+        if (speakingRef.current || loadingRef.current) {
+          finalText = "";
+          lastTranscript = "";
+          setInterim("");
+          if (turnTimerRef.current) {
+            clearTimeout(turnTimerRef.current);
+            turnTimerRef.current = null;
+          }
+          return;
+        }
         // Rebuild from scratch each event to avoid duplicate accumulation
         // (some engines re-emit final results across events).
         let finals = "";
