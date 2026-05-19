@@ -149,11 +149,17 @@ type Msg = { role: "user" | "assistant"; content: string };
 type Mode = "voice" | "text";
 
 const STORAGE_KEY = "va:agente-msgs";
+function getGreetingText() {
+  const h = new Date().getHours();
+  const saludo = h < 14 ? "Buenos días" : "Buenas tardes";
+  return `${saludo}, Leopoldo, ¿qué vamos a hacer hoy?`;
+}
 const GREETING: Msg = {
   role: "assistant",
-  content:
-    "¡Hola! Soy **Agente Vamos**, tu concierge en Alicante. ¿Qué te apetece hacer — comer, dormir, playa, moverte, un plan?",
-};
+  get content() {
+    return getGreetingText();
+  },
+} as Msg;
 
 function loadMsgs(): Msg[] {
   if (typeof window === "undefined") return [GREETING];
