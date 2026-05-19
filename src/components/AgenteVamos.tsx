@@ -613,6 +613,31 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     [speak],
   );
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handler = (e: Event) => {
+      if (window.sessionStorage.getItem("afp:voiceFoodSummaryPending") !== "1") return;
+      window.sessionStorage.removeItem("afp:voiceFoodSummaryPending");
+      const detail = (e as CustomEvent).detail as { count: number; openCount: number; label: string } | undefined;
+      if (!detail) return;
+      const rawLabel = detail.label.toLowerCase().trim();
+      const categoryLabel = rawLabel
+        .replace(/^comida\s+/, "")
+        .replace(/^cocina\s+/, "")
+        .trim();
+      const foodLabel = `comida ${categoryLabel || rawLabel}`;
+      const text =
+        detail.openCount > 0
+          ? `Te he conseguido ${detail.openCount} restaurantes abiertos de ${foodLabel}.`
+          : detail.count > 0
+            ? `No tengo restaurantes abiertos de ${foodLabel} ahora mismo, pero te dejo los ${detail.count} del listado por si quieres reservar.`
+            : `Ahora mismo no encuentro restaurantes de ${foodLabel} cercanos. ¿Probamos otra categoría?`;
+      speakExternalSummary(text);
+    };
+    window.addEventListener("vamos:food-summary", handler as EventListener);
+    return () => window.removeEventListener("vamos:food-summary", handler as EventListener);
+  }, [speakExternalSummary]);
+
   const send = useCallback(
     async (text: string, viaVoice = false) => {
       const clean = text.trim();
