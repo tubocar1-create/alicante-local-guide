@@ -13,6 +13,8 @@ import {
   Play,
 } from "lucide-react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { agenteVamosChat } from "@/lib/agente.functions";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
