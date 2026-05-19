@@ -1,8 +1,9 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-const ALICANTE_LAT = 38.3452;
+// Centro de búsqueda: Puerta del Mar, Alicante
+const ALICANTE_LAT = 38.3402;
 const ALICANTE_LNG = -0.481;
-const RADIUS_M = 10000;
+const RADIUS_M = 30000;
 
 // Google Places (New) – Nearby Search v1
 const PLACES_URL = "https://places.googleapis.com/v1/places:searchNearby";

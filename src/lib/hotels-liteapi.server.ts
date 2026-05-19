@@ -1,8 +1,10 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const LITEAPI_BASE = "https://api.liteapi.travel/v3.0";
-const ALICANTE_LAT = 38.3452;
+// Centro de búsqueda: Puerta del Mar, Alicante
+const ALICANTE_LAT = 38.3402;
 const ALICANTE_LNG = -0.481;
+const RADIUS_KM = 30;
 
 function liteHeaders() {
   const key = process.env.LITEAPI_KEY;
@@ -64,11 +66,13 @@ const ROOM_LABELS: Record<RoomCat, string> = {
 };
 export { ROOM_LABELS };
 
-/** Fetch all LiteAPI hotels in Alicante area */
+/** Fetch all LiteAPI hotels within RADIUS_KM of Puerta del Mar */
 async function fetchLiteApiHotels() {
   const url = new URL(`${LITEAPI_BASE}/data/hotels`);
   url.searchParams.set("countryCode", "ES");
-  url.searchParams.set("cityName", "Alicante");
+  url.searchParams.set("latitude", String(ALICANTE_LAT));
+  url.searchParams.set("longitude", String(ALICANTE_LNG));
+  url.searchParams.set("distance", String(RADIUS_KM * 1000)); // metros
   url.searchParams.set("limit", "1000");
   const res = await fetch(url, { headers: liteHeaders() });
   if (!res.ok) throw new Error(`LiteAPI hotels ${res.status}: ${(await res.text()).slice(0, 200)}`);
