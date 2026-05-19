@@ -425,7 +425,7 @@ function HotelDetail() {
                           return (
                             <div
                               key={c.key}
-                              title={`${c.date} · ${available ? "disponible" : "sin disponibilidad"}`}
+                              title={`${c.date} · ${isToday ? "hoy (estancia mínima 1 noche)" : available ? "disponible" : "sin disponibilidad"}`}
                               className={
                                 "flex h-12 flex-col items-center justify-center rounded text-[10px] leading-tight " +
                                 (available
