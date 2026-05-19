@@ -51,6 +51,26 @@ function getSpeechRecognition(): any {
 let __vaGreetingSpoken = false;
 export const __vaGetGreetingSpoken = () => __vaGreetingSpoken;
 export const __vaSetGreetingSpoken = (v: boolean) => { __vaGreetingSpoken = v; };
+let __vaActiveUtterance: SpeechSynthesisUtterance | null = null;
+
+function pickSpanishVoice(synth: SpeechSynthesis) {
+  const voices = synth.getVoices();
+  return voices.find((v) => v.lang?.toLowerCase().startsWith("es-es"))
+    || voices.find((v) => v.lang?.toLowerCase().startsWith("es"))
+    || null;
+}
+
+function makeSpanishUtterance(text: string) {
+  const u = new SpeechSynthesisUtterance(plainText(text));
+  u.lang = "es-ES";
+  u.rate = 1.05;
+  u.pitch = 1;
+  const synth = window.speechSynthesis;
+  const voice = synth ? pickSpanishVoice(synth) : null;
+  if (voice) u.voice = voice;
+  __vaActiveUtterance = u;
+  return u;
+}
 
 export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [msgs, setMsgs] = useState<Msg[]>(loadMsgs);
@@ -106,6 +126,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
   const stopSpeaking = useCallback(() => {
     try { window.speechSynthesis?.cancel(); } catch {}
+    __vaActiveUtterance = null;
     setSpeaking(false);
   }, []);
 
