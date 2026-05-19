@@ -49,12 +49,100 @@ const parentPath = (p: string): string => {
   return segs.length === 0 ? "/" : "/" + segs.join("/");
 };
 
+// === RESOLVER DE NOMBRES PROPIOS (máxima prioridad) ===
+// Detecta entidades específicas (playa concreta, línea de bus concreta,
+// marca de cine, destino de vuelo, hotel concreto…) antes que la categoría genérica.
+
+// Marcas/cines conocidos en Alicante con su ruta destino.
+// Mientras no podamos resolver slug del cine dinámicamente, llevamos al listado de cines.
+const CINEMA_BRANDS: Array<{ terms: string[]; path: string }> = [
+  { terms: ["yelmo", "yelmocines", "yelmo cines"], path: "/ocio/cines" },
+  { terms: ["kinepolis"], path: "/ocio/cines" },
+  { terms: ["odeon", "odeón", "odeon multicines"], path: "/ocio/cines" },
+  { terms: ["cinesa"], path: "/ocio/cines" },
+  { terms: ["abc park", "abc"], path: "/ocio/cines" },
+  { terms: ["aana", "aana cinema"], path: "/ocio/cines" },
+  { terms: ["panoramis"], path: "/ocio/cines" },
+];
+
+// Ciudades / destinos comunes desde ALC. Detecta "vuelo a Madrid".
+const FLIGHT_DESTINATIONS = [
+  "madrid", "barcelona", "bilbao", "sevilla", "valencia", "malaga", "palma", "tenerife",
+  "londres", "london", "paris", "amsterdam", "bruselas", "berlin", "munich", "roma",
+  "milan", "dublin", "manchester", "liverpool", "edimburgo", "oslo", "estocolmo",
+  "copenhague", "helsinki", "varsovia", "praga", "viena", "zurich", "ginebra",
+  "lisboa", "porto", "nueva york", "new york",
+];
+
+const properNounMatch = (
+  rawText: string,
+  currentPath: string,
+): { path: string; reason: string } | null => {
+  const text = normalizeText(rawText);
+  if (!text) return null;
+
+  // 1) PLAYA CONCRETA — slug directo a ficha
+  for (const playa of PLAYAS) {
+    const baseName = normalizeText(playa.name)
+      .replace(/^(playa|cala)\s+(de\s+la\s+|de\s+los\s+|del\s+|de\s+l\s+|de\s+)?/i, "")
+      .trim();
+    const slugWords = normalizeText(playa.slug.replace(/-/g, " "));
+    const candidates = [baseName, slugWords].filter((v) => v && v.length >= 3);
+    for (const cand of candidates) {
+      if (text.includes(cand)) {
+        const target = `/playas/${playa.slug}`;
+        if (target === currentPath) return null;
+        return { path: target, reason: `playa concreta: ${playa.name}` };
+      }
+    }
+  }
+
+  // 2) LÍNEA DE BUS CONCRETA — "linea 12", "L12", "bus 24", "el 22"
+  const lineMatch =
+    text.match(/\bl(?:inea)?\s*([0-9]{1,3}[a-z]?)\b/i) ||
+    text.match(/\bbus\s+([0-9]{1,3}[a-z]?)\b/i) ||
+    text.match(/\bel\s+([0-9]{1,3}[a-z]?)\b/i);
+  if (lineMatch && lineMatch[1]) {
+    const code = lineMatch[1].toUpperCase();
+    const target = `/bus/lines/${code}`;
+    if (target === currentPath) return null;
+    return { path: target, reason: `línea de bus concreta: ${code}` };
+  }
+
+  // 3) MARCA DE CINE CONCRETA
+  for (const brand of CINEMA_BRANDS) {
+    if (hasAnyTerm(text, brand.terms) || brand.terms.some((t) => text.includes(t))) {
+      if (brand.path === currentPath) return null;
+      return { path: brand.path, reason: `marca de cine concreta` };
+    }
+  }
+
+  // 4) VUELO A DESTINO CONCRETO — "vuelo a Madrid", "vuelos a Londres"
+  const flightThemed = /\bvuelo(s)?\b/.test(text);
+  if (flightThemed) {
+    for (const dest of FLIGHT_DESTINATIONS) {
+      if (new RegExp(`\\b(a|para|hacia|desde|de)\\s+${dest}\\b`).test(text) || text.includes(`vuelo ${dest}`)) {
+        const target = `/vuelos?destino=${encodeURIComponent(dest)}`;
+        if (currentPath.startsWith("/vuelos")) return null;
+        return { path: target, reason: `vuelo con destino concreto: ${dest}` };
+      }
+    }
+  }
+
+  return null;
+};
+
 const getPriorityRoute = (
   rawText: string,
   currentPath: string = "/",
 ): { path: string; reason: string } | null => {
   const text = normalizeText(rawText);
   if (!text) return null;
+
+  // PRIORIDAD MÁXIMA: nombre propio / entidad concreta
+  const proper = properNounMatch(rawText, currentPath);
+  if (proper) return proper;
+
 
   // === Navegación relativa al flujo actual ===
   // Volver / atrás → sube un nivel desde la ruta actual
