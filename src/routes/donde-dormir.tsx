@@ -55,9 +55,9 @@ function DondeDormirPage() {
       const aAv = a.dyn?.available ? 1 : 0;
       const bAv = b.dyn?.available ? 1 : 0;
       if (aAv !== bAv) return bAv - aAv;
-      const pa = a.dyn?.current_price ?? Infinity;
-      const pb = b.dyn?.current_price ?? Infinity;
-      return pa - pb;
+      const pa = a.dyn?.current_price ?? -Infinity;
+      const pb = b.dyn?.current_price ?? -Infinity;
+      return pb - pa;
     });
     return all;
   }, [data]);
