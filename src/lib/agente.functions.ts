@@ -527,6 +527,40 @@ const matchProperNoun = (
 // Dashboard Nocturno inline (no existe ruta /tomar-algo dedicada).
 const DRINKS_INTENT_RE = /\b(tomar algo|beber|copa|copas|coctel|cóctel|cocktail|cocteleria|coctelería|cerveza|cervezas|cerveceria|cervecería|brewery|vermut|vermouth|gin tonic|gintonic|vino|vinos|vinoteca|wine bar|pub|pubs|discoteca|discotecas|disco|night ?club|nightclub|club nocturno|rooftop|terraceo|sala de fiestas|karaoke|karaokes|bar de copas|chupito|chupitos|afterwork|sunset bar)\b/i;
 
+// === Intenciones de comida ===
+// Cada categoría tiene su Dashboard inline en ChatScreen. Reenviamos al chat
+// principal con el prompt canónico que dispara la regex correspondiente.
+// "Comida rápida" general y "Comer" general abren submenús (no Dashboard directo).
+type FoodIntent = {
+  test: RegExp;
+  forwardPrompt?: string;
+  openSubmenu?: "comer" | "comer.comida-rapida";
+  blurb: string;
+};
+const FOOD_INTENTS: FoodIntent[] = [
+  // Específicos de comida rápida (Dashboard concreto)
+  { test: /\b(hamburgues|burger|smash ?burger|mcdonald|burger king|goiko|five guys|tgb)\b/i, forwardPrompt: "Una buena hamburguesería abierta ahora (McDonald's, Burger King, TGB, Goiko, Five Guys…)", blurb: "Abro el Dashboard de hamburgueserías." },
+  { test: /\b(montaditos?|100 montaditos|lizarr[aá]n)\b/i, forwardPrompt: "Un sitio de montaditos abierto ahora (100 Montaditos, Lizarrán…)", blurb: "Abro el Dashboard de montaditos." },
+  { test: /\b(kebaps?|kebab|d[oö]ner|shawarma)\b/i, forwardPrompt: "Un buen kebap abierto ahora", blurb: "Abro el Dashboard de kebaps." },
+  { test: /\b(kfc|popeyes|pollo frito|pollos asados|poller[ií]a)\b/i, forwardPrompt: "Un sitio de pollo frito o pollos asados abierto ahora (KFC, Popeyes…)", blurb: "Abro el Dashboard de pollo frito." },
+  { test: /\b(taco bell|tacos?|burritos?|tex.?mex|taquer[ií]a|mexican[oa]s?)\b/i, forwardPrompt: "Un mexicano abierto ahora (Taco Bell, tacos, burritos…)", blurb: "Abro el Dashboard mexicano." },
+  { test: /\b(telepizza|domino'?s|papa john'?s?|pizza hut|pizza m[oó]vil|pizza a domicilio|pizzer[ií]a r[aá]pida|pizza r[aá]pida)\b/i, forwardPrompt: "Una pizzería abierta ahora (Telepizza, Domino's…)", blurb: "Abro el Dashboard de pizzas rápidas." },
+  // Submenú de comida rápida (general)
+  { test: /\b(comida r[aá]pida|fast ?food|comida basura)\b/i, openSubmenu: "comer.comida-rapida", blurb: "Abro el submenú de Comida rápida: hamburguesas, pizzas, montaditos, kebaps, pollo frito o mexicano." },
+  // Categorías con Dashboard propio
+  { test: /\b(cocina t[ií]pica|alicantin[oa]s?|tradicional|tasca|cocina espa[ñn]ola|tapas tradicionales|mediterr[aá]ne[oa])\b/i, forwardPrompt: "Recomiéndame un sitio de cocina típica alicantina tradicional abierto ahora", blurb: "Abro el Dashboard de cocina típica alicantina." },
+  { test: /\b(arroz|arroces|arrocer[ií]a|paella|pescado|pescados|marisco|mariscos|marisquer[ií]a|seafood)\b/i, forwardPrompt: "Quiero un buen arroz, paella o pescado fresco, ¿dónde voy ahora?", blurb: "Abro el Dashboard de arroces y pescado." },
+  { test: /\b(italian[oa]s?|pasta|trattoria|ristorante|pizzer[ií]a|pizza)\b/i, forwardPrompt: "Apetece italiano (pizza, pasta), ¿dónde puedo ir ahora?", blurb: "Abro el Dashboard italiano." },
+  { test: /\b(japon[eé]s|japonesa|sushi|ramen|asi[aá]tic[oa]s?|chin[oa]s?|thai|tailand|vietnam|coreano|korean|wok|noodle)\b/i, forwardPrompt: "Un japonés o asiático rico abierto ahora", blurb: "Abro el Dashboard japonés / asiático." },
+  { test: /\b(vegano[as]?|vegan[a]?|vegetarian[oa]s?|saludable|healthy|poke|veggie|plant[\s-]?based)\b/i, forwardPrompt: "Un sitio vegano o saludable abierto ahora", blurb: "Abro el Dashboard vegano / saludable." },
+  { test: /\b(brunch|desayun[oa]s?|breakfast|tortitas|pancakes|waffles?|gofres?|huevos benedictinos|eggs benedict|cruasanes?|croissants?|boller[ií]a)\b/i, forwardPrompt: "Necesito un buen desayuno o brunch en Alicante abierto ahora", blurb: "Abro el Dashboard de desayuno / brunch." },
+  { test: /\b(postres?|helader[ií]as?|helados?|gelater[ií]as?|pasteler[ií]as?|chocolater[ií]as?|crepes?|cr[eê]pes?|tartas?|reposter[ií]a|dulces?|cafeter[ií]a con postres)\b/i, forwardPrompt: "Una cafetería con postres ricos abierta ahora", blurb: "Abro el Dashboard de postres y cafetería." },
+  { test: /\b(barato|baratos?|baratit[oa]s?|econ[oó]mic[oa]s?|low cost|men[uú] del d[ií]a|men[uú] diario|comer barato|sin gastar)\b/i, forwardPrompt: "Algo barato y rico para comer ya, abierto ahora", blurb: "Abro el Dashboard low cost." },
+  { test: /\b(internacional|hind[uú]e?s?|hindi|indi[oa]s?|india|libanes[ae]?|libano|[áa]rabe|peruan[oa]s?|peru|latino[as]?|latinoameric[oa]n[oa]s?|venezolan[oa]s?|colombian[oa]s?|argentin[oa]s?|cuban[oa]s?|brasil|marroqu[ií]|griego|griega|turco)\b/i, forwardPrompt: "Quiero comida internacional (hindú, libanés, peruano, mexicano, latino, árabe…), ¿dónde voy ahora?", blurb: "Abro el Dashboard internacional." },
+  // Intento genérico "Comer" — SIEMPRE el último para que los específicos ganen
+  { test: /\b(comer|cenar|cena|almorzar|almuerzo|comida|restaurante|restaurantes|hambre|tengo hambre|me apetece comer|qu[eé] comemos|qu[eé] cenamos)\b/i, openSubmenu: "comer", blurb: "Abro el submenú Comer: dime qué te apetece (cocina típica, arroces, italiano, japonés, vegano, brunch, postres, comida rápida, barato o internacional)." },
+];
+
 export const agenteVamosChat = createServerFn({ method: "POST" })
   .inputValidator((d: { messages: Array<{ role: "user" | "assistant"; content: string }>; path?: string }) => d)
   .handler(async ({ data }) => {
@@ -550,6 +584,22 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
         forwardPrompt: lastUserMessage,
         source: "drinks" as const,
       };
+    }
+
+    // 1.ter) Comer / restaurantes / categorías de comida → reenviar al chat principal
+    // Cada categoría dispara su Dashboard inline; "comer" o "comida rápida" genéricos
+    // abren el submenú correspondiente para que el usuario elija.
+    for (const intent of FOOD_INTENTS) {
+      if (intent.test.test(lastUserMessage)) {
+        return {
+          ok: true as const,
+          content: intent.blurb,
+          navigate: "/",
+          forwardPrompt: intent.forwardPrompt,
+          openSubmenu: intent.openSubmenu,
+          source: "food" as const,
+        };
+      }
     }
 
     // Import dinámico: client.server NO debe estar al top-level de un .functions.ts mixto.
