@@ -507,16 +507,27 @@ export function AgenteVamosFab() {
       {!open && (
         <button
           onClick={() => {
-            // Prime speech synthesis within the user gesture so the first
-            // utterance actually plays (Chrome/iOS autoplay policy).
+            // Speak the greeting SYNCHRONOUSLY inside the click handler so the
+            // browser accepts it as a user-gesture action (Chrome/iOS autoplay).
             try {
               const synth = window.speechSynthesis;
               if (synth) {
+                synth.cancel();
                 synth.resume();
-                const warm = new SpeechSynthesisUtterance(" ");
-                warm.volume = 0;
-                warm.lang = "es-ES";
-                synth.speak(warm);
+                const greetText =
+                  "¡Hola! Soy Agente Vamos, tu concierge en Alicante. ¿Qué te apetece hacer? ¿Comer, dormir, playa, moverte, un plan?";
+                const u = new SpeechSynthesisUtterance(greetText);
+                u.lang = "es-ES";
+                u.rate = 1.05;
+                u.pitch = 1;
+                // Voice selection happens just-in-time; if voices aren't loaded
+                // yet the browser will fall back to the default es voice.
+                const voices = synth.getVoices();
+                const es = voices.find((v) => v.lang?.toLowerCase().startsWith("es-es"))
+                  || voices.find((v) => v.lang?.toLowerCase().startsWith("es"));
+                if (es) u.voice = es;
+                __vaSetGreetingSpoken(true);
+                synth.speak(u);
               }
             } catch {}
             setOpen(true);
