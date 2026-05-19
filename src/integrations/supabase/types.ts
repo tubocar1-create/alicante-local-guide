@@ -119,6 +119,51 @@ export type Database = {
         }
         Relationships: []
       }
+      agente_proper_nouns: {
+        Row: {
+          active: boolean
+          aliases: string[]
+          category: string
+          created_at: string
+          id: string
+          name: string
+          normalized: string
+          priority: number
+          route: string
+          source: string | null
+          source_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          aliases?: string[]
+          category: string
+          created_at?: string
+          id?: string
+          name: string
+          normalized: string
+          priority?: number
+          route: string
+          source?: string | null
+          source_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          aliases?: string[]
+          category?: string
+          created_at?: string
+          id?: string
+          name?: string
+          normalized?: string
+          priority?: number
+          route?: string
+          source?: string | null
+          source_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       agente_unknown_queries: {
         Row: {
           count: number
@@ -1482,6 +1527,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      agente_normalize: { Args: { input: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
