@@ -149,21 +149,24 @@ type Msg = { role: "user" | "assistant"; content: string };
 type Mode = "voice" | "text";
 
 const STORAGE_KEY = "va:agente-msgs";
-const GREETING: Msg = {
-  role: "assistant",
-  content:
-    "¡Hola! Soy **Agente Vamos**, tu concierge en Alicante. ¿Qué te apetece hacer — comer, dormir, playa, moverte, un plan?",
-};
+function getGreetingText() {
+  const h = new Date().getHours();
+  const saludo = h < 14 ? "Buenos días" : "Buenas tardes";
+  return `${saludo}, Leopoldo, ¿qué vamos a hacer hoy?`;
+}
+function makeGreeting(): Msg {
+  return { role: "assistant", content: getGreetingText() };
+}
 
 function loadMsgs(): Msg[] {
-  if (typeof window === "undefined") return [GREETING];
+  if (typeof window === "undefined") return [makeGreeting()];
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) return [GREETING];
+    if (!raw) return [makeGreeting()];
     const arr = JSON.parse(raw);
     if (Array.isArray(arr) && arr.length) return arr;
   } catch {}
-  return [GREETING];
+  return [makeGreeting()];
 }
 
 function plainText(md: string): string {
@@ -542,7 +545,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       if (!greetedRef.current && !pausedRef.current) {
         // No external greeting played (e.g. switched from text to voice).
         greetedRef.current = true;
-        speak(GREETING.content);
+        speak(getGreetingText());
         return;
       }
       if (shouldAutoListen()) startListening();
@@ -806,33 +809,40 @@ export function AgenteVamosFab() {
     if (voiceBootStartedRef.current) return;
     voiceBootStartedRef.current = true;
     try {
-      primeSpanishUtterances();
       const synth = window.speechSynthesis;
-      if (synth) {
+      if (!synth) return;
+      // Create the utterance synchronously inside the click handler so the
+      // browser links the speech to the user gesture (autoplay rules).
+      const greetText = getGreetingText();
+      const u = new SpeechSynthesisUtterance(greetText);
+      u.lang = "es-ES";
+      u.rate = 1.05;
+      u.pitch = 1;
+      const voice = pickSpanishVoice(synth);
+      if (voice) u.voice = voice;
+      __vaSetGreetingSpoken(false);
+      u.onstart = () => {
+        __vaActiveUtterance = u;
+        __vaSetGreetingSpoken(true);
+      };
+      u.onend = () => {
+        __vaActiveUtterance = null;
+        __vaSetGreetingSpoken(true);
+      };
+      u.onerror = () => {
+        __vaActiveUtterance = null;
         __vaSetGreetingSpoken(false);
-        synth.cancel();
-        synth.resume();
-        const greetText =
-          "¡Hola! Soy Agente Vamos, tu concierge en Alicante. ¿Qué te apetece hacer? ¿Comer, dormir, playa, moverte, un plan?";
-        const u = makeSpanishUtterance(greetText);
-        u.onstart = () => {
-          __vaActiveUtterance = u;
-          __vaSetGreetingSpoken(true);
-        };
-        u.onend = () => {
-          __vaActiveUtterance = null;
-          __vaSetGreetingSpoken(true);
-        };
-        u.onerror = () => {
-          __vaActiveUtterance = null;
-          __vaSetGreetingSpoken(false);
-        };
-        synth.speak(u);
-      }
+      };
+      synth.cancel();
+      synth.resume();
+      synth.speak(u);
+      // Prime additional utterances for subsequent replies (still inside gesture).
+      primeSpanishUtterances();
     } catch {
       voiceBootStartedRef.current = false;
     }
   };
+
 
   return (
     <>
