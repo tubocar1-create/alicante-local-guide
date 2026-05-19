@@ -1,0 +1,1 @@
+update public.agente_faqs set route = null where route = '/eat';
