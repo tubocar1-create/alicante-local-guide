@@ -41,9 +41,30 @@ const normalizeText = (value: string) =>
 const hasAnyTerm = (text: string, terms: string[]) =>
   terms.some((term) => new RegExp(`(^|\\s)${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}($|\\s)`, "i").test(text));
 
-const getPriorityRoute = (rawText: string): { path: string; reason: string } | null => {
+const parentPath = (p: string): string => {
+  if (!p || p === "/") return "/";
+  const segs = p.split("/").filter(Boolean);
+  segs.pop();
+  return segs.length === 0 ? "/" : "/" + segs.join("/");
+};
+
+const getPriorityRoute = (
+  rawText: string,
+  currentPath: string = "/",
+): { path: string; reason: string } | null => {
   const text = normalizeText(rawText);
   if (!text) return null;
+
+  // === Navegación relativa al flujo actual ===
+  // Volver / atrás → sube un nivel desde la ruta actual
+  if (hasAnyTerm(text, ["atras", "volver", "regresa", "regresar", "back", "vuelve"])) {
+    const parent = parentPath(currentPath);
+    if (parent !== currentPath) return { path: parent, reason: "volver al nivel anterior" };
+  }
+  // Menú principal / inicio / home
+  if (hasAnyTerm(text, ["inicio", "home", "principal", "menu"]) && !hasAnyTerm(text, ["bus", "linea", "lineas"])) {
+    if (currentPath !== "/") return { path: "/", reason: "volver al menú principal" };
+  }
 
   const isTransportTheme = hasAnyTerm(text, ["bus", "emt", "parada", "paradas", "linea", "lineas", "billete", "bonobus", "tarjeta"]);
   const hasOriginDestination = /\bde\s+\S+.+\b(a|hasta)\s+\S+/.test(text);
@@ -72,10 +93,16 @@ const getPriorityRoute = (rawText: string): { path: string; reason: string } | n
 
   for (const rule of rules) {
     if (rule.test && !rule.test(text)) continue;
-    if (hasAnyTerm(text, rule.terms)) return { path: rule.path, reason: rule.reason };
+    if (hasAnyTerm(text, rule.terms)) {
+      // Si ya está en esa ruta, no proponemos navegar — dejar que el AI conteste contextual.
+      if (rule.path === currentPath) return null;
+      return { path: rule.path, reason: rule.reason };
+    }
   }
 
-  if (hasOriginDestination && isTransportTheme) return { path: "/bus/planner", reason: "origen y destino con transporte" };
+  if (hasOriginDestination && isTransportTheme && currentPath !== "/bus/planner") {
+    return { path: "/bus/planner", reason: "origen y destino con transporte" };
+  }
   return null;
 };
 
@@ -184,6 +211,26 @@ Ejemplos correctos:
 
 Sólo responde sin navegar si NO hay ninguna ruta razonable, en saludo/despedida casual, o si el usuario ya está en la página correcta y pide un detalle puntual.
 
+# CONTINUIDAD DE FLUJO (MUY IMPORTANTE)
+La conversación NUNCA termina al navegar. Después de llevar al usuario a una página, mantén el hilo: ofrece próximos pasos contextuales, refina filtros, baja a un detalle, vuelve a un nivel superior o salta a una sección hermana — según lo que pida.
+
+Reglas:
+1. La "Ruta actual del usuario" indica el contexto. Decide si la próxima respuesta debe: a) bajar de nivel (submenú o detalle), b) subir de nivel (padre / menú principal), c) saltar a una ruta hermana, d) permanecer y responder con texto.
+2. Si el usuario YA está en la ruta donde se atiende su tema y hace una pregunta de detalle (filtrar, elegir un ítem, comparar), NO navegues: responde con texto.
+3. "volver", "atrás", "regresa" → navega al padre (quitar el último segmento; si ya está en raíz, "/").
+4. "menú", "menú principal", "inicio", "home" → navega a "/".
+5. Si está en una página y nombra otro tema del menú/submenú → navega a la nueva ruta sin pedir confirmación.
+6. Si está en un submenú y pregunta por un hermano del mismo hub (en /ocio/cartelera pregunta "¿y teatros?"), salta a /ocio/teatros.
+7. Tras cada navegación, frase breve indicando qué verá y sugiriendo el siguiente paso natural ("Aquí tienes la cartelera. ¿Filtramos por sala o por hora?").
+8. Mantén memoria del recorrido: si el usuario eligió cine, luego una sala concreta, y luego "¿cómo llego?", recién entonces saltas a /bus/planner con destino=el cine.
+
+Ejemplos:
+- En /ocio/cartelera, "¿hay algo de terror?" → texto, sin navegar.
+- En /ocio/cartelera, "y de teatro?" → navigate_to("/ocio/teatros").
+- En /ocio/cartelera, "volver" → navigate_to("/ocio").
+- En /playas/mapa, "menú principal" → navigate_to("/").
+- En /eat, "¿cómo llego al primero?" → navigate_to("/bus/planner") con origen/destino.
+
 # COBERTURA
 Alicante y radio de 30 km desde Puerta del Mar.
 
@@ -202,7 +249,7 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
     if (!key) return { ok: false as const, error: "AI no configurada" };
 
     const lastUserMessage = [...data.messages].reverse().find((message) => message.role === "user")?.content ?? "";
-    const priorityRoute = getPriorityRoute(lastUserMessage);
+    const priorityRoute = getPriorityRoute(lastUserMessage, data.path ?? "/");
 
     const routeList = ROUTES.map((r) => `- ${r.path} — ${r.desc}`).join("\n");
     const sys = `${SYSTEM_PROMPT}\n\nRUTAS DISPONIBLES:\n${routeList}\n\nRuta actual del usuario: ${data.path ?? "/"}${priorityRoute ? `\n\nDECISIÓN DETERMINISTA DE ENRUTAMIENTO: el clasificador interno detectó ${priorityRoute.reason}; si respondes con tool, usa navigate_to(\"${priorityRoute.path}\") y no otra ruta.` : ""}`;
