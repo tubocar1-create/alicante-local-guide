@@ -381,17 +381,37 @@ export function ChatScreen() {
         | undefined;
       if (!detail) return;
       const { openCount, count, label } = detail;
+      const rawLabel = label.toLowerCase().trim();
+      const foodLabel = rawLabel.startsWith("comida ")
+        ? rawLabel
+        : rawLabel.startsWith("cocina ")
+          ? rawLabel.replace(/^cocina\s+/, "comida ")
+          : rawLabel;
       const text =
         openCount > 0
-          ? `Te he conseguido ${openCount} sitios donde comer ${label} abiertos ahora.`
+          ? `Te he conseguido ${openCount} restaurantes abiertos de ${foodLabel}.`
           : count > 0
-            ? `No tengo sitios de ${label} abiertos ahora mismo, pero te dejo los ${count} del listado por si quieres reservar.`
-            : `Ahora mismo no encuentro sitios de ${label} cercanos. ¿Probamos otra categoría?`;
+            ? `No tengo restaurantes abiertos de ${foodLabel} ahora mismo, pero te dejo los ${count} del listado por si quieres reservar.`
+            : `Ahora mismo no encuentro restaurantes de ${foodLabel} cercanos. ¿Probamos otra categoría?`;
       setMessages((prev) => {
+        const lastAssistantIndex = (() => {
+          for (let i = prev.length - 1; i >= 0; i--) {
+            if (prev[i].role === "assistant") return i;
+          }
+          return -1;
+        })();
+        if (lastAssistantIndex < 0) return prev;
+        const lastUser = (() => {
+          for (let i = lastAssistantIndex - 1; i >= 0; i--) {
+            if (prev[i].role === "user") return prev[i].content;
+          }
+          return "";
+        })();
+        const dashboardPrompt = /(comer|restaurante|cocina|arroz|pescado|italian|pizza|desayun|brunch|japon|asi[aá]tic|bar|caf[eé]|hamburgues|burger|taco|burrito|mexican|kebab|pollo|montadito|vegano|postre|barato|internacional)/i.test(lastUser);
         for (let i = prev.length - 1; i >= 0; i--) {
           const m = prev[i];
           if (m.role !== "assistant") continue;
-          if (/^Abro el Dashboard/i.test(m.content) || /Marchando/i.test(m.content)) {
+          if (dashboardPrompt || /^Abro el Dashboard/i.test(m.content) || /Marchando/i.test(m.content) || /^Te he conseguido \d+ restaurantes abiertos/i.test(m.content)) {
             const copy = prev.slice();
             copy[i] = { ...m, content: text };
             return copy;
@@ -404,6 +424,7 @@ export function ChatScreen() {
         const synth = window.speechSynthesis;
         if (synth) {
           synth.cancel();
+          synth.resume();
           const u = new SpeechSynthesisUtterance(text);
           u.lang = "es-ES";
           u.rate = 1;
@@ -411,10 +432,8 @@ export function ChatScreen() {
           const voices = synth.getVoices();
           const es = voices.find((v) => /es[-_]/i.test(v.lang));
           if (es) u.voice = es;
-          // Pequeño delay para que el cancel se aplique antes del speak.
-          setTimeout(() => {
-            try { synth.speak(u); } catch {}
-          }, 60);
+          synth.speak(u);
+          if (synth.paused) synth.resume();
         }
       } catch {}
     };
