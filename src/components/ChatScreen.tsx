@@ -382,11 +382,11 @@ export function ChatScreen() {
       if (!detail) return;
       const { openCount, count, label } = detail;
       const rawLabel = label.toLowerCase().trim();
-      const foodLabel = rawLabel.startsWith("comida ")
-        ? rawLabel
-        : rawLabel.startsWith("cocina ")
-          ? rawLabel.replace(/^cocina\s+/, "comida ")
-          : rawLabel;
+      const categoryLabel = rawLabel
+        .replace(/^comida\s+/, "")
+        .replace(/^cocina\s+/, "")
+        .trim();
+      const foodLabel = `comida ${categoryLabel || rawLabel}`;
       const text =
         openCount > 0
           ? `Te he conseguido ${openCount} restaurantes abiertos de ${foodLabel}.`
@@ -419,8 +419,10 @@ export function ChatScreen() {
         }
         return prev;
       });
-      // Habla el resumen real (sustituyendo cualquier TTS previo del agente).
+      // Habla el resumen real si no viene de una conversación de voz: en ese
+      // caso lo habla AgenteVamos para mantener continuidad de diálogo.
       try {
+        if (window.sessionStorage.getItem("afp:voiceFoodSummaryPending") === "1") return;
         const synth = window.speechSynthesis;
         if (synth) {
           synth.cancel();
