@@ -17,6 +17,12 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 
+const VOICE_ASSETS = import.meta.glob("../assets/agent-voice/*.mp3", {
+  eager: true,
+  query: "?url",
+  import: "default",
+}) as Record<string, string>;
+
 // Local intent router — no AI provider needed. Maps keywords to a friendly
 // reply + optional navigation. Keeps the agent fully responsive offline.
 type VoiceClip =
@@ -199,7 +205,8 @@ type Mode = "voice" | "text";
 type PendingSpeech = { text: string; audio?: AgentAudioClip };
 
 const STORAGE_KEY = "va:agente-msgs";
-const audioSrc = (clip: AgentAudioClip) => `/agent-voice/${clip}.mp3`;
+const audioSrc = (clip: AgentAudioClip) =>
+  VOICE_ASSETS[`../assets/agent-voice/${clip}.mp3`] ?? `/agent-voice/${clip}.mp3`;
 function getGreetingClip(): GreetingClip {
   return new Date().getHours() < 14 ? "greeting_morning" : "greeting_afternoon";
 }
@@ -250,6 +257,7 @@ export const __vaSetGreetingSpoken = (v: boolean) => {
 };
 let __vaActiveUtterance: SpeechSynthesisUtterance | null = null;
 let __vaActiveAudio: HTMLAudioElement | null = null;
+let __vaActiveAudioStartedAt = 0;
 const __vaPrimedUtterances: SpeechSynthesisUtterance[] = [];
 
 function pickSpanishVoice(synth: SpeechSynthesis) {
@@ -373,6 +381,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       if (__vaActiveAudio) __vaActiveAudio.currentTime = 0;
     } catch {}
     __vaActiveAudio = null;
+    __vaActiveAudioStartedAt = 0;
     try {
       window.speechSynthesis?.cancel();
     } catch {}
@@ -405,12 +414,15 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         __vaActiveAudio?.pause();
         const audio = new Audio(audioSrc(clip));
         audio.preload = "auto";
+        audio.volume = 1;
         __vaActiveAudio = audio;
+        __vaActiveAudioStartedAt = Date.now();
         setTapToSpeak(null);
         speakingRef.current = true;
         setSpeaking(true);
         const finish = () => {
           if (__vaActiveAudio === audio) __vaActiveAudio = null;
+          __vaActiveAudioStartedAt = 0;
           speakingRef.current = false;
           setSpeaking(false);
           onEnd?.();
@@ -419,6 +431,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         audio.onended = finish;
         audio.onerror = () => {
           if (__vaActiveAudio === audio) __vaActiveAudio = null;
+          __vaActiveAudioStartedAt = 0;
           speakingRef.current = false;
           setSpeaking(false);
           setTapToSpeak({ text, audio: clip });
@@ -429,6 +442,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         if (started && typeof started.catch === "function") {
           started.catch(() => {
             if (__vaActiveAudio === audio) __vaActiveAudio = null;
+            __vaActiveAudioStartedAt = 0;
             speakingRef.current = false;
             setSpeaking(false);
             setTapToSpeak({ text, audio: clip });
@@ -592,17 +606,24 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         }
         // Silence — restart listening automatically
         if (shouldAutoListen()) {
-          setTimeout(() => startListeningRef.current(), 300);
+          setTimeout(() => {
+            if (shouldAutoListen()) startListeningRef.current();
+          }, 700);
         }
       };
       recogRef.current = rec;
       setVoiceError(null);
       setListening(true);
       rec.start();
-    } catch {
+    } catch (err) {
       setListening(false);
-      // Try again shortly
-      if (shouldAutoListen()) setTimeout(() => startListeningRef.current(), 500);
+      const message = err instanceof Error ? err.message : "";
+      setVoiceError(
+        message.includes("not-allowed") || message.includes("denied")
+          ? "Permiso de micrófono denegado. Pulsa reanudar y acepta el permiso."
+          : "No pude iniciar el micrófono. Pulsa reanudar para intentarlo otra vez.",
+      );
+      setPaused(true);
     }
   }, [shouldAutoListen]);
 
@@ -647,6 +668,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
     const tryStart = () => {
       if (cancelled) return;
+      if (__vaActiveAudio && Date.now() - __vaActiveAudioStartedAt > 9000) {
+        __vaActiveAudio = null;
+        __vaActiveAudioStartedAt = 0;
+      }
       if ((synth && (synth.speaking || synth.pending || __vaActiveUtterance)) || __vaActiveAudio) {
         // Do not cancel or replace the click-started greeting while it is
         // queued/playing; otherwise mobile browsers may drop audio entirely.
@@ -810,6 +835,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                   onClick={() => {
                     if (paused) {
                       primeSpanishUtterances();
+                      setVoiceError(null);
                       setPaused(false);
                       setTimeout(() => startListeningRef.current(), 100);
                     } else {
@@ -918,18 +944,34 @@ export function AgenteVamosFab() {
     try {
       const greetText = getGreetingText();
       const greetAudio = new Audio(audioSrc(getGreetingClip()));
+      greetAudio.preload = "auto";
+      greetAudio.volume = 1;
       __vaActiveAudio = greetAudio;
+      __vaActiveAudioStartedAt = Date.now();
       __vaSetGreetingSpoken(true);
       greetAudio.onended = () => {
         if (__vaActiveAudio === greetAudio) __vaActiveAudio = null;
+        __vaActiveAudioStartedAt = 0;
+        if (navigator.mediaDevices?.getUserMedia) {
+          navigator.mediaDevices
+            .getUserMedia({ audio: true })
+            .then((stream) => stream.getTracks().forEach((track) => track.stop()))
+            .catch(() => {});
+        }
       };
       greetAudio.onerror = () => {
         if (__vaActiveAudio === greetAudio) __vaActiveAudio = null;
+        __vaActiveAudioStartedAt = 0;
       };
       const audioStarted = greetAudio.play();
+      if (!audioStarted) {
+        __vaActiveAudio = null;
+        __vaActiveAudioStartedAt = 0;
+      }
       if (audioStarted && typeof audioStarted.catch === "function") {
         audioStarted.catch(() => {
           if (__vaActiveAudio === greetAudio) __vaActiveAudio = null;
+          __vaActiveAudioStartedAt = 0;
           const synth = window.speechSynthesis;
           if (!synth) return;
           const u = new SpeechSynthesisUtterance(greetText);
