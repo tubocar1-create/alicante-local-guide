@@ -435,6 +435,53 @@ const blurbFor = (path: string): string => {
   return "Te llevo allí.";
 };
 
+// Para fichas /vuelos/{IATA} (destino) y /vuelos/{IATA}?type=L (origen)
+// generamos un blurb con el conteo real de vuelos hoy y a 7 días.
+async function flightsCountBlurb(
+  supabaseAdmin: any,
+  path: string,
+): Promise<string | null> {
+  const m = path.match(/^\/vuelos\/([A-Z]{3})(\?type=L)?$/);
+  if (!m) return null;
+  const iata = m[1];
+  const isInbound = !!m[2];
+  const flightType = isInbound ? "L" : "S";
+
+  const now = new Date();
+  const startToday = new Date(now);
+  startToday.setHours(0, 0, 0, 0);
+  const endToday = new Date(startToday);
+  endToday.setDate(endToday.getDate() + 1);
+  const end7d = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+  const qToday = supabaseAdmin
+    .from("aena_flights")
+    .select("id", { count: "exact", head: true })
+    .eq("airport", "ALC")
+    .eq("flight_type", flightType)
+    .eq("iata_otro", iata)
+    .gte("scheduled_at", startToday.toISOString())
+    .lt("scheduled_at", endToday.toISOString());
+
+  const qWeek = supabaseAdmin
+    .from("aena_flights")
+    .select("id", { count: "exact", head: true })
+    .eq("airport", "ALC")
+    .eq("flight_type", flightType)
+    .eq("iata_otro", iata)
+    .gte("scheduled_at", now.toISOString())
+    .lte("scheduled_at", end7d.toISOString());
+
+  try {
+    const [tRes, wRes] = await Promise.all([qToday, qWeek]);
+    const today = tRes.count ?? 0;
+    const week = wRes.count ?? 0;
+    return `Hemos encontrado ${today} vuelo${today === 1 ? "" : "s"} disponible${today === 1 ? "" : "s"} para hoy y ${week} vuelo${week === 1 ? "" : "s"} disponible${week === 1 ? "" : "s"} para los próximos 7 días.`;
+  } catch {
+    return null;
+  }
+}
+
 // Detecta intentos abiertos / ambiguos que SÍ merecen llamada a la IA.
 const isOpenEnded = (text: string): boolean => {
   const t = normalizeText(text);
