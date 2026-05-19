@@ -539,7 +539,7 @@ type FoodIntent = {
 };
 const FOOD_INTENTS: FoodIntent[] = [
   // Específicos de comida rápida (Dashboard concreto)
-  { test: /\b(hamburgues|burger|smash ?burger|mcdonald|burger king|goiko|five guys|tgb)\b/i, forwardPrompt: "Una buena hamburguesería abierta ahora (McDonald's, Burger King, TGB, Goiko, Five Guys…)", blurb: "Abro el Dashboard de hamburgueserías." },
+  { test: /\b(hamburgues\w*|burger\w*|smash ?burger\w*|mcdonald\w*|burger king|goiko|five guys|tgb)\b/i, forwardPrompt: "Una buena hamburguesería abierta ahora (McDonald's, Burger King, TGB, Goiko, Five Guys…)", blurb: "Abro el Dashboard de hamburgueserías." },
   { test: /\b(montaditos?|100 montaditos|lizarr[aá]n)\b/i, forwardPrompt: "Un sitio de montaditos abierto ahora (100 Montaditos, Lizarrán…)", blurb: "Abro el Dashboard de montaditos." },
   { test: /\b(kebaps?|kebab|d[oö]ner|shawarma)\b/i, forwardPrompt: "Un buen kebap abierto ahora", blurb: "Abro el Dashboard de kebaps." },
   { test: /\b(kfc|popeyes|pollo frito|pollos asados|poller[ií]a)\b/i, forwardPrompt: "Un sitio de pollo frito o pollos asados abierto ahora (KFC, Popeyes…)", blurb: "Abro el Dashboard de pollo frito." },
