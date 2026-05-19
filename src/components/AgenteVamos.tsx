@@ -45,6 +45,13 @@ function getSpeechRecognition(): any {
   return (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition || null;
 }
 
+// Set true by the FAB after speaking the greeting synchronously (inside the
+// click handler — required by browser autoplay rules). The panel reads it to
+// avoid double-greeting.
+let __vaGreetingSpoken = false;
+export const __vaGetGreetingSpoken = () => __vaGreetingSpoken;
+export const __vaSetGreetingSpoken = (v: boolean) => { __vaGreetingSpoken = v; };
+
 export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [msgs, setMsgs] = useState<Msg[]>(loadMsgs);
   const [input, setInput] = useState("");
