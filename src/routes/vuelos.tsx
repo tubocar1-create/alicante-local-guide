@@ -254,9 +254,6 @@ function VuelosDashboard() {
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
 
   const flightType = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("type") === "L" ? "L" : "S";
-  const destinoParam = typeof window !== "undefined"
-    ? (new URLSearchParams(window.location.search).get("destino") ?? "").trim().toLowerCase()
-    : "";
 
   useEffect(() => {
     let cancel = false;
