@@ -523,6 +523,10 @@ const matchProperNoun = (
   return best ? { path: best.path, reason: best.reason, name: best.name } : null;
 };
 
+// Intención "tomar algo" — reenvía al chat principal para que renderice el
+// Dashboard Nocturno inline (no existe ruta /tomar-algo dedicada).
+const DRINKS_INTENT_RE = /\b(tomar algo|beber|copa|copas|coctel|cóctel|cocktail|cocteleria|coctelería|cerveza|cervezas|cerveceria|cervecería|brewery|vermut|vermouth|gin tonic|gintonic|vino|vinos|vinoteca|wine bar|pub|pubs|discoteca|discotecas|disco|night ?club|nightclub|club nocturno|rooftop|terraceo|sala de fiestas|karaoke|karaokes|bar de copas|chupito|chupitos|afterwork|sunset bar)\b/i;
+
 export const agenteVamosChat = createServerFn({ method: "POST" })
   .inputValidator((d: { messages: Array<{ role: "user" | "assistant"; content: string }>; path?: string }) => d)
   .handler(async ({ data }) => {
@@ -534,6 +538,18 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
     const smalltalk = smalltalkReply(lastUserMessage);
     if (smalltalk) {
       return { ok: true as const, content: smalltalk, navigate: null, source: "smalltalk" as const };
+    }
+
+    // 1.bis) Tomar algo / cerveza / copas / discoteca → reenviar al chat principal
+    // El Dashboard Nocturno vive inline dentro de ChatScreen y se dispara con el prompt.
+    if (DRINKS_INTENT_RE.test(lastUserMessage)) {
+      return {
+        ok: true as const,
+        content: "Abro el Dashboard Nocturno: bares, cervecerías, pubs y discotecas abiertos ahora.",
+        navigate: "/",
+        forwardPrompt: lastUserMessage,
+        source: "drinks" as const,
+      };
     }
 
     // Import dinámico: client.server NO debe estar al top-level de un .functions.ts mixto.

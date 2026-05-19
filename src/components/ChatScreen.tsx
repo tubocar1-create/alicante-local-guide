@@ -311,6 +311,25 @@ export function ChatScreen() {
     return () => window.removeEventListener("bus:choose", handler);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, loading]);
+
+  // Reenvío de prompts desde AgenteVamos (p.ej. "tomar algo / cerveza")
+  // El agente vocal escribe el prompt en sessionStorage y navega a "/";
+  // aquí lo recogemos y lo enviamos para que se renderice el Dashboard inline.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const key = "afp:fwdPrompt";
+    const tryConsume = () => {
+      const fwd = window.sessionStorage.getItem(key);
+      if (!fwd || loading) return;
+      window.sessionStorage.removeItem(key);
+      void send(fwd);
+    };
+    tryConsume();
+    const onFocus = () => tryConsume();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { state: locState, request: requestLocation } = useUserLocation();
