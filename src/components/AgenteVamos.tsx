@@ -886,23 +886,25 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       const mic = getMicWarmupSnapshot();
       setMicReady(mic.state === "ready");
       if (mic.message && mic.state !== "ready") setVoiceError(mic.message);
-      if (__vaActiveAudio && Date.now() - __vaActiveAudioStartedAt > 9000) {
-        __vaActiveAudio = null;
-        __vaActiveAudioStartedAt = 0;
-      }
-      if ((synth && (synth.speaking || synth.pending || __vaActiveUtterance)) || __vaActiveAudio) {
-        // Do not cancel or replace the click-started greeting while it is
-        // queued/playing; otherwise mobile browsers may drop audio entirely.
-        setSpeaking(Boolean(synth?.speaking || __vaActiveUtterance || __vaActiveAudio));
-        setTimeout(tryStart, 250);
+      // Refleja si aún suena el saludo, pero NO bloquea el inicio de escucha:
+      // el reconocedor arranca en paralelo para que el usuario pueda hablar
+      // inmediatamente (barge-in). Mucho mejor percepción de latencia.
+      const stillSpeaking = Boolean(
+        (synth && (synth.speaking || synth.pending || __vaActiveUtterance)) ||
+          __vaActiveAudio,
+      );
+      setSpeaking(stillSpeaking);
+      if (mic.state === "pending" && mic.promise) {
+        mic.promise.then(() => {
+          if (!cancelled && shouldAutoListen()) startListening();
+        });
         return;
       }
-      setSpeaking(false);
       if (shouldAutoListen()) startListening();
     };
 
-    // Small initial delay so the FAB-initiated utterance has a chance to start.
-    const t = setTimeout(tryStart, 150);
+    // Arrancamos en el siguiente tick para no pisar el gesto de click.
+    const t = setTimeout(tryStart, 0);
     return () => {
       cancelled = true;
       clearTimeout(t);
