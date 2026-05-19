@@ -675,7 +675,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             }
             if (vueloMatch) {
               return navigate({
-                to: "/vuelos_/$iata",
+                to: "/vuelos/$iata",
                 params: { iata: vueloMatch[1] },
                 search: search as any,
               });
