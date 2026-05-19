@@ -809,33 +809,40 @@ export function AgenteVamosFab() {
     if (voiceBootStartedRef.current) return;
     voiceBootStartedRef.current = true;
     try {
-      primeSpanishUtterances();
       const synth = window.speechSynthesis;
-      if (synth) {
+      if (!synth) return;
+      // Create the utterance synchronously inside the click handler so the
+      // browser links the speech to the user gesture (autoplay rules).
+      const greetText = getGreetingText();
+      const u = new SpeechSynthesisUtterance(greetText);
+      u.lang = "es-ES";
+      u.rate = 1.05;
+      u.pitch = 1;
+      const voice = pickSpanishVoice(synth);
+      if (voice) u.voice = voice;
+      __vaSetGreetingSpoken(false);
+      u.onstart = () => {
+        __vaActiveUtterance = u;
+        __vaSetGreetingSpoken(true);
+      };
+      u.onend = () => {
+        __vaActiveUtterance = null;
+        __vaSetGreetingSpoken(true);
+      };
+      u.onerror = () => {
+        __vaActiveUtterance = null;
         __vaSetGreetingSpoken(false);
-        synth.cancel();
-        synth.resume();
-        const greetText =
-          "¡Hola! Soy Agente Vamos, tu concierge en Alicante. ¿Qué te apetece hacer? ¿Comer, dormir, playa, moverte, un plan?";
-        const u = makeSpanishUtterance(greetText);
-        u.onstart = () => {
-          __vaActiveUtterance = u;
-          __vaSetGreetingSpoken(true);
-        };
-        u.onend = () => {
-          __vaActiveUtterance = null;
-          __vaSetGreetingSpoken(true);
-        };
-        u.onerror = () => {
-          __vaActiveUtterance = null;
-          __vaSetGreetingSpoken(false);
-        };
-        synth.speak(u);
-      }
+      };
+      synth.cancel();
+      synth.resume();
+      synth.speak(u);
+      // Prime additional utterances for subsequent replies (still inside gesture).
+      primeSpanishUtterances();
     } catch {
       voiceBootStartedRef.current = false;
     }
   };
+
 
   return (
     <>
