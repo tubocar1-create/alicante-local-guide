@@ -30,6 +30,7 @@ const VOICE_ASSETS = import.meta.glob("../assets/agent-voice/*.mp3", {
 type VoiceClip =
   | "hotel"
   | "eat"
+  | "drinks"
   | "beaches"
   | "beach_map"
   | "explore"
@@ -54,6 +55,12 @@ type AgentAudioClip = VoiceClip | GreetingClip;
 
 type Intent = { keys: string[]; reply: string; path?: string; audio: VoiceClip };
 const INTENTS: Intent[] = [
+  {
+    keys: ["tomar algo", "beber", "cerveza", "cervezas", "cerveceria", "cervecería", "copa", "copas", "pub", "discoteca", "bar de copas", "rooftop"],
+    reply: "Abro el Dashboard Nocturno: bares, cervecerías, pubs y discotecas abiertos ahora.",
+    path: "/",
+    audio: "drinks",
+  },
   {
     keys: ["hotel", "dormir", "alojamiento", "alojar", "hostal", "apartamento", "habitacion"],
     reply: "Te llevo a alojamientos cerca de Alicante.",
@@ -614,6 +621,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         const fallback = localResolve(clean);
         let reply = fallback.reply;
         let target: string | undefined = fallback.path;
+        let forwardPrompt: string | undefined;
 
         try {
           const res = await askAgent({
@@ -627,6 +635,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             if (ai.content && ai.content.trim()) reply = ai.content.trim();
             if (ai.navigate) target = ai.navigate;
             if (ai.forwardPrompt && typeof window !== "undefined") {
+              forwardPrompt = ai.forwardPrompt;
               try {
                 window.sessionStorage.setItem("afp:fwdPrompt", ai.forwardPrompt);
               } catch {}
@@ -637,15 +646,20 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         }
 
         setMsgs((m) => [...m, { role: "assistant", content: reply }]);
-        if (target && target !== path) {
+        if (forwardPrompt && typeof window !== "undefined") {
+          setTimeout(() => {
+            try {
+              const done = target && target !== path ? navigate({ to: target }) : undefined;
+              Promise.resolve(done).finally(() => {
+                window.dispatchEvent(new CustomEvent("afp:forward-prompt", { detail: { text: forwardPrompt } }));
+                onClose();
+              });
+            } catch {}
+          }, 350);
+        } else if (target && target !== path) {
           setTimeout(() => {
             try {
               navigate({ to: target });
-              // Si forwardPrompt está pendiente, cerramos el overlay para
-              // que ChatScreen lo recoja y lance el prompt automáticamente.
-              if (typeof window !== "undefined" && window.sessionStorage.getItem("afp:fwdPrompt")) {
-                onClose();
-              }
             } catch {}
           }, 350);
         }
