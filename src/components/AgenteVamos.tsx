@@ -1004,6 +1004,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   useEffect(() => {
     if (open && !wasOpenRef.current) {
       setMode("voice");
+      setMuted(false); // A2: voz por defecto al abrir → no muted
       setPaused(false);
       setVoiceError(null);
       bumpIdle();
