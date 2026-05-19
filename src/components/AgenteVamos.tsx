@@ -215,6 +215,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const [muted, setMuted] = useState(false);
   const [paused, setPaused] = useState(false);
   const [voiceError, setVoiceError] = useState<string | null>(null);
+  const [tapToSpeak, setTapToSpeak] = useState<string | null>(null);
 
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
@@ -229,6 +230,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const speakingRef = useRef(speaking);
   const openRef = useRef(open);
   const wasOpenRef = useRef(open);
+  const turnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     modeRef.current = mode;
   }, [mode]);
