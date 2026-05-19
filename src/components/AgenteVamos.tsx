@@ -1456,7 +1456,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                     stopListening();
                     stopSpeaking();
                     setMode("text");
-                    setMuted(true);
+                    // No silenciar al cambiar a texto: el agente debe seguir hablando.
+                    setMuted(false);
                   }}
                   className="rounded-full border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
                 >
