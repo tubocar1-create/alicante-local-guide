@@ -839,8 +839,8 @@ export function ChatScreen() {
             </button>
           ) : (
             <button
-              onClick={() => alert("Voice messages coming soon 🎙️")}
-              aria-label="Voice"
+              onClick={() => window.dispatchEvent(new Event("vamos:open"))}
+              aria-label="Hablar con Agente Vamos"
               className="flex h-12 w-12 items-center justify-center rounded-full gradient-warm text-primary-foreground shadow-soft transition active:scale-95"
             >
               <Mic className="h-5 w-5" />

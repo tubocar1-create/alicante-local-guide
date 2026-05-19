@@ -1167,6 +1167,18 @@ export function AgenteVamosFab() {
     });
   };
 
+  // Permitir abrir el agente desde otros botones (p.ej. el micro del chat)
+  // El listener corre síncrono dentro del click handler externo, así que
+  // sigue siendo un gesto de usuario válido para getUserMedia.
+  useEffect(() => {
+    const handler = () => {
+      if (!voiceBootStartedRef.current) startGreetingFromUserGesture();
+      setOpen(true);
+    };
+    window.addEventListener("vamos:open", handler);
+    return () => window.removeEventListener("vamos:open", handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <>
