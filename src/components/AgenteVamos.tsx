@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { Sparkles, Send, X, Loader2 } from "lucide-react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { Sparkles, Send, X, Loader2, Mic, MicOff, Keyboard, Volume2, VolumeX } from "lucide-react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import ReactMarkdown from "react-markdown";
@@ -8,6 +8,7 @@ import { agenteVamosChat } from "@/lib/agente.functions";
 import { cn } from "@/lib/utils";
 
 type Msg = { role: "user" | "assistant"; content: string };
+type Mode = "voice" | "text";
 
 const STORAGE_KEY = "va:agente-msgs";
 const GREETING: Msg = {
@@ -27,14 +28,44 @@ function loadMsgs(): Msg[] {
   return [GREETING];
 }
 
+// Strip markdown for TTS
+function plainText(md: string): string {
+  return md
+    .replace(/`{1,3}[^`]*`{1,3}/g, "")
+    .replace(/\*\*?([^*]+)\*\*?/g, "$1")
+    .replace(/_([^_]+)_/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/^[#>\-*]\s+/gm, "")
+    .replace(/\n{2,}/g, ". ")
+    .trim();
+}
+
+// Web Speech API types
+type SR = any;
+
+function getSpeechRecognition(): any {
+  if (typeof window === "undefined") return null;
+  return (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition || null;
+}
+
 export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [msgs, setMsgs] = useState<Msg[]>(loadMsgs);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<Mode>("voice");
+  const [listening, setListening] = useState(false);
+  const [interim, setInterim] = useState("");
+  const [speaking, setSpeaking] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
+
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const callAgent = useServerFn(agenteVamosChat);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const recogRef = useRef<SR | null>(null);
+  const mutedRef = useRef(muted);
+  useEffect(() => { mutedRef.current = muted; }, [muted]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -50,12 +81,54 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  async function send(text: string) {
+  const stopListening = useCallback(() => {
+    try { recogRef.current?.stop(); } catch {}
+    setListening(false);
+  }, []);
+
+  const stopSpeaking = useCallback(() => {
+    try { window.speechSynthesis?.cancel(); } catch {}
+    setSpeaking(false);
+  }, []);
+
+  // Cleanup on close
+  useEffect(() => {
+    if (!open) {
+      stopListening();
+      stopSpeaking();
+    }
+  }, [open, stopListening, stopSpeaking]);
+
+  const speak = useCallback((text: string, onEnd?: () => void) => {
+    if (mutedRef.current || typeof window === "undefined" || !window.speechSynthesis) {
+      onEnd?.();
+      return;
+    }
+    try {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(plainText(text));
+      u.lang = "es-ES";
+      u.rate = 1.05;
+      u.pitch = 1;
+      const voices = window.speechSynthesis.getVoices();
+      const es = voices.find((v) => v.lang?.toLowerCase().startsWith("es"));
+      if (es) u.voice = es;
+      u.onstart = () => setSpeaking(true);
+      u.onend = () => { setSpeaking(false); onEnd?.(); };
+      u.onerror = () => { setSpeaking(false); onEnd?.(); };
+      window.speechSynthesis.speak(u);
+    } catch {
+      onEnd?.();
+    }
+  }, []);
+
+  const send = useCallback(async (text: string, viaVoice = false) => {
     const clean = text.trim();
     if (!clean || loading) return;
     const next = [...msgs, { role: "user" as const, content: clean }];
     setMsgs(next);
     setInput("");
+    setInterim("");
     setLoading(true);
     try {
       const res = await callAgent({ data: { messages: next, path } });
@@ -63,21 +136,92 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         const content = res.content || "Vale.";
         setMsgs((m) => [...m, { role: "assistant", content }]);
         if (res.navigate) {
-          setTimeout(() => {
-            try { navigate({ to: res.navigate as string }); } catch {}
-          }, 350);
+          setTimeout(() => { try { navigate({ to: res.navigate as string }); } catch {} }, 350);
+        }
+        if (viaVoice || mode === "voice") {
+          speak(content, () => {
+            // Auto-resume listening after response in voice mode
+            if (mode === "voice") startListening();
+          });
         }
       } else {
-        setMsgs((m) => [...m, { role: "assistant", content: res.error || "Ahora mismo no puedo responder. Intenta otra vez en un momento." }]);
+        const err = res.error || "Ahora mismo no puedo responder. Intenta otra vez en un momento.";
+        setMsgs((m) => [...m, { role: "assistant", content: err }]);
+        if (viaVoice || mode === "voice") speak(err);
       }
     } catch {
-      setMsgs((m) => [...m, { role: "assistant", content: "Algo ha fallado. ¿Lo intentamos de nuevo?" }]);
+      const err = "Algo ha fallado. ¿Lo intentamos de nuevo?";
+      setMsgs((m) => [...m, { role: "assistant", content: err }]);
+      if (viaVoice || mode === "voice") speak(err);
     } finally {
       setLoading(false);
     }
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [msgs, loading, callAgent, path, navigate, mode, speak]);
+
+  const startListening = useCallback(() => {
+    const SRClass = getSpeechRecognition();
+    if (!SRClass) {
+      setVoiceError("Tu navegador no soporta reconocimiento de voz. Usa Chrome o Safari, o cambia a modo texto.");
+      return;
+    }
+    stopSpeaking();
+    try {
+      const rec = new SRClass();
+      rec.lang = "es-ES";
+      rec.continuous = false;
+      rec.interimResults = true;
+      let finalText = "";
+      rec.onresult = (e: any) => {
+        let interimText = "";
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const t = e.results[i][0].transcript;
+          if (e.results[i].isFinal) finalText += t;
+          else interimText += t;
+        }
+        setInterim(interimText);
+        if (finalText) {
+          setInterim("");
+          stopListening();
+          send(finalText, true);
+        }
+      };
+      rec.onerror = (e: any) => {
+        setListening(false);
+        if (e?.error === "not-allowed" || e?.error === "service-not-allowed") {
+          setVoiceError("Permiso de micrófono denegado. Habilítalo o cambia a modo texto.");
+        }
+      };
+      rec.onend = () => setListening(false);
+      recogRef.current = rec;
+      setVoiceError(null);
+      setListening(true);
+      rec.start();
+    } catch (err: any) {
+      setListening(false);
+      setVoiceError("No se pudo iniciar el micrófono.");
+    }
+  }, [send, stopListening, stopSpeaking]);
+
+  // Auto-start listening when opening in voice mode
+  useEffect(() => {
+    if (!open) return;
+    if (mode !== "voice") return;
+    const SRClass = getSpeechRecognition();
+    if (!SRClass) {
+      setVoiceError("Tu navegador no soporta reconocimiento de voz. Cambia a modo texto.");
+      return;
+    }
+    // Warm up voices list
+    try { window.speechSynthesis?.getVoices(); } catch {}
+    const t = setTimeout(() => { if (!listening && !loading && !speaking) startListening(); }, 400);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, mode]);
 
   if (!open) return null;
+  const isVoice = mode === "voice";
+
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-end sm:items-end sm:justify-end">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
@@ -89,60 +233,153 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             </div>
             <div>
               <p className="text-sm font-bold leading-tight">Agente Vamos</p>
-              <p className="text-[11px] opacity-90">Tu concierge en Alicante</p>
+              <p className="text-[11px] opacity-90">
+                {isVoice ? (speaking ? "hablando…" : listening ? "te escucho…" : "modo voz") : "modo texto"}
+              </p>
             </div>
           </div>
-          <button onClick={onClose} aria-label="Cerrar" className="rounded-full p-1 hover:bg-white/20">
-            <X className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setMuted((v) => { if (!v) stopSpeaking(); return !v; })}
+              aria-label={muted ? "Activar voz" : "Silenciar voz"}
+              className="rounded-full p-2 hover:bg-white/20"
+              title={muted ? "Activar voz" : "Silenciar voz"}
+            >
+              {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+            </button>
+            <button
+              onClick={() => {
+                if (isVoice) {
+                  stopListening();
+                  stopSpeaking();
+                  setMode("text");
+                } else {
+                  setMode("voice");
+                }
+              }}
+              aria-label={isVoice ? "Cambiar a texto" : "Cambiar a voz"}
+              className="rounded-full p-2 hover:bg-white/20"
+              title={isVoice ? "Cambiar a texto" : "Cambiar a voz"}
+            >
+              {isVoice ? <Keyboard className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+            </button>
+            <button onClick={onClose} aria-label="Cerrar" className="rounded-full p-2 hover:bg-white/20">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </header>
 
-        <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-3 py-4">
-          {msgs.map((m, i) => (
-            <div key={i} className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}>
-              <div
+        {/* Voice mode UI */}
+        {isVoice ? (
+          <div className="flex flex-1 flex-col items-center justify-between overflow-hidden px-6 py-6">
+            <div ref={scrollRef} className="w-full flex-1 overflow-y-auto space-y-3 pb-4">
+              {msgs.slice(-4).map((m, i) => (
+                <div key={i} className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}>
+                  <div className={cn(
+                    "max-w-[90%] rounded-2xl px-3 py-2 text-sm leading-relaxed",
+                    m.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground",
+                  )}>
+                    <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-a:text-primary">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {interim && (
+                <div className="flex justify-end">
+                  <div className="max-w-[90%] rounded-2xl bg-primary/40 px-3 py-2 text-sm italic text-primary-foreground">
+                    {interim}…
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex w-full flex-col items-center gap-3 pb-2">
+              {voiceError && (
+                <p className="text-center text-xs text-destructive">{voiceError}</p>
+              )}
+              <button
+                onClick={() => {
+                  if (loading) return;
+                  if (speaking) { stopSpeaking(); return; }
+                  if (listening) stopListening();
+                  else startListening();
+                }}
+                disabled={loading}
+                aria-label={listening ? "Detener" : "Hablar"}
                 className={cn(
-                  "max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed",
-                  m.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-foreground",
+                  "relative grid h-24 w-24 place-items-center rounded-full text-primary-foreground shadow-2xl transition active:scale-95 disabled:opacity-60",
+                  listening
+                    ? "bg-red-500 ring-8 ring-red-500/30 animate-pulse"
+                    : speaking
+                      ? "bg-orange-500 ring-8 ring-orange-500/30"
+                      : "bg-gradient-to-br from-primary to-orange-500 ring-4 ring-primary/20",
                 )}
               >
-                <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-a:text-primary">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
+                {loading ? <Loader2 className="h-10 w-10 animate-spin" />
+                  : listening ? <MicOff className="h-10 w-10" />
+                  : <Mic className="h-10 w-10" />}
+              </button>
+              <p className="text-center text-xs text-muted-foreground">
+                {loading ? "pensando…"
+                  : speaking ? "toca para interrumpir"
+                  : listening ? "te escucho · toca para parar"
+                  : "toca y habla"}
+              </p>
+              <button
+                onClick={() => { stopListening(); stopSpeaking(); setMode("text"); }}
+                className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+              >
+                cambiar a modo texto
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-3 py-4">
+              {msgs.map((m, i) => (
+                <div key={i} className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}>
+                  <div className={cn(
+                    "max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed",
+                    m.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground",
+                  )}>
+                    <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-a:text-primary">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ))}
+              {loading && (
+                <div className="flex justify-start">
+                  <div className="flex items-center gap-2 rounded-2xl bg-muted px-3 py-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" /> pensando…
+                  </div>
+                </div>
+              )}
             </div>
-          ))}
-          {loading && (
-            <div className="flex justify-start">
-              <div className="flex items-center gap-2 rounded-2xl bg-muted px-3 py-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" /> pensando…
-              </div>
-            </div>
-          )}
-        </div>
 
-        <form
-          onSubmit={(e) => { e.preventDefault(); send(input); }}
-          className="flex items-center gap-2 border-t bg-background p-3"
-        >
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Escribe a Agente Vamos…"
-            className="flex-1 rounded-full border bg-background px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40"
-            disabled={loading}
-          />
-          <button
-            type="submit"
-            disabled={loading || !input.trim()}
-            className="grid h-10 w-10 place-items-center rounded-full bg-primary text-primary-foreground disabled:opacity-50"
-            aria-label="Enviar"
-          >
-            <Send className="h-4 w-4" />
-          </button>
-        </form>
+            <form
+              onSubmit={(e) => { e.preventDefault(); send(input); }}
+              className="flex items-center gap-2 border-t bg-background p-3"
+            >
+              <input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Escribe a Agente Vamos…"
+                className="flex-1 rounded-full border bg-background px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40"
+                disabled={loading}
+              />
+              <button
+                type="submit"
+                disabled={loading || !input.trim()}
+                className="grid h-10 w-10 place-items-center rounded-full bg-primary text-primary-foreground disabled:opacity-50"
+                aria-label="Enviar"
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            </form>
+          </>
+        )}
       </div>
     </div>
   );
@@ -151,7 +388,6 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 export function AgenteVamosFab() {
   const [open, setOpen] = useState(false);
   const path = useRouterState({ select: (s) => s.location.pathname });
-  // Hide on auth/onboarding routes
   const hidden = ["/login", "/magic", "/welcome"].includes(path) || path.startsWith("/business/login");
   if (hidden) return null;
   return (
@@ -162,7 +398,7 @@ export function AgenteVamosFab() {
           aria-label="Abrir Agente Vamos"
           className="fixed bottom-5 right-5 z-[90] flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-orange-500 px-4 py-3 text-sm font-semibold text-primary-foreground shadow-2xl ring-4 ring-primary/20 transition hover:scale-105 active:scale-95"
         >
-          <Sparkles className="h-5 w-5" />
+          <Mic className="h-5 w-5" />
           <span className="hidden sm:inline">Agente Vamos</span>
         </button>
       )}
