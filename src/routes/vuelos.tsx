@@ -1082,10 +1082,10 @@ function InfoPanel({
       <ul className="mb-3 space-y-1">
         {visibleCities.map((c, i) => (
           <li key={c.iata} className="odd:bg-white/[0.02] rounded-lg">
-            <a
-              href={`/vuelos/${c.iata}?type=${flightType}`}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              to="/vuelos_/$iata"
+              params={{ iata: c.iata }}
+              search={{ type: flightType }}
               className="flex items-center gap-2 px-2 py-1 text-[12px] text-slate-200 transition hover:text-cyan-300"
             >
               <span className="w-4 text-right font-mono text-[11px] text-slate-500">
@@ -1101,7 +1101,7 @@ function InfoPanel({
               <span className="font-mono tabular-nums text-slate-300">
                 {c.total}
               </span>
-            </a>
+            </Link>
           </li>
         ))}
         {cities.length === 0 && (
