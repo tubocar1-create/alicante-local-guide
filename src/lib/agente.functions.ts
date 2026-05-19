@@ -407,12 +407,22 @@ type FaqRow = {
   priority: number;
 };
 
+// Coincidencia por palabra completa (no substring) para que "tomar" no
+// dispare "mar", "cena" no dispare "cenar mal", etc.
+const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const hasWord = (text: string, needle: string): boolean => {
+  if (!needle) return false;
+  // Si el término ya contiene espacios, basta con substring (frase).
+  if (/\s/.test(needle)) return text.includes(needle);
+  return new RegExp(`(?:^|[^a-z0-9ñ])${escapeRegex(needle)}(?:[^a-z0-9ñ]|$)`).test(text);
+};
+
 const matchFaq = (text: string, faqs: FaqRow[]): FaqRow | null => {
   for (const f of faqs) {
-    const allOk = (f.keywords ?? []).every((k) => text.includes(normalizeText(k)));
+    const allOk = (f.keywords ?? []).every((k) => hasWord(text, normalizeText(k)));
     if (!allOk) continue;
     const anyList = (f.any_of ?? []).map(normalizeText).filter(Boolean);
-    const anyOk = anyList.length === 0 || anyList.some((k) => text.includes(k));
+    const anyOk = anyList.length === 0 || anyList.some((k) => hasWord(text, k));
     if (!anyOk) continue;
     return f;
   }
