@@ -820,7 +820,10 @@ export function AgenteVamosFab() {
       u.pitch = 1;
       const voice = pickSpanishVoice(synth);
       if (voice) u.voice = voice;
-      __vaSetGreetingSpoken(false);
+      // Mark it immediately so the panel does not create a second utterance
+      // from an effect and cancel the click-authorized audio before it starts.
+      __vaActiveUtterance = u;
+      __vaSetGreetingSpoken(true);
       u.onstart = () => {
         __vaActiveUtterance = u;
         __vaSetGreetingSpoken(true);
@@ -831,7 +834,7 @@ export function AgenteVamosFab() {
       };
       u.onerror = () => {
         __vaActiveUtterance = null;
-        __vaSetGreetingSpoken(false);
+        __vaSetGreetingSpoken(true);
       };
       synth.cancel();
       synth.resume();
