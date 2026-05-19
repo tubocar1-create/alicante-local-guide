@@ -1509,6 +1509,7 @@ export function AgenteVamosFab() {
   const playGreetingAfterPermission = () => {
     try {
       const greetText = getGreetingText();
+        unlockSpeechFromUserGesture();
       const greetAudio = new Audio(audioSrc(getGreetingClip()));
       greetAudio.preload = "auto";
       greetAudio.volume = 1;
