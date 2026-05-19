@@ -734,9 +734,10 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
       const rows = await loadProperNouns(supabaseAdmin);
       const pn = matchProperNoun(normalized, rows, currentPath);
       if (pn) {
+        const flightBlurb = await flightsCountBlurb(supabaseAdmin, pn.path);
         return {
           ok: true as const,
-          content: blurbFor(pn.path) || `Te llevo a ${pn.name}.`,
+          content: flightBlurb ?? blurbFor(pn.path) ?? `Te llevo a ${pn.name}.`,
           navigate: pn.path,
           source: "proper_noun" as const,
         };
@@ -748,9 +749,10 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
     // 3) Clasificador determinista (nombres propios hardcodeados + sustantivo + navegación relativa)
     const priorityRoute = getPriorityRoute(lastUserMessage, currentPath);
     if (priorityRoute) {
+      const flightBlurb = await flightsCountBlurb(supabaseAdmin, priorityRoute.path);
       return {
         ok: true as const,
-        content: blurbFor(priorityRoute.path),
+        content: flightBlurb ?? blurbFor(priorityRoute.path),
         navigate: priorityRoute.path,
         source: "router" as const,
       };
