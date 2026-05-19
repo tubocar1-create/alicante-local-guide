@@ -349,26 +349,23 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         </header>
 
         {isVoice ? (
-          <div className="flex flex-1 flex-col items-center justify-between overflow-hidden px-6 py-6">
-            <div ref={scrollRef} className="w-full flex-1 overflow-y-auto space-y-3 pb-4">
-              {msgs.slice(-4).map((m, i) => (
-                <div key={i} className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}>
-                  <div className={cn(
-                    "max-w-[90%] rounded-2xl px-3 py-2 text-sm leading-relaxed",
-                    m.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground",
-                  )}>
-                    <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-a:text-primary">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {interim && (
-                <div className="flex justify-end">
-                  <div className="max-w-[90%] rounded-2xl bg-primary/40 px-3 py-2 text-sm italic text-primary-foreground">
-                    {interim}…
-                  </div>
-                </div>
+          <div className="flex flex-1 flex-col items-center justify-center gap-4 overflow-hidden px-6 py-6">
+            {/* Voice-only — no message history rendered. Show just live transcript. */}
+            <div className="min-h-[2.5rem] w-full text-center">
+              {interim ? (
+                <p className="text-sm italic text-foreground/80">"{interim}…"</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  {speaking
+                    ? "VA está hablando…"
+                    : listening
+                      ? "Habla cuando quieras"
+                      : loading
+                        ? "Pensando una respuesta…"
+                        : paused
+                          ? "Conversación en pausa"
+                          : "Preparando…"}
+                </p>
               )}
             </div>
 
