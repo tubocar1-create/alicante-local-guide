@@ -670,6 +670,22 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       if (!clean || loadingRef.current) return;
       bumpIdle();
       stopListening();
+
+      // C8: despedida del usuario — responde local, habla y cierra.
+      if (/^(gracias|graci[ao]s|nada m[aá]s|adi[oó]s|hasta luego|chao|chau|hasta otra|me voy)\b/i.test(clean)) {
+        setMsgs((m) => [
+          ...m,
+          { role: "user", content: clean },
+          { role: "assistant", content: "Hasta luego, Leopoldo." },
+        ]);
+        setInput("");
+        setInterim("");
+        speak("Hasta luego, Leopoldo.", undefined, () => {
+          setTimeout(() => onClose(), 200);
+        });
+        return;
+      }
+
       const next = [...msgs, { role: "user" as const, content: clean }];
       setMsgs(next);
       setInput("");
@@ -722,8 +738,15 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           // si falla el servidor, nos quedamos con la respuesta local
         }
 
-        setMsgs((m) => [...m, { role: "assistant", content: reply }]);
         const pendingSubmenu = typeof window !== "undefined" ? window.sessionStorage.getItem("afp:openSubmenu") : null;
+        const navigatingToDashboard = Boolean(forwardPrompt || pendingSubmenu);
+
+        // B3: cuando vamos a un Dashboard, NO insertamos el placeholder
+        // "Abro el Dashboard…" — mantenemos el indicador "pensando…" hasta
+        // que llegue el resumen real vía vamos:food-summary.
+        if (!navigatingToDashboard) {
+          setMsgs((m) => [...m, { role: "assistant", content: reply }]);
+        }
 
         // Navegación tolerante: acepta paths con query string y rutas dinámicas
         // de BD (p.ej. /hotel/<uuid>, /vuelos?destino=amsterdam). Si TanStack
@@ -762,12 +785,28 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           }
         };
 
-        if (forwardPrompt || pendingSubmenu) {
-          if ((forwardPrompt || pendingSubmenu) && typeof window !== "undefined") {
+        if (navigatingToDashboard) {
+          if (typeof window !== "undefined") {
             try {
               window.sessionStorage.setItem("afp:voiceFoodSummaryPending", "1");
             } catch {}
           }
+          // Mantenemos loading=true hasta que llegue el resumen (B3).
+          awaitingSummaryRef.current = true;
+          // B4: acuse breve hablado si el resumen tarda > 800ms.
+          if (ackTimerRef.current) clearTimeout(ackTimerRef.current);
+          ackTimerRef.current = setTimeout(() => {
+            if (awaitingSummaryRef.current && !mutedRef.current) {
+              speak("Voy a por ello.");
+            }
+          }, 800);
+          // Seguridad: si el resumen nunca llega, libera el spinner a los 8s.
+          setTimeout(() => {
+            if (awaitingSummaryRef.current) {
+              awaitingSummaryRef.current = false;
+              setLoading(false);
+            }
+          }, 8000);
           setTimeout(() => {
             try {
               const done = target && target !== path ? goTo(target) : undefined;
@@ -778,29 +817,20 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                 if (pendingSubmenu) {
                   window.dispatchEvent(new CustomEvent("afp:open-submenu", { detail: { path: pendingSubmenu } }));
                 }
-                // No cerramos el diálogo: el agente debe seguir activo para
-                // verbalizar el resumen ("Te he conseguido N restaurantes…")
-                // y permitir continuar la conversación.
               });
             } catch {}
           }, 350);
+          // No tocamos loading aquí — lo limpia speakExternalSummary o el timeout.
+          return;
         } else if (target && target !== path) {
           setTimeout(() => {
             goTo(target);
           }, 350);
         }
-        // Si vamos a abrir un Dashboard en ChatScreen (forwardPrompt/openSubmenu),
-        // NO hablamos el placeholder "Abro el Dashboard…" aquí, porque sería
-        // cortado al cerrar el panel (stopSpeaking) y bloquearía el TTS del
-        // resumen real. ChatScreen hablará el resumen final ("Te he conseguido
-        // N sitios…") cuando los datos carguen.
-        // Hablar también en modo texto: el agente verbaliza lo que escribe.
-        // El usuario puede silenciar con el botón de altavoz (mutedRef).
-        if (!forwardPrompt && !pendingSubmenu) {
-          speak(reply, fallback.audio);
-        }
+        // Habla la respuesta normal (no navegación a Dashboard).
+        speak(reply, fallback.audio);
       } finally {
-        setLoading(false);
+        if (!awaitingSummaryRef.current) setLoading(false);
       }
     },
     [msgs, path, navigate, speak, stopListening, bumpIdle, askAgent, onClose],
