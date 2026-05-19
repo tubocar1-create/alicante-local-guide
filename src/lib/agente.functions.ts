@@ -41,9 +41,30 @@ const normalizeText = (value: string) =>
 const hasAnyTerm = (text: string, terms: string[]) =>
   terms.some((term) => new RegExp(`(^|\\s)${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}($|\\s)`, "i").test(text));
 
-const getPriorityRoute = (rawText: string): { path: string; reason: string } | null => {
+const parentPath = (p: string): string => {
+  if (!p || p === "/") return "/";
+  const segs = p.split("/").filter(Boolean);
+  segs.pop();
+  return segs.length === 0 ? "/" : "/" + segs.join("/");
+};
+
+const getPriorityRoute = (
+  rawText: string,
+  currentPath: string = "/",
+): { path: string; reason: string } | null => {
   const text = normalizeText(rawText);
   if (!text) return null;
+
+  // === Navegación relativa al flujo actual ===
+  // Volver / atrás → sube un nivel desde la ruta actual
+  if (hasAnyTerm(text, ["atras", "volver", "regresa", "regresar", "back", "vuelve"])) {
+    const parent = parentPath(currentPath);
+    if (parent !== currentPath) return { path: parent, reason: "volver al nivel anterior" };
+  }
+  // Menú principal / inicio / home
+  if (hasAnyTerm(text, ["inicio", "home", "principal", "menu"]) && !hasAnyTerm(text, ["bus", "linea", "lineas"])) {
+    if (currentPath !== "/") return { path: "/", reason: "volver al menú principal" };
+  }
 
   const isTransportTheme = hasAnyTerm(text, ["bus", "emt", "parada", "paradas", "linea", "lineas", "billete", "bonobus", "tarjeta"]);
   const hasOriginDestination = /\bde\s+\S+.+\b(a|hasta)\s+\S+/.test(text);
@@ -72,10 +93,16 @@ const getPriorityRoute = (rawText: string): { path: string; reason: string } | n
 
   for (const rule of rules) {
     if (rule.test && !rule.test(text)) continue;
-    if (hasAnyTerm(text, rule.terms)) return { path: rule.path, reason: rule.reason };
+    if (hasAnyTerm(text, rule.terms)) {
+      // Si ya está en esa ruta, no proponemos navegar — dejar que el AI conteste contextual.
+      if (rule.path === currentPath) return null;
+      return { path: rule.path, reason: rule.reason };
+    }
   }
 
-  if (hasOriginDestination && isTransportTheme) return { path: "/bus/planner", reason: "origen y destino con transporte" };
+  if (hasOriginDestination && isTransportTheme && currentPath !== "/bus/planner") {
+    return { path: "/bus/planner", reason: "origen y destino con transporte" };
+  }
   return null;
 };
 
