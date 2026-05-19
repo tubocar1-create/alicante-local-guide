@@ -1050,11 +1050,8 @@ export function AgenteVamosFab() {
     ["/login", "/magic", "/welcome"].includes(path) || path.startsWith("/business/login");
   if (hidden) return null;
 
-  const startGreetingFromUserGesture = () => {
-    if (voiceBootStartedRef.current) return;
-    voiceBootStartedRef.current = true;
+  const playGreetingAfterPermission = () => {
     try {
-      requestMicWarmupFromUserGesture();
       const greetText = getGreetingText();
       const greetAudio = new Audio(audioSrc(getGreetingClip()));
       greetAudio.preload = "auto";
@@ -1071,10 +1068,6 @@ export function AgenteVamosFab() {
         __vaActiveAudioStartedAt = 0;
       };
       const audioStarted = greetAudio.play();
-      if (!audioStarted) {
-        __vaActiveAudio = null;
-        __vaActiveAudioStartedAt = 0;
-      }
       if (audioStarted && typeof audioStarted.catch === "function") {
         audioStarted.catch(() => {
           if (__vaActiveAudio === greetAudio) __vaActiveAudio = null;
@@ -1088,25 +1081,44 @@ export function AgenteVamosFab() {
           const voice = pickSpanishVoice(synth);
           if (voice) u.voice = voice;
           __vaActiveUtterance = u;
-          u.onend = () => {
-            __vaActiveUtterance = null;
-          };
-          u.onerror = () => {
-            __vaActiveUtterance = null;
-          };
+          u.onend = () => { __vaActiveUtterance = null; };
+          u.onerror = () => { __vaActiveUtterance = null; };
           synth.cancel();
           synth.resume();
           synth.speak(u);
         });
       }
       if (window.speechSynthesis) window.speechSynthesis.resume();
-      // Create the utterance synchronously inside the click handler so the
-      // browser links the speech to the user gesture (autoplay rules).
-      // Prime additional utterances for subsequent replies (still inside gesture).
       primeSpanishUtterances();
     } catch {
-      voiceBootStartedRef.current = false;
+      /* noop */
     }
+  };
+
+  const startGreetingFromUserGesture = () => {
+    if (voiceBootStartedRef.current) return;
+    voiceBootStartedRef.current = true;
+    // Pedimos el permiso del micrófono ANTES de empezar la conversación.
+    // getUserMedia debe llamarse de forma síncrona dentro del gesto del usuario.
+    const warmup = requestMicWarmupFromUserGesture();
+    const snap = getMicWarmupSnapshot();
+    if (snap.state === "ready") {
+      playGreetingAfterPermission();
+      return;
+    }
+    if (!warmup) {
+      // No hay API de micrófono; abrimos igualmente y saludamos.
+      playGreetingAfterPermission();
+      return;
+    }
+    warmup.then((state) => {
+      if (state === "ready") {
+        playGreetingAfterPermission();
+      } else {
+        // Permiso denegado o error: no iniciamos conversación, mostramos aviso en el panel.
+        voiceBootStartedRef.current = false;
+      }
+    });
   };
 
 
