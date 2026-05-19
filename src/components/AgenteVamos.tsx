@@ -378,7 +378,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
               {/* Animated orb — visual only, no interaction required */}
               <div
                 className={cn(
-                  "relative grid h-28 w-28 place-items-center rounded-full text-primary-foreground shadow-2xl transition",
+                  "relative grid h-20 w-20 place-items-center rounded-full text-primary-foreground shadow-2xl transition",
                   paused
                     ? "bg-muted text-muted-foreground"
                     : listening
@@ -390,9 +390,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                           : "bg-gradient-to-br from-primary to-orange-500 ring-4 ring-primary/20",
                 )}
               >
-                {loading ? <Loader2 className="h-10 w-10 animate-spin" />
-                  : paused ? <MicOff className="h-10 w-10" />
-                  : <Mic className="h-10 w-10" />}
+                {loading ? <Loader2 className="h-8 w-8 animate-spin" />
+                  : paused ? <MicOff className="h-8 w-8" />
+                  : <Mic className="h-8 w-8" />}
               </div>
 
               <p className="text-center text-xs text-muted-foreground">
