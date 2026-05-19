@@ -119,6 +119,51 @@ export type Database = {
         }
         Relationships: []
       }
+      agente_intents: {
+        Row: {
+          action: string | null
+          active: boolean
+          created_at: string
+          id: string
+          key: string
+          keywords: string[]
+          label: string
+          notes: string | null
+          priority: number
+          route: string | null
+          spoken_reply: string
+          updated_at: string
+        }
+        Insert: {
+          action?: string | null
+          active?: boolean
+          created_at?: string
+          id?: string
+          key: string
+          keywords?: string[]
+          label: string
+          notes?: string | null
+          priority?: number
+          route?: string | null
+          spoken_reply: string
+          updated_at?: string
+        }
+        Update: {
+          action?: string | null
+          active?: boolean
+          created_at?: string
+          id?: string
+          key?: string
+          keywords?: string[]
+          label?: string
+          notes?: string | null
+          priority?: number
+          route?: string | null
+          spoken_reply?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       agente_proper_nouns: {
         Row: {
           active: boolean
