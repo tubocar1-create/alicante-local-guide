@@ -392,6 +392,24 @@ export function ChatScreen() {
         }
         return prev;
       });
+      // Habla el resumen real (sustituyendo cualquier TTS previo del agente).
+      try {
+        const synth = window.speechSynthesis;
+        if (synth) {
+          synth.cancel();
+          const u = new SpeechSynthesisUtterance(text);
+          u.lang = "es-ES";
+          u.rate = 1;
+          u.pitch = 1;
+          const voices = synth.getVoices();
+          const es = voices.find((v) => /es[-_]/i.test(v.lang));
+          if (es) u.voice = es;
+          // Pequeño delay para que el cancel se aplique antes del speak.
+          setTimeout(() => {
+            try { synth.speak(u); } catch {}
+          }, 60);
+        }
+      } catch {}
     };
     window.addEventListener("vamos:food-summary", handler as EventListener);
     return () => window.removeEventListener("vamos:food-summary", handler as EventListener);
