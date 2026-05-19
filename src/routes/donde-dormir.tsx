@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { X, ChevronDown, ChevronRight, Euro, Coffee, ShieldCheck, MapPin, BedDouble } from "lucide-react";
+import { X, ChevronDown, ChevronRight, Euro, Coffee, ShieldCheck, MapPin } from "lucide-react";
 import { listHotels } from "@/lib/hotels.functions";
 
 export const Route = createFileRoute("/donde-dormir")({
@@ -134,7 +134,6 @@ function DondeDormirPage() {
             <span className="inline-flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Disponible</span>
             <span className="inline-flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-rose-400" /> Sin disponibilidad</span>
             <span className="inline-flex items-center gap-1"><Euro className="h-2.5 w-2.5" /> Precio/noche</span>
-            <span className="inline-flex items-center gap-1"><BedDouble className="h-2.5 w-2.5" /> Habitaciones disponibles</span>
             <span className="inline-flex items-center gap-1"><Coffee className="h-2.5 w-2.5" /> Desayuno</span>
             <span className="inline-flex items-center gap-1"><ShieldCheck className="h-2.5 w-2.5" /> Cancelación gratis</span>
             <span className="inline-flex items-center gap-1"><MapPin className="h-2.5 w-2.5" /> Distancia</span>
@@ -145,7 +144,6 @@ function DondeDormirPage() {
               <col className="w-[18px]" />
               <col />
               <col className="w-[46px]" />
-              <col className="w-[32px]" />
               <col className="w-[30px]" />
               <col className="w-[34px]" />
               <col className="w-[38px]" />
@@ -156,9 +154,6 @@ function DondeDormirPage() {
                 <th className="px-1 py-1 text-[9px] font-medium uppercase tracking-[0.12em]">Hotel</th>
                 <th className="px-1 py-1 text-right" aria-label="Precio por noche">
                   <Euro className="ml-auto h-3 w-3" />
-                </th>
-                <th className="px-1 py-1 text-center" aria-label="Habitaciones disponibles">
-                  <BedDouble className="mx-auto h-3 w-3" />
                 </th>
                 <th className="px-1 py-1 text-center" aria-label="Desayuno incluido">
                   <Coffee className="mx-auto h-3 w-3" />
@@ -171,6 +166,7 @@ function DondeDormirPage() {
                 </th>
               </tr>
             </thead>
+
             <tbody>
               {ranked.map((h: any) => {
                 const d = h.dyn;
@@ -228,13 +224,8 @@ function DondeDormirPage() {
                           <span className="font-normal text-amber-200/40">—</span>
                         )}
                       </td>
-                      <td className="px-1 py-1 text-center align-middle font-mono text-[10px] tabular-nums text-amber-50">
-                        {d?.rooms_available != null ? (
-                          <span className={d.rooms_available > 0 ? "text-emerald-200" : "text-rose-300"}>{d.rooms_available}</span>
-                        ) : (
-                          <span className="text-amber-100/40">—</span>
-                        )}
-                      </td>
+
+
                       <td className="px-1 py-1 text-center align-middle text-[10px] font-medium text-amber-50">
                         {d?.breakfast_included ? (
                           <span className="text-emerald-200">Sí</span>
@@ -256,7 +247,7 @@ function DondeDormirPage() {
                     {open && roomTypes.length > 0 && (
                       <tr key={h.id + "-rooms"} className="bg-amber-500/[0.04]">
                         <td className="rounded-l-md" />
-                        <td colSpan={6} className="rounded-r-md px-2 py-2">
+                        <td colSpan={5} className="rounded-r-md px-2 py-2">
                           <ul className="flex flex-col divide-y divide-amber-100/[0.06]">
                             {roomTypes.map((rt, i) => (
                               <li
@@ -283,7 +274,8 @@ function DondeDormirPage() {
               })}
               {!isLoading && ranked.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-2 py-4 text-center text-xs text-amber-200/50">
+                  <td colSpan={6} className="px-2 py-4 text-center text-xs text-amber-200/50">
+
                     Sin alojamientos.
                   </td>
                 </tr>

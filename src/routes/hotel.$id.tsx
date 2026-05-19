@@ -10,6 +10,7 @@ import {
   Sparkles,
   ExternalLink,
   CalendarDays,
+  BedDouble,
 } from "lucide-react";
 import { getHotel, getHotelCalendar, getHotelPhotos } from "@/lib/hotels.functions";
 import { getAiReview } from "@/lib/ai-review.functions";
@@ -245,7 +246,15 @@ function HotelDetail() {
                   <p className="mt-1 text-xs text-amber-200/70">{h.address}</p>
                 )}
 
-                <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[11px]">
+                <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
+                  <a
+                    href={mapsHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-semibold text-amber-950 hover:bg-amber-100"
+                  >
+                    🚶 Cómo ir
+                  </a>
                   {h.stars && (
                     <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/15 px-2 py-0.5 font-semibold text-amber-200">
                       <Star className="h-3 w-3 fill-current" />
@@ -259,13 +268,19 @@ function HotelDetail() {
                   )}
                 </div>
 
+
                 {/* Tarifas por tipo de habitación */}
                 <div className="mt-4 rounded-xl border border-amber-100/[0.08] bg-black/30 p-3">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-[10px] uppercase tracking-[0.2em] text-amber-300/70">
                       Habitaciones y tarifas
                     </p>
-                    <div className="flex gap-2 text-[10px]">
+                    <div className="flex flex-wrap gap-2 text-[10px]">
+                      {d?.rooms_available != null && (
+                        <span className={"inline-flex items-center gap-1 " + (d.rooms_available > 0 ? "text-emerald-300" : "text-rose-300")}>
+                          <BedDouble className="h-3 w-3" /> {d.rooms_available} hab.
+                        </span>
+                      )}
                       {d?.breakfast_included && (
                         <span className="inline-flex items-center gap-1 text-emerald-300">
                           <Coffee className="h-3 w-3" /> Desayuno
@@ -277,6 +292,7 @@ function HotelDetail() {
                         </span>
                       )}
                     </div>
+
                   </div>
                   {roomTypes.length > 0 ? (
                     <ul className="mt-2 divide-y divide-amber-100/[0.06]">
@@ -316,31 +332,21 @@ function HotelDetail() {
                   )}
                 </div>
 
-                {/* Actions: left = Cómo ir (small), right = stacked operators */}
-                <div className="mt-4 grid grid-cols-3 gap-2 items-start">
-                  <a
-                    href={mapsHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="col-span-1 inline-flex items-center justify-center gap-1 self-start rounded-lg bg-amber-200 px-1.5 py-1 text-[9px] font-semibold text-amber-950 hover:bg-amber-100"
-                  >
-                    <span className="text-xs leading-none">🚶</span> Cómo ir
-                  </a>
-
-                  <div className="col-span-2 flex flex-col gap-2">
-                    {operators.map((op) => (
-                      <a
-                        key={op.label}
-                        href={op.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-200 to-[#FF6347] px-3 py-2 text-[12px] font-semibold text-amber-950 hover:opacity-90"
-                      >
-                        {op.label} <ExternalLink className="h-3 w-3" />
-                      </a>
-                    ))}
-                  </div>
+                {/* Operadores en 2 columnas */}
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  {operators.map((op) => (
+                    <a
+                      key={op.label}
+                      href={op.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-200 to-[#FF6347] px-3 py-2 text-[12px] font-semibold text-amber-950 hover:opacity-90"
+                    >
+                      {op.label} <ExternalLink className="h-3 w-3" />
+                    </a>
+                  ))}
                 </div>
+
               </div>
             </div>
 
@@ -417,8 +423,9 @@ function HotelDetail() {
                               className={
                                 "flex h-12 flex-col items-center justify-center rounded text-[10px] leading-tight " +
                                 (available
-                                  ? "bg-green-500 text-white"
-                                  : "bg-red-500 text-white")
+                                  ? "bg-emerald-600/50 text-emerald-50"
+                                  : "bg-rose-600/40 text-rose-50/90")
+
                               }
                             >
                               <span className="font-mono font-semibold">{c.dayNum}</span>
