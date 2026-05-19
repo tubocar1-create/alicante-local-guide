@@ -757,7 +757,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                 if (pendingSubmenu) {
                   window.dispatchEvent(new CustomEvent("afp:open-submenu", { detail: { path: pendingSubmenu } }));
                 }
-                onClose();
+                // No cerramos el diálogo: el agente debe seguir activo para
+                // verbalizar el resumen ("Te he conseguido N restaurantes…")
+                // y permitir continuar la conversación.
               });
             } catch {}
           }, 350);
