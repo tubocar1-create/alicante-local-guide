@@ -773,9 +773,6 @@ export function AgenteVamosFab() {
     <>
       {!open && (
         <button
-          onTouchStart={startGreetingFromUserGesture}
-          onMouseDown={startGreetingFromUserGesture}
-          onPointerDown={startGreetingFromUserGesture}
           onClick={() => {
             startGreetingFromUserGesture();
             setOpen(true);
