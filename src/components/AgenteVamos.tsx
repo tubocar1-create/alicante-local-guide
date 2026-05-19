@@ -209,8 +209,7 @@ function localResolve(text: string): { reply: string; path?: string; audio: Voic
   }
   if (best) return { reply: best.reply, path: best.path, audio: best.audio };
   return {
-    reply:
-      "Puedo llevarte a: playas, dónde comer, dónde dormir, bus, vuelos, ocio, fiestas, clima o salud. ¿Qué prefieres?",
+    reply: "No te he entendido. ¿Puedes repetirlo?",
     audio: "fallback",
   };
 }
