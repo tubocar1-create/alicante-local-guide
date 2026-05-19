@@ -654,7 +654,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         setLoading(false);
       }
     },
-    [msgs, path, navigate, speak, stopListening, bumpIdle, askAgent],
+    [msgs, path, navigate, speak, stopListening, bumpIdle, askAgent, onClose],
   );
 
   const sendRef = useRef(send);
