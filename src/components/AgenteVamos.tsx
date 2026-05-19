@@ -396,7 +396,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     try {
       const rec = new SRClass();
       rec.lang = "es-ES";
-      rec.continuous = false;
+      rec.continuous = true;
       rec.interimResults = true;
       let finalText = "";
       let lastTranscript = "";
@@ -410,13 +410,24 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         }
         lastTranscript = (finalText || interimText || lastTranscript).trim();
         setInterim(interimText);
+        if (lastTranscript) {
+          if (turnTimerRef.current) clearTimeout(turnTimerRef.current);
+          turnTimerRef.current = setTimeout(() => finishTurn(), 950);
+        }
       };
       const finishTurn = () => {
         if (handled) return true;
+        if (turnTimerRef.current) {
+          clearTimeout(turnTimerRef.current);
+          turnTimerRef.current = null;
+        }
         const t = (finalText || lastTranscript).trim();
         if (!t) return false;
         handled = true;
         setInterim("");
+        try {
+          rec.stop?.();
+        } catch {}
         sendRef.current(t, true);
         return true;
       };
