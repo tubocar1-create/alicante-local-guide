@@ -396,108 +396,120 @@ const smalltalkReply = (text: string): string | null => {
   return "¡Hola! ¿Qué buscas en Alicante hoy? Playa, comer, cine, transporte…";
 };
 
+// === FAQ MATCHER (BD) ===
+// Carga FAQs activas y elige la primera cuya lista de keywords (TODAS) y any_of (AL MENOS UNA, si hay) coinciden.
+type FaqRow = {
+  id: string;
+  keywords: string[];
+  any_of: string[];
+  response: string;
+  route: string | null;
+  priority: number;
+};
+
+const matchFaq = (text: string, faqs: FaqRow[]): FaqRow | null => {
+  for (const f of faqs) {
+    const allOk = (f.keywords ?? []).every((k) => text.includes(normalizeText(k)));
+    if (!allOk) continue;
+    const anyList = (f.any_of ?? []).map(normalizeText).filter(Boolean);
+    const anyOk = anyList.length === 0 || anyList.some((k) => text.includes(k));
+    if (!anyOk) continue;
+    return f;
+  }
+  return null;
+};
+
+type AdminClient = { from: (table: string) => any };
+
+const logUnknown = async (db: AdminClient, rawQuery: string, normalized: string, path: string) => {
+  try {
+    const { data: existing } = await db
+      .from("agente_unknown_queries")
+      .select("id, count")
+      .eq("normalized", normalized)
+      .maybeSingle();
+    if (existing) {
+      await db
+        .from("agente_unknown_queries")
+        .update({ count: existing.count + 1, last_seen_at: new Date().toISOString(), path })
+        .eq("id", existing.id);
+    } else {
+      await db
+        .from("agente_unknown_queries")
+        .insert({ query: rawQuery.slice(0, 500), normalized: normalized.slice(0, 500), path });
+    }
+  } catch {
+    // No bloqueamos la respuesta por un fallo de log.
+  }
+};
+
+const bumpFaqHits = async (db: AdminClient, id: string) => {
+  try {
+    const { data } = await db.from("agente_faqs").select("hits").eq("id", id).maybeSingle();
+    if (data) {
+      await db.from("agente_faqs").update({ hits: (data.hits ?? 0) + 1 }).eq("id", id);
+    }
+  } catch {
+    // ignore
+  }
+};
+
+
 export const agenteVamosChat = createServerFn({ method: "POST" })
   .inputValidator((d: { messages: Array<{ role: "user" | "assistant"; content: string }>; path?: string }) => d)
   .handler(async ({ data }) => {
-    const lastUserMessage = [...data.messages].reverse().find((message) => message.role === "user")?.content ?? "";
+    const lastUserMessage = [...data.messages].reverse().find((m) => m.role === "user")?.content ?? "";
     const currentPath = data.path ?? "/";
-    const priorityRoute = getPriorityRoute(lastUserMessage, currentPath);
+    const normalized = normalizeText(lastUserMessage);
 
-    // === FAST PATH 1: saludo / despedida → respuesta local, sin IA ===
+    // 1) Saludo / despedida / agradecimiento → local instantáneo
     const smalltalk = smalltalkReply(lastUserMessage);
     if (smalltalk) {
-      return { ok: true as const, content: smalltalk, navigate: null, source: "local" as const };
+      return { ok: true as const, content: smalltalk, navigate: null, source: "smalltalk" as const };
     }
 
-    // === FAST PATH 2: clasificador determinista con confianza → respuesta local ===
-    // Saltamos la IA si tenemos ruta clara Y la frase NO es abierta/ambigua.
-    if (priorityRoute && !isOpenEnded(lastUserMessage)) {
+    // 2) Clasificador determinista (nombre propio / sustantivo / navegación relativa)
+    const priorityRoute = getPriorityRoute(lastUserMessage, currentPath);
+    if (priorityRoute) {
       return {
         ok: true as const,
         content: blurbFor(priorityRoute.path),
         navigate: priorityRoute.path,
-        source: "local" as const,
+        source: "router" as const,
       };
     }
 
-    // === FALLBACK: frase ambigua o sin ruta → IA ===
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) {
-      // Sin IA disponible: respuesta de cortesía + ruta si la había
-      return {
-        ok: true as const,
-        content: priorityRoute ? blurbFor(priorityRoute.path) : "Cuéntame qué buscas: comer, dormir, playa, ocio, transporte, salud, vuelos o clima.",
-        navigate: priorityRoute?.path ?? null,
-        source: "local" as const,
-      };
-    }
+    // Import dinámico: client.server NO debe estar al top-level de un .functions.ts mixto.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const routeList = ROUTES.map((r) => `- ${r.path} — ${r.desc}`).join("\n");
-    const sys = `${SYSTEM_PROMPT}\n\nRUTAS DISPONIBLES:\n${routeList}\n\nRuta actual del usuario: ${currentPath}${priorityRoute ? `\n\nDECISIÓN DETERMINISTA DE ENRUTAMIENTO: el clasificador interno detectó ${priorityRoute.reason}; si respondes con tool, usa navigate_to(\"${priorityRoute.path}\") y no otra ruta.` : ""}`;
-
-    const messages: ChatMsg[] = [
-      { role: "system", content: sys },
-      ...data.messages.map((m) => ({ role: m.role, content: m.content })),
-    ];
-
-
-    const tools = [
-      {
-        type: "function",
-        function: {
-          name: "navigate_to",
-          description: "Lleva al usuario a una página de la app cuando sea relevante para su petición.",
-          parameters: {
-            type: "object",
-            properties: {
-              path: {
-                type: "string",
-                description: "Ruta absoluta dentro de la app, p.ej. /donde-dormir, /playas/mapa, /vuelos.",
-              },
-              reason: { type: "string", description: "Breve motivo (no se muestra al usuario)." },
-            },
-            required: ["path"],
-            additionalProperties: false,
-          },
-        },
-      },
-    ];
-
+    // 3) FAQ desde BD
     try {
-      const r = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash-lite",
-          messages,
-          tools,
-          tool_choice: "auto",
-        }),
-      });
-      if (r.status === 429) return { ok: false as const, error: "Hay mucha demanda ahora mismo. Prueba en unos segundos." };
-      if (r.status === 402) return { ok: false as const, error: "Se han agotado los créditos de IA del proyecto." };
-      if (!r.ok) {
-        const t = await r.text().catch(() => "");
-        return { ok: false as const, error: `Error IA (${r.status}): ${t.slice(0, 200)}` };
+      const { data: faqs } = await supabaseAdmin
+        .from("agente_faqs")
+        .select("id, keywords, any_of, response, route, priority")
+        .eq("active", true)
+        .order("priority", { ascending: true });
+      const match = matchFaq(normalized, (faqs ?? []) as FaqRow[]);
+      if (match) {
+        void bumpFaqHits(supabaseAdmin, match.id);
+        return {
+          ok: true as const,
+          content: match.response,
+          navigate: match.route ?? null,
+          source: "faq" as const,
+        };
       }
-      const j = (await r.json()) as any;
-      const msg = j?.choices?.[0]?.message ?? {};
-      const text = (msg.content ?? "").toString();
-      let navigate: string | null = priorityRoute?.path ?? null;
-      const calls = msg.tool_calls ?? [];
-      for (const c of calls) {
-        if (c?.function?.name === "navigate_to") {
-          try {
-            const args = JSON.parse(c.function.arguments ?? "{}");
-            if (!priorityRoute && typeof args.path === "string" && args.path.startsWith("/")) {
-              navigate = args.path;
-              break;
-            }
-          } catch {}
-        }
-      }
-      return { ok: true as const, content: text, navigate, source: "ai" as const };
-    } catch (e: any) {
-      return { ok: false as const, error: e?.message ?? "fallo" };
+    } catch {
+      // Si falla la BD, caemos al fallback de desconocido.
     }
+
+    // 4) Desconocido → registramos para auto-aprendizaje y respondemos plantilla
+    void logUnknown(supabaseAdmin, lastUserMessage, normalized, currentPath);
+    return {
+      ok: true as const,
+      content: "Lo siento, desconozco ese tema. ¿Puedo ayudarte con playas, comer, ocio, transporte, vuelos, clima, salud o alojamiento?",
+      navigate: null,
+      source: "unknown" as const,
+    };
   });
+
