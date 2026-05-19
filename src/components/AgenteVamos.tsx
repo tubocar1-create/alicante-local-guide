@@ -257,6 +257,7 @@ export const __vaSetGreetingSpoken = (v: boolean) => {
 };
 let __vaActiveUtterance: SpeechSynthesisUtterance | null = null;
 let __vaActiveAudio: HTMLAudioElement | null = null;
+let __vaActiveAudioStartedAt = 0;
 let __vaMicWarmup: Promise<MediaStream> | null = null;
 const __vaPrimedUtterances: SpeechSynthesisUtterance[] = [];
 
@@ -381,6 +382,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       if (__vaActiveAudio) __vaActiveAudio.currentTime = 0;
     } catch {}
     __vaActiveAudio = null;
+    __vaActiveAudioStartedAt = 0;
     try {
       window.speechSynthesis?.cancel();
     } catch {}
@@ -415,11 +417,13 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         audio.preload = "auto";
         audio.volume = 1;
         __vaActiveAudio = audio;
+        __vaActiveAudioStartedAt = Date.now();
         setTapToSpeak(null);
         speakingRef.current = true;
         setSpeaking(true);
         const finish = () => {
           if (__vaActiveAudio === audio) __vaActiveAudio = null;
+          __vaActiveAudioStartedAt = 0;
           speakingRef.current = false;
           setSpeaking(false);
           onEnd?.();
@@ -428,6 +432,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         audio.onended = finish;
         audio.onerror = () => {
           if (__vaActiveAudio === audio) __vaActiveAudio = null;
+          __vaActiveAudioStartedAt = 0;
           speakingRef.current = false;
           setSpeaking(false);
           setTapToSpeak({ text, audio: clip });
@@ -438,6 +443,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         if (started && typeof started.catch === "function") {
           started.catch(() => {
             if (__vaActiveAudio === audio) __vaActiveAudio = null;
+            __vaActiveAudioStartedAt = 0;
             speakingRef.current = false;
             setSpeaking(false);
             setTapToSpeak({ text, audio: clip });
