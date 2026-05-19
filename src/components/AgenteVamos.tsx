@@ -406,6 +406,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const wasOpenRef = useRef(open);
   const turnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Acuse "Voy a por ello…" mientras carga el Dashboard tras una navegación.
+  const ackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Marca que estamos esperando un resumen externo (vamos:food-summary).
+  const awaitingSummaryRef = useRef(false);
 
   const IDLE_MS = 60_000;
   const bumpIdle = useCallback(() => {
