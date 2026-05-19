@@ -113,6 +113,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const loadingRef = useRef(loading);
   const speakingRef = useRef(speaking);
   const openRef = useRef(open);
+  const wasOpenRef = useRef(open);
   useEffect(() => {
     modeRef.current = mode;
   }, [mode]);
@@ -350,6 +351,15 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       setInterim("");
     }
   }, [open, stopListening, stopSpeaking]);
+
+  useEffect(() => {
+    if (open && !wasOpenRef.current) {
+      setMode("voice");
+      setPaused(false);
+      setVoiceError(null);
+    }
+    wasOpenRef.current = open;
+  }, [open]);
 
   // Hands-free bootstrap: when opening in voice mode, ensure we end up listening.
   // The greeting is spoken synchronously by the FAB onClick (so the browser
