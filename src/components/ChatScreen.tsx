@@ -374,13 +374,12 @@ export function ChatScreen() {
         | undefined;
       if (!detail) return;
       const { openCount, count, label } = detail;
-      const kind = detail.pluralKind ?? "restaurantes";
       const text =
         openCount > 0
-          ? `Te he conseguido ${openCount} ${kind} ${label} abiertos ahora.`
+          ? `Te he conseguido ${openCount} sitios donde comer ${label} abiertos ahora.`
           : count > 0
-            ? `No tengo ${kind} ${label} abiertos ahora mismo, pero te dejo los ${count} del listado por si quieres reservar.`
-            : `Ahora mismo no encuentro ${kind} ${label} cercanos. ¿Probamos otra categoría?`;
+            ? `No tengo sitios de ${label} abiertos ahora mismo, pero te dejo los ${count} del listado por si quieres reservar.`
+            : `Ahora mismo no encuentro sitios de ${label} cercanos. ¿Probamos otra categoría?`;
       setMessages((prev) => {
         for (let i = prev.length - 1; i >= 0; i--) {
           const m = prev[i];
@@ -2002,7 +2001,7 @@ function AsianTableInner({ ranked, loading, originLabel, onClose }: {
     }).length;
     window.dispatchEvent(
       new CustomEvent("vamos:food-summary", {
-        detail: { count: ranked.length, openCount, label: "asiáticos", pluralKind: "restaurantes" },
+        detail: { count: ranked.length, openCount, label: "comida asiática", pluralKind: "sitios" },
       }),
     );
   }, [loading, ranked]);
@@ -3397,9 +3396,8 @@ function CategoryTableInner({
       const s = resolveOpeningStatus(c.openingHours ?? undefined);
       return s.status === "open" || (s.status === "unknown" && c.openNow === true);
     }).length;
-    // theme.title1 ej.: "Cocina típica", "Italiano", "Vegano", "Postres".
-    const raw = (theme.title1 || "").toLowerCase().trim();
-    const label = raw ? `de ${raw}` : "";
+    // theme.title1 ej.: "Cocina típica", "Comida italiana", "Vegano", "Postres".
+    const label = (theme.title1 || "").toLowerCase().trim();
     window.dispatchEvent(
       new CustomEvent("vamos:food-summary", {
         detail: { count: ranked.length, openCount, label, pluralKind: "sitios" },
