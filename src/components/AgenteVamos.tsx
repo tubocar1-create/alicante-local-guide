@@ -943,35 +943,38 @@ export function AgenteVamosFab() {
     if (voiceBootStartedRef.current) return;
     voiceBootStartedRef.current = true;
     try {
-      if (navigator.mediaDevices?.getUserMedia) {
-        __vaMicWarmup = navigator.mediaDevices.getUserMedia({ audio: true });
-        __vaMicWarmup
-          .then((stream) => {
-            stream.getTracks().forEach((track) => track.stop());
-          })
-          .catch(() => {
-            __vaMicWarmup = null;
-          });
-      }
       const greetText = getGreetingText();
       const greetAudio = new Audio(audioSrc(getGreetingClip()));
       greetAudio.preload = "auto";
       greetAudio.volume = 1;
       __vaActiveAudio = greetAudio;
+      __vaActiveAudioStartedAt = Date.now();
       __vaSetGreetingSpoken(true);
       greetAudio.onended = () => {
         if (__vaActiveAudio === greetAudio) __vaActiveAudio = null;
+        __vaActiveAudioStartedAt = 0;
+        if (navigator.mediaDevices?.getUserMedia) {
+          __vaMicWarmup = navigator.mediaDevices.getUserMedia({ audio: true });
+          __vaMicWarmup
+            .then((stream) => stream.getTracks().forEach((track) => track.stop()))
+            .catch(() => {
+              __vaMicWarmup = null;
+            });
+        }
       };
       greetAudio.onerror = () => {
         if (__vaActiveAudio === greetAudio) __vaActiveAudio = null;
+        __vaActiveAudioStartedAt = 0;
       };
       const audioStarted = greetAudio.play();
       if (!audioStarted) {
         __vaActiveAudio = null;
+        __vaActiveAudioStartedAt = 0;
       }
       if (audioStarted && typeof audioStarted.catch === "function") {
         audioStarted.catch(() => {
           if (__vaActiveAudio === greetAudio) __vaActiveAudio = null;
+          __vaActiveAudioStartedAt = 0;
           const synth = window.speechSynthesis;
           if (!synth) return;
           const u = new SpeechSynthesisUtterance(greetText);
