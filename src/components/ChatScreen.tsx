@@ -2001,7 +2001,7 @@ function AsianTableInner({ ranked, loading, originLabel, onClose }: {
     }).length;
     window.dispatchEvent(
       new CustomEvent("vamos:food-summary", {
-        detail: { count: ranked.length, openCount, label: "asiáticos", pluralKind: "restaurantes" },
+        detail: { count: ranked.length, openCount, label: "comida asiática", pluralKind: "sitios" },
       }),
     );
   }, [loading, ranked]);
