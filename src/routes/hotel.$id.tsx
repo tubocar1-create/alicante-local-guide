@@ -246,7 +246,15 @@ function HotelDetail() {
                   <p className="mt-1 text-xs text-amber-200/70">{h.address}</p>
                 )}
 
-                <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[11px]">
+                <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
+                  <a
+                    href={mapsHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-semibold text-amber-950 hover:bg-amber-100"
+                  >
+                    🚶 Cómo ir
+                  </a>
                   {h.stars && (
                     <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/15 px-2 py-0.5 font-semibold text-amber-200">
                       <Star className="h-3 w-3 fill-current" />
@@ -259,6 +267,7 @@ function HotelDetail() {
                     </span>
                   )}
                 </div>
+
 
                 {/* Tarifas por tipo de habitación */}
                 <div className="mt-4 rounded-xl border border-amber-100/[0.08] bg-black/30 p-3">
