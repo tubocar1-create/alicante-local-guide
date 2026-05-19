@@ -524,6 +524,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const greetedRef = useRef(__vaGetGreetingSpoken());
   useEffect(() => {
     if (!open || mode !== "voice") return;
+    if (__vaGetGreetingSpoken()) greetedRef.current = true;
     const SRClass = getSpeechRecognition();
     if (!SRClass) {
       setVoiceError("Tu navegador no soporta reconocimiento de voz. Cambia a modo texto.");
@@ -542,12 +543,6 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         return;
       }
       setSpeaking(false);
-      if (!greetedRef.current && !pausedRef.current) {
-        // No external greeting played (e.g. switched from text to voice).
-        greetedRef.current = true;
-        speak(getGreetingText());
-        return;
-      }
       if (shouldAutoListen()) startListening();
     };
 
@@ -820,7 +815,10 @@ export function AgenteVamosFab() {
       u.pitch = 1;
       const voice = pickSpanishVoice(synth);
       if (voice) u.voice = voice;
-      __vaSetGreetingSpoken(false);
+      // Mark it immediately so the panel does not create a second utterance
+      // from an effect and cancel the click-authorized audio before it starts.
+      __vaActiveUtterance = u;
+      __vaSetGreetingSpoken(true);
       u.onstart = () => {
         __vaActiveUtterance = u;
         __vaSetGreetingSpoken(true);
@@ -831,7 +829,7 @@ export function AgenteVamosFab() {
       };
       u.onerror = () => {
         __vaActiveUtterance = null;
-        __vaSetGreetingSpoken(false);
+        __vaSetGreetingSpoken(true);
       };
       synth.cancel();
       synth.resume();
