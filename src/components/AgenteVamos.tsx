@@ -608,10 +608,15 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       setVoiceError(null);
       setListening(true);
       rec.start();
-    } catch {
+    } catch (err) {
       setListening(false);
-      // Try again shortly
-      if (shouldAutoListen()) setTimeout(() => startListeningRef.current(), 500);
+      const message = err instanceof Error ? err.message : "";
+      setVoiceError(
+        message.includes("not-allowed") || message.includes("denied")
+          ? "Permiso de micrófono denegado. Pulsa reanudar y acepta el permiso."
+          : "No pude iniciar el micrófono. Pulsa reanudar para intentarlo otra vez.",
+      );
+      setPaused(true);
     }
   }, [shouldAutoListen]);
 
