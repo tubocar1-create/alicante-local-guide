@@ -746,6 +746,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
     const tryStart = () => {
       if (cancelled) return;
+      const mic = getMicWarmupSnapshot();
+      setMicReady(mic.state === "ready");
+      if (mic.message && mic.state !== "ready") setVoiceError(mic.message);
       if (__vaActiveAudio && Date.now() - __vaActiveAudioStartedAt > 9000) {
         __vaActiveAudio = null;
         __vaActiveAudioStartedAt = 0;
