@@ -603,7 +603,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     (text: string) => {
       setMsgs((m) => {
         const last = m[m.length - 1];
-        if (last?.role === "assistant" && (/^Abro el Dashboard/i.test(last.content) || /^Te he conseguido/i.test(last.content))) {
+        if (
+          last?.role === "assistant" &&
+          (/^Abro el Dashboard/i.test(last.content) || /^Te he conseguido/i.test(last.content))
+        ) {
           return m.map((msg, i) => (i === m.length - 1 ? { ...msg, content: text } : msg));
         }
         return [...m, { role: "assistant", content: text }];
@@ -617,8 +620,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     if (typeof window === "undefined") return;
     const handler = (e: Event) => {
       if (window.sessionStorage.getItem("afp:voiceFoodSummaryPending") !== "1") return;
-      window.sessionStorage.removeItem("afp:voiceFoodSummaryPending");
-      const detail = (e as CustomEvent).detail as { count: number; openCount: number; label: string } | undefined;
+      window.setTimeout(() => window.sessionStorage.removeItem("afp:voiceFoodSummaryPending"), 0);
+      const detail = (e as CustomEvent).detail as
+        | { count: number; openCount: number; label: string }
+        | undefined;
       if (!detail) return;
       const rawLabel = detail.label.toLowerCase().trim();
       const categoryLabel = rawLabel
