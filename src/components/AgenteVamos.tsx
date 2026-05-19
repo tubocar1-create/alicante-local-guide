@@ -380,6 +380,21 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const openRef = useRef(open);
   const wasOpenRef = useRef(open);
   const turnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const IDLE_MS = 60_000;
+  const bumpIdle = useCallback(() => {
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    if (!openRef.current) return;
+    idleTimerRef.current = setTimeout(() => {
+      // Sólo cerramos si no hay actividad en curso
+      if (speakingRef.current || loadingRef.current) {
+        bumpIdle();
+        return;
+      }
+      onClose();
+    }, IDLE_MS);
+  }, [onClose]);
   useEffect(() => {
     modeRef.current = mode;
   }, [mode]);
