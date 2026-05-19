@@ -238,13 +238,16 @@ const WEEKDAYS_PRETTY = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 // ---------- Route ----------
 
 export const Route = createFileRoute("/vuelos_/$iata")({
-  head: ({ params }) => ({
-    meta: [
-      {
-        title: `Vuelos · Alicante ↔ ${params.iata.toUpperCase()} · Dashboard`,
-      },
-    ],
-  }),
+  head: ({ params }) => {
+    const code = params.iata.toUpperCase();
+    const isArrival =
+      typeof window !== "undefined" &&
+      new URLSearchParams(window.location.search).get("type") === "L";
+    const label = isArrival ? "Ficha de origen" : "Ficha de destino";
+    return {
+      meta: [{ title: `Vuelos · Alicante ↔ ${code} · ${label}` }],
+    };
+  },
   component: DestinationDashboard,
 });
 
@@ -412,111 +415,25 @@ function DestinationDashboard() {
 
   return (
     <Shell flightType={flightType}>
-      {/* HEADER + KPIs */}
-      <div className="mb-2 grid gap-2 rounded-2xl border border-slate-800 bg-slate-900/40 p-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
-        <div>
-          <h1 className="text-base font-semibold leading-tight md:text-lg">
-            {isArrival
-              ? `Vuelos hacia Alicante (ALC) desde ${ciudad} (${pais})`
-              : `Vuelos desde Alicante (ALC) a ${ciudad} (${pais})`}
-          </h1>
-          <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-cyan-300">
-            <CalendarDays className="h-3 w-3" />
-            Semana ({startStr} – {endStr})
-          </p>
-        </div>
-        <div className="grid grid-cols-4 gap-1.5">
-          <Kpi icon={<Plane className="h-3.5 w-3.5" />} value={total} label="vuelos / 7d" />
-          <Kpi icon={<Armchair className="h-3.5 w-3.5" />} value={airlinesAgg.length} label="aerolíneas / 7d" />
-          <Kpi icon={<CalendarDays className="h-3.5 w-3.5" />} value={daysWith} label="días con vuelos" />
-          <Kpi
-            icon={<TrendingUp className="h-3.5 w-3.5" />}
-            value={avgPerDay.toFixed(1).replace(".", ",")}
-            label="vuelos/día"
-          />
-        </div>
+      {/* HEADER */}
+      <div className="mb-2 rounded-2xl border border-slate-800 bg-slate-900/40 p-3">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-cyan-300/80">
+          {isArrival ? "Ficha de origen" : "Ficha de destino"}
+        </p>
+        <h1 className="mt-0.5 text-base font-semibold leading-tight md:text-lg">
+          {isArrival
+            ? `Vuelos hacia Alicante (ALC) desde ${ciudad} (${pais})`
+            : `Vuelos desde Alicante (ALC) a ${ciudad} (${pais})`}
+        </h1>
+        <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-cyan-300">
+          <CalendarDays className="h-3 w-3" />
+          Semana ({startStr} – {endStr})
+        </p>
       </div>
 
-      {/* TRES TARJETAS */}
-      <div className="grid gap-2 lg:grid-cols-3">
-        {/* 1. Resumen por aerolínea */}
-        <Card index={1} title="Resumen por aerolínea" subtitle="Semana (7 días)">
-          <div className="flex items-center gap-3">
-            <div className="relative shrink-0">
-              <svg width="110" height="110" viewBox="0 0 140 140">
-                {donut.map((s, i) => (
-                  <path key={i} d={s.d} fill={s.color} />
-                ))}
-              </svg>
-              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-                <div className="text-xl font-bold leading-none text-white">{total}</div>
-                <div className="text-[8px] uppercase tracking-wider text-slate-400">vuelos / 7d</div>
-              </div>
-            </div>
-            <div className="flex-1 text-xs">
-              <div className="grid grid-cols-[1fr_auto_auto] gap-x-2 border-b border-slate-800 pb-1 text-[9px] uppercase tracking-wider text-slate-500">
-                <span>Aerolínea</span>
-                <span className="text-right">Vuelos</span>
-                <span className="text-right">%</span>
-              </div>
-              <div className="mt-1 space-y-1">
-                {airlinesAgg.map(([code, n], i) => {
-                  const pct = Math.round((n / total) * 100);
-                  return (
-                    <div key={code} className="grid grid-cols-[1fr_auto_auto] items-center gap-x-2">
-                      <div className="flex items-center gap-1.5 truncate">
-                        <span className="h-2 w-2 rounded-full" style={{ background: colorFor(code, i) }} />
-                        <span className="truncate text-slate-200">{airlineName(code)}</span>
-                      </div>
-                      <span className="text-right font-mono text-slate-300">{n}</span>
-                      <span className="text-right font-mono text-slate-500">{pct}%</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        {/* 2. Calendario */}
-        <Card index={2} title="Vuelos por día" subtitle="Distribución semanal (7 días)">
-          <div className="grid grid-cols-7 gap-1 text-center text-[9px] uppercase tracking-wider text-slate-500">
-            {WEEKDAYS_SHORT.map((d) => (
-              <div key={d}>{d}</div>
-            ))}
-          </div>
-          <WeekRange week={week1} />
-          <div className="mt-2 flex flex-wrap justify-center gap-x-3 gap-y-1 text-[10px]">
-            {airlinesAgg.map(([code, _n], i) => (
-              <div key={code} className="flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full" style={{ background: colorFor(code, i) }} />
-                <span className="text-slate-300">{airlineName(code)}</span>
-              </div>
-            ))}
-          </div>
-          <div className="mt-2 grid grid-cols-2 gap-2 rounded-xl border border-slate-800 bg-slate-950/40 p-2 text-center">
-            <div>
-              <div className="text-[9px] uppercase tracking-wider text-slate-500">Días con vuelos</div>
-              <div className="font-mono text-base font-bold text-emerald-300">{daysWith}<span className="text-[10px] text-slate-500"> / 7</span></div>
-            </div>
-            <div>
-              <div className="text-[9px] uppercase tracking-wider text-slate-500">Días sin vuelos</div>
-              <div className="font-mono text-base font-bold text-slate-300">{7 - daysWith}<span className="text-[10px] text-slate-500"> / 7</span></div>
-            </div>
-          </div>
-          {daysWithoutList.length > 0 && daysWithoutList.length < 7 && (
-            <p className="mt-2 text-center text-[10px] text-slate-500">
-              ⓘ Los días sin vuelos directos son{" "}
-              {daysWithoutList
-                .map((d) => `${d.date.getDate()} ${MONTHS_LONG[d.date.getMonth()].slice(0, 3)}`)
-                .join(", ")}
-              .
-            </p>
-          )}
-        </Card>
-
-        {/* 3. Vuelos disponibles */}
-        <Card index={3} title="Vuelos disponibles" subtitle="Ordenados por fecha y hora">
+      {/* 1. VUELOS DISPONIBLES — prioridad superior */}
+      <div className="mb-2">
+        <Card index={1} title="Vuelos disponibles" subtitle="Ordenados por fecha y hora">
           <div className="overflow-hidden rounded-xl border border-slate-800">
             <div className="grid grid-cols-[auto_auto_auto_auto_auto_auto_auto] gap-x-2 border-b border-slate-800 bg-slate-950/60 px-2 py-1.5 text-[9px] uppercase tracking-wider text-slate-500">
               <span>Fecha</span>
@@ -527,7 +444,7 @@ function DestinationDashboard() {
               <span>Llegada</span>
               <span>Duración</span>
             </div>
-            <div className="max-h-[220px] divide-y divide-slate-800/60 overflow-y-auto">
+            <div className="max-h-[320px] divide-y divide-slate-800/60 overflow-y-auto">
               {window14Flights.map((f, i) => {
                 const d = parseDate(f.fecha);
                 const day = `${WEEKDAYS_PRETTY[(d.getDay() + 6) % 7]} ${d.getDate()} ${MONTHS_LONG[d.getMonth()].slice(0, 3)}`;
@@ -572,6 +489,95 @@ function DestinationDashboard() {
               ? "* Salida y duración estimadas. Datos de llegada en tiempo real."
               : "* Llegada y duración estimadas. Datos de salida en tiempo real."}
           </p>
+        </Card>
+      </div>
+
+      {/* KPIs (métricas) bajo los vuelos */}
+      <div className="mb-2 grid grid-cols-2 gap-1.5 md:grid-cols-4">
+        <Kpi icon={<Plane className="h-3.5 w-3.5" />} value={total} label="vuelos / 7d" />
+        <Kpi icon={<Armchair className="h-3.5 w-3.5" />} value={airlinesAgg.length} label="aerolíneas / 7d" />
+        <Kpi icon={<CalendarDays className="h-3.5 w-3.5" />} value={daysWith} label="días con vuelos" />
+        <Kpi
+          icon={<TrendingUp className="h-3.5 w-3.5" />}
+          value={avgPerDay.toFixed(1).replace(".", ",")}
+          label="vuelos/día"
+        />
+      </div>
+
+      {/* Resumen + Calendario */}
+      <div className="grid gap-2 lg:grid-cols-2">
+        <Card index={2} title="Resumen por aerolínea" subtitle="Semana (7 días)">
+          <div className="flex items-center gap-3">
+            <div className="relative shrink-0">
+              <svg width="110" height="110" viewBox="0 0 140 140">
+                {donut.map((s, i) => (
+                  <path key={i} d={s.d} fill={s.color} />
+                ))}
+              </svg>
+              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
+                <div className="text-xl font-bold leading-none text-white">{total}</div>
+                <div className="text-[8px] uppercase tracking-wider text-slate-400">vuelos / 7d</div>
+              </div>
+            </div>
+            <div className="flex-1 text-xs">
+              <div className="grid grid-cols-[1fr_auto_auto] gap-x-2 border-b border-slate-800 pb-1 text-[9px] uppercase tracking-wider text-slate-500">
+                <span>Aerolínea</span>
+                <span className="text-right">Vuelos</span>
+                <span className="text-right">%</span>
+              </div>
+              <div className="mt-1 space-y-1">
+                {airlinesAgg.map(([code, n], i) => {
+                  const pct = Math.round((n / total) * 100);
+                  return (
+                    <div key={code} className="grid grid-cols-[1fr_auto_auto] items-center gap-x-2">
+                      <div className="flex items-center gap-1.5 truncate">
+                        <span className="h-2 w-2 rounded-full" style={{ background: colorFor(code, i) }} />
+                        <span className="truncate text-slate-200">{airlineName(code)}</span>
+                      </div>
+                      <span className="text-right font-mono text-slate-300">{n}</span>
+                      <span className="text-right font-mono text-slate-500">{pct}%</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <Card index={3} title="Vuelos por día" subtitle="Distribución semanal (7 días)">
+          <div className="grid grid-cols-7 gap-1 text-center text-[9px] uppercase tracking-wider text-slate-500">
+            {WEEKDAYS_SHORT.map((d) => (
+              <div key={d}>{d}</div>
+            ))}
+          </div>
+          <WeekRange week={week1} />
+          <div className="mt-2 flex flex-wrap justify-center gap-x-3 gap-y-1 text-[10px]">
+            {airlinesAgg.map(([code, _n], i) => (
+              <div key={code} className="flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full" style={{ background: colorFor(code, i) }} />
+                <span className="text-slate-300">{airlineName(code)}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-2 grid grid-cols-2 gap-2 rounded-xl border border-slate-800 bg-slate-950/40 p-2 text-center">
+            <div>
+              <div className="text-[9px] uppercase tracking-wider text-slate-500">Días con vuelos</div>
+              <div className="font-mono text-base font-bold text-emerald-300">{daysWith}<span className="text-[10px] text-slate-500"> / 7</span></div>
+            </div>
+            <div>
+              <div className="text-[9px] uppercase tracking-wider text-slate-500">Días sin vuelos</div>
+              <div className="font-mono text-base font-bold text-slate-300">{7 - daysWith}<span className="text-[10px] text-slate-500"> / 7</span></div>
+            </div>
+          </div>
+          {daysWithoutList.length > 0 && daysWithoutList.length < 7 && (
+            <p className="mt-2 text-center text-[10px] text-slate-500">
+              ⓘ Los días sin vuelos directos son{" "}
+              {daysWithoutList
+                .map((d) => `${d.date.getDate()} ${MONTHS_LONG[d.date.getMonth()].slice(0, 3)}`)
+                .join(", ")}
+              .
+            </p>
+          )}
         </Card>
       </div>
 
