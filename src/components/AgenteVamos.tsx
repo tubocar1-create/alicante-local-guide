@@ -30,7 +30,6 @@ const VOICE_ASSETS = import.meta.glob("../assets/agent-voice/*.mp3", {
 type VoiceClip =
   | "hotel"
   | "eat"
-  | "drinks"
   | "beaches"
   | "beach_map"
   | "explore"
@@ -59,7 +58,7 @@ const INTENTS: Intent[] = [
     keys: ["tomar algo", "beber", "cerveza", "cervezas", "cerveceria", "cervecería", "copa", "copas", "pub", "discoteca", "bar de copas", "rooftop"],
     reply: "Abro el Dashboard Nocturno: bares, cervecerías, pubs y discotecas abiertos ahora.",
     path: "/",
-    audio: "drinks",
+    audio: "leisure",
   },
   {
     keys: ["hotel", "dormir", "alojamiento", "alojar", "hostal", "apartamento", "habitacion"],
