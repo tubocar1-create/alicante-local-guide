@@ -159,14 +159,14 @@ function makeGreeting(): Msg {
 }
 
 function loadMsgs(): Msg[] {
-  if (typeof window === "undefined") return [GREETING];
+  if (typeof window === "undefined") return [makeGreeting()];
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) return [GREETING];
+    if (!raw) return [makeGreeting()];
     const arr = JSON.parse(raw);
     if (Array.isArray(arr) && arr.length) return arr;
   } catch {}
-  return [GREETING];
+  return [makeGreeting()];
 }
 
 function plainText(md: string): string {
@@ -545,7 +545,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       if (!greetedRef.current && !pausedRef.current) {
         // No external greeting played (e.g. switched from text to voice).
         greetedRef.current = true;
-        speak(GREETING.content);
+        speak(getGreetingText());
         return;
       }
       if (shouldAutoListen()) startListening();
