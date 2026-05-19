@@ -623,9 +623,14 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             },
           });
           if (res && (res as any).ok) {
-            const ai = res as { ok: true; content: string; navigate: string | null };
+            const ai = res as { ok: true; content: string; navigate: string | null; forwardPrompt?: string };
             if (ai.content && ai.content.trim()) reply = ai.content.trim();
             if (ai.navigate) target = ai.navigate;
+            if (ai.forwardPrompt && typeof window !== "undefined") {
+              try {
+                window.sessionStorage.setItem("afp:fwdPrompt", ai.forwardPrompt);
+              } catch {}
+            }
           }
         } catch {
           // si falla el servidor, nos quedamos con la respuesta local
@@ -636,6 +641,11 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           setTimeout(() => {
             try {
               navigate({ to: target });
+              // Si forwardPrompt está pendiente, cerramos el overlay para
+              // que ChatScreen lo recoja y lance el prompt automáticamente.
+              if (typeof window !== "undefined" && window.sessionStorage.getItem("afp:fwdPrompt")) {
+                onClose();
+              }
             } catch {}
           }, 350);
         }
