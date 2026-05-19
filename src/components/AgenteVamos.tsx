@@ -115,30 +115,53 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       if (shouldAutoListen()) startListeningRef.current();
       return;
     }
-    try {
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(plainText(text));
-      u.lang = "es-ES";
-      u.rate = 1.05;
-      u.pitch = 1;
-      const voices = window.speechSynthesis.getVoices();
-      const es = voices.find((v) => v.lang?.toLowerCase().startsWith("es"));
-      if (es) u.voice = es;
-      u.onstart = () => setSpeaking(true);
-      u.onend = () => {
-        setSpeaking(false);
+    const synth = window.speechSynthesis;
+    const doSpeak = () => {
+      try {
+        synth.cancel();
+        synth.resume();
+        const u = new SpeechSynthesisUtterance(plainText(text));
+        u.lang = "es-ES";
+        u.rate = 1.05;
+        u.pitch = 1;
+        const voices = synth.getVoices();
+        const es = voices.find((v) => v.lang?.toLowerCase().startsWith("es-es"))
+          || voices.find((v) => v.lang?.toLowerCase().startsWith("es"));
+        if (es) u.voice = es;
+        u.onstart = () => setSpeaking(true);
+        u.onend = () => {
+          setSpeaking(false);
+          onEnd?.();
+          if (shouldAutoListen()) setTimeout(() => startListeningRef.current(), 200);
+        };
+        u.onerror = () => {
+          setSpeaking(false);
+          onEnd?.();
+          if (shouldAutoListen()) setTimeout(() => startListeningRef.current(), 200);
+        };
+        // Small delay so cancel() flushes (fixes Chrome no-onstart bug)
+        setTimeout(() => {
+          try { synth.speak(u); } catch {}
+        }, 60);
+      } catch {
         onEnd?.();
-        if (shouldAutoListen()) setTimeout(() => startListeningRef.current(), 200);
+        if (shouldAutoListen()) startListeningRef.current();
+      }
+    };
+    // Ensure voices are loaded (some browsers populate async)
+    if (synth.getVoices().length === 0) {
+      const handler = () => {
+        synth.removeEventListener("voiceschanged", handler);
+        doSpeak();
       };
-      u.onerror = () => {
-        setSpeaking(false);
-        onEnd?.();
-        if (shouldAutoListen()) setTimeout(() => startListeningRef.current(), 200);
-      };
-      window.speechSynthesis.speak(u);
-    } catch {
-      onEnd?.();
-      if (shouldAutoListen()) startListeningRef.current();
+      synth.addEventListener("voiceschanged", handler);
+      // Fallback in case event never fires
+      setTimeout(() => {
+        synth.removeEventListener("voiceschanged", handler);
+        doSpeak();
+      }, 800);
+    } else {
+      doSpeak();
     }
   }, [shouldAutoListen]);
 
@@ -276,9 +299,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const isVoice = mode === "voice";
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end justify-end sm:items-end sm:justify-end">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative flex h-[88vh] w-full flex-col overflow-hidden rounded-t-3xl bg-background shadow-2xl sm:m-4 sm:h-[80vh] sm:max-h-[720px] sm:w-[440px] sm:rounded-3xl">
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[100] flex justify-center sm:inset-auto sm:bottom-4 sm:right-4 sm:justify-end">
+      <div className="pointer-events-auto relative flex max-h-[58vh] w-full flex-col overflow-hidden rounded-t-3xl border bg-background shadow-2xl sm:max-h-[560px] sm:w-[380px] sm:rounded-3xl">
+
         <header className="flex items-center justify-between border-b bg-gradient-to-r from-primary to-orange-500 px-4 py-3 text-primary-foreground">
           <div className="flex items-center gap-2">
             <div className="grid h-9 w-9 place-items-center rounded-full bg-white/20">
@@ -355,7 +378,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
               {/* Animated orb — visual only, no interaction required */}
               <div
                 className={cn(
-                  "relative grid h-28 w-28 place-items-center rounded-full text-primary-foreground shadow-2xl transition",
+                  "relative grid h-20 w-20 place-items-center rounded-full text-primary-foreground shadow-2xl transition",
                   paused
                     ? "bg-muted text-muted-foreground"
                     : listening
@@ -367,9 +390,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                           : "bg-gradient-to-br from-primary to-orange-500 ring-4 ring-primary/20",
                 )}
               >
-                {loading ? <Loader2 className="h-10 w-10 animate-spin" />
-                  : paused ? <MicOff className="h-10 w-10" />
-                  : <Mic className="h-10 w-10" />}
+                {loading ? <Loader2 className="h-8 w-8 animate-spin" />
+                  : paused ? <MicOff className="h-8 w-8" />
+                  : <Mic className="h-8 w-8" />}
               </div>
 
               <p className="text-center text-xs text-muted-foreground">
@@ -465,7 +488,21 @@ export function AgenteVamosFab() {
     <>
       {!open && (
         <button
-          onClick={() => setOpen(true)}
+          onClick={() => {
+            // Prime speech synthesis within the user gesture so the first
+            // utterance actually plays (Chrome/iOS autoplay policy).
+            try {
+              const synth = window.speechSynthesis;
+              if (synth) {
+                synth.resume();
+                const warm = new SpeechSynthesisUtterance(" ");
+                warm.volume = 0;
+                warm.lang = "es-ES";
+                synth.speak(warm);
+              }
+            } catch {}
+            setOpen(true);
+          }}
           aria-label="Abrir Agente Vamos"
           className="fixed bottom-5 right-5 z-[90] flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-orange-500 px-4 py-3 text-sm font-semibold text-primary-foreground shadow-2xl ring-4 ring-primary/20 transition hover:scale-105 active:scale-95"
         >
