@@ -148,29 +148,21 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       try {
         synth.cancel();
         synth.resume();
-        const u = new SpeechSynthesisUtterance(plainText(text));
-        u.lang = "es-ES";
-        u.rate = 1.05;
-        u.pitch = 1;
-        const voices = synth.getVoices();
-        const es = voices.find((v) => v.lang?.toLowerCase().startsWith("es-es"))
-          || voices.find((v) => v.lang?.toLowerCase().startsWith("es"));
-        if (es) u.voice = es;
+        const u = makeSpanishUtterance(text);
         u.onstart = () => setSpeaking(true);
         u.onend = () => {
+          __vaActiveUtterance = null;
           setSpeaking(false);
           onEnd?.();
           if (shouldAutoListen()) setTimeout(() => startListeningRef.current(), 200);
         };
         u.onerror = () => {
+          __vaActiveUtterance = null;
           setSpeaking(false);
           onEnd?.();
           if (shouldAutoListen()) setTimeout(() => startListeningRef.current(), 200);
         };
-        // Small delay so cancel() flushes (fixes Chrome no-onstart bug)
-        setTimeout(() => {
-          try { synth.speak(u); } catch {}
-        }, 60);
+        synth.speak(u);
       } catch {
         onEnd?.();
         if (shouldAutoListen()) startListeningRef.current();
