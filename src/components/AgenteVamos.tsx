@@ -49,46 +49,51 @@ const INTENTS: Intent[] = [
     path: "/bus/planner",
   },
   {
-    keys: /\b(vuelo|aeropuerto|aena|alc)\b/i,
+    keys: ["vuelo", "vuelos", "aeropuerto", "aena", "avion", "alc"],
     reply: "Vuelos del aeropuerto de Alicante.",
     path: "/vuelos",
   },
   {
-    keys: /\b(clima|tiempo|llueve|sol|temperatura)\b/i,
+    keys: ["clima", "tiempo", "llueve", "lluvia", "sol", "temperatura", "calor", "frio"],
     reply: "Mira la previsión.",
     path: "/clima",
   },
   {
-    keys: /\b(cine|pel[ií]cula|cartelera)\b/i,
+    keys: ["cine", "pelicula", "peliculas", "cartelera"],
     reply: "Cartelera de cine.",
     path: "/ocio/cartelera",
   },
-  { keys: /\b(teatro)\b/i, reply: "Teatros en la ciudad.", path: "/ocio/teatros" },
+  { keys: ["teatro", "teatros", "obra"], reply: "Teatros en la ciudad.", path: "/ocio/teatros" },
   {
-    keys: /\b(concierto|m[uú]sica en vivo)\b/i,
+    keys: ["concierto", "conciertos", "musica", "musica en vivo", "directo"],
     reply: "Conciertos por aquí.",
     path: "/ocio/conciertos",
   },
-  { keys: /\b(ocio|plan|hacer)\b/i, reply: "Ideas para tu plan.", path: "/ocio" },
+  { keys: ["ocio", "plan", "planes", "hacer", "que hago", "que hacer"], reply: "Ideas para tu plan.", path: "/ocio" },
   {
-    keys: /\b(fiesta|hoguera|moros|cristianos)\b/i,
+    keys: ["fiesta", "fiestas", "hoguera", "hogueras", "moros", "cristianos"],
     reply: "Programa de fiestas.",
     path: "/fiestas",
   },
-  { keys: /\b(farmacia|guardia)\b/i, reply: "Farmacias de guardia.", path: "/farmacias" },
-  { keys: /\b(hospital|urgencias)\b/i, reply: "Hospitales cercanos.", path: "/hospitales" },
-  { keys: /\b(salud|m[eé]dico|sanitar)\b/i, reply: "Servicios sanitarios.", path: "/salud" },
-  { keys: /\b(perfil|cuenta)\b/i, reply: "Tu perfil.", path: "/perfil" },
+  { keys: ["farmacia", "farmacias", "guardia", "medicamento"], reply: "Farmacias de guardia.", path: "/farmacias" },
+  { keys: ["hospital", "hospitales", "urgencia", "urgencias"], reply: "Hospitales cercanos.", path: "/hospitales" },
+  { keys: ["salud", "medico", "medica", "sanitario", "sanitaria"], reply: "Servicios sanitarios.", path: "/salud" },
+  { keys: ["perfil", "cuenta", "usuario"], reply: "Tu perfil.", path: "/perfil" },
   {
-    keys: /\b(hola|buenas|hey|saludos)\b/i,
+    keys: ["hola", "buenas", "hey", "saludos"],
     reply:
       "¡Hola! ¿En qué te ayudo? Puedes pedirme playa, comer, dormir, bus, vuelos, ocio o clima.",
   },
-  { keys: /\b(gracias|grac)\b/i, reply: "¡A mandar! Si necesitas otra cosa, dímelo." },
+  { keys: ["gracias", "gracia", "vale", "ok"], reply: "¡A mandar! Si necesitas otra cosa, dímelo." },
 ];
 
 function localResolve(text: string): { reply: string; path?: string } {
-  for (const it of INTENTS) if (it.keys.test(text)) return { reply: it.reply, path: it.path };
+  const query = normalizeSpeech(text);
+  for (const it of INTENTS) {
+    if (it.keys.some((key) => query.includes(normalizeSpeech(key)))) {
+      return { reply: it.reply, path: it.path };
+    }
+  }
   return {
     reply:
       "Puedo llevarte a: playas, dónde comer, dónde dormir, bus, vuelos, ocio, fiestas, clima o salud. ¿Qué prefieres?",
