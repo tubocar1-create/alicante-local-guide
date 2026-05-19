@@ -742,7 +742,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         };
 
         if (forwardPrompt || pendingSubmenu) {
-          if (forwardPrompt && typeof window !== "undefined") {
+          if ((forwardPrompt || pendingSubmenu) && typeof window !== "undefined") {
             try {
               window.sessionStorage.setItem("afp:voiceFoodSummaryPending", "1");
             } catch {}
