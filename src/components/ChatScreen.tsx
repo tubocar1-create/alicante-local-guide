@@ -362,6 +362,41 @@ export function ChatScreen() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // El agente reemplaza su "Abro el Dashboard…" con el resumen real
+  // ("Te he conseguido N restaurantes X abiertos ahora") cuando el dashboard
+  // termina de cargar los datos.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as
+        | { count: number; openCount: number; label: string; pluralKind?: "restaurantes" | "sitios" }
+        | undefined;
+      if (!detail) return;
+      const { openCount, count, label } = detail;
+      const kind = detail.pluralKind ?? "restaurantes";
+      const text =
+        openCount > 0
+          ? `Te he conseguido ${openCount} ${kind} ${label} abiertos ahora.`
+          : count > 0
+            ? `No tengo ${kind} ${label} abiertos ahora mismo, pero te dejo los ${count} del listado por si quieres reservar.`
+            : `Ahora mismo no encuentro ${kind} ${label} cercanos. ¿Probamos otra categoría?`;
+      setMessages((prev) => {
+        for (let i = prev.length - 1; i >= 0; i--) {
+          const m = prev[i];
+          if (m.role !== "assistant") continue;
+          if (/^Abro el Dashboard/i.test(m.content) || /Marchando/i.test(m.content)) {
+            const copy = prev.slice();
+            copy[i] = { ...m, content: text };
+            return copy;
+          }
+        }
+        return prev;
+      });
+    };
+    window.addEventListener("vamos:food-summary", handler as EventListener);
+    return () => window.removeEventListener("vamos:food-summary", handler as EventListener);
+  }, []);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { state: locState, request: requestLocation } = useUserLocation();
@@ -1959,6 +1994,19 @@ function AsianTableInner({ ranked, loading, originLabel, onClose }: {
   const resolvePlace = useServerFn(resolvePlaceByName);
   const [resolving, setResolving] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (loading) return;
+    const openCount = ranked.filter(({ c }) => {
+      const s = resolveOpeningStatus(c.openingHours ?? undefined);
+      return s.status === "open" || (s.status === "unknown" && c.openNow === true);
+    }).length;
+    window.dispatchEvent(
+      new CustomEvent("vamos:food-summary", {
+        detail: { count: ranked.length, openCount, label: "asiáticos", pluralKind: "restaurantes" },
+      }),
+    );
+  }, [loading, ranked]);
+
   const openDashboard = async (c: PlaceCardData) => {
     if (c.placeId) {
         markRestaurantReturn();
@@ -3342,6 +3390,22 @@ function CategoryTableInner({
   const navigate = useNavigate();
   const resolvePlace = useServerFn(resolvePlaceByName);
   const [resolving, setResolving] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (loading) return;
+    const openCount = ranked.filter(({ c }) => {
+      const s = resolveOpeningStatus(c.openingHours ?? undefined);
+      return s.status === "open" || (s.status === "unknown" && c.openNow === true);
+    }).length;
+    // theme.title1 ej.: "Cocina típica", "Italiano", "Vegano", "Postres".
+    const raw = (theme.title1 || "").toLowerCase().trim();
+    const label = raw ? `de ${raw}` : "";
+    window.dispatchEvent(
+      new CustomEvent("vamos:food-summary", {
+        detail: { count: ranked.length, openCount, label, pluralKind: "sitios" },
+      }),
+    );
+  }, [loading, ranked, theme.title1]);
 
   const openDashboard = async (c: PlaceCardData) => {
     if (c.placeId) {
