@@ -666,7 +666,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             }
             const hotelMatch = pathname.match(/^\/hotel\/([^/]+)$/);
             const restMatch = pathname.match(/^\/restaurants\/([^/]+)$/);
-            const vueloMatch = pathname.match(/^\/vuelos_\/([^/]+)$/);
+            const vueloMatch = pathname.match(/^\/vuelos\/([^/]+)$/);
             if (hotelMatch) {
               return navigate({ to: "/hotel/$id", params: { id: hotelMatch[1] } });
             }
