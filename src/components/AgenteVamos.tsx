@@ -361,7 +361,9 @@ function configureSpanishUtterance(u: SpeechSynthesisUtterance, text: string) {
 }
 
 function makeSpanishUtterance(text: string, fresh = false) {
-  const u = fresh ? new SpeechSynthesisUtterance("") : __vaPrimedUtterances.shift() || new SpeechSynthesisUtterance("");
+  const u = fresh
+    ? new SpeechSynthesisUtterance("")
+    : __vaPrimedUtterances.shift() || new SpeechSynthesisUtterance("");
   return configureSpanishUtterance(u, text);
 }
 
@@ -370,7 +372,9 @@ function keepSpeechSynthesisAwake(synth: SpeechSynthesis) {
     window.setTimeout(() => {
       try {
         synth.resume();
-      } catch {}
+      } catch {
+        // Speech engines can be unavailable while the browser is restoring audio.
+      }
     }, delay);
   });
 }
