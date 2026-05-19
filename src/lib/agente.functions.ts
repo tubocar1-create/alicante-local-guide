@@ -295,7 +295,7 @@ REGLA ANTI-COLISIÓN CON /bus/planner:
 Ejemplos correctos:
 - "Quiero ir al cine" → tema = cine → navigate_to("/ocio/cartelera"). NUNCA /bus/planner.
 - "Quiero ir a la playa" → tema = playa → navigate_to("/playas").
-- "Quiero ir a comer paella" → tema = paella/comer → navigate_to("/eat").
+- "Quiero ir a comer paella" → tema = paella/comer → el chat abre el Dashboard inline (no navegues a /eat, esa ruta no existe).
 - "¿Qué cines hay?" → navigate_to("/ocio/cines").
 - "¿Qué película veo hoy?" → navigate_to("/ocio/cartelera").
 - "¿Qué hay para hacer hoy?" → navigate_to("/ocio").
