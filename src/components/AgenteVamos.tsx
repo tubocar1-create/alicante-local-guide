@@ -360,9 +360,19 @@ function configureSpanishUtterance(u: SpeechSynthesisUtterance, text: string) {
   return u;
 }
 
-function makeSpanishUtterance(text: string) {
-  const u = __vaPrimedUtterances.shift() || new SpeechSynthesisUtterance("");
+function makeSpanishUtterance(text: string, fresh = false) {
+  const u = fresh ? new SpeechSynthesisUtterance("") : __vaPrimedUtterances.shift() || new SpeechSynthesisUtterance("");
   return configureSpanishUtterance(u, text);
+}
+
+function keepSpeechSynthesisAwake(synth: SpeechSynthesis) {
+  [0, 120, 450, 900].forEach((delay) => {
+    window.setTimeout(() => {
+      try {
+        synth.resume();
+      } catch {}
+    }, delay);
+  });
 }
 
 function primeSpanishUtterances(count = 8) {
