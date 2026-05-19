@@ -496,7 +496,7 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
           } catch {}
         }
       }
-      return { ok: true as const, content: text, navigate };
+      return { ok: true as const, content: text, navigate, source: "ai" as const };
     } catch (e: any) {
       return { ok: false as const, error: e?.message ?? "fallo" };
     }
