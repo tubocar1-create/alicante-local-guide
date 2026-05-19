@@ -717,7 +717,14 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             goTo(target);
           }, 350);
         }
-        if (viaVoice || modeRef.current === "voice") speak(reply, fallback.audio);
+        // Si vamos a abrir un Dashboard en ChatScreen (forwardPrompt/openSubmenu),
+        // NO hablamos el placeholder "Abro el Dashboard…" aquí, porque sería
+        // cortado al cerrar el panel (stopSpeaking) y bloquearía el TTS del
+        // resumen real. ChatScreen hablará el resumen final ("Te he conseguido
+        // N sitios…") cuando los datos carguen.
+        if ((viaVoice || modeRef.current === "voice") && !forwardPrompt && !pendingSubmenu) {
+          speak(reply, fallback.audio);
+        }
       } finally {
         setLoading(false);
       }
