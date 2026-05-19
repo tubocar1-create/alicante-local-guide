@@ -19,76 +19,126 @@ import { cn } from "@/lib/utils";
 
 // Local intent router — no AI provider needed. Maps keywords to a friendly
 // reply + optional navigation. Keeps the agent fully responsive offline.
-type Intent = { keys: RegExp; reply: string; path?: string };
+type Intent = { keys: string[]; reply: string; path?: string };
 const INTENTS: Intent[] = [
   {
-    keys: /\b(hotel|dormir|aloj|hostal|apartamento)\b/i,
+    keys: ["hotel", "dormir", "alojamiento", "alojar", "hostal", "apartamento", "habitacion"],
     reply: "Te llevo a alojamientos cerca de Alicante.",
     path: "/donde-dormir",
   },
   {
-    keys: /\b(comer|restaurante|tapas|cena|comida|gastronom)\b/i,
+    keys: ["comer", "restaurante", "tapas", "cena", "comida", "gastronomia", "arroz", "paella"],
     reply: "Vamos a ver dónde comer.",
     path: "/eat",
   },
   {
-    keys: /\b(playa|mar|arena|cala)\b/i,
+    keys: ["playa", "mar", "arena", "cala", "bañar", "bano", "nadAr", "tabarca"],
     reply: "Estas son las playas. ¿Quieres verlas en el mapa?",
     path: "/playas",
   },
   {
-    keys: /\bmapa\b.*\bplaya|playa.*mapa\b/i,
+    keys: ["mapa playa", "playas mapa", "mapa de playas"],
     reply: "Aquí tienes el mapa de playas.",
     path: "/playas/mapa",
   },
-  { keys: /\b(explorar|mapa|ciudad)\b/i, reply: "Te abro el mapa de la ciudad.", path: "/explore" },
-  { keys: /\b(bus|emt|autob)\b/i, reply: "Buses urbanos de Alicante.", path: "/bus" },
   {
-    keys: /\b(planificar|ruta|c[oó]mo llego|llegar)\b/i,
+    keys: ["explorar", "mapa", "ciudad", "cerca", "sitios"],
+    reply: "Te abro el mapa de la ciudad.",
+    path: "/explore",
+  },
+  {
+    keys: ["bus", "emt", "autobus", "autobuses", "transporte"],
+    reply: "Buses urbanos de Alicante.",
+    path: "/bus",
+  },
+  {
+    keys: ["planificar", "ruta", "como llego", "llegar", "ir a", "llevarme"],
     reply: "Vamos al planificador de rutas.",
     path: "/bus/planner",
   },
   {
-    keys: /\b(vuelo|aeropuerto|aena|alc)\b/i,
+    keys: ["vuelo", "vuelos", "aeropuerto", "aena", "avion", "alc"],
     reply: "Vuelos del aeropuerto de Alicante.",
     path: "/vuelos",
   },
   {
-    keys: /\b(clima|tiempo|llueve|sol|temperatura)\b/i,
+    keys: ["clima", "tiempo", "llueve", "lluvia", "sol", "temperatura", "calor", "frio"],
     reply: "Mira la previsión.",
     path: "/clima",
   },
   {
-    keys: /\b(cine|pel[ií]cula|cartelera)\b/i,
+    keys: ["cine", "pelicula", "peliculas", "cartelera"],
     reply: "Cartelera de cine.",
     path: "/ocio/cartelera",
   },
-  { keys: /\b(teatro)\b/i, reply: "Teatros en la ciudad.", path: "/ocio/teatros" },
+  { keys: ["teatro", "teatros", "obra"], reply: "Teatros en la ciudad.", path: "/ocio/teatros" },
   {
-    keys: /\b(concierto|m[uú]sica en vivo)\b/i,
+    keys: ["concierto", "conciertos", "musica", "musica en vivo", "directo"],
     reply: "Conciertos por aquí.",
     path: "/ocio/conciertos",
   },
-  { keys: /\b(ocio|plan|hacer)\b/i, reply: "Ideas para tu plan.", path: "/ocio" },
   {
-    keys: /\b(fiesta|hoguera|moros|cristianos)\b/i,
+    keys: ["ocio", "plan", "planes", "hacer", "que hago", "que hacer"],
+    reply: "Ideas para tu plan.",
+    path: "/ocio",
+  },
+  {
+    keys: ["fiesta", "fiestas", "hoguera", "hogueras", "moros", "cristianos"],
     reply: "Programa de fiestas.",
     path: "/fiestas",
   },
-  { keys: /\b(farmacia|guardia)\b/i, reply: "Farmacias de guardia.", path: "/farmacias" },
-  { keys: /\b(hospital|urgencias)\b/i, reply: "Hospitales cercanos.", path: "/hospitales" },
-  { keys: /\b(salud|m[eé]dico|sanitar)\b/i, reply: "Servicios sanitarios.", path: "/salud" },
-  { keys: /\b(perfil|cuenta)\b/i, reply: "Tu perfil.", path: "/perfil" },
   {
-    keys: /\b(hola|buenas|hey|saludos)\b/i,
+    keys: ["farmacia", "farmacias", "guardia", "medicamento"],
+    reply: "Farmacias de guardia.",
+    path: "/farmacias",
+  },
+  {
+    keys: ["hospital", "hospitales", "urgencia", "urgencias"],
+    reply: "Hospitales cercanos.",
+    path: "/hospitales",
+  },
+  {
+    keys: ["salud", "medico", "medica", "sanitario", "sanitaria"],
+    reply: "Servicios sanitarios.",
+    path: "/salud",
+  },
+  { keys: ["perfil", "cuenta", "usuario"], reply: "Tu perfil.", path: "/perfil" },
+  {
+    keys: ["hola", "buenas", "hey", "saludos"],
     reply:
       "¡Hola! ¿En qué te ayudo? Puedes pedirme playa, comer, dormir, bus, vuelos, ocio o clima.",
   },
-  { keys: /\b(gracias|grac)\b/i, reply: "¡A mandar! Si necesitas otra cosa, dímelo." },
+  {
+    keys: ["gracias", "gracia", "vale", "ok"],
+    reply: "¡A mandar! Si necesitas otra cosa, dímelo.",
+  },
 ];
 
+function normalizeSpeech(text: string) {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9ñ\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function localResolve(text: string): { reply: string; path?: string } {
-  for (const it of INTENTS) if (it.keys.test(text)) return { reply: it.reply, path: it.path };
+  const query = normalizeSpeech(text);
+  let best: Intent | null = null;
+  let bestScore = 0;
+  for (const it of INTENTS) {
+    const score = it.keys.reduce((max, key) => {
+      const normalizedKey = normalizeSpeech(key);
+      return query.includes(normalizedKey) ? Math.max(max, normalizedKey.length) : max;
+    }, 0);
+    if (score > bestScore) {
+      best = it;
+      bestScore = score;
+    }
+  }
+  if (best) return { reply: best.reply, path: best.path };
   return {
     reply:
       "Puedo llevarte a: playas, dónde comer, dónde dormir, bus, vuelos, ocio, fiestas, clima o salud. ¿Qué prefieres?",
@@ -192,6 +242,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const [muted, setMuted] = useState(false);
   const [paused, setPaused] = useState(false);
   const [voiceError, setVoiceError] = useState<string | null>(null);
+  const [tapToSpeak, setTapToSpeak] = useState<string | null>(null);
 
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
@@ -206,6 +257,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const speakingRef = useRef(speaking);
   const openRef = useRef(open);
   const wasOpenRef = useRef(open);
+  const turnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     modeRef.current = mode;
   }, [mode]);
@@ -244,6 +296,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   }, [open, onClose]);
 
   const stopListening = useCallback(() => {
+    if (turnTimerRef.current) {
+      clearTimeout(turnTimerRef.current);
+      turnTimerRef.current = null;
+    }
     try {
       recogRef.current?.abort?.();
     } catch {}
@@ -278,6 +334,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const speak = useCallback(
     (text: string, onEnd?: () => void) => {
       if (mutedRef.current || typeof window === "undefined" || !window.speechSynthesis) {
+        setTapToSpeak(null);
         onEnd?.();
         if (shouldAutoListen()) startListeningRef.current();
         return;
@@ -287,6 +344,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         synth.cancel();
         synth.resume();
         const u = makeSpanishUtterance(text);
+        setTapToSpeak(null);
         u.onstart = () => {
           speakingRef.current = true;
           setSpeaking(true);
@@ -302,11 +360,13 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           __vaActiveUtterance = null;
           speakingRef.current = false;
           setSpeaking(false);
+          setTapToSpeak(text);
           onEnd?.();
           if (shouldAutoListen()) startListeningRef.current();
         };
         synth.speak(u);
       } catch {
+        setTapToSpeak(text);
         onEnd?.();
         if (shouldAutoListen()) startListeningRef.current();
       }
@@ -363,7 +423,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     try {
       const rec = new SRClass();
       rec.lang = "es-ES";
-      rec.continuous = false;
+      rec.continuous = true;
       rec.interimResults = true;
       let finalText = "";
       let lastTranscript = "";
@@ -377,13 +437,24 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         }
         lastTranscript = (finalText || interimText || lastTranscript).trim();
         setInterim(interimText);
+        if (lastTranscript) {
+          if (turnTimerRef.current) clearTimeout(turnTimerRef.current);
+          turnTimerRef.current = setTimeout(() => finishTurn(), 950);
+        }
       };
       const finishTurn = () => {
         if (handled) return true;
+        if (turnTimerRef.current) {
+          clearTimeout(turnTimerRef.current);
+          turnTimerRef.current = null;
+        }
         const t = (finalText || lastTranscript).trim();
         if (!t) return false;
         handled = true;
         setInterim("");
+        try {
+          rec.stop?.();
+        } catch {}
         sendRef.current(t, true);
         return true;
       };
@@ -579,6 +650,14 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
             <div className="flex w-full flex-col items-center gap-3 pb-2">
               {voiceError && <p className="text-center text-xs text-destructive">{voiceError}</p>}
+              {tapToSpeak && (
+                <button
+                  onClick={() => speak(tapToSpeak)}
+                  className="rounded-full border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
+                >
+                  tocar para oír respuesta
+                </button>
+              )}
 
               {/* Animated orb — visual only, no interaction required */}
               <div
@@ -736,9 +815,9 @@ export function AgenteVamosFab() {
         const greetText =
           "¡Hola! Soy Agente Vamos, tu concierge en Alicante. ¿Qué te apetece hacer? ¿Comer, dormir, playa, moverte, un plan?";
         const u = makeSpanishUtterance(greetText);
-        __vaSetGreetingSpoken(true);
         u.onstart = () => {
           __vaActiveUtterance = u;
+          __vaSetGreetingSpoken(true);
         };
         u.onend = () => {
           __vaActiveUtterance = null;
