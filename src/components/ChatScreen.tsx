@@ -332,7 +332,6 @@ export function ChatScreen() {
     };
     window.addEventListener("focus", onFocus);
     window.addEventListener("afp:forward-prompt", onForward);
-    return () => window.removeEventListener("focus", onFocus);
     return () => {
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("afp:forward-prompt", onForward);
