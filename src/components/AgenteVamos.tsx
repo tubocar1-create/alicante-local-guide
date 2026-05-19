@@ -660,6 +660,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         lastTranscript = (finalText || interimText || lastTranscript).trim();
         setInterim(interimText);
         if (lastTranscript) {
+          bumpIdle();
           if (turnTimerRef.current) clearTimeout(turnTimerRef.current);
           turnTimerRef.current = setTimeout(() => finishTurn(), 950);
         }
