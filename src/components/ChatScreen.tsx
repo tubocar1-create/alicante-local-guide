@@ -3391,6 +3391,22 @@ function CategoryTableInner({
   const resolvePlace = useServerFn(resolvePlaceByName);
   const [resolving, setResolving] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (loading) return;
+    const openCount = ranked.filter(({ c }) => {
+      const s = resolveOpeningStatus(c.openingHours ?? undefined);
+      return s.status === "open" || (s.status === "unknown" && c.openNow === true);
+    }).length;
+    // theme.title1 ej.: "Cocina típica", "Italiano", "Vegano", "Postres".
+    const raw = (theme.title1 || "").toLowerCase().trim();
+    const label = raw ? `de ${raw}` : "";
+    window.dispatchEvent(
+      new CustomEvent("vamos:food-summary", {
+        detail: { count: ranked.length, openCount, label, pluralKind: "sitios" },
+      }),
+    );
+  }, [loading, ranked, theme.title1]);
+
   const openDashboard = async (c: PlaceCardData) => {
     if (c.placeId) {
       markRestaurantReturn();
