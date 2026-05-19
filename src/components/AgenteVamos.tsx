@@ -257,6 +257,7 @@ export const __vaSetGreetingSpoken = (v: boolean) => {
 };
 let __vaActiveUtterance: SpeechSynthesisUtterance | null = null;
 let __vaActiveAudio: HTMLAudioElement | null = null;
+let __vaMicWarmup: Promise<MediaStream> | null = null;
 const __vaPrimedUtterances: SpeechSynthesisUtterance[] = [];
 
 function pickSpanishVoice(synth: SpeechSynthesis) {
