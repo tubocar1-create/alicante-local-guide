@@ -259,6 +259,61 @@ let __vaActiveUtterance: SpeechSynthesisUtterance | null = null;
 let __vaActiveAudio: HTMLAudioElement | null = null;
 let __vaActiveAudioStartedAt = 0;
 const __vaPrimedUtterances: SpeechSynthesisUtterance[] = [];
+type MicWarmupState = "idle" | "pending" | "ready" | "denied" | "unavailable" | "error";
+let __vaMicWarmupState: MicWarmupState = "idle";
+let __vaMicWarmupPromise: Promise<MicWarmupState> | null = null;
+let __vaMicWarmupMessage: string | null = null;
+
+function micWarmupMessage(err: unknown) {
+  const name = err instanceof DOMException ? err.name : err instanceof Error ? err.name : "";
+  if (name === "NotAllowedError" || name === "SecurityError") {
+    return "Permiso de micrófono denegado. Habilítalo en el navegador.";
+  }
+  if (name === "NotFoundError") return "No encuentro ningún micrófono en este dispositivo.";
+  if (name === "NotReadableError") return "El micrófono está ocupado por otra aplicación.";
+  return "No pude activar el micrófono. Toca el micrófono para intentarlo otra vez.";
+}
+
+function requestMicWarmupFromUserGesture() {
+  if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+    __vaMicWarmupState = "unavailable";
+    __vaMicWarmupMessage = "Este navegador no permite usar el micrófono aquí.";
+    return null;
+  }
+  if (__vaMicWarmupState === "ready") return null;
+  if (__vaMicWarmupState === "pending") return __vaMicWarmupPromise;
+
+  __vaMicWarmupState = "pending";
+  __vaMicWarmupMessage = "Acepta el permiso del micrófono para poder hablar.";
+  __vaMicWarmupPromise = navigator.mediaDevices
+    .getUserMedia({ audio: true })
+    .then((stream) => {
+      stream.getTracks().forEach((track) => track.stop());
+      __vaMicWarmupState = "ready";
+      __vaMicWarmupMessage = null;
+      return __vaMicWarmupState;
+    })
+    .catch((err) => {
+      __vaMicWarmupMessage = micWarmupMessage(err);
+      __vaMicWarmupState =
+        err instanceof DOMException && (err.name === "NotAllowedError" || err.name === "SecurityError")
+          ? "denied"
+          : "error";
+      return __vaMicWarmupState;
+    })
+    .finally(() => {
+      __vaMicWarmupPromise = null;
+    });
+  return __vaMicWarmupPromise;
+}
+
+function getMicWarmupSnapshot() {
+  return {
+    state: __vaMicWarmupState,
+    message: __vaMicWarmupMessage,
+    promise: __vaMicWarmupPromise,
+  };
+}
 
 function pickSpanishVoice(synth: SpeechSynthesis) {
   const voices = synth.getVoices();
