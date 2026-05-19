@@ -134,6 +134,7 @@ function DondeDormirPage() {
             <span className="inline-flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Disponible</span>
             <span className="inline-flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-rose-400" /> Sin disponibilidad</span>
             <span className="inline-flex items-center gap-1"><Euro className="h-2.5 w-2.5" /> Precio/noche</span>
+            <span className="inline-flex items-center gap-1"><BedDouble className="h-2.5 w-2.5" /> Habitaciones disponibles</span>
             <span className="inline-flex items-center gap-1"><Coffee className="h-2.5 w-2.5" /> Desayuno</span>
             <span className="inline-flex items-center gap-1"><ShieldCheck className="h-2.5 w-2.5" /> Cancelación gratis</span>
             <span className="inline-flex items-center gap-1"><MapPin className="h-2.5 w-2.5" /> Distancia</span>
@@ -143,10 +144,11 @@ function DondeDormirPage() {
             <colgroup>
               <col className="w-[18px]" />
               <col />
-              <col className="w-[50px]" />
+              <col className="w-[46px]" />
+              <col className="w-[32px]" />
+              <col className="w-[30px]" />
               <col className="w-[34px]" />
-              <col className="w-[40px]" />
-              <col className="w-[42px]" />
+              <col className="w-[38px]" />
             </colgroup>
             <thead>
               <tr className="text-amber-200/60">
@@ -154,6 +156,9 @@ function DondeDormirPage() {
                 <th className="px-1 py-1 text-[9px] font-medium uppercase tracking-[0.12em]">Hotel</th>
                 <th className="px-1 py-1 text-right" aria-label="Precio por noche">
                   <Euro className="ml-auto h-3 w-3" />
+                </th>
+                <th className="px-1 py-1 text-center" aria-label="Habitaciones disponibles">
+                  <BedDouble className="mx-auto h-3 w-3" />
                 </th>
                 <th className="px-1 py-1 text-center" aria-label="Desayuno incluido">
                   <Coffee className="mx-auto h-3 w-3" />
