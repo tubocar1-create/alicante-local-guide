@@ -233,6 +233,7 @@ export function ChatScreen() {
   const [mode, setMode] = useState<"transit" | null>(null);
   const [showBusPicker, setShowBusPicker] = useState(false);
   const [showFlightPicker, setShowFlightPicker] = useState(false);
+  const [composerMode, setComposerMode] = useState<"voice" | "text">("voice");
 
   useEffect(() => {
     setCanShowPersonalName(true);
