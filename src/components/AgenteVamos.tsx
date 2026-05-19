@@ -651,10 +651,40 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
         setMsgs((m) => [...m, { role: "assistant", content: reply }]);
         const pendingSubmenu = typeof window !== "undefined" ? window.sessionStorage.getItem("afp:openSubmenu") : null;
+
+        // Navegación tolerante: acepta paths con query string y rutas dinámicas
+        // de BD (p.ej. /hotel/<uuid>, /vuelos?destino=amsterdam). Si TanStack
+        // falla, caemos a window.location para no quedarnos atascados.
+        const goTo = (raw: string) => {
+          try {
+            const qIdx = raw.indexOf("?");
+            const pathname = qIdx >= 0 ? raw.slice(0, qIdx) : raw;
+            const search: Record<string, string> = {};
+            if (qIdx >= 0) {
+              const sp = new URLSearchParams(raw.slice(qIdx + 1));
+              sp.forEach((v, k) => (search[k] = v));
+            }
+            const hotelMatch = pathname.match(/^\/hotel\/([^/]+)$/);
+            const restMatch = pathname.match(/^\/restaurants\/([^/]+)$/);
+            if (hotelMatch) {
+              return navigate({ to: "/hotel/$id", params: { id: hotelMatch[1] } });
+            }
+            if (restMatch) {
+              return navigate({ to: "/restaurants/$placeId", params: { placeId: restMatch[1] } });
+            }
+            if (Object.keys(search).length > 0) {
+              return navigate({ to: pathname as any, search: search as any });
+            }
+            return navigate({ to: pathname as any });
+          } catch {
+            try { window.location.assign(raw); } catch {}
+          }
+        };
+
         if (forwardPrompt || pendingSubmenu) {
           setTimeout(() => {
             try {
-              const done = target && target !== path ? navigate({ to: target }) : undefined;
+              const done = target && target !== path ? goTo(target) : undefined;
               Promise.resolve(done).finally(() => {
                 if (forwardPrompt) {
                   window.dispatchEvent(new CustomEvent("afp:forward-prompt", { detail: { text: forwardPrompt } }));
@@ -668,9 +698,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           }, 350);
         } else if (target && target !== path) {
           setTimeout(() => {
-            try {
-              navigate({ to: target });
-            } catch {}
+            goTo(target);
           }, 350);
         }
         if (viaVoice || modeRef.current === "voice") speak(reply, fallback.audio);
