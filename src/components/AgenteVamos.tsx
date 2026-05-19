@@ -664,6 +664,25 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     return () => window.removeEventListener("vamos:food-summary", handler as EventListener);
   }, [speakExternalSummary]);
 
+  // C6: despedida hablada al cerrar por inactividad.
+  const speakFarewell = useCallback(() => {
+    if (!openRef.current) return;
+    const text = "Si necesitas algo más, vuélveme a llamar.";
+    setMsgs((m) => [...m, { role: "assistant", content: text }]);
+    if (mutedRef.current || typeof window === "undefined" || !window.speechSynthesis) {
+      setTimeout(() => onClose(), 1500);
+      return;
+    }
+    speak(text, undefined, () => {
+      setTimeout(() => onClose(), 200);
+    });
+  }, [speak, onClose]);
+  useEffect(() => {
+    speakFarewellRef.current = speakFarewell;
+  }, [speakFarewell]);
+
+
+
   const send = useCallback(
     async (text: string, viaVoice = false) => {
       const clean = text.trim();
