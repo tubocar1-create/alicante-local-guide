@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Sparkles, Send, X, Loader2, Mic, MicOff, Keyboard, Volume2, VolumeX } from "lucide-react";
+import { Sparkles, Send, X, Loader2, Mic, MicOff, Keyboard, Volume2, VolumeX, Pause, Play } from "lucide-react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import ReactMarkdown from "react-markdown";
@@ -28,7 +28,6 @@ function loadMsgs(): Msg[] {
   return [GREETING];
 }
 
-// Strip markdown for TTS
 function plainText(md: string): string {
   return md
     .replace(/`{1,3}[^`]*`{1,3}/g, "")
@@ -40,9 +39,7 @@ function plainText(md: string): string {
     .trim();
 }
 
-// Web Speech API types
 type SR = any;
-
 function getSpeechRecognition(): any {
   if (typeof window === "undefined") return null;
   return (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition || null;
@@ -57,6 +54,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const [interim, setInterim] = useState("");
   const [speaking, setSpeaking] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [paused, setPaused] = useState(false);
   const [voiceError, setVoiceError] = useState<string | null>(null);
 
   const navigate = useNavigate();
@@ -64,8 +62,20 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const callAgent = useServerFn(agenteVamosChat);
   const scrollRef = useRef<HTMLDivElement>(null);
   const recogRef = useRef<SR | null>(null);
+
+  // Refs to avoid stale closures inside speech callbacks
+  const modeRef = useRef(mode);
+  const pausedRef = useRef(paused);
   const mutedRef = useRef(muted);
+  const loadingRef = useRef(loading);
+  const speakingRef = useRef(speaking);
+  const openRef = useRef(open);
+  useEffect(() => { modeRef.current = mode; }, [mode]);
+  useEffect(() => { pausedRef.current = paused; }, [paused]);
   useEffect(() => { mutedRef.current = muted; }, [muted]);
+  useEffect(() => { loadingRef.current = loading; }, [loading]);
+  useEffect(() => { speakingRef.current = speaking; }, [speaking]);
+  useEffect(() => { openRef.current = open; }, [open]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -82,7 +92,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   }, [open, onClose]);
 
   const stopListening = useCallback(() => {
-    try { recogRef.current?.stop(); } catch {}
+    try { recogRef.current?.abort?.(); } catch {}
+    try { recogRef.current?.stop?.(); } catch {}
     setListening(false);
   }, []);
 
@@ -91,17 +102,17 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     setSpeaking(false);
   }, []);
 
-  // Cleanup on close
-  useEffect(() => {
-    if (!open) {
-      stopListening();
-      stopSpeaking();
-    }
-  }, [open, stopListening, stopSpeaking]);
+  const shouldAutoListen = useCallback(() => {
+    return openRef.current && modeRef.current === "voice" && !pausedRef.current && !loadingRef.current && !speakingRef.current;
+  }, []);
+
+  // Forward declaration via ref so callbacks can call latest startListening
+  const startListeningRef = useRef<() => void>(() => {});
 
   const speak = useCallback((text: string, onEnd?: () => void) => {
     if (mutedRef.current || typeof window === "undefined" || !window.speechSynthesis) {
       onEnd?.();
+      if (shouldAutoListen()) startListeningRef.current();
       return;
     }
     try {
@@ -114,17 +125,27 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       const es = voices.find((v) => v.lang?.toLowerCase().startsWith("es"));
       if (es) u.voice = es;
       u.onstart = () => setSpeaking(true);
-      u.onend = () => { setSpeaking(false); onEnd?.(); };
-      u.onerror = () => { setSpeaking(false); onEnd?.(); };
+      u.onend = () => {
+        setSpeaking(false);
+        onEnd?.();
+        if (shouldAutoListen()) setTimeout(() => startListeningRef.current(), 200);
+      };
+      u.onerror = () => {
+        setSpeaking(false);
+        onEnd?.();
+        if (shouldAutoListen()) setTimeout(() => startListeningRef.current(), 200);
+      };
       window.speechSynthesis.speak(u);
     } catch {
       onEnd?.();
+      if (shouldAutoListen()) startListeningRef.current();
     }
-  }, []);
+  }, [shouldAutoListen]);
 
   const send = useCallback(async (text: string, viaVoice = false) => {
     const clean = text.trim();
-    if (!clean || loading) return;
+    if (!clean || loadingRef.current) return;
+    stopListening();
     const next = [...msgs, { role: "user" as const, content: clean }];
     setMsgs(next);
     setInput("");
@@ -138,34 +159,34 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         if (res.navigate) {
           setTimeout(() => { try { navigate({ to: res.navigate as string }); } catch {} }, 350);
         }
-        if (viaVoice || mode === "voice") {
-          speak(content, () => {
-            // Auto-resume listening after response in voice mode
-            if (mode === "voice") startListening();
-          });
-        }
+        if (viaVoice || modeRef.current === "voice") speak(content);
       } else {
         const err = res.error || "Ahora mismo no puedo responder. Intenta otra vez en un momento.";
         setMsgs((m) => [...m, { role: "assistant", content: err }]);
-        if (viaVoice || mode === "voice") speak(err);
+        if (viaVoice || modeRef.current === "voice") speak(err);
       }
     } catch {
       const err = "Algo ha fallado. ¿Lo intentamos de nuevo?";
       setMsgs((m) => [...m, { role: "assistant", content: err }]);
-      if (viaVoice || mode === "voice") speak(err);
+      if (viaVoice || modeRef.current === "voice") speak(err);
     } finally {
       setLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [msgs, loading, callAgent, path, navigate, mode, speak]);
+  }, [msgs, callAgent, path, navigate, speak, stopListening]);
+
+  const sendRef = useRef(send);
+  useEffect(() => { sendRef.current = send; }, [send]);
 
   const startListening = useCallback(() => {
+    if (!openRef.current || modeRef.current !== "voice") return;
+    if (pausedRef.current || loadingRef.current || speakingRef.current) return;
     const SRClass = getSpeechRecognition();
     if (!SRClass) {
-      setVoiceError("Tu navegador no soporta reconocimiento de voz. Usa Chrome o Safari, o cambia a modo texto.");
+      setVoiceError("Tu navegador no soporta reconocimiento de voz. Cambia a modo texto.");
       return;
     }
-    stopSpeaking();
+    // Stop any previous instance
+    try { recogRef.current?.abort?.(); } catch {}
     try {
       const rec = new SRClass();
       rec.lang = "es-ES";
@@ -180,41 +201,73 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           else interimText += t;
         }
         setInterim(interimText);
-        if (finalText) {
-          setInterim("");
-          stopListening();
-          send(finalText, true);
-        }
       };
       rec.onerror = (e: any) => {
         setListening(false);
         if (e?.error === "not-allowed" || e?.error === "service-not-allowed") {
           setVoiceError("Permiso de micrófono denegado. Habilítalo o cambia a modo texto.");
+          setPaused(true);
+        } else if (e?.error === "no-speech" || e?.error === "aborted") {
+          // benign — will auto-restart on end if conditions allow
         }
       };
-      rec.onend = () => setListening(false);
+      rec.onend = () => {
+        setListening(false);
+        const t = finalText.trim();
+        if (t) {
+          setInterim("");
+          sendRef.current(t, true);
+          return;
+        }
+        // Silence — restart listening automatically
+        if (shouldAutoListen()) {
+          setTimeout(() => startListeningRef.current(), 300);
+        }
+      };
       recogRef.current = rec;
       setVoiceError(null);
       setListening(true);
       rec.start();
-    } catch (err: any) {
+    } catch {
       setListening(false);
-      setVoiceError("No se pudo iniciar el micrófono.");
+      // Try again shortly
+      if (shouldAutoListen()) setTimeout(() => startListeningRef.current(), 500);
     }
-  }, [send, stopListening, stopSpeaking]);
+  }, [shouldAutoListen]);
 
-  // Auto-start listening when opening in voice mode
+  useEffect(() => { startListeningRef.current = startListening; }, [startListening]);
+
+  // Cleanup on close
   useEffect(() => {
-    if (!open) return;
-    if (mode !== "voice") return;
+    if (!open) {
+      stopListening();
+      stopSpeaking();
+      setPaused(false);
+      setInterim("");
+    }
+  }, [open, stopListening, stopSpeaking]);
+
+  // Hands-free bootstrap: when opening in voice mode for the first time,
+  // greet aloud and then auto-listen continuously.
+  const greetedRef = useRef(false);
+  useEffect(() => {
+    if (!open || mode !== "voice") return;
     const SRClass = getSpeechRecognition();
     if (!SRClass) {
       setVoiceError("Tu navegador no soporta reconocimiento de voz. Cambia a modo texto.");
       return;
     }
-    // Warm up voices list
     try { window.speechSynthesis?.getVoices(); } catch {}
-    const t = setTimeout(() => { if (!listening && !loading && !speaking) startListening(); }, 400);
+    const t = setTimeout(() => {
+      if (!greetedRef.current) {
+        greetedRef.current = true;
+        // Speak greeting (or last assistant message), then auto-listen via speak's onend
+        const last = [...msgs].reverse().find((m) => m.role === "assistant");
+        speak(last?.content || GREETING.content);
+      } else if (shouldAutoListen()) {
+        startListening();
+      }
+    }, 300);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, mode]);
@@ -234,7 +287,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             <div>
               <p className="text-sm font-bold leading-tight">Agente Vamos</p>
               <p className="text-[11px] opacity-90">
-                {isVoice ? (speaking ? "hablando…" : listening ? "te escucho…" : "modo voz") : "modo texto"}
+                {isVoice
+                  ? (paused ? "en pausa" : speaking ? "hablando…" : listening ? "te escucho…" : loading ? "pensando…" : "modo voz")
+                  : "modo texto"}
               </p>
             </div>
           </div>
@@ -255,6 +310,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                   setMode("text");
                 } else {
                   setMode("voice");
+                  greetedRef.current = true; // don't re-greet on switch
                 }
               }}
               aria-label={isVoice ? "Cambiar a texto" : "Cambiar a voz"}
@@ -269,7 +325,6 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           </div>
         </header>
 
-        {/* Voice mode UI */}
         {isVoice ? (
           <div className="flex flex-1 flex-col items-center justify-between overflow-hidden px-6 py-6">
             <div ref={scrollRef} className="w-full flex-1 overflow-y-auto space-y-3 pb-4">
@@ -295,43 +350,59 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             </div>
 
             <div className="flex w-full flex-col items-center gap-3 pb-2">
-              {voiceError && (
-                <p className="text-center text-xs text-destructive">{voiceError}</p>
-              )}
-              <button
-                onClick={() => {
-                  if (loading) return;
-                  if (speaking) { stopSpeaking(); return; }
-                  if (listening) stopListening();
-                  else startListening();
-                }}
-                disabled={loading}
-                aria-label={listening ? "Detener" : "Hablar"}
+              {voiceError && <p className="text-center text-xs text-destructive">{voiceError}</p>}
+
+              {/* Animated orb — visual only, no interaction required */}
+              <div
                 className={cn(
-                  "relative grid h-24 w-24 place-items-center rounded-full text-primary-foreground shadow-2xl transition active:scale-95 disabled:opacity-60",
-                  listening
-                    ? "bg-red-500 ring-8 ring-red-500/30 animate-pulse"
-                    : speaking
-                      ? "bg-orange-500 ring-8 ring-orange-500/30"
-                      : "bg-gradient-to-br from-primary to-orange-500 ring-4 ring-primary/20",
+                  "relative grid h-28 w-28 place-items-center rounded-full text-primary-foreground shadow-2xl transition",
+                  paused
+                    ? "bg-muted text-muted-foreground"
+                    : listening
+                      ? "bg-red-500 ring-8 ring-red-500/30 animate-pulse"
+                      : speaking
+                        ? "bg-orange-500 ring-8 ring-orange-500/30"
+                        : loading
+                          ? "bg-primary ring-4 ring-primary/30"
+                          : "bg-gradient-to-br from-primary to-orange-500 ring-4 ring-primary/20",
                 )}
               >
                 {loading ? <Loader2 className="h-10 w-10 animate-spin" />
-                  : listening ? <MicOff className="h-10 w-10" />
+                  : paused ? <MicOff className="h-10 w-10" />
                   : <Mic className="h-10 w-10" />}
-              </button>
+              </div>
+
               <p className="text-center text-xs text-muted-foreground">
-                {loading ? "pensando…"
-                  : speaking ? "toca para interrumpir"
-                  : listening ? "te escucho · toca para parar"
-                  : "toca y habla"}
+                {paused ? "conversación en pausa"
+                  : loading ? "pensando…"
+                  : speaking ? "hablando — puedes interrumpir hablando"
+                  : listening ? "te escucho · habla cuando quieras"
+                  : "preparando micrófono…"}
               </p>
-              <button
-                onClick={() => { stopListening(); stopSpeaking(); setMode("text"); }}
-                className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
-              >
-                cambiar a modo texto
-              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    if (paused) {
+                      setPaused(false);
+                      setTimeout(() => startListeningRef.current(), 100);
+                    } else {
+                      setPaused(true);
+                      stopListening();
+                      stopSpeaking();
+                    }
+                  }}
+                  className="flex items-center gap-1 rounded-full border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
+                >
+                  {paused ? <><Play className="h-3 w-3" /> reanudar</> : <><Pause className="h-3 w-3" /> pausar</>}
+                </button>
+                <button
+                  onClick={() => { stopListening(); stopSpeaking(); setMode("text"); }}
+                  className="rounded-full border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
+                >
+                  modo texto
+                </button>
+              </div>
             </div>
           </div>
         ) : (
