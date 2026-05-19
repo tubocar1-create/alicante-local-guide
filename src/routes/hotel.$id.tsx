@@ -277,8 +277,11 @@ function HotelDetail() {
                     </p>
                     <div className="flex flex-wrap gap-2 text-[10px]">
                       {d?.rooms_available != null && (
-                        <span className={"inline-flex items-center gap-1 " + (d.rooms_available > 0 ? "text-emerald-300" : "text-rose-300")}>
-                          <BedDouble className="h-3 w-3" /> {d.rooms_available} hab.
+                        <span
+                          title="Habitaciones disponibles ahora mismo"
+                          className={"inline-flex items-center gap-1 " + (d.rooms_available > 0 ? "text-emerald-300" : "text-rose-300")}
+                        >
+                          <BedDouble className="h-3 w-3" /> {d.rooms_available} hab. disponibles
                         </span>
                       )}
                       {d?.breakfast_included && (
