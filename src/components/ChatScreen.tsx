@@ -234,6 +234,7 @@ export function ChatScreen() {
   const [showBusPicker, setShowBusPicker] = useState(false);
   const [showFlightPicker, setShowFlightPicker] = useState(false);
   const [composerMode, setComposerMode] = useState<"voice" | "text">("voice");
+  const lastFoodSummaryRef = useRef<string | null>(null);
 
   useEffect(() => {
     setCanShowPersonalName(true);
@@ -357,10 +358,12 @@ export function ChatScreen() {
     } catch {}
     const onForward = (e: Event) => {
       const detail = (e as CustomEvent).detail as { text?: string } | undefined;
+      lastFoodSummaryRef.current = null;
       tryConsume(detail?.text);
     };
     const onOpenSubmenu = (e: Event) => {
       const detail = (e as CustomEvent).detail as { path?: string } | undefined;
+      lastFoodSummaryRef.current = null;
       tryOpenSubmenu(detail?.path);
     };
     window.addEventListener("afp:forward-prompt", onForward);
@@ -384,6 +387,9 @@ export function ChatScreen() {
       if (!detail) return;
       const { openCount, count, label } = detail;
       const rawLabel = label.toLowerCase().trim();
+      const summaryKey = `${rawLabel}|${count}|${openCount}`;
+      if (lastFoodSummaryRef.current === summaryKey) return;
+      lastFoodSummaryRef.current = summaryKey;
       const categoryLabel = rawLabel
         .replace(/^comida\s+/, "")
         .replace(/^cocina\s+/, "")
@@ -414,6 +420,7 @@ export function ChatScreen() {
           const m = prev[i];
           if (m.role !== "assistant") continue;
           if (dashboardPrompt || /^Abro el Dashboard/i.test(m.content) || /Marchando/i.test(m.content) || /^Te he conseguido \d+ restaurantes abiertos/i.test(m.content)) {
+            if (m.content === text) return prev;
             const copy = prev.slice();
             copy[i] = { ...m, content: text };
             return copy;
