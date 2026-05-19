@@ -4,28 +4,29 @@ type ChatMsg = { role: "system" | "user" | "assistant" | "tool"; content: string
 
 const ROUTES: Array<{ path: string; desc: string }> = [
   { path: "/", desc: "Inicio / chat principal" },
-  { path: "/donde-dormir", desc: "Hoteles y alojamientos (Alicante, radio 30 km)" },
-  { path: "/eat", desc: "Restaurantes y gastronomía" },
-  { path: "/playas", desc: "Listado de playas" },
-  { path: "/playas/mapa", desc: "Mapa interactivo de playas" },
-  { path: "/explore", desc: "Explorar la ciudad en mapa" },
-  { path: "/bus", desc: "Buses urbanos EMT" },
-  { path: "/bus/lines", desc: "Líneas de bus" },
-  { path: "/bus/planner", desc: "Planificador de rutas en bus" },
-  { path: "/vuelos", desc: "Vuelos AENA Alicante-Elche (ALC)" },
-  { path: "/clima", desc: "Clima y previsión" },
-  { path: "/ocio", desc: "Ocio: cines, teatros, conciertos" },
-  { path: "/ocio/cartelera", desc: "Cartelera de cine" },
-  { path: "/ocio/cines", desc: "Cines" },
-  { path: "/ocio/teatros", desc: "Teatros" },
-  { path: "/ocio/conciertos", desc: "Conciertos" },
-  { path: "/fiestas", desc: "Fiestas (Hogueras, Moros y Cristianos)" },
-  { path: "/salud", desc: "Servicios sanitarios" },
-  { path: "/farmacias", desc: "Farmacias de guardia" },
-  { path: "/hospitales", desc: "Hospitales" },
-  { path: "/sistema-sanitario", desc: "Sistema sanitario español" },
-  { path: "/threads", desc: "Hilos de coordinación con negocios" },
-  { path: "/perfil", desc: "Perfil del usuario" },
+  { path: "/donde-dormir", desc: "MENÚ PRINCIPAL · Dormir — hoteles, apartamentos, hostales (Alicante + 30 km). Palabras: dormir, alojamiento, hotel, hostal, apartamento, airbnb, habitación, cama, noche, check-in" },
+  { path: "/eat", desc: "MENÚ PRINCIPAL · Comer — restaurantes, tapas, paella, marisco, vegano, italiano, sushi, romántico, reservar mesa" },
+  { path: "/playas", desc: "MENÚ PRINCIPAL · Playas — listado de playas (San Juan, Postiguet, Albufereta, El Campello…). Palabras: playa, mar, arena, baño, chiringuito, bandera, medusas" },
+  { path: "/playas/mapa", desc: "SUBMENÚ Playas · Mapa interactivo (usar cuando el usuario quiera 'ver en mapa', 'cómo llego', 'cerca de mí')" },
+  { path: "/comprar", desc: "MENÚ PRINCIPAL · Comprar — tiendas, mercados, centros comerciales, souvenirs, moda" },
+  { path: "/ocio", desc: "MENÚ PRINCIPAL · Ocio (hub) — cines, teatros, conciertos, eventos, planes, nightlife, 'qué hago hoy'" },
+  { path: "/ocio/cartelera", desc: "SUBMENÚ Ocio · Cartelera de cine — usar cuando el usuario diga 'quiero ir al cine', 'qué películas hay', 'cartelera', 'estreno', un título o género (acción, terror, infantil)" },
+  { path: "/ocio/cines", desc: "SUBMENÚ Ocio · Cines (salas) — usar cuando pregunte por una sala concreta, ubicación, sesiones por cine, parking del cine" },
+  { path: "/ocio/teatros", desc: "SUBMENÚ Ocio · Teatros — obras, musicales, sala concreta" },
+  { path: "/ocio/conciertos", desc: "SUBMENÚ Ocio · Conciertos — música en vivo, festivales, artista, agenda" },
+  { path: "/explore", desc: "MENÚ PRINCIPAL · Mapa explorar la ciudad (rutas urbanas, lugares, descubrir)" },
+  { path: "/bus", desc: "MENÚ PRINCIPAL · Transporte EMT (hub) — bus, parada, tarjeta, billete, 'cómo llego'" },
+  { path: "/bus/lines", desc: "SUBMENÚ Transporte · Líneas de bus (cuando pregunte por una línea concreta o todas las líneas)" },
+  { path: "/bus/planner", desc: "SUBMENÚ Transporte · Planificador de rutas (origen → destino, 'cómo voy de X a Y')" },
+  { path: "/vuelos", desc: "Vuelos AENA Alicante-Elche (ALC) — estado de vuelo, llegadas, salidas, retrasos, aeropuerto" },
+  { path: "/clima", desc: "Clima y previsión (hoy, mañana, fin de semana, lluvia, viento, alerta)" },
+  { path: "/salud", desc: "MENÚ PRINCIPAL · Salud (hub) — farmacias, hospitales, urgencias, médico, sistema sanitario" },
+  { path: "/farmacias", desc: "SUBMENÚ Salud · Farmacias de guardia (24h, abierta ahora, cercana)" },
+  { path: "/hospitales", desc: "SUBMENÚ Salud · Hospitales y urgencias" },
+  { path: "/sistema-sanitario", desc: "SUBMENÚ Salud · Cómo funciona la sanidad española (turistas, SIP, seguro)" },
+  { path: "/fiestas", desc: "MENÚ PRINCIPAL · Fiestas — Hogueras de San Juan, Moros y Cristianos, agenda festiva, mascletà" },
+  { path: "/threads", desc: "Hilos de coordinación con negocios (mensajes con hoteles/restaurantes reservados)" },
+  { path: "/perfil", desc: "Perfil del usuario (preferencias, historial, reservas)" },
 ];
 
 const SYSTEM_PROMPT = `Eres "VA", el agente inteligente multimodal oficial de Vamos Alicante.
@@ -97,10 +98,26 @@ Frases abiertas ("estoy aburrido", "sorpréndeme", "¿qué hago hoy?", "recomié
 # REGLAS DE RESPUESTA
 1. Detecta intención. 2. Recupera memoria relevante. 3. Decide si necesitas tools. 4. Usa sólo las necesarias. 5. Responde clara y humana. 6. Mantén al usuario en el flujo útil.
 
-# NAVEGACIÓN (MUY IMPORTANTE)
-- Cuando el usuario pida algo con página dedicada, LLAMA a la herramienta navigate_to con la ruta más relevante para que la vea visualmente.
-- No anuncies "voy a navegar"; simplemente hazlo y comenta brevemente lo que verá.
-- Si no hay página relevante, responde sólo con texto.
+# NAVEGACIÓN (MUY IMPORTANTE) — REGLA DE ENRUTAMIENTO PRIORITARIO
+ANTES de redactar la respuesta, comprueba si la intención del usuario encaja con alguno de los íconos del MENÚ PRINCIPAL (rutas marcadas como "MENÚ PRINCIPAL" en RUTAS DISPONIBLES). Si encaja:
+  1. Si la pregunta es general sobre ese sector → llama a navigate_to con la ruta del MENÚ PRINCIPAL.
+  2. Si la pregunta es más profunda o específica → baja un nivel y llama a navigate_to con el SUBMENÚ correspondiente (la ruta hija más relevante).
+  3. Ejecuta la navegación SIEMPRE en el mismo turno; no preguntes "¿quieres que te lleve?", llévalo y comenta brevemente lo que verá.
+  4. Si hay ambigüedad entre dos submenús, elige el más probable, navega allí, y en el texto ofrece la alternativa en una frase corta.
+
+Ejemplos:
+- "Quiero ir al cine" → navigate_to("/ocio/cartelera") + "Te abro la cartelera. Si prefieres elegir sala, dime y te llevo a /ocio/cines."
+- "¿Qué cines hay?" → navigate_to("/ocio/cines").
+- "¿Qué hay para hacer hoy?" → navigate_to("/ocio").
+- "Necesito una farmacia de guardia" → navigate_to("/farmacias").
+- "Tengo dolor de pecho" → navigate_to("/hospitales") + indicar 112.
+- "Cómo voy del centro a San Juan" → navigate_to("/bus/planner").
+- "Quiero dormir cerca de la playa" → navigate_to("/donde-dormir").
+- "Una paella mirando al mar" → navigate_to("/eat").
+- "¿Llueve mañana?" → navigate_to("/clima").
+- "¿Mi vuelo llega a tiempo?" → navigate_to("/vuelos").
+
+Sólo responde sin navegar cuando NO exista una ruta razonable, sea charla casual de saludo/despedida, o el usuario ya esté en la página correcta y pida un detalle puntual.
 
 # COBERTURA
 Alicante y radio de 30 km desde Puerta del Mar.
