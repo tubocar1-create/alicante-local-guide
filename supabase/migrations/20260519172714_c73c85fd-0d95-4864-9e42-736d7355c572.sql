@@ -1,0 +1,1 @@
+DELETE FROM public.agente_proper_nouns WHERE category='flight_destination';
