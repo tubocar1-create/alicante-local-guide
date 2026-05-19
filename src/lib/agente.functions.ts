@@ -166,7 +166,7 @@ const getPriorityRoute = (
     { path: "/farmacias", reason: "tema farmacia", terms: ["farmacia", "farmacias", "guardia", "medicamento", "medicamentos"] },
     { path: "/hospitales", reason: "tema hospital/urgencias", terms: ["hospital", "hospitales", "urgencia", "urgencias", "emergencia", "emergencias"] },
     { path: "/sistema-sanitario", reason: "tema sistema sanitario", terms: ["sanidad", "sanitario", "sip", "seguro", "medico", "medica"] },
-    { path: "/eat", reason: "tema comer/restaurantes", terms: ["comer", "restaurante", "restaurantes", "tapas", "paella", "marisco", "cenar", "cena", "desayuno", "brunch", "sushi", "vegano", "italiano"] },
+    
     { path: "/playas", reason: "tema playas", terms: ["playa", "playas", "mar", "arena", "bano", "chiringuito", "bandera", "medusas"] },
     { path: "/donde-dormir", reason: "tema alojamiento", terms: ["dormir", "alojamiento", "hotel", "hoteles", "hostal", "hostales", "apartamento", "apartamentos", "airbnb", "habitacion"] },
     { path: "/comprar", reason: "tema compras", terms: ["comprar", "tienda", "tiendas", "mercado", "mercados", "shopping", "souvenir", "souvenirs", "moda", "centro comercial"] },
