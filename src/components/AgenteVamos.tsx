@@ -611,6 +611,14 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       setInterim("");
       setLoading(true);
       try {
+        // Limpia estado obsoleto de la llamada anterior para que ninguna
+        // categoría se contamine con un forwardPrompt/openSubmenu antiguo.
+        if (typeof window !== "undefined") {
+          try {
+            window.sessionStorage.removeItem("afp:fwdPrompt");
+            window.sessionStorage.removeItem("afp:openSubmenu");
+          } catch {}
+        }
         const fallback = localResolve(clean);
         let reply = fallback.reply;
         let target: string | undefined = fallback.path;

@@ -324,12 +324,19 @@ export function ChatScreen() {
       const fwd = value ?? window.sessionStorage.getItem(key);
       if (!fwd || loading) return;
       window.sessionStorage.removeItem(key);
+      // Si llega un forwardPrompt concreto (p.ej. mexicano, asiático…),
+      // descartamos cualquier openSubmenu huérfano de una llamada anterior
+      // para que las categorías queden totalmente aisladas.
+      window.sessionStorage.removeItem(submenuKey);
       void send(fwd);
     };
     const tryOpenSubmenu = (value?: string | null) => {
       const path = value ?? window.sessionStorage.getItem(submenuKey);
       if (!path) return;
       window.sessionStorage.removeItem(submenuKey);
+      // Si también hay un forwardPrompt pendiente, ese tiene prioridad
+      // (categoría concreta) y el submenu se descarta.
+      if (window.sessionStorage.getItem(key)) return;
       const comer = SUGGESTIONS.find((s) => s.label.includes("Comer"));
       if (!comer) return;
       setMessages([GREETING]);
