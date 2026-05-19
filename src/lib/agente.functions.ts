@@ -729,6 +729,20 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
     // Import dinámico: client.server NO debe estar al top-level de un .functions.ts mixto.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    // 1.quater) CIUDAD/DESTINO de vuelo (Madrid, Londres, París…) — prioridad sobre BD
+    // de nombres propios para evitar que "Madrid" matchee una clínica con "Madrid"
+    // en su nombre. Solo dispara con intención de viaje.
+    const cityRoute = getPriorityRoute(lastUserMessage, currentPath);
+    if (cityRoute && /^\/vuelos\/[A-Z]{3}(\?type=L)?$/.test(cityRoute.path)) {
+      const flightBlurb = await flightsCountBlurb(supabaseAdmin, cityRoute.path);
+      return {
+        ok: true as const,
+        content: flightBlurb ?? blurbFor(cityRoute.path) ?? `Te llevo al destino.`,
+        navigate: cityRoute.path,
+        source: "router" as const,
+      };
+    }
+
     // 2) NOMBRE PROPIO desde BD (máxima prioridad sobre el sustantivo genérico)
     try {
       const rows = await loadProperNouns(supabaseAdmin);
