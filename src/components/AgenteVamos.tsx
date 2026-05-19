@@ -380,6 +380,21 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const openRef = useRef(open);
   const wasOpenRef = useRef(open);
   const turnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const IDLE_MS = 60_000;
+  const bumpIdle = useCallback(() => {
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    if (!openRef.current) return;
+    idleTimerRef.current = setTimeout(() => {
+      // Sólo cerramos si no hay actividad en curso
+      if (speakingRef.current || loadingRef.current) {
+        bumpIdle();
+        return;
+      }
+      onClose();
+    }, IDLE_MS);
+  }, [onClose]);
   useEffect(() => {
     modeRef.current = mode;
   }, [mode]);
@@ -563,6 +578,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     async (text: string, viaVoice = false) => {
       const clean = text.trim();
       if (!clean || loadingRef.current) return;
+      bumpIdle();
       stopListening();
       const next = [...msgs, { role: "user" as const, content: clean }];
       setMsgs(next);
@@ -585,7 +601,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         setLoading(false);
       }
     },
-    [msgs, path, navigate, speak, stopListening],
+    [msgs, path, navigate, speak, stopListening, bumpIdle],
   );
 
   const sendRef = useRef(send);
@@ -644,6 +660,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         lastTranscript = (finalText || interimText || lastTranscript).trim();
         setInterim(interimText);
         if (lastTranscript) {
+          bumpIdle();
           if (turnTimerRef.current) clearTimeout(turnTimerRef.current);
           turnTimerRef.current = setTimeout(() => finishTurn(), 950);
         }
@@ -724,9 +741,16 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       setMode("voice");
       setPaused(false);
       setVoiceError(null);
+      bumpIdle();
+    }
+    if (!open && wasOpenRef.current) {
+      if (idleTimerRef.current) {
+        clearTimeout(idleTimerRef.current);
+        idleTimerRef.current = null;
+      }
     }
     wasOpenRef.current = open;
-  }, [open]);
+  }, [open, bumpIdle]);
 
   // Hands-free bootstrap: when opening in voice mode, ensure we end up listening.
   // The greeting is spoken synchronously by the FAB onClick (so the browser
