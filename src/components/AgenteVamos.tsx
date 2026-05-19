@@ -623,6 +623,14 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
             <div className="flex w-full flex-col items-center gap-3 pb-2">
               {voiceError && <p className="text-center text-xs text-destructive">{voiceError}</p>}
+              {tapToSpeak && (
+                <button
+                  onClick={() => speak(tapToSpeak)}
+                  className="rounded-full border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
+                >
+                  tocar para oír respuesta
+                </button>
+              )}
 
               {/* Animated orb — visual only, no interaction required */}
               <div
