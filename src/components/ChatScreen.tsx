@@ -862,42 +862,66 @@ export function ChatScreen() {
             {geo.city}
           </div>
         )}
-        <div className="mx-auto flex max-w-2xl items-end gap-2">
-          <div className="flex flex-1 items-end gap-2 rounded-3xl border border-border bg-card/90 px-3 py-2 shadow-sm backdrop-blur">
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  send(input);
-                }
+        {composerMode === "voice" ? (
+          <div className="mx-auto flex max-w-2xl flex-col items-center gap-2">
+            <button
+              onClick={() => window.dispatchEvent(new Event("vamos:open"))}
+              aria-label="Hablar con Agente Vamos"
+              className="flex h-16 w-16 items-center justify-center rounded-full gradient-warm text-primary-foreground shadow-soft ring-4 ring-primary/20 transition active:scale-95"
+            >
+              <Mic className="h-7 w-7" />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setComposerMode("text");
+                setTimeout(() => inputRef.current?.focus(), 50);
               }}
-              rows={1}
-              placeholder="Message your friend in Alicante…"
-              className="max-h-32 flex-1 resize-none bg-transparent py-1.5 text-[15px] outline-none placeholder:text-muted-foreground"
-            />
+              className="flex items-center gap-1 rounded-full border border-border bg-background/80 px-3 py-1 text-[11px] font-medium text-muted-foreground hover:bg-muted"
+            >
+              <Keyboard className="h-3 w-3" /> escribir en su lugar
+            </button>
           </div>
-          {input.trim() ? (
+        ) : (
+          <div className="mx-auto flex max-w-2xl items-end gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setInput("");
+                setComposerMode("voice");
+              }}
+              aria-label="Volver a modo voz"
+              title="Volver a modo voz"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-border bg-card/90 text-muted-foreground shadow-sm transition hover:bg-muted active:scale-95"
+            >
+              <Mic className="h-5 w-5" />
+            </button>
+            <div className="flex flex-1 items-end gap-2 rounded-3xl border border-border bg-card/90 px-3 py-2 shadow-sm backdrop-blur">
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    send(input);
+                  }
+                }}
+                rows={1}
+                placeholder="Message your friend in Alicante…"
+                className="max-h-32 flex-1 resize-none bg-transparent py-1.5 text-[15px] outline-none placeholder:text-muted-foreground"
+              />
+            </div>
             <button
               onClick={() => send(input)}
-              disabled={loading}
+              disabled={loading || !input.trim()}
               aria-label="Send"
               className="flex h-12 w-12 items-center justify-center rounded-full gradient-warm text-primary-foreground shadow-soft transition active:scale-95 disabled:opacity-60"
             >
               <Send className="h-5 w-5" />
             </button>
-          ) : (
-            <button
-              onClick={() => window.dispatchEvent(new Event("vamos:open"))}
-              aria-label="Hablar con Agente Vamos"
-              className="flex h-12 w-12 items-center justify-center rounded-full gradient-warm text-primary-foreground shadow-soft transition active:scale-95"
-            >
-              <Mic className="h-5 w-5" />
-            </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
       {referralName && (
         <ReferralDialog
