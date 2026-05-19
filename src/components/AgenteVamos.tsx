@@ -99,11 +99,19 @@ function normalizeSpeech(text: string) {
 
 function localResolve(text: string): { reply: string; path?: string } {
   const query = normalizeSpeech(text);
+  let best: Intent | null = null;
+  let bestScore = 0;
   for (const it of INTENTS) {
-    if (it.keys.some((key) => query.includes(normalizeSpeech(key)))) {
-      return { reply: it.reply, path: it.path };
+    const score = it.keys.reduce((max, key) => {
+      const normalizedKey = normalizeSpeech(key);
+      return query.includes(normalizedKey) ? Math.max(max, normalizedKey.length) : max;
+    }, 0);
+    if (score > bestScore) {
+      best = it;
+      bestScore = score;
     }
   }
+  if (best) return { reply: best.reply, path: best.path };
   return {
     reply:
       "Puedo llevarte a: playas, dónde comer, dónde dormir, bus, vuelos, ocio, fiestas, clima o salud. ¿Qué prefieres?",
