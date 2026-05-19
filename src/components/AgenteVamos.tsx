@@ -916,9 +916,19 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                   onClick={() => {
                     if (paused) {
                       primeSpanishUtterances();
+                      const warmup = requestMicWarmupFromUserGesture();
                       setVoiceError(null);
                       setPaused(false);
-                      setTimeout(() => startListeningRef.current(), 100);
+                      if (warmup) {
+                        warmup.then((state) => {
+                          setMicReady(state === "ready");
+                          if (state === "ready") startListeningRef.current();
+                          else if (__vaMicWarmupMessage) setVoiceError(__vaMicWarmupMessage);
+                        });
+                      } else {
+                        setMicReady(__vaMicWarmupState === "ready");
+                        setTimeout(() => startListeningRef.current(), 100);
+                      }
                     } else {
                       setPaused(true);
                       stopListening();
@@ -937,6 +947,27 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                     </>
                   )}
                 </button>
+                {!micReady && (
+                  <button
+                    onClick={() => {
+                      const warmup = requestMicWarmupFromUserGesture();
+                      setVoiceError(__vaMicWarmupMessage);
+                      warmup?.then((state) => {
+                        setMicReady(state === "ready");
+                        if (state === "ready") {
+                          setVoiceError(null);
+                          setPaused(false);
+                          startListeningRef.current();
+                        } else if (__vaMicWarmupMessage) {
+                          setVoiceError(__vaMicWarmupMessage);
+                        }
+                      });
+                    }}
+                    className="flex items-center gap-1 rounded-full border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
+                  >
+                    <Mic className="h-3 w-3" /> activar micro
+                  </button>
+                )}
                 <button
                   onClick={() => {
                     stopListening();
