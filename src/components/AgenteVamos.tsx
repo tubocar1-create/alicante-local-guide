@@ -259,6 +259,61 @@ let __vaActiveUtterance: SpeechSynthesisUtterance | null = null;
 let __vaActiveAudio: HTMLAudioElement | null = null;
 let __vaActiveAudioStartedAt = 0;
 const __vaPrimedUtterances: SpeechSynthesisUtterance[] = [];
+type MicWarmupState = "idle" | "pending" | "ready" | "denied" | "unavailable" | "error";
+let __vaMicWarmupState: MicWarmupState = "idle";
+let __vaMicWarmupPromise: Promise<MicWarmupState> | null = null;
+let __vaMicWarmupMessage: string | null = null;
+
+function micWarmupMessage(err: unknown) {
+  const name = err instanceof DOMException ? err.name : err instanceof Error ? err.name : "";
+  if (name === "NotAllowedError" || name === "SecurityError") {
+    return "Permiso de micrófono denegado. Habilítalo en el navegador.";
+  }
+  if (name === "NotFoundError") return "No encuentro ningún micrófono en este dispositivo.";
+  if (name === "NotReadableError") return "El micrófono está ocupado por otra aplicación.";
+  return "No pude activar el micrófono. Toca el micrófono para intentarlo otra vez.";
+}
+
+function requestMicWarmupFromUserGesture() {
+  if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+    __vaMicWarmupState = "unavailable";
+    __vaMicWarmupMessage = "Este navegador no permite usar el micrófono aquí.";
+    return null;
+  }
+  if (__vaMicWarmupState === "ready") return null;
+  if (__vaMicWarmupState === "pending") return __vaMicWarmupPromise;
+
+  __vaMicWarmupState = "pending";
+  __vaMicWarmupMessage = "Acepta el permiso del micrófono para poder hablar.";
+  __vaMicWarmupPromise = navigator.mediaDevices
+    .getUserMedia({ audio: true })
+    .then((stream) => {
+      stream.getTracks().forEach((track) => track.stop());
+      __vaMicWarmupState = "ready";
+      __vaMicWarmupMessage = null;
+      return __vaMicWarmupState;
+    })
+    .catch((err) => {
+      __vaMicWarmupMessage = micWarmupMessage(err);
+      __vaMicWarmupState =
+        err instanceof DOMException && (err.name === "NotAllowedError" || err.name === "SecurityError")
+          ? "denied"
+          : "error";
+      return __vaMicWarmupState;
+    })
+    .finally(() => {
+      __vaMicWarmupPromise = null;
+    });
+  return __vaMicWarmupPromise;
+}
+
+function getMicWarmupSnapshot() {
+  return {
+    state: __vaMicWarmupState,
+    message: __vaMicWarmupMessage,
+    promise: __vaMicWarmupPromise,
+  };
+}
 
 function pickSpanishVoice(synth: SpeechSynthesis) {
   const voices = synth.getVoices();
@@ -309,6 +364,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const [paused, setPaused] = useState(false);
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const [tapToSpeak, setTapToSpeak] = useState<PendingSpeech | null>(null);
+  const [micReady, setMicReady] = useState(__vaMicWarmupState === "ready");
 
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
@@ -540,6 +596,27 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const startListening = useCallback(() => {
     if (!openRef.current || modeRef.current !== "voice") return;
     if (pausedRef.current || loadingRef.current || speakingRef.current) return;
+    if (__vaMicWarmupState !== "ready") {
+      const { message, promise } = getMicWarmupSnapshot();
+      setListening(false);
+      setMicReady(false);
+      if (message) setVoiceError(message);
+      if (promise) {
+        promise.then((state) => {
+          setMicReady(state === "ready");
+          if (state === "ready") {
+            setVoiceError(null);
+            if (shouldAutoListen()) startListeningRef.current();
+          } else if (__vaMicWarmupMessage) {
+            setVoiceError(__vaMicWarmupMessage);
+            setPaused(true);
+          }
+        });
+      } else if (__vaMicWarmupState === "denied" || __vaMicWarmupState === "error") {
+        setPaused(true);
+      }
+      return;
+    }
     const SRClass = getSpeechRecognition();
     if (!SRClass) {
       setVoiceError("Tu navegador no soporta reconocimiento de voz. Cambia a modo texto.");
@@ -613,6 +690,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       };
       recogRef.current = rec;
       setVoiceError(null);
+      setMicReady(true);
       setListening(true);
       rec.start();
     } catch (err) {
@@ -668,6 +746,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
     const tryStart = () => {
       if (cancelled) return;
+      const mic = getMicWarmupSnapshot();
+      setMicReady(mic.state === "ready");
+      if (mic.message && mic.state !== "ready") setVoiceError(mic.message);
       if (__vaActiveAudio && Date.now() - __vaActiveAudioStartedAt > 9000) {
         __vaActiveAudio = null;
         __vaActiveAudioStartedAt = 0;
@@ -835,9 +916,19 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                   onClick={() => {
                     if (paused) {
                       primeSpanishUtterances();
+                      const warmup = requestMicWarmupFromUserGesture();
                       setVoiceError(null);
                       setPaused(false);
-                      setTimeout(() => startListeningRef.current(), 100);
+                      if (warmup) {
+                        warmup.then((state) => {
+                          setMicReady(state === "ready");
+                          if (state === "ready") startListeningRef.current();
+                          else if (__vaMicWarmupMessage) setVoiceError(__vaMicWarmupMessage);
+                        });
+                      } else {
+                        setMicReady(__vaMicWarmupState === "ready");
+                        setTimeout(() => startListeningRef.current(), 100);
+                      }
                     } else {
                       setPaused(true);
                       stopListening();
@@ -856,6 +947,27 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                     </>
                   )}
                 </button>
+                {!micReady && (
+                  <button
+                    onClick={() => {
+                      const warmup = requestMicWarmupFromUserGesture();
+                      setVoiceError(__vaMicWarmupMessage);
+                      warmup?.then((state) => {
+                        setMicReady(state === "ready");
+                        if (state === "ready") {
+                          setVoiceError(null);
+                          setPaused(false);
+                          startListeningRef.current();
+                        } else if (__vaMicWarmupMessage) {
+                          setVoiceError(__vaMicWarmupMessage);
+                        }
+                      });
+                    }}
+                    className="flex items-center gap-1 rounded-full border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
+                  >
+                    <Mic className="h-3 w-3" /> activar micro
+                  </button>
+                )}
                 <button
                   onClick={() => {
                     stopListening();
@@ -942,6 +1054,7 @@ export function AgenteVamosFab() {
     if (voiceBootStartedRef.current) return;
     voiceBootStartedRef.current = true;
     try {
+      requestMicWarmupFromUserGesture();
       const greetText = getGreetingText();
       const greetAudio = new Audio(audioSrc(getGreetingClip()));
       greetAudio.preload = "auto";
@@ -952,12 +1065,6 @@ export function AgenteVamosFab() {
       greetAudio.onended = () => {
         if (__vaActiveAudio === greetAudio) __vaActiveAudio = null;
         __vaActiveAudioStartedAt = 0;
-        if (navigator.mediaDevices?.getUserMedia) {
-          navigator.mediaDevices
-            .getUserMedia({ audio: true })
-            .then((stream) => stream.getTracks().forEach((track) => track.stop()))
-            .catch(() => {});
-        }
       };
       greetAudio.onerror = () => {
         if (__vaActiveAudio === greetAudio) __vaActiveAudio = null;
