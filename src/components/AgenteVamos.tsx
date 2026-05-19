@@ -601,7 +601,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         }
         // Silence — restart listening automatically
         if (shouldAutoListen()) {
-          setTimeout(() => startListeningRef.current(), 300);
+          setTimeout(() => {
+            if (shouldAutoListen()) startListeningRef.current();
+          }, 700);
         }
       };
       recogRef.current = rec;
