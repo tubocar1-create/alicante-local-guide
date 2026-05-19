@@ -830,12 +830,16 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       let lastTranscript = "";
       let handled = false;
       rec.onresult = (e: any) => {
+        // Rebuild from scratch each event to avoid duplicate accumulation
+        // (some engines re-emit final results across events).
+        let finals = "";
         let interimText = "";
-        for (let i = e.resultIndex; i < e.results.length; i++) {
+        for (let i = 0; i < e.results.length; i++) {
           const t = e.results[i][0].transcript;
-          if (e.results[i].isFinal) finalText += t;
+          if (e.results[i].isFinal) finals += t;
           else interimText += t;
         }
+        finalText = finals;
         lastTranscript = (finalText || interimText || lastTranscript).trim();
         setInterim(interimText);
         if (lastTranscript) {
