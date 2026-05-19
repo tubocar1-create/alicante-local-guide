@@ -412,9 +412,12 @@ function HotelDetail() {
                               />
                             );
                           }
-                          const available = !!dy?.available;
-                          const priceLabel =
-                            dy?.price_double != null
+                          const todayIso = new Date().toISOString().slice(0, 10);
+                          const isToday = c.date === todayIso;
+                          const available = isToday ? true : !!dy?.available;
+                          const priceLabel = isToday
+                            ? ""
+                            : dy?.price_double != null
                               ? `${Math.round(dy.price_double)}€`
                               : dy?.price_min != null
                                 ? `${Math.round(dy.price_min)}€`
