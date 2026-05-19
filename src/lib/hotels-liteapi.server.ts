@@ -1,8 +1,10 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const LITEAPI_BASE = "https://api.liteapi.travel/v3.0";
-const ALICANTE_LAT = 38.3452;
+// Centro de búsqueda: Puerta del Mar, Alicante
+const ALICANTE_LAT = 38.3402;
 const ALICANTE_LNG = -0.481;
+const RADIUS_KM = 30;
 
 function liteHeaders() {
   const key = process.env.LITEAPI_KEY;
