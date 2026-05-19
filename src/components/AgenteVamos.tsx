@@ -620,7 +620,13 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         const fallback = localResolve(clean);
         let reply = fallback.reply;
         let target: string | undefined = fallback.path;
-        let forwardPrompt: string | undefined;
+        let forwardPrompt: string | undefined =
+          fallback.path === "/" && fallback.reply.includes("Dashboard Nocturno") ? clean : undefined;
+        if (forwardPrompt && typeof window !== "undefined") {
+          try {
+            window.sessionStorage.setItem("afp:fwdPrompt", forwardPrompt);
+          } catch {}
+        }
 
         try {
           const res = await askAgent({
