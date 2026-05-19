@@ -157,7 +157,7 @@ const SUGGESTIONS: Suggestion[] = [
   { label: "🏨 Dormir", href: "/donde-dormir" },
   { label: "🏖️ Turismo, playa y aventuras", prompt: BEACH_GUIDE_PROMPT },
   { label: "🛍️ Comprar", prompt: "¿Dónde puedo ir de compras?" },
-  { label: "🍹 Tomar algo", href: "/eat" },
+  { label: "🍹 Tomar algo", prompt: "¿Dónde voy a tomar algo abierto ahora?" },
   {
     label: "🚆 Transporte público",
     submenu: [
