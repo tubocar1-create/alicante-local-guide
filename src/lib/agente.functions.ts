@@ -479,6 +479,9 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
       };
     }
 
+    // Import dinámico: client.server NO debe estar al top-level de un .functions.ts mixto.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
     // 3) FAQ desde BD
     try {
       const { data: faqs } = await supabaseAdmin
@@ -488,8 +491,7 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
         .order("priority", { ascending: true });
       const match = matchFaq(normalized, (faqs ?? []) as FaqRow[]);
       if (match) {
-        // Incrementa contador en background; no bloquea la respuesta.
-        void bumpFaqHits(match.id);
+        void bumpFaqHits(supabaseAdmin, match.id);
         return {
           ok: true as const,
           content: match.response,
@@ -502,7 +504,7 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
     }
 
     // 4) Desconocido → registramos para auto-aprendizaje y respondemos plantilla
-    void logUnknown(lastUserMessage, normalized, currentPath);
+    void logUnknown(supabaseAdmin, lastUserMessage, normalized, currentPath);
     return {
       ok: true as const,
       content: "Lo siento, desconozco ese tema. ¿Puedo ayudarte con playas, comer, ocio, transporte, vuelos, clima, salud o alojamiento?",
