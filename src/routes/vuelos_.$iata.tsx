@@ -238,13 +238,16 @@ const WEEKDAYS_PRETTY = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 // ---------- Route ----------
 
 export const Route = createFileRoute("/vuelos_/$iata")({
-  head: ({ params }) => ({
-    meta: [
-      {
-        title: `Vuelos · Alicante ↔ ${params.iata.toUpperCase()} · Dashboard`,
-      },
-    ],
-  }),
+  head: ({ params }) => {
+    const code = params.iata.toUpperCase();
+    const isArrival =
+      typeof window !== "undefined" &&
+      new URLSearchParams(window.location.search).get("type") === "L";
+    const label = isArrival ? "Ficha de origen" : "Ficha de destino";
+    return {
+      meta: [{ title: `Vuelos · Alicante ↔ ${code} · ${label}` }],
+    };
+  },
   component: DestinationDashboard,
 });
 
