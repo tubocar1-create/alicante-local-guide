@@ -142,7 +142,7 @@ export const __vaSetGreetingSpoken = (v: boolean) => {
   __vaGreetingSpoken = v;
 };
 let __vaActiveUtterance: SpeechSynthesisUtterance | null = null;
-let __vaPrimedUtterances: SpeechSynthesisUtterance[] = [];
+const __vaPrimedUtterances: SpeechSynthesisUtterance[] = [];
 
 function pickSpanishVoice(synth: SpeechSynthesis) {
   const voices = synth.getVoices();
