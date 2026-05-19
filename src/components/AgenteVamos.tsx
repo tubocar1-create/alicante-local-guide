@@ -773,7 +773,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         // cortado al cerrar el panel (stopSpeaking) y bloquearía el TTS del
         // resumen real. ChatScreen hablará el resumen final ("Te he conseguido
         // N sitios…") cuando los datos carguen.
-        if ((viaVoice || modeRef.current === "voice") && !forwardPrompt && !pendingSubmenu) {
+        // Hablar también en modo texto: el agente verbaliza lo que escribe.
+        // El usuario puede silenciar con el botón de altavoz (mutedRef).
+        if (!forwardPrompt && !pendingSubmenu) {
           speak(reply, fallback.audio);
         }
       } finally {
