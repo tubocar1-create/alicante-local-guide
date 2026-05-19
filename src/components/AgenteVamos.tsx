@@ -263,6 +263,8 @@ type MicWarmupState = "idle" | "pending" | "ready" | "denied" | "unavailable" | 
 let __vaMicWarmupState: MicWarmupState = "idle";
 let __vaMicWarmupPromise: Promise<MicWarmupState> | null = null;
 let __vaMicWarmupMessage: string | null = null;
+let __vaMicWarmupAttempt = 0;
+const MIC_WARMUP_TIMEOUT_MS = 8000;
 
 function micWarmupMessage(err: unknown) {
   const name = err instanceof DOMException ? err.name : err instanceof Error ? err.name : "";
@@ -285,25 +287,45 @@ function requestMicWarmupFromUserGesture() {
 
   __vaMicWarmupState = "pending";
   __vaMicWarmupMessage = "Acepta el permiso del micrófono para poder hablar.";
-  __vaMicWarmupPromise = navigator.mediaDevices
+  const attempt = ++__vaMicWarmupAttempt;
+  const mediaRequest = navigator.mediaDevices
     .getUserMedia({ audio: true })
     .then((stream) => {
       stream.getTracks().forEach((track) => track.stop());
-      __vaMicWarmupState = "ready";
-      __vaMicWarmupMessage = null;
+      if (attempt === __vaMicWarmupAttempt) {
+        __vaMicWarmupState = "ready";
+        __vaMicWarmupMessage = null;
+      }
       return __vaMicWarmupState;
     })
     .catch((err) => {
-      __vaMicWarmupMessage = micWarmupMessage(err);
-      __vaMicWarmupState =
-        err instanceof DOMException && (err.name === "NotAllowedError" || err.name === "SecurityError")
-          ? "denied"
-          : "error";
+      if (attempt === __vaMicWarmupAttempt) {
+        __vaMicWarmupMessage = micWarmupMessage(err);
+        __vaMicWarmupState =
+          err instanceof DOMException && (err.name === "NotAllowedError" || err.name === "SecurityError")
+            ? "denied"
+            : "error";
+      }
       return __vaMicWarmupState;
-    })
-    .finally(() => {
-      __vaMicWarmupPromise = null;
     });
+
+  __vaMicWarmupPromise = new Promise<MicWarmupState>((resolve) => {
+    const timeout = window.setTimeout(() => {
+      if (attempt === __vaMicWarmupAttempt && __vaMicWarmupState === "pending") {
+        __vaMicWarmupState = "error";
+        __vaMicWarmupMessage =
+          "No apareció el permiso del micrófono. Pulsa “activar micro” y acepta el permiso del navegador.";
+      }
+      if (attempt === __vaMicWarmupAttempt) __vaMicWarmupPromise = null;
+      resolve(__vaMicWarmupState);
+    }, MIC_WARMUP_TIMEOUT_MS);
+
+    mediaRequest.then((state) => {
+      window.clearTimeout(timeout);
+      if (attempt === __vaMicWarmupAttempt) __vaMicWarmupPromise = null;
+      resolve(state);
+    });
+  });
   return __vaMicWarmupPromise;
 }
 
