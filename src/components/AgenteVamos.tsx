@@ -912,6 +912,16 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       stopSpeaking();
       setPaused(false);
       setInterim("");
+      // Limpia caché del diálogo: el próximo se abre desde cero.
+      if (typeof window !== "undefined") {
+        try {
+          window.sessionStorage.removeItem(STORAGE_KEY);
+          window.sessionStorage.removeItem("afp:fwdPrompt");
+          window.sessionStorage.removeItem("afp:openSubmenu");
+          window.sessionStorage.removeItem("afp:voiceFoodSummaryPending");
+        } catch {}
+      }
+      setMsgs([makeGreeting()]);
     }
   }, [open, stopListening, stopSpeaking]);
 
