@@ -492,6 +492,17 @@ const loadProperNouns = async (db: AdminClient): Promise<ProperNounRow[]> => {
   return rows;
 };
 
+// Palabras genéricas que NO deben usarse como token distintivo de un nombre propio
+// (evita falsos positivos del tipo "hotel" → primer hotel de la lista).
+const PROPER_NOUN_STOPWORDS = new Set([
+  "a","al","ante","bajo","con","contra","de","del","desde","en","entre","hacia","hasta","la","las","el","los","lo","y","o","u","por","para","segun","sin","sobre","tras","un","una","unos","unas","the","of","by","and","or",
+  "hotel","hoteles","hostal","hostales","apartamento","apartamentos","apartahotel","resort","spa","suites","suite","affiliated",
+  "restaurante","restaurantes","bar","bares","cafeteria","cafe","cafetería","pub","pubs","brewery","cerveceria","cervecería","taberna","tasca","pizzeria","pizzería","marisqueria","marisquería","arroceria","arrocería",
+  "vuelos","vuelo","destino","aerolinea","aerolínea","compania","compañia","compañía",
+  "alicante","elche","santa","san","santo","sant","playa","calle","avenida","plaza","centro","ciudad","alacant",
+  "cine","cines","teatro","teatros","sala","farmacia","farmacias","hospital","hospitales",
+]);
+
 const matchProperNoun = (
   normalizedText: string,
   rows: ProperNounRow[],
@@ -500,7 +511,15 @@ const matchProperNoun = (
   if (!normalizedText) return null;
   let best: { path: string; reason: string; name: string; len: number; prio: number } | null = null;
   for (const r of rows) {
-    const candidates = [r.normalized, ...(r.aliases ?? [])].filter((s) => s && s.length >= 3);
+    // Candidatos: el nombre normalizado completo, cada alias, y además los tokens
+    // distintivos del nombre (palabra ≥4 chars que no esté en stopwords). Esto
+    // permite que "Meliá" matchee "Meliá Alicante" sin necesidad de añadir alias.
+    const baseCandidates = [r.normalized, ...(r.aliases ?? [])].filter((s) => s && s.length >= 3);
+    const distinctiveTokens = (r.normalized || "")
+      .split(/\s+/)
+      .map((t) => t.trim())
+      .filter((t) => t.length >= 4 && !PROPER_NOUN_STOPWORDS.has(t));
+    const candidates = Array.from(new Set([...baseCandidates, ...distinctiveTokens]));
     for (const cand of candidates) {
       const c = cand.trim();
       if (!c) continue;
