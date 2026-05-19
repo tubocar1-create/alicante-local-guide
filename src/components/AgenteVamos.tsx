@@ -274,6 +274,7 @@ let __vaActiveUtterance: SpeechSynthesisUtterance | null = null;
 let __vaActiveAudio: HTMLAudioElement | null = null;
 let __vaActiveAudioStartedAt = 0;
 const __vaPrimedUtterances: SpeechSynthesisUtterance[] = [];
+let __vaSpeechUnlocked = false;
 type MicWarmupState = "idle" | "pending" | "ready" | "denied" | "unavailable" | "error";
 let __vaMicWarmupState: MicWarmupState = "idle";
 let __vaMicWarmupPromise: Promise<MicWarmupState> | null = null;
