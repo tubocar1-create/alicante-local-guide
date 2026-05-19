@@ -41,8 +41,16 @@ const INTENTS: Intent[] = [
     reply: "Aquí tienes el mapa de playas.",
     path: "/playas/mapa",
   },
-  { keys: ["explorar", "mapa", "ciudad", "cerca", "sitios"], reply: "Te abro el mapa de la ciudad.", path: "/explore" },
-  { keys: ["bus", "emt", "autobus", "autobuses", "transporte"], reply: "Buses urbanos de Alicante.", path: "/bus" },
+  {
+    keys: ["explorar", "mapa", "ciudad", "cerca", "sitios"],
+    reply: "Te abro el mapa de la ciudad.",
+    path: "/explore",
+  },
+  {
+    keys: ["bus", "emt", "autobus", "autobuses", "transporte"],
+    reply: "Buses urbanos de Alicante.",
+    path: "/bus",
+  },
   {
     keys: ["planificar", "ruta", "como llego", "llegar", "ir a", "llevarme"],
     reply: "Vamos al planificador de rutas.",
@@ -69,22 +77,41 @@ const INTENTS: Intent[] = [
     reply: "Conciertos por aquí.",
     path: "/ocio/conciertos",
   },
-  { keys: ["ocio", "plan", "planes", "hacer", "que hago", "que hacer"], reply: "Ideas para tu plan.", path: "/ocio" },
+  {
+    keys: ["ocio", "plan", "planes", "hacer", "que hago", "que hacer"],
+    reply: "Ideas para tu plan.",
+    path: "/ocio",
+  },
   {
     keys: ["fiesta", "fiestas", "hoguera", "hogueras", "moros", "cristianos"],
     reply: "Programa de fiestas.",
     path: "/fiestas",
   },
-  { keys: ["farmacia", "farmacias", "guardia", "medicamento"], reply: "Farmacias de guardia.", path: "/farmacias" },
-  { keys: ["hospital", "hospitales", "urgencia", "urgencias"], reply: "Hospitales cercanos.", path: "/hospitales" },
-  { keys: ["salud", "medico", "medica", "sanitario", "sanitaria"], reply: "Servicios sanitarios.", path: "/salud" },
+  {
+    keys: ["farmacia", "farmacias", "guardia", "medicamento"],
+    reply: "Farmacias de guardia.",
+    path: "/farmacias",
+  },
+  {
+    keys: ["hospital", "hospitales", "urgencia", "urgencias"],
+    reply: "Hospitales cercanos.",
+    path: "/hospitales",
+  },
+  {
+    keys: ["salud", "medico", "medica", "sanitario", "sanitaria"],
+    reply: "Servicios sanitarios.",
+    path: "/salud",
+  },
   { keys: ["perfil", "cuenta", "usuario"], reply: "Tu perfil.", path: "/perfil" },
   {
     keys: ["hola", "buenas", "hey", "saludos"],
     reply:
       "¡Hola! ¿En qué te ayudo? Puedes pedirme playa, comer, dormir, bus, vuelos, ocio o clima.",
   },
-  { keys: ["gracias", "gracia", "vale", "ok"], reply: "¡A mandar! Si necesitas otra cosa, dímelo." },
+  {
+    keys: ["gracias", "gracia", "vale", "ok"],
+    reply: "¡A mandar! Si necesitas otra cosa, dímelo.",
+  },
 ];
 
 function normalizeSpeech(text: string) {
