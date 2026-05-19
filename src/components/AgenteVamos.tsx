@@ -283,49 +283,32 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         return;
       }
       const synth = window.speechSynthesis;
-      const doSpeak = () => {
-        try {
-          synth.cancel();
-          synth.resume();
-          const u = makeSpanishUtterance(text);
-          u.onstart = () => {
-            speakingRef.current = true;
-            setSpeaking(true);
-          };
-          u.onend = () => {
-            __vaActiveUtterance = null;
-            speakingRef.current = false;
-            setSpeaking(false);
-            onEnd?.();
-            if (shouldAutoListen()) startListeningRef.current();
-          };
-          u.onerror = () => {
-            __vaActiveUtterance = null;
-            speakingRef.current = false;
-            setSpeaking(false);
-            onEnd?.();
-            if (shouldAutoListen()) startListeningRef.current();
-          };
-          synth.speak(u);
-        } catch {
+      try {
+        synth.cancel();
+        synth.resume();
+        const u = makeSpanishUtterance(text);
+        u.onstart = () => {
+          speakingRef.current = true;
+          setSpeaking(true);
+        };
+        u.onend = () => {
+          __vaActiveUtterance = null;
+          speakingRef.current = false;
+          setSpeaking(false);
           onEnd?.();
           if (shouldAutoListen()) startListeningRef.current();
-        }
-      };
-      // Ensure voices are loaded (some browsers populate async)
-      if (synth.getVoices().length === 0) {
-        const handler = () => {
-          synth.removeEventListener("voiceschanged", handler);
-          doSpeak();
         };
-        synth.addEventListener("voiceschanged", handler);
-        // Fallback in case event never fires
-        setTimeout(() => {
-          synth.removeEventListener("voiceschanged", handler);
-          doSpeak();
-        }, 800);
-      } else {
-        doSpeak();
+        u.onerror = () => {
+          __vaActiveUtterance = null;
+          speakingRef.current = false;
+          setSpeaking(false);
+          onEnd?.();
+          if (shouldAutoListen()) startListeningRef.current();
+        };
+        synth.speak(u);
+      } catch {
+        onEnd?.();
+        if (shouldAutoListen()) startListeningRef.current();
       }
     },
     [shouldAutoListen],
@@ -753,7 +736,10 @@ export function AgenteVamosFab() {
         const greetText =
           "¡Hola! Soy Agente Vamos, tu concierge en Alicante. ¿Qué te apetece hacer? ¿Comer, dormir, playa, moverte, un plan?";
         const u = makeSpanishUtterance(greetText);
-        u.onstart = () => __vaSetGreetingSpoken(true);
+        __vaSetGreetingSpoken(true);
+        u.onstart = () => {
+          __vaActiveUtterance = u;
+        };
         u.onend = () => {
           __vaActiveUtterance = null;
           __vaSetGreetingSpoken(true);
@@ -773,9 +759,6 @@ export function AgenteVamosFab() {
     <>
       {!open && (
         <button
-          onTouchStart={startGreetingFromUserGesture}
-          onMouseDown={startGreetingFromUserGesture}
-          onPointerDown={startGreetingFromUserGesture}
           onClick={() => {
             startGreetingFromUserGesture();
             setOpen(true);
