@@ -1054,6 +1054,7 @@ export function AgenteVamosFab() {
     if (voiceBootStartedRef.current) return;
     voiceBootStartedRef.current = true;
     try {
+      requestMicWarmupFromUserGesture();
       const greetText = getGreetingText();
       const greetAudio = new Audio(audioSrc(getGreetingClip()));
       greetAudio.preload = "auto";
@@ -1064,12 +1065,6 @@ export function AgenteVamosFab() {
       greetAudio.onended = () => {
         if (__vaActiveAudio === greetAudio) __vaActiveAudio = null;
         __vaActiveAudioStartedAt = 0;
-        if (navigator.mediaDevices?.getUserMedia) {
-          navigator.mediaDevices
-            .getUserMedia({ audio: true })
-            .then((stream) => stream.getTracks().forEach((track) => track.stop()))
-            .catch(() => {});
-        }
       };
       greetAudio.onerror = () => {
         if (__vaActiveAudio === greetAudio) __vaActiveAudio = null;
