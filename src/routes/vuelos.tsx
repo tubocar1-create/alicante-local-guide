@@ -1083,7 +1083,7 @@ function InfoPanel({
         {visibleCities.map((c, i) => (
           <li key={c.iata} className="odd:bg-white/[0.02] rounded-lg">
             <Link
-              to="/vuelos_/$iata"
+              to="/vuelos/$iata"
               params={{ iata: c.iata }}
               search={{ type: flightType }}
               className="flex items-center gap-2 px-2 py-1 text-[12px] text-slate-200 transition hover:text-cyan-300"
