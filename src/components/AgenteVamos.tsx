@@ -55,7 +55,20 @@ type AgentAudioClip = VoiceClip | GreetingClip;
 type Intent = { keys: string[]; reply: string; path?: string; audio: VoiceClip };
 const INTENTS: Intent[] = [
   {
-    keys: ["tomar algo", "beber", "cerveza", "cervezas", "cerveceria", "cervecería", "copa", "copas", "pub", "discoteca", "bar de copas", "rooftop"],
+    keys: [
+      "tomar algo",
+      "beber",
+      "cerveza",
+      "cervezas",
+      "cerveceria",
+      "cervecería",
+      "copa",
+      "copas",
+      "pub",
+      "discoteca",
+      "bar de copas",
+      "rooftop",
+    ],
     reply: "Abro el Dashboard Nocturno: bares, cervecerías, pubs y discotecas abiertos ahora.",
     path: "/",
     audio: "leisure",
@@ -261,6 +274,7 @@ let __vaActiveUtterance: SpeechSynthesisUtterance | null = null;
 let __vaActiveAudio: HTMLAudioElement | null = null;
 let __vaActiveAudioStartedAt = 0;
 const __vaPrimedUtterances: SpeechSynthesisUtterance[] = [];
+let __vaSpeechUnlocked = false;
 type MicWarmupState = "idle" | "pending" | "ready" | "denied" | "unavailable" | "error";
 let __vaMicWarmupState: MicWarmupState = "idle";
 let __vaMicWarmupPromise: Promise<MicWarmupState> | null = null;
@@ -304,7 +318,8 @@ function requestMicWarmupFromUserGesture() {
       if (attempt === __vaMicWarmupAttempt) {
         __vaMicWarmupMessage = micWarmupMessage(err);
         __vaMicWarmupState =
-          err instanceof DOMException && (err.name === "NotAllowedError" || err.name === "SecurityError")
+          err instanceof DOMException &&
+          (err.name === "NotAllowedError" || err.name === "SecurityError")
             ? "denied"
             : "error";
       }
@@ -360,9 +375,44 @@ function configureSpanishUtterance(u: SpeechSynthesisUtterance, text: string) {
   return u;
 }
 
-function makeSpanishUtterance(text: string) {
-  const u = __vaPrimedUtterances.shift() || new SpeechSynthesisUtterance("");
+function makeSpanishUtterance(text: string, fresh = false) {
+  const u = fresh
+    ? new SpeechSynthesisUtterance("")
+    : __vaPrimedUtterances.shift() || new SpeechSynthesisUtterance("");
   return configureSpanishUtterance(u, text);
+}
+
+function keepSpeechSynthesisAwake(synth: SpeechSynthesis) {
+  [0, 120, 450, 900].forEach((delay) => {
+    window.setTimeout(() => {
+      try {
+        synth.resume();
+      } catch {
+        // Speech engines can be unavailable while the browser is restoring audio.
+      }
+    }, delay);
+  });
+}
+
+function unlockSpeechFromUserGesture() {
+  if (typeof window === "undefined" || __vaSpeechUnlocked || !window.speechSynthesis) return;
+  try {
+    const synth = window.speechSynthesis;
+    const u = new SpeechSynthesisUtterance(" ");
+    u.lang = "es-ES";
+    u.volume = 0;
+    u.rate = 1;
+    u.onend = () => {
+      __vaSpeechUnlocked = true;
+    };
+    u.onerror = () => {
+      __vaSpeechUnlocked = true;
+    };
+    synth.resume();
+    synth.speak(u);
+  } catch {
+    // If the browser refuses the unlock, the visible tap-to-speak fallback remains available.
+  }
 }
 
 function primeSpanishUtterances(count = 8) {
@@ -567,7 +617,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       // Anti-eco (D9): cortamos cualquier escucha activa antes de hablar.
       try {
         recogRef.current?.abort?.();
-      } catch {}
+      } catch {
+        // Ignore if recognition is already stopped.
+      }
       if (audio && playAudioClip(audio, text, onEnd)) return;
       if (mutedRef.current || typeof window === "undefined" || !window.speechSynthesis) {
         if (!mutedRef.current) setTapToSpeak({ text, audio });
@@ -581,11 +633,24 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         synth.resume();
         const u = makeSpanishUtterance(text);
         setTapToSpeak(null);
+        let started = false;
+        const blockedTimer = window.setTimeout(() => {
+          if (!started && __vaActiveUtterance === u) {
+            __vaActiveUtterance = null;
+            speakingRef.current = false;
+            setSpeaking(false);
+            setTapToSpeak({ text });
+            onEnd?.();
+          }
+        }, 1200);
         u.onstart = () => {
+          started = true;
+          window.clearTimeout(blockedTimer);
           speakingRef.current = true;
           setSpeaking(true);
         };
         u.onend = () => {
+          window.clearTimeout(blockedTimer);
           __vaActiveUtterance = null;
           speakingRef.current = false;
           setSpeaking(false);
@@ -593,6 +658,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           if (shouldAutoListen()) startListeningRef.current();
         };
         u.onerror = () => {
+          window.clearTimeout(blockedTimer);
           __vaActiveUtterance = null;
           speakingRef.current = false;
           setSpeaking(false);
@@ -600,7 +666,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           onEnd?.();
           if (shouldAutoListen()) startListeningRef.current();
         };
+        speakingRef.current = true;
+        setSpeaking(true);
         synth.speak(u);
+        keepSpeechSynthesisAwake(synth);
       } catch {
         setTapToSpeak({ text });
         onEnd?.();
@@ -624,8 +693,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         const last = m[m.length - 1];
         if (
           last?.role === "assistant" &&
-          (/^Abro el Dashboard/i.test(last.content) || /^Te he conseguido/i.test(last.content) ||
-            /^No tengo restaurantes/i.test(last.content) || /^Ahora mismo no encuentro/i.test(last.content))
+          (/^Abro el Dashboard/i.test(last.content) ||
+            /^Te he conseguido/i.test(last.content) ||
+            /^No tengo restaurantes/i.test(last.content) ||
+            /^Ahora mismo no encuentro/i.test(last.content))
         ) {
           return m.map((msg, i) => (i === m.length - 1 ? { ...msg, content: text } : msg));
         }
@@ -681,8 +752,6 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     speakFarewellRef.current = speakFarewell;
   }, [speakFarewell]);
 
-
-
   const send = useCallback(
     async (text: string, viaVoice = false) => {
       const clean = text.trim();
@@ -691,7 +760,11 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       stopListening();
 
       // C8: despedida del usuario — responde local, habla y cierra.
-      if (/^(gracias|graci[ao]s|nada m[aá]s|adi[oó]s|hasta luego|chao|chau|hasta otra|me voy)\b/i.test(clean)) {
+      if (
+        /^(gracias|graci[ao]s|nada m[aá]s|adi[oó]s|hasta luego|chao|chau|hasta otra|me voy)\b/i.test(
+          clean,
+        )
+      ) {
         setMsgs((m) => [
           ...m,
           { role: "user", content: clean },
@@ -723,7 +796,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         let reply = fallback.reply;
         let target: string | undefined = fallback.path;
         let forwardPrompt: string | undefined =
-          fallback.path === "/" && fallback.reply.includes("Dashboard Nocturno") ? clean : undefined;
+          fallback.path === "/" && fallback.reply.includes("Dashboard Nocturno")
+            ? clean
+            : undefined;
         if (forwardPrompt && typeof window !== "undefined") {
           try {
             window.sessionStorage.setItem("afp:fwdPrompt", forwardPrompt);
@@ -738,7 +813,13 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             },
           });
           if (res && (res as any).ok) {
-            const ai = res as { ok: true; content: string; navigate: string | null; forwardPrompt?: string; openSubmenu?: string };
+            const ai = res as {
+              ok: true;
+              content: string;
+              navigate: string | null;
+              forwardPrompt?: string;
+              openSubmenu?: string;
+            };
             if (ai.content && ai.content.trim()) reply = ai.content.trim();
             if (ai.navigate) target = ai.navigate;
             if (ai.forwardPrompt && typeof window !== "undefined") {
@@ -757,7 +838,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           // si falla el servidor, nos quedamos con la respuesta local
         }
 
-        const pendingSubmenu = typeof window !== "undefined" ? window.sessionStorage.getItem("afp:openSubmenu") : null;
+        const pendingSubmenu =
+          typeof window !== "undefined" ? window.sessionStorage.getItem("afp:openSubmenu") : null;
         const navigatingToDashboard = Boolean(forwardPrompt || pendingSubmenu);
 
         // B3: cuando vamos a un Dashboard, NO insertamos el placeholder
@@ -800,7 +882,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             }
             return navigate({ to: pathname as any });
           } catch {
-            try { window.location.assign(raw); } catch {}
+            try {
+              window.location.assign(raw);
+            } catch {}
           }
         };
 
@@ -830,10 +914,14 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
               const done = target && target !== path ? goTo(target) : undefined;
               Promise.resolve(done).finally(() => {
                 if (forwardPrompt) {
-                  window.dispatchEvent(new CustomEvent("afp:forward-prompt", { detail: { text: forwardPrompt } }));
+                  window.dispatchEvent(
+                    new CustomEvent("afp:forward-prompt", { detail: { text: forwardPrompt } }),
+                  );
                 }
                 if (pendingSubmenu) {
-                  window.dispatchEvent(new CustomEvent("afp:open-submenu", { detail: { path: pendingSubmenu } }));
+                  window.dispatchEvent(
+                    new CustomEvent("afp:open-submenu", { detail: { path: pendingSubmenu } }),
+                  );
                 }
               });
             } catch {}
@@ -1048,8 +1136,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       // el reconocedor arranca en paralelo para que el usuario pueda hablar
       // inmediatamente (barge-in). Mucho mejor percepción de latencia.
       const stillSpeaking = Boolean(
-        (synth && (synth.speaking || synth.pending || __vaActiveUtterance)) ||
-          __vaActiveAudio,
+        (synth && (synth.speaking || synth.pending || __vaActiveUtterance)) || __vaActiveAudio,
       );
       setSpeaking(stillSpeaking);
       if (mic.state === "pending" && mic.promise) {
@@ -1120,6 +1207,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                   setMode("text");
                   setMuted(true); // A2: en modo texto, silenciar por defecto
                 } else {
+                  unlockSpeechFromUserGesture();
                   primeSpanishUtterances();
                   setMode("voice");
                   setMuted(false); // A2: en modo voz, activar audio
@@ -1176,26 +1264,64 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                       // para que un nuevo fallo no deje el botón huérfano.
                       const pending = tapToSpeak;
                       setTapToSpeak(null);
+                      try {
+                        recogRef.current?.abort?.();
+                      } catch {
+                        // Ignore if recognition is already stopped.
+                      }
                       // Reproducción síncrona dentro del gesto del usuario:
                       // creamos el utterance aquí mismo para que el navegador
                       // no bloquee la síntesis por falta de gesture.
                       try {
-                        if (pending.audio) {
-                          if (playAudioClip(pending.audio, pending.text)) return;
-                        }
                         if (typeof window !== "undefined" && window.speechSynthesis) {
                           const synth = window.speechSynthesis;
-                          try { synth.cancel(); } catch {}
-                          try { synth.resume(); } catch {}
-                          const u = makeSpanishUtterance(pending.text);
-                          u.onstart = () => { speakingRef.current = true; setSpeaking(true); };
-                          u.onend = () => { speakingRef.current = false; setSpeaking(false); };
-                          u.onerror = () => { speakingRef.current = false; setSpeaking(false); };
+                          try {
+                            synth.cancel();
+                          } catch {
+                            // Ignore if the engine is already idle.
+                          }
+                          try {
+                            synth.resume();
+                          } catch {
+                            // Ignore if the engine cannot resume synchronously.
+                          }
+                          const u = makeSpanishUtterance(pending.text, true);
+                          let started = false;
+                          const blockedTimer = window.setTimeout(() => {
+                            if (!started && __vaActiveUtterance === u) {
+                              __vaActiveUtterance = null;
+                              speakingRef.current = false;
+                              setSpeaking(false);
+                              setTapToSpeak(pending);
+                            }
+                          }, 1200);
+                          u.onstart = () => {
+                            started = true;
+                            window.clearTimeout(blockedTimer);
+                            speakingRef.current = true;
+                            setSpeaking(true);
+                          };
+                          u.onend = () => {
+                            window.clearTimeout(blockedTimer);
+                            __vaActiveUtterance = null;
+                            speakingRef.current = false;
+                            setSpeaking(false);
+                            if (shouldAutoListen()) startListeningRef.current();
+                          };
+                          u.onerror = () => {
+                            window.clearTimeout(blockedTimer);
+                            __vaActiveUtterance = null;
+                            speakingRef.current = false;
+                            setSpeaking(false);
+                            setTapToSpeak(pending);
+                          };
+                          speakingRef.current = true;
+                          setSpeaking(true);
                           synth.speak(u);
+                          keepSpeechSynthesisAwake(synth);
                         }
                       } catch {
-                        // Si vuelve a fallar, no reaparece el banner; el texto
-                        // queda visible en pantalla y el usuario puede leerlo.
+                        setTapToSpeak(pending);
                       }
                     }}
                     className="rounded-full border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
@@ -1245,6 +1371,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                 <button
                   onClick={() => {
                     if (paused) {
+                      unlockSpeechFromUserGesture();
                       primeSpanishUtterances();
                       const warmup = requestMicWarmupFromUserGesture();
                       setVoiceError(null);
@@ -1280,6 +1407,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                 {!micReady && (
                   <button
                     onClick={() => {
+                      unlockSpeechFromUserGesture();
                       const warmup = requestMicWarmupFromUserGesture();
                       setVoiceError(__vaMicWarmupMessage);
                       warmup?.then((state) => {
@@ -1384,6 +1512,7 @@ export function AgenteVamosFab() {
   const playGreetingAfterPermission = () => {
     try {
       const greetText = getGreetingText();
+      unlockSpeechFromUserGesture();
       const greetAudio = new Audio(audioSrc(getGreetingClip()));
       greetAudio.preload = "auto";
       greetAudio.volume = 1;
@@ -1412,8 +1541,12 @@ export function AgenteVamosFab() {
           const voice = pickSpanishVoice(synth);
           if (voice) u.voice = voice;
           __vaActiveUtterance = u;
-          u.onend = () => { __vaActiveUtterance = null; };
-          u.onerror = () => { __vaActiveUtterance = null; };
+          u.onend = () => {
+            __vaActiveUtterance = null;
+          };
+          u.onerror = () => {
+            __vaActiveUtterance = null;
+          };
           synth.cancel();
           synth.resume();
           synth.speak(u);
