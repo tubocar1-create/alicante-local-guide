@@ -623,37 +623,46 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
 export function AgenteVamosFab() {
   const [open, setOpen] = useState(false);
+  const voiceBootStartedRef = useRef(false);
   const path = useRouterState({ select: (s) => s.location.pathname });
   const hidden =
     ["/login", "/magic", "/welcome"].includes(path) || path.startsWith("/business/login");
   if (hidden) return null;
+
+  const startGreetingFromUserGesture = () => {
+    if (voiceBootStartedRef.current) return;
+    voiceBootStartedRef.current = true;
+    try {
+      const synth = window.speechSynthesis;
+      if (synth) {
+        __vaSetGreetingSpoken(false);
+        synth.cancel();
+        synth.resume();
+        const greetText =
+          "¡Hola! Soy Agente Vamos, tu concierge en Alicante. ¿Qué te apetece hacer? ¿Comer, dormir, playa, moverte, un plan?";
+        const u = makeSpanishUtterance(greetText);
+        u.onstart = () => __vaSetGreetingSpoken(true);
+        u.onend = () => {
+          __vaActiveUtterance = null;
+        };
+        u.onerror = () => {
+          __vaActiveUtterance = null;
+          __vaSetGreetingSpoken(false);
+        };
+        synth.speak(u);
+      }
+    } catch {
+      voiceBootStartedRef.current = false;
+    }
+  };
+
   return (
     <>
       {!open && (
         <button
+          onPointerDown={startGreetingFromUserGesture}
           onClick={() => {
-            // Speak the greeting SYNCHRONOUSLY inside the click handler so the
-            // browser accepts it as a user-gesture action (Chrome/iOS autoplay).
-            try {
-              const synth = window.speechSynthesis;
-              if (synth) {
-                __vaSetGreetingSpoken(false);
-                synth.cancel();
-                synth.resume();
-                const greetText =
-                  "¡Hola! Soy Agente Vamos, tu concierge en Alicante. ¿Qué te apetece hacer? ¿Comer, dormir, playa, moverte, un plan?";
-                const u = makeSpanishUtterance(greetText);
-                u.onstart = () => __vaSetGreetingSpoken(true);
-                u.onend = () => {
-                  __vaActiveUtterance = null;
-                };
-                u.onerror = () => {
-                  __vaActiveUtterance = null;
-                  __vaSetGreetingSpoken(false);
-                };
-                synth.speak(u);
-              }
-            } catch {}
+            startGreetingFromUserGesture();
             setOpen(true);
           }}
           aria-label="Abrir Agente Vamos"
@@ -663,7 +672,13 @@ export function AgenteVamosFab() {
           <span className="hidden sm:inline">Agente Vamos</span>
         </button>
       )}
-      <AgenteVamosPanel open={open} onClose={() => setOpen(false)} />
+      <AgenteVamosPanel
+        open={open}
+        onClose={() => {
+          voiceBootStartedRef.current = false;
+          setOpen(false);
+        }}
+      />
     </>
   );
 }
