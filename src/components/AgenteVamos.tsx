@@ -636,7 +636,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             },
           });
           if (res && (res as any).ok) {
-            const ai = res as { ok: true; content: string; navigate: string | null; forwardPrompt?: string };
+            const ai = res as { ok: true; content: string; navigate: string | null; forwardPrompt?: string; openSubmenu?: string };
             if (ai.content && ai.content.trim()) reply = ai.content.trim();
             if (ai.navigate) target = ai.navigate;
             if (ai.forwardPrompt && typeof window !== "undefined") {
@@ -645,18 +645,29 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                 window.sessionStorage.setItem("afp:fwdPrompt", ai.forwardPrompt);
               } catch {}
             }
+            if (ai.openSubmenu && typeof window !== "undefined") {
+              try {
+                window.sessionStorage.setItem("afp:openSubmenu", ai.openSubmenu);
+              } catch {}
+            }
           }
         } catch {
           // si falla el servidor, nos quedamos con la respuesta local
         }
 
         setMsgs((m) => [...m, { role: "assistant", content: reply }]);
-        if (forwardPrompt && typeof window !== "undefined") {
+        const pendingSubmenu = typeof window !== "undefined" ? window.sessionStorage.getItem("afp:openSubmenu") : null;
+        if (forwardPrompt || pendingSubmenu) {
           setTimeout(() => {
             try {
               const done = target && target !== path ? navigate({ to: target }) : undefined;
               Promise.resolve(done).finally(() => {
-                window.dispatchEvent(new CustomEvent("afp:forward-prompt", { detail: { text: forwardPrompt } }));
+                if (forwardPrompt) {
+                  window.dispatchEvent(new CustomEvent("afp:forward-prompt", { detail: { text: forwardPrompt } }));
+                }
+                if (pendingSubmenu) {
+                  window.dispatchEvent(new CustomEvent("afp:open-submenu", { detail: { path: pendingSubmenu } }));
+                }
                 onClose();
               });
             } catch {}

@@ -318,23 +318,46 @@ export function ChatScreen() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const key = "afp:fwdPrompt";
+    const submenuKey = "afp:openSubmenu";
     const tryConsume = (value?: string | null) => {
       const fwd = value ?? window.sessionStorage.getItem(key);
       if (!fwd || loading) return;
       window.sessionStorage.removeItem(key);
       void send(fwd);
     };
+    const tryOpenSubmenu = (value?: string | null) => {
+      const path = value ?? window.sessionStorage.getItem(submenuKey);
+      if (!path) return;
+      window.sessionStorage.removeItem(submenuKey);
+      const comer = SUGGESTIONS.find((s) => s.label.includes("Comer"));
+      if (!comer) return;
+      setMessages([GREETING]);
+      window.sessionStorage.removeItem(CHAT_STATE_KEY);
+      if (path === "comer.comida-rapida") {
+        const fast = comer.submenu?.find((s) => s.label.includes("Comida rápida"));
+        setSubmenuStack(fast ? [comer, fast] : [comer]);
+      } else {
+        setSubmenuStack([comer]);
+      }
+    };
     tryConsume();
-    const onFocus = () => tryConsume();
+    tryOpenSubmenu();
+    const onFocus = () => { tryConsume(); tryOpenSubmenu(); };
     const onForward = (e: Event) => {
       const detail = (e as CustomEvent).detail as { text?: string } | undefined;
       tryConsume(detail?.text);
     };
+    const onOpenSubmenu = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { path?: string } | undefined;
+      tryOpenSubmenu(detail?.path);
+    };
     window.addEventListener("focus", onFocus);
     window.addEventListener("afp:forward-prompt", onForward);
+    window.addEventListener("afp:open-submenu", onOpenSubmenu);
     return () => {
       window.removeEventListener("focus", onFocus);
       window.removeEventListener("afp:forward-prompt", onForward);
+      window.removeEventListener("afp:open-submenu", onOpenSubmenu);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
