@@ -317,6 +317,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       rec.continuous = false;
       rec.interimResults = true;
       let finalText = "";
+      let lastTranscript = "";
+      let handled = false;
       rec.onresult = (e: any) => {
         let interimText = "";
         for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -324,7 +326,20 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           if (e.results[i].isFinal) finalText += t;
           else interimText += t;
         }
+        lastTranscript = (finalText || interimText || lastTranscript).trim();
         setInterim(interimText);
+      };
+      const finishTurn = () => {
+        if (handled) return true;
+        const t = (finalText || lastTranscript).trim();
+        if (!t) return false;
+        handled = true;
+        setInterim("");
+        sendRef.current(t, true);
+        return true;
+      };
+      rec.onspeechend = () => {
+        finishTurn();
       };
       rec.onerror = (e: any) => {
         setListening(false);
@@ -337,10 +352,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       };
       rec.onend = () => {
         setListening(false);
-        const t = finalText.trim();
-        if (t) {
-          setInterim("");
-          sendRef.current(t, true);
+        if (finishTurn()) {
           return;
         }
         // Silence — restart listening automatically
