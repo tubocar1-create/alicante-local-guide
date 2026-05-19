@@ -488,7 +488,21 @@ export function AgenteVamosFab() {
     <>
       {!open && (
         <button
-          onClick={() => setOpen(true)}
+          onClick={() => {
+            // Prime speech synthesis within the user gesture so the first
+            // utterance actually plays (Chrome/iOS autoplay policy).
+            try {
+              const synth = window.speechSynthesis;
+              if (synth) {
+                synth.resume();
+                const warm = new SpeechSynthesisUtterance(" ");
+                warm.volume = 0;
+                warm.lang = "es-ES";
+                synth.speak(warm);
+              }
+            } catch {}
+            setOpen(true);
+          }}
           aria-label="Abrir Agente Vamos"
           className="fixed bottom-5 right-5 z-[90] flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-orange-500 px-4 py-3 text-sm font-semibold text-primary-foreground shadow-2xl ring-4 ring-primary/20 transition hover:scale-105 active:scale-95"
         >
