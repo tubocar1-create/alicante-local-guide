@@ -87,6 +87,16 @@ const INTENTS: Intent[] = [
   { keys: ["gracias", "gracia", "vale", "ok"], reply: "¡A mandar! Si necesitas otra cosa, dímelo." },
 ];
 
+function normalizeSpeech(text: string) {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9ñ\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function localResolve(text: string): { reply: string; path?: string } {
   const query = normalizeSpeech(text);
   for (const it of INTENTS) {
