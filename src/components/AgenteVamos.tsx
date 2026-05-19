@@ -412,6 +412,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         __vaActiveAudio?.pause();
         const audio = new Audio(audioSrc(clip));
         audio.preload = "auto";
+        audio.volume = 1;
         __vaActiveAudio = audio;
         setTapToSpeak(null);
         speakingRef.current = true;
@@ -925,6 +926,8 @@ export function AgenteVamosFab() {
     try {
       const greetText = getGreetingText();
       const greetAudio = new Audio(audioSrc(getGreetingClip()));
+      greetAudio.preload = "auto";
+      greetAudio.volume = 1;
       __vaActiveAudio = greetAudio;
       __vaSetGreetingSpoken(true);
       greetAudio.onended = () => {
