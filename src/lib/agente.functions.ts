@@ -734,11 +734,20 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
       const rows = await loadProperNouns(supabaseAdmin);
       const pn = matchProperNoun(normalized, rows, currentPath);
       if (pn) {
-        const flightBlurb = await flightsCountBlurb(supabaseAdmin, pn.path);
+        // Si es una ficha de vuelo /vuelos/{IATA} y el viajero indica origen
+        // ("desde X", "vengo de X", "vuelo desde X"…) reescribimos a la
+        // ficha de origen /vuelos/{IATA}?type=L.
+        let targetPath = pn.path;
+        const flightMatch = pn.path.match(/^\/vuelos\/([A-Z]{3})$/);
+        if (flightMatch) {
+          const isFrom = /\b(desde|vengo de|vienen de|origen|procedente de|salgo de|salimos de|partimos de|parto de)\b/.test(normalized);
+          if (isFrom) targetPath = `/vuelos/${flightMatch[1]}?type=L`;
+        }
+        const flightBlurb = await flightsCountBlurb(supabaseAdmin, targetPath);
         return {
           ok: true as const,
-          content: flightBlurb ?? blurbFor(pn.path) ?? `Te llevo a ${pn.name}.`,
-          navigate: pn.path,
+          content: flightBlurb ?? blurbFor(targetPath) ?? `Te llevo a ${pn.name}.`,
+          navigate: targetPath,
           source: "proper_noun" as const,
         };
       }
