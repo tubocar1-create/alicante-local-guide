@@ -66,11 +66,13 @@ const ROOM_LABELS: Record<RoomCat, string> = {
 };
 export { ROOM_LABELS };
 
-/** Fetch all LiteAPI hotels in Alicante area */
+/** Fetch all LiteAPI hotels within RADIUS_KM of Puerta del Mar */
 async function fetchLiteApiHotels() {
   const url = new URL(`${LITEAPI_BASE}/data/hotels`);
   url.searchParams.set("countryCode", "ES");
-  url.searchParams.set("cityName", "Alicante");
+  url.searchParams.set("latitude", String(ALICANTE_LAT));
+  url.searchParams.set("longitude", String(ALICANTE_LNG));
+  url.searchParams.set("distance", String(RADIUS_KM * 1000)); // metros
   url.searchParams.set("limit", "1000");
   const res = await fetch(url, { headers: liteHeaders() });
   if (!res.ok) throw new Error(`LiteAPI hotels ${res.status}: ${(await res.text()).slice(0, 200)}`);
