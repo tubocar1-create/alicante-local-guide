@@ -824,6 +824,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                   onClick={() => {
                     if (paused) {
                       primeSpanishUtterances();
+                      setVoiceError(null);
                       setPaused(false);
                       setTimeout(() => startListeningRef.current(), 100);
                     } else {
