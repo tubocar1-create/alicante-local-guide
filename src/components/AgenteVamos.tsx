@@ -21,25 +21,69 @@ import { cn } from "@/lib/utils";
 // reply + optional navigation. Keeps the agent fully responsive offline.
 type Intent = { keys: RegExp; reply: string; path?: string };
 const INTENTS: Intent[] = [
-  { keys: /\b(hotel|dormir|aloj|hostal|apartamento)\b/i, reply: "Te llevo a alojamientos cerca de Alicante.", path: "/donde-dormir" },
-  { keys: /\b(comer|restaurante|tapas|cena|comida|gastronom)\b/i, reply: "Vamos a ver dónde comer.", path: "/eat" },
-  { keys: /\b(playa|mar|arena|cala)\b/i, reply: "Estas son las playas. ¿Quieres verlas en el mapa?", path: "/playas" },
-  { keys: /\bmapa\b.*\bplaya|playa.*mapa\b/i, reply: "Aquí tienes el mapa de playas.", path: "/playas/mapa" },
+  {
+    keys: /\b(hotel|dormir|aloj|hostal|apartamento)\b/i,
+    reply: "Te llevo a alojamientos cerca de Alicante.",
+    path: "/donde-dormir",
+  },
+  {
+    keys: /\b(comer|restaurante|tapas|cena|comida|gastronom)\b/i,
+    reply: "Vamos a ver dónde comer.",
+    path: "/eat",
+  },
+  {
+    keys: /\b(playa|mar|arena|cala)\b/i,
+    reply: "Estas son las playas. ¿Quieres verlas en el mapa?",
+    path: "/playas",
+  },
+  {
+    keys: /\bmapa\b.*\bplaya|playa.*mapa\b/i,
+    reply: "Aquí tienes el mapa de playas.",
+    path: "/playas/mapa",
+  },
   { keys: /\b(explorar|mapa|ciudad)\b/i, reply: "Te abro el mapa de la ciudad.", path: "/explore" },
   { keys: /\b(bus|emt|autob)\b/i, reply: "Buses urbanos de Alicante.", path: "/bus" },
-  { keys: /\b(planificar|ruta|c[oó]mo llego|llegar)\b/i, reply: "Vamos al planificador de rutas.", path: "/bus/planner" },
-  { keys: /\b(vuelo|aeropuerto|aena|alc)\b/i, reply: "Vuelos del aeropuerto de Alicante.", path: "/vuelos" },
-  { keys: /\b(clima|tiempo|llueve|sol|temperatura)\b/i, reply: "Mira la previsión.", path: "/clima" },
-  { keys: /\b(cine|pel[ií]cula|cartelera)\b/i, reply: "Cartelera de cine.", path: "/ocio/cartelera" },
+  {
+    keys: /\b(planificar|ruta|c[oó]mo llego|llegar)\b/i,
+    reply: "Vamos al planificador de rutas.",
+    path: "/bus/planner",
+  },
+  {
+    keys: /\b(vuelo|aeropuerto|aena|alc)\b/i,
+    reply: "Vuelos del aeropuerto de Alicante.",
+    path: "/vuelos",
+  },
+  {
+    keys: /\b(clima|tiempo|llueve|sol|temperatura)\b/i,
+    reply: "Mira la previsión.",
+    path: "/clima",
+  },
+  {
+    keys: /\b(cine|pel[ií]cula|cartelera)\b/i,
+    reply: "Cartelera de cine.",
+    path: "/ocio/cartelera",
+  },
   { keys: /\b(teatro)\b/i, reply: "Teatros en la ciudad.", path: "/ocio/teatros" },
-  { keys: /\b(concierto|m[uú]sica en vivo)\b/i, reply: "Conciertos por aquí.", path: "/ocio/conciertos" },
+  {
+    keys: /\b(concierto|m[uú]sica en vivo)\b/i,
+    reply: "Conciertos por aquí.",
+    path: "/ocio/conciertos",
+  },
   { keys: /\b(ocio|plan|hacer)\b/i, reply: "Ideas para tu plan.", path: "/ocio" },
-  { keys: /\b(fiesta|hoguera|moros|cristianos)\b/i, reply: "Programa de fiestas.", path: "/fiestas" },
+  {
+    keys: /\b(fiesta|hoguera|moros|cristianos)\b/i,
+    reply: "Programa de fiestas.",
+    path: "/fiestas",
+  },
   { keys: /\b(farmacia|guardia)\b/i, reply: "Farmacias de guardia.", path: "/farmacias" },
   { keys: /\b(hospital|urgencias)\b/i, reply: "Hospitales cercanos.", path: "/hospitales" },
   { keys: /\b(salud|m[eé]dico|sanitar)\b/i, reply: "Servicios sanitarios.", path: "/salud" },
   { keys: /\b(perfil|cuenta)\b/i, reply: "Tu perfil.", path: "/perfil" },
-  { keys: /\b(hola|buenas|hey|saludos)\b/i, reply: "¡Hola! ¿En qué te ayudo? Puedes pedirme playa, comer, dormir, bus, vuelos, ocio o clima." },
+  {
+    keys: /\b(hola|buenas|hey|saludos)\b/i,
+    reply:
+      "¡Hola! ¿En qué te ayudo? Puedes pedirme playa, comer, dormir, bus, vuelos, ocio o clima.",
+  },
   { keys: /\b(gracias|grac)\b/i, reply: "¡A mandar! Si necesitas otra cosa, dímelo." },
 ];
 
@@ -299,8 +343,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       setLoading(true);
       try {
         const { reply, path: target } = localResolve(clean);
-        const content =
-          target && target !== path ? reply : reply;
+        const content = target && target !== path ? reply : reply;
         setMsgs((m) => [...m, { role: "assistant", content }]);
         if (target && target !== path) {
           setTimeout(() => {
