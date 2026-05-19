@@ -19,32 +19,32 @@ import { cn } from "@/lib/utils";
 
 // Local intent router — no AI provider needed. Maps keywords to a friendly
 // reply + optional navigation. Keeps the agent fully responsive offline.
-type Intent = { keys: RegExp; reply: string; path?: string };
+type Intent = { keys: string[]; reply: string; path?: string };
 const INTENTS: Intent[] = [
   {
-    keys: /\b(hotel|dormir|aloj|hostal|apartamento)\b/i,
+    keys: ["hotel", "dormir", "alojamiento", "alojar", "hostal", "apartamento", "habitacion"],
     reply: "Te llevo a alojamientos cerca de Alicante.",
     path: "/donde-dormir",
   },
   {
-    keys: /\b(comer|restaurante|tapas|cena|comida|gastronom)\b/i,
+    keys: ["comer", "restaurante", "tapas", "cena", "comida", "gastronomia", "arroz", "paella"],
     reply: "Vamos a ver dónde comer.",
     path: "/eat",
   },
   {
-    keys: /\b(playa|mar|arena|cala)\b/i,
+    keys: ["playa", "mar", "arena", "cala", "bañar", "bano", "nadAr", "tabarca"],
     reply: "Estas son las playas. ¿Quieres verlas en el mapa?",
     path: "/playas",
   },
   {
-    keys: /\bmapa\b.*\bplaya|playa.*mapa\b/i,
+    keys: ["mapa playa", "playas mapa", "mapa de playas"],
     reply: "Aquí tienes el mapa de playas.",
     path: "/playas/mapa",
   },
-  { keys: /\b(explorar|mapa|ciudad)\b/i, reply: "Te abro el mapa de la ciudad.", path: "/explore" },
-  { keys: /\b(bus|emt|autob)\b/i, reply: "Buses urbanos de Alicante.", path: "/bus" },
+  { keys: ["explorar", "mapa", "ciudad", "cerca", "sitios"], reply: "Te abro el mapa de la ciudad.", path: "/explore" },
+  { keys: ["bus", "emt", "autobus", "autobuses", "transporte"], reply: "Buses urbanos de Alicante.", path: "/bus" },
   {
-    keys: /\b(planificar|ruta|c[oó]mo llego|llegar)\b/i,
+    keys: ["planificar", "ruta", "como llego", "llegar", "ir a", "llevarme"],
     reply: "Vamos al planificador de rutas.",
     path: "/bus/planner",
   },
