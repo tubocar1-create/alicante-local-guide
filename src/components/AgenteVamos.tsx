@@ -98,6 +98,7 @@ export const __vaSetGreetingSpoken = (v: boolean) => {
   __vaGreetingSpoken = v;
 };
 let __vaActiveUtterance: SpeechSynthesisUtterance | null = null;
+let __vaPrimedUtterances: SpeechSynthesisUtterance[] = [];
 
 function pickSpanishVoice(synth: SpeechSynthesis) {
   const voices = synth.getVoices();
@@ -108,8 +109,8 @@ function pickSpanishVoice(synth: SpeechSynthesis) {
   );
 }
 
-function makeSpanishUtterance(text: string) {
-  const u = new SpeechSynthesisUtterance(plainText(text));
+function configureSpanishUtterance(u: SpeechSynthesisUtterance, text: string) {
+  u.text = plainText(text);
   u.lang = "es-ES";
   u.rate = 1.05;
   u.pitch = 1;
@@ -118,6 +119,22 @@ function makeSpanishUtterance(text: string) {
   if (voice) u.voice = voice;
   __vaActiveUtterance = u;
   return u;
+}
+
+function makeSpanishUtterance(text: string) {
+  const u = __vaPrimedUtterances.shift() || new SpeechSynthesisUtterance("");
+  return configureSpanishUtterance(u, text);
+}
+
+function primeSpanishUtterances(count = 8) {
+  if (typeof window === "undefined") return;
+  while (__vaPrimedUtterances.length < count) {
+    const u = new SpeechSynthesisUtterance("");
+    u.lang = "es-ES";
+    u.rate = 1.05;
+    u.pitch = 1;
+    __vaPrimedUtterances.push(u);
+  }
 }
 
 export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
