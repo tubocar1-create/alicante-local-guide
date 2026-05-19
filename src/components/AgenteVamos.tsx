@@ -1113,9 +1113,11 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                   stopListening();
                   stopSpeaking();
                   setMode("text");
+                  setMuted(true); // A2: en modo texto, silenciar por defecto
                 } else {
                   primeSpanishUtterances();
                   setMode("voice");
+                  setMuted(false); // A2: en modo voz, activar audio
                   greetedRef.current = true; // don't re-greet on switch
                 }
               }}
