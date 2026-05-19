@@ -224,13 +224,8 @@ function DondeDormirPage() {
                           <span className="font-normal text-amber-200/40">—</span>
                         )}
                       </td>
-                      <td className="px-1 py-1 text-center align-middle font-mono text-[10px] tabular-nums text-amber-50">
-                        {d?.rooms_available != null ? (
-                          <span className={d.rooms_available > 0 ? "text-emerald-200" : "text-rose-300"}>{d.rooms_available}</span>
-                        ) : (
-                          <span className="text-amber-100/40">—</span>
-                        )}
-                      </td>
+
+
                       <td className="px-1 py-1 text-center align-middle text-[10px] font-medium text-amber-50">
                         {d?.breakfast_included ? (
                           <span className="text-emerald-200">Sí</span>
