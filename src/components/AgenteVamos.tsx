@@ -739,9 +739,16 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       setMode("voice");
       setPaused(false);
       setVoiceError(null);
+      bumpIdle();
+    }
+    if (!open && wasOpenRef.current) {
+      if (idleTimerRef.current) {
+        clearTimeout(idleTimerRef.current);
+        idleTimerRef.current = null;
+      }
     }
     wasOpenRef.current = open;
-  }, [open]);
+  }, [open, bumpIdle]);
 
   // Hands-free bootstrap: when opening in voice mode, ensure we end up listening.
   // The greeting is spoken synchronously by the FAB onClick (so the browser
