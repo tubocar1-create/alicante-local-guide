@@ -269,6 +269,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   }, [open, onClose]);
 
   const stopListening = useCallback(() => {
+    if (turnTimerRef.current) {
+      clearTimeout(turnTimerRef.current);
+      turnTimerRef.current = null;
+    }
     try {
       recogRef.current?.abort?.();
     } catch {}
@@ -303,6 +307,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const speak = useCallback(
     (text: string, onEnd?: () => void) => {
       if (mutedRef.current || typeof window === "undefined" || !window.speechSynthesis) {
+        setTapToSpeak(null);
         onEnd?.();
         if (shouldAutoListen()) startListeningRef.current();
         return;
@@ -312,6 +317,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         synth.cancel();
         synth.resume();
         const u = makeSpanishUtterance(text);
+        setTapToSpeak(null);
         u.onstart = () => {
           speakingRef.current = true;
           setSpeaking(true);
@@ -327,11 +333,13 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           __vaActiveUtterance = null;
           speakingRef.current = false;
           setSpeaking(false);
+          setTapToSpeak(text);
           onEnd?.();
           if (shouldAutoListen()) startListeningRef.current();
         };
         synth.speak(u);
       } catch {
+        setTapToSpeak(text);
         onEnd?.();
         if (shouldAutoListen()) startListeningRef.current();
       }
