@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { X, ChevronDown, ChevronRight, Euro, Coffee, ShieldCheck, MapPin } from "lucide-react";
+import { X, ChevronDown, ChevronRight, Euro, Coffee, ShieldCheck, MapPin, BedDouble } from "lucide-react";
 import { listHotels } from "@/lib/hotels.functions";
 
 export const Route = createFileRoute("/donde-dormir")({
