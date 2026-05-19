@@ -9,6 +9,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { InstallPWA } from "@/components/InstallPWA";
+import { AgenteVamosFab } from "@/components/AgenteVamos";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 
@@ -142,6 +143,7 @@ function RootComponent() {
       </AuthGate>
       <Toaster />
       <InstallPWA />
+      <AgenteVamosFab />
     </QueryClientProvider>
   );
 }
