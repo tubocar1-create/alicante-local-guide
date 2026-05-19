@@ -332,31 +332,21 @@ function HotelDetail() {
                   )}
                 </div>
 
-                {/* Actions: left = Cómo ir (small), right = stacked operators */}
-                <div className="mt-4 grid grid-cols-3 gap-2 items-start">
-                  <a
-                    href={mapsHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="col-span-1 inline-flex items-center justify-center gap-1 self-start rounded-lg bg-amber-200 px-1.5 py-1 text-[9px] font-semibold text-amber-950 hover:bg-amber-100"
-                  >
-                    <span className="text-xs leading-none">🚶</span> Cómo ir
-                  </a>
-
-                  <div className="col-span-2 flex flex-col gap-2">
-                    {operators.map((op) => (
-                      <a
-                        key={op.label}
-                        href={op.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-200 to-[#FF6347] px-3 py-2 text-[12px] font-semibold text-amber-950 hover:opacity-90"
-                      >
-                        {op.label} <ExternalLink className="h-3 w-3" />
-                      </a>
-                    ))}
-                  </div>
+                {/* Operadores en 2 columnas */}
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                  {operators.map((op) => (
+                    <a
+                      key={op.label}
+                      href={op.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-200 to-[#FF6347] px-3 py-2 text-[12px] font-semibold text-amber-950 hover:opacity-90"
+                    >
+                      {op.label} <ExternalLink className="h-3 w-3" />
+                    </a>
+                  ))}
                 </div>
+
               </div>
             </div>
 
