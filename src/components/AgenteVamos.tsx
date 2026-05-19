@@ -68,8 +68,8 @@ const INTENTS: Intent[] = [
   },
   {
     keys: ["comer", "restaurante", "tapas", "cena", "comida", "gastronomia", "arroz", "paella"],
-    reply: "Vamos a ver dónde comer.",
-    path: "/eat",
+    reply: "Abro el submenú Comer en el chat.",
+    path: "/",
     audio: "eat",
   },
   {
