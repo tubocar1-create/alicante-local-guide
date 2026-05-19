@@ -67,12 +67,6 @@ const INTENTS: Intent[] = [
     audio: "hotel",
   },
   {
-    keys: ["comer", "restaurante", "tapas", "cena", "comida", "gastronomia", "arroz", "paella"],
-    reply: "Vamos a ver dónde comer.",
-    path: "/eat",
-    audio: "eat",
-  },
-  {
     keys: ["playa", "mar", "arena", "cala", "bañar", "bano", "nadAr", "tabarca"],
     reply: "Estas son las playas. ¿Quieres verlas en el mapa?",
     path: "/playas",

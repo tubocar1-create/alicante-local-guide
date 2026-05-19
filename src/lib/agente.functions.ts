@@ -6,7 +6,7 @@ type ChatMsg = { role: "system" | "user" | "assistant" | "tool"; content: string
 const ROUTES: Array<{ path: string; desc: string }> = [
   { path: "/", desc: "Inicio / chat principal" },
   { path: "/donde-dormir", desc: "MENÚ PRINCIPAL · Dormir — hoteles, apartamentos, hostales (Alicante + 30 km). Palabras: dormir, alojamiento, hotel, hostal, apartamento, airbnb, habitación, cama, noche, check-in" },
-  { path: "/eat", desc: "MENÚ PRINCIPAL · Comer — restaurantes, tapas, paella, marisco, vegano, italiano, sushi, romántico, reservar mesa" },
+  { path: "/", desc: "MENÚ PRINCIPAL · Comer — el submenú Comer se abre en el chat principal (no hay ruta /eat). Categorías: cocina típica, arroces/paella, italiano, japonés/asiático, vegano, brunch, postres, comida rápida, barato, internacional. Cada categoría abre su propio Dashboard inline en el chat." },
   { path: "/playas", desc: "MENÚ PRINCIPAL · Playas — listado de playas (San Juan, Postiguet, Albufereta, El Campello…). Palabras: playa, mar, arena, baño, chiringuito, bandera, medusas" },
   { path: "/playas/mapa", desc: "SUBMENÚ Playas · Mapa interactivo (usar cuando el usuario quiera 'ver en mapa', 'cómo llego', 'cerca de mí')" },
   { path: "/comprar", desc: "MENÚ PRINCIPAL · Comprar — tiendas, mercados, centros comerciales, souvenirs, moda" },
@@ -166,7 +166,7 @@ const getPriorityRoute = (
     { path: "/farmacias", reason: "tema farmacia", terms: ["farmacia", "farmacias", "guardia", "medicamento", "medicamentos"] },
     { path: "/hospitales", reason: "tema hospital/urgencias", terms: ["hospital", "hospitales", "urgencia", "urgencias", "emergencia", "emergencias"] },
     { path: "/sistema-sanitario", reason: "tema sistema sanitario", terms: ["sanidad", "sanitario", "sip", "seguro", "medico", "medica"] },
-    { path: "/eat", reason: "tema comer/restaurantes", terms: ["comer", "restaurante", "restaurantes", "tapas", "paella", "marisco", "cenar", "cena", "desayuno", "brunch", "sushi", "vegano", "italiano"] },
+    
     { path: "/playas", reason: "tema playas", terms: ["playa", "playas", "mar", "arena", "bano", "chiringuito", "bandera", "medusas"] },
     { path: "/donde-dormir", reason: "tema alojamiento", terms: ["dormir", "alojamiento", "hotel", "hoteles", "hostal", "hostales", "apartamento", "apartamentos", "airbnb", "habitacion"] },
     { path: "/comprar", reason: "tema compras", terms: ["comprar", "tienda", "tiendas", "mercado", "mercados", "shopping", "souvenir", "souvenirs", "moda", "centro comercial"] },
@@ -295,7 +295,7 @@ REGLA ANTI-COLISIÓN CON /bus/planner:
 Ejemplos correctos:
 - "Quiero ir al cine" → tema = cine → navigate_to("/ocio/cartelera"). NUNCA /bus/planner.
 - "Quiero ir a la playa" → tema = playa → navigate_to("/playas").
-- "Quiero ir a comer paella" → tema = paella/comer → navigate_to("/eat").
+- "Quiero ir a comer paella" → tema = paella/comer → el chat abre el Dashboard inline (no navegues a /eat, esa ruta no existe).
 - "¿Qué cines hay?" → navigate_to("/ocio/cines").
 - "¿Qué película veo hoy?" → navigate_to("/ocio/cartelera").
 - "¿Qué hay para hacer hoy?" → navigate_to("/ocio").
@@ -327,7 +327,7 @@ Ejemplos:
 - En /ocio/cartelera, "y de teatro?" → navigate_to("/ocio/teatros").
 - En /ocio/cartelera, "volver" → navigate_to("/ocio").
 - En /playas/mapa, "menú principal" → navigate_to("/").
-- En /eat, "¿cómo llego al primero?" → navigate_to("/bus/planner") con origen/destino.
+- En el Dashboard de Comer (en "/"), "¿cómo llego al primero?" → navigate_to("/bus/planner") con origen/destino.
 
 # COBERTURA
 Alicante y radio de 30 km desde Puerta del Mar.
@@ -353,7 +353,7 @@ const ROUTE_BLURBS: Record<string, string> = {
   "/playas/mapa": "Mapa de playas. Pulsa una para ver detalles.",
   "/donde-dormir": "Alojamientos cerca. ¿Zona, precio o estilo?",
   "/comprar": "Tiendas y mercados. ¿Buscas algo concreto?",
-  "/eat": "Restaurantes y tapas. ¿Qué te apetece?",
+  
   "/explore": "Explora la ciudad. ¿Centro histórico, museos o rutas?",
   "/bus": "Transporte EMT. ¿Línea concreta o planificar una ruta?",
   "/bus/lines": "Líneas EMT. ¿Te paso una en concreto?",
