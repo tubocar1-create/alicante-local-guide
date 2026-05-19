@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { PLAYAS } from "@/lib/playas-data";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 type ChatMsg = { role: "system" | "user" | "assistant" | "tool"; content: string; tool_calls?: any; tool_call_id?: string; name?: string };
 
