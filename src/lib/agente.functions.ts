@@ -249,7 +249,7 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
     if (!key) return { ok: false as const, error: "AI no configurada" };
 
     const lastUserMessage = [...data.messages].reverse().find((message) => message.role === "user")?.content ?? "";
-    const priorityRoute = getPriorityRoute(lastUserMessage);
+    const priorityRoute = getPriorityRoute(lastUserMessage, data.path ?? "/");
 
     const routeList = ROUTES.map((r) => `- ${r.path} — ${r.desc}`).join("\n");
     const sys = `${SYSTEM_PROMPT}\n\nRUTAS DISPONIBLES:\n${routeList}\n\nRuta actual del usuario: ${data.path ?? "/"}${priorityRoute ? `\n\nDECISIÓN DETERMINISTA DE ENRUTAMIENTO: el clasificador interno detectó ${priorityRoute.reason}; si respondes con tool, usa navigate_to(\"${priorityRoute.path}\") y no otra ruta.` : ""}`;
