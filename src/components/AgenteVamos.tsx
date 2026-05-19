@@ -564,6 +564,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
   const speak = useCallback(
     (text: string, audio?: AgentAudioClip, onEnd?: () => void) => {
+      // Anti-eco (D9): cortamos cualquier escucha activa antes de hablar.
+      try {
+        recogRef.current?.abort?.();
+      } catch {}
       if (audio && playAudioClip(audio, text, onEnd)) return;
       if (mutedRef.current || typeof window === "undefined" || !window.speechSynthesis) {
         if (!mutedRef.current) setTapToSpeak({ text, audio });
