@@ -244,20 +244,23 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           synth.cancel();
           synth.resume();
           const u = makeSpanishUtterance(text);
-          u.onstart = () => setSpeaking(true);
+          u.onstart = () => {
+            speakingRef.current = true;
+            setSpeaking(true);
+          };
           u.onend = () => {
             __vaActiveUtterance = null;
-             speakingRef.current = false;
+            speakingRef.current = false;
             setSpeaking(false);
             onEnd?.();
-             if (shouldAutoListen()) startListeningRef.current();
+            if (shouldAutoListen()) startListeningRef.current();
           };
           u.onerror = () => {
             __vaActiveUtterance = null;
-             speakingRef.current = false;
+            speakingRef.current = false;
             setSpeaking(false);
             onEnd?.();
-             if (shouldAutoListen()) startListeningRef.current();
+            if (shouldAutoListen()) startListeningRef.current();
           };
           synth.speak(u);
         } catch {
