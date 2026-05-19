@@ -45,6 +45,13 @@ function getSpeechRecognition(): any {
   return (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition || null;
 }
 
+// Set true by the FAB after speaking the greeting synchronously (inside the
+// click handler — required by browser autoplay rules). The panel reads it to
+// avoid double-greeting.
+let __vaGreetingSpoken = false;
+export const __vaGetGreetingSpoken = () => __vaGreetingSpoken;
+export const __vaSetGreetingSpoken = (v: boolean) => { __vaGreetingSpoken = v; };
+
 export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [msgs, setMsgs] = useState<Msg[]>(loadMsgs);
   const [input, setInput] = useState("");
@@ -270,9 +277,11 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     }
   }, [open, stopListening, stopSpeaking]);
 
-  // Hands-free bootstrap: when opening in voice mode for the first time,
-  // greet aloud and then auto-listen continuously.
-  const greetedRef = useRef(false);
+  // Hands-free bootstrap: when opening in voice mode, ensure we end up listening.
+  // The greeting is spoken synchronously by the FAB onClick (so the browser
+  // accepts it as a user-gesture action). Here we just kick off listening
+  // once any in-flight speech finishes.
+  const greetedRef = useRef(__vaGetGreetingSpoken());
   useEffect(() => {
     if (!open || mode !== "voice") return;
     const SRClass = getSpeechRecognition();
@@ -280,18 +289,30 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       setVoiceError("Tu navegador no soporta reconocimiento de voz. Cambia a modo texto.");
       return;
     }
-    try { window.speechSynthesis?.getVoices(); } catch {}
-    const t = setTimeout(() => {
-      if (!greetedRef.current) {
-        greetedRef.current = true;
-        // Speak greeting (or last assistant message), then auto-listen via speak's onend
-        const last = [...msgs].reverse().find((m) => m.role === "assistant");
-        speak(last?.content || GREETING.content);
-      } else if (shouldAutoListen()) {
-        startListening();
+    const synth = window.speechSynthesis;
+    let cancelled = false;
+
+    const tryStart = () => {
+      if (cancelled) return;
+      if (synth && synth.speaking) {
+        // Reflect the speaking state and check again shortly
+        setSpeaking(true);
+        setTimeout(tryStart, 250);
+        return;
       }
-    }, 300);
-    return () => clearTimeout(t);
+      setSpeaking(false);
+      if (!greetedRef.current && !pausedRef.current) {
+        // No external greeting played (e.g. switched from text to voice).
+        greetedRef.current = true;
+        speak(GREETING.content);
+        return;
+      }
+      if (shouldAutoListen()) startListening();
+    };
+
+    // Small initial delay so the FAB-initiated utterance has a chance to start.
+    const t = setTimeout(tryStart, 150);
+    return () => { cancelled = true; clearTimeout(t); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, mode]);
 
@@ -486,16 +507,27 @@ export function AgenteVamosFab() {
       {!open && (
         <button
           onClick={() => {
-            // Prime speech synthesis within the user gesture so the first
-            // utterance actually plays (Chrome/iOS autoplay policy).
+            // Speak the greeting SYNCHRONOUSLY inside the click handler so the
+            // browser accepts it as a user-gesture action (Chrome/iOS autoplay).
             try {
               const synth = window.speechSynthesis;
               if (synth) {
+                synth.cancel();
                 synth.resume();
-                const warm = new SpeechSynthesisUtterance(" ");
-                warm.volume = 0;
-                warm.lang = "es-ES";
-                synth.speak(warm);
+                const greetText =
+                  "¡Hola! Soy Agente Vamos, tu concierge en Alicante. ¿Qué te apetece hacer? ¿Comer, dormir, playa, moverte, un plan?";
+                const u = new SpeechSynthesisUtterance(greetText);
+                u.lang = "es-ES";
+                u.rate = 1.05;
+                u.pitch = 1;
+                // Voice selection happens just-in-time; if voices aren't loaded
+                // yet the browser will fall back to the default es voice.
+                const voices = synth.getVoices();
+                const es = voices.find((v) => v.lang?.toLowerCase().startsWith("es-es"))
+                  || voices.find((v) => v.lang?.toLowerCase().startsWith("es"));
+                if (es) u.voice = es;
+                __vaSetGreetingSpoken(true);
+                synth.speak(u);
               }
             } catch {}
             setOpen(true);
