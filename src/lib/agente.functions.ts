@@ -201,8 +201,11 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
     const key = process.env.LOVABLE_API_KEY;
     if (!key) return { ok: false as const, error: "AI no configurada" };
 
+    const lastUserMessage = [...data.messages].reverse().find((message) => message.role === "user")?.content ?? "";
+    const priorityRoute = getPriorityRoute(lastUserMessage);
+
     const routeList = ROUTES.map((r) => `- ${r.path} — ${r.desc}`).join("\n");
-    const sys = `${SYSTEM_PROMPT}\n\nRUTAS DISPONIBLES:\n${routeList}\n\nRuta actual del usuario: ${data.path ?? "/"}`;
+    const sys = `${SYSTEM_PROMPT}\n\nRUTAS DISPONIBLES:\n${routeList}\n\nRuta actual del usuario: ${data.path ?? "/"}${priorityRoute ? `\n\nDECISIÓN DETERMINISTA DE ENRUTAMIENTO: el clasificador interno detectó ${priorityRoute.reason}; si respondes con tool, usa navigate_to(\"${priorityRoute.path}\") y no otra ruta.` : ""}`;
 
     const messages: ChatMsg[] = [
       { role: "system", content: sys },
@@ -251,13 +254,13 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
       const j = (await r.json()) as any;
       const msg = j?.choices?.[0]?.message ?? {};
       const text = (msg.content ?? "").toString();
-      let navigate: string | null = null;
+      let navigate: string | null = priorityRoute?.path ?? null;
       const calls = msg.tool_calls ?? [];
       for (const c of calls) {
         if (c?.function?.name === "navigate_to") {
           try {
             const args = JSON.parse(c.function.arguments ?? "{}");
-            if (typeof args.path === "string" && args.path.startsWith("/")) {
+            if (!priorityRoute && typeof args.path === "string" && args.path.startsWith("/")) {
               navigate = args.path;
               break;
             }
