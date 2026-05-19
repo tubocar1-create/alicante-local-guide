@@ -937,6 +937,9 @@ export function AgenteVamosFab() {
         if (__vaActiveAudio === greetAudio) __vaActiveAudio = null;
       };
       const audioStarted = greetAudio.play();
+      if (!audioStarted) {
+        __vaActiveAudio = null;
+      }
       if (audioStarted && typeof audioStarted.catch === "function") {
         audioStarted.catch(() => {
           if (__vaActiveAudio === greetAudio) __vaActiveAudio = null;
