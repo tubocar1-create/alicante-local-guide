@@ -6,7 +6,7 @@ type ChatMsg = { role: "system" | "user" | "assistant" | "tool"; content: string
 const ROUTES: Array<{ path: string; desc: string }> = [
   { path: "/", desc: "Inicio / chat principal" },
   { path: "/donde-dormir", desc: "MENÚ PRINCIPAL · Dormir — hoteles, apartamentos, hostales (Alicante + 30 km). Palabras: dormir, alojamiento, hotel, hostal, apartamento, airbnb, habitación, cama, noche, check-in" },
-  { path: "/eat", desc: "MENÚ PRINCIPAL · Comer — restaurantes, tapas, paella, marisco, vegano, italiano, sushi, romántico, reservar mesa" },
+  { path: "/", desc: "MENÚ PRINCIPAL · Comer — el submenú Comer se abre en el chat principal (no hay ruta /eat). Categorías: cocina típica, arroces/paella, italiano, japonés/asiático, vegano, brunch, postres, comida rápida, barato, internacional. Cada categoría abre su propio Dashboard inline en el chat." },
   { path: "/playas", desc: "MENÚ PRINCIPAL · Playas — listado de playas (San Juan, Postiguet, Albufereta, El Campello…). Palabras: playa, mar, arena, baño, chiringuito, bandera, medusas" },
   { path: "/playas/mapa", desc: "SUBMENÚ Playas · Mapa interactivo (usar cuando el usuario quiera 'ver en mapa', 'cómo llego', 'cerca de mí')" },
   { path: "/comprar", desc: "MENÚ PRINCIPAL · Comprar — tiendas, mercados, centros comerciales, souvenirs, moda" },
