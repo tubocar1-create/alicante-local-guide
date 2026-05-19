@@ -65,13 +65,55 @@ const CINEMA_BRANDS: Array<{ terms: string[]; path: string }> = [
   { terms: ["panoramis"], path: "/ocio/cines" },
 ];
 
-// Ciudades / destinos comunes desde ALC. Detecta "vuelo a Madrid".
-const FLIGHT_DESTINATIONS = [
-  "madrid", "barcelona", "bilbao", "sevilla", "valencia", "malaga", "palma", "tenerife",
-  "londres", "london", "paris", "amsterdam", "bruselas", "berlin", "munich", "roma",
-  "milan", "dublin", "manchester", "liverpool", "edimburgo", "oslo", "estocolmo",
-  "copenhague", "helsinki", "varsovia", "praga", "viena", "zurich", "ginebra",
-  "lisboa", "porto", "nueva york", "new york",
+// Ciudades / destinos comunes desde ALC con su IATA. Detecta "vuelo a Madrid",
+// "quiero ir a Amsterdam", "llego desde Londres" → ficha de destino / origen.
+const CITY_TO_IATA: Array<{ names: string[]; iata: string }> = [
+  { names: ["madrid"], iata: "MAD" },
+  { names: ["barcelona"], iata: "BCN" },
+  { names: ["bilbao"], iata: "BIO" },
+  { names: ["sevilla"], iata: "SVQ" },
+  { names: ["valencia"], iata: "VLC" },
+  { names: ["malaga", "málaga"], iata: "AGP" },
+  { names: ["palma", "palma de mallorca", "mallorca"], iata: "PMI" },
+  { names: ["tenerife"], iata: "TFN" },
+  { names: ["ibiza"], iata: "IBZ" },
+  { names: ["menorca", "mahon", "mahón"], iata: "MAH" },
+  { names: ["santiago", "santiago de compostela"], iata: "SCQ" },
+  { names: ["vigo"], iata: "VGO" },
+  { names: ["asturias", "oviedo"], iata: "OVD" },
+  { names: ["londres", "london"], iata: "LGW" },
+  { names: ["paris", "parís"], iata: "CDG" },
+  { names: ["amsterdam", "ámsterdam"], iata: "AMS" },
+  { names: ["bruselas", "brussels"], iata: "BRU" },
+  { names: ["berlin", "berlín"], iata: "BER" },
+  { names: ["munich", "múnich"], iata: "MUC" },
+  { names: ["roma", "rome"], iata: "FCO" },
+  { names: ["milan", "milán"], iata: "MXP" },
+  { names: ["dublin", "dublín"], iata: "DUB" },
+  { names: ["manchester"], iata: "MAN" },
+  { names: ["liverpool"], iata: "LPL" },
+  { names: ["edimburgo", "edinburgh"], iata: "EDI" },
+  { names: ["oslo"], iata: "OSL" },
+  { names: ["estocolmo", "stockholm"], iata: "ARN" },
+  { names: ["copenhague", "copenhagen"], iata: "CPH" },
+  { names: ["helsinki"], iata: "HEL" },
+  { names: ["varsovia", "warsaw"], iata: "WAW" },
+  { names: ["praga", "prague"], iata: "PRG" },
+  { names: ["viena", "vienna"], iata: "VIE" },
+  { names: ["zurich", "zúrich"], iata: "ZRH" },
+  { names: ["ginebra", "geneva"], iata: "GVA" },
+  { names: ["lisboa", "lisbon"], iata: "LIS" },
+  { names: ["porto", "oporto"], iata: "OPO" },
+  { names: ["frankfurt"], iata: "FRA" },
+  { names: ["dusseldorf", "düsseldorf"], iata: "DUS" },
+  { names: ["hamburgo", "hamburg"], iata: "HAM" },
+  { names: ["colonia", "cologne"], iata: "CGN" },
+  { names: ["napoles", "nápoles", "naples"], iata: "NAP" },
+  { names: ["venecia", "venice"], iata: "VCE" },
+  { names: ["atenas", "athens"], iata: "ATH" },
+  { names: ["estambul", "istanbul"], iata: "IST" },
+  { names: ["marrakech"], iata: "RAK" },
+  { names: ["casablanca"], iata: "CMN" },
 ];
 
 const properNounMatch = (
@@ -117,14 +159,30 @@ const properNounMatch = (
     }
   }
 
-  // 4) VUELO A DESTINO CONCRETO — "vuelo a Madrid", "vuelos a Londres"
-  const flightThemed = /\bvuelo(s)?\b/.test(text);
-  if (flightThemed) {
-    for (const dest of FLIGHT_DESTINATIONS) {
-      if (new RegExp(`\\b(a|para|hacia|desde|de)\\s+${dest}\\b`).test(text) || text.includes(`vuelo ${dest}`)) {
-        const target = `/vuelos?destino=${encodeURIComponent(dest)}`;
-        if (currentPath.startsWith("/vuelos")) return null;
-        return { path: target, reason: `vuelo con destino concreto: ${dest}` };
+  // 4) CIUDAD / AEROPUERTO POR NOMBRE PROPIO → ficha destino/origen
+  //    Disparadores: "vuelo a X", "ir a X", "viajar a X", "llego desde X", "vengo de X"…
+  const travelIntent =
+    /\b(vuelo|vuelos|volar|viajar|viaje|ir|voy|quiero ir|quisiera ir|llegar|llego|vengo|venir|reservar)\b/.test(
+      text,
+    );
+  if (travelIntent) {
+    for (const c of CITY_TO_IATA) {
+      for (const name of c.names) {
+        const reFrom = new RegExp(`\\b(desde|de)\\s+${name}\\b`);
+        const reTo = new RegExp(`\\b(a|para|hacia|hasta)\\s+${name}\\b`);
+        const looseTo = new RegExp(`\\b${name}\\b`);
+        const isFrom = reFrom.test(text);
+        const isTo = reTo.test(text) || (!isFrom && looseTo.test(text));
+        if (isFrom || isTo) {
+          const target = isFrom ? `/vuelos_/${c.iata}?type=L` : `/vuelos_/${c.iata}`;
+          if (currentPath === `/vuelos_/${c.iata}`) return null;
+          return {
+            path: target,
+            reason: isFrom
+              ? `ficha de origen: ${name} (${c.iata})`
+              : `ficha de destino: ${name} (${c.iata})`,
+          };
+        }
       }
     }
   }
