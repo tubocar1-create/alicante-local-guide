@@ -1207,6 +1207,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                   setMode("text");
                   setMuted(true); // A2: en modo texto, silenciar por defecto
                 } else {
+                  unlockSpeechFromUserGesture();
                   primeSpanishUtterances();
                   setMode("voice");
                   setMuted(false); // A2: en modo voz, activar audio
@@ -1370,6 +1371,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                 <button
                   onClick={() => {
                     if (paused) {
+                      unlockSpeechFromUserGesture();
                       primeSpanishUtterances();
                       const warmup = requestMicWarmupFromUserGesture();
                       setVoiceError(null);
@@ -1405,6 +1407,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                 {!micReady && (
                   <button
                     onClick={() => {
+                      unlockSpeechFromUserGesture();
                       const warmup = requestMicWarmupFromUserGesture();
                       setVoiceError(__vaMicWarmupMessage);
                       warmup?.then((state) => {
