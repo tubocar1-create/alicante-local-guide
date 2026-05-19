@@ -77,6 +77,78 @@ export type Database = {
         }
         Relationships: []
       }
+      agente_faqs: {
+        Row: {
+          active: boolean
+          any_of: string[]
+          created_at: string
+          hits: number
+          id: string
+          keywords: string[]
+          notes: string | null
+          priority: number
+          response: string
+          route: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          any_of?: string[]
+          created_at?: string
+          hits?: number
+          id?: string
+          keywords?: string[]
+          notes?: string | null
+          priority?: number
+          response: string
+          route?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          any_of?: string[]
+          created_at?: string
+          hits?: number
+          id?: string
+          keywords?: string[]
+          notes?: string | null
+          priority?: number
+          response?: string
+          route?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      agente_unknown_queries: {
+        Row: {
+          count: number
+          created_at: string
+          id: string
+          last_seen_at: string
+          normalized: string
+          path: string | null
+          query: string
+        }
+        Insert: {
+          count?: number
+          created_at?: string
+          id?: string
+          last_seen_at?: string
+          normalized: string
+          path?: string | null
+          query: string
+        }
+        Update: {
+          count?: number
+          created_at?: string
+          id?: string
+          last_seen_at?: string
+          normalized?: string
+          path?: string | null
+          query?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           business_id: string
