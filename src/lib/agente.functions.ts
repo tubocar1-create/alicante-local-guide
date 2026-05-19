@@ -419,21 +419,22 @@ const matchFaq = (text: string, faqs: FaqRow[]): FaqRow | null => {
   return null;
 };
 
-const logUnknown = async (rawQuery: string, normalized: string, path: string) => {
+type AdminClient = { from: (table: string) => any };
+
+const logUnknown = async (db: AdminClient, rawQuery: string, normalized: string, path: string) => {
   try {
-    // UPSERT manual: si existe, suma 1 y actualiza last_seen; si no, inserta.
-    const { data: existing } = await supabaseAdmin
+    const { data: existing } = await db
       .from("agente_unknown_queries")
       .select("id, count")
       .eq("normalized", normalized)
       .maybeSingle();
     if (existing) {
-      await supabaseAdmin
+      await db
         .from("agente_unknown_queries")
         .update({ count: existing.count + 1, last_seen_at: new Date().toISOString(), path })
         .eq("id", existing.id);
     } else {
-      await supabaseAdmin
+      await db
         .from("agente_unknown_queries")
         .insert({ query: rawQuery.slice(0, 500), normalized: normalized.slice(0, 500), path });
     }
@@ -442,17 +443,17 @@ const logUnknown = async (rawQuery: string, normalized: string, path: string) =>
   }
 };
 
-const bumpFaqHits = async (id: string) => {
+const bumpFaqHits = async (db: AdminClient, id: string) => {
   try {
-    await supabaseAdmin.rpc as unknown; // noop guard
-    const { data } = await supabaseAdmin.from("agente_faqs").select("hits").eq("id", id).maybeSingle();
+    const { data } = await db.from("agente_faqs").select("hits").eq("id", id).maybeSingle();
     if (data) {
-      await supabaseAdmin.from("agente_faqs").update({ hits: (data.hits ?? 0) + 1 }).eq("id", id);
+      await db.from("agente_faqs").update({ hits: (data.hits ?? 0) + 1 }).eq("id", id);
     }
   } catch {
     // ignore
   }
 };
+
 
 export const agenteVamosChat = createServerFn({ method: "POST" })
   .inputValidator((d: { messages: Array<{ role: "user" | "assistant"; content: string }>; path?: string }) => d)
