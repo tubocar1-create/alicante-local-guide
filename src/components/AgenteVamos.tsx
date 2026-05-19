@@ -591,11 +591,24 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         synth.resume();
         const u = makeSpanishUtterance(text);
         setTapToSpeak(null);
+          let started = false;
+          const blockedTimer = window.setTimeout(() => {
+            if (!started && __vaActiveUtterance === u) {
+              __vaActiveUtterance = null;
+              speakingRef.current = false;
+              setSpeaking(false);
+              setTapToSpeak({ text });
+              onEnd?.();
+            }
+          }, 1200);
         u.onstart = () => {
+            started = true;
+            window.clearTimeout(blockedTimer);
           speakingRef.current = true;
           setSpeaking(true);
         };
         u.onend = () => {
+            window.clearTimeout(blockedTimer);
           __vaActiveUtterance = null;
           speakingRef.current = false;
           setSpeaking(false);
@@ -603,6 +616,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           if (shouldAutoListen()) startListeningRef.current();
         };
         u.onerror = () => {
+            window.clearTimeout(blockedTimer);
           __vaActiveUtterance = null;
           speakingRef.current = false;
           setSpeaking(false);
@@ -610,7 +624,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           onEnd?.();
           if (shouldAutoListen()) startListeningRef.current();
         };
+          speakingRef.current = true;
+          setSpeaking(true);
         synth.speak(u);
+          keepSpeechSynthesisAwake(synth);
       } catch {
         setTapToSpeak({ text });
         onEnd?.();
