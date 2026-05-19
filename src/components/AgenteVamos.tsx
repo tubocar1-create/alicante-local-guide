@@ -134,7 +134,6 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const callAgent = useServerFn(agenteVamosChat);
   const scrollRef = useRef<HTMLDivElement>(null);
   const recogRef = useRef<SR | null>(null);
 
