@@ -55,7 +55,20 @@ type AgentAudioClip = VoiceClip | GreetingClip;
 type Intent = { keys: string[]; reply: string; path?: string; audio: VoiceClip };
 const INTENTS: Intent[] = [
   {
-    keys: ["tomar algo", "beber", "cerveza", "cervezas", "cerveceria", "cervecería", "copa", "copas", "pub", "discoteca", "bar de copas", "rooftop"],
+    keys: [
+      "tomar algo",
+      "beber",
+      "cerveza",
+      "cervezas",
+      "cerveceria",
+      "cervecería",
+      "copa",
+      "copas",
+      "pub",
+      "discoteca",
+      "bar de copas",
+      "rooftop",
+    ],
     reply: "Abro el Dashboard Nocturno: bares, cervecerías, pubs y discotecas abiertos ahora.",
     path: "/",
     audio: "leisure",
@@ -304,7 +317,8 @@ function requestMicWarmupFromUserGesture() {
       if (attempt === __vaMicWarmupAttempt) {
         __vaMicWarmupMessage = micWarmupMessage(err);
         __vaMicWarmupState =
-          err instanceof DOMException && (err.name === "NotAllowedError" || err.name === "SecurityError")
+          err instanceof DOMException &&
+          (err.name === "NotAllowedError" || err.name === "SecurityError")
             ? "denied"
             : "error";
       }
@@ -595,24 +609,24 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         synth.resume();
         const u = makeSpanishUtterance(text);
         setTapToSpeak(null);
-          let started = false;
-          const blockedTimer = window.setTimeout(() => {
-            if (!started && __vaActiveUtterance === u) {
-              __vaActiveUtterance = null;
-              speakingRef.current = false;
-              setSpeaking(false);
-              setTapToSpeak({ text });
-              onEnd?.();
-            }
-          }, 1200);
+        let started = false;
+        const blockedTimer = window.setTimeout(() => {
+          if (!started && __vaActiveUtterance === u) {
+            __vaActiveUtterance = null;
+            speakingRef.current = false;
+            setSpeaking(false);
+            setTapToSpeak({ text });
+            onEnd?.();
+          }
+        }, 1200);
         u.onstart = () => {
-            started = true;
-            window.clearTimeout(blockedTimer);
+          started = true;
+          window.clearTimeout(blockedTimer);
           speakingRef.current = true;
           setSpeaking(true);
         };
         u.onend = () => {
-            window.clearTimeout(blockedTimer);
+          window.clearTimeout(blockedTimer);
           __vaActiveUtterance = null;
           speakingRef.current = false;
           setSpeaking(false);
@@ -620,7 +634,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           if (shouldAutoListen()) startListeningRef.current();
         };
         u.onerror = () => {
-            window.clearTimeout(blockedTimer);
+          window.clearTimeout(blockedTimer);
           __vaActiveUtterance = null;
           speakingRef.current = false;
           setSpeaking(false);
@@ -628,10 +642,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           onEnd?.();
           if (shouldAutoListen()) startListeningRef.current();
         };
-          speakingRef.current = true;
-          setSpeaking(true);
+        speakingRef.current = true;
+        setSpeaking(true);
         synth.speak(u);
-          keepSpeechSynthesisAwake(synth);
+        keepSpeechSynthesisAwake(synth);
       } catch {
         setTapToSpeak({ text });
         onEnd?.();
@@ -655,8 +669,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         const last = m[m.length - 1];
         if (
           last?.role === "assistant" &&
-          (/^Abro el Dashboard/i.test(last.content) || /^Te he conseguido/i.test(last.content) ||
-            /^No tengo restaurantes/i.test(last.content) || /^Ahora mismo no encuentro/i.test(last.content))
+          (/^Abro el Dashboard/i.test(last.content) ||
+            /^Te he conseguido/i.test(last.content) ||
+            /^No tengo restaurantes/i.test(last.content) ||
+            /^Ahora mismo no encuentro/i.test(last.content))
         ) {
           return m.map((msg, i) => (i === m.length - 1 ? { ...msg, content: text } : msg));
         }
@@ -712,8 +728,6 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     speakFarewellRef.current = speakFarewell;
   }, [speakFarewell]);
 
-
-
   const send = useCallback(
     async (text: string, viaVoice = false) => {
       const clean = text.trim();
@@ -722,7 +736,11 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       stopListening();
 
       // C8: despedida del usuario — responde local, habla y cierra.
-      if (/^(gracias|graci[ao]s|nada m[aá]s|adi[oó]s|hasta luego|chao|chau|hasta otra|me voy)\b/i.test(clean)) {
+      if (
+        /^(gracias|graci[ao]s|nada m[aá]s|adi[oó]s|hasta luego|chao|chau|hasta otra|me voy)\b/i.test(
+          clean,
+        )
+      ) {
         setMsgs((m) => [
           ...m,
           { role: "user", content: clean },
@@ -754,7 +772,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         let reply = fallback.reply;
         let target: string | undefined = fallback.path;
         let forwardPrompt: string | undefined =
-          fallback.path === "/" && fallback.reply.includes("Dashboard Nocturno") ? clean : undefined;
+          fallback.path === "/" && fallback.reply.includes("Dashboard Nocturno")
+            ? clean
+            : undefined;
         if (forwardPrompt && typeof window !== "undefined") {
           try {
             window.sessionStorage.setItem("afp:fwdPrompt", forwardPrompt);
@@ -769,7 +789,13 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             },
           });
           if (res && (res as any).ok) {
-            const ai = res as { ok: true; content: string; navigate: string | null; forwardPrompt?: string; openSubmenu?: string };
+            const ai = res as {
+              ok: true;
+              content: string;
+              navigate: string | null;
+              forwardPrompt?: string;
+              openSubmenu?: string;
+            };
             if (ai.content && ai.content.trim()) reply = ai.content.trim();
             if (ai.navigate) target = ai.navigate;
             if (ai.forwardPrompt && typeof window !== "undefined") {
@@ -788,7 +814,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           // si falla el servidor, nos quedamos con la respuesta local
         }
 
-        const pendingSubmenu = typeof window !== "undefined" ? window.sessionStorage.getItem("afp:openSubmenu") : null;
+        const pendingSubmenu =
+          typeof window !== "undefined" ? window.sessionStorage.getItem("afp:openSubmenu") : null;
         const navigatingToDashboard = Boolean(forwardPrompt || pendingSubmenu);
 
         // B3: cuando vamos a un Dashboard, NO insertamos el placeholder
@@ -831,7 +858,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             }
             return navigate({ to: pathname as any });
           } catch {
-            try { window.location.assign(raw); } catch {}
+            try {
+              window.location.assign(raw);
+            } catch {}
           }
         };
 
@@ -861,10 +890,14 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
               const done = target && target !== path ? goTo(target) : undefined;
               Promise.resolve(done).finally(() => {
                 if (forwardPrompt) {
-                  window.dispatchEvent(new CustomEvent("afp:forward-prompt", { detail: { text: forwardPrompt } }));
+                  window.dispatchEvent(
+                    new CustomEvent("afp:forward-prompt", { detail: { text: forwardPrompt } }),
+                  );
                 }
                 if (pendingSubmenu) {
-                  window.dispatchEvent(new CustomEvent("afp:open-submenu", { detail: { path: pendingSubmenu } }));
+                  window.dispatchEvent(
+                    new CustomEvent("afp:open-submenu", { detail: { path: pendingSubmenu } }),
+                  );
                 }
               });
             } catch {}
@@ -1079,8 +1112,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       // el reconocedor arranca en paralelo para que el usuario pueda hablar
       // inmediatamente (barge-in). Mucho mejor percepción de latencia.
       const stillSpeaking = Boolean(
-        (synth && (synth.speaking || synth.pending || __vaActiveUtterance)) ||
-          __vaActiveAudio,
+        (synth && (synth.speaking || synth.pending || __vaActiveUtterance)) || __vaActiveAudio,
       );
       setSpeaking(stillSpeaking);
       if (mic.state === "pending" && mic.promise) {
@@ -1209,9 +1241,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                       setTapToSpeak(null);
                       try {
                         recogRef.current?.abort?.();
-                        } catch {
-                          // Ignore if recognition is already stopped.
-                        }
+                      } catch {
+                        // Ignore if recognition is already stopped.
+                      }
                       // Reproducción síncrona dentro del gesto del usuario:
                       // creamos el utterance aquí mismo para que el navegador
                       // no bloquee la síntesis por falta de gesture.
@@ -1481,8 +1513,12 @@ export function AgenteVamosFab() {
           const voice = pickSpanishVoice(synth);
           if (voice) u.voice = voice;
           __vaActiveUtterance = u;
-          u.onend = () => { __vaActiveUtterance = null; };
-          u.onerror = () => { __vaActiveUtterance = null; };
+          u.onend = () => {
+            __vaActiveUtterance = null;
+          };
+          u.onerror = () => {
+            __vaActiveUtterance = null;
+          };
           synth.cancel();
           synth.resume();
           synth.speak(u);
