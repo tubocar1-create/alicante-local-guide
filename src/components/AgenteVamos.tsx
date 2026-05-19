@@ -578,6 +578,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     async (text: string, viaVoice = false) => {
       const clean = text.trim();
       if (!clean || loadingRef.current) return;
+      bumpIdle();
       stopListening();
       const next = [...msgs, { role: "user" as const, content: clean }];
       setMsgs(next);
