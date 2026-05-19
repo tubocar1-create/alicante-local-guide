@@ -1203,26 +1203,54 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                       // para que un nuevo fallo no deje el botón huérfano.
                       const pending = tapToSpeak;
                       setTapToSpeak(null);
+                      try {
+                        recogRef.current?.abort?.();
+                      } catch {}
                       // Reproducción síncrona dentro del gesto del usuario:
                       // creamos el utterance aquí mismo para que el navegador
                       // no bloquee la síntesis por falta de gesture.
                       try {
-                        if (pending.audio) {
-                          if (playAudioClip(pending.audio, pending.text)) return;
-                        }
                         if (typeof window !== "undefined" && window.speechSynthesis) {
                           const synth = window.speechSynthesis;
                           try { synth.cancel(); } catch {}
                           try { synth.resume(); } catch {}
-                          const u = makeSpanishUtterance(pending.text);
-                          u.onstart = () => { speakingRef.current = true; setSpeaking(true); };
-                          u.onend = () => { speakingRef.current = false; setSpeaking(false); };
-                          u.onerror = () => { speakingRef.current = false; setSpeaking(false); };
+                          const u = makeSpanishUtterance(pending.text, true);
+                          let started = false;
+                          const blockedTimer = window.setTimeout(() => {
+                            if (!started && __vaActiveUtterance === u) {
+                              __vaActiveUtterance = null;
+                              speakingRef.current = false;
+                              setSpeaking(false);
+                              setTapToSpeak(pending);
+                            }
+                          }, 1200);
+                          u.onstart = () => {
+                            started = true;
+                            window.clearTimeout(blockedTimer);
+                            speakingRef.current = true;
+                            setSpeaking(true);
+                          };
+                          u.onend = () => {
+                            window.clearTimeout(blockedTimer);
+                            __vaActiveUtterance = null;
+                            speakingRef.current = false;
+                            setSpeaking(false);
+                            if (shouldAutoListen()) startListeningRef.current();
+                          };
+                          u.onerror = () => {
+                            window.clearTimeout(blockedTimer);
+                            __vaActiveUtterance = null;
+                            speakingRef.current = false;
+                            setSpeaking(false);
+                            setTapToSpeak(pending);
+                          };
+                          speakingRef.current = true;
+                          setSpeaking(true);
                           synth.speak(u);
+                          keepSpeechSynthesisAwake(synth);
                         }
                       } catch {
-                        // Si vuelve a fallar, no reaparece el banner; el texto
-                        // queda visible en pantalla y el usuario puede leerlo.
+                        setTapToSpeak(pending);
                       }
                     }}
                     className="rounded-full border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
