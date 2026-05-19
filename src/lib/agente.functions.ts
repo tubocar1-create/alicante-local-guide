@@ -29,6 +29,56 @@ const ROUTES: Array<{ path: string; desc: string }> = [
   { path: "/perfil", desc: "Perfil del usuario (preferencias, historial, reservas)" },
 ];
 
+const normalizeText = (value: string) =>
+  value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9ñ\s-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const hasAnyTerm = (text: string, terms: string[]) =>
+  terms.some((term) => new RegExp(`(^|\\s)${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}($|\\s)`, "i").test(text));
+
+const getPriorityRoute = (rawText: string): { path: string; reason: string } | null => {
+  const text = normalizeText(rawText);
+  if (!text) return null;
+
+  const isTransportTheme = hasAnyTerm(text, ["bus", "emt", "parada", "paradas", "linea", "lineas", "billete", "bonobus", "tarjeta"]);
+  const hasOriginDestination = /\bde\s+\S+.+\b(a|hasta)\s+\S+/.test(text);
+
+  const rules: Array<{ path: string; reason: string; terms: string[]; test?: (text: string) => boolean }> = [
+    { path: "/ocio/cartelera", reason: "tema cine/cartelera", terms: ["cine", "pelicula", "peliculas", "cartelera", "estreno", "estrenos", "sesion", "sesiones"] },
+    { path: "/ocio/cines", reason: "tema salas de cine", terms: ["cines", "sala", "salas", "kinepolis", "odeon", "yelmocines"] },
+    { path: "/ocio/teatros", reason: "tema teatro", terms: ["teatro", "teatros", "obra", "obras", "musical", "musicales"] },
+    { path: "/ocio/conciertos", reason: "tema conciertos", terms: ["concierto", "conciertos", "festival", "festivales", "musica", "artista"] },
+    { path: "/farmacias", reason: "tema farmacia", terms: ["farmacia", "farmacias", "guardia", "medicamento", "medicamentos"] },
+    { path: "/hospitales", reason: "tema hospital/urgencias", terms: ["hospital", "hospitales", "urgencia", "urgencias", "emergencia", "emergencias"] },
+    { path: "/sistema-sanitario", reason: "tema sistema sanitario", terms: ["sanidad", "sanitario", "sip", "seguro", "medico", "medica"] },
+    { path: "/eat", reason: "tema comer/restaurantes", terms: ["comer", "restaurante", "restaurantes", "tapas", "paella", "marisco", "cenar", "cena", "desayuno", "brunch", "sushi", "vegano", "italiano"] },
+    { path: "/playas", reason: "tema playas", terms: ["playa", "playas", "mar", "arena", "bano", "chiringuito", "bandera", "medusas"] },
+    { path: "/donde-dormir", reason: "tema alojamiento", terms: ["dormir", "alojamiento", "hotel", "hoteles", "hostal", "hostales", "apartamento", "apartamentos", "airbnb", "habitacion"] },
+    { path: "/comprar", reason: "tema compras", terms: ["comprar", "tienda", "tiendas", "mercado", "mercados", "shopping", "souvenir", "souvenirs", "moda", "centro comercial"] },
+    { path: "/vuelos", reason: "tema vuelos/aeropuerto", terms: ["vuelo", "vuelos", "aeropuerto", "llegadas", "salidas", "retraso", "retrasos", "aena"] },
+    { path: "/clima", reason: "tema clima", terms: ["clima", "tiempo", "lluvia", "llueve", "llover", "viento", "temperatura", "calor", "frio", "alerta"] },
+    { path: "/fiestas", reason: "tema fiestas", terms: ["fiesta", "fiestas", "hogueras", "mascleta", "moros", "cristianos"] },
+    { path: "/bus/lines", reason: "tema líneas de bus", terms: ["linea", "lineas"], test: () => isTransportTheme },
+    { path: "/bus/planner", reason: "tema planificador de transporte", terms: ["bus", "emt", "parada", "paradas", "billete", "bonobus", "tarjeta"], test: () => isTransportTheme || hasOriginDestination },
+    { path: "/ocio", reason: "tema ocio/planes", terms: ["ocio", "plan", "planes", "aburrido", "aburrida", "hacer", "hoy", "noche", "salir"] },
+    { path: "/explore", reason: "tema explorar ciudad", terms: ["explorar", "descubrir", "ruta", "rutas", "paseo", "monumento", "monumentos", "lugar", "lugares"] },
+    { path: "/salud", reason: "tema salud", terms: ["salud", "medico", "medica", "doctor", "doctora"] },
+  ];
+
+  for (const rule of rules) {
+    if (rule.test && !rule.test(text)) continue;
+    if (hasAnyTerm(text, rule.terms)) return { path: rule.path, reason: rule.reason };
+  }
+
+  if (hasOriginDestination && isTransportTheme) return { path: "/bus/planner", reason: "origen y destino con transporte" };
+  return null;
+};
+
 const SYSTEM_PROMPT = `Eres "VA", el agente inteligente multimodal oficial de Vamos Alicante.
 
 Tu trabajo es ayudar a usuarios y negocios dentro del ecosistema urbano de Alicante mediante conversación natural, memoria persistente, herramientas operacionales y coordinación en tiempo real.
