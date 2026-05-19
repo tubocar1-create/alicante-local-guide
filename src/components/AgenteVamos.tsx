@@ -696,6 +696,7 @@ export function AgenteVamosFab() {
     if (voiceBootStartedRef.current) return;
     voiceBootStartedRef.current = true;
     try {
+      primeSpanishUtterances();
       const synth = window.speechSynthesis;
       if (synth) {
         __vaSetGreetingSpoken(false);
@@ -707,6 +708,7 @@ export function AgenteVamosFab() {
         u.onstart = () => __vaSetGreetingSpoken(true);
         u.onend = () => {
           __vaActiveUtterance = null;
+          __vaSetGreetingSpoken(true);
         };
         u.onerror = () => {
           __vaActiveUtterance = null;
