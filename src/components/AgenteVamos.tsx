@@ -154,12 +154,9 @@ function getGreetingText() {
   const saludo = h < 14 ? "Buenos días" : "Buenas tardes";
   return `${saludo}, Leopoldo, ¿qué vamos a hacer hoy?`;
 }
-const GREETING: Msg = {
-  role: "assistant",
-  get content() {
-    return getGreetingText();
-  },
-} as Msg;
+function makeGreeting(): Msg {
+  return { role: "assistant", content: getGreetingText() };
+}
 
 function loadMsgs(): Msg[] {
   if (typeof window === "undefined") return [GREETING];
