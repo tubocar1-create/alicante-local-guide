@@ -666,11 +666,19 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             }
             const hotelMatch = pathname.match(/^\/hotel\/([^/]+)$/);
             const restMatch = pathname.match(/^\/restaurants\/([^/]+)$/);
+            const vueloMatch = pathname.match(/^\/vuelos_\/([^/]+)$/);
             if (hotelMatch) {
               return navigate({ to: "/hotel/$id", params: { id: hotelMatch[1] } });
             }
             if (restMatch) {
               return navigate({ to: "/restaurants/$placeId", params: { placeId: restMatch[1] } });
+            }
+            if (vueloMatch) {
+              return navigate({
+                to: "/vuelos_/$iata",
+                params: { iata: vueloMatch[1] },
+                search: search as any,
+              });
             }
             if (Object.keys(search).length > 0) {
               return navigate({ to: pathname as any, search: search as any });
