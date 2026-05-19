@@ -325,17 +325,7 @@ function VuelosDashboard() {
     return set.size || 1;
   }, [flights7d]);
 
-  // Si llegamos con ?destino=madrid → preseleccionar la ciudad cuyo nombre coincide.
-  useEffect(() => {
-    if (!destinoParam || selectedCity || !cities.length) return;
-    const norm = (s: string) =>
-      s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    const target = norm(destinoParam);
-    const match =
-      cities.find((c) => norm(c.ciudad) === target || c.iata.toLowerCase() === target) ??
-      cities.find((c) => norm(c.ciudad).includes(target));
-    if (match) setSelectedCity(match.iata);
-  }, [destinoParam, cities, selectedCity]);
+
 
   const weekRange = useMemo(() => {
     if (!flights7d.length) return { start: "", end: "" };
