@@ -364,6 +364,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const [paused, setPaused] = useState(false);
   const [voiceError, setVoiceError] = useState<string | null>(null);
   const [tapToSpeak, setTapToSpeak] = useState<PendingSpeech | null>(null);
+  const [micReady, setMicReady] = useState(__vaMicWarmupState === "ready");
 
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
@@ -595,6 +596,27 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const startListening = useCallback(() => {
     if (!openRef.current || modeRef.current !== "voice") return;
     if (pausedRef.current || loadingRef.current || speakingRef.current) return;
+    if (__vaMicWarmupState !== "ready") {
+      const { message, promise } = getMicWarmupSnapshot();
+      setListening(false);
+      setMicReady(false);
+      if (message) setVoiceError(message);
+      if (promise) {
+        promise.then((state) => {
+          setMicReady(state === "ready");
+          if (state === "ready") {
+            setVoiceError(null);
+            if (shouldAutoListen()) startListeningRef.current();
+          } else if (__vaMicWarmupMessage) {
+            setVoiceError(__vaMicWarmupMessage);
+            setPaused(true);
+          }
+        });
+      } else if (__vaMicWarmupState === "denied" || __vaMicWarmupState === "error") {
+        setPaused(true);
+      }
+      return;
+    }
     const SRClass = getSpeechRecognition();
     if (!SRClass) {
       setVoiceError("Tu navegador no soporta reconocimiento de voz. Cambia a modo texto.");
@@ -668,6 +690,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       };
       recogRef.current = rec;
       setVoiceError(null);
+      setMicReady(true);
       setListening(true);
       rec.start();
     } catch (err) {
