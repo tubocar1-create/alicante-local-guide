@@ -1166,12 +1166,43 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             <div className="flex w-full flex-col items-center gap-3 pb-2">
               {voiceError && <p className="text-center text-xs text-destructive">{voiceError}</p>}
               {tapToSpeak && (
-                <button
-                  onClick={() => speak(tapToSpeak.text, tapToSpeak.audio)}
-                  className="rounded-full border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
-                >
-                  tocar para oír respuesta
-                </button>
+                <div className="flex w-full flex-col items-center gap-2">
+                  <p className="max-w-[28rem] text-center text-sm text-foreground/90">
+                    {tapToSpeak.text}
+                  </p>
+                  <button
+                    onClick={() => {
+                      // Captura el texto y limpia el banner antes de hablar
+                      // para que un nuevo fallo no deje el botón huérfano.
+                      const pending = tapToSpeak;
+                      setTapToSpeak(null);
+                      // Reproducción síncrona dentro del gesto del usuario:
+                      // creamos el utterance aquí mismo para que el navegador
+                      // no bloquee la síntesis por falta de gesture.
+                      try {
+                        if (pending.audio) {
+                          if (playAudioClip(pending.audio, pending.text)) return;
+                        }
+                        if (typeof window !== "undefined" && window.speechSynthesis) {
+                          const synth = window.speechSynthesis;
+                          try { synth.cancel(); } catch {}
+                          try { synth.resume(); } catch {}
+                          const u = makeSpanishUtterance(pending.text);
+                          u.onstart = () => { speakingRef.current = true; setSpeaking(true); };
+                          u.onend = () => { speakingRef.current = false; setSpeaking(false); };
+                          u.onerror = () => { speakingRef.current = false; setSpeaking(false); };
+                          synth.speak(u);
+                        }
+                      } catch {
+                        // Si vuelve a fallar, no reaparece el banner; el texto
+                        // queda visible en pantalla y el usuario puede leerlo.
+                      }
+                    }}
+                    className="rounded-full border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
+                  >
+                    tocar para oír respuesta
+                  </button>
+                </div>
               )}
 
               {/* Animated orb — visual only, no interaction required */}
