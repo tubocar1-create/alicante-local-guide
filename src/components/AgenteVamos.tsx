@@ -988,6 +988,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       stopSpeaking();
       setPaused(false);
       setInterim("");
+      setLoading(false);
+      awaitingSummaryRef.current = false;
+      if (ackTimerRef.current) {
+        clearTimeout(ackTimerRef.current);
+        ackTimerRef.current = null;
+      }
       // Limpia caché del diálogo: el próximo se abre desde cero.
       if (typeof window !== "undefined") {
         try {
