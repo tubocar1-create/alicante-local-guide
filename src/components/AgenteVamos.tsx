@@ -931,6 +931,16 @@ export function AgenteVamosFab() {
     if (voiceBootStartedRef.current) return;
     voiceBootStartedRef.current = true;
     try {
+      if (navigator.mediaDevices?.getUserMedia) {
+        __vaMicWarmup = navigator.mediaDevices.getUserMedia({ audio: true });
+        __vaMicWarmup
+          .then((stream) => {
+            stream.getTracks().forEach((track) => track.stop());
+          })
+          .catch(() => {
+            __vaMicWarmup = null;
+          });
+      }
       const greetText = getGreetingText();
       const greetAudio = new Audio(audioSrc(getGreetingClip()));
       greetAudio.preload = "auto";
