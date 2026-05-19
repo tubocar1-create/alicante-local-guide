@@ -115,30 +115,53 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       if (shouldAutoListen()) startListeningRef.current();
       return;
     }
-    try {
-      window.speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(plainText(text));
-      u.lang = "es-ES";
-      u.rate = 1.05;
-      u.pitch = 1;
-      const voices = window.speechSynthesis.getVoices();
-      const es = voices.find((v) => v.lang?.toLowerCase().startsWith("es"));
-      if (es) u.voice = es;
-      u.onstart = () => setSpeaking(true);
-      u.onend = () => {
-        setSpeaking(false);
+    const synth = window.speechSynthesis;
+    const doSpeak = () => {
+      try {
+        synth.cancel();
+        synth.resume();
+        const u = new SpeechSynthesisUtterance(plainText(text));
+        u.lang = "es-ES";
+        u.rate = 1.05;
+        u.pitch = 1;
+        const voices = synth.getVoices();
+        const es = voices.find((v) => v.lang?.toLowerCase().startsWith("es-es"))
+          || voices.find((v) => v.lang?.toLowerCase().startsWith("es"));
+        if (es) u.voice = es;
+        u.onstart = () => setSpeaking(true);
+        u.onend = () => {
+          setSpeaking(false);
+          onEnd?.();
+          if (shouldAutoListen()) setTimeout(() => startListeningRef.current(), 200);
+        };
+        u.onerror = () => {
+          setSpeaking(false);
+          onEnd?.();
+          if (shouldAutoListen()) setTimeout(() => startListeningRef.current(), 200);
+        };
+        // Small delay so cancel() flushes (fixes Chrome no-onstart bug)
+        setTimeout(() => {
+          try { synth.speak(u); } catch {}
+        }, 60);
+      } catch {
         onEnd?.();
-        if (shouldAutoListen()) setTimeout(() => startListeningRef.current(), 200);
+        if (shouldAutoListen()) startListeningRef.current();
+      }
+    };
+    // Ensure voices are loaded (some browsers populate async)
+    if (synth.getVoices().length === 0) {
+      const handler = () => {
+        synth.removeEventListener("voiceschanged", handler);
+        doSpeak();
       };
-      u.onerror = () => {
-        setSpeaking(false);
-        onEnd?.();
-        if (shouldAutoListen()) setTimeout(() => startListeningRef.current(), 200);
-      };
-      window.speechSynthesis.speak(u);
-    } catch {
-      onEnd?.();
-      if (shouldAutoListen()) startListeningRef.current();
+      synth.addEventListener("voiceschanged", handler);
+      // Fallback in case event never fires
+      setTimeout(() => {
+        synth.removeEventListener("voiceschanged", handler);
+        doSpeak();
+      }, 800);
+    } else {
+      doSpeak();
     }
   }, [shouldAutoListen]);
 
