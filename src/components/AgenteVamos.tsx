@@ -1209,15 +1209,25 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                       setTapToSpeak(null);
                       try {
                         recogRef.current?.abort?.();
-                      } catch {}
+                        } catch {
+                          // Ignore if recognition is already stopped.
+                        }
                       // Reproducción síncrona dentro del gesto del usuario:
                       // creamos el utterance aquí mismo para que el navegador
                       // no bloquee la síntesis por falta de gesture.
                       try {
                         if (typeof window !== "undefined" && window.speechSynthesis) {
                           const synth = window.speechSynthesis;
-                          try { synth.cancel(); } catch {}
-                          try { synth.resume(); } catch {}
+                          try {
+                            synth.cancel();
+                          } catch {
+                            // Ignore if the engine is already idle.
+                          }
+                          try {
+                            synth.resume();
+                          } catch {
+                            // Ignore if the engine cannot resume synchronously.
+                          }
                           const u = makeSpanishUtterance(pending.text, true);
                           let started = false;
                           const blockedTimer = window.setTimeout(() => {
