@@ -327,7 +327,7 @@ Ejemplos:
 - En /ocio/cartelera, "y de teatro?" → navigate_to("/ocio/teatros").
 - En /ocio/cartelera, "volver" → navigate_to("/ocio").
 - En /playas/mapa, "menú principal" → navigate_to("/").
-- En /eat, "¿cómo llego al primero?" → navigate_to("/bus/planner") con origen/destino.
+- En el Dashboard de Comer (en "/"), "¿cómo llego al primero?" → navigate_to("/bus/planner") con origen/destino.
 
 # COBERTURA
 Alicante y radio de 30 km desde Puerta del Mar.
