@@ -258,7 +258,6 @@ export const __vaSetGreetingSpoken = (v: boolean) => {
 let __vaActiveUtterance: SpeechSynthesisUtterance | null = null;
 let __vaActiveAudio: HTMLAudioElement | null = null;
 let __vaActiveAudioStartedAt = 0;
-let __vaMicWarmup: Promise<MediaStream> | null = null;
 const __vaPrimedUtterances: SpeechSynthesisUtterance[] = [];
 
 function pickSpanishVoice(synth: SpeechSynthesis) {
@@ -954,12 +953,10 @@ export function AgenteVamosFab() {
         if (__vaActiveAudio === greetAudio) __vaActiveAudio = null;
         __vaActiveAudioStartedAt = 0;
         if (navigator.mediaDevices?.getUserMedia) {
-          __vaMicWarmup = navigator.mediaDevices.getUserMedia({ audio: true });
-          __vaMicWarmup
+          navigator.mediaDevices
+            .getUserMedia({ audio: true })
             .then((stream) => stream.getTracks().forEach((track) => track.stop()))
-            .catch(() => {
-              __vaMicWarmup = null;
-            });
+            .catch(() => {});
         }
       };
       greetAudio.onerror = () => {
