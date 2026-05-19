@@ -275,33 +275,23 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       setInterim("");
       setLoading(true);
       try {
-        const res = await callAgent({ data: { messages: next, path } });
-        if (res.ok) {
-          const content = res.content || "Vale.";
-          setMsgs((m) => [...m, { role: "assistant", content }]);
-          if (res.navigate) {
-            setTimeout(() => {
-              try {
-                navigate({ to: res.navigate as string });
-              } catch {}
-            }, 350);
-          }
-          if (viaVoice || modeRef.current === "voice") speak(content);
-        } else {
-          const err =
-            res.error || "Ahora mismo no puedo responder. Intenta otra vez en un momento.";
-          setMsgs((m) => [...m, { role: "assistant", content: err }]);
-          if (viaVoice || modeRef.current === "voice") speak(err);
+        const { reply, path: target } = localResolve(clean);
+        const content =
+          target && target !== path ? reply : reply;
+        setMsgs((m) => [...m, { role: "assistant", content }]);
+        if (target && target !== path) {
+          setTimeout(() => {
+            try {
+              navigate({ to: target });
+            } catch {}
+          }, 350);
         }
-      } catch {
-        const err = "Algo ha fallado. ¿Lo intentamos de nuevo?";
-        setMsgs((m) => [...m, { role: "assistant", content: err }]);
-        if (viaVoice || modeRef.current === "voice") speak(err);
+        if (viaVoice || modeRef.current === "voice") speak(content);
       } finally {
         setLoading(false);
       }
     },
-    [msgs, callAgent, path, navigate, speak, stopListening],
+    [msgs, path, navigate, speak, stopListening],
   );
 
   const sendRef = useRef(send);
