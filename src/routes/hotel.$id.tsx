@@ -10,6 +10,7 @@ import {
   Sparkles,
   ExternalLink,
   CalendarDays,
+  BedDouble,
 } from "lucide-react";
 import { getHotel, getHotelCalendar, getHotelPhotos } from "@/lib/hotels.functions";
 import { getAiReview } from "@/lib/ai-review.functions";
