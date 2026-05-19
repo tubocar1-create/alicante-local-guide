@@ -307,9 +307,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
     const tryStart = () => {
       if (cancelled) return;
-      if (synth && synth.speaking) {
-        // Reflect the speaking state and check again shortly
-        setSpeaking(true);
+      if (synth && (synth.speaking || synth.pending || __vaActiveUtterance)) {
+        // Do not cancel or replace the click-started greeting while it is
+        // queued/playing; otherwise mobile browsers may drop audio entirely.
+        setSpeaking(synth.speaking || Boolean(__vaActiveUtterance));
         setTimeout(tryStart, 250);
         return;
       }
