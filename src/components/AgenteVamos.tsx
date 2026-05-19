@@ -810,15 +810,14 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
               window.sessionStorage.setItem("afp:voiceFoodSummaryPending", "1");
             } catch {}
           }
-          // Mantenemos loading=true hasta que llegue el resumen (B3).
+          // Mantenemos loading=true hasta que llegue el resumen real con
+          // los datos del Dashboard. El agente NO habla hasta entonces, para
+          // sincronizar voz y datos en pantalla.
           awaitingSummaryRef.current = true;
-          // B4: acuse breve hablado si el resumen tarda > 800ms.
-          if (ackTimerRef.current) clearTimeout(ackTimerRef.current);
-          ackTimerRef.current = setTimeout(() => {
-            if (awaitingSummaryRef.current && !mutedRef.current) {
-              speak("Voy a por ello.");
-            }
-          }, 800);
+          if (ackTimerRef.current) {
+            clearTimeout(ackTimerRef.current);
+            ackTimerRef.current = null;
+          }
           // Seguridad: si el resumen nunca llega, libera el spinner a los 8s.
           setTimeout(() => {
             if (awaitingSummaryRef.current) {
