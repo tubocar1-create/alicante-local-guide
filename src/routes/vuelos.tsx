@@ -254,6 +254,9 @@ function VuelosDashboard() {
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
 
   const flightType = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("type") === "L" ? "L" : "S";
+  const destinoParam = typeof window !== "undefined"
+    ? (new URLSearchParams(window.location.search).get("destino") ?? "").trim().toLowerCase()
+    : "";
 
   useEffect(() => {
     let cancel = false;
@@ -324,6 +327,18 @@ function VuelosDashboard() {
     const set = new Set(flights7d.map((f) => f.fecha));
     return set.size || 1;
   }, [flights7d]);
+
+  // Si llegamos con ?destino=madrid → preseleccionar la ciudad cuyo nombre coincide.
+  useEffect(() => {
+    if (!destinoParam || selectedCity || !cities.length) return;
+    const norm = (s: string) =>
+      s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const target = norm(destinoParam);
+    const match =
+      cities.find((c) => norm(c.ciudad) === target || c.iata.toLowerCase() === target) ??
+      cities.find((c) => norm(c.ciudad).includes(target));
+    if (match) setSelectedCity(match.iata);
+  }, [destinoParam, cities, selectedCity]);
 
   const weekRange = useMemo(() => {
     if (!flights7d.length) return { start: "", end: "" };
