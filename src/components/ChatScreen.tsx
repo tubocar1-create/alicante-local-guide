@@ -348,9 +348,13 @@ export function ChatScreen() {
         setSubmenuStack([comer]);
       }
     };
-    tryConsume();
-    tryOpenSubmenu();
-    const onFocus = () => { tryConsume(); tryOpenSubmenu(); };
+    // NO consumimos sessionStorage en el mount ni en focus: solo reaccionamos
+    // a los eventos del agente. Si quedó un valor obsoleto de una sesión
+    // anterior, lo descartamos al iniciar.
+    try {
+      window.sessionStorage.removeItem(key);
+      window.sessionStorage.removeItem(submenuKey);
+    } catch {}
     const onForward = (e: Event) => {
       const detail = (e as CustomEvent).detail as { text?: string } | undefined;
       tryConsume(detail?.text);
@@ -359,11 +363,9 @@ export function ChatScreen() {
       const detail = (e as CustomEvent).detail as { path?: string } | undefined;
       tryOpenSubmenu(detail?.path);
     };
-    window.addEventListener("focus", onFocus);
     window.addEventListener("afp:forward-prompt", onForward);
     window.addEventListener("afp:open-submenu", onOpenSubmenu);
     return () => {
-      window.removeEventListener("focus", onFocus);
       window.removeEventListener("afp:forward-prompt", onForward);
       window.removeEventListener("afp:open-submenu", onOpenSubmenu);
     };
