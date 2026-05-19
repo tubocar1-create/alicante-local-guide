@@ -486,6 +486,20 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     setSpeaking(false);
   }, []);
 
+  const speakExternalSummary = useCallback(
+    (text: string) => {
+      setMsgs((m) => {
+        const last = m[m.length - 1];
+        if (last?.role === "assistant" && (/^Abro el Dashboard/i.test(last.content) || /^Te he conseguido/i.test(last.content))) {
+          return m.map((msg, i) => (i === m.length - 1 ? { ...msg, content: text } : msg));
+        }
+        return [...m, { role: "assistant", content: text }];
+      });
+      if (modeRef.current === "voice") speak(text);
+    },
+    [speak],
+  );
+
   const shouldAutoListen = useCallback(() => {
     return (
       openRef.current &&
@@ -698,6 +712,11 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         };
 
         if (forwardPrompt || pendingSubmenu) {
+          if (viaVoice && forwardPrompt && typeof window !== "undefined") {
+            try {
+              window.sessionStorage.setItem("afp:voiceFoodSummaryPending", "1");
+            } catch {}
+          }
           setTimeout(() => {
             try {
               const done = target && target !== path ? goTo(target) : undefined;
