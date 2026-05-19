@@ -353,7 +353,7 @@ const ROUTE_BLURBS: Record<string, string> = {
   "/playas/mapa": "Mapa de playas. Pulsa una para ver detalles.",
   "/donde-dormir": "Alojamientos cerca. ¿Zona, precio o estilo?",
   "/comprar": "Tiendas y mercados. ¿Buscas algo concreto?",
-  "/eat": "Restaurantes y tapas. ¿Qué te apetece?",
+  
   "/explore": "Explora la ciudad. ¿Centro histórico, museos o rutas?",
   "/bus": "Transporte EMT. ¿Línea concreta o planificar una ruta?",
   "/bus/lines": "Líneas EMT. ¿Te paso una en concreto?",
