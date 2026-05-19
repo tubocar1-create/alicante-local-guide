@@ -421,9 +421,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         bumpIdle();
         return;
       }
-      onClose();
+      // Cierre con despedida hablada (C6)
+      speakFarewellRef.current();
     }, IDLE_MS);
-  }, [onClose]);
+  }, []);
+  // Forward ref para la despedida (definida más abajo) — evita ciclos de deps.
+  const speakFarewellRef = useRef<() => void>(() => {});
   useEffect(() => {
     modeRef.current = mode;
   }, [mode]);
