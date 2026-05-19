@@ -394,6 +394,27 @@ function keepSpeechSynthesisAwake(synth: SpeechSynthesis) {
   });
 }
 
+function unlockSpeechFromUserGesture() {
+  if (typeof window === "undefined" || __vaSpeechUnlocked || !window.speechSynthesis) return;
+  try {
+    const synth = window.speechSynthesis;
+    const u = new SpeechSynthesisUtterance(" ");
+    u.lang = "es-ES";
+    u.volume = 0;
+    u.rate = 1;
+    u.onend = () => {
+      __vaSpeechUnlocked = true;
+    };
+    u.onerror = () => {
+      __vaSpeechUnlocked = true;
+    };
+    synth.resume();
+    synth.speak(u);
+  } catch {
+    // If the browser refuses the unlock, the visible tap-to-speak fallback remains available.
+  }
+}
+
 function primeSpanishUtterances(count = 8) {
   if (typeof window === "undefined" || typeof SpeechSynthesisUtterance === "undefined") return;
   while (__vaPrimedUtterances.length < count) {
