@@ -552,6 +552,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                   stopSpeaking();
                   setMode("text");
                 } else {
+                  primeSpanishUtterances();
                   setMode("voice");
                   greetedRef.current = true; // don't re-greet on switch
                 }
@@ -636,6 +637,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                 <button
                   onClick={() => {
                     if (paused) {
+                      primeSpanishUtterances();
                       setPaused(false);
                       setTimeout(() => startListeningRef.current(), 100);
                     } else {
