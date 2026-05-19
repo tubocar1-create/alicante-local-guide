@@ -318,16 +318,24 @@ export function ChatScreen() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const key = "afp:fwdPrompt";
-    const tryConsume = () => {
-      const fwd = window.sessionStorage.getItem(key);
+    const tryConsume = (value?: string | null) => {
+      const fwd = value ?? window.sessionStorage.getItem(key);
       if (!fwd || loading) return;
       window.sessionStorage.removeItem(key);
       void send(fwd);
     };
     tryConsume();
     const onFocus = () => tryConsume();
+    const onForward = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { text?: string } | undefined;
+      tryConsume(detail?.text);
+    };
     window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
+    window.addEventListener("afp:forward-prompt", onForward);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("afp:forward-prompt", onForward);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const scrollRef = useRef<HTMLDivElement>(null);
