@@ -281,7 +281,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   // The greeting is spoken synchronously by the FAB onClick (so the browser
   // accepts it as a user-gesture action). Here we just kick off listening
   // once any in-flight speech finishes.
-  const greetedRef = useRef(false);
+  const greetedRef = useRef(__vaGetGreetingSpoken());
   useEffect(() => {
     if (!open || mode !== "voice") return;
     const SRClass = getSpeechRecognition();
