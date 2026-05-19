@@ -214,6 +214,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       window.speechSynthesis?.cancel();
     } catch {}
     __vaActiveUtterance = null;
+    speakingRef.current = false;
     setSpeaking(false);
   }, []);
 
@@ -246,15 +247,17 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           u.onstart = () => setSpeaking(true);
           u.onend = () => {
             __vaActiveUtterance = null;
+             speakingRef.current = false;
             setSpeaking(false);
             onEnd?.();
-            if (shouldAutoListen()) setTimeout(() => startListeningRef.current(), 200);
+             if (shouldAutoListen()) startListeningRef.current();
           };
           u.onerror = () => {
             __vaActiveUtterance = null;
+             speakingRef.current = false;
             setSpeaking(false);
             onEnd?.();
-            if (shouldAutoListen()) setTimeout(() => startListeningRef.current(), 200);
+             if (shouldAutoListen()) startListeningRef.current();
           };
           synth.speak(u);
         } catch {
