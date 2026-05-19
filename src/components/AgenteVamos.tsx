@@ -1,5 +1,17 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Sparkles, Send, X, Loader2, Mic, MicOff, Keyboard, Volume2, VolumeX, Pause, Play } from "lucide-react";
+import {
+  Sparkles,
+  Send,
+  X,
+  Loader2,
+  Mic,
+  MicOff,
+  Keyboard,
+  Volume2,
+  VolumeX,
+  Pause,
+  Play,
+} from "lucide-react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import ReactMarkdown from "react-markdown";
@@ -50,14 +62,18 @@ function getSpeechRecognition(): any {
 // avoid double-greeting.
 let __vaGreetingSpoken = false;
 export const __vaGetGreetingSpoken = () => __vaGreetingSpoken;
-export const __vaSetGreetingSpoken = (v: boolean) => { __vaGreetingSpoken = v; };
+export const __vaSetGreetingSpoken = (v: boolean) => {
+  __vaGreetingSpoken = v;
+};
 let __vaActiveUtterance: SpeechSynthesisUtterance | null = null;
 
 function pickSpanishVoice(synth: SpeechSynthesis) {
   const voices = synth.getVoices();
-  return voices.find((v) => v.lang?.toLowerCase().startsWith("es-es"))
-    || voices.find((v) => v.lang?.toLowerCase().startsWith("es"))
-    || null;
+  return (
+    voices.find((v) => v.lang?.toLowerCase().startsWith("es-es")) ||
+    voices.find((v) => v.lang?.toLowerCase().startsWith("es")) ||
+    null
+  );
 }
 
 function makeSpanishUtterance(text: string) {
@@ -97,128 +113,169 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const loadingRef = useRef(loading);
   const speakingRef = useRef(speaking);
   const openRef = useRef(open);
-  useEffect(() => { modeRef.current = mode; }, [mode]);
-  useEffect(() => { pausedRef.current = paused; }, [paused]);
-  useEffect(() => { mutedRef.current = muted; }, [muted]);
-  useEffect(() => { loadingRef.current = loading; }, [loading]);
-  useEffect(() => { speakingRef.current = speaking; }, [speaking]);
-  useEffect(() => { openRef.current = open; }, [open]);
+  useEffect(() => {
+    modeRef.current = mode;
+  }, [mode]);
+  useEffect(() => {
+    pausedRef.current = paused;
+  }, [paused]);
+  useEffect(() => {
+    mutedRef.current = muted;
+  }, [muted]);
+  useEffect(() => {
+    loadingRef.current = loading;
+  }, [loading]);
+  useEffect(() => {
+    speakingRef.current = speaking;
+  }, [speaking]);
+  useEffect(() => {
+    openRef.current = open;
+  }, [open]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(msgs)); } catch {}
+      try {
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(msgs));
+      } catch {}
     }
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [msgs]);
 
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
   const stopListening = useCallback(() => {
-    try { recogRef.current?.abort?.(); } catch {}
-    try { recogRef.current?.stop?.(); } catch {}
+    try {
+      recogRef.current?.abort?.();
+    } catch {}
+    try {
+      recogRef.current?.stop?.();
+    } catch {}
     setListening(false);
   }, []);
 
   const stopSpeaking = useCallback(() => {
-    try { window.speechSynthesis?.cancel(); } catch {}
+    try {
+      window.speechSynthesis?.cancel();
+    } catch {}
     __vaActiveUtterance = null;
     setSpeaking(false);
   }, []);
 
   const shouldAutoListen = useCallback(() => {
-    return openRef.current && modeRef.current === "voice" && !pausedRef.current && !loadingRef.current && !speakingRef.current;
+    return (
+      openRef.current &&
+      modeRef.current === "voice" &&
+      !pausedRef.current &&
+      !loadingRef.current &&
+      !speakingRef.current
+    );
   }, []);
 
   // Forward declaration via ref so callbacks can call latest startListening
   const startListeningRef = useRef<() => void>(() => {});
 
-  const speak = useCallback((text: string, onEnd?: () => void) => {
-    if (mutedRef.current || typeof window === "undefined" || !window.speechSynthesis) {
-      onEnd?.();
-      if (shouldAutoListen()) startListeningRef.current();
-      return;
-    }
-    const synth = window.speechSynthesis;
-    const doSpeak = () => {
-      try {
-        synth.cancel();
-        synth.resume();
-        const u = makeSpanishUtterance(text);
-        u.onstart = () => setSpeaking(true);
-        u.onend = () => {
-          __vaActiveUtterance = null;
-          setSpeaking(false);
-          onEnd?.();
-          if (shouldAutoListen()) setTimeout(() => startListeningRef.current(), 200);
-        };
-        u.onerror = () => {
-          __vaActiveUtterance = null;
-          setSpeaking(false);
-          onEnd?.();
-          if (shouldAutoListen()) setTimeout(() => startListeningRef.current(), 200);
-        };
-        synth.speak(u);
-      } catch {
+  const speak = useCallback(
+    (text: string, onEnd?: () => void) => {
+      if (mutedRef.current || typeof window === "undefined" || !window.speechSynthesis) {
         onEnd?.();
         if (shouldAutoListen()) startListeningRef.current();
+        return;
       }
-    };
-    // Ensure voices are loaded (some browsers populate async)
-    if (synth.getVoices().length === 0) {
-      const handler = () => {
-        synth.removeEventListener("voiceschanged", handler);
-        doSpeak();
-      };
-      synth.addEventListener("voiceschanged", handler);
-      // Fallback in case event never fires
-      setTimeout(() => {
-        synth.removeEventListener("voiceschanged", handler);
-        doSpeak();
-      }, 800);
-    } else {
-      doSpeak();
-    }
-  }, [shouldAutoListen]);
-
-  const send = useCallback(async (text: string, viaVoice = false) => {
-    const clean = text.trim();
-    if (!clean || loadingRef.current) return;
-    stopListening();
-    const next = [...msgs, { role: "user" as const, content: clean }];
-    setMsgs(next);
-    setInput("");
-    setInterim("");
-    setLoading(true);
-    try {
-      const res = await callAgent({ data: { messages: next, path } });
-      if (res.ok) {
-        const content = res.content || "Vale.";
-        setMsgs((m) => [...m, { role: "assistant", content }]);
-        if (res.navigate) {
-          setTimeout(() => { try { navigate({ to: res.navigate as string }); } catch {} }, 350);
+      const synth = window.speechSynthesis;
+      const doSpeak = () => {
+        try {
+          synth.cancel();
+          synth.resume();
+          const u = makeSpanishUtterance(text);
+          u.onstart = () => setSpeaking(true);
+          u.onend = () => {
+            __vaActiveUtterance = null;
+            setSpeaking(false);
+            onEnd?.();
+            if (shouldAutoListen()) setTimeout(() => startListeningRef.current(), 200);
+          };
+          u.onerror = () => {
+            __vaActiveUtterance = null;
+            setSpeaking(false);
+            onEnd?.();
+            if (shouldAutoListen()) setTimeout(() => startListeningRef.current(), 200);
+          };
+          synth.speak(u);
+        } catch {
+          onEnd?.();
+          if (shouldAutoListen()) startListeningRef.current();
         }
-        if (viaVoice || modeRef.current === "voice") speak(content);
+      };
+      // Ensure voices are loaded (some browsers populate async)
+      if (synth.getVoices().length === 0) {
+        const handler = () => {
+          synth.removeEventListener("voiceschanged", handler);
+          doSpeak();
+        };
+        synth.addEventListener("voiceschanged", handler);
+        // Fallback in case event never fires
+        setTimeout(() => {
+          synth.removeEventListener("voiceschanged", handler);
+          doSpeak();
+        }, 800);
       } else {
-        const err = res.error || "Ahora mismo no puedo responder. Intenta otra vez en un momento.";
+        doSpeak();
+      }
+    },
+    [shouldAutoListen],
+  );
+
+  const send = useCallback(
+    async (text: string, viaVoice = false) => {
+      const clean = text.trim();
+      if (!clean || loadingRef.current) return;
+      stopListening();
+      const next = [...msgs, { role: "user" as const, content: clean }];
+      setMsgs(next);
+      setInput("");
+      setInterim("");
+      setLoading(true);
+      try {
+        const res = await callAgent({ data: { messages: next, path } });
+        if (res.ok) {
+          const content = res.content || "Vale.";
+          setMsgs((m) => [...m, { role: "assistant", content }]);
+          if (res.navigate) {
+            setTimeout(() => {
+              try {
+                navigate({ to: res.navigate as string });
+              } catch {}
+            }, 350);
+          }
+          if (viaVoice || modeRef.current === "voice") speak(content);
+        } else {
+          const err =
+            res.error || "Ahora mismo no puedo responder. Intenta otra vez en un momento.";
+          setMsgs((m) => [...m, { role: "assistant", content: err }]);
+          if (viaVoice || modeRef.current === "voice") speak(err);
+        }
+      } catch {
+        const err = "Algo ha fallado. ¿Lo intentamos de nuevo?";
         setMsgs((m) => [...m, { role: "assistant", content: err }]);
         if (viaVoice || modeRef.current === "voice") speak(err);
+      } finally {
+        setLoading(false);
       }
-    } catch {
-      const err = "Algo ha fallado. ¿Lo intentamos de nuevo?";
-      setMsgs((m) => [...m, { role: "assistant", content: err }]);
-      if (viaVoice || modeRef.current === "voice") speak(err);
-    } finally {
-      setLoading(false);
-    }
-  }, [msgs, callAgent, path, navigate, speak, stopListening]);
+    },
+    [msgs, callAgent, path, navigate, speak, stopListening],
+  );
 
   const sendRef = useRef(send);
-  useEffect(() => { sendRef.current = send; }, [send]);
+  useEffect(() => {
+    sendRef.current = send;
+  }, [send]);
 
   const startListening = useCallback(() => {
     if (!openRef.current || modeRef.current !== "voice") return;
@@ -229,7 +286,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       return;
     }
     // Stop any previous instance
-    try { recogRef.current?.abort?.(); } catch {}
+    try {
+      recogRef.current?.abort?.();
+    } catch {}
     try {
       const rec = new SRClass();
       rec.lang = "es-ES";
@@ -278,7 +337,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     }
   }, [shouldAutoListen]);
 
-  useEffect(() => { startListeningRef.current = startListening; }, [startListening]);
+  useEffect(() => {
+    startListeningRef.current = startListening;
+  }, [startListening]);
 
   // Cleanup on close
   useEffect(() => {
@@ -326,7 +387,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
     // Small initial delay so the FAB-initiated utterance has a chance to start.
     const t = setTimeout(tryStart, 150);
-    return () => { cancelled = true; clearTimeout(t); };
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, mode]);
 
@@ -336,7 +400,6 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[100] flex justify-center sm:inset-auto sm:bottom-4 sm:right-4 sm:justify-end">
       <div className="pointer-events-auto relative flex max-h-[58vh] w-full flex-col overflow-hidden rounded-t-3xl border bg-background shadow-2xl sm:max-h-[560px] sm:w-[380px] sm:rounded-3xl">
-
         <header className="flex items-center justify-between border-b bg-gradient-to-r from-primary to-orange-500 px-4 py-3 text-primary-foreground">
           <div className="flex items-center gap-2">
             <div className="grid h-9 w-9 place-items-center rounded-full bg-white/20">
@@ -346,14 +409,27 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
               <p className="text-sm font-bold leading-tight">Agente Vamos</p>
               <p className="text-[11px] opacity-90">
                 {isVoice
-                  ? (paused ? "en pausa" : speaking ? "hablando…" : listening ? "te escucho…" : loading ? "pensando…" : "modo voz")
+                  ? paused
+                    ? "en pausa"
+                    : speaking
+                      ? "hablando…"
+                      : listening
+                        ? "te escucho…"
+                        : loading
+                          ? "pensando…"
+                          : "modo voz"
                   : "modo texto"}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-1">
             <button
-              onClick={() => setMuted((v) => { if (!v) stopSpeaking(); return !v; })}
+              onClick={() =>
+                setMuted((v) => {
+                  if (!v) stopSpeaking();
+                  return !v;
+                })
+              }
               aria-label={muted ? "Activar voz" : "Silenciar voz"}
               className="rounded-full p-2 hover:bg-white/20"
               title={muted ? "Activar voz" : "Silenciar voz"}
@@ -377,7 +453,11 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             >
               {isVoice ? <Keyboard className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
             </button>
-            <button onClick={onClose} aria-label="Cerrar" className="rounded-full p-2 hover:bg-white/20">
+            <button
+              onClick={onClose}
+              aria-label="Cerrar"
+              className="rounded-full p-2 hover:bg-white/20"
+            >
               <X className="h-5 w-5" />
             </button>
           </div>
@@ -422,17 +502,25 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                           : "bg-gradient-to-br from-primary to-orange-500 ring-4 ring-primary/20",
                 )}
               >
-                {loading ? <Loader2 className="h-8 w-8 animate-spin" />
-                  : paused ? <MicOff className="h-8 w-8" />
-                  : <Mic className="h-8 w-8" />}
+                {loading ? (
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                ) : paused ? (
+                  <MicOff className="h-8 w-8" />
+                ) : (
+                  <Mic className="h-8 w-8" />
+                )}
               </div>
 
               <p className="text-center text-xs text-muted-foreground">
-                {paused ? "conversación en pausa"
-                  : loading ? "pensando…"
-                  : speaking ? "hablando — puedes interrumpir hablando"
-                  : listening ? "te escucho · habla cuando quieras"
-                  : "preparando micrófono…"}
+                {paused
+                  ? "conversación en pausa"
+                  : loading
+                    ? "pensando…"
+                    : speaking
+                      ? "hablando — puedes interrumpir hablando"
+                      : listening
+                        ? "te escucho · habla cuando quieras"
+                        : "preparando micrófono…"}
               </p>
 
               <div className="flex items-center gap-2">
@@ -449,10 +537,22 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                   }}
                   className="flex items-center gap-1 rounded-full border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
                 >
-                  {paused ? <><Play className="h-3 w-3" /> reanudar</> : <><Pause className="h-3 w-3" /> pausar</>}
+                  {paused ? (
+                    <>
+                      <Play className="h-3 w-3" /> reanudar
+                    </>
+                  ) : (
+                    <>
+                      <Pause className="h-3 w-3" /> pausar
+                    </>
+                  )}
                 </button>
                 <button
-                  onClick={() => { stopListening(); stopSpeaking(); setMode("text"); }}
+                  onClick={() => {
+                    stopListening();
+                    stopSpeaking();
+                    setMode("text");
+                  }}
                   className="rounded-full border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
                 >
                   modo texto
@@ -464,11 +564,18 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           <>
             <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-3 py-4">
               {msgs.map((m, i) => (
-                <div key={i} className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}>
-                  <div className={cn(
-                    "max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed",
-                    m.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground",
-                  )}>
+                <div
+                  key={i}
+                  className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}
+                >
+                  <div
+                    className={cn(
+                      "max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed",
+                      m.role === "user"
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-foreground",
+                    )}
+                  >
                     <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-a:text-primary">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
                     </div>
@@ -485,7 +592,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             </div>
 
             <form
-              onSubmit={(e) => { e.preventDefault(); send(input); }}
+              onSubmit={(e) => {
+                e.preventDefault();
+                send(input);
+              }}
               className="flex items-center gap-2 border-t bg-background p-3"
             >
               <input
@@ -514,7 +624,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 export function AgenteVamosFab() {
   const [open, setOpen] = useState(false);
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const hidden = ["/login", "/magic", "/welcome"].includes(path) || path.startsWith("/business/login");
+  const hidden =
+    ["/login", "/magic", "/welcome"].includes(path) || path.startsWith("/business/login");
   if (hidden) return null;
   return (
     <>
@@ -533,8 +644,13 @@ export function AgenteVamosFab() {
                   "¡Hola! Soy Agente Vamos, tu concierge en Alicante. ¿Qué te apetece hacer? ¿Comer, dormir, playa, moverte, un plan?";
                 const u = makeSpanishUtterance(greetText);
                 u.onstart = () => __vaSetGreetingSpoken(true);
-                u.onend = () => { __vaActiveUtterance = null; };
-                u.onerror = () => { __vaActiveUtterance = null; __vaSetGreetingSpoken(false); };
+                u.onend = () => {
+                  __vaActiveUtterance = null;
+                };
+                u.onerror = () => {
+                  __vaActiveUtterance = null;
+                  __vaSetGreetingSpoken(false);
+                };
                 synth.speak(u);
               }
             } catch {}
