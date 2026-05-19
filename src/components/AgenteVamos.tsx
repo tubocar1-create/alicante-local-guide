@@ -525,21 +525,15 @@ export function AgenteVamosFab() {
             try {
               const synth = window.speechSynthesis;
               if (synth) {
+                __vaSetGreetingSpoken(false);
                 synth.cancel();
                 synth.resume();
                 const greetText =
                   "¡Hola! Soy Agente Vamos, tu concierge en Alicante. ¿Qué te apetece hacer? ¿Comer, dormir, playa, moverte, un plan?";
-                const u = new SpeechSynthesisUtterance(greetText);
-                u.lang = "es-ES";
-                u.rate = 1.05;
-                u.pitch = 1;
-                // Voice selection happens just-in-time; if voices aren't loaded
-                // yet the browser will fall back to the default es voice.
-                const voices = synth.getVoices();
-                const es = voices.find((v) => v.lang?.toLowerCase().startsWith("es-es"))
-                  || voices.find((v) => v.lang?.toLowerCase().startsWith("es"));
-                if (es) u.voice = es;
-                __vaSetGreetingSpoken(true);
+                const u = makeSpanishUtterance(greetText);
+                u.onstart = () => __vaSetGreetingSpoken(true);
+                u.onend = () => { __vaActiveUtterance = null; };
+                u.onerror = () => { __vaActiveUtterance = null; __vaSetGreetingSpoken(false); };
                 synth.speak(u);
               }
             } catch {}
