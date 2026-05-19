@@ -275,7 +275,12 @@ function HotelDetail() {
                     <p className="text-[10px] uppercase tracking-[0.2em] text-amber-300/70">
                       Habitaciones y tarifas
                     </p>
-                    <div className="flex gap-2 text-[10px]">
+                    <div className="flex flex-wrap gap-2 text-[10px]">
+                      {d?.rooms_available != null && (
+                        <span className={"inline-flex items-center gap-1 " + (d.rooms_available > 0 ? "text-emerald-300" : "text-rose-300")}>
+                          <BedDouble className="h-3 w-3" /> {d.rooms_available} hab.
+                        </span>
+                      )}
                       {d?.breakfast_included && (
                         <span className="inline-flex items-center gap-1 text-emerald-300">
                           <Coffee className="h-3 w-3" /> Desayuno
@@ -287,6 +292,7 @@ function HotelDetail() {
                         </span>
                       )}
                     </div>
+
                   </div>
                   {roomTypes.length > 0 ? (
                     <ul className="mt-2 divide-y divide-amber-100/[0.06]">
