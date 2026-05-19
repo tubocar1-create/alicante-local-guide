@@ -611,9 +611,27 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       setInterim("");
       setLoading(true);
       try {
-        const { reply, path: target, audio } = localResolve(clean);
-        const content = target && target !== path ? reply : reply;
-        setMsgs((m) => [...m, { role: "assistant", content }]);
+        const fallback = localResolve(clean);
+        let reply = fallback.reply;
+        let target: string | undefined = fallback.path;
+
+        try {
+          const res = await askAgent({
+            data: {
+              messages: next.map((m) => ({ role: m.role, content: m.content })),
+              path,
+            },
+          });
+          if (res && (res as any).ok) {
+            const ai = res as { ok: true; content: string; navigate: string | null };
+            if (ai.content && ai.content.trim()) reply = ai.content.trim();
+            if (ai.navigate) target = ai.navigate;
+          }
+        } catch {
+          // si falla el servidor, nos quedamos con la respuesta local
+        }
+
+        setMsgs((m) => [...m, { role: "assistant", content: reply }]);
         if (target && target !== path) {
           setTimeout(() => {
             try {
@@ -621,12 +639,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             } catch {}
           }, 350);
         }
-        if (viaVoice || modeRef.current === "voice") speak(content, audio);
+        if (viaVoice || modeRef.current === "voice") speak(reply, fallback.audio);
       } finally {
         setLoading(false);
       }
     },
-    [msgs, path, navigate, speak, stopListening, bumpIdle],
+    [msgs, path, navigate, speak, stopListening, bumpIdle, askAgent],
   );
 
   const sendRef = useRef(send);
