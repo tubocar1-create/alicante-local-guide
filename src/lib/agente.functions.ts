@@ -455,6 +455,64 @@ const bumpFaqHits = async (db: AdminClient, id: string) => {
 };
 
 
+// === BD de nombres propios (cache in-memory por instancia) ===
+type ProperNounRow = {
+  name: string;
+  normalized: string;
+  aliases: string[] | null;
+  category: string;
+  route: string;
+  priority: number;
+};
+let _properNounsCache: { at: number; rows: ProperNounRow[] } | null = null;
+const PROPER_NOUNS_TTL_MS = 5 * 60 * 1000;
+
+const loadProperNouns = async (db: AdminClient): Promise<ProperNounRow[]> => {
+  const now = Date.now();
+  if (_properNounsCache && now - _properNounsCache.at < PROPER_NOUNS_TTL_MS) {
+    return _properNounsCache.rows;
+  }
+  const { data } = await db
+    .from("agente_proper_nouns")
+    .select("name, normalized, aliases, category, route, priority")
+    .eq("active", true)
+    .order("priority", { ascending: true });
+  const rows = (data ?? []) as ProperNounRow[];
+  _properNounsCache = { at: now, rows };
+  return rows;
+};
+
+const matchProperNoun = (
+  normalizedText: string,
+  rows: ProperNounRow[],
+  currentPath: string,
+): { path: string; reason: string; name: string } | null => {
+  if (!normalizedText) return null;
+  let best: { path: string; reason: string; name: string; len: number; prio: number } | null = null;
+  for (const r of rows) {
+    const candidates = [r.normalized, ...(r.aliases ?? [])].filter((s) => s && s.length >= 3);
+    for (const cand of candidates) {
+      const c = cand.trim();
+      if (!c) continue;
+      // Match por palabra completa (límites) o substring si tiene espacios (nombre compuesto)
+      const matched = c.includes(" ")
+        ? normalizedText.includes(c)
+        : new RegExp(`(^|\\s)${c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}($|\\s)`).test(normalizedText);
+      if (!matched) continue;
+      if (r.route === currentPath) continue; // ya estamos allí
+      const score = c.length;
+      if (
+        !best ||
+        r.priority < best.prio ||
+        (r.priority === best.prio && score > best.len)
+      ) {
+        best = { path: r.route, reason: `nombre propio (${r.category}): ${r.name}`, name: r.name, len: score, prio: r.priority };
+      }
+    }
+  }
+  return best ? { path: best.path, reason: best.reason, name: best.name } : null;
+};
+
 export const agenteVamosChat = createServerFn({ method: "POST" })
   .inputValidator((d: { messages: Array<{ role: "user" | "assistant"; content: string }>; path?: string }) => d)
   .handler(async ({ data }) => {
@@ -468,7 +526,26 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
       return { ok: true as const, content: smalltalk, navigate: null, source: "smalltalk" as const };
     }
 
-    // 2) Clasificador determinista (nombre propio / sustantivo / navegación relativa)
+    // Import dinámico: client.server NO debe estar al top-level de un .functions.ts mixto.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // 2) NOMBRE PROPIO desde BD (máxima prioridad sobre el sustantivo genérico)
+    try {
+      const rows = await loadProperNouns(supabaseAdmin);
+      const pn = matchProperNoun(normalized, rows, currentPath);
+      if (pn) {
+        return {
+          ok: true as const,
+          content: blurbFor(pn.path) || `Te llevo a ${pn.name}.`,
+          navigate: pn.path,
+          source: "proper_noun" as const,
+        };
+      }
+    } catch {
+      // si falla, seguimos con el clasificador determinista
+    }
+
+    // 3) Clasificador determinista (nombres propios hardcodeados + sustantivo + navegación relativa)
     const priorityRoute = getPriorityRoute(lastUserMessage, currentPath);
     if (priorityRoute) {
       return {
@@ -478,9 +555,6 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
         source: "router" as const,
       };
     }
-
-    // Import dinámico: client.server NO debe estar al top-level de un .functions.ts mixto.
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // 3) FAQ desde BD
     try {
