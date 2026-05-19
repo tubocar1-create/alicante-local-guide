@@ -534,9 +534,19 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
       const rows = await loadProperNouns(supabaseAdmin);
       const pn = matchProperNoun(normalized, rows, currentPath);
       if (pn) {
+        // Mensaje personalizado por categoría
+        let content: string;
+        if (pn.path.startsWith("/vuelos?destino=")) {
+          const city = pn.name.replace(/^Vuelos a\s+/i, "");
+          content = `Te muestro la lista de vuelos a ${city}. Abriendo el dashboard…`;
+        } else if (pn.path.startsWith("/vuelos?compania=")) {
+          content = `Te muestro los vuelos de ${pn.name}. Abriendo el dashboard…`;
+        } else {
+          content = blurbFor(pn.path) || `Te llevo a ${pn.name}.`;
+        }
         return {
           ok: true as const,
-          content: blurbFor(pn.path) || `Te llevo a ${pn.name}.`,
+          content,
           navigate: pn.path,
           source: "proper_noun" as const,
         };
