@@ -736,7 +736,10 @@ export function AgenteVamosFab() {
         const greetText =
           "¡Hola! Soy Agente Vamos, tu concierge en Alicante. ¿Qué te apetece hacer? ¿Comer, dormir, playa, moverte, un plan?";
         const u = makeSpanishUtterance(greetText);
-        u.onstart = () => __vaSetGreetingSpoken(true);
+        __vaSetGreetingSpoken(true);
+        u.onstart = () => {
+          __vaActiveUtterance = u;
+        };
         u.onend = () => {
           __vaActiveUtterance = null;
           __vaSetGreetingSpoken(true);
