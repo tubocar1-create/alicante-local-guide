@@ -17,6 +17,12 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 
+const VOICE_ASSETS = import.meta.glob("../assets/agent-voice/*.mp3", {
+  eager: true,
+  query: "?url",
+  import: "default",
+}) as Record<string, string>;
+
 // Local intent router — no AI provider needed. Maps keywords to a friendly
 // reply + optional navigation. Keeps the agent fully responsive offline.
 type VoiceClip =
@@ -199,7 +205,8 @@ type Mode = "voice" | "text";
 type PendingSpeech = { text: string; audio?: AgentAudioClip };
 
 const STORAGE_KEY = "va:agente-msgs";
-const audioSrc = (clip: AgentAudioClip) => `/agent-voice/${clip}.mp3`;
+const audioSrc = (clip: AgentAudioClip) =>
+  VOICE_ASSETS[`../assets/agent-voice/${clip}.mp3`] ?? `/agent-voice/${clip}.mp3`;
 function getGreetingClip(): GreetingClip {
   return new Date().getHours() < 14 ? "greeting_morning" : "greeting_afternoon";
 }
