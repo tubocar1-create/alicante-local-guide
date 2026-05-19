@@ -317,16 +317,14 @@ function HotelDetail() {
                 </div>
 
                 {/* Actions: left = Cómo ir (small), right = stacked operators */}
-                <div className="mt-4 grid grid-cols-3 gap-2 items-stretch">
+                <div className="mt-4 grid grid-cols-3 gap-2 items-start">
                   <a
                     href={mapsHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="col-span-1 flex flex-col items-center justify-center gap-0.5 rounded-xl bg-amber-200 px-1 py-1 text-[10px] font-semibold text-amber-950 hover:bg-amber-100"
+                    className="col-span-1 inline-flex items-center justify-center gap-1 self-start rounded-lg bg-amber-200 px-1.5 py-1 text-[9px] font-semibold text-amber-950 hover:bg-amber-100"
                   >
-                    <span className="inline-flex items-center gap-1">
-                      <span className="text-base">🚶</span> Cómo ir
-                    </span>
+                    <span className="text-xs leading-none">🚶</span> Cómo ir
                   </a>
 
                   <div className="col-span-2 flex flex-col gap-2">
