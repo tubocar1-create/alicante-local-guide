@@ -374,13 +374,12 @@ export function ChatScreen() {
         | undefined;
       if (!detail) return;
       const { openCount, count, label } = detail;
-      const kind = detail.pluralKind ?? "restaurantes";
       const text =
         openCount > 0
-          ? `Te he conseguido ${openCount} ${kind} ${label} abiertos ahora.`
+          ? `Te he conseguido ${openCount} sitios donde comer ${label} abiertos ahora.`
           : count > 0
-            ? `No tengo ${kind} ${label} abiertos ahora mismo, pero te dejo los ${count} del listado por si quieres reservar.`
-            : `Ahora mismo no encuentro ${kind} ${label} cercanos. ¿Probamos otra categoría?`;
+            ? `No tengo sitios de ${label} abiertos ahora mismo, pero te dejo los ${count} del listado por si quieres reservar.`
+            : `Ahora mismo no encuentro sitios de ${label} cercanos. ¿Probamos otra categoría?`;
       setMessages((prev) => {
         for (let i = prev.length - 1; i >= 0; i--) {
           const m = prev[i];
