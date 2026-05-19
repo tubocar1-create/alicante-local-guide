@@ -174,8 +174,8 @@ const properNounMatch = (
         const isFrom = reFrom.test(text);
         const isTo = reTo.test(text) || (!isFrom && looseTo.test(text));
         if (isFrom || isTo) {
-          const target = isFrom ? `/vuelos_/${c.iata}?type=L` : `/vuelos_/${c.iata}`;
-          if (currentPath === `/vuelos_/${c.iata}`) return null;
+          const target = isFrom ? `/vuelos/${c.iata}?type=L` : `/vuelos/${c.iata}`;
+          if (currentPath === `/vuelos/${c.iata}`) return null;
           return {
             path: target,
             reason: isFrom
