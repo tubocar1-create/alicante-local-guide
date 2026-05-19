@@ -611,7 +611,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         }
         return [...m, { role: "assistant", content: text }];
       });
-      if (modeRef.current === "voice") speak(text);
+      speak(text);
     },
     [speak],
   );
