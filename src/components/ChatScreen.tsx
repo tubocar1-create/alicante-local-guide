@@ -1994,6 +1994,19 @@ function AsianTableInner({ ranked, loading, originLabel, onClose }: {
   const resolvePlace = useServerFn(resolvePlaceByName);
   const [resolving, setResolving] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (loading) return;
+    const openCount = ranked.filter(({ c }) => {
+      const s = resolveOpeningStatus(c.openingHours ?? undefined);
+      return s.status === "open" || (s.status === "unknown" && c.openNow === true);
+    }).length;
+    window.dispatchEvent(
+      new CustomEvent("vamos:food-summary", {
+        detail: { count: ranked.length, openCount, label: "asiáticos", pluralKind: "restaurantes" },
+      }),
+    );
+  }, [loading, ranked]);
+
   const openDashboard = async (c: PlaceCardData) => {
     if (c.placeId) {
         markRestaurantReturn();
