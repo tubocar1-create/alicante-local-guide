@@ -595,7 +595,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       // Anti-eco (D9): cortamos cualquier escucha activa antes de hablar.
       try {
         recogRef.current?.abort?.();
-      } catch {}
+      } catch {
+        // Ignore if recognition is already stopped.
+      }
       if (audio && playAudioClip(audio, text, onEnd)) return;
       if (mutedRef.current || typeof window === "undefined" || !window.speechSynthesis) {
         if (!mutedRef.current) setTapToSpeak({ text, audio });
