@@ -340,22 +340,106 @@ Ser el sistema operativo conversacional de Alicante: urbano, multimodal, operaci
 
 Responde SIEMPRE en el idioma del usuario (por defecto español).`;
 
+// === RESPUESTAS LOCALES (sin llamar a la IA) ===
+// Catálogo de respuestas breves por ruta para acompañar la navegación determinista.
+const ROUTE_BLURBS: Record<string, string> = {
+  "/": "Vuelvo al menú principal.",
+  "/ocio/cartelera": "Aquí tienes la cartelera. ¿Filtramos por sala u hora?",
+  "/ocio/cines": "Estos son los cines. Dime cuál te interesa.",
+  "/ocio/teatros": "Cartel de teatros. ¿Algún género en concreto?",
+  "/ocio/conciertos": "Conciertos próximos. ¿Te oriento por fecha o artista?",
+  "/ocio": "Planes de ocio. ¿Cine, teatro, conciertos o salir de noche?",
+  "/playas": "Playas y calas. ¿Centro, San Juan, El Campello o caletas escondidas?",
+  "/playas/mapa": "Mapa de playas. Pulsa una para ver detalles.",
+  "/donde-dormir": "Alojamientos cerca. ¿Zona, precio o estilo?",
+  "/comprar": "Tiendas y mercados. ¿Buscas algo concreto?",
+  "/eat": "Restaurantes y tapas. ¿Qué te apetece?",
+  "/explore": "Explora la ciudad. ¿Centro histórico, museos o rutas?",
+  "/bus": "Transporte EMT. ¿Línea concreta o planificar una ruta?",
+  "/bus/lines": "Líneas EMT. ¿Te paso una en concreto?",
+  "/bus/planner": "Planificador. Dime origen y destino.",
+  "/vuelos": "Estado del aeropuerto ALC. ¿Llegadas o salidas?",
+  "/clima": "Previsión del tiempo en Alicante.",
+  "/salud": "Salud. ¿Farmacia, hospital o info del sistema?",
+  "/farmacias": "Farmacias de guardia más cercanas.",
+  "/hospitales": "Hospitales y urgencias.",
+  "/sistema-sanitario": "Info del sistema sanitario español.",
+  "/fiestas": "Agenda festiva: Hogueras, Moros y Cristianos, mascletà…",
+  "/threads": "Tus hilos con negocios.",
+  "/perfil": "Tu perfil.",
+};
+
+const blurbFor = (path: string): string => {
+  if (ROUTE_BLURBS[path]) return ROUTE_BLURBS[path];
+  // Rutas con parámetro: usar el padre
+  const parent = path.split("/").slice(0, -1).join("/") || "/";
+  if (ROUTE_BLURBS[parent]) return ROUTE_BLURBS[parent];
+  return "Te llevo allí.";
+};
+
+// Detecta intentos abiertos / ambiguos que SÍ merecen llamada a la IA.
+const isOpenEnded = (text: string): boolean => {
+  const t = normalizeText(text);
+  if (!t) return false;
+  if (t.split(" ").length > 14) return true; // frases largas
+  return /\b(aburrid|sorprend|recomienda|recomiend|que hago|que hacer|no se|improvisar|romantic|familia|ninos|barato|caro|cerca de mi|sugerencia|opcion|que me recomien|ideas?)\b/.test(t);
+};
+
+// Saludo / despedida / agradecimiento → respuesta local
+const SMALLTALK_RX = /^(hola|buenas|hey|hi|hello|gracias|grasias|thanks|adios|adiós|chao|chau|hasta luego|ok|vale|perfecto|genial|👍|👌)[\s!.¡¿?]*$/i;
+const smalltalkReply = (text: string): string | null => {
+  const t = text.trim();
+  if (!SMALLTALK_RX.test(t)) return null;
+  if (/gracias|grasias|thanks/i.test(t)) return "¡A ti! Si necesitas algo más, dímelo.";
+  if (/adios|adiós|chao|chau|hasta luego/i.test(t)) return "¡Hasta pronto! 👋";
+  if (/^(ok|vale|perfecto|genial|👍|👌)/i.test(t)) return "👍";
+  return "¡Hola! ¿Qué buscas en Alicante hoy? Playa, comer, cine, transporte…";
+};
+
 export const agenteVamosChat = createServerFn({ method: "POST" })
   .inputValidator((d: { messages: Array<{ role: "user" | "assistant"; content: string }>; path?: string }) => d)
   .handler(async ({ data }) => {
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) return { ok: false as const, error: "AI no configurada" };
-
     const lastUserMessage = [...data.messages].reverse().find((message) => message.role === "user")?.content ?? "";
-    const priorityRoute = getPriorityRoute(lastUserMessage, data.path ?? "/");
+    const currentPath = data.path ?? "/";
+    const priorityRoute = getPriorityRoute(lastUserMessage, currentPath);
+
+    // === FAST PATH 1: saludo / despedida → respuesta local, sin IA ===
+    const smalltalk = smalltalkReply(lastUserMessage);
+    if (smalltalk) {
+      return { ok: true as const, content: smalltalk, navigate: null, source: "local" as const };
+    }
+
+    // === FAST PATH 2: clasificador determinista con confianza → respuesta local ===
+    // Saltamos la IA si tenemos ruta clara Y la frase NO es abierta/ambigua.
+    if (priorityRoute && !isOpenEnded(lastUserMessage)) {
+      return {
+        ok: true as const,
+        content: blurbFor(priorityRoute.path),
+        navigate: priorityRoute.path,
+        source: "local" as const,
+      };
+    }
+
+    // === FALLBACK: frase ambigua o sin ruta → IA ===
+    const key = process.env.LOVABLE_API_KEY;
+    if (!key) {
+      // Sin IA disponible: respuesta de cortesía + ruta si la había
+      return {
+        ok: true as const,
+        content: priorityRoute ? blurbFor(priorityRoute.path) : "Cuéntame qué buscas: comer, dormir, playa, ocio, transporte, salud, vuelos o clima.",
+        navigate: priorityRoute?.path ?? null,
+        source: "local" as const,
+      };
+    }
 
     const routeList = ROUTES.map((r) => `- ${r.path} — ${r.desc}`).join("\n");
-    const sys = `${SYSTEM_PROMPT}\n\nRUTAS DISPONIBLES:\n${routeList}\n\nRuta actual del usuario: ${data.path ?? "/"}${priorityRoute ? `\n\nDECISIÓN DETERMINISTA DE ENRUTAMIENTO: el clasificador interno detectó ${priorityRoute.reason}; si respondes con tool, usa navigate_to(\"${priorityRoute.path}\") y no otra ruta.` : ""}`;
+    const sys = `${SYSTEM_PROMPT}\n\nRUTAS DISPONIBLES:\n${routeList}\n\nRuta actual del usuario: ${currentPath}${priorityRoute ? `\n\nDECISIÓN DETERMINISTA DE ENRUTAMIENTO: el clasificador interno detectó ${priorityRoute.reason}; si respondes con tool, usa navigate_to(\"${priorityRoute.path}\") y no otra ruta.` : ""}`;
 
     const messages: ChatMsg[] = [
       { role: "system", content: sys },
       ...data.messages.map((m) => ({ role: m.role, content: m.content })),
     ];
+
 
     const tools = [
       {
@@ -384,7 +468,7 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: "google/gemini-2.5-flash-lite",
           messages,
           tools,
           tool_choice: "auto",
@@ -412,7 +496,7 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
           } catch {}
         }
       }
-      return { ok: true as const, content: text, navigate };
+      return { ok: true as const, content: text, navigate, source: "ai" as const };
     } catch (e: any) {
       return { ok: false as const, error: e?.message ?? "fallo" };
     }
