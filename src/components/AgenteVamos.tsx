@@ -19,98 +19,146 @@ import { cn } from "@/lib/utils";
 
 // Local intent router — no AI provider needed. Maps keywords to a friendly
 // reply + optional navigation. Keeps the agent fully responsive offline.
-type Intent = { keys: string[]; reply: string; path?: string };
+type VoiceClip =
+  | "hotel"
+  | "eat"
+  | "beaches"
+  | "beach_map"
+  | "explore"
+  | "bus"
+  | "planner"
+  | "flights"
+  | "weather"
+  | "cinema"
+  | "theatre"
+  | "concerts"
+  | "leisure"
+  | "fiestas"
+  | "pharmacy"
+  | "hospitals"
+  | "health"
+  | "profile"
+  | "hello"
+  | "thanks"
+  | "fallback";
+type GreetingClip = "greeting_morning" | "greeting_afternoon";
+type AgentAudioClip = VoiceClip | GreetingClip;
+
+type Intent = { keys: string[]; reply: string; path?: string; audio: VoiceClip };
 const INTENTS: Intent[] = [
   {
     keys: ["hotel", "dormir", "alojamiento", "alojar", "hostal", "apartamento", "habitacion"],
     reply: "Te llevo a alojamientos cerca de Alicante.",
     path: "/donde-dormir",
+    audio: "hotel",
   },
   {
     keys: ["comer", "restaurante", "tapas", "cena", "comida", "gastronomia", "arroz", "paella"],
     reply: "Vamos a ver dónde comer.",
     path: "/eat",
+    audio: "eat",
   },
   {
     keys: ["playa", "mar", "arena", "cala", "bañar", "bano", "nadAr", "tabarca"],
     reply: "Estas son las playas. ¿Quieres verlas en el mapa?",
     path: "/playas",
+    audio: "beaches",
   },
   {
     keys: ["mapa playa", "playas mapa", "mapa de playas"],
     reply: "Aquí tienes el mapa de playas.",
     path: "/playas/mapa",
+    audio: "beach_map",
   },
   {
     keys: ["explorar", "mapa", "ciudad", "cerca", "sitios"],
     reply: "Te abro el mapa de la ciudad.",
     path: "/explore",
+    audio: "explore",
   },
   {
     keys: ["bus", "emt", "autobus", "autobuses", "transporte"],
     reply: "Buses urbanos de Alicante.",
     path: "/bus",
+    audio: "bus",
   },
   {
     keys: ["planificar", "ruta", "como llego", "llegar", "ir a", "llevarme"],
     reply: "Vamos al planificador de rutas.",
     path: "/bus/planner",
+    audio: "planner",
   },
   {
     keys: ["vuelo", "vuelos", "aeropuerto", "aena", "avion", "alc"],
     reply: "Vuelos del aeropuerto de Alicante.",
     path: "/vuelos",
+    audio: "flights",
   },
   {
     keys: ["clima", "tiempo", "llueve", "lluvia", "sol", "temperatura", "calor", "frio"],
     reply: "Mira la previsión.",
     path: "/clima",
+    audio: "weather",
   },
   {
     keys: ["cine", "pelicula", "peliculas", "cartelera"],
     reply: "Cartelera de cine.",
     path: "/ocio/cartelera",
+    audio: "cinema",
   },
-  { keys: ["teatro", "teatros", "obra"], reply: "Teatros en la ciudad.", path: "/ocio/teatros" },
+  {
+    keys: ["teatro", "teatros", "obra"],
+    reply: "Teatros en la ciudad.",
+    path: "/ocio/teatros",
+    audio: "theatre",
+  },
   {
     keys: ["concierto", "conciertos", "musica", "musica en vivo", "directo"],
     reply: "Conciertos por aquí.",
     path: "/ocio/conciertos",
+    audio: "concerts",
   },
   {
     keys: ["ocio", "plan", "planes", "hacer", "que hago", "que hacer"],
     reply: "Ideas para tu plan.",
     path: "/ocio",
+    audio: "leisure",
   },
   {
     keys: ["fiesta", "fiestas", "hoguera", "hogueras", "moros", "cristianos"],
     reply: "Programa de fiestas.",
     path: "/fiestas",
+    audio: "fiestas",
   },
   {
     keys: ["farmacia", "farmacias", "guardia", "medicamento"],
     reply: "Farmacias de guardia.",
     path: "/farmacias",
+    audio: "pharmacy",
   },
   {
     keys: ["hospital", "hospitales", "urgencia", "urgencias"],
     reply: "Hospitales cercanos.",
     path: "/hospitales",
+    audio: "hospitals",
   },
   {
     keys: ["salud", "medico", "medica", "sanitario", "sanitaria"],
     reply: "Servicios sanitarios.",
     path: "/salud",
+    audio: "health",
   },
-  { keys: ["perfil", "cuenta", "usuario"], reply: "Tu perfil.", path: "/perfil" },
+  { keys: ["perfil", "cuenta", "usuario"], reply: "Tu perfil.", path: "/perfil", audio: "profile" },
   {
     keys: ["hola", "buenas", "hey", "saludos"],
     reply:
       "¡Hola! ¿En qué te ayudo? Puedes pedirme playa, comer, dormir, bus, vuelos, ocio o clima.",
+    audio: "hello",
   },
   {
     keys: ["gracias", "gracia", "vale", "ok"],
     reply: "¡A mandar! Si necesitas otra cosa, dímelo.",
+    audio: "thanks",
   },
 ];
 
@@ -124,7 +172,7 @@ function normalizeSpeech(text: string) {
     .trim();
 }
 
-function localResolve(text: string): { reply: string; path?: string } {
+function localResolve(text: string): { reply: string; path?: string; audio: VoiceClip } {
   const query = normalizeSpeech(text);
   let best: Intent | null = null;
   let bestScore = 0;
@@ -138,17 +186,23 @@ function localResolve(text: string): { reply: string; path?: string } {
       bestScore = score;
     }
   }
-  if (best) return { reply: best.reply, path: best.path };
+  if (best) return { reply: best.reply, path: best.path, audio: best.audio };
   return {
     reply:
       "Puedo llevarte a: playas, dónde comer, dónde dormir, bus, vuelos, ocio, fiestas, clima o salud. ¿Qué prefieres?",
+    audio: "fallback",
   };
 }
 
 type Msg = { role: "user" | "assistant"; content: string };
 type Mode = "voice" | "text";
+type PendingSpeech = { text: string; audio?: AgentAudioClip };
 
 const STORAGE_KEY = "va:agente-msgs";
+const audioSrc = (clip: AgentAudioClip) => `/agent-voice/${clip}.mp3`;
+function getGreetingClip(): GreetingClip {
+  return new Date().getHours() < 14 ? "greeting_morning" : "greeting_afternoon";
+}
 function getGreetingText() {
   const h = new Date().getHours();
   const saludo = h < 14 ? "Buenos días" : "Buenas tardes";
@@ -195,6 +249,7 @@ export const __vaSetGreetingSpoken = (v: boolean) => {
   __vaGreetingSpoken = v;
 };
 let __vaActiveUtterance: SpeechSynthesisUtterance | null = null;
+let __vaActiveAudio: HTMLAudioElement | null = null;
 const __vaPrimedUtterances: SpeechSynthesisUtterance[] = [];
 
 function pickSpanishVoice(synth: SpeechSynthesis) {
@@ -224,7 +279,7 @@ function makeSpanishUtterance(text: string) {
 }
 
 function primeSpanishUtterances(count = 8) {
-  if (typeof window === "undefined") return;
+  if (typeof window === "undefined" || typeof SpeechSynthesisUtterance === "undefined") return;
   while (__vaPrimedUtterances.length < count) {
     const u = new SpeechSynthesisUtterance("");
     u.lang = "es-ES";
@@ -245,7 +300,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const [muted, setMuted] = useState(false);
   const [paused, setPaused] = useState(false);
   const [voiceError, setVoiceError] = useState<string | null>(null);
-  const [tapToSpeak, setTapToSpeak] = useState<string | null>(null);
+  const [tapToSpeak, setTapToSpeak] = useState<PendingSpeech | null>(null);
 
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
@@ -314,6 +369,11 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
   const stopSpeaking = useCallback(() => {
     try {
+      __vaActiveAudio?.pause();
+      if (__vaActiveAudio) __vaActiveAudio.currentTime = 0;
+    } catch {}
+    __vaActiveAudio = null;
+    try {
       window.speechSynthesis?.cancel();
     } catch {}
     __vaActiveUtterance = null;
@@ -334,10 +394,62 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   // Forward declaration via ref so callbacks can call latest startListening
   const startListeningRef = useRef<() => void>(() => {});
 
-  const speak = useCallback(
-    (text: string, onEnd?: () => void) => {
-      if (mutedRef.current || typeof window === "undefined" || !window.speechSynthesis) {
+  const playAudioClip = useCallback(
+    (clip: AgentAudioClip, text: string, onEnd?: () => void) => {
+      if (typeof window === "undefined" || mutedRef.current) {
+        onEnd?.();
+        if (shouldAutoListen()) startListeningRef.current();
+        return true;
+      }
+      try {
+        __vaActiveAudio?.pause();
+        const audio = new Audio(audioSrc(clip));
+        audio.preload = "auto";
+        __vaActiveAudio = audio;
         setTapToSpeak(null);
+        speakingRef.current = true;
+        setSpeaking(true);
+        const finish = () => {
+          if (__vaActiveAudio === audio) __vaActiveAudio = null;
+          speakingRef.current = false;
+          setSpeaking(false);
+          onEnd?.();
+          if (shouldAutoListen()) startListeningRef.current();
+        };
+        audio.onended = finish;
+        audio.onerror = () => {
+          if (__vaActiveAudio === audio) __vaActiveAudio = null;
+          speakingRef.current = false;
+          setSpeaking(false);
+          setTapToSpeak({ text, audio: clip });
+          onEnd?.();
+          if (shouldAutoListen()) startListeningRef.current();
+        };
+        const started = audio.play();
+        if (started && typeof started.catch === "function") {
+          started.catch(() => {
+            if (__vaActiveAudio === audio) __vaActiveAudio = null;
+            speakingRef.current = false;
+            setSpeaking(false);
+            setTapToSpeak({ text, audio: clip });
+            onEnd?.();
+            if (shouldAutoListen()) startListeningRef.current();
+          });
+        }
+        return true;
+      } catch {
+        setTapToSpeak({ text, audio: clip });
+        return false;
+      }
+    },
+    [shouldAutoListen],
+  );
+
+  const speak = useCallback(
+    (text: string, audio?: AgentAudioClip, onEnd?: () => void) => {
+      if (audio && playAudioClip(audio, text, onEnd)) return;
+      if (mutedRef.current || typeof window === "undefined" || !window.speechSynthesis) {
+        if (!mutedRef.current) setTapToSpeak({ text, audio });
         onEnd?.();
         if (shouldAutoListen()) startListeningRef.current();
         return;
@@ -363,18 +475,18 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           __vaActiveUtterance = null;
           speakingRef.current = false;
           setSpeaking(false);
-          setTapToSpeak(text);
+          setTapToSpeak({ text });
           onEnd?.();
           if (shouldAutoListen()) startListeningRef.current();
         };
         synth.speak(u);
       } catch {
-        setTapToSpeak(text);
+        setTapToSpeak({ text });
         onEnd?.();
         if (shouldAutoListen()) startListeningRef.current();
       }
     },
-    [shouldAutoListen],
+    [playAudioClip, shouldAutoListen],
   );
 
   const send = useCallback(
@@ -388,7 +500,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       setInterim("");
       setLoading(true);
       try {
-        const { reply, path: target } = localResolve(clean);
+        const { reply, path: target, audio } = localResolve(clean);
         const content = target && target !== path ? reply : reply;
         setMsgs((m) => [...m, { role: "assistant", content }]);
         if (target && target !== path) {
@@ -398,7 +510,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             } catch {}
           }, 350);
         }
-        if (viaVoice || modeRef.current === "voice") speak(content);
+        if (viaVoice || modeRef.current === "voice") speak(content, audio);
       } finally {
         setLoading(false);
       }
@@ -535,10 +647,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
     const tryStart = () => {
       if (cancelled) return;
-      if (synth && (synth.speaking || synth.pending || __vaActiveUtterance)) {
+      if ((synth && (synth.speaking || synth.pending || __vaActiveUtterance)) || __vaActiveAudio) {
         // Do not cancel or replace the click-started greeting while it is
         // queued/playing; otherwise mobile browsers may drop audio entirely.
-        setSpeaking(synth.speaking || Boolean(__vaActiveUtterance));
+        setSpeaking(Boolean(synth?.speaking || __vaActiveUtterance || __vaActiveAudio));
         setTimeout(tryStart, 250);
         return;
       }
@@ -650,7 +762,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
               {voiceError && <p className="text-center text-xs text-destructive">{voiceError}</p>}
               {tapToSpeak && (
                 <button
-                  onClick={() => speak(tapToSpeak)}
+                  onClick={() => speak(tapToSpeak.text, tapToSpeak.audio)}
                   className="rounded-full border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
                 >
                   tocar para oír respuesta
@@ -804,36 +916,43 @@ export function AgenteVamosFab() {
     if (voiceBootStartedRef.current) return;
     voiceBootStartedRef.current = true;
     try {
-      const synth = window.speechSynthesis;
-      if (!synth) return;
+      const greetText = getGreetingText();
+      const greetAudio = new Audio(audioSrc(getGreetingClip()));
+      __vaActiveAudio = greetAudio;
+      __vaSetGreetingSpoken(true);
+      greetAudio.onended = () => {
+        if (__vaActiveAudio === greetAudio) __vaActiveAudio = null;
+      };
+      greetAudio.onerror = () => {
+        if (__vaActiveAudio === greetAudio) __vaActiveAudio = null;
+      };
+      const audioStarted = greetAudio.play();
+      if (audioStarted && typeof audioStarted.catch === "function") {
+        audioStarted.catch(() => {
+          if (__vaActiveAudio === greetAudio) __vaActiveAudio = null;
+          const synth = window.speechSynthesis;
+          if (!synth) return;
+          const u = new SpeechSynthesisUtterance(greetText);
+          u.lang = "es-ES";
+          u.rate = 1.05;
+          u.pitch = 1;
+          const voice = pickSpanishVoice(synth);
+          if (voice) u.voice = voice;
+          __vaActiveUtterance = u;
+          u.onend = () => {
+            __vaActiveUtterance = null;
+          };
+          u.onerror = () => {
+            __vaActiveUtterance = null;
+          };
+          synth.cancel();
+          synth.resume();
+          synth.speak(u);
+        });
+      }
+      if (window.speechSynthesis) window.speechSynthesis.resume();
       // Create the utterance synchronously inside the click handler so the
       // browser links the speech to the user gesture (autoplay rules).
-      const greetText = getGreetingText();
-      const u = new SpeechSynthesisUtterance(greetText);
-      u.lang = "es-ES";
-      u.rate = 1.05;
-      u.pitch = 1;
-      const voice = pickSpanishVoice(synth);
-      if (voice) u.voice = voice;
-      // Mark it immediately so the panel does not create a second utterance
-      // from an effect and cancel the click-authorized audio before it starts.
-      __vaActiveUtterance = u;
-      __vaSetGreetingSpoken(true);
-      u.onstart = () => {
-        __vaActiveUtterance = u;
-        __vaSetGreetingSpoken(true);
-      };
-      u.onend = () => {
-        __vaActiveUtterance = null;
-        __vaSetGreetingSpoken(true);
-      };
-      u.onerror = () => {
-        __vaActiveUtterance = null;
-        __vaSetGreetingSpoken(true);
-      };
-      synth.cancel();
-      synth.resume();
-      synth.speak(u);
       // Prime additional utterances for subsequent replies (still inside gesture).
       primeSpanishUtterances();
     } catch {
