@@ -995,8 +995,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             goTo(target);
           }, 350);
         }
-        // Habla la respuesta normal (no navegación a Dashboard).
-        speak(reply, fallback.audio);
+        // Habla exactamente la respuesta visible con TTS, no con clips genéricos.
+        speak(reply);
       } finally {
         if (!awaitingSummaryRef.current) setLoading(false);
       }
