@@ -4,7 +4,7 @@ import { useWeather } from "@/hooks/useWeather";
 import BookingDialog from "@/components/BookingDialog";
 import { AdBanner } from "@/components/AdBanner";
 import type { Listing } from "@/lib/overpass-listings";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { PlaceImage } from "@/components/PlaceImage";
@@ -215,6 +215,7 @@ function markRestaurantReturn() {
 
 export function ChatScreen() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user: authUser } = useAuth();
   const [canShowPersonalName, setCanShowPersonalName] = useState(false);
   const firstName = canShowPersonalName ? authUser?.name?.trim().split(" ")[0] : "";
@@ -259,7 +260,7 @@ export function ChatScreen() {
       /* noop */
     }
     return () => window.removeEventListener("agent:open-bus-picker", open);
-  }, []);
+  }, [location.search]);
 
   useEffect(() => {
     const restored = readInitialMessages();
