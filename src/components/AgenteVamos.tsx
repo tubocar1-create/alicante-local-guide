@@ -1005,6 +1005,28 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const recognitionRestartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const suppressRecognitionUntilRef = useRef(0);
+  // Máquina de estados del SpeechRecognition para evitar bloqueos en Android
+  // (start/stop simultáneos dejan al motor en "Preparando..." infinito).
+  // Transiciones válidas:
+  //   idle → listening (start)
+  //   listening → stopping (stop / onend / onerror)
+  //   stopping → idle (tras ~300ms de gracia)
+  const voiceStateRef = useRef<"idle" | "listening" | "stopping">("idle");
+  const voiceStateResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const setVoiceState = (next: "idle" | "listening" | "stopping") => {
+    voiceStateRef.current = next;
+    if (typeof window !== "undefined") {
+      // eslint-disable-next-line no-console
+      console.log("VOICE STATE:", next);
+    }
+  };
+  const scheduleVoiceIdle = (delay = 300) => {
+    if (voiceStateResetTimerRef.current) clearTimeout(voiceStateResetTimerRef.current);
+    voiceStateResetTimerRef.current = setTimeout(() => {
+      voiceStateResetTimerRef.current = null;
+      setVoiceState("idle");
+    }, delay);
+  };
   // Acuse "Voy a por ello…" mientras carga el Dashboard tras una navegación.
   const ackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Marca que estamos esperando un resumen externo (vamos:food-summary).
@@ -1101,15 +1123,25 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       activeRec.onerror = null;
       activeRec.onend = null;
     }
-    try {
-      activeRec?.abort?.();
-    } catch {}
-    try {
-      activeRec?.stop?.();
-    } catch {}
+    const wasListening = voiceStateRef.current === "listening";
+    if (wasListening || activeRec) {
+      setVoiceState("stopping");
+      try {
+        activeRec?.abort?.();
+      } catch {}
+      try {
+        activeRec?.stop?.();
+      } catch {}
+      // Espera de gracia antes de volver a IDLE: Android necesita ~300ms
+      // entre stop() y un eventual start() para no quedarse colgado.
+      scheduleVoiceIdle(300);
+    } else {
+      setVoiceState("idle");
+    }
     recogRef.current = null;
     setListening(false);
   }, []);
+
 
   const stopSpeaking = useCallback(() => {
     try {
@@ -1590,6 +1622,21 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
   const startListening = useCallback(() => {
     if (!openRef.current || modeRef.current !== "voice") return;
+    // Máquina de estados: SOLO arrancamos si estamos en IDLE.
+    // Cualquier otro estado (listening, stopping) se ignora — esto evita
+    // que Android entre en bloqueo de "Preparando..." por start/stop
+    // simultáneos.
+    if (voiceStateRef.current !== "idle") {
+      if (typeof window !== "undefined") {
+        // eslint-disable-next-line no-console
+        console.log("VOICE STATE: skip start (not idle ->", voiceStateRef.current, ")");
+      }
+      // Si estamos en "stopping", reintentamos cuando vuelva a idle.
+      if (voiceStateRef.current === "stopping") {
+        resumeListeningAfterEcho(400);
+      }
+      return;
+    }
     if (
       pausedRef.current ||
       loadingRef.current ||
@@ -1609,7 +1656,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       setVoiceError("Tu navegador no soporta reconocimiento de voz. Cambia a modo texto.");
       return;
     }
-    // Stop any previous instance
+    // No debería existir una instancia previa si el estado es IDLE; por
+    // seguridad limpiamos handlers sin volver a llamar a stop() (ya lo hizo
+    // quien dejó el estado en IDLE).
     const previousRec = recogRef.current;
     if (previousRec) {
       previousRec.onresult = null;
@@ -1617,10 +1666,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       previousRec.onerror = null;
       previousRec.onend = null;
     }
-    try {
-      previousRec?.abort?.();
-    } catch {}
     recogRef.current = null;
+
     try {
       const rec = new SRClass();
       rec.lang = "es-ES";
@@ -1712,6 +1759,11 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         }
         handled = true;
         setInterim("");
+        // Transición a STOPPING antes de invocar stop() para evitar carreras.
+        if (voiceStateRef.current === "listening") {
+          setVoiceState("stopping");
+          scheduleVoiceIdle(300);
+        }
         try {
           rec.stop?.();
         } catch {}
@@ -1735,6 +1787,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       };
       rec.onerror = (e: any) => {
         setListening(false);
+        // El reconocimiento ha muerto: transiciona a STOPPING y luego IDLE
+        // antes de cualquier reintento (evita "Preparando..." en Android).
+        if (voiceStateRef.current !== "idle") {
+          setVoiceState("stopping");
+          scheduleVoiceIdle(300);
+        }
         if (e?.error === "not-allowed" || e?.error === "service-not-allowed") {
           setVoiceError(null);
           resumeListeningAfterEcho(900);
@@ -1744,6 +1802,11 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       };
       rec.onend = () => {
         setListening(false);
+        // Transición de estado: listening → stopping → (300ms) → idle.
+        if (voiceStateRef.current !== "idle") {
+          setVoiceState("stopping");
+          scheduleVoiceIdle(300);
+        }
         if (
           speakingRef.current ||
           loadingRef.current ||
@@ -1758,19 +1821,39 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         if (finishTurn()) {
           return;
         }
-        // Silence — restart listening automatically
-        resumeListeningAfterEcho();
+        // Silence — restart listening automatically (con margen para que
+        // la máquina de estados vuelva a IDLE).
+        resumeListeningAfterEcho(Math.max(POST_SPEECH_LISTEN_DELAY_MS, 400));
       };
       recogRef.current = rec;
       setVoiceError(null);
       setListening(true);
-      rec.start();
+      // Marcamos LISTENING justo antes de start() para que cualquier
+      // start() concurrente quede bloqueado por la máquina de estados.
+      setVoiceState("listening");
+      try {
+        rec.start();
+      } catch (startErr) {
+        // Android puede lanzar "InvalidStateError" si todavía está cerrando
+        // una instancia previa. Volvemos a IDLE y reintentamos con margen.
+        setListening(false);
+        recogRef.current = null;
+        setVoiceState("stopping");
+        scheduleVoiceIdle(400);
+        resumeListeningAfterEcho(600);
+        return;
+      }
     } catch (err) {
       setListening(false);
       setVoiceError(null);
+      if (voiceStateRef.current !== "idle") {
+        setVoiceState("stopping");
+        scheduleVoiceIdle(300);
+      }
       resumeListeningAfterEcho(900);
     }
   }, [resumeListeningAfterEcho, shouldAutoListen]);
+
 
   useEffect(() => {
     startListeningRef.current = startListening;
