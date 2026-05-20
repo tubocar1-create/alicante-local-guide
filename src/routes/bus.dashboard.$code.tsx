@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ArrowDown, ArrowUp, Bus, Radio, RefreshCw, Loader2 } from "lucide-react";
 import { useBusGraph } from "@/hooks/useBusGraph";
@@ -35,11 +35,27 @@ function formatHHMM(d: Date): string {
 function BusDashboardPage() {
   const { code } = Route.useParams();
   const { data, loading } = useBusGraph();
+  const navigate = useNavigate();
   const [clock, setClock] = useState<Date>(new Date());
   useEffect(() => {
     const t = setInterval(() => setClock(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
+
+  const handlePickStop = (stopCode: string, stopName: string) => {
+    const prompt = `Quiero coger la línea ${code} en la parada ${stopName} (${stopCode}).`;
+    try {
+      sessionStorage.setItem("afp:fwdPrompt", prompt);
+    } catch {}
+    navigate({ to: "/" });
+    setTimeout(() => {
+      try {
+        window.dispatchEvent(
+          new CustomEvent("afp:forward-prompt", { detail: { text: prompt } }),
+        );
+      } catch {}
+    }, 350);
+  };
 
 
   const line = data?.lines.find((l) => l.code === code);
@@ -207,6 +223,7 @@ function BusDashboardPage() {
               if (!others) return [];
               return topTransfers.filter((t) => others.has(t.code));
             }}
+            onPickStop={handlePickStop}
           />
           <DirectionColumn
             label="VUELTA"
@@ -220,6 +237,7 @@ function BusDashboardPage() {
               if (!others) return [];
               return topTransfers.filter((t) => others.has(t.code));
             }}
+            onPickStop={handlePickStop}
           />
         </div>
 
@@ -287,6 +305,7 @@ function DirectionColumn({
   color,
   inService,
   transferLines,
+  onPickStop,
 }: {
   label: string;
   direction: 1 | 2;
@@ -295,6 +314,7 @@ function DirectionColumn({
   color: string;
   inService: boolean;
   transferLines: (stopCode: string) => { code: string; color: string }[];
+  onPickStop: (stopCode: string, stopName: string) => void;
 }) {
   const now = new Date();
 
@@ -373,7 +393,12 @@ function DirectionColumn({
                   {isOrigin ? "Origen" : "Destino"}
                 </span>
               )}
-              <div className="flex items-start gap-2">
+              <button
+                type="button"
+                onClick={() => onPickStop(s.code, s.name)}
+                className="flex w-full items-start gap-2 rounded-md text-left transition hover:bg-white/5 active:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                aria-label={`Ver tiempo real de ${s.name}`}
+              >
                 {/* Badge con el próximo tiempo + código de parada */}
                 <div className="flex shrink-0 flex-col items-center">
                   <div
@@ -447,7 +472,7 @@ function DirectionColumn({
                   )}
 
                 </div>
-              </div>
+              </button>
             </li>
 
 
