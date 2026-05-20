@@ -1347,157 +1347,94 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const isVoice = true;
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-[100] flex">
-      <div className="pointer-events-auto relative flex h-full w-full flex-col overflow-hidden border bg-background shadow-2xl">
-        <header className="flex items-center justify-between border-b bg-gradient-to-r from-primary to-orange-500 px-4 py-3 text-primary-foreground">
-          <div className="flex items-center gap-2">
-            <div className="grid h-9 w-9 place-items-center rounded-full bg-white/20">
-              <Sparkles className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-sm font-bold leading-tight">Agente Vamos</p>
-              <p className="text-[11px] opacity-90">
-                {isVoice
-                  ? paused
-                    ? "en pausa"
-                    : speaking
-                      ? "hablando…"
-                      : listening
-                        ? "te escucho…"
-                        : loading
-                          ? "pensando…"
-                          : "modo voz"
-                  : "modo texto"}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() =>
-                setMuted((v) => {
-                  if (!v) stopSpeaking();
-                  return !v;
-                })
-              }
-              aria-label={muted ? "Activar voz" : "Silenciar voz"}
-              className="rounded-full p-2 hover:bg-white/20"
-              title={muted ? "Activar voz" : "Silenciar voz"}
-            >
-              {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-            </button>
-            {/* Toggle de modo texto eliminado: el agente es solo de voz */}
-            <button
-              onClick={onClose}
-              aria-label="Cerrar"
-              className="rounded-full p-2 hover:bg-white/20"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-        </header>
-
-        {/* Modo voz siempre visible (compacto) */}
-        <div className="flex flex-col items-center gap-2 border-b px-4 py-3">
-          {/* Voice-only — no message history rendered. Show just live transcript. */}
-          <div className="min-h-[2.5rem] w-full text-center">
-            {interim ? (
-              <p className="text-sm italic text-foreground/80">"{interim}…"</p>
-            ) : (
-              <p className="text-xs text-muted-foreground">
-                {speaking
-                  ? "VA está hablando…"
-                  : listening
-                    ? "Habla cuando quieras"
-                    : loading
-                      ? "Pensando una respuesta…"
-                      : paused
-                        ? "Conversación en pausa"
-                        : "Preparando…"}
-              </p>
-            )}
-          </div>
-
-          <div className="flex w-full flex-col items-center gap-3 pb-2">
-            {/* Sin avisos de permiso ni botón de activar micro: el agente habla directamente */}
-
-
-            {/* Animated orb — visual only, no interaction required */}
-            <div
-              className={cn(
-                "relative grid h-20 w-20 place-items-center rounded-full text-primary-foreground shadow-2xl transition",
-                paused
-                  ? "bg-muted text-muted-foreground"
-                  : listening
-                    ? "bg-red-500 ring-8 ring-red-500/30 animate-pulse"
-                    : speaking
-                      ? "bg-orange-500 ring-8 ring-orange-500/30"
-                      : loading
-                        ? "bg-primary ring-4 ring-primary/30"
-                        : "bg-gradient-to-br from-primary to-orange-500 ring-4 ring-primary/20",
-              )}
-            >
-              {loading ? (
-                <Loader2 className="h-8 w-8 animate-spin" />
-              ) : paused ? (
-                <MicOff className="h-8 w-8" />
-              ) : (
-                <Mic className="h-8 w-8" />
-              )}
-            </div>
-
-            <p className="text-center text-xs text-muted-foreground">
-              {paused
-                ? "conversación en pausa"
-                : loading
-                  ? "pensando…"
-                  : speaking
-                    ? "hablando — espera tu turno"
-                    : listening
-                      ? "te escucho · habla cuando quieras"
-                      : "preparando micrófono…"}
-            </p>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => {
-                  iniciarAudio();
-                  if (paused) {
-                    primeSpanishUtterances();
-                    setVoiceError(null);
-                    setPaused(false);
-                    setTimeout(() => startListeningRef.current(), POST_SPEECH_LISTEN_DELAY_MS);
-                  } else {
-                    setPaused(true);
-                    stopListening();
-                    stopSpeaking();
-                  }
-                }}
-                className="flex items-center gap-1 rounded-full border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
-              >
-                {paused ? (
-                  <>
-                    <Play className="h-3 w-3" /> reanudar
-                  </>
-                ) : (
-                  <>
-                    <Pause className="h-3 w-3" /> pausar
-                  </>
-                )}
-              </button>
-              {/* Botón "activar micro" eliminado: no se muestran prompts de permiso */}
-
-              {/* Botón "modo texto" eliminado: el agente es solo de voz */}
-            </div>
-          </div>
+    <div className="pointer-events-none fixed inset-x-0 bottom-20 z-[100] flex justify-center px-3">
+      <div className="pointer-events-auto flex items-center gap-3 rounded-full border bg-background/95 px-3 py-2 shadow-2xl backdrop-blur">
+        <div
+          className={cn(
+            "relative grid h-12 w-12 place-items-center rounded-full text-primary-foreground transition",
+            paused
+              ? "bg-muted text-muted-foreground"
+              : listening
+                ? "bg-red-500 ring-4 ring-red-500/30 animate-pulse"
+                : speaking
+                  ? "bg-orange-500 ring-4 ring-orange-500/30"
+                  : loading
+                    ? "bg-primary ring-2 ring-primary/30"
+                    : "bg-gradient-to-br from-primary to-orange-500 ring-2 ring-primary/20",
+          )}
+        >
+          {loading ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : paused ? (
+            <MicOff className="h-5 w-5" />
+          ) : (
+            <Mic className="h-5 w-5" />
+          )}
         </div>
 
-        <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-4" />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-xs font-semibold text-foreground">
+            {paused
+              ? "en pausa"
+              : speaking
+                ? "hablando…"
+                : listening
+                  ? "te escucho"
+                  : loading
+                    ? "pensando…"
+                    : "preparando…"}
+          </p>
+          {interim && (
+            <p className="truncate text-[11px] italic text-muted-foreground">"{interim}…"</p>
+          )}
+        </div>
 
+        <button
+          onClick={() => {
+            iniciarAudio();
+            if (paused) {
+              primeSpanishUtterances();
+              setVoiceError(null);
+              setPaused(false);
+              setTimeout(() => startListeningRef.current(), POST_SPEECH_LISTEN_DELAY_MS);
+            } else {
+              setPaused(true);
+              stopListening();
+              stopSpeaking();
+            }
+          }}
+          aria-label={paused ? "Reanudar" : "Pausar"}
+          className="flex h-9 w-9 items-center justify-center rounded-full border bg-background text-foreground hover:bg-muted"
+        >
+          {paused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+        </button>
 
-        {/* Formulario de texto eliminado: el agente es solo de voz */}
+        <button
+          onClick={() =>
+            setMuted((v) => {
+              if (!v) stopSpeaking();
+              return !v;
+            })
+          }
+          aria-label={muted ? "Activar voz" : "Silenciar voz"}
+          className="flex h-9 w-9 items-center justify-center rounded-full border bg-background text-foreground hover:bg-muted"
+        >
+          {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+        </button>
+
+        <button
+          onClick={onClose}
+          aria-label="Cerrar"
+          className="flex h-9 w-9 items-center justify-center rounded-full border bg-background text-foreground hover:bg-muted"
+        >
+          <X className="h-4 w-4" />
+        </button>
+
+        <div ref={scrollRef} className="hidden" />
       </div>
     </div>
   );
+
 }
 
 export function AgenteVamosFab() {
