@@ -753,44 +753,27 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         return;
       }
 
-      // Implementación directa y sencilla: cancel → resume → speak.
-      // Sin colas, sin utterances reservadas, sin timers de bloqueo.
-      const voz = new SpeechSynthesisUtterance(text);
-      voz.lang = "es-ES";
-      voz.rate = 1.05;
-      voz.pitch = 1;
-      try {
-        const v = pickSpanishVoice(window.speechSynthesis);
-        if (v) voz.voice = v;
-      } catch {
-        // sin voz específica
-      }
-
-      voz.onstart = () => {
+      const onSpeechStart = () => {
         speakingRef.current = true;
         setSpeaking(true);
       };
-      voz.onend = () => {
+      const onSpeechEnd = () => {
         suppressRecognitionUntilRef.current = Date.now() + POST_SPEECH_LISTEN_DELAY_MS;
         speakingRef.current = false;
         setSpeaking(false);
         onEnd?.();
         resumeListeningAfterEcho();
       };
-      voz.onerror = () => {
-        speakingRef.current = false;
-        setSpeaking(false);
-        onEnd?.();
-        resumeListeningAfterEcho();
-      };
 
       try {
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.resume();
+        window.addEventListener("vamos:speech-start", onSpeechStart, { once: true });
+        window.addEventListener("vamos:speech-end", onSpeechEnd, { once: true });
         speakingRef.current = true;
         setSpeaking(true);
-        window.speechSynthesis.speak(voz);
+        hablar(text);
       } catch {
+        window.removeEventListener("vamos:speech-start", onSpeechStart);
+        window.removeEventListener("vamos:speech-end", onSpeechEnd);
         onEnd?.();
         resumeListeningAfterEcho();
       }
