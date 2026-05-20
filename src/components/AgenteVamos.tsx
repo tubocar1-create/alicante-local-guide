@@ -1115,6 +1115,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       setInterim("");
       setLoading(false);
       awaitingSummaryRef.current = false;
+      if (recognitionRestartTimerRef.current) {
+        clearTimeout(recognitionRestartTimerRef.current);
+        recognitionRestartTimerRef.current = null;
+      }
       if (ackTimerRef.current) {
         clearTimeout(ackTimerRef.current);
         ackTimerRef.current = null;
@@ -1357,13 +1361,15 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                           u.onend = () => {
                             window.clearTimeout(blockedTimer);
                             __vaActiveUtterance = null;
+                            suppressRecognitionUntilRef.current = Date.now() + 700;
                             speakingRef.current = false;
                             setSpeaking(false);
-                            if (shouldAutoListen()) startListeningRef.current();
+                            resumeListeningAfterEcho();
                           };
                           u.onerror = () => {
                             window.clearTimeout(blockedTimer);
                             __vaActiveUtterance = null;
+                            suppressRecognitionUntilRef.current = Date.now() + 700;
                             speakingRef.current = false;
                             setSpeaking(false);
                             setTapToSpeak(pending);
