@@ -1180,8 +1180,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const isVoice = mode === "voice";
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[100] flex justify-center sm:inset-auto sm:bottom-4 sm:right-4 sm:justify-end">
-      <div className="pointer-events-auto relative flex max-h-[58vh] w-full flex-col overflow-hidden rounded-t-3xl border bg-background shadow-2xl sm:max-h-[560px] sm:w-[380px] sm:rounded-3xl">
+    <div className="pointer-events-none fixed inset-0 z-[100] flex">
+      <div className="pointer-events-auto relative flex h-full w-full flex-col overflow-hidden border bg-background shadow-2xl">
+
         <header className="flex items-center justify-between border-b bg-gradient-to-r from-primary to-orange-500 px-4 py-3 text-primary-foreground">
           <div className="flex items-center gap-2">
             <div className="grid h-9 w-9 place-items-center rounded-full bg-white/20">
