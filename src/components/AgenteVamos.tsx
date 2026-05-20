@@ -610,6 +610,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       clearTimeout(turnTimerRef.current);
       turnTimerRef.current = null;
     }
+    if (recognitionRestartTimerRef.current) {
+      clearTimeout(recognitionRestartTimerRef.current);
+      recognitionRestartTimerRef.current = null;
+    }
     setInterim("");
     try {
       recogRef.current?.abort?.();
@@ -642,6 +646,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       !pausedRef.current &&
       !loadingRef.current &&
       !speakingRef.current &&
+      !isAgentSpeechOutputActive() &&
       Date.now() >= suppressRecognitionUntilRef.current
     );
   }, []);
