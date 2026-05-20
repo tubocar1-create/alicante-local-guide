@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, MapPin, Search, X } from "lucide-react";
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { useUserLocation, distanceKm } from "@/hooks/useUserLocation";
