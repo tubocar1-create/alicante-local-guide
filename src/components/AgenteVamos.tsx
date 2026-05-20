@@ -1745,9 +1745,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         // falla, caemos a window.location para no quedarnos atascados.
         const goTo = (raw: string) => {
           try {
-            const normalizedTarget = ["/bus", "/bus/", "/bus/planner", "/buses-en-vivo"].includes(raw)
-              ? "action:bus-picker"
-              : raw;
+            const legacyBusLine = raw.match(/^\/bus\/lines\/([^/?#]+)$/i);
+            const normalizedTarget = legacyBusLine
+              ? `/bus/dashboard/${legacyBusLine[1]}`
+              : ["/bus", "/bus/", "/bus/planner", "/buses-en-vivo", "/bus/lines"].includes(raw)
+                ? "action:bus-picker"
+                : raw;
             // Sentinel legacy: antes abría el picker con una línea preseleccionada;
             // ahora debe ir siempre al Dashboard de la línea.
             const lineSentinel = normalizedTarget.match(/^action:bus-picker:line:([A-Z0-9]+)$/i);
@@ -1815,7 +1818,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             return navigate({ to: pathname as any });
           } catch {
             try {
-              if (["/bus", "/bus/", "/bus/planner", "/buses-en-vivo", "action:bus-picker"].includes(raw)) {
+              const legacyBusLine = raw.match(/^\/bus\/lines\/([^/?#]+)$/i);
+              if (legacyBusLine) {
+                window.location.assign(`/bus/dashboard/${legacyBusLine[1]}`);
+              } else if (["/bus", "/bus/", "/bus/planner", "/buses-en-vivo", "/bus/lines", "action:bus-picker"].includes(raw)) {
                 try {
                   window.sessionStorage.setItem("agent:open-bus-picker", "1");
                 } catch {
