@@ -1066,6 +1066,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         return true;
       };
       rec.onspeechend = () => {
+        if (speakingRef.current || loadingRef.current || Date.now() < suppressRecognitionUntilRef.current) {
+          finalText = "";
+          lastTranscript = "";
+          setInterim("");
+          return;
+        }
         finishTurn();
       };
       rec.onerror = (e: any) => {
@@ -1079,6 +1085,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       };
       rec.onend = () => {
         setListening(false);
+        if (speakingRef.current || loadingRef.current || Date.now() < suppressRecognitionUntilRef.current) {
+          finalText = "";
+          lastTranscript = "";
+          setInterim("");
+          return;
+        }
         if (finishTurn()) {
           return;
         }
