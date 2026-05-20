@@ -495,6 +495,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const mutedRef = useRef(muted);
   const loadingRef = useRef(loading);
   const speakingRef = useRef(speaking);
+  const assistantSpeechMemoryRef = useRef<string[]>([getGreetingText()]);
   const openRef = useRef(open);
   const wasOpenRef = useRef(open);
   const turnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -680,6 +681,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const speak = useCallback(
     (text: string, audio?: AgentAudioClip, onEnd?: () => void) => {
       // Anti-eco (D9): cortamos cualquier escucha activa antes de hablar.
+      assistantSpeechMemoryRef.current = [text, ...assistantSpeechMemoryRef.current].slice(0, 6);
       suppressRecognitionUntilRef.current = Date.now() + 1200;
       setInterim("");
       try {
@@ -1101,6 +1103,14 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         }
         const t = (finalText || lastTranscript).trim();
         if (!t) return false;
+        if (isLikelyAgentEcho(t, assistantSpeechMemoryRef.current)) {
+          finalText = "";
+          lastTranscript = "";
+          setInterim("");
+          suppressRecognitionUntilRef.current = Date.now() + 700;
+          resumeListeningAfterEcho();
+          return false;
+        }
         handled = true;
         setInterim("");
         try {
