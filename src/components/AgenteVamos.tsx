@@ -1818,6 +1818,26 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           }
         }
 
+        // ─── HARD-BLOCK SANITARIO POST-SERVIDOR ──────────────────────────
+        // Si el mensaje original contiene síntomas, ignoramos cualquier
+        // navegación devuelta por el servidor: forzamos el dominio salud
+        // con su pregunta aclaratoria.
+        if (hasHealthHardBlock(normalizeSpeech(clean)) && pendingDomainRef.current !== "salud") {
+          const saludDomain = DOMAINS.find((d) => d.id === "salud");
+          if (saludDomain) {
+            target = undefined;
+            reply = saludDomain.question;
+            forwardPrompt = undefined;
+            pendingDomainRef.current = "salud";
+            if (typeof window !== "undefined") {
+              try {
+                window.sessionStorage.removeItem("afp:fwdPrompt");
+                window.sessionStorage.removeItem("afp:openSubmenu");
+              } catch {}
+            }
+          }
+        }
+
         // ─── HARD-BLOCK · destinos específicos desde frases ambiguas ─────
         // Regla: NUNCA abrir un destino específico (especialista, ficha,
         // subcategoría) si el mensaje del usuario es ambiguo. Solo abrimos
