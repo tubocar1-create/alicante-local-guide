@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound, Await } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, redirect, Await } from "@tanstack/react-router";
 import { Suspense } from "react";
 import { ArrowLeft, MapPin, Navigation, Sparkles, Star } from "lucide-react";
 import { getBeachQuick, getBeachExtras, type BeachExtras } from "@/lib/playas-map.functions";
