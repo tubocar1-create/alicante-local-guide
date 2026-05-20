@@ -667,14 +667,14 @@ function localResolve(
     // 1.bis) Caso especial: estamos esperando que el usuario diga la línea
     // de bus que quiere tomar. Si la frase contiene un código de línea
     // válido (1–3 dígitos opcionalmente con "N" o letra), saltamos directos
-    // al selector de paradas con esa línea preseleccionada.
+    // al Dashboard de esa línea.
     if (currentDomain === "bus_known") {
       const m = query.match(/\b(?:linea\s+)?([clm]?\s?-?\s?\d{1,3}\s?[a-z]?)\b/i);
       const code = m?.[1]?.replace(/[\s-]/g, "").toUpperCase();
       if (code && /\d/.test(code)) {
         return {
-          reply: `¡Voy! Abro las paradas de la línea ${code}.`,
-          path: `action:bus-picker:line:${code}`,
+          reply: `¡Voy! Abro el Dashboard de la línea ${code}.`,
+          path: `/bus/dashboard/${code}`,
           audio: "bus",
           pendingDomain: null,
         };
@@ -1624,7 +1624,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           pendingDomainRef.current = null;
         }
 
-        if (!isClarifying) {
+        const resolvedLineDashboard = /^\/bus\/dashboard\/[^/?#]+$/i.test(fallback.path ?? "");
+
+        if (!isClarifying && !resolvedLineDashboard) {
           try {
             const res = await askAgent({
               data: {
@@ -1726,27 +1728,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             const normalizedTarget = ["/bus", "/bus/", "/bus/planner", "/buses-en-vivo"].includes(raw)
               ? "action:bus-picker"
               : raw;
-            // Sentinel: abrir el picker con una línea preseleccionada.
+            // Sentinel legacy: antes abría el picker con una línea preseleccionada;
+            // ahora debe ir siempre al Dashboard de la línea.
             const lineSentinel = normalizedTarget.match(/^action:bus-picker:line:([A-Z0-9]+)$/i);
             if (lineSentinel) {
               const lineCode = lineSentinel[1];
-              try {
-                window.sessionStorage.setItem("agent:open-bus-picker", "1");
-                window.sessionStorage.setItem("agent:open-bus-picker-line", lineCode);
-              } catch {
-                /* noop */
-              }
-              navigate({ href: "/?openBusPicker=1", replace: true } as any);
-              setTimeout(() => {
-                try {
-                  window.dispatchEvent(
-                    new CustomEvent("agent:open-bus-picker", { detail: { line: lineCode } }),
-                  );
-                } catch {
-                  /* noop */
-                }
-              }, 60);
-              return;
+              return navigate({ to: "/bus/dashboard/$code", params: { code: lineCode } });
             }
             // Sentinel: abrir el picker de buses urbanos en el Inicio.
             if (normalizedTarget === "action:bus-picker") {
@@ -1785,11 +1772,15 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             const hotelMatch = pathname.match(/^\/hotel\/([^/]+)$/);
             const restMatch = pathname.match(/^\/restaurants\/([^/]+)$/);
             const vueloMatch = pathname.match(/^\/vuelos\/([^/]+)$/);
+            const busDashboardMatch = pathname.match(/^\/bus\/dashboard\/([^/]+)$/);
             if (hotelMatch) {
               return navigate({ to: "/hotel/$id", params: { id: hotelMatch[1] } });
             }
             if (restMatch) {
               return navigate({ to: "/restaurants/$placeId", params: { placeId: restMatch[1] } });
+            }
+            if (busDashboardMatch) {
+              return navigate({ to: "/bus/dashboard/$code", params: { code: busDashboardMatch[1] } });
             }
             if (vueloMatch) {
               return navigate({
