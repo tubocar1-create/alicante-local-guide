@@ -1520,8 +1520,6 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                 <Send className="h-4 w-4" />
               </button>
             </form>
-          </>
-        )}
       </div>
     </div>
   );
