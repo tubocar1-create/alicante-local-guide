@@ -696,7 +696,7 @@ export function ChatScreen() {
       {isWelcome && <div className="mb-2"><AdBanner /></div>}
 
       {/* Messages */}
-      <div ref={scrollRef} className={["relative flex-1 px-4 pt-3 pb-5", isWelcome ? "overflow-hidden" : "overflow-y-auto"].join(" ")}>
+      <div ref={scrollRef} className={["relative min-h-0 flex-1 px-4 pt-3", isWelcome ? "overflow-hidden pb-0" : "overflow-y-auto pb-5"].join(" ")}>
         <div className="mx-auto flex max-w-2xl flex-col gap-3">
           {isWelcome && (
             <div className="relative mx-auto mb-1 w-full max-w-[320px] overflow-visible rounded-xl">
