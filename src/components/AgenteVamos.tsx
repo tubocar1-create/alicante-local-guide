@@ -321,13 +321,40 @@ const DOMAINS: DomainSpec[] = [
       "quiero moverme", "necesito moverme", "como me muevo", "quiero desplazarme",
       "tengo que ir", "necesito ir", "como llego", "como voy",
       "transporte",
+      // Disparadores explícitos del flujo de bus urbano:
+      "bus", "buses", "autobus", "autobuses", "emt", "vectalia",
+      "linea de bus", "parada", "parada de bus", "bus urbano", "buses urbanos",
     ],
-    question: "¿Quieres bus urbano, planificador de ruta o vuelos?",
+    question: "🚌 ¿Ya sabes qué bus tomar? Dime «sí, lo sé» y te pregunto la línea, o «ayúdame» y planificamos la ruta.",
     audio: "bus",
     followups: [
-      { keys: ["bus", "autobus", "autobuses", "urbano", "urbanos", "emt", "parada", "linea", "lineas", "local", "locales"], path: "action:bus-picker" },
-      { keys: ["ruta", "planificador", "planificar", "trayecto"], path: "action:bus-picker" },
+      // "Sí, conozco mi bus" → entramos en bus_known para que el usuario diga la línea.
+      { keys: [
+          "si", "si lo se", "si lo sé", "lo se", "lo sé", "claro", "por supuesto",
+          "conozco", "conozco mi bus", "se el bus", "sé el bus", "ya lo se", "ya lo sé",
+          "ya se que bus", "ya sé qué bus", "se que bus", "sé qué bus",
+        ], path: "action:bus-known-line" },
+      // "Ayúdame" / "no sé" / planificar → abrimos el picker en su paso inicial.
+      { keys: [
+          "no", "no se", "no sé", "ayuda", "ayudame", "ayúdame", "no lo se", "no lo sé",
+          "elegir ruta", "planificar", "planificador", "planifica", "ruta", "trayecto",
+          "no tengo ni idea", "ni idea",
+        ], path: "action:bus-picker" },
       { keys: ["vuelo", "vuelos", "avion", "aeropuerto"], path: "/vuelos" },
+    ],
+  },
+  {
+    id: "bus_known",
+    hubPath: "action:bus-picker",
+    // No usamos triggers de entrada: este dominio solo se activa como
+    // continuación de "transporte" cuando el usuario confirma que conoce
+    // su bus. Aquí esperamos que diga la línea (número).
+    triggers: [],
+    question: "Perfecto. ¿Cuál es la línea que quieres tomar? (por ejemplo: 22, 7, 13N…)",
+    audio: "bus",
+    followups: [
+      // Si cambia de opinión y pide ayuda, abrimos el picker normal.
+      { keys: ["no se", "no sé", "ayuda", "ayudame", "ayúdame", "no lo se", "no lo sé"], path: "action:bus-picker" },
     ],
   },
   {
@@ -637,6 +664,22 @@ function localResolve(
 
   // 1) Follow-up dentro de un dominio activo: resolvemos sub-destino.
   if (currentDomain) {
+    // 1.bis) Caso especial: estamos esperando que el usuario diga la línea
+    // de bus que quiere tomar. Si la frase contiene un código de línea
+    // válido (1–3 dígitos opcionalmente con "N" o letra), saltamos directos
+    // al selector de paradas con esa línea preseleccionada.
+    if (currentDomain === "bus_known") {
+      const m = query.match(/\b(?:linea\s+)?([clm]?\s?-?\s?\d{1,3}\s?[a-z]?)\b/i);
+      const code = m?.[1]?.replace(/[\s-]/g, "").toUpperCase();
+      if (code && /\d/.test(code)) {
+        return {
+          reply: `¡Voy! Abro las paradas de la línea ${code}.`,
+          path: `action:bus-picker:line:${code}`,
+          audio: "bus",
+          pendingDomain: null,
+        };
+      }
+    }
     const d = DOMAINS.find((x) => x.id === currentDomain);
     const subcategory = matchExistingSubcategory(query, catalog.subcategories[currentDomain]);
     if (subcategory) {
@@ -650,6 +693,17 @@ function localResolve(
     if (d) {
       const fuPath = matchFollowup(query, d);
       if (fuPath) {
+        // Sentinel especial: el usuario dice "sí, conozco mi bus" estando
+        // en el dominio "transporte". En vez de navegar, activamos el
+        // subdominio "bus_known" y preguntamos la línea, sin abrir picker.
+        if (fuPath === "action:bus-known-line") {
+          const busKnown = DOMAINS.find((x) => x.id === "bus_known");
+          return {
+            reply: busKnown?.question ?? "¿Cuál es la línea que quieres tomar?",
+            audio: "bus",
+            pendingDomain: "bus_known",
+          };
+        }
         const intent = INTENTS.find((it) => it.path === fuPath);
         return {
           reply: intent?.reply ?? "Te llevo allí.",
@@ -1672,6 +1726,28 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             const normalizedTarget = ["/bus", "/bus/", "/bus/planner", "/buses-en-vivo"].includes(raw)
               ? "action:bus-picker"
               : raw;
+            // Sentinel: abrir el picker con una línea preseleccionada.
+            const lineSentinel = normalizedTarget.match(/^action:bus-picker:line:([A-Z0-9]+)$/i);
+            if (lineSentinel) {
+              const lineCode = lineSentinel[1];
+              try {
+                window.sessionStorage.setItem("agent:open-bus-picker", "1");
+                window.sessionStorage.setItem("agent:open-bus-picker-line", lineCode);
+              } catch {
+                /* noop */
+              }
+              navigate({ href: "/?openBusPicker=1", replace: true } as any);
+              setTimeout(() => {
+                try {
+                  window.dispatchEvent(
+                    new CustomEvent("agent:open-bus-picker", { detail: { line: lineCode } }),
+                  );
+                } catch {
+                  /* noop */
+                }
+              }, 60);
+              return;
+            }
             // Sentinel: abrir el picker de buses urbanos en el Inicio.
             if (normalizedTarget === "action:bus-picker") {
               try {
