@@ -1289,7 +1289,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   }, [open, mode]);
 
   if (!open) return null;
-  const isVoice = mode === "voice";
+  const isVoice = true;
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[100] flex">
