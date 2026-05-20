@@ -764,27 +764,23 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         return;
       }
 
-      const onSpeechStart = () => {
-        speakingRef.current = true;
-        setSpeaking(true);
-      };
-      const onSpeechEnd = () => {
-        suppressRecognitionUntilRef.current = Date.now() + POST_SPEECH_LISTEN_DELAY_MS;
-        speakingRef.current = false;
-        setSpeaking(false);
-        onEnd?.();
-        resumeListeningAfterEcho();
-      };
-
       try {
-        window.addEventListener("vamos:speech-start", onSpeechStart, { once: true });
-        window.addEventListener("vamos:speech-end", onSpeechEnd, { once: true });
         speakingRef.current = true;
         setSpeaking(true);
-        hablar(text);
+        hablar(text, {
+          onStart: () => {
+            speakingRef.current = true;
+            setSpeaking(true);
+          },
+          onEnd: () => {
+            suppressRecognitionUntilRef.current = Date.now() + POST_SPEECH_LISTEN_DELAY_MS;
+            speakingRef.current = false;
+            setSpeaking(false);
+            onEnd?.();
+            resumeListeningAfterEcho();
+          },
+        });
       } catch {
-        window.removeEventListener("vamos:speech-start", onSpeechStart);
-        window.removeEventListener("vamos:speech-end", onSpeechEnd);
         onEnd?.();
         resumeListeningAfterEcho();
       }
