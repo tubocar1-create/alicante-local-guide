@@ -11,7 +11,7 @@ export const Route = createFileRoute("/bus")({
         /* noop */
       }
     }
-    throw redirect({ to: "/", search: { openBusPicker: "1" } as any, replace: true });
+    throw redirect({ href: "/?openBusPicker=1", replace: true });
   },
   component: () => null,
 });
