@@ -705,6 +705,19 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
       return { ok: true as const, content: smalltalk, navigate: null, source: "smalltalk" as const };
     }
 
+    // 1.amb) AMBIGÜEDAD DE RUTA — preguntar antes de navegar.
+    // Frases que pueden encajar en varias rutas a la vez (p.ej. "tomar el sol"
+    // → playa o clima). No navegamos: devolvemos una pregunta de aclaración.
+    const ambiguous = detectAmbiguity(normalized);
+    if (ambiguous) {
+      return {
+        ok: true as const,
+        content: ambiguous,
+        navigate: null,
+        source: "clarify" as const,
+      };
+    }
+
     // 1.bis) Tomar algo / cerveza / copas / discoteca → reenviar al chat principal
     // El Dashboard Nocturno vive inline dentro de ChatScreen y se dispara con el prompt.
     if (DRINKS_INTENT_RE.test(lastUserMessage)) {
