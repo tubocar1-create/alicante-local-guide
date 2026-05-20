@@ -1254,8 +1254,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           </div>
         </header>
 
-        {isVoice ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-4 overflow-hidden px-6 py-6">
+        {/* Modo voz siempre visible (compacto) */}
+        <div className="flex flex-col items-center gap-2 border-b px-4 py-3">
+
             {/* Voice-only — no message history rendered. Show just live transcript. */}
             <div className="min-h-[2.5rem] w-full text-center">
               {interim ? (
@@ -1465,8 +1466,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
               </div>
             </div>
           </div>
-        ) : (
-          <>
+
+
             <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-3 py-4">
               {msgs.map((m, i) => (
                 <div
@@ -1519,8 +1520,6 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                 <Send className="h-4 w-4" />
               </button>
             </form>
-          </>
-        )}
       </div>
     </div>
   );
