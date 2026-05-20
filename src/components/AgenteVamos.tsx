@@ -1669,7 +1669,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         // falla, caemos a window.location para no quedarnos atascados.
         const goTo = (raw: string) => {
           try {
-            const normalizedTarget = ["/bus", "/bus/planner", "/buses-en-vivo"].includes(raw)
+            const normalizedTarget = ["/bus", "/bus/", "/bus/planner", "/buses-en-vivo"].includes(raw)
               ? "action:bus-picker"
               : raw;
             // Sentinel: abrir el picker de buses urbanos en el Inicio.
@@ -1679,7 +1679,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
               } catch {
                 /* noop */
               }
-              navigate({ to: "/" });
+              navigate({ to: "/", search: { openBusPicker: "1" } as any, replace: true });
               setTimeout(() => {
                 try {
                   window.dispatchEvent(new Event("agent:open-bus-picker"));
@@ -1728,7 +1728,16 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             return navigate({ to: pathname as any });
           } catch {
             try {
-              window.location.assign(raw);
+              if (["/bus", "/bus/", "/bus/planner", "/buses-en-vivo", "action:bus-picker"].includes(raw)) {
+                try {
+                  window.sessionStorage.setItem("agent:open-bus-picker", "1");
+                } catch {
+                  /* noop */
+                }
+                window.location.assign("/?openBusPicker=1");
+              } else {
+                window.location.assign(raw);
+              }
             } catch {}
           }
         };
