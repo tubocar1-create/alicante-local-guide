@@ -679,8 +679,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   );
 
   const speak = useCallback(
-    (text: string, audio?: AgentAudioClip, onEnd?: () => void, reservedUtterance?: SpeechSynthesisUtterance | null) => {
-      // Anti-eco (D9): cortamos cualquier escucha activa antes de hablar.
+    (text: string, _audio?: AgentAudioClip, onEnd?: () => void, _reservedUtterance?: SpeechSynthesisUtterance | null) => {
+      // Anti-eco: cortamos escucha activa antes de hablar.
       assistantSpeechMemoryRef.current = [text, ...assistantSpeechMemoryRef.current].slice(0, 6);
       suppressRecognitionUntilRef.current = Date.now() + 1200;
       setInterim("");
@@ -693,72 +693,60 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         }
         recogRef.current?.abort?.();
       } catch {
-        // Ignore if recognition is already stopped.
+        // Ignore
       }
       recogRef.current = null;
       setListening(false);
-      if (audio && playAudioClip(audio, text, onEnd)) return;
+
       if (mutedRef.current || typeof window === "undefined" || !window.speechSynthesis) {
         onEnd?.();
         resumeListeningAfterEcho();
         return;
       }
-      const synth = window.speechSynthesis;
+
+      // Implementación directa y sencilla: cancel → resume → speak.
+      // Sin colas, sin utterances reservadas, sin timers de bloqueo.
+      const voz = new SpeechSynthesisUtterance(text);
+      voz.lang = "es-ES";
+      voz.rate = 1.05;
+      voz.pitch = 1;
       try {
-        synth.cancel();
-        synth.resume();
-        const u = reservedUtterance ? configureSpanishUtterance(reservedUtterance, text) : makeSpanishUtterance(text);
-        let started = false;
-        const blockedTimer = window.setTimeout(() => {
-          if (!started && __vaActiveUtterance === u) {
-            try {
-              synth.resume();
-              synth.speak(u);
-              keepSpeechSynthesisAwake(synth);
-              return;
-            } catch {
-              __vaActiveUtterance = null;
-              speakingRef.current = false;
-              setSpeaking(false);
-              onEnd?.();
-              resumeListeningAfterEcho();
-            }
-          }
-        }, 1200);
-        u.onstart = () => {
-          started = true;
-          window.clearTimeout(blockedTimer);
-          speakingRef.current = true;
-          setSpeaking(true);
-        };
-        u.onend = () => {
-          window.clearTimeout(blockedTimer);
-          __vaActiveUtterance = null;
-          suppressRecognitionUntilRef.current = Date.now() + POST_SPEECH_LISTEN_DELAY_MS;
-          speakingRef.current = false;
-          setSpeaking(false);
-          onEnd?.();
-          resumeListeningAfterEcho();
-        };
-        u.onerror = () => {
-          window.clearTimeout(blockedTimer);
-          __vaActiveUtterance = null;
-          suppressRecognitionUntilRef.current = Date.now() + POST_SPEECH_LISTEN_DELAY_MS;
-          speakingRef.current = false;
-          setSpeaking(false);
-          onEnd?.();
-          resumeListeningAfterEcho();
-        };
+        const v = pickSpanishVoice(window.speechSynthesis);
+        if (v) voz.voice = v;
+      } catch {
+        // sin voz específica
+      }
+
+      voz.onstart = () => {
         speakingRef.current = true;
         setSpeaking(true);
-        synth.speak(u);
-        keepSpeechSynthesisAwake(synth);
+      };
+      voz.onend = () => {
+        suppressRecognitionUntilRef.current = Date.now() + POST_SPEECH_LISTEN_DELAY_MS;
+        speakingRef.current = false;
+        setSpeaking(false);
+        onEnd?.();
+        resumeListeningAfterEcho();
+      };
+      voz.onerror = () => {
+        speakingRef.current = false;
+        setSpeaking(false);
+        onEnd?.();
+        resumeListeningAfterEcho();
+      };
+
+      try {
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.resume();
+        speakingRef.current = true;
+        setSpeaking(true);
+        window.speechSynthesis.speak(voz);
       } catch {
         onEnd?.();
         resumeListeningAfterEcho();
       }
     },
-    [playAudioClip, resumeListeningAfterEcho],
+    [resumeListeningAfterEcho],
   );
 
   const speakExternalSummary = useCallback(
