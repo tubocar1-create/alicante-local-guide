@@ -265,20 +265,21 @@ function LineChip({
 }) {
   return (
     <div
-      className="inline-flex items-center gap-2 rounded-full px-3 py-1.5"
+      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5"
       style={{
-        border: `2px solid ${color}`,
+        border: `1.5px solid ${color}`,
         background: filled ? color : "transparent",
       }}
     >
-      <Bus className="h-4 w-4" style={{ color: filled ? "#fff" : color }} />
+      <Bus className="h-3 w-3" style={{ color: filled ? "#fff" : color }} />
       <span
-        className="font-sans text-[13px] font-bold not-italic tabular-nums"
+        className="font-sans text-[10px] font-bold not-italic tabular-nums"
         style={{ color: filled ? "#fff" : color }}
       >
         {code}
       </span>
     </div>
+
   );
 }
 
