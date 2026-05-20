@@ -253,6 +253,37 @@ const getPriorityRoute = (
   return null;
 };
 
+// === DESAMBIGUACIÓN DE RUTAS ===
+// Cuando una frase puede encajar en varias secciones (p.ej. "tomar el sol"
+// → playa o clima), no navegamos directamente: devolvemos una pregunta corta
+// al usuario para que elija. Se evalúa ANTES de la clasificación determinista.
+type AmbiguityCase = {
+  // patrón ambiguo que dispara la duda
+  test: RegExp;
+  // términos que, si aparecen, ya desambigüan y por tanto NO preguntamos
+  disambiguators?: RegExp;
+  // pregunta para el usuario
+  ask: string;
+};
+
+const AMBIGUITY_CASES: AmbiguityCase[] = [
+  {
+    // "tomar el sol", "ponerme al sol", "broncearme", "solearme"
+    test: /\b(tomar\s+el\s+sol|ponerme\s+al\s+sol|al\s+sol|broncear(me|se)?|solear(me|se)?|tumbarme\s+al\s+sol)\b/i,
+    disambiguators: /\b(playa|playas|cala|calas|arena|mar|chiringuito|clima|tiempo|temperatura|previsi[oó]n|lluvia|llueve|nublad[oa]|sol(es)?\s+(hoy|mañana|fin\s+de\s+semana))\b/i,
+    ask: "¿Te refieres a una playa donde tomar el sol o a la previsión del tiempo para hoy?",
+  },
+];
+
+const detectAmbiguity = (text: string): string | null => {
+  for (const c of AMBIGUITY_CASES) {
+    if (!c.test.test(text)) continue;
+    if (c.disambiguators && c.disambiguators.test(text)) continue;
+    return c.ask;
+  }
+  return null;
+};
+
 const SYSTEM_PROMPT = `Eres "VA", el agente inteligente multimodal oficial de Vamos Alicante.
 
 Tu trabajo es ayudar a usuarios y negocios dentro del ecosistema urbano de Alicante mediante conversación natural, memoria persistente, herramientas operacionales y coordinación en tiempo real.
@@ -703,6 +734,19 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
     const smalltalk = smalltalkReply(lastUserMessage);
     if (smalltalk) {
       return { ok: true as const, content: smalltalk, navigate: null, source: "smalltalk" as const };
+    }
+
+    // 1.amb) AMBIGÜEDAD DE RUTA — preguntar antes de navegar.
+    // Frases que pueden encajar en varias rutas a la vez (p.ej. "tomar el sol"
+    // → playa o clima). No navegamos: devolvemos una pregunta de aclaración.
+    const ambiguous = detectAmbiguity(normalized);
+    if (ambiguous) {
+      return {
+        ok: true as const,
+        content: ambiguous,
+        navigate: null,
+        source: "clarify" as const,
+      };
     }
 
     // 1.bis) Tomar algo / cerveza / copas / discoteca → reenviar al chat principal
