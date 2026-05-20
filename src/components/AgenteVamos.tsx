@@ -350,6 +350,12 @@ function isAgentSpeechOutputActive() {
   return Boolean(__vaActiveAudio || __vaActiveUtterance || synth?.speaking || synth?.pending);
 }
 
+function hasMobileSpeechDuplicationBug() {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  return /Android/i.test(ua) && /Chrome|CriOS/i.test(ua);
+}
+
 type SR = any;
 function getSpeechRecognition(): any {
   if (typeof window === "undefined") return null;
