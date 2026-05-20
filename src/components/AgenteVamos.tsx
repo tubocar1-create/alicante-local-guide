@@ -1316,9 +1316,6 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
     const tryStart = () => {
       if (cancelled) return;
-      const mic = getMicWarmupSnapshot();
-      setMicReady(mic.state === "ready");
-      if (mic.message && mic.state !== "ready") setVoiceError(mic.message);
       // Si el agente aún está hablando (saludo TTS), NO arrancamos el
       // reconocedor: evitamos el bucle de eco donde el micro capta nuestra
       // propia voz y la reenvía como mensaje de usuario.
@@ -1334,14 +1331,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       }
       if (bootSpeechWasActiveRef.current) {
         bootSpeechWasActiveRef.current = false;
-        suppressRecognitionUntilRef.current = Date.now() + 700;
+        suppressRecognitionUntilRef.current = Date.now() + POST_SPEECH_LISTEN_DELAY_MS;
         resumeListeningAfterEcho();
-        return;
-      }
-      if (mic.state === "pending" && mic.promise) {
-        mic.promise.then(() => {
-          if (!cancelled && shouldAutoListen()) startListening();
-        });
         return;
       }
       if (shouldAutoListen()) startListening();
