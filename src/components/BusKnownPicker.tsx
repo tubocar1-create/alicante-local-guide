@@ -15,6 +15,8 @@ type Props = {
   onClose: () => void;
   onUnknown: () => void;
   onSelected: (pick: BusStopPick) => void;
+  /** Si se pasa, el picker arranca preseleccionado con esta línea, saltando "ask" y "line". */
+  initialLineCode?: string | null;
 };
 
 // Categorías de líneas en Alicante:
@@ -36,16 +38,35 @@ const CATEGORY_COLOR: Record<"night" | "extraurban" | "urban", string> = {
 };
 
 
-export function BusKnownPicker({ onClose, onUnknown, onSelected }: Props) {
+export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode }: Props) {
   const { data, loading } = useBusGraph();
   const { state: locState, request: requestLocation } = useUserLocation();
-  const [step, setStep] = useState<"ask" | "line" | "direction" | "stop">("ask");
+  const [step, setStep] = useState<"ask" | "line" | "direction" | "stop">(
+    initialLineCode ? "direction" : "ask",
+  );
   const [line, setLine] = useState<{ code: string; name: string; color: string | null } | null>(
     null,
   );
   const [direction, setDirection] = useState<1 | 2 | null>(null);
   const [search, setSearch] = useState("");
-  const isExpanded = step === "stop" || step === "line";
+  const isExpanded = step === "stop" || step === "line" || step === "direction";
+
+  // Cuando llega el catálogo de líneas y el agente nos pidió arrancar
+  // preseleccionado con una línea concreta, fijamos la línea y dejamos
+  // el flujo en "direction" para que el usuario solo elija sentido/parada.
+  useEffect(() => {
+    if (!initialLineCode || line || !data) return;
+    const target = initialLineCode.trim().toUpperCase();
+    const found = data.lines.find((l) => l.code.toUpperCase() === target);
+    if (found) {
+      setLine(found);
+      setStep("direction");
+      if (locState.status === "idle") requestLocation();
+    } else {
+      // Línea inexistente → caemos al paso "line" para que elija manualmente.
+      setStep("line");
+    }
+  }, [initialLineCode, data, line, locState.status, requestLocation]);
 
   const directions = useMemo(() => {
     if (!data || !line)
