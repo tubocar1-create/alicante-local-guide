@@ -250,14 +250,7 @@ function BusDashboardPage() {
           </div>
         )}
 
-        {/* FOOTER */}
-        <p className="mt-4 text-center font-sans text-[12px] not-italic text-white/60">
-          Fuente: Vectalia Alicante
-        </p>
-        <p className="text-center font-sans text-[12px] not-italic text-white/60">
-          Datos actualizados en tiempo real
-          {updatedAt && ` · ${new Date(updatedAt).toLocaleTimeString("es-ES")}`}
-          {loadingEtas && <Loader2 className="ml-1 inline h-3 w-3 animate-spin" />}
+
         </p>
 
         {loading && (
