@@ -52,7 +52,7 @@ type VoiceClip =
 type GreetingClip = "greeting_morning" | "greeting_afternoon";
 type AgentAudioClip = VoiceClip | GreetingClip;
 
-type Intent = { keys: string[]; reply: string; path?: string; audio: VoiceClip };
+
 // Each intent declares strong keys (exact concepts) and context phrases
 // (natural-language signals). Context matches score lower than strong keys so
 // "hospital" beats "me siento mal" when both appear, but "me duele la cabeza"
