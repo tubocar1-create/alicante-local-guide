@@ -1330,32 +1330,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             >
               {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
             </button>
-            <button
-              onClick={() => {
-                if (isVoice) {
-                  stopListening();
-                  stopSpeaking();
-                  setMode("text");
-                  // Mantener el audio activo también en modo texto:
-                  // el agente debe verbalizar sus respuestas salvo que
-                  // el usuario pulse explícitamente el botón de silenciar.
-                  unlockSpeechFromUserGesture();
-                  primeSpanishUtterances();
-                  setMuted(false);
-                } else {
-                  unlockSpeechFromUserGesture();
-                  primeSpanishUtterances();
-                  setMode("voice");
-                  setMuted(false);
-                  greetedRef.current = true; // don't re-greet on switch
-                }
-              }}
-              aria-label={isVoice ? "Cambiar a texto" : "Cambiar a voz"}
-              className="rounded-full p-2 hover:bg-white/20"
-              title={isVoice ? "Cambiar a texto" : "Cambiar a voz"}
-            >
-              {isVoice ? <Keyboard className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-            </button>
+            {/* Toggle de modo texto eliminado: el agente es solo de voz */}
             <button
               onClick={onClose}
               aria-label="Cerrar"
