@@ -394,11 +394,18 @@ function DirectionColumn({
                         : undefined
                   }
                 >
-                  <span className="font-sans text-[12px] font-extrabold not-italic tabular-nums">
-                    {hasEta ? eta1 : "—"}
-                  </span>
-                  <span className="font-sans text-[8px] font-bold not-italic">min</span>
+                  {hasEta && eta1 === 0 ? (
+                    <Bus className="h-5 w-5" />
+                  ) : (
+                    <>
+                      <span className="font-sans text-[12px] font-extrabold not-italic tabular-nums">
+                        {hasEta ? eta1 : "—"}
+                      </span>
+                      <span className="font-sans text-[8px] font-bold not-italic">min</span>
+                    </>
+                  )}
                 </div>
+
 
                 <div className="min-w-0 flex-1">
 
