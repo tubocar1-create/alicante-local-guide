@@ -43,8 +43,8 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
   const navigate = useNavigate();
   const { data, loading } = useBusGraph();
   const { state: locState, request: requestLocation } = useUserLocation();
-  const [step, setStep] = useState<"ask" | "line" | "direction" | "stop">(
-    initialLineCode ? "direction" : "ask",
+  const [step, setStep] = useState<"line" | "direction" | "stop">(
+    initialLineCode ? "direction" : "line",
   );
   const [line, setLine] = useState<{ code: string; name: string; color: string | null } | null>(
     null,
