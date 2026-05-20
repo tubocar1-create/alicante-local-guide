@@ -1486,11 +1486,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                       // para que un nuevo fallo no deje el botón huérfano.
                       const pending = tapToSpeak;
                       setTapToSpeak(null);
-                      try {
-                        recogRef.current?.abort?.();
-                      } catch {
-                        // Ignore if recognition is already stopped.
-                      }
+                      stopListening();
                       // Reproducción síncrona dentro del gesto del usuario:
                       // creamos el utterance aquí mismo para que el navegador
                       // no bloquee la síntesis por falta de gesture.
