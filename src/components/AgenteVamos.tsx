@@ -615,12 +615,20 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       recognitionRestartTimerRef.current = null;
     }
     setInterim("");
+    const activeRec = recogRef.current;
+    if (activeRec) {
+      activeRec.onresult = null;
+      activeRec.onspeechend = null;
+      activeRec.onerror = null;
+      activeRec.onend = null;
+    }
     try {
-      recogRef.current?.abort?.();
+      activeRec?.abort?.();
     } catch {}
     try {
-      recogRef.current?.stop?.();
+      activeRec?.stop?.();
     } catch {}
+    recogRef.current = null;
     setListening(false);
   }, []);
 
