@@ -132,8 +132,8 @@ const INTENTS: IntentDef[] = [
       "planificar ruta", "planificador", "como llego", "como voy a", "llegar a",
       "ir a", "llevarme a", "ruta hasta", "trayecto",
     ],
-    reply: "Vamos al planificador de rutas.",
-    path: "/bus/planner",
+    reply: "Te abro los buses urbanos para planificar tu ruta.",
+    path: "action:bus-picker",
     audio: "planner",
   },
   {
