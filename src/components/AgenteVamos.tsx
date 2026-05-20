@@ -1432,7 +1432,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                   : loading
                     ? "pensando…"
                     : speaking
-                      ? "hablando — puedes interrumpir hablando"
+                      ? "hablando — espera tu turno"
                       : listening
                         ? "te escucho · habla cuando quieras"
                         : "preparando micrófono…"}
