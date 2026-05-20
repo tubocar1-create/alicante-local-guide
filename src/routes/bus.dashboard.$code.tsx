@@ -160,11 +160,12 @@ function BusDashboardPage() {
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div
-            className="flex h-16 w-16 shrink-0 items-center justify-center text-2xl font-black text-white shadow-lg"
-            style={{ background: lineColor, borderRadius: 16 }}
+            className="flex h-11 w-11 shrink-0 items-center justify-center text-base font-black text-white shadow-lg"
+            style={{ background: lineColor, borderRadius: 12 }}
           >
             {code}
           </div>
+
           <div className="min-w-0 flex-1 pt-0.5">
             <h1 className="font-sans text-2xl font-bold not-italic leading-tight text-white">
               Línea {code}
@@ -264,20 +265,21 @@ function LineChip({
 }) {
   return (
     <div
-      className="inline-flex items-center gap-2 rounded-full px-3 py-1.5"
+      className="inline-flex items-center gap-1 rounded-full px-2 py-0.5"
       style={{
-        border: `2px solid ${color}`,
+        border: `1.5px solid ${color}`,
         background: filled ? color : "transparent",
       }}
     >
-      <Bus className="h-4 w-4" style={{ color: filled ? "#fff" : color }} />
+      <Bus className="h-3 w-3" style={{ color: filled ? "#fff" : color }} />
       <span
-        className="font-sans text-[13px] font-bold not-italic tabular-nums"
+        className="font-sans text-[10px] font-bold not-italic tabular-nums"
         style={{ color: filled ? "#fff" : color }}
       >
         {code}
       </span>
     </div>
+
   );
 }
 
@@ -314,12 +316,17 @@ function DirectionColumn({
             {label}
           </span>
         </div>
-        <div className="flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5">
-          <Radio className="h-3 w-3 text-emerald-400" />
-          <span className="font-sans text-[10px] font-bold not-italic text-emerald-400">
-            {inService ? "En servicio" : "Sin datos"}
-          </span>
-        </div>
+        <span
+          aria-label={inService ? "En servicio" : "Sin datos"}
+          title={inService ? "En servicio" : "Sin datos"}
+          className={[
+            "inline-block h-2.5 w-2.5 rounded-full",
+            inService
+              ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]"
+              : "bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.7)]",
+          ].join(" ")}
+        />
+
       </div>
 
       {stops.length > 0 && (
@@ -382,12 +389,9 @@ function DirectionColumn({
                   </div>
 
 
-                  <div className="truncate font-sans text-[12px] font-semibold not-italic leading-snug text-white">
-                    {s.name}
-                  </div>
                   {isOrigin && (
                     <span
-                      className="mt-0.5 inline-block rounded px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-white"
+                      className="mb-0.5 inline-block rounded px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-white"
                       style={{ background: color }}
                     >
                       Origen
@@ -395,12 +399,16 @@ function DirectionColumn({
                   )}
                   {isDest && (
                     <span
-                      className="mt-0.5 inline-block rounded px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-white"
+                      className="mb-0.5 inline-block rounded px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-white"
                       style={{ background: color }}
                     >
                       Destino
                     </span>
                   )}
+                  <div className="truncate font-sans text-[12px] font-semibold not-italic leading-snug text-white">
+                    {s.name}
+                  </div>
+
                 </div>
             </li>
 
