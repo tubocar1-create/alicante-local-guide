@@ -1175,7 +1175,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           clearTimeout(turnTimerRef.current);
           turnTimerRef.current = null;
         }
-        const t = (finalText || lastTranscript).trim();
+        const t = compactRecognitionText([finalText || lastTranscript]);
         if (!t) return false;
         if (isLikelyAgentEcho(t, assistantSpeechMemoryRef.current)) {
           finalText = "";
@@ -1194,7 +1194,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         return true;
       };
       rec.onspeechend = () => {
-        if (speakingRef.current || loadingRef.current || Date.now() < suppressRecognitionUntilRef.current) {
+        if (
+          speakingRef.current ||
+          loadingRef.current ||
+          isAgentSpeechOutputActive() ||
+          Date.now() < suppressRecognitionUntilRef.current
+        ) {
           finalText = "";
           lastTranscript = "";
           setInterim("");
@@ -1214,7 +1219,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       };
       rec.onend = () => {
         setListening(false);
-        if (speakingRef.current || loadingRef.current || Date.now() < suppressRecognitionUntilRef.current) {
+        if (
+          speakingRef.current ||
+          loadingRef.current ||
+          isAgentSpeechOutputActive() ||
+          Date.now() < suppressRecognitionUntilRef.current
+        ) {
           finalText = "";
           lastTranscript = "";
           setInterim("");
