@@ -316,16 +316,16 @@ const DOMAINS: DomainSpec[] = [
   },
   {
     id: "transporte",
-    hubPath: "/bus/lines",
+    hubPath: "action:bus-picker",
     triggers: [
       "quiero moverme", "necesito moverme", "como me muevo", "quiero desplazarme",
       "tengo que ir", "necesito ir", "como llego", "como voy",
       "transporte",
     ],
-    question: "¿Quieres líneas de bus, planificador de ruta o vuelos?",
+    question: "¿Quieres bus urbano, planificador de ruta o vuelos?",
     audio: "bus",
     followups: [
-      { keys: ["bus", "autobus", "autobuses", "emt", "parada", "linea", "lineas", "local", "locales"], path: "/bus/lines" },
+      { keys: ["bus", "autobus", "autobuses", "urbano", "urbanos", "emt", "parada", "linea", "lineas", "local", "locales"], path: "action:bus-picker" },
       { keys: ["ruta", "planificador", "planificar", "trayecto"], path: "/bus/planner" },
       { keys: ["vuelo", "vuelos", "avion", "aeropuerto"], path: "/vuelos" },
     ],
