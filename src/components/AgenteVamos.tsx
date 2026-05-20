@@ -848,9 +848,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         ]);
         setInput("");
         setInterim("");
-          speak("Hasta luego, Leopoldo.", undefined, () => {
+        speak("Hasta luego, Leopoldo.", undefined, () => {
           setTimeout(() => onClose(), 200);
-          }, reservedReplyUtterance);
+        }, reservedReplyUtterance);
         return;
       }
 
