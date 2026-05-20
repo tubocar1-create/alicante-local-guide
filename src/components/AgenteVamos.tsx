@@ -216,8 +216,6 @@ function localResolve(text: string): { reply: string; path?: string; audio: Voic
 
 type Msg = { role: "user" | "assistant"; content: string };
 type Mode = "voice" | "text";
-type PendingSpeech = { text: string; audio?: AgentAudioClip };
-
 const STORAGE_KEY = "va:agente-msgs";
 const audioSrc = (clip: AgentAudioClip) =>
   VOICE_ASSETS[`../assets/agent-voice/${clip}.mp3`] ?? `/agent-voice/${clip}.mp3`;
@@ -375,84 +373,7 @@ let __vaActiveAudio: HTMLAudioElement | null = null;
 let __vaActiveAudioStartedAt = 0;
 const __vaPrimedUtterances: SpeechSynthesisUtterance[] = [];
 let __vaSpeechUnlocked = false;
-type MicWarmupState = "idle" | "pending" | "ready" | "denied" | "unavailable" | "error";
-let __vaMicWarmupState: MicWarmupState = "idle";
-let __vaMicWarmupPromise: Promise<MicWarmupState> | null = null;
-let __vaMicWarmupMessage: string | null = null;
-let __vaMicWarmupAttempt = 0;
-const MIC_WARMUP_TIMEOUT_MS = 8000;
-
-function micWarmupMessage(err: unknown) {
-  const name = err instanceof DOMException ? err.name : err instanceof Error ? err.name : "";
-  if (name === "NotAllowedError" || name === "SecurityError") {
-    return "Permiso de micrófono denegado. Habilítalo en el navegador.";
-  }
-  if (name === "NotFoundError") return "No encuentro ningún micrófono en este dispositivo.";
-  if (name === "NotReadableError") return "El micrófono está ocupado por otra aplicación.";
-  return "No pude activar el micrófono. Toca el micrófono para intentarlo otra vez.";
-}
-
-function requestMicWarmupFromUserGesture() {
-  if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
-    __vaMicWarmupState = "unavailable";
-    __vaMicWarmupMessage = "Este navegador no permite usar el micrófono aquí.";
-    return null;
-  }
-  if (__vaMicWarmupState === "ready") return null;
-  if (__vaMicWarmupState === "pending") return __vaMicWarmupPromise;
-
-  __vaMicWarmupState = "pending";
-  __vaMicWarmupMessage = "Acepta el permiso del micrófono para poder hablar.";
-  const attempt = ++__vaMicWarmupAttempt;
-  const mediaRequest = navigator.mediaDevices
-    .getUserMedia({ audio: true })
-    .then((stream) => {
-      stream.getTracks().forEach((track) => track.stop());
-      if (attempt === __vaMicWarmupAttempt) {
-        __vaMicWarmupState = "ready";
-        __vaMicWarmupMessage = null;
-      }
-      return __vaMicWarmupState;
-    })
-    .catch((err) => {
-      if (attempt === __vaMicWarmupAttempt) {
-        __vaMicWarmupMessage = micWarmupMessage(err);
-        __vaMicWarmupState =
-          err instanceof DOMException &&
-          (err.name === "NotAllowedError" || err.name === "SecurityError")
-            ? "denied"
-            : "error";
-      }
-      return __vaMicWarmupState;
-    });
-
-  __vaMicWarmupPromise = new Promise<MicWarmupState>((resolve) => {
-    const timeout = window.setTimeout(() => {
-      if (attempt === __vaMicWarmupAttempt && __vaMicWarmupState === "pending") {
-        __vaMicWarmupState = "error";
-        __vaMicWarmupMessage =
-          "No apareció el permiso del micrófono. Pulsa “activar micro” y acepta el permiso del navegador.";
-      }
-      if (attempt === __vaMicWarmupAttempt) __vaMicWarmupPromise = null;
-      resolve(__vaMicWarmupState);
-    }, MIC_WARMUP_TIMEOUT_MS);
-
-    mediaRequest.then((state) => {
-      window.clearTimeout(timeout);
-      if (attempt === __vaMicWarmupAttempt) __vaMicWarmupPromise = null;
-      resolve(state);
-    });
-  });
-  return __vaMicWarmupPromise;
-}
-
-function getMicWarmupSnapshot() {
-  return {
-    state: __vaMicWarmupState,
-    message: __vaMicWarmupMessage,
-    promise: __vaMicWarmupPromise,
-  };
-}
+const POST_SPEECH_LISTEN_DELAY_MS = 140;
 
 function pickSpanishVoice(synth: SpeechSynthesis) {
   const voices = synth.getVoices();
@@ -537,8 +458,6 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const [muted, setMuted] = useState(false);
   const [paused, setPaused] = useState(false);
   const [voiceError, setVoiceError] = useState<string | null>(null);
-  const [tapToSpeak, setTapToSpeak] = useState<PendingSpeech | null>(null);
-  const [micReady, setMicReady] = useState(__vaMicWarmupState === "ready");
 
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
@@ -674,13 +593,13 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   // Forward declaration via ref so callbacks can call latest startListening
   const startListeningRef = useRef<() => void>(() => {});
   const resumeListeningAfterEcho = useCallback(
-    (delay = 700) => {
+    (delay = POST_SPEECH_LISTEN_DELAY_MS) => {
       if (recognitionRestartTimerRef.current) clearTimeout(recognitionRestartTimerRef.current);
       recognitionRestartTimerRef.current = setTimeout(() => {
         recognitionRestartTimerRef.current = null;
         const remaining = suppressRecognitionUntilRef.current - Date.now();
         if (remaining > 0) {
-          resumeListeningAfterEcho(remaining + 120);
+          resumeListeningAfterEcho(remaining + POST_SPEECH_LISTEN_DELAY_MS);
           return;
         }
         if (shouldAutoListen()) startListeningRef.current();
@@ -705,13 +624,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         __vaActiveAudio = audio;
         __vaActiveAudioStartedAt = Date.now();
         assistantSpeechMemoryRef.current = [text, ...assistantSpeechMemoryRef.current].slice(0, 6);
-        setTapToSpeak(null);
         speakingRef.current = true;
         setSpeaking(true);
         const finish = () => {
           if (__vaActiveAudio === audio) __vaActiveAudio = null;
           __vaActiveAudioStartedAt = 0;
-          suppressRecognitionUntilRef.current = Date.now() + 700;
+          suppressRecognitionUntilRef.current = Date.now() + POST_SPEECH_LISTEN_DELAY_MS;
           speakingRef.current = false;
           setSpeaking(false);
           onEnd?.();
@@ -721,10 +639,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         audio.onerror = () => {
           if (__vaActiveAudio === audio) __vaActiveAudio = null;
           __vaActiveAudioStartedAt = 0;
-          suppressRecognitionUntilRef.current = Date.now() + 700;
+          suppressRecognitionUntilRef.current = Date.now() + POST_SPEECH_LISTEN_DELAY_MS;
           speakingRef.current = false;
           setSpeaking(false);
-          setTapToSpeak({ text, audio: clip });
           onEnd?.();
           resumeListeningAfterEcho();
         };
@@ -733,17 +650,15 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           started.catch(() => {
             if (__vaActiveAudio === audio) __vaActiveAudio = null;
             __vaActiveAudioStartedAt = 0;
-            suppressRecognitionUntilRef.current = Date.now() + 700;
+            suppressRecognitionUntilRef.current = Date.now() + POST_SPEECH_LISTEN_DELAY_MS;
             speakingRef.current = false;
             setSpeaking(false);
-            setTapToSpeak({ text, audio: clip });
             onEnd?.();
             resumeListeningAfterEcho();
           });
         }
         return true;
       } catch {
-        setTapToSpeak({ text, audio: clip });
         return false;
       }
     },
@@ -771,7 +686,6 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       setListening(false);
       if (audio && playAudioClip(audio, text, onEnd)) return;
       if (mutedRef.current || typeof window === "undefined" || !window.speechSynthesis) {
-        if (!mutedRef.current) setTapToSpeak({ text, audio });
         onEnd?.();
         resumeListeningAfterEcho();
         return;
@@ -781,15 +695,14 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         synth.cancel();
         synth.resume();
         const u = makeSpanishUtterance(text);
-        setTapToSpeak(null);
         let started = false;
         const blockedTimer = window.setTimeout(() => {
           if (!started && __vaActiveUtterance === u) {
             __vaActiveUtterance = null;
             speakingRef.current = false;
             setSpeaking(false);
-            setTapToSpeak({ text });
             onEnd?.();
+            resumeListeningAfterEcho();
           }
         }, 1200);
         u.onstart = () => {
@@ -801,7 +714,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         u.onend = () => {
           window.clearTimeout(blockedTimer);
           __vaActiveUtterance = null;
-          suppressRecognitionUntilRef.current = Date.now() + 700;
+          suppressRecognitionUntilRef.current = Date.now() + POST_SPEECH_LISTEN_DELAY_MS;
           speakingRef.current = false;
           setSpeaking(false);
           onEnd?.();
@@ -810,10 +723,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         u.onerror = () => {
           window.clearTimeout(blockedTimer);
           __vaActiveUtterance = null;
-          suppressRecognitionUntilRef.current = Date.now() + 700;
+          suppressRecognitionUntilRef.current = Date.now() + POST_SPEECH_LISTEN_DELAY_MS;
           speakingRef.current = false;
           setSpeaking(false);
-          setTapToSpeak({ text });
           onEnd?.();
           resumeListeningAfterEcho();
         };
@@ -822,7 +734,6 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         synth.speak(u);
         keepSpeechSynthesisAwake(synth);
       } catch {
-        setTapToSpeak({ text });
         onEnd?.();
         resumeListeningAfterEcho();
       }
@@ -1111,28 +1022,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     }
     const remainingEchoGuard = suppressRecognitionUntilRef.current - Date.now();
     if (remainingEchoGuard > 0) {
-      resumeListeningAfterEcho(remainingEchoGuard + 120);
-      return;
-    }
-    if (__vaMicWarmupState !== "ready") {
-      const { message, promise } = getMicWarmupSnapshot();
-      setListening(false);
-      setMicReady(false);
-      if (message) setVoiceError(message);
-      if (promise) {
-        promise.then((state) => {
-          setMicReady(state === "ready");
-          if (state === "ready") {
-            setVoiceError(null);
-            if (shouldAutoListen()) startListeningRef.current();
-          } else if (__vaMicWarmupMessage) {
-            setVoiceError(__vaMicWarmupMessage);
-            setPaused(true);
-          }
-        });
-      } else if (__vaMicWarmupState === "denied" || __vaMicWarmupState === "error") {
-        setPaused(true);
-      }
+      resumeListeningAfterEcho(remainingEchoGuard + POST_SPEECH_LISTEN_DELAY_MS);
       return;
     }
     const SRClass = getSpeechRecognition();
@@ -1239,8 +1129,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       rec.onerror = (e: any) => {
         setListening(false);
         if (e?.error === "not-allowed" || e?.error === "service-not-allowed") {
-          setVoiceError("Permiso de micrófono denegado. Habilítalo o cambia a modo texto.");
-          setPaused(true);
+          setVoiceError(null);
+          resumeListeningAfterEcho(900);
         } else if (e?.error === "no-speech" || e?.error === "aborted") {
           // benign — will auto-restart on end if conditions allow
         }
@@ -1266,18 +1156,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       };
       recogRef.current = rec;
       setVoiceError(null);
-      setMicReady(true);
       setListening(true);
       rec.start();
     } catch (err) {
       setListening(false);
-      const message = err instanceof Error ? err.message : "";
-      setVoiceError(
-        message.includes("not-allowed") || message.includes("denied")
-          ? "Permiso de micrófono denegado. Pulsa reanudar y acepta el permiso."
-          : "No pude iniciar el micrófono. Pulsa reanudar para intentarlo otra vez.",
-      );
-      setPaused(true);
+      setVoiceError(null);
+      resumeListeningAfterEcho(900);
     }
   }, [resumeListeningAfterEcho, shouldAutoListen]);
 
@@ -1352,9 +1236,6 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
     const tryStart = () => {
       if (cancelled) return;
-      const mic = getMicWarmupSnapshot();
-      setMicReady(mic.state === "ready");
-      if (mic.message && mic.state !== "ready") setVoiceError(mic.message);
       // Si el agente aún está hablando (saludo TTS), NO arrancamos el
       // reconocedor: evitamos el bucle de eco donde el micro capta nuestra
       // propia voz y la reenvía como mensaje de usuario.
@@ -1370,14 +1251,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       }
       if (bootSpeechWasActiveRef.current) {
         bootSpeechWasActiveRef.current = false;
-        suppressRecognitionUntilRef.current = Date.now() + 700;
+        suppressRecognitionUntilRef.current = Date.now() + POST_SPEECH_LISTEN_DELAY_MS;
         resumeListeningAfterEcho();
-        return;
-      }
-      if (mic.state === "pending" && mic.promise) {
-        mic.promise.then(() => {
-          if (!cancelled && shouldAutoListen()) startListening();
-        });
         return;
       }
       if (shouldAutoListen()) startListening();
@@ -1537,19 +1412,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                   if (paused) {
                     unlockSpeechFromUserGesture();
                     primeSpanishUtterances();
-                    const warmup = requestMicWarmupFromUserGesture();
                     setVoiceError(null);
                     setPaused(false);
-                    if (warmup) {
-                      warmup.then((state) => {
-                        setMicReady(state === "ready");
-                        if (state === "ready") startListeningRef.current();
-                        else if (__vaMicWarmupMessage) setVoiceError(__vaMicWarmupMessage);
-                      });
-                    } else {
-                      setMicReady(__vaMicWarmupState === "ready");
-                      setTimeout(() => startListeningRef.current(), 100);
-                    }
+                    setTimeout(() => startListeningRef.current(), POST_SPEECH_LISTEN_DELAY_MS);
                   } else {
                     setPaused(true);
                     stopListening();
@@ -1704,27 +1569,7 @@ export function AgenteVamosFab() {
   const startGreetingFromUserGesture = () => {
     if (voiceBootStartedRef.current) return;
     voiceBootStartedRef.current = true;
-    // Pedimos el permiso del micrófono ANTES de empezar la conversación.
-    // getUserMedia debe llamarse de forma síncrona dentro del gesto del usuario.
-    const warmup = requestMicWarmupFromUserGesture();
-    const snap = getMicWarmupSnapshot();
-    if (snap.state === "ready") {
-      playGreetingAfterPermission();
-      return;
-    }
-    if (!warmup) {
-      // No hay API de micrófono; abrimos igualmente y saludamos.
-      playGreetingAfterPermission();
-      return;
-    }
-    warmup.then((state) => {
-      if (state === "ready") {
-        playGreetingAfterPermission();
-      } else {
-        // Permiso denegado o error: no iniciamos conversación, mostramos aviso en el panel.
-        voiceBootStartedRef.current = false;
-      }
-    });
+    playGreetingAfterPermission();
   };
 
   // Permitir abrir el agente desde otros botones (p.ej. el micro del chat)
