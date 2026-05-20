@@ -293,7 +293,7 @@ function DirectionColumn({
   label: string;
   direction: 1 | 2;
   stops: StopRow[];
-  etas: Record<string, number | null>;
+  etas: Record<string, number[]>;
   color: string;
   inService: boolean;
   transferLineColor: (stopCode: string) => string | null;
