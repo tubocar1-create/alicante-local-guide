@@ -34,6 +34,12 @@ function formatHHMM(d: Date): string {
 function BusDashboardPage() {
   const { code } = Route.useParams();
   const { data, loading } = useBusGraph();
+  const [clock, setClock] = useState<Date>(new Date());
+  useEffect(() => {
+    const t = setInterval(() => setClock(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
 
   const line = data?.lines.find((l) => l.code === code);
 
