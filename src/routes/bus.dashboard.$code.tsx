@@ -34,6 +34,12 @@ function formatHHMM(d: Date): string {
 function BusDashboardPage() {
   const { code } = Route.useParams();
   const { data, loading } = useBusGraph();
+  const [clock, setClock] = useState<Date>(new Date());
+  useEffect(() => {
+    const t = setInterval(() => setClock(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
 
   const line = data?.lines.find((l) => l.code === code);
 
@@ -177,7 +183,20 @@ function BusDashboardPage() {
               Ambos sentidos
             </p>
           </div>
+          <div className="shrink-0 self-start rounded-lg border border-white/15 bg-white/5 px-2 py-1 text-right">
+            <div className="font-sans text-[9px] font-semibold not-italic uppercase tracking-wide text-white/50 leading-none">
+              Hora
+            </div>
+            <div className="font-mono text-lg font-bold tabular-nums leading-tight text-white">
+              {String(clock.getHours()).padStart(2, "0")}:
+              {String(clock.getMinutes()).padStart(2, "0")}
+              <span className="text-white/50">
+                :{String(clock.getSeconds()).padStart(2, "0")}
+              </span>
+            </div>
+          </div>
         </div>
+
 
         {/* CHIPS DE TRANSBORDO */}
         <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
@@ -356,46 +375,38 @@ function DirectionColumn({
             : null;
 
           return (
-            <li key={`${s.code}-${i}`} className="relative flex items-start gap-2">
-              {/* Badge con el próximo tiempo, posicionado sobre la línea */}
-              <div
-                className={[
-                  "relative z-10 flex h-9 w-12 shrink-0 flex-col items-center justify-center rounded-md leading-none",
-                  hasEta ? "bg-white text-black" : "bg-white/15 text-white/70",
-                ].join(" ")}
-                style={
-                  transferColor
-                    ? { boxShadow: `0 0 0 2px ${transferColor}` }
-                    : isOrigin || isDest
-                      ? { boxShadow: `0 0 0 2px #fff` }
-                      : undefined
-                }
-              >
-                <span className="font-sans text-[12px] font-extrabold not-italic tabular-nums">
-                  {hasEta ? eta1 : "—"}
+            <li key={`${s.code}-${i}`} className="relative flex flex-col gap-1">
+              {(isOrigin || isDest) && (
+                <span
+                  className="inline-block self-start rounded px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-white"
+                  style={{ background: color }}
+                >
+                  {isOrigin ? "Origen" : "Destino"}
                 </span>
-                <span className="font-sans text-[8px] font-bold not-italic">min</span>
-              </div>
-
-
+              )}
+              <div className="flex items-start gap-2">
+                {/* Badge con el próximo tiempo, posicionado sobre la línea */}
+                <div
+                  className={[
+                    "relative z-10 flex h-9 w-12 shrink-0 flex-col items-center justify-center rounded-md leading-none",
+                    hasEta ? "bg-white text-black" : "bg-white/15 text-white/70",
+                  ].join(" ")}
+                  style={
+                    transferColor
+                      ? { boxShadow: `0 0 0 2px ${transferColor}` }
+                      : isOrigin || isDest
+                        ? { boxShadow: `0 0 0 2px #fff` }
+                        : undefined
+                  }
+                >
+                  <span className="font-sans text-[12px] font-extrabold not-italic tabular-nums">
+                    {hasEta ? eta1 : "—"}
+                  </span>
+                  <span className="font-sans text-[8px] font-bold not-italic">min</span>
+                </div>
 
                 <div className="min-w-0 flex-1">
-                  {isOrigin && (
-                    <span
-                      className="mb-0.5 inline-block rounded px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-white"
-                      style={{ background: color }}
-                    >
-                      Origen
-                    </span>
-                  )}
-                  {isDest && (
-                    <span
-                      className="mb-0.5 inline-block rounded px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-white"
-                      style={{ background: color }}
-                    >
-                      Destino
-                    </span>
-                  )}
+
                   <div className="flex items-baseline gap-1.5">
                     <span className="font-sans text-[11px] font-semibold not-italic tabular-nums text-white/90">
                       {etaTime ?? "--:--"}
@@ -408,9 +419,10 @@ function DirectionColumn({
                     {s.name}
                   </div>
 
-
                 </div>
+              </div>
             </li>
+
 
           );
         })}
