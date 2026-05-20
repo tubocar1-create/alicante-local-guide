@@ -431,6 +431,40 @@ function matchFollowup(query: string, domain: DomainSpec): string | null {
   return bestPath;
 }
 
+// ─── DB Intents (agente_intents) ──────────────────────────────────────
+// Mapa: cuando un intent de BD coincida y SU dominio tenga clarificación
+// definida en DOMAINS, en vez de navegar directo abrimos la pregunta
+// aclaratoria (regla del usuario: conversar antes de derivar).
+const DB_KEY_TO_DOMAIN: Record<string, string> = {
+  salud: "salud",
+  comer: "comida",
+  transporte: "transporte",
+  playas: "playas",
+  dormir: "hoteles",
+  ocio: "ocio",
+};
+
+function matchDbIntent(
+  query: string,
+  dbIntents: AgenteIntentRow[],
+): { intent: AgenteIntentRow; len: number } | null {
+  let best: AgenteIntentRow | null = null;
+  let bestLen = 0;
+  for (const it of dbIntents) {
+    for (const kw of it.keywords ?? []) {
+      const n = normalizeSpeech(kw);
+      // Exigimos longitud mínima 4 para evitar que palabras sueltas muy
+      // cortas ("ir", "ver"…) disparen un dominio entero.
+      if (n.length < 4) continue;
+      if (query.includes(n) && n.length > bestLen) {
+        best = it;
+        bestLen = n.length;
+      }
+    }
+  }
+  return best ? { intent: best, len: bestLen } : null;
+}
+
 type LocalResult = {
   reply: string;
   path?: string;
@@ -438,7 +472,11 @@ type LocalResult = {
   pendingDomain?: string | null;
 };
 
-function localResolve(text: string, currentDomain?: string | null): LocalResult {
+function localResolve(
+  text: string,
+  currentDomain?: string | null,
+  dbIntents: AgenteIntentRow[] = [],
+): LocalResult {
   const query = normalizeSpeech(text);
 
   // 1) Follow-up dentro de un dominio activo: resolvemos sub-destino.
@@ -458,7 +496,7 @@ function localResolve(text: string, currentDomain?: string | null): LocalResult 
     }
   }
 
-  // 2) Coincidencia FUERTE por keyword exacta → routing directo.
+  // 2) Coincidencia FUERTE por keyword exacta hardcoded → routing directo.
   const keyMatch = bestKeyIntent(query);
   if (keyMatch && keyMatch.len >= 4) {
     return {
@@ -469,7 +507,7 @@ function localResolve(text: string, currentDomain?: string | null): LocalResult 
     };
   }
 
-  // 3) Detección de DOMINIO general → preguntar antes de navegar.
+  // 3) Dominio general hardcoded (lenguaje natural ambiguo) → preguntar.
   const domain = matchDomain(query);
   if (domain) {
     return {
@@ -479,7 +517,40 @@ function localResolve(text: string, currentDomain?: string | null): LocalResult 
     };
   }
 
-  // 4) Context match específico de un intent concreto.
+  // 4) DB Intents (agente_intents): semántica rica desde Supabase.
+  const dbMatch = matchDbIntent(query, dbIntents);
+  if (dbMatch) {
+    const { intent } = dbMatch;
+    // Si pertenece a un dominio con clarificación → preguntar primero.
+    const domainId = DB_KEY_TO_DOMAIN[intent.key];
+    if (domainId) {
+      const d = DOMAINS.find((x) => x.id === domainId);
+      if (d) {
+        return {
+          reply: d.question,
+          audio: d.audio,
+          pendingDomain: d.id,
+        };
+      }
+    }
+    // Acción logout u otras acciones especiales: sin path.
+    if (intent.action === "logout") {
+      return {
+        reply: "Cerrando sesión…",
+        audio: "fallback",
+        pendingDomain: null,
+      };
+    }
+    // Resto: navegación directa al hub que define la BD.
+    return {
+      reply: `Te llevo a ${intent.label.toLowerCase()}.`,
+      path: intent.route ?? undefined,
+      audio: "fallback",
+      pendingDomain: null,
+    };
+  }
+
+  // 5) Context match específico de un intent concreto.
   const ctx = bestContextIntent(query);
   if (ctx) {
     return {
