@@ -1499,13 +1499,20 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           }
         }
 
-        // ─── HARD-BLOCK · subcategorías médicas ──────────────────────────
-        // Nunca llevamos al usuario a un especialista (/salud/<categoria>)
-        // si su mensaje no menciona explícitamente esa especialidad.
-        // "tengo dolor" NUNCA debe acabar en /salud/traumatologia.
-        if (target && /^\/salud\/[^/]+/.test(target)) {
+        // ─── HARD-BLOCK · destinos específicos desde frases ambiguas ─────
+        // Regla: NUNCA abrir un destino específico (especialista, ficha,
+        // subcategoría) si el mensaje del usuario es ambiguo. Solo abrimos
+        // sub-destinos cuando la frase contiene una mención EXPLÍCITA del
+        // destino (entidad exacta o palabra de alta confianza, >=8 chars).
+        if (target && /^\/[^/]+\/[^/?#]+/.test(target)) {
           const cleanNorm = normalizeSpeech(clean);
-          // Stems de especialidades reconocibles en lenguaje natural.
+          // 1) ¿la frase activa un dominio ambiguo?
+          const ambiguousDomain = matchDomain(cleanNorm);
+          // 2) ¿la frase contiene una mención explícita del último segmento
+          //    de la ruta destino? Ej. /salud/dermatologia → "dermatolog".
+          const lastSeg = target.split("?")[0].split("/").filter(Boolean).at(-1) ?? "";
+          const segNorm = normalizeSpeech(lastSeg.replace(/-/g, " "));
+          const segStems = segNorm.split(" ").filter((w) => w.length >= 6);
           const SPECIALTY_STEMS = [
             "traumatolog", "trauma", "dermatolog", "pediatr", "cardiolog",
             "oftalmolog", "ocular", "odontolog", "dentista", "psicolog",
@@ -1515,13 +1522,15 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             "analisis", "radiolog", "diagnostico por imagen", "ecograf",
             "centro de salud", "ambulatorio", "sip", "urgenc",
           ];
-          const explicit = SPECIALTY_STEMS.some((s) => cleanNorm.includes(s));
-          if (!explicit) {
-            // Forzamos al hub /salud y abrimos el flujo aclaratorio.
-            target = "/salud";
-            reply =
-              "Entiendo. ¿Necesitas hospital, farmacia, urgencias o centro de salud?";
-            pendingDomainRef.current = "salud";
+          const explicitFromStems =
+            segStems.some((s) => cleanNorm.includes(s)) ||
+            SPECIALTY_STEMS.some((s) => cleanNorm.includes(s));
+          if (ambiguousDomain && !explicitFromStems) {
+            // Forzamos al hub del dominio y abrimos el flujo aclaratorio.
+            const hub = ambiguousDomain.domain.hubPath ?? "/";
+            target = hub;
+            reply = ambiguousDomain.domain.question;
+            pendingDomainRef.current = ambiguousDomain.domain.id;
             forwardPrompt = undefined;
             if (typeof window !== "undefined") {
               try {
