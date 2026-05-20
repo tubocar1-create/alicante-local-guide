@@ -103,11 +103,11 @@ Deno.serve(async (req) => {
     });
   }
 
-  let etas = await fetchFromRequestEndpoint(stop, line);
-  let source = "request";
+  let etas = await fetchFromStopPage(stop, line);
+  let source = "page";
   if (etas.length === 0) {
-    etas = await fetchFromStopPage(stop, line);
-    source = "page";
+    etas = await fetchFromRequestEndpoint(stop, line);
+    source = "request";
   }
 
   let etaMin: number | null = null;
