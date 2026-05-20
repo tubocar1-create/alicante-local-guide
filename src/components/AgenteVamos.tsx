@@ -1121,9 +1121,17 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       return;
     }
     // Stop any previous instance
+    const previousRec = recogRef.current;
+    if (previousRec) {
+      previousRec.onresult = null;
+      previousRec.onspeechend = null;
+      previousRec.onerror = null;
+      previousRec.onend = null;
+    }
     try {
-      recogRef.current?.abort?.();
+      previousRec?.abort?.();
     } catch {}
+    recogRef.current = null;
     try {
       const rec = new SRClass();
       rec.lang = "es-ES";
