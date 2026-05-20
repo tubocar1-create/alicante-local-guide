@@ -42,7 +42,13 @@ export const loadAgenteIntents = createServerFn({ method: "GET" }).handler(
 
 export const loadAgenteRoutingCatalog = createServerFn({ method: "GET" }).handler(
   async (): Promise<AgenteRoutingCatalog> => {
-    const intents = await loadAgenteIntents();
+    const { data: intentRows, error: intentsError } = await supabaseAdmin
+      .from("agente_intents")
+      .select("key,label,route,action,priority,keywords")
+      .eq("active", true)
+      .order("priority", { ascending: true });
+    if (intentsError) console.error("loadAgenteRoutingCatalog intents error", intentsError);
+    const intents = (intentRows ?? []) as AgenteIntentRow[];
 
     const [
       { count: pharmaciesCount },
@@ -69,7 +75,7 @@ export const loadAgenteRoutingCatalog = createServerFn({ method: "GET" }).handle
         domain: "salud",
         label: category.shortLabel ?? category.label,
         route: `/salud/${category.slug}`,
-        aliases: [category.slug.replace(/-/g, " "), category.label, category.description].filter(Boolean),
+        aliases: [category.slug.replace(/-/g, " "), category.label, category.description, category.query].filter(Boolean),
       }));
 
     const healthCore: AgenteSubcategory[] = [
