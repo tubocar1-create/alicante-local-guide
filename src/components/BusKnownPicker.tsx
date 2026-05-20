@@ -211,10 +211,10 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
       )}
 
       {step === "line" && (
-        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pr-1">
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain pr-1">
           {loading && <p className="text-sm text-muted-foreground">Cargando líneas…</p>}
 
-          {(["urban", "extraurban", "night"] as const).map((cat) => {
+          {(["urban", "extraurban", "night"] as const).map((cat, idx) => {
             const lines = (data?.lines ?? [])
               .filter((l) => classifyLine(l.code) === cat)
               .slice()
@@ -223,49 +223,71 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
               );
             if (lines.length === 0) return null;
             const label =
-              cat === "urban" ? "Urbanas" : cat === "extraurban" ? "Interurbanas" : "Nocturnas";
+              cat === "urban" ? "URBANAS" : cat === "extraurban" ? "INTERURBANAS" : "NOCTURNAS";
             const sublabel =
               cat === "urban"
                 ? "Dentro de la ciudad"
                 : cat === "extraurban"
                   ? "Fuera de Alicante"
                   : "Servicio nocturno";
-            const catColor = CATEGORY_COLOR[cat];
+            const catColor =
+              cat === "urban" ? "#EF4444" : cat === "extraurban" ? "#3B82F6" : "#A855F7";
             return (
-              <div key={cat}>
-                <div className="mb-1.5 flex items-center gap-2">
+              <div key={cat} className={idx > 0 ? "border-t border-border/60 pt-4" : ""}>
+                <div className="mb-3 flex items-center gap-2">
                   <span
                     className="inline-block h-2.5 w-2.5 rounded-full"
                     style={{ backgroundColor: catColor }}
                   />
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-foreground/80">
+                  <span className="text-[12px] font-extrabold uppercase tracking-wider text-foreground">
                     {label}
                   </span>
-                  <span className="text-[10px] text-muted-foreground">· {sublabel}</span>
+                  <span className="text-[11px] text-muted-foreground">· {sublabel}</span>
                 </div>
-                <div className="grid grid-cols-6 gap-1.5 sm:grid-cols-8">
-                  {lines.map((l) => (
-                    <button
-                      key={l.code}
-                      onClick={() => {
-                        setLine(l);
-                        setDirection(null);
-                        setStep("direction");
-                        if (locState.status === "idle") requestLocation();
-                      }}
-                      title={l.name}
-                      className={`flex h-9 items-center justify-center rounded-lg text-[12px] font-bold text-white shadow-sm transition active:scale-95 ${
-                        cat === "night" ? "ring-1 ring-amber-300/60" : ""
-                      }`}
-                      style={{ backgroundColor: catColor }}
-                    >
-                      {cat === "night" ? `🌙 ${l.code}` : l.code}
-                    </button>
-                  ))}
+                <div className="grid grid-cols-6 gap-2">
+                  {lines.map((l) => {
+                    const filled = cat === "urban";
+                    return (
+                      <button
+                        key={l.code}
+                        onClick={() => {
+                          setLine(l);
+                          setDirection(null);
+                          setStep("direction");
+                          if (locState.status === "idle") requestLocation();
+                        }}
+                        title={l.name}
+                        className="flex aspect-square items-center justify-center gap-0.5 rounded-2xl text-[15px] font-extrabold shadow-sm transition active:scale-95"
+                        style={
+                          filled
+                            ? {
+                                color: "#fff",
+                                background: `linear-gradient(160deg, ${catColor} 0%, #B91C1C 100%)`,
+                              }
+                            : {
+                                color: catColor,
+                                background: "transparent",
+                                border: `1.5px solid ${catColor}`,
+                              }
+                        }
+                      >
+                        {cat === "night" && <span aria-hidden>🌙</span>}
+                        <span>{l.code}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             );
           })}
+
+          <div className="flex items-start gap-2 border-t border-border/60 pt-3 text-[11px] text-muted-foreground">
+            <span aria-hidden className="text-pink-400">✦</span>
+            <div className="leading-tight">
+              <div>Tiempos en tiempo real</div>
+              <div>Datos proporcionados por Vectalia Alicante</div>
+            </div>
+          </div>
         </div>
       )}
 
