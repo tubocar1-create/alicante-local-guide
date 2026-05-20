@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Bus, Radio, RefreshCw, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowDown, ArrowUp, Bus, Radio, RefreshCw, Loader2 } from "lucide-react";
 import { useBusGraph } from "@/hooks/useBusGraph";
 
 
