@@ -672,13 +672,13 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   // Forward declaration via ref so callbacks can call latest startListening
   const startListeningRef = useRef<() => void>(() => {});
   const resumeListeningAfterEcho = useCallback(
-    (delay = 700) => {
+    (delay = POST_SPEECH_LISTEN_DELAY_MS) => {
       if (recognitionRestartTimerRef.current) clearTimeout(recognitionRestartTimerRef.current);
       recognitionRestartTimerRef.current = setTimeout(() => {
         recognitionRestartTimerRef.current = null;
         const remaining = suppressRecognitionUntilRef.current - Date.now();
         if (remaining > 0) {
-          resumeListeningAfterEcho(remaining + 120);
+          resumeListeningAfterEcho(remaining + POST_SPEECH_LISTEN_DELAY_MS);
           return;
         }
         if (shouldAutoListen()) startListeningRef.current();
