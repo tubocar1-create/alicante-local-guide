@@ -194,12 +194,9 @@ function BusDashboardPage() {
         </div>
 
 
-        {/* CHIPS DE TRANSBORDO */}
+        {/* CHIP LÍNEA ACTUAL */}
         <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
           <LineChip code={code} color={lineColor} filled />
-          {topTransfers.map((t) => (
-            <LineChip key={t.code} code={t.code} color={t.color} />
-          ))}
         </div>
 
         {/* COLUMNAS IDA / VUELTA */}
