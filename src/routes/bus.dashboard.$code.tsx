@@ -328,11 +328,11 @@ function DirectionColumn({
         </p>
       )}
 
-      <ol className="relative space-y-1 pl-5">
+      <ol className="relative space-y-1">
         {stops.length > 1 && (
           <span
             aria-hidden
-            className="absolute left-[7px] top-3 bottom-3 w-[2px] rounded-full"
+            className="absolute left-6 top-3 bottom-3 w-[2px] rounded-full"
             style={{ background: color }}
           />
         )}
@@ -353,45 +353,31 @@ function DirectionColumn({
               : null;
 
           return (
-            <li key={`${s.code}-${i}`} className="relative">
-              {/* Marcador del recorrido */}
-              {transferColor ? (
-                <span
-                  className="absolute -left-[2px] top-2 flex h-4 w-4 items-center justify-center rounded-full bg-black"
-                  style={{ border: `2px solid ${transferColor}` }}
-                >
-                  <RefreshCw className="h-2.5 w-2.5" style={{ color: transferColor }} />
+            <li key={`${s.code}-${i}`} className="relative flex items-start gap-2">
+              {/* Badge con los 2 próximos tiempos, posicionado sobre la línea */}
+              <div
+                className={[
+                  "relative z-10 flex h-9 w-12 shrink-0 flex-col items-center justify-center rounded-md leading-none",
+                  hasEta ? "bg-white text-black" : "bg-white/15 text-white/70",
+                ].join(" ")}
+                style={
+                  transferColor
+                    ? { boxShadow: `0 0 0 2px ${transferColor}` }
+                    : isOrigin || isDest
+                      ? { boxShadow: `0 0 0 2px #fff` }
+                      : undefined
+                }
+              >
+                <span className="font-sans text-[12px] font-extrabold not-italic tabular-nums">
+                  {hasEta
+                    ? typeof eta2 === "number"
+                      ? `${eta1}·${eta2}`
+                      : eta1
+                    : "—"}
                 </span>
-              ) : (
-                <span
-                  className={
-                    "absolute -left-[2px] top-2 h-4 w-4 rounded-full bg-black " +
-                    (isOrigin || isDest ? "" : "")
-                  }
-                  style={{
-                    border: `2px solid ${isOrigin || isDest ? "#fff" : color}`,
-                    background: isOrigin || isDest ? "#000" : "#000",
-                  }}
-                />
-              )}
+                <span className="font-sans text-[8px] font-bold not-italic">min</span>
+              </div>
 
-              <div className="flex items-start gap-1.5">
-                {/* Badge con los 2 próximos tiempos */}
-                <div
-                  className={[
-                    "flex h-9 w-12 shrink-0 flex-col items-center justify-center rounded-md leading-none",
-                    hasEta ? "bg-white text-black" : "bg-white/15 text-white/70",
-                  ].join(" ")}
-                >
-                  <span className="font-sans text-[12px] font-extrabold not-italic tabular-nums">
-                    {hasEta
-                      ? typeof eta2 === "number"
-                        ? `${eta1}·${eta2}`
-                        : eta1
-                      : "—"}
-                  </span>
-                  <span className="font-sans text-[8px] font-bold not-italic">min</span>
-                </div>
 
 
                 <div className="min-w-0 flex-1">
@@ -427,8 +413,8 @@ function DirectionColumn({
                     </span>
                   )}
                 </div>
-              </div>
             </li>
+
           );
         })}
       </ol>
