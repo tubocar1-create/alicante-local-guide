@@ -1799,7 +1799,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           } catch {}
         }
         const fallback = localResolve(clean, pendingDomainRef.current, routingCatalogRef.current);
-        let reply = fallback.reply;
+        const replyMode = pickAssistantMode(fallback.pendingDomain ?? pendingDomainRef.current ?? null);
+        let reply = formatReply(replyMode, fallback.reply);
         let target: string | undefined = fallback.path;
         let forwardPrompt: string | undefined =
           fallback.path === "/" && fallback.reply.includes("Dashboard Nocturno")
