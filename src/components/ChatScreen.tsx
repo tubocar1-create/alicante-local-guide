@@ -1032,7 +1032,7 @@ export function ChatScreen() {
       )}
       {isWelcome && (
         <>
-          <nav className="relative flex items-center justify-around border-t border-border/60 bg-[oklch(0.985_0.018_88)]/95 px-2 pt-2 pb-3 backdrop-blur">
+          <nav className="relative flex items-center justify-around border-t border-border/60 bg-[oklch(0.985_0.018_88)]/95 px-2 pt-2 pb-[max(0.25rem,env(safe-area-inset-bottom))] backdrop-blur">
           <button
             type="button"
             onClick={() => {
