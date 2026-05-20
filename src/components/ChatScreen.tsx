@@ -1059,9 +1059,10 @@ export function ChatScreen() {
             type="button"
             onClick={() => setShowQrInfo(true)}
             aria-label="QR VAMOS"
-            className="-mt-7 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-4 ring-[oklch(0.985_0.018_88)] active:scale-95"
+            className="flex flex-col items-center gap-0.5 px-3 py-1 text-primary active:scale-95"
           >
-            <QrCode className="h-6 w-6" />
+            <QrCode className="h-5 w-5" />
+            <span className="text-[10px] font-semibold">QR</span>
           </button>
           <Link
             to="/threads"
