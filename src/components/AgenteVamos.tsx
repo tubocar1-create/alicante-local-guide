@@ -625,6 +625,15 @@ function findSubcategoryByTarget(target: string | undefined, catalog: AgenteRout
   return null;
 }
 
+function matchBusLineDashboard(query: string, allowBareNumber = false): string | null {
+  const explicit =
+    query.match(/\b(?:linea|line|l|bus|autobus)\s*([0-9]{1,3}[a-z]?)\b/i) ||
+    query.match(/\bel\s+([0-9]{1,3}[a-z]?)\b/i);
+  const bare = allowBareNumber ? query.match(/^\s*([0-9]{1,3}[a-z]?)\s*$/i) : null;
+  const code = (explicit?.[1] ?? bare?.[1])?.replace(/[\s-]/g, "").toUpperCase();
+  return code && /\d/.test(code) ? `/bus/dashboard/${code}` : null;
+}
+
 function matchDbIntent(
   query: string,
   dbIntents: AgenteIntentRow[],
@@ -669,12 +678,12 @@ function localResolve(
     // válido (1–3 dígitos opcionalmente con "N" o letra), saltamos directos
     // al Dashboard de esa línea.
     if (currentDomain === "bus_known") {
-      const m = query.match(/\b(?:linea\s+)?([clm]?\s?-?\s?\d{1,3}\s?[a-z]?)\b/i);
-      const code = m?.[1]?.replace(/[\s-]/g, "").toUpperCase();
-      if (code && /\d/.test(code)) {
+      const dashboardPath = matchBusLineDashboard(query, true);
+      if (dashboardPath) {
+        const code = dashboardPath.split("/").pop();
         return {
           reply: `¡Voy! Abro el Dashboard de la línea ${code}.`,
-          path: `/bus/dashboard/${code}`,
+          path: dashboardPath,
           audio: "bus",
           pendingDomain: null,
         };
@@ -713,6 +722,17 @@ function localResolve(
         };
       }
     }
+  }
+
+  const directBusDashboard = matchBusLineDashboard(query);
+  if (directBusDashboard) {
+    const code = directBusDashboard.split("/").pop();
+    return {
+      reply: `¡Voy! Abro el Dashboard de la línea ${code}.`,
+      path: directBusDashboard,
+      audio: "bus",
+      pendingDomain: null,
+    };
   }
 
   // 2) PRIORIDAD 0 — ENTIDAD CONCRETA NOMBRADA (hotel, monumento, marca,
@@ -1725,9 +1745,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         // falla, caemos a window.location para no quedarnos atascados.
         const goTo = (raw: string) => {
           try {
-            const normalizedTarget = ["/bus", "/bus/", "/bus/planner", "/buses-en-vivo"].includes(raw)
-              ? "action:bus-picker"
-              : raw;
+            const legacyBusLine = raw.match(/^\/bus\/lines\/([^/?#]+)$/i);
+            const normalizedTarget = legacyBusLine
+              ? `/bus/dashboard/${legacyBusLine[1]}`
+              : ["/bus", "/bus/", "/bus/planner", "/buses-en-vivo", "/bus/lines"].includes(raw)
+                ? "action:bus-picker"
+                : raw;
             // Sentinel legacy: antes abría el picker con una línea preseleccionada;
             // ahora debe ir siempre al Dashboard de la línea.
             const lineSentinel = normalizedTarget.match(/^action:bus-picker:line:([A-Z0-9]+)$/i);
@@ -1795,7 +1818,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             return navigate({ to: pathname as any });
           } catch {
             try {
-              if (["/bus", "/bus/", "/bus/planner", "/buses-en-vivo", "action:bus-picker"].includes(raw)) {
+              const legacyBusLine = raw.match(/^\/bus\/lines\/([^/?#]+)$/i);
+              if (legacyBusLine) {
+                window.location.assign(`/bus/dashboard/${legacyBusLine[1]}`);
+              } else if (["/bus", "/bus/", "/bus/planner", "/buses-en-vivo", "/bus/lines", "action:bus-picker"].includes(raw)) {
                 try {
                   window.sessionStorage.setItem("agent:open-bus-picker", "1");
                 } catch {
