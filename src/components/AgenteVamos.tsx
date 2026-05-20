@@ -737,10 +737,14 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       suppressRecognitionUntilRef.current = Date.now() + 1200;
       setInterim("");
       try {
-        recogRef.current?.abort?.();
+          recogRef.current?.onresult && (recogRef.current.onresult = null);
+          recogRef.current?.onend && (recogRef.current.onend = null);
+          recogRef.current?.abort?.();
       } catch {
         // Ignore if recognition is already stopped.
       }
+        recogRef.current = null;
+        setListening(false);
       if (audio && playAudioClip(audio, text, onEnd)) return;
       if (mutedRef.current || typeof window === "undefined" || !window.speechSynthesis) {
         if (!mutedRef.current) setTapToSpeak({ text, audio });
