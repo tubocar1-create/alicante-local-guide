@@ -413,8 +413,8 @@ function DirectionColumn({
                     </span>
                   )}
                 </div>
-              </div>
             </li>
+
           );
         })}
       </ol>
