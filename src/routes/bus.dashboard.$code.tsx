@@ -223,6 +223,7 @@ function BusDashboardPage() {
               if (!others) return [];
               return topTransfers.filter((t) => others.has(t.code));
             }}
+            onPickStop={handlePickStop}
           />
           <DirectionColumn
             label="VUELTA"
@@ -236,6 +237,7 @@ function BusDashboardPage() {
               if (!others) return [];
               return topTransfers.filter((t) => others.has(t.code));
             }}
+            onPickStop={handlePickStop}
           />
         </div>
 
