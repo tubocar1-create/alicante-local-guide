@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowDown, ArrowUp, Bus, Radio, RefreshCw, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowDown, ArrowUp, Bus, ChevronDown, Radio, RefreshCw, Loader2 } from "lucide-react";
 import { useBusGraph } from "@/hooks/useBusGraph";
 import busAlicanteImg from "@/assets/bus-alicante.png";
 
@@ -384,6 +384,16 @@ function DirectionColumn({
                   : undefined,
               }}
             >
+              {!isDest && (
+                <ChevronDown
+                  aria-hidden
+                  className="pointer-events-none absolute -bottom-2 left-[18px] z-20 h-3 w-3"
+                  strokeWidth={3}
+                  style={{ color }}
+                />
+              )}
+
+
 
               {(isOrigin || isDest) && (
                 <span
