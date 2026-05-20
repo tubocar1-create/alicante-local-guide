@@ -35,11 +35,27 @@ function formatHHMM(d: Date): string {
 function BusDashboardPage() {
   const { code } = Route.useParams();
   const { data, loading } = useBusGraph();
+  const navigate = useNavigate();
   const [clock, setClock] = useState<Date>(new Date());
   useEffect(() => {
     const t = setInterval(() => setClock(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
+
+  const handlePickStop = (stopCode: string, stopName: string) => {
+    const prompt = `Quiero coger la línea ${code} en la parada ${stopName} (${stopCode}).`;
+    try {
+      sessionStorage.setItem("afp:fwdPrompt", prompt);
+    } catch {}
+    navigate({ to: "/" });
+    setTimeout(() => {
+      try {
+        window.dispatchEvent(
+          new CustomEvent("afp:forward-prompt", { detail: { text: prompt } }),
+        );
+      } catch {}
+    }, 350);
+  };
 
 
   const line = data?.lines.find((l) => l.code === code);
