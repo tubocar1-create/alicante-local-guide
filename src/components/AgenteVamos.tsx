@@ -15,7 +15,12 @@ import {
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { agenteVamosChat } from "@/lib/agente.functions";
-import { loadAgenteIntents, type AgenteIntentRow } from "@/lib/agente-intents.functions";
+import {
+  loadAgenteRoutingCatalog,
+  type AgenteIntentRow,
+  type AgenteRoutingCatalog,
+  type AgenteSubcategory,
+} from "@/lib/agente-intents.functions";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
@@ -247,12 +252,14 @@ type DomainSpec = {
   triggers: string[];
   question: string;
   audio: VoiceClip;
+  hubPath?: string;
   followups: { keys: string[]; path: string }[];
 };
 
 const DOMAINS: DomainSpec[] = [
   {
     id: "salud",
+    hubPath: "/salud",
     triggers: [
       "estoy enfermo", "estoy enferma", "me encuentro mal", "me siento mal",
       "me siento fatal", "me encuentro fatal", "no me encuentro bien",
@@ -281,7 +288,8 @@ const DOMAINS: DomainSpec[] = [
     ],
   },
   {
-    id: "comida",
+    id: "comer",
+    hubPath: "/",
     triggers: [
       "tengo hambre", "estoy hambriento", "estoy hambrienta", "me muero de hambre",
       "sitio para comer", "algo de comer", "me apetece comer",
@@ -300,6 +308,7 @@ const DOMAINS: DomainSpec[] = [
   },
   {
     id: "transporte",
+    hubPath: "/bus",
     triggers: [
       "quiero moverme", "necesito moverme", "como me muevo", "quiero desplazarme",
       "tengo que ir", "necesito ir", "como llego", "como voy",
@@ -315,6 +324,7 @@ const DOMAINS: DomainSpec[] = [
   },
   {
     id: "ocio",
+    hubPath: "/ocio",
     triggers: [
       "quiero salir", "quiero hacer algo", "me aburro", "estoy aburrido",
       "estoy aburrida", "no se que hacer", "algo divertido",
@@ -333,6 +343,7 @@ const DOMAINS: DomainSpec[] = [
   },
   {
     id: "playas",
+    hubPath: "/playas",
     triggers: [
       "me quiero banar", "me quiero bañar", "quiero banarme", "quiero bañarme",
       "ir al mar", "darme un bano", "darme un baño",
@@ -346,7 +357,8 @@ const DOMAINS: DomainSpec[] = [
     ],
   },
   {
-    id: "hoteles",
+    id: "dormir",
+    hubPath: "/donde-dormir",
     triggers: [
       "pasar la noche", "necesito cama", "busco cama", "sitio para dormir",
       "donde duermo", "donde me quedo",
@@ -437,12 +449,54 @@ function matchFollowup(query: string, domain: DomainSpec): string | null {
 // aclaratoria (regla del usuario: conversar antes de derivar).
 const DB_KEY_TO_DOMAIN: Record<string, string> = {
   salud: "salud",
-  comer: "comida",
+  comer: "comer",
   transporte: "transporte",
   playas: "playas",
-  dormir: "hoteles",
+  dormir: "dormir",
+  comprar: "comprar",
+  tomar_algo: "tomar_algo",
+  mapa: "mapa",
   ocio: "ocio",
+  fiestas: "fiestas",
+  perfil: "perfil",
+  clima: "clima",
+  qr: "qr",
 };
+
+const EMPTY_ROUTING_CATALOG: AgenteRoutingCatalog = { intents: [], subcategories: {} };
+
+function hasPhrase(text: string, phrase: string): boolean {
+  const n = normalizeSpeech(phrase);
+  if (!n || n.length < 4) return false;
+  if (n.includes(" ")) return text.includes(n);
+  return new RegExp(`(^|\\s)${n.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}(\\s|$)`).test(text);
+}
+
+function matchExistingSubcategory(query: string, items: AgenteSubcategory[] = []): AgenteSubcategory | null {
+  let best: AgenteSubcategory | null = null;
+  let bestLen = 0;
+  for (const item of items) {
+    for (const alias of [item.label, item.route.split("/").filter(Boolean).at(-1)?.replace(/-/g, " "), ...(item.aliases ?? [])]) {
+      if (!alias) continue;
+      const n = normalizeSpeech(alias);
+      if (hasPhrase(query, n) && n.length > bestLen) {
+        best = item;
+        bestLen = n.length;
+      }
+    }
+  }
+  return best;
+}
+
+function findSubcategoryByTarget(target: string | undefined, catalog: AgenteRoutingCatalog): AgenteSubcategory | null {
+  if (!target) return null;
+  const cleanTarget = target.split("?")[0];
+  for (const item of Object.values(catalog.subcategories).flat()) {
+    const route = item.route.split("?")[0];
+    if (cleanTarget === route || cleanTarget.startsWith(`${route}/`)) return item;
+  }
+  return null;
+}
 
 function matchDbIntent(
   query: string,
@@ -470,18 +524,29 @@ type LocalResult = {
   path?: string;
   audio: VoiceClip;
   pendingDomain?: string | null;
+  forwardPrompt?: string;
+  openSubmenu?: string;
 };
 
 function localResolve(
   text: string,
   currentDomain?: string | null,
-  dbIntents: AgenteIntentRow[] = [],
+  catalog: AgenteRoutingCatalog = EMPTY_ROUTING_CATALOG,
 ): LocalResult {
   const query = normalizeSpeech(text);
 
   // 1) Follow-up dentro de un dominio activo: resolvemos sub-destino.
   if (currentDomain) {
     const d = DOMAINS.find((x) => x.id === currentDomain);
+    const subcategory = matchExistingSubcategory(query, catalog.subcategories[currentDomain]);
+    if (subcategory) {
+      return {
+        reply: `Te llevo a ${subcategory.label}.`,
+        path: subcategory.route,
+        audio: d?.audio ?? "fallback",
+        pendingDomain: null,
+      };
+    }
     if (d) {
       const fuPath = matchFollowup(query, d);
       if (fuPath) {
@@ -518,7 +583,7 @@ function localResolve(
   }
 
   // 4) DB Intents (agente_intents): semántica rica desde Supabase.
-  const dbMatch = matchDbIntent(query, dbIntents);
+  const dbMatch = matchDbIntent(query, catalog.intents);
   if (dbMatch) {
     const { intent } = dbMatch;
     // Si pertenece a un dominio con clarificación → preguntar primero.
@@ -935,8 +1000,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   // "salud" aquí y el siguiente mensaje se resuelve dentro de ese dominio.
   const pendingDomainRef = useRef<string | null>(null);
   // Cache de agente_intents cargados desde Supabase (fuente semántica real).
-  const dbIntentsRef = useRef<AgenteIntentRow[]>([]);
-  const loadIntents = useServerFn(loadAgenteIntents);
+  const routingCatalogRef = useRef<AgenteRoutingCatalog>(EMPTY_ROUTING_CATALOG);
+  const loadCatalog = useServerFn(loadAgenteRoutingCatalog);
 
   const IDLE_MS = 15_000;
   const bumpIdle = useCallback(() => {
@@ -973,19 +1038,19 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     openRef.current = open;
   }, [open]);
 
-  // Carga agente_intents de Supabase la primera vez que se abre el panel.
+  // Carga catálogo real de intents + subcategorías existentes la primera vez que se abre el panel.
   useEffect(() => {
     if (!open) return;
-    if (dbIntentsRef.current.length > 0) return;
-    loadIntents()
-      .then((rows) => {
-        dbIntentsRef.current = rows ?? [];
-        console.log(`[Agente] Intents cargados desde BD: ${dbIntentsRef.current.length}`);
+    if (routingCatalogRef.current.intents.length > 0) return;
+    loadCatalog()
+      .then((catalog: AgenteRoutingCatalog) => {
+        routingCatalogRef.current = catalog ?? EMPTY_ROUTING_CATALOG;
+        console.log(`[Agente] Catálogo cargado desde BD: ${routingCatalogRef.current.intents.length}`);
       })
-      .catch((err) => {
-        console.warn("[Agente] No se pudieron cargar intents de BD", err);
+      .catch((err: unknown) => {
+        console.warn("[Agente] No se pudo cargar el catálogo de routing", err);
       });
-  }, [open, loadIntents]);
+  }, [open, loadCatalog]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -1302,7 +1367,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             window.sessionStorage.removeItem("afp:openSubmenu");
           } catch {}
         }
-        const fallback = localResolve(clean, pendingDomainRef.current, dbIntentsRef.current);
+        const fallback = localResolve(clean, pendingDomainRef.current, routingCatalogRef.current);
         let reply = fallback.reply;
         let target: string | undefined = fallback.path;
         let forwardPrompt: string | undefined =
