@@ -148,7 +148,7 @@ function BusDashboardPage() {
 
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="h-[100dvh] overflow-y-auto overscroll-contain bg-black text-white">
       <div className="mx-auto max-w-3xl px-3 py-4">
         {/* HEADER */}
         <div className="flex items-start gap-3">
