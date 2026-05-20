@@ -159,7 +159,7 @@ function RootComponent() {
       <Toaster />
       <InstallPWA />
       <AgenteVamosFab />
-      <TTSTestButton />
+      
     </QueryClientProvider>
   );
 }
