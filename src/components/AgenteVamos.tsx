@@ -15,6 +15,7 @@ import {
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { agenteVamosChat } from "@/lib/agente.functions";
+import { loadAgenteIntents, type AgenteIntentRow } from "@/lib/agente-intents.functions";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
@@ -430,6 +431,40 @@ function matchFollowup(query: string, domain: DomainSpec): string | null {
   return bestPath;
 }
 
+// ─── DB Intents (agente_intents) ──────────────────────────────────────
+// Mapa: cuando un intent de BD coincida y SU dominio tenga clarificación
+// definida en DOMAINS, en vez de navegar directo abrimos la pregunta
+// aclaratoria (regla del usuario: conversar antes de derivar).
+const DB_KEY_TO_DOMAIN: Record<string, string> = {
+  salud: "salud",
+  comer: "comida",
+  transporte: "transporte",
+  playas: "playas",
+  dormir: "hoteles",
+  ocio: "ocio",
+};
+
+function matchDbIntent(
+  query: string,
+  dbIntents: AgenteIntentRow[],
+): { intent: AgenteIntentRow; len: number } | null {
+  let best: AgenteIntentRow | null = null;
+  let bestLen = 0;
+  for (const it of dbIntents) {
+    for (const kw of it.keywords ?? []) {
+      const n = normalizeSpeech(kw);
+      // Exigimos longitud mínima 4 para evitar que palabras sueltas muy
+      // cortas ("ir", "ver"…) disparen un dominio entero.
+      if (n.length < 4) continue;
+      if (query.includes(n) && n.length > bestLen) {
+        best = it;
+        bestLen = n.length;
+      }
+    }
+  }
+  return best ? { intent: best, len: bestLen } : null;
+}
+
 type LocalResult = {
   reply: string;
   path?: string;
@@ -437,7 +472,11 @@ type LocalResult = {
   pendingDomain?: string | null;
 };
 
-function localResolve(text: string, currentDomain?: string | null): LocalResult {
+function localResolve(
+  text: string,
+  currentDomain?: string | null,
+  dbIntents: AgenteIntentRow[] = [],
+): LocalResult {
   const query = normalizeSpeech(text);
 
   // 1) Follow-up dentro de un dominio activo: resolvemos sub-destino.
@@ -457,7 +496,7 @@ function localResolve(text: string, currentDomain?: string | null): LocalResult 
     }
   }
 
-  // 2) Coincidencia FUERTE por keyword exacta → routing directo.
+  // 2) Coincidencia FUERTE por keyword exacta hardcoded → routing directo.
   const keyMatch = bestKeyIntent(query);
   if (keyMatch && keyMatch.len >= 4) {
     return {
@@ -468,7 +507,7 @@ function localResolve(text: string, currentDomain?: string | null): LocalResult 
     };
   }
 
-  // 3) Detección de DOMINIO general → preguntar antes de navegar.
+  // 3) Dominio general hardcoded (lenguaje natural ambiguo) → preguntar.
   const domain = matchDomain(query);
   if (domain) {
     return {
@@ -478,7 +517,40 @@ function localResolve(text: string, currentDomain?: string | null): LocalResult 
     };
   }
 
-  // 4) Context match específico de un intent concreto.
+  // 4) DB Intents (agente_intents): semántica rica desde Supabase.
+  const dbMatch = matchDbIntent(query, dbIntents);
+  if (dbMatch) {
+    const { intent } = dbMatch;
+    // Si pertenece a un dominio con clarificación → preguntar primero.
+    const domainId = DB_KEY_TO_DOMAIN[intent.key];
+    if (domainId) {
+      const d = DOMAINS.find((x) => x.id === domainId);
+      if (d) {
+        return {
+          reply: d.question,
+          audio: d.audio,
+          pendingDomain: d.id,
+        };
+      }
+    }
+    // Acción logout u otras acciones especiales: sin path.
+    if (intent.action === "logout") {
+      return {
+        reply: "Cerrando sesión…",
+        audio: "fallback",
+        pendingDomain: null,
+      };
+    }
+    // Resto: navegación directa al hub que define la BD.
+    return {
+      reply: `Te llevo a ${intent.label.toLowerCase()}.`,
+      path: intent.route ?? undefined,
+      audio: "fallback",
+      pendingDomain: null,
+    };
+  }
+
+  // 5) Context match específico de un intent concreto.
   const ctx = bestContextIntent(query);
   if (ctx) {
     return {
@@ -862,6 +934,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   // usuario expresa un dominio general ambiguo ("tengo dolor"), guardamos
   // "salud" aquí y el siguiente mensaje se resuelve dentro de ese dominio.
   const pendingDomainRef = useRef<string | null>(null);
+  // Cache de agente_intents cargados desde Supabase (fuente semántica real).
+  const dbIntentsRef = useRef<AgenteIntentRow[]>([]);
+  const loadIntents = useServerFn(loadAgenteIntents);
 
   const IDLE_MS = 15_000;
   const bumpIdle = useCallback(() => {
@@ -897,6 +972,20 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   useEffect(() => {
     openRef.current = open;
   }, [open]);
+
+  // Carga agente_intents de Supabase la primera vez que se abre el panel.
+  useEffect(() => {
+    if (!open) return;
+    if (dbIntentsRef.current.length > 0) return;
+    loadIntents()
+      .then((rows) => {
+        dbIntentsRef.current = rows ?? [];
+        console.log(`[Agente] Intents cargados desde BD: ${dbIntentsRef.current.length}`);
+      })
+      .catch((err) => {
+        console.warn("[Agente] No se pudieron cargar intents de BD", err);
+      });
+  }, [open, loadIntents]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -1213,7 +1302,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             window.sessionStorage.removeItem("afp:openSubmenu");
           } catch {}
         }
-        const fallback = localResolve(clean, pendingDomainRef.current);
+        const fallback = localResolve(clean, pendingDomainRef.current, dbIntentsRef.current);
         let reply = fallback.reply;
         let target: string | undefined = fallback.path;
         let forwardPrompt: string | undefined =
