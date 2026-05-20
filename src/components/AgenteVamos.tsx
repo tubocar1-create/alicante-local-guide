@@ -1288,7 +1288,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             window.sessionStorage.removeItem("afp:openSubmenu");
           } catch {}
         }
-        const fallback = localResolve(clean, pendingDomainRef.current);
+        const fallback = localResolve(clean, pendingDomainRef.current, dbIntentsRef.current);
         let reply = fallback.reply;
         let target: string | undefined = fallback.path;
         let forwardPrompt: string | undefined =
