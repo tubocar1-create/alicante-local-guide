@@ -772,13 +772,19 @@ export function ChatScreen() {
 
           {showBusPicker && (
             <BusKnownPicker
-              onClose={() => setShowBusPicker(false)}
+              initialLineCode={busPickerLine}
+              onClose={() => {
+                setShowBusPicker(false);
+                setBusPickerLine(null);
+              }}
               onUnknown={() => {
                 setShowBusPicker(false);
+                setBusPickerLine(null);
                 void send("Hola, quiero moverme en bus por Alicante.", { mode: "transit" });
               }}
               onSelected={(pick: BusStopPick) => {
                 setShowBusPicker(false);
+                setBusPickerLine(null);
                 setMode("transit");
                 const userText = `Quiero coger la línea ${pick.line} en la parada ${pick.stopName} (${pick.stopCode}).`;
                 const payload = encodeURIComponent(JSON.stringify(pick));
