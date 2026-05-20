@@ -1492,8 +1492,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           </div>
 
           <div className="flex w-full flex-col items-center gap-3 pb-2">
-            {voiceError && <p className="text-center text-xs text-destructive">{voiceError}</p>}
-            {/* El agente habla directamente sin pedir gesto/permiso al usuario */}
+            {/* Sin avisos de permiso ni botón de activar micro: el agente habla directamente */}
+
 
             {/* Animated orb — visual only, no interaction required */}
             <div
@@ -1568,28 +1568,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                   </>
                 )}
               </button>
-              {!micReady && (
-                <button
-                  onClick={() => {
-                    unlockSpeechFromUserGesture();
-                    const warmup = requestMicWarmupFromUserGesture();
-                    setVoiceError(__vaMicWarmupMessage);
-                    warmup?.then((state) => {
-                      setMicReady(state === "ready");
-                      if (state === "ready") {
-                        setVoiceError(null);
-                        setPaused(false);
-                        startListeningRef.current();
-                      } else if (__vaMicWarmupMessage) {
-                        setVoiceError(__vaMicWarmupMessage);
-                      }
-                    });
-                  }}
-                  className="flex items-center gap-1 rounded-full border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
-                >
-                  <Mic className="h-3 w-3" /> activar micro
-                </button>
-              )}
+              {/* Botón "activar micro" eliminado: no se muestran prompts de permiso */}
+
               <button
                 onClick={() => {
                   stopListening();
