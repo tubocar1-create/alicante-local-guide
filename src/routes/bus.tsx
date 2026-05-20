@@ -16,5 +16,5 @@ export const Route = createFileRoute("/bus")({
     }
     throw redirect({ href: "/?openBusPicker=1", replace: true });
   },
-  component: () => null,
+  component: () => <Outlet />,
 });
