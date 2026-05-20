@@ -305,6 +305,7 @@ function DirectionColumn({
   color,
   inService,
   transferLines,
+  onPickStop,
 }: {
   label: string;
   direction: 1 | 2;
@@ -313,6 +314,7 @@ function DirectionColumn({
   color: string;
   inService: boolean;
   transferLines: (stopCode: string) => { code: string; color: string }[];
+  onPickStop: (stopCode: string, stopName: string) => void;
 }) {
   const now = new Date();
 
