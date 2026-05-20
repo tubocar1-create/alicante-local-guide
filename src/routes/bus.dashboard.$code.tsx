@@ -187,7 +187,7 @@ function BusDashboardPage() {
         </div>
 
         {/* COLUMNAS IDA / VUELTA */}
-        <div className="mt-4 grid grid-cols-2 gap-2 rounded-2xl border border-white/10 bg-white/[0.02] p-2">
+        <div className="mt-4 grid grid-cols-2 divide-x divide-white/10 rounded-2xl border border-white/10 bg-white/[0.02] p-2">
           <DirectionColumn
             label="IDA"
             direction={1}
@@ -202,7 +202,6 @@ function BusDashboardPage() {
               return null;
             }}
           />
-          <div className="border-l border-white/10" />
           <DirectionColumn
             label="VUELTA"
             direction={2}
@@ -216,7 +215,6 @@ function BusDashboardPage() {
               for (const t of topTransfers) if (others.has(t.code)) return t.color;
               return null;
             }}
-            offsetGrid
           />
         </div>
 
