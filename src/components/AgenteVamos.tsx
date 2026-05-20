@@ -1123,15 +1123,25 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       activeRec.onerror = null;
       activeRec.onend = null;
     }
-    try {
-      activeRec?.abort?.();
-    } catch {}
-    try {
-      activeRec?.stop?.();
-    } catch {}
+    const wasListening = voiceStateRef.current === "listening";
+    if (wasListening || activeRec) {
+      setVoiceState("stopping");
+      try {
+        activeRec?.abort?.();
+      } catch {}
+      try {
+        activeRec?.stop?.();
+      } catch {}
+      // Espera de gracia antes de volver a IDLE: Android necesita ~300ms
+      // entre stop() y un eventual start() para no quedarse colgado.
+      scheduleVoiceIdle(300);
+    } else {
+      setVoiceState("idle");
+    }
     recogRef.current = null;
     setListening(false);
   }, []);
+
 
   const stopSpeaking = useCallback(() => {
     try {
