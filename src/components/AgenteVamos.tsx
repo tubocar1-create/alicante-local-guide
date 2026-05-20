@@ -569,16 +569,20 @@ function localResolve(
     }
   }
 
-  // 2) Dominio general PRIMERO (regla: conversar antes de derivar).
-  //    Si el usuario dice algo ambiguo que toca un dominio ("dolor", "hambre",
-  //    "moverme"), preguntamos antes de saltar a una subcategoría.
+  // 2) ARQUITECTURA POR CAPAS (regla del producto):
+  //    PRIORIDAD 1 → entidad/destino EXACTO (frase específica, len >= 8)
+  //    PRIORIDAD 2 → dominio general (frase ambigua → preguntar antes)
+  //    PRIORIDAD 3 → keyword / DB intent (solo si no hay dominio en juego)
+  //
+  //    Frases ambiguas ("me duele", "tengo hambre", "me aburro") NUNCA
+  //    pueden abrir destinos específicos, especialistas ni fichas.
   const domainMatch = matchDomain(query);
   const keyMatch = bestKeyIntent(query);
 
-  // 3) Solo permitimos que un keyword hardcoded ESPECÍFICO gane al dominio
-  //    cuando su frase coincidente sea estrictamente más larga (más concreta)
-  //    que el trigger del dominio. Así "traumatologia" gana, pero "dolor" no.
-  if (keyMatch && keyMatch.len >= 4 && (!domainMatch || keyMatch.len > domainMatch.len)) {
+  // 2a) PRIORIDAD 1 — entidad exacta de alta confianza (>=8 chars) gana
+  //     incluso sobre el dominio. Ej: "farmacia", "hospital", "aeropuerto",
+  //     "cartelera"… son peticiones explícitas, no ambigüedades.
+  if (keyMatch && keyMatch.len >= 8 && (!domainMatch || keyMatch.len > domainMatch.len)) {
     return {
       reply: keyMatch.intent.reply,
       path: keyMatch.intent.path,
@@ -587,6 +591,7 @@ function localResolve(
     };
   }
 
+  // 2b) PRIORIDAD 2 — si hay dominio, SIEMPRE preguntar antes de derivar.
   if (domainMatch) {
     const { domain } = domainMatch;
     return {
@@ -596,11 +601,22 @@ function localResolve(
     };
   }
 
-  // 4) DB Intents (agente_intents): semántica rica desde Supabase.
+  // 2c) PRIORIDAD 3 — keyword corto (4–7 chars) sin dominio en juego.
+  if (keyMatch && keyMatch.len >= 4) {
+    return {
+      reply: keyMatch.intent.reply,
+      path: keyMatch.intent.path,
+      audio: keyMatch.intent.audio,
+      pendingDomain: null,
+    };
+  }
+
+  // 3) DB Intents (agente_intents): semántica rica desde Supabase.
+  //    Si el intent de BD pertenece a un dominio con clarificación,
+  //    SIEMPRE preguntamos primero (nunca abrimos especialista directo).
   const dbMatch = matchDbIntent(query, catalog.intents);
   if (dbMatch) {
     const { intent } = dbMatch;
-    // Si pertenece a un dominio con clarificación → preguntar primero.
     const domainId = DB_KEY_TO_DOMAIN[intent.key];
     if (domainId) {
       const d = DOMAINS.find((x) => x.id === domainId);
@@ -612,7 +628,19 @@ function localResolve(
         };
       }
     }
-    // Acción logout u otras acciones especiales: sin path.
+    // Si la ruta del intent BD apunta a un sub-destino específico
+    // (ej. /salud/<categoria>, /ocio/<algo>), exigimos que el keyword
+    // coincidente sea suficientemente explícito (>= 8 chars).
+    const isSpecificSubpath =
+      intent.route && /^\/[^/]+\/[^/]+/.test(intent.route);
+    if (isSpecificSubpath && dbMatch.len < 8) {
+      // Ambiguo → no abrimos destino concreto. Pedimos aclaración genérica.
+      return {
+        reply: "¿Puedes concretar un poco más qué necesitas?",
+        audio: "fallback",
+        pendingDomain: null,
+      };
+    }
     if (intent.action === "logout") {
       return {
         reply: "Cerrando sesión…",
@@ -620,7 +648,6 @@ function localResolve(
         pendingDomain: null,
       };
     }
-    // Resto: navegación directa al hub que define la BD.
     return {
       reply: `Te llevo a ${intent.label.toLowerCase()}.`,
       path: intent.route ?? undefined,
@@ -629,7 +656,7 @@ function localResolve(
     };
   }
 
-  // 5) Context match específico de un intent concreto.
+  // 4) Context match específico de un intent concreto.
   const ctx = bestContextIntent(query);
   if (ctx) {
     return {
@@ -1472,13 +1499,20 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           }
         }
 
-        // ─── HARD-BLOCK · subcategorías médicas ──────────────────────────
-        // Nunca llevamos al usuario a un especialista (/salud/<categoria>)
-        // si su mensaje no menciona explícitamente esa especialidad.
-        // "tengo dolor" NUNCA debe acabar en /salud/traumatologia.
-        if (target && /^\/salud\/[^/]+/.test(target)) {
+        // ─── HARD-BLOCK · destinos específicos desde frases ambiguas ─────
+        // Regla: NUNCA abrir un destino específico (especialista, ficha,
+        // subcategoría) si el mensaje del usuario es ambiguo. Solo abrimos
+        // sub-destinos cuando la frase contiene una mención EXPLÍCITA del
+        // destino (entidad exacta o palabra de alta confianza, >=8 chars).
+        if (target && /^\/[^/]+\/[^/?#]+/.test(target)) {
           const cleanNorm = normalizeSpeech(clean);
-          // Stems de especialidades reconocibles en lenguaje natural.
+          // 1) ¿la frase activa un dominio ambiguo?
+          const ambiguousDomain = matchDomain(cleanNorm);
+          // 2) ¿la frase contiene una mención explícita del último segmento
+          //    de la ruta destino? Ej. /salud/dermatologia → "dermatolog".
+          const lastSeg = target.split("?")[0].split("/").filter(Boolean).at(-1) ?? "";
+          const segNorm = normalizeSpeech(lastSeg.replace(/-/g, " "));
+          const segStems = segNorm.split(" ").filter((w) => w.length >= 6);
           const SPECIALTY_STEMS = [
             "traumatolog", "trauma", "dermatolog", "pediatr", "cardiolog",
             "oftalmolog", "ocular", "odontolog", "dentista", "psicolog",
@@ -1488,13 +1522,15 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             "analisis", "radiolog", "diagnostico por imagen", "ecograf",
             "centro de salud", "ambulatorio", "sip", "urgenc",
           ];
-          const explicit = SPECIALTY_STEMS.some((s) => cleanNorm.includes(s));
-          if (!explicit) {
-            // Forzamos al hub /salud y abrimos el flujo aclaratorio.
-            target = "/salud";
-            reply =
-              "Entiendo. ¿Necesitas hospital, farmacia, urgencias o centro de salud?";
-            pendingDomainRef.current = "salud";
+          const explicitFromStems =
+            segStems.some((s) => cleanNorm.includes(s)) ||
+            SPECIALTY_STEMS.some((s) => cleanNorm.includes(s));
+          if (ambiguousDomain && !explicitFromStems) {
+            // Forzamos al hub del dominio y abrimos el flujo aclaratorio.
+            const hub = ambiguousDomain.domain.hubPath ?? "/";
+            target = hub;
+            reply = ambiguousDomain.domain.question;
+            pendingDomainRef.current = ambiguousDomain.domain.id;
             forwardPrompt = undefined;
             if (typeof window !== "undefined") {
               try {
