@@ -363,7 +363,90 @@ function BusDashboardPage() {
   );
 }
 
+function HeaderEtas({
+  nearestIda,
+  nearestVuelta,
+  stopsIda,
+  stopsVuelta,
+  etas,
+  geoStatus,
+  color,
+  now,
+  updatedAt,
+}: {
+  nearestIda: { code: string; distance: number } | null;
+  nearestVuelta: { code: string; distance: number } | null;
+  stopsIda: StopRow[];
+  stopsVuelta: StopRow[];
+  etas: Record<string, number[]>;
+  geoStatus: "idle" | "loading" | "ok" | "unavailable";
+  color: string;
+  now: Date;
+  updatedAt: string | null;
+}) {
+  const updatedTs = updatedAt ? new Date(updatedAt).getTime() : Date.now();
+  const cell = (
+    label: string,
+    nearest: { code: string; distance: number } | null,
+    stops: StopRow[],
+  ) => {
+    const stop = nearest ? stops.find((s) => s.code === nearest.code) : null;
+    const next = nearest ? etas[nearest.code]?.[0] : undefined;
+    let liveMin: number | null = null;
+    let arrival: Date | null = null;
+    if (typeof next === "number") {
+      arrival = new Date(updatedTs + Math.max(0, next) * 60_000);
+      liveMin = Math.max(0, Math.round((arrival.getTime() - now.getTime()) / 60_000));
+    }
+    return (
+      <div className="flex-1 min-w-0 px-3 py-2">
+        <div className="flex items-center gap-1.5">
+          <span
+            className="font-sans text-[10px] font-extrabold not-italic uppercase tracking-wide"
+            style={{ color }}
+          >
+            {label}
+          </span>
+          {geoStatus === "ok" && nearest ? (
+            <span className="flex items-center gap-0.5 text-[10px] text-emerald-400">
+              <MapPin className="h-3 w-3" />
+              {nearest.distance < 1000
+                ? `${Math.round(nearest.distance)} m`
+                : `${(nearest.distance / 1000).toFixed(1)} km`}
+            </span>
+          ) : (
+            <span className="text-[10px] text-white/40">n/d</span>
+          )}
+        </div>
+        <div className="truncate font-sans text-[11px] not-italic text-white/70">
+          {stop?.name ?? "—"}
+        </div>
+        <div className="mt-1 flex items-baseline justify-between gap-2">
+          <span className="font-sans text-[11px] not-italic text-white/80">
+            {liveMin == null
+              ? "Sin paso"
+              : liveMin <= 0
+                ? "Llegando"
+                : `Faltan ${liveMin} min`}
+          </span>
+          <span className="font-mono text-lg font-bold tabular-nums text-white">
+            {arrival ? formatHHMM(arrival) : "--:--"}
+          </span>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="mt-3 grid grid-cols-2 divide-x divide-white/10 rounded-2xl border border-white/10 bg-white/[0.03]">
+      {cell("Ida", nearestIda, stopsIda)}
+      {cell("Vuelta", nearestVuelta, stopsVuelta)}
+    </div>
+  );
+}
+
 function LineChip({
+
   code,
   color,
   filled = false,
