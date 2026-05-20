@@ -284,6 +284,21 @@ function BusDashboardPage() {
           </div>
         </div>
 
+        {/* TIEMPOS DE ESPERA EN LA PARADA MÁS CERCANA */}
+        <HeaderEtas
+          nearestIda={nearestByDir[1]}
+          nearestVuelta={nearestByDir[2]}
+          stopsIda={stopsByDir[1]}
+          stopsVuelta={stopsByDir[2]}
+          etas={etas}
+          geoStatus={geoStatus}
+          color={lineColor}
+          now={clock}
+          updatedAt={updatedAt}
+        />
+
+
+
         {/* COLUMNAS IDA / VUELTA */}
         <div className="mt-4 grid grid-cols-2 divide-x divide-white/10 rounded-2xl border border-white/10 bg-white/[0.02] p-2">
           <DirectionColumn
