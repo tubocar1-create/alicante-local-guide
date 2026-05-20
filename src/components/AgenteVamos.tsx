@@ -1155,7 +1155,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     try {
       const rec = new SRClass();
       rec.lang = "es-ES";
-      rec.continuous = true;
+      rec.continuous = !hasMobileSpeechDuplicationBug();
       rec.interimResults = true;
       let finalText = "";
       let lastTranscript = "";
