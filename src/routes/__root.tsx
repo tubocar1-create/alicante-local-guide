@@ -10,6 +10,7 @@ import {
 } from "@tanstack/react-router";
 import { InstallPWA } from "@/components/InstallPWA";
 import { AgenteVamosFab } from "@/components/AgenteVamos";
+import { TTSTestButton } from "@/components/TTSTestButton";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 
