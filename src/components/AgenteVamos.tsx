@@ -132,8 +132,8 @@ const INTENTS: IntentDef[] = [
       "planificar ruta", "planificador", "como llego", "como voy a", "llegar a",
       "ir a", "llevarme a", "ruta hasta", "trayecto",
     ],
-    reply: "Vamos al planificador de rutas.",
-    path: "/bus/planner",
+    reply: "Te abro los buses urbanos para planificar tu ruta.",
+    path: "action:bus-picker",
     audio: "planner",
   },
   {
@@ -326,7 +326,7 @@ const DOMAINS: DomainSpec[] = [
     audio: "bus",
     followups: [
       { keys: ["bus", "autobus", "autobuses", "urbano", "urbanos", "emt", "parada", "linea", "lineas", "local", "locales"], path: "action:bus-picker" },
-      { keys: ["ruta", "planificador", "planificar", "trayecto"], path: "/bus/planner" },
+      { keys: ["ruta", "planificador", "planificar", "trayecto"], path: "action:bus-picker" },
       { keys: ["vuelo", "vuelos", "avion", "aeropuerto"], path: "/vuelos" },
     ],
   },

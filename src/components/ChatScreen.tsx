@@ -245,6 +245,16 @@ export function ChatScreen() {
     if (typeof window === "undefined") return;
     const open = () => setShowBusPicker(true);
     window.addEventListener("agent:open-bus-picker", open);
+    // Si llegamos desde una ruta legacy (/bus/planner) con el flag puesto,
+    // abrimos el picker en cuanto monta el Inicio.
+    try {
+      if (sessionStorage.getItem("agent:open-bus-picker") === "1") {
+        sessionStorage.removeItem("agent:open-bus-picker");
+        setShowBusPicker(true);
+      }
+    } catch {
+      /* noop */
+    }
     return () => window.removeEventListener("agent:open-bus-picker", open);
   }, []);
 

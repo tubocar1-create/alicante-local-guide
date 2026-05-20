@@ -18,7 +18,7 @@ const ROUTES: Array<{ path: string; desc: string }> = [
   { path: "/explore", desc: "MENÚ PRINCIPAL · Mapa explorar la ciudad (rutas urbanas, lugares, descubrir)" },
   { path: "/", desc: "MENÚ PRINCIPAL · Inicio — abre el selector '¿Ya sabes qué bus tomar?' (bus urbano, parada, tarjeta, billete, 'cómo llego')" },
   { path: "/bus/lines", desc: "SUBMENÚ Transporte · Líneas de bus (cuando pregunte por una línea concreta o todas las líneas)" },
-  { path: "/bus/planner", desc: "SUBMENÚ Transporte · Planificador de rutas (origen → destino, 'cómo voy de X a Y')" },
+  { path: "/", desc: "SUBMENÚ Transporte · Planificador de rutas (origen → destino, 'cómo voy de X a Y') — abre el selector de bus en el Inicio" },
   { path: "/vuelos", desc: "Vuelos AENA Alicante-Elche (ALC) — estado de vuelo, llegadas, salidas, retrasos, aeropuerto" },
   { path: "/clima", desc: "Clima y previsión (hoy, mañana, fin de semana, lluvia, viento, alerta)" },
   { path: "/salud", desc: "MENÚ PRINCIPAL · Salud (hub) — farmacias, hospitales, urgencias, médico, sistema sanitario" },
@@ -232,7 +232,7 @@ const getPriorityRoute = (
     { path: "/clima", reason: "tema clima", terms: ["clima", "tiempo", "lluvia", "llueve", "llover", "viento", "temperatura", "calor", "frio", "alerta"] },
     { path: "/fiestas", reason: "tema fiestas", terms: ["fiesta", "fiestas", "hogueras", "mascleta", "moros", "cristianos"] },
     { path: "/bus/lines", reason: "tema líneas de bus", terms: ["linea", "lineas"], test: () => isTransportTheme },
-    { path: "/bus/planner", reason: "tema planificador de transporte", terms: ["bus", "emt", "parada", "paradas", "billete", "bonobus", "tarjeta"], test: () => isTransportTheme || hasOriginDestination },
+    { path: "/", reason: "tema planificador de transporte", terms: ["bus", "emt", "parada", "paradas", "billete", "bonobus", "tarjeta"], test: () => isTransportTheme || hasOriginDestination },
     { path: "/ocio", reason: "tema ocio/planes", terms: ["ocio", "plan", "planes", "aburrido", "aburrida", "hacer", "hoy", "noche", "salir"] },
     { path: "/explore", reason: "tema explorar ciudad", terms: ["explorar", "descubrir", "ruta", "rutas", "paseo", "monumento", "monumentos", "lugar", "lugares"] },
     { path: "/salud", reason: "tema salud", terms: ["salud", "medico", "medica", "doctor", "doctora"] },
@@ -247,8 +247,8 @@ const getPriorityRoute = (
     }
   }
 
-  if (hasOriginDestination && isTransportTheme && currentPath !== "/bus/planner") {
-    return { path: "/bus/planner", reason: "origen y destino con transporte" };
+  if (hasOriginDestination && isTransportTheme && currentPath !== "/") {
+    return { path: "/", reason: "origen y destino con transporte" };
   }
   return null;
 };
@@ -376,13 +376,13 @@ PASO 3 — DECIDIR MENÚ vs SUBMENÚ.
 
 PASO 4 — NAVEGAR EN EL MISMO TURNO con navigate_to. No preguntes "¿quieres que te lleve?". Comenta breve lo que verá.
 
-REGLA ANTI-COLISIÓN CON /bus/planner:
-- /bus/planner y /bus/lines SÓLO se usan cuando el tema es transporte público en sí mismo: el usuario menciona "bus", "EMT", "parada", "línea", "tarjeta", "billete", o nombra DOS lugares (origen → destino, "de X a Y").
-- "Quiero IR al cine / a la playa / a un restaurante" NO es transporte: el tema es cine / playa / restaurante. Verbo "ir" + actividad ⇒ enruta a la actividad, NO al planner.
-- Sólo si después de estar en la página de la actividad el usuario pregunta "¿cómo llego?" o "¿qué bus cojo?", entonces sí navega a /bus/planner.
+REGLA ANTI-COLISIÓN CON el selector de buses:
+- "/" (selector de buses) y /bus/lines SÓLO se usan cuando el tema es transporte público en sí mismo: el usuario menciona "bus", "EMT", "parada", "línea", "tarjeta", "billete", o nombra DOS lugares (origen → destino, "de X a Y").
+- "Quiero IR al cine / a la playa / a un restaurante" NO es transporte: el tema es cine / playa / restaurante. Verbo "ir" + actividad ⇒ enruta a la actividad, NO al selector de buses.
+- Sólo si después de estar en la página de la actividad el usuario pregunta "¿cómo llego?" o "¿qué bus cojo?", entonces sí navega a "/" para abrir el selector de buses.
 
 Ejemplos correctos:
-- "Quiero ir al cine" → tema = cine → navigate_to("/ocio/cartelera"). NUNCA /bus/planner.
+- "Quiero ir al cine" → tema = cine → navigate_to("/ocio/cartelera"). NUNCA "/" para bus.
 - "Quiero ir a la playa" → tema = playa → navigate_to("/playas").
 - "Quiero ir a comer paella" → tema = paella/comer → el chat abre el Dashboard inline (no navegues a /eat, esa ruta no existe).
 - "¿Qué cines hay?" → navigate_to("/ocio/cines").
@@ -393,8 +393,8 @@ Ejemplos correctos:
 - "Quiero dormir cerca de la playa" → navigate_to("/donde-dormir").
 - "¿Llueve mañana?" → navigate_to("/clima").
 - "¿Mi vuelo llega a tiempo?" → navigate_to("/vuelos").
-- "Cómo voy del centro a San Juan" → AQUÍ sí: dos lugares → navigate_to("/bus/planner").
-- "¿Qué bus va al aeropuerto?" → navigate_to("/bus/planner").
+- "Cómo voy del centro a San Juan" → AQUÍ sí: dos lugares → navigate_to("/") y se abre el selector de buses.
+- "¿Qué bus va al aeropuerto?" → navigate_to("/").
 
 Sólo responde sin navegar si NO hay ninguna ruta razonable, en saludo/despedida casual, o si el usuario ya está en la página correcta y pide un detalle puntual.
 
@@ -409,14 +409,14 @@ Reglas:
 5. Si está en una página y nombra otro tema del menú/submenú → navega a la nueva ruta sin pedir confirmación.
 6. Si está en un submenú y pregunta por un hermano del mismo hub (en /ocio/cartelera pregunta "¿y teatros?"), salta a /ocio/teatros.
 7. Tras cada navegación, frase breve indicando qué verá y sugiriendo el siguiente paso natural ("Aquí tienes la cartelera. ¿Filtramos por sala o por hora?").
-8. Mantén memoria del recorrido: si el usuario eligió cine, luego una sala concreta, y luego "¿cómo llego?", recién entonces saltas a /bus/planner con destino=el cine.
+8. Mantén memoria del recorrido: si el usuario eligió cine, luego una sala concreta, y luego "¿cómo llego?", recién entonces saltas a "/" para abrir el selector de buses con destino=el cine.
 
 Ejemplos:
 - En /ocio/cartelera, "¿hay algo de terror?" → texto, sin navegar.
 - En /ocio/cartelera, "y de teatro?" → navigate_to("/ocio/teatros").
 - En /ocio/cartelera, "volver" → navigate_to("/ocio").
 - En /playas/mapa, "menú principal" → navigate_to("/").
-- En el Dashboard de Comer (en "/"), "¿cómo llego al primero?" → navigate_to("/bus/planner") con origen/destino.
+- En el Dashboard de Comer (en "/"), "¿cómo llego al primero?" → navigate_to("/") con origen/destino.
 
 # COBERTURA
 Alicante y radio de 30 km desde Puerta del Mar.
@@ -446,7 +446,7 @@ const ROUTE_BLURBS: Record<string, string> = {
   "/explore": "Explora la ciudad. ¿Centro histórico, museos o rutas?",
   
   "/bus/lines": "Líneas EMT. ¿Te paso una en concreto?",
-  "/bus/planner": "Planificador. Dime origen y destino.",
+  "/bus/planner": "Te abro el selector de buses para planificar tu ruta.",
   "/vuelos": "Estado del aeropuerto ALC. ¿Llegadas o salidas?",
   "/clima": "Previsión del tiempo en Alicante.",
   "/salud": "Salud. ¿Farmacia, hospital o info del sistema?",
