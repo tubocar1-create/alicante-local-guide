@@ -745,8 +745,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       suppressRecognitionUntilRef.current = Date.now() + 1200;
       setInterim("");
       try {
-          recogRef.current?.onresult && (recogRef.current.onresult = null);
-          recogRef.current?.onend && (recogRef.current.onend = null);
+          if (recogRef.current) {
+            recogRef.current.onresult = null;
+            recogRef.current.onspeechend = null;
+            recogRef.current.onerror = null;
+            recogRef.current.onend = null;
+          }
           recogRef.current?.abort?.();
       } catch {
         // Ignore if recognition is already stopped.
