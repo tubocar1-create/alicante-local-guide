@@ -160,11 +160,12 @@ function BusDashboardPage() {
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div
-            className="flex h-16 w-16 shrink-0 items-center justify-center text-2xl font-black text-white shadow-lg"
-            style={{ background: lineColor, borderRadius: 16 }}
+            className="flex h-11 w-11 shrink-0 items-center justify-center text-base font-black text-white shadow-lg"
+            style={{ background: lineColor, borderRadius: 12 }}
           >
             {code}
           </div>
+
           <div className="min-w-0 flex-1 pt-0.5">
             <h1 className="font-sans text-2xl font-bold not-italic leading-tight text-white">
               Línea {code}
