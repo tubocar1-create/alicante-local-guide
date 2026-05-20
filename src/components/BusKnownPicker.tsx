@@ -281,13 +281,6 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
             );
           })}
 
-          <div className="flex items-start gap-2 border-t border-border/60 pt-3 text-[11px] text-muted-foreground">
-            <span aria-hidden className="text-pink-400">✦</span>
-            <div className="leading-tight">
-              <div>Tiempos en tiempo real</div>
-              <div>Datos proporcionados por Vectalia Alicante</div>
-            </div>
-          </div>
         </div>
       )}
 
