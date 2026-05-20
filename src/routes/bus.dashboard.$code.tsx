@@ -160,7 +160,7 @@ function BusDashboardPage() {
         {/* HEADER */}
         <div className="flex items-start gap-3">
           <Link
-            to="/"
+            to="/bus"
             className="mt-1 inline-flex h-9 w-9 items-center justify-center rounded-full text-white hover:bg-white/10"
             aria-label="Volver"
           >
@@ -191,12 +191,6 @@ function BusDashboardPage() {
               </span>
             </div>
           </div>
-        </div>
-
-
-        {/* CHIP LÍNEA ACTUAL */}
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-          <LineChip code={code} color={lineColor} filled />
         </div>
 
         {/* COLUMNAS IDA / VUELTA */}
