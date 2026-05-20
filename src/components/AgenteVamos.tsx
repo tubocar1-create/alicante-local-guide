@@ -678,12 +678,12 @@ function localResolve(
     // válido (1–3 dígitos opcionalmente con "N" o letra), saltamos directos
     // al Dashboard de esa línea.
     if (currentDomain === "bus_known") {
-      const m = query.match(/\b(?:linea\s+)?([clm]?\s?-?\s?\d{1,3}\s?[a-z]?)\b/i);
-      const code = m?.[1]?.replace(/[\s-]/g, "").toUpperCase();
-      if (code && /\d/.test(code)) {
+      const dashboardPath = matchBusLineDashboard(query, true);
+      if (dashboardPath) {
+        const code = dashboardPath.split("/").pop();
         return {
           reply: `¡Voy! Abro el Dashboard de la línea ${code}.`,
-          path: `/bus/dashboard/${code}`,
+          path: dashboardPath,
           audio: "bus",
           pendingDomain: null,
         };
@@ -722,6 +722,17 @@ function localResolve(
         };
       }
     }
+  }
+
+  const directBusDashboard = matchBusLineDashboard(query);
+  if (directBusDashboard) {
+    const code = directBusDashboard.split("/").pop();
+    return {
+      reply: `¡Voy! Abro el Dashboard de la línea ${code}.`,
+      path: directBusDashboard,
+      audio: "bus",
+      pendingDomain: null,
+    };
   }
 
   // 2) PRIORIDAD 0 — ENTIDAD CONCRETA NOMBRADA (hotel, monumento, marca,
