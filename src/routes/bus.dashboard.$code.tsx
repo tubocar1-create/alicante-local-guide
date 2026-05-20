@@ -305,7 +305,7 @@ function DirectionColumn({
   return (
     <div className="px-1">
       <div className="mb-2 flex items-center justify-between gap-2 pt-1">
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 pl-14">
           <span style={{ color }} className="text-base">
             {direction === 1 ? "↓" : "↑"}
           </span>
@@ -316,6 +316,7 @@ function DirectionColumn({
             {label}
           </span>
         </div>
+
         <span
           aria-label={inService ? "En servicio" : "Sin datos"}
           title={inService ? "En servicio" : "Sin datos"}
@@ -379,16 +380,6 @@ function DirectionColumn({
 
 
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="font-sans text-[11px] font-semibold not-italic tabular-nums text-white/90">
-                      {etaTime ?? "--:--"}
-                    </span>
-                    <span className="ml-auto font-sans text-[10px] not-italic tabular-nums text-white/50">
-                      {s.code}
-                    </span>
-                  </div>
-
-
                   {isOrigin && (
                     <span
                       className="mb-0.5 inline-block rounded px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-white"
@@ -405,9 +396,18 @@ function DirectionColumn({
                       Destino
                     </span>
                   )}
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-sans text-[11px] font-semibold not-italic tabular-nums text-white/90">
+                      {etaTime ?? "--:--"}
+                    </span>
+                    <span className="ml-auto font-sans text-[10px] not-italic tabular-nums text-white/50">
+                      {s.code}
+                    </span>
+                  </div>
                   <div className="truncate font-sans text-[12px] font-semibold not-italic leading-snug text-white">
                     {s.name}
                   </div>
+
 
                 </div>
             </li>
