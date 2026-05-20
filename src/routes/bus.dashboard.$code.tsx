@@ -165,11 +165,10 @@ function BusDashboardPage() {
   }, [code, stopsByDir[1].length, stopsByDir[2].length]);
 
 
-  const lineCategory: "night" | "extraurban" | "urban" = /N$/i.test(code)
-    ? "night"
-    : /^[1-9]\d?$/.test(code) && parseInt(code, 10) >= 21
-      ? "extraurban"
-      : "urban";
+  const lineCategory = classifyLine(code);
+  const catColor = lineCategory === "urban" ? "#EF4444" : "#3B82F6";
+  const catGradientEnd = lineCategory === "urban" ? "#B91C1C" : "#1E3A8A";
+  const lineColor = line?.color || catColor;
   const catColor = lineCategory === "urban" ? "#EF4444" : "#3B82F6";
   const catGradientEnd = lineCategory === "urban" ? "#B91C1C" : "#1E3A8A";
   const lineColor = line?.color || catColor;
