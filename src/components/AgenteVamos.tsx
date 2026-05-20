@@ -1088,7 +1088,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
   const startListening = useCallback(() => {
     if (!openRef.current || modeRef.current !== "voice") return;
-    if (pausedRef.current || loadingRef.current || speakingRef.current) return;
+    if (pausedRef.current || loadingRef.current || speakingRef.current || isAgentSpeechOutputActive()) {
+      if (isAgentSpeechOutputActive()) resumeListeningAfterEcho();
+      return;
+    }
     const remainingEchoGuard = suppressRecognitionUntilRef.current - Date.now();
     if (remainingEchoGuard > 0) {
       resumeListeningAfterEcho(remainingEchoGuard + 120);
