@@ -711,11 +711,18 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         let started = false;
         const blockedTimer = window.setTimeout(() => {
           if (!started && __vaActiveUtterance === u) {
-            __vaActiveUtterance = null;
-            speakingRef.current = false;
-            setSpeaking(false);
-            onEnd?.();
-            resumeListeningAfterEcho();
+            try {
+              synth.resume();
+              synth.speak(u);
+              keepSpeechSynthesisAwake(synth);
+              return;
+            } catch {
+              __vaActiveUtterance = null;
+              speakingRef.current = false;
+              setSpeaking(false);
+              onEnd?.();
+              resumeListeningAfterEcho();
+            }
           }
         }, 1200);
         u.onstart = () => {
