@@ -207,7 +207,9 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
                   ? "Fuera de Alicante"
                   : "Servicio nocturno";
             const catColor =
-              cat === "urban" ? "#EF4444" : cat === "extraurban" ? "#3B82F6" : "#A855F7";
+              cat === "urban" ? "#EF4444" : cat === "extraurban" ? "#3B82F6" : "#3B82F6";
+            const gradientEnd =
+              cat === "urban" ? "#B91C1C" : "#1E3A8A";
             return (
               <div key={cat} className={idx > 0 ? "border-t border-border/60 pt-4" : ""}>
                 <div className="mb-3 flex items-center gap-2">
@@ -222,27 +224,17 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
                 </div>
                 <div className="grid grid-cols-6 gap-2">
                   {lines.map((l) => {
-                    const filled = cat === "urban";
                     return (
                       <a
                         key={l.code}
                         href={`/bus/dashboard/${encodeURIComponent(l.code)}`}
                         title={l.name}
                         className="flex aspect-square items-center justify-center gap-0.5 font-sans text-[15px] font-extrabold not-italic no-underline shadow-sm transition active:scale-95"
-                        style={
-                          filled
-                            ? {
-                                color: "#fff",
-                                background: `linear-gradient(160deg, ${catColor} 0%, #B91C1C 100%)`,
-                                borderRadius: 14,
-                              }
-                            : {
-                                color: catColor,
-                                background: "transparent",
-                                border: `1.5px solid ${catColor}`,
-                                borderRadius: 14,
-                              }
-                        }
+                        style={{
+                          color: "#fff",
+                          background: `linear-gradient(160deg, ${catColor} 0%, ${gradientEnd} 100%)`,
+                          borderRadius: 14,
+                        }}
                       >
                         {cat === "night" && <span aria-hidden>🌙</span>}
                         <span>{l.code}</span>
