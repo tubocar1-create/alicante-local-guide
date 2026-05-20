@@ -34,7 +34,6 @@ function formatHHMM(d: Date): string {
 function BusDashboardPage() {
   const { code } = Route.useParams();
   const { data, loading } = useBusGraph();
-  const fetchRealtime = useServerFn(getStopRealtime);
 
   const line = data?.lines.find((l) => l.code === code);
 
@@ -87,13 +86,9 @@ function BusDashboardPage() {
       }));
   }, [stopsByDir, transfersByStop]);
 
-  const topTransferSet = useMemo(
-    () => new Map(topTransfers.map((t) => [t.code, t.color])),
-    [topTransfers],
-  );
-
   // Realtime: por cada parada del recorrido (ambas direcciones), pedir su ETA.
-  const [etas, setEtas] = useState<Record<string, number | null>>({});
+  // Guardamos hasta 2 próximos tiempos por parada (índice 0 y 1).
+  const [etas, setEtas] = useState<Record<string, number[]>>({});
   const [loadingEtas, setLoadingEtas] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
 
@@ -103,27 +98,31 @@ function BusDashboardPage() {
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
 
+    const fetchStop = async (stopCode: string): Promise<number[]> => {
+      try {
+        const r = await fetch(
+          `/api/public/bus-eta?stop=${encodeURIComponent(stopCode)}&line=${encodeURIComponent(code)}`,
+          { cache: "no-store" },
+        );
+        if (!r.ok) return [];
+        const j = (await r.json()) as { all?: number[] };
+        return Array.isArray(j.all) ? j.all.slice(0, 2) : [];
+      } catch {
+        return [];
+      }
+    };
+
     const tick = async () => {
       setLoadingEtas(true);
       const codes = Array.from(new Set(allStops.map((s) => s.code)));
-      const next: Record<string, number | null> = {};
       const CHUNK = 6;
       for (let i = 0; i < codes.length; i += CHUNK) {
         if (cancelled) break;
         const slice = codes.slice(i, i + CHUNK);
-        const results = await Promise.allSettled(
-          slice.map((c) => fetchRealtime({ data: { stopCode: c, lines: [code] } })),
-        );
-        results.forEach((r, idx) => {
-          const stopCode = slice[idx];
-          if (r.status === "fulfilled") {
-            const match = r.value.arrivals
-              .filter((a) => a.line === code)
-              .sort((a, b) => a.etaMin - b.etaMin)[0];
-            next[stopCode] = match ? match.etaMin : null;
-          } else {
-            next[stopCode] = null;
-          }
+        const results = await Promise.all(slice.map(fetchStop));
+        const next: Record<string, number[]> = {};
+        results.forEach((arr, idx) => {
+          next[slice[idx]] = arr;
         });
         if (!cancelled) setEtas((prev) => ({ ...prev, ...next }));
       }
@@ -140,6 +139,7 @@ function BusDashboardPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code, stopsByDir[1].length, stopsByDir[2].length]);
+
 
   const lineColor = line?.color || "#EF4444";
 
