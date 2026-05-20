@@ -336,7 +336,7 @@ function DirectionColumn({
         </p>
       )}
 
-      <ol className="relative space-y-1">
+      <ol className="relative" style={{ display: "flex", flexDirection: "column", gap: "3mm" }}>
         {stops.length > 1 && (
           <span
             aria-hidden
