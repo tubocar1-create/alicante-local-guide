@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ArrowDown, ArrowUp, Bus, Radio, RefreshCw, Loader2 } from "lucide-react";
 import { useBusGraph } from "@/hooks/useBusGraph";
-import busAlicanteImg from "@/assets/bus-alicante.jpg";
+import busAlicanteImg from "@/assets/bus-alicante.png";
 
 
 export const Route = createFileRoute("/bus/dashboard/$code")({
