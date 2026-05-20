@@ -1,0 +1,434 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { ArrowLeft, Bus, Radio, RefreshCw, Loader2 } from "lucide-react";
+import { useBusGraph } from "@/hooks/useBusGraph";
+import { getStopRealtime } from "@/lib/bus-realtime.functions";
+
+export const Route = createFileRoute("/bus/dashboard/$code")({
+  head: ({ params }) => ({
+    meta: [
+      { title: `Línea ${params.code} · Dashboard en tiempo real` },
+      {
+        name: "description",
+        content: `Dashboard en tiempo real de la Línea ${params.code} de Alicante: paradas, horarios y transbordos en ambos sentidos.`,
+      },
+    ],
+  }),
+  component: BusDashboardPage,
+});
+
+type StopRow = {
+  code: string;
+  name: string;
+  seq: number;
+};
+
+const LINE_PALETTE = ["#EF4444", "#3B82F6", "#22C55E", "#A855F7", "#F59E0B"];
+
+function formatHHMM(d: Date): string {
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${hh}:${mm}`;
+}
+
+function BusDashboardPage() {
+  const { code } = Route.useParams();
+  const { data, loading } = useBusGraph();
+  const fetchRealtime = useServerFn(getStopRealtime);
+
+  const line = data?.lines.find((l) => l.code === code);
+
+  const stopsByDir = useMemo(() => {
+    const out: Record<1 | 2, StopRow[]> = { 1: [], 2: [] };
+    if (!data) return out;
+    for (const s of data.stops) {
+      if (s.line_code !== code) continue;
+      if ((s.direction === 1 || s.direction === 2) && s.stop_code) {
+        out[s.direction as 1 | 2].push({
+          code: s.stop_code,
+          name: s.stop_name,
+          seq: s.seq,
+        });
+      }
+    }
+    out[1].sort((a, b) => a.seq - b.seq);
+    out[2].sort((a, b) => a.seq - b.seq);
+    return out;
+  }, [data, code]);
+
+  // Transbordos: para cada stop_code, qué otras líneas pasan por allí.
+  const transfersByStop = useMemo(() => {
+    const map = new Map<string, Set<string>>();
+    if (!data) return map;
+    for (const s of data.stops) {
+      if (!s.stop_code || s.line_code === code) continue;
+      const set = map.get(s.stop_code) ?? new Set<string>();
+      set.add(s.line_code);
+      map.set(s.stop_code, set);
+    }
+    return map;
+  }, [data, code]);
+
+  // Top líneas con las que comparte más paradas → chips de cabecera y leyenda.
+  const topTransfers = useMemo(() => {
+    const counts = new Map<string, number>();
+    const allStops = [...stopsByDir[1], ...stopsByDir[2]];
+    for (const s of allStops) {
+      const others = transfersByStop.get(s.code);
+      if (!others) continue;
+      for (const l of others) counts.set(l, (counts.get(l) ?? 0) + 1);
+    }
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 2)
+      .map(([lineCode], idx) => ({
+        code: lineCode,
+        color: LINE_PALETTE[(idx + 1) % LINE_PALETTE.length],
+      }));
+  }, [stopsByDir, transfersByStop]);
+
+  const topTransferSet = useMemo(
+    () => new Map(topTransfers.map((t) => [t.code, t.color])),
+    [topTransfers],
+  );
+
+  // Realtime: por cada parada del recorrido (ambas direcciones), pedir su ETA.
+  const [etas, setEtas] = useState<Record<string, number | null>>({});
+  const [loadingEtas, setLoadingEtas] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
+
+  useEffect(() => {
+    const allStops = [...stopsByDir[1], ...stopsByDir[2]];
+    if (allStops.length === 0) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const tick = async () => {
+      setLoadingEtas(true);
+      const codes = Array.from(new Set(allStops.map((s) => s.code)));
+      const next: Record<string, number | null> = {};
+      const CHUNK = 6;
+      for (let i = 0; i < codes.length; i += CHUNK) {
+        if (cancelled) break;
+        const slice = codes.slice(i, i + CHUNK);
+        const results = await Promise.allSettled(
+          slice.map((c) => fetchRealtime({ data: { stopCode: c, lines: [code] } })),
+        );
+        results.forEach((r, idx) => {
+          const stopCode = slice[idx];
+          if (r.status === "fulfilled") {
+            const match = r.value.arrivals
+              .filter((a) => a.line === code)
+              .sort((a, b) => a.etaMin - b.etaMin)[0];
+            next[stopCode] = match ? match.etaMin : null;
+          } else {
+            next[stopCode] = null;
+          }
+        });
+        if (!cancelled) setEtas((prev) => ({ ...prev, ...next }));
+      }
+      if (!cancelled) {
+        setUpdatedAt(new Date().toISOString());
+        setLoadingEtas(false);
+        timer = setTimeout(tick, 30_000);
+      }
+    };
+    tick();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code, stopsByDir[1].length, stopsByDir[2].length]);
+
+  const lineColor = line?.color || "#EF4444";
+
+  const inService =
+    Object.values(etas).some((v) => typeof v === "number") || loadingEtas;
+
+  return (
+    <div className="min-h-screen bg-black text-white">
+      <div className="mx-auto max-w-3xl px-3 py-4">
+        {/* HEADER */}
+        <div className="flex items-start gap-3">
+          <Link
+            to="/"
+            className="mt-1 inline-flex h-9 w-9 items-center justify-center rounded-full text-white hover:bg-white/10"
+            aria-label="Volver"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
+          <div
+            className="flex h-16 w-16 shrink-0 items-center justify-center text-2xl font-black text-white shadow-lg"
+            style={{ background: lineColor, borderRadius: 16 }}
+          >
+            {code}
+          </div>
+          <div className="min-w-0 flex-1 pt-0.5">
+            <h1 className="font-sans text-2xl font-bold not-italic leading-tight text-white">
+              Línea {code}
+            </h1>
+            <p className="font-sans text-[13px] not-italic text-white/70 leading-tight">
+              Ruta de bus en tiempo real
+            </p>
+            <p className="font-sans text-[13px] not-italic text-white/70 leading-tight">
+              Ambos sentidos
+            </p>
+          </div>
+        </div>
+
+        {/* CHIPS DE TRANSBORDO */}
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+          <LineChip code={code} color={lineColor} filled />
+          {topTransfers.map((t) => (
+            <LineChip key={t.code} code={t.code} color={t.color} />
+          ))}
+        </div>
+
+        {/* COLUMNAS IDA / VUELTA */}
+        <div className="mt-4 grid grid-cols-2 gap-2 rounded-2xl border border-white/10 bg-white/[0.02] p-2">
+          <DirectionColumn
+            label="IDA"
+            direction={1}
+            stops={stopsByDir[1]}
+            etas={etas}
+            color={lineColor}
+            inService={inService}
+            transferLineColor={(c) => {
+              const others = transfersByStop.get(c);
+              if (!others) return null;
+              for (const t of topTransfers) if (others.has(t.code)) return t.color;
+              return null;
+            }}
+          />
+          <div className="border-l border-white/10" />
+          <DirectionColumn
+            label="VUELTA"
+            direction={2}
+            stops={stopsByDir[2]}
+            etas={etas}
+            color={lineColor}
+            inService={inService}
+            transferLineColor={(c) => {
+              const others = transfersByStop.get(c);
+              if (!others) return null;
+              for (const t of topTransfers) if (others.has(t.code)) return t.color;
+              return null;
+            }}
+            offsetGrid
+          />
+        </div>
+
+        {/* LEYENDA */}
+        {topTransfers.length > 0 && (
+          <div className="mt-3 flex flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-3">
+            <span className="font-sans text-[13px] not-italic text-white/70">Leyenda</span>
+            {topTransfers.map((t) => (
+              <div key={t.code} className="flex items-center gap-2">
+                <RefreshCw className="h-4 w-4" style={{ color: t.color }} />
+                <span className="font-sans text-[12px] not-italic text-white leading-tight">
+                  Transbordo
+                  <br />
+                  Línea {t.code}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* FOOTER */}
+        <p className="mt-4 text-center font-sans text-[12px] not-italic text-white/60">
+          Fuente: Vectalia Alicante
+        </p>
+        <p className="text-center font-sans text-[12px] not-italic text-white/60">
+          Datos actualizados en tiempo real
+          {updatedAt && ` · ${new Date(updatedAt).toLocaleTimeString("es-ES")}`}
+          {loadingEtas && <Loader2 className="ml-1 inline h-3 w-3 animate-spin" />}
+        </p>
+
+        {loading && (
+          <p className="mt-4 text-center text-sm text-white/60">Cargando paradas…</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function LineChip({
+  code,
+  color,
+  filled = false,
+}: {
+  code: string;
+  color: string;
+  filled?: boolean;
+}) {
+  return (
+    <div
+      className="inline-flex items-center gap-2 rounded-full px-3 py-1.5"
+      style={{
+        border: `2px solid ${color}`,
+        background: filled ? color : "transparent",
+      }}
+    >
+      <Bus className="h-4 w-4" style={{ color: filled ? "#fff" : color }} />
+      <span
+        className="font-sans text-[13px] font-bold not-italic tabular-nums"
+        style={{ color: filled ? "#fff" : color }}
+      >
+        {code}
+      </span>
+    </div>
+  );
+}
+
+function DirectionColumn({
+  label,
+  direction,
+  stops,
+  etas,
+  color,
+  inService,
+  transferLineColor,
+  offsetGrid,
+}: {
+  label: string;
+  direction: 1 | 2;
+  stops: StopRow[];
+  etas: Record<string, number | null>;
+  color: string;
+  inService: boolean;
+  transferLineColor: (stopCode: string) => string | null;
+  offsetGrid?: boolean;
+}) {
+  const now = new Date();
+
+  return (
+    <div className={offsetGrid ? "col-start-2 row-start-1 px-1" : "px-1"}>
+      <div className="mb-2 flex items-center justify-between gap-2 pt-1">
+        <div className="flex items-center gap-1">
+          <span style={{ color }} className="text-base">
+            {direction === 1 ? "↓" : "↑"}
+          </span>
+          <span
+            className="font-sans text-base font-extrabold not-italic"
+            style={{ color }}
+          >
+            {label}
+          </span>
+        </div>
+        <div className="flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5">
+          <Radio className="h-3 w-3 text-emerald-400" />
+          <span className="font-sans text-[10px] font-bold not-italic text-emerald-400">
+            {inService ? "En servicio" : "Sin datos"}
+          </span>
+        </div>
+      </div>
+
+      {stops.length > 0 && (
+        <p className="mb-2 truncate font-sans text-[11px] not-italic text-white/70">
+          {stops[0].name} → {stops[stops.length - 1].name}
+        </p>
+      )}
+
+      <ol className="relative space-y-1 pl-5">
+        {stops.length > 1 && (
+          <span
+            aria-hidden
+            className="absolute left-[7px] top-3 bottom-3 w-[2px] rounded-full"
+            style={{ background: color }}
+          />
+        )}
+        {stops.map((s, i) => {
+          const eta = etas[s.code];
+          const isOrigin = i === 0;
+          const isDest = i === stops.length - 1;
+          const transferColor = transferLineColor(s.code);
+          const etaTime =
+            typeof eta === "number"
+              ? formatHHMM(new Date(now.getTime() + eta * 60_000))
+              : null;
+
+          return (
+            <li key={`${s.code}-${i}`} className="relative">
+              {/* Marcador del recorrido */}
+              {transferColor ? (
+                <span
+                  className="absolute -left-[2px] top-2 flex h-4 w-4 items-center justify-center rounded-full bg-black"
+                  style={{ border: `2px solid ${transferColor}` }}
+                >
+                  <RefreshCw className="h-2.5 w-2.5" style={{ color: transferColor }} />
+                </span>
+              ) : (
+                <span
+                  className={
+                    "absolute -left-[2px] top-2 h-4 w-4 rounded-full bg-black " +
+                    (isOrigin || isDest ? "" : "")
+                  }
+                  style={{
+                    border: `2px solid ${isOrigin || isDest ? "#fff" : color}`,
+                    background: isOrigin || isDest ? "#000" : "#000",
+                  }}
+                />
+              )}
+
+              <div className="flex items-start gap-1.5">
+                {/* Badge de min */}
+                <div
+                  className={[
+                    "flex h-9 w-9 shrink-0 flex-col items-center justify-center rounded-md leading-none",
+                    typeof eta === "number"
+                      ? "bg-white text-black"
+                      : "bg-white/15 text-white/70",
+                  ].join(" ")}
+                >
+                  <span className="font-sans text-[13px] font-extrabold not-italic tabular-nums">
+                    {typeof eta === "number" ? eta : "—"}
+                  </span>
+                  <span className="font-sans text-[8px] font-bold not-italic">min</span>
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-sans text-[11px] font-semibold not-italic tabular-nums text-white/90">
+                      {etaTime ?? "--:--"}
+                    </span>
+                    <span className="ml-auto font-sans text-[10px] not-italic tabular-nums text-white/50">
+                      {s.code}
+                    </span>
+                  </div>
+                  <div className="truncate font-sans text-[12px] font-semibold not-italic leading-snug text-white">
+                    {s.name}
+                  </div>
+                  {isOrigin && (
+                    <span
+                      className="mt-0.5 inline-block rounded px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-white"
+                      style={{ background: color }}
+                    >
+                      Origen
+                    </span>
+                  )}
+                  {isDest && (
+                    <span
+                      className="mt-0.5 inline-block rounded px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-white"
+                      style={{ background: color }}
+                    >
+                      Destino
+                    </span>
+                  )}
+                </div>
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+
+      {stops.length === 0 && (
+        <p className="px-2 py-4 text-center text-xs text-white/60">
+          Sin paradas para este sentido.
+        </p>
+      )}
+    </div>
+  );
+}
