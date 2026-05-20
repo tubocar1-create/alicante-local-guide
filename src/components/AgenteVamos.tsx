@@ -299,6 +299,51 @@ function isLikelyAgentEcho(transcript: string, assistantMessages: string[]) {
   });
 }
 
+function collapseRepeatedTokenRuns(text: string) {
+  const tokens = text.replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
+  if (tokens.length < 2) return tokens.join(" ");
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (let size = Math.floor(tokens.length / 2); size >= 1; size--) {
+      for (let i = 0; i + size * 2 <= tokens.length; i++) {
+        const left = tokens.slice(i, i + size).map(normalizeSpeech).join(" ");
+        const right = tokens.slice(i + size, i + size * 2).map(normalizeSpeech).join(" ");
+        if (left && left === right) {
+          tokens.splice(i + size, size);
+          changed = true;
+          break;
+        }
+      }
+      if (changed) break;
+    }
+  }
+  return tokens.join(" ");
+}
+
+function compactRecognitionText(parts: string[]) {
+  const compact: string[] = [];
+  for (const raw of parts.map((p) => p.trim()).filter(Boolean)) {
+    const current = normalizeSpeech(raw);
+    if (!current) continue;
+    const last = compact[compact.length - 1];
+    const previous = last ? normalizeSpeech(last) : "";
+    if (previous && (current === previous || previous.endsWith(` ${current}`))) continue;
+    if (previous && (current.startsWith(`${previous} `) || current.startsWith(previous))) {
+      compact[compact.length - 1] = raw;
+    } else {
+      compact.push(raw);
+    }
+  }
+  return collapseRepeatedTokenRuns(compact.join(" "));
+}
+
+function isAgentSpeechOutputActive() {
+  if (typeof window === "undefined") return Boolean(__vaActiveAudio || __vaActiveUtterance);
+  const synth = window.speechSynthesis;
+  return Boolean(__vaActiveAudio || __vaActiveUtterance || synth?.speaking || synth?.pending);
+}
+
 type SR = any;
 function getSpeechRecognition(): any {
   if (typeof window === "undefined") return null;
