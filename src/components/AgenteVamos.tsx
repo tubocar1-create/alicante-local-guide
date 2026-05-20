@@ -1669,6 +1669,16 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         // falla, caemos a window.location para no quedarnos atascados.
         const goTo = (raw: string) => {
           try {
+            // URL externa (Google Maps, web oficial de una entidad concreta):
+            // abrimos en nueva pestaña para no perder el contexto del agente.
+            if (/^https?:\/\//i.test(raw)) {
+              try {
+                window.open(raw, "_blank", "noopener,noreferrer");
+              } catch {
+                window.location.assign(raw);
+              }
+              return;
+            }
             const qIdx = raw.indexOf("?");
             const pathname = qIdx >= 0 ? raw.slice(0, qIdx) : raw;
             const search: Record<string, string> = {};
