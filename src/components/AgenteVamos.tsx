@@ -255,6 +255,50 @@ function plainText(md: string): string {
     .trim();
 }
 
+const ECHO_STOPWORDS = new Set([
+  "a",
+  "al",
+  "de",
+  "del",
+  "el",
+  "en",
+  "la",
+  "leopoldo",
+  "los",
+  "me",
+  "o",
+  "para",
+  "que",
+  "te",
+  "un",
+  "una",
+  "y",
+]);
+
+function meaningfulSpeechTokens(text: string) {
+  return normalizeSpeech(text)
+    .split(" ")
+    .filter((token) => token.length > 2 && !ECHO_STOPWORDS.has(token));
+}
+
+function isLikelyAgentEcho(transcript: string, assistantMessages: string[]) {
+  const heard = normalizeSpeech(transcript);
+  const heardTokens = meaningfulSpeechTokens(transcript);
+  if (heardTokens.length < 2) return false;
+
+  return assistantMessages.some((message) => {
+    const spoken = normalizeSpeech(plainText(message));
+    if (!spoken) return false;
+    if (spoken.includes(heard) || heard.includes(spoken)) return true;
+
+    const spokenTokens = meaningfulSpeechTokens(message);
+    if (spokenTokens.length < 2) return false;
+    const overlap = heardTokens.filter((token) => spokenTokens.includes(token)).length;
+    const ratio = overlap / Math.min(heardTokens.length, spokenTokens.length);
+    return overlap >= 3 && ratio >= 0.6;
+  });
+}
+
 type SR = any;
 function getSpeechRecognition(): any {
   if (typeof window === "undefined") return null;
