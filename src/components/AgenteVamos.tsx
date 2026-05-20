@@ -658,9 +658,17 @@ function parseBusLineCode(segment: string): string | null {
   if (digitParts.length > 0) return digitParts.join("");
 
   const first = meaningful[0];
+  const unitAfterY = meaningful[1] === "y" ? meaningful[2] : meaningful[1];
+  if (first === "veinti" && SPOKEN_UNITS[meaningful[1]]) {
+    const suffix = meaningful.includes("n") || meaningful.includes("ene") ? "N" : "";
+    return `${20 + Number(SPOKEN_UNITS[meaningful[1]])}${suffix}`;
+  }
+  if (["veinte", "treinta", "cuarenta", "cincuenta"].includes(first) && unitAfterY && SPOKEN_UNITS[unitAfterY]) {
+    const suffix = meaningful.includes("n") || meaningful.includes("ene") ? "N" : "";
+    return `${(SPOKEN_NUMBERS[first] ?? 0) + Number(SPOKEN_UNITS[unitAfterY])}${suffix}`;
+  }
   if (SPOKEN_NUMBERS[first] != null) {
     let value = SPOKEN_NUMBERS[first];
-    if (first === "treinta" && meaningful[1] === "y" && SPOKEN_UNITS[meaningful[2]]) value += Number(SPOKEN_UNITS[meaningful[2]]);
     const suffix = meaningful.includes("n") || meaningful.includes("ene") ? "N" : "";
     return `${value}${suffix}`;
   }
