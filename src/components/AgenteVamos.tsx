@@ -1046,9 +1046,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             goTo(target);
           }, 350);
         }
-        // Habla exactamente la respuesta visible con TTS, no con clips genéricos.
-        speak(reply, undefined, undefined, reservedReplyUtterance);
-      } finally {
+        // La voz ya se ha lanzado arriba con speak(reply). Aquí sólo
+        // gestionamos navegación tardía si procede.
         if (!awaitingSummaryRef.current) setLoading(false);
       }
     },
