@@ -247,8 +247,8 @@ const getPriorityRoute = (
     }
   }
 
-  if (hasOriginDestination && isTransportTheme && currentPath !== "/bus/planner") {
-    return { path: "/bus/planner", reason: "origen y destino con transporte" };
+  if (hasOriginDestination && isTransportTheme && currentPath !== "/") {
+    return { path: "/", reason: "origen y destino con transporte" };
   }
   return null;
 };
