@@ -55,6 +55,25 @@ function BusDashboardPage() {
     return () => clearInterval(t);
   }, []);
 
+  // Geolocalización del usuario
+  const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null);
+  const [geoStatus, setGeoStatus] = useState<"idle" | "loading" | "ok" | "unavailable">("loading");
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setGeoStatus("unavailable");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (p) => {
+        setUserPos({ lat: p.coords.latitude, lng: p.coords.longitude });
+        setGeoStatus("ok");
+      },
+      () => setGeoStatus("unavailable"),
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 60_000 },
+    );
+  }, []);
+
+
   const handlePickStop = (stopCode: string, stopName: string) => {
     const pick = {
       line: code,
