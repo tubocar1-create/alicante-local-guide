@@ -381,6 +381,8 @@ function pickSpanishVoice(synth: SpeechSynthesis) {
   return (
     voices.find((v) => v.lang?.toLowerCase().startsWith("es-es")) ||
     voices.find((v) => v.lang?.toLowerCase().startsWith("es")) ||
+    voices.find((v) => v.lang?.toLowerCase().includes("es")) ||
+    voices[0] ||
     null
   );
 }
@@ -395,22 +397,30 @@ function extractSpeechText(respuesta: unknown) {
   return respuesta == null ? "" : String(respuesta);
 }
 
-function logSpeechSynthesisDebug(synth: SpeechSynthesis) {
-  console.log("speechSynthesis:", synth);
-  console.log("VOICES:", synth.getVoices());
-  if (!__vaVoicesLoggingAttached) {
-    __vaVoicesLoggingAttached = true;
-    synth.onvoiceschanged = () => {
-      console.log("VOICES:", synth.getVoices());
+function waitVoices(synth: SpeechSynthesis): Promise<SpeechSynthesisVoice[]> {
+  return new Promise((resolve) => {
+    const existing = synth.getVoices();
+    if (existing.length) {
+      resolve(existing);
+      return;
+    }
+    let done = false;
+    const finish = (voices: SpeechSynthesisVoice[]) => {
+      if (done) return;
+      done = true;
+      resolve(voices);
     };
-  }
+    synth.onvoiceschanged = () => finish(synth.getVoices());
+    // Fallback por si onvoiceschanged nunca dispara (algunos Android).
+    setTimeout(() => finish(synth.getVoices()), 1500);
+  });
 }
 
-function hablar(
+async function hablar(
   texto: unknown,
-  opts: { onStart?: () => void; onEnd?: () => void; retryIfNoVoices?: boolean } = {},
+  opts: { onStart?: () => void; onEnd?: () => void } = {},
 ) {
-  const { onStart, onEnd, retryIfNoVoices = true } = opts;
+  const { onStart, onEnd } = opts;
   const respuesta = plainText(extractSpeechText(texto));
   console.log("RESPUESTA:", texto);
   if (!respuesta || typeof window === "undefined" || !window.speechSynthesis) {
@@ -418,10 +428,8 @@ function hablar(
     return;
   }
   const synth = window.speechSynthesis;
-  if (!synth.getVoices().length && retryIfNoVoices) {
-    setTimeout(() => hablar(respuesta, { ...opts, retryIfNoVoices: false }), 1000);
-    return;
-  }
+  const voices = await waitVoices(synth);
+  console.log("VOICES:", voices);
   synth.cancel();
   synth.resume();
   const utterance = new SpeechSynthesisUtterance(String(respuesta));
@@ -430,7 +438,12 @@ function hablar(
   utterance.pitch = 1;
   utterance.volume = 1;
   const voice = pickSpanishVoice(synth);
-  if (voice) utterance.voice = voice;
+  if (voice) {
+    utterance.voice = voice;
+    console.log("VOICE PICKED:", voice.name, voice.lang);
+  } else {
+    console.warn("No hay voces disponibles para TTS.");
+  }
   __vaActiveUtterance = utterance;
   let finished = false;
   const finish = () => {
@@ -439,9 +452,18 @@ function hablar(
     if (__vaActiveUtterance === utterance) __vaActiveUtterance = null;
     onEnd?.();
   };
-  utterance.onstart = () => onStart?.();
-  utterance.onend = finish;
-  utterance.onerror = finish;
+  utterance.onstart = () => {
+    console.log("VOICE START");
+    onStart?.();
+  };
+  utterance.onend = () => {
+    console.log("VOICE END");
+    finish();
+  };
+  utterance.onerror = (e) => {
+    console.log("VOICE ERROR", e);
+    finish();
+  };
   synth.speak(utterance);
 }
 
