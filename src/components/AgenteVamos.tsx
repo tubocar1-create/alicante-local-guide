@@ -426,15 +426,27 @@ function hablar(texto: unknown, retryIfNoVoices = true) {
   const voice = pickSpanishVoice(synth);
   if (voice) utterance.voice = voice;
   __vaActiveUtterance = utterance;
+  let finished = false;
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    if (__vaActiveUtterance === utterance) __vaActiveUtterance = null;
+    if (watchdog) clearTimeout(watchdog);
+    window.dispatchEvent(new CustomEvent("vamos:speech-end"));
+  };
   utterance.onstart = () => {
     window.dispatchEvent(new CustomEvent("vamos:speech-start"));
   };
-  const finish = () => {
-    if (__vaActiveUtterance === utterance) __vaActiveUtterance = null;
-    window.dispatchEvent(new CustomEvent("vamos:speech-end"));
-  };
   utterance.onend = finish;
   utterance.onerror = finish;
+  // Watchdog: si Android no dispara onend, liberamos el micro igualmente.
+  // Estimamos ~80ms por carácter + 2s de margen, máximo 20s.
+  const estimatedMs = Math.min(20000, 2000 + respuesta.length * 80);
+  const watchdog = setTimeout(() => {
+    console.warn("VOICE watchdog: forzando fin de TTS tras", estimatedMs, "ms");
+    try { synth.cancel(); } catch {}
+    finish();
+  }, estimatedMs);
   synth.speak(utterance);
 }
 
