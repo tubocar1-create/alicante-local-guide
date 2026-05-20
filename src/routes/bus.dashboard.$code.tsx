@@ -106,7 +106,7 @@ function BusDashboardPage() {
         );
         if (!r.ok) return [];
         const j = (await r.json()) as { all?: number[] };
-        return Array.isArray(j.all) ? j.all.slice(0, 2) : [];
+        return Array.isArray(j.all) ? j.all.slice(0, 1) : [];
       } catch {
         return [];
       }
@@ -339,7 +339,6 @@ function DirectionColumn({
         {stops.map((s, i) => {
           const arr = etas[s.code] ?? [];
           const eta1 = arr[0];
-          const eta2 = arr[1];
           const hasEta = typeof eta1 === "number";
           const isOrigin = i === 0;
           const isDest = i === stops.length - 1;
@@ -347,14 +346,10 @@ function DirectionColumn({
           const etaTime = hasEta
             ? formatHHMM(new Date(now.getTime() + eta1 * 60_000))
             : null;
-          const etaTime2 =
-            typeof eta2 === "number"
-              ? formatHHMM(new Date(now.getTime() + eta2 * 60_000))
-              : null;
 
           return (
             <li key={`${s.code}-${i}`} className="relative flex items-start gap-2">
-              {/* Badge con los 2 próximos tiempos, posicionado sobre la línea */}
+              {/* Badge con el próximo tiempo, posicionado sobre la línea */}
               <div
                 className={[
                   "relative z-10 flex h-9 w-12 shrink-0 flex-col items-center justify-center rounded-md leading-none",
@@ -369,11 +364,7 @@ function DirectionColumn({
                 }
               >
                 <span className="font-sans text-[12px] font-extrabold not-italic tabular-nums">
-                  {hasEta
-                    ? typeof eta2 === "number"
-                      ? `${eta1}·${eta2}`
-                      : eta1
-                    : "—"}
+                  {hasEta ? eta1 : "—"}
                 </span>
                 <span className="font-sans text-[8px] font-bold not-italic">min</span>
               </div>
@@ -384,14 +375,12 @@ function DirectionColumn({
                   <div className="flex items-baseline gap-1.5">
                     <span className="font-sans text-[11px] font-semibold not-italic tabular-nums text-white/90">
                       {etaTime ?? "--:--"}
-                      {etaTime2 && (
-                        <span className="ml-1 text-white/60">· {etaTime2}</span>
-                      )}
                     </span>
                     <span className="ml-auto font-sans text-[10px] not-italic tabular-nums text-white/50">
                       {s.code}
                     </span>
                   </div>
+
 
                   <div className="truncate font-sans text-[12px] font-semibold not-italic leading-snug text-white">
                     {s.name}
