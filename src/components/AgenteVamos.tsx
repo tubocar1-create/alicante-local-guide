@@ -1022,7 +1022,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     }
     const remainingEchoGuard = suppressRecognitionUntilRef.current - Date.now();
     if (remainingEchoGuard > 0) {
-      resumeListeningAfterEcho(remainingEchoGuard + 120);
+      resumeListeningAfterEcho(remainingEchoGuard + POST_SPEECH_LISTEN_DELAY_MS);
       return;
     }
     const SRClass = getSpeechRecognition();
