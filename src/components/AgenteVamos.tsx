@@ -1669,8 +1669,16 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         // falla, caemos a window.location para no quedarnos atascados.
         const goTo = (raw: string) => {
           try {
+            const normalizedTarget = ["/bus", "/bus/planner", "/buses-en-vivo"].includes(raw)
+              ? "action:bus-picker"
+              : raw;
             // Sentinel: abrir el picker de buses urbanos en el Inicio.
-            if (raw === "action:bus-picker") {
+            if (normalizedTarget === "action:bus-picker") {
+              try {
+                window.sessionStorage.setItem("agent:open-bus-picker", "1");
+              } catch {
+                /* noop */
+              }
               navigate({ to: "/" });
               setTimeout(() => {
                 try {
@@ -1683,19 +1691,19 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             }
             // URL externa (Google Maps, web oficial de una entidad concreta):
             // abrimos en nueva pestaña para no perder el contexto del agente.
-            if (/^https?:\/\//i.test(raw)) {
+            if (/^https?:\/\//i.test(normalizedTarget)) {
               try {
-                window.open(raw, "_blank", "noopener,noreferrer");
+                window.open(normalizedTarget, "_blank", "noopener,noreferrer");
               } catch {
-                window.location.assign(raw);
+                window.location.assign(normalizedTarget);
               }
               return;
             }
-            const qIdx = raw.indexOf("?");
-            const pathname = qIdx >= 0 ? raw.slice(0, qIdx) : raw;
+            const qIdx = normalizedTarget.indexOf("?");
+            const pathname = qIdx >= 0 ? normalizedTarget.slice(0, qIdx) : normalizedTarget;
             const search: Record<string, string> = {};
             if (qIdx >= 0) {
-              const sp = new URLSearchParams(raw.slice(qIdx + 1));
+              const sp = new URLSearchParams(normalizedTarget.slice(qIdx + 1));
               sp.forEach((v, k) => (search[k] = v));
             }
             const hotelMatch = pathname.match(/^\/hotel\/([^/]+)$/);
