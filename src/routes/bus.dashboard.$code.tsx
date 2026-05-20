@@ -337,13 +337,19 @@ function DirectionColumn({
           />
         )}
         {stops.map((s, i) => {
-          const eta = etas[s.code];
+          const arr = etas[s.code] ?? [];
+          const eta1 = arr[0];
+          const eta2 = arr[1];
+          const hasEta = typeof eta1 === "number";
           const isOrigin = i === 0;
           const isDest = i === stops.length - 1;
           const transferColor = transferLineColor(s.code);
-          const etaTime =
-            typeof eta === "number"
-              ? formatHHMM(new Date(now.getTime() + eta * 60_000))
+          const etaTime = hasEta
+            ? formatHHMM(new Date(now.getTime() + eta1 * 60_000))
+            : null;
+          const etaTime2 =
+            typeof eta2 === "number"
+              ? formatHHMM(new Date(now.getTime() + eta2 * 60_000))
               : null;
 
           return (
@@ -370,20 +376,23 @@ function DirectionColumn({
               )}
 
               <div className="flex items-start gap-1.5">
-                {/* Badge de min */}
+                {/* Badge con los 2 próximos tiempos */}
                 <div
                   className={[
-                    "flex h-9 w-9 shrink-0 flex-col items-center justify-center rounded-md leading-none",
-                    typeof eta === "number"
-                      ? "bg-white text-black"
-                      : "bg-white/15 text-white/70",
+                    "flex h-9 w-12 shrink-0 flex-col items-center justify-center rounded-md leading-none",
+                    hasEta ? "bg-white text-black" : "bg-white/15 text-white/70",
                   ].join(" ")}
                 >
-                  <span className="font-sans text-[13px] font-extrabold not-italic tabular-nums">
-                    {typeof eta === "number" ? eta : "—"}
+                  <span className="font-sans text-[12px] font-extrabold not-italic tabular-nums">
+                    {hasEta
+                      ? typeof eta2 === "number"
+                        ? `${eta1}·${eta2}`
+                        : eta1
+                      : "—"}
                   </span>
                   <span className="font-sans text-[8px] font-bold not-italic">min</span>
                 </div>
+
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline gap-1.5">
