@@ -234,6 +234,7 @@ export function ChatScreen() {
   const [showQrInfo, setShowQrInfo] = useState(false);
   const [mode, setMode] = useState<"transit" | null>(null);
   const [showBusPicker, setShowBusPicker] = useState(false);
+  const [busPickerLine, setBusPickerLine] = useState<string | null>(null);
   const [showFlightPicker, setShowFlightPicker] = useState(false);
   const [composerMode, setComposerMode] = useState<"voice" | "text">("voice");
   const lastFoodSummaryRef = useRef<string | null>(null);
@@ -244,8 +245,12 @@ export function ChatScreen() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const open = () => setShowBusPicker(true);
-    window.addEventListener("agent:open-bus-picker", open);
+    const open = (ev: Event) => {
+      const detail = (ev as CustomEvent<{ line?: string }>).detail;
+      setBusPickerLine(detail?.line ?? null);
+      setShowBusPicker(true);
+    };
+    window.addEventListener("agent:open-bus-picker", open as EventListener);
     // Si llegamos desde una ruta legacy (/bus/planner) con el flag puesto,
     // abrimos el picker en cuanto monta el Inicio.
     try {
@@ -253,13 +258,18 @@ export function ChatScreen() {
       const shouldOpenFromUrl = openBusPickerParam === "1" || openBusPickerParam === '"1"' || openBusPickerParam === "true";
       if (sessionStorage.getItem("agent:open-bus-picker") === "1" || shouldOpenFromUrl) {
         sessionStorage.removeItem("agent:open-bus-picker");
+        const storedLine = sessionStorage.getItem("agent:open-bus-picker-line");
+        if (storedLine) {
+          setBusPickerLine(storedLine);
+          sessionStorage.removeItem("agent:open-bus-picker-line");
+        }
         setShowBusPicker(true);
         if (shouldOpenFromUrl) window.history.replaceState(window.history.state, "", "/");
       }
     } catch {
       /* noop */
     }
-    return () => window.removeEventListener("agent:open-bus-picker", open);
+    return () => window.removeEventListener("agent:open-bus-picker", open as EventListener);
   }, [location.search]);
 
   useEffect(() => {
