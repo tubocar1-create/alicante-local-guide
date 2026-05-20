@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, MapPin, Search, X } from "lucide-react";
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { useUserLocation, distanceKm } from "@/hooks/useUserLocation";
@@ -40,7 +39,6 @@ const CATEGORY_COLOR: Record<"night" | "extraurban" | "urban", string> = {
 
 
 export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode }: Props) {
-  const navigate = useNavigate();
   const { data, loading } = useBusGraph();
   const { state: locState, request: requestLocation } = useUserLocation();
   const [step, setStep] = useState<"line" | "direction" | "stop">(
@@ -226,14 +224,11 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
                   {lines.map((l) => {
                     const filled = cat === "urban";
                     return (
-                      <button
+                      <a
                         key={l.code}
-                        onClick={() => {
-                          navigate({ to: "/bus/dashboard/$code", params: { code: l.code } });
-                          onClose();
-                        }}
+                        href={`/bus/dashboard/${encodeURIComponent(l.code)}`}
                         title={l.name}
-                        className="flex aspect-square items-center justify-center gap-0.5 font-sans text-[15px] font-extrabold not-italic shadow-sm transition active:scale-95"
+                        className="flex aspect-square items-center justify-center gap-0.5 font-sans text-[15px] font-extrabold not-italic no-underline shadow-sm transition active:scale-95"
                         style={
                           filled
                             ? {
@@ -251,7 +246,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
                       >
                         {cat === "night" && <span aria-hidden>🌙</span>}
                         <span>{l.code}</span>
-                      </button>
+                      </a>
                     );
                   })}
                 </div>
