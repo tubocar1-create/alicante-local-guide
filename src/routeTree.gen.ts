@@ -28,7 +28,6 @@ import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as DondeDormirRouteImport } from './routes/donde-dormir'
 import { Route as ClimaRouteImport } from './routes/clima'
 import { Route as BusinessRouteImport } from './routes/business'
-import { Route as BusRouteImport } from './routes/bus'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BusinessIndexRouteImport } from './routes/business.index'
 import { Route as VuelosIataRouteImport } from './routes/vuelos_.$iata'
@@ -166,11 +165,6 @@ const ClimaRoute = ClimaRouteImport.update({
 const BusinessRoute = BusinessRouteImport.update({
   id: '/business',
   path: '/business',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BusRoute = BusRouteImport.update({
-  id: '/bus',
-  path: '/bus',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -395,7 +389,6 @@ const ApiPublicHooksAenaSyncRoute = ApiPublicHooksAenaSyncRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/bus': typeof BusRouteWithChildren
   '/business': typeof BusinessRouteWithChildren
   '/clima': typeof ClimaRoute
   '/donde-dormir': typeof DondeDormirRoute
@@ -460,7 +453,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/bus': typeof BusRouteWithChildren
   '/clima': typeof ClimaRoute
   '/donde-dormir': typeof DondeDormirRoute
   '/explore': typeof ExploreRoute
@@ -525,7 +517,6 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/bus': typeof BusRouteWithChildren
   '/business': typeof BusinessRouteWithChildren
   '/clima': typeof ClimaRoute
   '/donde-dormir': typeof DondeDormirRoute
@@ -592,7 +583,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/bus'
     | '/business'
     | '/clima'
     | '/donde-dormir'
@@ -657,7 +647,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/bus'
     | '/clima'
     | '/donde-dormir'
     | '/explore'
@@ -721,7 +710,6 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
-    | '/bus'
     | '/business'
     | '/clima'
     | '/donde-dormir'
@@ -787,7 +775,6 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  BusRoute: typeof BusRouteWithChildren
   BusinessRoute: typeof BusinessRouteWithChildren
   ClimaRoute: typeof ClimaRoute
   DondeDormirRoute: typeof DondeDormirRoute
@@ -966,13 +953,6 @@ declare module '@tanstack/react-router' {
       path: '/business'
       fullPath: '/business'
       preLoaderRoute: typeof BusinessRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/bus': {
-      id: '/bus'
-      path: '/bus'
-      fullPath: '/bus'
-      preLoaderRoute: typeof BusRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -1279,30 +1259,6 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface BusLinesRouteChildren {
-  BusLinesCodeRoute: typeof BusLinesCodeRoute
-}
-
-const BusLinesRouteChildren: BusLinesRouteChildren = {
-  BusLinesCodeRoute: BusLinesCodeRoute,
-}
-
-const BusLinesRouteWithChildren = BusLinesRoute._addFileChildren(
-  BusLinesRouteChildren,
-)
-
-interface BusRouteChildren {
-  BusLinesRoute: typeof BusLinesRouteWithChildren
-  BusPlannerRoute: typeof BusPlannerRoute
-}
-
-const BusRouteChildren: BusRouteChildren = {
-  BusLinesRoute: BusLinesRouteWithChildren,
-  BusPlannerRoute: BusPlannerRoute,
-}
-
-const BusRouteWithChildren = BusRoute._addFileChildren(BusRouteChildren)
-
 interface BusinessInboxRouteChildren {
   BusinessInboxIdRoute: typeof BusinessInboxIdRoute
 }
@@ -1393,7 +1349,6 @@ const SaludCategoriaRouteWithChildren = SaludCategoriaRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  BusRoute: BusRouteWithChildren,
   BusinessRoute: BusinessRouteWithChildren,
   ClimaRoute: ClimaRoute,
   DondeDormirRoute: DondeDormirRoute,
@@ -1442,3 +1397,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
