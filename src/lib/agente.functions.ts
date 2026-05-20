@@ -146,7 +146,7 @@ const properNounMatch = (
     text.match(/\bel\s+([0-9]{1,3}[a-z]?)\b/i);
   if (lineMatch && lineMatch[1]) {
     const code = lineMatch[1].toUpperCase();
-    const target = `/bus/lines/${code}`;
+    const target = `/bus/dashboard/${code}`;
     if (target === currentPath) return null;
     return { path: target, reason: `línea de bus concreta: ${code}` };
   }
