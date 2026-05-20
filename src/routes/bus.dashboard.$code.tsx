@@ -106,7 +106,7 @@ function BusDashboardPage() {
         );
         if (!r.ok) return [];
         const j = (await r.json()) as { all?: number[] };
-        return Array.isArray(j.all) ? j.all.slice(0, 2) : [];
+        return Array.isArray(j.all) ? j.all.slice(0, 1) : [];
       } catch {
         return [];
       }
