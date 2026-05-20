@@ -455,6 +455,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const wasOpenRef = useRef(open);
   const turnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const recognitionRestartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const suppressRecognitionUntilRef = useRef(0);
   // Acuse "Voy a por ello…" mientras carga el Dashboard tras una navegación.
   const ackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Marca que estamos esperando un resumen externo (vamos:food-summary).
@@ -518,6 +520,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       clearTimeout(turnTimerRef.current);
       turnTimerRef.current = null;
     }
+    setInterim("");
     try {
       recogRef.current?.abort?.();
     } catch {}
@@ -548,12 +551,28 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       modeRef.current === "voice" &&
       !pausedRef.current &&
       !loadingRef.current &&
-      !speakingRef.current
+      !speakingRef.current &&
+      Date.now() >= suppressRecognitionUntilRef.current
     );
   }, []);
 
   // Forward declaration via ref so callbacks can call latest startListening
   const startListeningRef = useRef<() => void>(() => {});
+  const resumeListeningAfterEcho = useCallback(
+    (delay = 700) => {
+      if (recognitionRestartTimerRef.current) clearTimeout(recognitionRestartTimerRef.current);
+      recognitionRestartTimerRef.current = setTimeout(() => {
+        recognitionRestartTimerRef.current = null;
+        const remaining = suppressRecognitionUntilRef.current - Date.now();
+        if (remaining > 0) {
+          resumeListeningAfterEcho(remaining + 120);
+          return;
+        }
+        if (shouldAutoListen()) startListeningRef.current();
+      }, delay);
+    },
+    [shouldAutoListen],
+  );
 
   const playAudioClip = useCallback(
     (clip: AgentAudioClip, text: string, onEnd?: () => void) => {
@@ -575,31 +594,34 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         const finish = () => {
           if (__vaActiveAudio === audio) __vaActiveAudio = null;
           __vaActiveAudioStartedAt = 0;
+          suppressRecognitionUntilRef.current = Date.now() + 700;
           speakingRef.current = false;
           setSpeaking(false);
           onEnd?.();
-          if (shouldAutoListen()) startListeningRef.current();
+          resumeListeningAfterEcho();
         };
         audio.onended = finish;
         audio.onerror = () => {
           if (__vaActiveAudio === audio) __vaActiveAudio = null;
           __vaActiveAudioStartedAt = 0;
+          suppressRecognitionUntilRef.current = Date.now() + 700;
           speakingRef.current = false;
           setSpeaking(false);
           setTapToSpeak({ text, audio: clip });
           onEnd?.();
-          if (shouldAutoListen()) startListeningRef.current();
+          resumeListeningAfterEcho();
         };
         const started = audio.play();
         if (started && typeof started.catch === "function") {
           started.catch(() => {
             if (__vaActiveAudio === audio) __vaActiveAudio = null;
             __vaActiveAudioStartedAt = 0;
+            suppressRecognitionUntilRef.current = Date.now() + 700;
             speakingRef.current = false;
             setSpeaking(false);
             setTapToSpeak({ text, audio: clip });
             onEnd?.();
-            if (shouldAutoListen()) startListeningRef.current();
+            resumeListeningAfterEcho();
           });
         }
         return true;
@@ -608,12 +630,14 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         return false;
       }
     },
-    [shouldAutoListen],
+    [resumeListeningAfterEcho],
   );
 
   const speak = useCallback(
     (text: string, audio?: AgentAudioClip, onEnd?: () => void) => {
       // Anti-eco (D9): cortamos cualquier escucha activa antes de hablar.
+      suppressRecognitionUntilRef.current = Date.now() + 1200;
+      setInterim("");
       try {
         recogRef.current?.abort?.();
       } catch {
@@ -623,7 +647,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       if (mutedRef.current || typeof window === "undefined" || !window.speechSynthesis) {
         if (!mutedRef.current) setTapToSpeak({ text, audio });
         onEnd?.();
-        if (shouldAutoListen()) startListeningRef.current();
+        resumeListeningAfterEcho();
         return;
       }
       const synth = window.speechSynthesis;
@@ -651,19 +675,21 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         u.onend = () => {
           window.clearTimeout(blockedTimer);
           __vaActiveUtterance = null;
+          suppressRecognitionUntilRef.current = Date.now() + 700;
           speakingRef.current = false;
           setSpeaking(false);
           onEnd?.();
-          if (shouldAutoListen()) startListeningRef.current();
+          resumeListeningAfterEcho();
         };
         u.onerror = () => {
           window.clearTimeout(blockedTimer);
           __vaActiveUtterance = null;
+          suppressRecognitionUntilRef.current = Date.now() + 700;
           speakingRef.current = false;
           setSpeaking(false);
           setTapToSpeak({ text });
           onEnd?.();
-          if (shouldAutoListen()) startListeningRef.current();
+          resumeListeningAfterEcho();
         };
         speakingRef.current = true;
         setSpeaking(true);
@@ -672,10 +698,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       } catch {
         setTapToSpeak({ text });
         onEnd?.();
-        if (shouldAutoListen()) startListeningRef.current();
+        resumeListeningAfterEcho();
       }
     },
-    [playAudioClip, shouldAutoListen],
+    [playAudioClip, resumeListeningAfterEcho],
   );
 
   const speakExternalSummary = useCallback(
