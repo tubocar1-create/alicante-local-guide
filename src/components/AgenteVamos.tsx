@@ -1427,7 +1427,11 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         </button>
 
         <button
-          onClick={onClose}
+          onClick={() => {
+            stopListening();
+            stopSpeaking();
+            onClose();
+          }}
           aria-label="Cerrar"
           className="flex h-9 w-9 items-center justify-center rounded-full border bg-background text-foreground hover:bg-muted"
         >
