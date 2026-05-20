@@ -690,8 +690,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const resumeListeningAfterEcho = useCallback(
     (delay = POST_SPEECH_LISTEN_DELAY_MS) => {
       if (recognitionRestartTimerRef.current) clearTimeout(recognitionRestartTimerRef.current);
+      // Si el panel ya no está abierto, no reabrimos el micro (evita que el
+      // indicador de grabación vuelva a aparecer tras cerrar).
+      if (!openRef.current) return;
       recognitionRestartTimerRef.current = setTimeout(() => {
         recognitionRestartTimerRef.current = null;
+        if (!openRef.current) return;
         const remaining = suppressRecognitionUntilRef.current - Date.now();
         if (remaining > 0) {
           resumeListeningAfterEcho(remaining + POST_SPEECH_LISTEN_DELAY_MS);
