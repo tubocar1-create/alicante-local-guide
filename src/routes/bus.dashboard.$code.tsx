@@ -144,7 +144,8 @@ function BusDashboardPage() {
   const lineColor = line?.color || "#EF4444";
 
   const inService =
-    Object.values(etas).some((v) => typeof v === "number") || loadingEtas;
+    Object.values(etas).some((arr) => arr && arr.length > 0) || loadingEtas;
+
 
   return (
     <div className="min-h-screen bg-black text-white">
