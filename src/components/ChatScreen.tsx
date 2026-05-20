@@ -1577,7 +1577,15 @@ function MarkdownText({ text }: { text: string }) {
               <button
                 type="button"
                 onClick={() => {
-                  if (url === "/playas/mapa") navigate({ to: "/playas/mapa" });
+                  if (["/bus", "/bus/", "/bus/planner", "/buses-en-vivo", "/"].includes(url)) {
+                    try {
+                      sessionStorage.setItem("agent:open-bus-picker", "1");
+                    } catch {
+                      /* noop */
+                    }
+                    navigate({ to: "/", search: { openBusPicker: "1" } as any, replace: true });
+                    window.dispatchEvent(new Event("agent:open-bus-picker"));
+                  } else if (url === "/playas/mapa") navigate({ to: "/playas/mapa" });
                   else if (url === "/playas") navigate({ to: "/playas" });
                   else window.location.assign(url);
                 }}
