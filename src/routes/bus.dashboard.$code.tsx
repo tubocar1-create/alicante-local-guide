@@ -384,6 +384,16 @@ function DirectionColumn({
                   : undefined,
               }}
             >
+              {!isDest && (
+                <ChevronDown
+                  aria-hidden
+                  className="pointer-events-none absolute -bottom-2 left-[18px] z-20 h-3 w-3"
+                  strokeWidth={3}
+                  style={{ color }}
+                />
+              )}
+
+
 
               {(isOrigin || isDest) && (
                 <span
