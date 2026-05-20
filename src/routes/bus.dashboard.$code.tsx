@@ -389,12 +389,9 @@ function DirectionColumn({
                   </div>
 
 
-                  <div className="truncate font-sans text-[12px] font-semibold not-italic leading-snug text-white">
-                    {s.name}
-                  </div>
                   {isOrigin && (
                     <span
-                      className="mt-0.5 inline-block rounded px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-white"
+                      className="mb-0.5 inline-block rounded px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-white"
                       style={{ background: color }}
                     >
                       Origen
@@ -402,12 +399,16 @@ function DirectionColumn({
                   )}
                   {isDest && (
                     <span
-                      className="mt-0.5 inline-block rounded px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-white"
+                      className="mb-0.5 inline-block rounded px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-white"
                       style={{ background: color }}
                     >
                       Destino
                     </span>
                   )}
+                  <div className="truncate font-sans text-[12px] font-semibold not-italic leading-snug text-white">
+                    {s.name}
+                  </div>
+
                 </div>
             </li>
 
