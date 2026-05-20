@@ -1491,34 +1491,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           </div>
         </div>
 
-        <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-3 py-4">
-          {msgs.map((m, i) => (
-            <div
-              key={i}
-              className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}
-            >
-              <div
-                className={cn(
-                  "max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed",
-                  m.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-foreground",
-                )}
-              >
-                <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-a:text-primary">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
-                </div>
-              </div>
-            </div>
-          ))}
-          {loading && (
-            <div className="flex justify-start">
-              <div className="flex items-center gap-2 rounded-2xl bg-muted px-3 py-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" /> pensando…
-              </div>
-            </div>
-          )}
-        </div>
+        <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-4" />
+
 
         {/* Formulario de texto eliminado: el agente es solo de voz */}
       </div>
