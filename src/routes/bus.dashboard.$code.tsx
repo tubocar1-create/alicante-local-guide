@@ -146,6 +146,36 @@ function BusDashboardPage() {
       }));
   }, [stopsByDir, transfersByStop]);
 
+  // Coordenadas por código de parada
+  const stopCoords = useMemo(() => {
+    const m = new Map<string, { lat: number; lng: number }>();
+    if (!data) return m;
+    for (const sm of data.stopsMeta) {
+      if (typeof sm.lat === "number" && typeof sm.lng === "number") {
+        m.set(sm.code, { lat: sm.lat, lng: sm.lng });
+      }
+    }
+    return m;
+  }, [data]);
+
+  // Parada más cercana por sentido (solo si hay geo)
+  const nearestByDir = useMemo(() => {
+    const out: Record<1 | 2, { code: string; distance: number } | null> = { 1: null, 2: null };
+    if (!userPos) return out;
+    for (const dir of [1, 2] as const) {
+      let best: { code: string; distance: number } | null = null;
+      for (const s of stopsByDir[dir]) {
+        const c = stopCoords.get(s.code);
+        if (!c) continue;
+        const d = haversineMeters(userPos, c);
+        if (!best || d < best.distance) best = { code: s.code, distance: d };
+      }
+      out[dir] = best;
+    }
+    return out;
+  }, [userPos, stopsByDir, stopCoords]);
+
+
   // Realtime: por cada parada del recorrido (ambas direcciones), pedir su ETA.
   // Guardamos hasta 2 próximos tiempos por parada (índice 0 y 1).
   const [etas, setEtas] = useState<Record<string, number[]>>({});
