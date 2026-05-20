@@ -316,12 +316,17 @@ function DirectionColumn({
             {label}
           </span>
         </div>
-        <div className="flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5">
-          <Radio className="h-3 w-3 text-emerald-400" />
-          <span className="font-sans text-[10px] font-bold not-italic text-emerald-400">
-            {inService ? "En servicio" : "Sin datos"}
-          </span>
-        </div>
+        <span
+          aria-label={inService ? "En servicio" : "Sin datos"}
+          title={inService ? "En servicio" : "Sin datos"}
+          className={[
+            "inline-block h-2.5 w-2.5 rounded-full",
+            inService
+              ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]"
+              : "bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.7)]",
+          ].join(" ")}
+        />
+
       </div>
 
       {stops.length > 0 && (
