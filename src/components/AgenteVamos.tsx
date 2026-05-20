@@ -1072,6 +1072,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           setInterim("");
           return;
         }
+        if (!finalText.trim()) return;
         finishTurn();
       };
       rec.onerror = (e: any) => {
