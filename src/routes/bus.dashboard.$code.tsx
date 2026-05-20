@@ -289,7 +289,6 @@ function DirectionColumn({
   color,
   inService,
   transferLineColor,
-  offsetGrid,
 }: {
   label: string;
   direction: 1 | 2;
@@ -298,12 +297,11 @@ function DirectionColumn({
   color: string;
   inService: boolean;
   transferLineColor: (stopCode: string) => string | null;
-  offsetGrid?: boolean;
 }) {
   const now = new Date();
 
   return (
-    <div className={offsetGrid ? "col-start-2 row-start-1 px-1" : "px-1"}>
+    <div className="px-1">
       <div className="mb-2 flex items-center justify-between gap-2 pt-1">
         <div className="flex items-center gap-1">
           <span style={{ color }} className="text-base">
