@@ -383,34 +383,39 @@ function DirectionColumn({
                 </span>
               )}
               <div className="flex items-start gap-2">
-                {/* Badge con el próximo tiempo, posicionado sobre la línea */}
-                <div
-                  className={[
-                    "relative z-10 flex h-9 w-12 shrink-0 flex-col items-center justify-center rounded-md leading-none",
-                    hasEta ? "bg-white text-black" : "bg-white/15 text-white/70",
-                  ].join(" ")}
-                  style={
-                    transferColor
-                      ? { boxShadow: `0 0 0 2px ${transferColor}` }
-                      : isOrigin || isDest
-                        ? { boxShadow: `0 0 0 2px #fff` }
-                        : undefined
-                  }
-                >
-                  {hasEta && eta1 === 0 ? (
-                    <img
-                      src={busAlicanteImg}
-                      alt="Bus"
-                      className="h-7 w-7 object-contain"
-                    />
-                  ) : (
-                    <>
-                      <span className="font-sans text-[12px] font-extrabold not-italic tabular-nums">
-                        {hasEta ? eta1 : "—"}
-                      </span>
-                      <span className="font-sans text-[8px] font-bold not-italic">min</span>
-                    </>
-                  )}
+                {/* Badge con el próximo tiempo + código de parada */}
+                <div className="flex shrink-0 flex-col items-center">
+                  <div
+                    className={[
+                      "relative z-10 flex h-9 w-12 flex-col items-center justify-center rounded-md leading-none",
+                      hasEta ? "bg-white text-black" : "bg-white/15 text-white/70",
+                    ].join(" ")}
+                    style={
+                      transferColor
+                        ? { boxShadow: `0 0 0 2px ${transferColor}` }
+                        : isOrigin || isDest
+                          ? { boxShadow: `0 0 0 2px #fff` }
+                          : undefined
+                    }
+                  >
+                    {hasEta && eta1 === 0 ? (
+                      <img
+                        src={busAlicanteImg}
+                        alt="Bus"
+                        className="h-7 w-7 object-contain"
+                      />
+                    ) : (
+                      <>
+                        <span className="font-sans text-[12px] font-extrabold not-italic tabular-nums">
+                          {hasEta ? eta1 : "—"}
+                        </span>
+                        <span className="font-sans text-[8px] font-bold not-italic">min</span>
+                      </>
+                    )}
+                  </div>
+                  <span className="mt-0.5 font-sans text-[7px] font-medium not-italic tabular-nums leading-none text-white/45">
+                    {s.code}
+                  </span>
                 </div>
 
 
@@ -419,9 +424,6 @@ function DirectionColumn({
                   <div className="flex items-baseline gap-1.5">
                     <span className="font-sans text-[11px] font-semibold not-italic tabular-nums text-white/90">
                       {etaTime ?? "--:--"}
-                    </span>
-                    <span className="ml-auto font-sans text-[10px] not-italic tabular-nums text-white/50">
-                      {s.code}
                     </span>
                   </div>
                   <div className="truncate font-sans text-[12px] font-semibold not-italic leading-snug text-white">
