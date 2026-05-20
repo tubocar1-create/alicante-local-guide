@@ -211,11 +211,10 @@ function BusDashboardPage() {
             etas={etas}
             color={lineColor}
             inService={inService}
-            transferLineColor={(c) => {
+            transferLines={(c) => {
               const others = transfersByStop.get(c);
-              if (!others) return null;
-              for (const t of topTransfers) if (others.has(t.code)) return t.color;
-              return null;
+              if (!others) return [];
+              return topTransfers.filter((t) => others.has(t.code));
             }}
           />
           <DirectionColumn
@@ -225,11 +224,10 @@ function BusDashboardPage() {
             etas={etas}
             color={lineColor}
             inService={inService}
-            transferLineColor={(c) => {
+            transferLines={(c) => {
               const others = transfersByStop.get(c);
-              if (!others) return null;
-              for (const t of topTransfers) if (others.has(t.code)) return t.color;
-              return null;
+              if (!others) return [];
+              return topTransfers.filter((t) => others.has(t.code));
             }}
           />
         </div>
@@ -297,7 +295,7 @@ function DirectionColumn({
   etas,
   color,
   inService,
-  transferLineColor,
+  transferLines,
 }: {
   label: string;
   direction: 1 | 2;
@@ -305,7 +303,7 @@ function DirectionColumn({
   etas: Record<string, number[]>;
   color: string;
   inService: boolean;
-  transferLineColor: (stopCode: string) => string | null;
+  transferLines: (stopCode: string) => { code: string; color: string }[];
 }) {
   const now = new Date();
 
@@ -357,7 +355,8 @@ function DirectionColumn({
           const hasEta = typeof eta1 === "number";
           const isOrigin = i === 0;
           const isDest = i === stops.length - 1;
-          const transferColor = transferLineColor(s.code);
+          const transfers = transferLines(s.code);
+          const transferColor = transfers[0]?.color ?? null;
           const etaTime = hasEta
             ? formatHHMM(new Date(now.getTime() + eta1 * 60_000))
             : null;
@@ -365,10 +364,13 @@ function DirectionColumn({
           return (
             <li
               key={`${s.code}-${i}`}
-              className="relative flex flex-col gap-1 pb-2"
+              className="relative flex flex-col gap-1 rounded-md pb-2"
               style={{
                 borderBottom: "1px solid rgba(255,255,255,0.06)",
                 boxShadow: "0 1px 0 rgba(0,0,0,0.4)",
+                background: transferColor
+                  ? `linear-gradient(90deg, ${transferColor}26 0%, ${transferColor}10 60%, transparent 100%)`
+                  : undefined,
               }}
             >
 
@@ -425,6 +427,26 @@ function DirectionColumn({
                   <div className="truncate font-sans text-[12px] font-semibold not-italic leading-snug text-white">
                     {s.name}
                   </div>
+                  {transfers.length > 0 && (
+                    <div className="mt-1 flex flex-wrap items-center gap-1">
+                      <RefreshCw
+                        className="h-3 w-3"
+                        style={{ color: transfers[0].color }}
+                      />
+                      <span className="font-sans text-[9px] font-semibold not-italic uppercase tracking-wide text-white/60">
+                        Transbordo
+                      </span>
+                      {transfers.map((t) => (
+                        <span
+                          key={t.code}
+                          className="inline-flex items-center rounded-full px-1.5 py-[1px] font-sans text-[10px] font-bold not-italic tabular-nums text-white"
+                          style={{ background: t.color }}
+                        >
+                          {t.code}
+                        </span>
+                      ))}
+                    </div>
+                  )}
 
                 </div>
               </div>
