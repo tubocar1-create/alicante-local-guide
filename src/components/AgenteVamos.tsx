@@ -458,7 +458,6 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const [muted, setMuted] = useState(false);
   const [paused, setPaused] = useState(false);
   const [voiceError, setVoiceError] = useState<string | null>(null);
-  const [, setMicReady] = useState(__vaMicWarmupState === "ready");
 
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
@@ -1157,7 +1156,6 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       };
       recogRef.current = rec;
       setVoiceError(null);
-      setMicReady(true);
       setListening(true);
       rec.start();
     } catch (err) {
