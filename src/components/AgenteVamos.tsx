@@ -1209,7 +1209,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             window.sessionStorage.removeItem("afp:openSubmenu");
           } catch {}
         }
-        const fallback = localResolve(clean);
+        const fallback = localResolve(clean, pendingDomainRef.current);
         let reply = fallback.reply;
         let target: string | undefined = fallback.path;
         let forwardPrompt: string | undefined =
@@ -1222,37 +1222,50 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           } catch {}
         }
 
-        try {
-          const res = await askAgent({
-            data: {
-              messages: next.map((m) => ({ role: m.role, content: m.content })),
-              path,
-            },
-          });
-          if (res && (res as any).ok) {
-            const ai = res as {
-              ok: true;
-              content: string;
-              navigate: string | null;
-              forwardPrompt?: string;
-              openSubmenu?: string;
-            };
-            if (ai.content && ai.content.trim()) reply = ai.content.trim();
-            if (ai.navigate) target = ai.navigate;
-            if (ai.forwardPrompt && typeof window !== "undefined") {
-              forwardPrompt = ai.forwardPrompt;
-              try {
-                window.sessionStorage.setItem("afp:fwdPrompt", ai.forwardPrompt);
-              } catch {}
+        // Si el resolver local activa un DOMINIO (pregunta aclaratoria sin
+        // path), saltamos el servidor para no pisar la pregunta con una
+        // navegación agresiva. Actualizamos el dominio activo y respondemos.
+        const isClarifying = fallback.pendingDomain != null && !fallback.path;
+        if (isClarifying) {
+          pendingDomainRef.current = fallback.pendingDomain ?? null;
+        } else if (fallback.pendingDomain === null) {
+          // Resolución concreta → cerramos el dominio activo.
+          pendingDomainRef.current = null;
+        }
+
+        if (!isClarifying) {
+          try {
+            const res = await askAgent({
+              data: {
+                messages: next.map((m) => ({ role: m.role, content: m.content })),
+                path,
+              },
+            });
+            if (res && (res as any).ok) {
+              const ai = res as {
+                ok: true;
+                content: string;
+                navigate: string | null;
+                forwardPrompt?: string;
+                openSubmenu?: string;
+              };
+              if (ai.content && ai.content.trim()) reply = ai.content.trim();
+              if (ai.navigate) target = ai.navigate;
+              if (ai.forwardPrompt && typeof window !== "undefined") {
+                forwardPrompt = ai.forwardPrompt;
+                try {
+                  window.sessionStorage.setItem("afp:fwdPrompt", ai.forwardPrompt);
+                } catch {}
+              }
+              if (ai.openSubmenu && typeof window !== "undefined") {
+                try {
+                  window.sessionStorage.setItem("afp:openSubmenu", ai.openSubmenu);
+                } catch {}
+              }
             }
-            if (ai.openSubmenu && typeof window !== "undefined") {
-              try {
-                window.sessionStorage.setItem("afp:openSubmenu", ai.openSubmenu);
-              } catch {}
-            }
+          } catch {
+            // si falla el servidor, nos quedamos con la respuesta local
           }
-        } catch {
-          // si falla el servidor, nos quedamos con la respuesta local
         }
 
         const pendingSubmenu =
