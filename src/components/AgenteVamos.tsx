@@ -1425,8 +1425,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             <div className="flex items-center gap-2">
               <button
                 onClick={() => {
+                  iniciarAudio();
                   if (paused) {
-                    unlockSpeechFromUserGesture();
                     primeSpanishUtterances();
                     setVoiceError(null);
                     setPaused(false);
@@ -1573,6 +1573,7 @@ export function AgenteVamosFab() {
       {!open && (
         <button
           onClick={() => {
+            iniciarAudio();
             startGreetingFromUserGesture();
             setOpen(true);
           }}
