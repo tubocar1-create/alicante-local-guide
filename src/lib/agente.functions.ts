@@ -16,7 +16,7 @@ const ROUTES: Array<{ path: string; desc: string }> = [
   { path: "/ocio/teatros", desc: "SUBMENÚ Ocio · Teatros — obras, musicales, sala concreta" },
   { path: "/ocio/conciertos", desc: "SUBMENÚ Ocio · Conciertos — música en vivo, festivales, artista, agenda" },
   { path: "/explore", desc: "MENÚ PRINCIPAL · Mapa explorar la ciudad (rutas urbanas, lugares, descubrir)" },
-  { path: "/bus", desc: "MENÚ PRINCIPAL · Transporte EMT (hub) — bus, parada, tarjeta, billete, 'cómo llego'" },
+  { path: "/", desc: "MENÚ PRINCIPAL · Inicio — abre el selector '¿Ya sabes qué bus tomar?' (bus urbano, parada, tarjeta, billete, 'cómo llego')" },
   { path: "/bus/lines", desc: "SUBMENÚ Transporte · Líneas de bus (cuando pregunte por una línea concreta o todas las líneas)" },
   { path: "/bus/planner", desc: "SUBMENÚ Transporte · Planificador de rutas (origen → destino, 'cómo voy de X a Y')" },
   { path: "/vuelos", desc: "Vuelos AENA Alicante-Elche (ALC) — estado de vuelo, llegadas, salidas, retrasos, aeropuerto" },
@@ -444,7 +444,7 @@ const ROUTE_BLURBS: Record<string, string> = {
   "/comprar": "Tiendas y mercados. ¿Buscas algo concreto?",
   
   "/explore": "Explora la ciudad. ¿Centro histórico, museos o rutas?",
-  "/bus": "Transporte EMT. ¿Línea concreta o planificar una ruta?",
+  
   "/bus/lines": "Líneas EMT. ¿Te paso una en concreto?",
   "/bus/planner": "Planificador. Dime origen y destino.",
   "/vuelos": "Estado del aeropuerto ALC. ¿Llegadas o salidas?",
