@@ -1272,6 +1272,39 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           }
         }
 
+        // ─── HARD-BLOCK · subcategorías médicas ──────────────────────────
+        // Nunca llevamos al usuario a un especialista (/salud/<categoria>)
+        // si su mensaje no menciona explícitamente esa especialidad.
+        // "tengo dolor" NUNCA debe acabar en /salud/traumatologia.
+        if (target && /^\/salud\/[^/]+/.test(target)) {
+          const cleanNorm = normalizeSpeech(clean);
+          // Stems de especialidades reconocibles en lenguaje natural.
+          const SPECIALTY_STEMS = [
+            "traumatolog", "trauma", "dermatolog", "pediatr", "cardiolog",
+            "oftalmolog", "ocular", "odontolog", "dentista", "psicolog",
+            "psiquiatr", "ginec", "matron", "nutricion", "dietista",
+            "estetic", "audiolog", "audifon", "rehabilit", "fisiotera",
+            "vacun", "veterinari", "optic", "salud mental", "analitica",
+            "analisis", "radiolog", "diagnostico por imagen", "ecograf",
+            "centro de salud", "ambulatorio", "sip", "urgenc",
+          ];
+          const explicit = SPECIALTY_STEMS.some((s) => cleanNorm.includes(s));
+          if (!explicit) {
+            // Forzamos al hub /salud y abrimos el flujo aclaratorio.
+            target = "/salud";
+            reply =
+              "Entiendo. ¿Necesitas hospital, farmacia, urgencias o centro de salud?";
+            pendingDomainRef.current = "salud";
+            forwardPrompt = undefined;
+            if (typeof window !== "undefined") {
+              try {
+                window.sessionStorage.removeItem("afp:fwdPrompt");
+                window.sessionStorage.removeItem("afp:openSubmenu");
+              } catch {}
+            }
+          }
+        }
+
         const pendingSubmenu =
           typeof window !== "undefined" ? window.sessionStorage.getItem("afp:openSubmenu") : null;
         const navigatingToDashboard = Boolean(forwardPrompt || pendingSubmenu);
