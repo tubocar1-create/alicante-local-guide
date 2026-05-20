@@ -661,7 +661,21 @@ function localResolve(
     }
   }
 
-  // 2) ARQUITECTURA POR CAPAS (regla del producto):
+  // 2) PRIORIDAD 0 — ENTIDAD CONCRETA NOMBRADA (hotel, monumento, marca,
+  //    lugar específico). Si el usuario nombra algo concreto, NUNCA preguntamos
+  //    ni mostramos dominio: abrimos directo. Mayor prioridad que keywords,
+  //    dominios y BD. Búsqueda flexible (acentos, mayúsculas, variantes).
+  const entity = matchNamedEntity(query);
+  if (entity) {
+    return {
+      reply: entity.reply,
+      path: entity.external ?? entity.path,
+      audio: "fallback",
+      pendingDomain: null,
+    };
+  }
+
+  // 3) ARQUITECTURA POR CAPAS (regla del producto):
   //    PRIORIDAD 1 → entidad/destino EXACTO (frase específica, len >= 8)
   //    PRIORIDAD 2 → dominio general (frase ambigua → preguntar antes)
   //    PRIORIDAD 3 → keyword / DB intent (solo si no hay dominio en juego)
