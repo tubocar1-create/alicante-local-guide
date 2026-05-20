@@ -1625,7 +1625,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       const rec = new SRClass();
       rec.lang = "es-ES";
       rec.continuous = !hasMobileSpeechDuplicationBug();
-      rec.interimResults = true;
+      // Solo procesar frases finales. Los transcripts parciales rompen
+      // el routing semántico ("me siento" en lugar de "me siento mal").
+      rec.interimResults = false;
       let finalText = "";
       let lastTranscript = "";
       let handled = false;
@@ -1647,24 +1649,25 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           }
           return;
         }
-        // Rebuild from scratch each event to avoid duplicate accumulation
-        // (some engines re-emit final results across events).
+        // Solo finales. Acumulamos desde resultIndex para captar frases
+        // completas tipo "me siento mal" sin perder la última palabra.
         const finals: string[] = [];
-        const interims: string[] = [];
-        for (let i = 0; i < e.results.length; i++) {
-          const t = e.results[i][0].transcript;
-          if (e.results[i].isFinal) finals.push(t);
-          else interims.push(t);
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const result = e.results[i];
+          if (result.isFinal) finals.push(result[0].transcript);
         }
-        const interimText = compactRecognitionText(interims);
-        finalText = compactRecognitionText(finals);
-        lastTranscript = (finalText || interimText || lastTranscript).trim();
-        setInterim(interimText);
-        if (lastTranscript) {
-          bumpIdle();
-          if (turnTimerRef.current) clearTimeout(turnTimerRef.current);
-          turnTimerRef.current = setTimeout(() => finishTurn(), 950);
+        if (!finals.length) return;
+        const incoming = compactRecognitionText(finals);
+        if (!incoming.trim()) return;
+        finalText = compactRecognitionText([finalText, incoming].filter(Boolean));
+        lastTranscript = finalText.trim();
+        setInterim("");
+        bumpIdle();
+        if (turnTimerRef.current) {
+          clearTimeout(turnTimerRef.current);
+          turnTimerRef.current = null;
         }
+        finishTurn();
       };
       const finishTurn = () => {
         if (handled) return true;
