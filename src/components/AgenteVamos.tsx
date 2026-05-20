@@ -1170,6 +1170,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   // accepts it as a user-gesture action). Here we just kick off listening
   // once any in-flight speech finishes.
   const greetedRef = useRef(__vaGetGreetingSpoken());
+  const bootSpeechWasActiveRef = useRef(false);
   useEffect(() => {
     if (!open || mode !== "voice") return;
     if (__vaGetGreetingSpoken()) greetedRef.current = true;
@@ -1192,14 +1193,16 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       const stillSpeaking = Boolean(
         (synth && (synth.speaking || synth.pending || __vaActiveUtterance)) || __vaActiveAudio,
       );
+      speakingRef.current = stillSpeaking;
       setSpeaking(stillSpeaking);
       if (stillSpeaking) {
-        const retry = setTimeout(() => {
-          if (!cancelled && shouldAutoListen()) startListeningRef.current();
-        }, 300);
-        // El cleanup externo limpia el timeout principal; aquí confiamos en
-        // shouldAutoListen para no duplicar el reconocedor.
+        bootSpeechWasActiveRef.current = true;
+        setTimeout(tryStart, 300);
         return;
+      }
+      if (bootSpeechWasActiveRef.current) {
+        bootSpeechWasActiveRef.current = false;
+        suppressRecognitionUntilRef.current = Date.now() + 700;
       }
       if (mic.state === "pending" && mic.promise) {
         mic.promise.then(() => {
