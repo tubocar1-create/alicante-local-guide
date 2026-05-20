@@ -169,9 +169,6 @@ function BusDashboardPage() {
   const catColor = lineCategory === "urban" ? "#EF4444" : "#3B82F6";
   const catGradientEnd = lineCategory === "urban" ? "#B91C1C" : "#1E3A8A";
   const lineColor = line?.color || catColor;
-  const catColor = lineCategory === "urban" ? "#EF4444" : "#3B82F6";
-  const catGradientEnd = lineCategory === "urban" ? "#B91C1C" : "#1E3A8A";
-  const lineColor = line?.color || catColor;
 
   const inService =
     Object.values(etas).some((arr) => arr && arr.length > 0) || loadingEtas;
