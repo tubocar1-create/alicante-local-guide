@@ -1,9 +1,21 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowDown, ArrowUp, Bus, ChevronDown, Radio, RefreshCw, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowDown, ArrowUp, Bus, ChevronDown, Radio, RefreshCw, Loader2, MapPin } from "lucide-react";
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { classifyLine } from "@/components/BusKnownPicker";
 import busAlicanteImg from "@/assets/bus-alicante.png";
+
+function haversineMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  const R = 6371000;
+  const toRad = (x: number) => (x * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
 
 
 export const Route = createFileRoute("/bus/dashboard/$code")({
@@ -42,6 +54,25 @@ function BusDashboardPage() {
     const t = setInterval(() => setClock(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
+
+  // Geolocalización del usuario
+  const [userPos, setUserPos] = useState<{ lat: number; lng: number } | null>(null);
+  const [geoStatus, setGeoStatus] = useState<"idle" | "loading" | "ok" | "unavailable">("loading");
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setGeoStatus("unavailable");
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (p) => {
+        setUserPos({ lat: p.coords.latitude, lng: p.coords.longitude });
+        setGeoStatus("ok");
+      },
+      () => setGeoStatus("unavailable"),
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 60_000 },
+    );
+  }, []);
+
 
   const handlePickStop = (stopCode: string, stopName: string) => {
     const pick = {
@@ -114,6 +145,36 @@ function BusDashboardPage() {
         color: LINE_PALETTE[(idx + 1) % LINE_PALETTE.length],
       }));
   }, [stopsByDir, transfersByStop]);
+
+  // Coordenadas por código de parada
+  const stopCoords = useMemo(() => {
+    const m = new Map<string, { lat: number; lng: number }>();
+    if (!data) return m;
+    for (const sm of data.stopsMeta) {
+      if (typeof sm.lat === "number" && typeof sm.lng === "number") {
+        m.set(sm.code, { lat: sm.lat, lng: sm.lng });
+      }
+    }
+    return m;
+  }, [data]);
+
+  // Parada más cercana por sentido (solo si hay geo)
+  const nearestByDir = useMemo(() => {
+    const out: Record<1 | 2, { code: string; distance: number } | null> = { 1: null, 2: null };
+    if (!userPos) return out;
+    for (const dir of [1, 2] as const) {
+      let best: { code: string; distance: number } | null = null;
+      for (const s of stopsByDir[dir]) {
+        const c = stopCoords.get(s.code);
+        if (!c) continue;
+        const d = haversineMeters(userPos, c);
+        if (!best || d < best.distance) best = { code: s.code, distance: d };
+      }
+      out[dir] = best;
+    }
+    return out;
+  }, [userPos, stopsByDir, stopCoords]);
+
 
   // Realtime: por cada parada del recorrido (ambas direcciones), pedir su ETA.
   // Guardamos hasta 2 próximos tiempos por parada (índice 0 y 1).
@@ -238,6 +299,8 @@ function BusDashboardPage() {
               return topTransfers.filter((t) => others.has(t.code));
             }}
             onPickStop={handlePickStop}
+            nearest={nearestByDir[1]}
+            geoStatus={geoStatus}
           />
           <DirectionColumn
             label="VUELTA"
@@ -252,6 +315,9 @@ function BusDashboardPage() {
               return topTransfers.filter((t) => others.has(t.code));
             }}
             onPickStop={handlePickStop}
+            nearest={nearestByDir[2]}
+            geoStatus={geoStatus}
+
           />
         </div>
 
@@ -320,6 +386,8 @@ function DirectionColumn({
   inService,
   transferLines,
   onPickStop,
+  nearest,
+  geoStatus,
 }: {
   label: string;
   direction: 1 | 2;
@@ -329,7 +397,10 @@ function DirectionColumn({
   inService: boolean;
   transferLines: (stopCode: string) => { code: string; color: string }[];
   onPickStop: (stopCode: string, stopName: string) => void;
+  nearest: { code: string; distance: number } | null;
+  geoStatus: "idle" | "loading" | "ok" | "unavailable";
 }) {
+
   const now = new Date();
 
   return (
@@ -361,10 +432,28 @@ function DirectionColumn({
       </div>
 
       {stops.length > 0 && (
-        <p className="mb-2 truncate font-sans text-[11px] not-italic text-white/70">
+        <p className="mb-1.5 truncate font-sans text-[11px] not-italic text-white/70">
           {stops[0].name} → {stops[stops.length - 1].name}
         </p>
       )}
+
+      {/* Parada más cercana */}
+      <div className="mb-2 flex items-center gap-1 rounded-md border border-emerald-400/30 bg-emerald-400/10 px-2 py-1">
+        <MapPin className="h-3 w-3 text-emerald-300" />
+        <span className="font-sans text-[9px] font-semibold not-italic uppercase tracking-wide text-emerald-200/80">
+          Más cercana
+        </span>
+        <span className="ml-auto font-sans text-[10px] font-bold not-italic tabular-nums text-emerald-100">
+          {geoStatus === "unavailable"
+            ? "n/d"
+            : nearest
+              ? `${Math.round(nearest.distance)} m`
+              : geoStatus === "loading"
+                ? "…"
+                : "n/d"}
+        </span>
+      </div>
+
 
       <ol className="relative" style={{ display: "flex", flexDirection: "column", gap: "6mm" }}>
         {stops.length > 1 && (
@@ -386,16 +475,22 @@ function DirectionColumn({
             ? formatHHMM(new Date(now.getTime() + eta1 * 60_000))
             : null;
 
+          const isNearest = nearest?.code === s.code;
+
           return (
             <li
               key={`${s.code}-${i}`}
               className="relative flex flex-col gap-1 rounded-md pb-2"
               style={{
                 borderBottom: "1px solid rgba(255,255,255,0.06)",
-                boxShadow: "0 1px 0 rgba(0,0,0,0.4)",
-                background: transferColor
-                  ? `linear-gradient(90deg, ${transferColor}26 0%, ${transferColor}10 60%, transparent 100%)`
-                  : undefined,
+                boxShadow: isNearest
+                  ? "0 0 0 2px rgba(52,211,153,0.9), 0 0 14px rgba(52,211,153,0.45)"
+                  : "0 1px 0 rgba(0,0,0,0.4)",
+                background: isNearest
+                  ? "linear-gradient(90deg, rgba(52,211,153,0.28) 0%, rgba(52,211,153,0.10) 70%, transparent 100%)"
+                  : transferColor
+                    ? `linear-gradient(90deg, ${transferColor}26 0%, ${transferColor}10 60%, transparent 100%)`
+                    : undefined,
               }}
             >
               {!isDest && (
@@ -407,16 +502,23 @@ function DirectionColumn({
                 />
               )}
 
+              <div className="flex items-center gap-1 self-start">
+                {(isOrigin || isDest) && (
+                  <span
+                    className="inline-block rounded px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-white"
+                    style={{ background: color }}
+                  >
+                    {isOrigin ? "Origen" : "Destino"}
+                  </span>
+                )}
+                {isNearest && (
+                  <span className="inline-flex items-center gap-0.5 rounded bg-emerald-400 px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-black">
+                    <MapPin className="h-2.5 w-2.5" />
+                    {Math.round(nearest!.distance)} m
+                  </span>
+                )}
+              </div>
 
-
-              {(isOrigin || isDest) && (
-                <span
-                  className="inline-block self-start rounded px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-white"
-                  style={{ background: color }}
-                >
-                  {isOrigin ? "Origen" : "Destino"}
-                </span>
-              )}
               <button
                 type="button"
                 onClick={() => onPickStop(s.code, s.name)}
