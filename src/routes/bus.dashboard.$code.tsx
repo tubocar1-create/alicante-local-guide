@@ -422,6 +422,9 @@ function DirectionColumn({
                     <span className="font-sans text-[11px] font-semibold not-italic tabular-nums text-white/90">
                       {etaTime ?? "--:--"}
                     </span>
+                    <span className="font-sans text-[9px] font-medium not-italic uppercase tracking-wide text-white/50">
+                      estimado
+                    </span>
                   </div>
                   <div className="truncate font-sans text-[12px] font-semibold not-italic leading-snug text-white">
                     {s.name}
