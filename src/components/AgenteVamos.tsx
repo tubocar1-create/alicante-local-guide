@@ -257,6 +257,10 @@ const DOMAINS: DomainSpec[] = [
       "me siento fatal", "me encuentro fatal", "no me encuentro bien",
       "estoy malo", "estoy mala", "estoy malita", "estoy malito",
       "me duele", "tengo dolor", "dolor de", "duele mucho",
+      // Síntomas como palabra suelta → SIEMPRE quedan en salud genérica.
+      "dolor", "dolores", "sintoma", "sintomas", "enfermedad", "cansancio",
+      "agotado", "agotada", "debil", "mareo", "mareos", "herida", "heridas",
+      "sangrado", "ardor", "picor", "picores", "molestia", "molestias",
       "tengo fiebre", "tengo decimas", "tengo gripe", "tengo catarro",
       "estoy resfriado", "estoy resfriada", "tengo tos", "estoy mareado",
       "estoy mareada", "me mareo", "tengo nauseas", "tengo vomitos",
