@@ -261,14 +261,22 @@ const DOMAINS: DomainSpec[] = [
     id: "salud",
     hubPath: "/salud",
     triggers: [
-      "estoy enfermo", "estoy enferma", "me encuentro mal", "me siento mal",
+      // Estados generales de "no encontrarse bien".
+      "estoy enfermo", "estoy enferma", "me siento enfermo", "me siento enferma",
+      "me encuentro enfermo", "me encuentro enferma", "enfermo", "enferma",
+      "me encuentro mal", "me siento mal", "siento mal",
       "me siento fatal", "me encuentro fatal", "no me encuentro bien",
+      "no me siento bien", "estoy pachucho", "estoy pachucha",
       "estoy malo", "estoy mala", "estoy malita", "estoy malito",
-      "me duele", "tengo dolor", "dolor de", "duele mucho",
+      "indispuesto", "indispuesta", "decaido", "decaida",
+      // Dolor.
+      "me duele", "tengo dolor", "dolor de", "duele mucho", "me duelen",
       // Síntomas como palabra suelta → SIEMPRE quedan en salud genérica.
       "dolor", "dolores", "sintoma", "sintomas", "enfermedad", "cansancio",
       "agotado", "agotada", "debil", "mareo", "mareos", "herida", "heridas",
       "sangrado", "ardor", "picor", "picores", "molestia", "molestias",
+      "fiebre", "decimas", "gripe", "catarro", "resfriado", "resfriada",
+      "tos", "nauseas", "vomitos", "vomito", "diarrea",
       "tengo fiebre", "tengo decimas", "tengo gripe", "tengo catarro",
       "estoy resfriado", "estoy resfriada", "tengo tos", "estoy mareado",
       "estoy mareada", "me mareo", "tengo nauseas", "tengo vomitos",
