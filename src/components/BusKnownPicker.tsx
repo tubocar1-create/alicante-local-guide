@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, MapPin, Search, Sparkles, X } from "lucide-react";
+import { ArrowLeft, MapPin, Search, X } from "lucide-react";
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { useUserLocation, distanceKm } from "@/hooks/useUserLocation";
 
@@ -150,7 +150,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
   return (
     <div
       className={[
-        "rounded-2xl border border-border bg-card/95 p-2.5 shadow-soft backdrop-blur",
+        "rounded-2xl border border-border bg-black p-2.5 shadow-soft",
         isExpanded
           ? "fixed bottom-[5.75rem] left-1/2 top-[4.75rem] z-50 flex w-[calc(100vw-1.5rem)] max-w-2xl -translate-x-1/2 flex-col"
           : "mt-2",
@@ -280,13 +280,6 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
               </div>
             );
           })}
-          <div className="mt-4 flex items-start gap-2 border-t border-border/60 pt-3 text-[11px] text-muted-foreground">
-            <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#EF4444]" />
-            <div className="leading-snug">
-              <div>Tiempos en tiempo real</div>
-              <div>Datos proporcionados por Vectalia Alicante</div>
-            </div>
-          </div>
         </div>
       )}
 
