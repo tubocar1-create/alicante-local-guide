@@ -398,11 +398,54 @@ export function ChatScreen() {
       lastFoodSummaryRef.current = null;
       tryOpenSubmenu(detail?.path);
     };
+    const onShowBusStop = (e: Event) => {
+      const detail = (e as CustomEvent).detail as BusStopPick | undefined;
+      const stored = (() => {
+        try {
+          const raw = window.sessionStorage.getItem("afp:showBusStop");
+          if (!raw) return null;
+          window.sessionStorage.removeItem("afp:showBusStop");
+          return JSON.parse(raw) as BusStopPick;
+        } catch {
+          return null;
+        }
+      })();
+      const pick = detail ?? stored;
+      if (!pick) return;
+      setMode("transit");
+      const userText = `Quiero coger la línea ${pick.line} en la parada ${pick.stopName} (${pick.stopCode}).`;
+      const payload = encodeURIComponent(JSON.stringify(pick));
+      const reply = `¡Perfecto! Te muestro el tiempo de llegada en tu parada.\n\n[[busstop:${payload}]]`;
+      setMessages((prev) => [
+        ...prev,
+        { role: "user", content: userText },
+        { role: "assistant", content: reply },
+      ]);
+    };
     window.addEventListener("afp:forward-prompt", onForward);
     window.addEventListener("afp:open-submenu", onOpenSubmenu);
+    window.addEventListener("afp:show-busstop", onShowBusStop);
+    // Consume pending busstop from sessionStorage (in case event fired before mount)
+    try {
+      const raw = window.sessionStorage.getItem("afp:showBusStop");
+      if (raw) {
+        window.sessionStorage.removeItem("afp:showBusStop");
+        const pick = JSON.parse(raw) as BusStopPick;
+        setMode("transit");
+        const userText = `Quiero coger la línea ${pick.line} en la parada ${pick.stopName} (${pick.stopCode}).`;
+        const payload = encodeURIComponent(JSON.stringify(pick));
+        const reply = `¡Perfecto! Te muestro el tiempo de llegada en tu parada.\n\n[[busstop:${payload}]]`;
+        setMessages((prev) => [
+          ...prev,
+          { role: "user", content: userText },
+          { role: "assistant", content: reply },
+        ]);
+      }
+    } catch {}
     return () => {
       window.removeEventListener("afp:forward-prompt", onForward);
       window.removeEventListener("afp:open-submenu", onOpenSubmenu);
+      window.removeEventListener("afp:show-busstop", onShowBusStop);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
