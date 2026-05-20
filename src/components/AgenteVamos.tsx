@@ -578,7 +578,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     (clip: AgentAudioClip, text: string, onEnd?: () => void) => {
       if (typeof window === "undefined" || mutedRef.current) {
         onEnd?.();
-        if (shouldAutoListen()) startListeningRef.current();
+        resumeListeningAfterEcho();
         return true;
       }
       try {
@@ -1203,6 +1203,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       if (bootSpeechWasActiveRef.current) {
         bootSpeechWasActiveRef.current = false;
         suppressRecognitionUntilRef.current = Date.now() + 700;
+        resumeListeningAfterEcho();
+        return;
       }
       if (mic.state === "pending" && mic.promise) {
         mic.promise.then(() => {
