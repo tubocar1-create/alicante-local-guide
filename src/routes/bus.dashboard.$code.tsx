@@ -176,13 +176,8 @@ function BusDashboardPage() {
             <h1 className="font-sans text-2xl font-bold not-italic leading-tight text-white">
               Línea {code}
             </h1>
-            <p className="font-sans text-[13px] not-italic text-white/70 leading-tight">
-              Ruta de bus en tiempo real
-            </p>
-            <p className="font-sans text-[13px] not-italic text-white/70 leading-tight">
-              Ambos sentidos
-            </p>
           </div>
+
           <div className="shrink-0 self-start rounded-lg border border-white/15 bg-white/5 px-2 py-1 text-right">
             <div className="font-sans text-[9px] font-semibold not-italic uppercase tracking-wide text-white/50 leading-none">
               Hora
