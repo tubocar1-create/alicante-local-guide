@@ -449,12 +449,44 @@ function matchFollowup(query: string, domain: DomainSpec): string | null {
 // aclaratoria (regla del usuario: conversar antes de derivar).
 const DB_KEY_TO_DOMAIN: Record<string, string> = {
   salud: "salud",
-  comer: "comida",
+  comer: "comer",
   transporte: "transporte",
   playas: "playas",
-  dormir: "hoteles",
+  dormir: "dormir",
+  comprar: "comprar",
+  tomar_algo: "tomar_algo",
+  mapa: "mapa",
   ocio: "ocio",
+  fiestas: "fiestas",
+  perfil: "perfil",
+  clima: "clima",
+  qr: "qr",
 };
+
+const EMPTY_ROUTING_CATALOG: AgenteRoutingCatalog = { intents: [], subcategories: {} };
+
+function hasPhrase(text: string, phrase: string): boolean {
+  const n = normalizeSpeech(phrase);
+  if (!n || n.length < 4) return false;
+  if (n.includes(" ")) return text.includes(n);
+  return new RegExp(`(^|\\s)${n.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}(\\s|$)`).test(text);
+}
+
+function matchExistingSubcategory(query: string, items: AgenteSubcategory[] = []): AgenteSubcategory | null {
+  let best: AgenteSubcategory | null = null;
+  let bestLen = 0;
+  for (const item of items) {
+    for (const alias of [item.label, item.route.split("/").filter(Boolean).at(-1)?.replace(/-/g, " "), ...(item.aliases ?? [])]) {
+      if (!alias) continue;
+      const n = normalizeSpeech(alias);
+      if (hasPhrase(query, n) && n.length > bestLen) {
+        best = item;
+        bestLen = n.length;
+      }
+    }
+  }
+  return best;
+}
 
 function matchDbIntent(
   query: string,
@@ -487,13 +519,22 @@ type LocalResult = {
 function localResolve(
   text: string,
   currentDomain?: string | null,
-  dbIntents: AgenteIntentRow[] = [],
+  catalog: AgenteRoutingCatalog = EMPTY_ROUTING_CATALOG,
 ): LocalResult {
   const query = normalizeSpeech(text);
 
   // 1) Follow-up dentro de un dominio activo: resolvemos sub-destino.
   if (currentDomain) {
     const d = DOMAINS.find((x) => x.id === currentDomain);
+    const subcategory = matchExistingSubcategory(query, catalog.subcategories[currentDomain]);
+    if (subcategory) {
+      return {
+        reply: `Te llevo a ${subcategory.label}.`,
+        path: subcategory.route,
+        audio: d?.audio ?? "fallback",
+        pendingDomain: null,
+      };
+    }
     if (d) {
       const fuPath = matchFollowup(query, d);
       if (fuPath) {
@@ -530,7 +571,7 @@ function localResolve(
   }
 
   // 4) DB Intents (agente_intents): semántica rica desde Supabase.
-  const dbMatch = matchDbIntent(query, dbIntents);
+  const dbMatch = matchDbIntent(query, catalog.intents);
   if (dbMatch) {
     const { intent } = dbMatch;
     // Si pertenece a un dominio con clarificación → preguntar primero.
