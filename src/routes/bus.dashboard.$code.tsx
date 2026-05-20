@@ -511,12 +511,6 @@ function DirectionColumn({
                     {isOrigin ? "Origen" : "Destino"}
                   </span>
                 )}
-                {isNearest && (
-                  <span className="inline-flex items-center gap-0.5 rounded bg-emerald-400 px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-black">
-                    <MapPin className="h-2.5 w-2.5" />
-                    {Math.round(nearest!.distance)} m
-                  </span>
-                )}
               </div>
 
               <button
