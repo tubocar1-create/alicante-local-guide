@@ -1605,20 +1605,6 @@ export function AgenteVamosFab() {
 
   return (
     <>
-      {!open && (
-        <button
-          onClick={() => {
-            iniciarAudio();
-            startGreetingFromUserGesture();
-            setOpen(true);
-          }}
-          aria-label="Abrir Agente Vamos"
-          className="fixed bottom-5 right-5 z-[90] flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-orange-500 px-4 py-3 text-sm font-semibold text-primary-foreground shadow-2xl ring-4 ring-primary/20 transition hover:scale-105 active:scale-95"
-        >
-          <Mic className="h-5 w-5" />
-          <span className="hidden sm:inline">Agente Vamos</span>
-        </button>
-      )}
       <AgenteVamosPanel
         open={open}
         onClose={() => {
