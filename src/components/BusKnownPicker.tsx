@@ -171,7 +171,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
               <ArrowLeft className="h-5 w-5" />
             </button>
           )}
-          <h3 className="text-base font-bold tracking-tight">
+          <h3 className="font-sans text-base font-bold not-italic tracking-tight text-white">
             {step === "ask" && "🚌 ¿Ya sabes qué bus tomar?"}
             {step === "line" && "Elige tu línea"}
             {step === "direction" && `Línea ${line?.code} · ¿Hacia dónde?`}
@@ -239,10 +239,10 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
                     className="inline-block h-2.5 w-2.5 rounded-full"
                     style={{ backgroundColor: catColor }}
                   />
-                  <span className="text-[12px] font-extrabold uppercase tracking-wider text-foreground">
+                  <span className="font-sans text-[12px] font-extrabold uppercase not-italic tracking-wider text-white">
                     {label}
                   </span>
-                  <span className="text-[11px] text-muted-foreground">· {sublabel}</span>
+                  <span className="font-sans text-[11px] not-italic text-white/60">· {sublabel}</span>
                 </div>
                 <div className="grid grid-cols-6 gap-2">
                   {lines.map((l) => {
@@ -257,17 +257,19 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
                           if (locState.status === "idle") requestLocation();
                         }}
                         title={l.name}
-                        className="flex aspect-square items-center justify-center gap-0.5 rounded-2xl text-[15px] font-extrabold shadow-sm transition active:scale-95"
+                        className="flex aspect-square items-center justify-center gap-0.5 font-sans text-[15px] font-extrabold not-italic shadow-sm transition active:scale-95"
                         style={
                           filled
                             ? {
                                 color: "#fff",
                                 background: `linear-gradient(160deg, ${catColor} 0%, #B91C1C 100%)`,
+                                borderRadius: 14,
                               }
                             : {
                                 color: catColor,
                                 background: "transparent",
                                 border: `1.5px solid ${catColor}`,
+                                borderRadius: 14,
                               }
                         }
                       >
