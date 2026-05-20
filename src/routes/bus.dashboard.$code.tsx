@@ -375,46 +375,38 @@ function DirectionColumn({
             : null;
 
           return (
-            <li key={`${s.code}-${i}`} className="relative flex items-start gap-2">
-              {/* Badge con el próximo tiempo, posicionado sobre la línea */}
-              <div
-                className={[
-                  "relative z-10 flex h-9 w-12 shrink-0 flex-col items-center justify-center rounded-md leading-none",
-                  hasEta ? "bg-white text-black" : "bg-white/15 text-white/70",
-                ].join(" ")}
-                style={
-                  transferColor
-                    ? { boxShadow: `0 0 0 2px ${transferColor}` }
-                    : isOrigin || isDest
-                      ? { boxShadow: `0 0 0 2px #fff` }
-                      : undefined
-                }
-              >
-                <span className="font-sans text-[12px] font-extrabold not-italic tabular-nums">
-                  {hasEta ? eta1 : "—"}
+            <li key={`${s.code}-${i}`} className="relative flex flex-col gap-1">
+              {(isOrigin || isDest) && (
+                <span
+                  className="inline-block self-start rounded px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-white"
+                  style={{ background: color }}
+                >
+                  {isOrigin ? "Origen" : "Destino"}
                 </span>
-                <span className="font-sans text-[8px] font-bold not-italic">min</span>
-              </div>
-
-
+              )}
+              <div className="flex items-start gap-2">
+                {/* Badge con el próximo tiempo, posicionado sobre la línea */}
+                <div
+                  className={[
+                    "relative z-10 flex h-9 w-12 shrink-0 flex-col items-center justify-center rounded-md leading-none",
+                    hasEta ? "bg-white text-black" : "bg-white/15 text-white/70",
+                  ].join(" ")}
+                  style={
+                    transferColor
+                      ? { boxShadow: `0 0 0 2px ${transferColor}` }
+                      : isOrigin || isDest
+                        ? { boxShadow: `0 0 0 2px #fff` }
+                        : undefined
+                  }
+                >
+                  <span className="font-sans text-[12px] font-extrabold not-italic tabular-nums">
+                    {hasEta ? eta1 : "—"}
+                  </span>
+                  <span className="font-sans text-[8px] font-bold not-italic">min</span>
+                </div>
 
                 <div className="min-w-0 flex-1">
-                  {isOrigin && (
-                    <span
-                      className="mb-0.5 inline-block rounded px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-white"
-                      style={{ background: color }}
-                    >
-                      Origen
-                    </span>
-                  )}
-                  {isDest && (
-                    <span
-                      className="mb-0.5 inline-block rounded px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-white"
-                      style={{ background: color }}
-                    >
-                      Destino
-                    </span>
-                  )}
+
                   <div className="flex items-baseline gap-1.5">
                     <span className="font-sans text-[11px] font-semibold not-italic tabular-nums text-white/90">
                       {etaTime ?? "--:--"}
