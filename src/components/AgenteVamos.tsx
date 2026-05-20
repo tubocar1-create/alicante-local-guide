@@ -934,6 +934,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   // usuario expresa un dominio general ambiguo ("tengo dolor"), guardamos
   // "salud" aquí y el siguiente mensaje se resuelve dentro de ese dominio.
   const pendingDomainRef = useRef<string | null>(null);
+  // Cache de agente_intents cargados desde Supabase (fuente semántica real).
+  const dbIntentsRef = useRef<AgenteIntentRow[]>([]);
+  const loadIntents = useServerFn(loadAgenteIntents);
 
   const IDLE_MS = 15_000;
   const bumpIdle = useCallback(() => {
