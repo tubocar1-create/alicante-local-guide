@@ -1104,27 +1104,6 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       resumeListeningAfterEcho(remainingEchoGuard + 120);
       return;
     }
-    if (__vaMicWarmupState !== "ready") {
-      const { message, promise } = getMicWarmupSnapshot();
-      setListening(false);
-      setMicReady(false);
-      if (message) setVoiceError(message);
-      if (promise) {
-        promise.then((state) => {
-          setMicReady(state === "ready");
-          if (state === "ready") {
-            setVoiceError(null);
-            if (shouldAutoListen()) startListeningRef.current();
-          } else if (__vaMicWarmupMessage) {
-            setVoiceError(__vaMicWarmupMessage);
-            setPaused(true);
-          }
-        });
-      } else if (__vaMicWarmupState === "denied" || __vaMicWarmupState === "error") {
-        setPaused(true);
-      }
-      return;
-    }
     const SRClass = getSpeechRecognition();
     if (!SRClass) {
       setVoiceError("Tu navegador no soporta reconocimiento de voz. Cambia a modo texto.");
@@ -1229,8 +1208,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       rec.onerror = (e: any) => {
         setListening(false);
         if (e?.error === "not-allowed" || e?.error === "service-not-allowed") {
-          setVoiceError("Permiso de micrófono denegado. Habilítalo o cambia a modo texto.");
-          setPaused(true);
+          setVoiceError(null);
+          resumeListeningAfterEcho(900);
         } else if (e?.error === "no-speech" || e?.error === "aborted") {
           // benign — will auto-restart on end if conditions allow
         }
@@ -1261,13 +1240,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       rec.start();
     } catch (err) {
       setListening(false);
-      const message = err instanceof Error ? err.message : "";
-      setVoiceError(
-        message.includes("not-allowed") || message.includes("denied")
-          ? "Permiso de micrófono denegado. Pulsa reanudar y acepta el permiso."
-          : "No pude iniciar el micrófono. Pulsa reanudar para intentarlo otra vez.",
-      );
-      setPaused(true);
+      setVoiceError(null);
+      resumeListeningAfterEcho(900);
     }
   }, [resumeListeningAfterEcho, shouldAutoListen]);
 
