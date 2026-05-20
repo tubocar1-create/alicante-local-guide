@@ -52,38 +52,55 @@ type VoiceClip =
 type GreetingClip = "greeting_morning" | "greeting_afternoon";
 type AgentAudioClip = VoiceClip | GreetingClip;
 
-type Intent = { keys: string[]; reply: string; path?: string; audio: VoiceClip };
-const INTENTS: Intent[] = [
+
+// Each intent declares strong keys (exact concepts) and context phrases
+// (natural-language signals). Context matches score lower than strong keys so
+// "hospital" beats "me siento mal" when both appear, but "me duele la cabeza"
+// still routes to salud even without any medical noun.
+type IntentDef = {
+  keys: string[];
+  context?: string[];
+  reply: string;
+  path?: string;
+  audio: VoiceClip;
+};
+const INTENTS: IntentDef[] = [
   {
     keys: [
-      "tomar algo",
-      "beber",
-      "cerveza",
-      "cervezas",
-      "cerveceria",
-      "cervecería",
-      "copa",
-      "copas",
-      "pub",
-      "discoteca",
-      "bar de copas",
-      "rooftop",
+      "tomar algo", "beber", "cerveza", "cervezas", "cerveceria", "copa", "copas",
+      "pub", "discoteca", "bar de copas", "rooftop", "vino", "vinos", "coctel", "cocteles",
+      "gin tonic", "una caña", "cañas",
     ],
+    context: ["salir de fiesta noche", "tomar unas", "ir de copas", "vamos a beber"],
     reply: "Abro el Dashboard Nocturno: bares, cervecerías, pubs y discotecas abiertos ahora.",
     path: "/",
     audio: "leisure",
   },
   {
-    keys: ["hotel", "dormir", "alojamiento", "alojar", "hostal", "apartamento", "habitacion"],
+    keys: [
+      "hotel", "hoteles", "dormir", "alojamiento", "alojar", "hostal", "hostel",
+      "apartamento", "habitacion", "pernoctar", "donde quedarme", "donde me quedo",
+      "donde me alojo", "airbnb", "booking",
+    ],
+    context: ["pasar la noche", "necesito cama", "busco cama", "sitio para dormir"],
     reply: "Te llevo a alojamientos cerca de Alicante.",
     path: "/donde-dormir",
     audio: "hotel",
   },
   {
-    keys: ["playa", "mar", "arena", "cala", "bañar", "bano", "nadAr", "tabarca"],
-    reply: "Estas son las playas. ¿Quieres verlas en el mapa?",
-    path: "/playas",
-    audio: "beaches",
+    keys: [
+      "comer", "comida", "restaurante", "restaurantes", "tapas", "tapeo",
+      "almorzar", "cenar", "desayunar", "desayuno", "almuerzo", "cena",
+      "menu", "menus", "paella", "arroz", "hambre", "picar algo",
+    ],
+    context: [
+      "tengo hambre", "estoy hambriento", "me muero de hambre", "donde como",
+      "donde ceno", "donde almuerzo", "sitio para comer", "algo de comer",
+      "me apetece comer",
+    ],
+    reply: "Te muestro sitios para comer cerca.",
+    path: "/",
+    audio: "eat",
   },
   {
     keys: ["mapa playa", "playas mapa", "mapa de playas"],
@@ -92,92 +109,163 @@ const INTENTS: Intent[] = [
     audio: "beach_map",
   },
   {
-    keys: ["explorar", "mapa", "ciudad", "cerca", "sitios"],
+    keys: [
+      "playa", "playas", "cala", "calas", "arena", "tabarca", "postiguet", "albufereta",
+      "san juan", "agua salada",
+    ],
+    context: ["bañarme", "darme un baño", "ir al mar", "tomar el sol", "nadar en el mar"],
+    reply: "Estas son las playas. ¿Quieres verlas en el mapa?",
+    path: "/playas",
+    audio: "beaches",
+  },
+  {
+    keys: ["explorar", "mapa", "ciudad", "cerca de mi", "sitios cerca", "que hay cerca"],
+    context: ["ver alrededor", "explorar zona"],
     reply: "Te abro el mapa de la ciudad.",
     path: "/explore",
     audio: "explore",
   },
   {
-    keys: ["bus", "emt", "autobus", "autobuses", "transporte"],
-    reply: "Buses urbanos de Alicante.",
-    path: "/bus",
-    audio: "bus",
-  },
-  {
-    keys: ["planificar", "ruta", "como llego", "llegar", "ir a", "llevarme"],
+    keys: [
+      "planificar ruta", "planificador", "como llego", "como voy a", "llegar a",
+      "ir a", "llevarme a", "ruta hasta", "trayecto",
+    ],
     reply: "Vamos al planificador de rutas.",
     path: "/bus/planner",
     audio: "planner",
   },
   {
-    keys: ["vuelo", "vuelos", "aeropuerto", "aena", "avion", "alc"],
+    keys: [
+      "bus", "buses", "emt", "autobus", "autobuses", "transporte publico",
+      "linea de bus", "parada",
+    ],
+    context: ["coger el bus", "tomar el autobús"],
+    reply: "Buses urbanos de Alicante.",
+    path: "/bus",
+    audio: "bus",
+  },
+  {
+    keys: [
+      "vuelo", "vuelos", "aeropuerto", "aena", "avion", "aviones", "alc",
+      "salida de vuelo", "llegada de vuelo", "facturar",
+    ],
+    context: ["voy a coger un avion", "vuelo a", "salida internacional"],
     reply: "Vuelos del aeropuerto de Alicante.",
     path: "/vuelos",
     audio: "flights",
   },
   {
-    keys: ["clima", "tiempo", "llueve", "lluvia", "sol", "temperatura", "calor", "frio"],
+    keys: [
+      "clima", "tiempo", "llueve", "lluvia", "sol", "temperatura", "calor",
+      "frio", "viento", "previsión", "prevision", "pronostico", "humedad",
+    ],
+    context: [
+      "va a llover", "hara sol", "hace mucho calor", "hace frío", "que tiempo hace",
+      "como esta el tiempo", "como esta el clima",
+    ],
     reply: "Mira la previsión.",
     path: "/clima",
     audio: "weather",
   },
   {
-    keys: ["cine", "pelicula", "peliculas", "cartelera"],
+    keys: ["cine", "cines", "pelicula", "peliculas", "cartelera", "estreno", "estrenos"],
+    context: ["ver una peli", "ir al cine", "que ponen en el cine"],
     reply: "Cartelera de cine.",
     path: "/ocio/cartelera",
     audio: "cinema",
   },
   {
-    keys: ["teatro", "teatros", "obra"],
+    keys: ["teatro", "teatros", "obra de teatro", "musical"],
     reply: "Teatros en la ciudad.",
     path: "/ocio/teatros",
     audio: "theatre",
   },
   {
-    keys: ["concierto", "conciertos", "musica", "musica en vivo", "directo"],
+    keys: ["concierto", "conciertos", "musica en vivo", "directo", "festival", "festivales", "dj"],
+    context: ["escuchar musica", "ver un concierto"],
     reply: "Conciertos por aquí.",
     path: "/ocio/conciertos",
     audio: "concerts",
   },
   {
-    keys: ["ocio", "plan", "planes", "hacer", "que hago", "que hacer"],
+    keys: [
+      "ocio", "plan", "planes", "que hago", "que hacer", "aburrido", "aburrida",
+      "diversion", "divertirme", "entretenimiento",
+    ],
+    context: [
+      "me aburro", "estoy aburrido", "no se que hacer", "algo divertido",
+      "que puedo hacer hoy", "que puedo hacer esta tarde",
+    ],
     reply: "Ideas para tu plan.",
     path: "/ocio",
     audio: "leisure",
   },
   {
-    keys: ["fiesta", "fiestas", "hoguera", "hogueras", "moros", "cristianos"],
+    keys: ["fiesta", "fiestas", "hoguera", "hogueras", "moros", "cristianos", "san juan"],
+    context: ["programa de fiestas", "que se celebra"],
     reply: "Programa de fiestas.",
     path: "/fiestas",
     audio: "fiestas",
   },
   {
-    keys: ["farmacia", "farmacias", "guardia", "medicamento"],
+    keys: [
+      "farmacia", "farmacias", "guardia", "medicamento", "medicamentos",
+      "pastilla", "pastillas", "receta", "ibuprofeno", "paracetamol", "antibiotico",
+    ],
+    context: ["necesito una pastilla", "comprar medicina", "farmacia 24 horas"],
     reply: "Farmacias de guardia.",
     path: "/farmacias",
     audio: "pharmacy",
   },
   {
-    keys: ["hospital", "hospitales", "urgencia", "urgencias"],
+    keys: [
+      "hospital", "hospitales", "urgencia", "urgencias", "ambulancia", "112", "061",
+    ],
+    context: [
+      "necesito urgencias", "llevar a urgencias", "ir a urgencias",
+      "necesito una ambulancia", "es una emergencia medica",
+    ],
     reply: "Hospitales cercanos.",
     path: "/hospitales",
     audio: "hospitals",
   },
   {
-    keys: ["salud", "medico", "medica", "sanitario", "sanitaria"],
-    reply: "Servicios sanitarios.",
+    keys: [
+      "salud", "medico", "medica", "doctor", "doctora", "sanitario", "sanitaria",
+      "ayuda medica", "asistencia medica", "centro de salud", "consulta medica",
+    ],
+    context: [
+      "estoy enfermo", "estoy enferma", "me encuentro mal", "me siento mal",
+      "me siento fatal", "me encuentro fatal", "no me encuentro bien",
+      "estoy malo", "estoy mala", "estoy malita", "estoy malito",
+      "me duele", "dolor de cabeza", "dolor de barriga", "dolor de estomago",
+      "dolor de garganta", "dolor de espalda", "duele mucho",
+      "tengo fiebre", "tengo decimas", "tengo gripe", "tengo catarro",
+      "estoy resfriado", "estoy resfriada", "tengo tos", "estoy mareado",
+      "estoy mareada", "me mareo", "tengo nauseas", "tengo vomitos",
+      "necesito un medico", "necesito ir al medico", "necesito ayuda medica",
+      "me he caido", "me he hecho dano", "me he hecho daño", "tengo una herida",
+      "me he cortado", "me sangra", "no puedo respirar", "me cuesta respirar",
+      "malestar", "estoy fatal",
+    ],
+    reply: "Parece que necesitas ayuda médica. Te abro Salud.",
     path: "/salud",
     audio: "health",
   },
-  { keys: ["perfil", "cuenta", "usuario"], reply: "Tu perfil.", path: "/perfil", audio: "profile" },
   {
-    keys: ["hola", "buenas", "hey", "saludos"],
+    keys: ["perfil", "mi cuenta", "mi usuario", "mis datos"],
+    reply: "Tu perfil.",
+    path: "/perfil",
+    audio: "profile",
+  },
+  {
+    keys: ["hola", "buenas", "hey", "saludos", "buenos dias", "buenas tardes", "buenas noches"],
     reply:
       "¡Hola! ¿En qué te ayudo? Puedes pedirme playa, comer, dormir, bus, vuelos, ocio o clima.",
     audio: "hello",
   },
   {
-    keys: ["gracias", "gracia", "vale", "ok"],
+    keys: ["gracias", "muchas gracias", "te lo agradezco", "perfecto gracias"],
     reply: "¡A mandar! Si necesitas otra cosa, dímelo.",
     audio: "thanks",
   },
@@ -193,18 +281,31 @@ function normalizeSpeech(text: string) {
     .trim();
 }
 
+// Score: exact key match = key length × 10, context phrase match = phrase length × 4.
+// Longer / more specific matches win; context phrases route natural language
+// when no strong keyword is present.
+function scoreIntent(query: string, intent: IntentDef): number {
+  let score = 0;
+  for (const key of intent.keys) {
+    const n = normalizeSpeech(key);
+    if (n && query.includes(n)) score = Math.max(score, n.length * 10);
+  }
+  for (const ctx of intent.context ?? []) {
+    const n = normalizeSpeech(ctx);
+    if (n && query.includes(n)) score = Math.max(score, n.length * 4);
+  }
+  return score;
+}
+
 function localResolve(text: string): { reply: string; path?: string; audio: VoiceClip } {
   const query = normalizeSpeech(text);
-  let best: Intent | null = null;
+  let best: IntentDef | null = null;
   let bestScore = 0;
   for (const it of INTENTS) {
-    const score = it.keys.reduce((max, key) => {
-      const normalizedKey = normalizeSpeech(key);
-      return query.includes(normalizedKey) ? Math.max(max, normalizedKey.length) : max;
-    }, 0);
-    if (score > bestScore) {
+    const s = scoreIntent(query, it);
+    if (s > bestScore) {
       best = it;
-      bestScore = score;
+      bestScore = s;
     }
   }
   if (best) return { reply: best.reply, path: best.path, audio: best.audio };
