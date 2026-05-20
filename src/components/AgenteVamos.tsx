@@ -1624,7 +1624,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           pendingDomainRef.current = null;
         }
 
-        if (!isClarifying) {
+        const resolvedLineDashboard = /^\/bus\/dashboard\/[^/?#]+$/i.test(fallback.path ?? "");
+
+        if (!isClarifying && !resolvedLineDashboard) {
           try {
             const res = await askAgent({
               data: {
@@ -1770,11 +1772,15 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             const hotelMatch = pathname.match(/^\/hotel\/([^/]+)$/);
             const restMatch = pathname.match(/^\/restaurants\/([^/]+)$/);
             const vueloMatch = pathname.match(/^\/vuelos\/([^/]+)$/);
+            const busDashboardMatch = pathname.match(/^\/bus\/dashboard\/([^/]+)$/);
             if (hotelMatch) {
               return navigate({ to: "/hotel/$id", params: { id: hotelMatch[1] } });
             }
             if (restMatch) {
               return navigate({ to: "/restaurants/$placeId", params: { placeId: restMatch[1] } });
+            }
+            if (busDashboardMatch) {
+              return navigate({ to: "/bus/dashboard/$code", params: { code: busDashboardMatch[1] } });
             }
             if (vueloMatch) {
               return navigate({
