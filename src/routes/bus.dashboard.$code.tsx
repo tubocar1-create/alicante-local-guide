@@ -393,7 +393,12 @@ function DirectionColumn({
                   {isOrigin ? "Origen" : "Destino"}
                 </span>
               )}
-              <div className="flex items-start gap-2">
+              <button
+                type="button"
+                onClick={() => onPickStop(s.code, s.name)}
+                className="flex w-full items-start gap-2 rounded-md text-left transition hover:bg-white/5 active:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                aria-label={`Ver tiempo real de ${s.name}`}
+              >
                 {/* Badge con el próximo tiempo + código de parada */}
                 <div className="flex shrink-0 flex-col items-center">
                   <div
@@ -467,7 +472,7 @@ function DirectionColumn({
                   )}
 
                 </div>
-              </div>
+              </button>
             </li>
 
 
