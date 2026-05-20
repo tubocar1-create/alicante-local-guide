@@ -854,6 +854,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const ackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Marca que estamos esperando un resumen externo (vamos:food-summary).
   const awaitingSummaryRef = useRef(false);
+  // Dominio activo de la conversación (jerarquía de intent): cuando el
+  // usuario expresa un dominio general ambiguo ("tengo dolor"), guardamos
+  // "salud" aquí y el siguiente mensaje se resuelve dentro de ese dominio.
+  const pendingDomainRef = useRef<string | null>(null);
 
   const IDLE_MS = 15_000;
   const bumpIdle = useCallback(() => {
