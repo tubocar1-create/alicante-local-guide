@@ -299,6 +299,8 @@ function BusDashboardPage() {
               return topTransfers.filter((t) => others.has(t.code));
             }}
             onPickStop={handlePickStop}
+            nearest={nearestByDir[1]}
+            geoStatus={geoStatus}
           />
           <DirectionColumn
             label="VUELTA"
@@ -313,6 +315,9 @@ function BusDashboardPage() {
               return topTransfers.filter((t) => others.has(t.code));
             }}
             onPickStop={handlePickStop}
+            nearest={nearestByDir[2]}
+            geoStatus={geoStatus}
+
           />
         </div>
 
