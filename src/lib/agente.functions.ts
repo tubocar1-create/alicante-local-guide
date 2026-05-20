@@ -409,14 +409,14 @@ Reglas:
 5. Si está en una página y nombra otro tema del menú/submenú → navega a la nueva ruta sin pedir confirmación.
 6. Si está en un submenú y pregunta por un hermano del mismo hub (en /ocio/cartelera pregunta "¿y teatros?"), salta a /ocio/teatros.
 7. Tras cada navegación, frase breve indicando qué verá y sugiriendo el siguiente paso natural ("Aquí tienes la cartelera. ¿Filtramos por sala o por hora?").
-8. Mantén memoria del recorrido: si el usuario eligió cine, luego una sala concreta, y luego "¿cómo llego?", recién entonces saltas a /bus/planner con destino=el cine.
+8. Mantén memoria del recorrido: si el usuario eligió cine, luego una sala concreta, y luego "¿cómo llego?", recién entonces saltas a "/" para abrir el selector de buses con destino=el cine.
 
 Ejemplos:
 - En /ocio/cartelera, "¿hay algo de terror?" → texto, sin navegar.
 - En /ocio/cartelera, "y de teatro?" → navigate_to("/ocio/teatros").
 - En /ocio/cartelera, "volver" → navigate_to("/ocio").
 - En /playas/mapa, "menú principal" → navigate_to("/").
-- En el Dashboard de Comer (en "/"), "¿cómo llego al primero?" → navigate_to("/bus/planner") con origen/destino.
+- En el Dashboard de Comer (en "/"), "¿cómo llego al primero?" → navigate_to("/") con origen/destino.
 
 # COBERTURA
 Alicante y radio de 30 km desde Puerta del Mar.
