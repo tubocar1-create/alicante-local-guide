@@ -1465,29 +1465,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           )}
         </div>
 
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            send(input);
-          }}
-          className="flex items-center gap-2 border-t bg-background p-3"
-        >
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Escribe a Agente Vamos…"
-            className="flex-1 rounded-full border bg-background px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40"
-            disabled={loading}
-          />
-          <button
-            type="submit"
-            disabled={loading || !input.trim()}
-            className="grid h-10 w-10 place-items-center rounded-full bg-primary text-primary-foreground disabled:opacity-50"
-            aria-label="Enviar"
-          >
-            <Send className="h-4 w-4" />
-          </button>
-        </form>
+        {/* Formulario de texto eliminado: el agente es solo de voz */}
       </div>
     </div>
   );
