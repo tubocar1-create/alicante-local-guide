@@ -386,6 +386,8 @@ function DirectionColumn({
   inService,
   transferLines,
   onPickStop,
+  nearest,
+  geoStatus,
 }: {
   label: string;
   direction: 1 | 2;
@@ -395,7 +397,10 @@ function DirectionColumn({
   inService: boolean;
   transferLines: (stopCode: string) => { code: string; color: string }[];
   onPickStop: (stopCode: string, stopName: string) => void;
+  nearest: { code: string; distance: number } | null;
+  geoStatus: "idle" | "loading" | "ok" | "unavailable";
 }) {
+
   const now = new Date();
 
   return (
