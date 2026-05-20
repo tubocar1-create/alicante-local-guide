@@ -679,7 +679,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   );
 
   const speak = useCallback(
-    (text: string, audio?: AgentAudioClip, onEnd?: () => void) => {
+    (text: string, audio?: AgentAudioClip, onEnd?: () => void, reservedUtterance?: SpeechSynthesisUtterance | null) => {
       // Anti-eco (D9): cortamos cualquier escucha activa antes de hablar.
       assistantSpeechMemoryRef.current = [text, ...assistantSpeechMemoryRef.current].slice(0, 6);
       suppressRecognitionUntilRef.current = Date.now() + 1200;
@@ -707,7 +707,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       try {
         synth.cancel();
         synth.resume();
-        const u = makeSpanishUtterance(text);
+        const u = reservedUtterance ? configureSpanishUtterance(reservedUtterance, text) : makeSpanishUtterance(text);
         let started = false;
         const blockedTimer = window.setTimeout(() => {
           if (!started && __vaActiveUtterance === u) {
