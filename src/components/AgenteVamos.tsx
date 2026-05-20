@@ -396,6 +396,19 @@ function configureSpanishUtterance(u: SpeechSynthesisUtterance, text: string) {
   return u;
 }
 
+function reserveSpanishUtterance() {
+  if (typeof window === "undefined" || typeof SpeechSynthesisUtterance === "undefined") return null;
+  const u = __vaPrimedUtterances.shift() || new SpeechSynthesisUtterance("");
+  u.text = "";
+  u.lang = "es-ES";
+  u.rate = 1.05;
+  u.pitch = 1;
+  const synth = window.speechSynthesis;
+  const voice = synth ? pickSpanishVoice(synth) : null;
+  if (voice) u.voice = voice;
+  return u;
+}
+
 function makeSpanishUtterance(text: string, fresh = false) {
   const u = fresh
     ? new SpeechSynthesisUtterance("")
