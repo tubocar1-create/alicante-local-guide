@@ -377,7 +377,7 @@ PASO 3 — DECIDIR MENÚ vs SUBMENÚ.
 PASO 4 — NAVEGAR EN EL MISMO TURNO con navigate_to. No preguntes "¿quieres que te lleve?". Comenta breve lo que verá.
 
 REGLA ANTI-COLISIÓN CON el selector de buses:
-- "/" (selector de buses) y /bus/lines SÓLO se usan cuando el tema es transporte público en sí mismo: el usuario menciona "bus", "EMT", "parada", "línea", "tarjeta", "billete", o nombra DOS lugares (origen → destino, "de X a Y").
+- "/" (selector de buses) SÓLO se usa cuando el tema es transporte público en sí mismo: el usuario menciona "bus", "EMT", "parada", "línea", "tarjeta", "billete", o nombra DOS lugares (origen → destino, "de X a Y"). Desde el selector, al elegir una línea se entra a su Dashboard, y desde ahí a una parada concreta.
 - "Quiero IR al cine / a la playa / a un restaurante" NO es transporte: el tema es cine / playa / restaurante. Verbo "ir" + actividad ⇒ enruta a la actividad, NO al selector de buses.
 - Sólo si después de estar en la página de la actividad el usuario pregunta "¿cómo llego?" o "¿qué bus cojo?", entonces sí navega a "/" para abrir el selector de buses.
 
