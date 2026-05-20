@@ -252,12 +252,14 @@ type DomainSpec = {
   triggers: string[];
   question: string;
   audio: VoiceClip;
+  hubPath?: string;
   followups: { keys: string[]; path: string }[];
 };
 
 const DOMAINS: DomainSpec[] = [
   {
     id: "salud",
+    hubPath: "/salud",
     triggers: [
       "estoy enfermo", "estoy enferma", "me encuentro mal", "me siento mal",
       "me siento fatal", "me encuentro fatal", "no me encuentro bien",
@@ -286,7 +288,8 @@ const DOMAINS: DomainSpec[] = [
     ],
   },
   {
-    id: "comida",
+    id: "comer",
+    hubPath: "/",
     triggers: [
       "tengo hambre", "estoy hambriento", "estoy hambrienta", "me muero de hambre",
       "sitio para comer", "algo de comer", "me apetece comer",
@@ -305,6 +308,7 @@ const DOMAINS: DomainSpec[] = [
   },
   {
     id: "transporte",
+    hubPath: "/bus",
     triggers: [
       "quiero moverme", "necesito moverme", "como me muevo", "quiero desplazarme",
       "tengo que ir", "necesito ir", "como llego", "como voy",
@@ -320,6 +324,7 @@ const DOMAINS: DomainSpec[] = [
   },
   {
     id: "ocio",
+    hubPath: "/ocio",
     triggers: [
       "quiero salir", "quiero hacer algo", "me aburro", "estoy aburrido",
       "estoy aburrida", "no se que hacer", "algo divertido",
@@ -338,6 +343,7 @@ const DOMAINS: DomainSpec[] = [
   },
   {
     id: "playas",
+    hubPath: "/playas",
     triggers: [
       "me quiero banar", "me quiero bañar", "quiero banarme", "quiero bañarme",
       "ir al mar", "darme un bano", "darme un baño",
@@ -351,7 +357,8 @@ const DOMAINS: DomainSpec[] = [
     ],
   },
   {
-    id: "hoteles",
+    id: "dormir",
+    hubPath: "/donde-dormir",
     triggers: [
       "pasar la noche", "necesito cama", "busco cama", "sitio para dormir",
       "donde duermo", "donde me quedo",
