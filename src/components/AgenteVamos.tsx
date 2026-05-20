@@ -833,6 +833,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       if (!clean || loadingRef.current) return;
       bumpIdle();
       stopListening();
+      const reservedReplyUtterance = viaVoice ? reserveSpanishUtterance() : null;
 
       // C8: despedida del usuario — responde local, habla y cierra.
       if (
@@ -847,9 +848,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         ]);
         setInput("");
         setInterim("");
-        speak("Hasta luego, Leopoldo.", undefined, () => {
+          speak("Hasta luego, Leopoldo.", undefined, () => {
           setTimeout(() => onClose(), 200);
-        });
+          }, reservedReplyUtterance);
         return;
       }
 
@@ -1009,7 +1010,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           }, 350);
         }
         // Habla exactamente la respuesta visible con TTS, no con clips genéricos.
-        speak(reply);
+        speak(reply, undefined, undefined, reservedReplyUtterance);
       } finally {
         if (!awaitingSummaryRef.current) setLoading(false);
       }
