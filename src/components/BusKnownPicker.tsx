@@ -160,12 +160,11 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
     >
       <div className="mb-3 flex shrink-0 items-center justify-between">
         <div className="flex items-center gap-2">
-          {step !== "ask" && (
+          {step !== "line" && (
             <button
               onClick={() => {
                 if (step === "stop") setStep("direction");
                 else if (step === "direction") setStep("line");
-                else if (step === "line") setStep("ask");
               }}
               className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[#EF4444] hover:bg-muted"
               aria-label="Atrás"
@@ -174,7 +173,6 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
             </button>
           )}
           <h3 className="font-sans text-base font-bold not-italic tracking-tight text-white">
-            {step === "ask" && "🚌 ¿Ya sabes qué bus tomar?"}
             {step === "line" && "Elige tu línea"}
             {step === "direction" && `Línea ${line?.code} · ¿Hacia dónde?`}
             {step === "stop" && `Línea ${line?.code} · ¿Qué parada?`}
@@ -189,28 +187,6 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
         </button>
       </div>
 
-      {step === "ask" && (
-        <div className="grid grid-cols-1 gap-2">
-          <button
-            onClick={() => setStep("line")}
-            className="rounded-2xl border border-border bg-background/80 px-4 py-3 text-left text-sm font-semibold shadow-sm hover:bg-accent/40 active:scale-[0.99]"
-          >
-            ✅ Sí, conozco mi bus
-            <p className="mt-0.5 text-[11px] font-normal text-muted-foreground">
-              Te muestro el tiempo de llegada en tu parada.
-            </p>
-          </button>
-          <button
-            onClick={onUnknown}
-            className="rounded-2xl border border-border bg-background/80 px-4 py-3 text-left text-sm font-semibold shadow-sm hover:bg-accent/40 active:scale-[0.99]"
-          >
-            🤔 No, ayúdame a elegir ruta
-            <p className="mt-0.5 text-[11px] font-normal text-muted-foreground">
-              Te pregunto origen y destino para planificar el viaje.
-            </p>
-          </button>
-        </div>
-      )}
 
       {step === "line" && (
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain pr-1">
