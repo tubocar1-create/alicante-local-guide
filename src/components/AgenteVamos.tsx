@@ -720,12 +720,93 @@ type LocalResult = {
   openSubmenu?: string;
 };
 
+// ─── MOTOR CONTEXTUAL URBANO ──────────────────────────────────────────
+// Hard-block sanitario: si el mensaje contiene un síntoma o estado de
+// "no encontrarse bien", el dominio salud_general gana SIEMPRE, por
+// encima de keywords, DB intents y entidades nombradas. Nunca se navega
+// directo a especialista/hospital/traumatología.
+const HEALTH_HARD_BLOCK = [
+  "dolor", "duele", "duelen", "fiebre", "decimas", "mareo", "mareos",
+  "mareado", "mareada", "nausea", "nauseas", "vomito", "vomitos",
+  "diarrea", "herida", "heridas", "sangra", "sangrado", "sangre",
+  "ardor", "picor", "picores", "molestia", "molestias",
+  "enfermo", "enferma", "enfermedad", "sintoma", "sintomas",
+  "cansado", "cansada", "agotado", "agotada", "debil",
+  "me siento mal", "me encuentro mal", "no me encuentro bien",
+  "no me siento bien", "estoy fatal", "estoy malito", "estoy malita",
+  "tengo fiebre", "tengo dolor", "me he caido", "me he cortado",
+  "no puedo respirar", "me cuesta respirar", "malestar",
+  "tos", "gripe", "catarro", "resfriado", "resfriada",
+];
+function hasHealthHardBlock(query: string): boolean {
+  return HEALTH_HARD_BLOCK.some((t) => {
+    const n = normalizeSpeech(t);
+    if (!n) return false;
+    return n.includes(" ") ? query.includes(n) : new RegExp(`(^|\\s)${n}(\\s|$)`).test(query);
+  });
+}
+
+type AssistantMode =
+  | "operativo" | "empatico" | "inspiracional" | "social" | "practico" | "neutro";
+function pickAssistantMode(domain: string | null): AssistantMode {
+  switch (domain) {
+    case "transporte":
+    case "bus_known": return "operativo";
+    case "salud":
+    case "salud_general": return "empatico";
+    case "playas": return "inspiracional";
+    case "fiestas":
+    case "ocio": return "social";
+    case "comer":
+    case "dormir":
+    case "compras": return "practico";
+    default: return "neutro";
+  }
+}
+
+function logDecision(opts: {
+  input: string;
+  domain: string | null;
+  confidence: number;
+  uiAction: "openDomain" | "openSubmenu" | "openEndpoint" | "askClarification" | "none";
+  result: LocalResult;
+}) {
+  if (typeof window === "undefined") return;
+  // eslint-disable-next-line no-console
+  console.debug("[Agente] decision", {
+    input: opts.input,
+    domain: opts.domain,
+    intentConfidence: Number(opts.confidence.toFixed(2)),
+    assistantMode: pickAssistantMode(opts.domain),
+    uiAction: opts.uiAction,
+    path: opts.result.path ?? null,
+  });
+}
+
 function localResolve(
   text: string,
   currentDomain?: string | null,
   catalog: AgenteRoutingCatalog = EMPTY_ROUTING_CATALOG,
 ): LocalResult {
   const query = normalizeSpeech(text);
+
+  // 0) HARD-BLOCK SANITARIO — gana sobre todo lo demás excepto el follow-up
+  //    dentro del propio dominio salud (donde el usuario ya eligió opción).
+  if (hasHealthHardBlock(query) && currentDomain !== "salud") {
+    const saludDomain = DOMAINS.find((d) => d.id === "salud");
+    if (saludDomain) {
+      const result: LocalResult = {
+        reply: saludDomain.question,
+        audio: saludDomain.audio,
+        pendingDomain: saludDomain.id,
+      };
+      logDecision({
+        input: text, domain: "salud_general", confidence: 0.95,
+        uiAction: "askClarification", result,
+      });
+      return result;
+    }
+  }
 
   // 1) Follow-up dentro de un dominio activo: resolvemos sub-destino.
   if (currentDomain) {
