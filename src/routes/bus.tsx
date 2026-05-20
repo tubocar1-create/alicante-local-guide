@@ -5,7 +5,7 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 export const Route = createFileRoute("/bus")({
   beforeLoad: ({ location }) => {
     // Solo redirige la URL exacta /bus al selector en Inicio.
-    // No interferir con rutas hijas como /bus/dashboard/$code o /bus/lines/$code.
+    // No interferir con rutas hijas como /bus/dashboard/$code.
     if (location.pathname !== "/bus") return;
     if (typeof window !== "undefined") {
       try {
