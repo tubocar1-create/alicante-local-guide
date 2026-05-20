@@ -1412,19 +1412,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                   if (paused) {
                     unlockSpeechFromUserGesture();
                     primeSpanishUtterances();
-                    const warmup = requestMicWarmupFromUserGesture();
                     setVoiceError(null);
                     setPaused(false);
-                    if (warmup) {
-                      warmup.then((state) => {
-                        setMicReady(state === "ready");
-                        if (state === "ready") startListeningRef.current();
-                        else if (__vaMicWarmupMessage) setVoiceError(__vaMicWarmupMessage);
-                      });
-                    } else {
-                      setMicReady(__vaMicWarmupState === "ready");
-                      setTimeout(() => startListeningRef.current(), 100);
-                    }
+                    setTimeout(() => startListeningRef.current(), POST_SPEECH_LISTEN_DELAY_MS);
                   } else {
                     setPaused(true);
                     stopListening();
@@ -1579,27 +1569,7 @@ export function AgenteVamosFab() {
   const startGreetingFromUserGesture = () => {
     if (voiceBootStartedRef.current) return;
     voiceBootStartedRef.current = true;
-    // Pedimos el permiso del micrófono ANTES de empezar la conversación.
-    // getUserMedia debe llamarse de forma síncrona dentro del gesto del usuario.
-    const warmup = requestMicWarmupFromUserGesture();
-    const snap = getMicWarmupSnapshot();
-    if (snap.state === "ready") {
-      playGreetingAfterPermission();
-      return;
-    }
-    if (!warmup) {
-      // No hay API de micrófono; abrimos igualmente y saludamos.
-      playGreetingAfterPermission();
-      return;
-    }
-    warmup.then((state) => {
-      if (state === "ready") {
-        playGreetingAfterPermission();
-      } else {
-        // Permiso denegado o error: no iniciamos conversación, mostramos aviso en el panel.
-        voiceBootStartedRef.current = false;
-      }
-    });
+    playGreetingAfterPermission();
   };
 
   // Permitir abrir el agente desde otros botones (p.ej. el micro del chat)
