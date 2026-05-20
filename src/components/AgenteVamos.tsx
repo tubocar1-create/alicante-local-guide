@@ -1289,7 +1289,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   }, [open, mode]);
 
   if (!open) return null;
-  const isVoice = mode === "voice";
+  const isVoice = true;
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[100] flex">
@@ -1330,32 +1330,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             >
               {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
             </button>
-            <button
-              onClick={() => {
-                if (isVoice) {
-                  stopListening();
-                  stopSpeaking();
-                  setMode("text");
-                  // Mantener el audio activo también en modo texto:
-                  // el agente debe verbalizar sus respuestas salvo que
-                  // el usuario pulse explícitamente el botón de silenciar.
-                  unlockSpeechFromUserGesture();
-                  primeSpanishUtterances();
-                  setMuted(false);
-                } else {
-                  unlockSpeechFromUserGesture();
-                  primeSpanishUtterances();
-                  setMode("voice");
-                  setMuted(false);
-                  greetedRef.current = true; // don't re-greet on switch
-                }
-              }}
-              aria-label={isVoice ? "Cambiar a texto" : "Cambiar a voz"}
-              className="rounded-full p-2 hover:bg-white/20"
-              title={isVoice ? "Cambiar a texto" : "Cambiar a voz"}
-            >
-              {isVoice ? <Keyboard className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-            </button>
+            {/* Toggle de modo texto eliminado: el agente es solo de voz */}
             <button
               onClick={onClose}
               aria-label="Cerrar"
@@ -1456,18 +1431,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
               </button>
               {/* Botón "activar micro" eliminado: no se muestran prompts de permiso */}
 
-              <button
-                onClick={() => {
-                  stopListening();
-                  stopSpeaking();
-                  setMode("text");
-                  // No silenciar al cambiar a texto: el agente debe seguir hablando.
-                  setMuted(false);
-                }}
-                className="rounded-full border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
-              >
-                modo texto
-              </button>
+              {/* Botón "modo texto" eliminado: el agente es solo de voz */}
             </div>
           </div>
         </div>
@@ -1501,29 +1465,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           )}
         </div>
 
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            send(input);
-          }}
-          className="flex items-center gap-2 border-t bg-background p-3"
-        >
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Escribe a Agente Vamos…"
-            className="flex-1 rounded-full border bg-background px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40"
-            disabled={loading}
-          />
-          <button
-            type="submit"
-            disabled={loading || !input.trim()}
-            className="grid h-10 w-10 place-items-center rounded-full bg-primary text-primary-foreground disabled:opacity-50"
-            aria-label="Enviar"
-          >
-            <Send className="h-4 w-4" />
-          </button>
-        </form>
+        {/* Formulario de texto eliminado: el agente es solo de voz */}
       </div>
     </div>
   );
