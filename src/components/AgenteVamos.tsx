@@ -141,8 +141,8 @@ const INTENTS: IntentDef[] = [
       "bus", "buses", "emt", "autobus", "autobuses", "transporte publico",
       "linea de bus", "parada",
     ],
-    reply: "Líneas de buses locales de Alicante.",
-    path: "/bus/lines",
+    reply: "Te abro los buses urbanos.",
+    path: "action:bus-picker",
     audio: "bus",
   },
   {
@@ -316,16 +316,16 @@ const DOMAINS: DomainSpec[] = [
   },
   {
     id: "transporte",
-    hubPath: "/bus/lines",
+    hubPath: "action:bus-picker",
     triggers: [
       "quiero moverme", "necesito moverme", "como me muevo", "quiero desplazarme",
       "tengo que ir", "necesito ir", "como llego", "como voy",
       "transporte",
     ],
-    question: "¿Quieres líneas de bus, planificador de ruta o vuelos?",
+    question: "¿Quieres bus urbano, planificador de ruta o vuelos?",
     audio: "bus",
     followups: [
-      { keys: ["bus", "autobus", "autobuses", "emt", "parada", "linea", "lineas", "local", "locales"], path: "/bus/lines" },
+      { keys: ["bus", "autobus", "autobuses", "urbano", "urbanos", "emt", "parada", "linea", "lineas", "local", "locales"], path: "action:bus-picker" },
       { keys: ["ruta", "planificador", "planificar", "trayecto"], path: "/bus/planner" },
       { keys: ["vuelo", "vuelos", "avion", "aeropuerto"], path: "/vuelos" },
     ],
@@ -1669,6 +1669,18 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         // falla, caemos a window.location para no quedarnos atascados.
         const goTo = (raw: string) => {
           try {
+            // Sentinel: abrir el picker de buses urbanos en el Inicio.
+            if (raw === "action:bus-picker") {
+              navigate({ to: "/" });
+              setTimeout(() => {
+                try {
+                  window.dispatchEvent(new Event("agent:open-bus-picker"));
+                } catch {
+                  /* noop */
+                }
+              }, 60);
+              return;
+            }
             // URL externa (Google Maps, web oficial de una entidad concreta):
             // abrimos en nueva pestaña para no perder el contexto del agente.
             if (/^https?:\/\//i.test(raw)) {
