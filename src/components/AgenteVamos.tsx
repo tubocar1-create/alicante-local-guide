@@ -255,6 +255,50 @@ function plainText(md: string): string {
     .trim();
 }
 
+const ECHO_STOPWORDS = new Set([
+  "a",
+  "al",
+  "de",
+  "del",
+  "el",
+  "en",
+  "la",
+  "leopoldo",
+  "los",
+  "me",
+  "o",
+  "para",
+  "que",
+  "te",
+  "un",
+  "una",
+  "y",
+]);
+
+function meaningfulSpeechTokens(text: string) {
+  return normalizeSpeech(text)
+    .split(" ")
+    .filter((token) => token.length > 2 && !ECHO_STOPWORDS.has(token));
+}
+
+function isLikelyAgentEcho(transcript: string, assistantMessages: string[]) {
+  const heard = normalizeSpeech(transcript);
+  const heardTokens = meaningfulSpeechTokens(transcript);
+  if (heardTokens.length < 2) return false;
+
+  return assistantMessages.some((message) => {
+    const spoken = normalizeSpeech(plainText(message));
+    if (!spoken) return false;
+    if (spoken.includes(heard) || heard.includes(spoken)) return true;
+
+    const spokenTokens = meaningfulSpeechTokens(message);
+    if (spokenTokens.length < 2) return false;
+    const overlap = heardTokens.filter((token) => spokenTokens.includes(token)).length;
+    const ratio = overlap / Math.min(heardTokens.length, spokenTokens.length);
+    return overlap >= 3 && ratio >= 0.6;
+  });
+}
+
 type SR = any;
 function getSpeechRecognition(): any {
   if (typeof window === "undefined") return null;
@@ -451,6 +495,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const mutedRef = useRef(muted);
   const loadingRef = useRef(loading);
   const speakingRef = useRef(speaking);
+  const assistantSpeechMemoryRef = useRef<string[]>([getGreetingText()]);
   const openRef = useRef(open);
   const wasOpenRef = useRef(open);
   const turnTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -577,6 +622,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const playAudioClip = useCallback(
     (clip: AgentAudioClip, text: string, onEnd?: () => void) => {
       if (typeof window === "undefined" || mutedRef.current) {
+        assistantSpeechMemoryRef.current = [text, ...assistantSpeechMemoryRef.current].slice(0, 6);
         onEnd?.();
         resumeListeningAfterEcho();
         return true;
@@ -588,6 +634,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         audio.volume = 1;
         __vaActiveAudio = audio;
         __vaActiveAudioStartedAt = Date.now();
+        assistantSpeechMemoryRef.current = [text, ...assistantSpeechMemoryRef.current].slice(0, 6);
         setTapToSpeak(null);
         speakingRef.current = true;
         setSpeaking(true);
@@ -636,6 +683,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const speak = useCallback(
     (text: string, audio?: AgentAudioClip, onEnd?: () => void) => {
       // Anti-eco (D9): cortamos cualquier escucha activa antes de hablar.
+      assistantSpeechMemoryRef.current = [text, ...assistantSpeechMemoryRef.current].slice(0, 6);
       suppressRecognitionUntilRef.current = Date.now() + 1200;
       setInterim("");
       try {
@@ -1057,6 +1105,14 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         }
         const t = (finalText || lastTranscript).trim();
         if (!t) return false;
+        if (isLikelyAgentEcho(t, assistantSpeechMemoryRef.current)) {
+          finalText = "";
+          lastTranscript = "";
+          setInterim("");
+          suppressRecognitionUntilRef.current = Date.now() + 700;
+          resumeListeningAfterEcho();
+          return false;
+        }
         handled = true;
         setInterim("");
         try {
@@ -1128,6 +1184,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       setInterim("");
       setLoading(false);
       awaitingSummaryRef.current = false;
+      assistantSpeechMemoryRef.current = [getGreetingText()];
       if (recognitionRestartTimerRef.current) {
         clearTimeout(recognitionRestartTimerRef.current);
         recognitionRestartTimerRef.current = null;
