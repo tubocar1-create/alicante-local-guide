@@ -429,6 +429,13 @@ const ROUTE_BLURBS: Record<string, string> = {
 
 const blurbFor = (path: string): string => {
   if (ROUTE_BLURBS[path]) return ROUTE_BLURBS[path];
+  // Ficha de playa concreta → punto final: anuncia y cierra el diálogo.
+  const playaMatch = path.match(/^\/playas\/([^/?#]+)$/);
+  if (playaMatch && playaMatch[1] !== "mapa") {
+    const playa = PLAYAS.find((p) => p.slug === playaMatch[1]);
+    const name = playa?.name ?? "esta playa";
+    return `Esta es ${name}, te estoy dejando fotos, descripción y reseñas, para que tú explores y decidas.`;
+  }
   // Rutas con parámetro: usar el padre
   const parent = path.split("/").slice(0, -1).join("/") || "/";
   if (ROUTE_BLURBS[parent]) return ROUTE_BLURBS[parent];
