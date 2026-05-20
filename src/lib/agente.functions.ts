@@ -358,7 +358,7 @@ Frases abiertas ("estoy aburrido", "sorpréndeme", "¿qué hago hoy?", "recomié
 PASO 0 — NOMBRE PROPIO GANA SIEMPRE.
 Antes que nada busca en la frase NOMBRES PROPIOS o entidades concretas conocidas y enrútalas a su ficha específica:
 - Playa concreta (Playa San Juan, Postiguet, Albufereta, Cala Granadella, Moraig…) → /playas/{slug}
-- Línea de bus concreta ("línea 12", "L22", "bus 24") → /bus/lines/{código}
+- Línea de bus concreta ("línea 12", "L22", "bus 24") → /bus/dashboard/{código} (Dashboard de la línea con sus paradas)
 - Marca de cine concreta (Yelmo, Kinepolis, Odeón, ABC Park, Panoramis) → ficha del cine en /ocio/cines
 - Vuelo con destino concreto ("vuelo a Madrid", "vuelos a Londres") → /vuelos filtrado por ese destino
 - Hotel concreto (Hotel Meliá, AC Hotel…) → /donde-dormir y filtra
