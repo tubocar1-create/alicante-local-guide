@@ -438,6 +438,10 @@ function hablar(texto: unknown, retryIfNoVoices = true) {
   synth.speak(utterance);
 }
 
+if (typeof window !== "undefined") {
+  (window as any).hablar = hablar;
+}
+
 function iniciarAudio() {
   if (typeof window === "undefined" || __vaSpeechUnlocked || !window.speechSynthesis) return;
   try {
