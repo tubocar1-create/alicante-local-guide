@@ -1,9 +1,8 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 
-// Ruta legacy: el planificador ahora vive en el selector de buses del Inicio.
-// Redirigimos a "/" y dejamos un flag en sessionStorage para que ChatScreen
-// abra el picker en cuanto monte.
-export const Route = createFileRoute("/bus/planner")({
+// Ruta legacy: antes mostraba "Buses en vivo". Ahora cualquier entrada a /bus
+// debe abrir el selector "¿Ya sabes qué bus tomar?" en Inicio.
+export const Route = createFileRoute("/bus")({
   beforeLoad: () => {
     if (typeof window !== "undefined") {
       try {
