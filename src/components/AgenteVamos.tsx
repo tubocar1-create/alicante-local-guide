@@ -956,6 +956,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           setMsgs((m) => [...m, { role: "assistant", content: reply }]);
         }
 
+        // CRÍTICO: hablar SIEMPRE la respuesta del agente en cuanto llega,
+        // sin depender de eventos posteriores (food-summary sólo existe
+        // para comida; cine, vuelos, hoteles… no dispararían voz nunca).
+        console.log("RESPUESTA AGENTE:", reply);
+        speak(reply, undefined, undefined, reservedReplyUtterance);
+
         // Navegación tolerante: acepta paths con query string y rutas dinámicas
         // de BD (p.ej. /hotel/<uuid>, /vuelos?destino=amsterdam). Si TanStack
         // falla, caemos a window.location para no quedarnos atascados.
@@ -1040,8 +1046,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             goTo(target);
           }, 350);
         }
-        // Habla exactamente la respuesta visible con TTS, no con clips genéricos.
-        speak(reply, undefined, undefined, reservedReplyUtterance);
+        // La voz ya se ha lanzado arriba con speak(reply). Aquí sólo
+        // gestionamos navegación tardía si procede.
       } finally {
         if (!awaitingSummaryRef.current) setLoading(false);
       }
