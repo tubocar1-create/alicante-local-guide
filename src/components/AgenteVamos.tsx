@@ -358,6 +358,26 @@ const DOMAINS: DomainSpec[] = [
     ],
   },
   {
+    id: "fiestas",
+    hubPath: "/",
+    triggers: [
+      "quiero fiesta", "ir de fiesta", "salir de fiesta", "salir de noche",
+      "salir de copas", "tomar algo", "tomar una copa", "tomar unas copas",
+      "irme de copas", "pubs", "pub", "discoteca", "discotecas", "terraza",
+      "musica en vivo", "música en vivo", "marcha", "ambiente nocturno",
+      "vida nocturna", "noche alicantina",
+    ],
+    question:
+      "El centro está muy animado esta noche 🍸 ¿Prefieres terraza, pubs, discoteca o música en vivo?",
+    audio: "leisure",
+    followups: [
+      { keys: ["terraza", "terrazas", "azotea", "rooftop"], path: "/" },
+      { keys: ["pub", "pubs", "bar", "bares", "cerveza", "copa", "copas"], path: "/" },
+      { keys: ["discoteca", "discotecas", "club", "clubs", "disco"], path: "/" },
+      { keys: ["musica en vivo", "música en vivo", "concierto", "directo", "live"], path: "/ocio/conciertos" },
+    ],
+  },
+  {
     id: "ocio",
     hubPath: "/ocio",
     triggers: [
