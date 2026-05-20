@@ -305,7 +305,7 @@ function DirectionColumn({
   return (
     <div className="px-1">
       <div className="mb-2 flex items-center justify-between gap-2 pt-1">
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 pl-14">
           <span style={{ color }} className="text-base">
             {direction === 1 ? "↓" : "↑"}
           </span>
@@ -316,6 +316,7 @@ function DirectionColumn({
             {label}
           </span>
         </div>
+
         <span
           aria-label={inService ? "En servicio" : "Sin datos"}
           title={inService ? "En servicio" : "Sin datos"}
