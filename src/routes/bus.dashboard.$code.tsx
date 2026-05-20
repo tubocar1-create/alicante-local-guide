@@ -375,7 +375,15 @@ function DirectionColumn({
             : null;
 
           return (
-            <li key={`${s.code}-${i}`} className="relative flex flex-col gap-1">
+            <li
+              key={`${s.code}-${i}`}
+              className="relative flex flex-col gap-1 pb-2"
+              style={{
+                borderBottom: "1px solid rgba(255,255,255,0.06)",
+                boxShadow: "0 1px 0 rgba(0,0,0,0.4)",
+              }}
+            >
+
               {(isOrigin || isDest) && (
                 <span
                   className="inline-block self-start rounded px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-white"
