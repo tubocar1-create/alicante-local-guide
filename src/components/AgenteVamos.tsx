@@ -975,6 +975,11 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const startListening = useCallback(() => {
     if (!openRef.current || modeRef.current !== "voice") return;
     if (pausedRef.current || loadingRef.current || speakingRef.current) return;
+    const remainingEchoGuard = suppressRecognitionUntilRef.current - Date.now();
+    if (remainingEchoGuard > 0) {
+      resumeListeningAfterEcho(remainingEchoGuard + 120);
+      return;
+    }
     if (__vaMicWarmupState !== "ready") {
       const { message, promise } = getMicWarmupSnapshot();
       setListening(false);
@@ -1016,7 +1021,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       rec.onresult = (e: any) => {
         // Anti-eco: si el agente está hablando o cargando, descarta lo
         // captado por el micro (es el propio TTS realimentándose).
-        if (speakingRef.current || loadingRef.current) {
+        if (speakingRef.current || loadingRef.current || Date.now() < suppressRecognitionUntilRef.current) {
           finalText = "";
           lastTranscript = "";
           setInterim("");
@@ -1078,11 +1083,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           return;
         }
         // Silence — restart listening automatically
-        if (shouldAutoListen()) {
-          setTimeout(() => {
-            if (shouldAutoListen()) startListeningRef.current();
-          }, 700);
-        }
+        resumeListeningAfterEcho();
       };
       recogRef.current = rec;
       setVoiceError(null);
@@ -1099,7 +1100,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       );
       setPaused(true);
     }
-  }, [shouldAutoListen]);
+  }, [resumeListeningAfterEcho, shouldAutoListen]);
 
   useEffect(() => {
     startListeningRef.current = startListening;
