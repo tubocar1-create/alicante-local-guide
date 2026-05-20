@@ -17,7 +17,7 @@ const ROUTES: Array<{ path: string; desc: string }> = [
   { path: "/ocio/conciertos", desc: "SUBMENÚ Ocio · Conciertos — música en vivo, festivales, artista, agenda" },
   { path: "/explore", desc: "MENÚ PRINCIPAL · Mapa explorar la ciudad (rutas urbanas, lugares, descubrir)" },
   { path: "action:bus-picker", desc: "MENÚ PRINCIPAL · Bus urbano — abre el selector '¿Ya sabes qué bus tomar?' (bus urbano, parada, tarjeta, billete, 'cómo llego')" },
-  { path: "/bus/lines", desc: "SUBMENÚ Transporte · Líneas de bus (cuando pregunte por una línea concreta o todas las líneas)" },
+  { path: "action:bus-picker", desc: "SUBMENÚ Transporte · Líneas de bus — abre el selector de bus (al elegir una línea se muestra el Dashboard de esa línea con sus paradas)" },
   { path: "action:bus-picker", desc: "SUBMENÚ Transporte · Planificador de rutas (origen → destino, 'cómo voy de X a Y') — abre el selector de bus en el Inicio" },
   { path: "/vuelos", desc: "Vuelos AENA Alicante-Elche (ALC) — estado de vuelo, llegadas, salidas, retrasos, aeropuerto" },
   { path: "/clima", desc: "Clima y previsión (hoy, mañana, fin de semana, lluvia, viento, alerta)" },
@@ -146,7 +146,7 @@ const properNounMatch = (
     text.match(/\bel\s+([0-9]{1,3}[a-z]?)\b/i);
   if (lineMatch && lineMatch[1]) {
     const code = lineMatch[1].toUpperCase();
-    const target = `/bus/lines/${code}`;
+    const target = `/bus/dashboard/${code}`;
     if (target === currentPath) return null;
     return { path: target, reason: `línea de bus concreta: ${code}` };
   }
@@ -231,7 +231,7 @@ const getPriorityRoute = (
     { path: "/vuelos", reason: "tema vuelos/aeropuerto", terms: ["vuelo", "vuelos", "aeropuerto", "llegadas", "salidas", "retraso", "retrasos", "aena"] },
     { path: "/clima", reason: "tema clima", terms: ["clima", "tiempo", "lluvia", "llueve", "llover", "viento", "temperatura", "calor", "frio", "alerta"] },
     { path: "/fiestas", reason: "tema fiestas", terms: ["fiesta", "fiestas", "hogueras", "mascleta", "moros", "cristianos"] },
-    { path: "/bus/lines", reason: "tema líneas de bus", terms: ["linea", "lineas"], test: () => isTransportTheme },
+    { path: "action:bus-picker", reason: "tema líneas de bus", terms: ["linea", "lineas"], test: () => isTransportTheme },
     { path: "action:bus-picker", reason: "tema planificador de transporte", terms: ["bus", "emt", "parada", "paradas", "billete", "bonobus", "tarjeta"], test: () => isTransportTheme || hasOriginDestination },
     { path: "/ocio", reason: "tema ocio/planes", terms: ["ocio", "plan", "planes", "aburrido", "aburrida", "hacer", "hoy", "noche", "salir"] },
     { path: "/explore", reason: "tema explorar ciudad", terms: ["explorar", "descubrir", "ruta", "rutas", "paseo", "monumento", "monumentos", "lugar", "lugares"] },
@@ -358,7 +358,7 @@ Frases abiertas ("estoy aburrido", "sorpréndeme", "¿qué hago hoy?", "recomié
 PASO 0 — NOMBRE PROPIO GANA SIEMPRE.
 Antes que nada busca en la frase NOMBRES PROPIOS o entidades concretas conocidas y enrútalas a su ficha específica:
 - Playa concreta (Playa San Juan, Postiguet, Albufereta, Cala Granadella, Moraig…) → /playas/{slug}
-- Línea de bus concreta ("línea 12", "L22", "bus 24") → /bus/lines/{código}
+- Línea de bus concreta ("línea 12", "L22", "bus 24") → /bus/dashboard/{código} (Dashboard de la línea con sus paradas)
 - Marca de cine concreta (Yelmo, Kinepolis, Odeón, ABC Park, Panoramis) → ficha del cine en /ocio/cines
 - Vuelo con destino concreto ("vuelo a Madrid", "vuelos a Londres") → /vuelos filtrado por ese destino
 - Hotel concreto (Hotel Meliá, AC Hotel…) → /donde-dormir y filtra
@@ -377,7 +377,7 @@ PASO 3 — DECIDIR MENÚ vs SUBMENÚ.
 PASO 4 — NAVEGAR EN EL MISMO TURNO con navigate_to. No preguntes "¿quieres que te lleve?". Comenta breve lo que verá.
 
 REGLA ANTI-COLISIÓN CON el selector de buses:
-- "/" (selector de buses) y /bus/lines SÓLO se usan cuando el tema es transporte público en sí mismo: el usuario menciona "bus", "EMT", "parada", "línea", "tarjeta", "billete", o nombra DOS lugares (origen → destino, "de X a Y").
+- "/" (selector de buses) SÓLO se usa cuando el tema es transporte público en sí mismo: el usuario menciona "bus", "EMT", "parada", "línea", "tarjeta", "billete", o nombra DOS lugares (origen → destino, "de X a Y"). Desde el selector, al elegir una línea se entra a su Dashboard, y desde ahí a una parada concreta.
 - "Quiero IR al cine / a la playa / a un restaurante" NO es transporte: el tema es cine / playa / restaurante. Verbo "ir" + actividad ⇒ enruta a la actividad, NO al selector de buses.
 - Sólo si después de estar en la página de la actividad el usuario pregunta "¿cómo llego?" o "¿qué bus cojo?", entonces sí navega a "/" para abrir el selector de buses.
 
@@ -445,7 +445,6 @@ const ROUTE_BLURBS: Record<string, string> = {
   
   "/explore": "Explora la ciudad. ¿Centro histórico, museos o rutas?",
   
-  "/bus/lines": "Líneas EMT. ¿Te paso una en concreto?",
   "/bus/planner": "Te abro el selector de buses para planificar tu ruta.",
   "/vuelos": "Estado del aeropuerto ALC. ¿Llegadas o salidas?",
   "/clima": "Previsión del tiempo en Alicante.",
