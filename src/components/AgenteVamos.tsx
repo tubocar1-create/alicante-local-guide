@@ -1466,8 +1466,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
               </div>
             </div>
           </div>
-        ) : (
-          <>
+
+
             <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-3 py-4">
               {msgs.map((m, i) => (
                 <div
