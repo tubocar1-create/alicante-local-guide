@@ -774,7 +774,6 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         synth.cancel();
         synth.resume();
         const u = makeSpanishUtterance(text);
-        setTapToSpeak(null);
         let started = false;
         const blockedTimer = window.setTimeout(() => {
           if (!started && __vaActiveUtterance === u) {
