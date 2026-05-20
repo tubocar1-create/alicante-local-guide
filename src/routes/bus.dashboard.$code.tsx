@@ -44,15 +44,20 @@ function BusDashboardPage() {
   }, []);
 
   const handlePickStop = (stopCode: string, stopName: string) => {
-    const prompt = `Quiero coger la línea ${code} en la parada ${stopName} (${stopCode}).`;
+    const pick = {
+      line: code,
+      lineName: line?.name,
+      stopCode,
+      stopName,
+    };
     try {
-      sessionStorage.setItem("afp:fwdPrompt", prompt);
+      sessionStorage.setItem("afp:showBusStop", JSON.stringify(pick));
     } catch {}
     navigate({ to: "/" });
     setTimeout(() => {
       try {
         window.dispatchEvent(
-          new CustomEvent("afp:forward-prompt", { detail: { text: prompt } }),
+          new CustomEvent("afp:show-busstop", { detail: pick }),
         );
       } catch {}
     }, 350);
