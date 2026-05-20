@@ -1492,8 +1492,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           </div>
 
           <div className="flex w-full flex-col items-center gap-3 pb-2">
-            {voiceError && <p className="text-center text-xs text-destructive">{voiceError}</p>}
-            {/* El agente habla directamente sin pedir gesto/permiso al usuario */}
+            {/* Sin avisos de permiso ni botón de activar micro: el agente habla directamente */}
+
 
             {/* Animated orb — visual only, no interaction required */}
             <div
