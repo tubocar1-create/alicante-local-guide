@@ -578,7 +578,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   // Marca que estamos esperando un resumen externo (vamos:food-summary).
   const awaitingSummaryRef = useRef(false);
 
-  const IDLE_MS = 5_000;
+  const IDLE_MS = 15_000;
   const bumpIdle = useCallback(() => {
     if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     if (!openRef.current) return;
