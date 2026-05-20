@@ -1651,6 +1651,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         }
         // Solo finales. Acumulamos desde resultIndex para captar frases
         // completas tipo "me siento mal" sin perder la última palabra.
+        // IMPORTANTE: el reconocedor puede emitir varios resultados finales
+        // separados para una sola frase ("me siento" + "enfermo"). Por eso
+        // NO procesamos inmediatamente: esperamos un pequeño debounce o el
+        // evento onspeechend para concatenar todos los finales del turno.
         const finals: string[] = [];
         for (let i = e.resultIndex; i < e.results.length; i++) {
           const result = e.results[i];
@@ -1665,9 +1669,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         bumpIdle();
         if (turnTimerRef.current) {
           clearTimeout(turnTimerRef.current);
-          turnTimerRef.current = null;
         }
-        finishTurn();
+        // Debounce: si llegan más finales en los próximos 900ms, los unimos.
+        turnTimerRef.current = setTimeout(() => {
+          turnTimerRef.current = null;
+          finishTurn();
+        }, 900);
       };
       const finishTurn = () => {
         if (handled) return true;
