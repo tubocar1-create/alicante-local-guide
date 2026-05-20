@@ -973,6 +973,20 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     openRef.current = open;
   }, [open]);
 
+  // Carga agente_intents de Supabase la primera vez que se abre el panel.
+  useEffect(() => {
+    if (!open) return;
+    if (dbIntentsRef.current.length > 0) return;
+    loadIntents()
+      .then((rows) => {
+        dbIntentsRef.current = rows ?? [];
+        console.log(`[Agente] Intents cargados desde BD: ${dbIntentsRef.current.length}`);
+      })
+      .catch((err) => {
+        console.warn("[Agente] No se pudieron cargar intents de BD", err);
+      });
+  }, [open, loadIntents]);
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       try {
