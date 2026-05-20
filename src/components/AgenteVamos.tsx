@@ -765,7 +765,6 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       setListening(false);
       if (audio && playAudioClip(audio, text, onEnd)) return;
       if (mutedRef.current || typeof window === "undefined" || !window.speechSynthesis) {
-        if (!mutedRef.current) setTapToSpeak({ text, audio });
         onEnd?.();
         resumeListeningAfterEcho();
         return;
@@ -782,8 +781,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             __vaActiveUtterance = null;
             speakingRef.current = false;
             setSpeaking(false);
-            setTapToSpeak({ text });
             onEnd?.();
+            resumeListeningAfterEcho();
           }
         }, 1200);
         u.onstart = () => {
@@ -795,7 +794,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         u.onend = () => {
           window.clearTimeout(blockedTimer);
           __vaActiveUtterance = null;
-          suppressRecognitionUntilRef.current = Date.now() + 700;
+          suppressRecognitionUntilRef.current = Date.now() + POST_SPEECH_LISTEN_DELAY_MS;
           speakingRef.current = false;
           setSpeaking(false);
           onEnd?.();
@@ -804,10 +803,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         u.onerror = () => {
           window.clearTimeout(blockedTimer);
           __vaActiveUtterance = null;
-          suppressRecognitionUntilRef.current = Date.now() + 700;
+          suppressRecognitionUntilRef.current = Date.now() + POST_SPEECH_LISTEN_DELAY_MS;
           speakingRef.current = false;
           setSpeaking(false);
-          setTapToSpeak({ text });
           onEnd?.();
           resumeListeningAfterEcho();
         };
@@ -816,7 +814,6 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         synth.speak(u);
         keepSpeechSynthesisAwake(synth);
       } catch {
-        setTapToSpeak({ text });
         onEnd?.();
         resumeListeningAfterEcho();
       }
