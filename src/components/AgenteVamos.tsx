@@ -141,8 +141,8 @@ const INTENTS: IntentDef[] = [
       "bus", "buses", "emt", "autobus", "autobuses", "transporte publico",
       "linea de bus", "parada",
     ],
-    reply: "Buses urbanos de Alicante.",
-    path: "/bus",
+    reply: "Líneas de buses locales de Alicante.",
+    path: "/bus/lines",
     audio: "bus",
   },
   {
