@@ -35,6 +35,7 @@ import heroImg from "@/assets/alicante-hero.jpg";
 import portadaImg from "@/assets/alicante-portada.jpg";
 import hoguerasIcon from "@/assets/hogueras-alicante.png";
 import busAlicanteIcon from "@/assets/bus-alicante.png";
+import asistenteIcon from "@/assets/asistente-icon.png";
 import { VamosWord } from "@/components/VamosWord";
 
 const TILE_SUBTITLES: Record<string, string> = {
@@ -956,9 +957,9 @@ export function ChatScreen() {
             <button
               onClick={() => window.dispatchEvent(new Event("vamos:open"))}
               aria-label="Hablar con Agente Vamos"
-              className="flex h-16 w-16 items-center justify-center rounded-full gradient-warm text-primary-foreground shadow-soft ring-4 ring-primary/20 transition active:scale-95"
+              className="flex h-16 w-16 items-center justify-center rounded-2xl shadow-soft ring-4 ring-primary/20 transition active:scale-95 overflow-hidden bg-transparent"
             >
-              <Mic className="h-7 w-7" />
+              <img src={asistenteIcon} alt="Asistente" className="h-full w-full object-cover" />
             </button>
             <button
               type="button"
