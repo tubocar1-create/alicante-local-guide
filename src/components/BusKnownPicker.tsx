@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, MapPin, Search, X } from "lucide-react";
+import { ArrowLeft, MapPin, Search, Sparkles, X } from "lucide-react";
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { useUserLocation, distanceKm } from "@/hooks/useUserLocation";
 
@@ -165,13 +165,13 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
                 else if (step === "direction") setStep("line");
                 else if (step === "line") setStep("ask");
               }}
-              className="inline-flex h-7 w-7 items-center justify-center rounded-full hover:bg-muted"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[#EF4444] hover:bg-muted"
               aria-label="Atrás"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-5 w-5" />
             </button>
           )}
-          <h3 className="text-sm font-semibold">
+          <h3 className="text-base font-bold tracking-tight">
             {step === "ask" && "🚌 ¿Ya sabes qué bus tomar?"}
             {step === "line" && "Elige tu línea"}
             {step === "direction" && `Línea ${line?.code} · ¿Hacia dónde?`}
@@ -180,7 +180,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
         </div>
         <button
           onClick={onClose}
-          className="inline-flex h-7 w-7 items-center justify-center rounded-full hover:bg-muted"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-muted/60 hover:bg-muted"
           aria-label="Cerrar"
         >
           <X className="h-4 w-4" />
@@ -280,7 +280,13 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
               </div>
             );
           })}
-
+          <div className="mt-4 flex items-start gap-2 border-t border-border/60 pt-3 text-[11px] text-muted-foreground">
+            <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#EF4444]" />
+            <div className="leading-snug">
+              <div>Tiempos en tiempo real</div>
+              <div>Datos proporcionados por Vectalia Alicante</div>
+            </div>
+          </div>
         </div>
       )}
 
