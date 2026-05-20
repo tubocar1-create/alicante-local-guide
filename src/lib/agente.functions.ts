@@ -444,7 +444,7 @@ const ROUTE_BLURBS: Record<string, string> = {
   "/comprar": "Tiendas y mercados. ¿Buscas algo concreto?",
   
   "/explore": "Explora la ciudad. ¿Centro histórico, museos o rutas?",
-  "/": "Te abro el selector de bus urbano en el inicio. ¿Conoces tu parada o prefieres planificar una ruta?",
+  
   "/bus/lines": "Líneas EMT. ¿Te paso una en concreto?",
   "/bus/planner": "Planificador. Dime origen y destino.",
   "/vuelos": "Estado del aeropuerto ALC. ¿Llegadas o salidas?",
