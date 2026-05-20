@@ -561,9 +561,16 @@ function localResolve(
     }
   }
 
-  // 2) Coincidencia FUERTE por keyword exacta hardcoded → routing directo.
+  // 2) Dominio general PRIMERO (regla: conversar antes de derivar).
+  //    Si el usuario dice algo ambiguo que toca un dominio ("dolor", "hambre",
+  //    "moverme"), preguntamos antes de saltar a una subcategoría.
+  const domainMatch = matchDomain(query);
   const keyMatch = bestKeyIntent(query);
-  if (keyMatch && keyMatch.len >= 4) {
+
+  // 3) Solo permitimos que un keyword hardcoded ESPECÍFICO gane al dominio
+  //    cuando su frase coincidente sea estrictamente más larga (más concreta)
+  //    que el trigger del dominio. Así "traumatologia" gana, pero "dolor" no.
+  if (keyMatch && keyMatch.len >= 4 && (!domainMatch || keyMatch.len > domainMatch.len)) {
     return {
       reply: keyMatch.intent.reply,
       path: keyMatch.intent.path,
@@ -572,9 +579,8 @@ function localResolve(
     };
   }
 
-  // 3) Dominio general hardcoded (lenguaje natural ambiguo) → preguntar.
-  const domain = matchDomain(query);
-  if (domain) {
+  if (domainMatch) {
+    const { domain } = domainMatch;
     return {
       reply: domain.question,
       audio: domain.audio,
