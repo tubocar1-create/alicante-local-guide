@@ -53,10 +53,14 @@ type GreetingClip = "greeting_morning" | "greeting_afternoon";
 type AgentAudioClip = VoiceClip | GreetingClip;
 
 
-// Each intent declares strong keys (exact concepts) and context phrases
-// (natural-language signals). Context matches score lower than strong keys so
-// "hospital" beats "me siento mal" when both appear, but "me duele la cabeza"
-// still routes to salud even without any medical noun.
+// Arquitectura jerárquica de intents:
+//   1. KEYS (exact concepts, alta confianza) → routing directo.
+//   2. DOMAIN triggers (lenguaje natural ambiguo) → pregunta aclaratoria,
+//      sin navegación; el dominio queda activo en `pendingDomainRef`.
+//   3. CONTEXT phrases (lenguaje natural específico de UN intent concreto)
+//      → routing si no había dominio.
+// El follow-up usa el dominio activo para resolver palabras cortas
+// ("hospital", "farmacia", "cine"…) al sub-destino correcto.
 type IntentDef = {
   keys: string[];
   context?: string[];
@@ -71,7 +75,7 @@ const INTENTS: IntentDef[] = [
       "pub", "discoteca", "bar de copas", "rooftop", "vino", "vinos", "coctel", "cocteles",
       "gin tonic", "una caña", "cañas",
     ],
-    context: ["salir de fiesta noche", "tomar unas", "ir de copas", "vamos a beber"],
+    context: ["salir de fiesta noche", "ir de copas", "vamos a beber"],
     reply: "Abro el Dashboard Nocturno: bares, cervecerías, pubs y discotecas abiertos ahora.",
     path: "/",
     audio: "leisure",
@@ -82,21 +86,15 @@ const INTENTS: IntentDef[] = [
       "apartamento", "habitacion", "pernoctar", "donde quedarme", "donde me quedo",
       "donde me alojo", "airbnb", "booking",
     ],
-    context: ["pasar la noche", "necesito cama", "busco cama", "sitio para dormir"],
     reply: "Te llevo a alojamientos cerca de Alicante.",
     path: "/donde-dormir",
     audio: "hotel",
   },
   {
     keys: [
-      "comer", "comida", "restaurante", "restaurantes", "tapas", "tapeo",
+      "restaurante", "restaurantes", "tapas", "tapeo",
       "almorzar", "cenar", "desayunar", "desayuno", "almuerzo", "cena",
-      "menu", "menus", "paella", "arroz", "hambre", "picar algo",
-    ],
-    context: [
-      "tengo hambre", "estoy hambriento", "me muero de hambre", "donde como",
-      "donde ceno", "donde almuerzo", "sitio para comer", "algo de comer",
-      "me apetece comer",
+      "menu", "menus", "paella", "arroz", "picar algo",
     ],
     reply: "Te muestro sitios para comer cerca.",
     path: "/",
@@ -111,16 +109,14 @@ const INTENTS: IntentDef[] = [
   {
     keys: [
       "playa", "playas", "cala", "calas", "arena", "tabarca", "postiguet", "albufereta",
-      "san juan", "agua salada",
+      "san juan",
     ],
-    context: ["bañarme", "darme un baño", "ir al mar", "tomar el sol", "nadar en el mar"],
     reply: "Estas son las playas. ¿Quieres verlas en el mapa?",
     path: "/playas",
     audio: "beaches",
   },
   {
     keys: ["explorar", "mapa", "ciudad", "cerca de mi", "sitios cerca", "que hay cerca"],
-    context: ["ver alrededor", "explorar zona"],
     reply: "Te abro el mapa de la ciudad.",
     path: "/explore",
     audio: "explore",
@@ -139,7 +135,6 @@ const INTENTS: IntentDef[] = [
       "bus", "buses", "emt", "autobus", "autobuses", "transporte publico",
       "linea de bus", "parada",
     ],
-    context: ["coger el bus", "tomar el autobús"],
     reply: "Buses urbanos de Alicante.",
     path: "/bus",
     audio: "bus",
@@ -149,7 +144,6 @@ const INTENTS: IntentDef[] = [
       "vuelo", "vuelos", "aeropuerto", "aena", "avion", "aviones", "alc",
       "salida de vuelo", "llegada de vuelo", "facturar",
     ],
-    context: ["voy a coger un avion", "vuelo a", "salida internacional"],
     reply: "Vuelos del aeropuerto de Alicante.",
     path: "/vuelos",
     audio: "flights",
@@ -160,7 +154,7 @@ const INTENTS: IntentDef[] = [
       "frio", "viento", "previsión", "prevision", "pronostico", "humedad",
     ],
     context: [
-      "va a llover", "hara sol", "hace mucho calor", "hace frío", "que tiempo hace",
+      "va a llover", "hara sol", "que tiempo hace",
       "como esta el tiempo", "como esta el clima",
     ],
     reply: "Mira la previsión.",
@@ -169,7 +163,6 @@ const INTENTS: IntentDef[] = [
   },
   {
     keys: ["cine", "cines", "pelicula", "peliculas", "cartelera", "estreno", "estrenos"],
-    context: ["ver una peli", "ir al cine", "que ponen en el cine"],
     reply: "Cartelera de cine.",
     path: "/ocio/cartelera",
     audio: "cinema",
@@ -182,19 +175,13 @@ const INTENTS: IntentDef[] = [
   },
   {
     keys: ["concierto", "conciertos", "musica en vivo", "directo", "festival", "festivales", "dj"],
-    context: ["escuchar musica", "ver un concierto"],
     reply: "Conciertos por aquí.",
     path: "/ocio/conciertos",
     audio: "concerts",
   },
   {
     keys: [
-      "ocio", "plan", "planes", "que hago", "que hacer", "aburrido", "aburrida",
-      "diversion", "divertirme", "entretenimiento",
-    ],
-    context: [
-      "me aburro", "estoy aburrido", "no se que hacer", "algo divertido",
-      "que puedo hacer hoy", "que puedo hacer esta tarde",
+      "ocio", "entretenimiento",
     ],
     reply: "Ideas para tu plan.",
     path: "/ocio",
@@ -202,7 +189,6 @@ const INTENTS: IntentDef[] = [
   },
   {
     keys: ["fiesta", "fiestas", "hoguera", "hogueras", "moros", "cristianos", "san juan"],
-    context: ["programa de fiestas", "que se celebra"],
     reply: "Programa de fiestas.",
     path: "/fiestas",
     audio: "fiestas",
@@ -212,7 +198,6 @@ const INTENTS: IntentDef[] = [
       "farmacia", "farmacias", "guardia", "medicamento", "medicamentos",
       "pastilla", "pastillas", "receta", "ibuprofeno", "paracetamol", "antibiotico",
     ],
-    context: ["necesito una pastilla", "comprar medicina", "farmacia 24 horas"],
     reply: "Farmacias de guardia.",
     path: "/farmacias",
     audio: "pharmacy",
@@ -221,34 +206,15 @@ const INTENTS: IntentDef[] = [
     keys: [
       "hospital", "hospitales", "urgencia", "urgencias", "ambulancia", "112", "061",
     ],
-    context: [
-      "necesito urgencias", "llevar a urgencias", "ir a urgencias",
-      "necesito una ambulancia", "es una emergencia medica",
-    ],
     reply: "Hospitales cercanos.",
     path: "/hospitales",
     audio: "hospitals",
   },
   {
     keys: [
-      "salud", "medico", "medica", "doctor", "doctora", "sanitario", "sanitaria",
-      "ayuda medica", "asistencia medica", "centro de salud", "consulta medica",
+      "centro de salud", "ambulatorio", "consulta medica", "especialista",
     ],
-    context: [
-      "estoy enfermo", "estoy enferma", "me encuentro mal", "me siento mal",
-      "me siento fatal", "me encuentro fatal", "no me encuentro bien",
-      "estoy malo", "estoy mala", "estoy malita", "estoy malito",
-      "me duele", "dolor de cabeza", "dolor de barriga", "dolor de estomago",
-      "dolor de garganta", "dolor de espalda", "duele mucho",
-      "tengo fiebre", "tengo decimas", "tengo gripe", "tengo catarro",
-      "estoy resfriado", "estoy resfriada", "tengo tos", "estoy mareado",
-      "estoy mareada", "me mareo", "tengo nauseas", "tengo vomitos",
-      "necesito un medico", "necesito ir al medico", "necesito ayuda medica",
-      "me he caido", "me he hecho dano", "me he hecho daño", "tengo una herida",
-      "me he cortado", "me sangra", "no puedo respirar", "me cuesta respirar",
-      "malestar", "estoy fatal",
-    ],
-    reply: "Parece que necesitas ayuda médica. Te abro Salud.",
+    reply: "Te abro Salud.",
     path: "/salud",
     audio: "health",
   },
@@ -271,6 +237,125 @@ const INTENTS: IntentDef[] = [
   },
 ];
 
+// ─── DOMINIOS GENERALES ───────────────────────────────────────────────
+// Cuando el usuario habla en lenguaje natural ambiguo ("tengo dolor",
+// "tengo hambre", "me aburro"), detectamos el DOMINIO y pedimos
+// aclaración antes de navegar a una subcategoría concreta.
+type DomainSpec = {
+  id: string;
+  triggers: string[];
+  question: string;
+  audio: VoiceClip;
+  followups: { keys: string[]; path: string }[];
+};
+
+const DOMAINS: DomainSpec[] = [
+  {
+    id: "salud",
+    triggers: [
+      "estoy enfermo", "estoy enferma", "me encuentro mal", "me siento mal",
+      "me siento fatal", "me encuentro fatal", "no me encuentro bien",
+      "estoy malo", "estoy mala", "estoy malita", "estoy malito",
+      "me duele", "tengo dolor", "dolor de", "duele mucho",
+      "tengo fiebre", "tengo decimas", "tengo gripe", "tengo catarro",
+      "estoy resfriado", "estoy resfriada", "tengo tos", "estoy mareado",
+      "estoy mareada", "me mareo", "tengo nauseas", "tengo vomitos",
+      "necesito un medico", "necesito ir al medico", "necesito ayuda medica",
+      "ayuda medica", "asistencia medica",
+      "me he caido", "me he hecho dano", "me he hecho daño", "tengo una herida",
+      "me he cortado", "me sangra", "no puedo respirar", "me cuesta respirar",
+      "malestar", "estoy fatal", "salud", "medico", "doctor", "sanitario",
+    ],
+    question:
+      "Entiendo. ¿Necesitas hospital, farmacia, urgencias o centro de salud?",
+    audio: "health",
+    followups: [
+      { keys: ["hospital", "hospitales", "urgencia", "urgencias", "ambulancia", "emergencia"], path: "/hospitales" },
+      { keys: ["farmacia", "farmacias", "medicina", "medicamento", "pastilla", "receta"], path: "/farmacias" },
+      { keys: ["centro de salud", "ambulatorio", "especialista", "medico", "doctor", "consulta"], path: "/salud" },
+    ],
+  },
+  {
+    id: "comida",
+    triggers: [
+      "tengo hambre", "estoy hambriento", "estoy hambrienta", "me muero de hambre",
+      "sitio para comer", "algo de comer", "me apetece comer",
+      "donde como", "donde ceno", "donde almuerzo",
+      "comer", "comida", "hambre",
+    ],
+    question:
+      "¿Buscas restaurante, tapas, paella o algo rápido?",
+    audio: "eat",
+    followups: [
+      { keys: ["restaurante", "restaurantes", "cenar", "almorzar", "desayunar"], path: "/" },
+      { keys: ["tapas", "tapeo", "picar"], path: "/" },
+      { keys: ["paella", "arroz"], path: "/" },
+      { keys: ["rapido", "fast", "hamburguesa", "pizza"], path: "/" },
+    ],
+  },
+  {
+    id: "transporte",
+    triggers: [
+      "quiero moverme", "necesito moverme", "como me muevo", "quiero desplazarme",
+      "tengo que ir", "necesito ir", "como llego", "como voy",
+      "transporte",
+    ],
+    question: "¿Quieres bus, planificador de ruta o vuelos?",
+    audio: "bus",
+    followups: [
+      { keys: ["bus", "autobus", "autobuses", "emt", "parada", "linea"], path: "/bus" },
+      { keys: ["ruta", "planificador", "planificar", "trayecto"], path: "/bus/planner" },
+      { keys: ["vuelo", "vuelos", "avion", "aeropuerto"], path: "/vuelos" },
+    ],
+  },
+  {
+    id: "ocio",
+    triggers: [
+      "quiero salir", "quiero hacer algo", "me aburro", "estoy aburrido",
+      "estoy aburrida", "no se que hacer", "algo divertido",
+      "que hago hoy", "que hago esta tarde", "que hacemos esta noche",
+      "que puedo hacer", "diversion", "divertirme", "plan", "planes",
+    ],
+    question: "¿Te apetece cine, conciertos, teatro o fiestas?",
+    audio: "leisure",
+    followups: [
+      { keys: ["cine", "pelicula", "peliculas", "cartelera"], path: "/ocio/cartelera" },
+      { keys: ["concierto", "conciertos", "musica", "dj", "festival"], path: "/ocio/conciertos" },
+      { keys: ["teatro", "teatros", "obra", "musical"], path: "/ocio/teatros" },
+      { keys: ["fiesta", "fiestas", "hoguera", "hogueras"], path: "/fiestas" },
+      { keys: ["copa", "copas", "bar", "cerveza", "discoteca", "pub"], path: "/" },
+    ],
+  },
+  {
+    id: "playas",
+    triggers: [
+      "me quiero banar", "me quiero bañar", "quiero banarme", "quiero bañarme",
+      "ir al mar", "darme un bano", "darme un baño",
+      "tomar el sol", "nadar en el mar",
+    ],
+    question: "¿Quieres el listado de playas o el mapa de playas?",
+    audio: "beaches",
+    followups: [
+      { keys: ["mapa"], path: "/playas/mapa" },
+      { keys: ["listado", "lista", "todas", "cuales", "playas", "playa"], path: "/playas" },
+    ],
+  },
+  {
+    id: "hoteles",
+    triggers: [
+      "pasar la noche", "necesito cama", "busco cama", "sitio para dormir",
+      "donde duermo", "donde me quedo",
+    ],
+    question: "¿Buscas hotel, hostal o apartamento?",
+    audio: "hotel",
+    followups: [
+      { keys: ["hotel", "hoteles"], path: "/donde-dormir" },
+      { keys: ["hostal", "hostel"], path: "/donde-dormir" },
+      { keys: ["apartamento", "airbnb"], path: "/donde-dormir" },
+    ],
+  },
+];
+
 function normalizeSpeech(text: string) {
   return text
     .toLowerCase()
@@ -281,34 +366,125 @@ function normalizeSpeech(text: string) {
     .trim();
 }
 
-// Score: exact key match = key length × 10, context phrase match = phrase length × 4.
-// Longer / more specific matches win; context phrases route natural language
-// when no strong keyword is present.
-function scoreIntent(query: string, intent: IntentDef): number {
-  let score = 0;
-  for (const key of intent.keys) {
-    const n = normalizeSpeech(key);
-    if (n && query.includes(n)) score = Math.max(score, n.length * 10);
-  }
-  for (const ctx of intent.context ?? []) {
-    const n = normalizeSpeech(ctx);
-    if (n && query.includes(n)) score = Math.max(score, n.length * 4);
-  }
-  return score;
-}
-
-function localResolve(text: string): { reply: string; path?: string; audio: VoiceClip } {
-  const query = normalizeSpeech(text);
+function bestKeyIntent(query: string): { intent: IntentDef; len: number } | null {
   let best: IntentDef | null = null;
-  let bestScore = 0;
+  let bestLen = 0;
   for (const it of INTENTS) {
-    const s = scoreIntent(query, it);
-    if (s > bestScore) {
-      best = it;
-      bestScore = s;
+    for (const key of it.keys) {
+      const n = normalizeSpeech(key);
+      if (n && query.includes(n) && n.length > bestLen) {
+        best = it;
+        bestLen = n.length;
+      }
     }
   }
-  if (best) return { reply: best.reply, path: best.path, audio: best.audio };
+  return best ? { intent: best, len: bestLen } : null;
+}
+
+function bestContextIntent(query: string): IntentDef | null {
+  let best: IntentDef | null = null;
+  let bestLen = 0;
+  for (const it of INTENTS) {
+    for (const c of it.context ?? []) {
+      const n = normalizeSpeech(c);
+      if (n && query.includes(n) && n.length > bestLen) {
+        best = it;
+        bestLen = n.length;
+      }
+    }
+  }
+  return best;
+}
+
+function matchDomain(query: string): DomainSpec | null {
+  let best: DomainSpec | null = null;
+  let bestLen = 0;
+  for (const d of DOMAINS) {
+    for (const t of d.triggers) {
+      const n = normalizeSpeech(t);
+      if (n && query.includes(n) && n.length > bestLen) {
+        best = d;
+        bestLen = n.length;
+      }
+    }
+  }
+  return best;
+}
+
+function matchFollowup(query: string, domain: DomainSpec): string | null {
+  let bestPath: string | null = null;
+  let bestLen = 0;
+  for (const f of domain.followups) {
+    for (const k of f.keys) {
+      const n = normalizeSpeech(k);
+      if (n && query.includes(n) && n.length > bestLen) {
+        bestPath = f.path;
+        bestLen = n.length;
+      }
+    }
+  }
+  return bestPath;
+}
+
+type LocalResult = {
+  reply: string;
+  path?: string;
+  audio: VoiceClip;
+  pendingDomain?: string | null;
+};
+
+function localResolve(text: string, currentDomain?: string | null): LocalResult {
+  const query = normalizeSpeech(text);
+
+  // 1) Follow-up dentro de un dominio activo: resolvemos sub-destino.
+  if (currentDomain) {
+    const d = DOMAINS.find((x) => x.id === currentDomain);
+    if (d) {
+      const fuPath = matchFollowup(query, d);
+      if (fuPath) {
+        const intent = INTENTS.find((it) => it.path === fuPath);
+        return {
+          reply: intent?.reply ?? "Te llevo allí.",
+          path: fuPath,
+          audio: intent?.audio ?? d.audio,
+          pendingDomain: null,
+        };
+      }
+    }
+  }
+
+  // 2) Coincidencia FUERTE por keyword exacta → routing directo.
+  const keyMatch = bestKeyIntent(query);
+  if (keyMatch && keyMatch.len >= 4) {
+    return {
+      reply: keyMatch.intent.reply,
+      path: keyMatch.intent.path,
+      audio: keyMatch.intent.audio,
+      pendingDomain: null,
+    };
+  }
+
+  // 3) Detección de DOMINIO general → preguntar antes de navegar.
+  const domain = matchDomain(query);
+  if (domain) {
+    return {
+      reply: domain.question,
+      audio: domain.audio,
+      pendingDomain: domain.id,
+    };
+  }
+
+  // 4) Context match específico de un intent concreto.
+  const ctx = bestContextIntent(query);
+  if (ctx) {
+    return {
+      reply: ctx.reply,
+      path: ctx.path,
+      audio: ctx.audio,
+      pendingDomain: null,
+    };
+  }
+
   return {
     reply: "No te he entendido. ¿Puedes repetirlo?",
     audio: "fallback",
