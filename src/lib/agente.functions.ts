@@ -376,13 +376,13 @@ PASO 3 — DECIDIR MENÚ vs SUBMENÚ.
 
 PASO 4 — NAVEGAR EN EL MISMO TURNO con navigate_to. No preguntes "¿quieres que te lleve?". Comenta breve lo que verá.
 
-REGLA ANTI-COLISIÓN CON /bus/planner:
-- /bus/planner y /bus/lines SÓLO se usan cuando el tema es transporte público en sí mismo: el usuario menciona "bus", "EMT", "parada", "línea", "tarjeta", "billete", o nombra DOS lugares (origen → destino, "de X a Y").
-- "Quiero IR al cine / a la playa / a un restaurante" NO es transporte: el tema es cine / playa / restaurante. Verbo "ir" + actividad ⇒ enruta a la actividad, NO al planner.
-- Sólo si después de estar en la página de la actividad el usuario pregunta "¿cómo llego?" o "¿qué bus cojo?", entonces sí navega a /bus/planner.
+REGLA ANTI-COLISIÓN CON el selector de buses:
+- "/" (selector de buses) y /bus/lines SÓLO se usan cuando el tema es transporte público en sí mismo: el usuario menciona "bus", "EMT", "parada", "línea", "tarjeta", "billete", o nombra DOS lugares (origen → destino, "de X a Y").
+- "Quiero IR al cine / a la playa / a un restaurante" NO es transporte: el tema es cine / playa / restaurante. Verbo "ir" + actividad ⇒ enruta a la actividad, NO al selector de buses.
+- Sólo si después de estar en la página de la actividad el usuario pregunta "¿cómo llego?" o "¿qué bus cojo?", entonces sí navega a "/" para abrir el selector de buses.
 
 Ejemplos correctos:
-- "Quiero ir al cine" → tema = cine → navigate_to("/ocio/cartelera"). NUNCA /bus/planner.
+- "Quiero ir al cine" → tema = cine → navigate_to("/ocio/cartelera"). NUNCA "/" para bus.
 - "Quiero ir a la playa" → tema = playa → navigate_to("/playas").
 - "Quiero ir a comer paella" → tema = paella/comer → el chat abre el Dashboard inline (no navegues a /eat, esa ruta no existe).
 - "¿Qué cines hay?" → navigate_to("/ocio/cines").
@@ -393,8 +393,8 @@ Ejemplos correctos:
 - "Quiero dormir cerca de la playa" → navigate_to("/donde-dormir").
 - "¿Llueve mañana?" → navigate_to("/clima").
 - "¿Mi vuelo llega a tiempo?" → navigate_to("/vuelos").
-- "Cómo voy del centro a San Juan" → AQUÍ sí: dos lugares → navigate_to("/bus/planner").
-- "¿Qué bus va al aeropuerto?" → navigate_to("/bus/planner").
+- "Cómo voy del centro a San Juan" → AQUÍ sí: dos lugares → navigate_to("/") y se abre el selector de buses.
+- "¿Qué bus va al aeropuerto?" → navigate_to("/").
 
 Sólo responde sin navegar si NO hay ninguna ruta razonable, en saludo/despedida casual, o si el usuario ya está en la página correcta y pide un detalle puntual.
 
