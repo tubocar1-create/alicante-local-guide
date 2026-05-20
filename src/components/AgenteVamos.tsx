@@ -988,8 +988,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   // "salud" aquí y el siguiente mensaje se resuelve dentro de ese dominio.
   const pendingDomainRef = useRef<string | null>(null);
   // Cache de agente_intents cargados desde Supabase (fuente semántica real).
-  const dbIntentsRef = useRef<AgenteIntentRow[]>([]);
-  const loadIntents = useServerFn(loadAgenteIntents);
+  const routingCatalogRef = useRef<AgenteRoutingCatalog>(EMPTY_ROUTING_CATALOG);
+  const loadCatalog = useServerFn(loadAgenteRoutingCatalog);
 
   const IDLE_MS = 15_000;
   const bumpIdle = useCallback(() => {
@@ -1026,19 +1026,19 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     openRef.current = open;
   }, [open]);
 
-  // Carga agente_intents de Supabase la primera vez que se abre el panel.
+  // Carga catálogo real de intents + subcategorías existentes la primera vez que se abre el panel.
   useEffect(() => {
     if (!open) return;
-    if (dbIntentsRef.current.length > 0) return;
-    loadIntents()
-      .then((rows) => {
-        dbIntentsRef.current = rows ?? [];
-        console.log(`[Agente] Intents cargados desde BD: ${dbIntentsRef.current.length}`);
+    if (routingCatalogRef.current.intents.length > 0) return;
+    loadCatalog()
+      .then((catalog: AgenteRoutingCatalog) => {
+        routingCatalogRef.current = catalog ?? EMPTY_ROUTING_CATALOG;
+        console.log(`[Agente] Catálogo cargado desde BD: ${routingCatalogRef.current.intents.length}`);
       })
-      .catch((err) => {
-        console.warn("[Agente] No se pudieron cargar intents de BD", err);
+      .catch((err: unknown) => {
+        console.warn("[Agente] No se pudo cargar el catálogo de routing", err);
       });
-  }, [open, loadIntents]);
+  }, [open, loadCatalog]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
