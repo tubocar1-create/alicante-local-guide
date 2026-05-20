@@ -164,7 +164,14 @@ function BusDashboardPage() {
   }, [code, stopsByDir[1].length, stopsByDir[2].length]);
 
 
-  const lineColor = line?.color || "#EF4444";
+  const lineCategory: "night" | "extraurban" | "urban" = /N$/i.test(code)
+    ? "night"
+    : /^[1-9]\d?$/.test(code) && parseInt(code, 10) >= 21
+      ? "extraurban"
+      : "urban";
+  const catColor = lineCategory === "urban" ? "#EF4444" : "#3B82F6";
+  const catGradientEnd = lineCategory === "urban" ? "#B91C1C" : "#1E3A8A";
+  const lineColor = line?.color || catColor;
 
   const inService =
     Object.values(etas).some((arr) => arr && arr.length > 0) || loadingEtas;
@@ -183,11 +190,16 @@ function BusDashboardPage() {
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div
-            className="flex h-11 w-11 shrink-0 items-center justify-center text-base font-black text-white shadow-lg"
-            style={{ background: lineColor, borderRadius: 12 }}
+            className="flex h-11 w-11 shrink-0 items-center justify-center gap-0.5 text-base font-black text-white shadow-lg"
+            style={{
+              background: `linear-gradient(160deg, ${catColor} 0%, ${catGradientEnd} 100%)`,
+              borderRadius: 12,
+            }}
           >
+            {lineCategory === "night" && <span aria-hidden>🌙</span>}
             {code}
           </div>
+
 
           <div className="min-w-0 flex-1 pt-0.5">
             <h1 className="font-sans text-2xl font-bold not-italic leading-tight text-white">
