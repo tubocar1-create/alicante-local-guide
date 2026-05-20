@@ -766,6 +766,27 @@ function hasHealthHardBlock(query: string): boolean {
   });
 }
 
+// Adapta el tono del texto según el modo del asistente. Solo retoca
+// registro/longitud: nunca cambia el destino ni inventa información.
+function formatReply(mode: AssistantMode, base: string): string {
+  switch (mode) {
+    case "operativo":
+      return base; // frases cortas, sin floritura
+    case "empatico":
+      return base.startsWith("Tranquilo") || base.startsWith("Entiendo")
+        ? base
+        : `Tranquilo. ${base}`;
+    case "social":
+      return base.startsWith("¡") ? base : `¡Vamos! ${base}`;
+    case "inspiracional":
+      return base.startsWith("Genial") ? base : `Genial. ${base}`;
+    case "practico":
+      return base;
+    default:
+      return base;
+  }
+}
+
 type AssistantMode =
   | "operativo" | "empatico" | "inspiracional" | "social" | "practico" | "neutro";
 function pickAssistantMode(domain: string | null): AssistantMode {
