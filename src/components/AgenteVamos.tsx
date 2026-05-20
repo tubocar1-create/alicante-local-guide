@@ -406,14 +406,20 @@ function logSpeechSynthesisDebug(synth: SpeechSynthesis) {
   }
 }
 
-function hablar(texto: unknown, retryIfNoVoices = true) {
+function hablar(
+  texto: unknown,
+  opts: { onStart?: () => void; onEnd?: () => void; retryIfNoVoices?: boolean } = {},
+) {
+  const { onStart, onEnd, retryIfNoVoices = true } = opts;
   const respuesta = plainText(extractSpeechText(texto));
   console.log("RESPUESTA:", texto);
-  if (!respuesta || typeof window === "undefined" || !window.speechSynthesis) return;
+  if (!respuesta || typeof window === "undefined" || !window.speechSynthesis) {
+    onEnd?.();
+    return;
+  }
   const synth = window.speechSynthesis;
-  logSpeechSynthesisDebug(synth);
   if (!synth.getVoices().length && retryIfNoVoices) {
-    setTimeout(() => hablar(respuesta, false), 1000);
+    setTimeout(() => hablar(respuesta, { ...opts, retryIfNoVoices: false }), 1000);
     return;
   }
   synth.cancel();
@@ -431,22 +437,11 @@ function hablar(texto: unknown, retryIfNoVoices = true) {
     if (finished) return;
     finished = true;
     if (__vaActiveUtterance === utterance) __vaActiveUtterance = null;
-    if (watchdog) clearTimeout(watchdog);
-    window.dispatchEvent(new CustomEvent("vamos:speech-end"));
+    onEnd?.();
   };
-  utterance.onstart = () => {
-    window.dispatchEvent(new CustomEvent("vamos:speech-start"));
-  };
+  utterance.onstart = () => onStart?.();
   utterance.onend = finish;
   utterance.onerror = finish;
-  // Watchdog: si Android no dispara onend, liberamos el micro igualmente.
-  // Estimamos ~80ms por carácter + 2s de margen, máximo 20s.
-  const estimatedMs = Math.min(20000, 2000 + respuesta.length * 80);
-  const watchdog = setTimeout(() => {
-    console.warn("VOICE watchdog: forzando fin de TTS tras", estimatedMs, "ms");
-    try { synth.cancel(); } catch {}
-    finish();
-  }, estimatedMs);
   synth.speak(utterance);
 }
 
