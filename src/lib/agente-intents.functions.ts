@@ -16,6 +16,8 @@ export type AgenteSubcategory = {
   label: string;
   route: string;
   aliases: string[];
+  prompt?: string;
+  submenu?: string;
 };
 
 export type AgenteRoutingCatalog = {
@@ -42,11 +44,17 @@ export const loadAgenteRoutingCatalog = createServerFn({ method: "GET" }).handle
   async (): Promise<AgenteRoutingCatalog> => {
     const intents = await loadAgenteIntents();
 
-    const [{ count: pharmaciesCount }, { count: hospitalsCount }, { data: providerCategories }] =
+    const [
+      { count: pharmaciesCount },
+      { count: hospitalsCount },
+      { data: providerCategories },
+      { data: placeCategories },
+    ] =
       await Promise.all([
         supabaseAdmin.from("pharmacies").select("id", { count: "exact", head: true }),
         supabaseAdmin.from("health_centers").select("id", { count: "exact", head: true }),
         supabaseAdmin.from("health_providers").select("category"),
+        supabaseAdmin.from("places_cache").select("category, cuisine"),
       ]);
 
     const dbHealthCategories = new Set(
@@ -73,10 +81,41 @@ export const loadAgenteRoutingCatalog = createServerFn({ method: "GET" }).handle
         : []),
     ];
 
+    const existingPlaceCategories = new Set(
+      ((placeCategories ?? []) as Array<{ category: string | null; cuisine: string | null }>)
+        .map((row) => row.category)
+        .filter(Boolean) as string[],
+    );
+
+    const foodTaxonomy: Record<string, { label: string; prompt: string; aliases: string[]; domain?: string }> = {
+      typical: { label: "Cocina típica", prompt: "Recomiéndame un sitio de cocina típica alicantina tradicional abierto ahora", aliases: ["cocina típica", "tipica", "tradicional"] },
+      rice_fish: { label: "Arroces y pescado", prompt: "Quiero un buen arroz, paella o pescado fresco, ¿dónde voy ahora?", aliases: ["arroz", "arroces", "paella", "pescado"] },
+      italian: { label: "Italiano", prompt: "Apetece italiano (pizza, pasta), ¿dónde puedo ir ahora?", aliases: ["italiano", "pasta", "trattoria"] },
+      asian: { label: "Japonés / Asiático", prompt: "Un japonés o asiático rico abierto ahora", aliases: ["japonés", "japones", "asiático", "asiatico", "sushi", "ramen"] },
+      brunch: { label: "Desayuno / Brunch", prompt: "Necesito un buen desayuno o brunch en Alicante abierto ahora", aliases: ["desayuno", "brunch", "cafetería", "cafeteria"] },
+      pizzas: { label: "Pizzas", prompt: "Una pizzería abierta ahora (Telepizza, Domino's…)", aliases: ["pizza", "pizzas", "pizzería", "pizzeria"] },
+      chains: { label: "Comida rápida", prompt: "comida rápida", aliases: ["comida rápida", "comida rapida", "fast food", "hamburguesa", "kebab", "pollo frito"] },
+      international: { label: "Internacional", prompt: "Quiero comida internacional (hindú, libanés, peruano, mexicano, latino, árabe…), ¿dónde voy ahora?", aliases: ["internacional", "hindú", "hindu", "árabe", "arabe", "mexicano"] },
+      drinks: { label: "Bares y copas", prompt: "¿Dónde voy a tomar algo abierto ahora?", aliases: ["bar", "bares", "copas", "cerveza", "pub", "discoteca"], domain: "tomar_algo" },
+    };
+
+    const foodSubcategories = Array.from(existingPlaceCategories)
+      .map((category) => foodTaxonomy[category])
+      .filter(Boolean)
+      .map((entry) => ({
+        domain: entry.domain ?? "comer",
+        label: entry.label,
+        route: "/",
+        prompt: entry.prompt,
+        aliases: entry.aliases,
+      }));
+
     return {
       intents,
       subcategories: {
         salud: [...healthCore, ...healthFromApp],
+        comer: foodSubcategories.filter((entry) => entry.domain === "comer"),
+        tomar_algo: foodSubcategories.filter((entry) => entry.domain === "tomar_algo"),
       },
     };
   },
