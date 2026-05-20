@@ -957,19 +957,25 @@ export function ChatScreen() {
             <button
               onClick={() => window.dispatchEvent(new Event("vamos:open"))}
               aria-label="Hablar con Agente Vamos"
-              className="flex h-16 w-16 items-center justify-center rounded-2xl shadow-soft ring-4 ring-primary/20 transition active:scale-95 overflow-hidden bg-transparent"
-            >
-              <img src={asistenteIcon} alt="Asistente" className="h-full w-full object-cover" />
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setComposerMode("text");
-                setTimeout(() => inputRef.current?.focus(), 50);
+              className="group relative flex h-28 w-28 items-center justify-center rounded-3xl transition active:scale-95"
+              style={{
+                filter:
+                  "drop-shadow(0 0 18px rgba(255,165,0,0.65)) drop-shadow(0 0 36px rgba(255,140,0,0.45))",
               }}
-              className="flex items-center gap-1 rounded-full border border-border bg-background/80 px-3 py-1 text-[11px] font-medium text-muted-foreground hover:bg-muted"
             >
-              <Keyboard className="h-3 w-3" /> escribir en su lugar
+              <span
+                aria-hidden
+                className="absolute inset-0 rounded-3xl animate-pulse"
+                style={{
+                  background:
+                    "radial-gradient(circle, rgba(255,180,60,0.45) 0%, rgba(255,140,0,0.15) 55%, transparent 75%)",
+                }}
+              />
+              <img
+                src={asistenteIcon}
+                alt="Asistente"
+                className="relative h-full w-full object-contain"
+              />
             </button>
           </div>
         ) : (
