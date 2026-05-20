@@ -664,6 +664,22 @@ function localResolve(
 
   // 1) Follow-up dentro de un dominio activo: resolvemos sub-destino.
   if (currentDomain) {
+    // 1.bis) Caso especial: estamos esperando que el usuario diga la línea
+    // de bus que quiere tomar. Si la frase contiene un código de línea
+    // válido (1–3 dígitos opcionalmente con "N" o letra), saltamos directos
+    // al selector de paradas con esa línea preseleccionada.
+    if (currentDomain === "bus_known") {
+      const m = query.match(/\b(?:linea\s+)?([clm]?\s?-?\s?\d{1,3}\s?[a-z]?)\b/i);
+      const code = m?.[1]?.replace(/[\s-]/g, "").toUpperCase();
+      if (code && /\d/.test(code)) {
+        return {
+          reply: `¡Voy! Abro las paradas de la línea ${code}.`,
+          path: `action:bus-picker:line:${code}`,
+          audio: "bus",
+          pendingDomain: null,
+        };
+      }
+    }
     const d = DOMAINS.find((x) => x.id === currentDomain);
     const subcategory = matchExistingSubcategory(query, catalog.subcategories[currentDomain]);
     if (subcategory) {
@@ -677,6 +693,17 @@ function localResolve(
     if (d) {
       const fuPath = matchFollowup(query, d);
       if (fuPath) {
+        // Sentinel especial: el usuario dice "sí, conozco mi bus" estando
+        // en el dominio "transporte". En vez de navegar, activamos el
+        // subdominio "bus_known" y preguntamos la línea, sin abrir picker.
+        if (fuPath === "action:bus-known-line") {
+          const busKnown = DOMAINS.find((x) => x.id === "bus_known");
+          return {
+            reply: busKnown?.question ?? "¿Cuál es la línea que quieres tomar?",
+            audio: "bus",
+            pendingDomain: "bus_known",
+          };
+        }
         const intent = INTENTS.find((it) => it.path === fuPath);
         return {
           reply: intent?.reply ?? "Te llevo allí.",
