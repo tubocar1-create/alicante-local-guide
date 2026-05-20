@@ -1135,7 +1135,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       rec.onresult = (e: any) => {
         // Anti-eco: si el agente está hablando o cargando, descarta lo
         // captado por el micro (es el propio TTS realimentándose).
-        if (speakingRef.current || loadingRef.current || Date.now() < suppressRecognitionUntilRef.current) {
+        if (
+          speakingRef.current ||
+          loadingRef.current ||
+          isAgentSpeechOutputActive() ||
+          Date.now() < suppressRecognitionUntilRef.current
+        ) {
           finalText = "";
           lastTranscript = "";
           setInterim("");
@@ -1147,14 +1152,15 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         }
         // Rebuild from scratch each event to avoid duplicate accumulation
         // (some engines re-emit final results across events).
-        let finals = "";
-        let interimText = "";
+        const finals: string[] = [];
+        const interims: string[] = [];
         for (let i = 0; i < e.results.length; i++) {
           const t = e.results[i][0].transcript;
-          if (e.results[i].isFinal) finals += t;
-          else interimText += t;
+          if (e.results[i].isFinal) finals.push(t);
+          else interims.push(t);
         }
-        finalText = finals;
+        const interimText = compactRecognitionText(interims);
+        finalText = compactRecognitionText(finals);
         lastTranscript = (finalText || interimText || lastTranscript).trim();
         setInterim(interimText);
         if (lastTranscript) {
