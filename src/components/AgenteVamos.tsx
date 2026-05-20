@@ -287,7 +287,7 @@ const DOMAINS: DomainSpec[] = [
       "malestar", "estoy fatal", "salud", "medico", "doctor", "sanitario",
     ],
     question:
-      "Entiendo. ¿Necesitas hospital, farmacia, urgencias o centro de salud?",
+      "Entiendo. ¿Necesitas hospital, farmacia, urgencias o especialista?",
     audio: "health",
     followups: [
       { keys: ["hospital", "hospitales", "urgencia", "urgencias", "ambulancia", "emergencia"], path: "/hospitales" },
