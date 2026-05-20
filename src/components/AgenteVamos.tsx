@@ -1622,6 +1622,21 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
   const startListening = useCallback(() => {
     if (!openRef.current || modeRef.current !== "voice") return;
+    // Máquina de estados: SOLO arrancamos si estamos en IDLE.
+    // Cualquier otro estado (listening, stopping) se ignora — esto evita
+    // que Android entre en bloqueo de "Preparando..." por start/stop
+    // simultáneos.
+    if (voiceStateRef.current !== "idle") {
+      if (typeof window !== "undefined") {
+        // eslint-disable-next-line no-console
+        console.log("VOICE STATE: skip start (not idle ->", voiceStateRef.current, ")");
+      }
+      // Si estamos en "stopping", reintentamos cuando vuelva a idle.
+      if (voiceStateRef.current === "stopping") {
+        resumeListeningAfterEcho(400);
+      }
+      return;
+    }
     if (
       pausedRef.current ||
       loadingRef.current ||
@@ -1641,7 +1656,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       setVoiceError("Tu navegador no soporta reconocimiento de voz. Cambia a modo texto.");
       return;
     }
-    // Stop any previous instance
+    // No debería existir una instancia previa si el estado es IDLE; por
+    // seguridad limpiamos handlers sin volver a llamar a stop() (ya lo hizo
+    // quien dejó el estado en IDLE).
     const previousRec = recogRef.current;
     if (previousRec) {
       previousRec.onresult = null;
@@ -1649,10 +1666,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       previousRec.onerror = null;
       previousRec.onend = null;
     }
-    try {
-      previousRec?.abort?.();
-    } catch {}
     recogRef.current = null;
+
     try {
       const rec = new SRClass();
       rec.lang = "es-ES";
