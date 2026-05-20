@@ -257,17 +257,19 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
                           if (locState.status === "idle") requestLocation();
                         }}
                         title={l.name}
-                        className="flex aspect-square items-center justify-center gap-0.5 rounded-2xl text-[15px] font-extrabold shadow-sm transition active:scale-95"
+                        className="flex aspect-square items-center justify-center gap-0.5 font-sans text-[15px] font-extrabold not-italic shadow-sm transition active:scale-95"
                         style={
                           filled
                             ? {
                                 color: "#fff",
                                 background: `linear-gradient(160deg, ${catColor} 0%, #B91C1C 100%)`,
+                                borderRadius: 14,
                               }
                             : {
                                 color: catColor,
                                 background: "transparent",
                                 border: `1.5px solid ${catColor}`,
+                                borderRadius: 14,
                               }
                         }
                       >
