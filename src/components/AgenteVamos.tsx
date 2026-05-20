@@ -1048,6 +1048,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         }
         // La voz ya se ha lanzado arriba con speak(reply). Aquí sólo
         // gestionamos navegación tardía si procede.
+      } finally {
         if (!awaitingSummaryRef.current) setLoading(false);
       }
     },
