@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { PLAYAS } from "@/lib/playas-data";
+import { MAP_BEACHES } from "@/lib/playas-map-data";
 
 type ChatMsg = { role: "system" | "user" | "assistant" | "tool"; content: string; tool_calls?: any; tool_call_id?: string; name?: string };
 
@@ -123,8 +123,8 @@ const properNounMatch = (
   const text = normalizeText(rawText);
   if (!text) return null;
 
-  // 1) PLAYA CONCRETA — slug directo a ficha
-  for (const playa of PLAYAS) {
+  // 1) PLAYA CONCRETA — slug directo a ficha real /playas/$slug
+  for (const playa of MAP_BEACHES) {
     const baseName = normalizeText(playa.name)
       .replace(/^(playa|cala)\s+(de\s+la\s+|de\s+los\s+|del\s+|de\s+l\s+|de\s+)?/i, "")
       .trim();
@@ -463,7 +463,7 @@ const blurbFor = (path: string): string => {
   // Ficha de playa concreta → punto final: anuncia y cierra el diálogo.
   const playaMatch = path.match(/^\/playas\/([^/?#]+)$/);
   if (playaMatch && playaMatch[1] !== "mapa") {
-    const playa = PLAYAS.find((p) => p.slug === playaMatch[1]);
+    const playa = MAP_BEACHES.find((p) => p.slug === playaMatch[1]);
     const name = playa?.name ?? "esta playa";
     return `Esta es ${name}, te estoy dejando fotos, descripción y reseñas, para que tú explores y decidas.`;
   }
