@@ -171,7 +171,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
               <ArrowLeft className="h-5 w-5" />
             </button>
           )}
-          <h3 className="text-base font-bold tracking-tight">
+          <h3 className="font-sans text-base font-bold not-italic tracking-tight text-white">
             {step === "ask" && "🚌 ¿Ya sabes qué bus tomar?"}
             {step === "line" && "Elige tu línea"}
             {step === "direction" && `Línea ${line?.code} · ¿Hacia dónde?`}
