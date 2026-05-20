@@ -471,6 +471,98 @@ const DB_KEY_TO_DOMAIN: Record<string, string> = {
   qr: "qr",
 };
 
+// ─── NAMED ENTITIES (PRIORIDAD 0) ─────────────────────────────────────
+// Entidades concretas que el usuario nombra explícitamente: hoteles,
+// monumentos, marcas, lugares. Ganan SIEMPRE sobre dominios y keywords.
+// Si no hay ruta interna, abrimos Google Maps con la consulta para que el
+// usuario llegue al sitio "directamente" sin pasar por conversación.
+type NamedEntity = {
+  aliases: string[];
+  reply: string;
+  path?: string;       // ruta interna existente
+  external?: string;   // URL externa (Google Maps, web oficial)
+};
+
+const NAMED_ENTITIES: NamedEntity[] = [
+  // ── Transporte / infraestructura
+  { aliases: ["aeropuerto de alicante", "aeropuerto alicante", "aeropuerto elche", "aeropuerto alc", "el altet"],
+    reply: "Te llevo al aeropuerto de Alicante.", path: "/vuelos" },
+
+  // ── Hoteles concretos (no hay buscador por nombre → mandamos a la lista)
+  { aliases: ["melia alicante", "hotel melia", "el melia"],
+    reply: "Abriendo Meliá Alicante.",
+    external: "https://www.google.com/maps/search/?api=1&query=Meli%C3%A1+Alicante" },
+  { aliases: ["hospes amerigo", "hotel hospes"],
+    reply: "Abriendo Hospes Amérigo.",
+    external: "https://www.google.com/maps/search/?api=1&query=Hospes+Amerigo+Alicante" },
+  { aliases: ["hotel mediterranea plaza", "mediterranea plaza"],
+    reply: "Abriendo Mediterránea Plaza.",
+    external: "https://www.google.com/maps/search/?api=1&query=Hotel+Mediterranea+Plaza+Alicante" },
+
+  // ── Monumentos y lugares emblemáticos
+  { aliases: ["castillo de santa barbara", "castillo santa barbara", "santa barbara"],
+    reply: "Abriendo Castillo de Santa Bárbara.",
+    external: "https://www.google.com/maps/search/?api=1&query=Castillo+de+Santa+B%C3%A1rbara+Alicante" },
+  { aliases: ["explanada de espana", "la explanada"],
+    reply: "Abriendo la Explanada de España.",
+    external: "https://www.google.com/maps/search/?api=1&query=Explanada+de+Espa%C3%B1a+Alicante" },
+  { aliases: ["mercado central", "mercado de alicante"],
+    reply: "Abriendo el Mercado Central.",
+    external: "https://www.google.com/maps/search/?api=1&query=Mercado+Central+Alicante" },
+  { aliases: ["marq", "museo arqueologico"],
+    reply: "Abriendo el MARQ.",
+    external: "https://www.google.com/maps/search/?api=1&query=MARQ+Alicante" },
+  { aliases: ["isla de tabarca", "tabarca"],
+    reply: "Abriendo Isla de Tabarca.",
+    external: "https://www.google.com/maps/search/?api=1&query=Isla+de+Tabarca" },
+
+  // ── Marcas y cadenas comerciales
+  { aliases: ["mcdonalds", "mc donalds", "macdonalds"],
+    reply: "Abriendo McDonald's en Alicante.",
+    external: "https://www.google.com/maps/search/?api=1&query=McDonalds+Alicante" },
+  { aliases: ["burger king"],
+    reply: "Abriendo Burger King en Alicante.",
+    external: "https://www.google.com/maps/search/?api=1&query=Burger+King+Alicante" },
+  { aliases: ["zara"],
+    reply: "Abriendo Zara en Alicante.",
+    external: "https://www.google.com/maps/search/?api=1&query=Zara+Alicante" },
+  { aliases: ["el corte ingles", "corte ingles"],
+    reply: "Abriendo El Corte Inglés.",
+    external: "https://www.google.com/maps/search/?api=1&query=El+Corte+Ingles+Alicante" },
+  { aliases: ["mercadona"],
+    reply: "Abriendo Mercadona.",
+    external: "https://www.google.com/maps/search/?api=1&query=Mercadona+Alicante" },
+  { aliases: ["carrefour"],
+    reply: "Abriendo Carrefour.",
+    external: "https://www.google.com/maps/search/?api=1&query=Carrefour+Alicante" },
+  { aliases: ["ikea"],
+    reply: "Abriendo IKEA.",
+    external: "https://www.google.com/maps/search/?api=1&query=IKEA+San+Vicente+del+Raspeig" },
+
+  // ── Centros comerciales
+  { aliases: ["plaza mar 2", "plaza mar dos", "plaza mar"],
+    reply: "Abriendo Centro Comercial Plaza Mar 2.",
+    external: "https://www.google.com/maps/search/?api=1&query=Plaza+Mar+2+Alicante" },
+  { aliases: ["gran via alicante", "centro comercial gran via"],
+    reply: "Abriendo C.C. Gran Vía.",
+    external: "https://www.google.com/maps/search/?api=1&query=Gran+Via+Alicante+centro+comercial" },
+];
+
+function matchNamedEntity(query: string): NamedEntity | null {
+  let best: NamedEntity | null = null;
+  let bestLen = 0;
+  for (const e of NAMED_ENTITIES) {
+    for (const a of e.aliases) {
+      const n = normalizeSpeech(a);
+      if (n && query.includes(n) && n.length > bestLen) {
+        best = e;
+        bestLen = n.length;
+      }
+    }
+  }
+  return best;
+}
+
 const EMPTY_ROUTING_CATALOG: AgenteRoutingCatalog = { intents: [], subcategories: {} };
 
 function hasPhrase(text: string, phrase: string): boolean {
