@@ -957,15 +957,15 @@ export function ChatScreen() {
             <button
               onClick={() => window.dispatchEvent(new Event("vamos:open"))}
               aria-label="Hablar con Agente Vamos"
-              className="group relative flex h-28 w-28 items-center justify-center rounded-3xl transition active:scale-95"
+              className="group relative flex h-20 w-20 items-center justify-center rounded-full transition active:scale-95"
               style={{
                 filter:
-                  "drop-shadow(0 0 18px rgba(255,165,0,0.65)) drop-shadow(0 0 36px rgba(255,140,0,0.45))",
+                  "drop-shadow(0 0 14px rgba(255,165,0,0.65)) drop-shadow(0 0 28px rgba(255,140,0,0.45))",
               }}
             >
               <span
                 aria-hidden
-                className="absolute inset-0 rounded-3xl animate-pulse"
+                className="absolute inset-0 rounded-full animate-pulse"
                 style={{
                   background:
                     "radial-gradient(circle, rgba(255,180,60,0.45) 0%, rgba(255,140,0,0.15) 55%, transparent 75%)",
@@ -974,7 +974,7 @@ export function ChatScreen() {
               <img
                 src={asistenteIcon}
                 alt="Asistente"
-                className="relative h-full w-full object-contain"
+                className="relative h-full w-full rounded-full object-cover"
               />
             </button>
           </div>
