@@ -239,10 +239,10 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
                     className="inline-block h-2.5 w-2.5 rounded-full"
                     style={{ backgroundColor: catColor }}
                   />
-                  <span className="text-[12px] font-extrabold uppercase tracking-wider text-foreground">
+                  <span className="font-sans text-[12px] font-extrabold uppercase not-italic tracking-wider text-white">
                     {label}
                   </span>
-                  <span className="text-[11px] text-muted-foreground">· {sublabel}</span>
+                  <span className="font-sans text-[11px] not-italic text-white/60">· {sublabel}</span>
                 </div>
                 <div className="grid grid-cols-6 gap-2">
                   {lines.map((l) => {
