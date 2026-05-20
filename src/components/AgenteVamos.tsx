@@ -381,6 +381,7 @@ let __vaMicWarmupPromise: Promise<MicWarmupState> | null = null;
 let __vaMicWarmupMessage: string | null = null;
 let __vaMicWarmupAttempt = 0;
 const MIC_WARMUP_TIMEOUT_MS = 8000;
+const POST_SPEECH_LISTEN_DELAY_MS = 140;
 
 function micWarmupMessage(err: unknown) {
   const name = err instanceof DOMException ? err.name : err instanceof Error ? err.name : "";
@@ -537,8 +538,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const [muted, setMuted] = useState(false);
   const [paused, setPaused] = useState(false);
   const [voiceError, setVoiceError] = useState<string | null>(null);
-  const [tapToSpeak, setTapToSpeak] = useState<PendingSpeech | null>(null);
-  const [micReady, setMicReady] = useState(__vaMicWarmupState === "ready");
+  const [, setMicReady] = useState(__vaMicWarmupState === "ready");
 
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
