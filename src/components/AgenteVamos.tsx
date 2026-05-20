@@ -216,8 +216,6 @@ function localResolve(text: string): { reply: string; path?: string; audio: Voic
 
 type Msg = { role: "user" | "assistant"; content: string };
 type Mode = "voice" | "text";
-type PendingSpeech = { text: string; audio?: AgentAudioClip };
-
 const STORAGE_KEY = "va:agente-msgs";
 const audioSrc = (clip: AgentAudioClip) =>
   VOICE_ASSETS[`../assets/agent-voice/${clip}.mp3`] ?? `/agent-voice/${clip}.mp3`;
@@ -705,13 +703,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         __vaActiveAudio = audio;
         __vaActiveAudioStartedAt = Date.now();
         assistantSpeechMemoryRef.current = [text, ...assistantSpeechMemoryRef.current].slice(0, 6);
-        setTapToSpeak(null);
         speakingRef.current = true;
         setSpeaking(true);
         const finish = () => {
           if (__vaActiveAudio === audio) __vaActiveAudio = null;
           __vaActiveAudioStartedAt = 0;
-          suppressRecognitionUntilRef.current = Date.now() + 700;
+          suppressRecognitionUntilRef.current = Date.now() + POST_SPEECH_LISTEN_DELAY_MS;
           speakingRef.current = false;
           setSpeaking(false);
           onEnd?.();
@@ -721,10 +718,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         audio.onerror = () => {
           if (__vaActiveAudio === audio) __vaActiveAudio = null;
           __vaActiveAudioStartedAt = 0;
-          suppressRecognitionUntilRef.current = Date.now() + 700;
+          suppressRecognitionUntilRef.current = Date.now() + POST_SPEECH_LISTEN_DELAY_MS;
           speakingRef.current = false;
           setSpeaking(false);
-          setTapToSpeak({ text, audio: clip });
           onEnd?.();
           resumeListeningAfterEcho();
         };
@@ -733,17 +729,15 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           started.catch(() => {
             if (__vaActiveAudio === audio) __vaActiveAudio = null;
             __vaActiveAudioStartedAt = 0;
-            suppressRecognitionUntilRef.current = Date.now() + 700;
+            suppressRecognitionUntilRef.current = Date.now() + POST_SPEECH_LISTEN_DELAY_MS;
             speakingRef.current = false;
             setSpeaking(false);
-            setTapToSpeak({ text, audio: clip });
             onEnd?.();
             resumeListeningAfterEcho();
           });
         }
         return true;
       } catch {
-        setTapToSpeak({ text, audio: clip });
         return false;
       }
     },
