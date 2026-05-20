@@ -446,7 +446,7 @@ const ROUTE_BLURBS: Record<string, string> = {
   "/explore": "Explora la ciudad. ¿Centro histórico, museos o rutas?",
   
   "/bus/lines": "Líneas EMT. ¿Te paso una en concreto?",
-  "/bus/planner": "Planificador. Dime origen y destino.",
+  "/bus/planner": "Te abro el selector de buses para planificar tu ruta.",
   "/vuelos": "Estado del aeropuerto ALC. ¿Llegadas o salidas?",
   "/clima": "Previsión del tiempo en Alicante.",
   "/salud": "Salud. ¿Farmacia, hospital o info del sistema?",
