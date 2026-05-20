@@ -1669,6 +1669,18 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         // falla, caemos a window.location para no quedarnos atascados.
         const goTo = (raw: string) => {
           try {
+            // Sentinel: abrir el picker de buses urbanos en el Inicio.
+            if (raw === "action:bus-picker") {
+              navigate({ to: "/" });
+              setTimeout(() => {
+                try {
+                  window.dispatchEvent(new Event("agent:open-bus-picker"));
+                } catch {
+                  /* noop */
+                }
+              }, 60);
+              return;
+            }
             // URL externa (Google Maps, web oficial de una entidad concreta):
             // abrimos en nueva pestaña para no perder el contexto del agente.
             if (/^https?:\/\//i.test(raw)) {
