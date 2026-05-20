@@ -413,7 +413,7 @@ function bestContextIntent(query: string): IntentDef | null {
   return best;
 }
 
-function matchDomain(query: string): DomainSpec | null {
+function matchDomain(query: string): { domain: DomainSpec; len: number } | null {
   let best: DomainSpec | null = null;
   let bestLen = 0;
   for (const d of DOMAINS) {
@@ -425,7 +425,7 @@ function matchDomain(query: string): DomainSpec | null {
       }
     }
   }
-  return best;
+  return best ? { domain: best, len: bestLen } : null;
 }
 
 function matchFollowup(query: string, domain: DomainSpec): string | null {
