@@ -459,6 +459,7 @@ const ROUTE_BLURBS: Record<string, string> = {
 };
 
 const blurbFor = (path: string): string => {
+  if (path === "action:bus-picker") return "Te abro el selector de buses urbanos.";
   if (ROUTE_BLURBS[path]) return ROUTE_BLURBS[path];
   // Ficha de playa concreta → punto final: anuncia y cierra el diálogo.
   const playaMatch = path.match(/^\/playas\/([^/?#]+)$/);
