@@ -380,16 +380,6 @@ function DirectionColumn({
 
 
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="font-sans text-[11px] font-semibold not-italic tabular-nums text-white/90">
-                      {etaTime ?? "--:--"}
-                    </span>
-                    <span className="ml-auto font-sans text-[10px] not-italic tabular-nums text-white/50">
-                      {s.code}
-                    </span>
-                  </div>
-
-
                   {isOrigin && (
                     <span
                       className="mb-0.5 inline-block rounded px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-white"
@@ -406,9 +396,18 @@ function DirectionColumn({
                       Destino
                     </span>
                   )}
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-sans text-[11px] font-semibold not-italic tabular-nums text-white/90">
+                      {etaTime ?? "--:--"}
+                    </span>
+                    <span className="ml-auto font-sans text-[10px] not-italic tabular-nums text-white/50">
+                      {s.code}
+                    </span>
+                  </div>
                   <div className="truncate font-sans text-[12px] font-semibold not-italic leading-snug text-white">
                     {s.name}
                   </div>
+
 
                 </div>
             </li>
