@@ -226,14 +226,16 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
                   {lines.map((l) => {
                     const filled = cat === "urban";
                     return (
-                      <button
+                      <a
                         key={l.code}
-                        onClick={() => {
-                          navigate({ to: "/bus/dashboard/$code", params: { code: l.code } });
+                        href={`/bus/dashboard/${encodeURIComponent(l.code)}`}
+                        onClick={(e) => {
+                          e.preventDefault();
                           onClose();
+                          navigate({ to: "/bus/dashboard/$code", params: { code: l.code } });
                         }}
                         title={l.name}
-                        className="flex aspect-square items-center justify-center gap-0.5 font-sans text-[15px] font-extrabold not-italic shadow-sm transition active:scale-95"
+                        className="flex aspect-square items-center justify-center gap-0.5 font-sans text-[15px] font-extrabold not-italic no-underline shadow-sm transition active:scale-95"
                         style={
                           filled
                             ? {
@@ -251,7 +253,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
                       >
                         {cat === "night" && <span aria-hidden>🌙</span>}
                         <span>{l.code}</span>
-                      </button>
+                      </a>
                     );
                   })}
                 </div>
