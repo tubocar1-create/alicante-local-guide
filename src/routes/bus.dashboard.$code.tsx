@@ -430,23 +430,25 @@ function DirectionColumn({
                     {s.name}
                   </div>
                   {transfers.length > 0 && (
-                    <div className="mt-1 flex flex-wrap items-center gap-1">
+                    <div className="mt-1 flex items-start gap-1.5">
                       <RefreshCw
-                        className="h-3 w-3"
+                        className="mt-0.5 h-3 w-3 shrink-0"
                         style={{ color: transfers[0].color }}
                       />
-                      <span className="font-sans text-[9px] font-semibold not-italic uppercase tracking-wide text-white/60">
+                      <span className="mt-0.5 font-sans text-[9px] font-semibold not-italic uppercase tracking-wide text-white/60">
                         Transbordo
                       </span>
-                      {transfers.map((t) => (
-                        <span
-                          key={t.code}
-                          className="inline-flex items-center rounded-full px-1.5 py-[1px] font-sans text-[10px] font-bold not-italic tabular-nums text-white"
-                          style={{ background: t.color }}
-                        >
-                          {t.code}
-                        </span>
-                      ))}
+                      <div className="flex flex-col items-start gap-0.5">
+                        {transfers.map((t) => (
+                          <span
+                            key={t.code}
+                            className="inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 font-sans text-[9px] font-bold not-italic tabular-nums leading-none text-white"
+                            style={{ background: t.color }}
+                          >
+                            {t.code}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   )}
 
