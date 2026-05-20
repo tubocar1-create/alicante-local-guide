@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound, Await } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, redirect, Await } from "@tanstack/react-router";
 import { Suspense } from "react";
 import { ArrowLeft, MapPin, Navigation, Sparkles, Star } from "lucide-react";
 import { getBeachQuick, getBeachExtras, type BeachExtras } from "@/lib/playas-map.functions";
@@ -6,8 +6,17 @@ import { getBeachBySlug } from "@/lib/playas-map-data";
 
 export const Route = createFileRoute("/playas/$slug")({
   loader: async ({ params }) => {
-    const quick = await getBeachQuick({ data: { slug: params.slug } });
-    if (!quick) throw notFound();
+    // Defensive: slug debe ser ascii kebab-case. Si no, redirigimos al listado.
+    if (!/^[a-z0-9-]+$/.test(params.slug)) {
+      throw redirect({ to: "/playas" });
+    }
+    let quick;
+    try {
+      quick = await getBeachQuick({ data: { slug: params.slug } });
+    } catch {
+      throw redirect({ to: "/playas" });
+    }
+    if (!quick) throw redirect({ to: "/playas" });
     // Fire-and-forget — render header immediately, stream the rest.
     const extras = getBeachExtras({ data: { slug: params.slug } });
     return { quick, extras };
