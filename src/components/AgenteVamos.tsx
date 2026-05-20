@@ -257,6 +257,10 @@ const DOMAINS: DomainSpec[] = [
       "me siento fatal", "me encuentro fatal", "no me encuentro bien",
       "estoy malo", "estoy mala", "estoy malita", "estoy malito",
       "me duele", "tengo dolor", "dolor de", "duele mucho",
+      // Síntomas como palabra suelta → SIEMPRE quedan en salud genérica.
+      "dolor", "dolores", "sintoma", "sintomas", "enfermedad", "cansancio",
+      "agotado", "agotada", "debil", "mareo", "mareos", "herida", "heridas",
+      "sangrado", "ardor", "picor", "picores", "molestia", "molestias",
       "tengo fiebre", "tengo decimas", "tengo gripe", "tengo catarro",
       "estoy resfriado", "estoy resfriada", "tengo tos", "estoy mareado",
       "estoy mareada", "me mareo", "tengo nauseas", "tengo vomitos",
@@ -1265,6 +1269,39 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             }
           } catch {
             // si falla el servidor, nos quedamos con la respuesta local
+          }
+        }
+
+        // ─── HARD-BLOCK · subcategorías médicas ──────────────────────────
+        // Nunca llevamos al usuario a un especialista (/salud/<categoria>)
+        // si su mensaje no menciona explícitamente esa especialidad.
+        // "tengo dolor" NUNCA debe acabar en /salud/traumatologia.
+        if (target && /^\/salud\/[^/]+/.test(target)) {
+          const cleanNorm = normalizeSpeech(clean);
+          // Stems de especialidades reconocibles en lenguaje natural.
+          const SPECIALTY_STEMS = [
+            "traumatolog", "trauma", "dermatolog", "pediatr", "cardiolog",
+            "oftalmolog", "ocular", "odontolog", "dentista", "psicolog",
+            "psiquiatr", "ginec", "matron", "nutricion", "dietista",
+            "estetic", "audiolog", "audifon", "rehabilit", "fisiotera",
+            "vacun", "veterinari", "optic", "salud mental", "analitica",
+            "analisis", "radiolog", "diagnostico por imagen", "ecograf",
+            "centro de salud", "ambulatorio", "sip", "urgenc",
+          ];
+          const explicit = SPECIALTY_STEMS.some((s) => cleanNorm.includes(s));
+          if (!explicit) {
+            // Forzamos al hub /salud y abrimos el flujo aclaratorio.
+            target = "/salud";
+            reply =
+              "Entiendo. ¿Necesitas hospital, farmacia, urgencias o centro de salud?";
+            pendingDomainRef.current = "salud";
+            forwardPrompt = undefined;
+            if (typeof window !== "undefined") {
+              try {
+                window.sessionStorage.removeItem("afp:fwdPrompt");
+                window.sessionStorage.removeItem("afp:openSubmenu");
+              } catch {}
+            }
           }
         }
 
