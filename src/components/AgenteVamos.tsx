@@ -373,6 +373,7 @@ let __vaActiveAudio: HTMLAudioElement | null = null;
 let __vaActiveAudioStartedAt = 0;
 const __vaPrimedUtterances: SpeechSynthesisUtterance[] = [];
 let __vaSpeechUnlocked = false;
+let __vaVoicesLoggingAttached = false;
 const POST_SPEECH_LISTEN_DELAY_MS = 140;
 
 function pickSpanishVoice(synth: SpeechSynthesis) {
@@ -382,6 +383,75 @@ function pickSpanishVoice(synth: SpeechSynthesis) {
     voices.find((v) => v.lang?.toLowerCase().startsWith("es")) ||
     null
   );
+}
+
+function extractSpeechText(respuesta: unknown) {
+  if (typeof respuesta === "string") return respuesta;
+  if (respuesta && typeof respuesta === "object") {
+    const obj = respuesta as Record<string, unknown>;
+    const value = obj.text ?? obj.message ?? obj.content;
+    return value == null ? "" : String(value);
+  }
+  return respuesta == null ? "" : String(respuesta);
+}
+
+function logSpeechSynthesisDebug(synth: SpeechSynthesis) {
+  console.log("speechSynthesis:", synth);
+  console.log("VOICES:", synth.getVoices());
+  if (!__vaVoicesLoggingAttached) {
+    __vaVoicesLoggingAttached = true;
+    synth.onvoiceschanged = () => {
+      console.log("VOICES:", synth.getVoices());
+    };
+  }
+}
+
+function hablar(texto: unknown, retryIfNoVoices = true) {
+  const respuesta = plainText(extractSpeechText(texto));
+  console.log("RESPUESTA:", texto);
+  if (!respuesta || typeof window === "undefined" || !window.speechSynthesis) return;
+  const synth = window.speechSynthesis;
+  logSpeechSynthesisDebug(synth);
+  if (!synth.getVoices().length && retryIfNoVoices) {
+    setTimeout(() => hablar(respuesta, false), 1000);
+    return;
+  }
+  synth.cancel();
+  synth.resume();
+  const utterance = new SpeechSynthesisUtterance(String(respuesta));
+  utterance.lang = "es-ES";
+  utterance.rate = 1;
+  utterance.pitch = 1;
+  utterance.volume = 1;
+  const voice = pickSpanishVoice(synth);
+  if (voice) utterance.voice = voice;
+  __vaActiveUtterance = utterance;
+  utterance.onstart = () => {
+    window.dispatchEvent(new CustomEvent("vamos:speech-start"));
+  };
+  const finish = () => {
+    if (__vaActiveUtterance === utterance) __vaActiveUtterance = null;
+    window.dispatchEvent(new CustomEvent("vamos:speech-end"));
+  };
+  utterance.onend = finish;
+  utterance.onerror = finish;
+  synth.speak(utterance);
+}
+
+if (typeof window !== "undefined") {
+  (window as any).hablar = hablar;
+}
+
+function iniciarAudio() {
+  if (typeof window === "undefined" || __vaSpeechUnlocked || !window.speechSynthesis) return;
+  try {
+    const unlock = new SpeechSynthesisUtterance(" ");
+    window.speechSynthesis.speak(unlock);
+    window.speechSynthesis.resume();
+    __vaSpeechUnlocked = true;
+  } catch {
+    // Ignore unlock failures; the next user tap can retry.
+  }
 }
 
 function configureSpanishUtterance(u: SpeechSynthesisUtterance, text: string) {
@@ -429,24 +499,7 @@ function keepSpeechSynthesisAwake(synth: SpeechSynthesis) {
 }
 
 function unlockSpeechFromUserGesture() {
-  if (typeof window === "undefined" || __vaSpeechUnlocked || !window.speechSynthesis) return;
-  try {
-    const synth = window.speechSynthesis;
-    const u = new SpeechSynthesisUtterance(" ");
-    u.lang = "es-ES";
-    u.volume = 0;
-    u.rate = 1;
-    u.onend = () => {
-      __vaSpeechUnlocked = true;
-    };
-    u.onerror = () => {
-      __vaSpeechUnlocked = true;
-    };
-    synth.resume();
-    synth.speak(u);
-  } catch {
-    // If the browser refuses the unlock, the visible tap-to-speak fallback remains available.
-  }
+  iniciarAudio();
 }
 
 function primeSpanishUtterances(count = 8) {
@@ -704,44 +757,27 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         return;
       }
 
-      // Implementación directa y sencilla: cancel → resume → speak.
-      // Sin colas, sin utterances reservadas, sin timers de bloqueo.
-      const voz = new SpeechSynthesisUtterance(text);
-      voz.lang = "es-ES";
-      voz.rate = 1.05;
-      voz.pitch = 1;
-      try {
-        const v = pickSpanishVoice(window.speechSynthesis);
-        if (v) voz.voice = v;
-      } catch {
-        // sin voz específica
-      }
-
-      voz.onstart = () => {
+      const onSpeechStart = () => {
         speakingRef.current = true;
         setSpeaking(true);
       };
-      voz.onend = () => {
+      const onSpeechEnd = () => {
         suppressRecognitionUntilRef.current = Date.now() + POST_SPEECH_LISTEN_DELAY_MS;
         speakingRef.current = false;
         setSpeaking(false);
         onEnd?.();
         resumeListeningAfterEcho();
       };
-      voz.onerror = () => {
-        speakingRef.current = false;
-        setSpeaking(false);
-        onEnd?.();
-        resumeListeningAfterEcho();
-      };
 
       try {
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.resume();
+        window.addEventListener("vamos:speech-start", onSpeechStart, { once: true });
+        window.addEventListener("vamos:speech-end", onSpeechEnd, { once: true });
         speakingRef.current = true;
         setSpeaking(true);
-        window.speechSynthesis.speak(voz);
+        hablar(text);
       } catch {
+        window.removeEventListener("vamos:speech-start", onSpeechStart);
+        window.removeEventListener("vamos:speech-end", onSpeechEnd);
         onEnd?.();
         resumeListeningAfterEcho();
       }
@@ -1393,8 +1429,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             <div className="flex items-center gap-2">
               <button
                 onClick={() => {
+                  iniciarAudio();
                   if (paused) {
-                    unlockSpeechFromUserGesture();
                     primeSpanishUtterances();
                     setVoiceError(null);
                     setPaused(false);
@@ -1541,6 +1577,7 @@ export function AgenteVamosFab() {
       {!open && (
         <button
           onClick={() => {
+            iniciarAudio();
             startGreetingFromUserGesture();
             setOpen(true);
           }}
