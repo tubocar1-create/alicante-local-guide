@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
 // Ruta legacy: antes mostraba "Buses en vivo". Ahora cualquier entrada a /bus
 // debe abrir el selector "¿Ya sabes qué bus tomar?" en Inicio.
