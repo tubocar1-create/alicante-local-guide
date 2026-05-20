@@ -953,11 +953,11 @@ export function ChatScreen() {
           </div>
         )}
         {composerMode === "voice" ? (
-          <div className="mx-auto flex max-w-2xl flex-col items-center gap-2">
+          <div className="mx-auto flex max-w-2xl flex-col items-center gap-1">
             <button
               onClick={() => window.dispatchEvent(new Event("vamos:open"))}
               aria-label="Hablar con Agente Vamos"
-              className="group relative flex h-20 w-20 items-center justify-center rounded-full transition active:scale-95"
+              className="group relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full transition active:scale-95"
               style={{
                 filter:
                   "drop-shadow(0 0 14px rgba(255,165,0,0.65)) drop-shadow(0 0 28px rgba(255,140,0,0.45))",
@@ -974,9 +974,10 @@ export function ChatScreen() {
               <img
                 src={asistenteIcon}
                 alt="Asistente"
-                className="relative h-full w-full rounded-full object-cover"
+                className="relative h-[130%] w-[130%] -translate-y-[8%] object-cover"
               />
             </button>
+            <span className="text-[10px] font-semibold text-foreground">Asistente</span>
           </div>
         ) : (
           <div className="mx-auto flex max-w-2xl items-end gap-2">
