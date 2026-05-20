@@ -229,11 +229,6 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
                       <a
                         key={l.code}
                         href={`/bus/dashboard/${encodeURIComponent(l.code)}`}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          onClose();
-                          navigate({ to: "/bus/dashboard/$code", params: { code: l.code } });
-                        }}
                         title={l.name}
                         className="flex aspect-square items-center justify-center gap-0.5 font-sans text-[15px] font-extrabold not-italic no-underline shadow-sm transition active:scale-95"
                         style={
