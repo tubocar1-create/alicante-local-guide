@@ -696,7 +696,7 @@ export function ChatScreen() {
       {isWelcome && <div className="mb-2"><AdBanner /></div>}
 
       {/* Messages */}
-      <div ref={scrollRef} className={["relative flex-1 px-4 pt-3 pb-5", isWelcome ? "overflow-hidden" : "overflow-y-auto"].join(" ")}>
+      <div ref={scrollRef} className={["relative min-h-0 flex-1 px-4 pt-3", isWelcome ? "overflow-hidden pb-0" : "overflow-y-auto pb-5"].join(" ")}>
         <div className="mx-auto flex max-w-2xl flex-col gap-3">
           {isWelcome && (
             <div className="relative mx-auto mb-1 w-full max-w-[320px] overflow-visible rounded-xl">
@@ -1032,7 +1032,7 @@ export function ChatScreen() {
       )}
       {isWelcome && (
         <>
-          <nav className="relative flex items-center justify-around border-t border-border/60 bg-[oklch(0.985_0.018_88)]/95 px-2 pt-2 pb-3 backdrop-blur">
+          <nav className="relative flex items-center justify-around border-t border-border/60 bg-[oklch(0.985_0.018_88)]/95 px-2 pt-2 pb-[max(0.25rem,env(safe-area-inset-bottom))] backdrop-blur">
           <button
             type="button"
             onClick={() => {

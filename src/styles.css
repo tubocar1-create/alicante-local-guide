@@ -115,6 +115,13 @@
   }
   html, body, #root {
     height: 100%;
+    /* Encajar exactamente al viewport visible del móvil (sin barra URL) */
+    height: 100dvh;
+    min-height: 100dvh;
+  }
+  html, body {
+    overflow: hidden;
+    overscroll-behavior: none;
   }
   body {
     background-color: var(--color-background);
