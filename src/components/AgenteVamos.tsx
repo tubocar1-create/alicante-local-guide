@@ -1726,6 +1726,28 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             const normalizedTarget = ["/bus", "/bus/", "/bus/planner", "/buses-en-vivo"].includes(raw)
               ? "action:bus-picker"
               : raw;
+            // Sentinel: abrir el picker con una línea preseleccionada.
+            const lineSentinel = normalizedTarget.match(/^action:bus-picker:line:([A-Z0-9]+)$/i);
+            if (lineSentinel) {
+              const lineCode = lineSentinel[1];
+              try {
+                window.sessionStorage.setItem("agent:open-bus-picker", "1");
+                window.sessionStorage.setItem("agent:open-bus-picker-line", lineCode);
+              } catch {
+                /* noop */
+              }
+              navigate({ href: "/?openBusPicker=1", replace: true } as any);
+              setTimeout(() => {
+                try {
+                  window.dispatchEvent(
+                    new CustomEvent("agent:open-bus-picker", { detail: { line: lineCode } }),
+                  );
+                } catch {
+                  /* noop */
+                }
+              }, 60);
+              return;
+            }
             // Sentinel: abrir el picker de buses urbanos en el Inicio.
             if (normalizedTarget === "action:bus-picker") {
               try {
