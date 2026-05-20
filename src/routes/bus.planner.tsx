@@ -153,7 +153,7 @@ function PlannerPage() {
       <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur">
         <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
           <Link
-            to="/bus"
+            to="/"
             className="inline-flex h-9 w-9 items-center justify-center rounded-full hover:bg-muted"
             aria-label="Volver"
           >

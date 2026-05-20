@@ -278,14 +278,14 @@ const BusinessBookingsRoute = BusinessBookingsRouteImport.update({
   getParentRoute: () => BusinessRoute,
 } as any)
 const BusPlannerRoute = BusPlannerRouteImport.update({
-  id: '/planner',
-  path: '/planner',
-  getParentRoute: () => BusRoute,
+  id: '/bus/planner',
+  path: '/bus/planner',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const BusLinesRoute = BusLinesRouteImport.update({
-  id: '/lines',
-  path: '/lines',
-  getParentRoute: () => BusRoute,
+  id: '/bus/lines',
+  path: '/bus/lines',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AdminSaludRoute = AdminSaludRouteImport.update({
   id: '/admin/salud',
@@ -796,6 +796,8 @@ export interface RootRouteChildren {
   WelcomeRoute: typeof WelcomeRoute
   AdminPlacesRoute: typeof AdminPlacesRoute
   AdminSaludRoute: typeof AdminSaludRoute
+  BusLinesRoute: typeof BusLinesRouteWithChildren
+  BusPlannerRoute: typeof BusPlannerRoute
   HospitalesIdRoute: typeof HospitalesIdRoute
   HotelIdRoute: typeof HotelIdRoute
   OcioCarteleraRoute: typeof OcioCarteleraRoute
@@ -1111,17 +1113,17 @@ declare module '@tanstack/react-router' {
     }
     '/bus/planner': {
       id: '/bus/planner'
-      path: '/planner'
+      path: '/bus/planner'
       fullPath: '/bus/planner'
       preLoaderRoute: typeof BusPlannerRouteImport
-      parentRoute: typeof BusRoute
+      parentRoute: typeof rootRouteImport
     }
     '/bus/lines': {
       id: '/bus/lines'
-      path: '/lines'
+      path: '/bus/lines'
       fullPath: '/bus/lines'
       preLoaderRoute: typeof BusLinesRouteImport
-      parentRoute: typeof BusRoute
+      parentRoute: typeof rootRouteImport
     }
     '/admin/salud': {
       id: '/admin/salud'
@@ -1323,6 +1325,18 @@ const ThreadsRouteChildren: ThreadsRouteChildren = {
 const ThreadsRouteWithChildren =
   ThreadsRoute._addFileChildren(ThreadsRouteChildren)
 
+interface BusLinesRouteChildren {
+  BusLinesCodeRoute: typeof BusLinesCodeRoute
+}
+
+const BusLinesRouteChildren: BusLinesRouteChildren = {
+  BusLinesCodeRoute: BusLinesCodeRoute,
+}
+
+const BusLinesRouteWithChildren = BusLinesRoute._addFileChildren(
+  BusLinesRouteChildren,
+)
+
 interface OcioCinesRouteChildren {
   OcioCinesIdRoute: typeof OcioCinesIdRoute
 }
@@ -1370,6 +1384,8 @@ const rootRouteChildren: RootRouteChildren = {
   WelcomeRoute: WelcomeRoute,
   AdminPlacesRoute: AdminPlacesRoute,
   AdminSaludRoute: AdminSaludRoute,
+  BusLinesRoute: BusLinesRouteWithChildren,
+  BusPlannerRoute: BusPlannerRoute,
   HospitalesIdRoute: HospitalesIdRoute,
   HotelIdRoute: HotelIdRoute,
   OcioCarteleraRoute: OcioCarteleraRoute,
@@ -1397,13 +1413,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
