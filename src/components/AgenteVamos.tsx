@@ -625,6 +625,15 @@ function findSubcategoryByTarget(target: string | undefined, catalog: AgenteRout
   return null;
 }
 
+function matchBusLineDashboard(query: string, allowBareNumber = false): string | null {
+  const explicit =
+    query.match(/\b(?:linea|line|l|bus|autobus)\s*([0-9]{1,3}[a-z]?)\b/i) ||
+    query.match(/\bel\s+([0-9]{1,3}[a-z]?)\b/i);
+  const bare = allowBareNumber ? query.match(/^\s*([0-9]{1,3}[a-z]?)\s*$/i) : null;
+  const code = (explicit?.[1] ?? bare?.[1])?.replace(/[\s-]/g, "").toUpperCase();
+  return code && /\d/.test(code) ? `/bus/dashboard/${code}` : null;
+}
+
 function matchDbIntent(
   query: string,
   dbIntents: AgenteIntentRow[],
