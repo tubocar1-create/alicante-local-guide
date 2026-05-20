@@ -475,16 +475,22 @@ function DirectionColumn({
             ? formatHHMM(new Date(now.getTime() + eta1 * 60_000))
             : null;
 
+          const isNearest = nearest?.code === s.code;
+
           return (
             <li
               key={`${s.code}-${i}`}
               className="relative flex flex-col gap-1 rounded-md pb-2"
               style={{
                 borderBottom: "1px solid rgba(255,255,255,0.06)",
-                boxShadow: "0 1px 0 rgba(0,0,0,0.4)",
-                background: transferColor
-                  ? `linear-gradient(90deg, ${transferColor}26 0%, ${transferColor}10 60%, transparent 100%)`
-                  : undefined,
+                boxShadow: isNearest
+                  ? "0 0 0 2px rgba(52,211,153,0.9), 0 0 14px rgba(52,211,153,0.45)"
+                  : "0 1px 0 rgba(0,0,0,0.4)",
+                background: isNearest
+                  ? "linear-gradient(90deg, rgba(52,211,153,0.28) 0%, rgba(52,211,153,0.10) 70%, transparent 100%)"
+                  : transferColor
+                    ? `linear-gradient(90deg, ${transferColor}26 0%, ${transferColor}10 60%, transparent 100%)`
+                    : undefined,
               }}
             >
               {!isDest && (
@@ -496,16 +502,23 @@ function DirectionColumn({
                 />
               )}
 
+              <div className="flex items-center gap-1 self-start">
+                {(isOrigin || isDest) && (
+                  <span
+                    className="inline-block rounded px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-white"
+                    style={{ background: color }}
+                  >
+                    {isOrigin ? "Origen" : "Destino"}
+                  </span>
+                )}
+                {isNearest && (
+                  <span className="inline-flex items-center gap-0.5 rounded bg-emerald-400 px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-black">
+                    <MapPin className="h-2.5 w-2.5" />
+                    {Math.round(nearest!.distance)} m
+                  </span>
+                )}
+              </div>
 
-
-              {(isOrigin || isDest) && (
-                <span
-                  className="inline-block self-start rounded px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-white"
-                  style={{ background: color }}
-                >
-                  {isOrigin ? "Origen" : "Destino"}
-                </span>
-              )}
               <button
                 type="button"
                 onClick={() => onPickStop(s.code, s.name)}
