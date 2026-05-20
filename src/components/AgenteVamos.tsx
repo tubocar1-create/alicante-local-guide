@@ -287,7 +287,7 @@ const DOMAINS: DomainSpec[] = [
       "malestar", "estoy fatal", "salud", "medico", "doctor", "sanitario",
     ],
     question:
-      "Entiendo. ¿Necesitas hospital, farmacia, urgencias o centro de salud?",
+      "Entiendo. ¿Necesitas hospital, farmacia, urgencias o especialista?",
     audio: "health",
     followups: [
       { keys: ["hospital", "hospitales", "urgencia", "urgencias", "ambulancia", "emergencia"], path: "/hospitales" },
@@ -355,6 +355,26 @@ const DOMAINS: DomainSpec[] = [
     followups: [
       // Si cambia de opinión y pide ayuda, abrimos el picker normal.
       { keys: ["no se", "no sé", "ayuda", "ayudame", "ayúdame", "no lo se", "no lo sé"], path: "action:bus-picker" },
+    ],
+  },
+  {
+    id: "fiestas",
+    hubPath: "/",
+    triggers: [
+      "quiero fiesta", "ir de fiesta", "salir de fiesta", "salir de noche",
+      "salir de copas", "tomar algo", "tomar una copa", "tomar unas copas",
+      "irme de copas", "pubs", "pub", "discoteca", "discotecas", "terraza",
+      "musica en vivo", "música en vivo", "marcha", "ambiente nocturno",
+      "vida nocturna", "noche alicantina",
+    ],
+    question:
+      "El centro está muy animado esta noche 🍸 ¿Prefieres terraza, pubs, discoteca o música en vivo?",
+    audio: "leisure",
+    followups: [
+      { keys: ["terraza", "terrazas", "azotea", "rooftop"], path: "/" },
+      { keys: ["pub", "pubs", "bar", "bares", "cerveza", "copa", "copas"], path: "/" },
+      { keys: ["discoteca", "discotecas", "club", "clubs", "disco"], path: "/" },
+      { keys: ["musica en vivo", "música en vivo", "concierto", "directo", "live"], path: "/ocio/conciertos" },
     ],
   },
   {
@@ -744,6 +764,27 @@ function hasHealthHardBlock(query: string): boolean {
     if (!n) return false;
     return n.includes(" ") ? query.includes(n) : new RegExp(`(^|\\s)${n}(\\s|$)`).test(query);
   });
+}
+
+// Adapta el tono del texto según el modo del asistente. Solo retoca
+// registro/longitud: nunca cambia el destino ni inventa información.
+function formatReply(mode: AssistantMode, base: string): string {
+  switch (mode) {
+    case "operativo":
+      return base; // frases cortas, sin floritura
+    case "empatico":
+      return base.startsWith("Tranquilo") || base.startsWith("Entiendo")
+        ? base
+        : `Tranquilo. ${base}`;
+    case "social":
+      return base.startsWith("¡") ? base : `¡Vamos! ${base}`;
+    case "inspiracional":
+      return base.startsWith("Genial") ? base : `Genial. ${base}`;
+    case "practico":
+      return base;
+    default:
+      return base;
+  }
 }
 
 type AssistantMode =
@@ -1758,7 +1799,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           } catch {}
         }
         const fallback = localResolve(clean, pendingDomainRef.current, routingCatalogRef.current);
-        let reply = fallback.reply;
+        const replyMode = pickAssistantMode(fallback.pendingDomain ?? pendingDomainRef.current ?? null);
+        let reply = formatReply(replyMode, fallback.reply);
         let target: string | undefined = fallback.path;
         let forwardPrompt: string | undefined =
           fallback.path === "/" && fallback.reply.includes("Dashboard Nocturno")
