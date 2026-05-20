@@ -326,7 +326,7 @@ const DOMAINS: DomainSpec[] = [
     audio: "bus",
     followups: [
       { keys: ["bus", "autobus", "autobuses", "urbano", "urbanos", "emt", "parada", "linea", "lineas", "local", "locales"], path: "action:bus-picker" },
-      { keys: ["ruta", "planificador", "planificar", "trayecto"], path: "/bus/planner" },
+      { keys: ["ruta", "planificador", "planificar", "trayecto"], path: "action:bus-picker" },
       { keys: ["vuelo", "vuelos", "avion", "aeropuerto"], path: "/vuelos" },
     ],
   },
