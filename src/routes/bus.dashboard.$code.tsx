@@ -398,11 +398,15 @@ function DirectionColumn({
                   <div className="flex items-baseline gap-1.5">
                     <span className="font-sans text-[11px] font-semibold not-italic tabular-nums text-white/90">
                       {etaTime ?? "--:--"}
+                      {etaTime2 && (
+                        <span className="ml-1 text-white/60">· {etaTime2}</span>
+                      )}
                     </span>
                     <span className="ml-auto font-sans text-[10px] not-italic tabular-nums text-white/50">
                       {s.code}
                     </span>
                   </div>
+
                   <div className="truncate font-sans text-[12px] font-semibold not-italic leading-snug text-white">
                     {s.name}
                   </div>
