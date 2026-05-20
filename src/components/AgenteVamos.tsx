@@ -622,6 +622,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const playAudioClip = useCallback(
     (clip: AgentAudioClip, text: string, onEnd?: () => void) => {
       if (typeof window === "undefined" || mutedRef.current) {
+        assistantSpeechMemoryRef.current = [text, ...assistantSpeechMemoryRef.current].slice(0, 6);
         onEnd?.();
         resumeListeningAfterEcho();
         return true;
@@ -633,6 +634,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         audio.volume = 1;
         __vaActiveAudio = audio;
         __vaActiveAudioStartedAt = Date.now();
+        assistantSpeechMemoryRef.current = [text, ...assistantSpeechMemoryRef.current].slice(0, 6);
         setTapToSpeak(null);
         speakingRef.current = true;
         setSpeaking(true);
