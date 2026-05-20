@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ArrowDown, ArrowUp, Bus, Radio, RefreshCw, Loader2 } from "lucide-react";
 import { useBusGraph } from "@/hooks/useBusGraph";
+import busAlicanteImg from "@/assets/bus-alicante.jpg";
 
 
 export const Route = createFileRoute("/bus/dashboard/$code")({
@@ -395,7 +396,11 @@ function DirectionColumn({
                   }
                 >
                   {hasEta && eta1 === 0 ? (
-                    <Bus className="h-5 w-5" />
+                    <img
+                      src={busAlicanteImg}
+                      alt="Bus"
+                      className="h-7 w-7 object-contain"
+                    />
                   ) : (
                     <>
                       <span className="font-sans text-[12px] font-extrabold not-italic tabular-nums">
