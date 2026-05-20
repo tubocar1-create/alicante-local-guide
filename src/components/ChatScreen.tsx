@@ -242,6 +242,13 @@ export function ChatScreen() {
   }, []);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const open = () => setShowBusPicker(true);
+    window.addEventListener("agent:open-bus-picker", open);
+    return () => window.removeEventListener("agent:open-bus-picker", open);
+  }, []);
+
+  useEffect(() => {
     const restored = readInitialMessages();
     restoredReturnRef.current = true;
     if (restored.length > 1) setMessages(restored);
