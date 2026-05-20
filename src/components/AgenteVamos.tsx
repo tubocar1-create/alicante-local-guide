@@ -1630,7 +1630,15 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       rec.interimResults = false;
       let finalText = "";
       let lastTranscript = "";
+      let prevTranscript = "";
       let handled = false;
+      let maxTurnTimer: ReturnType<typeof setTimeout> | null = null;
+      const clearMaxTimer = () => {
+        if (maxTurnTimer) {
+          clearTimeout(maxTurnTimer);
+          maxTurnTimer = null;
+        }
+      };
       rec.onresult = (e: any) => {
         // Anti-eco: si el agente está hablando o cargando, descarta lo
         // captado por el micro (es el propio TTS realimentándose).
@@ -1642,19 +1650,15 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         ) {
           finalText = "";
           lastTranscript = "";
+          prevTranscript = "";
           setInterim("");
           if (turnTimerRef.current) {
             clearTimeout(turnTimerRef.current);
             turnTimerRef.current = null;
           }
+          clearMaxTimer();
           return;
         }
-        // Solo finales. Acumulamos desde resultIndex para captar frases
-        // completas tipo "me siento mal" sin perder la última palabra.
-        // IMPORTANTE: el reconocedor puede emitir varios resultados finales
-        // separados para una sola frase ("me siento" + "enfermo"). Por eso
-        // NO procesamos inmediatamente: esperamos un pequeño debounce o el
-        // evento onspeechend para concatenar todos los finales del turno.
         const finals: string[] = [];
         for (let i = e.resultIndex; i < e.results.length; i++) {
           const result = e.results[i];
@@ -1665,16 +1669,28 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         if (!incoming.trim()) return;
         finalText = compactRecognitionText([finalText, incoming].filter(Boolean));
         lastTranscript = finalText.trim();
+        // Si el texto no ha cambiado (Android sigue emitiendo el mismo chunk),
+        // NO reiniciamos el debounce — dejamos que dispare.
+        if (lastTranscript === prevTranscript) return;
+        prevTranscript = lastTranscript;
         setInterim("");
         bumpIdle();
         if (turnTimerRef.current) {
           clearTimeout(turnTimerRef.current);
         }
-        // Debounce: si llegan más finales en los próximos 900ms, los unimos.
+        // Debounce: si llega texto NUEVO en los próximos 900ms, lo unimos.
         turnTimerRef.current = setTimeout(() => {
           turnTimerRef.current = null;
           finishTurn();
         }, 900);
+        // Fallback máximo: pase lo que pase, procesa a los 4s desde
+        // el primer chunk, aunque Android siga emitiendo ruido.
+        if (!maxTurnTimer) {
+          maxTurnTimer = setTimeout(() => {
+            maxTurnTimer = null;
+            if (lastTranscript) finishTurn();
+          }, 4000);
+        }
       };
       const finishTurn = () => {
         if (handled) return true;
@@ -1682,11 +1698,13 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           clearTimeout(turnTimerRef.current);
           turnTimerRef.current = null;
         }
+        clearMaxTimer();
         const t = compactRecognitionText([finalText || lastTranscript]);
         if (!t) return false;
         if (isLikelyAgentEcho(t, assistantSpeechMemoryRef.current)) {
           finalText = "";
           lastTranscript = "";
+          prevTranscript = "";
           setInterim("");
           suppressRecognitionUntilRef.current = Date.now() + 700;
           resumeListeningAfterEcho();
