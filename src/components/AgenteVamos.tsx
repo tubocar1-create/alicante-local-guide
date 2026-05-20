@@ -15,7 +15,12 @@ import {
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { agenteVamosChat } from "@/lib/agente.functions";
-import { loadAgenteIntents, type AgenteIntentRow } from "@/lib/agente-intents.functions";
+import {
+  loadAgenteRoutingCatalog,
+  type AgenteIntentRow,
+  type AgenteRoutingCatalog,
+  type AgenteSubcategory,
+} from "@/lib/agente-intents.functions";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
