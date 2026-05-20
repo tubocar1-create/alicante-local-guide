@@ -251,7 +251,6 @@ function BusDashboardPage() {
         )}
 
 
-        </p>
 
         {loading && (
           <p className="mt-4 text-center text-sm text-white/60">Cargando paradas…</p>
