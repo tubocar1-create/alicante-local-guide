@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, MapPin, Search, X } from "lucide-react";
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { useUserLocation, distanceKm } from "@/hooks/useUserLocation";
@@ -39,6 +40,7 @@ const CATEGORY_COLOR: Record<"night" | "extraurban" | "urban", string> = {
 
 
 export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode }: Props) {
+  const navigate = useNavigate();
   const { data, loading } = useBusGraph();
   const { state: locState, request: requestLocation } = useUserLocation();
   const [step, setStep] = useState<"ask" | "line" | "direction" | "stop">(
@@ -251,10 +253,8 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
                       <button
                         key={l.code}
                         onClick={() => {
-                          setLine(l);
-                          setDirection(null);
-                          setStep("direction");
-                          if (locState.status === "idle") requestLocation();
+                          onClose();
+                          navigate({ to: "/bus/dashboard/$code", params: { code: l.code } });
                         }}
                         title={l.name}
                         className="flex aspect-square items-center justify-center gap-0.5 font-sans text-[15px] font-extrabold not-italic shadow-sm transition active:scale-95"
