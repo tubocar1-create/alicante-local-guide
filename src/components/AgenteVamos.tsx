@@ -307,8 +307,14 @@ function collapseRepeatedTokenRuns(text: string) {
     changed = false;
     for (let size = Math.floor(tokens.length / 2); size >= 1; size--) {
       for (let i = 0; i + size * 2 <= tokens.length; i++) {
-        const left = tokens.slice(i, i + size).map(normalizeSpeech).join(" ");
-        const right = tokens.slice(i + size, i + size * 2).map(normalizeSpeech).join(" ");
+        const left = tokens
+          .slice(i, i + size)
+          .map(normalizeSpeech)
+          .join(" ");
+        const right = tokens
+          .slice(i + size, i + size * 2)
+          .map(normalizeSpeech)
+          .join(" ");
         if (left && left === right) {
           tokens.splice(i + size, size);
           changed = true;
@@ -745,18 +751,18 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       suppressRecognitionUntilRef.current = Date.now() + 1200;
       setInterim("");
       try {
-          if (recogRef.current) {
-            recogRef.current.onresult = null;
-            recogRef.current.onspeechend = null;
-            recogRef.current.onerror = null;
-            recogRef.current.onend = null;
-          }
-          recogRef.current?.abort?.();
+        if (recogRef.current) {
+          recogRef.current.onresult = null;
+          recogRef.current.onspeechend = null;
+          recogRef.current.onerror = null;
+          recogRef.current.onend = null;
+        }
+        recogRef.current?.abort?.();
       } catch {
         // Ignore if recognition is already stopped.
       }
-        recogRef.current = null;
-        setListening(false);
+      recogRef.current = null;
+      setListening(false);
       if (audio && playAudioClip(audio, text, onEnd)) return;
       if (mutedRef.current || typeof window === "undefined" || !window.speechSynthesis) {
         if (!mutedRef.current) setTapToSpeak({ text, audio });
@@ -1088,7 +1094,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
   const startListening = useCallback(() => {
     if (!openRef.current || modeRef.current !== "voice") return;
-    if (pausedRef.current || loadingRef.current || speakingRef.current || isAgentSpeechOutputActive()) {
+    if (
+      pausedRef.current ||
+      loadingRef.current ||
+      speakingRef.current ||
+      isAgentSpeechOutputActive()
+    ) {
       if (isAgentSpeechOutputActive()) resumeListeningAfterEcho();
       return;
     }
@@ -1381,7 +1392,6 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   return (
     <div className="pointer-events-none fixed inset-0 z-[100] flex">
       <div className="pointer-events-auto relative flex h-full w-full flex-col overflow-hidden border bg-background shadow-2xl">
-
         <header className="flex items-center justify-between border-b bg-gradient-to-r from-primary to-orange-500 px-4 py-3 text-primary-foreground">
           <div className="flex items-center gap-2">
             <div className="grid h-9 w-9 place-items-center rounded-full bg-white/20">
@@ -1456,268 +1466,266 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
         {/* Modo voz siempre visible (compacto) */}
         <div className="flex flex-col items-center gap-2 border-b px-4 py-3">
+          {/* Voice-only — no message history rendered. Show just live transcript. */}
+          <div className="min-h-[2.5rem] w-full text-center">
+            {interim ? (
+              <p className="text-sm italic text-foreground/80">"{interim}…"</p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                {speaking
+                  ? "VA está hablando…"
+                  : listening
+                    ? "Habla cuando quieras"
+                    : loading
+                      ? "Pensando una respuesta…"
+                      : paused
+                        ? "Conversación en pausa"
+                        : "Preparando…"}
+              </p>
+            )}
+          </div>
 
-            {/* Voice-only — no message history rendered. Show just live transcript. */}
-            <div className="min-h-[2.5rem] w-full text-center">
-              {interim ? (
-                <p className="text-sm italic text-foreground/80">"{interim}…"</p>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  {speaking
-                    ? "VA está hablando…"
-                    : listening
-                      ? "Habla cuando quieras"
-                      : loading
-                        ? "Pensando una respuesta…"
-                        : paused
-                          ? "Conversación en pausa"
-                          : "Preparando…"}
+          <div className="flex w-full flex-col items-center gap-3 pb-2">
+            {voiceError && <p className="text-center text-xs text-destructive">{voiceError}</p>}
+            {tapToSpeak && (
+              <div className="flex w-full flex-col items-center gap-2">
+                <p className="max-w-[28rem] text-center text-sm text-foreground/90">
+                  {tapToSpeak.text}
                 </p>
-              )}
-            </div>
-
-            <div className="flex w-full flex-col items-center gap-3 pb-2">
-              {voiceError && <p className="text-center text-xs text-destructive">{voiceError}</p>}
-              {tapToSpeak && (
-                <div className="flex w-full flex-col items-center gap-2">
-                  <p className="max-w-[28rem] text-center text-sm text-foreground/90">
-                    {tapToSpeak.text}
-                  </p>
-                  <button
-                    onClick={() => {
-                      // Captura el texto y limpia el banner antes de hablar
-                      // para que un nuevo fallo no deje el botón huérfano.
-                      const pending = tapToSpeak;
-                      setTapToSpeak(null);
-                      stopListening();
-                      // Reproducción síncrona dentro del gesto del usuario:
-                      // creamos el utterance aquí mismo para que el navegador
-                      // no bloquee la síntesis por falta de gesture.
-                      try {
-                        if (typeof window !== "undefined" && window.speechSynthesis) {
-                          const synth = window.speechSynthesis;
-                          try {
-                            synth.cancel();
-                          } catch {
-                            // Ignore if the engine is already idle.
-                          }
-                          try {
-                            synth.resume();
-                          } catch {
-                            // Ignore if the engine cannot resume synchronously.
-                          }
-                          const u = makeSpanishUtterance(pending.text, true);
-                          let started = false;
-                          const blockedTimer = window.setTimeout(() => {
-                            if (!started && __vaActiveUtterance === u) {
-                              __vaActiveUtterance = null;
-                              speakingRef.current = false;
-                              setSpeaking(false);
-                              setTapToSpeak(pending);
-                            }
-                          }, 1200);
-                          u.onstart = () => {
-                            started = true;
-                            window.clearTimeout(blockedTimer);
-                            speakingRef.current = true;
-                            setSpeaking(true);
-                          };
-                          u.onend = () => {
-                            window.clearTimeout(blockedTimer);
+                <button
+                  onClick={() => {
+                    // Captura el texto y limpia el banner antes de hablar
+                    // para que un nuevo fallo no deje el botón huérfano.
+                    const pending = tapToSpeak;
+                    setTapToSpeak(null);
+                    stopListening();
+                    // Reproducción síncrona dentro del gesto del usuario:
+                    // creamos el utterance aquí mismo para que el navegador
+                    // no bloquee la síntesis por falta de gesture.
+                    try {
+                      if (typeof window !== "undefined" && window.speechSynthesis) {
+                        const synth = window.speechSynthesis;
+                        try {
+                          synth.cancel();
+                        } catch {
+                          // Ignore if the engine is already idle.
+                        }
+                        try {
+                          synth.resume();
+                        } catch {
+                          // Ignore if the engine cannot resume synchronously.
+                        }
+                        const u = makeSpanishUtterance(pending.text, true);
+                        let started = false;
+                        const blockedTimer = window.setTimeout(() => {
+                          if (!started && __vaActiveUtterance === u) {
                             __vaActiveUtterance = null;
-                            suppressRecognitionUntilRef.current = Date.now() + 700;
-                            speakingRef.current = false;
-                            setSpeaking(false);
-                            resumeListeningAfterEcho();
-                          };
-                          u.onerror = () => {
-                            window.clearTimeout(blockedTimer);
-                            __vaActiveUtterance = null;
-                            suppressRecognitionUntilRef.current = Date.now() + 700;
                             speakingRef.current = false;
                             setSpeaking(false);
                             setTapToSpeak(pending);
-                          };
+                          }
+                        }, 1200);
+                        u.onstart = () => {
+                          started = true;
+                          window.clearTimeout(blockedTimer);
                           speakingRef.current = true;
                           setSpeaking(true);
-                          synth.speak(u);
-                          keepSpeechSynthesisAwake(synth);
-                        }
-                      } catch {
-                        setTapToSpeak(pending);
+                        };
+                        u.onend = () => {
+                          window.clearTimeout(blockedTimer);
+                          __vaActiveUtterance = null;
+                          suppressRecognitionUntilRef.current = Date.now() + 700;
+                          speakingRef.current = false;
+                          setSpeaking(false);
+                          resumeListeningAfterEcho();
+                        };
+                        u.onerror = () => {
+                          window.clearTimeout(blockedTimer);
+                          __vaActiveUtterance = null;
+                          suppressRecognitionUntilRef.current = Date.now() + 700;
+                          speakingRef.current = false;
+                          setSpeaking(false);
+                          setTapToSpeak(pending);
+                        };
+                        speakingRef.current = true;
+                        setSpeaking(true);
+                        synth.speak(u);
+                        keepSpeechSynthesisAwake(synth);
                       }
-                    }}
-                    className="rounded-full border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
-                  >
-                    tocar para oír respuesta
-                  </button>
-                </div>
-              )}
-
-              {/* Animated orb — visual only, no interaction required */}
-              <div
-                className={cn(
-                  "relative grid h-20 w-20 place-items-center rounded-full text-primary-foreground shadow-2xl transition",
-                  paused
-                    ? "bg-muted text-muted-foreground"
-                    : listening
-                      ? "bg-red-500 ring-8 ring-red-500/30 animate-pulse"
-                      : speaking
-                        ? "bg-orange-500 ring-8 ring-orange-500/30"
-                        : loading
-                          ? "bg-primary ring-4 ring-primary/30"
-                          : "bg-gradient-to-br from-primary to-orange-500 ring-4 ring-primary/20",
-                )}
-              >
-                {loading ? (
-                  <Loader2 className="h-8 w-8 animate-spin" />
-                ) : paused ? (
-                  <MicOff className="h-8 w-8" />
-                ) : (
-                  <Mic className="h-8 w-8" />
-                )}
-              </div>
-
-              <p className="text-center text-xs text-muted-foreground">
-                {paused
-                  ? "conversación en pausa"
-                  : loading
-                    ? "pensando…"
-                    : speaking
-                      ? "hablando — espera tu turno"
-                      : listening
-                        ? "te escucho · habla cuando quieras"
-                        : "preparando micrófono…"}
-              </p>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    if (paused) {
-                      unlockSpeechFromUserGesture();
-                      primeSpanishUtterances();
-                      const warmup = requestMicWarmupFromUserGesture();
-                      setVoiceError(null);
-                      setPaused(false);
-                      if (warmup) {
-                        warmup.then((state) => {
-                          setMicReady(state === "ready");
-                          if (state === "ready") startListeningRef.current();
-                          else if (__vaMicWarmupMessage) setVoiceError(__vaMicWarmupMessage);
-                        });
-                      } else {
-                        setMicReady(__vaMicWarmupState === "ready");
-                        setTimeout(() => startListeningRef.current(), 100);
-                      }
-                    } else {
-                      setPaused(true);
-                      stopListening();
-                      stopSpeaking();
+                    } catch {
+                      setTapToSpeak(pending);
                     }
-                  }}
-                  className="flex items-center gap-1 rounded-full border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
-                >
-                  {paused ? (
-                    <>
-                      <Play className="h-3 w-3" /> reanudar
-                    </>
-                  ) : (
-                    <>
-                      <Pause className="h-3 w-3" /> pausar
-                    </>
-                  )}
-                </button>
-                {!micReady && (
-                  <button
-                    onClick={() => {
-                      unlockSpeechFromUserGesture();
-                      const warmup = requestMicWarmupFromUserGesture();
-                      setVoiceError(__vaMicWarmupMessage);
-                      warmup?.then((state) => {
-                        setMicReady(state === "ready");
-                        if (state === "ready") {
-                          setVoiceError(null);
-                          setPaused(false);
-                          startListeningRef.current();
-                        } else if (__vaMicWarmupMessage) {
-                          setVoiceError(__vaMicWarmupMessage);
-                        }
-                      });
-                    }}
-                    className="flex items-center gap-1 rounded-full border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
-                  >
-                    <Mic className="h-3 w-3" /> activar micro
-                  </button>
-                )}
-                <button
-                  onClick={() => {
-                    stopListening();
-                    stopSpeaking();
-                    setMode("text");
-                    // No silenciar al cambiar a texto: el agente debe seguir hablando.
-                    setMuted(false);
                   }}
                   className="rounded-full border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
                 >
-                  modo texto
+                  tocar para oír respuesta
                 </button>
               </div>
-            </div>
-          </div>
+            )}
 
-
-            <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-3 py-4">
-              {msgs.map((m, i) => (
-                <div
-                  key={i}
-                  className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}
-                >
-                  <div
-                    className={cn(
-                      "max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed",
-                      m.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-foreground",
-                    )}
-                  >
-                    <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-a:text-primary">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {loading && (
-                <div className="flex justify-start">
-                  <div className="flex items-center gap-2 rounded-2xl bg-muted px-3 py-2 text-sm text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin" /> pensando…
-                  </div>
-                </div>
+            {/* Animated orb — visual only, no interaction required */}
+            <div
+              className={cn(
+                "relative grid h-20 w-20 place-items-center rounded-full text-primary-foreground shadow-2xl transition",
+                paused
+                  ? "bg-muted text-muted-foreground"
+                  : listening
+                    ? "bg-red-500 ring-8 ring-red-500/30 animate-pulse"
+                    : speaking
+                      ? "bg-orange-500 ring-8 ring-orange-500/30"
+                      : loading
+                        ? "bg-primary ring-4 ring-primary/30"
+                        : "bg-gradient-to-br from-primary to-orange-500 ring-4 ring-primary/20",
+              )}
+            >
+              {loading ? (
+                <Loader2 className="h-8 w-8 animate-spin" />
+              ) : paused ? (
+                <MicOff className="h-8 w-8" />
+              ) : (
+                <Mic className="h-8 w-8" />
               )}
             </div>
 
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                send(input);
-              }}
-              className="flex items-center gap-2 border-t bg-background p-3"
-            >
-              <input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Escribe a Agente Vamos…"
-                className="flex-1 rounded-full border bg-background px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40"
-                disabled={loading}
-              />
+            <p className="text-center text-xs text-muted-foreground">
+              {paused
+                ? "conversación en pausa"
+                : loading
+                  ? "pensando…"
+                  : speaking
+                    ? "hablando — espera tu turno"
+                    : listening
+                      ? "te escucho · habla cuando quieras"
+                      : "preparando micrófono…"}
+            </p>
+
+            <div className="flex items-center gap-2">
               <button
-                type="submit"
-                disabled={loading || !input.trim()}
-                className="grid h-10 w-10 place-items-center rounded-full bg-primary text-primary-foreground disabled:opacity-50"
-                aria-label="Enviar"
+                onClick={() => {
+                  if (paused) {
+                    unlockSpeechFromUserGesture();
+                    primeSpanishUtterances();
+                    const warmup = requestMicWarmupFromUserGesture();
+                    setVoiceError(null);
+                    setPaused(false);
+                    if (warmup) {
+                      warmup.then((state) => {
+                        setMicReady(state === "ready");
+                        if (state === "ready") startListeningRef.current();
+                        else if (__vaMicWarmupMessage) setVoiceError(__vaMicWarmupMessage);
+                      });
+                    } else {
+                      setMicReady(__vaMicWarmupState === "ready");
+                      setTimeout(() => startListeningRef.current(), 100);
+                    }
+                  } else {
+                    setPaused(true);
+                    stopListening();
+                    stopSpeaking();
+                  }
+                }}
+                className="flex items-center gap-1 rounded-full border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
               >
-                <Send className="h-4 w-4" />
+                {paused ? (
+                  <>
+                    <Play className="h-3 w-3" /> reanudar
+                  </>
+                ) : (
+                  <>
+                    <Pause className="h-3 w-3" /> pausar
+                  </>
+                )}
               </button>
-            </form>
+              {!micReady && (
+                <button
+                  onClick={() => {
+                    unlockSpeechFromUserGesture();
+                    const warmup = requestMicWarmupFromUserGesture();
+                    setVoiceError(__vaMicWarmupMessage);
+                    warmup?.then((state) => {
+                      setMicReady(state === "ready");
+                      if (state === "ready") {
+                        setVoiceError(null);
+                        setPaused(false);
+                        startListeningRef.current();
+                      } else if (__vaMicWarmupMessage) {
+                        setVoiceError(__vaMicWarmupMessage);
+                      }
+                    });
+                  }}
+                  className="flex items-center gap-1 rounded-full border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
+                >
+                  <Mic className="h-3 w-3" /> activar micro
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  stopListening();
+                  stopSpeaking();
+                  setMode("text");
+                  // No silenciar al cambiar a texto: el agente debe seguir hablando.
+                  setMuted(false);
+                }}
+                className="rounded-full border bg-background px-3 py-1.5 text-xs font-medium hover:bg-muted"
+              >
+                modo texto
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-3 py-4">
+          {msgs.map((m, i) => (
+            <div
+              key={i}
+              className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}
+            >
+              <div
+                className={cn(
+                  "max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed",
+                  m.role === "user"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-foreground",
+                )}
+              >
+                <div className="prose prose-sm max-w-none dark:prose-invert prose-p:my-1 prose-a:text-primary">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
+                </div>
+              </div>
+            </div>
+          ))}
+          {loading && (
+            <div className="flex justify-start">
+              <div className="flex items-center gap-2 rounded-2xl bg-muted px-3 py-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" /> pensando…
+              </div>
+            </div>
+          )}
+        </div>
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            send(input);
+          }}
+          className="flex items-center gap-2 border-t bg-background p-3"
+        >
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Escribe a Agente Vamos…"
+            className="flex-1 rounded-full border bg-background px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40"
+            disabled={loading}
+          />
+          <button
+            type="submit"
+            disabled={loading || !input.trim()}
+            className="grid h-10 w-10 place-items-center rounded-full bg-primary text-primary-foreground disabled:opacity-50"
+            aria-label="Enviar"
+          >
+            <Send className="h-4 w-4" />
+          </button>
+        </form>
       </div>
     </div>
   );
