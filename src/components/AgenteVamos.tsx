@@ -396,6 +396,19 @@ function configureSpanishUtterance(u: SpeechSynthesisUtterance, text: string) {
   return u;
 }
 
+function reserveSpanishUtterance() {
+  if (typeof window === "undefined" || typeof SpeechSynthesisUtterance === "undefined") return null;
+  const u = __vaPrimedUtterances.shift() || new SpeechSynthesisUtterance("");
+  u.text = "";
+  u.lang = "es-ES";
+  u.rate = 1.05;
+  u.pitch = 1;
+  const synth = window.speechSynthesis;
+  const voice = synth ? pickSpanishVoice(synth) : null;
+  if (voice) u.voice = voice;
+  return u;
+}
+
 function makeSpanishUtterance(text: string, fresh = false) {
   const u = fresh
     ? new SpeechSynthesisUtterance("")
@@ -666,7 +679,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   );
 
   const speak = useCallback(
-    (text: string, audio?: AgentAudioClip, onEnd?: () => void) => {
+    (text: string, audio?: AgentAudioClip, onEnd?: () => void, reservedUtterance?: SpeechSynthesisUtterance | null) => {
       // Anti-eco (D9): cortamos cualquier escucha activa antes de hablar.
       assistantSpeechMemoryRef.current = [text, ...assistantSpeechMemoryRef.current].slice(0, 6);
       suppressRecognitionUntilRef.current = Date.now() + 1200;
@@ -694,15 +707,22 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       try {
         synth.cancel();
         synth.resume();
-        const u = makeSpanishUtterance(text);
+        const u = reservedUtterance ? configureSpanishUtterance(reservedUtterance, text) : makeSpanishUtterance(text);
         let started = false;
         const blockedTimer = window.setTimeout(() => {
           if (!started && __vaActiveUtterance === u) {
-            __vaActiveUtterance = null;
-            speakingRef.current = false;
-            setSpeaking(false);
-            onEnd?.();
-            resumeListeningAfterEcho();
+            try {
+              synth.resume();
+              synth.speak(u);
+              keepSpeechSynthesisAwake(synth);
+              return;
+            } catch {
+              __vaActiveUtterance = null;
+              speakingRef.current = false;
+              setSpeaking(false);
+              onEnd?.();
+              resumeListeningAfterEcho();
+            }
           }
         }, 1200);
         u.onstart = () => {
@@ -820,6 +840,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       if (!clean || loadingRef.current) return;
       bumpIdle();
       stopListening();
+      const reservedReplyUtterance = viaVoice ? reserveSpanishUtterance() : null;
 
       // C8: despedida del usuario — responde local, habla y cierra.
       if (
@@ -836,7 +857,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         setInterim("");
         speak("Hasta luego, Leopoldo.", undefined, () => {
           setTimeout(() => onClose(), 200);
-        });
+        }, reservedReplyUtterance);
         return;
       }
 
@@ -996,7 +1017,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           }, 350);
         }
         // Habla exactamente la respuesta visible con TTS, no con clips genéricos.
-        speak(reply);
+        speak(reply, undefined, undefined, reservedReplyUtterance);
       } finally {
         if (!awaitingSummaryRef.current) setLoading(false);
       }
