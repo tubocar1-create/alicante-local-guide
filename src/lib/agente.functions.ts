@@ -17,7 +17,7 @@ const ROUTES: Array<{ path: string; desc: string }> = [
   { path: "/ocio/conciertos", desc: "SUBMENÚ Ocio · Conciertos — música en vivo, festivales, artista, agenda" },
   { path: "/explore", desc: "MENÚ PRINCIPAL · Mapa explorar la ciudad (rutas urbanas, lugares, descubrir)" },
   { path: "action:bus-picker", desc: "MENÚ PRINCIPAL · Bus urbano — abre el selector '¿Ya sabes qué bus tomar?' (bus urbano, parada, tarjeta, billete, 'cómo llego')" },
-  { path: "/bus/lines", desc: "SUBMENÚ Transporte · Líneas de bus (cuando pregunte por una línea concreta o todas las líneas)" },
+  { path: "action:bus-picker", desc: "SUBMENÚ Transporte · Líneas de bus — abre el selector de bus (al elegir una línea se muestra el Dashboard de esa línea con sus paradas)" },
   { path: "action:bus-picker", desc: "SUBMENÚ Transporte · Planificador de rutas (origen → destino, 'cómo voy de X a Y') — abre el selector de bus en el Inicio" },
   { path: "/vuelos", desc: "Vuelos AENA Alicante-Elche (ALC) — estado de vuelo, llegadas, salidas, retrasos, aeropuerto" },
   { path: "/clima", desc: "Clima y previsión (hoy, mañana, fin de semana, lluvia, viento, alerta)" },

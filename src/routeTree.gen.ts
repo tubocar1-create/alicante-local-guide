@@ -52,14 +52,12 @@ import { Route as BusinessIssuedRouteImport } from './routes/business.issued'
 import { Route as BusinessInboxRouteImport } from './routes/business.inbox'
 import { Route as BusinessBookingsRouteImport } from './routes/business.bookings'
 import { Route as BusPlannerRouteImport } from './routes/bus.planner'
-import { Route as BusLinesRouteImport } from './routes/bus.lines'
 import { Route as AdminSaludRouteImport } from './routes/admin.salud'
 import { Route as AdminPlacesRouteImport } from './routes/admin.places'
 import { Route as SaludCategoriaIdRouteImport } from './routes/salud_.$categoria.$id'
 import { Route as OcioPeliculaIdRouteImport } from './routes/ocio_.pelicula.$id'
 import { Route as OcioCinesIdRouteImport } from './routes/ocio_.cines.$id'
 import { Route as BusinessInboxIdRouteImport } from './routes/business.inbox.$id'
-import { Route as BusLinesCodeRouteImport } from './routes/bus.lines.$code'
 import { Route as BusDashboardCodeRouteImport } from './routes/bus.dashboard.$code'
 import { Route as ApiPublicRefreshNewsRouteImport } from './routes/api/public/refresh-news'
 import { Route as ApiPublicRefreshAlicantePressRouteImport } from './routes/api/public/refresh-alicante-press'
@@ -289,11 +287,6 @@ const BusPlannerRoute = BusPlannerRouteImport.update({
   path: '/planner',
   getParentRoute: () => BusRoute,
 } as any)
-const BusLinesRoute = BusLinesRouteImport.update({
-  id: '/lines',
-  path: '/lines',
-  getParentRoute: () => BusRoute,
-} as any)
 const AdminSaludRoute = AdminSaludRouteImport.update({
   id: '/admin/salud',
   path: '/admin/salud',
@@ -323,11 +316,6 @@ const BusinessInboxIdRoute = BusinessInboxIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => BusinessInboxRoute,
-} as any)
-const BusLinesCodeRoute = BusLinesCodeRouteImport.update({
-  id: '/$code',
-  path: '/$code',
-  getParentRoute: () => BusLinesRoute,
 } as any)
 const BusDashboardCodeRoute = BusDashboardCodeRouteImport.update({
   id: '/dashboard/$code',
@@ -423,7 +411,6 @@ export interface FileRoutesByFullPath {
   '/welcome': typeof WelcomeRoute
   '/admin/places': typeof AdminPlacesRoute
   '/admin/salud': typeof AdminSaludRoute
-  '/bus/lines': typeof BusLinesRouteWithChildren
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
   '/business/inbox': typeof BusinessInboxRouteWithChildren
@@ -454,7 +441,6 @@ export interface FileRoutesByFullPath {
   '/api/public/refresh-alicante-press': typeof ApiPublicRefreshAlicantePressRoute
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/dashboard/$code': typeof BusDashboardCodeRoute
-  '/bus/lines/$code': typeof BusLinesCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
   '/ocio/cines/$id': typeof OcioCinesIdRoute
   '/ocio/pelicula/$id': typeof OcioPeliculaIdRoute
@@ -488,7 +474,6 @@ export interface FileRoutesByTo {
   '/welcome': typeof WelcomeRoute
   '/admin/places': typeof AdminPlacesRoute
   '/admin/salud': typeof AdminSaludRoute
-  '/bus/lines': typeof BusLinesRouteWithChildren
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
   '/business/inbox': typeof BusinessInboxRouteWithChildren
@@ -519,7 +504,6 @@ export interface FileRoutesByTo {
   '/api/public/refresh-alicante-press': typeof ApiPublicRefreshAlicantePressRoute
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/dashboard/$code': typeof BusDashboardCodeRoute
-  '/bus/lines/$code': typeof BusLinesCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
   '/ocio/cines/$id': typeof OcioCinesIdRoute
   '/ocio/pelicula/$id': typeof OcioPeliculaIdRoute
@@ -555,7 +539,6 @@ export interface FileRoutesById {
   '/welcome': typeof WelcomeRoute
   '/admin/places': typeof AdminPlacesRoute
   '/admin/salud': typeof AdminSaludRoute
-  '/bus/lines': typeof BusLinesRouteWithChildren
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
   '/business/inbox': typeof BusinessInboxRouteWithChildren
@@ -586,7 +569,6 @@ export interface FileRoutesById {
   '/api/public/refresh-alicante-press': typeof ApiPublicRefreshAlicantePressRoute
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/dashboard/$code': typeof BusDashboardCodeRoute
-  '/bus/lines/$code': typeof BusLinesCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
   '/ocio_/cines/$id': typeof OcioCinesIdRoute
   '/ocio_/pelicula/$id': typeof OcioPeliculaIdRoute
@@ -623,7 +605,6 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/admin/places'
     | '/admin/salud'
-    | '/bus/lines'
     | '/bus/planner'
     | '/business/bookings'
     | '/business/inbox'
@@ -654,7 +635,6 @@ export interface FileRouteTypes {
     | '/api/public/refresh-alicante-press'
     | '/api/public/refresh-news'
     | '/bus/dashboard/$code'
-    | '/bus/lines/$code'
     | '/business/inbox/$id'
     | '/ocio/cines/$id'
     | '/ocio/pelicula/$id'
@@ -688,7 +668,6 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/admin/places'
     | '/admin/salud'
-    | '/bus/lines'
     | '/bus/planner'
     | '/business/bookings'
     | '/business/inbox'
@@ -719,7 +698,6 @@ export interface FileRouteTypes {
     | '/api/public/refresh-alicante-press'
     | '/api/public/refresh-news'
     | '/bus/dashboard/$code'
-    | '/bus/lines/$code'
     | '/business/inbox/$id'
     | '/ocio/cines/$id'
     | '/ocio/pelicula/$id'
@@ -754,7 +732,6 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/admin/places'
     | '/admin/salud'
-    | '/bus/lines'
     | '/bus/planner'
     | '/business/bookings'
     | '/business/inbox'
@@ -785,7 +762,6 @@ export interface FileRouteTypes {
     | '/api/public/refresh-alicante-press'
     | '/api/public/refresh-news'
     | '/bus/dashboard/$code'
-    | '/bus/lines/$code'
     | '/business/inbox/$id'
     | '/ocio_/cines/$id'
     | '/ocio_/pelicula/$id'
@@ -1148,13 +1124,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BusPlannerRouteImport
       parentRoute: typeof BusRoute
     }
-    '/bus/lines': {
-      id: '/bus/lines'
-      path: '/lines'
-      fullPath: '/bus/lines'
-      preLoaderRoute: typeof BusLinesRouteImport
-      parentRoute: typeof BusRoute
-    }
     '/admin/salud': {
       id: '/admin/salud'
       path: '/admin/salud'
@@ -1196,13 +1165,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/business/inbox/$id'
       preLoaderRoute: typeof BusinessInboxIdRouteImport
       parentRoute: typeof BusinessInboxRoute
-    }
-    '/bus/lines/$code': {
-      id: '/bus/lines/$code'
-      path: '/$code'
-      fullPath: '/bus/lines/$code'
-      preLoaderRoute: typeof BusLinesCodeRouteImport
-      parentRoute: typeof BusLinesRoute
     }
     '/bus/dashboard/$code': {
       id: '/bus/dashboard/$code'
@@ -1298,26 +1260,12 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface BusLinesRouteChildren {
-  BusLinesCodeRoute: typeof BusLinesCodeRoute
-}
-
-const BusLinesRouteChildren: BusLinesRouteChildren = {
-  BusLinesCodeRoute: BusLinesCodeRoute,
-}
-
-const BusLinesRouteWithChildren = BusLinesRoute._addFileChildren(
-  BusLinesRouteChildren,
-)
-
 interface BusRouteChildren {
-  BusLinesRoute: typeof BusLinesRouteWithChildren
   BusPlannerRoute: typeof BusPlannerRoute
   BusDashboardCodeRoute: typeof BusDashboardCodeRoute
 }
 
 const BusRouteChildren: BusRouteChildren = {
-  BusLinesRoute: BusLinesRouteWithChildren,
   BusPlannerRoute: BusPlannerRoute,
   BusDashboardCodeRoute: BusDashboardCodeRoute,
 }
