@@ -1,9 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, Bus, Radio, RefreshCw, Loader2 } from "lucide-react";
 import { useBusGraph } from "@/hooks/useBusGraph";
-import { getStopRealtime } from "@/lib/bus-realtime.functions";
+
 
 export const Route = createFileRoute("/bus/dashboard/$code")({
   head: ({ params }) => ({
@@ -35,7 +34,6 @@ function formatHHMM(d: Date): string {
 function BusDashboardPage() {
   const { code } = Route.useParams();
   const { data, loading } = useBusGraph();
-  const fetchRealtime = useServerFn(getStopRealtime);
 
   const line = data?.lines.find((l) => l.code === code);
 
@@ -88,13 +86,9 @@ function BusDashboardPage() {
       }));
   }, [stopsByDir, transfersByStop]);
 
-  const topTransferSet = useMemo(
-    () => new Map(topTransfers.map((t) => [t.code, t.color])),
-    [topTransfers],
-  );
-
   // Realtime: por cada parada del recorrido (ambas direcciones), pedir su ETA.
-  const [etas, setEtas] = useState<Record<string, number | null>>({});
+  // Guardamos hasta 2 próximos tiempos por parada (índice 0 y 1).
+  const [etas, setEtas] = useState<Record<string, number[]>>({});
   const [loadingEtas, setLoadingEtas] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
 
@@ -104,27 +98,31 @@ function BusDashboardPage() {
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
 
+    const fetchStop = async (stopCode: string): Promise<number[]> => {
+      try {
+        const r = await fetch(
+          `/api/public/bus-eta?stop=${encodeURIComponent(stopCode)}&line=${encodeURIComponent(code)}`,
+          { cache: "no-store" },
+        );
+        if (!r.ok) return [];
+        const j = (await r.json()) as { all?: number[] };
+        return Array.isArray(j.all) ? j.all.slice(0, 2) : [];
+      } catch {
+        return [];
+      }
+    };
+
     const tick = async () => {
       setLoadingEtas(true);
       const codes = Array.from(new Set(allStops.map((s) => s.code)));
-      const next: Record<string, number | null> = {};
       const CHUNK = 6;
       for (let i = 0; i < codes.length; i += CHUNK) {
         if (cancelled) break;
         const slice = codes.slice(i, i + CHUNK);
-        const results = await Promise.allSettled(
-          slice.map((c) => fetchRealtime({ data: { stopCode: c, lines: [code] } })),
-        );
-        results.forEach((r, idx) => {
-          const stopCode = slice[idx];
-          if (r.status === "fulfilled") {
-            const match = r.value.arrivals
-              .filter((a) => a.line === code)
-              .sort((a, b) => a.etaMin - b.etaMin)[0];
-            next[stopCode] = match ? match.etaMin : null;
-          } else {
-            next[stopCode] = null;
-          }
+        const results = await Promise.all(slice.map(fetchStop));
+        const next: Record<string, number[]> = {};
+        results.forEach((arr, idx) => {
+          next[slice[idx]] = arr;
         });
         if (!cancelled) setEtas((prev) => ({ ...prev, ...next }));
       }
@@ -142,10 +140,12 @@ function BusDashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code, stopsByDir[1].length, stopsByDir[2].length]);
 
+
   const lineColor = line?.color || "#EF4444";
 
   const inService =
-    Object.values(etas).some((v) => typeof v === "number") || loadingEtas;
+    Object.values(etas).some((arr) => arr && arr.length > 0) || loadingEtas;
+
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -293,7 +293,7 @@ function DirectionColumn({
   label: string;
   direction: 1 | 2;
   stops: StopRow[];
-  etas: Record<string, number | null>;
+  etas: Record<string, number[]>;
   color: string;
   inService: boolean;
   transferLineColor: (stopCode: string) => string | null;
@@ -337,13 +337,19 @@ function DirectionColumn({
           />
         )}
         {stops.map((s, i) => {
-          const eta = etas[s.code];
+          const arr = etas[s.code] ?? [];
+          const eta1 = arr[0];
+          const eta2 = arr[1];
+          const hasEta = typeof eta1 === "number";
           const isOrigin = i === 0;
           const isDest = i === stops.length - 1;
           const transferColor = transferLineColor(s.code);
-          const etaTime =
-            typeof eta === "number"
-              ? formatHHMM(new Date(now.getTime() + eta * 60_000))
+          const etaTime = hasEta
+            ? formatHHMM(new Date(now.getTime() + eta1 * 60_000))
+            : null;
+          const etaTime2 =
+            typeof eta2 === "number"
+              ? formatHHMM(new Date(now.getTime() + eta2 * 60_000))
               : null;
 
           return (
@@ -370,30 +376,37 @@ function DirectionColumn({
               )}
 
               <div className="flex items-start gap-1.5">
-                {/* Badge de min */}
+                {/* Badge con los 2 próximos tiempos */}
                 <div
                   className={[
-                    "flex h-9 w-9 shrink-0 flex-col items-center justify-center rounded-md leading-none",
-                    typeof eta === "number"
-                      ? "bg-white text-black"
-                      : "bg-white/15 text-white/70",
+                    "flex h-9 w-12 shrink-0 flex-col items-center justify-center rounded-md leading-none",
+                    hasEta ? "bg-white text-black" : "bg-white/15 text-white/70",
                   ].join(" ")}
                 >
-                  <span className="font-sans text-[13px] font-extrabold not-italic tabular-nums">
-                    {typeof eta === "number" ? eta : "—"}
+                  <span className="font-sans text-[12px] font-extrabold not-italic tabular-nums">
+                    {hasEta
+                      ? typeof eta2 === "number"
+                        ? `${eta1}·${eta2}`
+                        : eta1
+                      : "—"}
                   </span>
                   <span className="font-sans text-[8px] font-bold not-italic">min</span>
                 </div>
+
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline gap-1.5">
                     <span className="font-sans text-[11px] font-semibold not-italic tabular-nums text-white/90">
                       {etaTime ?? "--:--"}
+                      {etaTime2 && (
+                        <span className="ml-1 text-white/60">· {etaTime2}</span>
+                      )}
                     </span>
                     <span className="ml-auto font-sans text-[10px] not-italic tabular-nums text-white/50">
                       {s.code}
                     </span>
                   </div>
+
                   <div className="truncate font-sans text-[12px] font-semibold not-italic leading-snug text-white">
                     {s.name}
                   </div>
