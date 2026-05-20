@@ -1184,6 +1184,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       setInterim("");
       setLoading(false);
       awaitingSummaryRef.current = false;
+      assistantSpeechMemoryRef.current = [getGreetingText()];
       if (recognitionRestartTimerRef.current) {
         clearTimeout(recognitionRestartTimerRef.current);
         recognitionRestartTimerRef.current = null;
