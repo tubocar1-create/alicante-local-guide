@@ -248,9 +248,11 @@ export function ChatScreen() {
     // Si llegamos desde una ruta legacy (/bus/planner) con el flag puesto,
     // abrimos el picker en cuanto monta el Inicio.
     try {
-      if (sessionStorage.getItem("agent:open-bus-picker") === "1") {
+      const shouldOpenFromUrl = new URLSearchParams(window.location.search).get("openBusPicker") === "1";
+      if (sessionStorage.getItem("agent:open-bus-picker") === "1" || shouldOpenFromUrl) {
         sessionStorage.removeItem("agent:open-bus-picker");
         setShowBusPicker(true);
+        if (shouldOpenFromUrl) window.history.replaceState(window.history.state, "", "/");
       }
     } catch {
       /* noop */
