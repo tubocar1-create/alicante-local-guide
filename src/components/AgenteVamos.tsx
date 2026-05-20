@@ -1679,7 +1679,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
               } catch {
                 /* noop */
               }
-              navigate({ to: "/", search: { openBusPicker: "1" } as any, replace: true });
+              navigate({ href: "/?openBusPicker=1", replace: true } as any);
               setTimeout(() => {
                 try {
                   window.dispatchEvent(new Event("agent:open-bus-picker"));
