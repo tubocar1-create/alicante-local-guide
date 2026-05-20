@@ -28,6 +28,7 @@ import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as DondeDormirRouteImport } from './routes/donde-dormir'
 import { Route as ClimaRouteImport } from './routes/clima'
 import { Route as BusinessRouteImport } from './routes/business'
+import { Route as BusRouteImport } from './routes/bus'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BusinessIndexRouteImport } from './routes/business.index'
 import { Route as VuelosIataRouteImport } from './routes/vuelos_.$iata'
@@ -167,6 +168,11 @@ const BusinessRoute = BusinessRouteImport.update({
   path: '/business',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BusRoute = BusRouteImport.update({
+  id: '/bus',
+  path: '/bus',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -278,14 +284,14 @@ const BusinessBookingsRoute = BusinessBookingsRouteImport.update({
   getParentRoute: () => BusinessRoute,
 } as any)
 const BusPlannerRoute = BusPlannerRouteImport.update({
-  id: '/bus/planner',
-  path: '/bus/planner',
-  getParentRoute: () => rootRouteImport,
+  id: '/planner',
+  path: '/planner',
+  getParentRoute: () => BusRoute,
 } as any)
 const BusLinesRoute = BusLinesRouteImport.update({
-  id: '/bus/lines',
-  path: '/bus/lines',
-  getParentRoute: () => rootRouteImport,
+  id: '/lines',
+  path: '/lines',
+  getParentRoute: () => BusRoute,
 } as any)
 const AdminSaludRoute = AdminSaludRouteImport.update({
   id: '/admin/salud',
@@ -389,6 +395,7 @@ const ApiPublicHooksAenaSyncRoute = ApiPublicHooksAenaSyncRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/bus': typeof BusRouteWithChildren
   '/business': typeof BusinessRouteWithChildren
   '/clima': typeof ClimaRoute
   '/donde-dormir': typeof DondeDormirRoute
@@ -453,6 +460,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/bus': typeof BusRouteWithChildren
   '/clima': typeof ClimaRoute
   '/donde-dormir': typeof DondeDormirRoute
   '/explore': typeof ExploreRoute
@@ -517,6 +525,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/bus': typeof BusRouteWithChildren
   '/business': typeof BusinessRouteWithChildren
   '/clima': typeof ClimaRoute
   '/donde-dormir': typeof DondeDormirRoute
@@ -583,6 +592,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/bus'
     | '/business'
     | '/clima'
     | '/donde-dormir'
@@ -647,6 +657,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/bus'
     | '/clima'
     | '/donde-dormir'
     | '/explore'
@@ -710,6 +721,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/bus'
     | '/business'
     | '/clima'
     | '/donde-dormir'
@@ -775,6 +787,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BusRoute: typeof BusRouteWithChildren
   BusinessRoute: typeof BusinessRouteWithChildren
   ClimaRoute: typeof ClimaRoute
   DondeDormirRoute: typeof DondeDormirRoute
@@ -796,8 +809,6 @@ export interface RootRouteChildren {
   WelcomeRoute: typeof WelcomeRoute
   AdminPlacesRoute: typeof AdminPlacesRoute
   AdminSaludRoute: typeof AdminSaludRoute
-  BusLinesRoute: typeof BusLinesRouteWithChildren
-  BusPlannerRoute: typeof BusPlannerRoute
   HospitalesIdRoute: typeof HospitalesIdRoute
   HotelIdRoute: typeof HotelIdRoute
   OcioCarteleraRoute: typeof OcioCarteleraRoute
@@ -957,6 +968,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BusinessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bus': {
+      id: '/bus'
+      path: '/bus'
+      fullPath: '/bus'
+      preLoaderRoute: typeof BusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -1113,17 +1131,17 @@ declare module '@tanstack/react-router' {
     }
     '/bus/planner': {
       id: '/bus/planner'
-      path: '/bus/planner'
+      path: '/planner'
       fullPath: '/bus/planner'
       preLoaderRoute: typeof BusPlannerRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof BusRoute
     }
     '/bus/lines': {
       id: '/bus/lines'
-      path: '/bus/lines'
+      path: '/lines'
       fullPath: '/bus/lines'
       preLoaderRoute: typeof BusLinesRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof BusRoute
     }
     '/admin/salud': {
       id: '/admin/salud'
@@ -1261,6 +1279,30 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface BusLinesRouteChildren {
+  BusLinesCodeRoute: typeof BusLinesCodeRoute
+}
+
+const BusLinesRouteChildren: BusLinesRouteChildren = {
+  BusLinesCodeRoute: BusLinesCodeRoute,
+}
+
+const BusLinesRouteWithChildren = BusLinesRoute._addFileChildren(
+  BusLinesRouteChildren,
+)
+
+interface BusRouteChildren {
+  BusLinesRoute: typeof BusLinesRouteWithChildren
+  BusPlannerRoute: typeof BusPlannerRoute
+}
+
+const BusRouteChildren: BusRouteChildren = {
+  BusLinesRoute: BusLinesRouteWithChildren,
+  BusPlannerRoute: BusPlannerRoute,
+}
+
+const BusRouteWithChildren = BusRoute._addFileChildren(BusRouteChildren)
+
 interface BusinessInboxRouteChildren {
   BusinessInboxIdRoute: typeof BusinessInboxIdRoute
 }
@@ -1325,18 +1367,6 @@ const ThreadsRouteChildren: ThreadsRouteChildren = {
 const ThreadsRouteWithChildren =
   ThreadsRoute._addFileChildren(ThreadsRouteChildren)
 
-interface BusLinesRouteChildren {
-  BusLinesCodeRoute: typeof BusLinesCodeRoute
-}
-
-const BusLinesRouteChildren: BusLinesRouteChildren = {
-  BusLinesCodeRoute: BusLinesCodeRoute,
-}
-
-const BusLinesRouteWithChildren = BusLinesRoute._addFileChildren(
-  BusLinesRouteChildren,
-)
-
 interface OcioCinesRouteChildren {
   OcioCinesIdRoute: typeof OcioCinesIdRoute
 }
@@ -1363,6 +1393,7 @@ const SaludCategoriaRouteWithChildren = SaludCategoriaRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BusRoute: BusRouteWithChildren,
   BusinessRoute: BusinessRouteWithChildren,
   ClimaRoute: ClimaRoute,
   DondeDormirRoute: DondeDormirRoute,
@@ -1384,8 +1415,6 @@ const rootRouteChildren: RootRouteChildren = {
   WelcomeRoute: WelcomeRoute,
   AdminPlacesRoute: AdminPlacesRoute,
   AdminSaludRoute: AdminSaludRoute,
-  BusLinesRoute: BusLinesRouteWithChildren,
-  BusPlannerRoute: BusPlannerRoute,
   HospitalesIdRoute: HospitalesIdRoute,
   HotelIdRoute: HotelIdRoute,
   OcioCarteleraRoute: OcioCarteleraRoute,

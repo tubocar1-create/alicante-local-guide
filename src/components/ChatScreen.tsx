@@ -4,7 +4,7 @@ import { useWeather } from "@/hooks/useWeather";
 import BookingDialog from "@/components/BookingDialog";
 import { AdBanner } from "@/components/AdBanner";
 import type { Listing } from "@/lib/overpass-listings";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { PlaceImage } from "@/components/PlaceImage";
@@ -215,6 +215,7 @@ function markRestaurantReturn() {
 
 export function ChatScreen() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user: authUser } = useAuth();
   const [canShowPersonalName, setCanShowPersonalName] = useState(false);
   const firstName = canShowPersonalName ? authUser?.name?.trim().split(" ")[0] : "";
@@ -248,7 +249,8 @@ export function ChatScreen() {
     // Si llegamos desde una ruta legacy (/bus/planner) con el flag puesto,
     // abrimos el picker en cuanto monta el Inicio.
     try {
-      const shouldOpenFromUrl = new URLSearchParams(window.location.search).get("openBusPicker") === "1";
+      const openBusPickerParam = new URLSearchParams(window.location.search).get("openBusPicker");
+      const shouldOpenFromUrl = openBusPickerParam === "1" || openBusPickerParam === '"1"' || openBusPickerParam === "true";
       if (sessionStorage.getItem("agent:open-bus-picker") === "1" || shouldOpenFromUrl) {
         sessionStorage.removeItem("agent:open-bus-picker");
         setShowBusPicker(true);
@@ -258,7 +260,7 @@ export function ChatScreen() {
       /* noop */
     }
     return () => window.removeEventListener("agent:open-bus-picker", open);
-  }, []);
+  }, [location.search]);
 
   useEffect(() => {
     const restored = readInitialMessages();
@@ -1577,7 +1579,15 @@ function MarkdownText({ text }: { text: string }) {
               <button
                 type="button"
                 onClick={() => {
-                  if (url === "/playas/mapa") navigate({ to: "/playas/mapa" });
+                  if (["/bus", "/bus/", "/bus/planner", "/buses-en-vivo", "/"].includes(url)) {
+                    try {
+                      sessionStorage.setItem("agent:open-bus-picker", "1");
+                    } catch {
+                      /* noop */
+                    }
+                    navigate({ href: "/?openBusPicker=1", replace: true } as any);
+                    window.dispatchEvent(new Event("agent:open-bus-picker"));
+                  } else if (url === "/playas/mapa") navigate({ to: "/playas/mapa" });
                   else if (url === "/playas") navigate({ to: "/playas" });
                   else window.location.assign(url);
                 }}
