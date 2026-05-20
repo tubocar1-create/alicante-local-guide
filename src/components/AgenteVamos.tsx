@@ -625,13 +625,69 @@ function findSubcategoryByTarget(target: string | undefined, catalog: AgenteRout
   return null;
 }
 
+const SPOKEN_UNITS: Record<string, string> = {
+  cero: "0", un: "1", uno: "1", una: "1", dos: "2", tres: "3", cuatro: "4", cinco: "5",
+  seis: "6", siete: "7", ocho: "8", nueve: "9",
+};
+
+const SPOKEN_NUMBERS: Record<string, number> = {
+  diez: 10, once: 11, doce: 12, trece: 13, catorce: 14, quince: 15,
+  dieciseis: 16, diecisiete: 17, dieciocho: 18, diecinueve: 19,
+  veinte: 20, veintiuno: 21, veintidos: 22, veintitres: 23, veinticuatro: 24,
+  veinticinco: 25, veintiseis: 26, veintisiete: 27, veintiocho: 28, veintinueve: 29,
+  treinta: 30, cuarenta: 40, cincuenta: 50,
+};
+
+function parseBusLineCode(segment: string): string | null {
+  const tokens = normalizeSpeech(segment).split(" ").filter(Boolean);
+  const meaningful = tokens.filter((t) => !["linea", "line", "bus", "autobus", "el", "la", "numero", "num"].includes(t));
+  if (meaningful.length === 0) return null;
+
+  const digitParts: string[] = [];
+  for (const token of meaningful) {
+    const m = token.match(/^([0-9]{1,3})([a-z]?)$/i);
+    if (m) {
+      digitParts.push(m[1]);
+      if (m[2]) return `${digitParts.join("")}${m[2].toUpperCase()}`;
+      if (digitParts.join("").length >= 3) break;
+      continue;
+    }
+    if ((token === "n" || token === "ene") && digitParts.length > 0) return `${digitParts.join("")}N`;
+    break;
+  }
+  if (digitParts.length > 0) return digitParts.join("");
+
+  const first = meaningful[0];
+  const unitAfterY = meaningful[1] === "y" ? meaningful[2] : meaningful[1];
+  if (first === "veinti" && SPOKEN_UNITS[meaningful[1]]) {
+    const suffix = meaningful.includes("n") || meaningful.includes("ene") ? "N" : "";
+    return `${20 + Number(SPOKEN_UNITS[meaningful[1]])}${suffix}`;
+  }
+  if (["veinte", "treinta", "cuarenta", "cincuenta"].includes(first) && unitAfterY && SPOKEN_UNITS[unitAfterY]) {
+    const suffix = meaningful.includes("n") || meaningful.includes("ene") ? "N" : "";
+    return `${(SPOKEN_NUMBERS[first] ?? 0) + Number(SPOKEN_UNITS[unitAfterY])}${suffix}`;
+  }
+  if (SPOKEN_NUMBERS[first] != null) {
+    let value = SPOKEN_NUMBERS[first];
+    const suffix = meaningful.includes("n") || meaningful.includes("ene") ? "N" : "";
+    return `${value}${suffix}`;
+  }
+
+  const spokenDigits = meaningful.map((t) => SPOKEN_UNITS[t]).filter(Boolean).join("");
+  if (spokenDigits) {
+    const suffix = meaningful.includes("n") || meaningful.includes("ene") ? "N" : "";
+    return `${spokenDigits.slice(0, 3)}${suffix}`;
+  }
+  return null;
+}
+
 function matchBusLineDashboard(query: string, allowBareNumber = false): string | null {
   const explicit =
-    query.match(/\b(?:linea|line|l|bus|autobus)\s*([0-9]{1,3}[a-z]?)\b/i) ||
-    query.match(/\bel\s+([0-9]{1,3}[a-z]?)\b/i);
-  const bare = allowBareNumber ? query.match(/^\s*([0-9]{1,3}[a-z]?)\s*$/i) : null;
-  const code = (explicit?.[1] ?? bare?.[1])?.replace(/[\s-]/g, "").toUpperCase();
-  return code && /\d/.test(code) ? `/bus/dashboard/${code}` : null;
+    query.match(/\b(?:linea|line|bus|autobus)\s*([0-9a-zñ][0-9a-zñ\s-]{0,24})/i) ||
+    query.match(/\bl\s*([0-9][0-9\s-]{0,5}\s*[a-z]?)/i) ||
+    query.match(/\bel\s+([0-9a-zñ][0-9a-zñ\s-]{0,24})/i);
+  const code = parseBusLineCode(explicit?.[1] ?? (allowBareNumber ? query : ""))?.toUpperCase();
+  return code && /^\d{1,3}[A-Z]?$/.test(code) ? `/bus/dashboard/${code}` : null;
 }
 
 function matchDbIntent(
