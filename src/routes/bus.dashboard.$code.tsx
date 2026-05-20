@@ -312,11 +312,8 @@ function DirectionColumn({
     <div className="px-1">
       <div className="mb-2 flex items-center justify-between gap-2 pt-1">
         <div className="flex items-center gap-1 pl-14">
-          {direction === 1 ? (
-            <ArrowDown style={{ color }} strokeWidth={4} className="h-7 w-7" />
-          ) : (
-            <ArrowUp style={{ color }} strokeWidth={4} className="h-7 w-7" />
-          )}
+          <ArrowDown style={{ color }} strokeWidth={4} className="h-7 w-7" />
+
 
           <span
             className="font-sans text-base font-extrabold not-italic"
