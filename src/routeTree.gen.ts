@@ -60,6 +60,7 @@ import { Route as OcioPeliculaIdRouteImport } from './routes/ocio_.pelicula.$id'
 import { Route as OcioCinesIdRouteImport } from './routes/ocio_.cines.$id'
 import { Route as BusinessInboxIdRouteImport } from './routes/business.inbox.$id'
 import { Route as BusLinesCodeRouteImport } from './routes/bus.lines.$code'
+import { Route as BusDashboardCodeRouteImport } from './routes/bus.dashboard.$code'
 import { Route as ApiPublicRefreshNewsRouteImport } from './routes/api/public/refresh-news'
 import { Route as ApiPublicRefreshAlicantePressRouteImport } from './routes/api/public/refresh-alicante-press'
 import { Route as ApiPublicQrValidateRouteImport } from './routes/api/public/qr-validate'
@@ -328,6 +329,11 @@ const BusLinesCodeRoute = BusLinesCodeRouteImport.update({
   path: '/$code',
   getParentRoute: () => BusLinesRoute,
 } as any)
+const BusDashboardCodeRoute = BusDashboardCodeRouteImport.update({
+  id: '/dashboard/$code',
+  path: '/dashboard/$code',
+  getParentRoute: () => BusRoute,
+} as any)
 const ApiPublicRefreshNewsRoute = ApiPublicRefreshNewsRouteImport.update({
   id: '/api/public/refresh-news',
   path: '/api/public/refresh-news',
@@ -447,6 +453,7 @@ export interface FileRoutesByFullPath {
   '/api/public/qr-validate': typeof ApiPublicQrValidateRoute
   '/api/public/refresh-alicante-press': typeof ApiPublicRefreshAlicantePressRoute
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
+  '/bus/dashboard/$code': typeof BusDashboardCodeRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
   '/ocio/cines/$id': typeof OcioCinesIdRoute
@@ -511,6 +518,7 @@ export interface FileRoutesByTo {
   '/api/public/qr-validate': typeof ApiPublicQrValidateRoute
   '/api/public/refresh-alicante-press': typeof ApiPublicRefreshAlicantePressRoute
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
+  '/bus/dashboard/$code': typeof BusDashboardCodeRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
   '/ocio/cines/$id': typeof OcioCinesIdRoute
@@ -577,6 +585,7 @@ export interface FileRoutesById {
   '/api/public/qr-validate': typeof ApiPublicQrValidateRoute
   '/api/public/refresh-alicante-press': typeof ApiPublicRefreshAlicantePressRoute
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
+  '/bus/dashboard/$code': typeof BusDashboardCodeRoute
   '/bus/lines/$code': typeof BusLinesCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
   '/ocio_/cines/$id': typeof OcioCinesIdRoute
@@ -644,6 +653,7 @@ export interface FileRouteTypes {
     | '/api/public/qr-validate'
     | '/api/public/refresh-alicante-press'
     | '/api/public/refresh-news'
+    | '/bus/dashboard/$code'
     | '/bus/lines/$code'
     | '/business/inbox/$id'
     | '/ocio/cines/$id'
@@ -708,6 +718,7 @@ export interface FileRouteTypes {
     | '/api/public/qr-validate'
     | '/api/public/refresh-alicante-press'
     | '/api/public/refresh-news'
+    | '/bus/dashboard/$code'
     | '/bus/lines/$code'
     | '/business/inbox/$id'
     | '/ocio/cines/$id'
@@ -773,6 +784,7 @@ export interface FileRouteTypes {
     | '/api/public/qr-validate'
     | '/api/public/refresh-alicante-press'
     | '/api/public/refresh-news'
+    | '/bus/dashboard/$code'
     | '/bus/lines/$code'
     | '/business/inbox/$id'
     | '/ocio_/cines/$id'
@@ -1192,6 +1204,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BusLinesCodeRouteImport
       parentRoute: typeof BusLinesRoute
     }
+    '/bus/dashboard/$code': {
+      id: '/bus/dashboard/$code'
+      path: '/dashboard/$code'
+      fullPath: '/bus/dashboard/$code'
+      preLoaderRoute: typeof BusDashboardCodeRouteImport
+      parentRoute: typeof BusRoute
+    }
     '/api/public/refresh-news': {
       id: '/api/public/refresh-news'
       path: '/api/public/refresh-news'
@@ -1294,11 +1313,13 @@ const BusLinesRouteWithChildren = BusLinesRoute._addFileChildren(
 interface BusRouteChildren {
   BusLinesRoute: typeof BusLinesRouteWithChildren
   BusPlannerRoute: typeof BusPlannerRoute
+  BusDashboardCodeRoute: typeof BusDashboardCodeRoute
 }
 
 const BusRouteChildren: BusRouteChildren = {
   BusLinesRoute: BusLinesRouteWithChildren,
   BusPlannerRoute: BusPlannerRoute,
+  BusDashboardCodeRoute: BusDashboardCodeRoute,
 }
 
 const BusRouteWithChildren = BusRoute._addFileChildren(BusRouteChildren)

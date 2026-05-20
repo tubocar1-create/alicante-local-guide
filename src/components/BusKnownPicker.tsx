@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, MapPin, Search, X } from "lucide-react";
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { useUserLocation, distanceKm } from "@/hooks/useUserLocation";
