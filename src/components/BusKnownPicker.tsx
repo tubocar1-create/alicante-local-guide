@@ -253,8 +253,8 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
                       <button
                         key={l.code}
                         onClick={() => {
-                          onClose();
                           navigate({ to: "/bus/dashboard/$code", params: { code: l.code } });
+                          onClose();
                         }}
                         title={l.name}
                         className="flex aspect-square items-center justify-center gap-0.5 font-sans text-[15px] font-extrabold not-italic shadow-sm transition active:scale-95"
