@@ -1585,7 +1585,7 @@ function MarkdownText({ text }: { text: string }) {
                     } catch {
                       /* noop */
                     }
-                    navigate({ to: "/", search: { openBusPicker: "1" } as any, replace: true });
+                    navigate({ href: "/?openBusPicker=1", replace: true } as any);
                     window.dispatchEvent(new Event("agent:open-bus-picker"));
                   } else if (url === "/playas/mapa") navigate({ to: "/playas/mapa" });
                   else if (url === "/playas") navigate({ to: "/playas" });
