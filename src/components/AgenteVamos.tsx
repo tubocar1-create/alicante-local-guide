@@ -488,6 +488,16 @@ function matchExistingSubcategory(query: string, items: AgenteSubcategory[] = []
   return best;
 }
 
+function findSubcategoryByTarget(target: string | undefined, catalog: AgenteRoutingCatalog): AgenteSubcategory | null {
+  if (!target) return null;
+  const cleanTarget = target.split("?")[0];
+  for (const item of Object.values(catalog.subcategories).flat()) {
+    const route = item.route.split("?")[0];
+    if (cleanTarget === route || cleanTarget.startsWith(`${route}/`)) return item;
+  }
+  return null;
+}
+
 function matchDbIntent(
   query: string,
   dbIntents: AgenteIntentRow[],
@@ -514,6 +524,8 @@ type LocalResult = {
   path?: string;
   audio: VoiceClip;
   pendingDomain?: string | null;
+  forwardPrompt?: string;
+  openSubmenu?: string;
 };
 
 function localResolve(
