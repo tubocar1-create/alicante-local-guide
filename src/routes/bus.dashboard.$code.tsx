@@ -419,9 +419,10 @@ function DirectionColumn({
                     {s.name}
                   </div>
 
-
                 </div>
+              </div>
             </li>
+
 
           );
         })}
