@@ -1005,6 +1005,28 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const recognitionRestartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const suppressRecognitionUntilRef = useRef(0);
+  // Máquina de estados del SpeechRecognition para evitar bloqueos en Android
+  // (start/stop simultáneos dejan al motor en "Preparando..." infinito).
+  // Transiciones válidas:
+  //   idle → listening (start)
+  //   listening → stopping (stop / onend / onerror)
+  //   stopping → idle (tras ~300ms de gracia)
+  const voiceStateRef = useRef<"idle" | "listening" | "stopping">("idle");
+  const voiceStateResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const setVoiceState = (next: "idle" | "listening" | "stopping") => {
+    voiceStateRef.current = next;
+    if (typeof window !== "undefined") {
+      // eslint-disable-next-line no-console
+      console.log("VOICE STATE:", next);
+    }
+  };
+  const scheduleVoiceIdle = (delay = 300) => {
+    if (voiceStateResetTimerRef.current) clearTimeout(voiceStateResetTimerRef.current);
+    voiceStateResetTimerRef.current = setTimeout(() => {
+      voiceStateResetTimerRef.current = null;
+      setVoiceState("idle");
+    }, delay);
+  };
   // Acuse "Voy a por ello…" mientras carga el Dashboard tras una navegación.
   const ackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Marca que estamos esperando un resumen externo (vamos:food-summary).
