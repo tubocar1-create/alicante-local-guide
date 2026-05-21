@@ -89,6 +89,20 @@ function TiendaDetail() {
               </span>
             )}
           </div>
+        ) : biz.logo_url ? (
+          <div className="relative flex h-56 items-center justify-center overflow-hidden rounded-2xl border bg-white sm:h-72">
+            <img
+              src={biz.logo_url}
+              alt={`Logotipo ${biz.name}`}
+              className="max-h-40 max-w-[70%] object-contain sm:max-h-52"
+              loading="eager"
+            />
+            {biz.subsector?.name && (
+              <span className="absolute left-3 top-3 rounded-full bg-foreground/80 px-2.5 py-1 text-[11px] font-medium text-background shadow">
+                {biz.subsector.name}
+              </span>
+            )}
+          </div>
         ) : (
           <div className="relative flex h-56 items-center justify-center overflow-hidden rounded-2xl border bg-gradient-to-br from-muted via-muted/60 to-background sm:h-72">
             <span className="select-none text-[7rem] leading-none opacity-80 sm:text-[9rem]" aria-hidden>
