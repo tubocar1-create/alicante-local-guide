@@ -1125,6 +1125,39 @@ function getReentryGreeting(): string {
   );
 }
 
+// Micro-saludo de continuidad para reentradas DENTRO de la misma sesión
+// abierta (cuando el usuario vuelve a interactuar tras un silencio).
+// Debe ser muy corto, natural, nunca robótico.
+function getContinuityMicroGreeting(): string {
+  let lastTopic = "";
+  if (typeof window !== "undefined") {
+    try {
+      lastTopic = window.sessionStorage.getItem(VA_LAST_TOPIC_KEY) ?? "";
+    } catch {}
+  }
+  const generic = [
+    "Seguimos.",
+    "Te escucho.",
+    "Aquí sigo.",
+    "Dime.",
+    "Vamos con ello.",
+    "Sigo contigo.",
+  ];
+  if (lastTopic) {
+    const short = lastTopic.length > 40 ? lastTopic.slice(0, 40) + "…" : lastTopic;
+    return pickDistinct(
+      [
+        `Seguimos con lo de "${short}".`,
+        `Te escucho.`,
+        `Sigo contigo.`,
+        `Dime, ¿continuamos?`,
+      ],
+      VA_LAST_REENTRY_KEY,
+    );
+  }
+  return pickDistinct(generic, VA_LAST_REENTRY_KEY);
+}
+
 function loadMsgs(): Msg[] {
   if (typeof window === "undefined") return [makeGreeting()];
   try {
