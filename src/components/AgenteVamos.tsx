@@ -1193,9 +1193,15 @@ let __vaSpeechUnlocked = false;
 let __vaVoicesLoggingAttached = false;
 const POST_SPEECH_LISTEN_DELAY_MS = 140;
 
+// Voz unificada del agente: español Estados Unidos (es-US) si está disponible.
+const VA_VOICE_LANG = "es-US";
+const VA_VOICE_RATE = 0.6;
+const VA_VOICE_PITCH = 0.55;
+
 function pickSpanishVoice(synth: SpeechSynthesis) {
   const voices = synth.getVoices();
   return (
+    voices.find((v) => v.lang?.toLowerCase().startsWith("es-us")) ||
     voices.find((v) => v.lang?.toLowerCase().startsWith("es-es")) ||
     voices.find((v) => v.lang?.toLowerCase().startsWith("es")) ||
     voices.find((v) => v.lang?.toLowerCase().includes("es")) ||
