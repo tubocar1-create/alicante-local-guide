@@ -117,26 +117,40 @@ function ComprarPage() {
           )}
         </section>
 
-        <section className="space-y-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Sectores
-          </h2>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {sectors.map((sector) => (
-              <Link
-                key={sector.id}
-                to="/comprar/sector/$sector"
-                params={{ sector: sector.slug }}
-                className="flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border bg-card p-3 text-center shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow"
-              >
-                <span className="text-3xl">{sector.emoji ?? "•"}</span>
-                <span className="text-xs font-medium leading-tight">
-                  {sector.short_label || sector.name}
-                </span>
-              </Link>
-            ))}
-          </div>
-        </section>
+        {sectors.map((sector) => (
+          <section key={sector.id} className="space-y-3">
+            <Link
+              to="/comprar/sector/$sector"
+              params={{ sector: sector.slug }}
+              className="group flex items-center gap-2 transition hover:text-primary"
+            >
+              <span className="text-xl">{sector.emoji}</span>
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground group-hover:text-primary">
+                {sector.short_label || sector.name}
+              </h2>
+              <span className="ml-auto text-[10px] font-medium uppercase tracking-wider text-primary/70">
+                Ver dashboard →
+              </span>
+            </Link>
+            {sector.subsectors.length === 0 ? (
+              <p className="text-xs text-muted-foreground">Sin categorías disponibles.</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {sector.subsectors.map((ss) => (
+                  <Link
+                    key={ss.id}
+                    to="/comprar/$subsector"
+                    params={{ subsector: ss.slug }}
+                    className="flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border bg-card p-3 text-center shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow"
+                  >
+                    <span className="text-3xl">{ss.emoji ?? "•"}</span>
+                    <span className="text-xs font-medium leading-tight">{ss.name}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
+        ))}
       </main>
     </div>
   );
