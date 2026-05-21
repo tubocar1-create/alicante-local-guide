@@ -61,6 +61,7 @@ import { Route as SaludCategoriaIdRouteImport } from './routes/salud_.$categoria
 import { Route as OcioPeliculaIdRouteImport } from './routes/ocio_.pelicula.$id'
 import { Route as OcioCinesIdRouteImport } from './routes/ocio_.cines.$id'
 import { Route as ComprarTiendaIdRouteImport } from './routes/comprar.tienda.$id'
+import { Route as ComprarSubsectorSubsubsectorRouteImport } from './routes/comprar.$subsector.$subsubsector'
 import { Route as BusinessInboxIdRouteImport } from './routes/business.inbox.$id'
 import { Route as BusDashboardCodeRouteImport } from './routes/bus.dashboard.$code'
 import { Route as ApiPublicRefreshNewsRouteImport } from './routes/api/public/refresh-news'
@@ -337,6 +338,12 @@ const ComprarTiendaIdRoute = ComprarTiendaIdRouteImport.update({
   path: '/tienda/$id',
   getParentRoute: () => ComprarRoute,
 } as any)
+const ComprarSubsectorSubsubsectorRoute =
+  ComprarSubsectorSubsubsectorRouteImport.update({
+    id: '/$subsubsector',
+    path: '/$subsubsector',
+    getParentRoute: () => ComprarSubsectorRoute,
+  } as any)
 const BusinessInboxIdRoute = BusinessInboxIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -452,7 +459,7 @@ export interface FileRoutesByFullPath {
   '/business/onboarding': typeof BusinessOnboardingRoute
   '/business/qr': typeof BusinessQrRoute
   '/business/referrals': typeof BusinessReferralsRoute
-  '/comprar/$subsector': typeof ComprarSubsectorRoute
+  '/comprar/$subsector': typeof ComprarSubsectorRouteWithChildren
   '/hospitales/$id': typeof HospitalesIdRoute
   '/hotel/$id': typeof HotelIdRoute
   '/ocio/cartelera': typeof OcioCarteleraRoute
@@ -475,6 +482,7 @@ export interface FileRoutesByFullPath {
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/dashboard/$code': typeof BusDashboardCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
+  '/comprar/$subsector/$subsubsector': typeof ComprarSubsectorSubsubsectorRoute
   '/comprar/tienda/$id': typeof ComprarTiendaIdRoute
   '/ocio/cines/$id': typeof OcioCinesIdRoute
   '/ocio/pelicula/$id': typeof OcioPeliculaIdRoute
@@ -520,7 +528,7 @@ export interface FileRoutesByTo {
   '/business/onboarding': typeof BusinessOnboardingRoute
   '/business/qr': typeof BusinessQrRoute
   '/business/referrals': typeof BusinessReferralsRoute
-  '/comprar/$subsector': typeof ComprarSubsectorRoute
+  '/comprar/$subsector': typeof ComprarSubsectorRouteWithChildren
   '/hospitales/$id': typeof HospitalesIdRoute
   '/hotel/$id': typeof HotelIdRoute
   '/ocio/cartelera': typeof OcioCarteleraRoute
@@ -543,6 +551,7 @@ export interface FileRoutesByTo {
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/dashboard/$code': typeof BusDashboardCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
+  '/comprar/$subsector/$subsubsector': typeof ComprarSubsectorSubsubsectorRoute
   '/comprar/tienda/$id': typeof ComprarTiendaIdRoute
   '/ocio/cines/$id': typeof OcioCinesIdRoute
   '/ocio/pelicula/$id': typeof OcioPeliculaIdRoute
@@ -590,7 +599,7 @@ export interface FileRoutesById {
   '/business/onboarding': typeof BusinessOnboardingRoute
   '/business/qr': typeof BusinessQrRoute
   '/business/referrals': typeof BusinessReferralsRoute
-  '/comprar/$subsector': typeof ComprarSubsectorRoute
+  '/comprar/$subsector': typeof ComprarSubsectorRouteWithChildren
   '/hospitales_/$id': typeof HospitalesIdRoute
   '/hotel/$id': typeof HotelIdRoute
   '/ocio_/cartelera': typeof OcioCarteleraRoute
@@ -613,6 +622,7 @@ export interface FileRoutesById {
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/dashboard/$code': typeof BusDashboardCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
+  '/comprar/$subsector/$subsubsector': typeof ComprarSubsectorSubsubsectorRoute
   '/comprar/tienda/$id': typeof ComprarTiendaIdRoute
   '/ocio_/cines/$id': typeof OcioCinesIdRoute
   '/ocio_/pelicula/$id': typeof OcioPeliculaIdRoute
@@ -684,6 +694,7 @@ export interface FileRouteTypes {
     | '/api/public/refresh-news'
     | '/bus/dashboard/$code'
     | '/business/inbox/$id'
+    | '/comprar/$subsector/$subsubsector'
     | '/comprar/tienda/$id'
     | '/ocio/cines/$id'
     | '/ocio/pelicula/$id'
@@ -752,6 +763,7 @@ export interface FileRouteTypes {
     | '/api/public/refresh-news'
     | '/bus/dashboard/$code'
     | '/business/inbox/$id'
+    | '/comprar/$subsector/$subsubsector'
     | '/comprar/tienda/$id'
     | '/ocio/cines/$id'
     | '/ocio/pelicula/$id'
@@ -821,6 +833,7 @@ export interface FileRouteTypes {
     | '/api/public/refresh-news'
     | '/bus/dashboard/$code'
     | '/business/inbox/$id'
+    | '/comprar/$subsector/$subsubsector'
     | '/comprar/tienda/$id'
     | '/ocio_/cines/$id'
     | '/ocio_/pelicula/$id'
@@ -1250,6 +1263,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ComprarTiendaIdRouteImport
       parentRoute: typeof ComprarRoute
     }
+    '/comprar/$subsector/$subsubsector': {
+      id: '/comprar/$subsector/$subsubsector'
+      path: '/$subsubsector'
+      fullPath: '/comprar/$subsector/$subsubsector'
+      preLoaderRoute: typeof ComprarSubsectorSubsubsectorRouteImport
+      parentRoute: typeof ComprarSubsectorRoute
+    }
     '/business/inbox/$id': {
       id: '/business/inbox/$id'
       path: '/$id'
@@ -1410,13 +1430,24 @@ const BusinessRouteWithChildren = BusinessRoute._addFileChildren(
   BusinessRouteChildren,
 )
 
+interface ComprarSubsectorRouteChildren {
+  ComprarSubsectorSubsubsectorRoute: typeof ComprarSubsectorSubsubsectorRoute
+}
+
+const ComprarSubsectorRouteChildren: ComprarSubsectorRouteChildren = {
+  ComprarSubsectorSubsubsectorRoute: ComprarSubsectorSubsubsectorRoute,
+}
+
+const ComprarSubsectorRouteWithChildren =
+  ComprarSubsectorRoute._addFileChildren(ComprarSubsectorRouteChildren)
+
 interface ComprarRouteChildren {
-  ComprarSubsectorRoute: typeof ComprarSubsectorRoute
+  ComprarSubsectorRoute: typeof ComprarSubsectorRouteWithChildren
   ComprarTiendaIdRoute: typeof ComprarTiendaIdRoute
 }
 
 const ComprarRouteChildren: ComprarRouteChildren = {
-  ComprarSubsectorRoute: ComprarSubsectorRoute,
+  ComprarSubsectorRoute: ComprarSubsectorRouteWithChildren,
   ComprarTiendaIdRoute: ComprarTiendaIdRoute,
 }
 
