@@ -73,7 +73,7 @@ function ComprarPage() {
   if (subsectors.length === 0) return <div className="p-6">No hay sectores configurados.</div>;
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-background text-foreground">
+    <div className="flex h-full flex-col overflow-hidden bg-black text-white">
       <header className="border-b bg-background/95">
         <div className="mx-auto flex max-w-3xl items-center gap-2 px-3 py-2">
           <Link to="/" className="rounded-full p-1.5 hover:bg-muted" aria-label="Volver">
