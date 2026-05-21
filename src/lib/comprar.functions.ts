@@ -330,10 +330,21 @@ export const listShopBusinesses = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const sb = admin();
+
+    let subsubsectorId: string | null = null;
+    if (data.subsubsector_slug) {
+      const { data: sx } = await sb
+        .from("shop_subsubsectors")
+        .select("id")
+        .eq("slug", data.subsubsector_slug)
+        .maybeSingle();
+      subsubsectorId = sx?.id ?? null;
+    }
+
     let q = sb
       .from("shop_businesses")
       .select(
-        "id,name,address,rating,user_ratings_total,price_level,google_types,opening_hours,photos,zone_id,shop_zones(id,name,slug)",
+        "id,name,address,rating,user_ratings_total,price_level,google_types,opening_hours,photos,zone_id,subsubsector_id,shop_zones(id,name,slug)",
       )
       .order("rating", { ascending: false, nullsFirst: false })
       .limit(data.limit);
@@ -344,7 +355,13 @@ export const listShopBusinesses = createServerFn({ method: "POST" })
     }
 
     const wantedTypes = data.subsubsector_slug ? TYPE_MAP[data.subsubsector_slug] : undefined;
-    if (wantedTypes && wantedTypes.length) {
+    if (subsubsectorId && wantedTypes && wantedTypes.length) {
+      q = q.or(
+        `subsubsector_id.eq.${subsubsectorId},google_types.ov.{${wantedTypes.join(",")}}`,
+      );
+    } else if (subsubsectorId) {
+      q = q.eq("subsubsector_id", subsubsectorId);
+    } else if (wantedTypes && wantedTypes.length) {
       q = q.overlaps("google_types", wantedTypes);
     }
 
