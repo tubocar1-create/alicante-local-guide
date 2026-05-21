@@ -1383,6 +1383,7 @@ async function hablar(
     if (finished) return;
     finished = true;
     if (__vaActiveUtterance === utterance) __vaActiveUtterance = null;
+    markVaInteraction();
     onEnd?.();
   };
   utterance.onstart = () => {
