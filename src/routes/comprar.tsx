@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, Sparkles, Loader2, ShoppingBag } from "lucide-react";
 import { classifyShopIntent, getShopTree, type ShopTree } from "@/lib/comprar.functions";
+
 
 export const Route = createFileRoute("/comprar")({
   head: () => ({
@@ -27,9 +28,10 @@ type Intent = Subsubsector["intents"][number];
 type Classification = Awaited<ReturnType<typeof classifyShopIntent>>;
 
 function ComprarPage() {
-  const tree = Route.useLoaderData();
-  const sector = tree.sectors[0]; // "Comercio y Servicios"
+  const tree = Route.useLoaderData() as ShopTree;
+  const sector: Sector | undefined = tree.sectors[0]; // "Comercio y Servicios"
   const classify = useServerFn(classifyShopIntent);
+
 
   const [subsector, setSubsector] = useState<Subsector | null>(null);
   const [subsubsector, setSubsubsector] = useState<Subsubsector | null>(null);
@@ -259,5 +261,3 @@ function Tile({
   );
 }
 
-// Avoid auto-prerender hitting the AI from the loader: loader only fetches tree.
-useEffect; // keep import for tree shake safety (no-op)
