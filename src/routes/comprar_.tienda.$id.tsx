@@ -94,7 +94,7 @@ function TiendaDetail() {
             <img
               src={biz.logo_url}
               alt={`Logotipo ${biz.name}`}
-              className="max-h-40 max-w-[70%] object-contain sm:max-h-52"
+              className="h-full w-full object-contain p-6 sm:p-8"
               loading="eager"
             />
             {biz.subsector?.name && (
