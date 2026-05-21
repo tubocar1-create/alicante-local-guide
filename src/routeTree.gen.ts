@@ -27,6 +27,7 @@ import { Route as FiestasRouteImport } from './routes/fiestas'
 import { Route as FarmaciasRouteImport } from './routes/farmacias'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as DondeDormirRouteImport } from './routes/donde-dormir'
+import { Route as ComprarRouteImport } from './routes/comprar'
 import { Route as ClimaRouteImport } from './routes/clima'
 import { Route as BusinessRouteImport } from './routes/business'
 import { Route as BusRouteImport } from './routes/bus'
@@ -161,6 +162,11 @@ const ExploreRoute = ExploreRouteImport.update({
 const DondeDormirRoute = DondeDormirRouteImport.update({
   id: '/donde-dormir',
   path: '/donde-dormir',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComprarRoute = ComprarRouteImport.update({
+  id: '/comprar',
+  path: '/comprar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ClimaRoute = ClimaRouteImport.update({
@@ -398,6 +404,7 @@ export interface FileRoutesByFullPath {
   '/bus': typeof BusRouteWithChildren
   '/business': typeof BusinessRouteWithChildren
   '/clima': typeof ClimaRoute
+  '/comprar': typeof ComprarRoute
   '/donde-dormir': typeof DondeDormirRoute
   '/explore': typeof ExploreRoute
   '/farmacias': typeof FarmaciasRoute
@@ -462,6 +469,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bus': typeof BusRouteWithChildren
   '/clima': typeof ClimaRoute
+  '/comprar': typeof ComprarRoute
   '/donde-dormir': typeof DondeDormirRoute
   '/explore': typeof ExploreRoute
   '/farmacias': typeof FarmaciasRoute
@@ -528,6 +536,7 @@ export interface FileRoutesById {
   '/bus': typeof BusRouteWithChildren
   '/business': typeof BusinessRouteWithChildren
   '/clima': typeof ClimaRoute
+  '/comprar': typeof ComprarRoute
   '/donde-dormir': typeof DondeDormirRoute
   '/explore': typeof ExploreRoute
   '/farmacias': typeof FarmaciasRoute
@@ -595,6 +604,7 @@ export interface FileRouteTypes {
     | '/bus'
     | '/business'
     | '/clima'
+    | '/comprar'
     | '/donde-dormir'
     | '/explore'
     | '/farmacias'
@@ -659,6 +669,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bus'
     | '/clima'
+    | '/comprar'
     | '/donde-dormir'
     | '/explore'
     | '/farmacias'
@@ -724,6 +735,7 @@ export interface FileRouteTypes {
     | '/bus'
     | '/business'
     | '/clima'
+    | '/comprar'
     | '/donde-dormir'
     | '/explore'
     | '/farmacias'
@@ -790,6 +802,7 @@ export interface RootRouteChildren {
   BusRoute: typeof BusRouteWithChildren
   BusinessRoute: typeof BusinessRouteWithChildren
   ClimaRoute: typeof ClimaRoute
+  ComprarRoute: typeof ComprarRoute
   DondeDormirRoute: typeof DondeDormirRoute
   ExploreRoute: typeof ExploreRoute
   FarmaciasRoute: typeof FarmaciasRoute
@@ -960,6 +973,13 @@ declare module '@tanstack/react-router' {
       path: '/donde-dormir'
       fullPath: '/donde-dormir'
       preLoaderRoute: typeof DondeDormirRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/comprar': {
+      id: '/comprar'
+      path: '/comprar'
+      fullPath: '/comprar'
+      preLoaderRoute: typeof ComprarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/clima': {
@@ -1385,6 +1405,7 @@ const rootRouteChildren: RootRouteChildren = {
   BusRoute: BusRouteWithChildren,
   BusinessRoute: BusinessRouteWithChildren,
   ClimaRoute: ClimaRoute,
+  ComprarRoute: ComprarRoute,
   DondeDormirRoute: DondeDormirRoute,
   ExploreRoute: ExploreRoute,
   FarmaciasRoute: FarmaciasRoute,
@@ -1432,13 +1453,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

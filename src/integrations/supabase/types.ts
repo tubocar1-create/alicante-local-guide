@@ -1420,6 +1420,263 @@ export type Database = {
           },
         ]
       }
+      shop_intent_learning: {
+        Row: {
+          ai_response: string | null
+          ai_suggested_keywords: string[]
+          confidence: number | null
+          created_at: string
+          hits: number
+          id: string
+          last_seen_at: string
+          matched_intent_id: string | null
+          matched_sector_id: string | null
+          matched_subsector_id: string | null
+          matched_subsubsector_id: string | null
+          needs_review: boolean
+          normalized_query: string
+          resolved: boolean
+          user_id: string | null
+          user_query: string
+        }
+        Insert: {
+          ai_response?: string | null
+          ai_suggested_keywords?: string[]
+          confidence?: number | null
+          created_at?: string
+          hits?: number
+          id?: string
+          last_seen_at?: string
+          matched_intent_id?: string | null
+          matched_sector_id?: string | null
+          matched_subsector_id?: string | null
+          matched_subsubsector_id?: string | null
+          needs_review?: boolean
+          normalized_query: string
+          resolved?: boolean
+          user_id?: string | null
+          user_query: string
+        }
+        Update: {
+          ai_response?: string | null
+          ai_suggested_keywords?: string[]
+          confidence?: number | null
+          created_at?: string
+          hits?: number
+          id?: string
+          last_seen_at?: string
+          matched_intent_id?: string | null
+          matched_sector_id?: string | null
+          matched_subsector_id?: string | null
+          matched_subsubsector_id?: string | null
+          needs_review?: boolean
+          normalized_query?: string
+          resolved?: boolean
+          user_id?: string | null
+          user_query?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_intent_learning_matched_intent_id_fkey"
+            columns: ["matched_intent_id"]
+            isOneToOne: false
+            referencedRelation: "shop_intents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_intent_learning_matched_sector_id_fkey"
+            columns: ["matched_sector_id"]
+            isOneToOne: false
+            referencedRelation: "shop_sectors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_intent_learning_matched_subsector_id_fkey"
+            columns: ["matched_subsector_id"]
+            isOneToOne: false
+            referencedRelation: "shop_subsectors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_intent_learning_matched_subsubsector_id_fkey"
+            columns: ["matched_subsubsector_id"]
+            isOneToOne: false
+            referencedRelation: "shop_subsubsectors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_intents: {
+        Row: {
+          active: boolean
+          created_at: string
+          hits: number
+          id: string
+          keywords: string[]
+          label: string
+          priority: number
+          subsubsector_id: string
+          updated_at: string
+          verbal_recommendation: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          hits?: number
+          id?: string
+          keywords?: string[]
+          label: string
+          priority?: number
+          subsubsector_id: string
+          updated_at?: string
+          verbal_recommendation?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          hits?: number
+          id?: string
+          keywords?: string[]
+          label?: string
+          priority?: number
+          subsubsector_id?: string
+          updated_at?: string
+          verbal_recommendation?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_intents_subsubsector_id_fkey"
+            columns: ["subsubsector_id"]
+            isOneToOne: false
+            referencedRelation: "shop_subsubsectors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_sectors: {
+        Row: {
+          active: boolean
+          created_at: string
+          emoji: string | null
+          id: string
+          name: string
+          short_label: string | null
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          name: string
+          short_label?: string | null
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          name?: string
+          short_label?: string | null
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      shop_subsectors: {
+        Row: {
+          active: boolean
+          created_at: string
+          emoji: string | null
+          id: string
+          name: string
+          sector_id: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          name: string
+          sector_id: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          name?: string
+          sector_id?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_subsectors_sector_id_fkey"
+            columns: ["sector_id"]
+            isOneToOne: false
+            referencedRelation: "shop_sectors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shop_subsubsectors: {
+        Row: {
+          active: boolean
+          created_at: string
+          emoji: string | null
+          id: string
+          name: string
+          slug: string
+          sort_order: number
+          subsector_id: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number
+          subsector_id: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          emoji?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+          subsector_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_subsubsectors_subsector_id_fkey"
+            columns: ["subsector_id"]
+            isOneToOne: false
+            referencedRelation: "shop_subsectors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       showtimes: {
         Row: {
           cinema_id: string
