@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useRouter, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter, useNavigate, notFound } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
@@ -66,6 +66,7 @@ function fmtDist(km: number | null): string {
 
 function SectorDashboard() {
   const data = Route.useLoaderData() as SectorDashboardData;
+  const navigate = useNavigate();
   const load = useServerFn(getSectorDashboard);
   const { data: live } = useQuery({
     queryKey: ["sector-dashboard", data.sector.slug],
@@ -233,7 +234,19 @@ function SectorDashboard() {
                 const statusLabel =
                   status === "open" ? "Abre" : status === "closed" ? "Cerr" : "—";
                 return (
-                  <tr key={p.id} className="bg-white/[0.03]">
+                  <tr
+                    key={p.id}
+                    onClick={() => navigate({ to: "/comprar/tienda/$id", params: { id: p.id } })}
+                    role="link"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        navigate({ to: "/comprar/tienda/$id", params: { id: p.id } });
+                      }
+                    }}
+                    className="cursor-pointer bg-white/[0.03] transition hover:bg-white/[0.08]"
+                  >
                     <td
                       className="rounded-l-md px-1.5 py-1.5 align-middle text-[9px] uppercase tracking-[0.12em]"
                       style={{ color: `${ACCENT}cc` }}
@@ -248,20 +261,14 @@ function SectorDashboard() {
                       </span>
                     </td>
                     <td className="px-1.5 py-1.5 align-middle">
-                      <Link
-                        to="/comprar/tienda/$id"
-                        params={{ id: p.id }}
-                        className="block min-w-0 hover:opacity-80"
-                      >
-                        <span className="block truncate text-[11px] font-medium text-white">
-                          {p.name}
+                      <span className="block truncate text-[11px] font-medium text-white">
+                        {p.name}
+                      </span>
+                      {p.address && (
+                        <span className="block truncate text-[10px] text-white/55">
+                          {p.address}
                         </span>
-                        {p.address && (
-                          <span className="block truncate text-[10px] text-white/55">
-                            {p.address}
-                          </span>
-                        )}
-                      </Link>
+                      )}
                     </td>
                     <td className="px-1 py-1 text-center align-middle">
                       <span
