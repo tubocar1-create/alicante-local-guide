@@ -117,38 +117,22 @@ function ComprarPage() {
           )}
         </section>
 
-        {sectors.map((sector) => (
-          <section key={sector.id} className="space-y-3">
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+          {sectors.map((sector) => (
             <Link
+              key={sector.id}
               to="/comprar/sector/$sector"
               params={{ sector: sector.slug }}
               aria-label={`Abrir dashboard de ${sector.short_label || sector.name}`}
-              className="group flex items-center gap-2 py-1 transition hover:text-primary"
+              className="flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border bg-card p-3 text-center shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow"
             >
-              <span className="text-xl">{sector.emoji}</span>
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground group-hover:text-primary">
+              <span className="text-3xl">{sector.emoji}</span>
+              <span className="text-[11px] font-semibold uppercase tracking-wide leading-tight text-muted-foreground">
                 {sector.short_label || sector.name}
-              </h2>
+              </span>
             </Link>
-            {sector.subsectors.length === 0 ? (
-              <p className="text-xs text-muted-foreground">Sin categorías disponibles.</p>
-            ) : (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {sector.subsectors.map((ss) => (
-                  <Link
-                    key={ss.id}
-                    to="/comprar/$subsector"
-                    params={{ subsector: ss.slug }}
-                    className="flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border bg-card p-3 text-center shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow"
-                  >
-                    <span className="text-3xl">{ss.emoji ?? "•"}</span>
-                    <span className="text-xs font-medium leading-tight">{ss.name}</span>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </section>
-        ))}
+          ))}
+        </div>
       </main>
     </div>
   );
