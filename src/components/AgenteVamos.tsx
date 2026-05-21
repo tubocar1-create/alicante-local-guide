@@ -2545,12 +2545,17 @@ export function AgenteVamosFab() {
   const playGreetingAfterPermission = () => {
     try {
       const greetText = getGreetingText();
-      unlockSpeechFromUserGesture();
-      __vaSetGreetingSpoken(true);
-      primeSpanishUtterances();
+      if (typeof window === "undefined" || !window.speechSynthesis) return;
       const synth = window.speechSynthesis;
-      if (!synth) return;
-      const speakGreeting = () => {
+
+      // Cancela cualquier residuo previo y desbloquea TTS dentro del gesto.
+      try { synth.cancel(); } catch {}
+      try { synth.resume(); } catch {}
+      __vaSpeechUnlocked = true;
+
+      __vaSetGreetingSpoken(true);
+
+      const buildAndSpeak = () => {
         const u = new SpeechSynthesisUtterance(greetText);
         u.lang = VA_VOICE_LANG;
         u.rate = VA_VOICE_RATE;
@@ -2565,20 +2570,28 @@ export function AgenteVamosFab() {
         u.onerror = () => {
           if (__vaActiveUtterance === u) __vaActiveUtterance = null;
         };
-        synth.cancel();
-        synth.resume();
-        synth.speak(u);
+        try { synth.speak(u); } catch {}
+        keepSpeechSynthesisAwake(synth);
       };
-      const voicesNow = synth.getVoices();
-      if (voicesNow.length) {
-        speakGreeting();
-      } else {
-        waitVoices(synth).then(speakGreeting);
+
+      // Hablar SIEMPRE de forma síncrona dentro del gesto para Chrome/Android.
+      buildAndSpeak();
+
+      // Si las voces aún no estaban cargadas, re-emite con la voz correcta
+      // en cuanto estén disponibles (cancela el intento previo).
+      if (!synth.getVoices().length) {
+        waitVoices(synth).then(() => {
+          try { synth.cancel(); } catch {}
+          buildAndSpeak();
+        });
       }
+
+      primeSpanishUtterances();
     } catch {
       /* noop */
     }
   };
+
 
 
   const startGreetingFromUserGesture = () => {
