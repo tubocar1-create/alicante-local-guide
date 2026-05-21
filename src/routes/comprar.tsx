@@ -73,7 +73,7 @@ function ComprarPage() {
   if (subsectors.length === 0) return <div className="p-6">No hay sectores configurados.</div>;
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-background text-foreground">
+    <div className="flex h-full flex-col overflow-hidden bg-black text-white">
       <header className="border-b bg-background/95">
         <div className="mx-auto flex max-w-3xl items-center gap-2 px-3 py-2">
           <Link to="/" className="rounded-full p-1.5 hover:bg-muted" aria-label="Volver">
@@ -118,12 +118,13 @@ function ComprarPage() {
               to="/comprar/sector/$sector"
               params={{ sector: ss.slug }}
               aria-label={`Abrir dashboard de ${ss.name}`}
-              className="flex min-h-0 flex-col items-center justify-center gap-0.5 rounded-xl border bg-card p-1 text-center shadow-sm transition hover:border-primary/50"
+              className="flex min-h-0 flex-col items-center justify-center gap-1 rounded-xl border border-white/15 bg-white/5 p-1 text-center shadow-sm transition hover:border-primary/60"
             >
               <span className="text-xl leading-none">{ss.emoji ?? "•"}</span>
-              <span className="text-[9px] font-semibold uppercase tracking-tight leading-[1.1] text-muted-foreground line-clamp-2">
+              <span className="text-xl font-semibold uppercase tracking-tight leading-[1.05] text-white line-clamp-2">
                 {ss.name}
               </span>
+
             </Link>
           ))}
         </div>
