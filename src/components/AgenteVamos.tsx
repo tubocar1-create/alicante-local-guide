@@ -2548,49 +2548,36 @@ export function AgenteVamosFab() {
       if (typeof window === "undefined" || !window.speechSynthesis) return;
       const synth = window.speechSynthesis;
 
-      // Cancela cualquier residuo previo y desbloquea TTS dentro del gesto.
-      try { synth.cancel(); } catch {}
-      try { synth.resume(); } catch {}
+      // Marca el saludo como en curso ANTES de hablar para que el panel
+      // espere a que termine antes de abrir el micro.
+      const u = new SpeechSynthesisUtterance(greetText);
+      u.lang = VA_VOICE_LANG;
+      u.rate = VA_VOICE_RATE;
+      u.pitch = VA_VOICE_PITCH;
+      u.volume = 1;
+      const voice = pickSpanishVoice(synth);
+      if (voice) u.voice = voice;
+      __vaActiveUtterance = u;
+      __vaSetGreetingSpoken(true);
       __vaSpeechUnlocked = true;
 
-      __vaSetGreetingSpoken(true);
-
-      const buildAndSpeak = () => {
-        const u = new SpeechSynthesisUtterance(greetText);
-        u.lang = VA_VOICE_LANG;
-        u.rate = VA_VOICE_RATE;
-        u.pitch = VA_VOICE_PITCH;
-        u.volume = 1;
-        const voice = pickSpanishVoice(synth);
-        if (voice) u.voice = voice;
-        __vaActiveUtterance = u;
-        u.onend = () => {
-          if (__vaActiveUtterance === u) __vaActiveUtterance = null;
-        };
-        u.onerror = () => {
-          if (__vaActiveUtterance === u) __vaActiveUtterance = null;
-        };
-        try { synth.speak(u); } catch {}
-        keepSpeechSynthesisAwake(synth);
+      u.onend = () => {
+        if (__vaActiveUtterance === u) __vaActiveUtterance = null;
+      };
+      u.onerror = () => {
+        if (__vaActiveUtterance === u) __vaActiveUtterance = null;
       };
 
-      // Hablar SIEMPRE de forma síncrona dentro del gesto para Chrome/Android.
-      buildAndSpeak();
-
-      // Si las voces aún no estaban cargadas, re-emite con la voz correcta
-      // en cuanto estén disponibles (cancela el intento previo).
-      if (!synth.getVoices().length) {
-        waitVoices(synth).then(() => {
-          try { synth.cancel(); } catch {}
-          buildAndSpeak();
-        });
-      }
-
+      // Hablar SIEMPRE de forma síncrona dentro del gesto.
+      try { synth.resume(); } catch {}
+      try { synth.speak(u); } catch {}
+      keepSpeechSynthesisAwake(synth);
       primeSpanishUtterances();
     } catch {
       /* noop */
     }
   };
+
 
 
 
