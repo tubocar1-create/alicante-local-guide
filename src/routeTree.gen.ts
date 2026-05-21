@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as VuelosRouteImport } from './routes/vuelos'
+import { Route as VocesRouteImport } from './routes/voces'
 import { Route as ThreadsRouteImport } from './routes/threads'
 import { Route as StayRouteImport } from './routes/stay'
 import { Route as SistemaSanitarioRouteImport } from './routes/sistema-sanitario'
@@ -80,6 +81,11 @@ const WelcomeRoute = WelcomeRouteImport.update({
 const VuelosRoute = VuelosRouteImport.update({
   id: '/vuelos',
   path: '/vuelos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VocesRoute = VocesRouteImport.update({
+  id: '/voces',
+  path: '/voces',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ThreadsRoute = ThreadsRouteImport.update({
@@ -407,6 +413,7 @@ export interface FileRoutesByFullPath {
   '/sistema-sanitario': typeof SistemaSanitarioRoute
   '/stay': typeof StayRoute
   '/threads': typeof ThreadsRouteWithChildren
+  '/voces': typeof VocesRoute
   '/vuelos': typeof VuelosRoute
   '/welcome': typeof WelcomeRoute
   '/admin/places': typeof AdminPlacesRoute
@@ -470,6 +477,7 @@ export interface FileRoutesByTo {
   '/sistema-sanitario': typeof SistemaSanitarioRoute
   '/stay': typeof StayRoute
   '/threads': typeof ThreadsRouteWithChildren
+  '/voces': typeof VocesRoute
   '/vuelos': typeof VuelosRoute
   '/welcome': typeof WelcomeRoute
   '/admin/places': typeof AdminPlacesRoute
@@ -535,6 +543,7 @@ export interface FileRoutesById {
   '/sistema-sanitario': typeof SistemaSanitarioRoute
   '/stay': typeof StayRoute
   '/threads': typeof ThreadsRouteWithChildren
+  '/voces': typeof VocesRoute
   '/vuelos': typeof VuelosRoute
   '/welcome': typeof WelcomeRoute
   '/admin/places': typeof AdminPlacesRoute
@@ -601,6 +610,7 @@ export interface FileRouteTypes {
     | '/sistema-sanitario'
     | '/stay'
     | '/threads'
+    | '/voces'
     | '/vuelos'
     | '/welcome'
     | '/admin/places'
@@ -664,6 +674,7 @@ export interface FileRouteTypes {
     | '/sistema-sanitario'
     | '/stay'
     | '/threads'
+    | '/voces'
     | '/vuelos'
     | '/welcome'
     | '/admin/places'
@@ -728,6 +739,7 @@ export interface FileRouteTypes {
     | '/sistema-sanitario'
     | '/stay'
     | '/threads'
+    | '/voces'
     | '/vuelos'
     | '/welcome'
     | '/admin/places'
@@ -793,6 +805,7 @@ export interface RootRouteChildren {
   SistemaSanitarioRoute: typeof SistemaSanitarioRoute
   StayRoute: typeof StayRoute
   ThreadsRoute: typeof ThreadsRouteWithChildren
+  VocesRoute: typeof VocesRoute
   VuelosRoute: typeof VuelosRoute
   WelcomeRoute: typeof WelcomeRoute
   AdminPlacesRoute: typeof AdminPlacesRoute
@@ -835,6 +848,13 @@ declare module '@tanstack/react-router' {
       path: '/vuelos'
       fullPath: '/vuelos'
       preLoaderRoute: typeof VuelosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/voces': {
+      id: '/voces'
+      path: '/voces'
+      fullPath: '/voces'
+      preLoaderRoute: typeof VocesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/threads': {
@@ -1380,6 +1400,7 @@ const rootRouteChildren: RootRouteChildren = {
   SistemaSanitarioRoute: SistemaSanitarioRoute,
   StayRoute: StayRoute,
   ThreadsRoute: ThreadsRouteWithChildren,
+  VocesRoute: VocesRoute,
   VuelosRoute: VuelosRoute,
   WelcomeRoute: WelcomeRoute,
   AdminPlacesRoute: AdminPlacesRoute,
@@ -1411,13 +1432,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
