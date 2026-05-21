@@ -414,6 +414,7 @@ export const getShopBusiness = createServerFn({ method: "POST" })
       address: r.address,
       phone: r.phone,
       website: r.website,
+      logo_url: (r as any).logo_url ?? null,
       google_place_id: r.google_place_id,
       lat: r.lat,
       lng: r.lng,
