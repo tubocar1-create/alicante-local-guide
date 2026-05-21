@@ -268,3 +268,146 @@ Si la consulta es ambigua, propón una pregunta breve para afinar.`;
       needs_review: needsReview,
     };
   });
+
+// --------- Businesses (tienda detail + listings) ---------
+
+export type ShopBusinessSummary = {
+  id: string;
+  name: string;
+  address: string | null;
+  rating: number | null;
+  user_ratings_total: number | null;
+  price_level: number | null;
+  zone: { id: string; name: string; slug: string } | null;
+  photo_ref: string | null;
+  google_types: string[];
+  open_now: boolean | null;
+};
+
+export type ShopBusinessDetail = ShopBusinessSummary & {
+  phone: string | null;
+  website: string | null;
+  google_place_id: string | null;
+  lat: number | null;
+  lng: number | null;
+  weekday_descriptions: string[];
+  photos_refs: string[];
+};
+
+// Map subsubsector slug → google place types we consider relevant.
+const TYPE_MAP: Record<string, string[]> = {
+  calzado: ["shoe_store"],
+  ropa: ["clothing_store", "womens_clothing_store", "mens_clothing_store"],
+  "ropa-mujer": ["womens_clothing_store", "clothing_store"],
+  "ropa-hombre": ["mens_clothing_store", "clothing_store"],
+  lenceria: ["lingerie_store", "clothing_store"],
+  cosmetica: ["beauty_supply_store", "cosmetics_store"],
+  perfumeria: ["beauty_supply_store", "cosmetics_store"],
+  telefonia: ["cell_phone_store", "electronics_store"],
+  electronica: ["electronics_store"],
+  supermercado: ["supermarket", "grocery_or_supermarket"],
+  alimentacion: ["supermarket", "grocery_or_supermarket", "market"],
+  regalos: ["gift_shop"],
+  deporte: ["sporting_goods_store"],
+};
+
+function pickPhotoRef(photos: unknown): string | null {
+  if (!Array.isArray(photos) || photos.length === 0) return null;
+  const first = photos[0] as { name?: string } | string;
+  if (typeof first === "string") return first;
+  return first?.name ?? null;
+}
+
+export const listShopBusinesses = createServerFn({ method: "POST" })
+  .inputValidator((input) =>
+    z
+      .object({
+        subsubsector_slug: z.string().optional(),
+        zone_slug: z.string().optional(),
+        limit: z.number().int().min(1).max(100).default(40),
+      })
+      .parse(input ?? {}),
+  )
+  .handler(async ({ data }) => {
+    const sb = admin();
+    let q = sb
+      .from("shop_businesses")
+      .select(
+        "id,name,address,rating,user_ratings_total,price_level,google_types,opening_hours,photos,zone_id,shop_zones(id,name,slug)",
+      )
+      .order("rating", { ascending: false, nullsFirst: false })
+      .limit(data.limit);
+
+    if (data.zone_slug) {
+      const { data: z } = await sb.from("shop_zones").select("id").eq("slug", data.zone_slug).maybeSingle();
+      if (z?.id) q = q.eq("zone_id", z.id);
+    }
+
+    const wantedTypes = data.subsubsector_slug ? TYPE_MAP[data.subsubsector_slug] : undefined;
+    if (wantedTypes && wantedTypes.length) {
+      q = q.overlaps("google_types", wantedTypes);
+    }
+
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+
+    return (rows ?? []).map<ShopBusinessSummary>((r: any) => ({
+      id: r.id,
+      name: r.name,
+      address: r.address,
+      rating: r.rating,
+      user_ratings_total: r.user_ratings_total,
+      price_level: r.price_level,
+      zone: r.shop_zones
+        ? { id: r.shop_zones.id, name: r.shop_zones.name, slug: r.shop_zones.slug }
+        : null,
+      photo_ref: pickPhotoRef(r.photos),
+      google_types: (r.google_types ?? []) as string[],
+      open_now: r.opening_hours?.openNow ?? null,
+    }));
+  });
+
+export const getShopBusiness = createServerFn({ method: "POST" })
+  .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data }): Promise<ShopBusinessDetail | null> => {
+    const sb = admin();
+    const { data: r, error } = await sb
+      .from("shop_businesses")
+      .select(
+        "id,name,address,phone,website,google_place_id,lat,lng,rating,user_ratings_total,price_level,google_types,opening_hours,photos,zone_id,shop_zones(id,name,slug)",
+      )
+      .eq("id", data.id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!r) return null;
+    const photos = Array.isArray(r.photos) ? r.photos : [];
+    const photo_refs = photos
+      .map((p: any) => (typeof p === "string" ? p : p?.name))
+      .filter(Boolean) as string[];
+    const oh: any = r.opening_hours ?? {};
+    return {
+      id: r.id,
+      name: r.name,
+      address: r.address,
+      phone: r.phone,
+      website: r.website,
+      google_place_id: r.google_place_id,
+      lat: r.lat,
+      lng: r.lng,
+      rating: r.rating,
+      user_ratings_total: r.user_ratings_total,
+      price_level: r.price_level,
+      google_types: (r.google_types ?? []) as string[],
+      open_now: oh.openNow ?? null,
+      weekday_descriptions: Array.isArray(oh.weekdayDescriptions) ? oh.weekdayDescriptions : [],
+      photo_ref: photo_refs[0] ?? null,
+      photos_refs: photo_refs,
+      zone: (r as any).shop_zones
+        ? {
+            id: (r as any).shop_zones.id,
+            name: (r as any).shop_zones.name,
+            slug: (r as any).shop_zones.slug,
+          }
+        : null,
+    };
+  });
