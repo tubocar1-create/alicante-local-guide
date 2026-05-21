@@ -17,7 +17,7 @@ export const Route = createFileRoute("/voces")({
 });
 
 const SAMPLE =
-  "Hola, soy tu asistente de Alicante. Puedo ayudarte con buses, playas, salud y mucho más.";
+  "🚌 Buenos días Leopoldo, el bus 12 pasa en 6 minutos.";
 
 function VocesPage() {
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
