@@ -1,0 +1,2 @@
+INSERT INTO public.shop_subsubsectors (id, subsector_id, slug, name, emoji, sort_order, active)
+VALUES ('e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8a9b', '7078c41e-8815-41d2-9b2f-714b545848c2', 'recambios-moto', 'Recambios de moto', '🏍️', 110, true);
