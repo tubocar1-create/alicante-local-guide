@@ -1193,9 +1193,15 @@ let __vaSpeechUnlocked = false;
 let __vaVoicesLoggingAttached = false;
 const POST_SPEECH_LISTEN_DELAY_MS = 140;
 
+// Voz unificada del agente: español Estados Unidos (es-US) si está disponible.
+const VA_VOICE_LANG = "es-US";
+const VA_VOICE_RATE = 0.6;
+const VA_VOICE_PITCH = 0.55;
+
 function pickSpanishVoice(synth: SpeechSynthesis) {
   const voices = synth.getVoices();
   return (
+    voices.find((v) => v.lang?.toLowerCase().startsWith("es-us")) ||
     voices.find((v) => v.lang?.toLowerCase().startsWith("es-es")) ||
     voices.find((v) => v.lang?.toLowerCase().startsWith("es")) ||
     voices.find((v) => v.lang?.toLowerCase().includes("es")) ||
@@ -1250,9 +1256,9 @@ async function hablar(
   synth.cancel();
   synth.resume();
   const utterance = new SpeechSynthesisUtterance(String(respuesta));
-  utterance.lang = "es-ES";
-  utterance.rate = 1;
-  utterance.pitch = 1;
+  utterance.lang = VA_VOICE_LANG;
+  utterance.rate = VA_VOICE_RATE;
+  utterance.pitch = VA_VOICE_PITCH;
   utterance.volume = 1;
   const voice = pickSpanishVoice(synth);
   if (voice) {
@@ -1302,9 +1308,9 @@ function iniciarAudio() {
 
 function configureSpanishUtterance(u: SpeechSynthesisUtterance, text: string) {
   u.text = plainText(text);
-  u.lang = "es-ES";
-  u.rate = 1.05;
-  u.pitch = 1;
+  u.lang = VA_VOICE_LANG;
+  u.rate = VA_VOICE_RATE;
+  u.pitch = VA_VOICE_PITCH;
   const synth = window.speechSynthesis;
   const voice = synth ? pickSpanishVoice(synth) : null;
   if (voice) u.voice = voice;
@@ -1316,9 +1322,9 @@ function reserveSpanishUtterance() {
   if (typeof window === "undefined" || typeof SpeechSynthesisUtterance === "undefined") return null;
   const u = __vaPrimedUtterances.shift() || new SpeechSynthesisUtterance("");
   u.text = "";
-  u.lang = "es-ES";
-  u.rate = 1.05;
-  u.pitch = 1;
+  u.lang = VA_VOICE_LANG;
+  u.rate = VA_VOICE_RATE;
+  u.pitch = VA_VOICE_PITCH;
   const synth = window.speechSynthesis;
   const voice = synth ? pickSpanishVoice(synth) : null;
   if (voice) u.voice = voice;
@@ -1352,9 +1358,9 @@ function primeSpanishUtterances(count = 8) {
   if (typeof window === "undefined" || typeof SpeechSynthesisUtterance === "undefined") return;
   while (__vaPrimedUtterances.length < count) {
     const u = new SpeechSynthesisUtterance("");
-    u.lang = "es-ES";
-    u.rate = 1.05;
-    u.pitch = 1;
+    u.lang = VA_VOICE_LANG;
+    u.rate = VA_VOICE_RATE;
+    u.pitch = VA_VOICE_PITCH;
     __vaPrimedUtterances.push(u);
   }
 }
@@ -2562,9 +2568,9 @@ export function AgenteVamosFab() {
           const synth = window.speechSynthesis;
           if (!synth) return;
           const u = new SpeechSynthesisUtterance(greetText);
-          u.lang = "es-ES";
-          u.rate = 1.05;
-          u.pitch = 1;
+          u.lang = VA_VOICE_LANG;
+          u.rate = VA_VOICE_RATE;
+          u.pitch = VA_VOICE_PITCH;
           const voice = pickSpanishVoice(synth);
           if (voice) u.voice = voice;
           __vaActiveUtterance = u;
