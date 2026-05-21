@@ -2568,9 +2568,9 @@ export function AgenteVamosFab() {
           const synth = window.speechSynthesis;
           if (!synth) return;
           const u = new SpeechSynthesisUtterance(greetText);
-          u.lang = "es-ES";
-          u.rate = 1.05;
-          u.pitch = 1;
+          u.lang = VA_VOICE_LANG;
+          u.rate = VA_VOICE_RATE;
+          u.pitch = VA_VOICE_PITCH;
           const voice = pickSpanishVoice(synth);
           if (voice) u.voice = voice;
           __vaActiveUtterance = u;
