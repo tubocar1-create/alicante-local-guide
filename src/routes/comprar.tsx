@@ -118,12 +118,13 @@ function ComprarPage() {
               to="/comprar/sector/$sector"
               params={{ sector: ss.slug }}
               aria-label={`Abrir dashboard de ${ss.name}`}
-              className="flex min-h-0 flex-col items-center justify-center gap-0.5 rounded-xl border bg-card p-1 text-center shadow-sm transition hover:border-primary/50"
+              className="flex min-h-0 flex-col items-center justify-center gap-1 rounded-xl border border-white/15 bg-white/5 p-1 text-center shadow-sm transition hover:border-primary/60"
             >
               <span className="text-xl leading-none">{ss.emoji ?? "•"}</span>
-              <span className="text-[9px] font-semibold uppercase tracking-tight leading-[1.1] text-muted-foreground line-clamp-2">
+              <span className="text-xl font-semibold uppercase tracking-tight leading-[1.05] text-white line-clamp-2">
                 {ss.name}
               </span>
+
             </Link>
           ))}
         </div>
