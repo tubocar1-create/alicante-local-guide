@@ -2546,51 +2546,40 @@ export function AgenteVamosFab() {
     try {
       const greetText = getGreetingText();
       unlockSpeechFromUserGesture();
-      const greetAudio = new Audio(audioSrc(getGreetingClip()));
-      greetAudio.preload = "auto";
-      greetAudio.volume = 1;
-      __vaActiveAudio = greetAudio;
-      __vaActiveAudioStartedAt = Date.now();
       __vaSetGreetingSpoken(true);
-      greetAudio.onended = () => {
-        if (__vaActiveAudio === greetAudio) __vaActiveAudio = null;
-        __vaActiveAudioStartedAt = 0;
-      };
-      greetAudio.onerror = () => {
-        if (__vaActiveAudio === greetAudio) __vaActiveAudio = null;
-        __vaActiveAudioStartedAt = 0;
-      };
-      const audioStarted = greetAudio.play();
-      if (audioStarted && typeof audioStarted.catch === "function") {
-        audioStarted.catch(() => {
-          if (__vaActiveAudio === greetAudio) __vaActiveAudio = null;
-          __vaActiveAudioStartedAt = 0;
-          const synth = window.speechSynthesis;
-          if (!synth) return;
-          const u = new SpeechSynthesisUtterance(greetText);
-          u.lang = VA_VOICE_LANG;
-          u.rate = VA_VOICE_RATE;
-          u.pitch = VA_VOICE_PITCH;
-          const voice = pickSpanishVoice(synth);
-          if (voice) u.voice = voice;
-          __vaActiveUtterance = u;
-          u.onend = () => {
-            __vaActiveUtterance = null;
-          };
-          u.onerror = () => {
-            __vaActiveUtterance = null;
-          };
-          synth.cancel();
-          synth.resume();
-          synth.speak(u);
-        });
-      }
-      if (window.speechSynthesis) window.speechSynthesis.resume();
       primeSpanishUtterances();
+      const synth = window.speechSynthesis;
+      if (!synth) return;
+      const speakGreeting = () => {
+        const u = new SpeechSynthesisUtterance(greetText);
+        u.lang = VA_VOICE_LANG;
+        u.rate = VA_VOICE_RATE;
+        u.pitch = VA_VOICE_PITCH;
+        u.volume = 1;
+        const voice = pickSpanishVoice(synth);
+        if (voice) u.voice = voice;
+        __vaActiveUtterance = u;
+        u.onend = () => {
+          if (__vaActiveUtterance === u) __vaActiveUtterance = null;
+        };
+        u.onerror = () => {
+          if (__vaActiveUtterance === u) __vaActiveUtterance = null;
+        };
+        synth.cancel();
+        synth.resume();
+        synth.speak(u);
+      };
+      const voicesNow = synth.getVoices();
+      if (voicesNow.length) {
+        speakGreeting();
+      } else {
+        waitVoices(synth).then(speakGreeting);
+      }
     } catch {
       /* noop */
     }
   };
+
 
   const startGreetingFromUserGesture = () => {
     if (voiceBootStartedRef.current) return;
