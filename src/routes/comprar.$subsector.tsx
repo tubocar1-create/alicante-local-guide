@@ -70,7 +70,7 @@ function SubsectorPage() {
           <p className="text-sm text-muted-foreground">Sin subcategorías todavía.</p>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {data.subsubsectors.map((sx) => (
+            {data.subsubsectors.map((sx: { id: string; slug: string; name: string; emoji: string | null }) => (
               <Link
                 key={sx.id}
                 to="/comprar/$subsector/$subsubsector"

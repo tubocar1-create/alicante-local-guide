@@ -45,6 +45,7 @@ import { Route as OcioCinesRouteImport } from './routes/ocio_.cines'
 import { Route as OcioCarteleraRouteImport } from './routes/ocio_.cartelera'
 import { Route as HotelIdRouteImport } from './routes/hotel.$id'
 import { Route as HospitalesIdRouteImport } from './routes/hospitales_.$id'
+import { Route as ComprarSubsectorRouteImport } from './routes/comprar.$subsector'
 import { Route as BusinessReferralsRouteImport } from './routes/business.referrals'
 import { Route as BusinessQrRouteImport } from './routes/business.qr'
 import { Route as BusinessOnboardingRouteImport } from './routes/business.onboarding'
@@ -256,6 +257,11 @@ const HospitalesIdRoute = HospitalesIdRouteImport.update({
   path: '/hospitales/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ComprarSubsectorRoute = ComprarSubsectorRouteImport.update({
+  id: '/$subsector',
+  path: '/$subsector',
+  getParentRoute: () => ComprarRoute,
+} as any)
 const BusinessReferralsRoute = BusinessReferralsRouteImport.update({
   id: '/referrals',
   path: '/referrals',
@@ -446,6 +452,7 @@ export interface FileRoutesByFullPath {
   '/business/onboarding': typeof BusinessOnboardingRoute
   '/business/qr': typeof BusinessQrRoute
   '/business/referrals': typeof BusinessReferralsRoute
+  '/comprar/$subsector': typeof ComprarSubsectorRoute
   '/hospitales/$id': typeof HospitalesIdRoute
   '/hotel/$id': typeof HotelIdRoute
   '/ocio/cartelera': typeof OcioCarteleraRoute
@@ -513,6 +520,7 @@ export interface FileRoutesByTo {
   '/business/onboarding': typeof BusinessOnboardingRoute
   '/business/qr': typeof BusinessQrRoute
   '/business/referrals': typeof BusinessReferralsRoute
+  '/comprar/$subsector': typeof ComprarSubsectorRoute
   '/hospitales/$id': typeof HospitalesIdRoute
   '/hotel/$id': typeof HotelIdRoute
   '/ocio/cartelera': typeof OcioCarteleraRoute
@@ -582,6 +590,7 @@ export interface FileRoutesById {
   '/business/onboarding': typeof BusinessOnboardingRoute
   '/business/qr': typeof BusinessQrRoute
   '/business/referrals': typeof BusinessReferralsRoute
+  '/comprar/$subsector': typeof ComprarSubsectorRoute
   '/hospitales_/$id': typeof HospitalesIdRoute
   '/hotel/$id': typeof HotelIdRoute
   '/ocio_/cartelera': typeof OcioCarteleraRoute
@@ -652,6 +661,7 @@ export interface FileRouteTypes {
     | '/business/onboarding'
     | '/business/qr'
     | '/business/referrals'
+    | '/comprar/$subsector'
     | '/hospitales/$id'
     | '/hotel/$id'
     | '/ocio/cartelera'
@@ -719,6 +729,7 @@ export interface FileRouteTypes {
     | '/business/onboarding'
     | '/business/qr'
     | '/business/referrals'
+    | '/comprar/$subsector'
     | '/hospitales/$id'
     | '/hotel/$id'
     | '/ocio/cartelera'
@@ -787,6 +798,7 @@ export interface FileRouteTypes {
     | '/business/onboarding'
     | '/business/qr'
     | '/business/referrals'
+    | '/comprar/$subsector'
     | '/hospitales_/$id'
     | '/hotel/$id'
     | '/ocio_/cartelera'
@@ -1126,6 +1138,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HospitalesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/comprar/$subsector': {
+      id: '/comprar/$subsector'
+      path: '/$subsector'
+      fullPath: '/comprar/$subsector'
+      preLoaderRoute: typeof ComprarSubsectorRouteImport
+      parentRoute: typeof ComprarRoute
+    }
     '/business/referrals': {
       id: '/business/referrals'
       path: '/referrals'
@@ -1392,10 +1411,12 @@ const BusinessRouteWithChildren = BusinessRoute._addFileChildren(
 )
 
 interface ComprarRouteChildren {
+  ComprarSubsectorRoute: typeof ComprarSubsectorRoute
   ComprarTiendaIdRoute: typeof ComprarTiendaIdRoute
 }
 
 const ComprarRouteChildren: ComprarRouteChildren = {
+  ComprarSubsectorRoute: ComprarSubsectorRoute,
   ComprarTiendaIdRoute: ComprarTiendaIdRoute,
 }
 
