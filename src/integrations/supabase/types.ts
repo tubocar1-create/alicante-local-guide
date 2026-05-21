@@ -1420,6 +1420,112 @@ export type Database = {
           },
         ]
       }
+      shop_businesses: {
+        Row: {
+          address: string | null
+          brand: string | null
+          city: string | null
+          created_at: string
+          google_place_id: string | null
+          google_types: string[] | null
+          id: string
+          intent_id: string | null
+          last_enriched_at: string | null
+          lat: number | null
+          lng: number | null
+          name: string
+          notes: string | null
+          opening_hours: Json | null
+          phone: string | null
+          photos: Json | null
+          postal_code: string | null
+          price_level: number | null
+          rating: number | null
+          status: string
+          subsubsector_id: string | null
+          updated_at: string
+          user_ratings_total: number | null
+          website: string | null
+          zone_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          brand?: string | null
+          city?: string | null
+          created_at?: string
+          google_place_id?: string | null
+          google_types?: string[] | null
+          id?: string
+          intent_id?: string | null
+          last_enriched_at?: string | null
+          lat?: number | null
+          lng?: number | null
+          name: string
+          notes?: string | null
+          opening_hours?: Json | null
+          phone?: string | null
+          photos?: Json | null
+          postal_code?: string | null
+          price_level?: number | null
+          rating?: number | null
+          status?: string
+          subsubsector_id?: string | null
+          updated_at?: string
+          user_ratings_total?: number | null
+          website?: string | null
+          zone_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          brand?: string | null
+          city?: string | null
+          created_at?: string
+          google_place_id?: string | null
+          google_types?: string[] | null
+          id?: string
+          intent_id?: string | null
+          last_enriched_at?: string | null
+          lat?: number | null
+          lng?: number | null
+          name?: string
+          notes?: string | null
+          opening_hours?: Json | null
+          phone?: string | null
+          photos?: Json | null
+          postal_code?: string | null
+          price_level?: number | null
+          rating?: number | null
+          status?: string
+          subsubsector_id?: string | null
+          updated_at?: string
+          user_ratings_total?: number | null
+          website?: string | null
+          zone_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shop_businesses_intent_id_fkey"
+            columns: ["intent_id"]
+            isOneToOne: false
+            referencedRelation: "shop_intents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_businesses_subsubsector_id_fkey"
+            columns: ["subsubsector_id"]
+            isOneToOne: false
+            referencedRelation: "shop_subsubsectors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shop_businesses_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "shop_zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shop_intent_learning: {
         Row: {
           ai_response: string | null
@@ -1676,6 +1782,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      shop_zones: {
+        Row: {
+          active: boolean
+          city: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          city?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          city?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       showtimes: {
         Row: {
