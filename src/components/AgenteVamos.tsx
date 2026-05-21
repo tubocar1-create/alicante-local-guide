@@ -1048,6 +1048,83 @@ function makeGreeting(): Msg {
   return { role: "assistant", content: getGreetingText() };
 }
 
+// ── Saludo contextual de reentrada ───────────────────────────────────────
+const VA_LAST_INTERACTION_KEY = "va:last-interaction-ts";
+const VA_LAST_TOPIC_KEY = "va:last-topic";
+const VA_LAST_REENTRY_KEY = "va:last-reentry";
+
+export function markVaInteraction(topic?: string) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(VA_LAST_INTERACTION_KEY, String(Date.now()));
+    if (topic && topic.trim()) {
+      window.sessionStorage.setItem(VA_LAST_TOPIC_KEY, topic.trim().slice(0, 80));
+    }
+  } catch {}
+}
+
+function pickDistinct(options: string[], lastKey: string): string {
+  if (typeof window === "undefined") return options[0];
+  let last = "";
+  try { last = window.sessionStorage.getItem(lastKey) ?? ""; } catch {}
+  const pool = options.filter((o) => o !== last);
+  const arr = pool.length ? pool : options;
+  const choice = arr[Math.floor(Math.random() * arr.length)];
+  try { window.sessionStorage.setItem(lastKey, choice); } catch {}
+  return choice;
+}
+
+function getReentryGreeting(): string {
+  const h = new Date().getHours();
+  const partOfDay = h < 14 ? "Buenos días" : h < 20 ? "Buenas tardes" : "Buenas noches";
+  let lastTs = 0;
+  let lastTopic = "";
+  if (typeof window !== "undefined") {
+    try {
+      lastTs = Number(window.sessionStorage.getItem(VA_LAST_INTERACTION_KEY) ?? "0") || 0;
+      lastTopic = window.sessionStorage.getItem(VA_LAST_TOPIC_KEY) ?? "";
+    } catch {}
+  }
+  const minsSince = lastTs ? Math.round((Date.now() - lastTs) / 60000) : Infinity;
+
+  // > 30 min: saluda según hora del día
+  if (minsSince > 30) {
+    return pickDistinct(
+      [
+        `${partOfDay}, Leopoldo. Aquí sigo.`,
+        `${partOfDay}, Leopoldo. ¿Seguimos?`,
+        `Hola de nuevo, Leopoldo.`,
+      ],
+      VA_LAST_REENTRY_KEY,
+    );
+  }
+
+  // Reentrada reciente con tema previo
+  if (lastTopic) {
+    const short = lastTopic.length > 40 ? lastTopic.slice(0, 40) + "…" : lastTopic;
+    return pickDistinct(
+      [
+        `Seguimos con lo de "${short}".`,
+        `Aquí sigo, Leopoldo.`,
+        `Encontré más opciones sobre "${short}".`,
+        `Hola de nuevo, ¿continuamos?`,
+      ],
+      VA_LAST_REENTRY_KEY,
+    );
+  }
+
+  // Reentrada genérica
+  return pickDistinct(
+    [
+      `Aquí sigo, Leopoldo.`,
+      `Hola de nuevo.`,
+      `¿En qué seguimos?`,
+      `Sigo contigo.`,
+    ],
+    VA_LAST_REENTRY_KEY,
+  );
+}
+
 function loadMsgs(): Msg[] {
   if (typeof window === "undefined") return [makeGreeting()];
   try {
