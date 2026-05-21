@@ -8,7 +8,7 @@ import {
   type ShopBusinessSummary,
 } from "@/lib/comprar.functions";
 
-export const Route = createFileRoute("/comprar/$subsector/$subsubsector")({
+export const Route = createFileRoute("/comprar_/$subsector/$subsubsector")({
   loader: ({ params }) =>
     getSubsubsectorPage({
       data: { subsector_slug: params.subsector, slug: params.subsubsector },
