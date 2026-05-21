@@ -524,7 +524,14 @@ export type SectorDashboardItem = {
   subsector_name: string;
   subsubsector_name: string;
   subsubsector_emoji: string | null;
-  opening_hours: Record<string, unknown> | null;
+  opening_hours: {
+    periods?: Array<{
+      open?: { day?: number; hour?: number; minute?: number };
+      close?: { day?: number; hour?: number; minute?: number };
+    }>;
+    weekdayDescriptions?: string[];
+    openNow?: boolean;
+  } | null;
   lat: number | null;
   lng: number | null;
 };
