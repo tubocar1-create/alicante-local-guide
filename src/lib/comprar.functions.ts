@@ -449,14 +449,28 @@ export const getSubsectorPage = createServerFn({ method: "GET" })
       .eq("subsector_id", ss.id)
       .eq("active", true)
       .order("sort_order");
+    const ids = (sxs ?? []).map((x) => x.id);
+    const counts: Record<string, number> = {};
+    if (ids.length) {
+      const { data: biz } = await sb
+        .from("shop_businesses")
+        .select("subsubsector_id")
+        .in("subsubsector_id", ids)
+        .neq("status", "duplicate");
+      for (const r of biz ?? []) {
+        const k = (r as { subsubsector_id: string | null }).subsubsector_id;
+        if (k) counts[k] = (counts[k] ?? 0) + 1;
+      }
+    }
     return {
       id: ss.id,
       slug: ss.slug,
       name: ss.name,
       emoji: ss.emoji,
       sector: (ss as any).shop_sectors ?? null,
-      subsubsectors: sxs ?? [],
+      subsubsectors: (sxs ?? []).map((x) => ({ ...x, business_count: counts[x.id] ?? 0 })),
     };
+
   });
 
 // Fetch a single subsubsector page (with its intents + parents) by slugs.
