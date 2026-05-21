@@ -59,6 +59,7 @@ import { Route as AdminPlacesRouteImport } from './routes/admin.places'
 import { Route as SaludCategoriaIdRouteImport } from './routes/salud_.$categoria.$id'
 import { Route as OcioPeliculaIdRouteImport } from './routes/ocio_.pelicula.$id'
 import { Route as OcioCinesIdRouteImport } from './routes/ocio_.cines.$id'
+import { Route as ComprarTiendaIdRouteImport } from './routes/comprar.tienda.$id'
 import { Route as BusinessInboxIdRouteImport } from './routes/business.inbox.$id'
 import { Route as BusDashboardCodeRouteImport } from './routes/bus.dashboard.$code'
 import { Route as ApiPublicRefreshNewsRouteImport } from './routes/api/public/refresh-news'
@@ -325,6 +326,11 @@ const OcioCinesIdRoute = OcioCinesIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => OcioCinesRoute,
 } as any)
+const ComprarTiendaIdRoute = ComprarTiendaIdRouteImport.update({
+  id: '/tienda/$id',
+  path: '/tienda/$id',
+  getParentRoute: () => ComprarRoute,
+} as any)
 const BusinessInboxIdRoute = BusinessInboxIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -410,7 +416,7 @@ export interface FileRoutesByFullPath {
   '/bus': typeof BusRouteWithChildren
   '/business': typeof BusinessRouteWithChildren
   '/clima': typeof ClimaRoute
-  '/comprar': typeof ComprarRoute
+  '/comprar': typeof ComprarRouteWithChildren
   '/donde-dormir': typeof DondeDormirRoute
   '/explore': typeof ExploreRoute
   '/farmacias': typeof FarmaciasRoute
@@ -462,6 +468,7 @@ export interface FileRoutesByFullPath {
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/dashboard/$code': typeof BusDashboardCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
+  '/comprar/tienda/$id': typeof ComprarTiendaIdRoute
   '/ocio/cines/$id': typeof OcioCinesIdRoute
   '/ocio/pelicula/$id': typeof OcioPeliculaIdRoute
   '/salud/$categoria/$id': typeof SaludCategoriaIdRoute
@@ -476,7 +483,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bus': typeof BusRouteWithChildren
   '/clima': typeof ClimaRoute
-  '/comprar': typeof ComprarRoute
+  '/comprar': typeof ComprarRouteWithChildren
   '/donde-dormir': typeof DondeDormirRoute
   '/explore': typeof ExploreRoute
   '/farmacias': typeof FarmaciasRoute
@@ -528,6 +535,7 @@ export interface FileRoutesByTo {
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/dashboard/$code': typeof BusDashboardCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
+  '/comprar/tienda/$id': typeof ComprarTiendaIdRoute
   '/ocio/cines/$id': typeof OcioCinesIdRoute
   '/ocio/pelicula/$id': typeof OcioPeliculaIdRoute
   '/salud/$categoria/$id': typeof SaludCategoriaIdRoute
@@ -544,7 +552,7 @@ export interface FileRoutesById {
   '/bus': typeof BusRouteWithChildren
   '/business': typeof BusinessRouteWithChildren
   '/clima': typeof ClimaRoute
-  '/comprar': typeof ComprarRoute
+  '/comprar': typeof ComprarRouteWithChildren
   '/donde-dormir': typeof DondeDormirRoute
   '/explore': typeof ExploreRoute
   '/farmacias': typeof FarmaciasRoute
@@ -596,6 +604,7 @@ export interface FileRoutesById {
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/dashboard/$code': typeof BusDashboardCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
+  '/comprar/tienda/$id': typeof ComprarTiendaIdRoute
   '/ocio_/cines/$id': typeof OcioCinesIdRoute
   '/ocio_/pelicula/$id': typeof OcioPeliculaIdRoute
   '/salud_/$categoria/$id': typeof SaludCategoriaIdRoute
@@ -665,6 +674,7 @@ export interface FileRouteTypes {
     | '/api/public/refresh-news'
     | '/bus/dashboard/$code'
     | '/business/inbox/$id'
+    | '/comprar/tienda/$id'
     | '/ocio/cines/$id'
     | '/ocio/pelicula/$id'
     | '/salud/$categoria/$id'
@@ -731,6 +741,7 @@ export interface FileRouteTypes {
     | '/api/public/refresh-news'
     | '/bus/dashboard/$code'
     | '/business/inbox/$id'
+    | '/comprar/tienda/$id'
     | '/ocio/cines/$id'
     | '/ocio/pelicula/$id'
     | '/salud/$categoria/$id'
@@ -798,6 +809,7 @@ export interface FileRouteTypes {
     | '/api/public/refresh-news'
     | '/bus/dashboard/$code'
     | '/business/inbox/$id'
+    | '/comprar/tienda/$id'
     | '/ocio_/cines/$id'
     | '/ocio_/pelicula/$id'
     | '/salud_/$categoria/$id'
@@ -814,7 +826,7 @@ export interface RootRouteChildren {
   BusRoute: typeof BusRouteWithChildren
   BusinessRoute: typeof BusinessRouteWithChildren
   ClimaRoute: typeof ClimaRoute
-  ComprarRoute: typeof ComprarRoute
+  ComprarRoute: typeof ComprarRouteWithChildren
   DondeDormirRoute: typeof DondeDormirRoute
   ExploreRoute: typeof ExploreRoute
   FarmaciasRoute: typeof FarmaciasRoute
@@ -1212,6 +1224,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OcioCinesIdRouteImport
       parentRoute: typeof OcioCinesRoute
     }
+    '/comprar/tienda/$id': {
+      id: '/comprar/tienda/$id'
+      path: '/tienda/$id'
+      fullPath: '/comprar/tienda/$id'
+      preLoaderRoute: typeof ComprarTiendaIdRouteImport
+      parentRoute: typeof ComprarRoute
+    }
     '/business/inbox/$id': {
       id: '/business/inbox/$id'
       path: '/$id'
@@ -1372,6 +1391,17 @@ const BusinessRouteWithChildren = BusinessRoute._addFileChildren(
   BusinessRouteChildren,
 )
 
+interface ComprarRouteChildren {
+  ComprarTiendaIdRoute: typeof ComprarTiendaIdRoute
+}
+
+const ComprarRouteChildren: ComprarRouteChildren = {
+  ComprarTiendaIdRoute: ComprarTiendaIdRoute,
+}
+
+const ComprarRouteWithChildren =
+  ComprarRoute._addFileChildren(ComprarRouteChildren)
+
 interface PlayasRouteChildren {
   PlayasSlugRoute: typeof PlayasSlugRoute
   PlayasMapaRoute: typeof PlayasMapaRoute
@@ -1425,7 +1455,7 @@ const rootRouteChildren: RootRouteChildren = {
   BusRoute: BusRouteWithChildren,
   BusinessRoute: BusinessRouteWithChildren,
   ClimaRoute: ClimaRoute,
-  ComprarRoute: ComprarRoute,
+  ComprarRoute: ComprarRouteWithChildren,
   DondeDormirRoute: DondeDormirRoute,
   ExploreRoute: ExploreRoute,
   FarmaciasRoute: FarmaciasRoute,

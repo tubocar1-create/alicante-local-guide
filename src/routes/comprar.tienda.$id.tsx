@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { ArrowLeft, ExternalLink, MapPin, Phone, Star, Clock, Globe } from "lucide-react";
-import { getShopBusiness } from "@/lib/comprar.functions";
+import { getShopBusiness, type ShopBusinessDetail } from "@/lib/comprar.functions";
 
 export const Route = createFileRoute("/comprar/tienda/$id")({
   loader: ({ params }) => getShopBusiness({ data: { id: params.id } }),
