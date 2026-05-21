@@ -1256,9 +1256,9 @@ async function hablar(
   synth.cancel();
   synth.resume();
   const utterance = new SpeechSynthesisUtterance(String(respuesta));
-  utterance.lang = "es-ES";
-  utterance.rate = 1;
-  utterance.pitch = 1;
+  utterance.lang = VA_VOICE_LANG;
+  utterance.rate = VA_VOICE_RATE;
+  utterance.pitch = VA_VOICE_PITCH;
   utterance.volume = 1;
   const voice = pickSpanishVoice(synth);
   if (voice) {
