@@ -395,7 +395,7 @@ export const getShopBusiness = createServerFn({ method: "POST" })
     const { data: r, error } = await sb
       .from("shop_businesses")
       .select(
-        "id,name,address,phone,website,google_place_id,lat,lng,rating,user_ratings_total,price_level,google_types,opening_hours,photos,zone_id,shop_zones(id,name,slug),shop_subsubsectors(name,emoji,shop_subsectors(name,emoji))",
+        "id,name,address,phone,website,logo_url,google_place_id,lat,lng,rating,user_ratings_total,price_level,google_types,opening_hours,photos,zone_id,shop_zones(id,name,slug),shop_subsubsectors(name,emoji,shop_subsectors(name,emoji))",
       )
       .eq("id", data.id)
       .maybeSingle();
