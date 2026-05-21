@@ -70,18 +70,27 @@ function SubsectorPage() {
           <p className="text-sm text-muted-foreground">Sin subcategorías todavía.</p>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {data.subsubsectors.map((sx: { id: string; slug: string; name: string; emoji: string | null }) => (
-              <Link
-                key={sx.id}
-                to="/comprar/$subsector/$subsubsector"
-                params={{ subsector: data.slug, subsubsector: sx.slug }}
-                className="flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border bg-card p-3 text-center shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow"
-              >
-                <span className="text-3xl">{sx.emoji ?? "•"}</span>
-                <span className="text-xs font-medium leading-tight">{sx.name}</span>
-              </Link>
-            ))}
+            {data.subsubsectors.map((sx: { id: string; slug: string; name: string; emoji: string | null; business_count?: number }) => {
+              const unavailable = (sx.business_count ?? 0) === 0;
+              return (
+                <Link
+                  key={sx.id}
+                  to="/comprar/$subsector/$subsubsector"
+                  params={{ subsector: data.slug, subsubsector: sx.slug }}
+                  className={`relative flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border bg-card p-3 text-center shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow ${unavailable ? "opacity-70" : ""}`}
+                >
+                  <span className="text-3xl">{sx.emoji ?? "•"}</span>
+                  <span className="text-xs font-medium leading-tight">{sx.name}</span>
+                  {unavailable && (
+                    <span className="absolute right-1 top-1 rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
+                      No disp.
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
           </div>
+
         )}
       </main>
     </div>
