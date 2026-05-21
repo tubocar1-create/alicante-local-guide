@@ -524,7 +524,7 @@ export type SectorDashboardItem = {
   subsector_name: string;
   subsubsector_name: string;
   subsubsector_emoji: string | null;
-  opening_hours: unknown;
+  opening_hours: Record<string, unknown> | null;
   lat: number | null;
   lng: number | null;
 };
