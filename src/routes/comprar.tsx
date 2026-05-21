@@ -73,63 +73,55 @@ function ComprarPage() {
   if (subsectors.length === 0) return <div className="p-6">No hay sectores configurados.</div>;
 
   return (
-    <div className="h-full overflow-y-auto overscroll-contain bg-background text-foreground">
-      <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70">
-        <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
-          <Link to="/" className="rounded-full p-2 hover:bg-muted" aria-label="Volver">
-            <ArrowLeft className="h-5 w-5" />
+    <div className="flex h-full flex-col overflow-hidden bg-background text-foreground">
+      <header className="border-b bg-background/95">
+        <div className="mx-auto flex max-w-3xl items-center gap-2 px-3 py-2">
+          <Link to="/" className="rounded-full p-1.5 hover:bg-muted" aria-label="Volver">
+            <ArrowLeft className="h-4 w-4" />
           </Link>
-          <div className="flex items-center gap-2">
-            <ShoppingBag className="h-5 w-5" />
-            <h1 className="text-base font-semibold">Comprar en Alicante</h1>
+          <div className="flex items-center gap-1.5">
+            <ShoppingBag className="h-4 w-4" />
+            <h1 className="text-sm font-semibold">Comprar en Alicante</h1>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl space-y-8 px-4 py-5">
-        <section className="rounded-2xl border bg-card p-4 shadow-sm">
-          <label className="mb-2 flex items-center gap-2 text-sm font-medium">
-            <Sparkles className="h-4 w-4 text-primary" />
-            ¿Qué estás buscando?
-          </label>
-          <div className="flex gap-2">
+      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-2 overflow-hidden px-2 py-2">
+        <section className="rounded-xl border bg-card p-2 shadow-sm">
+          <div className="flex gap-1.5">
+            <Sparkles className="mt-2 h-3.5 w-3.5 shrink-0 text-primary" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && ask()}
-              placeholder="Ej. zapatos cómodos para diario"
-              className="flex-1 rounded-xl border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40"
+              placeholder="¿Qué buscas? Ej. zapatos cómodos"
+              className="flex-1 rounded-lg border bg-background px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary/40"
             />
             <button
               onClick={ask}
               disabled={loading || !query.trim()}
-              className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+              className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
             >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Ir"}
+              {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Ir"}
             </button>
           </div>
-          {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
+          {error && <p className="mt-1 text-[10px] text-destructive">{error}</p>}
           {aiResult && (
-            <div className="mt-3 space-y-2 rounded-xl bg-muted/40 p-3 text-sm">
-              <p className="leading-relaxed">{aiResult.verbal_response}</p>
-              {aiResult.clarifying_question && (
-                <p className="text-xs italic text-muted-foreground">{aiResult.clarifying_question}</p>
-              )}
-            </div>
+            <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-muted-foreground">{aiResult.verbal_response}</p>
           )}
         </section>
 
-        <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+        <div className="grid min-h-0 flex-1 grid-cols-3 gap-1.5 sm:grid-cols-4">
           {subsectors.map((ss) => (
             <Link
               key={ss.id}
               to="/comprar/sector/$sector"
               params={{ sector: ss.slug }}
               aria-label={`Abrir dashboard de ${ss.name}`}
-              className="flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border bg-card p-3 text-center shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow"
+              className="flex min-h-0 flex-col items-center justify-center gap-0.5 rounded-xl border bg-card p-1 text-center shadow-sm transition hover:border-primary/50"
             >
-              <span className="text-3xl">{ss.emoji ?? "•"}</span>
-              <span className="text-[11px] font-semibold uppercase tracking-wide leading-tight text-muted-foreground">
+              <span className="text-xl leading-none">{ss.emoji ?? "•"}</span>
+              <span className="text-[9px] font-semibold uppercase tracking-tight leading-[1.1] text-muted-foreground line-clamp-2">
                 {ss.name}
               </span>
             </Link>
@@ -139,4 +131,5 @@ function ComprarPage() {
     </div>
   );
 }
+
 
