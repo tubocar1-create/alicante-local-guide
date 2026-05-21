@@ -1,8 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Sparkles, Loader2, ShoppingBag } from "lucide-react";
-import { classifyShopIntent, getShopTree, type ShopTree } from "@/lib/comprar.functions";
+import { ArrowLeft, Sparkles, Loader2, ShoppingBag, Star, MapPin } from "lucide-react";
+import {
+  classifyShopIntent,
+  getShopTree,
+  listShopBusinesses,
+  type ShopBusinessSummary,
+  type ShopTree,
+} from "@/lib/comprar.functions";
 
 
 export const Route = createFileRoute("/comprar")({
