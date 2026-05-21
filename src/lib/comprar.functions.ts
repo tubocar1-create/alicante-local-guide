@@ -330,10 +330,21 @@ export const listShopBusinesses = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const sb = admin();
+
+    let subsubsectorId: string | null = null;
+    if (data.subsubsector_slug) {
+      const { data: sx } = await sb
+        .from("shop_subsubsectors")
+        .select("id")
+        .eq("slug", data.subsubsector_slug)
+        .maybeSingle();
+      subsubsectorId = sx?.id ?? null;
+    }
+
     let q = sb
       .from("shop_businesses")
       .select(
-        "id,name,address,rating,user_ratings_total,price_level,google_types,opening_hours,photos,zone_id,shop_zones(id,name,slug)",
+        "id,name,address,rating,user_ratings_total,price_level,google_types,opening_hours,photos,zone_id,subsubsector_id,shop_zones(id,name,slug)",
       )
       .order("rating", { ascending: false, nullsFirst: false })
       .limit(data.limit);
@@ -344,7 +355,13 @@ export const listShopBusinesses = createServerFn({ method: "POST" })
     }
 
     const wantedTypes = data.subsubsector_slug ? TYPE_MAP[data.subsubsector_slug] : undefined;
-    if (wantedTypes && wantedTypes.length) {
+    if (subsubsectorId && wantedTypes && wantedTypes.length) {
+      q = q.or(
+        `subsubsector_id.eq.${subsubsectorId},google_types.ov.{${wantedTypes.join(",")}}`,
+      );
+    } else if (subsubsectorId) {
+      q = q.eq("subsubsector_id", subsubsectorId);
+    } else if (wantedTypes && wantedTypes.length) {
       q = q.overlaps("google_types", wantedTypes);
     }
 
@@ -409,5 +426,77 @@ export const getShopBusiness = createServerFn({ method: "POST" })
             slug: (r as any).shop_zones.slug,
           }
         : null,
+    };
+  });
+
+// Fetch a single subsector page (with its subsubsectors) by slug.
+export const getSubsectorPage = createServerFn({ method: "GET" })
+  .inputValidator((input) => z.object({ slug: z.string() }).parse(input))
+  .handler(async ({ data }) => {
+    const sb = admin();
+    const { data: ss, error } = await sb
+      .from("shop_subsectors")
+      .select("id,slug,name,emoji,sector_id,shop_sectors(slug,name,emoji,short_label)")
+      .eq("slug", data.slug)
+      .eq("active", true)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!ss) return null;
+    const { data: sxs } = await sb
+      .from("shop_subsubsectors")
+      .select("id,slug,name,emoji")
+      .eq("subsector_id", ss.id)
+      .eq("active", true)
+      .order("sort_order");
+    return {
+      id: ss.id,
+      slug: ss.slug,
+      name: ss.name,
+      emoji: ss.emoji,
+      sector: (ss as any).shop_sectors ?? null,
+      subsubsectors: sxs ?? [],
+    };
+  });
+
+// Fetch a single subsubsector page (with its intents + parents) by slugs.
+export const getSubsubsectorPage = createServerFn({ method: "GET" })
+  .inputValidator((input) =>
+    z.object({ subsector_slug: z.string(), slug: z.string() }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    const sb = admin();
+    const { data: parent } = await sb
+      .from("shop_subsectors")
+      .select("id,slug,name,emoji,shop_sectors(slug,name,emoji,short_label)")
+      .eq("slug", data.subsector_slug)
+      .maybeSingle();
+    if (!parent) return null;
+    const { data: sx, error } = await sb
+      .from("shop_subsubsectors")
+      .select("id,slug,name,emoji")
+      .eq("slug", data.slug)
+      .eq("subsector_id", parent.id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!sx) return null;
+    const { data: intents } = await sb
+      .from("shop_intents")
+      .select("id,label,keywords,verbal_recommendation,priority")
+      .eq("subsubsector_id", sx.id)
+      .eq("active", true)
+      .order("priority");
+    return {
+      id: sx.id,
+      slug: sx.slug,
+      name: sx.name,
+      emoji: sx.emoji,
+      subsector: { id: parent.id, slug: parent.slug, name: parent.name, emoji: parent.emoji },
+      sector: (parent as any).shop_sectors ?? null,
+      intents: (intents ?? []).map((i: any) => ({
+        id: i.id,
+        label: i.label,
+        keywords: (i.keywords ?? []) as string[],
+        verbal_recommendation: i.verbal_recommendation,
+      })),
     };
   });
