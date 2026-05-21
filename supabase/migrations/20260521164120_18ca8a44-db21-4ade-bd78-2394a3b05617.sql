@@ -1,0 +1,2 @@
+INSERT INTO public.shop_subsubsectors (id, subsector_id, slug, name, emoji, sort_order, active)
+VALUES ('f6a7b8c9-d0e1-4f2a-3b4c-5d6e7f8a9b0c', '6d5eec15-c5f0-4611-8bfc-8bdeb801bc50', 'tiendas-mascotas', 'Tiendas de mascotas', '🐾', 90, true);
