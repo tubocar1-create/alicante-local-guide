@@ -120,17 +120,17 @@ function ComprarPage() {
         </section>
 
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-          {sectors.map((sector) => (
+          {subsectors.map((ss) => (
             <Link
-              key={sector.id}
+              key={ss.id}
               to="/comprar/sector/$sector"
-              params={{ sector: sector.slug }}
-              aria-label={`Abrir dashboard de ${sector.short_label || sector.name}`}
+              params={{ sector: ss.slug }}
+              aria-label={`Abrir dashboard de ${ss.name}`}
               className="flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border bg-card p-3 text-center shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow"
             >
-              <span className="text-3xl">{sector.emoji}</span>
+              <span className="text-3xl">{ss.emoji ?? "•"}</span>
               <span className="text-[11px] font-semibold uppercase tracking-wide leading-tight text-muted-foreground">
-                {sector.short_label || sector.name}
+                {ss.name}
               </span>
             </Link>
           ))}
