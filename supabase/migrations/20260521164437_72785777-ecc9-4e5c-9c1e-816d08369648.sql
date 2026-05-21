@@ -1,0 +1,2 @@
+INSERT INTO public.shop_subsubsectors (id, subsector_id, slug, name, emoji, sort_order, active)
+VALUES ('a7b8c9d0-e1f2-4a3b-4c5d-6e7f8a9b0c1d', '7078c41e-8815-41d2-9b2f-714b545848c2', 'gasolineras', 'Gasolineras', '⛽', 120, true);
