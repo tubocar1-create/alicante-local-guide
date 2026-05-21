@@ -35,9 +35,9 @@ type Classification = Awaited<ReturnType<typeof classifyShopIntent>>;
 
 function ComprarPage() {
   const tree = Route.useLoaderData() as ShopTree;
-  const sector: Sector | undefined = tree.sectors[0]; // "Comercio y Servicios"
+  const sector: Sector | undefined = tree.sectors[0];
   const classify = useServerFn(classifyShopIntent);
-
+  const listBiz = useServerFn(listShopBusinesses);
 
   const [subsector, setSubsector] = useState<Subsector | null>(null);
   const [subsubsector, setSubsubsector] = useState<Subsubsector | null>(null);
@@ -48,11 +48,38 @@ function ComprarPage() {
   const [aiResult, setAiResult] = useState<Classification | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const [businesses, setBusinesses] = useState<ShopBusinessSummary[] | null>(null);
+  const [bizLoading, setBizLoading] = useState(false);
+
+  // When an intent (or its parent subsubsector) is selected, fetch businesses.
+  useEffect(() => {
+    if (!subsubsector) {
+      setBusinesses(null);
+      return;
+    }
+    let cancelled = false;
+    setBizLoading(true);
+    listBiz({ data: { subsubsector_slug: subsubsector.slug, limit: 30 } })
+      .then((rows) => {
+        if (!cancelled) setBusinesses(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setBusinesses([]);
+      })
+      .finally(() => {
+        if (!cancelled) setBizLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [subsubsector, listBiz]);
+
   function reset() {
     setSubsector(null);
     setSubsubsector(null);
     setSelectedIntent(null);
     setAiResult(null);
+    setBusinesses(null);
   }
 
   async function ask() {
