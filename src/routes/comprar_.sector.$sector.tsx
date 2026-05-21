@@ -66,6 +66,7 @@ function fmtDist(km: number | null): string {
 
 function SectorDashboard() {
   const data = Route.useLoaderData() as SectorDashboardData;
+  const navigate = useNavigate();
   const load = useServerFn(getSectorDashboard);
   const { data: live } = useQuery({
     queryKey: ["sector-dashboard", data.sector.slug],
