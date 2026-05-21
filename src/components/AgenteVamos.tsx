@@ -2534,22 +2534,28 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
 }
 
+const GREETING_SESSION_KEY = "va:greeting-played";
+
 export function AgenteVamosFab() {
   const [open, setOpen] = useState(false);
+  const [showGreetingButton, setShowGreetingButton] = useState(false);
   const voiceBootStartedRef = useRef(false);
+  const greetingPlayedRef = useRef(false);
   const path = useRouterState({ select: (s) => s.location.pathname });
   const hidden =
     ["/login", "/magic", "/welcome"].includes(path) || path.startsWith("/business/login");
-  if (hidden) return null;
 
   const playGreetingAfterPermission = () => {
+    if (greetingPlayedRef.current) return;
     try {
       const greetText = getGreetingText();
       if (typeof window === "undefined" || !window.speechSynthesis) return;
       const synth = window.speechSynthesis;
 
-      // Marca el saludo como en curso ANTES de hablar para que el panel
-      // espere a que termine antes de abrir el micro.
+      // Cancela cualquier utterance anterior antes de iniciar el saludo.
+      try { synth.cancel(); } catch {}
+      try { synth.resume(); } catch {}
+
       const u = new SpeechSynthesisUtterance(greetText);
       u.lang = VA_VOICE_LANG;
       u.rate = VA_VOICE_RATE;
@@ -2560,6 +2566,8 @@ export function AgenteVamosFab() {
       __vaActiveUtterance = u;
       __vaSetGreetingSpoken(true);
       __vaSpeechUnlocked = true;
+      greetingPlayedRef.current = true;
+      try { window.sessionStorage.setItem(GREETING_SESSION_KEY, "1"); } catch {}
 
       u.onend = () => {
         if (__vaActiveUtterance === u) __vaActiveUtterance = null;
@@ -2568,8 +2576,6 @@ export function AgenteVamosFab() {
         if (__vaActiveUtterance === u) __vaActiveUtterance = null;
       };
 
-      // Hablar SIEMPRE de forma síncrona dentro del gesto.
-      try { synth.resume(); } catch {}
       try { synth.speak(u); } catch {}
       keepSpeechSynthesisAwake(synth);
       primeSpanishUtterances();
@@ -2578,18 +2584,14 @@ export function AgenteVamosFab() {
     }
   };
 
-
-
-
   const startGreetingFromUserGesture = () => {
     if (voiceBootStartedRef.current) return;
     voiceBootStartedRef.current = true;
     playGreetingAfterPermission();
+    setShowGreetingButton(false);
   };
 
   // Permitir abrir el agente desde otros botones (p.ej. el micro del chat)
-  // El listener corre síncrono dentro del click handler externo, así que
-  // sigue siendo un gesto de usuario válido para getUserMedia.
   useEffect(() => {
     const handler = () => {
       if (!voiceBootStartedRef.current) startGreetingFromUserGesture();
@@ -2600,6 +2602,48 @@ export function AgenteVamosFab() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ── Autoplay del saludo en el primer tap del usuario ──────────────────
+  // Los navegadores móviles bloquean TTS sin gesto. Adjuntamos un listener
+  // único a window que dispara el saludo en el primer toque/click. Si tras
+  // 4 s nadie ha interactuado, mostramos un botón flotante "Escuchar saludo"
+  // como fallback explícito.
+  useEffect(() => {
+    if (hidden) return;
+    if (typeof window === "undefined") return;
+    let alreadyPlayed = false;
+    try {
+      alreadyPlayed = window.sessionStorage.getItem(GREETING_SESSION_KEY) === "1";
+    } catch {}
+    if (alreadyPlayed) {
+      greetingPlayedRef.current = true;
+      voiceBootStartedRef.current = true;
+      return;
+    }
+
+    const onFirstTap = () => {
+      if (!voiceBootStartedRef.current) startGreetingFromUserGesture();
+      cleanup();
+    };
+    const events: (keyof WindowEventMap)[] = ["pointerdown", "touchstart", "click", "keydown"];
+    const cleanup = () => {
+      events.forEach((ev) => window.removeEventListener(ev, onFirstTap, true));
+      window.clearTimeout(timer);
+    };
+    events.forEach((ev) =>
+      window.addEventListener(ev, onFirstTap, { capture: true, once: false }),
+    );
+
+    // Fallback visible si el usuario no interactúa pronto.
+    const timer = window.setTimeout(() => {
+      if (!greetingPlayedRef.current) setShowGreetingButton(true);
+    }, 4000);
+
+    return cleanup;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hidden]);
+
+  if (hidden) return null;
+
   return (
     <>
       <AgenteVamosPanel
@@ -2609,6 +2653,21 @@ export function AgenteVamosFab() {
           setOpen(false);
         }}
       />
+      {showGreetingButton && !greetingPlayedRef.current && (
+        <button
+          type="button"
+          onClick={() => {
+            startGreetingFromUserGesture();
+            setShowGreetingButton(false);
+          }}
+          className="fixed bottom-24 left-1/2 z-[110] -translate-x-1/2 rounded-full border bg-background/95 px-4 py-2 text-sm font-medium text-foreground shadow-lg backdrop-blur hover:bg-muted"
+          aria-label="Escuchar saludo"
+        >
+          ▶️ Escuchar saludo
+        </button>
+      )}
     </>
   );
 }
+
+
