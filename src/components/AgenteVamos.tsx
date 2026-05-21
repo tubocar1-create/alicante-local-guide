@@ -1869,6 +1869,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
       const next = [...msgs, { role: "user" as const, content: clean }];
       setMsgs(next);
+      markVaInteraction(clean);
       setInput("");
       setInterim("");
       setLoading(true);
