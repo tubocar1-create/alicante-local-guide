@@ -1358,9 +1358,9 @@ function primeSpanishUtterances(count = 8) {
   if (typeof window === "undefined" || typeof SpeechSynthesisUtterance === "undefined") return;
   while (__vaPrimedUtterances.length < count) {
     const u = new SpeechSynthesisUtterance("");
-    u.lang = "es-ES";
-    u.rate = 1.05;
-    u.pitch = 1;
+    u.lang = VA_VOICE_LANG;
+    u.rate = VA_VOICE_RATE;
+    u.pitch = VA_VOICE_PITCH;
     __vaPrimedUtterances.push(u);
   }
 }
