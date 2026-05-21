@@ -2244,6 +2244,64 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       resumeListeningAfterEcho(remainingEchoGuard + POST_SPEECH_LISTEN_DELAY_MS);
       return;
     }
+    // ── Saludo de continuidad (reentrada dentro de la misma sesión) ──
+    // Si han pasado >8s desde la última interacción y el panel sigue
+    // abierto, hablamos una micro-frase ANTES de abrir el micrófono.
+    if (!__vaContinuityInFlight && typeof window !== "undefined") {
+      let lastTs = 0;
+      try {
+        lastTs = Number(
+          window.sessionStorage.getItem(VA_LAST_INTERACTION_KEY) ?? "0",
+        ) || 0;
+      } catch {}
+      const now = Date.now();
+      const gap = lastTs ? now - lastTs : 0;
+      const sinceLastContinuity = now - __vaContinuitySpokenAt;
+      const synth = window.speechSynthesis;
+      const synthBusy = Boolean(synth && (synth.speaking || synth.pending));
+      if (
+        lastTs > 0 &&
+        gap > 8000 &&
+        sinceLastContinuity > 15000 &&
+        !synthBusy &&
+        !__vaActiveUtterance &&
+        !__vaActiveAudio &&
+        !mutedRef.current
+      ) {
+        try {
+          const text = getContinuityMicroGreeting();
+          const u = new SpeechSynthesisUtterance(text);
+          u.lang = VA_VOICE_LANG;
+          u.rate = VA_VOICE_RATE;
+          u.pitch = VA_VOICE_PITCH;
+          u.volume = 1;
+          const v = synth ? pickSpanishVoice(synth) : null;
+          if (v) u.voice = v;
+          __vaActiveUtterance = u;
+          __vaContinuityInFlight = true;
+          __vaContinuitySpokenAt = now;
+          speakingRef.current = true;
+          setSpeaking(true);
+          const done = () => {
+            if (__vaActiveUtterance === u) __vaActiveUtterance = null;
+            __vaContinuityInFlight = false;
+            speakingRef.current = false;
+            setSpeaking(false);
+            markVaInteraction();
+            suppressRecognitionUntilRef.current =
+              Date.now() + POST_SPEECH_LISTEN_DELAY_MS;
+            resumeListeningAfterEcho(400);
+          };
+          u.onend = done;
+          u.onerror = done;
+          try { synth?.cancel(); } catch {}
+          synth?.speak(u);
+          return;
+        } catch {
+          __vaContinuityInFlight = false;
+        }
+      }
+    }
     const SRClass = getSpeechRecognition();
     if (!SRClass) {
       setVoiceError("Tu navegador no soporta reconocimiento de voz. Cambia a modo texto.");
