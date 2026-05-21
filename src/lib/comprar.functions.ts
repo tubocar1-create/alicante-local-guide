@@ -515,3 +515,76 @@ export const getSubsubsectorPage = createServerFn({ method: "GET" })
       })),
     };
   });
+
+// --------- Sector dashboard listing ---------
+export type SectorDashboardItem = {
+  id: string;
+  name: string;
+  address: string | null;
+  subsector_name: string;
+  subsubsector_name: string;
+  subsubsector_emoji: string | null;
+  opening_hours: {
+    periods?: Array<{
+      open?: { day?: number; hour?: number; minute?: number };
+      close?: { day?: number; hour?: number; minute?: number };
+    }>;
+    weekdayDescriptions?: string[];
+    openNow?: boolean;
+  } | null;
+  lat: number | null;
+  lng: number | null;
+};
+
+export type SectorDashboardData = {
+  sector: { id: string; slug: string; name: string; short_label: string | null; emoji: string | null };
+  items: SectorDashboardItem[];
+};
+
+export const getSectorDashboard = createServerFn({ method: "GET" })
+  .inputValidator((input) => z.object({ sector_slug: z.string() }).parse(input))
+  .handler(async ({ data }): Promise<SectorDashboardData | null> => {
+    const sb = admin();
+    const { data: sec } = await sb
+      .from("shop_sectors")
+      .select("id,slug,name,short_label,emoji")
+      .eq("slug", data.sector_slug)
+      .eq("active", true)
+      .maybeSingle();
+    if (!sec) return null;
+    const { data: subs } = await sb
+      .from("shop_subsectors")
+      .select("id,name")
+      .eq("sector_id", sec.id);
+    const subIds = (subs ?? []).map((s) => s.id);
+    if (subIds.length === 0) return { sector: sec as any, items: [] };
+    const { data: sss } = await sb
+      .from("shop_subsubsectors")
+      .select("id,name,emoji,subsector_id")
+      .in("subsector_id", subIds);
+    const sssIds = (sss ?? []).map((x) => x.id);
+    if (sssIds.length === 0) return { sector: sec as any, items: [] };
+    const { data: biz } = await sb
+      .from("shop_businesses")
+      .select("id,name,address,opening_hours,lat,lng,subsubsector_id")
+      .in("subsubsector_id", sssIds)
+      .neq("status", "duplicate")
+      .limit(1000);
+    const subMap = new Map((subs ?? []).map((s) => [s.id, s.name]));
+    const sssMap = new Map((sss ?? []).map((x) => [x.id, x]));
+    const items: SectorDashboardItem[] = (biz ?? []).map((b: any) => {
+      const sx = sssMap.get(b.subsubsector_id);
+      return {
+        id: b.id,
+        name: b.name,
+        address: b.address,
+        subsubsector_name: sx?.name ?? "",
+        subsubsector_emoji: sx?.emoji ?? null,
+        subsector_name: sx ? (subMap.get(sx.subsector_id) ?? "") : "",
+        opening_hours: b.opening_hours,
+        lat: b.lat,
+        lng: b.lng,
+      };
+    });
+    return { sector: sec as any, items };
+  });
