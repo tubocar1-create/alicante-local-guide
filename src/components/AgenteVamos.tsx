@@ -1125,6 +1125,39 @@ function getReentryGreeting(): string {
   );
 }
 
+// Micro-saludo de continuidad para reentradas DENTRO de la misma sesión
+// abierta (cuando el usuario vuelve a interactuar tras un silencio).
+// Debe ser muy corto, natural, nunca robótico.
+function getContinuityMicroGreeting(): string {
+  let lastTopic = "";
+  if (typeof window !== "undefined") {
+    try {
+      lastTopic = window.sessionStorage.getItem(VA_LAST_TOPIC_KEY) ?? "";
+    } catch {}
+  }
+  const generic = [
+    "Seguimos.",
+    "Te escucho.",
+    "Aquí sigo.",
+    "Dime.",
+    "Vamos con ello.",
+    "Sigo contigo.",
+  ];
+  if (lastTopic) {
+    const short = lastTopic.length > 40 ? lastTopic.slice(0, 40) + "…" : lastTopic;
+    return pickDistinct(
+      [
+        `Seguimos con lo de "${short}".`,
+        `Te escucho.`,
+        `Sigo contigo.`,
+        `Dime, ¿continuamos?`,
+      ],
+      VA_LAST_REENTRY_KEY,
+    );
+  }
+  return pickDistinct(generic, VA_LAST_REENTRY_KEY);
+}
+
 function loadMsgs(): Msg[] {
   if (typeof window === "undefined") return [makeGreeting()];
   try {
@@ -1268,6 +1301,8 @@ let __vaActiveAudioStartedAt = 0;
 const __vaPrimedUtterances: SpeechSynthesisUtterance[] = [];
 let __vaSpeechUnlocked = false;
 let __vaVoicesLoggingAttached = false;
+let __vaContinuityInFlight = false;
+let __vaContinuitySpokenAt = 0;
 const POST_SPEECH_LISTEN_DELAY_MS = 140;
 
 // Voz unificada del agente: español Estados Unidos (es-US) si está disponible.
@@ -1350,6 +1385,7 @@ async function hablar(
     if (finished) return;
     finished = true;
     if (__vaActiveUtterance === utterance) __vaActiveUtterance = null;
+    markVaInteraction();
     onEnd?.();
   };
   utterance.onstart = () => {
@@ -2207,6 +2243,64 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     if (remainingEchoGuard > 0) {
       resumeListeningAfterEcho(remainingEchoGuard + POST_SPEECH_LISTEN_DELAY_MS);
       return;
+    }
+    // ── Saludo de continuidad (reentrada dentro de la misma sesión) ──
+    // Si han pasado >8s desde la última interacción y el panel sigue
+    // abierto, hablamos una micro-frase ANTES de abrir el micrófono.
+    if (!__vaContinuityInFlight && typeof window !== "undefined") {
+      let lastTs = 0;
+      try {
+        lastTs = Number(
+          window.sessionStorage.getItem(VA_LAST_INTERACTION_KEY) ?? "0",
+        ) || 0;
+      } catch {}
+      const now = Date.now();
+      const gap = lastTs ? now - lastTs : 0;
+      const sinceLastContinuity = now - __vaContinuitySpokenAt;
+      const synth = window.speechSynthesis;
+      const synthBusy = Boolean(synth && (synth.speaking || synth.pending));
+      if (
+        lastTs > 0 &&
+        gap > 8000 &&
+        sinceLastContinuity > 15000 &&
+        !synthBusy &&
+        !__vaActiveUtterance &&
+        !__vaActiveAudio &&
+        !mutedRef.current
+      ) {
+        try {
+          const text = getContinuityMicroGreeting();
+          const u = new SpeechSynthesisUtterance(text);
+          u.lang = VA_VOICE_LANG;
+          u.rate = VA_VOICE_RATE;
+          u.pitch = VA_VOICE_PITCH;
+          u.volume = 1;
+          const v = synth ? pickSpanishVoice(synth) : null;
+          if (v) u.voice = v;
+          __vaActiveUtterance = u;
+          __vaContinuityInFlight = true;
+          __vaContinuitySpokenAt = now;
+          speakingRef.current = true;
+          setSpeaking(true);
+          const done = () => {
+            if (__vaActiveUtterance === u) __vaActiveUtterance = null;
+            __vaContinuityInFlight = false;
+            speakingRef.current = false;
+            setSpeaking(false);
+            markVaInteraction();
+            suppressRecognitionUntilRef.current =
+              Date.now() + POST_SPEECH_LISTEN_DELAY_MS;
+            resumeListeningAfterEcho(400);
+          };
+          u.onend = done;
+          u.onerror = done;
+          try { synth?.cancel(); } catch {}
+          synth?.speak(u);
+          return;
+        } catch {
+          __vaContinuityInFlight = false;
+        }
+      }
     }
     const SRClass = getSpeechRecognition();
     if (!SRClass) {
