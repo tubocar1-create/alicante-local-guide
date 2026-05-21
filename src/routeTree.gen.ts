@@ -69,6 +69,7 @@ import { Route as ApiPublicBusEtaRouteImport } from './routes/api/public/bus-eta
 import { Route as ApiPublicBookingCreateRouteImport } from './routes/api/public/booking-create'
 import { Route as ApiPublicAenaFlightsRouteImport } from './routes/api/public/aena-flights'
 import { Route as OcioCinesIdCarteleraRouteImport } from './routes/ocio_.cines_.$id.cartelera'
+import { Route as ApiPublicShopPhotoSplatRouteImport } from './routes/api/public/shop-photo.$'
 import { Route as ApiPublicHooksSyncHotelsStaticRouteImport } from './routes/api/public/hooks/sync-hotels-static'
 import { Route as ApiPublicHooksRefreshHotelsDynamicRouteImport } from './routes/api/public/hooks/refresh-hotels-dynamic'
 import { Route as ApiPublicHooksCinemasSyncRouteImport } from './routes/api/public/hooks/cinemas-sync'
@@ -375,6 +376,11 @@ const OcioCinesIdCarteleraRoute = OcioCinesIdCarteleraRouteImport.update({
   path: '/ocio/cines/$id/cartelera',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicShopPhotoSplatRoute = ApiPublicShopPhotoSplatRouteImport.update({
+  id: '/api/public/shop-photo/$',
+  path: '/api/public/shop-photo/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksSyncHotelsStaticRoute =
   ApiPublicHooksSyncHotelsStaticRouteImport.update({
     id: '/api/public/hooks/sync-hotels-static',
@@ -463,6 +469,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
   '/api/public/hooks/refresh-hotels-dynamic': typeof ApiPublicHooksRefreshHotelsDynamicRoute
   '/api/public/hooks/sync-hotels-static': typeof ApiPublicHooksSyncHotelsStaticRoute
+  '/api/public/shop-photo/$': typeof ApiPublicShopPhotoSplatRoute
   '/ocio/cines/$id/cartelera': typeof OcioCinesIdCarteleraRoute
 }
 export interface FileRoutesByTo {
@@ -528,6 +535,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
   '/api/public/hooks/refresh-hotels-dynamic': typeof ApiPublicHooksRefreshHotelsDynamicRoute
   '/api/public/hooks/sync-hotels-static': typeof ApiPublicHooksSyncHotelsStaticRoute
+  '/api/public/shop-photo/$': typeof ApiPublicShopPhotoSplatRoute
   '/ocio/cines/$id/cartelera': typeof OcioCinesIdCarteleraRoute
 }
 export interface FileRoutesById {
@@ -595,6 +603,7 @@ export interface FileRoutesById {
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
   '/api/public/hooks/refresh-hotels-dynamic': typeof ApiPublicHooksRefreshHotelsDynamicRoute
   '/api/public/hooks/sync-hotels-static': typeof ApiPublicHooksSyncHotelsStaticRoute
+  '/api/public/shop-photo/$': typeof ApiPublicShopPhotoSplatRoute
   '/ocio_/cines_/$id/cartelera': typeof OcioCinesIdCarteleraRoute
 }
 export interface FileRouteTypes {
@@ -663,6 +672,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/cinemas-sync'
     | '/api/public/hooks/refresh-hotels-dynamic'
     | '/api/public/hooks/sync-hotels-static'
+    | '/api/public/shop-photo/$'
     | '/ocio/cines/$id/cartelera'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -728,6 +738,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/cinemas-sync'
     | '/api/public/hooks/refresh-hotels-dynamic'
     | '/api/public/hooks/sync-hotels-static'
+    | '/api/public/shop-photo/$'
     | '/ocio/cines/$id/cartelera'
   id:
     | '__root__'
@@ -794,6 +805,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/cinemas-sync'
     | '/api/public/hooks/refresh-hotels-dynamic'
     | '/api/public/hooks/sync-hotels-static'
+    | '/api/public/shop-photo/$'
     | '/ocio_/cines_/$id/cartelera'
   fileRoutesById: FileRoutesById
 }
@@ -844,6 +856,7 @@ export interface RootRouteChildren {
   ApiPublicHooksCinemasSyncRoute: typeof ApiPublicHooksCinemasSyncRoute
   ApiPublicHooksRefreshHotelsDynamicRoute: typeof ApiPublicHooksRefreshHotelsDynamicRoute
   ApiPublicHooksSyncHotelsStaticRoute: typeof ApiPublicHooksSyncHotelsStaticRoute
+  ApiPublicShopPhotoSplatRoute: typeof ApiPublicShopPhotoSplatRoute
   OcioCinesIdCarteleraRoute: typeof OcioCinesIdCarteleraRoute
 }
 
@@ -1269,6 +1282,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OcioCinesIdCarteleraRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/shop-photo/$': {
+      id: '/api/public/shop-photo/$'
+      path: '/api/public/shop-photo/$'
+      fullPath: '/api/public/shop-photo/$'
+      preLoaderRoute: typeof ApiPublicShopPhotoSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/sync-hotels-static': {
       id: '/api/public/hooks/sync-hotels-static'
       path: '/api/public/hooks/sync-hotels-static'
@@ -1448,6 +1468,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksRefreshHotelsDynamicRoute:
     ApiPublicHooksRefreshHotelsDynamicRoute,
   ApiPublicHooksSyncHotelsStaticRoute: ApiPublicHooksSyncHotelsStaticRoute,
+  ApiPublicShopPhotoSplatRoute: ApiPublicShopPhotoSplatRoute,
   OcioCinesIdCarteleraRoute: OcioCinesIdCarteleraRoute,
 }
 export const routeTree = rootRouteImport
