@@ -70,7 +70,7 @@ function ComprarPage() {
     }
   }
 
-  if (sectors.length === 0) return <div className="p-6">No hay sectores configurados.</div>;
+  if (subsectors.length === 0) return <div className="p-6">No hay sectores configurados.</div>;
 
   return (
     <div className="h-full overflow-y-auto overscroll-contain bg-background text-foreground">
