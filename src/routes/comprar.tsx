@@ -86,31 +86,7 @@ function ComprarPage() {
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-2 overflow-hidden px-2 py-2">
-        <section className="rounded-xl border bg-card p-2 shadow-sm">
-          <div className="flex gap-1.5">
-            <Sparkles className="mt-2 h-3.5 w-3.5 shrink-0 text-primary" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && ask()}
-              placeholder="¿Qué buscas? Ej. zapatos cómodos"
-              className="flex-1 rounded-lg border bg-background px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-primary/40"
-            />
-            <button
-              onClick={ask}
-              disabled={loading || !query.trim()}
-              className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50"
-            >
-              {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Ir"}
-            </button>
-          </div>
-          {error && <p className="mt-1 text-[10px] text-destructive">{error}</p>}
-          {aiResult && (
-            <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-muted-foreground">{aiResult.verbal_response}</p>
-          )}
-        </section>
-
+      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col overflow-hidden px-2 py-2">
         <div className="grid min-h-0 flex-1 grid-cols-3 gap-1.5 sm:grid-cols-4">
           {subsectors.map((ss) => (
             <Link
@@ -118,14 +94,12 @@ function ComprarPage() {
               to="/comprar/sector/$sector"
               params={{ sector: ss.slug }}
               aria-label={`Abrir dashboard de ${ss.name}`}
-              className="flex min-h-0 flex-col items-center justify-center gap-1 rounded-xl border border-white/15 bg-white/5 p-1 text-center shadow-sm transition hover:border-primary/60"
+              className="flex min-h-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-white/30 bg-white/5 p-1 text-center shadow-sm transition hover:border-primary/60"
             >
               <span className="text-5xl leading-none">{ss.emoji ?? "•"}</span>
               <span className="text-[9px] font-semibold uppercase tracking-tight leading-[1.05] text-white/80 line-clamp-2 max-w-full">
                 {ss.name}
               </span>
-
-
             </Link>
           ))}
         </div>
