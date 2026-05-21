@@ -291,6 +291,8 @@ export type ShopBusinessDetail = ShopBusinessSummary & {
   lat: number | null;
   lng: number | null;
   weekday_descriptions: string[];
+  hours_assumed: boolean;
+  subsector: { name: string; emoji: string | null } | null;
   photos_refs: string[];
 };
 
@@ -392,7 +394,7 @@ export const getShopBusiness = createServerFn({ method: "POST" })
     const { data: r, error } = await sb
       .from("shop_businesses")
       .select(
-        "id,name,address,phone,website,google_place_id,lat,lng,rating,user_ratings_total,price_level,google_types,opening_hours,photos,zone_id,shop_zones(id,name,slug)",
+        "id,name,address,phone,website,google_place_id,lat,lng,rating,user_ratings_total,price_level,google_types,opening_hours,photos,zone_id,shop_zones(id,name,slug),shop_subsubsectors(name,emoji,shop_subsectors(name,emoji))",
       )
       .eq("id", data.id)
       .maybeSingle();
@@ -403,6 +405,8 @@ export const getShopBusiness = createServerFn({ method: "POST" })
       .map((p: any) => (typeof p === "string" ? p : p?.name))
       .filter(Boolean) as string[];
     const oh: any = r.opening_hours ?? {};
+    const sss: any = (r as any).shop_subsubsectors;
+    const sec: any = sss?.shop_subsectors;
     return {
       id: r.id,
       name: r.name,
@@ -418,6 +422,8 @@ export const getShopBusiness = createServerFn({ method: "POST" })
       google_types: (r.google_types ?? []) as string[],
       open_now: oh.openNow ?? null,
       weekday_descriptions: Array.isArray(oh.weekdayDescriptions) ? oh.weekdayDescriptions : [],
+      hours_assumed: oh.assumed === true,
+      subsector: sec ? { name: sec.name, emoji: sec.emoji ?? sss?.emoji ?? null } : sss ? { name: sss.name, emoji: sss.emoji ?? null } : null,
       photo_ref: photo_refs[0] ?? null,
       photos_refs: photo_refs,
       zone: (r as any).shop_zones
