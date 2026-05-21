@@ -23,16 +23,7 @@ type Classification = Awaited<ReturnType<typeof classifyShopIntent>>;
 
 function ComprarPage() {
   const tree = Route.useLoaderData() as ShopTree;
-  const HIDDEN_SUBSECTORS = new Set([
-    "farmacia-salud",
-    "clinicas",
-    "restauracion",
-    "horno-dulces",
-    "alojamiento-turistico",
-  ]);
-  const sectors = tree.sectors
-    .map((s) => ({ ...s, subsectors: s.subsectors.filter((ss) => !HIDDEN_SUBSECTORS.has(ss.slug)) }))
-    .filter((s) => s.subsectors.length > 0);
+  const sectors = tree.sectors;
   const classify = useServerFn(classifyShopIntent);
   const navigate = useNavigate();
 
