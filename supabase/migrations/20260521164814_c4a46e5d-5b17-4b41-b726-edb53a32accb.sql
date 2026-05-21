@@ -1,0 +1,2 @@
+INSERT INTO public.shop_subsubsectors (id, subsector_id, slug, name, emoji, sort_order, active)
+VALUES ('b8c9d0e1-f2a3-4b4c-5d6e-7f8a9b0c1d2e', '304086bd-deb1-4f28-a460-bac3fe9397ae', 'colchonerias', 'Colchonerías', '🛏️', 130, true);
