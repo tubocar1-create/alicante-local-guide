@@ -1433,6 +1433,7 @@ export type Database = {
           last_enriched_at: string | null
           lat: number | null
           lng: number | null
+          logo_url: string | null
           name: string
           notes: string | null
           opening_hours: Json | null
@@ -1460,6 +1461,7 @@ export type Database = {
           last_enriched_at?: string | null
           lat?: number | null
           lng?: number | null
+          logo_url?: string | null
           name: string
           notes?: string | null
           opening_hours?: Json | null
@@ -1487,6 +1489,7 @@ export type Database = {
           last_enriched_at?: string | null
           lat?: number | null
           lng?: number | null
+          logo_url?: string | null
           name?: string
           notes?: string | null
           opening_hours?: Json | null
