@@ -158,3 +158,56 @@ export function computeOpenStatus(oh: OpeningHours): OpenStatus {
   if (oh.openNow != null) return oh.openNow ? "open" : "closed";
   return "unknown";
 }
+
+// Devuelve la hora de cierre de hoy (formato "HH:MM") si está abierto ahora,
+// o el siguiente cierre del día si hay rango aún por venir; null si no se sabe.
+export function todayCloseLabel(oh: OpeningHours): string | null {
+  if (!oh) return null;
+  const { day, minutes } = nowInMadrid();
+  // Periodos Google
+  if (oh.periods && oh.periods.length > 0) {
+    let candidate: number | null = null;
+    for (const p of oh.periods) {
+      if (!p.open) continue;
+      const oDay = p.open.day ?? 0;
+      const oMin = (p.open.hour ?? 0) * 60 + (p.open.minute ?? 0);
+      const cDay = p.close?.day ?? oDay;
+      const cMin = (p.close?.hour ?? 0) * 60 + (p.close?.minute ?? 0);
+      if (oDay === day) {
+        // próximo cierre relevante: si estamos dentro o antes de la apertura
+        if (minutes < cMin || cDay !== day) {
+          const finalMin = cDay !== day ? cMin + 24 * 60 : cMin;
+          if (candidate == null || finalMin < candidate) candidate = finalMin;
+        }
+      }
+    }
+    if (candidate != null) {
+      const h = Math.floor(candidate / 60) % 24;
+      const m = candidate % 60;
+      return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+    }
+  }
+  // Weekday descriptions
+  if (oh.weekdayDescriptions && oh.weekdayDescriptions.length > 0) {
+    for (const line of oh.weekdayDescriptions) {
+      const parsed = parseDescriptionLine(line);
+      if (!parsed || parsed.days.length === 0) continue;
+      if (!parsed.days.includes(day)) continue;
+      // Buscar el siguiente cierre
+      let next: number | null = null;
+      for (const [o, c] of parsed.ranges) {
+        const cc = c <= o ? c + 24 * 60 : c;
+        if (minutes < cc) {
+          if (next == null || cc < next) next = cc;
+        }
+      }
+      if (next != null) {
+        const h = Math.floor(next / 60) % 24;
+        const m = next % 60;
+        return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+      }
+      return null;
+    }
+  }
+  return null;
+}
