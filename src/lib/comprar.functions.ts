@@ -346,6 +346,7 @@ export const listShopBusinesses = createServerFn({ method: "POST" })
       .select(
         "id,name,address,rating,user_ratings_total,price_level,google_types,opening_hours,photos,zone_id,subsubsector_id,shop_zones(id,name,slug)",
       )
+      .neq("status", "duplicate")
       .order("rating", { ascending: false, nullsFirst: false })
       .limit(data.limit);
 
