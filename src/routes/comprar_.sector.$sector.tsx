@@ -289,7 +289,7 @@ function SectorDashboard() {
               })}
               {ranked.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-2 py-6 text-center text-xs text-white/50">
+                  <td colSpan={5} className="px-2 py-6 text-center text-xs text-white/50">
                     Aún no hay comercios cargados para este sector.
                   </td>
                 </tr>
