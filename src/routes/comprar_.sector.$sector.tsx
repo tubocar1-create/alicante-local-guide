@@ -89,6 +89,8 @@ function SectorDashboard() {
         return { p, d };
       })
       .sort((a, b) => {
+        const cat = (a.p.subsubsector_name ?? "").localeCompare(b.p.subsubsector_name ?? "", "es", { sensitivity: "base" });
+        if (cat !== 0) return cat;
         if (a.d != null && b.d != null) return a.d - b.d;
         if (a.d != null) return -1;
         if (b.d != null) return 1;
