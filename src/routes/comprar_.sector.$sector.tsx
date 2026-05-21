@@ -199,16 +199,18 @@ function SectorDashboard() {
 
           <table className="w-full table-fixed border-separate border-spacing-y-0.5 text-left text-[11px] text-white">
             <colgroup>
+              <col className="w-[78px]" />
               <col />
-              <col className="w-[58px]" />
-              <col className="w-[48px]" />
               <col className="w-[52px]" />
+              <col className="w-[44px]" />
+              <col className="w-[48px]" />
             </colgroup>
             <thead>
               <tr
                 className="text-[9px] uppercase tracking-[0.12em]"
                 style={{ color: `${ACCENT}99` }}
               >
+                <th className="px-1 py-1 font-medium">Categoría</th>
                 <th className="px-1 py-1 font-medium">Comercio · Dirección</th>
                 <th className="px-1 py-1 text-center font-medium">Estado</th>
                 <th className="px-1 py-1 text-center font-medium">Cierra</th>
@@ -230,31 +232,33 @@ function SectorDashboard() {
                   status === "open" ? "Abre" : status === "closed" ? "Cerr" : "—";
                 return (
                   <tr key={p.id} className="bg-white/[0.03]">
-                    <td className="rounded-l-md px-1.5 py-1.5 align-middle">
+                    <td
+                      className="rounded-l-md px-1.5 py-1.5 align-middle text-[9px] uppercase tracking-[0.12em]"
+                      style={{ color: `${ACCENT}cc` }}
+                    >
+                      <span className="flex items-start gap-1">
+                        <span aria-hidden className="text-[12px] leading-none">
+                          {p.subsubsector_emoji ?? "•"}
+                        </span>
+                        <span className="line-clamp-2 leading-tight">
+                          {p.subsubsector_name}
+                        </span>
+                      </span>
+                    </td>
+                    <td className="px-1.5 py-1.5 align-middle">
                       <Link
                         to="/comprar/tienda/$id"
                         params={{ id: p.id }}
-                        className="flex items-start gap-1.5 hover:opacity-80"
+                        className="block min-w-0 hover:opacity-80"
                       >
-                        <span aria-hidden className="mt-0.5 text-[13px] leading-none">
-                          {p.subsubsector_emoji ?? "•"}
+                        <span className="block truncate text-[11px] font-medium text-white">
+                          {p.name}
                         </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-[11px] font-medium text-white">
-                            {p.name}
+                        {p.address && (
+                          <span className="block truncate text-[10px] text-white/55">
+                            {p.address}
                           </span>
-                          <span
-                            className="block truncate text-[9px] uppercase tracking-[0.14em]"
-                            style={{ color: `${ACCENT}aa` }}
-                          >
-                            {p.subsubsector_name}
-                          </span>
-                          {p.address && (
-                            <span className="block truncate text-[10px] text-white/55">
-                              {p.address}
-                            </span>
-                          )}
-                        </span>
+                        )}
                       </Link>
                     </td>
                     <td className="px-1 py-1 text-center align-middle">
@@ -285,7 +289,7 @@ function SectorDashboard() {
               })}
               {ranked.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-2 py-6 text-center text-xs text-white/50">
+                  <td colSpan={5} className="px-2 py-6 text-center text-xs text-white/50">
                     Aún no hay comercios cargados para este sector.
                   </td>
                 </tr>
