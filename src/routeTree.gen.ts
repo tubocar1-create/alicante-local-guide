@@ -61,7 +61,7 @@ import { Route as SaludCategoriaIdRouteImport } from './routes/salud_.$categoria
 import { Route as OcioPeliculaIdRouteImport } from './routes/ocio_.pelicula.$id'
 import { Route as OcioCinesIdRouteImport } from './routes/ocio_.cines.$id'
 import { Route as ComprarTiendaIdRouteImport } from './routes/comprar_.tienda.$id'
-import { Route as ComprarSubsectorSubsubsectorRouteImport } from './routes/comprar_.$subsector.$subsubsector'
+import { Route as ComprarSubsectorSubsubsectorRouteImport } from './routes/comprar_.$subsector_.$subsubsector'
 import { Route as BusinessInboxIdRouteImport } from './routes/business.inbox.$id'
 import { Route as BusDashboardCodeRouteImport } from './routes/bus.dashboard.$code'
 import { Route as ApiPublicRefreshNewsRouteImport } from './routes/api/public/refresh-news'
@@ -340,9 +340,9 @@ const ComprarTiendaIdRoute = ComprarTiendaIdRouteImport.update({
 } as any)
 const ComprarSubsectorSubsubsectorRoute =
   ComprarSubsectorSubsubsectorRouteImport.update({
-    id: '/$subsubsector',
-    path: '/$subsubsector',
-    getParentRoute: () => ComprarSubsectorRoute,
+    id: '/comprar_/$subsector_/$subsubsector',
+    path: '/comprar/$subsector/$subsubsector',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const BusinessInboxIdRoute = BusinessInboxIdRouteImport.update({
   id: '/$id',
@@ -459,7 +459,7 @@ export interface FileRoutesByFullPath {
   '/business/onboarding': typeof BusinessOnboardingRoute
   '/business/qr': typeof BusinessQrRoute
   '/business/referrals': typeof BusinessReferralsRoute
-  '/comprar/$subsector': typeof ComprarSubsectorRouteWithChildren
+  '/comprar/$subsector': typeof ComprarSubsectorRoute
   '/hospitales/$id': typeof HospitalesIdRoute
   '/hotel/$id': typeof HotelIdRoute
   '/ocio/cartelera': typeof OcioCarteleraRoute
@@ -528,7 +528,7 @@ export interface FileRoutesByTo {
   '/business/onboarding': typeof BusinessOnboardingRoute
   '/business/qr': typeof BusinessQrRoute
   '/business/referrals': typeof BusinessReferralsRoute
-  '/comprar/$subsector': typeof ComprarSubsectorRouteWithChildren
+  '/comprar/$subsector': typeof ComprarSubsectorRoute
   '/hospitales/$id': typeof HospitalesIdRoute
   '/hotel/$id': typeof HotelIdRoute
   '/ocio/cartelera': typeof OcioCarteleraRoute
@@ -599,7 +599,7 @@ export interface FileRoutesById {
   '/business/onboarding': typeof BusinessOnboardingRoute
   '/business/qr': typeof BusinessQrRoute
   '/business/referrals': typeof BusinessReferralsRoute
-  '/comprar_/$subsector': typeof ComprarSubsectorRouteWithChildren
+  '/comprar_/$subsector': typeof ComprarSubsectorRoute
   '/hospitales_/$id': typeof HospitalesIdRoute
   '/hotel/$id': typeof HotelIdRoute
   '/ocio_/cartelera': typeof OcioCarteleraRoute
@@ -622,7 +622,7 @@ export interface FileRoutesById {
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/dashboard/$code': typeof BusDashboardCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
-  '/comprar_/$subsector/$subsubsector': typeof ComprarSubsectorSubsubsectorRoute
+  '/comprar_/$subsector_/$subsubsector': typeof ComprarSubsectorSubsubsectorRoute
   '/comprar_/tienda/$id': typeof ComprarTiendaIdRoute
   '/ocio_/cines/$id': typeof OcioCinesIdRoute
   '/ocio_/pelicula/$id': typeof OcioPeliculaIdRoute
@@ -833,7 +833,7 @@ export interface FileRouteTypes {
     | '/api/public/refresh-news'
     | '/bus/dashboard/$code'
     | '/business/inbox/$id'
-    | '/comprar_/$subsector/$subsubsector'
+    | '/comprar_/$subsector_/$subsubsector'
     | '/comprar_/tienda/$id'
     | '/ocio_/cines/$id'
     | '/ocio_/pelicula/$id'
@@ -872,7 +872,7 @@ export interface RootRouteChildren {
   WelcomeRoute: typeof WelcomeRoute
   AdminPlacesRoute: typeof AdminPlacesRoute
   AdminSaludRoute: typeof AdminSaludRoute
-  ComprarSubsectorRoute: typeof ComprarSubsectorRouteWithChildren
+  ComprarSubsectorRoute: typeof ComprarSubsectorRoute
   HospitalesIdRoute: typeof HospitalesIdRoute
   HotelIdRoute: typeof HotelIdRoute
   OcioCarteleraRoute: typeof OcioCarteleraRoute
@@ -889,6 +889,7 @@ export interface RootRouteChildren {
   ApiPublicQrValidateRoute: typeof ApiPublicQrValidateRoute
   ApiPublicRefreshAlicantePressRoute: typeof ApiPublicRefreshAlicantePressRoute
   ApiPublicRefreshNewsRoute: typeof ApiPublicRefreshNewsRoute
+  ComprarSubsectorSubsubsectorRoute: typeof ComprarSubsectorSubsubsectorRoute
   ComprarTiendaIdRoute: typeof ComprarTiendaIdRoute
   OcioPeliculaIdRoute: typeof OcioPeliculaIdRoute
   ApiPublicHooksAenaSyncRoute: typeof ApiPublicHooksAenaSyncRoute
@@ -1265,12 +1266,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ComprarTiendaIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/comprar_/$subsector/$subsubsector': {
-      id: '/comprar_/$subsector/$subsubsector'
-      path: '/$subsubsector'
+    '/comprar_/$subsector_/$subsubsector': {
+      id: '/comprar_/$subsector_/$subsubsector'
+      path: '/comprar/$subsector/$subsubsector'
       fullPath: '/comprar/$subsector/$subsubsector'
       preLoaderRoute: typeof ComprarSubsectorSubsubsectorRouteImport
-      parentRoute: typeof ComprarSubsectorRoute
+      parentRoute: typeof rootRouteImport
     }
     '/business/inbox/$id': {
       id: '/business/inbox/$id'
@@ -1456,17 +1457,6 @@ const ThreadsRouteChildren: ThreadsRouteChildren = {
 const ThreadsRouteWithChildren =
   ThreadsRoute._addFileChildren(ThreadsRouteChildren)
 
-interface ComprarSubsectorRouteChildren {
-  ComprarSubsectorSubsubsectorRoute: typeof ComprarSubsectorSubsubsectorRoute
-}
-
-const ComprarSubsectorRouteChildren: ComprarSubsectorRouteChildren = {
-  ComprarSubsectorSubsubsectorRoute: ComprarSubsectorSubsubsectorRoute,
-}
-
-const ComprarSubsectorRouteWithChildren =
-  ComprarSubsectorRoute._addFileChildren(ComprarSubsectorRouteChildren)
-
 interface OcioCinesRouteChildren {
   OcioCinesIdRoute: typeof OcioCinesIdRoute
 }
@@ -1517,7 +1507,7 @@ const rootRouteChildren: RootRouteChildren = {
   WelcomeRoute: WelcomeRoute,
   AdminPlacesRoute: AdminPlacesRoute,
   AdminSaludRoute: AdminSaludRoute,
-  ComprarSubsectorRoute: ComprarSubsectorRouteWithChildren,
+  ComprarSubsectorRoute: ComprarSubsectorRoute,
   HospitalesIdRoute: HospitalesIdRoute,
   HotelIdRoute: HotelIdRoute,
   OcioCarteleraRoute: OcioCarteleraRoute,
@@ -1534,6 +1524,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicQrValidateRoute: ApiPublicQrValidateRoute,
   ApiPublicRefreshAlicantePressRoute: ApiPublicRefreshAlicantePressRoute,
   ApiPublicRefreshNewsRoute: ApiPublicRefreshNewsRoute,
+  ComprarSubsectorSubsubsectorRoute: ComprarSubsectorSubsubsectorRoute,
   ComprarTiendaIdRoute: ComprarTiendaIdRoute,
   OcioPeliculaIdRoute: OcioPeliculaIdRoute,
   ApiPublicHooksAenaSyncRoute: ApiPublicHooksAenaSyncRoute,
