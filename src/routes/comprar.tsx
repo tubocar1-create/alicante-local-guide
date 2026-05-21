@@ -23,7 +23,18 @@ type Classification = Awaited<ReturnType<typeof classifyShopIntent>>;
 
 function ComprarPage() {
   const tree = Route.useLoaderData() as ShopTree;
-  const sectors = tree.sectors;
+  const HIDDEN_SUBSECTORS = new Set([
+    "farmacia-salud",
+    "clinicas",
+    "restauracion",
+    "horno-dulces",
+    "alojamiento-turistico",
+  ]);
+  const subsectors = tree.sectors.flatMap((s) =>
+    s.subsectors
+      .filter((ss) => !HIDDEN_SUBSECTORS.has(ss.slug))
+      .map((ss) => ({ ...ss, sectorName: s.short_label || s.name })),
+  );
   const classify = useServerFn(classifyShopIntent);
   const navigate = useNavigate();
 
@@ -59,7 +70,7 @@ function ComprarPage() {
     }
   }
 
-  if (sectors.length === 0) return <div className="p-6">No hay sectores configurados.</div>;
+  if (subsectors.length === 0) return <div className="p-6">No hay sectores configurados.</div>;
 
   return (
     <div className="h-full overflow-y-auto overscroll-contain bg-background text-foreground">
@@ -109,17 +120,17 @@ function ComprarPage() {
         </section>
 
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-          {sectors.map((sector) => (
+          {subsectors.map((ss) => (
             <Link
-              key={sector.id}
+              key={ss.id}
               to="/comprar/sector/$sector"
-              params={{ sector: sector.slug }}
-              aria-label={`Abrir dashboard de ${sector.short_label || sector.name}`}
+              params={{ sector: ss.slug }}
+              aria-label={`Abrir dashboard de ${ss.name}`}
               className="flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border bg-card p-3 text-center shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow"
             >
-              <span className="text-3xl">{sector.emoji}</span>
+              <span className="text-3xl">{ss.emoji ?? "•"}</span>
               <span className="text-[11px] font-semibold uppercase tracking-wide leading-tight text-muted-foreground">
-                {sector.short_label || sector.name}
+                {ss.name}
               </span>
             </Link>
           ))}

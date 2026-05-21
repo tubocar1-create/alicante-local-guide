@@ -551,26 +551,43 @@ export const getSectorDashboard = createServerFn({ method: "GET" })
       .eq("slug", data.sector_slug)
       .eq("active", true)
       .maybeSingle();
-    if (!sec) return null;
-    const { data: subs } = await sb
-      .from("shop_subsectors")
-      .select("id,name")
-      .eq("sector_id", sec.id);
-    const subIds = (subs ?? []).map((s) => s.id);
-    if (subIds.length === 0) return { sector: sec as any, items: [] };
+
+    let subs: { id: string; name: string }[] = [];
+    let header: { id: string; slug: string; name: string; short_label: string | null; emoji: string | null } | null = null;
+
+    if (sec) {
+      header = sec as any;
+      const { data: ss } = await sb
+        .from("shop_subsectors")
+        .select("id,name")
+        .eq("sector_id", sec.id);
+      subs = ss ?? [];
+    } else {
+      const { data: sub } = await sb
+        .from("shop_subsectors")
+        .select("id,slug,name,emoji")
+        .eq("slug", data.sector_slug)
+        .maybeSingle();
+      if (!sub) return null;
+      header = { id: sub.id, slug: sub.slug, name: sub.name, short_label: sub.name, emoji: sub.emoji ?? null };
+      subs = [{ id: sub.id, name: sub.name }];
+    }
+
+    const subIds = subs.map((s) => s.id);
+    if (subIds.length === 0) return { sector: header as any, items: [] };
     const { data: sss } = await sb
       .from("shop_subsubsectors")
       .select("id,name,emoji,subsector_id")
       .in("subsector_id", subIds);
     const sssIds = (sss ?? []).map((x) => x.id);
-    if (sssIds.length === 0) return { sector: sec as any, items: [] };
+    if (sssIds.length === 0) return { sector: header as any, items: [] };
     const { data: biz } = await sb
       .from("shop_businesses")
       .select("id,name,address,opening_hours,lat,lng,subsubsector_id")
       .in("subsubsector_id", sssIds)
       .neq("status", "duplicate")
       .limit(1000);
-    const subMap = new Map((subs ?? []).map((s) => [s.id, s.name]));
+    const subMap = new Map(subs.map((s) => [s.id, s.name]));
     const sssMap = new Map((sss ?? []).map((x) => [x.id, x]));
     const items: SectorDashboardItem[] = (biz ?? []).map((b: any) => {
       const sx = sssMap.get(b.subsubsector_id);
@@ -586,5 +603,5 @@ export const getSectorDashboard = createServerFn({ method: "GET" })
         lng: b.lng,
       };
     });
-    return { sector: sec as any, items };
+    return { sector: header as any, items };
   });
