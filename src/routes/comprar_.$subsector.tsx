@@ -2,7 +2,7 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { getSubsectorPage } from "@/lib/comprar.functions";
 
-export const Route = createFileRoute("/comprar/$subsector")({
+export const Route = createFileRoute("/comprar_/$subsector")({
   loader: ({ params }) => getSubsectorPage({ data: { slug: params.subsector } }),
   head: ({ loaderData }) => ({
     meta: [
