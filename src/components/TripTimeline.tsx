@@ -47,40 +47,84 @@ export function TripTimeline({
 
   useEffect(() => {
     let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | null = null;
+    let pollTimer: ReturnType<typeof setTimeout> | null = null;
+    const retryTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
-    const tick = async () => {
+    const clearRetry = (key: string) => {
+      const t = retryTimers.get(key);
+      if (t) {
+        clearTimeout(t);
+        retryTimers.delete(key);
+      }
+    };
+
+    // Llama al API para una parada/línea. Si el API falla o no
+    // devuelve datos, reintenta cada 5s SOLO para esa parada
+    // hasta obtener información.
+    const fetchStopWithRetry = (
+      key: string,
+      stopCode: string,
+      lineCode: string,
+      onArrivals: (arr: StopArrival[]) => void,
+    ) => {
+      clearRetry(key);
+      const attempt = async () => {
+        if (cancelled) return;
+        try {
+          const r = await fetchRealtime({ data: { stopCode, lines: [lineCode] } });
+          if (cancelled) return;
+          if (r.arrivals && r.arrivals.length > 0) {
+            onArrivals(r.arrivals);
+            clearRetry(key);
+            return;
+          }
+        } catch {
+          /* sin respuesta válida, reintentamos */
+        }
+        if (cancelled) return;
+        retryTimers.set(key, setTimeout(attempt, 5_000));
+      };
+      attempt();
+    };
+
+    const tick = () => {
       setLoading(true);
       try {
         const first = trip.legs[0];
-        const calls: Promise<unknown>[] = [
-          fetchRealtime({ data: { stopCode: first.fromCode, lines: [first.lineCode] } }).then((r) => {
-            if (!cancelled) setOriginEta(r.arrivals);
-          }),
-        ];
-        // Solo cargamos los transbordos cuando el viaje está seleccionado
-        // (más tráfico de red); el ETA del origen siempre se muestra.
+        fetchStopWithRetry(
+          `origin:${first.fromCode}:${first.lineCode}`,
+          first.fromCode,
+          first.lineCode,
+          (arr) => {
+            if (!cancelled) setOriginEta(arr);
+          },
+        );
         if (selected) {
           for (let i = 1; i < trip.legs.length; i++) {
             const transfer = trip.legs[i];
-            calls.push(
-              fetchRealtime({ data: { stopCode: transfer.fromCode, lines: [transfer.lineCode] } }).then((r) => {
-                if (!cancelled) setTransferEtas((prev) => ({ ...prev, [i]: r.arrivals }));
-              }),
+            const idx = i;
+            fetchStopWithRetry(
+              `transfer:${idx}:${transfer.fromCode}:${transfer.lineCode}`,
+              transfer.fromCode,
+              transfer.lineCode,
+              (arr) => {
+                if (!cancelled) setTransferEtas((prev) => ({ ...prev, [idx]: arr }));
+              },
             );
           }
         }
-        await Promise.allSettled(calls);
         if (!cancelled) setFetchedAt(new Date().toISOString());
       } finally {
         if (!cancelled) setLoading(false);
       }
-      if (!cancelled) timer = setTimeout(tick, POLL_MS);
+      if (!cancelled) pollTimer = setTimeout(tick, POLL_MS);
     };
     tick();
     return () => {
       cancelled = true;
-      if (timer) clearTimeout(timer);
+      if (pollTimer) clearTimeout(pollTimer);
+      retryTimers.forEach((t) => clearTimeout(t));
+      retryTimers.clear();
     };
   }, [selected, trip, fetchRealtime]);
 
