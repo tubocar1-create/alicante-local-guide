@@ -1,8 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Sparkles, Loader2, ShoppingBag } from "lucide-react";
-import { classifyShopIntent, getShopTree, type ShopTree } from "@/lib/comprar.functions";
+import { ArrowLeft, Sparkles, Loader2, ShoppingBag, Star, MapPin } from "lucide-react";
+import {
+  classifyShopIntent,
+  getShopTree,
+  listShopBusinesses,
+  type ShopBusinessSummary,
+  type ShopTree,
+} from "@/lib/comprar.functions";
 
 
 export const Route = createFileRoute("/comprar")({
@@ -29,9 +35,9 @@ type Classification = Awaited<ReturnType<typeof classifyShopIntent>>;
 
 function ComprarPage() {
   const tree = Route.useLoaderData() as ShopTree;
-  const sector: Sector | undefined = tree.sectors[0]; // "Comercio y Servicios"
+  const sector: Sector | undefined = tree.sectors[0];
   const classify = useServerFn(classifyShopIntent);
-
+  const listBiz = useServerFn(listShopBusinesses);
 
   const [subsector, setSubsector] = useState<Subsector | null>(null);
   const [subsubsector, setSubsubsector] = useState<Subsubsector | null>(null);
@@ -42,11 +48,38 @@ function ComprarPage() {
   const [aiResult, setAiResult] = useState<Classification | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const [businesses, setBusinesses] = useState<ShopBusinessSummary[] | null>(null);
+  const [bizLoading, setBizLoading] = useState(false);
+
+  // When an intent (or its parent subsubsector) is selected, fetch businesses.
+  useEffect(() => {
+    if (!subsubsector) {
+      setBusinesses(null);
+      return;
+    }
+    let cancelled = false;
+    setBizLoading(true);
+    listBiz({ data: { subsubsector_slug: subsubsector.slug, limit: 30 } })
+      .then((rows) => {
+        if (!cancelled) setBusinesses(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setBusinesses([]);
+      })
+      .finally(() => {
+        if (!cancelled) setBizLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [subsubsector, listBiz]);
+
   function reset() {
     setSubsector(null);
     setSubsubsector(null);
     setSelectedIntent(null);
     setAiResult(null);
+    setBusinesses(null);
   }
 
   async function ask() {
@@ -230,6 +263,77 @@ function ComprarPage() {
                 {selectedIntent.verbal_recommendation}
               </div>
             )}
+
+            {/* Tiendas reales */}
+            <div className="space-y-3 pt-1">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold">Tiendas cerca</h3>
+                {bizLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+              </div>
+
+              {!bizLoading && businesses && businesses.length === 0 && (
+                <p className="rounded-xl border bg-muted/30 p-3 text-xs text-muted-foreground">
+                  Todavía no tenemos comercios cargados para esta categoría. Lo iremos ampliando.
+                </p>
+              )}
+
+              {businesses && businesses.length > 0 && (
+                <ul className="grid gap-3 sm:grid-cols-2">
+                  {businesses.map((b) => (
+                    <li key={b.id}>
+                      <Link
+                        to="/comprar/tienda/$id"
+                        params={{ id: b.id }}
+                        className="group block overflow-hidden rounded-2xl border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow"
+                      >
+                        <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
+                          {b.photo_ref ? (
+                            <img
+                              src={`/api/public/shop-photo/${b.photo_ref}?w=600`}
+                              alt={b.name}
+                              loading="lazy"
+                              className="h-full w-full object-cover transition group-hover:scale-105"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
+                              Sin foto
+                            </div>
+                          )}
+                          {b.open_now != null && (
+                            <span
+                              className={`absolute left-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-medium shadow ${
+                                b.open_now
+                                  ? "bg-emerald-500/95 text-white"
+                                  : "bg-zinc-800/90 text-white"
+                              }`}
+                            >
+                              {b.open_now ? "Abierto" : "Cerrado"}
+                            </span>
+                          )}
+                        </div>
+                        <div className="space-y-1 p-3">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="truncate text-sm font-semibold">{b.name}</span>
+                            {b.rating != null && (
+                              <span className="inline-flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+                                <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                                {b.rating.toFixed(1)}
+                              </span>
+                            )}
+                          </div>
+                          {b.zone && (
+                            <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                              <MapPin className="h-3 w-3" />
+                              {b.zone.name}
+                            </div>
+                          )}
+                        </div>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </section>
         )}
       </main>
