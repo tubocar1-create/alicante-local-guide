@@ -23,7 +23,7 @@ type Classification = Awaited<ReturnType<typeof classifyShopIntent>>;
 
 function ComprarPage() {
   const tree = Route.useLoaderData() as ShopTree;
-  const sector = tree.sectors[0];
+  const sectors = tree.sectors;
   const classify = useServerFn(classifyShopIntent);
   const navigate = useNavigate();
 
@@ -59,7 +59,7 @@ function ComprarPage() {
     }
   }
 
-  if (!sector) return <div className="p-6">No hay sectores configurados.</div>;
+  if (sectors.length === 0) return <div className="p-6">No hay sectores configurados.</div>;
 
   return (
     <div className="h-full overflow-y-auto overscroll-contain bg-background text-foreground">
@@ -75,7 +75,7 @@ function ComprarPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl space-y-6 px-4 py-5">
+      <main className="mx-auto max-w-3xl space-y-8 px-4 py-5">
         <section className="rounded-2xl border bg-card p-4 shadow-sm">
           <label className="mb-2 flex items-center gap-2 text-sm font-medium">
             <Sparkles className="h-4 w-4 text-primary" />
@@ -108,26 +108,35 @@ function ComprarPage() {
           )}
         </section>
 
-        <nav className="text-sm text-muted-foreground">
-          <span className="text-foreground">
-            {sector.emoji} {sector.short_label || sector.name}
-          </span>
-        </nav>
-
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {sector.subsectors.map((ss) => (
-            <Link
-              key={ss.id}
-              to="/comprar/$subsector"
-              params={{ subsector: ss.slug }}
-              className="flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border bg-card p-3 text-center shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow"
-            >
-              <span className="text-3xl">{ss.emoji ?? "•"}</span>
-              <span className="text-xs font-medium leading-tight">{ss.name}</span>
-            </Link>
-          ))}
-        </div>
+        {sectors.map((sector) => (
+          <section key={sector.id} className="space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">{sector.emoji}</span>
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                {sector.short_label || sector.name}
+              </h2>
+            </div>
+            {sector.subsectors.length === 0 ? (
+              <p className="text-xs text-muted-foreground">Sin categorías disponibles.</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {sector.subsectors.map((ss) => (
+                  <Link
+                    key={ss.id}
+                    to="/comprar/$subsector"
+                    params={{ subsector: ss.slug }}
+                    className="flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border bg-card p-3 text-center shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow"
+                  >
+                    <span className="text-3xl">{ss.emoji ?? "•"}</span>
+                    <span className="text-xs font-medium leading-tight">{ss.name}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
+        ))}
       </main>
     </div>
   );
 }
+
