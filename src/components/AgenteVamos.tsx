@@ -1308,9 +1308,9 @@ function iniciarAudio() {
 
 function configureSpanishUtterance(u: SpeechSynthesisUtterance, text: string) {
   u.text = plainText(text);
-  u.lang = "es-ES";
-  u.rate = 1.05;
-  u.pitch = 1;
+  u.lang = VA_VOICE_LANG;
+  u.rate = VA_VOICE_RATE;
+  u.pitch = VA_VOICE_PITCH;
   const synth = window.speechSynthesis;
   const voice = synth ? pickSpanishVoice(synth) : null;
   if (voice) u.voice = voice;
