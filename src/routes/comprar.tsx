@@ -119,12 +119,19 @@ function ComprarPage() {
 
         {sectors.map((sector) => (
           <section key={sector.id} className="space-y-3">
-            <div className="flex items-center gap-2">
+            <Link
+              to="/comprar/sector/$sector"
+              params={{ sector: sector.slug }}
+              className="group flex items-center gap-2 transition hover:text-primary"
+            >
               <span className="text-xl">{sector.emoji}</span>
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground group-hover:text-primary">
                 {sector.short_label || sector.name}
               </h2>
-            </div>
+              <span className="ml-auto text-[10px] font-medium uppercase tracking-wider text-primary/70">
+                Ver dashboard →
+              </span>
+            </Link>
             {sector.subsectors.length === 0 ? (
               <p className="text-xs text-muted-foreground">Sin categorías disponibles.</p>
             ) : (
