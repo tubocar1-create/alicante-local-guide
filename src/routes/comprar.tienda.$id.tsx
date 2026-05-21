@@ -44,7 +44,7 @@ function priceLabel(level: number | null) {
 }
 
 function TiendaDetail() {
-  const biz = Route.useLoaderData();
+  const biz = Route.useLoaderData() as ShopBusinessDetail | null;
   if (!biz) {
     return <div className="p-6 text-sm">Tienda no encontrada.</div>;
   }
