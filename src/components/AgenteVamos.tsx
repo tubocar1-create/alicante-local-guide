@@ -1301,6 +1301,8 @@ let __vaActiveAudioStartedAt = 0;
 const __vaPrimedUtterances: SpeechSynthesisUtterance[] = [];
 let __vaSpeechUnlocked = false;
 let __vaVoicesLoggingAttached = false;
+let __vaContinuityInFlight = false;
+let __vaContinuitySpokenAt = 0;
 const POST_SPEECH_LISTEN_DELAY_MS = 140;
 
 // Voz unificada del agente: español Estados Unidos (es-US) si está disponible.
