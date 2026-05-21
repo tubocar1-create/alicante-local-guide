@@ -46,9 +46,18 @@ export function StopRealtimeSheet({
   useEffect(() => {
     if (!open || !stop) return;
     let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | null = null;
+    let pollTimer: ReturnType<typeof setTimeout> | null = null;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
-    const tick = async () => {
+    const clearRetry = () => {
+      if (retryTimer) {
+        clearTimeout(retryTimer);
+        retryTimer = null;
+      }
+    };
+
+    const attempt = async () => {
+      if (cancelled) return;
       setLoading(true);
       setError(null);
       try {
@@ -56,20 +65,30 @@ export function StopRealtimeSheet({
           data: { stopCode: stop.code, lines: stop.lines ?? [] },
         });
         if (cancelled) return;
-        setArrivals(r.arrivals);
-        setFetchedAt(r.fetchedAt);
+        if (r.arrivals && r.arrivals.length > 0) {
+          setArrivals(r.arrivals);
+          setFetchedAt(r.fetchedAt);
+          clearRetry();
+          if (!cancelled) pollTimer = setTimeout(attempt, POLL_MS);
+          return;
+        }
+        // Sin datos: reintento en 5s solo para esta parada.
+        if (!cancelled) retryTimer = setTimeout(attempt, 5_000);
       } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : "Error");
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : "Error");
+          retryTimer = setTimeout(attempt, 5_000);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
-      if (!cancelled) timer = setTimeout(tick, POLL_MS);
     };
 
-    tick();
+    attempt();
     return () => {
       cancelled = true;
-      if (timer) clearTimeout(timer);
+      if (pollTimer) clearTimeout(pollTimer);
+      clearRetry();
     };
   }, [open, stop, fetchRealtime]);
 
