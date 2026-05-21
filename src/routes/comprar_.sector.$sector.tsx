@@ -81,15 +81,23 @@ function SectorDashboard() {
   const hasGeo = locState.status === "ready";
 
   const ranked = useMemo(() => {
+    const hour = new Date().getHours();
+    const prioritizeOpen = hour >= 20 || hour < 2;
     return items
       .map((p) => {
         const d =
           p.lat != null && p.lng != null
             ? distanceKm(origin, { lat: p.lat, lng: p.lng })
             : null;
-        return { p, d };
+        const status = computeOpenStatus(p.opening_hours as OpeningHours);
+        return { p, d, status };
       })
       .sort((a, b) => {
+        if (prioritizeOpen) {
+          const ao = a.status === "open" ? 0 : 1;
+          const bo = b.status === "open" ? 0 : 1;
+          if (ao !== bo) return ao - bo;
+        }
         const cat = (a.p.subsubsector_name ?? "").localeCompare(b.p.subsubsector_name ?? "", "es", { sensitivity: "base" });
         if (cat !== 0) return cat;
         if (a.d != null && b.d != null) return a.d - b.d;
