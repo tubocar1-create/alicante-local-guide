@@ -58,7 +58,7 @@ function TiendaDetail() {
       : null;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="h-full overflow-y-auto overscroll-contain bg-background text-foreground">
       <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/70">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
           <Link to="/comprar" className="rounded-full p-2 hover:bg-muted" aria-label="Volver">
