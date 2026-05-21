@@ -90,8 +90,18 @@ function TiendaDetail() {
             )}
           </div>
         ) : (
-          <div className="flex h-40 items-center justify-center rounded-2xl border bg-muted text-sm text-muted-foreground">
-            Sin foto disponible
+          <div className="relative flex h-56 items-center justify-center overflow-hidden rounded-2xl border bg-gradient-to-br from-muted via-muted/60 to-background sm:h-72">
+            <span className="select-none text-[7rem] leading-none opacity-80 sm:text-[9rem]" aria-hidden>
+              {biz.subsector?.emoji ?? "🏬"}
+            </span>
+            <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/70 px-3 py-1 text-[11px] font-medium uppercase tracking-wider text-white shadow">
+              Foto no disponible
+            </span>
+            {biz.subsector?.name && (
+              <span className="absolute left-3 top-3 rounded-full bg-background/80 px-2.5 py-1 text-[11px] font-medium text-foreground shadow">
+                {biz.subsector.name}
+              </span>
+            )}
           </div>
         )}
 
@@ -152,8 +162,15 @@ function TiendaDetail() {
 
         {biz.weekday_descriptions.length > 0 && (
           <section className="rounded-2xl border bg-card p-4 shadow-sm">
-            <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold">
-              <Clock className="h-4 w-4" /> Horario
+            <h3 className="mb-2 flex items-center justify-between gap-2 text-sm font-semibold">
+              <span className="flex items-center gap-2">
+                <Clock className="h-4 w-4" /> Horario
+              </span>
+              {biz.hours_assumed && (
+                <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-600 dark:text-amber-400">
+                  Estimado · pendiente confirmar
+                </span>
+              )}
             </h3>
             <ul className="space-y-0.5 text-sm text-muted-foreground">
               {biz.weekday_descriptions.map((d, i) => (
