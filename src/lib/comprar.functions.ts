@@ -294,6 +294,7 @@ export type ShopBusinessDetail = ShopBusinessSummary & {
   hours_assumed: boolean;
   subsector: { name: string; emoji: string | null } | null;
   photos_refs: string[];
+  logo_url: string | null;
 };
 
 // Map subsubsector slug → google place types we consider relevant.
