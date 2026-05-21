@@ -15,23 +15,24 @@ export const Route = createFileRoute("/comprar_/sector/$sector")({
   loader: async ({ params }) => {
     const data = await getSectorDashboard({ data: { sector_slug: params.sector } });
     if (!data) throw notFound();
-    return data;
+    return data as SectorDashboardData;
   },
-  head: ({ loaderData }) => ({
-    meta: [
-      {
-        title: loaderData
-          ? `${loaderData.sector.name} en Alicante · Dashboard`
-          : "Dashboard · Comprar",
-      },
-      {
-        name: "description",
-        content: loaderData
-          ? `Todos los comercios del sector ${loaderData.sector.name} en Alicante: estado, horario y distancia.`
-          : "Dashboard de comercios en Alicante.",
-      },
-    ],
-  }),
+  head: ({ loaderData }) => {
+    const ld = loaderData as SectorDashboardData | undefined;
+    return {
+      meta: [
+        {
+          title: ld ? `${ld.sector.name} en Alicante · Dashboard` : "Dashboard · Comprar",
+        },
+        {
+          name: "description",
+          content: ld
+            ? `Todos los comercios del sector ${ld.sector.name} en Alicante: estado, horario y distancia.`
+            : "Dashboard de comercios en Alicante.",
+        },
+      ],
+    };
+  },
   errorComponent: ({ error, reset }) => {
     const router = useRouter();
     return (
