@@ -981,7 +981,8 @@ export function ChatScreen() {
                       // Si elegimos otro transporte distinto al TRAM, ocultar panel TRAM.
                       if (opt.action !== "tram-inline") setShowTramInline(false);
                       if (opt.action === "tram-inline") {
-                        setShowTramInline((v) => !v);
+                        setSubmenuStack([]);
+                        navigate({ to: "/tram" });
                       } else if (opt.submenu) {
                         setSubmenuStack((stack) => [...stack, opt]);
                       } else if (opt.action === "bus-picker") {
