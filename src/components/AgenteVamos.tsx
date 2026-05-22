@@ -407,16 +407,41 @@ const DOMAINS: DomainSpec[] = [
   },
   {
     id: "fiestas",
-    hubPath: "/",
+    hubPath: "/fiestas",
     triggers: [
-      "quiero fiesta", "ir de fiesta", "salir de fiesta", "salir de noche",
-      "salir de copas", "tomar algo", "tomar una copa", "tomar unas copas",
-      "irme de copas", "pubs", "pub", "discoteca", "discotecas", "terraza",
-      "musica en vivo", "música en vivo", "marcha", "ambiente nocturno",
-      "vida nocturna", "noche alicantina",
+      "quiero fiesta", "ir de fiesta", "salir de fiesta",
+      "fiesta", "fiestas", "hoguera", "hogueras", "san juan",
+      "moros y cristianos", "moros", "cristianos", "fogueres",
+      "porrate", "porraet", "porratés",
+      "programa de fiestas", "programa fiestas", "que se celebra", "qué se celebra",
+      "agenda festiva", "fiesta popular", "fiestas populares",
+      "verbena", "verbenas", "procesion", "procesión",
     ],
     question:
-      "El centro está muy animado esta noche 🍸 ¿Prefieres terraza, pubs, discoteca o música en vivo?",
+      "¡Vamos! ¿Quieres ver el programa de fiestas, hogueras o moros y cristianos?",
+    audio: "leisure",
+    followups: [
+      { keys: ["hoguera", "hogueras", "san juan", "fogueres"], path: "/fiestas" },
+      { keys: ["moros", "cristianos", "moros y cristianos"], path: "/fiestas" },
+      { keys: ["programa", "agenda"], path: "/fiestas" },
+    ],
+  },
+  {
+    id: "tomar_algo",
+    hubPath: "/",
+    triggers: [
+      "tomar algo", "tomar una copa", "tomar unas copas",
+      "irme de copas", "salir de copas", "salir de noche",
+      "una copa", "unas copas", "una cerveza", "unas cervezas", "unas cañas",
+      "una caña", "una caña fría", "cerveza fria", "cerveza fría",
+      "pub", "pubs", "discoteca", "discotecas", "club", "clubs",
+      "terraza", "terrazas", "rooftop", "azotea",
+      "musica en vivo", "música en vivo", "ambiente nocturno",
+      "vida nocturna", "noche alicantina", "marcha", "after",
+      "vermut", "vermouth", "vinos", "cocteles", "cócteles", "gin tonic",
+    ],
+    question:
+      "🍸 ¿Prefieres terraza, pubs, discoteca o música en vivo?",
     audio: "leisure",
     followups: [
       { keys: ["terraza", "terrazas", "azotea", "rooftop"], path: "/" },
@@ -430,9 +455,17 @@ const DOMAINS: DomainSpec[] = [
     hubPath: "/ocio",
     triggers: [
       "quiero salir", "quiero hacer algo", "me aburro", "estoy aburrido",
-      "estoy aburrida", "no se que hacer", "algo divertido",
-      "que hago hoy", "que hago esta tarde", "que hacemos esta noche",
-      "que puedo hacer", "diversion", "divertirme", "plan", "planes",
+      "estoy aburrida", "no se que hacer", "no sé qué hacer", "algo divertido",
+      "que hago hoy", "qué hago hoy", "que hago esta tarde", "qué hago esta tarde",
+      "que hacemos esta noche", "qué hacemos esta noche",
+      "que puedo hacer", "qué puedo hacer", "diversion", "diversión", "divertirme",
+      "plan", "planes", "que ver", "qué ver", "que visitar", "qué visitar",
+      "ocio", "tiempo libre", "actividades", "panorama",
+      // sub-temas que activan ocio
+      "cine", "pelicula", "películas", "peliculas", "cartelera",
+      "concierto", "conciertos", "festival", "festivales",
+      "teatro", "teatros", "obra", "musical", "musicales",
+      "exposicion", "exposición", "museo", "museos", "cultura",
     ],
     question: "¿Te apetece cine, conciertos, teatro o fiestas?",
     audio: "leisure",
@@ -450,13 +483,18 @@ const DOMAINS: DomainSpec[] = [
     triggers: [
       "me quiero banar", "me quiero bañar", "quiero banarme", "quiero bañarme",
       "ir al mar", "darme un bano", "darme un baño",
-      "tomar el sol", "nadar en el mar",
+      "tomar el sol", "nadar en el mar", "ir a la playa", "ir a las playas",
+      "playa", "playas", "arena", "calita", "calitas", "cala", "calas",
+      "playas cerca", "playa cercana", "mejor playa", "mejores playas",
+      "bandera azul", "playa con duchas", "playa accesible",
+      "postiguet", "san juan", "san gabriel", "albufereta", "almadraba",
+      "que playa", "qué playa", "playa para hoy",
     ],
     question: "¿Quieres el listado de playas o el mapa de playas?",
     audio: "beaches",
     followups: [
       { keys: ["mapa"], path: "/playas/mapa" },
-      { keys: ["listado", "lista", "todas", "cuales", "playas", "playa"], path: "/playas" },
+      { keys: ["listado", "lista", "todas", "cuales", "cuáles", "playas", "playa"], path: "/playas" },
     ],
   },
   {
@@ -464,7 +502,14 @@ const DOMAINS: DomainSpec[] = [
     hubPath: "/donde-dormir",
     triggers: [
       "pasar la noche", "necesito cama", "busco cama", "sitio para dormir",
-      "donde duermo", "donde me quedo",
+      "donde duermo", "dónde duermo", "donde me quedo", "dónde me quedo",
+      "donde dormir", "dónde dormir", "donde puedo dormir",
+      "necesito alojamiento", "busco alojamiento", "alojamiento",
+      "hotel", "hoteles", "hostal", "hostales", "hostel", "hostels",
+      "apartamento", "apartamentos", "airbnb", "bnb",
+      "pension", "pensión", "pensiones", "albergue", "albergues",
+      "habitacion", "habitación", "reservar hotel", "buscar hotel",
+      "donde alojarme", "dónde alojarme", "alojarme",
     ],
     question: "¿Buscas hotel, hostal o apartamento?",
     audio: "hotel",
@@ -474,7 +519,82 @@ const DOMAINS: DomainSpec[] = [
       { keys: ["apartamento", "airbnb"], path: "/donde-dormir" },
     ],
   },
+  {
+    id: "compras",
+    hubPath: "/comprar",
+    triggers: [
+      "quiero comprar", "ir de compras", "necesito comprar", "tengo que comprar",
+      "comprar", "compras", "tiendas", "tienda", "comercio", "comercios",
+      "centro comercial", "centros comerciales", "shopping",
+      "boutique", "boutiques", "mercado", "mercadillo",
+      "donde comprar", "dónde comprar",
+      "ropa", "calzado", "zapatos", "zapatillas", "sneakers",
+      "regalo", "regalos", "souvenir", "souvenirs", "recuerdo",
+      "joyeria", "joyería", "perfumeria", "perfumería",
+      "supermercado", "supermercados", "ferreteria", "ferretería",
+      "libreria", "librería",
+    ],
+    question: "🛍️ ¿Qué quieres comprar? Dime ropa, regalos, supermercado o explora por sector.",
+    audio: "fallback",
+    followups: [
+      { keys: ["ropa", "moda", "boutique", "calzado", "zapatos"], path: "/comprar" },
+      { keys: ["regalo", "regalos", "souvenir", "recuerdo"], path: "/comprar" },
+      { keys: ["supermercado", "alimentacion", "alimentación"], path: "/comprar" },
+      { keys: ["explorar", "todo", "todas las tiendas", "ver tiendas"], path: "/comprar" },
+    ],
+  },
+  {
+    id: "mapa",
+    hubPath: "/explore",
+    triggers: [
+      "mapa", "ver mapa", "abrir mapa", "explorar mapa", "mapa de alicante",
+      "explorar", "explorar la ciudad", "que hay cerca", "qué hay cerca",
+      "sitios cerca de mi", "sitios cerca de mí", "cerca de mi", "cerca de mí",
+      "alrededor", "alrededor de mi", "alrededor de mí",
+      "donde estoy", "dónde estoy", "ubicacion", "ubicación",
+      "mapa interactivo", "mapa de la ciudad",
+    ],
+    question: "🗺️ ¿Mapa de la ciudad, mapa de playas o mapa del TRAM?",
+    audio: "fallback",
+    followups: [
+      { keys: ["playa", "playas", "mapa de playas"], path: "/playas/mapa" },
+      { keys: ["tram", "tranvia", "tranvía", "mapa del tram"], path: "/tram/mapa" },
+      { keys: ["ciudad", "explorar", "alicante", "general"], path: "/explore" },
+    ],
+  },
+  {
+    id: "clima",
+    hubPath: "/clima",
+    triggers: [
+      "clima", "tiempo", "que tiempo hace", "qué tiempo hace",
+      "como esta el tiempo", "cómo está el tiempo",
+      "como esta el clima", "cómo está el clima",
+      "llueve", "va a llover", "lluvia", "esta lloviendo", "está lloviendo",
+      "sol", "hace sol", "calor", "hace calor", "frio", "frío", "hace frio", "hace frío",
+      "temperatura", "grados", "humedad", "viento", "tormenta",
+      "pronostico", "pronóstico", "pronostico del tiempo", "pronóstico del tiempo",
+      "previsión", "prevision", "previsión meteorológica",
+    ],
+    question: "🌤️ Te llevo al clima de Alicante.",
+    audio: "fallback",
+    followups: [],
+
+  },
+  {
+    id: "perfil",
+    hubPath: "/perfil",
+    triggers: [
+      "perfil", "mi perfil", "mi cuenta", "mi usuario", "mis datos",
+      "mis favoritos", "favoritos", "mis reservas", "mis ajustes", "ajustes",
+      "configuracion", "configuración", "preferencias",
+      "cerrar sesion", "cerrar sesión", "logout", "iniciar sesion", "iniciar sesión", "login",
+    ],
+    question: "👤 Te llevo a tu perfil.",
+    audio: "fallback",
+    followups: [],
+  },
 ];
+
 
 function normalizeSpeech(text: string) {
   return text
@@ -888,10 +1008,15 @@ function pickAssistantMode(domain: string | null): AssistantMode {
     case "salud_general": return "empatico";
     case "playas": return "inspiracional";
     case "fiestas":
+    case "tomar_algo":
     case "ocio": return "social";
     case "comer":
     case "dormir":
-    case "compras": return "practico";
+    case "compras":
+    case "clima":
+    case "mapa":
+    case "perfil": return "practico";
+
     default: return "neutro";
   }
 }
@@ -1095,15 +1220,25 @@ function localResolve(
     };
   }
 
-  // 2b) PRIORIDAD 2 — si hay dominio, SIEMPRE preguntar antes de derivar.
+  // 2b) PRIORIDAD 2 — si hay dominio, preguntar antes de derivar.
+  //     Excepción: dominios sin followups (clima, perfil, …) navegan directos.
   if (domainMatch) {
     const { domain } = domainMatch;
+    if (!domain.followups.length && domain.hubPath && !domain.hubPath.startsWith("action:")) {
+      return {
+        reply: domain.question,
+        path: domain.hubPath,
+        audio: domain.audio,
+        pendingDomain: null,
+      };
+    }
     return {
       reply: domain.question,
       audio: domain.audio,
       pendingDomain: domain.id,
     };
   }
+
 
   // 2c) PRIORIDAD 3 — keyword corto (4–7 chars) sin dominio en juego.
   if (keyMatch && keyMatch.len >= 4) {
