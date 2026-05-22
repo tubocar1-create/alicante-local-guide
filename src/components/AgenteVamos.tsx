@@ -1220,15 +1220,25 @@ function localResolve(
     };
   }
 
-  // 2b) PRIORIDAD 2 — si hay dominio, SIEMPRE preguntar antes de derivar.
+  // 2b) PRIORIDAD 2 — si hay dominio, preguntar antes de derivar.
+  //     Excepción: dominios sin followups (clima, perfil, …) navegan directos.
   if (domainMatch) {
     const { domain } = domainMatch;
+    if (!domain.followups.length && domain.hubPath && !domain.hubPath.startsWith("action:")) {
+      return {
+        reply: domain.question,
+        path: domain.hubPath,
+        audio: domain.audio,
+        pendingDomain: null,
+      };
+    }
     return {
       reply: domain.question,
       audio: domain.audio,
       pendingDomain: domain.id,
     };
   }
+
 
   // 2c) PRIORIDAD 3 — keyword corto (4–7 chars) sin dominio en juego.
   if (keyMatch && keyMatch.len >= 4) {
