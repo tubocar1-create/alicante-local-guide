@@ -88,7 +88,7 @@ function InstallAppButton() {
     }
     if (platform === "ios") {
       alert(
-        "En iOS: pulsa Compartir en Safari → 'Añadir a pantalla de inicio'."
+        "En iOS: abre esta página (/admin) en Safari → pulsa Compartir → 'Añadir a pantalla de inicio'. Se creará un icono 'Admin' independiente de la app de usuarios."
       );
       return;
     }
