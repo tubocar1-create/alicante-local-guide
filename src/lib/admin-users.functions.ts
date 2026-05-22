@@ -85,12 +85,8 @@ export const listAdminUsers = createServerFn({ method: "POST" })
       active_30d: activeLast30.length,
       users: real
         .sort((a, b) => {
-          const ta = a.last_sign_in_at
-            ? new Date(a.last_sign_in_at).getTime()
-            : 0;
-          const tb = b.last_sign_in_at
-            ? new Date(b.last_sign_in_at).getTime()
-            : 0;
+          const ta = new Date(a.created_at).getTime();
+          const tb = new Date(b.created_at).getTime();
           return tb - ta;
         })
         .slice(0, 500),
