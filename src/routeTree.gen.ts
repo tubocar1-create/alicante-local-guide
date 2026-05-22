@@ -73,6 +73,7 @@ import { Route as ComprarSubsectorSubsubsectorRouteImport } from './routes/compr
 import { Route as BusinessInboxIdRouteImport } from './routes/business.inbox.$id'
 import { Route as BusDashboardCodeRouteImport } from './routes/bus.dashboard.$code'
 import { Route as ApiPublicRefreshNewsRouteImport } from './routes/api/public/refresh-news'
+import { Route as ApiPublicRefreshIncidenciasRouteImport } from './routes/api/public/refresh-incidencias'
 import { Route as ApiPublicRefreshAlicantePressRouteImport } from './routes/api/public/refresh-alicante-press'
 import { Route as ApiPublicQrValidateRouteImport } from './routes/api/public/qr-validate'
 import { Route as ApiPublicQrIssueRouteImport } from './routes/api/public/qr-issue'
@@ -416,6 +417,12 @@ const ApiPublicRefreshNewsRoute = ApiPublicRefreshNewsRouteImport.update({
   path: '/api/public/refresh-news',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicRefreshIncidenciasRoute =
+  ApiPublicRefreshIncidenciasRouteImport.update({
+    id: '/api/public/refresh-incidencias',
+    path: '/api/public/refresh-incidencias',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicRefreshAlicantePressRoute =
   ApiPublicRefreshAlicantePressRouteImport.update({
     id: '/api/public/refresh-alicante-press',
@@ -589,6 +596,7 @@ export interface FileRoutesByFullPath {
   '/api/public/qr-issue': typeof ApiPublicQrIssueRoute
   '/api/public/qr-validate': typeof ApiPublicQrValidateRoute
   '/api/public/refresh-alicante-press': typeof ApiPublicRefreshAlicantePressRoute
+  '/api/public/refresh-incidencias': typeof ApiPublicRefreshIncidenciasRoute
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/dashboard/$code': typeof BusDashboardCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
@@ -675,6 +683,7 @@ export interface FileRoutesByTo {
   '/api/public/qr-issue': typeof ApiPublicQrIssueRoute
   '/api/public/qr-validate': typeof ApiPublicQrValidateRoute
   '/api/public/refresh-alicante-press': typeof ApiPublicRefreshAlicantePressRoute
+  '/api/public/refresh-incidencias': typeof ApiPublicRefreshIncidenciasRoute
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/dashboard/$code': typeof BusDashboardCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
@@ -763,6 +772,7 @@ export interface FileRoutesById {
   '/api/public/qr-issue': typeof ApiPublicQrIssueRoute
   '/api/public/qr-validate': typeof ApiPublicQrValidateRoute
   '/api/public/refresh-alicante-press': typeof ApiPublicRefreshAlicantePressRoute
+  '/api/public/refresh-incidencias': typeof ApiPublicRefreshIncidenciasRoute
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/dashboard/$code': typeof BusDashboardCodeRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
@@ -852,6 +862,7 @@ export interface FileRouteTypes {
     | '/api/public/qr-issue'
     | '/api/public/qr-validate'
     | '/api/public/refresh-alicante-press'
+    | '/api/public/refresh-incidencias'
     | '/api/public/refresh-news'
     | '/bus/dashboard/$code'
     | '/business/inbox/$id'
@@ -938,6 +949,7 @@ export interface FileRouteTypes {
     | '/api/public/qr-issue'
     | '/api/public/qr-validate'
     | '/api/public/refresh-alicante-press'
+    | '/api/public/refresh-incidencias'
     | '/api/public/refresh-news'
     | '/bus/dashboard/$code'
     | '/business/inbox/$id'
@@ -1025,6 +1037,7 @@ export interface FileRouteTypes {
     | '/api/public/qr-issue'
     | '/api/public/qr-validate'
     | '/api/public/refresh-alicante-press'
+    | '/api/public/refresh-incidencias'
     | '/api/public/refresh-news'
     | '/bus/dashboard/$code'
     | '/business/inbox/$id'
@@ -1097,6 +1110,7 @@ export interface RootRouteChildren {
   ApiPublicQrIssueRoute: typeof ApiPublicQrIssueRoute
   ApiPublicQrValidateRoute: typeof ApiPublicQrValidateRoute
   ApiPublicRefreshAlicantePressRoute: typeof ApiPublicRefreshAlicantePressRoute
+  ApiPublicRefreshIncidenciasRoute: typeof ApiPublicRefreshIncidenciasRoute
   ApiPublicRefreshNewsRoute: typeof ApiPublicRefreshNewsRoute
   ComprarSubsectorSubsubsectorRoute: typeof ComprarSubsectorSubsubsectorRoute
   ComprarSectorSectorRoute: typeof ComprarSectorSectorRoute
@@ -1569,6 +1583,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicRefreshNewsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/refresh-incidencias': {
+      id: '/api/public/refresh-incidencias'
+      path: '/api/public/refresh-incidencias'
+      fullPath: '/api/public/refresh-incidencias'
+      preLoaderRoute: typeof ApiPublicRefreshIncidenciasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/refresh-alicante-press': {
       id: '/api/public/refresh-alicante-press'
       path: '/api/public/refresh-alicante-press'
@@ -1881,6 +1902,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicQrIssueRoute: ApiPublicQrIssueRoute,
   ApiPublicQrValidateRoute: ApiPublicQrValidateRoute,
   ApiPublicRefreshAlicantePressRoute: ApiPublicRefreshAlicantePressRoute,
+  ApiPublicRefreshIncidenciasRoute: ApiPublicRefreshIncidenciasRoute,
   ApiPublicRefreshNewsRoute: ApiPublicRefreshNewsRoute,
   ComprarSubsectorSubsubsectorRoute: ComprarSubsectorSubsubsectorRoute,
   ComprarSectorSectorRoute: ComprarSectorSectorRoute,
