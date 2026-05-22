@@ -64,6 +64,7 @@ export const Route = createFileRoute("/api/public/tram/valid-origins")({
           .select("trip_id, stop_id, stop_sequence")
           .in("trip_id", repTripIds);
         const stopTimes = (stRaw ?? []) as Array<{ trip_id: string; stop_id: string; stop_sequence: number }>;
+        console.log("[valid-origins] groups:", groups.size, "stopTimes:", stopTimes.length, "repIds:", repTripIds);
 
         // 5. Info de líneas.
         const routeIds = Array.from(new Set(Array.from(groups.values()).map((g) => g.route_id)));
