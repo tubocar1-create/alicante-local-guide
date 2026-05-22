@@ -55,7 +55,7 @@ const toSecs = (v: string | undefined): number | null => {
 async function batchInsert(table: string, rows: any[], chunk = 500) {
   for (let i = 0; i < rows.length; i += chunk) {
     const slice = rows.slice(i, i + chunk);
-    const { error } = await (supabaseAdmin.from(table) as any).insert(slice);
+    const { error } = await ((supabaseAdmin as any).from(table)).insert(slice);
     if (error) throw new Error(`${table}: ${error.message}`);
   }
 }
