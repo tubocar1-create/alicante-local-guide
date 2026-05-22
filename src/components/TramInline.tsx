@@ -348,37 +348,6 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
           />
         )}
 
-        {/* Explorar líneas (secundario, colapsado) */}
-        <details className="rounded-2xl border border-border/60 bg-background/40 group">
-          <summary className="flex cursor-pointer list-none items-center justify-between px-3.5 py-2.5">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Explorar líneas y mapa
-            </span>
-            <ChevronDown className="h-4 w-4 text-muted-foreground transition group-open:rotate-180" />
-          </summary>
-          <div className="grid grid-cols-2 gap-1.5 p-2 pt-0">
-            {lines.map((l) => {
-              const bg = ensureHash(l.color) ?? "var(--primary)";
-              const fg = ensureHash(l.text_color) ?? "#FFFFFF";
-              return (
-                <Link
-                  key={l.id}
-                  to="/tram/linea/$lineId"
-                  params={{ lineId: l.id }}
-                  className="flex items-center gap-2 rounded-xl border border-border bg-background/80 p-2 text-xs shadow-sm transition hover:border-primary/40 hover:bg-accent/20 active:scale-95"
-                >
-                  <span
-                    className="inline-flex h-6 min-w-[2rem] items-center justify-center rounded-md px-1.5 text-[11px] font-bold"
-                    style={{ background: bg, color: fg }}
-                  >
-                    {l.short_name}
-                  </span>
-                  <span className="truncate text-[11px] text-muted-foreground">{l.long_name}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </details>
       </div>
     </div>
   );
