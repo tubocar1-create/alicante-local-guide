@@ -225,26 +225,13 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
   }, [pendingOriginId, destination, validStops]);
 
 
-  // Sugerir origen automáticamente cuando hay validGroups
+  // Sugerencia de origen (NO confirma): si la geo está lista, OriginStep
+  // mostrará la parada más cercana y preguntará al usuario; aquí solo
+  // rellenamos una pista cuando no hay geo (origen guardado o Luceros).
   useEffect(() => {
     if (!destination || origin || !validGroups) return;
-    // 1) Geolocalización lista → sugerir y CONFIRMAR la más cercana automáticamente
-    if (geo.status === "ready") {
-      const near = nearestFromList(geo.coords, validStops);
-      if (near) {
-        setOrigin(near);
-        setOriginConfirmed(true);
-        try { localStorage.setItem(ORIGIN_KEY, JSON.stringify(near)); } catch { /* noop */ }
-        return;
-      }
-    }
+    if (geo.status === "ready") return; // la sugerencia visual la pinta OriginStep
     const luceros = validStops.find((s) => /luceros/i.test(s.stop_name));
-    if (geo.status === "error" || geo.status === "idle") {
-      if (luceros) { setOrigin(luceros); return; }
-    }
-    if (geo.status !== "ready") {
-      if (luceros) { setOrigin(luceros); return; }
-    }
     try {
       const saved = JSON.parse(localStorage.getItem(ORIGIN_KEY) || "null") as Station | null;
       if (saved?.stop_id && validStops.some((s) => s.stop_id === saved.stop_id)) {
@@ -309,21 +296,12 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
       const near = nearestFromList(geo.coords, validStops);
       if (near) { confirmOrigin(near); return; }
     }
-    // Si el usuario tenía la geolocalización desactivada en su perfil,
-    // reactívala antes de pedir permiso al navegador.
     if (!isGeoEnabled()) setGeoEnabled(true);
     requestGeo();
   };
 
-  // Cuando llega la geo después de pedirla, si aún no hay confirmación → usar
-  useEffect(() => {
-    if (geo.status !== "ready" || originConfirmed || !destination || !validStops.length) return;
-    const near = nearestFromList(geo.coords, validStops);
-    if (near) {
-      confirmOrigin(near);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [geo, originConfirmed, destination, validStops]);
+  // Coords actuales (solo si geo lista) para que OriginStep calcule sugerencia.
+  const geoCoords = geo.status === "ready" ? geo.coords : null;
 
   return (
     <div className={`flex animate-fade-in flex-col rounded-3xl border border-border bg-card/95 shadow-sm backdrop-blur ${embedded ? "" : "mt-2 max-h-[78vh] overflow-hidden"}`}>
@@ -431,6 +409,7 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
             validStops={validStops}
             showPicker={showPicker}
             geoStatus={geo.status}
+            geoCoords={geoCoords}
             geoError={geo.status === "error" ? geo.message : null}
             onUseGeo={useGeolocationOrigin}
             onConfirm={confirmOrigin}
@@ -460,7 +439,7 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
 // ---------- Paso 2: confirmar origen ----------
 
 function OriginStep({
-  destination, loading, validGroups, validStops, showPicker, geoStatus, geoError,
+  destination, loading, validGroups, validStops, showPicker, geoStatus, geoCoords, geoError,
   onUseGeo, onConfirm, onOpenPicker, onClosePicker, onChangeDestination,
 }: {
   destination: Station;
@@ -469,6 +448,7 @@ function OriginStep({
   validStops: Station[];
   showPicker: boolean;
   geoStatus: string;
+  geoCoords: Coords | null;
   geoError: string | null;
   onUseGeo: () => void;
   onConfirm: (s: Station) => void;
@@ -476,6 +456,15 @@ function OriginStep({
   onClosePicker: () => void;
   onChangeDestination: () => void;
 }) {
+  // Sugerencia más cercana (si hay geo): parada + distancia en metros.
+  const nearestSuggestion = useMemo(() => {
+    if (!geoCoords || !validStops.length) return null;
+    const near = nearestFromList(geoCoords, validStops);
+    if (!near || near.stop_lat == null || near.stop_lon == null) return null;
+    const km = distanceKm(geoCoords, { lat: near.stop_lat, lng: near.stop_lon });
+    return { stop: near, meters: Math.round(km * 1000) };
+  }, [geoCoords, validStops]);
+
   // Atajos rápidos = POPULAR filtrados a paradas válidas para este destino,
   // excluyendo el propio destino.
   const quickOrigins = useMemo(() => {
@@ -523,6 +512,36 @@ function OriginStep({
           </div>
         ) : (
           <>
+            {/* Sugerencia automática por geolocalización */}
+            {nearestSuggestion && (
+              <div className="mt-3 rounded-2xl border-2 border-primary/40 bg-gradient-to-br from-primary/10 to-accent/10 p-3 shadow-sm animate-fade-in">
+                <p className="text-xs leading-snug">
+                  Tu parada más cercana es{" "}
+                  <span className="font-semibold">{nearestSuggestion.stop.stop_name}</span>, a{" "}
+                  <span className="font-semibold">{nearestSuggestion.meters} m</span>.
+                </p>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  ¿Quieres ir desde allí o prefieres seleccionar otra parada?
+                </p>
+                <div className="mt-2.5 flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => onConfirm(nearestSuggestion.stop)}
+                    className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground shadow-sm hover:opacity-90 active:scale-95"
+                  >
+                    <Check className="h-3.5 w-3.5" /> Salir desde aquí
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onOpenPicker}
+                    className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border bg-background px-3 py-2 text-xs font-medium hover:bg-accent/40 active:scale-95"
+                  >
+                    <Navigation className="h-3.5 w-3.5 text-primary" /> Elegir otra parada
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Atajos rápidos de origen */}
             {quickOrigins.length > 0 && (
               <div className="mt-3 grid grid-cols-3 gap-1.5">
