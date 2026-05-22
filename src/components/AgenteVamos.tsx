@@ -876,6 +876,9 @@ function findOtherDomainHint(q: string): { id: string; label: string } | null {
   }
   return null;
 }
+function explicitlySwitchesAwayFromTram(q: string): boolean {
+  return /\b(comer|comida|restaurante|restaurantes|cenar|almorzar|desayunar|hotel|hoteles|alojamiento|alojarme|dormir|playa|playas|cala|calas|turismo|visitar|cine|teatro|farmacia|comprar|tienda|fiesta|concierto|copa|cerveza)\b/.test(q);
+}
 function detectAmbiguity(query: string): LocalResult | null {
   if (EXPLICIT_TRANSPORT_MODE_RE.test(query)) return null;
   if (!hasTransportVerb(query)) return null;
