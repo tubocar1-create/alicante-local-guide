@@ -5,7 +5,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 const ADMIN_PIN = "7910511";
 
 const TEST_PATTERNS = [
-  /test/i,
+  /@test\.com$/i,
   /@example\.(com|org|net)$/i,
   /\+test@/i,
   /lovable\.dev$/i,
@@ -26,69 +26,34 @@ export const listAdminUsers = createServerFn({ method: "POST" })
       throw new Response("Forbidden", { status: 403 });
     }
 
-    const all: Array<{
-      id: string;
-      email: string | null;
-      created_at: string;
-      last_sign_in_at: string | null;
-      provider: string | null;
-      confirmed: boolean;
-    }> = [];
+    const { data: rows, error } = await supabaseAdmin
+      .from("test_users")
+      .select("id,name,email,created_at")
+      .order("created_at", { ascending: false })
+      .limit(1000);
 
-    // Paginate through all users
-    let page = 1;
-    const perPage = 200;
-    for (;;) {
-      const { data: res, error } = await supabaseAdmin.auth.admin.listUsers({
-        page,
-        perPage,
-      });
-      if (error) {
-        console.error("[admin-users] listUsers error:", error.message);
-        break;
-      }
-      const users = res?.users ?? [];
-      for (const u of users) {
-        all.push({
-          id: u.id,
-          email: u.email ?? null,
-          created_at: u.created_at,
-          last_sign_in_at: u.last_sign_in_at ?? null,
-          provider:
-            (u.app_metadata as { provider?: string } | null)?.provider ?? null,
-          confirmed: !!u.email_confirmed_at || !!u.phone_confirmed_at,
-        });
-      }
-      if (users.length < perPage) break;
-      page += 1;
-      if (page > 50) break; // safety
+    if (error) {
+      console.error("[admin-users] test_users error:", error.message);
+      throw new Response("DB error", { status: 500 });
     }
 
+    const all = (rows ?? []).map((u) => ({
+      id: String(u.id),
+      name: (u.name as string | null) ?? null,
+      email: (u.email as string | null) ?? null,
+      created_at: u.created_at as string,
+      last_sign_in_at: null as string | null,
+      provider: null as string | null,
+      confirmed: true,
+    }));
+
     const real = all.filter((u) => !isTestUser(u.email));
-    const now = Date.now();
-    const DAY = 24 * 60 * 60 * 1000;
-    const activeLast7 = real.filter(
-      (u) =>
-        u.last_sign_in_at &&
-        now - new Date(u.last_sign_in_at).getTime() < 7 * DAY,
-    );
-    const activeLast30 = real.filter(
-      (u) =>
-        u.last_sign_in_at &&
-        now - new Date(u.last_sign_in_at).getTime() < 30 * DAY,
-    );
 
     return {
       total: real.length,
       total_with_test: all.length,
-      active_7d: activeLast7.length,
-      active_30d: activeLast30.length,
-      users: real
-        .sort((a, b) => {
-          const ta = new Date(a.created_at).getTime();
-          const tb = new Date(b.created_at).getTime();
-          return tb - ta;
-        })
-        .slice(0, 500),
+      active_7d: 0,
+      active_30d: 0,
+      users: real,
     };
   });

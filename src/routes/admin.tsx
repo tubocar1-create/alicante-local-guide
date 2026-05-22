@@ -319,9 +319,10 @@ function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.users.map((u) => (
+                    {data.users.map((u: any) => (
                       <tr key={u.id} className="border-t">
                         <td className="px-3 py-2 truncate max-w-[240px]">
+                          {u.name ? `${u.name} · ` : ""}
                           {u.email ?? "—"}
                         </td>
                         <td className="px-3 py-2 text-muted-foreground">
