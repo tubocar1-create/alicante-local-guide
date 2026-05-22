@@ -2781,13 +2781,13 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                 }
               });
             } catch {}
-          }, 350);
+          }, 50);
           // No tocamos loading aquí — lo limpia speakExternalSummary o el timeout.
           return;
         } else if (target && target !== path) {
           setTimeout(() => {
             goTo(target);
-          }, 350);
+          }, 50);
         }
         // La voz ya se ha lanzado arriba con speak(reply). Aquí sólo
         // gestionamos navegación tardía si procede.
