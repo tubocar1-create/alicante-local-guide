@@ -73,7 +73,12 @@ import { Route as ApiPublicBusEtaRouteImport } from './routes/api/public/bus-eta
 import { Route as ApiPublicBookingCreateRouteImport } from './routes/api/public/booking-create'
 import { Route as ApiPublicAenaFlightsRouteImport } from './routes/api/public/aena-flights'
 import { Route as OcioCinesIdCarteleraRouteImport } from './routes/ocio_.cines_.$id.cartelera'
+import { Route as ApiPublicTramStationsRouteImport } from './routes/api/public/tram/stations'
+import { Route as ApiPublicTramLinesRouteImport } from './routes/api/public/tram/lines'
+import { Route as ApiPublicTramLineStopsRouteImport } from './routes/api/public/tram/line-stops'
+import { Route as ApiPublicTramDeparturesRouteImport } from './routes/api/public/tram/departures'
 import { Route as ApiPublicShopPhotoSplatRouteImport } from './routes/api/public/shop-photo.$'
+import { Route as ApiPublicHooksTramSyncRouteImport } from './routes/api/public/hooks/tram-sync'
 import { Route as ApiPublicHooksSyncHotelsStaticRouteImport } from './routes/api/public/hooks/sync-hotels-static'
 import { Route as ApiPublicHooksRefreshHotelsDynamicRouteImport } from './routes/api/public/hooks/refresh-hotels-dynamic'
 import { Route as ApiPublicHooksCinemasSyncRouteImport } from './routes/api/public/hooks/cinemas-sync'
@@ -401,9 +406,34 @@ const OcioCinesIdCarteleraRoute = OcioCinesIdCarteleraRouteImport.update({
   path: '/ocio/cines/$id/cartelera',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTramStationsRoute = ApiPublicTramStationsRouteImport.update({
+  id: '/api/public/tram/stations',
+  path: '/api/public/tram/stations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicTramLinesRoute = ApiPublicTramLinesRouteImport.update({
+  id: '/api/public/tram/lines',
+  path: '/api/public/tram/lines',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicTramLineStopsRoute = ApiPublicTramLineStopsRouteImport.update({
+  id: '/api/public/tram/line-stops',
+  path: '/api/public/tram/line-stops',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicTramDeparturesRoute = ApiPublicTramDeparturesRouteImport.update({
+  id: '/api/public/tram/departures',
+  path: '/api/public/tram/departures',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicShopPhotoSplatRoute = ApiPublicShopPhotoSplatRouteImport.update({
   id: '/api/public/shop-photo/$',
   path: '/api/public/shop-photo/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHooksTramSyncRoute = ApiPublicHooksTramSyncRouteImport.update({
+  id: '/api/public/hooks/tram-sync',
+  path: '/api/public/hooks/tram-sync',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicHooksSyncHotelsStaticRoute =
@@ -498,7 +528,12 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
   '/api/public/hooks/refresh-hotels-dynamic': typeof ApiPublicHooksRefreshHotelsDynamicRoute
   '/api/public/hooks/sync-hotels-static': typeof ApiPublicHooksSyncHotelsStaticRoute
+  '/api/public/hooks/tram-sync': typeof ApiPublicHooksTramSyncRoute
   '/api/public/shop-photo/$': typeof ApiPublicShopPhotoSplatRoute
+  '/api/public/tram/departures': typeof ApiPublicTramDeparturesRoute
+  '/api/public/tram/line-stops': typeof ApiPublicTramLineStopsRoute
+  '/api/public/tram/lines': typeof ApiPublicTramLinesRoute
+  '/api/public/tram/stations': typeof ApiPublicTramStationsRoute
   '/ocio/cines/$id/cartelera': typeof OcioCinesIdCarteleraRoute
 }
 export interface FileRoutesByTo {
@@ -568,7 +603,12 @@ export interface FileRoutesByTo {
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
   '/api/public/hooks/refresh-hotels-dynamic': typeof ApiPublicHooksRefreshHotelsDynamicRoute
   '/api/public/hooks/sync-hotels-static': typeof ApiPublicHooksSyncHotelsStaticRoute
+  '/api/public/hooks/tram-sync': typeof ApiPublicHooksTramSyncRoute
   '/api/public/shop-photo/$': typeof ApiPublicShopPhotoSplatRoute
+  '/api/public/tram/departures': typeof ApiPublicTramDeparturesRoute
+  '/api/public/tram/line-stops': typeof ApiPublicTramLineStopsRoute
+  '/api/public/tram/lines': typeof ApiPublicTramLinesRoute
+  '/api/public/tram/stations': typeof ApiPublicTramStationsRoute
   '/ocio/cines/$id/cartelera': typeof OcioCinesIdCarteleraRoute
 }
 export interface FileRoutesById {
@@ -640,7 +680,12 @@ export interface FileRoutesById {
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
   '/api/public/hooks/refresh-hotels-dynamic': typeof ApiPublicHooksRefreshHotelsDynamicRoute
   '/api/public/hooks/sync-hotels-static': typeof ApiPublicHooksSyncHotelsStaticRoute
+  '/api/public/hooks/tram-sync': typeof ApiPublicHooksTramSyncRoute
   '/api/public/shop-photo/$': typeof ApiPublicShopPhotoSplatRoute
+  '/api/public/tram/departures': typeof ApiPublicTramDeparturesRoute
+  '/api/public/tram/line-stops': typeof ApiPublicTramLineStopsRoute
+  '/api/public/tram/lines': typeof ApiPublicTramLinesRoute
+  '/api/public/tram/stations': typeof ApiPublicTramStationsRoute
   '/ocio_/cines_/$id/cartelera': typeof OcioCinesIdCarteleraRoute
 }
 export interface FileRouteTypes {
@@ -713,7 +758,12 @@ export interface FileRouteTypes {
     | '/api/public/hooks/cinemas-sync'
     | '/api/public/hooks/refresh-hotels-dynamic'
     | '/api/public/hooks/sync-hotels-static'
+    | '/api/public/hooks/tram-sync'
     | '/api/public/shop-photo/$'
+    | '/api/public/tram/departures'
+    | '/api/public/tram/line-stops'
+    | '/api/public/tram/lines'
+    | '/api/public/tram/stations'
     | '/ocio/cines/$id/cartelera'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -783,7 +833,12 @@ export interface FileRouteTypes {
     | '/api/public/hooks/cinemas-sync'
     | '/api/public/hooks/refresh-hotels-dynamic'
     | '/api/public/hooks/sync-hotels-static'
+    | '/api/public/hooks/tram-sync'
     | '/api/public/shop-photo/$'
+    | '/api/public/tram/departures'
+    | '/api/public/tram/line-stops'
+    | '/api/public/tram/lines'
+    | '/api/public/tram/stations'
     | '/ocio/cines/$id/cartelera'
   id:
     | '__root__'
@@ -854,7 +909,12 @@ export interface FileRouteTypes {
     | '/api/public/hooks/cinemas-sync'
     | '/api/public/hooks/refresh-hotels-dynamic'
     | '/api/public/hooks/sync-hotels-static'
+    | '/api/public/hooks/tram-sync'
     | '/api/public/shop-photo/$'
+    | '/api/public/tram/departures'
+    | '/api/public/tram/line-stops'
+    | '/api/public/tram/lines'
+    | '/api/public/tram/stations'
     | '/ocio_/cines_/$id/cartelera'
   fileRoutesById: FileRoutesById
 }
@@ -909,7 +969,12 @@ export interface RootRouteChildren {
   ApiPublicHooksCinemasSyncRoute: typeof ApiPublicHooksCinemasSyncRoute
   ApiPublicHooksRefreshHotelsDynamicRoute: typeof ApiPublicHooksRefreshHotelsDynamicRoute
   ApiPublicHooksSyncHotelsStaticRoute: typeof ApiPublicHooksSyncHotelsStaticRoute
+  ApiPublicHooksTramSyncRoute: typeof ApiPublicHooksTramSyncRoute
   ApiPublicShopPhotoSplatRoute: typeof ApiPublicShopPhotoSplatRoute
+  ApiPublicTramDeparturesRoute: typeof ApiPublicTramDeparturesRoute
+  ApiPublicTramLineStopsRoute: typeof ApiPublicTramLineStopsRoute
+  ApiPublicTramLinesRoute: typeof ApiPublicTramLinesRoute
+  ApiPublicTramStationsRoute: typeof ApiPublicTramStationsRoute
   OcioCinesIdCarteleraRoute: typeof OcioCinesIdCarteleraRoute
 }
 
@@ -1363,11 +1428,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OcioCinesIdCarteleraRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/tram/stations': {
+      id: '/api/public/tram/stations'
+      path: '/api/public/tram/stations'
+      fullPath: '/api/public/tram/stations'
+      preLoaderRoute: typeof ApiPublicTramStationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/tram/lines': {
+      id: '/api/public/tram/lines'
+      path: '/api/public/tram/lines'
+      fullPath: '/api/public/tram/lines'
+      preLoaderRoute: typeof ApiPublicTramLinesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/tram/line-stops': {
+      id: '/api/public/tram/line-stops'
+      path: '/api/public/tram/line-stops'
+      fullPath: '/api/public/tram/line-stops'
+      preLoaderRoute: typeof ApiPublicTramLineStopsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/tram/departures': {
+      id: '/api/public/tram/departures'
+      path: '/api/public/tram/departures'
+      fullPath: '/api/public/tram/departures'
+      preLoaderRoute: typeof ApiPublicTramDeparturesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/shop-photo/$': {
       id: '/api/public/shop-photo/$'
       path: '/api/public/shop-photo/$'
       fullPath: '/api/public/shop-photo/$'
       preLoaderRoute: typeof ApiPublicShopPhotoSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/tram-sync': {
+      id: '/api/public/hooks/tram-sync'
+      path: '/api/public/hooks/tram-sync'
+      fullPath: '/api/public/hooks/tram-sync'
+      preLoaderRoute: typeof ApiPublicHooksTramSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/sync-hotels-static': {
@@ -1553,19 +1653,14 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksRefreshHotelsDynamicRoute:
     ApiPublicHooksRefreshHotelsDynamicRoute,
   ApiPublicHooksSyncHotelsStaticRoute: ApiPublicHooksSyncHotelsStaticRoute,
+  ApiPublicHooksTramSyncRoute: ApiPublicHooksTramSyncRoute,
   ApiPublicShopPhotoSplatRoute: ApiPublicShopPhotoSplatRoute,
+  ApiPublicTramDeparturesRoute: ApiPublicTramDeparturesRoute,
+  ApiPublicTramLineStopsRoute: ApiPublicTramLineStopsRoute,
+  ApiPublicTramLinesRoute: ApiPublicTramLinesRoute,
+  ApiPublicTramStationsRoute: ApiPublicTramStationsRoute,
   OcioCinesIdCarteleraRoute: OcioCinesIdCarteleraRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
