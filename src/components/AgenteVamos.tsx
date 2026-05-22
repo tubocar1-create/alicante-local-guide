@@ -1008,10 +1008,15 @@ function pickAssistantMode(domain: string | null): AssistantMode {
     case "salud_general": return "empatico";
     case "playas": return "inspiracional";
     case "fiestas":
+    case "tomar_algo":
     case "ocio": return "social";
     case "comer":
     case "dormir":
-    case "compras": return "practico";
+    case "compras":
+    case "clima":
+    case "mapa":
+    case "perfil": return "practico";
+
     default: return "neutro";
   }
 }
