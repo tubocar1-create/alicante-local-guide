@@ -72,6 +72,7 @@ const POPULAR: Array<{ emoji: string; label: string; stop_id: string; stop_name:
   { emoji: "🍹", label: "El Campello", stop_id: "17", stop_name: "El Campello" },
   { emoji: "🏖", label: "Villajoyosa", stop_id: "27", stop_name: "La Vila Joiosa" },
   { emoji: "🎡", label: "Benidorm", stop_id: "33", stop_name: "Benidorm" },
+  { emoji: "⚓", label: "Puerta del Mar", stop_id: "101", stop_name: "Porta del Mar" },
 ];
 
 function nearestFromList(coords: Coords, stations: Station[]): Station | null {
