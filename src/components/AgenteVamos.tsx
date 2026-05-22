@@ -169,7 +169,7 @@ const INTENTS: IntentDef[] = [
   },
   {
     keys: ["cine", "cines", "pelicula", "peliculas", "cartelera", "estreno", "estrenos"],
-    reply: "Cartelera de cine.",
+    reply: "Te abro la cartelera de cines. Si ya sabes la película que quieres ver, podemos buscar la sala y la hora. Si aún no has decidido cuál película ver, aquí tienes la cartelera: la puedes revisar y, posteriormente, me avisas y buscamos la sala de cine y la hora.",
     path: "/ocio/cartelera",
     audio: "cinema",
   },
