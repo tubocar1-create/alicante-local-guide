@@ -294,7 +294,7 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
                   <button
                     key={p.label}
                     type="button"
-                    onClick={() => pickDestinationByQuery(p.q)}
+                    onClick={() => setDestination({ stop_id: p.stop_id, stop_name: p.stop_name })}
                     className="flex flex-none items-center gap-1.5 rounded-full border border-border bg-background/80 px-3 py-2 text-xs font-medium shadow-sm transition hover:border-primary/40 hover:bg-accent/30 active:scale-95"
                   >
                     <span aria-hidden>{p.emoji}</span> {p.label}
