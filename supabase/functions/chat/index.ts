@@ -2729,7 +2729,13 @@ serve(async (req) => {
           .join(" \n ")
       : latestUserText;
     let originTextForTransit: string | null = null;
-    const destTextForTransit = guideMode ? null : extractTransitDestination(transitText);
+    let destTextForTransit = guideMode ? null : extractTransitDestination(transitText);
+    if (!destTextForTransit && transitMode) {
+      const standalone = latestUserText.replace(/[¿?¡!.,;:]+/g, " ").replace(/\s+/g, " ").trim();
+      const isShortPlaceAnswer = standalone.length >= 3 && standalone.length <= 80 && standalone.split(" ").length <= 5;
+      const explicitOtherDomain = /\b(comer|comida|restaurante|cenar|almorzar|desayun|hotel|alojam|dormir|playa|cala|turismo|visitar|cine|teatro|farmacia|hospital|comprar|tienda|fiesta|concierto)\b/i.test(standalone);
+      if (isShortPlaceAnswer && !explicitOtherDomain) destTextForTransit = standalone;
+    }
     if (!guideMode && (transitMode || detectTransitIntent(transitText))) {
       originTextForTransit = extractTransitOrigin(transitText);
       if (originTextForTransit) {
