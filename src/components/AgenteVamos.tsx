@@ -577,8 +577,8 @@ const DOMAINS: DomainSpec[] = [
     ],
     question: "🌤️ Te llevo al clima de Alicante.",
     audio: "fallback",
-    hubPath: "/clima",
     followups: [],
+
   },
   {
     id: "perfil",
