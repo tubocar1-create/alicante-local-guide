@@ -8,6 +8,15 @@ export const Route = createFileRoute("/api/public/tram/stations")({
         const url = new URL(request.url);
         const q = url.searchParams.get("q")?.trim();
         const lineId = url.searchParams.get("line_id")?.trim();
+        const stopId = url.searchParams.get("stop_id")?.trim();
+
+        // Lookup directo por id (útil para páginas de parada).
+        if (stopId) {
+          const { data, error } = await supabaseAdmin
+            .from("tram_stops").select("*").eq("stop_id", stopId).maybeSingle();
+          if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+          return Response.json({ stations: data ? [data] : [] });
+        }
 
         // Si filtra por línea, devolvemos estaciones únicas usadas por esa línea.
         if (lineId) {
