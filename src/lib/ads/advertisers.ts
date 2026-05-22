@@ -436,19 +436,38 @@ const ADVERTISERS_RAW: Advertiser[] = [
     brief:
       "Titulares en directo de alicantepress.com. Selección de noticias urbanas, culturales, deportivas y económicas; filtramos política partidista y sucesos.",
   },
+  {
+    id: "incidencias-alicante",
+    name: "Incidencias hoy",
+    tagline: "Avisos del Ayuntamiento para hoy",
+    category: "Movilidad",
+    kind: "incidencias",
+    ctaLabel: "Ver incidencias",
+    ctaUrl: "https://movilidad.alicante.es/incidencias",
+    theme: {
+      bg: "bg-gradient-to-r from-amber-200 via-orange-300 to-red-300",
+      fg: "text-slate-900",
+      accent: "bg-white text-red-700",
+      emoji: "⚠️",
+    },
+    brief:
+      "Incidencias activas hoy publicadas por movilidad.alicante.es (cortes, obras, eventos que afectan la circulación). Tono claro y útil, sin alarmismo.",
+  },
 ];
 
 // Rotación del carrusel. El orden definitivo se baraja en AdBanner; aquí solo
 // declaramos qué anunciantes participan y cuántas posiciones ocupa cada uno.
-// Teatro Principal aparece DOS veces para tener mayor presencia (variante
-// aleatoria distinta en cada slot).
+// "incidencias-alicante" aparece x3 (triple frecuencia) cuando hay aviso activo.
 const DISPLAY_ORDER: string[] = [
+  "incidencias-alicante",
   "clima-alicante",
+  "incidencias-alicante",
   "teatro-principal",
   "teatro-principal",
   "mar-alicante",
   "muelle-live",
   "parkings-alicante",
+  "incidencias-alicante",
   "plaza-toros",
   "trafico-alicante",
   "adda-alicante",
