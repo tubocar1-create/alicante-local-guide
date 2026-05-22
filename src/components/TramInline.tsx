@@ -57,13 +57,21 @@ function minutesUntil(timeStr?: string | null): number | null {
   return diff < 0 ? null : diff;
 }
 
-const POPULAR = [
-  { emoji: "🌊", label: "Playa San Juan", q: "playa san juan" },
-  { emoji: "🎡", label: "Benidorm", q: "benidorm" },
-  { emoji: "🎓", label: "Universidad", q: "universidad" },
-  { emoji: "🏖️", label: "El Campello", q: "campello" },
-  { emoji: "🏛️", label: "MARQ", q: "marq" },
-  { emoji: "🏰", label: "Luceros", q: "luceros" },
+// Atajos a destinos clave: stop_id fijo para evitar ambigüedades
+// (p.ej. "Benidorm" = ciudad, no "Av. Benidorm" en Playa San Juan).
+const POPULAR: Array<{ emoji: string; label: string; stop_id: string; stop_name: string }> = [
+  { emoji: "🏙", label: "San Vicente del Raspeig", stop_id: "124", stop_name: "Sant Vicent del Raspeig" },
+  { emoji: "🎓", label: "Universidad", stop_id: "123", stop_name: "Universitat" },
+  { emoji: "🏥", label: "Hospital", stop_id: "117", stop_name: "Hospital" },
+  { emoji: "🏰", label: "Plaza Luceros", stop_id: "2", stop_name: "Alicante - Luceros" },
+  { emoji: "🛍", label: "Mercado", stop_id: "3", stop_name: "Mercado" },
+  { emoji: "🏛", label: "MARQ", stop_id: "4", stop_name: "MARQ - CASTILLO" },
+  { emoji: "🏖", label: "Albufereta", stop_id: "7", stop_name: "Albufereta" },
+  { emoji: "🌊", label: "Playa San Juan", stop_id: "108", stop_name: "Av. Benidorm / Platja de San Joan" },
+  { emoji: "🌊", label: "Muchavista", stop_id: "12", stop_name: "Muchavista" },
+  { emoji: "🍹", label: "El Campello", stop_id: "17", stop_name: "El Campello" },
+  { emoji: "🏖", label: "Villajoyosa", stop_id: "27", stop_name: "La Vila Joiosa" },
+  { emoji: "🎡", label: "Benidorm", stop_id: "33", stop_name: "Benidorm" },
 ];
 
 function nearestFromList(coords: Coords, stations: Station[]): Station | null {
