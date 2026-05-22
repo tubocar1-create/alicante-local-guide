@@ -250,7 +250,13 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
       <div className="flex flex-none items-center gap-2 border-b border-border/60 bg-gradient-to-r from-primary/15 via-accent/10 to-transparent px-4 py-3">
         <span className="text-lg" aria-hidden>🚋</span>
         <h3 className="text-sm font-semibold tracking-tight">TRAM Alicante</h3>
-        <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground">FGV</span>
+        <Link
+          to="/tram/mapa"
+          className="ml-auto inline-flex items-center gap-1 rounded-full border border-border bg-background/80 px-2.5 py-1 text-[10px] font-semibold shadow-sm transition hover:border-primary/40 hover:bg-accent/30 active:scale-95"
+        >
+          <MapIcon className="h-3 w-3 text-primary" /> Mapa de líneas
+        </Link>
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">FGV</span>
       </div>
 
       <div className={`space-y-4 p-4 ${embedded ? "pb-24" : "flex-1 overflow-y-auto overscroll-contain"}`}>

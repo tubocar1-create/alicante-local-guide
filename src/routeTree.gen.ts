@@ -35,6 +35,7 @@ import { Route as BusRouteImport } from './routes/bus'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BusinessIndexRouteImport } from './routes/business.index'
 import { Route as VuelosIataRouteImport } from './routes/vuelos_.$iata'
+import { Route as TramMapaRouteImport } from './routes/tram.mapa'
 import { Route as TramFavoritosRouteImport } from './routes/tram.favoritos'
 import { Route as TramEstacionesRouteImport } from './routes/tram.estaciones'
 import { Route as ThreadsIdRouteImport } from './routes/threads.$id'
@@ -221,6 +222,11 @@ const VuelosIataRoute = VuelosIataRouteImport.update({
   id: '/vuelos_/$iata',
   path: '/vuelos/$iata',
   getParentRoute: () => rootRouteImport,
+} as any)
+const TramMapaRoute = TramMapaRouteImport.update({
+  id: '/mapa',
+  path: '/mapa',
+  getParentRoute: () => TramRoute,
 } as any)
 const TramFavoritosRoute = TramFavoritosRouteImport.update({
   id: '/favoritos',
@@ -560,6 +566,7 @@ export interface FileRoutesByFullPath {
   '/threads/$id': typeof ThreadsIdRoute
   '/tram/estaciones': typeof TramEstacionesRoute
   '/tram/favoritos': typeof TramFavoritosRoute
+  '/tram/mapa': typeof TramMapaRoute
   '/vuelos/$iata': typeof VuelosIataRoute
   '/business/': typeof BusinessIndexRoute
   '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
@@ -643,6 +650,7 @@ export interface FileRoutesByTo {
   '/threads/$id': typeof ThreadsIdRoute
   '/tram/estaciones': typeof TramEstacionesRoute
   '/tram/favoritos': typeof TramFavoritosRoute
+  '/tram/mapa': typeof TramMapaRoute
   '/vuelos/$iata': typeof VuelosIataRoute
   '/business': typeof BusinessIndexRoute
   '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
@@ -728,6 +736,7 @@ export interface FileRoutesById {
   '/threads/$id': typeof ThreadsIdRoute
   '/tram/estaciones': typeof TramEstacionesRoute
   '/tram/favoritos': typeof TramFavoritosRoute
+  '/tram/mapa': typeof TramMapaRoute
   '/vuelos_/$iata': typeof VuelosIataRoute
   '/business/': typeof BusinessIndexRoute
   '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
@@ -814,6 +823,7 @@ export interface FileRouteTypes {
     | '/threads/$id'
     | '/tram/estaciones'
     | '/tram/favoritos'
+    | '/tram/mapa'
     | '/vuelos/$iata'
     | '/business/'
     | '/api/public/aena-flights'
@@ -897,6 +907,7 @@ export interface FileRouteTypes {
     | '/threads/$id'
     | '/tram/estaciones'
     | '/tram/favoritos'
+    | '/tram/mapa'
     | '/vuelos/$iata'
     | '/business'
     | '/api/public/aena-flights'
@@ -981,6 +992,7 @@ export interface FileRouteTypes {
     | '/threads/$id'
     | '/tram/estaciones'
     | '/tram/favoritos'
+    | '/tram/mapa'
     | '/vuelos_/$iata'
     | '/business/'
     | '/api/public/aena-flights'
@@ -1263,6 +1275,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/vuelos/$iata'
       preLoaderRoute: typeof VuelosIataRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/tram/mapa': {
+      id: '/tram/mapa'
+      path: '/mapa'
+      fullPath: '/tram/mapa'
+      preLoaderRoute: typeof TramMapaRouteImport
+      parentRoute: typeof TramRoute
     }
     '/tram/favoritos': {
       id: '/tram/favoritos'
@@ -1738,6 +1757,7 @@ const ThreadsRouteWithChildren =
 interface TramRouteChildren {
   TramEstacionesRoute: typeof TramEstacionesRoute
   TramFavoritosRoute: typeof TramFavoritosRoute
+  TramMapaRoute: typeof TramMapaRoute
   TramLineaLineIdRoute: typeof TramLineaLineIdRoute
   TramParadaStopIdRoute: typeof TramParadaStopIdRoute
 }
@@ -1745,6 +1765,7 @@ interface TramRouteChildren {
 const TramRouteChildren: TramRouteChildren = {
   TramEstacionesRoute: TramEstacionesRoute,
   TramFavoritosRoute: TramFavoritosRoute,
+  TramMapaRoute: TramMapaRoute,
   TramLineaLineIdRoute: TramLineaLineIdRoute,
   TramParadaStopIdRoute: TramParadaStopIdRoute,
 }
