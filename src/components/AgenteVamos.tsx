@@ -1164,15 +1164,58 @@ function localResolve(
         const params = new URLSearchParams();
         params.set("tram_dest", tramHit2.destId);
         if (tramHit2.originId) params.set("tram_origin", tramHit2.originId);
-        const reply = tramHit2.originId
-          ? `¡Voy! TRAM de ${tramHit2.originName} a ${tramHit2.destName}.`
-          : `¡Voy! TRAM con destino ${tramHit2.destName}. Dime también desde dónde sales si quieres ver horarios.`;
+        if (tramHit2.originId) {
+          return {
+            reply: `¡Voy! TRAM de ${tramHit2.originName} a ${tramHit2.destName}.`,
+            path: `/tram?${params.toString()}`,
+            audio: "bus",
+            pendingDomain: null,
+          };
+        }
+        // Solo destino → guardamos para enriquecer con la parada más cercana
+        // y pedimos confirmación en el siguiente turno.
+        if (typeof window !== "undefined") {
+          try {
+            window.sessionStorage.setItem("tram:pending-dest-id", tramHit2.destId);
+            window.sessionStorage.setItem("tram:pending-dest-name", tramHit2.destName);
+            window.sessionStorage.removeItem("tram:suggested-origin-id");
+            window.sessionStorage.removeItem("tram:suggested-origin-name");
+          } catch { /* noop */ }
+        }
         return {
-          reply,
+          reply: `🎯 Destino: ${tramHit2.destName}. Calculando la parada más cercana…`,
           path: `/tram?${params.toString()}`,
           audio: "bus",
-          pendingDomain: tramHit2.originId ? null : "tram_pick",
+          pendingDomain: "tram_origin_confirm",
         };
+      }
+    }
+    // 1.quater) En tram_origin_confirm aceptamos también una parada nombrada
+    // como nuevo origen (sin necesidad de decir "tram").
+    if (currentDomain === "tram_origin_confirm") {
+      const tramHit3 = matchTramQuery(`tram ${query}`);
+      if (tramHit3 && tramHit3.destId && typeof window !== "undefined") {
+        // El usuario puede decir solo el nombre de una parada → tratarla como origen
+        // hacia el destino pendiente.
+        const pendingDestId = window.sessionStorage.getItem("tram:pending-dest-id");
+        const pendingDestName = window.sessionStorage.getItem("tram:pending-dest-name");
+        if (pendingDestId && pendingDestName) {
+          const params = new URLSearchParams();
+          params.set("tram_dest", pendingDestId);
+          params.set("tram_origin", tramHit3.destId);
+          try {
+            window.sessionStorage.removeItem("tram:pending-dest-id");
+            window.sessionStorage.removeItem("tram:pending-dest-name");
+            window.sessionStorage.removeItem("tram:suggested-origin-id");
+            window.sessionStorage.removeItem("tram:suggested-origin-name");
+          } catch { /* noop */ }
+          return {
+            reply: `¡Voy! TRAM de ${tramHit3.destName} a ${pendingDestName}.`,
+            path: `/tram?${params.toString()}`,
+            audio: "bus",
+            pendingDomain: null,
+          };
+        }
       }
     }
     const d = DOMAINS.find((x) => x.id === currentDomain);
