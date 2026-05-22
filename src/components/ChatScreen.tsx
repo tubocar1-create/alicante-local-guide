@@ -1125,56 +1125,31 @@ export function ChatScreen() {
       {isWelcome && (
         <>
           <nav className="relative flex items-center justify-around border-t border-border/60 bg-[oklch(0.985_0.018_88)]/95 px-2 pt-2 pb-[max(0.25rem,env(safe-area-inset-bottom))] backdrop-blur">
-          <button
-            type="button"
-            onClick={() => {
-              setMessages([GREETING]);
-              setActiveSubmenu(null);
-              setError(null);
-              setInput("");
-            }}
-            className="flex flex-col items-center gap-0.5 px-3 py-1 text-primary"
-            aria-label="Inicio"
-          >
-            <Home className="h-5 w-5" />
-            <span className="text-[10px] font-bold">Inicio</span>
-          </button>
-          <Link
-            to="/threads"
-            className="flex flex-col items-center gap-0.5 px-3 py-1 text-muted-foreground active:scale-95"
-            aria-label="Favoritos"
-          >
-            <Heart className="h-5 w-5" />
-            <span className="text-[10px] font-semibold">Favoritos</span>
-          </Link>
-          <button
-            type="button"
-            onClick={() => setShowQrInfo(true)}
-            aria-label="QR VAMOS"
-            className="flex flex-col items-center gap-0.5 px-3 py-1 text-primary active:scale-95"
-          >
-            <QrCode className="h-5 w-5" />
-            <span className="text-[10px] font-semibold">QR</span>
-          </button>
-          <Link
-            to="/threads"
-            className="flex flex-col items-center gap-0.5 px-3 py-1 text-muted-foreground active:scale-95"
-            aria-label="Guardado"
-          >
-            <Bookmark className="h-5 w-5" />
-            <span className="text-[10px] font-semibold">Guardado</span>
-          </Link>
-          <Link
-            to="/perfil"
-            className="flex flex-col items-center gap-0.5 px-3 py-1 text-muted-foreground active:scale-95"
-            aria-label="Perfil"
-          >
-            <UserIcon className="h-5 w-5" />
-            <span className="text-[10px] font-semibold">Perfil</span>
-          </Link>
-        </nav>
-      </>)}
-      {showQrInfo && <QrVamosInfo onClose={() => setShowQrInfo(false)} />}
+            <button
+              type="button"
+              onClick={() => {
+                setMessages([GREETING]);
+                setActiveSubmenu(null);
+                setError(null);
+                setInput("");
+              }}
+              className="flex flex-col items-center gap-0.5 px-3 py-1 text-primary"
+              aria-label="Inicio"
+            >
+              <Home className="h-5 w-5" />
+              <span className="text-[10px] font-bold">Inicio</span>
+            </button>
+            <Link
+              to="/perfil"
+              className="flex flex-col items-center gap-0.5 px-3 py-1 text-primary active:scale-95"
+              aria-label="Perfil"
+            >
+              <UserIcon className="h-5 w-5" />
+              <span className="text-[10px] font-bold">Perfil</span>
+            </Link>
+          </nav>
+        </>)}
+        {showQrInfo && <QrVamosInfo onClose={() => setShowQrInfo(false)} />}
     </div>
   );
 }
