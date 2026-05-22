@@ -164,10 +164,19 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
   // Sugerir origen automáticamente cuando hay validGroups
   useEffect(() => {
     if (!destination || origin || !validGroups) return;
-    // 1) Geolocalización
+    // 1) Geolocalización (solo si está disponible)
     if (geo.status === "ready") {
       const near = nearestFromList(geo.coords, validStops);
       if (near) { setOrigin(near); return; }
+    }
+    // Si la geo falla / fue denegada / no existe → SIEMPRE Luceros como por defecto.
+    const luceros = validStops.find((s) => /luceros/i.test(s.stop_name));
+    if (geo.status === "denied" || geo.status === "error" || geo.status === "unsupported") {
+      if (luceros) { setOrigin(luceros); return; }
+    }
+    // Mientras la geo aún se resuelve: preferir Luceros antes que historial/primera.
+    if (geo.status !== "ready") {
+      if (luceros) { setOrigin(luceros); return; }
     }
     // 2) Origen guardado si está en la lista válida
     try {
@@ -177,7 +186,6 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
       }
     } catch { /* noop */ }
     // 3) Luceros si está
-    const luceros = validStops.find((s) => /luceros/i.test(s.stop_name));
     if (luceros) { setOrigin(luceros); return; }
     // 4) Primera válida
     if (validStops[0]) setOrigin(validStops[0]);
