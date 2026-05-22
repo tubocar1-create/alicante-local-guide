@@ -253,7 +253,7 @@ type DomainSpec = {
   question: string;
   audio: VoiceClip;
   hubPath?: string;
-  followups: { keys: string[]; path: string }[];
+  followups: { keys: string[]; path: string; label?: string }[];
 };
 
 const DOMAINS: DomainSpec[] = [
