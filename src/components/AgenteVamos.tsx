@@ -2357,10 +2357,48 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           } catch {}
         }
 
+        // Enriquecer respuesta TRAM con la parada más cercana cuando hay geo.
+        if (fallback.pendingDomain === "tram_origin_confirm" && typeof window !== "undefined") {
+          const destId = window.sessionStorage.getItem("tram:pending-dest-id");
+          const destName = window.sessionStorage.getItem("tram:pending-dest-name");
+          const coords = readCachedCoords();
+          if (destId && destName) {
+            if (coords) {
+              try {
+                const res = await fetch(`/api/public/tram/valid-origins?destination=${encodeURIComponent(destId)}`);
+                const data = await res.json();
+                const groups = (data?.groups ?? []) as Array<{ stops: Array<{ stop_id: string; stop_name: string }> }>;
+                const uniq = new Map<string, { stop_id: string; stop_name: string }>();
+                for (const g of groups) for (const s of g.stops) if (!uniq.has(s.stop_id)) uniq.set(s.stop_id, s);
+                let best: { stop_id: string; stop_name: string; d: number } | null = null;
+                for (const s of uniq.values()) {
+                  const meta = TRAM_STOPS_CACHE.find((t) => t.stop_id === s.stop_id);
+                  if (!meta || meta.lat == null || meta.lng == null) continue;
+                  const d = tramDistanceKm(coords, { lat: meta.lat, lng: meta.lng });
+                  if (!best || d < best.d) best = { stop_id: s.stop_id, stop_name: s.stop_name, d };
+                }
+                if (best) {
+                  window.sessionStorage.setItem("tram:suggested-origin-id", best.stop_id);
+                  window.sessionStorage.setItem("tram:suggested-origin-name", best.stop_name);
+                  reply = `📍 Estás cerca de **${best.stop_name}**. ¿Quieres salir desde esa parada o prefieres otra?`;
+                } else {
+                  reply = `Destino: ${destName}. ¿Desde qué parada del TRAM quieres salir?`;
+                }
+              } catch {
+                reply = `Destino: ${destName}. ¿Desde qué parada del TRAM quieres salir?`;
+              }
+            } else {
+              reply = `Destino: ${destName}. Activa la ubicación para sugerirte la parada más cercana, o dime desde qué parada sales.`;
+            }
+          }
+        }
+
         // Si el resolver local activa un DOMINIO (pregunta aclaratoria sin
         // path), saltamos el servidor para no pisar la pregunta con una
         // navegación agresiva. Actualizamos el dominio activo y respondemos.
-        const isClarifying = fallback.pendingDomain != null && !fallback.path;
+        const isClarifying =
+          (fallback.pendingDomain != null && !fallback.path) ||
+          fallback.pendingDomain === "tram_origin_confirm";
         if (isClarifying) {
           pendingDomainRef.current = fallback.pendingDomain ?? null;
         } else if (fallback.pendingDomain === null) {
