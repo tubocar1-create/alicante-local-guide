@@ -85,7 +85,7 @@ export const Route = createFileRoute("/api/public/tram/valid-origins")({
 
         const { data: stopsRaw } = await supabaseAdmin
           .from("tram_stops")
-          .select("stop_id, stop_name, stop_lat, stop_lon")
+          .select("stop_id, stop_name, lat, lng")
           .in("stop_id", Array.from(originStopIds));
         const stopMap = new Map(((stopsRaw ?? []) as any[]).map((s) => [s.stop_id, s]));
 
@@ -105,7 +105,7 @@ export const Route = createFileRoute("/api/public/tram/valid-origins")({
               .filter(Boolean)
               .map((s: any) => ({
                 stop_id: s.stop_id, stop_name: s.stop_name,
-                stop_lat: s.stop_lat, stop_lon: s.stop_lon,
+                stop_lat: s.lat, stop_lon: s.lng,
               })),
           };
         }).filter((g) => g.stops.length > 0);
