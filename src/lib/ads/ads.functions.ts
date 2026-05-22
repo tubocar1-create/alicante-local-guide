@@ -13,6 +13,7 @@ import {
   fetchAlibusAlicante,
   fetchAlicantePressHeadlines,
   fetchAlicantePressDirect,
+  fetchAlicanteIncidencias,
   type CulturalEvent,
 } from "./alicante-city.server";
 import {
@@ -480,6 +481,19 @@ export const getAdVariants = createServerFn({ method: "POST" })
         .map((h, i) => `${i + 1}. "${h.title}"`)
         .join("\n");
       alicantePressCtx = `\n\nTITULARES REALES de Alicante Press (alicantepress.com, scraping directo de portada):\n${lines}\n\nGenera UNA variante por titular en el MISMO orden que el listado. Usa SOLO la información del titular; no inventes detalles ni fechas. DESCARTA política partidista, sucesos, accidentes, fallecimientos o tragedias (si quedara alguno colado, omítelo).`;
+    }
+
+    let incidenciasCtx = "";
+    if (advertiser.kind === "incidencias") {
+      const items = await fetchAlicanteIncidencias();
+      if (!items || items.length === 0) {
+        return { ...baseResp, variants: [] };
+      }
+      const lines = items
+        .slice(0, Math.max(count, 6))
+        .map((i, idx) => `${idx + 1}. "${i.title}"${i.when ? ` (${i.when})` : ""}${i.description ? ` — ${i.description.slice(0, 160)}` : ""}`)
+        .join("\n");
+      incidenciasCtx = `\n\nINCIDENCIAS OFICIALES de movilidad.alicante.es vigentes HOY:\n${lines}\n\nGenera UNA variante por incidencia. Usa SOLO la información del listado, no inventes. Tono claro, útil, sin alarmismo.`;
     }
 
     const apiKey = process.env.LOVABLE_API_KEY;
