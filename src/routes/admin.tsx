@@ -18,7 +18,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { listAdminUsers } from "@/lib/admin-users.functions";
+import { listAdminUsers, migrateTestUsersToAuth } from "@/lib/admin-users.functions";
 
 const ADMIN_PIN = "7910511";
 const PIN_KEY = "admin_home_pin_ok";
@@ -260,6 +260,7 @@ function AdminDashboard() {
             <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isFetching}>
               {isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Refrescar"}
             </Button>
+            <MigrateButton onDone={() => refetch()} />
             <InstallAppButton />
             <Button variant="ghost" onClick={logout}>
               Salir
@@ -377,6 +378,35 @@ function StatCard({
         <div className="mt-1 text-2xl font-bold">{value.toLocaleString()}</div>
       </CardContent>
     </Card>
+  );
+}
+
+function MigrateButton({ onDone }: { onDone: () => void }) {
+  const run = useServerFn(migrateTestUsersToAuth);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const handle = async () => {
+    if (!confirm("Migrar test_users a usuarios autenticados?")) return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await run({ data: { pin: ADMIN_PIN } });
+      setMsg(`+${res.created_count} creados · ${res.skipped_count} ya existían · ${res.failed_count} fallidos`);
+      onDone();
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Error");
+    } finally {
+      setBusy(false);
+      setTimeout(() => setMsg(null), 8000);
+    }
+  };
+  return (
+    <div className="flex items-center gap-2">
+      {msg && <span className="text-[11px] text-muted-foreground">{msg}</span>}
+      <Button variant="outline" size="sm" onClick={handle} disabled={busy}>
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Migrar test→Auth"}
+      </Button>
+    </div>
   );
 }
 
