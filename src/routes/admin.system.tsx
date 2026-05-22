@@ -2,11 +2,16 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useServerFn } from "@tanstack/react-start";
 import { checkIsAdmin } from "@/lib/admin.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
+
+const ADMIN_PIN = "7910511";
+const PIN_STORAGE_KEY = "admin_system_pin_ok";
+
 
 export const Route = createFileRoute("/admin/system")({
   head: () => ({
