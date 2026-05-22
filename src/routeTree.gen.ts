@@ -59,6 +59,7 @@ import { Route as BusinessIssuedRouteImport } from './routes/business.issued'
 import { Route as BusinessInboxRouteImport } from './routes/business.inbox'
 import { Route as BusinessBookingsRouteImport } from './routes/business.bookings'
 import { Route as BusPlannerRouteImport } from './routes/bus.planner'
+import { Route as AdminSystemRouteImport } from './routes/admin.system'
 import { Route as AdminSaludRouteImport } from './routes/admin.salud'
 import { Route as AdminPlacesRouteImport } from './routes/admin.places'
 import { Route as TramParadaStopIdRouteImport } from './routes/tram.parada.$stopId'
@@ -344,6 +345,11 @@ const BusPlannerRoute = BusPlannerRouteImport.update({
   path: '/planner',
   getParentRoute: () => BusRoute,
 } as any)
+const AdminSystemRoute = AdminSystemRouteImport.update({
+  id: '/admin/system',
+  path: '/admin/system',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminSaludRoute = AdminSaludRouteImport.update({
   id: '/admin/salud',
   path: '/admin/salud',
@@ -550,6 +556,7 @@ export interface FileRoutesByFullPath {
   '/welcome': typeof WelcomeRoute
   '/admin/places': typeof AdminPlacesRoute
   '/admin/salud': typeof AdminSaludRoute
+  '/admin/system': typeof AdminSystemRoute
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
   '/business/inbox': typeof BusinessInboxRouteWithChildren
@@ -635,6 +642,7 @@ export interface FileRoutesByTo {
   '/welcome': typeof WelcomeRoute
   '/admin/places': typeof AdminPlacesRoute
   '/admin/salud': typeof AdminSaludRoute
+  '/admin/system': typeof AdminSystemRoute
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
   '/business/inbox': typeof BusinessInboxRouteWithChildren
@@ -722,6 +730,7 @@ export interface FileRoutesById {
   '/welcome': typeof WelcomeRoute
   '/admin/places': typeof AdminPlacesRoute
   '/admin/salud': typeof AdminSaludRoute
+  '/admin/system': typeof AdminSystemRoute
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
   '/business/inbox': typeof BusinessInboxRouteWithChildren
@@ -810,6 +819,7 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/admin/places'
     | '/admin/salud'
+    | '/admin/system'
     | '/bus/planner'
     | '/business/bookings'
     | '/business/inbox'
@@ -895,6 +905,7 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/admin/places'
     | '/admin/salud'
+    | '/admin/system'
     | '/bus/planner'
     | '/business/bookings'
     | '/business/inbox'
@@ -981,6 +992,7 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/admin/places'
     | '/admin/salud'
+    | '/admin/system'
     | '/bus/planner'
     | '/business/bookings'
     | '/business/inbox'
@@ -1068,6 +1080,7 @@ export interface RootRouteChildren {
   WelcomeRoute: typeof WelcomeRoute
   AdminPlacesRoute: typeof AdminPlacesRoute
   AdminSaludRoute: typeof AdminSaludRoute
+  AdminSystemRoute: typeof AdminSystemRoute
   ComprarSubsectorRoute: typeof ComprarSubsectorRoute
   HospitalesIdRoute: typeof HospitalesIdRoute
   HotelIdRoute: typeof HotelIdRoute
@@ -1458,6 +1471,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BusPlannerRouteImport
       parentRoute: typeof BusRoute
     }
+    '/admin/system': {
+      id: '/admin/system'
+      path: '/admin/system'
+      fullPath: '/admin/system'
+      preLoaderRoute: typeof AdminSystemRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/salud': {
       id: '/admin/salud'
       path: '/admin/salud'
@@ -1844,6 +1864,7 @@ const rootRouteChildren: RootRouteChildren = {
   WelcomeRoute: WelcomeRoute,
   AdminPlacesRoute: AdminPlacesRoute,
   AdminSaludRoute: AdminSaludRoute,
+  AdminSystemRoute: AdminSystemRoute,
   ComprarSubsectorRoute: ComprarSubsectorRoute,
   HospitalesIdRoute: HospitalesIdRoute,
   HotelIdRoute: HotelIdRoute,
