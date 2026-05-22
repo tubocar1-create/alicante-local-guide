@@ -42,13 +42,17 @@ export const Route = createFileRoute("/api/public/tram/valid-origins")({
         for (const t of trips) {
           const dir = t.direction_id ?? 0;
           const key = `${t.route_id}|${dir}`;
-          if (groups.has(key)) continue;
           const seq = destSeqByTrip.get(t.trip_id);
-          if (seq == null) continue;
-          groups.set(key, {
-            key, route_id: t.route_id, direction_id: dir,
-            headsign: t.trip_headsign, trip_id: t.trip_id, destSeq: seq,
-          });
+          if (seq == null || seq <= 1) continue; // necesitamos paradas previas
+          const existing = groups.get(key);
+          // Preferimos el trip con mayor destSeq (más estaciones previas).
+          if (!existing || seq > existing.destSeq) {
+            groups.set(key, {
+              key, route_id: t.route_id, direction_id: dir,
+              headsign: t.trip_headsign ?? existing?.headsign ?? null,
+              trip_id: t.trip_id, destSeq: seq,
+            });
+          }
         }
         if (!groups.size) return Response.json({ groups: [] });
 
