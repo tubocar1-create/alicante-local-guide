@@ -345,6 +345,9 @@ const DOMAINS: DomainSpec[] = [
       "ir hacia", "desplazarme", "moverme",
       "ir en bus", "ir en tram", "ir en tranvia", "ir en tranvía",
       "ir en autobus", "ir en autobús",
+      "coger el tram", "coger tram", "tomar el tram", "tomar tram",
+      "coger el tranvia", "coger el tranvía", "tomar el tranvia", "tomar el tranvía",
+      "quiero coger el tram", "quiero coger tram", "quiero tomar el tram",
       "como llegar", "que bus", "qué bus", "que tram", "qué tram",
       // destinos típicos que implican transporte
       "al aeropuerto", "al altet", "estacion de tren", "estación de tren",
@@ -688,17 +691,41 @@ function readCachedCoords(): { lat: number; lng: number } | null {
   }
 }
 const TRAM_TRIGGER_RE = /\b(tram|tranvia|tranvias)\b/;
+const TRAM_ALIAS_STOPS: Array<{ aliases: string[]; stop_id: string; stop_name: string }> = [
+  { aliases: ["benidorm"], stop_id: "33", stop_name: "Benidorm" },
+  { aliases: ["playa san juan", "playa de san juan", "san juan playa"], stop_id: "108", stop_name: "Av. Benidorm / Platja de San Joan" },
+  { aliases: ["luceros", "plaza luceros"], stop_id: "2", stop_name: "Alicante - Luceros" },
+  { aliases: ["mercado"], stop_id: "3", stop_name: "Mercado" },
+  { aliases: ["marq", "castillo"], stop_id: "4", stop_name: "MARQ - CASTILLO" },
+  { aliases: ["hospital"], stop_id: "117", stop_name: "Hospital" },
+  { aliases: ["universidad", "universitat"], stop_id: "123", stop_name: "Universitat" },
+  { aliases: ["san vicente", "san vicente del raspeig", "sant vicent"], stop_id: "124", stop_name: "Sant Vicent del Raspeig" },
+  { aliases: ["albufereta"], stop_id: "7", stop_name: "Albufereta" },
+  { aliases: ["muchavista"], stop_id: "12", stop_name: "Muchavista" },
+  { aliases: ["campello", "el campello"], stop_id: "17", stop_name: "El Campello" },
+  { aliases: ["villajoyosa", "la vila joiosa", "vila joiosa"], stop_id: "27", stop_name: "La Vila Joiosa" },
+  { aliases: ["puerta del mar", "porta del mar"], stop_id: "101", stop_name: "Porta del Mar" },
+];
+
 function matchTramQuery(query: string): {
   destId: string; destName: string; originId?: string; originName?: string;
 } | null {
   if (!TRAM_TRIGGER_RE.test(query)) return null;
-  if (!TRAM_STOPS_CACHE.length) return null;
-  const hits: Array<TramStopEntry & { idx: number }> = [];
+  const hits: Array<(TramStopEntry & { idx: number }) | { stop_id: string; stop_name: string; norm: string; idx: number }> = [];
   for (const s of TRAM_STOPS_CACHE) {
     const idx = query.indexOf(s.norm);
     if (idx < 0) continue;
     if (hits.some((h) => idx < h.idx + h.norm.length && idx + s.norm.length > h.idx)) continue;
     hits.push({ ...s, idx });
+  }
+  for (const s of TRAM_ALIAS_STOPS) {
+    for (const alias of s.aliases) {
+      const norm = normalizeSpeech(alias);
+      const idx = query.indexOf(norm);
+      if (idx < 0 || hits.some((h) => h.stop_id === s.stop_id)) continue;
+      if (hits.some((h) => idx < h.idx + h.norm.length && idx + norm.length > h.idx)) continue;
+      hits.push({ stop_id: s.stop_id, stop_name: s.stop_name, norm, idx });
+    }
   }
   if (!hits.length) return null;
   hits.sort((a, b) => a.idx - b.idx);
@@ -1216,6 +1243,14 @@ function localResolve(
     const params = new URLSearchParams();
     params.set("tram_dest", tramHit.destId);
     if (tramHit.originId) params.set("tram_origin", tramHit.originId);
+    if (!tramHit.originId && typeof window !== "undefined") {
+      try {
+        window.sessionStorage.setItem("tram:pending-dest-id", tramHit.destId);
+        window.sessionStorage.setItem("tram:pending-dest-name", tramHit.destName);
+        window.sessionStorage.removeItem("tram:suggested-origin-id");
+        window.sessionStorage.removeItem("tram:suggested-origin-name");
+      } catch { /* noop */ }
+    }
     const reply = tramHit.originId
       ? `¡Voy! TRAM de ${tramHit.originName} a ${tramHit.destName}.`
       : `¡Voy! TRAM con destino ${tramHit.destName}.`;
@@ -1223,7 +1258,16 @@ function localResolve(
       reply,
       path: `/tram?${params.toString()}`,
       audio: "fallback",
-      pendingDomain: null,
+      pendingDomain: tramHit.originId ? null : "tram_origin_confirm",
+    };
+  }
+  if (TRAM_TRIGGER_RE.test(query) && !currentDomain) {
+    const tPick = DOMAINS.find((x) => x.id === "tram_pick");
+    return {
+      reply: tPick?.question ?? "¿Hacia qué estación del TRAM quieres ir?",
+      path: "/tram",
+      audio: "bus",
+      pendingDomain: "tram_pick",
     };
   }
 
