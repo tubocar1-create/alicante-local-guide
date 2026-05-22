@@ -447,7 +447,7 @@ function setTramStopsCache(stops: Array<{ stop_id: string; stop_name: string }>)
     .filter((s) => s.norm.length >= 3)
     .sort((a, b) => b.norm.length - a.norm.length);
 }
-const TRAM_TRIGGER_RE = /\b(tram|tranvia|tranvias|metro)\b/;
+const TRAM_TRIGGER_RE = /\b(tram|tranvia|tranvias)\b/;
 function matchTramQuery(query: string): {
   destId: string; destName: string; originId?: string; originName?: string;
 } | null {
