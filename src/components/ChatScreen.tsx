@@ -978,7 +978,11 @@ export function ChatScreen() {
                   <button
                     key={opt.label}
                     onClick={() => {
-                      if (opt.submenu) {
+                      // Si elegimos otro transporte distinto al TRAM, ocultar panel TRAM.
+                      if (opt.action !== "tram-inline") setShowTramInline(false);
+                      if (opt.action === "tram-inline") {
+                        setShowTramInline((v) => !v);
+                      } else if (opt.submenu) {
                         setSubmenuStack((stack) => [...stack, opt]);
                       } else if (opt.action === "bus-picker") {
                         setSubmenuStack([]);
@@ -1000,7 +1004,11 @@ export function ChatScreen() {
                         isBeachGuide ? sendBeachGuide() : send(opt.prompt, { mode: null });
                       }
                     }}
-                    className="flex w-full items-center gap-1.5 rounded-lg border border-border bg-background/80 px-2 py-1.5 text-left text-[12px] shadow-sm transition hover:bg-accent/40"
+                    className={`flex w-full items-center gap-1.5 rounded-lg border px-2 py-1.5 text-left text-[12px] shadow-sm transition hover:bg-accent/40 ${
+                      opt.action === "tram-inline" && showTramInline
+                        ? "border-primary bg-primary/10"
+                        : "border-border bg-background/80"
+                    }`}
                   >
                     {(() => {
                       const m = opt.label.match(/^(\p{Extended_Pictographic}(?:\u200d\p{Extended_Pictographic})*\uFE0F?)\s*(.*)$/u);
@@ -1020,6 +1028,7 @@ export function ChatScreen() {
                   </button>
                 ))}
               </div>
+              {showTramInline && activeSubmenu.label.includes("Transporte") && <TramInline />}
             </div>
           )}
         </div>
