@@ -277,10 +277,20 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
         </div>
 
         {/* Próximas salidas */}
-        <div className="rounded-2xl border border-border bg-background/60 p-3 shadow-inner">
+        <div ref={departuresSectionRef} className="rounded-2xl border border-border bg-background/60 p-3 shadow-inner">
           <div className="mb-2 flex items-center gap-1.5">
             <MapPin className="h-3.5 w-3.5 text-primary" />
             <span className="text-sm font-semibold">{station?.stop_name ?? "Cargando…"}</span>
+            {station && (
+              <button
+                type="button"
+                onClick={() => toggleFavorite(station)}
+                aria-label={isFav ? "Quitar de favoritos" : "Añadir a favoritos"}
+                className="ml-1 rounded-full p-1 transition hover:bg-accent/40 active:scale-90"
+              >
+                <Star className={`h-3.5 w-3.5 ${isFav ? "fill-amber-400 text-amber-400" : "text-muted-foreground"}`} />
+              </button>
+            )}
             <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground">Próximas salidas</span>
           </div>
           {loadingDep ? (
