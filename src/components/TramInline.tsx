@@ -188,7 +188,14 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
     if (!origin || !destination || !originConfirmed) { setPlanOptions(null); return; }
     let cancelled = false;
     setLoadingPlan(true);
-    fetch(`/api/public/tram/plan?origin=${encodeURIComponent(origin.stop_id)}&destination=${encodeURIComponent(destination.stop_id)}&limit=4`)
+    // Pasamos hora y fecha LOCALES del cliente (el servidor corre en UTC y
+    // devolvería salidas pasadas si dejamos que las calcule él).
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const from = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    const url = `/api/public/tram/plan?origin=${encodeURIComponent(origin.stop_id)}&destination=${encodeURIComponent(destination.stop_id)}&from=${from}&date=${date}&limit=15`;
+    fetch(url)
       .then((r) => r.json())
       .then((d) => { if (!cancelled) { setPlanOptions(d?.options ?? []); setLoadingPlan(false); } })
       .catch(() => { if (!cancelled) { setPlanOptions([]); setLoadingPlan(false); } });
@@ -561,31 +568,45 @@ function TripPlanCard({
   onClear: () => void;
   onChangeOrigin: () => void;
 }) {
-  const best = options?.[0];
-  const more = (options ?? []).slice(1);
+  // Filtro defensivo: solo salidas a partir de ahora.
+  const futureOptions = useMemo(() => {
+    if (!options) return null;
+    return options.filter((o) => {
+      const m = minutesUntil(o.depart_time);
+      return m !== null && m >= 0;
+    });
+  }, [options]);
+  const best = futureOptions?.[0];
+  const more = (futureOptions ?? []).slice(1);
   const mins = best ? minutesUntil(best.depart_time) : null;
   const color = best ? ensureHash(best.line_color) ?? "var(--primary)" : "var(--primary)";
 
   return (
     <div className="overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-background to-accent/10 shadow-md animate-scale-in">
-      <div className="flex items-center gap-2 border-b border-border/40 bg-background/60 px-3 py-2.5">
-        <div className="min-w-0 flex-1">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Desde</p>
-          <p className="truncate text-xs font-semibold">{origin?.stop_name ?? "—"}</p>
+      <div className="border-b border-border/40 bg-background/60 px-3 py-2.5">
+        <div className="flex items-center gap-2">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Desde</p>
+            <p className="truncate text-sm font-semibold">{origin?.stop_name ?? "—"}</p>
+          </div>
+          <ArrowRight className="h-4 w-4 flex-none text-primary" />
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Hasta</p>
+            <p className="truncate text-sm font-semibold">{destination.stop_name}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClear}
+            aria-label="Nuevo viaje"
+            className="ml-1 rounded-full p-1.5 text-muted-foreground hover:bg-accent/40"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
         </div>
-        <ArrowRight className="h-4 w-4 flex-none text-primary" />
-        <div className="min-w-0 flex-1">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Hasta</p>
-          <p className="truncate text-xs font-semibold">{destination.stop_name}</p>
+        <div className="mt-1.5 flex items-center gap-2 text-[10px] text-muted-foreground">
+          <MapPin className="h-3 w-3 text-primary/70" />
+          <span className="truncate">Estación {origin?.stop_name ?? "—"} → {destination.stop_name}</span>
         </div>
-        <button
-          type="button"
-          onClick={onClear}
-          aria-label="Nuevo viaje"
-          className="ml-1 rounded-full p-1.5 text-muted-foreground hover:bg-accent/40"
-        >
-          <X className="h-3.5 w-3.5" />
-        </button>
       </div>
 
       <div className="p-4">
@@ -676,8 +697,11 @@ function TripPlanCard({
 
             {more.length > 0 && (
               <div className="mt-4">
-                <p className="mb-1 text-[10px] uppercase tracking-wider text-muted-foreground">Más salidas</p>
-                <ul className="divide-y divide-border/60 rounded-xl border border-border/60 bg-background/60">
+                <p className="mb-1 flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <span>Más salidas</span>
+                  <span className="normal-case tracking-normal text-[10px] text-muted-foreground/70">{more.length} próximas</span>
+                </p>
+                <ul className="max-h-64 divide-y divide-border/60 overflow-y-auto rounded-xl border border-border/60 bg-background/60">
                   {more.map((o) => {
                     const m = minutesUntil(o.depart_time);
                     return (
