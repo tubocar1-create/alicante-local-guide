@@ -1250,7 +1250,43 @@ function localResolve(
             pendingDomain: "transporte_bus",
           };
         }
-        if (fuPath === "action:tram-pick") {
+        if (fuPath === "action:tram-confirm-suggested") {
+          if (typeof window !== "undefined") {
+            const destId = window.sessionStorage.getItem("tram:pending-dest-id");
+            const destName = window.sessionStorage.getItem("tram:pending-dest-name");
+            const originId = window.sessionStorage.getItem("tram:suggested-origin-id");
+            const originName = window.sessionStorage.getItem("tram:suggested-origin-name");
+            if (destId && originId) {
+              const params = new URLSearchParams();
+              params.set("tram_dest", destId);
+              params.set("tram_origin", originId);
+              try {
+                window.sessionStorage.removeItem("tram:pending-dest-id");
+                window.sessionStorage.removeItem("tram:pending-dest-name");
+                window.sessionStorage.removeItem("tram:suggested-origin-id");
+                window.sessionStorage.removeItem("tram:suggested-origin-name");
+              } catch { /* noop */ }
+              return {
+                reply: `¡Voy! TRAM de ${originName ?? "tu parada"} a ${destName ?? "tu destino"}.`,
+                path: `/tram?${params.toString()}`,
+                audio: "bus",
+                pendingDomain: null,
+              };
+            }
+          }
+          return {
+            reply: "Necesito que primero me digas el destino. ¿A qué estación del TRAM quieres ir?",
+            audio: "bus",
+            pendingDomain: "tram_pick",
+          };
+        }
+        if (fuPath === "action:tram-pick-origin") {
+          return {
+            reply: "Vale, dime desde qué estación del TRAM sales (por ejemplo: «desde Mercado»).",
+            audio: "bus",
+            pendingDomain: "tram_origin_confirm",
+          };
+        }
           const tPick = DOMAINS.find((x) => x.id === "tram_pick");
           return {
             reply: tPick?.question ?? "¿A qué estación del TRAM quieres ir y desde dónde sales?",
