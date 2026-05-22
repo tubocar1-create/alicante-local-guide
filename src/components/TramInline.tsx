@@ -607,7 +607,7 @@ function TripPlanCard({
   useEffect(() => {
     let cancelled = false;
     setBusLines(null);
-    fetch(`/api/public/tram/bus-connections?stop_id=${encodeURIComponent(destination.stop_id)}&radius_m=400`)
+    fetch(`/api/public/tram/bus-connections?stop_id=${encodeURIComponent(destination.stop_id)}&radius_m=600`)
       .then((r) => r.json())
       .then((d) => { if (!cancelled) setBusLines((d?.lines ?? []) as BusConn[]); })
       .catch(() => { if (!cancelled) setBusLines([]); });
