@@ -1243,6 +1243,14 @@ function localResolve(
     const params = new URLSearchParams();
     params.set("tram_dest", tramHit.destId);
     if (tramHit.originId) params.set("tram_origin", tramHit.originId);
+    if (!tramHit.originId && typeof window !== "undefined") {
+      try {
+        window.sessionStorage.setItem("tram:pending-dest-id", tramHit.destId);
+        window.sessionStorage.setItem("tram:pending-dest-name", tramHit.destName);
+        window.sessionStorage.removeItem("tram:suggested-origin-id");
+        window.sessionStorage.removeItem("tram:suggested-origin-name");
+      } catch { /* noop */ }
+    }
     const reply = tramHit.originId
       ? `¡Voy! TRAM de ${tramHit.originName} a ${tramHit.destName}.`
       : `¡Voy! TRAM con destino ${tramHit.destName}.`;
@@ -1250,7 +1258,7 @@ function localResolve(
       reply,
       path: `/tram?${params.toString()}`,
       audio: "fallback",
-      pendingDomain: null,
+      pendingDomain: tramHit.originId ? null : "tram_origin_confirm",
     };
   }
   if (TRAM_TRIGGER_RE.test(query) && !currentDomain) {
