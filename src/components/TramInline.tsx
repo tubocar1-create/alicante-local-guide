@@ -96,18 +96,7 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
   const selectStation = (s: Station) => {
     setStation(s);
     persistStation(s);
-    setShowFavorites(false);
     setTimeout(() => departuresSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
-  };
-
-  const selectLine = async (lineId: string) => {
-    setLoadingLine(lineId);
-    try {
-      const data = await fetch(`/api/public/tram/line-stops?line_id=${encodeURIComponent(lineId)}&direction=0`).then((r) => r.json());
-      const first = data?.stops?.[0]?.stop;
-      if (first) selectStation(first);
-    } catch {/* noop */}
-    setLoadingLine(null);
   };
 
   const openMap = () => {
