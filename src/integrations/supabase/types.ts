@@ -77,6 +77,90 @@ export type Database = {
         }
         Relationships: []
       }
+      agente_admin_supervisions: {
+        Row: {
+          admin_notes: string | null
+          confidence: number | null
+          created_at: string
+          final_intent: string | null
+          final_keywords: string[]
+          id: string
+          learning_log_id: string | null
+          model: string | null
+          normalized: string
+          priority: number
+          raw_query: string
+          reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source: string
+          status: string
+          suggested_intent: string | null
+          suggested_keywords: string[]
+          unknown_query_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          confidence?: number | null
+          created_at?: string
+          final_intent?: string | null
+          final_keywords?: string[]
+          id?: string
+          learning_log_id?: string | null
+          model?: string | null
+          normalized: string
+          priority?: number
+          raw_query: string
+          reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source?: string
+          status?: string
+          suggested_intent?: string | null
+          suggested_keywords?: string[]
+          unknown_query_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          confidence?: number | null
+          created_at?: string
+          final_intent?: string | null
+          final_keywords?: string[]
+          id?: string
+          learning_log_id?: string | null
+          model?: string | null
+          normalized?: string
+          priority?: number
+          raw_query?: string
+          reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source?: string
+          status?: string
+          suggested_intent?: string | null
+          suggested_keywords?: string[]
+          unknown_query_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agente_admin_supervisions_learning_log_id_fkey"
+            columns: ["learning_log_id"]
+            isOneToOne: false
+            referencedRelation: "agente_learning_log"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agente_admin_supervisions_unknown_query_id_fkey"
+            columns: ["unknown_query_id"]
+            isOneToOne: false
+            referencedRelation: "agente_unknown_queries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agente_faqs: {
         Row: {
           active: boolean
