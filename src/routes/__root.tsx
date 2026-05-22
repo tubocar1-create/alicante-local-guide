@@ -10,6 +10,7 @@ import {
 } from "@tanstack/react-router";
 import { InstallPWA } from "@/components/InstallPWA";
 import { AgenteVamosFab } from "@/components/AgenteVamos";
+import { AppVersionWatcher } from "@/components/AppVersionWatcher";
 
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
@@ -19,6 +20,10 @@ import "@/integrations/supabase/server-fn-fetch";
 
 const PUBLIC_ROUTES = ["/login", "/magic", "/welcome", "/playas", "/playas/mapa"];
 const WELCOMED_KEY = "vamos-welcomed-v1";
+
+// Stable per server/worker boot — changes on every deploy. Used by
+// AppVersionWatcher to silently reload tabs running an old bundle.
+const APP_VERSION = String(Date.now());
 
 
 function NotFoundComponent() {
@@ -100,6 +105,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Alicante Friend" },
       { name: "description", content: "Your friendly local AI guide in Alicante, Spain." },
       { name: "author", content: "Alicante Friend" },
+      { name: "app-version", content: APP_VERSION },
       { property: "og:title", content: "Alicante Friend" },
       { property: "og:description", content: "Your friendly local AI guide in Alicante, Spain." },
       { property: "og:type", content: "website" },
@@ -159,6 +165,8 @@ function RootComponent() {
       <Toaster />
       <InstallPWA />
       <AgenteVamosFab />
+      <AppVersionWatcher />
+      
       
     </QueryClientProvider>
   );
