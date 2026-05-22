@@ -52,17 +52,71 @@ function minutesUntil(timeStr?: string | null): number | null {
   return diff < 0 ? null : diff;
 }
 
+const FAV_KEY = "tram:favorites";
+const LAST_KEY = "tram:last";
+
 export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<{ stations: Station[]; lines: Line[] }>({ stations: [], lines: [] });
   const [searching, setSearching] = useState(false);
   const searchAbort = useRef<AbortController | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const linesSectionRef = useRef<HTMLDivElement | null>(null);
+  const departuresSectionRef = useRef<HTMLDivElement | null>(null);
 
   const [lines, setLines] = useState<Line[]>([]);
   const [station, setStation] = useState<Station | null>(null);
   const [departures, setDepartures] = useState<Departure[]>([]);
   const [loadingDep, setLoadingDep] = useState(true);
   const [serviceWarn, setServiceWarn] = useState<string | null>(null);
+  const [favorites, setFavorites] = useState<Station[]>([]);
+  const [showFavorites, setShowFavorites] = useState(false);
+  const [loadingLine, setLoadingLine] = useState<string | null>(null);
+
+  // Cargar favoritos y última parada
+  useEffect(() => {
+    try {
+      const fav = JSON.parse(localStorage.getItem(FAV_KEY) || "[]");
+      if (Array.isArray(fav)) setFavorites(fav);
+    } catch {/* noop */}
+  }, []);
+
+  const persistStation = (s: Station) => {
+    try { localStorage.setItem(LAST_KEY, JSON.stringify(s)); } catch {/* noop */}
+  };
+  const toggleFavorite = (s: Station) => {
+    setFavorites((prev) => {
+      const exists = prev.some((p) => p.stop_id === s.stop_id);
+      const next = exists ? prev.filter((p) => p.stop_id !== s.stop_id) : [...prev, s];
+      try { localStorage.setItem(FAV_KEY, JSON.stringify(next)); } catch {/* noop */}
+      return next;
+    });
+  };
+  const isFav = station ? favorites.some((f) => f.stop_id === station.stop_id) : false;
+
+  const selectStation = (s: Station) => {
+    setStation(s);
+    persistStation(s);
+    setShowFavorites(false);
+    setTimeout(() => departuresSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+  };
+
+  const selectLine = async (lineId: string) => {
+    setLoadingLine(lineId);
+    try {
+      const data = await fetch(`/api/public/tram/line-stops?line_id=${encodeURIComponent(lineId)}&direction=0`).then((r) => r.json());
+      const first = data?.stops?.[0]?.stop;
+      if (first) selectStation(first);
+    } catch {/* noop */}
+    setLoadingLine(null);
+  };
+
+  const openMap = () => {
+    const url = station?.stop_lat && station?.stop_lon
+      ? `https://www.google.com/maps/search/?api=1&query=${station.stop_lat},${station.stop_lon}`
+      : `https://www.google.com/maps/search/?api=1&query=TRAM+Alicante`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
 
   // 1. Cargar líneas + estación inicial (Luceros) + salidas.
   useEffect(() => {
