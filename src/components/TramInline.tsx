@@ -203,12 +203,16 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
     return lines;
   }, [lines]);
 
-  const quickAccess: Array<{ icon: typeof MapPin; label: string }> = [
-    { icon: Train, label: "Líneas" },
-    { icon: MapPin, label: "Estaciones" },
-    { icon: MapIcon, label: "Mapa" },
-    { icon: Star, label: "Favoritos" },
-    { icon: History, label: "Último TRAM" },
+  const lastStation: Station | null = (() => {
+    try { return JSON.parse(localStorage.getItem(LAST_KEY) || "null"); } catch { return null; }
+  })();
+
+  const quickAccess: Array<{ icon: typeof MapPin; label: string; onClick: () => void; active?: boolean }> = [
+    { icon: Train, label: "Líneas", onClick: () => linesSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }) },
+    { icon: MapPin, label: "Estaciones", onClick: () => { searchInputRef.current?.focus(); searchInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }); } },
+    { icon: MapIcon, label: "Mapa", onClick: openMap },
+    { icon: Star, label: showFavorites ? "Cerrar favoritos" : "Favoritos", onClick: () => setShowFavorites((v) => !v), active: showFavorites },
+    { icon: History, label: "Último TRAM", onClick: () => { if (lastStation) selectStation(lastStation); } },
   ];
 
   return (
