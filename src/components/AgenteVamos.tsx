@@ -1569,10 +1569,24 @@ const audioSrc = (clip: AgentAudioClip) =>
 function getGreetingClip(): GreetingClip {
   return new Date().getHours() < 14 ? "greeting_morning" : "greeting_afternoon";
 }
+function getLoggedUserName(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    const raw = localStorage.getItem("beta_user_v1");
+    if (!raw) return "";
+    const u = JSON.parse(raw);
+    return (u?.name || "").toString().trim();
+  } catch {
+    return "";
+  }
+}
 function getGreetingText() {
   const h = new Date().getHours();
-  const saludo = h < 14 ? "Buenos días" : "Buenas tardes";
-  return `${saludo}, Leopoldo, ¿qué vamos a hacer hoy?`;
+  const saludo = h < 14 ? "Buenos días" : h < 20 ? "Buenas tardes" : "Buenas noches";
+  const name = getLoggedUserName();
+  return name
+    ? `${saludo}, ${name}, ¿qué vamos a hacer hoy?`
+    : `${saludo}, ¿qué vamos a hacer hoy?`;
 }
 function makeGreeting(): Msg {
   return { role: "assistant", content: getGreetingText() };
@@ -1617,13 +1631,16 @@ function getReentryGreeting(): string {
   }
   const minsSince = lastTs ? Math.round((Date.now() - lastTs) / 60000) : Infinity;
 
+  const name = getLoggedUserName();
+  const nameSuffix = name ? `, ${name}` : "";
+
   // > 30 min: saluda según hora del día
   if (minsSince > 30) {
     return pickDistinct(
       [
-        `${partOfDay}, Leopoldo. Aquí sigo.`,
-        `${partOfDay}, Leopoldo. ¿Seguimos?`,
-        `Hola de nuevo, Leopoldo.`,
+        `${partOfDay}${nameSuffix}. Aquí sigo.`,
+        `${partOfDay}${nameSuffix}. ¿Seguimos?`,
+        `Hola de nuevo${nameSuffix}.`,
       ],
       VA_LAST_REENTRY_KEY,
     );
@@ -1635,7 +1652,7 @@ function getReentryGreeting(): string {
     return pickDistinct(
       [
         `Seguimos con lo de "${short}".`,
-        `Aquí sigo, Leopoldo.`,
+        `Aquí sigo${nameSuffix}.`,
         `Encontré más opciones sobre "${short}".`,
         `Hola de nuevo, ¿continuamos?`,
       ],
@@ -1646,7 +1663,7 @@ function getReentryGreeting(): string {
   // Reentrada genérica
   return pickDistinct(
     [
-      `Aquí sigo, Leopoldo.`,
+      `Aquí sigo${nameSuffix}.`,
       `Hola de nuevo.`,
       `¿En qué seguimos?`,
       `Sigo contigo.`,
