@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Search, MapPin, Navigation, Star, ArrowRight,
   ChevronDown, ChevronUp, Map as MapIcon, X, Locate, Check,
@@ -133,6 +133,13 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
   const [showLines, setShowLines] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
 
+  // Origen pendiente proveniente de URL (?tram_origin=...) que se aplicará
+  // cuando ya tengamos destino + validStops cargados.
+  const [pendingOriginId, setPendingOriginId] = useState<string | null>(null);
+
+  // Suscripción a search params (el agente navega a /?tram_dest=...&tram_origin=...)
+  const searchStr = useRouterState({ select: (s) => s.location.searchStr });
+
   // Carga inicial: líneas + favoritos + origen guardado (solo como pista)
   useEffect(() => {
     fetch("/api/public/tram/lines").then((r) => r.json())
@@ -143,6 +150,29 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
       if (Array.isArray(f)) setFavorites(f);
     } catch { /* noop */ }
   }, []);
+
+  // Aplicar destino/origen desde URL (?tram_dest=&tram_origin=)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sp = new URLSearchParams(window.location.search);
+    const destId = sp.get("tram_dest");
+    const originId = sp.get("tram_origin");
+    if (!destId) return;
+    if (destination?.stop_id === destId && (!originId || origin?.stop_id === originId)) return;
+    let cancelled = false;
+    fetch(`/api/public/tram/stations?stop_id=${encodeURIComponent(destId)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        const st = (d?.stations ?? [])[0];
+        if (!cancelled && st) {
+          setDestination(st);
+          setPendingOriginId(originId || null);
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchStr]);
 
   // Búsqueda al teclear
   useEffect(() => {
@@ -182,6 +212,18 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
     for (const g of validGroups) for (const s of g.stops) if (!map.has(s.stop_id)) map.set(s.stop_id, s);
     return Array.from(map.values());
   }, [validGroups]);
+
+  // Si la URL trae tram_origin, aplicarlo cuando estén los validStops listos.
+  useEffect(() => {
+    if (!pendingOriginId || !destination || !validStops.length) return;
+    const match = validStops.find((s) => s.stop_id === pendingOriginId);
+    if (match) {
+      setOrigin(match);
+      setOriginConfirmed(true);
+    }
+    setPendingOriginId(null);
+  }, [pendingOriginId, destination, validStops]);
+
 
   // Sugerir origen automáticamente cuando hay validGroups
   useEffect(() => {
