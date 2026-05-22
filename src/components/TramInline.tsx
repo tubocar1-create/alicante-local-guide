@@ -707,8 +707,8 @@ function TripPlanCard({
                   busLines.slice(0, 10).map((b) => (
                     <Link
                       key={b.code}
-                      to="/bus.dashboard.$code" as any
-                      params={{ code: b.code } as any}
+                      to="/bus/dashboard/$code"
+                      params={{ code: b.code }}
                       className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2 py-1 text-[11px] font-medium shadow-sm transition hover:border-primary/40 hover:bg-accent/30"
                       title={`${b.name}${b.stop_name ? ` · Parada ${b.stop_name}` : ""} · ${b.distance_m} m`}
                     >
