@@ -11,7 +11,7 @@ import {
 import { InstallPWA } from "@/components/InstallPWA";
 import { AgenteVamosFab } from "@/components/AgenteVamos";
 import { AppVersionWatcher } from "@/components/AppVersionWatcher";
-import { ManualRefreshButton } from "@/components/ManualRefreshButton";
+
 
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
