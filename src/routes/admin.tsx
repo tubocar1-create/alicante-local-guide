@@ -251,7 +251,15 @@ function AdminDashboard() {
               Página oculta · solo accesible con contraseña.
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-muted-foreground hidden sm:inline">
+              {dataUpdatedAt
+                ? `Actualizado ${new Date(dataUpdatedAt).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })} · auto cada 30 min`
+                : "—"}
+            </span>
+            <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isFetching}>
+              {isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Refrescar"}
+            </Button>
             <InstallAppButton />
             <Button variant="ghost" onClick={logout}>
               Salir
