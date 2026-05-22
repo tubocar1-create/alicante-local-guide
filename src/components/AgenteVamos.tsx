@@ -2449,6 +2449,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             window.sessionStorage.removeItem("afp:openSubmenu");
           } catch {}
         }
+        const priorDomain = pendingDomainRef.current;
         const fallback = localResolve(clean, pendingDomainRef.current, routingCatalogRef.current);
         const replyMode = pickAssistantMode(fallback.pendingDomain ?? pendingDomainRef.current ?? null);
         let reply = formatReply(replyMode, fallback.reply);
@@ -2518,8 +2519,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         // NO dejamos que el servidor sobreescriba la respuesta con la
         // pregunta del hub de ocio. Honramos el mensaje completo.
         const isCineIntent = fallback.path === "/ocio/cartelera";
+        // Si veníamos de un follow-up de dominio (p.ej. compras) y el resolver
+        // local ya derivó a una ruta concreta, NO dejamos que el servidor
+        // pise esa derivación con una sugerencia de otro dominio.
+        const isDomainFollowupResolution = !!priorDomain && !!fallback.path;
 
-        if (!isClarifying && !resolvedLineDashboard && !isCineIntent) {
+        if (!isClarifying && !resolvedLineDashboard && !isCineIntent && !isDomainFollowupResolution) {
           try {
             const res = await askAgent({
               data: {
