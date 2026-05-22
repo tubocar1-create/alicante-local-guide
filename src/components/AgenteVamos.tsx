@@ -2722,6 +2722,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             reply = saludDomain.question;
             forwardPrompt = undefined;
             pendingDomainRef.current = "salud";
+            writeStoredActiveDomain("salud");
             if (typeof window !== "undefined") {
               try {
                 window.sessionStorage.removeItem("afp:fwdPrompt");
@@ -2763,6 +2764,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             target = hub;
             reply = ambiguousDomain.domain.question;
             pendingDomainRef.current = ambiguousDomain.domain.id;
+            writeStoredActiveDomain(pendingDomainRef.current);
             forwardPrompt = undefined;
             if (typeof window !== "undefined") {
               try {
