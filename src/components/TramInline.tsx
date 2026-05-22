@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import {
-  Search, MapPin, Navigation, Star, Clock, ArrowRight,
-  ChevronDown, ChevronUp, Map as MapIcon, X, Locate,
+  Search, MapPin, Navigation, Star, ArrowRight,
+  ChevronDown, ChevronUp, Map as MapIcon, X, Locate, Check,
 } from "lucide-react";
-import { distanceKm, formatDistance, useUserLocation, type Coords } from "@/hooks/useUserLocation";
+import { distanceKm, useUserLocation, type Coords } from "@/hooks/useUserLocation";
 
 type Line = {
   id: string;
@@ -19,15 +19,6 @@ type Station = {
   stop_lat?: number;
   stop_lon?: number;
 };
-type Departure = {
-  trip_id: string;
-  route_id: string;
-  line_short_name?: string | null;
-  line_long_name?: string | null;
-  line_color?: string | null;
-  headsign?: string | null;
-  departure_time?: string | null;
-};
 type PlanOption = {
   trip_id: string;
   route_id: string;
@@ -40,6 +31,16 @@ type PlanOption = {
   arrive_time: string;
   duration_min: number;
   stops_between: number;
+};
+type ValidGroup = {
+  route_id: string;
+  line_short_name: string | null;
+  line_long_name: string | null;
+  line_color: string | null;
+  line_text_color: string | null;
+  direction_id: number;
+  headsign: string | null;
+  stops: Station[];
 };
 
 const FAV_KEY = "tram:favorites";
@@ -61,11 +62,11 @@ const POPULAR = [
   { emoji: "🎡", label: "Benidorm", q: "benidorm" },
   { emoji: "🎓", label: "Universidad", q: "universidad" },
   { emoji: "🏖️", label: "El Campello", q: "campello" },
-  { emoji: "🏰", label: "Centro", q: "luceros" },
   { emoji: "🏛️", label: "MARQ", q: "marq" },
+  { emoji: "🏰", label: "Luceros", q: "luceros" },
 ];
 
-function nearestStation(coords: Coords, stations: Station[]): Station | null {
+function nearestFromList(coords: Coords, stations: Station[]): Station | null {
   let best: Station | null = null;
   let bestD = Infinity;
   for (const s of stations) {
@@ -78,9 +79,6 @@ function nearestStation(coords: Coords, stations: Station[]): Station | null {
 
 export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
   const { state: geo, request: requestGeo } = useUserLocation();
-  const [origin, setOrigin] = useState<Station | null>(null);
-  const [destination, setDestination] = useState<Station | null>(null);
-  const [allStations, setAllStations] = useState<Station[]>([]);
   const [lines, setLines] = useState<Line[]>([]);
   const [favorites, setFavorites] = useState<Station[]>([]);
 
@@ -89,82 +87,32 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
   const [results, setResults] = useState<Station[]>([]);
   const searchAbort = useRef<AbortController | null>(null);
 
-  // Próximas salidas desde el origen (cuando no hay destino)
-  const [departures, setDepartures] = useState<Departure[]>([]);
-  const [loadingDep, setLoadingDep] = useState(false);
+  // Flujo
+  const [destination, setDestination] = useState<Station | null>(null);
+  const [origin, setOrigin] = useState<Station | null>(null);
+  const [originConfirmed, setOriginConfirmed] = useState(false);
 
-  // Plan de viaje (cuando hay destino)
+  // Estaciones válidas para el destino actual
+  const [validGroups, setValidGroups] = useState<ValidGroup[] | null>(null);
+  const [loadingValid, setLoadingValid] = useState(false);
+
+  // Plan
   const [planOptions, setPlanOptions] = useState<PlanOption[] | null>(null);
   const [loadingPlan, setLoadingPlan] = useState(false);
 
   const [showLines, setShowLines] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
 
-  // Cargar todo lo estático: estaciones + líneas + favoritos + origen guardado
+  // Carga inicial: líneas + favoritos + origen guardado (solo como pista)
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const [st, ln] = await Promise.all([
-          fetch("/api/public/tram/stations").then((r) => r.json()),
-          fetch("/api/public/tram/lines").then((r) => r.json()),
-        ]);
-        if (cancelled) return;
-        setAllStations(st?.stations ?? []);
-        setLines(ln?.lines ?? []);
-      } catch { /* noop */ }
-    })();
+    fetch("/api/public/tram/lines").then((r) => r.json())
+      .then((d) => setLines(d?.lines ?? []))
+      .catch(() => {});
     try {
       const f = JSON.parse(localStorage.getItem(FAV_KEY) || "[]");
       if (Array.isArray(f)) setFavorites(f);
     } catch { /* noop */ }
-    try {
-      const o = JSON.parse(localStorage.getItem(ORIGIN_KEY) || "null");
-      if (o?.stop_id) setOrigin(o);
-    } catch { /* noop */ }
-    return () => { cancelled = true; };
   }, []);
-
-  // Cuando llega la geolocalización, fijar parada más cercana como origen
-  // (solo si el usuario aún no ha elegido un origen distinto).
-  useEffect(() => {
-    if (geo.status !== "ready" || allStations.length === 0) return;
-    const near = nearestStation(geo.coords, allStations);
-    if (near && !origin) {
-      setOrigin(near);
-      try { localStorage.setItem(ORIGIN_KEY, JSON.stringify(near)); } catch { /* noop */ }
-    }
-  }, [geo, allStations, origin]);
-
-  // Si no hay geo ni origen, usar Luceros por defecto.
-  useEffect(() => {
-    if (origin || allStations.length === 0) return;
-    const luceros = allStations.find((s) => /luceros/i.test(s.stop_name));
-    if (luceros) setOrigin(luceros);
-  }, [allStations, origin]);
-
-  // Próximas salidas del origen (cuando no hay destino seleccionado).
-  useEffect(() => {
-    if (!origin || destination) { setDepartures([]); return; }
-    let cancelled = false;
-    setLoadingDep(true);
-    fetch(`/api/public/tram/departures?stop_id=${encodeURIComponent(origin.stop_id)}&limit=5`)
-      .then((r) => r.json())
-      .then((d) => { if (!cancelled) { setDepartures(d?.departures ?? []); setLoadingDep(false); } })
-      .catch(() => { if (!cancelled) setLoadingDep(false); });
-    return () => { cancelled = true; };
-  }, [origin?.stop_id, destination?.stop_id]);
-
-  // Plan de viaje cuando hay destino.
-  useEffect(() => {
-    if (!origin || !destination) { setPlanOptions(null); return; }
-    let cancelled = false;
-    setLoadingPlan(true);
-    fetch(`/api/public/tram/plan?origin=${encodeURIComponent(origin.stop_id)}&destination=${encodeURIComponent(destination.stop_id)}&limit=4`)
-      .then((r) => r.json())
-      .then((d) => { if (!cancelled) { setPlanOptions(d?.options ?? []); setLoadingPlan(false); } })
-      .catch(() => { if (!cancelled) { setPlanOptions([]); setLoadingPlan(false); } });
-    return () => { cancelled = true; };
-  }, [origin?.stop_id, destination?.stop_id]);
 
   // Búsqueda al teclear
   useEffect(() => {
@@ -182,6 +130,63 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
     return () => { clearTimeout(t); ctrl.abort(); };
   }, [query]);
 
+  // Al elegir destino → cargar orígenes válidos y resetear estado origen
+  useEffect(() => {
+    if (!destination) { setValidGroups(null); return; }
+    setOriginConfirmed(false);
+    setOrigin(null);
+    setShowPicker(false);
+    let cancelled = false;
+    setLoadingValid(true);
+    fetch(`/api/public/tram/valid-origins?destination=${encodeURIComponent(destination.stop_id)}`)
+      .then((r) => r.json())
+      .then((d) => { if (!cancelled) { setValidGroups(d?.groups ?? []); setLoadingValid(false); } })
+      .catch(() => { if (!cancelled) { setValidGroups([]); setLoadingValid(false); } });
+    return () => { cancelled = true; };
+  }, [destination?.stop_id]);
+
+  // Conjunto de estaciones válidas (únicas) para auto-sugerir origen
+  const validStops = useMemo(() => {
+    if (!validGroups) return [] as Station[];
+    const map = new Map<string, Station>();
+    for (const g of validGroups) for (const s of g.stops) if (!map.has(s.stop_id)) map.set(s.stop_id, s);
+    return Array.from(map.values());
+  }, [validGroups]);
+
+  // Sugerir origen automáticamente cuando hay validGroups
+  useEffect(() => {
+    if (!destination || origin || !validGroups) return;
+    // 1) Geolocalización
+    if (geo.status === "ready") {
+      const near = nearestFromList(geo.coords, validStops);
+      if (near) { setOrigin(near); return; }
+    }
+    // 2) Origen guardado si está en la lista válida
+    try {
+      const saved = JSON.parse(localStorage.getItem(ORIGIN_KEY) || "null") as Station | null;
+      if (saved?.stop_id && validStops.some((s) => s.stop_id === saved.stop_id)) {
+        setOrigin(saved); return;
+      }
+    } catch { /* noop */ }
+    // 3) Luceros si está
+    const luceros = validStops.find((s) => /luceros/i.test(s.stop_name));
+    if (luceros) { setOrigin(luceros); return; }
+    // 4) Primera válida
+    if (validStops[0]) setOrigin(validStops[0]);
+  }, [destination, origin, validGroups, validStops, geo]);
+
+  // Plan cuando origen confirmado
+  useEffect(() => {
+    if (!origin || !destination || !originConfirmed) { setPlanOptions(null); return; }
+    let cancelled = false;
+    setLoadingPlan(true);
+    fetch(`/api/public/tram/plan?origin=${encodeURIComponent(origin.stop_id)}&destination=${encodeURIComponent(destination.stop_id)}&limit=4`)
+      .then((r) => r.json())
+      .then((d) => { if (!cancelled) { setPlanOptions(d?.options ?? []); setLoadingPlan(false); } })
+      .catch(() => { if (!cancelled) { setPlanOptions([]); setLoadingPlan(false); } });
+    return () => { cancelled = true; };
+  }, [origin?.stop_id, destination?.stop_id, originConfirmed]);
+
   const pickDestinationByQuery = async (q: string) => {
     try {
       const r = await fetch(`/api/public/tram/stations?q=${encodeURIComponent(q)}`);
@@ -191,33 +196,38 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
     } catch { /* noop */ }
   };
 
-  const swapOrigin = (s: Station) => {
+  const confirmOrigin = (s: Station) => {
     setOrigin(s);
+    setOriginConfirmed(true);
+    setShowPicker(false);
     try { localStorage.setItem(ORIGIN_KEY, JSON.stringify(s)); } catch { /* noop */ }
   };
 
-  const isFavOrigin = origin ? favorites.some((f) => f.stop_id === origin.stop_id) : false;
-  const toggleFavOrigin = () => {
-    if (!origin) return;
-    setFavorites((prev) => {
-      const exists = prev.some((p) => p.stop_id === origin.stop_id);
-      const next = exists ? prev.filter((p) => p.stop_id !== origin.stop_id) : [...prev, origin];
-      try { localStorage.setItem(FAV_KEY, JSON.stringify(next)); } catch { /* noop */ }
-      return next;
-    });
+  const resetFlow = () => {
+    setDestination(null);
+    setOrigin(null);
+    setOriginConfirmed(false);
+    setValidGroups(null);
+    setPlanOptions(null);
+    setShowPicker(false);
   };
 
-  const openMap = () => {
-    const url = origin?.stop_lat && origin?.stop_lon
-      ? `https://www.google.com/maps/search/?api=1&query=${origin.stop_lat},${origin.stop_lon}`
-      : `https://www.google.com/maps/search/?api=1&query=TRAM+Alicante`;
-    window.open(url, "_blank", "noopener,noreferrer");
+  const useGeolocationOrigin = () => {
+    if (geo.status === "ready") {
+      const near = nearestFromList(geo.coords, validStops);
+      if (near) { confirmOrigin(near); return; }
+    }
+    requestGeo();
   };
 
-  const nextDep = departures[0];
-  const nextDepMin = nextDep ? minutesUntil(nextDep.departure_time) : null;
-
-  const displayLines = useMemo(() => lines, [lines]);
+  // Cuando llega la geo después de pedirla, si aún no hay confirmación → usar
+  useEffect(() => {
+    if (geo.status !== "ready" || originConfirmed || !destination || !validStops.length) return;
+    const near = nearestFromList(geo.coords, validStops);
+    if (near && (!origin || origin.stop_id !== near.stop_id)) {
+      setOrigin(near);
+    }
+  }, [geo, originConfirmed, destination, validStops, origin]);
 
   return (
     <div className={`flex animate-fade-in flex-col rounded-3xl border border-border bg-card/95 shadow-sm backdrop-blur ${embedded ? "" : "mt-2 max-h-[78vh] overflow-hidden"}`}>
@@ -229,242 +239,333 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
       </div>
 
       <div className={`space-y-4 p-4 ${embedded ? "pb-24" : "flex-1 overflow-y-auto overscroll-contain"}`}>
-
-        {/* ¿A dónde quieres ir? */}
-        <div>
-          <label className="mb-2 block px-1 text-base font-semibold tracking-tight">
-            ¿A dónde quieres ir?
-          </label>
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Busca playa, estación, universidad, Benidorm…"
-              className="w-full rounded-2xl border border-border bg-background py-3.5 pl-11 pr-10 text-sm shadow-sm outline-none transition focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
-            />
-            {query && (
-              <button
-                type="button"
-                onClick={() => { setQuery(""); setResults([]); }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground hover:bg-accent/40"
-                aria-label="Limpiar"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
-            {results.length > 0 && (
-              <div className="absolute z-30 mt-1.5 max-h-72 w-full overflow-y-auto rounded-2xl border border-border bg-popover p-1.5 shadow-xl animate-scale-in">
-                {results.map((s) => (
+        {/* PASO 1 — Destino */}
+        {!destination && (
+          <>
+            <div>
+              <label className="mb-2 block px-1 text-lg font-bold tracking-tight">
+                🚋 ¿A dónde quieres ir?
+              </label>
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Playa, universidad, Benidorm…"
+                  className="w-full rounded-2xl border border-border bg-background py-4 pl-11 pr-10 text-base shadow-sm outline-none transition focus:border-primary/60 focus:ring-2 focus:ring-primary/20"
+                />
+                {query && (
                   <button
-                    key={s.stop_id}
-                    onClick={() => { setDestination(s); setQuery(""); setResults([]); }}
-                    className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-sm hover:bg-accent/40"
+                    type="button"
+                    onClick={() => { setQuery(""); setResults([]); }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground hover:bg-accent/40"
+                    aria-label="Limpiar"
                   >
-                    <MapPin className="h-4 w-4 text-primary" />
-                    <span className="truncate">{s.stop_name}</span>
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+                {results.length > 0 && (
+                  <div className="absolute z-30 mt-1.5 max-h-72 w-full overflow-y-auto rounded-2xl border border-border bg-popover p-1.5 shadow-xl animate-scale-in">
+                    {results.map((s) => (
+                      <button
+                        key={s.stop_id}
+                        onClick={() => { setDestination(s); setQuery(""); setResults([]); }}
+                        className="flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-sm hover:bg-accent/40"
+                      >
+                        <MapPin className="h-4 w-4 text-primary" />
+                        <span className="truncate">{s.stop_name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Chips destino populares */}
+              <div className="-mx-1 mt-3 flex gap-1.5 overflow-x-auto px-1">
+                {POPULAR.map((p) => (
+                  <button
+                    key={p.label}
+                    type="button"
+                    onClick={() => pickDestinationByQuery(p.q)}
+                    className="flex flex-none items-center gap-1.5 rounded-full border border-border bg-background/80 px-3 py-2 text-xs font-medium shadow-sm transition hover:border-primary/40 hover:bg-accent/30 active:scale-95"
+                  >
+                    <span aria-hidden>{p.emoji}</span> {p.label}
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Favoritos como atajo destino */}
+            {favorites.length > 0 && (
+              <div>
+                <p className="mb-1.5 px-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Tus paradas guardadas
+                </p>
+                <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
+                  {favorites.map((f) => (
+                    <button
+                      key={f.stop_id}
+                      type="button"
+                      onClick={() => setDestination(f)}
+                      className="flex flex-none items-center gap-1.5 rounded-2xl border border-border bg-background/80 px-3 py-1.5 text-xs font-medium shadow-sm transition hover:border-primary/40 hover:bg-accent/30 active:scale-95"
+                    >
+                      <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                      <span className="max-w-[8rem] truncate">{f.stop_name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
-          </div>
+          </>
+        )}
 
-          {/* Chips destino */}
-          <div className="-mx-1 mt-2 flex gap-1.5 overflow-x-auto px-1">
-            {POPULAR.map((p) => (
-              <button
-                key={p.label}
-                type="button"
-                onClick={() => pickDestinationByQuery(p.q)}
-                className="flex flex-none items-center gap-1.5 rounded-full border border-border bg-background/80 px-3 py-1.5 text-xs font-medium shadow-sm transition hover:border-primary/40 hover:bg-accent/30 active:scale-95"
-              >
-                <span aria-hidden>{p.emoji}</span> {p.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* PASO 2 — Confirmar origen (cuando hay destino pero no confirmado) */}
+        {destination && !originConfirmed && (
+          <OriginStep
+            destination={destination}
+            suggested={origin}
+            loading={loadingValid}
+            validGroups={validGroups ?? []}
+            showPicker={showPicker}
+            geoStatus={geo.status}
+            onUseGeo={useGeolocationOrigin}
+            onConfirm={confirmOrigin}
+            onOpenPicker={() => setShowPicker(true)}
+            onClosePicker={() => setShowPicker(false)}
+            onChangeDestination={resetFlow}
+          />
+        )}
 
-        {/* Resultado del viaje */}
-        {destination ? (
+        {/* PASO 4 — Plan */}
+        {destination && originConfirmed && (
           <TripPlanCard
             origin={origin}
             destination={destination}
             options={planOptions}
             loading={loadingPlan}
-            onClear={() => setDestination(null)}
-            onSwapToDestination={() => {
-              if (!destination) return;
-              swapOrigin(destination);
-              setDestination(null);
-            }}
+            onClear={resetFlow}
+            onChangeOrigin={() => { setOriginConfirmed(false); setShowPicker(true); }}
           />
-        ) : (
-          /* Estado origen + próxima salida */
-          <div className="rounded-2xl border border-border bg-gradient-to-br from-primary/5 to-accent/5 p-4 shadow-inner">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 rounded-full bg-primary/15 p-2">
-                <MapPin className="h-4 w-4 text-primary" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Tu estación más cercana</p>
-                <p className="truncate text-base font-semibold">{origin?.stop_name ?? "Detectando…"}</p>
-                {geo.status !== "ready" && (
-                  <button
-                    type="button"
-                    onClick={requestGeo}
-                    className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
+        )}
+
+        {/* Explorar líneas (secundario, colapsado) */}
+        <details className="rounded-2xl border border-border/60 bg-background/40 group">
+          <summary className="flex cursor-pointer list-none items-center justify-between px-3.5 py-2.5">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Explorar líneas y mapa
+            </span>
+            <ChevronDown className="h-4 w-4 text-muted-foreground transition group-open:rotate-180" />
+          </summary>
+          <div className="grid grid-cols-2 gap-1.5 p-2 pt-0">
+            {lines.map((l) => {
+              const bg = ensureHash(l.color) ?? "var(--primary)";
+              const fg = ensureHash(l.text_color) ?? "#FFFFFF";
+              return (
+                <Link
+                  key={l.id}
+                  to="/tram/linea/$lineId"
+                  params={{ lineId: l.id }}
+                  className="flex items-center gap-2 rounded-xl border border-border bg-background/80 p-2 text-xs shadow-sm transition hover:border-primary/40 hover:bg-accent/20 active:scale-95"
+                >
+                  <span
+                    className="inline-flex h-6 min-w-[2rem] items-center justify-center rounded-md px-1.5 text-[11px] font-bold"
+                    style={{ background: bg, color: fg }}
                   >
-                    <Locate className="h-3 w-3" /> Usar mi ubicación
-                  </button>
-                )}
-              </div>
-              {origin && (
+                    {l.short_name}
+                  </span>
+                  <span className="truncate text-[11px] text-muted-foreground">{l.long_name}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </details>
+      </div>
+    </div>
+  );
+}
+
+// ---------- Paso 2: confirmar origen ----------
+
+function OriginStep({
+  destination, suggested, loading, validGroups, showPicker, geoStatus,
+  onUseGeo, onConfirm, onOpenPicker, onClosePicker, onChangeDestination,
+}: {
+  destination: Station;
+  suggested: Station | null;
+  loading: boolean;
+  validGroups: ValidGroup[];
+  showPicker: boolean;
+  geoStatus: string;
+  onUseGeo: () => void;
+  onConfirm: (s: Station) => void;
+  onOpenPicker: () => void;
+  onClosePicker: () => void;
+  onChangeDestination: () => void;
+}) {
+  return (
+    <div className="space-y-3 animate-fade-in">
+      {/* Cabecera destino */}
+      <div className="flex items-center gap-2 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 to-accent/10 px-3 py-2.5 shadow-sm">
+        <div className="rounded-full bg-primary/15 p-1.5">
+          <span aria-hidden>🎯</span>
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Destino</p>
+          <p className="truncate text-sm font-semibold">{destination.stop_name}</p>
+        </div>
+        <button
+          type="button"
+          onClick={onChangeDestination}
+          className="rounded-full p-1.5 text-muted-foreground hover:bg-accent/40"
+          aria-label="Cambiar destino"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      <div className="rounded-2xl border border-border bg-background/70 p-4 shadow-inner">
+        <p className="text-base font-semibold">📍 ¿Desde qué estación sales?</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          Solo te mostramos paradas desde las que puedes llegar.
+        </p>
+
+        {loading ? (
+          <div className="mt-3 space-y-2">
+            <div className="h-12 animate-pulse rounded-xl bg-muted" />
+            <div className="h-10 animate-pulse rounded-xl bg-muted" />
+          </div>
+        ) : validGroups.length === 0 ? (
+          <div className="mt-3 rounded-xl bg-muted/40 p-3 text-center text-xs text-muted-foreground">
+            No hay líneas TRAM directas hasta {destination.stop_name}.
+          </div>
+        ) : (
+          <>
+            {/* Sugerencia */}
+            {suggested && (
+              <div className="mt-3 rounded-xl border border-primary/30 bg-primary/5 p-3">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  {geoStatus === "ready" ? "Tu estación más cercana" : "Sugerencia"}
+                </p>
+                <p className="mt-0.5 text-base font-semibold">{suggested.stop_name}</p>
                 <button
                   type="button"
-                  onClick={toggleFavOrigin}
-                  aria-label={isFavOrigin ? "Quitar favorito" : "Añadir favorito"}
-                  className="rounded-full p-1.5 transition hover:bg-accent/40 active:scale-90"
+                  onClick={() => onConfirm(suggested)}
+                  className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground shadow transition active:scale-95"
                 >
-                  <Star className={`h-4 w-4 ${isFavOrigin ? "fill-amber-400 text-amber-400" : "text-muted-foreground"}`} />
+                  <Check className="h-4 w-4" /> Salir desde aquí
                 </button>
-              )}
-            </div>
-
-            <div className="mt-3 rounded-xl border border-border/60 bg-background/70 p-3">
-              <p className="text-[11px] uppercase tracking-wider text-muted-foreground">Próxima salida</p>
-              {loadingDep ? (
-                <div className="mt-1 flex items-center gap-2">
-                  <div className="h-7 w-12 animate-pulse rounded-md bg-muted" />
-                  <div className="h-4 flex-1 animate-pulse rounded bg-muted" />
-                </div>
-              ) : nextDep ? (
-                <div className="mt-1 flex items-center gap-2">
-                  <span
-                    className="inline-flex h-7 min-w-[2.5rem] items-center justify-center rounded-md px-1.5 text-xs font-bold text-white shadow-sm"
-                    style={{ background: ensureHash(nextDep.line_color) ?? "var(--primary)" }}
-                  >
-                    {nextDep.line_short_name ?? "TRAM"}
-                  </span>
-                  <span className="flex-1 truncate text-sm">{nextDep.headsign ?? nextDep.line_long_name}</span>
-                  <span className="text-right">
-                    {nextDepMin !== null ? (
-                      <>
-                        <span className="text-xl font-bold leading-none text-primary">{nextDepMin}</span>
-                        <span className="ml-0.5 text-[10px] uppercase text-muted-foreground">min</span>
-                      </>
-                    ) : (
-                      <span className="text-xs tabular-nums text-muted-foreground">{nextDep.departure_time?.slice(0, 5)}</span>
-                    )}
-                  </span>
-                </div>
-              ) : (
-                <p className="mt-1 text-xs text-muted-foreground">Sin salidas próximas 🌙</p>
-              )}
-
-              {departures.length > 1 && (
-                <ul className="mt-2 space-y-1 border-t border-border/60 pt-2">
-                  {departures.slice(1, 4).map((d, i) => {
-                    const m = minutesUntil(d.departure_time);
-                    return (
-                      <li key={`${d.trip_id}-${i}`} className="flex items-center gap-2 text-xs">
-                        <span
-                          className="inline-flex h-5 min-w-[1.75rem] items-center justify-center rounded px-1 text-[10px] font-bold text-white"
-                          style={{ background: ensureHash(d.line_color) ?? "var(--primary)" }}
-                        >
-                          {d.line_short_name ?? "—"}
-                        </span>
-                        <span className="flex-1 truncate text-muted-foreground">{d.headsign}</span>
-                        <span className="tabular-nums text-muted-foreground">{m !== null ? `${m} min` : d.departure_time?.slice(0, 5)}</span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
+              </div>
+            )}
 
             <div className="mt-2 flex flex-wrap gap-1.5">
+              {geoStatus !== "ready" && (
+                <button
+                  type="button"
+                  onClick={onUseGeo}
+                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border bg-background px-3 py-2 text-xs font-medium hover:bg-accent/40"
+                >
+                  <Locate className="h-3.5 w-3.5 text-primary" /> Usar mi ubicación
+                </button>
+              )}
               <button
                 type="button"
-                onClick={openMap}
-                className="inline-flex items-center gap-1 rounded-full border border-border bg-background/80 px-2.5 py-1 text-[11px] font-medium hover:bg-accent/40"
+                onClick={onOpenPicker}
+                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border bg-background px-3 py-2 text-xs font-medium hover:bg-accent/40"
               >
-                <MapIcon className="h-3 w-3 text-primary" /> Mapa
+                <Navigation className="h-3.5 w-3.5 text-primary" /> Elegir otra estación
               </button>
-              <Link
-                to="/tram/favoritos"
-                className="inline-flex items-center gap-1 rounded-full border border-border bg-background/80 px-2.5 py-1 text-[11px] font-medium hover:bg-accent/40"
-              >
-                <Star className="h-3 w-3 text-primary" /> Favoritos
-              </Link>
-              <Link
-                to="/tram/estaciones"
-                className="inline-flex items-center gap-1 rounded-full border border-border bg-background/80 px-2.5 py-1 text-[11px] font-medium hover:bg-accent/40"
-              >
-                <Navigation className="h-3 w-3 text-primary" /> Cambiar origen
-              </Link>
             </div>
-          </div>
+          </>
         )}
+      </div>
 
-        {/* Favoritos rápidos */}
-        {favorites.length > 0 && !destination && (
-          <div>
-            <p className="mb-1.5 px-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Tus favoritos
-            </p>
-            <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
-              {favorites.map((f) => (
-                <button
-                  key={f.stop_id}
-                  type="button"
-                  onClick={() => swapOrigin(f)}
-                  className="flex flex-none items-center gap-1.5 rounded-2xl border border-border bg-background/80 px-3 py-1.5 text-xs font-medium shadow-sm transition hover:border-primary/40 hover:bg-accent/30 active:scale-95"
-                >
-                  <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                  <span className="max-w-[8rem] truncate">{f.stop_name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+      {/* Picker agrupado por línea */}
+      {showPicker && (
+        <StationPicker
+          groups={validGroups}
+          destination={destination}
+          onPick={onConfirm}
+          onClose={onClosePicker}
+        />
+      )}
+    </div>
+  );
+}
 
-        {/* Explorar líneas (colapsable, secundario) */}
-        <div className="rounded-2xl border border-border/60 bg-background/40">
-          <button
-            type="button"
-            onClick={() => setShowLines((v) => !v)}
-            className="flex w-full items-center justify-between px-3.5 py-2.5 text-left"
-          >
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Explorar líneas
-            </span>
-            {showLines ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
-          </button>
-          {showLines && (
-            <div className="grid grid-cols-2 gap-1.5 p-2 pt-0">
-              {displayLines.map((l) => {
-                const bg = ensureHash(l.color) ?? "var(--primary)";
-                const fg = ensureHash(l.text_color) ?? "#FFFFFF";
-                return (
-                  <Link
-                    key={l.id}
-                    to="/tram/linea/$lineId"
-                    params={{ lineId: l.id }}
-                    className="flex items-center gap-2 rounded-xl border border-border bg-background/80 p-2 text-xs shadow-sm transition hover:border-primary/40 hover:bg-accent/20 active:scale-95"
-                  >
-                    <span
-                      className="inline-flex h-6 min-w-[2rem] items-center justify-center rounded-md px-1.5 text-[11px] font-bold"
-                      style={{ background: bg, color: fg }}
-                    >
-                      {l.short_name}
-                    </span>
-                    <span className="truncate text-[11px] text-muted-foreground">{l.long_name}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
+// ---------- Picker de estaciones origen agrupado por línea ----------
+
+function StationPicker({
+  groups, destination, onPick, onClose,
+}: {
+  groups: ValidGroup[];
+  destination: Station;
+  onPick: (s: Station) => void;
+  onClose: () => void;
+}) {
+  const [filter, setFilter] = useState("");
+  const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
+  const f = norm(filter.trim());
+
+  return (
+    <div className="rounded-2xl border border-border bg-background shadow-lg animate-scale-in">
+      <div className="flex items-center gap-2 border-b border-border/60 px-3 py-2">
+        <span className="text-xs font-semibold">Elige tu estación de origen</span>
+        <button
+          type="button"
+          onClick={onClose}
+          className="ml-auto rounded-full p-1 text-muted-foreground hover:bg-accent/40"
+          aria-label="Cerrar"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      <div className="p-2">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            placeholder="Filtrar paradas…"
+            className="w-full rounded-xl border border-border bg-background py-2 pl-9 pr-3 text-xs outline-none focus:border-primary/60 focus:ring-1 focus:ring-primary/20"
+          />
         </div>
+      </div>
+      <div className="max-h-80 space-y-2 overflow-y-auto px-2 pb-2">
+        {groups.map((g) => {
+          const bg = ensureHash(g.line_color) ?? "var(--primary)";
+          const fg = ensureHash(g.line_text_color) ?? "#FFFFFF";
+          const stops = g.stops.filter((s) => !f || norm(s.stop_name).includes(f));
+          if (!stops.length) return null;
+          return (
+            <div key={`${g.route_id}|${g.direction_id}`} className="rounded-xl border border-border/60 bg-background/60">
+              <div className="flex items-center gap-2 border-b border-border/40 px-2.5 py-1.5">
+                <span
+                  className="inline-flex h-5 min-w-[1.75rem] items-center justify-center rounded px-1.5 text-[10px] font-bold"
+                  style={{ background: bg, color: fg }}
+                >
+                  {g.line_short_name ?? "—"}
+                </span>
+                <span className="truncate text-[11px] text-muted-foreground">
+                  → {g.headsign ?? destination.stop_name}
+                </span>
+              </div>
+              <ul>
+                {stops.map((s) => (
+                  <li key={s.stop_id}>
+                    <button
+                      type="button"
+                      onClick={() => onPick(s)}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent/30"
+                    >
+                      <span className="h-1.5 w-1.5 rounded-full" style={{ background: bg }} />
+                      <span className="truncate">{s.stop_name}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -473,14 +574,14 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
 // ---------- Tarjeta de viaje ----------
 
 function TripPlanCard({
-  origin, destination, options, loading, onClear, onSwapToDestination,
+  origin, destination, options, loading, onClear, onChangeOrigin,
 }: {
   origin: Station | null;
   destination: Station;
   options: PlanOption[] | null;
   loading: boolean;
   onClear: () => void;
-  onSwapToDestination: () => void;
+  onChangeOrigin: () => void;
 }) {
   const best = options?.[0];
   const more = (options ?? []).slice(1);
@@ -489,7 +590,6 @@ function TripPlanCard({
 
   return (
     <div className="overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 via-background to-accent/10 shadow-md animate-scale-in">
-      {/* Cabecera ruta */}
       <div className="flex items-center gap-2 border-b border-border/40 bg-background/60 px-3 py-2.5">
         <div className="min-w-0 flex-1">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Desde</p>
@@ -503,14 +603,13 @@ function TripPlanCard({
         <button
           type="button"
           onClick={onClear}
-          aria-label="Cerrar"
+          aria-label="Nuevo viaje"
           className="ml-1 rounded-full p-1.5 text-muted-foreground hover:bg-accent/40"
         >
           <X className="h-3.5 w-3.5" />
         </button>
       </div>
 
-      {/* Mejor opción */}
       <div className="p-4">
         {loading ? (
           <div className="space-y-3">
@@ -521,9 +620,14 @@ function TripPlanCard({
         ) : !best ? (
           <div className="py-2 text-center">
             <p className="text-sm font-medium">No hay TRAM directo ahora mismo.</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Puede que necesites combinar con otra línea o esperar al próximo servicio.
-            </p>
+            <p className="mt-1 text-xs text-muted-foreground">Prueba con otra estación origen.</p>
+            <button
+              type="button"
+              onClick={onChangeOrigin}
+              className="mt-3 inline-flex items-center gap-1 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium hover:bg-accent/40"
+            >
+              Cambiar origen
+            </button>
           </div>
         ) : (
           <>
@@ -575,7 +679,6 @@ function TripPlanCard({
               </div>
             </div>
 
-            {/* Conexiones genéricas (sugeridas) */}
             <div className="mt-3">
               <p className="mb-1 text-[10px] uppercase tracking-wider text-muted-foreground">Conexiones en destino</p>
               <div className="flex flex-wrap gap-1.5">
@@ -593,7 +696,6 @@ function TripPlanCard({
               </div>
             </div>
 
-            {/* Otras opciones */}
             {more.length > 0 && (
               <div className="mt-4">
                 <p className="mb-1 text-[10px] uppercase tracking-wider text-muted-foreground">Más salidas</p>
@@ -609,9 +711,7 @@ function TripPlanCard({
                           {o.line_short_name ?? "TRAM"}
                         </span>
                         <span className="flex-1 truncate">Sale {o.depart_time} · {o.duration_min} min</span>
-                        {m !== null && (
-                          <span className="font-semibold text-primary">{m} min</span>
-                        )}
+                        {m !== null && <span className="font-semibold text-primary">{m} min</span>}
                       </li>
                     );
                   })}
@@ -622,10 +722,10 @@ function TripPlanCard({
             <div className="mt-3 flex flex-wrap gap-1.5">
               <button
                 type="button"
-                onClick={onSwapToDestination}
+                onClick={onChangeOrigin}
                 className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2.5 py-1 text-[11px] font-medium hover:bg-accent/40"
               >
-                <Clock className="h-3 w-3 text-primary" /> Estoy ya allí
+                <Navigation className="h-3 w-3 text-primary" /> Cambiar origen
               </button>
               <button
                 type="button"
@@ -641,3 +741,6 @@ function TripPlanCard({
     </div>
   );
 }
+
+// Pequeña compatibilidad
+export const __unused = { ChevronUp };
