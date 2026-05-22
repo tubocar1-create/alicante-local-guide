@@ -1273,7 +1273,7 @@ function localResolve(
       };
     }
   }
-  if (currentDomain === "tram_pick") {
+  if (currentDomain === "tram_pick" && !explicitlySwitchesAwayFromTram(query)) {
     const tramHit = matchTramQuery(`tram ${query}`);
     if (tramHit) {
       const params = new URLSearchParams();
@@ -1385,7 +1385,7 @@ function localResolve(
     }
     // 1.ter) En el dominio tram_pick aceptamos paradas aunque el usuario
     // no diga la palabra "tram" (ya está en el flujo).
-    if (currentDomain === "tram_pick") {
+  if (currentDomain === "tram_pick" && !explicitlySwitchesAwayFromTram(query)) {
       const tramHit2 = matchTramQuery(`tram ${query}`);
       if (tramHit2) {
         const params = new URLSearchParams();
