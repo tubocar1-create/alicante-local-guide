@@ -800,6 +800,42 @@ function domainFromPath(pathname: string): string | null {
   return domain?.id ?? null;
 }
 
+const ACTIVE_DOMAIN_KEY = "va:active-domain";
+const ACTIVE_DOMAIN_TS_KEY = "va:active-domain-ts";
+const ACTIVE_DOMAIN_TTL_MS = 10 * 60 * 1000;
+
+function readStoredActiveDomain(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const domain = window.sessionStorage.getItem(ACTIVE_DOMAIN_KEY);
+    const ts = Number(window.sessionStorage.getItem(ACTIVE_DOMAIN_TS_KEY) ?? "0");
+    if (!domain || !DOMAINS.some((d) => d.id === domain)) return null;
+    if (ts && Date.now() - ts > ACTIVE_DOMAIN_TTL_MS) {
+      window.sessionStorage.removeItem(ACTIVE_DOMAIN_KEY);
+      window.sessionStorage.removeItem(ACTIVE_DOMAIN_TS_KEY);
+      return null;
+    }
+    return domain;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredActiveDomain(domain: string | null) {
+  if (typeof window === "undefined") return;
+  try {
+    if (!domain) {
+      window.sessionStorage.removeItem(ACTIVE_DOMAIN_KEY);
+      window.sessionStorage.removeItem(ACTIVE_DOMAIN_TS_KEY);
+      return;
+    }
+    window.sessionStorage.setItem(ACTIVE_DOMAIN_KEY, domain);
+    window.sessionStorage.setItem(ACTIVE_DOMAIN_TS_KEY, String(Date.now()));
+  } catch {
+    /* noop */
+  }
+}
+
 // ─── DETECCIÓN DE DICOTOMÍA DE CONTEXTO ───────────────────────────────
 // Cuando la frase del usuario mezcla un verbo de movimiento ("ir a",
 // "voy a", "llévame"...) con otro dominio (comer/playas/dormir/...) o
