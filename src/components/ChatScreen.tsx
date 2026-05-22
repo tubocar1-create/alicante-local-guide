@@ -606,7 +606,7 @@ export function ChatScreen() {
       : false;
     let effectiveMode: "transit" | null;
     if (opts?.mode !== undefined) {
-      effectiveMode = opts.mode === "guide" ? null : opts.mode;
+      effectiveMode = opts.mode === "transit" ? "transit" : null;
     } else {
       effectiveMode = mode;
       if (TRANSIT_TRIGGER_RE.test(trimmed)) {
