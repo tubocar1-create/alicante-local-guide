@@ -224,29 +224,15 @@ function AdminHome() {
 
 function AdminDashboard() {
   const fetchUsers = useServerFn(listAdminUsers);
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<Awaited<ReturnType<typeof listAdminUsers>> | null>(
-    null,
-  );
-  const [err, setErr] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancel = false;
-    (async () => {
-      try {
-        setLoading(true);
-        const res = await fetchUsers({ data: { pin: ADMIN_PIN } });
-        if (!cancel) setData(res);
-      } catch (e) {
-        if (!cancel) setErr(e instanceof Error ? e.message : "Error");
-      } finally {
-        if (!cancel) setLoading(false);
-      }
-    })();
-    return () => {
-      cancel = true;
-    };
-  }, [fetchUsers]);
+  const { data, error, isLoading, dataUpdatedAt, refetch, isFetching } = useQuery({
+    queryKey: ["admin-users"],
+    queryFn: () => fetchUsers({ data: { pin: ADMIN_PIN } }),
+    refetchInterval: 30 * 60 * 1000, // cada 30 minutos
+    refetchOnWindowFocus: true,
+    staleTime: 30 * 60 * 1000,
+  });
+  const loading = isLoading;
+  const err = error instanceof Error ? error.message : null;
 
   const logout = () => {
     sessionStorage.removeItem(PIN_KEY);
