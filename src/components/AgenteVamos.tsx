@@ -1254,6 +1254,47 @@ function localResolve(
 ): LocalResult {
   const query = normalizeSpeech(text);
 
+  // Dominio activo = prioridad máxima sobre entidades/keywords aisladas.
+  // Si el agente acaba de preguntar por TRAM/transporte, respuestas cortas
+  // como “Benidorm” se resuelven como destino TRAM antes de llegar a turismo.
+  if (currentDomain === "transporte") {
+    const transportDomain = DOMAINS.find((x) => x.id === "transporte");
+    const tramFollowup = transportDomain ? matchFollowup(query, transportDomain) : null;
+    if (tramFollowup?.path === "action:tram-pick") {
+      const tPick = DOMAINS.find((x) => x.id === "tram_pick");
+      return {
+        reply: tPick?.question ?? "¿Hacia qué estación del TRAM quieres ir?",
+        path: "/tram",
+        audio: "bus",
+        pendingDomain: "tram_pick",
+      };
+    }
+  }
+  if (currentDomain === "tram_pick") {
+    const tramHit = matchTramQuery(`tram ${query}`);
+    if (tramHit) {
+      const params = new URLSearchParams();
+      params.set("tram_dest", tramHit.destId);
+      if (tramHit.originId) params.set("tram_origin", tramHit.originId);
+      if (typeof window !== "undefined" && !tramHit.originId) {
+        try {
+          window.sessionStorage.setItem("tram:pending-dest-id", tramHit.destId);
+          window.sessionStorage.setItem("tram:pending-dest-name", tramHit.destName);
+          window.sessionStorage.removeItem("tram:suggested-origin-id");
+          window.sessionStorage.removeItem("tram:suggested-origin-name");
+        } catch { /* noop */ }
+      }
+      return {
+        reply: tramHit.originId
+          ? `¡Voy! TRAM de ${tramHit.originName} a ${tramHit.destName}.`
+          : `🎯 Destino: ${tramHit.destName}. Calculando la parada más cercana…`,
+        path: `/tram?${params.toString()}`,
+        audio: "bus",
+        pendingDomain: tramHit.originId ? null : "tram_origin_confirm",
+      };
+    }
+  }
+
   // 0) HARD-BLOCK SANITARIO — gana sobre todo lo demás excepto el follow-up
   //    dentro del propio dominio salud (donde el usuario ya eligió opción).
   if (hasHealthHardBlock(query) && currentDomain !== "salud") {
