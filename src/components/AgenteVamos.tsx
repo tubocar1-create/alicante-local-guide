@@ -490,10 +490,9 @@ const DOMAINS: DomainSpec[] = [
       "que puedo hacer", "qué puedo hacer", "diversion", "diversión", "divertirme",
       "plan", "planes", "que ver", "qué ver", "que visitar", "qué visitar",
       "ocio", "tiempo libre", "actividades", "panorama",
-      // sub-temas que activan ocio
-      "cine", "pelicula", "películas", "peliculas", "cartelera",
-      "concierto", "conciertos", "festival", "festivales",
-      "teatro", "teatros", "obra", "musical", "musicales",
+      // sub-temas genéricos que activan el hub ocio (no específicos: cine, teatro,
+      // conciertos y fiestas tienen su propio intent directo arriba y no deben
+      // pasar por la pregunta de desambiguación)
       "exposicion", "exposición", "museo", "museos", "cultura",
     ],
     question: "¿Te apetece cine, conciertos, teatro o fiestas?",
