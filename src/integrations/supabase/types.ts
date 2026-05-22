@@ -1903,6 +1903,346 @@ export type Database = {
         }
         Relationships: []
       }
+      tram_agencies: {
+        Row: {
+          agency_email: string | null
+          agency_id: string
+          agency_lang: string | null
+          agency_name: string
+          agency_phone: string | null
+          agency_timezone: string | null
+          agency_url: string | null
+        }
+        Insert: {
+          agency_email?: string | null
+          agency_id: string
+          agency_lang?: string | null
+          agency_name: string
+          agency_phone?: string | null
+          agency_timezone?: string | null
+          agency_url?: string | null
+        }
+        Update: {
+          agency_email?: string | null
+          agency_id?: string
+          agency_lang?: string | null
+          agency_name?: string
+          agency_phone?: string | null
+          agency_timezone?: string | null
+          agency_url?: string | null
+        }
+        Relationships: []
+      }
+      tram_calendar: {
+        Row: {
+          end_date: string
+          friday: boolean
+          monday: boolean
+          saturday: boolean
+          service_id: string
+          start_date: string
+          sunday: boolean
+          thursday: boolean
+          tuesday: boolean
+          wednesday: boolean
+        }
+        Insert: {
+          end_date: string
+          friday?: boolean
+          monday?: boolean
+          saturday?: boolean
+          service_id: string
+          start_date: string
+          sunday?: boolean
+          thursday?: boolean
+          tuesday?: boolean
+          wednesday?: boolean
+        }
+        Update: {
+          end_date?: string
+          friday?: boolean
+          monday?: boolean
+          saturday?: boolean
+          service_id?: string
+          start_date?: string
+          sunday?: boolean
+          thursday?: boolean
+          tuesday?: boolean
+          wednesday?: boolean
+        }
+        Relationships: []
+      }
+      tram_calendar_dates: {
+        Row: {
+          date: string
+          exception_type: number
+          service_id: string
+        }
+        Insert: {
+          date: string
+          exception_type: number
+          service_id: string
+        }
+        Update: {
+          date?: string
+          exception_type?: number
+          service_id?: string
+        }
+        Relationships: []
+      }
+      tram_feed_versions: {
+        Row: {
+          applied_at: string | null
+          feed_end_date: string | null
+          feed_start_date: string | null
+          fetched_at: string
+          id: string
+          notes: string | null
+          sha1: string | null
+          size_bytes: number | null
+          source_url: string
+        }
+        Insert: {
+          applied_at?: string | null
+          feed_end_date?: string | null
+          feed_start_date?: string | null
+          fetched_at?: string
+          id?: string
+          notes?: string | null
+          sha1?: string | null
+          size_bytes?: number | null
+          source_url: string
+        }
+        Update: {
+          applied_at?: string | null
+          feed_end_date?: string | null
+          feed_start_date?: string | null
+          fetched_at?: string
+          id?: string
+          notes?: string | null
+          sha1?: string | null
+          size_bytes?: number | null
+          source_url?: string
+        }
+        Relationships: []
+      }
+      tram_routes: {
+        Row: {
+          agency_id: string | null
+          route_color: string | null
+          route_desc: string | null
+          route_id: string
+          route_long_name: string | null
+          route_short_name: string | null
+          route_text_color: string | null
+          route_type: number | null
+          route_url: string | null
+          sort_order: number | null
+        }
+        Insert: {
+          agency_id?: string | null
+          route_color?: string | null
+          route_desc?: string | null
+          route_id: string
+          route_long_name?: string | null
+          route_short_name?: string | null
+          route_text_color?: string | null
+          route_type?: number | null
+          route_url?: string | null
+          sort_order?: number | null
+        }
+        Update: {
+          agency_id?: string | null
+          route_color?: string | null
+          route_desc?: string | null
+          route_id?: string
+          route_long_name?: string | null
+          route_short_name?: string | null
+          route_text_color?: string | null
+          route_type?: number | null
+          route_url?: string | null
+          sort_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tram_routes_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "tram_agencies"
+            referencedColumns: ["agency_id"]
+          },
+        ]
+      }
+      tram_shapes: {
+        Row: {
+          shape_dist_traveled: number | null
+          shape_id: string
+          shape_pt_lat: number
+          shape_pt_lng: number
+          shape_pt_sequence: number
+        }
+        Insert: {
+          shape_dist_traveled?: number | null
+          shape_id: string
+          shape_pt_lat: number
+          shape_pt_lng: number
+          shape_pt_sequence: number
+        }
+        Update: {
+          shape_dist_traveled?: number | null
+          shape_id?: string
+          shape_pt_lat?: number
+          shape_pt_lng?: number
+          shape_pt_sequence?: number
+        }
+        Relationships: []
+      }
+      tram_stop_times: {
+        Row: {
+          arrival_seconds: number | null
+          departure_seconds: number | null
+          drop_off_type: number | null
+          pickup_type: number | null
+          shape_dist_traveled: number | null
+          stop_headsign: string | null
+          stop_id: string
+          stop_sequence: number
+          timepoint: number | null
+          trip_id: string
+        }
+        Insert: {
+          arrival_seconds?: number | null
+          departure_seconds?: number | null
+          drop_off_type?: number | null
+          pickup_type?: number | null
+          shape_dist_traveled?: number | null
+          stop_headsign?: string | null
+          stop_id: string
+          stop_sequence: number
+          timepoint?: number | null
+          trip_id: string
+        }
+        Update: {
+          arrival_seconds?: number | null
+          departure_seconds?: number | null
+          drop_off_type?: number | null
+          pickup_type?: number | null
+          shape_dist_traveled?: number | null
+          stop_headsign?: string | null
+          stop_id?: string
+          stop_sequence?: number
+          timepoint?: number | null
+          trip_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tram_stop_times_stop_id_fkey"
+            columns: ["stop_id"]
+            isOneToOne: false
+            referencedRelation: "tram_stops"
+            referencedColumns: ["stop_id"]
+          },
+          {
+            foreignKeyName: "tram_stop_times_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "tram_trips"
+            referencedColumns: ["trip_id"]
+          },
+        ]
+      }
+      tram_stops: {
+        Row: {
+          lat: number | null
+          lng: number | null
+          location_type: number | null
+          parent_station: string | null
+          platform_code: string | null
+          stop_code: string | null
+          stop_desc: string | null
+          stop_id: string
+          stop_name: string
+          stop_url: string | null
+          wheelchair_boarding: number | null
+          zone_id: string | null
+        }
+        Insert: {
+          lat?: number | null
+          lng?: number | null
+          location_type?: number | null
+          parent_station?: string | null
+          platform_code?: string | null
+          stop_code?: string | null
+          stop_desc?: string | null
+          stop_id: string
+          stop_name: string
+          stop_url?: string | null
+          wheelchair_boarding?: number | null
+          zone_id?: string | null
+        }
+        Update: {
+          lat?: number | null
+          lng?: number | null
+          location_type?: number | null
+          parent_station?: string | null
+          platform_code?: string | null
+          stop_code?: string | null
+          stop_desc?: string | null
+          stop_id?: string
+          stop_name?: string
+          stop_url?: string | null
+          wheelchair_boarding?: number | null
+          zone_id?: string | null
+        }
+        Relationships: []
+      }
+      tram_trips: {
+        Row: {
+          bikes_allowed: number | null
+          block_id: string | null
+          direction_id: number | null
+          route_id: string
+          service_id: string
+          shape_id: string | null
+          trip_headsign: string | null
+          trip_id: string
+          trip_short_name: string | null
+          wheelchair_accessible: number | null
+        }
+        Insert: {
+          bikes_allowed?: number | null
+          block_id?: string | null
+          direction_id?: number | null
+          route_id: string
+          service_id: string
+          shape_id?: string | null
+          trip_headsign?: string | null
+          trip_id: string
+          trip_short_name?: string | null
+          wheelchair_accessible?: number | null
+        }
+        Update: {
+          bikes_allowed?: number | null
+          block_id?: string | null
+          direction_id?: number | null
+          route_id?: string
+          service_id?: string
+          shape_id?: string | null
+          trip_headsign?: string | null
+          trip_id?: string
+          trip_short_name?: string | null
+          wheelchair_accessible?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tram_trips_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "tram_routes"
+            referencedColumns: ["route_id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
