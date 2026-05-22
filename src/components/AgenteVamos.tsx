@@ -1208,6 +1208,19 @@ function localResolve(
     };
   }
 
+  // 0.7) DICOTOMÍA DE CONTEXTO — frase con verbo de movimiento + otro
+  //      dominio o entidad nombrada → repreguntamos en vez de adivinar.
+  //      Solo si el usuario NO está dentro de un follow-up activo.
+  if (!currentDomain) {
+    const ambiguity = detectAmbiguity(query);
+    if (ambiguity) {
+      logDecision({
+        input: text, domain: null, confidence: 0.4,
+        uiAction: "askClarification", result: ambiguity,
+      });
+      return ambiguity;
+    }
+  }
 
   // 1) Follow-up dentro de un dominio activo: resolvemos sub-destino.
   if (currentDomain) {
