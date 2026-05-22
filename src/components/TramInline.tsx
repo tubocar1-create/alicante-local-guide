@@ -336,17 +336,55 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
 
         {/* Accesos rápidos */}
         <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
-          {quickAccess.map(({ icon: Icon, label }) => (
+          {quickAccess.map(({ icon: Icon, label, onClick, active }) => (
             <button
               key={label}
               type="button"
-              className="flex flex-none items-center gap-1.5 rounded-full border border-border bg-background/80 px-3 py-1.5 text-xs font-medium shadow-sm transition hover:bg-accent/40 active:scale-95"
+              onClick={onClick}
+              className={`flex flex-none items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium shadow-sm transition active:scale-95 ${
+                active ? "border-primary bg-primary/10" : "border-border bg-background/80 hover:bg-accent/40"
+              }`}
             >
               <Icon className="h-3.5 w-3.5 text-primary" />
               {label}
             </button>
           ))}
         </div>
+
+        {/* Favoritos */}
+        {showFavorites && (
+          <div className="rounded-2xl border border-border bg-background/60 p-3 animate-fade-in">
+            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Tus paradas favoritas</p>
+            {favorites.length === 0 ? (
+              <p className="py-2 text-center text-xs text-muted-foreground">
+                Aún no tienes favoritos. Pulsa la ⭐ junto al nombre de la parada para guardarla.
+              </p>
+            ) : (
+              <ul className="space-y-1">
+                {favorites.map((f) => (
+                  <li key={f.stop_id} className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => selectStation(f)}
+                      className="flex flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs hover:bg-accent/40"
+                    >
+                      <MapPin className="h-3.5 w-3.5 text-primary" />
+                      <span className="truncate">{f.stop_name}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => toggleFavorite(f)}
+                      aria-label="Quitar"
+                      className="rounded-full p-1 text-muted-foreground hover:bg-accent/40"
+                    >
+                      <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
 
         {/* Líneas TRAM */}
         <div>
