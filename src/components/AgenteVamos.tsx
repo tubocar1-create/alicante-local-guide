@@ -947,6 +947,25 @@ function localResolve(
         };
       }
     }
+    // 1.ter) En el dominio tram_pick aceptamos paradas aunque el usuario
+    // no diga la palabra "tram" (ya está en el flujo).
+    if (currentDomain === "tram_pick") {
+      const tramHit2 = matchTramQuery(`tram ${query}`);
+      if (tramHit2) {
+        const params = new URLSearchParams();
+        params.set("tram_dest", tramHit2.destId);
+        if (tramHit2.originId) params.set("tram_origin", tramHit2.originId);
+        const reply = tramHit2.originId
+          ? `¡Voy! TRAM de ${tramHit2.originName} a ${tramHit2.destName}.`
+          : `¡Voy! TRAM con destino ${tramHit2.destName}. Dime también desde dónde sales si quieres ver horarios.`;
+        return {
+          reply,
+          path: `/tram?${params.toString()}`,
+          audio: "bus",
+          pendingDomain: tramHit2.originId ? null : "tram_pick",
+        };
+      }
+    }
     const d = DOMAINS.find((x) => x.id === currentDomain);
     const subcategory = matchExistingSubcategory(query, catalog.subcategories[currentDomain]);
     if (subcategory) {
