@@ -716,49 +716,8 @@ function TripPlanCard({
               </div>
             </div>
 
-            <div className="mt-3">
-              <p className="mb-1 text-[10px] uppercase tracking-wider text-muted-foreground">Conexiones en destino</p>
-              <div className="flex flex-wrap gap-1.5">
-                {busLines === null ? (
-                  <span className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2.5 py-1 text-[11px] text-muted-foreground">
-                    🚍 Buscando líneas de bus…
-                  </span>
-                ) : busLines.length === 0 ? (
-                  <span className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2.5 py-1 text-[11px] text-muted-foreground">
-                    🚍 Sin bus urbano cerca
-                  </span>
-                ) : (
-                  busLines.slice(0, 12).map((b) => (
-                    <Link
-                      key={b.code}
-                      to="/bus/dashboard/$code"
-                      params={{ code: b.code }}
-                      className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2 py-1 text-[11px] font-medium shadow-sm transition hover:border-primary/40 hover:bg-accent/30"
-                      title={`${b.name}${b.stop_name ? ` · Parada ${b.stop_name}` : ""} · ${b.distance_m} m`}
-                    >
-                      <span
-                        className="inline-flex h-4 min-w-[1.4rem] items-center justify-center rounded px-1 text-[10px] font-bold text-white"
-                        style={{ background: ensureHash(b.color) ?? "var(--primary)" }}
-                      >
-                        {b.code}
-                      </span>
-                      <span className="max-w-[6rem] truncate">{b.name}</span>
-                      <span className="text-[9px] text-muted-foreground">{b.distance_m}m</span>
-                    </Link>
-                  ))
-                )}
-                <span className="rounded-full border border-border bg-background px-2.5 py-1 text-[11px]">🚕 Taxi</span>
-                {destination.stop_lat && destination.stop_lon && (
-                  <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${destination.stop_lat},${destination.stop_lon}`}
-                    target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2.5 py-1 text-[11px] font-medium hover:bg-accent/40"
-                  >
-                    <MapIcon className="h-3 w-3 text-primary" /> Ver en mapa
-                  </a>
-                )}
-              </div>
-            </div>
+            <ConnectionsPanel busLines={busLines} destination={destination} />
+
 
             {more.length > 0 && (
               <div className="mt-4">
