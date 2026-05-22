@@ -33,11 +33,12 @@ export const Route = createFileRoute("/api/public/tram/stations")({
           return Response.json({ stations: stops });
         }
 
-        let query = supabaseAdmin.from("tram_stops").select("*").order("stop_name").limit(500);
+        let query = supabaseAdmin.from("tram_stops").select("stop_id, stop_name, lat, lng").order("stop_name").limit(500);
         if (q) query = query.ilike("stop_name", `%${q}%`);
         const { data, error } = await query;
         if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 });
-        return Response.json({ stations: data });
+        const stations = (data ?? []).map((s: any) => ({ stop_id: s.stop_id, stop_name: s.stop_name, stop_lat: s.lat, stop_lon: s.lng }));
+        return Response.json({ stations });
       },
     },
   },
