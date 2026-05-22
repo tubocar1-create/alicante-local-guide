@@ -52,7 +52,7 @@ function minutesUntil(timeStr?: string | null): number | null {
   return diff < 0 ? null : diff;
 }
 
-export function TramInline() {
+export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<{ stations: Station[]; lines: Line[] }>({ stations: [], lines: [] });
   const [searching, setSearching] = useState(false);
