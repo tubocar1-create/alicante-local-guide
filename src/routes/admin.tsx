@@ -1,6 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Download, Lock, Loader2, Users, Activity, ShieldCheck } from "lucide-react";
+import {
+  Download,
+  Lock,
+  Loader2,
+  Users,
+  Activity,
+  ShieldCheck,
+  BarChart3,
+  ExternalLink,
+  Eye,
+  MousePointerClick,
+  Timer,
+} from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +21,47 @@ import { listAdminUsers } from "@/lib/admin-users.functions";
 
 const ADMIN_PIN = "7910511";
 const PIN_KEY = "admin_home_pin_ok";
+const LOVABLE_ANALYTICS_URL =
+  "https://lovable.dev/projects/a8ec37f9-59bf-4ebb-a372-974e51dc0567/settings/project-insights";
+
+// Snapshot de analíticas de Lovable (últimos 30 días, actualizado 2026-05-22).
+// Para datos en vivo, abrir el panel de Lovable.
+const ANALYTICS_SNAPSHOT = {
+  updated_at: "2026-05-22",
+  range: "Últimos 30 días",
+  visitors: 157,
+  pageviews: 1817,
+  views_per_visit: 11.57,
+  avg_session_sec: 1260,
+  bounce_rate_pct: 33,
+  top_pages: [
+    { path: "/", views: 125 },
+    { path: "/perfil", views: 19 },
+    { path: "/ocio", views: 16 },
+    { path: "/ocio/cartelera", views: 15 },
+    { path: "/fiestas", views: 13 },
+    { path: "/threads", views: 11 },
+    { path: "/salud", views: 10 },
+    { path: "/login", views: 10 },
+    { path: "/donde-dormir", views: 9 },
+    { path: "/ocio/cines", views: 8 },
+  ],
+  countries: [
+    { code: "ES", visitors: 123 },
+    { code: "VE", visitors: 4 },
+    { code: "US", visitors: 4 },
+  ],
+  devices: [
+    { type: "mobile", visitors: 150 },
+    { type: "desktop", visitors: 5 },
+  ],
+};
+
+function fmtDuration(sec: number): string {
+  const m = Math.floor(sec / 60);
+  const s = Math.round(sec % 60);
+  return `${m}m ${s}s`;
+}
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -226,6 +279,8 @@ function AdminDashboard() {
         )}
         {err && <p className="text-destructive text-sm">Error: {err}</p>}
 
+        <AnalyticsSection />
+
         {data && (
           <>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -339,4 +394,130 @@ function fmt(iso: string | null): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function AnalyticsSection() {
+  const a = ANALYTICS_SNAPSHOT;
+  return (
+    <Card>
+      <CardHeader className="flex-row items-center justify-between space-y-0">
+        <CardTitle className="text-base flex items-center gap-2">
+          <BarChart3 className="h-4 w-4" /> Analíticas de Lovable
+          <span className="text-xs font-normal text-muted-foreground ml-2">
+            {a.range} · actualizado {a.updated_at}
+          </span>
+        </CardTitle>
+        <a
+          href={LOVABLE_ANALYTICS_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs inline-flex items-center gap-1 text-primary hover:underline"
+        >
+          Ver en vivo <ExternalLink className="h-3 w-3" />
+        </a>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <StatCard
+            icon={<Users className="h-4 w-4" />}
+            label="Visitantes"
+            value={a.visitors}
+          />
+          <StatCard
+            icon={<Eye className="h-4 w-4" />}
+            label="Páginas vistas"
+            value={a.pageviews}
+          />
+          <MiniStat
+            icon={<MousePointerClick className="h-4 w-4" />}
+            label="Vistas / visita"
+            value={a.views_per_visit.toFixed(2)}
+          />
+          <MiniStat
+            icon={<Timer className="h-4 w-4" />}
+            label="Duración media"
+            value={fmtDuration(a.avg_session_sec)}
+          />
+          <MiniStat
+            icon={<Activity className="h-4 w-4" />}
+            label="Bounce rate"
+            value={`${a.bounce_rate_pct}%`}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <h4 className="text-xs uppercase text-muted-foreground mb-2">
+              Páginas más vistas
+            </h4>
+            <ul className="space-y-1 text-sm">
+              {a.top_pages.map((p) => (
+                <li
+                  key={p.path}
+                  className="flex justify-between border-b border-border/40 py-1"
+                >
+                  <span className="truncate mr-2">{p.path}</span>
+                  <span className="text-muted-foreground">{p.views}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-xs uppercase text-muted-foreground mb-2">
+              Países
+            </h4>
+            <ul className="space-y-1 text-sm">
+              {a.countries.map((c) => (
+                <li
+                  key={c.code}
+                  className="flex justify-between border-b border-border/40 py-1"
+                >
+                  <span>{c.code}</span>
+                  <span className="text-muted-foreground">{c.visitors}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-xs uppercase text-muted-foreground mb-2">
+              Dispositivos
+            </h4>
+            <ul className="space-y-1 text-sm">
+              {a.devices.map((d) => (
+                <li
+                  key={d.type}
+                  className="flex justify-between border-b border-border/40 py-1"
+                >
+                  <span className="capitalize">{d.type}</span>
+                  <span className="text-muted-foreground">{d.visitors}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function MiniStat({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          {icon}
+          {label}
+        </div>
+        <div className="mt-1 text-2xl font-bold">{value}</div>
+      </CardContent>
+    </Card>
+  );
 }
