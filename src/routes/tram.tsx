@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
 import { TramInline } from "@/components/TramInline";
 
@@ -18,6 +18,12 @@ export const Route = createFileRoute("/tram")({
 
 function TramPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  if (location.pathname !== "/tram") {
+    return <Outlet />;
+  }
+
   return (
     <main className="min-h-dvh bg-background">
       <header className="sticky top-0 z-10 flex items-center gap-2 border-b border-border/60 bg-background/90 px-3 py-2.5 backdrop-blur">
