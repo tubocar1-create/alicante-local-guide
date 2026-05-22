@@ -368,6 +368,14 @@ const DOMAINS: DomainSpec[] = [
     ],
   },
   {
+    id: "tram_pick",
+    hubPath: "/tram",
+    triggers: [],
+    question: "🚋 ¿A qué estación del TRAM quieres ir? Y dime también desde dónde sales (por ejemplo: «de Mercado a Benidorm»). Si prefieres, busca tu parada en la lista.",
+    audio: "bus",
+    followups: [],
+  },
+  {
     id: "fiestas",
     hubPath: "/",
     triggers: [
