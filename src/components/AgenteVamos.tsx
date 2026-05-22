@@ -1312,8 +1312,9 @@ function localResolve(
       };
     }
     if (d) {
-      const fuPath = matchFollowup(query, d);
-      if (fuPath) {
+      const fuMatch = matchFollowup(query, d);
+      if (fuMatch) {
+        const fuPath = fuMatch.path;
         // Sentinel especial: el usuario dice "sí, conozco mi bus" estando
         // en el dominio "transporte". En vez de navegar, activamos el
         // subdominio "bus_known" y preguntamos la línea, sin abrir picker.
@@ -1388,8 +1389,11 @@ function localResolve(
           };
         }
         const intent = INTENTS.find((it) => it.path === fuPath);
+        const reply = fuMatch.label
+          ? `Te puedo dirigir a ${fuMatch.label}.`
+          : (intent?.reply ?? "Te llevo allí.");
         return {
-          reply: intent?.reply ?? "Te llevo allí.",
+          reply,
           path: fuPath,
           audio: intent?.audio ?? d.audio,
           pendingDomain: null,
