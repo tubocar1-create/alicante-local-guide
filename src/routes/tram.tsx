@@ -25,7 +25,7 @@ function TramPage() {
   }
 
   return (
-    <main className="min-h-dvh bg-background">
+    <main className="h-dvh overflow-y-auto overscroll-contain bg-background pb-24">
       <header className="sticky top-0 z-10 flex items-center gap-2 border-b border-border/60 bg-background/90 px-3 py-2.5 backdrop-blur">
         <button
           type="button"
