@@ -133,6 +133,67 @@ function randomPassword(): string {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+async function syncTestUsersToAuth(): Promise<{
+  created: string[];
+  skipped: string[];
+  failed: Array<{ email: string; error: string }>;
+}> {
+  const { data: rows, error: tuErr } = await supabaseAdmin
+    .from("test_users")
+    .select("id,name,email,created_at")
+    .order("created_at", { ascending: true });
+
+  if (tuErr) {
+    console.error("[migrate] test_users:", tuErr.message);
+    return { created: [], skipped: [], failed: [] };
+  }
+
+  // Build set of existing auth emails
+  const existing = new Set<string>();
+  let page = 1;
+  const perPage = 200;
+  for (;;) {
+    const { data: res, error } = await supabaseAdmin.auth.admin.listUsers({
+      page,
+      perPage,
+    });
+    if (error) break;
+    const users = res?.users ?? [];
+    for (const u of users) if (u.email) existing.add(u.email.toLowerCase());
+    if (users.length < perPage) break;
+    page += 1;
+    if (page > 50) break;
+  }
+
+  const created: string[] = [];
+  const skipped: string[] = [];
+  const failed: Array<{ email: string; error: string }> = [];
+
+  for (const u of rows ?? []) {
+    const email = (u.email as string | null)?.trim().toLowerCase();
+    if (!email) continue;
+    if (existing.has(email)) {
+      skipped.push(email);
+      continue;
+    }
+    const name = (u.name as string | null) ?? null;
+    const { error } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password: randomPassword(),
+      email_confirm: true,
+      user_metadata: name ? { name, full_name: name } : {},
+    });
+    if (error) {
+      failed.push({ email, error: error.message });
+    } else {
+      created.push(email);
+      existing.add(email);
+    }
+  }
+
+  return { created, skipped, failed };
+}
+
 export const migrateTestUsersToAuth = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
     z.object({ pin: z.string().min(1).max(32) }).parse(d),
@@ -141,66 +202,12 @@ export const migrateTestUsersToAuth = createServerFn({ method: "POST" })
     if (data.pin !== ADMIN_PIN) {
       throw new Response("Forbidden", { status: 403 });
     }
-
-    const { data: rows, error: tuErr } = await supabaseAdmin
-      .from("test_users")
-      .select("id,name,email,created_at")
-      .order("created_at", { ascending: true });
-
-    if (tuErr) {
-      console.error("[migrate] test_users:", tuErr.message);
-      throw new Response("DB error", { status: 500 });
-    }
-
-    // Build set of existing auth emails
-    const existing = new Set<string>();
-    let page = 1;
-    const perPage = 200;
-    for (;;) {
-      const { data: res, error } = await supabaseAdmin.auth.admin.listUsers({
-        page,
-        perPage,
-      });
-      if (error) break;
-      const users = res?.users ?? [];
-      for (const u of users) if (u.email) existing.add(u.email.toLowerCase());
-      if (users.length < perPage) break;
-      page += 1;
-      if (page > 50) break;
-    }
-
-    const created: string[] = [];
-    const skipped: string[] = [];
-    const failed: Array<{ email: string; error: string }> = [];
-
-    for (const u of rows ?? []) {
-      const email = (u.email as string | null)?.trim().toLowerCase();
-      if (!email) continue;
-      if (existing.has(email)) {
-        skipped.push(email);
-        continue;
-      }
-      const name = (u.name as string | null) ?? null;
-      const { error } = await supabaseAdmin.auth.admin.createUser({
-        email,
-        password: randomPassword(),
-        email_confirm: true,
-        user_metadata: name ? { name, full_name: name } : {},
-      });
-      if (error) {
-        failed.push({ email, error: error.message });
-      } else {
-        created.push(email);
-        existing.add(email);
-      }
-    }
-
+    const r = await syncTestUsersToAuth();
     return {
-      created_count: created.length,
-      skipped_count: skipped.length,
-      failed_count: failed.length,
-      created,
-      skipped,
-      failed,
+      created_count: r.created.length,
+      skipped_count: r.skipped.length,
+      failed_count: r.failed.length,
+      ...r,
     };
   });
+
