@@ -549,6 +549,9 @@ export const getAdVariants = createServerFn({ method: "POST" })
       case "alicante_press":
         userPrompt = `Genera ${count} variantes de tarjeta sobre TITULARES de Alicante Press (alicantepress.com). UNA variante por titular del listado, en el MISMO orden que el listado. headline (máx 5 palabras, reescritura corta y neutra del titular real, sin clickbait), body (1 frase de contexto basada SOLO en el titular, máx 95 caracteres), cta "Leer noticia". DESCARTA política partidista, sucesos, accidentes, muertes y tragedias. Tono informativo, sin opinión, sin signos de exclamación.${alicantePressCtx}`;
         break;
+      case "incidencias":
+        userPrompt = `Genera ${count} variantes de tarjeta sobre INCIDENCIAS DE MOVILIDAD vigentes HOY en Alicante (fuente oficial movilidad.alicante.es). UNA variante por incidencia del listado. headline (máx 5 palabras, empieza por ⚠️ y resume el aviso, ej "⚠️ Corte calle San Vicente"), body (1 frase con qué pasa y, si aplica, cuándo o dónde, máx 95 caracteres), cta "Ver incidencias". Tono claro, útil, sin alarmismo. NO inventes nada que no esté en el listado.${incidenciasCtx}`;
+        break;
       default:
         userPrompt = wiki
           ? `Tema REAL de Wikipedia: "${wiki.title}".\n\nResumen fuente:\n"""${wiki.extract}"""\n\nGenera ${count} variantes DISTINTAS de tarjeta INFORMATIVA basadas EXCLUSIVAMENTE en ese resumen (no inventes datos). Cada variante destaca un ángulo distinto. Cada variante: headline (máx 4 palabras), body (1 frase con un dato concreto, máx 65 caracteres), cta (2-3 palabras tipo "Saber más"). Tono cercano, sin clichés. Si un dato no está en el resumen, omítelo.`
