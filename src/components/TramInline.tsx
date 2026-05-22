@@ -697,8 +697,11 @@ function TripPlanCard({
 
             {more.length > 0 && (
               <div className="mt-4">
-                <p className="mb-1 text-[10px] uppercase tracking-wider text-muted-foreground">Más salidas</p>
-                <ul className="divide-y divide-border/60 rounded-xl border border-border/60 bg-background/60">
+                <p className="mb-1 flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <span>Más salidas</span>
+                  <span className="normal-case tracking-normal text-[10px] text-muted-foreground/70">{more.length} próximas</span>
+                </p>
+                <ul className="max-h-64 divide-y divide-border/60 overflow-y-auto rounded-xl border border-border/60 bg-background/60">
                   {more.map((o) => {
                     const m = minutesUntil(o.depart_time);
                     return (
