@@ -409,6 +409,7 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
             validStops={validStops}
             showPicker={showPicker}
             geoStatus={geo.status}
+            geoCoords={geoCoords}
             geoError={geo.status === "error" ? geo.message : null}
             onUseGeo={useGeolocationOrigin}
             onConfirm={confirmOrigin}
