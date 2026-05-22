@@ -320,40 +320,50 @@ const DOMAINS: DomainSpec[] = [
     triggers: [
       "quiero moverme", "necesito moverme", "como me muevo", "quiero desplazarme",
       "tengo que ir", "necesito ir", "como llego", "como voy",
-      "transporte",
-      // Disparadores explícitos del flujo de bus urbano:
+      "transporte", "transporte publico", "transporte público",
+    ],
+    question: "🚍 ¿Quieres ir en bus urbano o en TRAM (tranvía)?",
+    audio: "bus",
+    followups: [
+      { keys: [
+          "bus", "buses", "autobus", "autobús", "autobuses", "urbano", "urbanos",
+          "bus urbano", "buses urbanos", "emt", "vectalia",
+        ], path: "action:transporte-bus" },
+      { keys: [
+          "tram", "tranvia", "tranvía", "tranvias", "tranvías", "fgv",
+        ], path: "/tram" },
+      { keys: ["vuelo", "vuelos", "avion", "aeropuerto"], path: "/vuelos" },
+    ],
+  },
+  {
+    id: "transporte_bus",
+    hubPath: "action:bus-picker",
+    triggers: [
       "bus", "buses", "autobus", "autobuses", "emt", "vectalia",
       "linea de bus", "parada", "parada de bus", "bus urbano", "buses urbanos",
     ],
     question: "🚌 ¿Ya sabes qué bus tomar? Dime «sí, lo sé» y te pregunto la línea, o «ayúdame» y planificamos la ruta.",
     audio: "bus",
     followups: [
-      // "Sí, conozco mi bus" → entramos en bus_known para que el usuario diga la línea.
       { keys: [
           "si", "si lo se", "si lo sé", "lo se", "lo sé", "claro", "por supuesto",
           "conozco", "conozco mi bus", "se el bus", "sé el bus", "ya lo se", "ya lo sé",
           "ya se que bus", "ya sé qué bus", "se que bus", "sé qué bus",
         ], path: "action:bus-known-line" },
-      // "Ayúdame" / "no sé" / planificar → abrimos el picker en su paso inicial.
       { keys: [
           "no", "no se", "no sé", "ayuda", "ayudame", "ayúdame", "no lo se", "no lo sé",
           "elegir ruta", "planificar", "planificador", "planifica", "ruta", "trayecto",
           "no tengo ni idea", "ni idea",
         ], path: "action:bus-picker" },
-      { keys: ["vuelo", "vuelos", "avion", "aeropuerto"], path: "/vuelos" },
     ],
   },
   {
     id: "bus_known",
     hubPath: "action:bus-picker",
-    // No usamos triggers de entrada: este dominio solo se activa como
-    // continuación de "transporte" cuando el usuario confirma que conoce
-    // su bus. Aquí esperamos que diga la línea (número).
     triggers: [],
     question: "Perfecto. ¿Cuál es la línea que quieres tomar? (por ejemplo: 22, 7, 13N…)",
     audio: "bus",
     followups: [
-      // Si cambia de opinión y pide ayuda, abrimos el picker normal.
       { keys: ["no se", "no sé", "ayuda", "ayudame", "ayúdame", "no lo se", "no lo sé"], path: "action:bus-picker" },
     ],
   },
@@ -833,6 +843,7 @@ type AssistantMode =
 function pickAssistantMode(domain: string | null): AssistantMode {
   switch (domain) {
     case "transporte":
+    case "transporte_bus":
     case "bus_known": return "operativo";
     case "salud":
     case "salud_general": return "empatico";
@@ -949,6 +960,14 @@ function localResolve(
             reply: busKnown?.question ?? "¿Cuál es la línea que quieres tomar?",
             audio: "bus",
             pendingDomain: "bus_known",
+          };
+        }
+        if (fuPath === "action:transporte-bus") {
+          const tBus = DOMAINS.find((x) => x.id === "transporte_bus");
+          return {
+            reply: tBus?.question ?? "¿Ya sabes qué bus tomar?",
+            audio: "bus",
+            pendingDomain: "transporte_bus",
           };
         }
         const intent = INTENTS.find((it) => it.path === fuPath);
