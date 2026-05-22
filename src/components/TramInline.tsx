@@ -309,6 +309,9 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
       const near = nearestFromList(geo.coords, validStops);
       if (near) { confirmOrigin(near); return; }
     }
+    // Si el usuario tenía la geolocalización desactivada en su perfil,
+    // reactívala antes de pedir permiso al navegador.
+    if (!isGeoEnabled()) setGeoEnabled(true);
     requestGeo();
   };
 
