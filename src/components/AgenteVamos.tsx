@@ -815,19 +815,19 @@ function detectAmbiguity(query: string): LocalResult | null {
   };
 }
 
-function matchFollowup(query: string, domain: DomainSpec): string | null {
-  let bestPath: string | null = null;
+function matchFollowup(query: string, domain: DomainSpec): { path: string; label?: string } | null {
+  let best: { path: string; label?: string } | null = null;
   let bestLen = 0;
   for (const f of domain.followups) {
     for (const k of f.keys) {
       const n = normalizeSpeech(k);
       if (n && query.includes(n) && n.length > bestLen) {
-        bestPath = f.path;
+        best = { path: f.path, label: f.label };
         bestLen = n.length;
       }
     }
   }
-  return bestPath;
+  return best;
 }
 
 // ─── DB Intents (agente_intents) ──────────────────────────────────────
