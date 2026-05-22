@@ -1,9 +1,9 @@
 // Proxy a tiempo real de Vectalia (Alicante).
-// 1) Intenta request.aspx (funciona para urbanas).
-// 2) Si no hay datos, scrapea consulta.aspx (incluye interurbanas y nocturnas
-//    embebidas en el bloque `var text = "..."`).
+// 1) Intenta datos.aspx, que es el endpoint JSON usado por la página QR actual.
+// 2) Si no hay datos, cae a request.aspx y después al scrapeo legacy.
 
 const VECTALIA_RT_URL = "https://qr.vectalia.es/Alicante/lib/request.aspx";
+const VECTALIA_DATA_URL = "https://qr.vectalia.es/Alicante/datos.aspx";
 const VECTALIA_PAGE_URL = "https://qr.vectalia.es/Alicante/consulta.aspx";
 const ARRIVAL_RE = /Linea\s+(\d{1,3}[A-Za-z]?)\s+([^:]+?)\s*:\s*(\d+)\s*min/gi;
 const VECTALIA_LINE_CODES: Record<string, string> = {
@@ -45,6 +45,21 @@ function parseEtas(raw: string, requestedLine: string): number[] {
     if (Number.isFinite(min)) mins.push(min);
   }
   return mins.sort((a, b) => a - b);
+}
+
+async function fetchFromDataEndpoint(stopCode: string, lineCode: string): Promise<number[]> {
+  try {
+    const r = await fetch(
+      `${VECTALIA_DATA_URL}?p=${encodeURIComponent(stopCode)}`,
+      { headers: { ...browserHeaders, Referer: `${VECTALIA_PAGE_URL}?p=${encodeURIComponent(stopCode)}` } },
+    );
+    if (!r.ok) return [];
+    const data = await r.json().catch(() => null) as { tiempos?: string } | null;
+    return parseEtas(data?.tiempos ?? "", lineCode);
+  } catch (e) {
+    console.error("[bus-eta] datos.aspx failed", e);
+    return [];
+  }
 }
 
 async function fetchFromRequestEndpoint(stopCode: string, lineCode: string): Promise<number[]> {
@@ -103,11 +118,15 @@ Deno.serve(async (req) => {
     });
   }
 
-  let etas = await fetchFromStopPage(stop, line);
-  let source = "page";
+  let etas = await fetchFromDataEndpoint(stop, line);
+  let source = "data";
   if (etas.length === 0) {
     etas = await fetchFromRequestEndpoint(stop, line);
     source = "request";
+  }
+  if (etas.length === 0) {
+    etas = await fetchFromStopPage(stop, line);
+    source = "page";
   }
 
   let etaMin: number | null = null;
