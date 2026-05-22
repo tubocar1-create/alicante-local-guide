@@ -225,26 +225,13 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
   }, [pendingOriginId, destination, validStops]);
 
 
-  // Sugerir origen automáticamente cuando hay validGroups
+  // Sugerencia de origen (NO confirma): si la geo está lista, OriginStep
+  // mostrará la parada más cercana y preguntará al usuario; aquí solo
+  // rellenamos una pista cuando no hay geo (origen guardado o Luceros).
   useEffect(() => {
     if (!destination || origin || !validGroups) return;
-    // 1) Geolocalización lista → sugerir y CONFIRMAR la más cercana automáticamente
-    if (geo.status === "ready") {
-      const near = nearestFromList(geo.coords, validStops);
-      if (near) {
-        setOrigin(near);
-        setOriginConfirmed(true);
-        try { localStorage.setItem(ORIGIN_KEY, JSON.stringify(near)); } catch { /* noop */ }
-        return;
-      }
-    }
+    if (geo.status === "ready") return; // la sugerencia visual la pinta OriginStep
     const luceros = validStops.find((s) => /luceros/i.test(s.stop_name));
-    if (geo.status === "error" || geo.status === "idle") {
-      if (luceros) { setOrigin(luceros); return; }
-    }
-    if (geo.status !== "ready") {
-      if (luceros) { setOrigin(luceros); return; }
-    }
     try {
       const saved = JSON.parse(localStorage.getItem(ORIGIN_KEY) || "null") as Station | null;
       if (saved?.stop_id && validStops.some((s) => s.stop_id === saved.stop_id)) {
