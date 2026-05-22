@@ -4,7 +4,7 @@ import {
   Search, MapPin, Navigation, Star, ArrowRight,
   ChevronDown, ChevronUp, Map as MapIcon, X, Locate, Check,
 } from "lucide-react";
-import { distanceKm, useUserLocation, type Coords } from "@/hooks/useUserLocation";
+import { distanceKm, useUserLocation, isGeoEnabled, setGeoEnabled, type Coords } from "@/hooks/useUserLocation";
 
 type Line = {
   id: string;
@@ -309,6 +309,9 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
       const near = nearestFromList(geo.coords, validStops);
       if (near) { confirmOrigin(near); return; }
     }
+    // Si el usuario tenía la geolocalización desactivada en su perfil,
+    // reactívala antes de pedir permiso al navegador.
+    if (!isGeoEnabled()) setGeoEnabled(true);
     requestGeo();
   };
 
@@ -427,6 +430,7 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
             validStops={validStops}
             showPicker={showPicker}
             geoStatus={geo.status}
+            geoError={geo.status === "error" ? geo.message : null}
             onUseGeo={useGeolocationOrigin}
             onConfirm={confirmOrigin}
             onOpenPicker={() => setShowPicker(true)}
@@ -455,7 +459,7 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
 // ---------- Paso 2: confirmar origen ----------
 
 function OriginStep({
-  destination, loading, validGroups, validStops, showPicker, geoStatus,
+  destination, loading, validGroups, validStops, showPicker, geoStatus, geoError,
   onUseGeo, onConfirm, onOpenPicker, onClosePicker, onChangeDestination,
 }: {
   destination: Station;
@@ -464,6 +468,7 @@ function OriginStep({
   validStops: Station[];
   showPicker: boolean;
   geoStatus: string;
+  geoError: string | null;
   onUseGeo: () => void;
   onConfirm: (s: Station) => void;
   onOpenPicker: () => void;
@@ -539,9 +544,15 @@ function OriginStep({
                 <button
                   type="button"
                   onClick={onUseGeo}
-                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border bg-background px-3 py-2 text-xs font-medium hover:bg-accent/40"
+                  disabled={geoStatus === "loading"}
+                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border bg-background px-3 py-2 text-xs font-medium hover:bg-accent/40 disabled:opacity-60"
                 >
-                  <Locate className="h-3.5 w-3.5 text-primary" /> Usar mi ubicación
+                  <Locate className={`h-3.5 w-3.5 text-primary ${geoStatus === "loading" ? "animate-pulse" : ""}`} />
+                  {geoStatus === "loading"
+                    ? "Localizando…"
+                    : geoStatus === "error"
+                      ? "Reintentar ubicación"
+                      : "Usar mi ubicación"}
                 </button>
               )}
               <button
@@ -552,6 +563,16 @@ function OriginStep({
                 <Navigation className="h-3.5 w-3.5 text-primary" /> Elegir otra estación
               </button>
             </div>
+            {geoStatus === "error" && geoError && (
+              <p className="mt-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-[11px] leading-snug text-destructive">
+                {geoError}
+              </p>
+            )}
+            {geoStatus === "idle" && (
+              <p className="mt-2 text-[11px] leading-snug text-muted-foreground">
+                Te pediremos permiso para usar tu ubicación y detectar la parada más cercana.
+              </p>
+            )}
           </>
         )}
       </div>
