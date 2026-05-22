@@ -260,6 +260,7 @@ function AdminDashboard() {
             <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isFetching}>
               {isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Refrescar"}
             </Button>
+            <MigrateButton onDone={() => refetch()} />
             <InstallAppButton />
             <Button variant="ghost" onClick={logout}>
               Salir
