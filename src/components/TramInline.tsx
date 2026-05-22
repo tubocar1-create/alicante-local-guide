@@ -171,7 +171,7 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
     }
     // Si la geo falla / fue denegada / no existe → SIEMPRE Luceros como por defecto.
     const luceros = validStops.find((s) => /luceros/i.test(s.stop_name));
-    if (geo.status === "denied" || geo.status === "error" || geo.status === "unsupported") {
+    if (geo.status === "error" || geo.status === "idle") {
       if (luceros) { setOrigin(luceros); return; }
     }
     // Mientras la geo aún se resuelve: preferir Luceros antes que historial/primera.
