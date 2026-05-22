@@ -1,0 +1,1 @@
+TRUNCATE tram_stop_times, tram_shapes, tram_trips, tram_calendar_dates, tram_calendar, tram_routes, tram_stops, tram_agencies CASCADE;
