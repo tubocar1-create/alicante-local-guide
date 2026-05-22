@@ -59,6 +59,8 @@ type ValidGroup = {
   line_text_color: string | null;
   direction_id: number;
   headsign: string | null;
+  via_transfer?: boolean;
+  transfer_at?: string;
   stops: Station[];
 };
 
