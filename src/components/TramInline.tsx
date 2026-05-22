@@ -768,5 +768,86 @@ function TripPlanCard({
   );
 }
 
-// Pequeña compatibilidad
-export const __unused = { ChevronUp };
+// ---------- Conexiones en destino (desplegable con scroll) ----------
+
+type BusConn = { code: string; name: string; color: string | null; operator: string | null; stop_name: string | null; distance_m: number };
+
+function ConnectionsPanel({
+  busLines, destination,
+}: {
+  busLines: BusConn[] | null;
+  destination: Station;
+}) {
+  const [open, setOpen] = useState(false);
+  const count = busLines?.length ?? 0;
+  const loading = busLines === null;
+
+  return (
+    <div className="mt-3 overflow-hidden rounded-xl border border-border bg-background/70">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center gap-2 px-3 py-2 text-left transition hover:bg-accent/30"
+        aria-expanded={open}
+      >
+        <span aria-hidden>🚍</span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Conexiones en destino</p>
+          <p className="truncate text-xs font-semibold">
+            {loading
+              ? "Buscando líneas de bus…"
+              : count === 0
+                ? "Sin bus urbano cerca · Taxi disponible"
+                : `${count} ${count === 1 ? "línea de bus" : "líneas de bus"} cerca · Taxi`}
+          </p>
+        </div>
+        {open ? (
+          <ChevronUp className="h-4 w-4 flex-none text-muted-foreground" />
+        ) : (
+          <ChevronDown className="h-4 w-4 flex-none text-muted-foreground" />
+        )}
+      </button>
+
+      {open && (
+        <div className="border-t border-border/60 bg-background/60 p-2 animate-fade-in">
+          {count > 0 && (
+            <div className="max-h-44 overflow-y-auto pr-1">
+              <ul className="space-y-1">
+                {busLines!.map((b) => (
+                  <li key={b.code}>
+                    <Link
+                      to="/bus/dashboard/$code"
+                      params={{ code: b.code }}
+                      className="flex items-center gap-2 rounded-lg border border-border/60 bg-background px-2.5 py-1.5 text-[12px] font-medium shadow-sm transition hover:border-primary/40 hover:bg-accent/30"
+                    >
+                      <span
+                        className="inline-flex h-5 min-w-[1.75rem] items-center justify-center rounded px-1.5 text-[10px] font-bold text-white"
+                        style={{ background: ensureHash(b.color) ?? "var(--primary)" }}
+                      >
+                        {b.code}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate">{b.name}</span>
+                      <span className="flex-none text-[10px] text-muted-foreground">{b.distance_m} m</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            <span className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2.5 py-1 text-[11px]">🚕 Taxi</span>
+            {destination.stop_lat && destination.stop_lon && (
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${destination.stop_lat},${destination.stop_lon}`}
+                target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2.5 py-1 text-[11px] font-medium hover:bg-accent/40"
+              >
+                <MapIcon className="h-3 w-3 text-primary" /> Ver en mapa
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
