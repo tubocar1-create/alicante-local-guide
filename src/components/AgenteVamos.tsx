@@ -1833,11 +1833,11 @@ let __vaSpeechUnlocked = false;
 let __vaVoicesLoggingAttached = false;
 let __vaContinuityInFlight = false;
 let __vaContinuitySpokenAt = 0;
-const POST_SPEECH_LISTEN_DELAY_MS = 140;
+const POST_SPEECH_LISTEN_DELAY_MS = 30;
 
 // Voz unificada del agente: español Estados Unidos (es-US) si está disponible.
 const VA_VOICE_LANG = "es-US";
-const VA_VOICE_RATE = 0.6;
+const VA_VOICE_RATE = 0.8;
 const VA_VOICE_PITCH = 0.55;
 
 function pickSpanishVoice(synth: SpeechSynthesis) {
@@ -2781,13 +2781,13 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                 }
               });
             } catch {}
-          }, 350);
+          }, 50);
           // No tocamos loading aquí — lo limpia speakExternalSummary o el timeout.
           return;
         } else if (target && target !== path) {
           setTimeout(() => {
             goTo(target);
-          }, 350);
+          }, 50);
         }
         // La voz ya se ha lanzado arriba con speak(reply). Aquí sólo
         // gestionamos navegación tardía si procede.
