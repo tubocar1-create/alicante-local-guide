@@ -78,6 +78,7 @@ import { Route as ApiPublicBusEtaRouteImport } from './routes/api/public/bus-eta
 import { Route as ApiPublicBookingCreateRouteImport } from './routes/api/public/booking-create'
 import { Route as ApiPublicAenaFlightsRouteImport } from './routes/api/public/aena-flights'
 import { Route as OcioCinesIdCarteleraRouteImport } from './routes/ocio_.cines_.$id.cartelera'
+import { Route as ApiPublicTramValidOriginsRouteImport } from './routes/api/public/tram/valid-origins'
 import { Route as ApiPublicTramStationsRouteImport } from './routes/api/public/tram/stations'
 import { Route as ApiPublicTramPlanRouteImport } from './routes/api/public/tram/plan'
 import { Route as ApiPublicTramLinesRouteImport } from './routes/api/public/tram/lines'
@@ -437,6 +438,12 @@ const OcioCinesIdCarteleraRoute = OcioCinesIdCarteleraRouteImport.update({
   path: '/ocio/cines/$id/cartelera',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTramValidOriginsRoute =
+  ApiPublicTramValidOriginsRouteImport.update({
+    id: '/api/public/tram/valid-origins',
+    path: '/api/public/tram/valid-origins',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicTramStationsRoute = ApiPublicTramStationsRouteImport.update({
   id: '/api/public/tram/stations',
   path: '/api/public/tram/stations',
@@ -576,6 +583,7 @@ export interface FileRoutesByFullPath {
   '/api/public/tram/lines': typeof ApiPublicTramLinesRoute
   '/api/public/tram/plan': typeof ApiPublicTramPlanRoute
   '/api/public/tram/stations': typeof ApiPublicTramStationsRoute
+  '/api/public/tram/valid-origins': typeof ApiPublicTramValidOriginsRoute
   '/ocio/cines/$id/cartelera': typeof OcioCinesIdCarteleraRoute
 }
 export interface FileRoutesByTo {
@@ -657,6 +665,7 @@ export interface FileRoutesByTo {
   '/api/public/tram/lines': typeof ApiPublicTramLinesRoute
   '/api/public/tram/plan': typeof ApiPublicTramPlanRoute
   '/api/public/tram/stations': typeof ApiPublicTramStationsRoute
+  '/api/public/tram/valid-origins': typeof ApiPublicTramValidOriginsRoute
   '/ocio/cines/$id/cartelera': typeof OcioCinesIdCarteleraRoute
 }
 export interface FileRoutesById {
@@ -740,6 +749,7 @@ export interface FileRoutesById {
   '/api/public/tram/lines': typeof ApiPublicTramLinesRoute
   '/api/public/tram/plan': typeof ApiPublicTramPlanRoute
   '/api/public/tram/stations': typeof ApiPublicTramStationsRoute
+  '/api/public/tram/valid-origins': typeof ApiPublicTramValidOriginsRoute
   '/ocio_/cines_/$id/cartelera': typeof OcioCinesIdCarteleraRoute
 }
 export interface FileRouteTypes {
@@ -824,6 +834,7 @@ export interface FileRouteTypes {
     | '/api/public/tram/lines'
     | '/api/public/tram/plan'
     | '/api/public/tram/stations'
+    | '/api/public/tram/valid-origins'
     | '/ocio/cines/$id/cartelera'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -905,6 +916,7 @@ export interface FileRouteTypes {
     | '/api/public/tram/lines'
     | '/api/public/tram/plan'
     | '/api/public/tram/stations'
+    | '/api/public/tram/valid-origins'
     | '/ocio/cines/$id/cartelera'
   id:
     | '__root__'
@@ -987,6 +999,7 @@ export interface FileRouteTypes {
     | '/api/public/tram/lines'
     | '/api/public/tram/plan'
     | '/api/public/tram/stations'
+    | '/api/public/tram/valid-origins'
     | '/ocio_/cines_/$id/cartelera'
   fileRoutesById: FileRoutesById
 }
@@ -1049,6 +1062,7 @@ export interface RootRouteChildren {
   ApiPublicTramLinesRoute: typeof ApiPublicTramLinesRoute
   ApiPublicTramPlanRoute: typeof ApiPublicTramPlanRoute
   ApiPublicTramStationsRoute: typeof ApiPublicTramStationsRoute
+  ApiPublicTramValidOriginsRoute: typeof ApiPublicTramValidOriginsRoute
   OcioCinesIdCarteleraRoute: typeof OcioCinesIdCarteleraRoute
 }
 
@@ -1537,6 +1551,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OcioCinesIdCarteleraRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/tram/valid-origins': {
+      id: '/api/public/tram/valid-origins'
+      path: '/api/public/tram/valid-origins'
+      fullPath: '/api/public/tram/valid-origins'
+      preLoaderRoute: typeof ApiPublicTramValidOriginsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/tram/stations': {
       id: '/api/public/tram/stations'
       path: '/api/public/tram/stations'
@@ -1793,18 +1814,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicTramLinesRoute: ApiPublicTramLinesRoute,
   ApiPublicTramPlanRoute: ApiPublicTramPlanRoute,
   ApiPublicTramStationsRoute: ApiPublicTramStationsRoute,
+  ApiPublicTramValidOriginsRoute: ApiPublicTramValidOriginsRoute,
   OcioCinesIdCarteleraRoute: OcioCinesIdCarteleraRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
