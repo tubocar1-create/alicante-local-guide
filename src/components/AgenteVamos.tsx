@@ -345,6 +345,9 @@ const DOMAINS: DomainSpec[] = [
       "ir hacia", "desplazarme", "moverme",
       "ir en bus", "ir en tram", "ir en tranvia", "ir en tranvía",
       "ir en autobus", "ir en autobús",
+      "coger el tram", "coger tram", "tomar el tram", "tomar tram",
+      "coger el tranvia", "coger el tranvía", "tomar el tranvia", "tomar el tranvía",
+      "quiero coger el tram", "quiero coger tram", "quiero tomar el tram",
       "como llegar", "que bus", "qué bus", "que tram", "qué tram",
       // destinos típicos que implican transporte
       "al aeropuerto", "al altet", "estacion de tren", "estación de tren",
