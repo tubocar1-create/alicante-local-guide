@@ -2449,6 +2449,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             window.sessionStorage.removeItem("afp:openSubmenu");
           } catch {}
         }
+        const priorDomain = pendingDomainRef.current;
         const fallback = localResolve(clean, pendingDomainRef.current, routingCatalogRef.current);
         const replyMode = pickAssistantMode(fallback.pendingDomain ?? pendingDomainRef.current ?? null);
         let reply = formatReply(replyMode, fallback.reply);
