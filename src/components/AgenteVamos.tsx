@@ -438,6 +438,44 @@ function normalizeSpeech(text: string) {
     .trim();
 }
 
+// =================== TRAM stops (catálogo en memoria) ===================
+type TramStopEntry = { stop_id: string; stop_name: string; norm: string };
+let TRAM_STOPS_CACHE: TramStopEntry[] = [];
+function setTramStopsCache(stops: Array<{ stop_id: string; stop_name: string }>) {
+  TRAM_STOPS_CACHE = stops
+    .map((s) => ({ stop_id: s.stop_id, stop_name: s.stop_name, norm: normalizeSpeech(s.stop_name) }))
+    .filter((s) => s.norm.length >= 3)
+    .sort((a, b) => b.norm.length - a.norm.length);
+}
+const TRAM_TRIGGER_RE = /\b(tram|tranvia|tranvias|metro)\b/;
+function matchTramQuery(query: string): {
+  destId: string; destName: string; originId?: string; originName?: string;
+} | null {
+  if (!TRAM_TRIGGER_RE.test(query)) return null;
+  if (!TRAM_STOPS_CACHE.length) return null;
+  const hits: Array<TramStopEntry & { idx: number }> = [];
+  for (const s of TRAM_STOPS_CACHE) {
+    const idx = query.indexOf(s.norm);
+    if (idx < 0) continue;
+    if (hits.some((h) => idx < h.idx + h.norm.length && idx + s.norm.length > h.idx)) continue;
+    hits.push({ ...s, idx });
+  }
+  if (!hits.length) return null;
+  hits.sort((a, b) => a.idx - b.idx);
+  if (hits.length === 1) return { destId: hits[0].stop_id, destName: hits[0].stop_name };
+  let origin = hits[0];
+  let dest = hits[1];
+  const desdeIdx = query.indexOf("desde");
+  if (desdeIdx >= 0) {
+    const sorted = [...hits].sort((a, b) => Math.abs(a.idx - desdeIdx) - Math.abs(b.idx - desdeIdx));
+    origin = sorted[0];
+    dest = hits.find((h) => h.stop_id !== origin.stop_id) ?? hits[1];
+  }
+  return {
+    destId: dest.stop_id, destName: dest.stop_name,
+    originId: origin.stop_id, originName: origin.stop_name,
+  };
+
 function bestKeyIntent(query: string): { intent: IntentDef; len: number } | null {
   let best: IntentDef | null = null;
   let bestLen = 0;
