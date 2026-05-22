@@ -2,8 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 // /api/public/tram/departures?stop_id=...&date=YYYY-MM-DD&from=HH:MM&limit=20
-// Devuelve las próximas salidas programadas en una parada, filtradas por
-// servicios activos en la fecha indicada (calendar + calendar_dates).
+// Próximas salidas programadas en una parada, filtradas por servicios activos
+// en la fecha indicada (calendar + calendar_dates).
 export const Route = createFileRoute("/api/public/tram/departures")({
   server: {
     handlers: {
@@ -13,55 +13,64 @@ export const Route = createFileRoute("/api/public/tram/departures")({
         if (!stopId) return new Response(JSON.stringify({ error: "stop_id required" }), { status: 400 });
 
         const today = new Date();
-        const isoDate = (url.searchParams.get("date") || today.toISOString().slice(0, 10));
-        const dateCompact = isoDate.replace(/-/g, "");
+        const dateStr = url.searchParams.get("date") || today.toISOString().slice(0, 10);
         const from = url.searchParams.get("from") || `${String(today.getHours()).padStart(2, "0")}:${String(today.getMinutes()).padStart(2, "0")}`;
         const limit = Math.min(Number(url.searchParams.get("limit") || 20), 100);
+        const [fh, fm] = from.split(":").map(Number);
+        const fromSecs = fh * 3600 + fm * 60;
 
-        // 1. Servicios activos en esa fecha.
-        const dow = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"][new Date(isoDate + "T00:00:00").getDay()];
+        // 1. Servicios activos.
+        const dow = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"][new Date(dateStr + "T00:00:00").getDay()];
         const { data: cal } = await supabaseAdmin
           .from("tram_calendar")
-          .select("service_id, start_date, end_date, " + dow)
-          .lte("start_date", dateCompact).gte("end_date", dateCompact);
-        const baseServices = new Set((cal ?? []).filter((c: any) => c[dow]).map((c) => c.service_id));
+          .select(`service_id, ${dow}`)
+          .lte("start_date", dateStr).gte("end_date", dateStr);
+        const baseServices = new Set(
+          ((cal ?? []) as any[]).filter((c) => c[dow]).map((c) => c.service_id as string),
+        );
 
         const { data: exc } = await supabaseAdmin
-          .from("tram_calendar_dates").select("service_id, exception_type").eq("date", isoDate);
-        (exc ?? []).forEach((e) => {
+          .from("tram_calendar_dates").select("service_id, exception_type").eq("date", dateStr);
+        ((exc ?? []) as Array<{ service_id: string; exception_type: number }>).forEach((e) => {
           if (e.exception_type === 1) baseServices.add(e.service_id);
           if (e.exception_type === 2) baseServices.delete(e.service_id);
         });
         const services = Array.from(baseServices);
-        if (!services.length) return Response.json({ stop_id: stopId, date: isoDate, departures: [] });
+        if (!services.length) return Response.json({ stop_id: stopId, date: dateStr, departures: [] });
 
-        // 2. Trips de esos servicios.
-        const { data: trips } = await supabaseAdmin
+        // 2. Trips.
+        const { data: tripsRaw } = await supabaseAdmin
           .from("tram_trips").select("trip_id, route_id, trip_headsign, direction_id")
           .in("service_id", services).limit(5000);
-        if (!trips?.length) return Response.json({ stop_id: stopId, date: isoDate, departures: [] });
+        const trips = (tripsRaw ?? []) as Array<{ trip_id: string; route_id: string; trip_headsign: string | null; direction_id: number | null }>;
+        if (!trips.length) return Response.json({ stop_id: stopId, date: dateStr, departures: [] });
         const tripMap = new Map(trips.map((t) => [t.trip_id, t]));
 
-        // 3. Stop_times en esa parada para esos trips, a partir de `from`.
-        const fromHHMMSS = from.length === 5 ? `${from}:00` : from;
-        const { data: st } = await supabaseAdmin
+        // 3. Stop_times.
+        const { data: stRaw } = await supabaseAdmin
           .from("tram_stop_times")
-          .select("trip_id, arrival_time, departure_time, stop_sequence")
+          .select("trip_id, arrival_seconds, departure_seconds, stop_sequence")
           .eq("stop_id", stopId)
-          .gte("departure_time", fromHHMMSS)
+          .gte("departure_seconds", fromSecs)
           .in("trip_id", trips.map((t) => t.trip_id))
-          .order("departure_time", { ascending: true })
+          .order("departure_seconds", { ascending: true })
           .limit(limit);
+        const st = (stRaw ?? []) as Array<{ trip_id: string; arrival_seconds: number | null; departure_seconds: number | null; stop_sequence: number }>;
 
-        const routeIds = Array.from(new Set((st ?? []).map((r) => tripMap.get(r.trip_id)?.route_id).filter(Boolean) as string[]));
-        const { data: routes } = await supabaseAdmin.from("tram_routes").select("route_id, route_short_name, route_long_name, route_color").in("route_id", routeIds);
-        const routeMap = new Map((routes ?? []).map((r) => [r.route_id, r]));
+        const routeIds = Array.from(new Set(st.map((r) => tripMap.get(r.trip_id)?.route_id).filter(Boolean) as string[]));
+        const { data: routes } = await supabaseAdmin.from("tram_routes")
+          .select("route_id, route_short_name, route_long_name, route_color").in("route_id", routeIds);
+        const routeMap = new Map(((routes ?? []) as any[]).map((r) => [r.route_id, r]));
+
+        const fmt = (n: number | null) => {
+          if (n === null) return null;
+          const h = Math.floor(n / 3600), m = Math.floor((n % 3600) / 60), s = n % 60;
+          return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+        };
 
         return Response.json({
-          stop_id: stopId,
-          date: isoDate,
-          from,
-          departures: (st ?? []).map((r) => {
+          stop_id: stopId, date: dateStr, from,
+          departures: st.map((r) => {
             const trip = tripMap.get(r.trip_id)!;
             const route = routeMap.get(trip.route_id);
             return {
@@ -72,8 +81,8 @@ export const Route = createFileRoute("/api/public/tram/departures")({
               line_color: route?.route_color,
               headsign: trip.trip_headsign,
               direction: trip.direction_id,
-              arrival_time: r.arrival_time,
-              departure_time: r.departure_time,
+              arrival_time: fmt(r.arrival_seconds),
+              departure_time: fmt(r.departure_seconds),
             };
           }),
         });

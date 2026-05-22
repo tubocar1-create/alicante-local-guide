@@ -18,34 +18,40 @@ export const Route = createFileRoute("/api/public/tram/line-stops")({
         const { data: trips } = await q.limit(1000);
         if (!trips?.length) return Response.json({ stops: [] });
 
-        // Elegir el trip con más paradas como representante.
         const sample = trips.slice(0, 50).map((t) => t.trip_id);
         const { data: counts } = await supabaseAdmin
           .from("tram_stop_times").select("trip_id, stop_sequence").in("trip_id", sample).limit(5000);
         const maxByTrip = new Map<string, number>();
-        (counts ?? []).forEach((r) => {
+        ((counts ?? []) as Array<{ trip_id: string; stop_sequence: number }>).forEach((r) => {
           maxByTrip.set(r.trip_id, Math.max(maxByTrip.get(r.trip_id) ?? 0, r.stop_sequence));
         });
         let bestTrip = sample[0];
         let bestCount = 0;
         for (const [tid, c] of maxByTrip) if (c > bestCount) { bestCount = c; bestTrip = tid; }
 
-        const { data: st } = await supabaseAdmin
+        const { data: stRaw } = await supabaseAdmin
           .from("tram_stop_times")
-          .select("stop_id, stop_sequence, arrival_time, departure_time")
+          .select("stop_id, stop_sequence, arrival_seconds, departure_seconds")
           .eq("trip_id", bestTrip).order("stop_sequence", { ascending: true });
+        const st = (stRaw ?? []) as Array<{ stop_id: string; stop_sequence: number; arrival_seconds: number | null; departure_seconds: number | null }>;
 
-        const stopIds = (st ?? []).map((r) => r.stop_id);
+        const stopIds = st.map((r) => r.stop_id);
         const { data: stops } = await supabaseAdmin.from("tram_stops").select("*").in("stop_id", stopIds);
-        const map = new Map((stops ?? []).map((s) => [s.stop_id, s]));
+        const map = new Map(((stops ?? []) as any[]).map((s) => [s.stop_id, s]));
+
+        const fmt = (n: number | null) => {
+          if (n === null) return null;
+          const h = Math.floor(n / 3600), m = Math.floor((n % 3600) / 60), s = n % 60;
+          return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+        };
 
         return Response.json({
           line_id: lineId,
           trip_id: bestTrip,
-          stops: (st ?? []).map((r) => ({
+          stops: st.map((r) => ({
             sequence: r.stop_sequence,
-            arrival_time: r.arrival_time,
-            departure_time: r.departure_time,
+            arrival_time: fmt(r.arrival_seconds),
+            departure_time: fmt(r.departure_seconds),
             stop: map.get(r.stop_id) ?? null,
           })),
         });

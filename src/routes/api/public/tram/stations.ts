@@ -13,11 +13,11 @@ export const Route = createFileRoute("/api/public/tram/stations")({
         if (lineId) {
           const { data: trips } = await supabaseAdmin
             .from("tram_trips").select("trip_id").eq("route_id", lineId).limit(2000);
-          const tripIds = (trips ?? []).map((t) => t.trip_id);
+          const tripIds = ((trips ?? []) as Array<{ trip_id: string }>).map((t) => t.trip_id);
           if (!tripIds.length) return Response.json({ stations: [] });
           const { data: st } = await supabaseAdmin
             .from("tram_stop_times").select("stop_id").in("trip_id", tripIds).limit(10000);
-          const ids = Array.from(new Set((st ?? []).map((r) => r.stop_id)));
+          const ids = Array.from(new Set(((st ?? []) as Array<{ stop_id: string }>).map((r) => r.stop_id)));
           const { data: stops, error } = await supabaseAdmin
             .from("tram_stops").select("*").in("stop_id", ids).order("stop_name");
           if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 });
