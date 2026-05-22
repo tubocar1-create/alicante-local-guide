@@ -13,6 +13,7 @@ import {
   fetchAlibusAlicante,
   fetchAlicantePressHeadlines,
   fetchAlicantePressDirect,
+  fetchAlicanteIncidencias,
   type CulturalEvent,
 } from "./alicante-city.server";
 import {
@@ -482,6 +483,19 @@ export const getAdVariants = createServerFn({ method: "POST" })
       alicantePressCtx = `\n\nTITULARES REALES de Alicante Press (alicantepress.com, scraping directo de portada):\n${lines}\n\nGenera UNA variante por titular en el MISMO orden que el listado. Usa SOLO la información del titular; no inventes detalles ni fechas. DESCARTA política partidista, sucesos, accidentes, fallecimientos o tragedias (si quedara alguno colado, omítelo).`;
     }
 
+    let incidenciasCtx = "";
+    if (advertiser.kind === "incidencias") {
+      const items = await fetchAlicanteIncidencias();
+      if (!items || items.length === 0) {
+        return { ...baseResp, variants: [] };
+      }
+      const lines = items
+        .slice(0, Math.max(count, 6))
+        .map((i, idx) => `${idx + 1}. "${i.title}"${i.when ? ` (${i.when})` : ""}${i.description ? ` — ${i.description.slice(0, 160)}` : ""}`)
+        .join("\n");
+      incidenciasCtx = `\n\nINCIDENCIAS OFICIALES de movilidad.alicante.es vigentes HOY:\n${lines}\n\nGenera UNA variante por incidencia. Usa SOLO la información del listado, no inventes. Tono claro, útil, sin alarmismo.`;
+    }
+
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       return {
@@ -534,6 +548,9 @@ export const getAdVariants = createServerFn({ method: "POST" })
         break;
       case "alicante_press":
         userPrompt = `Genera ${count} variantes de tarjeta sobre TITULARES de Alicante Press (alicantepress.com). UNA variante por titular del listado, en el MISMO orden que el listado. headline (máx 5 palabras, reescritura corta y neutra del titular real, sin clickbait), body (1 frase de contexto basada SOLO en el titular, máx 95 caracteres), cta "Leer noticia". DESCARTA política partidista, sucesos, accidentes, muertes y tragedias. Tono informativo, sin opinión, sin signos de exclamación.${alicantePressCtx}`;
+        break;
+      case "incidencias":
+        userPrompt = `Genera ${count} variantes de tarjeta sobre INCIDENCIAS DE MOVILIDAD vigentes HOY en Alicante (fuente oficial movilidad.alicante.es). UNA variante por incidencia del listado. headline (máx 5 palabras, empieza por ⚠️ y resume el aviso, ej "⚠️ Corte calle San Vicente"), body (1 frase con qué pasa y, si aplica, cuándo o dónde, máx 95 caracteres), cta "Ver incidencias". Tono claro, útil, sin alarmismo. NO inventes nada que no esté en el listado.${incidenciasCtx}`;
         break;
       default:
         userPrompt = wiki
