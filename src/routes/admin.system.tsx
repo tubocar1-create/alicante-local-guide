@@ -206,9 +206,11 @@ function AdminSystemPage() {
   const check = useServerFn(checkIsAdmin);
   const navigate = useNavigate();
   const [state, setState] = useState<"checking" | "ok" | "denied">("checking");
+  const [pinOk, setPinOk] = useState(false);
+  const [pin, setPin] = useState("");
+  const [pinError, setPinError] = useState(false);
 
   const handleClose = () => {
-    // Intenta cerrar la pestaña si fue abierta por el chat; si no, vuelve al home.
     if (typeof window !== "undefined" && window.opener) {
       window.close();
       return;
@@ -217,6 +219,9 @@ function AdminSystemPage() {
   };
 
   useEffect(() => {
+    if (typeof window !== "undefined" && sessionStorage.getItem(PIN_STORAGE_KEY) === "1") {
+      setPinOk(true);
+    }
     let cancelled = false;
     check()
       .then((r) => {
@@ -229,6 +234,18 @@ function AdminSystemPage() {
     };
   }, [check]);
 
+  const submitPin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pin === ADMIN_PIN) {
+      sessionStorage.setItem(PIN_STORAGE_KEY, "1");
+      setPinOk(true);
+      setPinError(false);
+    } else {
+      setPinError(true);
+      setPin("");
+    }
+  };
+
   if (state === "checking") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -238,7 +255,6 @@ function AdminSystemPage() {
   }
 
   if (state === "denied") {
-    // 404-style: no pista de que esta página existe.
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <p className="text-muted-foreground text-sm">404 — Página no encontrada</p>
@@ -246,7 +262,35 @@ function AdminSystemPage() {
     );
   }
 
+  if (!pinOk) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <form onSubmit={submitPin} className="w-full max-w-sm space-y-4 border rounded-lg p-6 shadow-sm">
+          <div className="space-y-1">
+            <h2 className="text-lg font-semibold">Acceso restringido</h2>
+            <p className="text-xs text-muted-foreground">Introduce el PIN de administrador (7 dígitos).</p>
+          </div>
+          <Input
+            type="password"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={7}
+            autoFocus
+            value={pin}
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, ""))}
+            placeholder="•••••••"
+          />
+          {pinError && <p className="text-xs text-destructive">PIN incorrecto</p>}
+          <Button type="submit" className="w-full" disabled={pin.length !== 7}>
+            Entrar
+          </Button>
+        </form>
+      </div>
+    );
+  }
+
   return (
+
     <div className="min-h-screen bg-background text-foreground">
       <Button
         onClick={handleClose}
