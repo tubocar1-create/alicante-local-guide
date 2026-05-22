@@ -800,6 +800,42 @@ function domainFromPath(pathname: string): string | null {
   return domain?.id ?? null;
 }
 
+const ACTIVE_DOMAIN_KEY = "va:active-domain";
+const ACTIVE_DOMAIN_TS_KEY = "va:active-domain-ts";
+const ACTIVE_DOMAIN_TTL_MS = 10 * 60 * 1000;
+
+function readStoredActiveDomain(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const domain = window.sessionStorage.getItem(ACTIVE_DOMAIN_KEY);
+    const ts = Number(window.sessionStorage.getItem(ACTIVE_DOMAIN_TS_KEY) ?? "0");
+    if (!domain || !DOMAINS.some((d) => d.id === domain)) return null;
+    if (ts && Date.now() - ts > ACTIVE_DOMAIN_TTL_MS) {
+      window.sessionStorage.removeItem(ACTIVE_DOMAIN_KEY);
+      window.sessionStorage.removeItem(ACTIVE_DOMAIN_TS_KEY);
+      return null;
+    }
+    return domain;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredActiveDomain(domain: string | null) {
+  if (typeof window === "undefined") return;
+  try {
+    if (!domain) {
+      window.sessionStorage.removeItem(ACTIVE_DOMAIN_KEY);
+      window.sessionStorage.removeItem(ACTIVE_DOMAIN_TS_KEY);
+      return;
+    }
+    window.sessionStorage.setItem(ACTIVE_DOMAIN_KEY, domain);
+    window.sessionStorage.setItem(ACTIVE_DOMAIN_TS_KEY, String(Date.now()));
+  } catch {
+    /* noop */
+  }
+}
+
 // ─── DETECCIÓN DE DICOTOMÍA DE CONTEXTO ───────────────────────────────
 // Cuando la frase del usuario mezcla un verbo de movimiento ("ir a",
 // "voy a", "llévame"...) con otro dominio (comer/playas/dormir/...) o
@@ -839,6 +875,9 @@ function findOtherDomainHint(q: string): { id: string; label: string } | null {
     }
   }
   return null;
+}
+function explicitlySwitchesAwayFromTram(q: string): boolean {
+  return /\b(comer|comida|restaurante|restaurantes|cenar|almorzar|desayunar|hotel|hoteles|alojamiento|alojarme|dormir|playa|playas|cala|calas|turismo|visitar|cine|teatro|farmacia|comprar|tienda|fiesta|concierto|copa|cerveza)\b/.test(q);
 }
 function detectAmbiguity(query: string): LocalResult | null {
   if (EXPLICIT_TRANSPORT_MODE_RE.test(query)) return null;
@@ -1218,6 +1257,47 @@ function localResolve(
 ): LocalResult {
   const query = normalizeSpeech(text);
 
+  // Dominio activo = prioridad máxima sobre entidades/keywords aisladas.
+  // Si el agente acaba de preguntar por TRAM/transporte, respuestas cortas
+  // como “Benidorm” se resuelven como destino TRAM antes de llegar a turismo.
+  if (currentDomain === "transporte") {
+    const transportDomain = DOMAINS.find((x) => x.id === "transporte");
+    const tramFollowup = transportDomain ? matchFollowup(query, transportDomain) : null;
+    if (tramFollowup?.path === "action:tram-pick") {
+      const tPick = DOMAINS.find((x) => x.id === "tram_pick");
+      return {
+        reply: tPick?.question ?? "¿Hacia qué estación del TRAM quieres ir?",
+        path: "/tram",
+        audio: "bus",
+        pendingDomain: "tram_pick",
+      };
+    }
+  }
+  if (currentDomain === "tram_pick" && !explicitlySwitchesAwayFromTram(query)) {
+    const tramHit = matchTramQuery(`tram ${query}`);
+    if (tramHit) {
+      const params = new URLSearchParams();
+      params.set("tram_dest", tramHit.destId);
+      if (tramHit.originId) params.set("tram_origin", tramHit.originId);
+      if (typeof window !== "undefined" && !tramHit.originId) {
+        try {
+          window.sessionStorage.setItem("tram:pending-dest-id", tramHit.destId);
+          window.sessionStorage.setItem("tram:pending-dest-name", tramHit.destName);
+          window.sessionStorage.removeItem("tram:suggested-origin-id");
+          window.sessionStorage.removeItem("tram:suggested-origin-name");
+        } catch { /* noop */ }
+      }
+      return {
+        reply: tramHit.originId
+          ? `¡Voy! TRAM de ${tramHit.originName} a ${tramHit.destName}.`
+          : `🎯 Destino: ${tramHit.destName}. Calculando la parada más cercana…`,
+        path: `/tram?${params.toString()}`,
+        audio: "bus",
+        pendingDomain: tramHit.originId ? null : "tram_origin_confirm",
+      };
+    }
+  }
+
   // 0) HARD-BLOCK SANITARIO — gana sobre todo lo demás excepto el follow-up
   //    dentro del propio dominio salud (donde el usuario ya eligió opción).
   if (hasHealthHardBlock(query) && currentDomain !== "salud") {
@@ -1305,7 +1385,7 @@ function localResolve(
     }
     // 1.ter) En el dominio tram_pick aceptamos paradas aunque el usuario
     // no diga la palabra "tram" (ya está en el flujo).
-    if (currentDomain === "tram_pick") {
+  if (currentDomain === "tram_pick" && !explicitlySwitchesAwayFromTram(query)) {
       const tramHit2 = matchTramQuery(`tram ${query}`);
       if (tramHit2) {
         const params = new URLSearchParams();
@@ -2520,7 +2600,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           } catch {}
         }
         const routeDomain = domainFromPath(path);
-        const activeDomain = pendingDomainRef.current ?? routeDomain;
+        const storedDomain = readStoredActiveDomain();
+        const activeDomain = pendingDomainRef.current ?? storedDomain ?? routeDomain;
         const priorDomain = activeDomain;
         const fallback = localResolve(clean, activeDomain, routingCatalogRef.current);
         const replyMode = pickAssistantMode(fallback.pendingDomain ?? pendingDomainRef.current ?? null);
@@ -2575,14 +2656,14 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         // Si el resolver local activa un DOMINIO (pregunta aclaratoria sin
         // path), saltamos el servidor para no pisar la pregunta con una
         // navegación agresiva. Actualizamos el dominio activo y respondemos.
-        const isClarifying =
-          (fallback.pendingDomain != null && !fallback.path) ||
-          fallback.pendingDomain === "tram_origin_confirm";
-        if (isClarifying) {
+        const isClarifying = fallback.pendingDomain != null;
+        if (fallback.pendingDomain != null) {
           pendingDomainRef.current = fallback.pendingDomain ?? null;
+          writeStoredActiveDomain(pendingDomainRef.current);
         } else if (fallback.pendingDomain === null) {
           // Resolución concreta → cerramos el dominio activo.
           pendingDomainRef.current = null;
+          writeStoredActiveDomain(null);
         }
 
         const resolvedLineDashboard = /^\/bus\/dashboard\/[^/?#]+$/i.test(fallback.path ?? "");
@@ -2642,6 +2723,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             reply = saludDomain.question;
             forwardPrompt = undefined;
             pendingDomainRef.current = "salud";
+            writeStoredActiveDomain("salud");
             if (typeof window !== "undefined") {
               try {
                 window.sessionStorage.removeItem("afp:fwdPrompt");
@@ -2683,6 +2765,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             target = hub;
             reply = ambiguousDomain.domain.question;
             pendingDomainRef.current = ambiguousDomain.domain.id;
+            writeStoredActiveDomain(pendingDomainRef.current);
             forwardPrompt = undefined;
             if (typeof window !== "undefined") {
               try {
