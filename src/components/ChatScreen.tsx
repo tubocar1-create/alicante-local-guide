@@ -237,6 +237,7 @@ export function ChatScreen() {
   const [showBusPicker, setShowBusPicker] = useState(false);
   const [busPickerLine, setBusPickerLine] = useState<string | null>(null);
   const [showFlightPicker, setShowFlightPicker] = useState(false);
+  const [showTramInline, setShowTramInline] = useState(false);
   const [composerMode, setComposerMode] = useState<"voice" | "text">("voice");
   const lastFoodSummaryRef = useRef<string | null>(null);
 
