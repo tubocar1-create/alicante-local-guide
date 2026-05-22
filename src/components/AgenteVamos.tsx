@@ -998,6 +998,15 @@ function localResolve(
             pendingDomain: "transporte_bus",
           };
         }
+        if (fuPath === "action:tram-pick") {
+          const tPick = DOMAINS.find((x) => x.id === "tram_pick");
+          return {
+            reply: tPick?.question ?? "¿A qué estación del TRAM quieres ir y desde dónde sales?",
+            path: "/tram",
+            audio: "bus",
+            pendingDomain: "tram_pick",
+          };
+        }
         const intent = INTENTS.find((it) => it.path === fuPath);
         return {
           reply: intent?.reply ?? "Te llevo allí.",
