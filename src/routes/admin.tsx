@@ -381,6 +381,35 @@ function StatCard({
   );
 }
 
+function MigrateButton({ onDone }: { onDone: () => void }) {
+  const run = useServerFn(migrateTestUsersToAuth);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const handle = async () => {
+    if (!confirm("Migrar test_users a usuarios autenticados?")) return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await run({ data: { pin: ADMIN_PIN } });
+      setMsg(`+${res.created_count} creados · ${res.skipped_count} ya existían · ${res.failed_count} fallidos`);
+      onDone();
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : "Error");
+    } finally {
+      setBusy(false);
+      setTimeout(() => setMsg(null), 8000);
+    }
+  };
+  return (
+    <div className="flex items-center gap-2">
+      {msg && <span className="text-[11px] text-muted-foreground">{msg}</span>}
+      <Button variant="outline" size="sm" onClick={handle} disabled={busy}>
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Migrar test→Auth"}
+      </Button>
+    </div>
+  );
+}
+
 function fmt(iso: string | null): string {
   if (!iso) return "—";
   const d = new Date(iso);
