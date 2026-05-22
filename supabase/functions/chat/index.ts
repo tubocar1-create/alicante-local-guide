@@ -21,6 +21,7 @@ type FoodPlace = {
 };
 type ChatContext = {
   maxOptions?: number;
+  mode?: "transit" | "guide" | null;
   location?: {
     lat?: number;
     lng?: number;
@@ -1397,7 +1398,7 @@ type TransitResult = {
 
 function detectTransitIntent(text: string): boolean {
   const t = text.toLowerCase();
-  return /\b(bus|autob[uú]s|tram|guagua|l[ií]nea\s*\d|transporte\s+p[uú]blico|c[oó]mo\s+(voy|llego|ir)|qu[eé]\s+l[ií]nea|en\s+bus|en\s+autob[uú]s)\b/.test(
+  return /\b(bus|autob[uú]s|tram|tranv[ií]a|guagua|l[ií]nea\s*\d|transporte\s+p[uú]blico|c[oó]mo\s+(voy|llego|ir)|qu[eé]\s+l[ií]nea|en\s+bus|en\s+autob[uú]s|en\s+tram|coger\s+(?:el\s+)?tram|tomar\s+(?:el\s+)?tram)\b/.test(
     t,
   );
 }
