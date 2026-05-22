@@ -387,7 +387,7 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
         )}
 
         {/* Líneas TRAM */}
-        <div>
+        <div ref={linesSectionRef}>
           <p className="mb-1.5 px-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             Líneas TRAM
           </p>
@@ -395,17 +395,20 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
             {displayLines.map((l) => {
               const bg = ensureHash(l.color) ?? "var(--primary)";
               const fg = ensureHash(l.text_color) ?? "#FFFFFF";
+              const isLoading = loadingLine === l.id;
               return (
                 <button
                   key={l.id}
                   type="button"
-                  className="group flex items-center gap-2 rounded-xl border border-border bg-background/80 p-2 text-left shadow-sm transition hover:border-primary/40 hover:bg-accent/30 active:scale-[0.98]"
+                  onClick={() => selectLine(l.id)}
+                  disabled={isLoading}
+                  className="group flex items-center gap-2 rounded-xl border border-border bg-background/80 p-2 text-left shadow-sm transition hover:border-primary/40 hover:bg-accent/30 active:scale-[0.98] disabled:opacity-60"
                 >
                   <span
                     className="inline-flex h-8 min-w-[2.25rem] items-center justify-center rounded-md px-1.5 text-[11px] font-black shadow-sm"
                     style={{ background: bg, color: fg }}
                   >
-                    {l.short_name}
+                    {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : l.short_name}
                   </span>
                   <span className="flex-1 text-[11px] leading-tight">{l.long_name}</span>
                 </button>
