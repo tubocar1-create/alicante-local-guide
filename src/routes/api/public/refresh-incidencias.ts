@@ -1,10 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { fetchAlicanteIncidencias } from "@/lib/ads/alicante-city.server";
 
-// Cron diario a las 07:00: precarga las incidencias publicadas por
-// movilidad.alicante.es para el día actual. No persiste nada: el fetcher
-// se ejecuta en cada banner, así que el efecto es "calentar" el primer hit
-// del día y dejar trazabilidad en logs.
 export const Route = createFileRoute("/api/public/refresh-incidencias")({
   server: {
     handlers: {
