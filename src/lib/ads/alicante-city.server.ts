@@ -105,6 +105,114 @@ export async function fetchAlicanteTraffic(): Promise<TrafficSummary | null> {
   }
 }
 
+export type IncidenceItem = {
+  title: string;
+  description?: string;
+  when?: string;
+};
+
+function isTodayMadrid(iso: string): boolean {
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return false;
+    const fmt = new Intl.DateTimeFormat("es-ES", {
+      timeZone: "Europe/Madrid",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    const today = fmt.format(new Date());
+    const that = fmt.format(d);
+    return today === that;
+  } catch {
+    return false;
+  }
+}
+
+function dateInRangeToday(start?: string, end?: string): boolean {
+  // Si no hay fechas, asumir que la incidencia está vigente hoy.
+  if (!start && !end) return true;
+  try {
+    const now = new Date();
+    const s = start ? new Date(start) : null;
+    const e = end ? new Date(end) : null;
+    if (s && isNaN(s.getTime())) return true;
+    if (e && isNaN(e.getTime())) return true;
+    if (s && now < s) return false;
+    if (e && now > e) return false;
+    return true;
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * Incidencias publicadas por movilidad.alicante.es para el día actual.
+ * Fuente: el mismo feed /asmpois que alimenta la web pública /incidencias.
+ */
+export async function fetchAlicanteIncidencias(): Promise<IncidenceItem[] | null> {
+  try {
+    const r = await fetch(`${BASE}/asmpois`, {
+      headers: { "User-Agent": UA, Accept: "application/json" },
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!r.ok) return null;
+    const list: Array<Record<string, unknown>> = await r.json();
+    const out: IncidenceItem[] = [];
+    for (const x of list) {
+      if (x.content_type !== "incidence") continue;
+      const title = typeof x.title === "string" ? x.title.trim() : "";
+      if (!title) continue;
+      const start =
+        (typeof x.date_init === "string" && x.date_init) ||
+        (typeof x.start_date === "string" && x.start_date) ||
+        (typeof x.date_start === "string" && x.date_start) ||
+        (typeof x.start_at === "string" && x.start_at) ||
+        undefined;
+      const end =
+        (typeof x.date_end === "string" && x.date_end) ||
+        (typeof x.end_date === "string" && x.end_date) ||
+        (typeof x.date_finish === "string" && x.date_finish) ||
+        (typeof x.end_at === "string" && x.end_at) ||
+        undefined;
+      const published =
+        (typeof x.published_at === "string" && x.published_at) ||
+        (typeof x.created_at === "string" && x.created_at) ||
+        undefined;
+      // Vigente hoy: dentro del rango start/end, o publicado hoy si no hay rango.
+      const vigente =
+        dateInRangeToday(start as string | undefined, end as string | undefined) ||
+        (published ? isTodayMadrid(published as string) : false);
+      if (!vigente) continue;
+      const description =
+        (typeof x.description === "string" && x.description.trim()) ||
+        (typeof x.content === "string" && x.content.trim()) ||
+        (typeof x.body === "string" && x.body.trim()) ||
+        undefined;
+      const when = start
+        ? new Date(start as string).toLocaleString("es-ES", {
+            timeZone: "Europe/Madrid",
+            day: "2-digit",
+            month: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : undefined;
+      out.push({ title, description: description || undefined, when });
+    }
+    // Dedupe por título.
+    const seen = new Set<string>();
+    return out.filter((i) => {
+      const k = i.title.toLowerCase();
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+  } catch {
+    return null;
+  }
+}
+
 export type AirQualityStation = {
   address: string;
   status: "verde" | "amarillo" | "naranja" | "rojo" | "morado" | "desconocido";
