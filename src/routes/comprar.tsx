@@ -74,9 +74,9 @@ function ComprarPage() {
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-black text-white">
-      <header className="border-b bg-background/95">
+      <header className="border-b border-white/10 bg-black">
         <div className="mx-auto flex max-w-3xl items-center gap-2 px-3 py-2">
-          <Link to="/" className="rounded-full p-1.5 hover:bg-muted" aria-label="Volver">
+          <Link to="/" className="rounded-full p-1.5 hover:bg-white/10" aria-label="Volver">
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <div className="flex items-center gap-1.5">
