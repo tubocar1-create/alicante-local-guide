@@ -71,8 +71,6 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
   const [loadingDep, setLoadingDep] = useState(true);
   const [serviceWarn, setServiceWarn] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<Station[]>([]);
-  const [showFavorites, setShowFavorites] = useState(false);
-  const [loadingLine, setLoadingLine] = useState<string | null>(null);
 
   // Cargar favoritos y última parada
   useEffect(() => {
