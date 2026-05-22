@@ -279,6 +279,8 @@ function AdminDashboard() {
         )}
         {err && <p className="text-destructive text-sm">Error: {err}</p>}
 
+        <AnalyticsSection />
+
         {data && (
           <>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
