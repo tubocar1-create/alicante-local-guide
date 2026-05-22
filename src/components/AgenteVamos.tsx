@@ -331,7 +331,7 @@ const DOMAINS: DomainSpec[] = [
         ], path: "action:transporte-bus" },
       { keys: [
           "tram", "tranvia", "tranvía", "tranvias", "tranvías", "fgv",
-        ], path: "/tram" },
+        ], path: "action:tram-pick" },
       { keys: ["vuelo", "vuelos", "avion", "aeropuerto"], path: "/vuelos" },
     ],
   },
