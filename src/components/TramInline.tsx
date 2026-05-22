@@ -192,24 +192,29 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
     if (validStops[0]) setOrigin(validStops[0]);
   }, [destination, origin, validGroups, validStops, geo]);
 
-  // Plan cuando origen confirmado
+  // Plan cuando origen confirmado (auto-refresca cada 15 min)
   useEffect(() => {
     if (!origin || !destination || !originConfirmed) { setPlanOptions(null); return; }
     let cancelled = false;
-    setLoadingPlan(true);
-    // Pasamos hora y fecha LOCALES del cliente (el servidor corre en UTC y
-    // devolvería salidas pasadas si dejamos que las calcule él).
-    const now = new Date();
-    const pad = (n: number) => String(n).padStart(2, "0");
-    const from = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
-    const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-    const url = `/api/public/tram/plan?origin=${encodeURIComponent(origin.stop_id)}&destination=${encodeURIComponent(destination.stop_id)}&from=${from}&date=${date}&limit=15`;
-    fetch(url)
-      .then((r) => r.json())
-      .then((d) => { if (!cancelled) { setPlanOptions(d?.options ?? []); setLoadingPlan(false); } })
-      .catch(() => { if (!cancelled) { setPlanOptions([]); setLoadingPlan(false); } });
-    return () => { cancelled = true; };
+    const load = (showSpinner: boolean) => {
+      if (showSpinner) setLoadingPlan(true);
+      // Pasamos hora y fecha LOCALES del cliente (el servidor corre en UTC y
+      // devolvería salidas pasadas si dejamos que las calcule él).
+      const now = new Date();
+      const pad = (n: number) => String(n).padStart(2, "0");
+      const from = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+      const url = `/api/public/tram/plan?origin=${encodeURIComponent(origin.stop_id)}&destination=${encodeURIComponent(destination.stop_id)}&from=${from}&date=${date}&limit=15`;
+      fetch(url)
+        .then((r) => r.json())
+        .then((d) => { if (!cancelled) { setPlanOptions(d?.options ?? []); setLoadingPlan(false); } })
+        .catch(() => { if (!cancelled) { setPlanOptions([]); setLoadingPlan(false); } });
+    };
+    load(true);
+    const id = setInterval(() => load(false), 15 * 60 * 1000);
+    return () => { cancelled = true; clearInterval(id); };
   }, [origin?.stop_id, destination?.stop_id, originConfirmed]);
+
 
   const pickDestinationByQuery = async (q: string) => {
     try {
