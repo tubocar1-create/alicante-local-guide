@@ -91,6 +91,7 @@ import { Route as ApiPublicHooksTramSyncRouteImport } from './routes/api/public/
 import { Route as ApiPublicHooksSyncHotelsStaticRouteImport } from './routes/api/public/hooks/sync-hotels-static'
 import { Route as ApiPublicHooksRefreshHotelsDynamicRouteImport } from './routes/api/public/hooks/refresh-hotels-dynamic'
 import { Route as ApiPublicHooksCinemasSyncRouteImport } from './routes/api/public/hooks/cinemas-sync'
+import { Route as ApiPublicHooksAgenteLearnRouteImport } from './routes/api/public/hooks/agente-learn'
 import { Route as ApiPublicHooksAenaSyncRouteImport } from './routes/api/public/hooks/aena-sync'
 
 const WelcomeRoute = WelcomeRouteImport.update({
@@ -510,6 +511,12 @@ const ApiPublicHooksCinemasSyncRoute =
     path: '/api/public/hooks/cinemas-sync',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksAgenteLearnRoute =
+  ApiPublicHooksAgenteLearnRouteImport.update({
+    id: '/api/public/hooks/agente-learn',
+    path: '/api/public/hooks/agente-learn',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksAenaSyncRoute = ApiPublicHooksAenaSyncRouteImport.update({
   id: '/api/public/hooks/aena-sync',
   path: '/api/public/hooks/aena-sync',
@@ -587,6 +594,7 @@ export interface FileRoutesByFullPath {
   '/tram/linea/$lineId': typeof TramLineaLineIdRoute
   '/tram/parada/$stopId': typeof TramParadaStopIdRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
+  '/api/public/hooks/agente-learn': typeof ApiPublicHooksAgenteLearnRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
   '/api/public/hooks/refresh-hotels-dynamic': typeof ApiPublicHooksRefreshHotelsDynamicRoute
   '/api/public/hooks/sync-hotels-static': typeof ApiPublicHooksSyncHotelsStaticRoute
@@ -671,6 +679,7 @@ export interface FileRoutesByTo {
   '/tram/linea/$lineId': typeof TramLineaLineIdRoute
   '/tram/parada/$stopId': typeof TramParadaStopIdRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
+  '/api/public/hooks/agente-learn': typeof ApiPublicHooksAgenteLearnRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
   '/api/public/hooks/refresh-hotels-dynamic': typeof ApiPublicHooksRefreshHotelsDynamicRoute
   '/api/public/hooks/sync-hotels-static': typeof ApiPublicHooksSyncHotelsStaticRoute
@@ -757,6 +766,7 @@ export interface FileRoutesById {
   '/tram/linea/$lineId': typeof TramLineaLineIdRoute
   '/tram/parada/$stopId': typeof TramParadaStopIdRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
+  '/api/public/hooks/agente-learn': typeof ApiPublicHooksAgenteLearnRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
   '/api/public/hooks/refresh-hotels-dynamic': typeof ApiPublicHooksRefreshHotelsDynamicRoute
   '/api/public/hooks/sync-hotels-static': typeof ApiPublicHooksSyncHotelsStaticRoute
@@ -844,6 +854,7 @@ export interface FileRouteTypes {
     | '/tram/linea/$lineId'
     | '/tram/parada/$stopId'
     | '/api/public/hooks/aena-sync'
+    | '/api/public/hooks/agente-learn'
     | '/api/public/hooks/cinemas-sync'
     | '/api/public/hooks/refresh-hotels-dynamic'
     | '/api/public/hooks/sync-hotels-static'
@@ -928,6 +939,7 @@ export interface FileRouteTypes {
     | '/tram/linea/$lineId'
     | '/tram/parada/$stopId'
     | '/api/public/hooks/aena-sync'
+    | '/api/public/hooks/agente-learn'
     | '/api/public/hooks/cinemas-sync'
     | '/api/public/hooks/refresh-hotels-dynamic'
     | '/api/public/hooks/sync-hotels-static'
@@ -1013,6 +1025,7 @@ export interface FileRouteTypes {
     | '/tram/linea/$lineId'
     | '/tram/parada/$stopId'
     | '/api/public/hooks/aena-sync'
+    | '/api/public/hooks/agente-learn'
     | '/api/public/hooks/cinemas-sync'
     | '/api/public/hooks/refresh-hotels-dynamic'
     | '/api/public/hooks/sync-hotels-static'
@@ -1077,6 +1090,7 @@ export interface RootRouteChildren {
   ComprarTiendaIdRoute: typeof ComprarTiendaIdRoute
   OcioPeliculaIdRoute: typeof OcioPeliculaIdRoute
   ApiPublicHooksAenaSyncRoute: typeof ApiPublicHooksAenaSyncRoute
+  ApiPublicHooksAgenteLearnRoute: typeof ApiPublicHooksAgenteLearnRoute
   ApiPublicHooksCinemasSyncRoute: typeof ApiPublicHooksCinemasSyncRoute
   ApiPublicHooksRefreshHotelsDynamicRoute: typeof ApiPublicHooksRefreshHotelsDynamicRoute
   ApiPublicHooksSyncHotelsStaticRoute: typeof ApiPublicHooksSyncHotelsStaticRoute
@@ -1668,6 +1682,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksCinemasSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/agente-learn': {
+      id: '/api/public/hooks/agente-learn'
+      path: '/api/public/hooks/agente-learn'
+      fullPath: '/api/public/hooks/agente-learn'
+      preLoaderRoute: typeof ApiPublicHooksAgenteLearnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/aena-sync': {
       id: '/api/public/hooks/aena-sync'
       path: '/api/public/hooks/aena-sync'
@@ -1845,6 +1866,7 @@ const rootRouteChildren: RootRouteChildren = {
   ComprarTiendaIdRoute: ComprarTiendaIdRoute,
   OcioPeliculaIdRoute: OcioPeliculaIdRoute,
   ApiPublicHooksAenaSyncRoute: ApiPublicHooksAenaSyncRoute,
+  ApiPublicHooksAgenteLearnRoute: ApiPublicHooksAgenteLearnRoute,
   ApiPublicHooksCinemasSyncRoute: ApiPublicHooksCinemasSyncRoute,
   ApiPublicHooksRefreshHotelsDynamicRoute:
     ApiPublicHooksRefreshHotelsDynamicRoute,
