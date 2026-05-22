@@ -2499,7 +2499,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
         const resolvedLineDashboard = /^\/bus\/dashboard\/[^/?#]+$/i.test(fallback.path ?? "");
 
-        if (!isClarifying && !resolvedLineDashboard) {
+        // Si la resolución local es el intent específico de cartelera/cine,
+        // NO dejamos que el servidor sobreescriba la respuesta con la
+        // pregunta del hub de ocio. Honramos el mensaje completo.
+        const isCineIntent = fallback.path === "/ocio/cartelera";
+
+        if (!isClarifying && !resolvedLineDashboard && !isCineIntent) {
           try {
             const res = await askAgent({
               data: {
