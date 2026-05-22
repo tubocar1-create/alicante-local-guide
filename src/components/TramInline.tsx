@@ -198,8 +198,8 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
 
   return (
     <div
-      className={`flex animate-fade-in flex-col overflow-hidden rounded-2xl border border-border bg-card/95 shadow-sm backdrop-blur ${
-        embedded ? "" : "mt-2 max-h-[70vh]"
+      className={`flex animate-fade-in flex-col rounded-2xl border border-border bg-card/95 shadow-sm backdrop-blur ${
+        embedded ? "" : "mt-2 max-h-[70vh] overflow-hidden"
       }`}
     >
       {/* Header */}
@@ -209,7 +209,8 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
         <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground">FGV</span>
       </div>
 
-      <div className={`space-y-3 p-3 ${embedded ? "" : "flex-1 overflow-y-auto overscroll-contain"}`}>
+      <div className={`space-y-3 p-3 ${embedded ? "pb-24" : "flex-1 overflow-y-auto overscroll-contain"}`}>
+
         {/* Buscador */}
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

@@ -26,7 +26,7 @@ function FavoritosPage() {
     try { localStorage.setItem(FAV_KEY, JSON.stringify(next)); } catch {/* noop */}
   };
   return (
-    <main className="min-h-dvh bg-background">
+    <main className="h-dvh overflow-y-auto overscroll-contain bg-background pb-24">
       <header className="sticky top-0 z-10 flex items-center gap-2 border-b border-border/60 bg-background/90 px-3 py-2.5 backdrop-blur">
         <Link to="/tram" className="flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium shadow-sm transition active:scale-95">
           <ChevronLeft className="h-3.5 w-3.5" /> Volver
