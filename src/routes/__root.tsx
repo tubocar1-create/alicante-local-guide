@@ -167,6 +167,7 @@ function RootComponent() {
       <InstallPWA />
       <AgenteVamosFab />
       <AppVersionWatcher />
+      <ManualRefreshButton />
       
       
     </QueryClientProvider>
