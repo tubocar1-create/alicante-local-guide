@@ -18,7 +18,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { listAdminUsers } from "@/lib/admin-users.functions";
+import { listAdminUsers, migrateTestUsersToAuth } from "@/lib/admin-users.functions";
 
 const ADMIN_PIN = "7910511";
 const PIN_KEY = "admin_home_pin_ok";
