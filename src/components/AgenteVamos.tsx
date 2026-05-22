@@ -607,13 +607,46 @@ function normalizeSpeech(text: string) {
 }
 
 // =================== TRAM stops (catálogo en memoria) ===================
-type TramStopEntry = { stop_id: string; stop_name: string; norm: string };
+type TramStopEntry = { stop_id: string; stop_name: string; norm: string; lat?: number; lng?: number };
 let TRAM_STOPS_CACHE: TramStopEntry[] = [];
-function setTramStopsCache(stops: Array<{ stop_id: string; stop_name: string }>) {
+function setTramStopsCache(stops: Array<{ stop_id: string; stop_name: string; stop_lat?: number; stop_lon?: number }>) {
   TRAM_STOPS_CACHE = stops
-    .map((s) => ({ stop_id: s.stop_id, stop_name: s.stop_name, norm: normalizeSpeech(s.stop_name) }))
+    .map((s) => ({
+      stop_id: s.stop_id,
+      stop_name: s.stop_name,
+      norm: normalizeSpeech(s.stop_name),
+      lat: typeof s.stop_lat === "number" ? s.stop_lat : undefined,
+      lng: typeof s.stop_lon === "number" ? s.stop_lon : undefined,
+    }))
     .filter((s) => s.norm.length >= 3)
     .sort((a, b) => b.norm.length - a.norm.length);
+}
+
+// Distancia haversine en km entre dos puntos (lat/lng).
+function tramDistanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  const R = 6371;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h = Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+// Lee las últimas coords cacheadas por el hook de geolocalización.
+function readCachedCoords(): { lat: number; lng: number } | null {
+  if (typeof localStorage === "undefined") return null;
+  try {
+    const parsed = JSON.parse(localStorage.getItem("geo:last-coords") ?? "null") as
+      | { lat?: number; lng?: number; savedAt?: number }
+      | null;
+    if (!parsed || typeof parsed.lat !== "number" || typeof parsed.lng !== "number") return null;
+    if (parsed.savedAt && Date.now() - parsed.savedAt > 12 * 60 * 60 * 1000) return null;
+    return { lat: parsed.lat, lng: parsed.lng };
+  } catch {
+    return null;
+  }
 }
 const TRAM_TRIGGER_RE = /\b(tram|tranvia|tranvias)\b/;
 function matchTramQuery(query: string): {
