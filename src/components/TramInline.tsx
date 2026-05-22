@@ -59,6 +59,8 @@ type ValidGroup = {
   line_text_color: string | null;
   direction_id: number;
   headsign: string | null;
+  via_transfer?: boolean;
+  transfer_at?: string;
   stops: Station[];
 };
 
@@ -570,8 +572,8 @@ function StationPicker({
           const stops = g.stops.filter((s) => !f || norm(s.stop_name).includes(f));
           if (!stops.length) return null;
           return (
-            <div key={`${g.route_id}|${g.direction_id}`} className="rounded-xl border border-border/60 bg-background/60">
-              <div className="flex items-center gap-2 border-b border-border/40 px-2.5 py-1.5">
+            <div key={`${g.route_id}|${g.direction_id}${g.via_transfer ? "|T" : ""}`} className="rounded-xl border border-border/60 bg-background/60">
+              <div className="flex flex-wrap items-center gap-2 border-b border-border/40 px-2.5 py-1.5">
                 <span
                   className="inline-flex h-5 min-w-[1.75rem] items-center justify-center rounded px-1.5 text-[10px] font-bold"
                   style={{ background: bg, color: fg }}
@@ -581,6 +583,11 @@ function StationPicker({
                 <span className="truncate text-[11px] text-muted-foreground">
                   → {g.headsign ?? destination.stop_name}
                 </span>
+                {g.via_transfer && (
+                  <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] font-semibold text-primary">
+                    🔁 vía Luceros
+                  </span>
+                )}
               </div>
               <ul>
                 {stops.map((s) => (
