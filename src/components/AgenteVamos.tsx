@@ -688,17 +688,41 @@ function readCachedCoords(): { lat: number; lng: number } | null {
   }
 }
 const TRAM_TRIGGER_RE = /\b(tram|tranvia|tranvias)\b/;
+const TRAM_ALIAS_STOPS: Array<{ aliases: string[]; stop_id: string; stop_name: string }> = [
+  { aliases: ["benidorm"], stop_id: "33", stop_name: "Benidorm" },
+  { aliases: ["playa san juan", "playa de san juan", "san juan playa"], stop_id: "108", stop_name: "Av. Benidorm / Platja de San Joan" },
+  { aliases: ["luceros", "plaza luceros"], stop_id: "2", stop_name: "Alicante - Luceros" },
+  { aliases: ["mercado"], stop_id: "3", stop_name: "Mercado" },
+  { aliases: ["marq", "castillo"], stop_id: "4", stop_name: "MARQ - CASTILLO" },
+  { aliases: ["hospital"], stop_id: "117", stop_name: "Hospital" },
+  { aliases: ["universidad", "universitat"], stop_id: "123", stop_name: "Universitat" },
+  { aliases: ["san vicente", "san vicente del raspeig", "sant vicent"], stop_id: "124", stop_name: "Sant Vicent del Raspeig" },
+  { aliases: ["albufereta"], stop_id: "7", stop_name: "Albufereta" },
+  { aliases: ["muchavista"], stop_id: "12", stop_name: "Muchavista" },
+  { aliases: ["campello", "el campello"], stop_id: "17", stop_name: "El Campello" },
+  { aliases: ["villajoyosa", "la vila joiosa", "vila joiosa"], stop_id: "27", stop_name: "La Vila Joiosa" },
+  { aliases: ["puerta del mar", "porta del mar"], stop_id: "101", stop_name: "Porta del Mar" },
+];
+
 function matchTramQuery(query: string): {
   destId: string; destName: string; originId?: string; originName?: string;
 } | null {
   if (!TRAM_TRIGGER_RE.test(query)) return null;
-  if (!TRAM_STOPS_CACHE.length) return null;
-  const hits: Array<TramStopEntry & { idx: number }> = [];
+  const hits: Array<(TramStopEntry & { idx: number }) | { stop_id: string; stop_name: string; norm: string; idx: number }> = [];
   for (const s of TRAM_STOPS_CACHE) {
     const idx = query.indexOf(s.norm);
     if (idx < 0) continue;
     if (hits.some((h) => idx < h.idx + h.norm.length && idx + s.norm.length > h.idx)) continue;
     hits.push({ ...s, idx });
+  }
+  for (const s of TRAM_ALIAS_STOPS) {
+    for (const alias of s.aliases) {
+      const norm = normalizeSpeech(alias);
+      const idx = query.indexOf(norm);
+      if (idx < 0 || hits.some((h) => h.stop_id === s.stop_id)) continue;
+      if (hits.some((h) => idx < h.idx + h.norm.length && idx + norm.length > h.idx)) continue;
+      hits.push({ stop_id: s.stop_id, stop_name: s.stop_name, norm, idx });
+    }
   }
   if (!hits.length) return null;
   hits.sort((a, b) => a.idx - b.idx);
