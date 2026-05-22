@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, ExternalLink } from "lucide-react";
+import { ChevronLeft, ExternalLink, Minus, Plus, RotateCcw } from "lucide-react";
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import mapaLineas from "@/assets/tram-mapa-lineas.jpg";
 
 export const Route = createFileRoute("/tram/mapa")({
@@ -15,8 +16,8 @@ export const Route = createFileRoute("/tram/mapa")({
 function TramMapaPage() {
   const navigate = useNavigate();
   return (
-    <main className="h-dvh overflow-y-auto overscroll-contain bg-background pb-24">
-      <header className="sticky top-0 z-10 flex items-center gap-2 border-b border-border/60 bg-background/90 px-3 py-2.5 backdrop-blur">
+    <main className="flex h-dvh flex-col overflow-hidden bg-background">
+      <header className="flex flex-none items-center gap-2 border-b border-border/60 bg-background/90 px-3 py-2.5 backdrop-blur">
         <button
           type="button"
           onClick={() => navigate({ to: "/tram" })}
@@ -36,18 +37,62 @@ function TramMapaPage() {
           <ExternalLink className="h-3 w-3" /> Abrir
         </a>
       </header>
-      <div className="mx-auto max-w-3xl p-3">
-        <p className="mb-2 px-1 text-[11px] text-muted-foreground">
-          Pellizca para hacer zoom. Fuente: FGV · tramalacant.es
-        </p>
-        <div className="overflow-auto rounded-2xl border border-border bg-card shadow-sm">
-          <img
-            src={mapaLineas}
-            alt="Plano zonal tarifario del TRAM de Alicante con todas las líneas (1, 2, 3, 4, 5 y 9)"
-            className="block w-full max-w-none"
-            loading="eager"
-          />
-        </div>
+
+      <div className="relative flex-1 overflow-hidden bg-muted/30">
+        <TransformWrapper
+          initialScale={1}
+          minScale={1}
+          maxScale={6}
+          centerOnInit
+          wheel={{ step: 0.15 }}
+          doubleClick={{ mode: "toggle", step: 2 }}
+          pinch={{ step: 5 }}
+        >
+          {({ zoomIn, zoomOut, resetTransform }) => (
+            <>
+              <TransformComponent
+                wrapperClass="!w-full !h-full"
+                contentClass="!w-full !h-full flex items-center justify-center"
+              >
+                <img
+                  src={mapaLineas}
+                  alt="Plano zonal tarifario del TRAM de Alicante con todas las líneas (1, 2, 3, 4, 5 y 9)"
+                  className="max-h-full max-w-full select-none"
+                  draggable={false}
+                />
+              </TransformComponent>
+
+              <div className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center">
+                <div className="pointer-events-auto flex items-center gap-1 rounded-full border border-border bg-card/95 px-1.5 py-1 shadow-lg backdrop-blur">
+                  <button
+                    type="button"
+                    onClick={() => zoomOut()}
+                    aria-label="Alejar"
+                    className="rounded-full p-2 transition hover:bg-accent/40 active:scale-95"
+                  >
+                    <Minus className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => resetTransform()}
+                    aria-label="Restablecer zoom"
+                    className="rounded-full p-2 transition hover:bg-accent/40 active:scale-95"
+                  >
+                    <RotateCcw className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => zoomIn()}
+                    aria-label="Acercar"
+                    className="rounded-full p-2 transition hover:bg-accent/40 active:scale-95"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </TransformWrapper>
       </div>
     </main>
   );
