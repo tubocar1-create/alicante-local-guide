@@ -319,10 +319,11 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
   useEffect(() => {
     if (geo.status !== "ready" || originConfirmed || !destination || !validStops.length) return;
     const near = nearestFromList(geo.coords, validStops);
-    if (near && (!origin || origin.stop_id !== near.stop_id)) {
-      setOrigin(near);
+    if (near) {
+      confirmOrigin(near);
     }
-  }, [geo, originConfirmed, destination, validStops, origin]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geo, originConfirmed, destination, validStops]);
 
   return (
     <div className={`flex animate-fade-in flex-col rounded-3xl border border-border bg-card/95 shadow-sm backdrop-blur ${embedded ? "" : "mt-2 max-h-[78vh] overflow-hidden"}`}>
