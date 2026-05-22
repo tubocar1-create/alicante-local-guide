@@ -35,6 +35,8 @@ import { Route as BusRouteImport } from './routes/bus'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BusinessIndexRouteImport } from './routes/business.index'
 import { Route as VuelosIataRouteImport } from './routes/vuelos_.$iata'
+import { Route as TramFavoritosRouteImport } from './routes/tram.favoritos'
+import { Route as TramEstacionesRouteImport } from './routes/tram.estaciones'
 import { Route as ThreadsIdRouteImport } from './routes/threads.$id'
 import { Route as SaludCategoriaRouteImport } from './routes/salud_.$categoria'
 import { Route as RestaurantsPlaceIdRouteImport } from './routes/restaurants.$placeId'
@@ -58,6 +60,8 @@ import { Route as BusinessBookingsRouteImport } from './routes/business.bookings
 import { Route as BusPlannerRouteImport } from './routes/bus.planner'
 import { Route as AdminSaludRouteImport } from './routes/admin.salud'
 import { Route as AdminPlacesRouteImport } from './routes/admin.places'
+import { Route as TramParadaStopIdRouteImport } from './routes/tram.parada.$stopId'
+import { Route as TramLineaLineIdRouteImport } from './routes/tram.linea.$lineId'
 import { Route as SaludCategoriaIdRouteImport } from './routes/salud_.$categoria.$id'
 import { Route as OcioPeliculaIdRouteImport } from './routes/ocio_.pelicula.$id'
 import { Route as OcioCinesIdRouteImport } from './routes/ocio_.cines.$id'
@@ -215,6 +219,16 @@ const VuelosIataRoute = VuelosIataRouteImport.update({
   path: '/vuelos/$iata',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TramFavoritosRoute = TramFavoritosRouteImport.update({
+  id: '/favoritos',
+  path: '/favoritos',
+  getParentRoute: () => TramRoute,
+} as any)
+const TramEstacionesRoute = TramEstacionesRouteImport.update({
+  id: '/estaciones',
+  path: '/estaciones',
+  getParentRoute: () => TramRoute,
+} as any)
 const ThreadsIdRoute = ThreadsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -329,6 +343,16 @@ const AdminPlacesRoute = AdminPlacesRouteImport.update({
   id: '/admin/places',
   path: '/admin/places',
   getParentRoute: () => rootRouteImport,
+} as any)
+const TramParadaStopIdRoute = TramParadaStopIdRouteImport.update({
+  id: '/parada/$stopId',
+  path: '/parada/$stopId',
+  getParentRoute: () => TramRoute,
+} as any)
+const TramLineaLineIdRoute = TramLineaLineIdRouteImport.update({
+  id: '/linea/$lineId',
+  path: '/linea/$lineId',
+  getParentRoute: () => TramRoute,
 } as any)
 const SaludCategoriaIdRoute = SaludCategoriaIdRouteImport.update({
   id: '/$id',
@@ -487,7 +511,7 @@ export interface FileRoutesByFullPath {
   '/sistema-sanitario': typeof SistemaSanitarioRoute
   '/stay': typeof StayRoute
   '/threads': typeof ThreadsRouteWithChildren
-  '/tram': typeof TramRoute
+  '/tram': typeof TramRouteWithChildren
   '/voces': typeof VocesRoute
   '/vuelos': typeof VuelosRoute
   '/welcome': typeof WelcomeRoute
@@ -514,6 +538,8 @@ export interface FileRoutesByFullPath {
   '/restaurants/$placeId': typeof RestaurantsPlaceIdRoute
   '/salud/$categoria': typeof SaludCategoriaRouteWithChildren
   '/threads/$id': typeof ThreadsIdRoute
+  '/tram/estaciones': typeof TramEstacionesRoute
+  '/tram/favoritos': typeof TramFavoritosRoute
   '/vuelos/$iata': typeof VuelosIataRoute
   '/business/': typeof BusinessIndexRoute
   '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
@@ -531,6 +557,8 @@ export interface FileRoutesByFullPath {
   '/ocio/cines/$id': typeof OcioCinesIdRoute
   '/ocio/pelicula/$id': typeof OcioPeliculaIdRoute
   '/salud/$categoria/$id': typeof SaludCategoriaIdRoute
+  '/tram/linea/$lineId': typeof TramLineaLineIdRoute
+  '/tram/parada/$stopId': typeof TramParadaStopIdRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
   '/api/public/hooks/refresh-hotels-dynamic': typeof ApiPublicHooksRefreshHotelsDynamicRoute
@@ -563,7 +591,7 @@ export interface FileRoutesByTo {
   '/sistema-sanitario': typeof SistemaSanitarioRoute
   '/stay': typeof StayRoute
   '/threads': typeof ThreadsRouteWithChildren
-  '/tram': typeof TramRoute
+  '/tram': typeof TramRouteWithChildren
   '/voces': typeof VocesRoute
   '/vuelos': typeof VuelosRoute
   '/welcome': typeof WelcomeRoute
@@ -590,6 +618,8 @@ export interface FileRoutesByTo {
   '/restaurants/$placeId': typeof RestaurantsPlaceIdRoute
   '/salud/$categoria': typeof SaludCategoriaRouteWithChildren
   '/threads/$id': typeof ThreadsIdRoute
+  '/tram/estaciones': typeof TramEstacionesRoute
+  '/tram/favoritos': typeof TramFavoritosRoute
   '/vuelos/$iata': typeof VuelosIataRoute
   '/business': typeof BusinessIndexRoute
   '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
@@ -607,6 +637,8 @@ export interface FileRoutesByTo {
   '/ocio/cines/$id': typeof OcioCinesIdRoute
   '/ocio/pelicula/$id': typeof OcioPeliculaIdRoute
   '/salud/$categoria/$id': typeof SaludCategoriaIdRoute
+  '/tram/linea/$lineId': typeof TramLineaLineIdRoute
+  '/tram/parada/$stopId': typeof TramParadaStopIdRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
   '/api/public/hooks/refresh-hotels-dynamic': typeof ApiPublicHooksRefreshHotelsDynamicRoute
@@ -641,7 +673,7 @@ export interface FileRoutesById {
   '/sistema-sanitario': typeof SistemaSanitarioRoute
   '/stay': typeof StayRoute
   '/threads': typeof ThreadsRouteWithChildren
-  '/tram': typeof TramRoute
+  '/tram': typeof TramRouteWithChildren
   '/voces': typeof VocesRoute
   '/vuelos': typeof VuelosRoute
   '/welcome': typeof WelcomeRoute
@@ -668,6 +700,8 @@ export interface FileRoutesById {
   '/restaurants/$placeId': typeof RestaurantsPlaceIdRoute
   '/salud_/$categoria': typeof SaludCategoriaRouteWithChildren
   '/threads/$id': typeof ThreadsIdRoute
+  '/tram/estaciones': typeof TramEstacionesRoute
+  '/tram/favoritos': typeof TramFavoritosRoute
   '/vuelos_/$iata': typeof VuelosIataRoute
   '/business/': typeof BusinessIndexRoute
   '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
@@ -685,6 +719,8 @@ export interface FileRoutesById {
   '/ocio_/cines/$id': typeof OcioCinesIdRoute
   '/ocio_/pelicula/$id': typeof OcioPeliculaIdRoute
   '/salud_/$categoria/$id': typeof SaludCategoriaIdRoute
+  '/tram/linea/$lineId': typeof TramLineaLineIdRoute
+  '/tram/parada/$stopId': typeof TramParadaStopIdRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
   '/api/public/hooks/refresh-hotels-dynamic': typeof ApiPublicHooksRefreshHotelsDynamicRoute
@@ -747,6 +783,8 @@ export interface FileRouteTypes {
     | '/restaurants/$placeId'
     | '/salud/$categoria'
     | '/threads/$id'
+    | '/tram/estaciones'
+    | '/tram/favoritos'
     | '/vuelos/$iata'
     | '/business/'
     | '/api/public/aena-flights'
@@ -764,6 +802,8 @@ export interface FileRouteTypes {
     | '/ocio/cines/$id'
     | '/ocio/pelicula/$id'
     | '/salud/$categoria/$id'
+    | '/tram/linea/$lineId'
+    | '/tram/parada/$stopId'
     | '/api/public/hooks/aena-sync'
     | '/api/public/hooks/cinemas-sync'
     | '/api/public/hooks/refresh-hotels-dynamic'
@@ -823,6 +863,8 @@ export interface FileRouteTypes {
     | '/restaurants/$placeId'
     | '/salud/$categoria'
     | '/threads/$id'
+    | '/tram/estaciones'
+    | '/tram/favoritos'
     | '/vuelos/$iata'
     | '/business'
     | '/api/public/aena-flights'
@@ -840,6 +882,8 @@ export interface FileRouteTypes {
     | '/ocio/cines/$id'
     | '/ocio/pelicula/$id'
     | '/salud/$categoria/$id'
+    | '/tram/linea/$lineId'
+    | '/tram/parada/$stopId'
     | '/api/public/hooks/aena-sync'
     | '/api/public/hooks/cinemas-sync'
     | '/api/public/hooks/refresh-hotels-dynamic'
@@ -900,6 +944,8 @@ export interface FileRouteTypes {
     | '/restaurants/$placeId'
     | '/salud_/$categoria'
     | '/threads/$id'
+    | '/tram/estaciones'
+    | '/tram/favoritos'
     | '/vuelos_/$iata'
     | '/business/'
     | '/api/public/aena-flights'
@@ -917,6 +963,8 @@ export interface FileRouteTypes {
     | '/ocio_/cines/$id'
     | '/ocio_/pelicula/$id'
     | '/salud_/$categoria/$id'
+    | '/tram/linea/$lineId'
+    | '/tram/parada/$stopId'
     | '/api/public/hooks/aena-sync'
     | '/api/public/hooks/cinemas-sync'
     | '/api/public/hooks/refresh-hotels-dynamic'
@@ -951,7 +999,7 @@ export interface RootRouteChildren {
   SistemaSanitarioRoute: typeof SistemaSanitarioRoute
   StayRoute: typeof StayRoute
   ThreadsRoute: typeof ThreadsRouteWithChildren
-  TramRoute: typeof TramRoute
+  TramRoute: typeof TramRouteWithChildren
   VocesRoute: typeof VocesRoute
   VuelosRoute: typeof VuelosRoute
   WelcomeRoute: typeof WelcomeRoute
@@ -1175,6 +1223,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VuelosIataRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tram/favoritos': {
+      id: '/tram/favoritos'
+      path: '/favoritos'
+      fullPath: '/tram/favoritos'
+      preLoaderRoute: typeof TramFavoritosRouteImport
+      parentRoute: typeof TramRoute
+    }
+    '/tram/estaciones': {
+      id: '/tram/estaciones'
+      path: '/estaciones'
+      fullPath: '/tram/estaciones'
+      preLoaderRoute: typeof TramEstacionesRouteImport
+      parentRoute: typeof TramRoute
+    }
     '/threads/$id': {
       id: '/threads/$id'
       path: '/$id'
@@ -1335,6 +1397,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/places'
       preLoaderRoute: typeof AdminPlacesRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/tram/parada/$stopId': {
+      id: '/tram/parada/$stopId'
+      path: '/parada/$stopId'
+      fullPath: '/tram/parada/$stopId'
+      preLoaderRoute: typeof TramParadaStopIdRouteImport
+      parentRoute: typeof TramRoute
+    }
+    '/tram/linea/$lineId': {
+      id: '/tram/linea/$lineId'
+      path: '/linea/$lineId'
+      fullPath: '/tram/linea/$lineId'
+      preLoaderRoute: typeof TramLineaLineIdRouteImport
+      parentRoute: typeof TramRoute
     }
     '/salud_/$categoria/$id': {
       id: '/salud_/$categoria/$id'
@@ -1597,6 +1673,22 @@ const ThreadsRouteChildren: ThreadsRouteChildren = {
 const ThreadsRouteWithChildren =
   ThreadsRoute._addFileChildren(ThreadsRouteChildren)
 
+interface TramRouteChildren {
+  TramEstacionesRoute: typeof TramEstacionesRoute
+  TramFavoritosRoute: typeof TramFavoritosRoute
+  TramLineaLineIdRoute: typeof TramLineaLineIdRoute
+  TramParadaStopIdRoute: typeof TramParadaStopIdRoute
+}
+
+const TramRouteChildren: TramRouteChildren = {
+  TramEstacionesRoute: TramEstacionesRoute,
+  TramFavoritosRoute: TramFavoritosRoute,
+  TramLineaLineIdRoute: TramLineaLineIdRoute,
+  TramParadaStopIdRoute: TramParadaStopIdRoute,
+}
+
+const TramRouteWithChildren = TramRoute._addFileChildren(TramRouteChildren)
+
 interface OcioCinesRouteChildren {
   OcioCinesIdRoute: typeof OcioCinesIdRoute
 }
@@ -1642,7 +1734,7 @@ const rootRouteChildren: RootRouteChildren = {
   SistemaSanitarioRoute: SistemaSanitarioRoute,
   StayRoute: StayRoute,
   ThreadsRoute: ThreadsRouteWithChildren,
-  TramRoute: TramRoute,
+  TramRoute: TramRouteWithChildren,
   VocesRoute: VocesRoute,
   VuelosRoute: VuelosRoute,
   WelcomeRoute: WelcomeRoute,
