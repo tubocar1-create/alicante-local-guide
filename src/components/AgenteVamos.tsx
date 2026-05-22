@@ -754,6 +754,68 @@ function matchDomain(query: string): { domain: DomainSpec; len: number } | null 
   return best ? { domain: best, len: bestLen } : null;
 }
 
+// ─── DETECCIÓN DE DICOTOMÍA DE CONTEXTO ───────────────────────────────
+// Cuando la frase del usuario mezcla un verbo de movimiento ("ir a",
+// "voy a", "llévame"...) con otro dominio (comer/playas/dormir/...) o
+// con una entidad nombrada, NO decidimos por él: repreguntamos.
+const TRANSPORT_VERB_HINTS = [
+  "ir a ", "ir al ", "ir hasta", "ir hacia",
+  "voy a ", "voy al ", "vamos a ", "vamos al ",
+  "llevame", "llévame", "llevarme", "llévarme",
+  "llegar a ", "llegar al ", "llegar hasta",
+  "moverme", "desplazarme",
+  "como llego", "cómo llego", "como voy", "cómo voy",
+  "tengo que ir", "necesito ir", "quiero ir",
+];
+function hasTransportVerb(q: string): boolean {
+  return TRANSPORT_VERB_HINTS.some((v) => q.includes(normalizeSpeech(v)));
+}
+const EXPLICIT_TRANSPORT_MODE_RE = /(^|\s)(tram|tranv\w*|bus|buses|autobus\w*|autobús\w*|metro|taxi|tren|renfe|emt|alsa|vectalia)(\s|$)/;
+const OTHER_DOMAIN_HINTS: Array<{ id: string; label: string; keys: string[] }> = [
+  { id: "comer", label: "comer", keys: ["comer", "comida", "restaurante", "restaurantes", "tapas", "almorzar", "cenar", "desayunar", "tapear"] },
+  { id: "dormir", label: "alojarte", keys: ["dormir", "hotel", "hoteles", "alojamiento", "hospedaje", "alojarme", "hostal"] },
+  { id: "playas", label: "playa", keys: ["playa", "playas", "cala", "calas", "arena"] },
+  { id: "compras", label: "comprar", keys: ["comprar", "tienda", "tiendas", "mercado", "centro comercial"] },
+  { id: "ocio", label: "ocio", keys: ["cine", "cines", "teatro", "concierto", "ocio", "pelicula", "película"] },
+  { id: "fiestas", label: "fiestas", keys: ["fiesta", "fiestas", "hogueras", "mascleta"] },
+  { id: "tomar_algo", label: "tomar algo", keys: ["copa", "copas", "cerveza", "tomar algo", "bar", "bares", "pub", "pubs"] },
+  { id: "salud", label: "salud", keys: ["farmacia", "farmacias", "hospital", "hospitales", "medico", "médico", "urgencias"] },
+];
+function findOtherDomainHint(q: string): { id: string; label: string } | null {
+  for (const d of OTHER_DOMAIN_HINTS) {
+    for (const k of d.keys) {
+      const n = normalizeSpeech(k);
+      if (!n) continue;
+      const re = n.includes(" ")
+        ? new RegExp(n)
+        : new RegExp(`(^|\\s)${n}(\\s|$)`);
+      if (re.test(q)) return { id: d.id, label: d.label };
+    }
+  }
+  return null;
+}
+function detectAmbiguity(query: string): LocalResult | null {
+  if (EXPLICIT_TRANSPORT_MODE_RE.test(query)) return null;
+  if (!hasTransportVerb(query)) return null;
+  const other = findOtherDomainHint(query);
+  const entity = matchNamedEntity(query);
+  if (!other && !entity) return null;
+  const opts: string[] = [];
+  if (entity) {
+    const name = entity.aliases[0] ?? "ese sitio";
+    opts.push(`abrirte ese sitio concreto (${name})`);
+  }
+  if (other && (!entity || other.id !== "dormir")) {
+    opts.push(`ver opciones de ${other.label}`);
+  }
+  opts.push("decirte cómo llegar (bus o TRAM)");
+  return {
+    reply: `He notado varias intenciones en tu mensaje. ¿Qué prefieres: ${opts.join("; o ")}?`,
+    audio: "fallback",
+    pendingDomain: null,
+  };
+}
+
 function matchFollowup(query: string, domain: DomainSpec): string | null {
   let bestPath: string | null = null;
   let bestLen = 0;
