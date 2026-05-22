@@ -475,6 +475,9 @@ function matchTramQuery(query: string): {
     destId: dest.stop_id, destName: dest.stop_name,
     originId: origin.stop_id, originName: origin.stop_name,
   };
+}
+
+
 
 function bestKeyIntent(query: string): { intent: IntentDef; len: number } | null {
   let best: IntentDef | null = null;
