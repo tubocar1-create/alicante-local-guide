@@ -544,9 +544,15 @@ function OriginStep({
                 <button
                   type="button"
                   onClick={onUseGeo}
-                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border bg-background px-3 py-2 text-xs font-medium hover:bg-accent/40"
+                  disabled={geoStatus === "loading"}
+                  className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border bg-background px-3 py-2 text-xs font-medium hover:bg-accent/40 disabled:opacity-60"
                 >
-                  <Locate className="h-3.5 w-3.5 text-primary" /> Usar mi ubicación
+                  <Locate className={`h-3.5 w-3.5 text-primary ${geoStatus === "loading" ? "animate-pulse" : ""}`} />
+                  {geoStatus === "loading"
+                    ? "Localizando…"
+                    : geoStatus === "error"
+                      ? "Reintentar ubicación"
+                      : "Usar mi ubicación"}
                 </button>
               )}
               <button
@@ -557,6 +563,16 @@ function OriginStep({
                 <Navigation className="h-3.5 w-3.5 text-primary" /> Elegir otra estación
               </button>
             </div>
+            {geoStatus === "error" && geoError && (
+              <p className="mt-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-[11px] leading-snug text-destructive">
+                {geoError}
+              </p>
+            )}
+            {geoStatus === "idle" && (
+              <p className="mt-2 text-[11px] leading-snug text-muted-foreground">
+                Te pediremos permiso para usar tu ubicación y detectar la parada más cercana.
+              </p>
+            )}
           </>
         )}
       </div>
