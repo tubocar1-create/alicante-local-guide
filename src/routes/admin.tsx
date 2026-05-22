@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Download,
   Lock,
@@ -223,29 +224,15 @@ function AdminHome() {
 
 function AdminDashboard() {
   const fetchUsers = useServerFn(listAdminUsers);
-  const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<Awaited<ReturnType<typeof listAdminUsers>> | null>(
-    null,
-  );
-  const [err, setErr] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancel = false;
-    (async () => {
-      try {
-        setLoading(true);
-        const res = await fetchUsers({ data: { pin: ADMIN_PIN } });
-        if (!cancel) setData(res);
-      } catch (e) {
-        if (!cancel) setErr(e instanceof Error ? e.message : "Error");
-      } finally {
-        if (!cancel) setLoading(false);
-      }
-    })();
-    return () => {
-      cancel = true;
-    };
-  }, [fetchUsers]);
+  const { data, error, isLoading, dataUpdatedAt, refetch, isFetching } = useQuery({
+    queryKey: ["admin-users"],
+    queryFn: () => fetchUsers({ data: { pin: ADMIN_PIN } }),
+    refetchInterval: 30 * 60 * 1000, // cada 30 minutos
+    refetchOnWindowFocus: true,
+    staleTime: 30 * 60 * 1000,
+  });
+  const loading = isLoading;
+  const err = error instanceof Error ? error.message : null;
 
   const logout = () => {
     sessionStorage.removeItem(PIN_KEY);
@@ -264,7 +251,15 @@ function AdminDashboard() {
               Página oculta · solo accesible con contraseña.
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-muted-foreground hidden sm:inline">
+              {dataUpdatedAt
+                ? `Actualizado ${new Date(dataUpdatedAt).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })} · auto cada 30 min`
+                : "—"}
+            </span>
+            <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isFetching}>
+              {isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Refrescar"}
+            </Button>
             <InstallAppButton />
             <Button variant="ghost" onClick={logout}>
               Salir
