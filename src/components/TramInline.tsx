@@ -228,30 +228,30 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
   // Sugerir origen automáticamente cuando hay validGroups
   useEffect(() => {
     if (!destination || origin || !validGroups) return;
-    // 1) Geolocalización (solo si está disponible)
+    // 1) Geolocalización lista → sugerir y CONFIRMAR la más cercana automáticamente
     if (geo.status === "ready") {
       const near = nearestFromList(geo.coords, validStops);
-      if (near) { setOrigin(near); return; }
+      if (near) {
+        setOrigin(near);
+        setOriginConfirmed(true);
+        try { localStorage.setItem(ORIGIN_KEY, JSON.stringify(near)); } catch { /* noop */ }
+        return;
+      }
     }
-    // Si la geo falla / fue denegada / no existe → SIEMPRE Luceros como por defecto.
     const luceros = validStops.find((s) => /luceros/i.test(s.stop_name));
     if (geo.status === "error" || geo.status === "idle") {
       if (luceros) { setOrigin(luceros); return; }
     }
-    // Mientras la geo aún se resuelve: preferir Luceros antes que historial/primera.
     if (geo.status !== "ready") {
       if (luceros) { setOrigin(luceros); return; }
     }
-    // 2) Origen guardado si está en la lista válida
     try {
       const saved = JSON.parse(localStorage.getItem(ORIGIN_KEY) || "null") as Station | null;
       if (saved?.stop_id && validStops.some((s) => s.stop_id === saved.stop_id)) {
         setOrigin(saved); return;
       }
     } catch { /* noop */ }
-    // 3) Luceros si está
     if (luceros) { setOrigin(luceros); return; }
-    // 4) Primera válida
     if (validStops[0]) setOrigin(validStops[0]);
   }, [destination, origin, validGroups, validStops, geo]);
 
@@ -319,10 +319,11 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
   useEffect(() => {
     if (geo.status !== "ready" || originConfirmed || !destination || !validStops.length) return;
     const near = nearestFromList(geo.coords, validStops);
-    if (near && (!origin || origin.stop_id !== near.stop_id)) {
-      setOrigin(near);
+    if (near) {
+      confirmOrigin(near);
     }
-  }, [geo, originConfirmed, destination, validStops, origin]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geo, originConfirmed, destination, validStops]);
 
   return (
     <div className={`flex animate-fade-in flex-col rounded-3xl border border-border bg-card/95 shadow-sm backdrop-blur ${embedded ? "" : "mt-2 max-h-[78vh] overflow-hidden"}`}>
