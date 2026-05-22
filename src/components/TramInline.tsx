@@ -4,7 +4,7 @@ import {
   Search, MapPin, Navigation, Star, ArrowRight,
   ChevronDown, ChevronUp, Map as MapIcon, X, Locate, Check,
 } from "lucide-react";
-import { distanceKm, useUserLocation, type Coords } from "@/hooks/useUserLocation";
+import { distanceKm, useUserLocation, isGeoEnabled, setGeoEnabled, type Coords } from "@/hooks/useUserLocation";
 
 type Line = {
   id: string;
