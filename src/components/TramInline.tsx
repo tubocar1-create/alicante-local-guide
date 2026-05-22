@@ -728,7 +728,7 @@ function TripPlanCard({
                     🚍 Sin bus urbano cerca
                   </span>
                 ) : (
-                  busLines.slice(0, 10).map((b) => (
+                  busLines.slice(0, 12).map((b) => (
                     <Link
                       key={b.code}
                       to="/bus/dashboard/$code"
@@ -742,7 +742,8 @@ function TripPlanCard({
                       >
                         {b.code}
                       </span>
-                      <span className="max-w-[7rem] truncate">{b.name}</span>
+                      <span className="max-w-[6rem] truncate">{b.name}</span>
+                      <span className="text-[9px] text-muted-foreground">{b.distance_m}m</span>
                     </Link>
                   ))
                 )}
