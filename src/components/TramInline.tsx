@@ -576,6 +576,20 @@ function TripPlanCard({
       return m !== null && m >= 0;
     });
   }, [options]);
+
+  // Conexiones de bus urbano (Vectalia) cercanas a la estación de destino.
+  type BusConn = { code: string; name: string; color: string | null; operator: string | null; stop_name: string | null; distance_m: number };
+  const [busLines, setBusLines] = useState<BusConn[] | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    setBusLines(null);
+    fetch(`/api/public/tram/bus-connections?stop_id=${encodeURIComponent(destination.stop_id)}&radius_m=400`)
+      .then((r) => r.json())
+      .then((d) => { if (!cancelled) setBusLines((d?.lines ?? []) as BusConn[]); })
+      .catch(() => { if (!cancelled) setBusLines([]); });
+    return () => { cancelled = true; };
+  }, [destination.stop_id]);
+
   const best = futureOptions?.[0];
   const more = (futureOptions ?? []).slice(1);
   const mins = best ? minutesUntil(best.depart_time) : null;
@@ -681,7 +695,33 @@ function TripPlanCard({
             <div className="mt-3">
               <p className="mb-1 text-[10px] uppercase tracking-wider text-muted-foreground">Conexiones en destino</p>
               <div className="flex flex-wrap gap-1.5">
-                <span className="rounded-full border border-border bg-background px-2.5 py-1 text-[11px]">🚍 Bus urbano</span>
+                {busLines === null ? (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2.5 py-1 text-[11px] text-muted-foreground">
+                    🚍 Buscando líneas de bus…
+                  </span>
+                ) : busLines.length === 0 ? (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2.5 py-1 text-[11px] text-muted-foreground">
+                    🚍 Sin bus urbano cerca
+                  </span>
+                ) : (
+                  busLines.slice(0, 10).map((b) => (
+                    <Link
+                      key={b.code}
+                      to="/bus/dashboard/$code"
+                      params={{ code: b.code }}
+                      className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-2 py-1 text-[11px] font-medium shadow-sm transition hover:border-primary/40 hover:bg-accent/30"
+                      title={`${b.name}${b.stop_name ? ` · Parada ${b.stop_name}` : ""} · ${b.distance_m} m`}
+                    >
+                      <span
+                        className="inline-flex h-4 min-w-[1.4rem] items-center justify-center rounded px-1 text-[10px] font-bold text-white"
+                        style={{ background: ensureHash(b.color) ?? "var(--primary)" }}
+                      >
+                        {b.code}
+                      </span>
+                      <span className="max-w-[7rem] truncate">{b.name}</span>
+                    </Link>
+                  ))
+                )}
                 <span className="rounded-full border border-border bg-background px-2.5 py-1 text-[11px]">🚕 Taxi</span>
                 {destination.stop_lat && destination.stop_lon && (
                   <a
