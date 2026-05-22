@@ -1,5 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
 import { checkIsAdmin } from "@/lib/admin.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -197,7 +199,17 @@ const LEARNING_PIPELINE = [
 
 function AdminSystemPage() {
   const check = useServerFn(checkIsAdmin);
+  const navigate = useNavigate();
   const [state, setState] = useState<"checking" | "ok" | "denied">("checking");
+
+  const handleClose = () => {
+    // Intenta cerrar la pestaña si fue abierta por el chat; si no, vuelve al home.
+    if (typeof window !== "undefined" && window.opener) {
+      window.close();
+      return;
+    }
+    navigate({ to: "/" });
+  };
 
   useEffect(() => {
     let cancelled = false;
