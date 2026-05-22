@@ -922,7 +922,7 @@ function localResolve(
       : `¡Voy! TRAM con destino ${tramHit.destName}.`;
     return {
       reply,
-      path: `/?${params.toString()}`,
+      path: `/tram?${params.toString()}`,
       audio: "fallback",
       pendingDomain: null,
     };
