@@ -2597,7 +2597,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           } catch {}
         }
         const routeDomain = domainFromPath(path);
-        const activeDomain = pendingDomainRef.current ?? routeDomain;
+        const storedDomain = readStoredActiveDomain();
+        const activeDomain = pendingDomainRef.current ?? storedDomain ?? routeDomain;
         const priorDomain = activeDomain;
         const fallback = localResolve(clean, activeDomain, routingCatalogRef.current);
         const replyMode = pickAssistantMode(fallback.pendingDomain ?? pendingDomainRef.current ?? null);
@@ -2657,9 +2658,11 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           fallback.pendingDomain === "tram_origin_confirm";
         if (isClarifying) {
           pendingDomainRef.current = fallback.pendingDomain ?? null;
+          writeStoredActiveDomain(pendingDomainRef.current);
         } else if (fallback.pendingDomain === null) {
           // Resolución concreta → cerramos el dominio activo.
           pendingDomainRef.current = null;
+          writeStoredActiveDomain(null);
         }
 
         const resolvedLineDashboard = /^\/bus\/dashboard\/[^/?#]+$/i.test(fallback.path ?? "");
