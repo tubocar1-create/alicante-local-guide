@@ -190,23 +190,50 @@ export const Route = createFileRoute("/api/public/tram/plan")({
 
         if (origin !== LUCEROS_STOP_ID && destination !== LUCEROS_STOP_ID) {
           // Leg1: origin → Luceros (próximas salidas)
-          const leg1s = await findDirect(origin, LUCEROS_STOP_ID, fromSecs, 60, services, routeCache);
+          const leg1s = await findDirect(origin, LUCEROS_STOP_ID, fromSecs, 120, services, routeCache);
           if (leg1s.length) {
             // Leg2: todas las salidas Luceros → destination en horizonte amplio
             const earliestLeg2From = Math.min(...leg1s.map((l) => l.arrive_seconds + MIN_TRANSFER_SECS));
-            const leg2Pool = await findDirect(LUCEROS_STOP_ID, destination, earliestLeg2From, 300, services, routeCache);
-            // Para cada leg1, elegir el leg2 más temprano compatible (distinta línea preferida).
-            const seenLeg2 = new Set<string>();
+            const leg2Pool = await findDirect(LUCEROS_STOP_ID, destination, earliestLeg2From, 500, services, routeCache);
+
+            // Filtro de orientación: descartar transbordos donde leg2 pase por
+            // el origen (vuelve hacia atrás) o donde leg1 ya alcance el destino
+            // (sería un viaje directo, no un transbordo real).
+            const candidateL1 = Array.from(new Set(leg1s.map((l) => l.trip_id)));
+            const candidateL2 = Array.from(new Set(leg2Pool.map((l) => l.trip_id)));
+            const [{ data: l1ReachDestRaw }, { data: l2PassOrigRaw }] = await Promise.all([
+              candidateL1.length
+                ? supabaseAdmin
+                    .from("tram_stop_times")
+                    .select("trip_id")
+                    .in("trip_id", candidateL1)
+                    .eq("stop_id", destination)
+                : Promise.resolve({ data: [] as { trip_id: string }[] }),
+              candidateL2.length
+                ? supabaseAdmin
+                    .from("tram_stop_times")
+                    .select("trip_id")
+                    .in("trip_id", candidateL2)
+                    .eq("stop_id", origin)
+                : Promise.resolve({ data: [] as { trip_id: string }[] }),
+            ]);
+            const l1ReachesDest = new Set(((l1ReachDestRaw ?? []) as { trip_id: string }[]).map((r) => r.trip_id));
+            const l2PassesOrigin = new Set(((l2PassOrigRaw ?? []) as { trip_id: string }[]).map((r) => r.trip_id));
+
+            // Para cada leg1 válido, elegir el leg2 más temprano compatible.
+            const seenPair = new Set<string>();
             for (const l1 of leg1s) {
+              if (l1ReachesDest.has(l1.trip_id)) continue; // ya es directo
               const minDepart = l1.arrive_seconds + MIN_TRANSFER_SECS;
               const l2 = leg2Pool.find((x) =>
-                x.depart_seconds >= minDepart && !seenLeg2.has(x.trip_id),
+                x.depart_seconds >= minDepart &&
+                !l2PassesOrigin.has(x.trip_id) &&
+                !seenPair.has(`${l1.line_short_name}|${x.line_short_name}|${x.trip_id}`),
               );
               if (!l2) continue;
-              seenLeg2.add(l2.trip_id);
+              seenPair.add(`${l1.line_short_name}|${l2.line_short_name}|${l2.trip_id}`);
               transferOptions.push({
                 ...l1,
-                // El "viaje" representado es leg1; la llegada total es la del leg2.
                 trip_id: `${l1.trip_id}|${l2.trip_id}`,
                 arrive_time: l2.arrive_time,
                 arrive_seconds: l2.arrive_seconds,
@@ -242,7 +269,7 @@ export const Route = createFileRoute("/api/public/tram/plan")({
             a.depart_seconds - b.depart_seconds ||
             a.arrive_seconds - b.arrive_seconds,
           )
-          .slice(0, limit);
+          .slice(0, Math.max(limit, 8));
 
         return Response.json({ origin, destination, date: dateStr, from, options: all });
       },
