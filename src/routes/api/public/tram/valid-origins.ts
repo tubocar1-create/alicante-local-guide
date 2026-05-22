@@ -85,12 +85,12 @@ export const Route = createFileRoute("/api/public/tram/valid-origins")({
           list.forEach((s) => originStopIds.add(s.stop_id));
         }
 
-        const { data: stopsRaw } = await supabaseAdmin
+        const { data: stopsRaw, error: stopsErr } = await supabaseAdmin
           .from("tram_stops")
           .select("stop_id, stop_name, stop_lat, stop_lon")
           .in("stop_id", Array.from(originStopIds));
+        console.log("[valid-origins] stopsErr:", stopsErr);
         const stopMap = new Map(((stopsRaw ?? []) as any[]).map((s) => [s.stop_id, s]));
-        console.log("[valid-origins] originStopIds:", originStopIds.size, "stopsRaw:", stopsRaw?.length, "sample originIds:", [...originStopIds].slice(0,5), "sample stopMap key:", [...stopMap.keys()].slice(0,5));
 
         const result = Array.from(groups.values()).map((g) => {
           const r = routeMap.get(g.route_id);
