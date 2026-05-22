@@ -112,6 +112,7 @@ function InstallAppButton() {
 }
 
 function AdminHome() {
+  useAdminManifest();
   const [pin, setPin] = useState("");
   const [authed, setAuthed] = useState(false);
   const [error, setError] = useState<string | null>(null);
