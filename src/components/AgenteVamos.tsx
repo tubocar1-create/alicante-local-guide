@@ -401,9 +401,29 @@ const DOMAINS: DomainSpec[] = [
     id: "tram_pick",
     hubPath: "/tram",
     triggers: [],
-    question: "🚋 ¿A qué estación del TRAM quieres ir? Y dime también desde dónde sales (por ejemplo: «de Mercado a Benidorm»). Si prefieres, busca tu parada en la lista.",
+    question: "🚋 ¿Hacia qué estación del TRAM quieres ir?",
     audio: "bus",
     followups: [],
+  },
+  {
+    id: "tram_origin_confirm",
+    hubPath: "/tram",
+    triggers: [],
+    question: "¿Quieres salir desde esa parada o prefieres otra?",
+    audio: "bus",
+    followups: [
+      { keys: [
+          "si", "sí", "vale", "ok", "okay", "perfecto", "claro", "dale",
+          "desde ahi", "desde ahí", "desde esa", "esa", "esa misma",
+          "esa esta bien", "esa está bien", "esa me sirve", "me sirve",
+          "confirmo", "confirmar", "ahi", "ahí",
+        ], path: "action:tram-confirm-suggested" },
+      { keys: [
+          "otra", "otra estacion", "otra estación", "otra parada",
+          "prefiero otra", "cambiar", "cambiar origen", "diferente",
+          "no", "mejor otra", "elegir otra",
+        ], path: "action:tram-pick-origin" },
+    ],
   },
   {
     id: "fiestas",
@@ -607,13 +627,46 @@ function normalizeSpeech(text: string) {
 }
 
 // =================== TRAM stops (catálogo en memoria) ===================
-type TramStopEntry = { stop_id: string; stop_name: string; norm: string };
+type TramStopEntry = { stop_id: string; stop_name: string; norm: string; lat?: number; lng?: number };
 let TRAM_STOPS_CACHE: TramStopEntry[] = [];
-function setTramStopsCache(stops: Array<{ stop_id: string; stop_name: string }>) {
+function setTramStopsCache(stops: Array<{ stop_id: string; stop_name: string; stop_lat?: number; stop_lon?: number }>) {
   TRAM_STOPS_CACHE = stops
-    .map((s) => ({ stop_id: s.stop_id, stop_name: s.stop_name, norm: normalizeSpeech(s.stop_name) }))
+    .map((s) => ({
+      stop_id: s.stop_id,
+      stop_name: s.stop_name,
+      norm: normalizeSpeech(s.stop_name),
+      lat: typeof s.stop_lat === "number" ? s.stop_lat : undefined,
+      lng: typeof s.stop_lon === "number" ? s.stop_lon : undefined,
+    }))
     .filter((s) => s.norm.length >= 3)
     .sort((a, b) => b.norm.length - a.norm.length);
+}
+
+// Distancia haversine en km entre dos puntos (lat/lng).
+function tramDistanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  const R = 6371;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h = Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+// Lee las últimas coords cacheadas por el hook de geolocalización.
+function readCachedCoords(): { lat: number; lng: number } | null {
+  if (typeof localStorage === "undefined") return null;
+  try {
+    const parsed = JSON.parse(localStorage.getItem("geo:last-coords") ?? "null") as
+      | { lat?: number; lng?: number; savedAt?: number }
+      | null;
+    if (!parsed || typeof parsed.lat !== "number" || typeof parsed.lng !== "number") return null;
+    if (parsed.savedAt && Date.now() - parsed.savedAt > 12 * 60 * 60 * 1000) return null;
+    return { lat: parsed.lat, lng: parsed.lng };
+  } catch {
+    return null;
+  }
 }
 const TRAM_TRIGGER_RE = /\b(tram|tranvia|tranvias)\b/;
 function matchTramQuery(query: string): {
@@ -1003,6 +1056,7 @@ function pickAssistantMode(domain: string | null): AssistantMode {
     case "transporte":
     case "transporte_bus":
     case "tram_pick":
+    case "tram_origin_confirm":
     case "bus_known": return "operativo";
     case "salud":
     case "salud_general": return "empatico";
@@ -1110,15 +1164,58 @@ function localResolve(
         const params = new URLSearchParams();
         params.set("tram_dest", tramHit2.destId);
         if (tramHit2.originId) params.set("tram_origin", tramHit2.originId);
-        const reply = tramHit2.originId
-          ? `¡Voy! TRAM de ${tramHit2.originName} a ${tramHit2.destName}.`
-          : `¡Voy! TRAM con destino ${tramHit2.destName}. Dime también desde dónde sales si quieres ver horarios.`;
+        if (tramHit2.originId) {
+          return {
+            reply: `¡Voy! TRAM de ${tramHit2.originName} a ${tramHit2.destName}.`,
+            path: `/tram?${params.toString()}`,
+            audio: "bus",
+            pendingDomain: null,
+          };
+        }
+        // Solo destino → guardamos para enriquecer con la parada más cercana
+        // y pedimos confirmación en el siguiente turno.
+        if (typeof window !== "undefined") {
+          try {
+            window.sessionStorage.setItem("tram:pending-dest-id", tramHit2.destId);
+            window.sessionStorage.setItem("tram:pending-dest-name", tramHit2.destName);
+            window.sessionStorage.removeItem("tram:suggested-origin-id");
+            window.sessionStorage.removeItem("tram:suggested-origin-name");
+          } catch { /* noop */ }
+        }
         return {
-          reply,
+          reply: `🎯 Destino: ${tramHit2.destName}. Calculando la parada más cercana…`,
           path: `/tram?${params.toString()}`,
           audio: "bus",
-          pendingDomain: tramHit2.originId ? null : "tram_pick",
+          pendingDomain: "tram_origin_confirm",
         };
+      }
+    }
+    // 1.quater) En tram_origin_confirm aceptamos también una parada nombrada
+    // como nuevo origen (sin necesidad de decir "tram").
+    if (currentDomain === "tram_origin_confirm") {
+      const tramHit3 = matchTramQuery(`tram ${query}`);
+      if (tramHit3 && tramHit3.destId && typeof window !== "undefined") {
+        // El usuario puede decir solo el nombre de una parada → tratarla como origen
+        // hacia el destino pendiente.
+        const pendingDestId = window.sessionStorage.getItem("tram:pending-dest-id");
+        const pendingDestName = window.sessionStorage.getItem("tram:pending-dest-name");
+        if (pendingDestId && pendingDestName) {
+          const params = new URLSearchParams();
+          params.set("tram_dest", pendingDestId);
+          params.set("tram_origin", tramHit3.destId);
+          try {
+            window.sessionStorage.removeItem("tram:pending-dest-id");
+            window.sessionStorage.removeItem("tram:pending-dest-name");
+            window.sessionStorage.removeItem("tram:suggested-origin-id");
+            window.sessionStorage.removeItem("tram:suggested-origin-name");
+          } catch { /* noop */ }
+          return {
+            reply: `¡Voy! TRAM de ${tramHit3.destName} a ${pendingDestName}.`,
+            path: `/tram?${params.toString()}`,
+            audio: "bus",
+            pendingDomain: null,
+          };
+        }
       }
     }
     const d = DOMAINS.find((x) => x.id === currentDomain);
@@ -1153,10 +1250,47 @@ function localResolve(
             pendingDomain: "transporte_bus",
           };
         }
+        if (fuPath === "action:tram-confirm-suggested") {
+          if (typeof window !== "undefined") {
+            const destId = window.sessionStorage.getItem("tram:pending-dest-id");
+            const destName = window.sessionStorage.getItem("tram:pending-dest-name");
+            const originId = window.sessionStorage.getItem("tram:suggested-origin-id");
+            const originName = window.sessionStorage.getItem("tram:suggested-origin-name");
+            if (destId && originId) {
+              const params = new URLSearchParams();
+              params.set("tram_dest", destId);
+              params.set("tram_origin", originId);
+              try {
+                window.sessionStorage.removeItem("tram:pending-dest-id");
+                window.sessionStorage.removeItem("tram:pending-dest-name");
+                window.sessionStorage.removeItem("tram:suggested-origin-id");
+                window.sessionStorage.removeItem("tram:suggested-origin-name");
+              } catch { /* noop */ }
+              return {
+                reply: `¡Voy! TRAM de ${originName ?? "tu parada"} a ${destName ?? "tu destino"}.`,
+                path: `/tram?${params.toString()}`,
+                audio: "bus",
+                pendingDomain: null,
+              };
+            }
+          }
+          return {
+            reply: "Necesito que primero me digas el destino. ¿A qué estación del TRAM quieres ir?",
+            audio: "bus",
+            pendingDomain: "tram_pick",
+          };
+        }
+        if (fuPath === "action:tram-pick-origin") {
+          return {
+            reply: "Vale, dime desde qué estación del TRAM sales (por ejemplo: «desde Mercado»).",
+            audio: "bus",
+            pendingDomain: "tram_origin_confirm",
+          };
+        }
         if (fuPath === "action:tram-pick") {
           const tPick = DOMAINS.find((x) => x.id === "tram_pick");
           return {
-            reply: tPick?.question ?? "¿A qué estación del TRAM quieres ir y desde dónde sales?",
+            reply: tPick?.question ?? "¿A qué estación del TRAM quieres ir?",
             path: "/tram",
             audio: "bus",
             pendingDomain: "tram_pick",
@@ -1878,7 +2012,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     if (TRAM_STOPS_CACHE.length) return;
     fetch("/api/public/tram/stations")
       .then((r) => r.json())
-      .then((d) => setTramStopsCache((d?.stations ?? []) as Array<{ stop_id: string; stop_name: string }>))
+      .then((d) => setTramStopsCache((d?.stations ?? []) as Array<{ stop_id: string; stop_name: string; stop_lat?: number; stop_lon?: number }>))
       .catch(() => {});
   }, []);
 
@@ -2223,10 +2357,48 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           } catch {}
         }
 
+        // Enriquecer respuesta TRAM con la parada más cercana cuando hay geo.
+        if (fallback.pendingDomain === "tram_origin_confirm" && typeof window !== "undefined") {
+          const destId = window.sessionStorage.getItem("tram:pending-dest-id");
+          const destName = window.sessionStorage.getItem("tram:pending-dest-name");
+          const coords = readCachedCoords();
+          if (destId && destName) {
+            if (coords) {
+              try {
+                const res = await fetch(`/api/public/tram/valid-origins?destination=${encodeURIComponent(destId)}`);
+                const data = await res.json();
+                const groups = (data?.groups ?? []) as Array<{ stops: Array<{ stop_id: string; stop_name: string }> }>;
+                const uniq = new Map<string, { stop_id: string; stop_name: string }>();
+                for (const g of groups) for (const s of g.stops) if (!uniq.has(s.stop_id)) uniq.set(s.stop_id, s);
+                let best: { stop_id: string; stop_name: string; d: number } | null = null;
+                for (const s of uniq.values()) {
+                  const meta = TRAM_STOPS_CACHE.find((t) => t.stop_id === s.stop_id);
+                  if (!meta || meta.lat == null || meta.lng == null) continue;
+                  const d = tramDistanceKm(coords, { lat: meta.lat, lng: meta.lng });
+                  if (!best || d < best.d) best = { stop_id: s.stop_id, stop_name: s.stop_name, d };
+                }
+                if (best) {
+                  window.sessionStorage.setItem("tram:suggested-origin-id", best.stop_id);
+                  window.sessionStorage.setItem("tram:suggested-origin-name", best.stop_name);
+                  reply = `📍 Estás cerca de **${best.stop_name}**. ¿Quieres salir desde esa parada o prefieres otra?`;
+                } else {
+                  reply = `Destino: ${destName}. ¿Desde qué parada del TRAM quieres salir?`;
+                }
+              } catch {
+                reply = `Destino: ${destName}. ¿Desde qué parada del TRAM quieres salir?`;
+              }
+            } else {
+              reply = `Destino: ${destName}. Activa la ubicación para sugerirte la parada más cercana, o dime desde qué parada sales.`;
+            }
+          }
+        }
+
         // Si el resolver local activa un DOMINIO (pregunta aclaratoria sin
         // path), saltamos el servidor para no pisar la pregunta con una
         // navegación agresiva. Actualizamos el dominio activo y respondemos.
-        const isClarifying = fallback.pendingDomain != null && !fallback.path;
+        const isClarifying =
+          (fallback.pendingDomain != null && !fallback.path) ||
+          fallback.pendingDomain === "tram_origin_confirm";
         if (isClarifying) {
           pendingDomainRef.current = fallback.pendingDomain ?? null;
         } else if (fallback.pendingDomain === null) {
