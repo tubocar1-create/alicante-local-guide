@@ -275,12 +275,18 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
             <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground">Próximas salidas</span>
           </div>
           {loadingDep ? (
-            <div className="flex items-center justify-center py-6 text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-            </div>
+            <ul className="space-y-2">
+              {[0,1,2].map((i) => (
+                <li key={i} className="flex items-center gap-2.5">
+                  <div className="h-7 w-10 animate-pulse rounded-md bg-muted" />
+                  <div className="h-4 flex-1 animate-pulse rounded bg-muted" />
+                  <div className="h-6 w-12 animate-pulse rounded bg-muted" />
+                </li>
+              ))}
+            </ul>
           ) : departures.length === 0 ? (
             <p className="py-3 text-center text-xs text-muted-foreground">
-              No hay salidas programadas próximamente desde esta parada.
+              No hay más tranvías por hoy 🌙
             </p>
           ) : (
             <ul className="divide-y divide-border/60">
@@ -288,7 +294,7 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
                 const mins = minutesUntil(d.departure_time);
                 const color = ensureHash(d.line_color) ?? "var(--primary)";
                 return (
-                  <li key={`${d.trip_id}-${i}`} className="flex items-center gap-2.5 py-2">
+                  <li key={`${d.trip_id}-${i}`} className="flex items-center gap-2.5 py-2 transition hover:bg-accent/20 rounded-md px-1 -mx-1">
                     <span
                       className="inline-flex h-7 min-w-[2.25rem] items-center justify-center rounded-md px-1.5 text-[11px] font-bold text-white shadow-sm"
                       style={{ background: color }}
@@ -314,6 +320,41 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
             </ul>
           )}
         </div>
+
+        {/* Destinos populares */}
+        <div>
+          <p className="mb-1.5 px-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Destinos populares
+          </p>
+          <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
+            {[
+              { emoji: "🌊", label: "Playa San Juan", q: "playa san juan" },
+              { emoji: "🎓", label: "Universidad", q: "universidad" },
+              { emoji: "🏰", label: "Centro", q: "luceros" },
+              { emoji: "🎡", label: "Benidorm", q: "benidorm" },
+              { emoji: "🏖️", label: "El Campello", q: "campello" },
+              { emoji: "🏛️", label: "MARQ", q: "marq" },
+            ].map((dest) => (
+              <button
+                key={dest.label}
+                type="button"
+                onClick={async () => {
+                  try {
+                    const r = await fetch(`/api/public/tram/stations?q=${encodeURIComponent(dest.q)}`);
+                    const d = await r.json();
+                    const first = (d?.stations ?? [])[0];
+                    if (first) selectStation(first);
+                  } catch {/* noop */}
+                }}
+                className="flex flex-none flex-col items-center gap-0.5 rounded-2xl border border-border bg-gradient-to-b from-background/90 to-accent/10 px-3 py-2 text-center shadow-sm transition hover:border-primary/40 hover:from-accent/30 active:scale-95"
+              >
+                <span className="text-lg" aria-hidden>{dest.emoji}</span>
+                <span className="text-[10px] font-medium leading-tight">{dest.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
 
         {/* Accesos rápidos */}
         <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
