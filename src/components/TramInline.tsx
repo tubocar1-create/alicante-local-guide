@@ -296,21 +296,12 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
       const near = nearestFromList(geo.coords, validStops);
       if (near) { confirmOrigin(near); return; }
     }
-    // Si el usuario tenía la geolocalización desactivada en su perfil,
-    // reactívala antes de pedir permiso al navegador.
     if (!isGeoEnabled()) setGeoEnabled(true);
     requestGeo();
   };
 
-  // Cuando llega la geo después de pedirla, si aún no hay confirmación → usar
-  useEffect(() => {
-    if (geo.status !== "ready" || originConfirmed || !destination || !validStops.length) return;
-    const near = nearestFromList(geo.coords, validStops);
-    if (near) {
-      confirmOrigin(near);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [geo, originConfirmed, destination, validStops]);
+  // Coords actuales (solo si geo lista) para que OriginStep calcule sugerencia.
+  const geoCoords = geo.status === "ready" ? geo.coords : null;
 
   return (
     <div className={`flex animate-fade-in flex-col rounded-3xl border border-border bg-card/95 shadow-sm backdrop-blur ${embedded ? "" : "mt-2 max-h-[78vh] overflow-hidden"}`}>
