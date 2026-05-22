@@ -15,10 +15,36 @@ export const Route = createFileRoute("/admin")({
     meta: [
       { title: "Admin (oculto)" },
       { name: "robots", content: "noindex,nofollow,noarchive,nosnippet" },
+      { name: "apple-mobile-web-app-title", content: "Admin" },
     ],
   }),
   component: AdminHome,
 });
+
+/** Swap the page manifest to the admin one so installing the PWA from this
+ *  page creates a separate "Admin" shortcut pointing to /admin, instead of
+ *  installing the public user app. */
+function useAdminManifest() {
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const existing = Array.from(
+      document.querySelectorAll<HTMLLinkElement>('link[rel="manifest"]'),
+    );
+    const saved = existing.map((l) => ({ el: l, href: l.href }));
+    existing.forEach((l) => l.remove());
+    const link = document.createElement("link");
+    link.rel = "manifest";
+    link.href = "/admin-manifest.webmanifest";
+    document.head.appendChild(link);
+    return () => {
+      link.remove();
+      saved.forEach(({ el, href }) => {
+        el.href = href;
+        document.head.appendChild(el);
+      });
+    };
+  }, []);
+}
 
 type BIPEvent = Event & {
   prompt: () => Promise<void>;
