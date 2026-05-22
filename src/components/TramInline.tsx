@@ -118,20 +118,22 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
-  // 1. Cargar líneas + estación inicial (Luceros) + salidas.
+  // 1. Cargar líneas + estación inicial (última usada o Luceros) + salidas.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
+        let last: Station | null = null;
+        try { last = JSON.parse(localStorage.getItem(LAST_KEY) || "null"); } catch {/* noop */}
         const [linesRes, stationsRes] = await Promise.all([
           fetch("/api/public/tram/lines").then((r) => r.json()),
-          fetch("/api/public/tram/stations?q=luceros").then((r) => r.json()),
+          last ? Promise.resolve({ stations: [last] }) : fetch("/api/public/tram/stations?q=luceros").then((r) => r.json()),
         ]);
         if (cancelled) return;
         setLines(linesRes?.lines ?? []);
-        const luceros: Station | undefined = (stationsRes?.stations ?? [])[0];
-        if (luceros) {
-          setStation(luceros);
+        const initial: Station | undefined = (stationsRes?.stations ?? [])[0];
+        if (initial) {
+          setStation(initial);
         } else {
           setLoadingDep(false);
         }
