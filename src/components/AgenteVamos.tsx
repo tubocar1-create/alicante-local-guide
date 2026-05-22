@@ -403,7 +403,16 @@ const DOMAINS: DomainSpec[] = [
     triggers: [],
     question: "🚋 ¿Hacia qué estación del TRAM quieres ir?",
     audio: "bus",
-    followups: [],
+    followups: [
+      { keys: [
+          "no se", "no sé", "no lo se", "no lo sé", "ni idea", "ns",
+          "no estoy seguro", "no estoy segura", "no sabria", "no sabría",
+          "ayuda", "ayudame", "ayúdame", "no sabria decirte", "cualquiera",
+          "no se a donde", "no sé a dónde", "no se a donde ir", "no sé a dónde ir",
+          "no se donde ir", "no sé dónde ir", "donde puedo ir", "dónde puedo ir",
+          "que opciones", "qué opciones", "opciones", "sugiere", "sugiéreme", "sugiereme",
+        ], path: "action:tram-quick-destinations" },
+    ],
   },
   {
     id: "tram_origin_confirm",
