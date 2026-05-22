@@ -331,7 +331,7 @@ const DOMAINS: DomainSpec[] = [
         ], path: "action:transporte-bus" },
       { keys: [
           "tram", "tranvia", "tranvía", "tranvias", "tranvías", "fgv",
-        ], path: "/tram" },
+        ], path: "action:tram-pick" },
       { keys: ["vuelo", "vuelos", "avion", "aeropuerto"], path: "/vuelos" },
     ],
   },
@@ -366,6 +366,14 @@ const DOMAINS: DomainSpec[] = [
     followups: [
       { keys: ["no se", "no sé", "ayuda", "ayudame", "ayúdame", "no lo se", "no lo sé"], path: "action:bus-picker" },
     ],
+  },
+  {
+    id: "tram_pick",
+    hubPath: "/tram",
+    triggers: [],
+    question: "🚋 ¿A qué estación del TRAM quieres ir? Y dime también desde dónde sales (por ejemplo: «de Mercado a Benidorm»). Si prefieres, busca tu parada en la lista.",
+    audio: "bus",
+    followups: [],
   },
   {
     id: "fiestas",
@@ -844,6 +852,7 @@ function pickAssistantMode(domain: string | null): AssistantMode {
   switch (domain) {
     case "transporte":
     case "transporte_bus":
+    case "tram_pick":
     case "bus_known": return "operativo";
     case "salud":
     case "salud_general": return "empatico";
@@ -913,7 +922,7 @@ function localResolve(
       : `¡Voy! TRAM con destino ${tramHit.destName}.`;
     return {
       reply,
-      path: `/?${params.toString()}`,
+      path: `/tram?${params.toString()}`,
       audio: "fallback",
       pendingDomain: null,
     };
@@ -935,6 +944,25 @@ function localResolve(
           path: dashboardPath,
           audio: "bus",
           pendingDomain: null,
+        };
+      }
+    }
+    // 1.ter) En el dominio tram_pick aceptamos paradas aunque el usuario
+    // no diga la palabra "tram" (ya está en el flujo).
+    if (currentDomain === "tram_pick") {
+      const tramHit2 = matchTramQuery(`tram ${query}`);
+      if (tramHit2) {
+        const params = new URLSearchParams();
+        params.set("tram_dest", tramHit2.destId);
+        if (tramHit2.originId) params.set("tram_origin", tramHit2.originId);
+        const reply = tramHit2.originId
+          ? `¡Voy! TRAM de ${tramHit2.originName} a ${tramHit2.destName}.`
+          : `¡Voy! TRAM con destino ${tramHit2.destName}. Dime también desde dónde sales si quieres ver horarios.`;
+        return {
+          reply,
+          path: `/tram?${params.toString()}`,
+          audio: "bus",
+          pendingDomain: tramHit2.originId ? null : "tram_pick",
         };
       }
     }
@@ -968,6 +996,15 @@ function localResolve(
             reply: tBus?.question ?? "¿Ya sabes qué bus tomar?",
             audio: "bus",
             pendingDomain: "transporte_bus",
+          };
+        }
+        if (fuPath === "action:tram-pick") {
+          const tPick = DOMAINS.find((x) => x.id === "tram_pick");
+          return {
+            reply: tPick?.question ?? "¿A qué estación del TRAM quieres ir y desde dónde sales?",
+            path: "/tram",
+            audio: "bus",
+            pendingDomain: "tram_pick",
           };
         }
         const intent = INTENTS.find((it) => it.path === fuPath);
