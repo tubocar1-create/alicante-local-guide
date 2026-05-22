@@ -1056,6 +1056,7 @@ function pickAssistantMode(domain: string | null): AssistantMode {
     case "transporte":
     case "transporte_bus":
     case "tram_pick":
+    case "tram_origin_confirm":
     case "bus_known": return "operativo";
     case "salud":
     case "salud_general": return "empatico";
