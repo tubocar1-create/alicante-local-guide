@@ -890,6 +890,25 @@ function localResolve(
     }
   }
 
+  // 0.5) TRAM directo: si el usuario menciona TRAM/tranvía + paradas,
+  //      abrimos el Inicio con destino (y origen si se infiere) precargados.
+  const tramHit = matchTramQuery(query);
+  if (tramHit) {
+    const params = new URLSearchParams();
+    params.set("tram_dest", tramHit.destId);
+    if (tramHit.originId) params.set("tram_origin", tramHit.originId);
+    const reply = tramHit.originId
+      ? `¡Voy! TRAM de ${tramHit.originName} a ${tramHit.destName}.`
+      : `¡Voy! TRAM con destino ${tramHit.destName}.`;
+    return {
+      reply,
+      path: `/?${params.toString()}`,
+      audio: "fallback",
+      pendingDomain: null,
+    };
+  }
+
+
   // 1) Follow-up dentro de un dominio activo: resolvemos sub-destino.
   if (currentDomain) {
     // 1.bis) Caso especial: estamos esperando que el usuario diga la línea
