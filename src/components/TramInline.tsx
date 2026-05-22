@@ -809,7 +809,22 @@ function TripPlanCard({
                         >
                           {o.line_short_name ?? "TRAM"}
                         </span>
-                        <span className="flex-1 truncate">Sale {o.depart_time} · {o.duration_min} min</span>
+                        {o.transfer && (
+                          <>
+                            <span className="text-[10px] text-muted-foreground">+</span>
+                            <span
+                              className="inline-flex h-6 min-w-[2rem] items-center justify-center rounded-md px-1 text-[10px] font-bold text-white"
+                              style={{ background: ensureHash(o.transfer.leg2.line_color) ?? "var(--primary)" }}
+                              title={`Transbordo Luceros · espera ${o.transfer.wait_min} min`}
+                            >
+                              {o.transfer.leg2.line_short_name ?? "TRAM"}
+                            </span>
+                          </>
+                        )}
+                        <span className="flex-1 truncate">
+                          Sale {o.depart_time} · {o.duration_min} min
+                          {o.transfer && <span className="text-muted-foreground"> · 🔁 {o.transfer.wait_min}m Luceros</span>}
+                        </span>
                         {m !== null && <span className="font-semibold text-primary">{m} min</span>}
                       </li>
                     );
