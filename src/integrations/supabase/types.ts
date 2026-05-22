@@ -164,6 +164,56 @@ export type Database = {
         }
         Relationships: []
       }
+      agente_learning_log: {
+        Row: {
+          added_keywords: string[]
+          confidence: number | null
+          created_at: string
+          decision: string
+          id: string
+          intent_key: string | null
+          model: string | null
+          normalized: string
+          notes: string | null
+          raw_query: string
+          unknown_query_id: string | null
+        }
+        Insert: {
+          added_keywords?: string[]
+          confidence?: number | null
+          created_at?: string
+          decision: string
+          id?: string
+          intent_key?: string | null
+          model?: string | null
+          normalized: string
+          notes?: string | null
+          raw_query: string
+          unknown_query_id?: string | null
+        }
+        Update: {
+          added_keywords?: string[]
+          confidence?: number | null
+          created_at?: string
+          decision?: string
+          id?: string
+          intent_key?: string | null
+          model?: string | null
+          normalized?: string
+          notes?: string | null
+          raw_query?: string
+          unknown_query_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agente_learning_log_unknown_query_id_fkey"
+            columns: ["unknown_query_id"]
+            isOneToOne: false
+            referencedRelation: "agente_unknown_queries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agente_proper_nouns: {
         Row: {
           active: boolean
@@ -211,30 +261,42 @@ export type Database = {
       }
       agente_unknown_queries: {
         Row: {
+          auto_added_keywords: string[]
+          auto_assigned_intent: string | null
+          confidence: number | null
           count: number
           created_at: string
           id: string
           last_seen_at: string
           normalized: string
           path: string | null
+          processed_at: string | null
           query: string
         }
         Insert: {
+          auto_added_keywords?: string[]
+          auto_assigned_intent?: string | null
+          confidence?: number | null
           count?: number
           created_at?: string
           id?: string
           last_seen_at?: string
           normalized: string
           path?: string | null
+          processed_at?: string | null
           query: string
         }
         Update: {
+          auto_added_keywords?: string[]
+          auto_assigned_intent?: string | null
+          confidence?: number | null
           count?: number
           created_at?: string
           id?: string
           last_seen_at?: string
           normalized?: string
           path?: string | null
+          processed_at?: string | null
           query?: string
         }
         Relationships: []
