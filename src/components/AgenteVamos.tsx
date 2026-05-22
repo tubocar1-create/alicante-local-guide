@@ -401,9 +401,29 @@ const DOMAINS: DomainSpec[] = [
     id: "tram_pick",
     hubPath: "/tram",
     triggers: [],
-    question: "🚋 ¿A qué estación del TRAM quieres ir? Y dime también desde dónde sales (por ejemplo: «de Mercado a Benidorm»). Si prefieres, busca tu parada en la lista.",
+    question: "🚋 ¿Hacia qué estación del TRAM quieres ir?",
     audio: "bus",
     followups: [],
+  },
+  {
+    id: "tram_origin_confirm",
+    hubPath: "/tram",
+    triggers: [],
+    question: "¿Quieres salir desde esa parada o prefieres otra?",
+    audio: "bus",
+    followups: [
+      { keys: [
+          "si", "sí", "vale", "ok", "okay", "perfecto", "claro", "dale",
+          "desde ahi", "desde ahí", "desde esa", "esa", "esa misma",
+          "esa esta bien", "esa está bien", "esa me sirve", "me sirve",
+          "confirmo", "confirmar", "ahi", "ahí",
+        ], path: "action:tram-confirm-suggested" },
+      { keys: [
+          "otra", "otra estacion", "otra estación", "otra parada",
+          "prefiero otra", "cambiar", "cambiar origen", "diferente",
+          "no", "mejor otra", "elegir otra",
+        ], path: "action:tram-pick-origin" },
+    ],
   },
   {
     id: "fiestas",
