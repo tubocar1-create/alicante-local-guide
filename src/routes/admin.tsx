@@ -1,6 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Download, Lock, Loader2, Users, Activity, ShieldCheck } from "lucide-react";
+import {
+  Download,
+  Lock,
+  Loader2,
+  Users,
+  Activity,
+  ShieldCheck,
+  BarChart3,
+  ExternalLink,
+  Eye,
+  MousePointerClick,
+  Timer,
+} from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +21,47 @@ import { listAdminUsers } from "@/lib/admin-users.functions";
 
 const ADMIN_PIN = "7910511";
 const PIN_KEY = "admin_home_pin_ok";
+const LOVABLE_ANALYTICS_URL =
+  "https://lovable.dev/projects/a8ec37f9-59bf-4ebb-a372-974e51dc0567/settings/project-insights";
+
+// Snapshot de analíticas de Lovable (últimos 30 días, actualizado 2026-05-22).
+// Para datos en vivo, abrir el panel de Lovable.
+const ANALYTICS_SNAPSHOT = {
+  updated_at: "2026-05-22",
+  range: "Últimos 30 días",
+  visitors: 157,
+  pageviews: 1817,
+  views_per_visit: 11.57,
+  avg_session_sec: 1260,
+  bounce_rate_pct: 33,
+  top_pages: [
+    { path: "/", views: 125 },
+    { path: "/perfil", views: 19 },
+    { path: "/ocio", views: 16 },
+    { path: "/ocio/cartelera", views: 15 },
+    { path: "/fiestas", views: 13 },
+    { path: "/threads", views: 11 },
+    { path: "/salud", views: 10 },
+    { path: "/login", views: 10 },
+    { path: "/donde-dormir", views: 9 },
+    { path: "/ocio/cines", views: 8 },
+  ],
+  countries: [
+    { code: "ES", visitors: 123 },
+    { code: "VE", visitors: 4 },
+    { code: "US", visitors: 4 },
+  ],
+  devices: [
+    { type: "mobile", visitors: 150 },
+    { type: "desktop", visitors: 5 },
+  ],
+};
+
+function fmtDuration(sec: number): string {
+  const m = Math.floor(sec / 60);
+  const s = Math.round(sec % 60);
+  return `${m}m ${s}s`;
+}
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
