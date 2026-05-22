@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { Search, MapPin, Train, Map as MapIcon, Star, History, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
 
 type Line = {
@@ -70,8 +71,6 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
   const [loadingDep, setLoadingDep] = useState(true);
   const [serviceWarn, setServiceWarn] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<Station[]>([]);
-  const [showFavorites, setShowFavorites] = useState(false);
-  const [loadingLine, setLoadingLine] = useState<string | null>(null);
 
   // Cargar favoritos y última parada
   useEffect(() => {
@@ -97,18 +96,7 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
   const selectStation = (s: Station) => {
     setStation(s);
     persistStation(s);
-    setShowFavorites(false);
     setTimeout(() => departuresSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
-  };
-
-  const selectLine = async (lineId: string) => {
-    setLoadingLine(lineId);
-    try {
-      const data = await fetch(`/api/public/tram/line-stops?line_id=${encodeURIComponent(lineId)}&direction=0`).then((r) => r.json());
-      const first = data?.stops?.[0]?.stop;
-      if (first) selectStation(first);
-    } catch {/* noop */}
-    setLoadingLine(null);
   };
 
   const openMap = () => {
@@ -207,13 +195,6 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
     try { return JSON.parse(localStorage.getItem(LAST_KEY) || "null"); } catch { return null; }
   })();
 
-  const quickAccess: Array<{ icon: typeof MapPin; label: string; onClick: () => void; active?: boolean }> = [
-    { icon: Train, label: "Líneas", onClick: () => linesSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }) },
-    { icon: MapPin, label: "Estaciones", onClick: () => { searchInputRef.current?.focus(); searchInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }); } },
-    { icon: MapIcon, label: "Mapa", onClick: openMap },
-    { icon: Star, label: showFavorites ? "Cerrar favoritos" : "Favoritos", onClick: () => setShowFavorites((v) => !v), active: showFavorites },
-    { icon: History, label: "Último TRAM", onClick: () => { if (lastStation) selectStation(lastStation); } },
-  ];
 
   return (
     <div
@@ -336,55 +317,24 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
 
         {/* Accesos rápidos */}
         <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
-          {quickAccess.map(({ icon: Icon, label, onClick, active }) => (
-            <button
-              key={label}
-              type="button"
-              onClick={onClick}
-              className={`flex flex-none items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium shadow-sm transition active:scale-95 ${
-                active ? "border-primary bg-primary/10" : "border-border bg-background/80 hover:bg-accent/40"
-              }`}
-            >
-              <Icon className="h-3.5 w-3.5 text-primary" />
-              {label}
-            </button>
-          ))}
+          <Link to="/tram/estaciones" className="flex flex-none items-center gap-1.5 rounded-full border border-border bg-background/80 px-3 py-1.5 text-xs font-medium shadow-sm transition hover:bg-accent/40 active:scale-95">
+            <MapPin className="h-3.5 w-3.5 text-primary" /> Estaciones
+          </Link>
+          <Link to="/tram/favoritos" className="flex flex-none items-center gap-1.5 rounded-full border border-border bg-background/80 px-3 py-1.5 text-xs font-medium shadow-sm transition hover:bg-accent/40 active:scale-95">
+            <Star className="h-3.5 w-3.5 text-primary" /> Favoritos
+          </Link>
+          {lastStation && (
+            <Link to="/tram/parada/$stopId" params={{ stopId: lastStation.stop_id }} className="flex flex-none items-center gap-1.5 rounded-full border border-border bg-background/80 px-3 py-1.5 text-xs font-medium shadow-sm transition hover:bg-accent/40 active:scale-95">
+              <History className="h-3.5 w-3.5 text-primary" /> Último TRAM
+            </Link>
+          )}
+          <button type="button" onClick={openMap} className="flex flex-none items-center gap-1.5 rounded-full border border-border bg-background/80 px-3 py-1.5 text-xs font-medium shadow-sm transition hover:bg-accent/40 active:scale-95">
+            <MapIcon className="h-3.5 w-3.5 text-primary" /> Mapa
+          </button>
+          <button type="button" onClick={() => linesSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })} className="flex flex-none items-center gap-1.5 rounded-full border border-border bg-background/80 px-3 py-1.5 text-xs font-medium shadow-sm transition hover:bg-accent/40 active:scale-95">
+            <Train className="h-3.5 w-3.5 text-primary" /> Líneas
+          </button>
         </div>
-
-        {/* Favoritos */}
-        {showFavorites && (
-          <div className="rounded-2xl border border-border bg-background/60 p-3 animate-fade-in">
-            <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Tus paradas favoritas</p>
-            {favorites.length === 0 ? (
-              <p className="py-2 text-center text-xs text-muted-foreground">
-                Aún no tienes favoritos. Pulsa la ⭐ junto al nombre de la parada para guardarla.
-              </p>
-            ) : (
-              <ul className="space-y-1">
-                {favorites.map((f) => (
-                  <li key={f.stop_id} className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => selectStation(f)}
-                      className="flex flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs hover:bg-accent/40"
-                    >
-                      <MapPin className="h-3.5 w-3.5 text-primary" />
-                      <span className="truncate">{f.stop_name}</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => toggleFavorite(f)}
-                      aria-label="Quitar"
-                      className="rounded-full p-1 text-muted-foreground hover:bg-accent/40"
-                    >
-                      <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        )}
 
         {/* Líneas TRAM */}
         <div ref={linesSectionRef}>
@@ -395,23 +345,21 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
             {displayLines.map((l) => {
               const bg = ensureHash(l.color) ?? "var(--primary)";
               const fg = ensureHash(l.text_color) ?? "#FFFFFF";
-              const isLoading = loadingLine === l.id;
               return (
-                <button
+                <Link
                   key={l.id}
-                  type="button"
-                  onClick={() => selectLine(l.id)}
-                  disabled={isLoading}
-                  className="group flex items-center gap-2 rounded-xl border border-border bg-background/80 p-2 text-left shadow-sm transition hover:border-primary/40 hover:bg-accent/30 active:scale-[0.98] disabled:opacity-60"
+                  to="/tram/linea/$lineId"
+                  params={{ lineId: l.id }}
+                  className="group flex items-center gap-2 rounded-xl border border-border bg-background/80 p-2 text-left shadow-sm transition hover:border-primary/40 hover:bg-accent/30 active:scale-[0.98]"
                 >
                   <span
                     className="inline-flex h-8 min-w-[2.25rem] items-center justify-center rounded-md px-1.5 text-[11px] font-black shadow-sm"
                     style={{ background: bg, color: fg }}
                   >
-                    {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : l.short_name}
+                    {l.short_name}
                   </span>
                   <span className="flex-1 text-[11px] leading-tight">{l.long_name}</span>
-                </button>
+                </Link>
               );
             })}
           </div>
