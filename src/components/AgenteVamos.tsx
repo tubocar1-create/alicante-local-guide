@@ -843,6 +843,7 @@ type AssistantMode =
 function pickAssistantMode(domain: string | null): AssistantMode {
   switch (domain) {
     case "transporte":
+    case "transporte_bus":
     case "bus_known": return "operativo";
     case "salud":
     case "salud_general": return "empatico";
