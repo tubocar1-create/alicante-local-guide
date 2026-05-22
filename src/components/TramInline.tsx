@@ -576,6 +576,20 @@ function TripPlanCard({
       return m !== null && m >= 0;
     });
   }, [options]);
+
+  // Conexiones de bus urbano (Vectalia) cercanas a la estación de destino.
+  type BusConn = { code: string; name: string; color: string | null; operator: string | null; stop_name: string | null; distance_m: number };
+  const [busLines, setBusLines] = useState<BusConn[] | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    setBusLines(null);
+    fetch(`/api/public/tram/bus-connections?stop_id=${encodeURIComponent(destination.stop_id)}&radius_m=400`)
+      .then((r) => r.json())
+      .then((d) => { if (!cancelled) setBusLines((d?.lines ?? []) as BusConn[]); })
+      .catch(() => { if (!cancelled) setBusLines([]); });
+    return () => { cancelled = true; };
+  }, [destination.stop_id]);
+
   const best = futureOptions?.[0];
   const more = (futureOptions ?? []).slice(1);
   const mins = best ? minutesUntil(best.depart_time) : null;
