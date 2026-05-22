@@ -79,6 +79,7 @@ import { Route as ApiPublicBookingCreateRouteImport } from './routes/api/public/
 import { Route as ApiPublicAenaFlightsRouteImport } from './routes/api/public/aena-flights'
 import { Route as OcioCinesIdCarteleraRouteImport } from './routes/ocio_.cines_.$id.cartelera'
 import { Route as ApiPublicTramStationsRouteImport } from './routes/api/public/tram/stations'
+import { Route as ApiPublicTramPlanRouteImport } from './routes/api/public/tram/plan'
 import { Route as ApiPublicTramLinesRouteImport } from './routes/api/public/tram/lines'
 import { Route as ApiPublicTramLineStopsRouteImport } from './routes/api/public/tram/line-stops'
 import { Route as ApiPublicTramDeparturesRouteImport } from './routes/api/public/tram/departures'
@@ -441,6 +442,11 @@ const ApiPublicTramStationsRoute = ApiPublicTramStationsRouteImport.update({
   path: '/api/public/tram/stations',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTramPlanRoute = ApiPublicTramPlanRouteImport.update({
+  id: '/api/public/tram/plan',
+  path: '/api/public/tram/plan',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicTramLinesRoute = ApiPublicTramLinesRouteImport.update({
   id: '/api/public/tram/lines',
   path: '/api/public/tram/lines',
@@ -568,6 +574,7 @@ export interface FileRoutesByFullPath {
   '/api/public/tram/departures': typeof ApiPublicTramDeparturesRoute
   '/api/public/tram/line-stops': typeof ApiPublicTramLineStopsRoute
   '/api/public/tram/lines': typeof ApiPublicTramLinesRoute
+  '/api/public/tram/plan': typeof ApiPublicTramPlanRoute
   '/api/public/tram/stations': typeof ApiPublicTramStationsRoute
   '/ocio/cines/$id/cartelera': typeof OcioCinesIdCarteleraRoute
 }
@@ -648,6 +655,7 @@ export interface FileRoutesByTo {
   '/api/public/tram/departures': typeof ApiPublicTramDeparturesRoute
   '/api/public/tram/line-stops': typeof ApiPublicTramLineStopsRoute
   '/api/public/tram/lines': typeof ApiPublicTramLinesRoute
+  '/api/public/tram/plan': typeof ApiPublicTramPlanRoute
   '/api/public/tram/stations': typeof ApiPublicTramStationsRoute
   '/ocio/cines/$id/cartelera': typeof OcioCinesIdCarteleraRoute
 }
@@ -730,6 +738,7 @@ export interface FileRoutesById {
   '/api/public/tram/departures': typeof ApiPublicTramDeparturesRoute
   '/api/public/tram/line-stops': typeof ApiPublicTramLineStopsRoute
   '/api/public/tram/lines': typeof ApiPublicTramLinesRoute
+  '/api/public/tram/plan': typeof ApiPublicTramPlanRoute
   '/api/public/tram/stations': typeof ApiPublicTramStationsRoute
   '/ocio_/cines_/$id/cartelera': typeof OcioCinesIdCarteleraRoute
 }
@@ -813,6 +822,7 @@ export interface FileRouteTypes {
     | '/api/public/tram/departures'
     | '/api/public/tram/line-stops'
     | '/api/public/tram/lines'
+    | '/api/public/tram/plan'
     | '/api/public/tram/stations'
     | '/ocio/cines/$id/cartelera'
   fileRoutesByTo: FileRoutesByTo
@@ -893,6 +903,7 @@ export interface FileRouteTypes {
     | '/api/public/tram/departures'
     | '/api/public/tram/line-stops'
     | '/api/public/tram/lines'
+    | '/api/public/tram/plan'
     | '/api/public/tram/stations'
     | '/ocio/cines/$id/cartelera'
   id:
@@ -974,6 +985,7 @@ export interface FileRouteTypes {
     | '/api/public/tram/departures'
     | '/api/public/tram/line-stops'
     | '/api/public/tram/lines'
+    | '/api/public/tram/plan'
     | '/api/public/tram/stations'
     | '/ocio_/cines_/$id/cartelera'
   fileRoutesById: FileRoutesById
@@ -1035,6 +1047,7 @@ export interface RootRouteChildren {
   ApiPublicTramDeparturesRoute: typeof ApiPublicTramDeparturesRoute
   ApiPublicTramLineStopsRoute: typeof ApiPublicTramLineStopsRoute
   ApiPublicTramLinesRoute: typeof ApiPublicTramLinesRoute
+  ApiPublicTramPlanRoute: typeof ApiPublicTramPlanRoute
   ApiPublicTramStationsRoute: typeof ApiPublicTramStationsRoute
   OcioCinesIdCarteleraRoute: typeof OcioCinesIdCarteleraRoute
 }
@@ -1531,6 +1544,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTramStationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/tram/plan': {
+      id: '/api/public/tram/plan'
+      path: '/api/public/tram/plan'
+      fullPath: '/api/public/tram/plan'
+      preLoaderRoute: typeof ApiPublicTramPlanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/tram/lines': {
       id: '/api/public/tram/lines'
       path: '/api/public/tram/lines'
@@ -1771,6 +1791,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicTramDeparturesRoute: ApiPublicTramDeparturesRoute,
   ApiPublicTramLineStopsRoute: ApiPublicTramLineStopsRoute,
   ApiPublicTramLinesRoute: ApiPublicTramLinesRoute,
+  ApiPublicTramPlanRoute: ApiPublicTramPlanRoute,
   ApiPublicTramStationsRoute: ApiPublicTramStationsRoute,
   OcioCinesIdCarteleraRoute: OcioCinesIdCarteleraRoute,
 }
