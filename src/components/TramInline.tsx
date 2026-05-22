@@ -354,9 +354,9 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
         {destination && !originConfirmed && (
           <OriginStep
             destination={destination}
-            suggested={origin}
             loading={loadingValid}
             validGroups={validGroups ?? []}
+            validStops={validStops}
             showPicker={showPicker}
             geoStatus={geo.status}
             onUseGeo={useGeolocationOrigin}
@@ -387,13 +387,13 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
 // ---------- Paso 2: confirmar origen ----------
 
 function OriginStep({
-  destination, suggested, loading, validGroups, showPicker, geoStatus,
+  destination, loading, validGroups, validStops, showPicker, geoStatus,
   onUseGeo, onConfirm, onOpenPicker, onClosePicker, onChangeDestination,
 }: {
   destination: Station;
-  suggested: Station | null;
   loading: boolean;
   validGroups: ValidGroup[];
+  validStops: Station[];
   showPicker: boolean;
   geoStatus: string;
   onUseGeo: () => void;
@@ -402,6 +402,15 @@ function OriginStep({
   onClosePicker: () => void;
   onChangeDestination: () => void;
 }) {
+  // Atajos rápidos = POPULAR filtrados a paradas válidas para este destino,
+  // excluyendo el propio destino.
+  const quickOrigins = useMemo(() => {
+    const validIds = new Set(validStops.map((s) => s.stop_id));
+    return POPULAR.filter(
+      (p) => validIds.has(p.stop_id) && p.stop_id !== destination.stop_id,
+    );
+  }, [validStops, destination.stop_id]);
+
   return (
     <div className="space-y-3 animate-fade-in">
       {/* Cabecera destino */}
@@ -440,24 +449,24 @@ function OriginStep({
           </div>
         ) : (
           <>
-            {/* Sugerencia */}
-            {suggested && (
-              <div className="mt-3 rounded-xl border border-primary/30 bg-primary/5 p-3">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                  {geoStatus === "ready" ? "Tu estación más cercana" : "Sugerencia"}
-                </p>
-                <p className="mt-0.5 text-base font-semibold">{suggested.stop_name}</p>
-                <button
-                  type="button"
-                  onClick={() => onConfirm(suggested)}
-                  className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground shadow transition active:scale-95"
-                >
-                  <Check className="h-4 w-4" /> Salir desde aquí
-                </button>
+            {/* Atajos rápidos de origen */}
+            {quickOrigins.length > 0 && (
+              <div className="mt-3 grid grid-cols-3 gap-1.5">
+                {quickOrigins.map((p) => (
+                  <button
+                    key={p.stop_id}
+                    type="button"
+                    onClick={() => onConfirm({ stop_id: p.stop_id, stop_name: p.stop_name })}
+                    className="flex min-w-0 items-center gap-1 rounded-full border border-border bg-background/80 px-2 py-1.5 text-[11px] font-medium shadow-sm transition hover:border-primary/40 hover:bg-accent/30 active:scale-95"
+                  >
+                    <span aria-hidden className="text-sm leading-none">{p.emoji}</span>
+                    <span className="truncate">{p.label}</span>
+                  </button>
+                ))}
               </div>
             )}
 
-            <div className="mt-2 flex flex-wrap gap-1.5">
+            <div className="mt-3 flex flex-wrap gap-1.5">
               {geoStatus !== "ready" && (
                 <button
                   type="button"
