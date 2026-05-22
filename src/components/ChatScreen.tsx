@@ -593,8 +593,34 @@ export function ChatScreen() {
       sendBeachGuide();
       return;
     }
-    const effectiveMode = opts?.mode !== undefined ? opts.mode : mode;
-    if (opts?.mode !== undefined) setMode(effectiveMode);
+    // ---- Contexto conversacional persistente (activeDomain sticky) ----
+    // Mientras exista un dominio activo (p.ej. TRANSPORTE/TRAM), las
+    // entidades geográficas (Benidorm, Madrid…) deben interpretarse dentro
+    // de ese dominio. Solo cambiamos de dominio si el usuario menciona
+    // explícitamente otra intención (comer, hotel, playa, etc.).
+    const TRANSIT_TRIGGER_RE = /\b(bus|autob[uú]s|tram|guagua|l[ií]nea\s*\d+|c[oó]mo\s+(?:voy|llego|ir)|qu[eé]\s+l[ií]nea|en\s+(?:bus|autob[uú]s|tram)|parada|transbordo|transporte\s+p[uú]blico|coger\s+(?:el\s+|la\s+)?(?:bus|tram|autob[uú]s|l[ií]nea))\b/i;
+    const SWITCH_DOMAIN_RE = /\b(comer|comida|restaurante|cenar|almorzar|desayun|brunch|tapa|hotel|alojam|dormir|hospedaj|playa|cala|turismo|visitar|monumento|museo|copa|cerveza|tomar\s+algo|cine|pel[ií]cula|teatro|farmacia|hospital|m[eé]dico|comprar|tienda|fiesta|concierto)\b/i;
+    const lastAssistant = [...messages].reverse().find((m) => m.role === "assistant");
+    const assistantAskedTransit = lastAssistant
+      ? /(parada|l[ií]nea|bus|tram|autob[uú]s|desde\s+d[oó]nde|a\s+d[oó]nde|destino|origen|transbordo)/i.test(lastAssistant.content)
+      : false;
+    let effectiveMode: "transit" | null;
+    if (opts?.mode !== undefined) {
+      effectiveMode = opts.mode === "transit" ? "transit" : null;
+    } else {
+      effectiveMode = mode;
+      if (TRANSIT_TRIGGER_RE.test(trimmed)) {
+        effectiveMode = "transit";
+      } else if (effectiveMode === "transit" && SWITCH_DOMAIN_RE.test(trimmed)) {
+        // El usuario cambia claramente de intención: cerramos el dominio transporte.
+        effectiveMode = null;
+      } else if (!effectiveMode && assistantAskedTransit) {
+        // El asistente venía pidiendo origen/destino/parada: heredamos transporte
+        // aunque el usuario solo mande una ciudad (p.ej. "Benidorm").
+        effectiveMode = "transit";
+      }
+    }
+    if (effectiveMode !== mode) setMode(effectiveMode);
     setError(null);
     const userMsg: Msg = { role: "user", content: trimmed };
     const next = [...messages, userMsg];
