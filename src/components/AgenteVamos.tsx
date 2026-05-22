@@ -1631,13 +1631,16 @@ function getReentryGreeting(): string {
   }
   const minsSince = lastTs ? Math.round((Date.now() - lastTs) / 60000) : Infinity;
 
+  const name = getLoggedUserName();
+  const nameSuffix = name ? `, ${name}` : "";
+
   // > 30 min: saluda según hora del día
   if (minsSince > 30) {
     return pickDistinct(
       [
-        `${partOfDay}, Leopoldo. Aquí sigo.`,
-        `${partOfDay}, Leopoldo. ¿Seguimos?`,
-        `Hola de nuevo, Leopoldo.`,
+        `${partOfDay}${nameSuffix}. Aquí sigo.`,
+        `${partOfDay}${nameSuffix}. ¿Seguimos?`,
+        `Hola de nuevo${nameSuffix}.`,
       ],
       VA_LAST_REENTRY_KEY,
     );
@@ -1649,7 +1652,7 @@ function getReentryGreeting(): string {
     return pickDistinct(
       [
         `Seguimos con lo de "${short}".`,
-        `Aquí sigo, Leopoldo.`,
+        `Aquí sigo${nameSuffix}.`,
         `Encontré más opciones sobre "${short}".`,
         `Hola de nuevo, ¿continuamos?`,
       ],
@@ -1660,7 +1663,7 @@ function getReentryGreeting(): string {
   // Reentrada genérica
   return pickDistinct(
     [
-      `Aquí sigo, Leopoldo.`,
+      `Aquí sigo${nameSuffix}.`,
       `Hola de nuevo.`,
       `¿En qué seguimos?`,
       `Sigo contigo.`,
