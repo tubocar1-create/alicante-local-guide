@@ -19,6 +19,24 @@ type Station = {
   stop_lat?: number;
   stop_lon?: number;
 };
+type PlanLeg2 = {
+  line_short_name: string | null;
+  line_color: string | null;
+  line_text_color: string | null;
+  headsign: string | null;
+  depart_time: string;
+  arrive_time: string;
+  duration_min: number;
+  stops_between: number;
+};
+type PlanTransfer = {
+  at_stop_id: string;
+  at_stop_name: string;
+  wait_min: number;
+  leg1_arrive_time: string;
+  leg2_depart_time: string;
+  leg2: PlanLeg2;
+};
 type PlanOption = {
   trip_id: string;
   route_id: string;
@@ -31,6 +49,7 @@ type PlanOption = {
   arrive_time: string;
   duration_min: number;
   stops_between: number;
+  transfer?: PlanTransfer | null;
 };
 type ValidGroup = {
   route_id: string;
