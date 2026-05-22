@@ -2653,10 +2653,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         // Si el resolver local activa un DOMINIO (pregunta aclaratoria sin
         // path), saltamos el servidor para no pisar la pregunta con una
         // navegación agresiva. Actualizamos el dominio activo y respondemos.
-        const isClarifying =
-          (fallback.pendingDomain != null && !fallback.path) ||
-          fallback.pendingDomain === "tram_origin_confirm";
-        if (isClarifying) {
+        const isClarifying = fallback.pendingDomain != null;
+        if (fallback.pendingDomain != null) {
           pendingDomainRef.current = fallback.pendingDomain ?? null;
           writeStoredActiveDomain(pendingDomainRef.current);
         } else if (fallback.pendingDomain === null) {
