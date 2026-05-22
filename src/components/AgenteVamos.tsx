@@ -1253,6 +1253,15 @@ function localResolve(
       pendingDomain: null,
     };
   }
+  if (TRAM_TRIGGER_RE.test(query) && !currentDomain) {
+    const tPick = DOMAINS.find((x) => x.id === "tram_pick");
+    return {
+      reply: tPick?.question ?? "¿Hacia qué estación del TRAM quieres ir?",
+      path: "/tram",
+      audio: "bus",
+      pendingDomain: "tram_pick",
+    };
+  }
 
   // 0.7) DICOTOMÍA DE CONTEXTO — frase con verbo de movimiento + otro
   //      dominio o entidad nombrada → repreguntamos en vez de adivinar.
