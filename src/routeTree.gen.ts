@@ -84,6 +84,7 @@ import { Route as ApiPublicTramPlanRouteImport } from './routes/api/public/tram/
 import { Route as ApiPublicTramLinesRouteImport } from './routes/api/public/tram/lines'
 import { Route as ApiPublicTramLineStopsRouteImport } from './routes/api/public/tram/line-stops'
 import { Route as ApiPublicTramDeparturesRouteImport } from './routes/api/public/tram/departures'
+import { Route as ApiPublicTramBusConnectionsRouteImport } from './routes/api/public/tram/bus-connections'
 import { Route as ApiPublicShopPhotoSplatRouteImport } from './routes/api/public/shop-photo.$'
 import { Route as ApiPublicHooksTramSyncRouteImport } from './routes/api/public/hooks/tram-sync'
 import { Route as ApiPublicHooksSyncHotelsStaticRouteImport } from './routes/api/public/hooks/sync-hotels-static'
@@ -469,6 +470,12 @@ const ApiPublicTramDeparturesRoute = ApiPublicTramDeparturesRouteImport.update({
   path: '/api/public/tram/departures',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicTramBusConnectionsRoute =
+  ApiPublicTramBusConnectionsRouteImport.update({
+    id: '/api/public/tram/bus-connections',
+    path: '/api/public/tram/bus-connections',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicShopPhotoSplatRoute = ApiPublicShopPhotoSplatRouteImport.update({
   id: '/api/public/shop-photo/$',
   path: '/api/public/shop-photo/$',
@@ -578,6 +585,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/sync-hotels-static': typeof ApiPublicHooksSyncHotelsStaticRoute
   '/api/public/hooks/tram-sync': typeof ApiPublicHooksTramSyncRoute
   '/api/public/shop-photo/$': typeof ApiPublicShopPhotoSplatRoute
+  '/api/public/tram/bus-connections': typeof ApiPublicTramBusConnectionsRoute
   '/api/public/tram/departures': typeof ApiPublicTramDeparturesRoute
   '/api/public/tram/line-stops': typeof ApiPublicTramLineStopsRoute
   '/api/public/tram/lines': typeof ApiPublicTramLinesRoute
@@ -660,6 +668,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/sync-hotels-static': typeof ApiPublicHooksSyncHotelsStaticRoute
   '/api/public/hooks/tram-sync': typeof ApiPublicHooksTramSyncRoute
   '/api/public/shop-photo/$': typeof ApiPublicShopPhotoSplatRoute
+  '/api/public/tram/bus-connections': typeof ApiPublicTramBusConnectionsRoute
   '/api/public/tram/departures': typeof ApiPublicTramDeparturesRoute
   '/api/public/tram/line-stops': typeof ApiPublicTramLineStopsRoute
   '/api/public/tram/lines': typeof ApiPublicTramLinesRoute
@@ -744,6 +753,7 @@ export interface FileRoutesById {
   '/api/public/hooks/sync-hotels-static': typeof ApiPublicHooksSyncHotelsStaticRoute
   '/api/public/hooks/tram-sync': typeof ApiPublicHooksTramSyncRoute
   '/api/public/shop-photo/$': typeof ApiPublicShopPhotoSplatRoute
+  '/api/public/tram/bus-connections': typeof ApiPublicTramBusConnectionsRoute
   '/api/public/tram/departures': typeof ApiPublicTramDeparturesRoute
   '/api/public/tram/line-stops': typeof ApiPublicTramLineStopsRoute
   '/api/public/tram/lines': typeof ApiPublicTramLinesRoute
@@ -829,6 +839,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/sync-hotels-static'
     | '/api/public/hooks/tram-sync'
     | '/api/public/shop-photo/$'
+    | '/api/public/tram/bus-connections'
     | '/api/public/tram/departures'
     | '/api/public/tram/line-stops'
     | '/api/public/tram/lines'
@@ -911,6 +922,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/sync-hotels-static'
     | '/api/public/hooks/tram-sync'
     | '/api/public/shop-photo/$'
+    | '/api/public/tram/bus-connections'
     | '/api/public/tram/departures'
     | '/api/public/tram/line-stops'
     | '/api/public/tram/lines'
@@ -994,6 +1006,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/sync-hotels-static'
     | '/api/public/hooks/tram-sync'
     | '/api/public/shop-photo/$'
+    | '/api/public/tram/bus-connections'
     | '/api/public/tram/departures'
     | '/api/public/tram/line-stops'
     | '/api/public/tram/lines'
@@ -1057,6 +1070,7 @@ export interface RootRouteChildren {
   ApiPublicHooksSyncHotelsStaticRoute: typeof ApiPublicHooksSyncHotelsStaticRoute
   ApiPublicHooksTramSyncRoute: typeof ApiPublicHooksTramSyncRoute
   ApiPublicShopPhotoSplatRoute: typeof ApiPublicShopPhotoSplatRoute
+  ApiPublicTramBusConnectionsRoute: typeof ApiPublicTramBusConnectionsRoute
   ApiPublicTramDeparturesRoute: typeof ApiPublicTramDeparturesRoute
   ApiPublicTramLineStopsRoute: typeof ApiPublicTramLineStopsRoute
   ApiPublicTramLinesRoute: typeof ApiPublicTramLinesRoute
@@ -1593,6 +1607,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTramDeparturesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/tram/bus-connections': {
+      id: '/api/public/tram/bus-connections'
+      path: '/api/public/tram/bus-connections'
+      fullPath: '/api/public/tram/bus-connections'
+      preLoaderRoute: typeof ApiPublicTramBusConnectionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/shop-photo/$': {
       id: '/api/public/shop-photo/$'
       path: '/api/public/shop-photo/$'
@@ -1809,6 +1830,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksSyncHotelsStaticRoute: ApiPublicHooksSyncHotelsStaticRoute,
   ApiPublicHooksTramSyncRoute: ApiPublicHooksTramSyncRoute,
   ApiPublicShopPhotoSplatRoute: ApiPublicShopPhotoSplatRoute,
+  ApiPublicTramBusConnectionsRoute: ApiPublicTramBusConnectionsRoute,
   ApiPublicTramDeparturesRoute: ApiPublicTramDeparturesRoute,
   ApiPublicTramLineStopsRoute: ApiPublicTramLineStopsRoute,
   ApiPublicTramLinesRoute: ApiPublicTramLinesRoute,
