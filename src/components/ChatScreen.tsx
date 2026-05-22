@@ -13,6 +13,7 @@ import ReferralDialog from "@/components/ReferralDialog";
 import { LiveEta } from "@/components/LiveEta";
 import { BusKnownPicker, type BusStopPick } from "@/components/BusKnownPicker";
 import { FlightPicker } from "@/components/FlightPicker";
+import { TramInline } from "@/components/TramInline";
 import { useAuth } from "@/hooks/useAuth";
 import { findPlaceOverride } from "@/data/places";
 import { resolveOpeningStatus, getTodayClosingTime, getTodayOpeningTime } from "@/lib/opening-hours";
@@ -79,7 +80,7 @@ type Suggestion = {
   label: string;
   prompt?: string;
   submenu?: Suggestion[];
-  action?: "bus-picker" | "flight-picker";
+  action?: "bus-picker" | "flight-picker" | "tram-inline";
   href?: string;
 };
 const BEACH_GUIDE_PROMPT = "Quiero una guía visual de las playas alrededor de Alicante, con mapa por zonas y muchas fotos reales.";
@@ -164,7 +165,7 @@ const SUGGESTIONS: Suggestion[] = [
     submenu: [
       { label: "🚌 Buses urbanos", action: "bus-picker" },
       { label: "🚍 Buses extra urbanos", prompt: "¿Cómo me muevo en bus extraurbano desde Alicante? Líneas, compañías (ALSA, Vectalia…), estación de autobuses y destinos principales (Elche, Benidorm, Murcia, Valencia, pueblos del interior)." },
-      { label: "🚊 Tram", prompt: "¿Cómo uso el TRAM de Alicante? Líneas, paradas principales y conexiones con la playa." },
+      { label: "🚊 Tram", action: "tram-inline" },
       { label: "🚆 Tren", prompt: "¿Cómo me muevo en tren por Alicante y alrededores? Horarios, estaciones de Cercanías y Renfe." },
       {
         label: "✈️ Avión",
@@ -236,6 +237,7 @@ export function ChatScreen() {
   const [showBusPicker, setShowBusPicker] = useState(false);
   const [busPickerLine, setBusPickerLine] = useState<string | null>(null);
   const [showFlightPicker, setShowFlightPicker] = useState(false);
+  const [showTramInline, setShowTramInline] = useState(false);
   const [composerMode, setComposerMode] = useState<"voice" | "text">("voice");
   const lastFoodSummaryRef = useRef<string | null>(null);
 
@@ -976,7 +978,11 @@ export function ChatScreen() {
                   <button
                     key={opt.label}
                     onClick={() => {
-                      if (opt.submenu) {
+                      // Si elegimos otro transporte distinto al TRAM, ocultar panel TRAM.
+                      if (opt.action !== "tram-inline") setShowTramInline(false);
+                      if (opt.action === "tram-inline") {
+                        setShowTramInline((v) => !v);
+                      } else if (opt.submenu) {
                         setSubmenuStack((stack) => [...stack, opt]);
                       } else if (opt.action === "bus-picker") {
                         setSubmenuStack([]);
@@ -998,7 +1004,11 @@ export function ChatScreen() {
                         isBeachGuide ? sendBeachGuide() : send(opt.prompt, { mode: null });
                       }
                     }}
-                    className="flex w-full items-center gap-1.5 rounded-lg border border-border bg-background/80 px-2 py-1.5 text-left text-[12px] shadow-sm transition hover:bg-accent/40"
+                    className={`flex w-full items-center gap-1.5 rounded-lg border px-2 py-1.5 text-left text-[12px] shadow-sm transition hover:bg-accent/40 ${
+                      opt.action === "tram-inline" && showTramInline
+                        ? "border-primary bg-primary/10"
+                        : "border-border bg-background/80"
+                    }`}
                   >
                     {(() => {
                       const m = opt.label.match(/^(\p{Extended_Pictographic}(?:\u200d\p{Extended_Pictographic})*\uFE0F?)\s*(.*)$/u);
@@ -1018,6 +1028,7 @@ export function ChatScreen() {
                   </button>
                 ))}
               </div>
+              {showTramInline && activeSubmenu.label.includes("Transporte") && <TramInline />}
             </div>
           )}
         </div>
