@@ -1911,7 +1911,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     if (TRAM_STOPS_CACHE.length) return;
     fetch("/api/public/tram/stations")
       .then((r) => r.json())
-      .then((d) => setTramStopsCache((d?.stations ?? []) as Array<{ stop_id: string; stop_name: string }>))
+      .then((d) => setTramStopsCache((d?.stations ?? []) as Array<{ stop_id: string; stop_name: string; stop_lat?: number; stop_lon?: number }>))
       .catch(() => {});
   }, []);
 
