@@ -1305,6 +1305,14 @@ function localResolve(
             pendingDomain: "tram_pick",
           };
         }
+        if (fuPath === "action:tram-quick-destinations") {
+          return {
+            reply: "Sin problema. Echa un vistazo a los botones de destino rápido (Playa, MARQ, Luceros, Hospital…) en la pantalla del TRAM y elige el que te encaje.",
+            path: "/tram",
+            audio: "bus",
+            pendingDomain: "tram_pick",
+          };
+        }
         const intent = INTENTS.find((it) => it.path === fuPath);
         return {
           reply: intent?.reply ?? "Te llevo allí.",
