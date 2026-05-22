@@ -1,5 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
 import { checkIsAdmin } from "@/lib/admin.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -197,7 +199,17 @@ const LEARNING_PIPELINE = [
 
 function AdminSystemPage() {
   const check = useServerFn(checkIsAdmin);
+  const navigate = useNavigate();
   const [state, setState] = useState<"checking" | "ok" | "denied">("checking");
+
+  const handleClose = () => {
+    // Intenta cerrar la pestaña si fue abierta por el chat; si no, vuelve al home.
+    if (typeof window !== "undefined" && window.opener) {
+      window.close();
+      return;
+    }
+    navigate({ to: "/" });
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -231,6 +243,15 @@ function AdminSystemPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <Button
+        onClick={handleClose}
+        variant="outline"
+        size="sm"
+        className="fixed top-4 right-4 z-50 gap-2 shadow-md"
+      >
+        <X className="h-4 w-4" />
+        Cerrar
+      </Button>
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
         <header className="space-y-2">
           <Badge variant="outline" className="text-xs">Solo administrador · noindex</Badge>
@@ -240,6 +261,7 @@ function AdminSystemPage() {
             programados. Mantén este catálogo sincronizado con las migraciones reales.
           </p>
         </header>
+
 
         <Section title="Dominios del agente (12 oficiales)">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
