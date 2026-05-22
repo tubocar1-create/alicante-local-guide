@@ -11,11 +11,13 @@ export const Route = createFileRoute("/api/public/tram/stations")({
         const stopId = url.searchParams.get("stop_id")?.trim();
 
         // Lookup directo por id (útil para páginas de parada).
+        const mapRow = (s: any) => ({ stop_id: s.stop_id, stop_name: s.stop_name, stop_lat: s.lat, stop_lon: s.lng });
+
         if (stopId) {
           const { data, error } = await supabaseAdmin
-            .from("tram_stops").select("*").eq("stop_id", stopId).maybeSingle();
+            .from("tram_stops").select("stop_id, stop_name, lat, lng").eq("stop_id", stopId).maybeSingle();
           if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 });
-          return Response.json({ stations: data ? [data] : [] });
+          return Response.json({ stations: data ? [mapRow(data)] : [] });
         }
 
         // Si filtra por línea, devolvemos estaciones únicas usadas por esa línea.
@@ -28,10 +30,11 @@ export const Route = createFileRoute("/api/public/tram/stations")({
             .from("tram_stop_times").select("stop_id").in("trip_id", tripIds).limit(10000);
           const ids = Array.from(new Set(((st ?? []) as Array<{ stop_id: string }>).map((r) => r.stop_id)));
           const { data: stops, error } = await supabaseAdmin
-            .from("tram_stops").select("*").in("stop_id", ids).order("stop_name");
+            .from("tram_stops").select("stop_id, stop_name, lat, lng").in("stop_id", ids).order("stop_name");
           if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 });
-          return Response.json({ stations: stops });
+          return Response.json({ stations: (stops ?? []).map(mapRow) });
         }
+
 
         let query = supabaseAdmin.from("tram_stops").select("stop_id, stop_name, lat, lng").order("stop_name").limit(500);
         if (q) query = query.ilike("stop_name", `%${q}%`);
