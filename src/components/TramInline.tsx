@@ -354,9 +354,9 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
         {destination && !originConfirmed && (
           <OriginStep
             destination={destination}
-            suggested={origin}
             loading={loadingValid}
             validGroups={validGroups ?? []}
+            validStops={validStops}
             showPicker={showPicker}
             geoStatus={geo.status}
             onUseGeo={useGeolocationOrigin}
