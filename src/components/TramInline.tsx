@@ -213,6 +213,18 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
     return Array.from(map.values());
   }, [validGroups]);
 
+  // Si la URL trae tram_origin, aplicarlo cuando estén los validStops listos.
+  useEffect(() => {
+    if (!pendingOriginId || !destination || !validStops.length) return;
+    const match = validStops.find((s) => s.stop_id === pendingOriginId);
+    if (match) {
+      setOrigin(match);
+      setOriginConfirmed(true);
+    }
+    setPendingOriginId(null);
+  }, [pendingOriginId, destination, validStops]);
+
+
   // Sugerir origen automáticamente cuando hay validGroups
   useEffect(() => {
     if (!destination || origin || !validGroups) return;
