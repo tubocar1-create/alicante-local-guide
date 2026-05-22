@@ -1280,16 +1280,10 @@ function localResolve(
             pendingDomain: "tram_pick",
           };
         }
-        if (fuPath === "action:tram-pick-origin") {
-          return {
-            reply: "Vale, dime desde qué estación del TRAM sales (por ejemplo: «desde Mercado»).",
-            audio: "bus",
-            pendingDomain: "tram_origin_confirm",
-          };
-        }
+        if (fuPath === "action:tram-pick") {
           const tPick = DOMAINS.find((x) => x.id === "tram_pick");
           return {
-            reply: tPick?.question ?? "¿A qué estación del TRAM quieres ir y desde dónde sales?",
+            reply: tPick?.question ?? "¿A qué estación del TRAM quieres ir?",
             path: "/tram",
             audio: "bus",
             pendingDomain: "tram_pick",
