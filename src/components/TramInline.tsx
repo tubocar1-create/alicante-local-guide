@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import {
   Search, MapPin, Navigation, Star, ArrowRight,
   ChevronDown, ChevronUp, Map as MapIcon, X, Locate, Check,
