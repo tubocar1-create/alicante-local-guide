@@ -19,7 +19,7 @@ import { useEffect } from "react";
 import appCss from "../styles.css?url";
 import "@/integrations/supabase/server-fn-fetch";
 
-const PUBLIC_ROUTES = ["/login", "/magic", "/welcome", "/playas", "/playas/mapa"];
+const PUBLIC_ROUTES = ["/login", "/magic", "/welcome", "/playas", "/playas/mapa", "/admin"];
 const WELCOMED_KEY = "vamos-welcomed-v1";
 
 // Stable per server/worker boot — changes on every deploy. Used by
