@@ -22,6 +22,7 @@ export const Route = createFileRoute("/api/public/tram/valid-origins")({
           .eq("stop_id", destination)
           .limit(3000);
         const destTimes = (destTimesRaw ?? []) as Array<{ trip_id: string; stop_sequence: number }>;
+        console.log("[valid-origins] dest", destination, "destTimes:", destTimes.length);
         if (!destTimes.length) return Response.json({ groups: [] });
 
         const destSeqByTrip = new Map(destTimes.map((r) => [r.trip_id, r.stop_sequence]));
