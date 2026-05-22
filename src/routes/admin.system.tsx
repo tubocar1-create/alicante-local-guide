@@ -243,6 +243,15 @@ function AdminSystemPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <Button
+        onClick={handleClose}
+        variant="outline"
+        size="sm"
+        className="fixed top-4 right-4 z-50 gap-2 shadow-md"
+      >
+        <X className="h-4 w-4" />
+        Cerrar
+      </Button>
       <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
         <header className="space-y-2">
           <Badge variant="outline" className="text-xs">Solo administrador · noindex</Badge>
@@ -252,6 +261,7 @@ function AdminSystemPage() {
             programados. Mantén este catálogo sincronizado con las migraciones reales.
           </p>
         </header>
+
 
         <Section title="Dominios del agente (12 oficiales)">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
