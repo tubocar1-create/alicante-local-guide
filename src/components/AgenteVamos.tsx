@@ -961,6 +961,14 @@ function localResolve(
             pendingDomain: "bus_known",
           };
         }
+        if (fuPath === "action:transporte-bus") {
+          const tBus = DOMAINS.find((x) => x.id === "transporte_bus");
+          return {
+            reply: tBus?.question ?? "¿Ya sabes qué bus tomar?",
+            audio: "bus",
+            pendingDomain: "transporte_bus",
+          };
+        }
         const intent = INTENTS.find((it) => it.path === fuPath);
         return {
           reply: intent?.reply ?? "Te llevo allí.",
