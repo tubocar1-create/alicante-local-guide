@@ -253,7 +253,7 @@ type DomainSpec = {
   question: string;
   audio: VoiceClip;
   hubPath?: string;
-  followups: { keys: string[]; path: string }[];
+  followups: { keys: string[]; path: string; label?: string }[];
 };
 
 const DOMAINS: DomainSpec[] = [
@@ -552,23 +552,34 @@ const DOMAINS: DomainSpec[] = [
     hubPath: "/comprar",
     triggers: [
       "quiero comprar", "ir de compras", "necesito comprar", "tengo que comprar",
-      "comprar", "compras", "tiendas", "tienda", "comercio", "comercios",
-      "centro comercial", "centros comerciales", "shopping",
+      "comprar", "compras", "compra", "tiendas", "tienda", "comercio", "comercios",
+      "centro comercial", "centros comerciales", "shopping", "shoppear",
+      "adquirir", "quiero adquirir", "necesito adquirir",
       "boutique", "boutiques", "mercado", "mercadillo",
       "donde comprar", "dónde comprar",
-      "ropa", "calzado", "zapatos", "zapatillas", "sneakers",
-      "regalo", "regalos", "souvenir", "souvenirs", "recuerdo",
-      "joyeria", "joyería", "perfumeria", "perfumería",
-      "supermercado", "supermercados", "ferreteria", "ferretería",
-      "libreria", "librería",
     ],
-    question: "🛍️ ¿Qué quieres comprar? Dime ropa, regalos, supermercado o explora por sector.",
+    question: "🛍️ Te abro los sectores de compras y servicios. ¿Qué artículo o servicio deseas adquirir?",
     audio: "fallback",
     followups: [
-      { keys: ["ropa", "moda", "boutique", "calzado", "zapatos"], path: "/comprar" },
-      { keys: ["regalo", "regalos", "souvenir", "recuerdo"], path: "/comprar" },
-      { keys: ["supermercado", "alimentacion", "alimentación"], path: "/comprar" },
-      { keys: ["explorar", "todo", "todas las tiendas", "ver tiendas"], path: "/comprar" },
+      { keys: ["ropa", "moda", "boutique", "calzado", "zapatos", "zapatillas", "sneakers", "vestido", "camisa"], path: "/comprar/sector/moda", label: "Moda" },
+      { keys: ["regalo", "regalos", "souvenir", "souvenirs", "recuerdo"], path: "/comprar/sector/regalos", label: "Regalos" },
+      { keys: ["supermercado", "supermercados", "alimentacion", "alimentación", "comida para casa"], path: "/comprar/sector/supermercados", label: "Supermercados" },
+      { keys: ["tecnologia", "tecnología", "movil", "móvil", "ordenador", "portatil", "portátil", "informatica", "informática", "electronica", "electrónica"], path: "/comprar/sector/tecnologia", label: "Tecnología" },
+      { keys: ["hogar", "muebles", "decoracion", "decoración", "menaje", "cocina para casa"], path: "/comprar/sector/hogar", label: "Hogar" },
+      { keys: ["mascota", "mascotas", "perro", "gato", "veterinario producto"], path: "/comprar/sector/mascotas", label: "Mascotas" },
+      { keys: ["belleza", "peluqueria", "peluquería", "estetica", "estética", "cosmetica", "cosmética", "perfume", "perfumeria", "perfumería"], path: "/comprar/sector/belleza", label: "Belleza y cuidado personal" },
+      { keys: ["deporte", "deportes", "deportiva", "gimnasio producto", "running"], path: "/comprar/sector/deporte", label: "Deporte" },
+      { keys: ["papeleria", "papelería", "libreria", "librería", "libro", "libros", "cultura"], path: "/comprar/sector/papeleria-cultura", label: "Papelería y cultura" },
+      { keys: ["automocion", "automoción", "coche", "taller", "neumatico", "neumático"], path: "/comprar/sector/automocion", label: "Automoción" },
+      { keys: ["movilidad", "patinete", "bici", "bicicleta", "scooter"], path: "/comprar/sector/movilidad", label: "Movilidad y traslados" },
+      { keys: ["foto", "fotografia", "fotografía", "imagen", "camara", "cámara"], path: "/comprar/sector/fotografia-imagen", label: "Fotografía e imagen" },
+      { keys: ["formacion", "formación", "academia", "curso", "clases"], path: "/comprar/sector/formacion", label: "Formación" },
+      { keys: ["asesoria", "asesoría", "legal", "abogado", "gestoria", "gestoría"], path: "/comprar/sector/asesoria-legal", label: "Asesoría y legal" },
+      { keys: ["coworking", "espacio de trabajo", "oficina alquiler"], path: "/comprar/sector/espacios-trabajo", label: "Espacios de trabajo" },
+      { keys: ["juego", "apuestas", "loteria", "lotería", "casino"], path: "/comprar/sector/juego-apuestas", label: "Juego y apuestas" },
+      { keys: ["servicios rapidos", "servicios rápidos", "copisteria", "copistería", "tintoreria", "tintorería", "cerrajero"], path: "/comprar/sector/servicios-rapidos", label: "Servicios rápidos" },
+      { keys: ["otros servicios", "otro servicio"], path: "/comprar/sector/otros-servicios", label: "Otros servicios" },
+      { keys: ["explorar", "todo", "todas las tiendas", "ver tiendas", "ver sectores"], path: "/comprar", label: "todos los sectores" },
     ],
   },
   {
@@ -815,19 +826,19 @@ function detectAmbiguity(query: string): LocalResult | null {
   };
 }
 
-function matchFollowup(query: string, domain: DomainSpec): string | null {
-  let bestPath: string | null = null;
+function matchFollowup(query: string, domain: DomainSpec): { path: string; label?: string } | null {
+  let best: { path: string; label?: string } | null = null;
   let bestLen = 0;
   for (const f of domain.followups) {
     for (const k of f.keys) {
       const n = normalizeSpeech(k);
       if (n && query.includes(n) && n.length > bestLen) {
-        bestPath = f.path;
+        best = { path: f.path, label: f.label };
         bestLen = n.length;
       }
     }
   }
-  return bestPath;
+  return best;
 }
 
 // ─── DB Intents (agente_intents) ──────────────────────────────────────
@@ -1312,8 +1323,9 @@ function localResolve(
       };
     }
     if (d) {
-      const fuPath = matchFollowup(query, d);
-      if (fuPath) {
+      const fuMatch = matchFollowup(query, d);
+      if (fuMatch) {
+        const fuPath = fuMatch.path;
         // Sentinel especial: el usuario dice "sí, conozco mi bus" estando
         // en el dominio "transporte". En vez de navegar, activamos el
         // subdominio "bus_known" y preguntamos la línea, sin abrir picker.
@@ -1388,8 +1400,11 @@ function localResolve(
           };
         }
         const intent = INTENTS.find((it) => it.path === fuPath);
+        const reply = fuMatch.label
+          ? `Te puedo dirigir a ${fuMatch.label}.`
+          : (intent?.reply ?? "Te llevo allí.");
         return {
-          reply: intent?.reply ?? "Te llevo allí.",
+          reply,
           path: fuPath,
           audio: intent?.audio ?? d.audio,
           pendingDomain: null,
