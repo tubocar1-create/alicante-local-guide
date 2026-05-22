@@ -32,6 +32,7 @@ import { Route as ComprarRouteImport } from './routes/comprar'
 import { Route as ClimaRouteImport } from './routes/clima'
 import { Route as BusinessRouteImport } from './routes/business'
 import { Route as BusRouteImport } from './routes/bus'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BusinessIndexRouteImport } from './routes/business.index'
 import { Route as VuelosIataRouteImport } from './routes/vuelos_.$iata'
@@ -211,6 +212,11 @@ const BusRoute = BusRouteImport.update({
   path: '/bus',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -347,19 +353,19 @@ const BusPlannerRoute = BusPlannerRouteImport.update({
   getParentRoute: () => BusRoute,
 } as any)
 const AdminSystemRoute = AdminSystemRouteImport.update({
-  id: '/admin/system',
-  path: '/admin/system',
-  getParentRoute: () => rootRouteImport,
+  id: '/system',
+  path: '/system',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminSaludRoute = AdminSaludRouteImport.update({
-  id: '/admin/salud',
-  path: '/admin/salud',
-  getParentRoute: () => rootRouteImport,
+  id: '/salud',
+  path: '/salud',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminPlacesRoute = AdminPlacesRouteImport.update({
-  id: '/admin/places',
-  path: '/admin/places',
-  getParentRoute: () => rootRouteImport,
+  id: '/places',
+  path: '/places',
+  getParentRoute: () => AdminRoute,
 } as any)
 const TramParadaStopIdRoute = TramParadaStopIdRouteImport.update({
   id: '/parada/$stopId',
@@ -538,6 +544,7 @@ const ApiPublicHooksAenaSyncRoute = ApiPublicHooksAenaSyncRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/bus': typeof BusRouteWithChildren
   '/business': typeof BusinessRouteWithChildren
   '/clima': typeof ClimaRoute
@@ -626,6 +633,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/bus': typeof BusRouteWithChildren
   '/clima': typeof ClimaRoute
   '/comprar': typeof ComprarRoute
@@ -714,6 +722,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/bus': typeof BusRouteWithChildren
   '/business': typeof BusinessRouteWithChildren
   '/clima': typeof ClimaRoute
@@ -804,6 +813,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/bus'
     | '/business'
     | '/clima'
@@ -892,6 +902,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/bus'
     | '/clima'
     | '/comprar'
@@ -979,6 +990,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/bus'
     | '/business'
     | '/clima'
@@ -1068,6 +1080,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   BusRoute: typeof BusRouteWithChildren
   BusinessRoute: typeof BusinessRouteWithChildren
   ClimaRoute: typeof ClimaRoute
@@ -1091,9 +1104,6 @@ export interface RootRouteChildren {
   VocesRoute: typeof VocesRoute
   VuelosRoute: typeof VuelosRoute
   WelcomeRoute: typeof WelcomeRoute
-  AdminPlacesRoute: typeof AdminPlacesRoute
-  AdminSaludRoute: typeof AdminSaludRoute
-  AdminSystemRoute: typeof AdminSystemRoute
   ComprarSubsectorRoute: typeof ComprarSubsectorRoute
   HospitalesIdRoute: typeof HospitalesIdRoute
   HotelIdRoute: typeof HotelIdRoute
@@ -1296,6 +1306,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BusRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -1487,24 +1504,24 @@ declare module '@tanstack/react-router' {
     }
     '/admin/system': {
       id: '/admin/system'
-      path: '/admin/system'
+      path: '/system'
       fullPath: '/admin/system'
       preLoaderRoute: typeof AdminSystemRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/admin/salud': {
       id: '/admin/salud'
-      path: '/admin/salud'
+      path: '/salud'
       fullPath: '/admin/salud'
       preLoaderRoute: typeof AdminSaludRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/admin/places': {
       id: '/admin/places'
-      path: '/admin/places'
+      path: '/places'
       fullPath: '/admin/places'
       preLoaderRoute: typeof AdminPlacesRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/tram/parada/$stopId': {
       id: '/tram/parada/$stopId'
@@ -1740,6 +1757,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminRouteChildren {
+  AdminPlacesRoute: typeof AdminPlacesRoute
+  AdminSaludRoute: typeof AdminSaludRoute
+  AdminSystemRoute: typeof AdminSystemRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminPlacesRoute: AdminPlacesRoute,
+  AdminSaludRoute: AdminSaludRoute,
+  AdminSystemRoute: AdminSystemRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 interface BusRouteChildren {
   BusPlannerRoute: typeof BusPlannerRoute
   BusDashboardCodeRoute: typeof BusDashboardCodeRoute
@@ -1860,6 +1891,7 @@ const SaludCategoriaRouteWithChildren = SaludCategoriaRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   BusRoute: BusRouteWithChildren,
   BusinessRoute: BusinessRouteWithChildren,
   ClimaRoute: ClimaRoute,
@@ -1883,9 +1915,6 @@ const rootRouteChildren: RootRouteChildren = {
   VocesRoute: VocesRoute,
   VuelosRoute: VuelosRoute,
   WelcomeRoute: WelcomeRoute,
-  AdminPlacesRoute: AdminPlacesRoute,
-  AdminSaludRoute: AdminSaludRoute,
-  AdminSystemRoute: AdminSystemRoute,
   ComprarSubsectorRoute: ComprarSubsectorRoute,
   HospitalesIdRoute: HospitalesIdRoute,
   HotelIdRoute: HotelIdRoute,
