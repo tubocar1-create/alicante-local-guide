@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { Search, MapPin, Train, Map as MapIcon, Star, History, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
 
 type Line = {
