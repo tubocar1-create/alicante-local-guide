@@ -459,7 +459,7 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
 // ---------- Paso 2: confirmar origen ----------
 
 function OriginStep({
-  destination, loading, validGroups, validStops, showPicker, geoStatus,
+  destination, loading, validGroups, validStops, showPicker, geoStatus, geoError,
   onUseGeo, onConfirm, onOpenPicker, onClosePicker, onChangeDestination,
 }: {
   destination: Station;
@@ -468,6 +468,7 @@ function OriginStep({
   validStops: Station[];
   showPicker: boolean;
   geoStatus: string;
+  geoError: string | null;
   onUseGeo: () => void;
   onConfirm: (s: Station) => void;
   onOpenPicker: () => void;
