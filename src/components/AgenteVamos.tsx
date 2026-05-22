@@ -764,6 +764,15 @@ function matchDomain(query: string): { domain: DomainSpec; len: number } | null 
   return best ? { domain: best, len: bestLen } : null;
 }
 
+function domainFromPath(pathname: string): string | null {
+  const cleanPath = pathname.split("?")[0];
+  const domain = DOMAINS.find((d) => {
+    if (!d.hubPath || d.hubPath === "/" || d.hubPath.startsWith("action:")) return false;
+    return cleanPath === d.hubPath || cleanPath.startsWith(`${d.hubPath}/`);
+  });
+  return domain?.id ?? null;
+}
+
 // ─── DETECCIÓN DE DICOTOMÍA DE CONTEXTO ───────────────────────────────
 // Cuando la frase del usuario mezcla un verbo de movimiento ("ir a",
 // "voy a", "llévame"...) con otro dominio (comer/playas/dormir/...) o
@@ -2449,8 +2458,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             window.sessionStorage.removeItem("afp:openSubmenu");
           } catch {}
         }
-        const priorDomain = pendingDomainRef.current;
-        const fallback = localResolve(clean, pendingDomainRef.current, routingCatalogRef.current);
+        const routeDomain = domainFromPath(path);
+        const activeDomain = pendingDomainRef.current ?? routeDomain;
+        const priorDomain = activeDomain;
+        const fallback = localResolve(clean, activeDomain, routingCatalogRef.current);
         const replyMode = pickAssistantMode(fallback.pendingDomain ?? pendingDomainRef.current ?? null);
         let reply = formatReply(replyMode, fallback.reply);
         let target: string | undefined = fallback.path;
