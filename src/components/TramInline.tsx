@@ -512,6 +512,36 @@ function OriginStep({
           </div>
         ) : (
           <>
+            {/* Sugerencia automática por geolocalización */}
+            {nearestSuggestion && (
+              <div className="mt-3 rounded-2xl border-2 border-primary/40 bg-gradient-to-br from-primary/10 to-accent/10 p-3 shadow-sm animate-fade-in">
+                <p className="text-xs leading-snug">
+                  Tu parada más cercana es{" "}
+                  <span className="font-semibold">{nearestSuggestion.stop.stop_name}</span>, a{" "}
+                  <span className="font-semibold">{nearestSuggestion.meters} m</span>.
+                </p>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  ¿Quieres ir desde allí o prefieres seleccionar otra parada?
+                </p>
+                <div className="mt-2.5 flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => onConfirm(nearestSuggestion.stop)}
+                    className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground shadow-sm hover:opacity-90 active:scale-95"
+                  >
+                    <Check className="h-3.5 w-3.5" /> Salir desde aquí
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onOpenPicker}
+                    className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border bg-background px-3 py-2 text-xs font-medium hover:bg-accent/40 active:scale-95"
+                  >
+                    <Navigation className="h-3.5 w-3.5 text-primary" /> Elegir otra parada
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Atajos rápidos de origen */}
             {quickOrigins.length > 0 && (
               <div className="mt-3 grid grid-cols-3 gap-1.5">
