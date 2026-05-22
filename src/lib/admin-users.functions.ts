@@ -27,6 +27,16 @@ export const listAdminUsers = createServerFn({ method: "POST" })
       throw new Response("Forbidden", { status: 403 });
     }
 
+    // Auto-sync: import any test_users not yet in auth.users so the admin
+    // list always reflects every registered person, not just those who
+    // signed up through the public auth flow.
+    try {
+      await syncTestUsersToAuth();
+    } catch (e) {
+      console.error("[admin-users] auto-sync failed:", e);
+    }
+
+
     // Paginate auth.users
     const all: Array<{
       id: string;
