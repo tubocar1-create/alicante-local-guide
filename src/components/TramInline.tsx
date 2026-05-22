@@ -439,7 +439,7 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
 // ---------- Paso 2: confirmar origen ----------
 
 function OriginStep({
-  destination, loading, validGroups, validStops, showPicker, geoStatus, geoError,
+  destination, loading, validGroups, validStops, showPicker, geoStatus, geoCoords, geoError,
   onUseGeo, onConfirm, onOpenPicker, onClosePicker, onChangeDestination,
 }: {
   destination: Station;
@@ -448,6 +448,7 @@ function OriginStep({
   validStops: Station[];
   showPicker: boolean;
   geoStatus: string;
+  geoCoords: Coords | null;
   geoError: string | null;
   onUseGeo: () => void;
   onConfirm: (s: Station) => void;
@@ -455,6 +456,15 @@ function OriginStep({
   onClosePicker: () => void;
   onChangeDestination: () => void;
 }) {
+  // Sugerencia más cercana (si hay geo): parada + distancia en metros.
+  const nearestSuggestion = useMemo(() => {
+    if (!geoCoords || !validStops.length) return null;
+    const near = nearestFromList(geoCoords, validStops);
+    if (!near || near.stop_lat == null || near.stop_lon == null) return null;
+    const km = distanceKm(geoCoords, { lat: near.stop_lat, lng: near.stop_lon });
+    return { stop: near, meters: Math.round(km * 1000) };
+  }, [geoCoords, validStops]);
+
   // Atajos rápidos = POPULAR filtrados a paradas válidas para este destino,
   // excluyendo el propio destino.
   const quickOrigins = useMemo(() => {
