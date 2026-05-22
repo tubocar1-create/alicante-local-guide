@@ -240,7 +240,7 @@ function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
+    <div className="h-[100dvh] overflow-y-auto bg-background p-4 md:p-8">
       <div className="mx-auto max-w-6xl space-y-6">
         <header className="flex flex-wrap items-center justify-between gap-3">
           <div>
