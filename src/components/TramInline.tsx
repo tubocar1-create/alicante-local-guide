@@ -156,7 +156,11 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
   ];
 
   return (
-    <div className="mt-2 flex max-h-[70vh] animate-fade-in flex-col overflow-hidden rounded-2xl border border-border bg-card/95 shadow-sm backdrop-blur">
+    <div
+      className={`flex animate-fade-in flex-col overflow-hidden rounded-2xl border border-border bg-card/95 shadow-sm backdrop-blur ${
+        embedded ? "" : "mt-2 max-h-[70vh]"
+      }`}
+    >
       {/* Header */}
       <div className="flex flex-none items-center gap-2 border-b border-border/60 bg-gradient-to-r from-primary/10 via-accent/10 to-transparent px-3 py-2.5">
         <span className="text-base" aria-hidden>🚋</span>
@@ -164,7 +168,7 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
         <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground">FGV</span>
       </div>
 
-      <div className="flex-1 space-y-3 overflow-y-auto overscroll-contain p-3">
+      <div className={`space-y-3 p-3 ${embedded ? "" : "flex-1 overflow-y-auto overscroll-contain"}`}>
         {/* Buscador */}
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
