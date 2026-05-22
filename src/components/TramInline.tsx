@@ -731,14 +731,63 @@ function TripPlanCard({
               </div>
             </div>
 
-            <div className="mt-3 flex items-start gap-2 rounded-xl bg-accent/20 p-2.5">
-              <MapPin className="mt-0.5 h-4 w-4 flex-none text-primary" />
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Bájate en</p>
-                <p className="truncate text-sm font-semibold">{destination.stop_name}</p>
-                <p className="text-[11px] text-muted-foreground">{best.stops_between} {best.stops_between === 1 ? "parada" : "paradas"} desde el origen</p>
+            {best.transfer ? (
+              <div className="mt-3 space-y-2">
+                {/* Leg 1 hasta Luceros */}
+                <div className="flex items-start gap-2 rounded-xl bg-accent/20 p-2.5">
+                  <MapPin className="mt-0.5 h-4 w-4 flex-none text-primary" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Bájate en</p>
+                    <p className="truncate text-sm font-semibold">{best.transfer.at_stop_name}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Llega {best.transfer.leg1_arrive_time} · {best.stops_between - best.transfer.leg2.stops_between} {(best.stops_between - best.transfer.leg2.stops_between) === 1 ? "parada" : "paradas"}
+                    </p>
+                  </div>
+                </div>
+                {/* Transbordo */}
+                <div className="flex items-center gap-2 rounded-xl border border-dashed border-primary/40 bg-primary/5 px-3 py-2">
+                  <span className="text-base" aria-hidden>🔁</span>
+                  <div className="min-w-0 flex-1 text-[11px]">
+                    <p className="font-semibold">Transbordo en {best.transfer.at_stop_name.replace("Alicante - ", "")}</p>
+                    <p className="text-muted-foreground">Espera {best.transfer.wait_min} min · sale {best.transfer.leg2_depart_time}</p>
+                  </div>
+                </div>
+                {/* Leg 2 */}
+                <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/70 px-3 py-2">
+                  <span
+                    className="inline-flex h-8 min-w-[2.5rem] items-center justify-center rounded-lg px-1.5 text-sm font-extrabold text-white shadow"
+                    style={{ background: ensureHash(best.transfer.leg2.line_color) ?? "var(--primary)" }}
+                  >
+                    {best.transfer.leg2.line_short_name ?? "TRAM"}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Toma hacia</p>
+                    <p className="truncate text-xs font-semibold">Dirección {best.transfer.leg2.headsign}</p>
+                  </div>
+                  <div className="text-right text-[11px] text-muted-foreground">
+                    {best.transfer.leg2.duration_min} min
+                  </div>
+                </div>
+                {/* Llegada final */}
+                <div className="flex items-start gap-2 rounded-xl bg-accent/20 p-2.5">
+                  <MapPin className="mt-0.5 h-4 w-4 flex-none text-primary" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Llega a</p>
+                    <p className="truncate text-sm font-semibold">{destination.stop_name}</p>
+                    <p className="text-[11px] text-muted-foreground">{best.arrive_time} · {best.transfer.leg2.stops_between} {best.transfer.leg2.stops_between === 1 ? "parada" : "paradas"} desde Luceros</p>
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="mt-3 flex items-start gap-2 rounded-xl bg-accent/20 p-2.5">
+                <MapPin className="mt-0.5 h-4 w-4 flex-none text-primary" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Bájate en</p>
+                  <p className="truncate text-sm font-semibold">{destination.stop_name}</p>
+                  <p className="text-[11px] text-muted-foreground">{best.stops_between} {best.stops_between === 1 ? "parada" : "paradas"} desde el origen</p>
+                </div>
+              </div>
+            )}
 
             <ConnectionsPanel busLines={busLines} destination={destination} />
 
