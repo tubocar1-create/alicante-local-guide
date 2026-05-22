@@ -288,16 +288,17 @@ export function TramInline({ embedded = false }: { embedded?: boolean } = {}) {
                 )}
               </div>
 
-              {/* Chips destino populares */}
-              <div className="-mx-1 mt-3 flex gap-1.5 overflow-x-auto px-1">
+              {/* Chips destino populares: visibles sin scroll */}
+              <div className="mt-3 grid grid-cols-3 gap-1.5">
                 {POPULAR.map((p) => (
                   <button
                     key={p.label}
                     type="button"
                     onClick={() => setDestination({ stop_id: p.stop_id, stop_name: p.stop_name })}
-                    className="flex flex-none items-center gap-1.5 rounded-full border border-border bg-background/80 px-3 py-2 text-xs font-medium shadow-sm transition hover:border-primary/40 hover:bg-accent/30 active:scale-95"
+                    className="flex min-w-0 items-center gap-1 rounded-full border border-border bg-background/80 px-2 py-1.5 text-[11px] font-medium shadow-sm transition hover:border-primary/40 hover:bg-accent/30 active:scale-95"
                   >
-                    <span aria-hidden>{p.emoji}</span> {p.label}
+                    <span aria-hidden className="text-sm leading-none">{p.emoji}</span>
+                    <span className="truncate">{p.label}</span>
                   </button>
                 ))}
               </div>
