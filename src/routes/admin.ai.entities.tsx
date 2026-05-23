@@ -47,7 +47,6 @@ const empty: EntityForm = {
 
 function EntitiesPage() {
   const qc = useQueryClient();
-  const { toast } = useToast();
   const q = useQuery(entitiesQO());
   const [editing, setEditing] = useState<EntityForm | null>(null);
 
@@ -67,17 +66,17 @@ function EntitiesPage() {
         },
       }),
     onSuccess: () => {
-      toast({ title: "Guardado" });
+      toast.success("Guardado");
       setEditing(null);
       qc.invalidateQueries({ queryKey: ["admin-ai", "entities"] });
     },
-    onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const del = useMutation({
     mutationFn: (id: string) => deleteEntity({ data: { pin: ADMIN_PIN, id } }),
     onSuccess: () => {
-      toast({ title: "Eliminada" });
+      toast.success("Eliminada");
       qc.invalidateQueries({ queryKey: ["admin-ai", "entities"] });
     },
   });
