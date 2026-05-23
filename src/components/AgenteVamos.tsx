@@ -524,14 +524,15 @@ const DOMAINS: DomainSpec[] = [
       "postiguet", "san juan", "san gabriel", "albufereta", "almadraba",
       "que playa", "qué playa", "playa para hoy",
     ],
-    question: "¿Quieres el listado de playas o el mapa de playas?",
+    question: "¿Prefieres ver el carrusel de playas o abrir el mapa interactivo?",
     audio: "beaches",
     followups: [
-      { keys: ["mapa"], path: "/playas/mapa" },
+      { keys: ["mapa", "mapa interactivo", "interactivo", "ver en mapa", "abrir mapa"], path: "/playas/mapa" },
       { keys: [
+          "carrusel", "carousel", "scroll", "fotos", "deslizar", "desliza",
+          "listado", "lista", "todas", "cuales", "cuáles", "playas", "playa",
           "si", "sí", "vale", "ok", "okay", "perfecto", "claro", "correcto",
           "exacto", "afirmativo", "afirmativa", "de acuerdo", "dale", "confirmo",
-          "listado", "lista", "todas", "cuales", "cuáles", "playas", "playa",
         ], path: "/playas" },
     ],
   },
