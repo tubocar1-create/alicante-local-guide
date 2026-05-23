@@ -431,6 +431,7 @@ const DOMAINS: DomainSpec[] = [
           "desde ahi", "desde ahí", "desde esa", "esa", "esa misma",
           "esa esta bien", "esa está bien", "esa me sirve", "me sirve",
           "confirmo", "confirmar", "ahi", "ahí",
+          "afirmativo", "afirmativa", "correcto", "exacto",
         ], path: "action:tram-confirm-suggested" },
       { keys: [
           "otra", "otra estacion", "otra estación", "otra parada",
