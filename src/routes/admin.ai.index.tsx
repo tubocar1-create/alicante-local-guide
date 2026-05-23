@@ -10,17 +10,7 @@ import {
   Inbox,
   TrendingDown,
 } from "lucide-react";
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  BarChart,
-  Bar,
-} from "recharts";
+// Tablas en lugar de gráficas para mantener el bundle ligero.
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { aiOverviewQO, aiTimeseriesQO, FAILURE_REASON_LABEL, money, pct } from "@/lib/admin-ai-shared";
