@@ -1096,3 +1096,25 @@ export const quickResolveDubious = createServerFn({ method: "POST" })
 
     return { ok: true as const, summary };
   });
+
+// ---------------- Delete conversation ----------------
+// Descarta una conversación completa: borra los turnos indicados del log
+// de aprendizaje del agente. El cliente pasa los ids visibles en el panel
+// (ConversationDTO.turns[].id).
+
+export const deleteConversationTurns = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    PinSchema.extend({
+      ids: z.array(z.string().uuid()).min(1).max(500),
+    }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    assertPin(data.pin);
+    const { error } = await supabaseAdmin
+      .from("agente_learning_log")
+      .delete()
+      .in("id", data.ids);
+    if (error) throw new Error(error.message);
+    return { ok: true as const, deleted: data.ids.length };
+  });
+
