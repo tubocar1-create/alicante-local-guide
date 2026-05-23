@@ -1231,6 +1231,16 @@ function hasHealthHardBlock(query: string): boolean {
   });
 }
 
+function isShoppingRequest(query: string): boolean {
+  return /(^|\s)(comprar|compras|compra|tienda|tiendas|comercio|comercios|shopping|mercado|mercadillo|boutique|boutiques)(\s|$)/.test(query) ||
+    query.includes("ir de compras") ||
+    query.includes("quiero adquirir") ||
+    query.includes("necesito adquirir") ||
+    query.includes("centro comercial") ||
+    query.includes("centros comerciales") ||
+    query.includes("donde comprar");
+}
+
 // Adapta el tono del texto según el modo del asistente. Solo retoca
 // registro/longitud: nunca cambia el destino ni inventa información.
 function formatReply(mode: AssistantMode, base: string): string {
