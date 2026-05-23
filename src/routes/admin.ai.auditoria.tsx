@@ -544,14 +544,39 @@ export function AuditoriaPage() {
                   )}
                 </div>
 
-                <div className="flex gap-2 pt-2">
-                  <Button onClick={() => auditMut.mutate()} disabled={auditMut.isPending} className="flex-1">
-                    {auditMut.isPending ? "Guardando…" : "Guardar auditoría"}
-                  </Button>
-                  <Button variant="ghost" onClick={() => setSelectedTurn(null)} disabled={auditMut.isPending}>
-                    Cancelar
-                  </Button>
-                </div>
+                {(() => {
+                  const needsAction = verdict !== "ok";
+                  const hasAction = quickAction !== "none";
+                  const blocked = needsAction && !hasAction;
+                  const label = auditMut.isPending
+                    ? "Guardando…"
+                    : hasAction
+                      ? "Aplicar corrección y auditar"
+                      : "Marcar como OK (sin cambios)";
+                  return (
+                    <div className="space-y-2 pt-2">
+                      {blocked && (
+                        <p className="text-xs text-destructive">
+                          Veredicto «{VERDICT_LABEL[verdict]}» exige una corrección.
+                          Elige una acción arriba o cambia el veredicto a OK.
+                        </p>
+                      )}
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => auditMut.mutate()}
+                          disabled={auditMut.isPending || blocked}
+                          className="flex-1"
+                        >
+                          {label}
+                        </Button>
+                        <Button variant="ghost" onClick={() => setSelectedTurn(null)} disabled={auditMut.isPending}>
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })()}
+
               </div>
             </>
           )}
