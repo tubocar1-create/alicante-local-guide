@@ -2688,6 +2688,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
         if (!isClarifying && !resolvedLineDashboard && !isCineIntent && !isDomainFollowupResolution) {
           try {
+            serverCalled = true;
             const res = await askAgent({
               data: {
                 messages: next.map((m) => ({ role: m.role, content: m.content })),
