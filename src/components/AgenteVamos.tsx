@@ -527,15 +527,16 @@ const DOMAINS: DomainSpec[] = [
     question: "¿Prefieres ver el carrusel de playas o abrir el mapa interactivo?",
     audio: "beaches",
     followups: [
-      { keys: ["mapa", "mapa interactivo", "interactivo", "ver en mapa", "abrir mapa"], path: "/playas/mapa" },
+      { keys: ["mapa", "mapa interactivo", "interactivo", "ver en mapa", "abrir mapa"], path: "/playas/mapa", label: "mapa" },
       { keys: [
           "carrusel", "carousel", "scroll", "fotos", "deslizar", "desliza",
           "listado", "lista", "todas", "cuales", "cuáles", "playas", "playa",
           "si", "sí", "vale", "ok", "okay", "perfecto", "claro", "correcto",
           "exacto", "afirmativo", "afirmativa", "de acuerdo", "dale", "confirmo",
-        ], path: "/playas?focus=carrusel" },
+        ], path: "/playas?focus=carrusel", label: "carrusel" },
     ],
   },
+
   {
     id: "dormir",
     hubPath: "/donde-dormir",
