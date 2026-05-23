@@ -118,6 +118,28 @@ function SupervisionPage() {
                 ) : null}
                 {r.status === "pending" && (
                   <div className="space-y-2">
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">
+                        Asignar a intent (fase 2 · enrutamiento)
+                      </div>
+                      <Select
+                        value={targetIntent[r.id] ?? ""}
+                        onValueChange={(v) =>
+                          setTargetIntent({ ...targetIntent, [r.id]: v })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona intent destino…" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(intentsQ.data?.intents ?? []).map((i: { key: string; label: string }) => (
+                            <SelectItem key={i.key} value={i.key}>
+                              {i.label} · <span className="text-muted-foreground">{i.key}</span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <Textarea
                       placeholder="Notas (opcional)"
                       value={notes[r.id] ?? ""}
@@ -127,9 +149,20 @@ function SupervisionPage() {
                     <div className="flex gap-2">
                       <Button
                         size="sm"
-                        onClick={() =>
-                          mut.mutate({ id: r.id, status: "approved", notes: notes[r.id] })
-                        }
+                        onClick={() => {
+                          const intent = targetIntent[r.id];
+                          if (!intent) {
+                            toast.error("Selecciona un intent destino antes de aprobar");
+                            return;
+                          }
+                          mut.mutate({
+                            id: r.id,
+                            status: "approved",
+                            notes: notes[r.id],
+                            final_intent: intent,
+                            final_keywords: r.suggested_keywords ?? [r.raw_query],
+                          });
+                        }}
                         disabled={mut.isPending}
                       >
                         Aprobar
@@ -142,7 +175,7 @@ function SupervisionPage() {
                         }
                         disabled={mut.isPending}
                       >
-                        Rechazar
+                        Rechazar (fuera de doctrina)
                       </Button>
                     </div>
                   </div>
