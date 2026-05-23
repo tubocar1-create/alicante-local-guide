@@ -573,7 +573,8 @@ const DOMAINS: DomainSpec[] = [
     ],
     question: "Genial, aquí te dejo una lista muy amplia de sitios para comprar, pero si lo prefieres te puedo orientar si me dices qué artículo o servicio necesitas.",
     audio: "fallback",
-    followups: [
+    followups: [],
+    /* followups: [
       { keys: ["ropa", "moda", "boutique", "calzado", "zapatos", "zapatillas", "sneakers", "vestido", "camisa"], path: "/comprar/sector/moda", label: "Moda" },
       { keys: ["regalo", "regalos", "souvenir", "souvenirs", "recuerdo"], path: "/comprar/sector/regalos", label: "Regalos" },
       { keys: ["supermercado", "supermercados", "alimentacion", "alimentación", "comida para casa"], path: "/comprar/sector/supermercados", label: "Supermercados" },
@@ -593,7 +594,7 @@ const DOMAINS: DomainSpec[] = [
       { keys: ["servicios rapidos", "servicios rápidos", "copisteria", "copistería", "tintoreria", "tintorería", "cerrajero"], path: "/comprar/sector/servicios-rapidos", label: "Servicios rápidos" },
       { keys: ["otros servicios", "otro servicio"], path: "/comprar/sector/otros-servicios", label: "Otros servicios" },
       { keys: ["explorar", "todo", "todas las tiendas", "ver tiendas", "ver sectores"], path: "/comprar", label: "todos los sectores" },
-    ],
+    ], */
   },
   {
     id: "mapa",
