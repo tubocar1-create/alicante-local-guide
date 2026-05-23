@@ -2757,8 +2757,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         // local ya derivó a una ruta concreta, NO dejamos que el servidor
         // pise esa derivación con una sugerencia de otro dominio.
         const isDomainFollowupResolution = !!priorDomain && !!fallback.path;
+        const isTrainedResolution = fallback.source === "trained";
 
-        if (!isClarifying && !resolvedLineDashboard && !isCineIntent && !isDomainFollowupResolution) {
+        if (!isClarifying && !resolvedLineDashboard && !isCineIntent && !isDomainFollowupResolution && !isTrainedResolution) {
           try {
             serverCalled = true;
             const res = await askAgent({
