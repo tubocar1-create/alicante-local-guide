@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Car, ArrowLeft, Clock, Bus, Users, MapPin, Sparkles, Timer } from "lucide-react";
+import entornoImg from "@/assets/rentacar-entorno.jpg";
+import sectorImg from "@/assets/rentacar-sector.jpg";
 
 export const Route = createFileRoute("/rent-a-car")({
   head: () => ({
