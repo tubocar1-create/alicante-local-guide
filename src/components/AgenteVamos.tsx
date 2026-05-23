@@ -1706,6 +1706,14 @@ function localResolve(
     if (domainId) {
       const d = DOMAINS.find((x) => x.id === domainId);
       if (d) {
+        if (!d.followups.length && d.hubPath && !d.hubPath.startsWith("action:")) {
+          return {
+            reply: d.question,
+            path: d.hubPath,
+            audio: d.audio,
+            pendingDomain: null,
+          };
+        }
         return {
           reply: d.question,
           audio: d.audio,
