@@ -2461,65 +2461,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     [shouldAutoListen],
   );
 
-  const playAudioClip = useCallback(
-    (clip: AgentAudioClip, text: string, onEnd?: () => void) => {
-      if (typeof window === "undefined" || mutedRef.current) {
-        assistantSpeechMemoryRef.current = [text, ...assistantSpeechMemoryRef.current].slice(0, 6);
-        onEnd?.();
-        resumeListeningAfterEcho();
-        return true;
-      }
-      try {
-        __vaActiveAudio?.pause();
-        const audio = new Audio(audioSrc(clip));
-        audio.preload = "auto";
-        audio.volume = 1;
-        __vaActiveAudio = audio;
-        __vaActiveAudioStartedAt = Date.now();
-        assistantSpeechMemoryRef.current = [text, ...assistantSpeechMemoryRef.current].slice(0, 6);
-        speakingRef.current = true;
-        setSpeaking(true);
-        const finish = () => {
-          if (__vaActiveAudio === audio) __vaActiveAudio = null;
-          __vaActiveAudioStartedAt = 0;
-          suppressRecognitionUntilRef.current = Date.now() + POST_SPEECH_LISTEN_DELAY_MS;
-          speakingRef.current = false;
-          setSpeaking(false);
-          onEnd?.();
-          resumeListeningAfterEcho();
-        };
-        audio.onended = finish;
-        audio.onerror = () => {
-          if (__vaActiveAudio === audio) __vaActiveAudio = null;
-          __vaActiveAudioStartedAt = 0;
-          suppressRecognitionUntilRef.current = Date.now() + POST_SPEECH_LISTEN_DELAY_MS;
-          speakingRef.current = false;
-          setSpeaking(false);
-          onEnd?.();
-          resumeListeningAfterEcho();
-        };
-        const started = audio.play();
-        if (started && typeof started.catch === "function") {
-          started.catch(() => {
-            if (__vaActiveAudio === audio) __vaActiveAudio = null;
-            __vaActiveAudioStartedAt = 0;
-            suppressRecognitionUntilRef.current = Date.now() + POST_SPEECH_LISTEN_DELAY_MS;
-            speakingRef.current = false;
-            setSpeaking(false);
-            onEnd?.();
-            resumeListeningAfterEcho();
-          });
-        }
-        return true;
-      } catch {
-        return false;
-      }
-    },
-    [resumeListeningAfterEcho],
-  );
-
   const speak = useCallback(
-    (text: string, _audio?: AgentAudioClip, onEnd?: () => void, _reservedUtterance?: SpeechSynthesisUtterance | null) => {
+    (text: string, _audio?: VoiceClip, onEnd?: () => void, _reservedUtterance?: SpeechSynthesisUtterance | null) => {
       // Anti-eco: cortamos escucha activa antes de hablar.
       assistantSpeechMemoryRef.current = [text, ...assistantSpeechMemoryRef.current].slice(0, 6);
       suppressRecognitionUntilRef.current = Date.now() + 1200;
