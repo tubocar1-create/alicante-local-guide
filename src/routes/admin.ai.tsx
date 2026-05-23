@@ -10,6 +10,7 @@ export const Route = createFileRoute("/admin/ai")({
 
 const TABS = [
   { to: "/admin/ai", label: "Resumen", exact: true },
+  { to: "/admin/ai/doctrina", label: "📜 Doctrina" },
   { to: "/admin/ai/conversations", label: "Conversaciones" },
   { to: "/admin/ai/unknown-queries", label: "Sin resolver" },
   { to: "/admin/ai/dubious", label: "Dudosas" },

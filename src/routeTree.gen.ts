@@ -96,6 +96,7 @@ import { Route as AdminAiSupervisionRouteImport } from './routes/admin.ai.superv
 import { Route as AdminAiIntentsRouteImport } from './routes/admin.ai.intents'
 import { Route as AdminAiEntitiesRouteImport } from './routes/admin.ai.entities'
 import { Route as AdminAiDubiousRouteImport } from './routes/admin.ai.dubious'
+import { Route as AdminAiDoctrinaRouteImport } from './routes/admin.ai.doctrina'
 import { Route as AdminAiCostsRouteImport } from './routes/admin.ai.costs'
 import { Route as AdminAiConversationsRouteImport } from './routes/admin.ai.conversations'
 import { Route as AdminAiAnalyticsRouteImport } from './routes/admin.ai.analytics'
@@ -553,6 +554,11 @@ const AdminAiDubiousRoute = AdminAiDubiousRouteImport.update({
   path: '/dubious',
   getParentRoute: () => AdminAiRoute,
 } as any)
+const AdminAiDoctrinaRoute = AdminAiDoctrinaRouteImport.update({
+  id: '/doctrina',
+  path: '/doctrina',
+  getParentRoute: () => AdminAiRoute,
+} as any)
 const AdminAiCostsRoute = AdminAiCostsRouteImport.update({
   id: '/costs',
   path: '/costs',
@@ -717,6 +723,7 @@ export interface FileRoutesByFullPath {
   '/admin/ai/analytics': typeof AdminAiAnalyticsRoute
   '/admin/ai/conversations': typeof AdminAiConversationsRoute
   '/admin/ai/costs': typeof AdminAiCostsRoute
+  '/admin/ai/doctrina': typeof AdminAiDoctrinaRoute
   '/admin/ai/dubious': typeof AdminAiDubiousRoute
   '/admin/ai/entities': typeof AdminAiEntitiesRoute
   '/admin/ai/intents': typeof AdminAiIntentsRoute
@@ -821,6 +828,7 @@ export interface FileRoutesByTo {
   '/admin/ai/analytics': typeof AdminAiAnalyticsRoute
   '/admin/ai/conversations': typeof AdminAiConversationsRoute
   '/admin/ai/costs': typeof AdminAiCostsRoute
+  '/admin/ai/doctrina': typeof AdminAiDoctrinaRoute
   '/admin/ai/dubious': typeof AdminAiDubiousRoute
   '/admin/ai/entities': typeof AdminAiEntitiesRoute
   '/admin/ai/intents': typeof AdminAiIntentsRoute
@@ -929,6 +937,7 @@ export interface FileRoutesById {
   '/admin/ai/analytics': typeof AdminAiAnalyticsRoute
   '/admin/ai/conversations': typeof AdminAiConversationsRoute
   '/admin/ai/costs': typeof AdminAiCostsRoute
+  '/admin/ai/doctrina': typeof AdminAiDoctrinaRoute
   '/admin/ai/dubious': typeof AdminAiDubiousRoute
   '/admin/ai/entities': typeof AdminAiEntitiesRoute
   '/admin/ai/intents': typeof AdminAiIntentsRoute
@@ -1038,6 +1047,7 @@ export interface FileRouteTypes {
     | '/admin/ai/analytics'
     | '/admin/ai/conversations'
     | '/admin/ai/costs'
+    | '/admin/ai/doctrina'
     | '/admin/ai/dubious'
     | '/admin/ai/entities'
     | '/admin/ai/intents'
@@ -1142,6 +1152,7 @@ export interface FileRouteTypes {
     | '/admin/ai/analytics'
     | '/admin/ai/conversations'
     | '/admin/ai/costs'
+    | '/admin/ai/doctrina'
     | '/admin/ai/dubious'
     | '/admin/ai/entities'
     | '/admin/ai/intents'
@@ -1249,6 +1260,7 @@ export interface FileRouteTypes {
     | '/admin/ai/analytics'
     | '/admin/ai/conversations'
     | '/admin/ai/costs'
+    | '/admin/ai/doctrina'
     | '/admin/ai/dubious'
     | '/admin/ai/entities'
     | '/admin/ai/intents'
@@ -1966,6 +1978,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAiDubiousRouteImport
       parentRoute: typeof AdminAiRoute
     }
+    '/admin/ai/doctrina': {
+      id: '/admin/ai/doctrina'
+      path: '/doctrina'
+      fullPath: '/admin/ai/doctrina'
+      preLoaderRoute: typeof AdminAiDoctrinaRouteImport
+      parentRoute: typeof AdminAiRoute
+    }
     '/admin/ai/costs': {
       id: '/admin/ai/costs'
       path: '/costs'
@@ -2099,6 +2118,7 @@ interface AdminAiRouteChildren {
   AdminAiAnalyticsRoute: typeof AdminAiAnalyticsRoute
   AdminAiConversationsRoute: typeof AdminAiConversationsRoute
   AdminAiCostsRoute: typeof AdminAiCostsRoute
+  AdminAiDoctrinaRoute: typeof AdminAiDoctrinaRoute
   AdminAiDubiousRoute: typeof AdminAiDubiousRoute
   AdminAiEntitiesRoute: typeof AdminAiEntitiesRoute
   AdminAiIntentsRoute: typeof AdminAiIntentsRoute
@@ -2111,6 +2131,7 @@ const AdminAiRouteChildren: AdminAiRouteChildren = {
   AdminAiAnalyticsRoute: AdminAiAnalyticsRoute,
   AdminAiConversationsRoute: AdminAiConversationsRoute,
   AdminAiCostsRoute: AdminAiCostsRoute,
+  AdminAiDoctrinaRoute: AdminAiDoctrinaRoute,
   AdminAiDubiousRoute: AdminAiDubiousRoute,
   AdminAiEntitiesRoute: AdminAiEntitiesRoute,
   AdminAiIntentsRoute: AdminAiIntentsRoute,
