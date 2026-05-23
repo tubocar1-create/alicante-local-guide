@@ -2201,24 +2201,24 @@ export type Database = {
       test_users: {
         Row: {
           created_at: string
-          email: string
+          email: string | null
           id: string
           name: string
-          surname: string
+          surname: string | null
         }
         Insert: {
           created_at?: string
-          email: string
+          email?: string | null
           id?: string
           name: string
-          surname: string
+          surname?: string | null
         }
         Update: {
           created_at?: string
-          email?: string
+          email?: string | null
           id?: string
           name?: string
-          surname?: string
+          surname?: string | null
         }
         Relationships: []
       }
