@@ -1,73 +1,66 @@
-## Centro de observación y entrenamiento del Agente IA
+## Reestructuración del CPA según la Doctrina (4 fases)
 
-Transformaré `/admin` añadiendo una nueva sección `/admin/ai` con 7 subrutas, sin tocar las secciones existentes (Resumen, Usuarios, Arquitectura, Integraciones, BD, Métricas). Reutilizo el sidebar, el gate por PIN y los helpers de `admin-shared.ts`.
+### Objetivo
+Simplificar el CPA y unificar toda revisión bajo un único esquema de auditoría basado en las 4 fases de la doctrina. Cada conversación se abre Q&A por Q&A y se evalúa contra los 5 criterios obligatorios.
 
-### 1. Base de datos (migración)
-
-Ampliar `agente_learning_log` (nullable, sin romper inserts actuales):
-- `normalized_query`, `detected_intent`, `intent_confidence numeric`
-- `resolver_type text`, `resolved boolean`, `fallback_used boolean`
-- `failure_reason text` (enum lógico: `NO_INTENT_MATCH | LOW_CONFIDENCE | EMPTY_RESULTS | API_FAILURE | ENTITY_AMBIGUOUS | OUT_OF_SCOPE`)
-- `latency_ms int`, `model_used text`, `tokens_input int`, `tokens_output int`, `estimated_cost numeric`
-- `clicked_result text`, `conversion_event text`
-- `route_origin text`, `geo_context jsonb`, `session_id text`
-
-Política RLS: mantener "admins read" y añadir INSERT vía service-role (server fn) — no se abre a `anon`.
-
-Índices: `(created_at desc)`, `(failure_reason)`, `(detected_intent)`, `(session_id)`.
-
-Tabla nueva `agente_unknown_query_actions` para trazar acciones de la cola (resuelta/ignorada/spam/fusionada/promovida-a-intent).
-
-Ampliar `agente_admin_supervisions` solo si falta algo (ya tiene casi todo).
-
-### 2. Helper de telemetría
-
-`src/lib/agent/logAgentLearning.ts` — wrapper sobre `supabaseAdmin` para registrar una interacción completa (input + output + métricas + coste). Server-only. Calcula `estimated_cost` con tabla de tarifas por modelo.
-
-Integración:
-- `supabase/functions/chat/index.ts` — registrar al final del turno.
-- Resolvers del agente (`src/lib/agente.functions.ts`, `agente-intents.functions.ts`) — registrar matches/fallbacks.
-
-### 3. Server functions admin (`src/lib/admin-ai.functions.ts`)
-
-Todas con `requireSupabaseAuth` + check `has_role(admin)`:
-- `getAiOverview` — KPIs agregados (totals, resolution rate, fallback rate, latencia, coste, top intents/failures).
-- `getAiTimeseries({ days })` — series para gráficas.
-- `listUnknownQueries({ status, search })`
-- `actUnknownQuery({ id, action, payload })` — promover, ignorar, spam, fusionar, crear FAQ.
-- `listSupervisionItems({ status })`
-- `submitSupervision({ id, correction })`
-- CRUD `listIntents/upsertIntent/deleteIntent` sobre `agente_intents` + `agente_faqs`.
-- CRUD `listEntities/upsertEntity` sobre `agente_proper_nouns`.
-- `getAiAnalytics`, `getAiCosts`.
-
-### 4. UI — 7 subrutas
-
-Layout: reutilizo `admin.tsx` sidebar añadiendo grupo "Agente IA" con 7 entradas.
+### Nueva estructura de tabs (simplificada)
+De 10 tabs a 4:
 
 ```
-src/routes/admin.ai.tsx                 (layout con subnav opcional + Outlet)
-src/routes/admin.ai.overview.tsx        Dashboard: KPI cards + gráficas (recharts ya en uso)
-src/routes/admin.ai.unknown-queries.tsx Tabla filtrable + acciones rápidas
-src/routes/admin.ai.supervision.tsx     Cards revisables con acciones
-src/routes/admin.ai.intents.tsx         CRUD intents/FAQs
-src/routes/admin.ai.entities.tsx        CRUD entidades/alias
-src/routes/admin.ai.analytics.tsx       Rankings y conversiones
-src/routes/admin.ai.costs.tsx           Coste por día/modelo/intent
+📜 Doctrina    →  referencia inmutable (ya existe)
+🔍 Auditoría   →  NUEVA — flujo único de revisión conversación-por-conversación
+📚 Entrenamiento →  Intents + Entidades + FAQs (fusionadas)
+📊 Operación   →  Resumen + Analítica + Costes (fusionadas)
 ```
 
-Estilo "centro de control": cards con badges de estado (verde/ámbar/rojo), tablas con filtros, botones de acción inline, tooltips explicativos en lenguaje no técnico. Usa los componentes shadcn ya existentes (`Card`, `Table`, `Badge`, `Button`, `Dialog`, `Select`).
+Tabs que desaparecen como pestaña independiente (su contenido se absorbe):
+- Conversaciones, Dudosas, Sin resolver, Supervisión → todas se unifican en **Auditoría**
+- Intents, Entidades → fusionadas en **Entrenamiento**
+- Resumen, Analítica, Costes → fusionadas en **Operación**
 
-### Detalles técnicos
+### Tab "Auditoría" — flujo único
 
-- TypeScript strict, sin `any`.
-- Cada server fn devuelve DTO plano (cumple regla de TanStack).
-- Comentarios JSDoc en helpers y server fns.
-- `queryOptions` con `staleTime: 30min` para overview (consistente con admin actual), `5min` para colas activas.
-- No se modifica `client.ts`, `types.ts`, ni se crean edge functions nuevas (se reutiliza la `chat` existente solo para instrumentarla).
-- Migración nullable + defaults seguros → no rompe el insert actual desde `chat`.
+Una sola cola de trabajo. Lista de conversaciones recientes (con filtros: pendientes, con incidencias, todas). Al abrir una conversación:
 
-### Fuera de alcance (lo aviso)
+1. **Cabecera**: sesión, ruta inicial, dominio activo, duración.
+2. **Línea de tiempo Q&A**: cada turno (pregunta usuario → respuesta agente) se muestra como una tarjeta auditable.
+3. **Panel de evaluación por turno** (los 5 criterios de la doctrina):
+   - ✅/⚠️/❌ Cumplimiento filosófico (¿enrutamiento o se desvió?)
+   - ✅/⚠️/❌ Precisión de intención
+   - ✅/⚠️/❌ Coherencia contextual (¿respetó dominio activo?)
+   - ✅/⚠️/❌ Consistencia de ruta
+   - ✅/⚠️/❌ Calidad del endpoint
+   - **Fase detectada** (1/2/3/4) badge
+   - Nota libre + acción correctiva ("Resolver al vuelo" ya existente: añadir keyword, crear intent, añadir FAQ, añadir alias)
+4. **Veredicto global** de la conversación: OK / requiere ajuste / crítica.
 
-- No conecto pagos/Stripe para costes reales (uso tarifas estáticas configurables en `src/lib/agent/model-pricing.ts`).
-- Conversion tracking depende de que los componentes de resultado emitan eventos — añado el helper `trackAgentConversion` pero solo lo cableo en 1-2 puntos clave (chat → reserva, chat → click externo); el resto queda preparado para iteraciones.
+Estado persistido en `agente_admin_supervisions` (ya existe) extendiendo el payload con `phase`, `criteria_scores`, `verdict`.
+
+### Tab "Entrenamiento"
+Sub-secciones internas (acordeón o tabs secundarias) — sin cambiar la lógica existente, solo agrupar:
+- Intents (lista + edición existente)
+- Entidades / nombres propios
+- FAQs
+
+### Tab "Operación"
+Dashboard plano con: KPIs del Resumen + serie temporal + costes. Sin acciones, solo lectura.
+
+### Archivos a tocar
+- `src/routes/admin.ai.tsx` — reducir `TABS` a 4.
+- `src/routes/admin.ai.auditoria.tsx` — **NUEVO** — flujo unificado de revisión.
+- `src/routes/admin.ai.entrenamiento.tsx` — **NUEVO** — wrapper con sub-secciones de intents/entidades/faqs.
+- `src/routes/admin.ai.operacion.tsx` — **NUEVO** — KPIs + serie + costes.
+- `src/routes/admin.ai.index.tsx` — redirige a `/admin/ai/auditoria` (cola de trabajo por defecto).
+- Rutas antiguas (`admin.ai.conversations.tsx`, `admin.ai.dubious.tsx`, `admin.ai.unknown-queries.tsx`, `admin.ai.supervision.tsx`, `admin.ai.intents.tsx`, `admin.ai.entities.tsx`, `admin.ai.analytics.tsx`, `admin.ai.costs.tsx`) — **se conservan los componentes internos** pero dejan de ser tabs; sus piezas se importan desde los 3 nuevos wrappers para no perder funcionalidad ya construida.
+- `src/lib/admin-ai.functions.ts` — añadir `saveAuditVerdict({ logId, phase, criteria, verdict, note })`.
+- Migración SQL: añadir columnas `phase smallint`, `criteria_scores jsonb`, `verdict text` a `agente_admin_supervisions`.
+
+### Detalle técnico
+- La lista de "Auditoría" se alimenta de `listAgentConversations` (ya existe) + `listDubiousInteractions` fusionadas por `session_id`.
+- "Resolver al vuelo" se reutiliza tal cual (`quickResolveDubious`) en cada turno.
+- La doctrina se renderiza como panel lateral colapsable dentro de "Auditoría" para que el revisor tenga los 5 criterios siempre a la vista.
+
+### Lo que NO se toca
+- `AgenteVamos.tsx` (regla de oro: las instrucciones al agente no modifican la estructura del producto).
+- Tabla `agente_intents`, `agente_entities`, `agente_faqs` — sólo lectura/escritura ya existente.
+- Rutas públicas del usuario final.
