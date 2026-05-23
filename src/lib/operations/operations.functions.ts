@@ -176,7 +176,7 @@ export const getOperationalEvent = createServerFn({ method: "POST" })
 
 export const saveOperationalReview = createServerFn({ method: "POST" })
   .inputValidator((input) => ReviewSchema.parse(input))
-  .handler(async ({ data, context }) => {
+  .handler(async ({ data }) => {
     const { error } = await supabaseAdmin
       .from("operational_event_reviews")
       .insert({
@@ -186,7 +186,7 @@ export const saveOperationalReview = createServerFn({ method: "POST" })
         corrected_category: data.corrected_category ?? null,
         corrected_source: data.corrected_source ?? null,
         note: data.note ?? null,
-        reviewed_by: context.userId ?? null,
+        reviewed_by: null,
       });
     if (error) throw new Error(error.message);
     return { ok: true };
