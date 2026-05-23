@@ -3563,48 +3563,8 @@ export function AgenteVamosFab() {
   const startGreetingFromUserGesture = () => {
     if (voiceBootStartedRef.current) return;
     voiceBootStartedRef.current = true;
-    if (!playGreetingClip()) {
-      playGreetingAfterPermission();
-    }
+    playGreetingAfterPermission();
     setShowGreetingButton(false);
-  };
-
-  const playGreetingClip = () => {
-    try {
-      if (typeof window === "undefined") return false;
-      __vaActiveAudio?.pause();
-      const audio = new Audio(audioSrc(getGreetingClip()));
-      audio.preload = "auto";
-      audio.volume = 1;
-      __vaActiveAudio = audio;
-      __vaActiveAudioStartedAt = Date.now();
-      __vaActiveUtterance = null;
-      __vaSetGreetingSpoken(true);
-      __vaSpeechUnlocked = true;
-      greetingPlayedRef.current = true;
-      try { window.sessionStorage.setItem(GREETING_SESSION_KEY, "1"); } catch {}
-      let finished = false;
-      const finish = (fallbackToTts = false) => {
-        if (finished) return;
-        finished = true;
-        if (__vaActiveAudio === audio) __vaActiveAudio = null;
-        __vaActiveAudioStartedAt = 0;
-        markVaInteraction();
-        if (fallbackToTts) {
-          greetingPlayedRef.current = false;
-          __vaSetGreetingSpoken(false);
-          try { window.sessionStorage.removeItem(GREETING_SESSION_KEY); } catch {}
-          playGreetingAfterPermission();
-        }
-      };
-      audio.onended = () => finish(false);
-      audio.onerror = () => finish(true);
-      const started = audio.play();
-      if (started && typeof started.catch === "function") started.catch(() => finish(true));
-      return true;
-    } catch {
-      return false;
-    }
   };
 
   // Saludo corto de reentrada: cuando el panel se abre y el saludo inicial
@@ -3657,9 +3617,6 @@ export function AgenteVamosFab() {
     if (hidden) return;
     if (typeof window === "undefined") return;
     try {
-      const greetingAudio = new Audio(audioSrc(getGreetingClip()));
-      greetingAudio.preload = "auto";
-      try { greetingAudio.load(); } catch {}
       if (window.sessionStorage.getItem(GREETING_SESSION_KEY) === "1") {
         greetingPlayedRef.current = true;
         voiceBootStartedRef.current = true;
