@@ -9,16 +9,10 @@ export const Route = createFileRoute("/admin/ai")({
 });
 
 const TABS = [
-  { to: "/admin/ai", label: "Resumen", exact: true },
+  { to: "/admin/ai/auditoria", label: "🔍 Auditoría" },
   { to: "/admin/ai/doctrina", label: "📜 Doctrina" },
-  { to: "/admin/ai/conversations", label: "Conversaciones" },
-  { to: "/admin/ai/unknown-queries", label: "Sin resolver" },
-  { to: "/admin/ai/dubious", label: "Dudosas" },
-  { to: "/admin/ai/supervision", label: "Supervisión" },
-  { to: "/admin/ai/intents", label: "Intents" },
-  { to: "/admin/ai/entities", label: "Entidades" },
-  { to: "/admin/ai/analytics", label: "Analítica" },
-  { to: "/admin/ai/costs", label: "Costes" },
+  { to: "/admin/ai/entrenamiento", label: "📚 Entrenamiento" },
+  { to: "/admin/ai/operacion", label: "📊 Operación" },
 ];
 
 function AdminAiLayout() {

@@ -718,6 +718,48 @@ export const reviewDubiousInteraction = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+// ---------------- Doctrine audit (per turn) ----------------
+// Guarda la auditoría de un turno contra los 5 criterios de la doctrina
+// + la fase detectada (1..4) + veredicto global. Es SOLO análisis: no
+// modifica intents/keywords. Para aplicar correcciones se usa
+// quickResolveDubious.
+
+const CriteriaScore = z.enum(["ok", "warn", "bad", "na"]);
+const CriteriaSchema = z.object({
+  philosophy: CriteriaScore,
+  intent: CriteriaScore,
+  context: CriteriaScore,
+  route: CriteriaScore,
+  endpoint: CriteriaScore,
+});
+export type AuditCriteria = z.infer<typeof CriteriaSchema>;
+
+export const saveAuditVerdict = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    PinSchema.extend({
+      id: z.string().uuid(),
+      phase: z.number().int().min(1).max(4),
+      criteria: CriteriaSchema,
+      verdict: z.enum(["ok", "adjust", "critical"]),
+      note: z.string().max(2000).optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    assertPin(data.pin);
+    const { error } = await supabaseAdmin
+      .from("agente_learning_log")
+      .update({
+        audit_phase: data.phase,
+        audit_criteria: data.criteria,
+        audit_verdict: data.verdict,
+        audit_note: data.note ?? null,
+        audited_at: new Date().toISOString(),
+      })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
 // ---------------- Conversations (turn-by-turn replay) ----------------
 // Agrupa las filas de agente_learning_log en "conversaciones":
 //  - Si dos filas comparten session_id  → misma conversación.
