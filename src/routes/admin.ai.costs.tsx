@@ -1,15 +1,7 @@
 // Coste IA estimado (basado en model-pricing.ts).
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-} from "recharts";
+// Tablas en lugar de gráficas para mantener el bundle ligero.
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { costsQO, money } from "@/lib/admin-ai-shared";
