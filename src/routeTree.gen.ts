@@ -35,6 +35,7 @@ import { Route as BusRouteImport } from './routes/bus'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BusinessIndexRouteImport } from './routes/business.index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as VuelosIataRouteImport } from './routes/vuelos_.$iata'
 import { Route as TramMapaRouteImport } from './routes/tram.mapa'
 import { Route as TramFavoritosRouteImport } from './routes/tram.favoritos'
@@ -60,9 +61,15 @@ import { Route as BusinessIssuedRouteImport } from './routes/business.issued'
 import { Route as BusinessInboxRouteImport } from './routes/business.inbox'
 import { Route as BusinessBookingsRouteImport } from './routes/business.bookings'
 import { Route as BusPlannerRouteImport } from './routes/bus.planner'
+import { Route as AdminUsuariosRouteImport } from './routes/admin.usuarios'
 import { Route as AdminSystemRouteImport } from './routes/admin.system'
 import { Route as AdminSaludRouteImport } from './routes/admin.salud'
 import { Route as AdminPlacesRouteImport } from './routes/admin.places'
+import { Route as AdminMetricasInternasRouteImport } from './routes/admin.metricas-internas'
+import { Route as AdminMetricasExternasRouteImport } from './routes/admin.metricas-externas'
+import { Route as AdminIntegracionesRouteImport } from './routes/admin.integraciones'
+import { Route as AdminBasesDatosRouteImport } from './routes/admin.bases-datos'
+import { Route as AdminArquitecturaRouteImport } from './routes/admin.arquitectura'
 import { Route as TramParadaStopIdRouteImport } from './routes/tram.parada.$stopId'
 import { Route as TramLineaLineIdRouteImport } from './routes/tram.linea.$lineId'
 import { Route as SaludCategoriaIdRouteImport } from './routes/salud_.$categoria.$id'
@@ -227,6 +234,11 @@ const BusinessIndexRoute = BusinessIndexRouteImport.update({
   path: '/',
   getParentRoute: () => BusinessRoute,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const VuelosIataRoute = VuelosIataRouteImport.update({
   id: '/vuelos_/$iata',
   path: '/vuelos/$iata',
@@ -352,6 +364,11 @@ const BusPlannerRoute = BusPlannerRouteImport.update({
   path: '/planner',
   getParentRoute: () => BusRoute,
 } as any)
+const AdminUsuariosRoute = AdminUsuariosRouteImport.update({
+  id: '/usuarios',
+  path: '/usuarios',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminSystemRoute = AdminSystemRouteImport.update({
   id: '/system',
   path: '/system',
@@ -365,6 +382,31 @@ const AdminSaludRoute = AdminSaludRouteImport.update({
 const AdminPlacesRoute = AdminPlacesRouteImport.update({
   id: '/places',
   path: '/places',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMetricasInternasRoute = AdminMetricasInternasRouteImport.update({
+  id: '/metricas-internas',
+  path: '/metricas-internas',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMetricasExternasRoute = AdminMetricasExternasRouteImport.update({
+  id: '/metricas-externas',
+  path: '/metricas-externas',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminIntegracionesRoute = AdminIntegracionesRouteImport.update({
+  id: '/integraciones',
+  path: '/integraciones',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminBasesDatosRoute = AdminBasesDatosRouteImport.update({
+  id: '/bases-datos',
+  path: '/bases-datos',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminArquitecturaRoute = AdminArquitecturaRouteImport.update({
+  id: '/arquitectura',
+  path: '/arquitectura',
   getParentRoute: () => AdminRoute,
 } as any)
 const TramParadaStopIdRoute = TramParadaStopIdRouteImport.update({
@@ -568,9 +610,15 @@ export interface FileRoutesByFullPath {
   '/voces': typeof VocesRoute
   '/vuelos': typeof VuelosRoute
   '/welcome': typeof WelcomeRoute
+  '/admin/arquitectura': typeof AdminArquitecturaRoute
+  '/admin/bases-datos': typeof AdminBasesDatosRoute
+  '/admin/integraciones': typeof AdminIntegracionesRoute
+  '/admin/metricas-externas': typeof AdminMetricasExternasRoute
+  '/admin/metricas-internas': typeof AdminMetricasInternasRoute
   '/admin/places': typeof AdminPlacesRoute
   '/admin/salud': typeof AdminSaludRoute
   '/admin/system': typeof AdminSystemRoute
+  '/admin/usuarios': typeof AdminUsuariosRoute
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
   '/business/inbox': typeof BusinessInboxRouteWithChildren
@@ -596,6 +644,7 @@ export interface FileRoutesByFullPath {
   '/tram/favoritos': typeof TramFavoritosRoute
   '/tram/mapa': typeof TramMapaRoute
   '/vuelos/$iata': typeof VuelosIataRoute
+  '/admin/': typeof AdminIndexRoute
   '/business/': typeof BusinessIndexRoute
   '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
   '/api/public/booking-create': typeof ApiPublicBookingCreateRoute
@@ -633,7 +682,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
   '/bus': typeof BusRouteWithChildren
   '/clima': typeof ClimaRoute
   '/comprar': typeof ComprarRoute
@@ -656,9 +704,15 @@ export interface FileRoutesByTo {
   '/voces': typeof VocesRoute
   '/vuelos': typeof VuelosRoute
   '/welcome': typeof WelcomeRoute
+  '/admin/arquitectura': typeof AdminArquitecturaRoute
+  '/admin/bases-datos': typeof AdminBasesDatosRoute
+  '/admin/integraciones': typeof AdminIntegracionesRoute
+  '/admin/metricas-externas': typeof AdminMetricasExternasRoute
+  '/admin/metricas-internas': typeof AdminMetricasInternasRoute
   '/admin/places': typeof AdminPlacesRoute
   '/admin/salud': typeof AdminSaludRoute
   '/admin/system': typeof AdminSystemRoute
+  '/admin/usuarios': typeof AdminUsuariosRoute
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
   '/business/inbox': typeof BusinessInboxRouteWithChildren
@@ -684,6 +738,7 @@ export interface FileRoutesByTo {
   '/tram/favoritos': typeof TramFavoritosRoute
   '/tram/mapa': typeof TramMapaRoute
   '/vuelos/$iata': typeof VuelosIataRoute
+  '/admin': typeof AdminIndexRoute
   '/business': typeof BusinessIndexRoute
   '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
   '/api/public/booking-create': typeof ApiPublicBookingCreateRoute
@@ -746,9 +801,15 @@ export interface FileRoutesById {
   '/voces': typeof VocesRoute
   '/vuelos': typeof VuelosRoute
   '/welcome': typeof WelcomeRoute
+  '/admin/arquitectura': typeof AdminArquitecturaRoute
+  '/admin/bases-datos': typeof AdminBasesDatosRoute
+  '/admin/integraciones': typeof AdminIntegracionesRoute
+  '/admin/metricas-externas': typeof AdminMetricasExternasRoute
+  '/admin/metricas-internas': typeof AdminMetricasInternasRoute
   '/admin/places': typeof AdminPlacesRoute
   '/admin/salud': typeof AdminSaludRoute
   '/admin/system': typeof AdminSystemRoute
+  '/admin/usuarios': typeof AdminUsuariosRoute
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
   '/business/inbox': typeof BusinessInboxRouteWithChildren
@@ -774,6 +835,7 @@ export interface FileRoutesById {
   '/tram/favoritos': typeof TramFavoritosRoute
   '/tram/mapa': typeof TramMapaRoute
   '/vuelos_/$iata': typeof VuelosIataRoute
+  '/admin/': typeof AdminIndexRoute
   '/business/': typeof BusinessIndexRoute
   '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
   '/api/public/booking-create': typeof ApiPublicBookingCreateRoute
@@ -837,9 +899,15 @@ export interface FileRouteTypes {
     | '/voces'
     | '/vuelos'
     | '/welcome'
+    | '/admin/arquitectura'
+    | '/admin/bases-datos'
+    | '/admin/integraciones'
+    | '/admin/metricas-externas'
+    | '/admin/metricas-internas'
     | '/admin/places'
     | '/admin/salud'
     | '/admin/system'
+    | '/admin/usuarios'
     | '/bus/planner'
     | '/business/bookings'
     | '/business/inbox'
@@ -865,6 +933,7 @@ export interface FileRouteTypes {
     | '/tram/favoritos'
     | '/tram/mapa'
     | '/vuelos/$iata'
+    | '/admin/'
     | '/business/'
     | '/api/public/aena-flights'
     | '/api/public/booking-create'
@@ -902,7 +971,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/admin'
     | '/bus'
     | '/clima'
     | '/comprar'
@@ -925,9 +993,15 @@ export interface FileRouteTypes {
     | '/voces'
     | '/vuelos'
     | '/welcome'
+    | '/admin/arquitectura'
+    | '/admin/bases-datos'
+    | '/admin/integraciones'
+    | '/admin/metricas-externas'
+    | '/admin/metricas-internas'
     | '/admin/places'
     | '/admin/salud'
     | '/admin/system'
+    | '/admin/usuarios'
     | '/bus/planner'
     | '/business/bookings'
     | '/business/inbox'
@@ -953,6 +1027,7 @@ export interface FileRouteTypes {
     | '/tram/favoritos'
     | '/tram/mapa'
     | '/vuelos/$iata'
+    | '/admin'
     | '/business'
     | '/api/public/aena-flights'
     | '/api/public/booking-create'
@@ -1014,9 +1089,15 @@ export interface FileRouteTypes {
     | '/voces'
     | '/vuelos'
     | '/welcome'
+    | '/admin/arquitectura'
+    | '/admin/bases-datos'
+    | '/admin/integraciones'
+    | '/admin/metricas-externas'
+    | '/admin/metricas-internas'
     | '/admin/places'
     | '/admin/salud'
     | '/admin/system'
+    | '/admin/usuarios'
     | '/bus/planner'
     | '/business/bookings'
     | '/business/inbox'
@@ -1042,6 +1123,7 @@ export interface FileRouteTypes {
     | '/tram/favoritos'
     | '/tram/mapa'
     | '/vuelos_/$iata'
+    | '/admin/'
     | '/business/'
     | '/api/public/aena-flights'
     | '/api/public/booking-create'
@@ -1327,6 +1409,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BusinessIndexRouteImport
       parentRoute: typeof BusinessRoute
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/vuelos_/$iata': {
       id: '/vuelos_/$iata'
       path: '/vuelos/$iata'
@@ -1502,6 +1591,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BusPlannerRouteImport
       parentRoute: typeof BusRoute
     }
+    '/admin/usuarios': {
+      id: '/admin/usuarios'
+      path: '/usuarios'
+      fullPath: '/admin/usuarios'
+      preLoaderRoute: typeof AdminUsuariosRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/system': {
       id: '/admin/system'
       path: '/system'
@@ -1521,6 +1617,41 @@ declare module '@tanstack/react-router' {
       path: '/places'
       fullPath: '/admin/places'
       preLoaderRoute: typeof AdminPlacesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/metricas-internas': {
+      id: '/admin/metricas-internas'
+      path: '/metricas-internas'
+      fullPath: '/admin/metricas-internas'
+      preLoaderRoute: typeof AdminMetricasInternasRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/metricas-externas': {
+      id: '/admin/metricas-externas'
+      path: '/metricas-externas'
+      fullPath: '/admin/metricas-externas'
+      preLoaderRoute: typeof AdminMetricasExternasRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/integraciones': {
+      id: '/admin/integraciones'
+      path: '/integraciones'
+      fullPath: '/admin/integraciones'
+      preLoaderRoute: typeof AdminIntegracionesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/bases-datos': {
+      id: '/admin/bases-datos'
+      path: '/bases-datos'
+      fullPath: '/admin/bases-datos'
+      preLoaderRoute: typeof AdminBasesDatosRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/arquitectura': {
+      id: '/admin/arquitectura'
+      path: '/arquitectura'
+      fullPath: '/admin/arquitectura'
+      preLoaderRoute: typeof AdminArquitecturaRouteImport
       parentRoute: typeof AdminRoute
     }
     '/tram/parada/$stopId': {
@@ -1758,15 +1889,29 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminArquitecturaRoute: typeof AdminArquitecturaRoute
+  AdminBasesDatosRoute: typeof AdminBasesDatosRoute
+  AdminIntegracionesRoute: typeof AdminIntegracionesRoute
+  AdminMetricasExternasRoute: typeof AdminMetricasExternasRoute
+  AdminMetricasInternasRoute: typeof AdminMetricasInternasRoute
   AdminPlacesRoute: typeof AdminPlacesRoute
   AdminSaludRoute: typeof AdminSaludRoute
   AdminSystemRoute: typeof AdminSystemRoute
+  AdminUsuariosRoute: typeof AdminUsuariosRoute
+  AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminArquitecturaRoute: AdminArquitecturaRoute,
+  AdminBasesDatosRoute: AdminBasesDatosRoute,
+  AdminIntegracionesRoute: AdminIntegracionesRoute,
+  AdminMetricasExternasRoute: AdminMetricasExternasRoute,
+  AdminMetricasInternasRoute: AdminMetricasInternasRoute,
   AdminPlacesRoute: AdminPlacesRoute,
   AdminSaludRoute: AdminSaludRoute,
   AdminSystemRoute: AdminSystemRoute,
+  AdminUsuariosRoute: AdminUsuariosRoute,
+  AdminIndexRoute: AdminIndexRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
@@ -1957,13 +2102,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
