@@ -124,10 +124,11 @@ const INTENTS: IntentDef[] = [
   },
   {
     keys: ["explorar", "mapa", "ciudad", "cerca de mi", "sitios cerca", "que hay cerca"],
-    reply: "Te abro el mapa de la ciudad.",
-    path: "/explore",
-    audio: "explore",
+    reply: "Aquí tienes el mapa interactivo de playas. Llámame luego si quieres más información.",
+    path: "/playas/mapa",
+    audio: "beach_map",
   },
+
   {
     keys: [
       "planificar ruta", "planificador", "como llego", "como voy a", "llegar a",
