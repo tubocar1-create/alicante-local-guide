@@ -175,6 +175,7 @@ const SUGGESTIONS: Suggestion[] = [
           { label: "🔎 Seleccione su vuelo", action: "flight-picker" },
         ],
       },
+      { label: "🚗 Rent a car", href: "/rent-a-car" },
     ],
   },
 ];
