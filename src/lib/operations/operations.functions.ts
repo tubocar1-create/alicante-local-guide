@@ -13,7 +13,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+// Nota: el panel admin se protege vía PIN (sessionStorage), no por auth real.
+// Esta es la misma convención que las server fns de admin-ai.functions.ts.
 
 // ---------- Schemas ----------
 
