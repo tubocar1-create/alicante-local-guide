@@ -1356,26 +1356,41 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          consents: Json
           created_at: string
           display_name: string | null
           email: string | null
+          first_name: string | null
           id: string
+          last_name: string | null
+          marketing_opt_in: boolean
+          preferences: Json
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
+          consents?: Json
           created_at?: string
           display_name?: string | null
           email?: string | null
+          first_name?: string | null
           id: string
+          last_name?: string | null
+          marketing_opt_in?: boolean
+          preferences?: Json
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
+          consents?: Json
           created_at?: string
           display_name?: string | null
           email?: string | null
+          first_name?: string | null
           id?: string
+          last_name?: string | null
+          marketing_opt_in?: boolean
+          preferences?: Json
           updated_at?: string
         }
         Relationships: []
