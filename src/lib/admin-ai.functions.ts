@@ -273,7 +273,7 @@ export const actUnknownQuery = createServerFn({ method: "POST" })
     await supabaseAdmin.from("agente_unknown_query_actions").insert({
       unknown_query_id: data.id,
       action: data.action,
-      payload,
+      payload: payload as never,
       notes: data.notes ?? null,
     });
 
