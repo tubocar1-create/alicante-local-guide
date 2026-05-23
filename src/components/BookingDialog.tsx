@@ -4,6 +4,7 @@ import { CalendarClock, Loader2, Users, X } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import type { Listing } from "@/lib/overpass-listings";
+import { trackOperationalEvent } from "@/lib/operations/trackOperationalEvent";
 
 const LOCAL_BOOKINGS_KEY = "local_booking_threads_v1";
 
