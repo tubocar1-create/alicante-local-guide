@@ -15,6 +15,7 @@ import {
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { agenteVamosChat } from "@/lib/agente.functions";
+import { logAgentInteraction } from "@/lib/agent/agent-runtime.functions";
 import {
   loadAgenteRoutingCatalog,
   type AgenteIntentRow,
