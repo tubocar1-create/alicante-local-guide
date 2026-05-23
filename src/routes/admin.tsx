@@ -57,6 +57,7 @@ function useAdminManifest() {
 
 const SECTIONS = [
   { to: "/admin", label: "Resumen", icon: LayoutDashboard, exact: true },
+  { to: "/admin/operations", label: "Centro Operativo", icon: Activity },
   { to: "/admin/usuarios", label: "Usuarios", icon: Users },
   { to: "/admin/arquitectura", label: "Arquitectura", icon: Network },
   { to: "/admin/integraciones", label: "Integraciones", icon: PlugZap },

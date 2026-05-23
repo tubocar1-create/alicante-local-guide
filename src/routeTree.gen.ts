@@ -65,6 +65,7 @@ import { Route as AdminUsuariosRouteImport } from './routes/admin.usuarios'
 import { Route as AdminSystemRouteImport } from './routes/admin.system'
 import { Route as AdminSaludRouteImport } from './routes/admin.salud'
 import { Route as AdminPlacesRouteImport } from './routes/admin.places'
+import { Route as AdminOperationsRouteImport } from './routes/admin.operations'
 import { Route as AdminMetricasInternasRouteImport } from './routes/admin.metricas-internas'
 import { Route as AdminMetricasExternasRouteImport } from './routes/admin.metricas-externas'
 import { Route as AdminIntegracionesRouteImport } from './routes/admin.integraciones'
@@ -392,6 +393,11 @@ const AdminPlacesRoute = AdminPlacesRouteImport.update({
   path: '/places',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminOperationsRoute = AdminOperationsRouteImport.update({
+  id: '/operations',
+  path: '/operations',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminMetricasInternasRoute = AdminMetricasInternasRouteImport.update({
   id: '/metricas-internas',
   path: '/metricas-internas',
@@ -664,6 +670,7 @@ export interface FileRoutesByFullPath {
   '/admin/integraciones': typeof AdminIntegracionesRoute
   '/admin/metricas-externas': typeof AdminMetricasExternasRoute
   '/admin/metricas-internas': typeof AdminMetricasInternasRoute
+  '/admin/operations': typeof AdminOperationsRoute
   '/admin/places': typeof AdminPlacesRoute
   '/admin/salud': typeof AdminSaludRoute
   '/admin/system': typeof AdminSystemRoute
@@ -765,6 +772,7 @@ export interface FileRoutesByTo {
   '/admin/integraciones': typeof AdminIntegracionesRoute
   '/admin/metricas-externas': typeof AdminMetricasExternasRoute
   '/admin/metricas-internas': typeof AdminMetricasInternasRoute
+  '/admin/operations': typeof AdminOperationsRoute
   '/admin/places': typeof AdminPlacesRoute
   '/admin/salud': typeof AdminSaludRoute
   '/admin/system': typeof AdminSystemRoute
@@ -870,6 +878,7 @@ export interface FileRoutesById {
   '/admin/integraciones': typeof AdminIntegracionesRoute
   '/admin/metricas-externas': typeof AdminMetricasExternasRoute
   '/admin/metricas-internas': typeof AdminMetricasInternasRoute
+  '/admin/operations': typeof AdminOperationsRoute
   '/admin/places': typeof AdminPlacesRoute
   '/admin/salud': typeof AdminSaludRoute
   '/admin/system': typeof AdminSystemRoute
@@ -976,6 +985,7 @@ export interface FileRouteTypes {
     | '/admin/integraciones'
     | '/admin/metricas-externas'
     | '/admin/metricas-internas'
+    | '/admin/operations'
     | '/admin/places'
     | '/admin/salud'
     | '/admin/system'
@@ -1077,6 +1087,7 @@ export interface FileRouteTypes {
     | '/admin/integraciones'
     | '/admin/metricas-externas'
     | '/admin/metricas-internas'
+    | '/admin/operations'
     | '/admin/places'
     | '/admin/salud'
     | '/admin/system'
@@ -1181,6 +1192,7 @@ export interface FileRouteTypes {
     | '/admin/integraciones'
     | '/admin/metricas-externas'
     | '/admin/metricas-internas'
+    | '/admin/operations'
     | '/admin/places'
     | '/admin/salud'
     | '/admin/system'
@@ -1713,6 +1725,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPlacesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/operations': {
+      id: '/admin/operations'
+      path: '/operations'
+      fullPath: '/admin/operations'
+      preLoaderRoute: typeof AdminOperationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/metricas-internas': {
       id: '/admin/metricas-internas'
       path: '/metricas-internas'
@@ -2068,6 +2087,7 @@ interface AdminRouteChildren {
   AdminIntegracionesRoute: typeof AdminIntegracionesRoute
   AdminMetricasExternasRoute: typeof AdminMetricasExternasRoute
   AdminMetricasInternasRoute: typeof AdminMetricasInternasRoute
+  AdminOperationsRoute: typeof AdminOperationsRoute
   AdminPlacesRoute: typeof AdminPlacesRoute
   AdminSaludRoute: typeof AdminSaludRoute
   AdminSystemRoute: typeof AdminSystemRoute
@@ -2082,6 +2102,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminIntegracionesRoute: AdminIntegracionesRoute,
   AdminMetricasExternasRoute: AdminMetricasExternasRoute,
   AdminMetricasInternasRoute: AdminMetricasInternasRoute,
+  AdminOperationsRoute: AdminOperationsRoute,
   AdminPlacesRoute: AdminPlacesRoute,
   AdminSaludRoute: AdminSaludRoute,
   AdminSystemRoute: AdminSystemRoute,
