@@ -383,6 +383,7 @@ const DOMAINS: DomainSpec[] = [
           "si", "si lo se", "si lo sé", "lo se", "lo sé", "claro", "por supuesto",
           "conozco", "conozco mi bus", "se el bus", "sé el bus", "ya lo se", "ya lo sé",
           "ya se que bus", "ya sé qué bus", "se que bus", "sé qué bus",
+          "afirmativo", "afirmativa", "correcto", "exacto",
         ], path: "action:bus-known-line" },
       { keys: [
           "no", "no se", "no sé", "ayuda", "ayudame", "ayúdame", "no lo se", "no lo sé",
