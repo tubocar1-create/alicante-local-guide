@@ -273,6 +273,10 @@ export type Database = {
           raw_query: string
           resolved: boolean | null
           resolver_type: string | null
+          review_note: string | null
+          review_status: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
           route_origin: string | null
           session_id: string | null
           tokens_input: number | null
@@ -303,6 +307,10 @@ export type Database = {
           raw_query: string
           resolved?: boolean | null
           resolver_type?: string | null
+          review_note?: string | null
+          review_status?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           route_origin?: string | null
           session_id?: string | null
           tokens_input?: number | null
@@ -333,6 +341,10 @@ export type Database = {
           raw_query?: string
           resolved?: boolean | null
           resolver_type?: string | null
+          review_note?: string | null
+          review_status?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           route_origin?: string | null
           session_id?: string | null
           tokens_input?: number | null
