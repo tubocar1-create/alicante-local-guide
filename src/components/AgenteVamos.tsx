@@ -528,7 +528,11 @@ const DOMAINS: DomainSpec[] = [
     audio: "beaches",
     followups: [
       { keys: ["mapa"], path: "/playas/mapa" },
-      { keys: ["listado", "lista", "todas", "cuales", "cuáles", "playas", "playa"], path: "/playas" },
+      { keys: [
+          "si", "sí", "vale", "ok", "okay", "perfecto", "claro", "correcto",
+          "exacto", "afirmativo", "afirmativa", "de acuerdo", "dale", "confirmo",
+          "listado", "lista", "todas", "cuales", "cuáles", "playas", "playa",
+        ], path: "/playas" },
     ],
   },
   {
@@ -910,13 +914,20 @@ function matchFollowup(query: string, domain: DomainSpec): { path: string; label
   for (const f of domain.followups) {
     for (const k of f.keys) {
       const n = normalizeSpeech(k);
-      if (n && query.includes(n) && n.length > bestLen) {
+      const matches = n.includes(" ") || n.length > 3
+        ? query.includes(n)
+        : new RegExp(`(^|\\s)${n}(\\s|$)`).test(query);
+      if (n && matches && n.length > bestLen) {
         best = { path: f.path, label: f.label };
         bestLen = n.length;
       }
     }
   }
   return best;
+}
+
+function isAffirmativeResponse(query: string): boolean {
+  return /^(si|sí|s[ií] claro|vale|ok|okay|perfecto|claro|correcto|exacto|afirmativo|afirmativa|de acuerdo|dale|confirmo)$/i.test(query.trim());
 }
 
 // ─── DB Intents (agente_intents) ──────────────────────────────────────
@@ -1370,6 +1381,8 @@ function localResolve(
 
   // 1) Follow-up dentro de un dominio activo: resolvemos sub-destino.
   if (currentDomain) {
+    const d = DOMAINS.find((x) => x.id === currentDomain);
+
     // 1.bis) Caso especial: estamos esperando que el usuario diga la línea
     // de bus que quiere tomar. Si la frase contiene un código de línea
     // válido (1–3 dígitos opcionalmente con "N" o letra), saltamos directos
@@ -1448,7 +1461,6 @@ function localResolve(
         }
       }
     }
-    const d = DOMAINS.find((x) => x.id === currentDomain);
     const subcategory = matchExistingSubcategory(query, catalog.subcategories[currentDomain]);
     if (subcategory) {
       return {
@@ -1543,6 +1555,14 @@ function localResolve(
           reply,
           path: fuPath,
           audio: intent?.audio ?? d.audio,
+          pendingDomain: null,
+        };
+      }
+      if (d.hubPath && !d.hubPath.startsWith("action:") && isAffirmativeResponse(query)) {
+        return {
+          reply: `Te llevo a ${d.id === "playas" ? "playas" : d.question.toLowerCase()}.`,
+          path: d.hubPath,
+          audio: d.audio,
           pendingDomain: null,
         };
       }
