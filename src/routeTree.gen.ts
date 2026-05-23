@@ -95,6 +95,7 @@ import { Route as AdminAiUnknownQueriesRouteImport } from './routes/admin.ai.unk
 import { Route as AdminAiSupervisionRouteImport } from './routes/admin.ai.supervision'
 import { Route as AdminAiIntentsRouteImport } from './routes/admin.ai.intents'
 import { Route as AdminAiEntitiesRouteImport } from './routes/admin.ai.entities'
+import { Route as AdminAiDubiousRouteImport } from './routes/admin.ai.dubious'
 import { Route as AdminAiCostsRouteImport } from './routes/admin.ai.costs'
 import { Route as AdminAiAnalyticsRouteImport } from './routes/admin.ai.analytics'
 import { Route as OcioCinesIdCarteleraRouteImport } from './routes/ocio_.cines_.$id.cartelera'
@@ -546,6 +547,11 @@ const AdminAiEntitiesRoute = AdminAiEntitiesRouteImport.update({
   path: '/entities',
   getParentRoute: () => AdminAiRoute,
 } as any)
+const AdminAiDubiousRoute = AdminAiDubiousRouteImport.update({
+  id: '/dubious',
+  path: '/dubious',
+  getParentRoute: () => AdminAiRoute,
+} as any)
 const AdminAiCostsRoute = AdminAiCostsRouteImport.update({
   id: '/costs',
   path: '/costs',
@@ -704,6 +710,7 @@ export interface FileRoutesByFullPath {
   '/business/': typeof BusinessIndexRoute
   '/admin/ai/analytics': typeof AdminAiAnalyticsRoute
   '/admin/ai/costs': typeof AdminAiCostsRoute
+  '/admin/ai/dubious': typeof AdminAiDubiousRoute
   '/admin/ai/entities': typeof AdminAiEntitiesRoute
   '/admin/ai/intents': typeof AdminAiIntentsRoute
   '/admin/ai/supervision': typeof AdminAiSupervisionRoute
@@ -806,6 +813,7 @@ export interface FileRoutesByTo {
   '/business': typeof BusinessIndexRoute
   '/admin/ai/analytics': typeof AdminAiAnalyticsRoute
   '/admin/ai/costs': typeof AdminAiCostsRoute
+  '/admin/ai/dubious': typeof AdminAiDubiousRoute
   '/admin/ai/entities': typeof AdminAiEntitiesRoute
   '/admin/ai/intents': typeof AdminAiIntentsRoute
   '/admin/ai/supervision': typeof AdminAiSupervisionRoute
@@ -912,6 +920,7 @@ export interface FileRoutesById {
   '/business/': typeof BusinessIndexRoute
   '/admin/ai/analytics': typeof AdminAiAnalyticsRoute
   '/admin/ai/costs': typeof AdminAiCostsRoute
+  '/admin/ai/dubious': typeof AdminAiDubiousRoute
   '/admin/ai/entities': typeof AdminAiEntitiesRoute
   '/admin/ai/intents': typeof AdminAiIntentsRoute
   '/admin/ai/supervision': typeof AdminAiSupervisionRoute
@@ -1019,6 +1028,7 @@ export interface FileRouteTypes {
     | '/business/'
     | '/admin/ai/analytics'
     | '/admin/ai/costs'
+    | '/admin/ai/dubious'
     | '/admin/ai/entities'
     | '/admin/ai/intents'
     | '/admin/ai/supervision'
@@ -1121,6 +1131,7 @@ export interface FileRouteTypes {
     | '/business'
     | '/admin/ai/analytics'
     | '/admin/ai/costs'
+    | '/admin/ai/dubious'
     | '/admin/ai/entities'
     | '/admin/ai/intents'
     | '/admin/ai/supervision'
@@ -1226,6 +1237,7 @@ export interface FileRouteTypes {
     | '/business/'
     | '/admin/ai/analytics'
     | '/admin/ai/costs'
+    | '/admin/ai/dubious'
     | '/admin/ai/entities'
     | '/admin/ai/intents'
     | '/admin/ai/supervision'
@@ -1935,6 +1947,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAiEntitiesRouteImport
       parentRoute: typeof AdminAiRoute
     }
+    '/admin/ai/dubious': {
+      id: '/admin/ai/dubious'
+      path: '/dubious'
+      fullPath: '/admin/ai/dubious'
+      preLoaderRoute: typeof AdminAiDubiousRouteImport
+      parentRoute: typeof AdminAiRoute
+    }
     '/admin/ai/costs': {
       id: '/admin/ai/costs'
       path: '/costs'
@@ -2060,6 +2079,7 @@ declare module '@tanstack/react-router' {
 interface AdminAiRouteChildren {
   AdminAiAnalyticsRoute: typeof AdminAiAnalyticsRoute
   AdminAiCostsRoute: typeof AdminAiCostsRoute
+  AdminAiDubiousRoute: typeof AdminAiDubiousRoute
   AdminAiEntitiesRoute: typeof AdminAiEntitiesRoute
   AdminAiIntentsRoute: typeof AdminAiIntentsRoute
   AdminAiSupervisionRoute: typeof AdminAiSupervisionRoute
@@ -2070,6 +2090,7 @@ interface AdminAiRouteChildren {
 const AdminAiRouteChildren: AdminAiRouteChildren = {
   AdminAiAnalyticsRoute: AdminAiAnalyticsRoute,
   AdminAiCostsRoute: AdminAiCostsRoute,
+  AdminAiDubiousRoute: AdminAiDubiousRoute,
   AdminAiEntitiesRoute: AdminAiEntitiesRoute,
   AdminAiIntentsRoute: AdminAiIntentsRoute,
   AdminAiSupervisionRoute: AdminAiSupervisionRoute,
