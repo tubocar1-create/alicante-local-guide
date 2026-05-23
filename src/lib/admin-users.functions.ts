@@ -42,6 +42,11 @@ export const listAdminUsers = createServerFn({ method: "POST" })
       id: string;
       email: string | null;
       name: string | null;
+      first_name: string | null;
+      last_name: string | null;
+      consents: Record<string, unknown>;
+      preferences: Record<string, unknown>;
+      marketing_opt_in: boolean;
       created_at: string;
       last_sign_in_at: string | null;
       provider: string | null;
@@ -71,6 +76,11 @@ export const listAdminUsers = createServerFn({ method: "POST" })
           id: u.id,
           email: u.email ?? null,
           name,
+          first_name: null,
+          last_name: null,
+          consents: {},
+          preferences: {},
+          marketing_opt_in: false,
           created_at: u.created_at,
           last_sign_in_at: u.last_sign_in_at ?? null,
           provider:
@@ -83,18 +93,27 @@ export const listAdminUsers = createServerFn({ method: "POST" })
       if (page > 50) break;
     }
 
-    // Enrich missing names from profiles.display_name
-    const missingName = all.filter((u) => !u.name).map((u) => u.id);
-    if (missingName.length) {
+    // Enrich from profiles
+    const ids = all.map((u) => u.id);
+    if (ids.length) {
       const { data: profs } = await supabaseAdmin
         .from("profiles")
-        .select("id,display_name")
-        .in("id", missingName);
+        .select(
+          "id,display_name,first_name,last_name,consents,preferences,marketing_opt_in",
+        )
+        .in("id", ids);
       const byId = new Map(
-        (profs ?? []).map((p) => [p.id as string, p.display_name as string | null]),
+        (profs ?? []).map((p) => [p.id as string, p as Record<string, unknown>]),
       );
       for (const u of all) {
-        if (!u.name) u.name = byId.get(u.id) ?? null;
+        const p = byId.get(u.id);
+        if (!p) continue;
+        if (!u.name) u.name = (p.display_name as string | null) ?? null;
+        u.first_name = (p.first_name as string | null) ?? null;
+        u.last_name = (p.last_name as string | null) ?? null;
+        u.consents = (p.consents as Record<string, unknown>) ?? {};
+        u.preferences = (p.preferences as Record<string, unknown>) ?? {};
+        u.marketing_opt_in = !!p.marketing_opt_in;
       }
     }
 
@@ -111,20 +130,33 @@ export const listAdminUsers = createServerFn({ method: "POST" })
         u.last_sign_in_at &&
         now - new Date(u.last_sign_in_at).getTime() < 30 * DAY,
     ).length;
+    const new_7d = real.filter(
+      (u) => now - new Date(u.created_at).getTime() < 7 * DAY,
+    ).length;
+    const new_24h = real.filter(
+      (u) => now - new Date(u.created_at).getTime() < DAY,
+    ).length;
+    const sortedByCreated = [...real].sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
+    const latest_signup_at = sortedByCreated[0]?.created_at ?? null;
+    const latest_signup_email = sortedByCreated[0]?.email ?? null;
 
     return {
       total: real.length,
       total_with_test: all.length,
       active_7d,
       active_30d,
-      users: real
-        .sort(
-          (a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-        )
-        .slice(0, 500),
+      new_7d,
+      new_24h,
+      latest_signup_at,
+      latest_signup_email,
+      generated_at: new Date().toISOString(),
+      users: sortedByCreated.slice(0, 500),
     };
   });
+
 
 // --- One-off migration: import test_users into auth.users ---
 function randomPassword(): string {
