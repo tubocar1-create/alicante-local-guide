@@ -2118,6 +2118,22 @@ function waitVoices(synth: SpeechSynthesis): Promise<SpeechSynthesisVoice[]> {
   });
 }
 
+function warmSpeechVoices(synth: SpeechSynthesis) {
+  try {
+    const voices = synth.getVoices();
+    if (voices.length) return;
+    synth.onvoiceschanged = () => {
+      try {
+        synth.getVoices();
+      } catch {
+        // Ignore voice warm-up failures.
+      }
+    };
+  } catch {
+    // Ignore voice warm-up failures.
+  }
+}
+
 export async function hablar(
   texto: unknown,
   opts: { onStart?: () => void; onEnd?: () => void } = {},
@@ -2130,8 +2146,7 @@ export async function hablar(
     return;
   }
   const synth = window.speechSynthesis;
-  const voices = await waitVoices(synth);
-  console.log("VOICES:", voices);
+  warmSpeechVoices(synth);
   synth.cancel();
   synth.resume();
   const utterance = new SpeechSynthesisUtterance(String(respuesta));
@@ -2142,9 +2157,6 @@ export async function hablar(
   const voice = pickSpanishVoice(synth);
   if (voice) {
     utterance.voice = voice;
-    console.log("VOICE PICKED:", voice.name, voice.lang);
-  } else {
-    console.warn("No hay voces disponibles para TTS.");
   }
   __vaActiveUtterance = utterance;
   let finished = false;
