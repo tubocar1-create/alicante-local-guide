@@ -195,7 +195,23 @@ function AdminLayout() {
             <NavItem key={s.to} {...s} />
           ))}
         </nav>
-        <div className="p-3 border-t mt-2">
+        <div className="p-3 border-t mt-2 space-y-1">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-start"
+            onClick={refreshAll}
+            disabled={isFetching > 0}
+            title="Actualiza todos los datos visibles en el panel"
+          >
+            <RefreshCw
+              className={cn(
+                "h-4 w-4 mr-2",
+                isFetching > 0 && "animate-spin",
+              )}
+            />
+            {isFetching > 0 ? "Actualizando…" : "Actualizar todo"}
+          </Button>
           <Button variant="ghost" size="sm" className="w-full" onClick={logout}>
             Salir
           </Button>
@@ -220,6 +236,21 @@ function AdminLayout() {
             <MenuIcon className="h-5 w-5" />
           </Button>
           <span className="text-sm font-semibold">Admin</span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="ml-auto"
+            onClick={refreshAll}
+            disabled={isFetching > 0}
+            title="Actualizar todos los datos"
+          >
+            <RefreshCw
+              className={cn(
+                "h-5 w-5",
+                isFetching > 0 && "animate-spin",
+              )}
+            />
+          </Button>
         </div>
         <div className="p-4 md:p-8 max-w-6xl mx-auto">
           <Outlet />
