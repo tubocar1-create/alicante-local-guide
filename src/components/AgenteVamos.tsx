@@ -2945,11 +2945,31 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         }
         // La voz ya se ha lanzado arriba con speak(reply). Aquí sólo
         // gestionamos navegación tardía si procede.
+        finalTarget = target;
       } finally {
         if (!awaitingSummaryRef.current) setLoading(false);
+        // Telemetría fire-and-forget: registra la interacción.
+        // Nunca bloquea la UX y nunca lanza errores al usuario.
+        try {
+          const t1 = typeof performance !== "undefined" ? performance.now() : Date.now();
+          void logInteraction({
+            data: {
+              rawQuery: clean,
+              normalizedQuery: clean.toLowerCase().trim(),
+              resolverType: serverCalled ? "intent_ai" : "intent_keyword",
+              resolved: !!finalTarget,
+              fallbackUsed: serverCalled,
+              latencyMs: Math.round(t1 - t0),
+              routeOrigin: path ?? null,
+              decision: finalTarget ? "navigated" : "answered",
+            },
+          }).catch(() => {});
+        } catch {
+          /* noop */
+        }
       }
     },
-    [msgs, path, navigate, speak, stopListening, bumpIdle, askAgent, onClose],
+    [msgs, path, navigate, speak, stopListening, bumpIdle, askAgent, onClose, logInteraction],
   );
 
   const sendRef = useRef(send);
