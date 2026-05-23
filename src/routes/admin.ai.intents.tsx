@@ -48,7 +48,6 @@ const emptyForm: IntentForm = {
 
 function IntentsPage() {
   const qc = useQueryClient();
-  const { toast } = useToast();
   const q = useQuery(intentsQO());
   const [editing, setEditing] = useState<IntentForm | null>(null);
 
@@ -68,17 +67,17 @@ function IntentsPage() {
         },
       }),
     onSuccess: () => {
-      toast({ title: "Guardado" });
+      toast.success("Guardado");
       setEditing(null);
       qc.invalidateQueries({ queryKey: ["admin-ai", "intents"] });
     },
-    onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const del = useMutation({
     mutationFn: (id: string) => deleteIntent({ data: { pin: ADMIN_PIN, id } }),
     onSuccess: () => {
-      toast({ title: "Eliminado" });
+      toast.success("Eliminado");
       qc.invalidateQueries({ queryKey: ["admin-ai", "intents"] });
     },
   });
