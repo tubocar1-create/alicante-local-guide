@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { supervisionQO } from "@/lib/admin-ai-shared";
+import { supervisionQO, intentsQO } from "@/lib/admin-ai-shared";
 import { submitSupervision } from "@/lib/admin-ai.functions";
 import { ADMIN_PIN } from "@/lib/admin-shared";
 import { toast } from "sonner";
@@ -27,22 +27,33 @@ type Status = "pending" | "approved" | "rejected" | "all";
 function SupervisionPage() {
   const [status, setStatus] = useState<Status>("pending");
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [targetIntent, setTargetIntent] = useState<Record<string, string>>({});
   const qc = useQueryClient();
   const q = useQuery(supervisionQO(status));
+  const intentsQ = useQuery(intentsQO());
 
   const mut = useMutation({
-    mutationFn: (args: { id: string; status: "approved" | "rejected"; notes?: string }) =>
+    mutationFn: (args: {
+      id: string;
+      status: "approved" | "rejected";
+      notes?: string;
+      final_intent?: string;
+      final_keywords?: string[];
+    }) =>
       submitSupervision({
         data: {
           pin: ADMIN_PIN,
           id: args.id,
           status: args.status,
           admin_notes: args.notes,
+          final_intent: args.final_intent,
+          final_keywords: args.final_keywords,
         },
       }),
     onSuccess: () => {
       toast.success("Revisión guardada");
       qc.invalidateQueries({ queryKey: ["admin-ai", "supervision"] });
+      qc.invalidateQueries({ queryKey: ["admin-ai", "intents"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -107,6 +118,28 @@ function SupervisionPage() {
                 ) : null}
                 {r.status === "pending" && (
                   <div className="space-y-2">
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">
+                        Asignar a intent (fase 2 · enrutamiento)
+                      </div>
+                      <Select
+                        value={targetIntent[r.id] ?? ""}
+                        onValueChange={(v) =>
+                          setTargetIntent({ ...targetIntent, [r.id]: v })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona intent destino…" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(intentsQ.data?.intents ?? []).map((i: { key: string; label: string }) => (
+                            <SelectItem key={i.key} value={i.key}>
+                              {i.label} · <span className="text-muted-foreground">{i.key}</span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <Textarea
                       placeholder="Notas (opcional)"
                       value={notes[r.id] ?? ""}
@@ -116,9 +149,20 @@ function SupervisionPage() {
                     <div className="flex gap-2">
                       <Button
                         size="sm"
-                        onClick={() =>
-                          mut.mutate({ id: r.id, status: "approved", notes: notes[r.id] })
-                        }
+                        onClick={() => {
+                          const intent = targetIntent[r.id];
+                          if (!intent) {
+                            toast.error("Selecciona un intent destino antes de aprobar");
+                            return;
+                          }
+                          mut.mutate({
+                            id: r.id,
+                            status: "approved",
+                            notes: notes[r.id],
+                            final_intent: intent,
+                            final_keywords: r.suggested_keywords ?? [r.raw_query],
+                          });
+                        }}
                         disabled={mut.isPending}
                       >
                         Aprobar
@@ -131,7 +175,7 @@ function SupervisionPage() {
                         }
                         disabled={mut.isPending}
                       >
-                        Rechazar
+                        Rechazar (fuera de doctrina)
                       </Button>
                     </div>
                   </div>

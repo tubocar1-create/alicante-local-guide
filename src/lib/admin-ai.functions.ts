@@ -324,6 +324,31 @@ export const submitSupervision = createServerFn({ method: "POST" })
       })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
+
+    // Si se aprueba y se asigna a un intent, fusionar las keywords
+    // sugeridas como alias del intent destino (sin duplicados).
+    if (data.status === "approved" && data.final_intent) {
+      const { data: intent } = await supabaseAdmin
+        .from("agente_intents")
+        .select("id,keywords")
+        .eq("key", data.final_intent)
+        .maybeSingle();
+      if (intent) {
+        const current = (intent.keywords as string[] | null) ?? [];
+        const merged = Array.from(
+          new Set([
+            ...current,
+            ...(data.final_keywords ?? [])
+              .map((k) => k.toLowerCase().trim())
+              .filter(Boolean),
+          ]),
+        );
+        await supabaseAdmin
+          .from("agente_intents")
+          .update({ keywords: merged })
+          .eq("id", intent.id);
+      }
+    }
     return { ok: true };
   });
 
