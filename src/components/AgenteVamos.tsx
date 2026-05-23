@@ -3610,7 +3610,9 @@ export function AgenteVamosFab() {
   const startGreetingFromUserGesture = () => {
     if (voiceBootStartedRef.current) return;
     voiceBootStartedRef.current = true;
-    playGreetingAfterPermission();
+    if (!playGreetingClip(getGreetingText(), playGreetingAfterPermission)) {
+      playGreetingAfterPermission();
+    }
     setShowGreetingButton(false);
   };
 
