@@ -70,13 +70,10 @@ const SECTIONS = [
 ] as const;
 
 const IA_SECTIONS = [
-  { to: "/admin/ai", label: "Resumen IA", icon: Bot, exact: true },
-  { to: "/admin/ai/conversations", label: "Conversaciones", icon: Bot },
-  { to: "/admin/ai/unknown-queries", label: "Consultas sin resolver", icon: Bot },
+  { to: "/admin/ai/correcciones", label: "Correcciones", icon: Bot },
+  { to: "/admin/ai/doctrina", label: "Doctrina", icon: Bot },
+  { to: "/admin/ai/operacion", label: "Operación", icon: Bot },
   { to: "/admin/ai/dubious", label: "Dudosas", icon: Bot },
-  { to: "/admin/ai/supervision", label: "Supervisión humana", icon: Bot },
-  { to: "/admin/ai/intents", label: "Intents", icon: Bot },
-  { to: "/admin/ai/entities", label: "Entidades y alias", icon: Bot },
   { to: "/admin/ai/analytics", label: "Analítica IA", icon: Bot },
   { to: "/admin/ai/costs", label: "Costes IA", icon: Bot },
 ] as const;

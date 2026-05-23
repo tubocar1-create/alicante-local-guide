@@ -36,6 +36,7 @@ import { conversationsQO, intentsQO } from "@/lib/admin-ai-shared";
 import {
   saveAuditVerdict,
   quickResolveDubious,
+  deleteConversationTurns,
   type ConversationTurn,
   type AuditCriteria,
 } from "@/lib/admin-ai.functions";
@@ -48,6 +49,7 @@ import {
   MessageSquare,
   RefreshCw,
   ShieldCheck,
+  Trash2,
   XCircle,
 } from "lucide-react";
 
@@ -213,6 +215,16 @@ export function AuditoriaPage() {
     onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Error"),
   });
 
+  const deleteMut = useMutation({
+    mutationFn: (ids: string[]) =>
+      deleteConversationTurns({ data: { pin: ADMIN_PIN, ids } }),
+    onSuccess: (r) => {
+      toast.success(`Conversación descartada (${r.deleted} turnos)`);
+      qc.invalidateQueries({ queryKey: ["admin-ai"] });
+    },
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Error"),
+  });
+
   const totals = useMemo(() => {
     const turns = conversations.reduce((a, c) => a + c.total_turns, 0);
     const issues = conversations.reduce(
@@ -294,7 +306,7 @@ export function AuditoriaPage() {
                         · {c.route_origin}
                       </span>
                     )}
-                    <div className="ml-auto flex gap-1">
+                    <div className="ml-auto flex items-center gap-1">
                       {c.unresolved_turns > 0 && (
                         <Badge variant="destructive">{c.unresolved_turns} sin resolver</Badge>
                       )}
@@ -304,8 +316,27 @@ export function AuditoriaPage() {
                       {!hasIssues && (
                         <Badge className="bg-emerald-600 hover:bg-emerald-600">ok</Badge>
                       )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                        title="Descartar esta conversación (borra los turnos del log)"
+                        disabled={deleteMut.isPending}
+                        onClick={() => {
+                          if (
+                            window.confirm(
+                              `¿Descartar esta conversación y borrar sus ${c.total_turns} turnos del log? Esta acción no se puede deshacer.`,
+                            )
+                          ) {
+                            deleteMut.mutate(c.turns.map((t) => t.id));
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
                   </div>
+
 
                   <ol className="divide-y">
                     {c.turns.map((t, idx) => {
