@@ -83,7 +83,6 @@ export const logOperationalEvent = createServerFn({ method: "POST" })
 // ---------- Admin: lectura ----------
 
 export const getOperationalKpis = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
   .handler(async () => {
     const now = new Date();
     const startToday = new Date(now);
@@ -135,7 +134,6 @@ export const getOperationalKpis = createServerFn({ method: "GET" })
   });
 
 export const listOperationalEvents = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((input) => ListSchema.parse(input))
   .handler(async ({ data }) => {
     let q = supabaseAdmin
@@ -156,7 +154,6 @@ export const listOperationalEvents = createServerFn({ method: "POST" })
   });
 
 export const getOperationalEvent = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data }) => {
     const { data: event } = await supabaseAdmin
@@ -177,7 +174,6 @@ export const getOperationalEvent = createServerFn({ method: "POST" })
 // ---------- Admin: anotaciones manuales ----------
 
 export const saveOperationalReview = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((input) => ReviewSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { error } = await supabaseAdmin
