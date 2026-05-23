@@ -91,6 +91,11 @@ function isBeachGuidePrompt(text: string) {
   return text === BEACH_GUIDE_PROMPT || (/charla\s+ia|gu[ií]a\s+visual|mapa|mapeo/i.test(text) && BEACH_GUIDE_RE.test(text));
 }
 
+function isShoppingPrompt(text: string) {
+  return /(^|\s)(comprar|compras|compra|tienda|tiendas|comercio|comercios|shopping|mercado|mercadillo|boutique|boutiques)(\s|$)/i.test(text) ||
+    /\b(ir de compras|quiero adquirir|necesito adquirir|centro comercial|centros comerciales|d[oó]nde comprar)\b/i.test(text);
+}
+
 const BEACH_GUIDE_RESPONSE = `La costa alicantina es un buffet libre: castillo arriba, calas con peces curiosos, kilómetros de arena y dunas al sur. Desliza las 17 playas y abre el mapa cuando una te enamore.
 
 [Abrir mapa interactivo](/playas/mapa)`;
