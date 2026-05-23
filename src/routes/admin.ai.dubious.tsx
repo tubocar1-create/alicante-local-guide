@@ -26,13 +26,15 @@ import {
 } from "@/components/ui/sheet";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { dubiousQO } from "@/lib/admin-ai-shared";
+import { dubiousQO, intentsQO } from "@/lib/admin-ai-shared";
 import {
   reviewDubiousInteraction,
+  quickResolveDubious,
   type DubiousRow,
 } from "@/lib/admin-ai.functions";
 import { ADMIN_PIN } from "@/lib/admin-shared";
 import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/admin/ai/dubious")({
   component: DubiousPage,
