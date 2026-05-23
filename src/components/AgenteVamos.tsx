@@ -1149,18 +1149,55 @@ function matchDbIntent(
   let best: AgenteIntentRow | null = null;
   let bestLen = 0;
   for (const it of dbIntents) {
+    const canRoute = Boolean(it.route || it.action);
+    if (!canRoute) continue;
     for (const kw of it.keywords ?? []) {
       const n = normalizeSpeech(kw);
       // Exigimos longitud mínima 4 para evitar que palabras sueltas muy
       // cortas ("ir", "ver"…) disparen un dominio entero.
       if (n.length < 4) continue;
-      if (query.includes(n) && n.length > bestLen) {
+      const betterTie = n.length === bestLen && !best?.route && Boolean(it.route);
+      if (query.includes(n) && (n.length > bestLen || betterTie)) {
         best = it;
         bestLen = n.length;
       }
     }
   }
   return best ? { intent: best, len: bestLen } : null;
+}
+
+function dbIntentToResult(intent: AgenteIntentRow): LocalResult {
+  if (intent.action === "logout") {
+    return {
+      reply: "Cerrando sesión…",
+      audio: "fallback",
+      pendingDomain: null,
+      source: "trained",
+    };
+  }
+  if (intent.route) {
+    return {
+      reply: `Te llevo a ${intent.label.toLowerCase()}.`,
+      path: intent.route,
+      audio: "fallback",
+      pendingDomain: null,
+      source: "trained",
+    };
+  }
+  const domainId = DB_KEY_TO_DOMAIN[normalizeSpeech(intent.key)];
+  if (domainId) {
+    const d = DOMAINS.find((x) => x.id === domainId);
+    if (d) {
+      return { reply: d.question, audio: d.audio, pendingDomain: d.id, source: "trained" };
+    }
+  }
+  return {
+    reply: `Te llevo a ${intent.label.toLowerCase()}.`,
+    path: intent.route ?? undefined,
+    audio: "fallback",
+    pendingDomain: null,
+    source: "trained",
+  };
 }
 
 type LocalResult = {
@@ -1170,6 +1207,7 @@ type LocalResult = {
   pendingDomain?: string | null;
   forwardPrompt?: string;
   openSubmenu?: string;
+  source?: "trained";
 };
 
 // ─── MOTOR CONTEXTUAL URBANO ──────────────────────────────────────────
@@ -1270,6 +1308,13 @@ function localResolve(
   catalog: AgenteRoutingCatalog = EMPTY_ROUTING_CATALOG,
 ): LocalResult {
   const query = normalizeSpeech(text);
+
+  // 0) Correcciones aprobadas en el CPA. Si una frase fue entrenada como
+  // alias de un intent, debe ganar sobre heurísticas antiguas del cliente.
+  const trainedMatch = matchDbIntent(query, catalog.intents);
+  if (trainedMatch && trainedMatch.len >= 8) {
+    return dbIntentToResult(trainedMatch.intent);
+  }
 
   // Dominio activo = prioridad máxima sobre entidades/keywords aisladas.
   // Si el agente acaba de preguntar por TRAM/transporte, respuestas cortas
@@ -2286,7 +2331,6 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   // Carga catálogo real de intents + subcategorías existentes la primera vez que se abre el panel.
   useEffect(() => {
     if (!open) return;
-    if (routingCatalogRef.current.intents.length > 0) return;
     loadCatalog()
       .then((catalog: AgenteRoutingCatalog) => {
         routingCatalogRef.current = catalog ?? EMPTY_ROUTING_CATALOG;
@@ -2641,7 +2685,16 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         const storedDomain = readStoredActiveDomain();
         const activeDomain = pendingDomainRef.current ?? storedDomain ?? routeDomain;
         const priorDomain = activeDomain;
-        const fallback = localResolve(clean, activeDomain, routingCatalogRef.current);
+        let catalogForTurn = routingCatalogRef.current;
+        if (catalogForTurn.intents.length === 0) {
+          try {
+            catalogForTurn = await loadCatalog();
+            routingCatalogRef.current = catalogForTurn ?? EMPTY_ROUTING_CATALOG;
+          } catch {
+            catalogForTurn = EMPTY_ROUTING_CATALOG;
+          }
+        }
+        const fallback = localResolve(clean, activeDomain, catalogForTurn);
         const replyMode = pickAssistantMode(fallback.pendingDomain ?? pendingDomainRef.current ?? null);
         let reply = formatReply(replyMode, fallback.reply);
         let target: string | undefined = fallback.path;
@@ -2714,8 +2767,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         // local ya derivó a una ruta concreta, NO dejamos que el servidor
         // pise esa derivación con una sugerencia de otro dominio.
         const isDomainFollowupResolution = !!priorDomain && !!fallback.path;
+        const isTrainedResolution = fallback.source === "trained";
 
-        if (!isClarifying && !resolvedLineDashboard && !isCineIntent && !isDomainFollowupResolution) {
+        if (!isClarifying && !resolvedLineDashboard && !isCineIntent && !isDomainFollowupResolution && !isTrainedResolution) {
           try {
             serverCalled = true;
             const res = await askAgent({

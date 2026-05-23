@@ -31,6 +31,9 @@ function SupervisionPage() {
   const qc = useQueryClient();
   const q = useQuery(supervisionQO(status));
   const intentsQ = useQuery(intentsQO());
+  const routableIntents = (intentsQ.data?.intents ?? []).filter(
+    (i: { route?: string | null; action?: string | null }) => Boolean(i.route || i.action),
+  );
 
   const mut = useMutation({
     mutationFn: (args: {
@@ -132,7 +135,7 @@ function SupervisionPage() {
                           <SelectValue placeholder="Selecciona intent destino…" />
                         </SelectTrigger>
                         <SelectContent>
-                          {(intentsQ.data?.intents ?? []).map((i: { key: string; label: string }) => (
+                          {routableIntents.map((i: { key: string; label: string }) => (
                             <SelectItem key={i.key} value={i.key}>
                               {i.label} · <span className="text-muted-foreground">{i.key}</span>
                             </SelectItem>
@@ -155,12 +158,23 @@ function SupervisionPage() {
                             toast.error("Selecciona un intent destino antes de aprobar");
                             return;
                           }
+                          const keywords = Array.from(
+                            new Set(
+                              [
+                                ...(r.suggested_keywords ?? []),
+                                r.normalized,
+                                r.raw_query,
+                              ]
+                                .map((k: string | null | undefined) => k?.toLowerCase().trim())
+                                .filter(Boolean) as string[],
+                            ),
+                          );
                           mut.mutate({
                             id: r.id,
                             status: "approved",
                             notes: notes[r.id],
                             final_intent: intent,
-                            final_keywords: r.suggested_keywords ?? [r.raw_query],
+                            final_keywords: keywords,
                           });
                         }}
                         disabled={mut.isPending}

@@ -313,6 +313,13 @@ export const submitSupervision = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     assertPin(data.pin);
+    const { data: supervisionRow, error: getErr } = await supabaseAdmin
+      .from("agente_admin_supervisions")
+      .select("id,raw_query,normalized,suggested_keywords,unknown_query_id")
+      .eq("id", data.id)
+      .single();
+    if (getErr || !supervisionRow) throw new Error(getErr?.message ?? "Supervisión no encontrada");
+
     const { error } = await supabaseAdmin
       .from("agente_admin_supervisions")
       .update({
@@ -328,25 +335,36 @@ export const submitSupervision = createServerFn({ method: "POST" })
     // Si se aprueba y se asigna a un intent, fusionar las keywords
     // sugeridas como alias del intent destino (sin duplicados).
     if (data.status === "approved" && data.final_intent) {
-      const { data: intent } = await supabaseAdmin
+      const fallbackKeywords = [
+        ...(((supervisionRow.suggested_keywords as string[] | null) ?? [])),
+        (supervisionRow.normalized as string | null) ?? "",
+        (supervisionRow.raw_query as string | null) ?? "",
+      ];
+      const trainingKeywords = (data.final_keywords?.length ? data.final_keywords : fallbackKeywords)
+        .map((k) => k.toLowerCase().trim())
+        .filter(Boolean);
+
+      const { data: intent, error: intentErr } = await supabaseAdmin
         .from("agente_intents")
         .select("id,keywords")
         .eq("key", data.final_intent)
         .maybeSingle();
+      if (intentErr) throw new Error(intentErr.message);
+      if (!intent) throw new Error(`Intent destino no encontrado: ${data.final_intent}`);
+
       if (intent) {
         const current = (intent.keywords as string[] | null) ?? [];
         const merged = Array.from(
           new Set([
             ...current,
-            ...(data.final_keywords ?? [])
-              .map((k) => k.toLowerCase().trim())
-              .filter(Boolean),
+            ...trainingKeywords,
           ]),
         );
-        await supabaseAdmin
+        const { error: updateIntentErr } = await supabaseAdmin
           .from("agente_intents")
           .update({ keywords: merged })
           .eq("id", intent.id);
+        if (updateIntentErr) throw new Error(updateIntentErr.message);
       }
     }
     return { ok: true };
