@@ -16,7 +16,7 @@ import {
 import { supervisionQO } from "@/lib/admin-ai-shared";
 import { submitSupervision } from "@/lib/admin-ai.functions";
 import { ADMIN_PIN } from "@/lib/admin-shared";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/ai/supervision")({
   component: SupervisionPage,
