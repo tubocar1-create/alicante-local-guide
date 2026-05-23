@@ -2198,30 +2198,6 @@ export type Database = {
           },
         ]
       }
-      test_users: {
-        Row: {
-          created_at: string
-          email: string
-          id: string
-          name: string
-          surname: string
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          id?: string
-          name: string
-          surname: string
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          id?: string
-          name?: string
-          surname?: string
-        }
-        Relationships: []
-      }
       tram_agencies: {
         Row: {
           agency_email: string | null
