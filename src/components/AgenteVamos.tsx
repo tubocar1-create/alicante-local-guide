@@ -2066,8 +2066,9 @@ const POST_SPEECH_LISTEN_DELAY_MS = 30;
 
 // Voz unificada del agente: español Estados Unidos (es-US) si está disponible.
 const VA_VOICE_LANG = "es-US";
-const VA_VOICE_RATE = 0.8;
+const VA_VOICE_RATE = 1.05;
 const VA_VOICE_PITCH = 0.55;
+
 
 function pickSpanishVoice(synth: SpeechSynthesis) {
   const voices = synth.getVoices();
