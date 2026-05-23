@@ -1,5 +1,6 @@
-import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useLocation, useSearch } from "@tanstack/react-router";
 import { ArrowLeft, MapPin, Waves, Sparkles } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { getMapBeaches, getCoastIntro } from "@/lib/playas-map.functions";
 
 export const Route = createFileRoute("/playas")({
