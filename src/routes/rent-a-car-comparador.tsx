@@ -1,56 +1,128 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Bus, XCircle, Car, Info, Heart } from "lucide-react";
+import { ArrowLeft, Bus, XCircle, Car, Info, Heart, Check } from "lucide-react";
 
 export const Route = createFileRoute("/rent-a-car-comparador")({
   head: () => ({
     meta: [
-      { title: "Comparador Rent a Car Alicante (ALC) — 15 operadoras" },
+      { title: "Comparador Rent a Car Alicante (ALC) — 20 operadoras" },
       {
         name: "description",
         content:
-          "Compara operadoras de alquiler de coches en el aeropuerto de Alicante-Elche: shuttle, horarios, precios, seguro, franquicia y tipo de vehículos.",
+          "Compara 20 operadoras de alquiler de coches y furgonetas en Alicante: shuttle, horarios, precios, seguro, franquicia, flota, transparencia y riesgo.",
       },
     ],
   }),
   component: ComparadorPage,
 });
 
-type PriceTier = "BAJO" | "BAJO-MEDIO" | "MEDIO" | "MEDIO-ALTO" | "ALTO";
+type Level =
+  | "Muy bajo"
+  | "Bajo"
+  | "Medio-bajo"
+  | "Medio"
+  | "Medio-alto"
+  | "Alto"
+  | "Muy alto"
+  | "Baja"
+  | "Media-baja"
+  | "Media"
+  | "Media-alta"
+  | "Alta"
+  | "Muy alta";
+
+type YesNoOpt = "Sí" | "No" | "Opcional" | "Variable" | "Algunas" | "Limitadas" | "Especialista";
 
 type Operator = {
   id: string;
   name: string;
-  airport: string;
-  shuttle: { kind: "shuttle" | "terminal" };
+  profile: string;
+  airport: boolean;
+  shuttle: boolean;
   hours: string;
-  price: PriceTier;
-  insurance: "Sí" | "No" | "Opcional";
-  franchise: "Sí" | "No" | "Opcional";
-  vehicles: number; // # iconos
-  total: number; // €
+  price: Level;
+  insurance: YesNoOpt;
+  franchise: YesNoOpt;
+  vehicles: string;
+  vans: YesNoOpt;
+  renting: YesNoOpt;
+  waitTime: Level;
+  terminalOffice: boolean;
+  transparency: Level;
+  vehicleState: string; // Correcto / Bueno / Muy bueno / Excelente
+  incidentRisk: Level;
 };
 
 const OPERATORS: Operator[] = [
-  { id: "record",   name: "Record Go",   airport: "ALC", shuttle: { kind: "shuttle"  }, hours: "07:00 – 23:00", price: "BAJO",       insurance: "Sí", franchise: "Sí",       vehicles: 2, total: 126.45 },
-  { id: "centauro", name: "Centauro",    airport: "ALC", shuttle: { kind: "shuttle"  }, hours: "07:00 – 23:00", price: "BAJO-MEDIO", insurance: "Sí", franchise: "Sí",       vehicles: 3, total: 132.10 },
-  { id: "goldcar",  name: "Goldcar",     airport: "ALC", shuttle: { kind: "shuttle"  }, hours: "07:30 – 23:00", price: "BAJO",       insurance: "Sí", franchise: "Sí",       vehicles: 2, total: 108.20 },
-  { id: "sixt",     name: "Sixt",        airport: "ALC", shuttle: { kind: "terminal" }, hours: "08:00 – 00:30", price: "ALTO",       insurance: "Sí", franchise: "Opcional", vehicles: 3, total: 178.55 },
-  { id: "wiber",    name: "Wiber",       airport: "ALC", shuttle: { kind: "shuttle"  }, hours: "07:00 – 23:00", price: "BAJO-MEDIO", insurance: "Sí", franchise: "Sí",       vehicles: 2, total: 117.30 },
-  { id: "ok",       name: "OK Mobility", airport: "ALC", shuttle: { kind: "shuttle"  }, hours: "07:00 – 23:00", price: "MEDIO",      insurance: "Sí", franchise: "Opcional", vehicles: 3, total: 122.56 },
-  { id: "hertz",    name: "Hertz",       airport: "ALC", shuttle: { kind: "terminal" }, hours: "08:00 – 00:00", price: "ALTO",       insurance: "Sí", franchise: "Sí",       vehicles: 3, total: 189.90 },
-  { id: "europcar", name: "Europcar",    airport: "ALC", shuttle: { kind: "terminal" }, hours: "07:30 – 00:00", price: "MEDIO-ALTO", insurance: "Sí", franchise: "Sí",       vehicles: 3, total: 164.75 },
+  { id: "goldcar",   name: "Goldcar",            profile: "Low cost masivo",         airport: true,  shuttle: true,  hours: "07:30–23:00", price: "Muy bajo",    insurance: "Opcional", franchise: "Sí",       vehicles: "Turismo, SUV",                  vans: "No",           renting: "No", waitTime: "Alto",       terminalOffice: false, transparency: "Media-baja", vehicleState: "Correcto",  incidentRisk: "Alto" },
+  { id: "centauro",  name: "Centauro",           profile: "Low cost equilibrado",    airport: true,  shuttle: true,  hours: "07:00–23:00", price: "Bajo",        insurance: "Sí",       franchise: "Sí",       vehicles: "Turismo, SUV, familiar",        vans: "Algunas",      renting: "No", waitTime: "Medio",      terminalOffice: false, transparency: "Media",      vehicleState: "Bueno",     incidentRisk: "Medio" },
+  { id: "record",    name: "Record Go",          profile: "Low cost moderno",        airport: true,  shuttle: true,  hours: "07:00–23:00", price: "Bajo",        insurance: "Sí",       franchise: "Sí",       vehicles: "Turismo, SUV, híbridos",        vans: "Limitadas",    renting: "No", waitTime: "Medio-bajo", terminalOffice: false, transparency: "Alta",       vehicleState: "Muy bueno", incidentRisk: "Bajo" },
+  { id: "clickrent", name: "ClickRent",          profile: "Low cost agresivo",       airport: true,  shuttle: true,  hours: "07:00–23:00", price: "Muy bajo",    insurance: "Sí",       franchise: "Sí",       vehicles: "Turismo, SUV",                  vans: "No",           renting: "No", waitTime: "Medio-alto", terminalOffice: false, transparency: "Media-baja", vehicleState: "Correcto",  incidentRisk: "Medio-alto" },
+  { id: "wiber",     name: "Wiber",              profile: "Low cost premiumizado",   airport: true,  shuttle: true,  hours: "07:00–23:00", price: "Medio-bajo",  insurance: "Sí",       franchise: "Sí",       vehicles: "Turismo, SUV",                  vans: "Algunas",      renting: "No", waitTime: "Bajo",       terminalOffice: false, transparency: "Alta",       vehicleState: "Muy bueno", incidentRisk: "Bajo" },
+  { id: "ok",        name: "OK Mobility",        profile: "Flexible/moderno",        airport: true,  shuttle: true,  hours: "07:00–23:00", price: "Medio",       insurance: "Sí",       franchise: "Opcional", vehicles: "Turismo, SUV, premium",         vans: "Sí",           renting: "Sí", waitTime: "Medio",      terminalOffice: false, transparency: "Media-alta", vehicleState: "Muy bueno", incidentRisk: "Medio" },
+  { id: "sixt",      name: "SIXT",               profile: "Premium internacional",   airport: true,  shuttle: false, hours: "08:00–00:30", price: "Alto",        insurance: "Sí",       franchise: "Opcional", vehicles: "Premium, SUV, eléctricos",      vans: "Sí",           renting: "Sí", waitTime: "Bajo",       terminalOffice: true,  transparency: "Muy alta",   vehicleState: "Excelente", incidentRisk: "Muy bajo" },
+  { id: "hertz",     name: "Hertz",              profile: "Premium clásico",         airport: true,  shuttle: false, hours: "08:00–00:00", price: "Alto",        insurance: "Sí",       franchise: "Sí",       vehicles: "Turismo, SUV, premium",         vans: "Sí",           renting: "Sí", waitTime: "Medio-bajo", terminalOffice: true,  transparency: "Alta",       vehicleState: "Muy bueno", incidentRisk: "Bajo" },
+  { id: "europcar",  name: "Europcar",           profile: "Corporativo",             airport: true,  shuttle: false, hours: "07:30–00:00", price: "Medio-alto",  insurance: "Sí",       franchise: "Sí",       vehicles: "Turismo, SUV, furgonetas",      vans: "Sí",           renting: "Sí", waitTime: "Medio",      terminalOffice: true,  transparency: "Alta",       vehicleState: "Bueno",     incidentRisk: "Bajo" },
+  { id: "avis",      name: "Avis",               profile: "Business internacional",  airport: true,  shuttle: false, hours: "08:00–23:45", price: "Alto",        insurance: "Sí",       franchise: "Sí",       vehicles: "Turismo, ejecutivos, SUV",      vans: "Algunas",      renting: "Sí", waitTime: "Bajo",       terminalOffice: true,  transparency: "Alta",       vehicleState: "Muy bueno", incidentRisk: "Bajo" },
+  { id: "enterprise",name: "Enterprise",         profile: "Servicio completo",       airport: true,  shuttle: false, hours: "08:00–22:00", price: "Medio-alto",  insurance: "Sí",       franchise: "Sí",       vehicles: "Turismo, SUV, furgonetas",      vans: "Sí",           renting: "Sí", waitTime: "Bajo",       terminalOffice: true,  transparency: "Muy alta",   vehicleState: "Muy bueno", incidentRisk: "Muy bajo" },
+  { id: "budget",    name: "Budget",             profile: "Económico corporativo",   airport: true,  shuttle: false, hours: "08:00–23:00", price: "Medio",       insurance: "Sí",       franchise: "Sí",       vehicles: "Turismo, compactos",            vans: "Limitadas",    renting: "No", waitTime: "Medio",      terminalOffice: true,  transparency: "Media",      vehicleState: "Bueno",     incidentRisk: "Medio" },
+  { id: "drivalia",  name: "Drivalia",           profile: "Innovador / EV",          airport: true,  shuttle: true,  hours: "07:00–23:00", price: "Medio",       insurance: "Sí",       franchise: "Sí",       vehicles: "Turismo, eléctricos, SUV",      vans: "Sí",           renting: "Sí", waitTime: "Medio",      terminalOffice: false, transparency: "Media-alta", vehicleState: "Muy bueno", incidentRisk: "Bajo" },
+  { id: "firefly",   name: "Firefly",            profile: "Ultra low cost",          airport: true,  shuttle: true,  hours: "08:00–01:00", price: "Muy bajo",    insurance: "Opcional", franchise: "Sí",       vehicles: "Turismo económico",             vans: "No",           renting: "No", waitTime: "Alto",       terminalOffice: false, transparency: "Baja",       vehicleState: "Correcto",  incidentRisk: "Alto" },
+  { id: "victoria",  name: "Victoria Cars",      profile: "Familiar/local",          airport: true,  shuttle: true,  hours: "24h",         price: "Medio",       insurance: "Sí",       franchise: "Opcional", vehicles: "Turismo, monovolumen",          vans: "No",           renting: "No", waitTime: "Bajo",       terminalOffice: false, transparency: "Alta",       vehicleState: "Bueno",     incidentRisk: "Bajo" },
+  { id: "northgate", name: "Northgate",          profile: "Renting profesional",     airport: false, shuttle: false, hours: "08:00–19:00", price: "Medio-alto",  insurance: "Sí",       franchise: "Variable", vehicles: "Industriales, comerciales",     vans: "Especialista", renting: "Sí", waitTime: "Muy bajo",   terminalOffice: false, transparency: "Muy alta",   vehicleState: "Excelente", incidentRisk: "Muy bajo" },
+  { id: "telefurgo", name: "TELEFURGO",          profile: "Comercial/furgo",         airport: false, shuttle: false, hours: "08:00–20:00", price: "Medio",       insurance: "Opcional", franchise: "Sí",       vehicles: "Furgonetas",                    vans: "Especialista", renting: "No", waitTime: "Bajo",       terminalOffice: false, transparency: "Alta",       vehicleState: "Bueno",     incidentRisk: "Bajo" },
+  { id: "covey",     name: "Covey",              profile: "Industrial/renting",      airport: false, shuttle: false, hours: "08:00–19:00", price: "Medio-alto",  insurance: "Sí",       franchise: "Sí",       vehicles: "Furgonetas industriales",       vans: "Especialista", renting: "Sí", waitTime: "Bajo",       terminalOffice: false, transparency: "Alta",       vehicleState: "Muy bueno", incidentRisk: "Bajo" },
+  { id: "demetrio",  name: "Furgonetas Demetrio",profile: "Local comercial",         airport: false, shuttle: false, hours: "08:00–19:00", price: "Medio",       insurance: "Opcional", franchise: "Sí",       vehicles: "Furgonetas y carga",            vans: "Especialista", renting: "No", waitTime: "Bajo",       terminalOffice: false, transparency: "Media",      vehicleState: "Bueno",     incidentRisk: "Bajo" },
+  { id: "primoti",   name: "PRIMOTI",            profile: "Industrial/logística",    airport: false, shuttle: false, hours: "08:00–18:00", price: "Medio-alto",  insurance: "Sí",       franchise: "Sí",       vehicles: "Comerciales e industriales",    vans: "Especialista", renting: "Sí", waitTime: "Bajo",       terminalOffice: false, transparency: "Alta",       vehicleState: "Muy bueno", incidentRisk: "Bajo" },
 ];
 
-const PRICE_STYLES: Record<PriceTier, string> = {
-  "BAJO":       "bg-emerald-100 text-emerald-700",
-  "BAJO-MEDIO": "bg-emerald-50 text-emerald-700",
-  "MEDIO":      "bg-amber-100 text-amber-700",
-  "MEDIO-ALTO": "bg-orange-100 text-orange-700",
-  "ALTO":       "bg-rose-100 text-rose-700",
+const LEVEL_STYLES: Record<string, string> = {
+  "Muy bajo":    "bg-emerald-100 text-emerald-700",
+  "Bajo":        "bg-emerald-50 text-emerald-700",
+  "Medio-bajo":  "bg-lime-100 text-lime-700",
+  "Medio":       "bg-amber-100 text-amber-700",
+  "Medio-alto":  "bg-orange-100 text-orange-700",
+  "Alto":        "bg-rose-100 text-rose-700",
+  "Muy alto":    "bg-rose-200 text-rose-800",
+  "Baja":        "bg-rose-100 text-rose-700",
+  "Media-baja":  "bg-orange-100 text-orange-700",
+  "Media":       "bg-amber-100 text-amber-700",
+  "Media-alta":  "bg-lime-100 text-lime-700",
+  "Alta":        "bg-emerald-50 text-emerald-700",
+  "Muy alta":    "bg-emerald-100 text-emerald-700",
 };
 
-function ShuttleCell({ kind }: { kind: Operator["shuttle"]["kind"] }) {
-  if (kind === "shuttle") {
+// For "Precio" higher = worse (red). For transparency/state higher = better (green).
+// LEVEL_STYLES already maps both name sets.
+
+const STATE_STYLES: Record<string, string> = {
+  "Correcto":  "bg-amber-100 text-amber-700",
+  "Bueno":     "bg-lime-100 text-lime-700",
+  "Muy bueno": "bg-emerald-100 text-emerald-700",
+  "Excelente": "bg-emerald-200 text-emerald-800",
+};
+
+function Badge({ value, styles }: { value: string; styles: Record<string, string> }) {
+  const cls = styles[value] ?? "bg-slate-100 text-slate-700";
+  return (
+    <span className={`inline-block whitespace-nowrap rounded-md px-2 py-0.5 text-[11px] font-semibold ${cls}`}>
+      {value}
+    </span>
+  );
+}
+
+function YesNo({ value }: { value: YesNoOpt | boolean }) {
+  if (value === true) return <Check className="h-4 w-4 text-emerald-600" />;
+  if (value === false) return <XCircle className="h-4 w-4 text-rose-400" />;
+  const tone =
+    value === "Sí"           ? "text-emerald-600" :
+    value === "No"           ? "text-rose-500" :
+    value === "Especialista" ? "text-blue-600 font-semibold" :
+                               "text-amber-600";
+  return <span className={`text-xs font-medium ${tone}`}>{value}</span>;
+}
+
+function ShuttleCell({ value, terminalOffice }: { value: boolean; terminalOffice: boolean }) {
+  if (value) {
     return (
       <div className="flex items-center gap-1.5 text-emerald-600">
         <Bus className="h-4 w-4" />
@@ -64,17 +136,7 @@ function ShuttleCell({ kind }: { kind: Operator["shuttle"]["kind"] }) {
         <XCircle className="h-4 w-4" />
         <span className="text-sm font-medium">No</span>
       </div>
-      <span className="text-[11px] text-muted-foreground">(Terminal)</span>
-    </div>
-  );
-}
-
-function VehicleIcons({ count }: { count: number }) {
-  return (
-    <div className="flex items-center gap-1 text-foreground/70">
-      {Array.from({ length: count }).map((_, i) => (
-        <Car key={i} className="h-4 w-4" />
-      ))}
+      {terminalOffice && <span className="text-[11px] text-muted-foreground">(Terminal)</span>}
     </div>
   );
 }
@@ -82,7 +144,6 @@ function VehicleIcons({ count }: { count: number }) {
 function ComparadorPage() {
   return (
     <div className="h-dvh overflow-y-auto bg-slate-50">
-      {/* Top bar */}
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-3">
@@ -103,34 +164,16 @@ function ComparadorPage() {
               </div>
             </div>
           </div>
-          <nav className="hidden gap-6 text-sm font-medium text-slate-600 md:flex">
-            <span className="border-b-2 border-blue-600 pb-1 text-blue-600">Comparar</span>
-            <span>Guía Alicante</span>
-            <span>Consejos</span>
-            <span>Opiniones</span>
-            <span>Ofertas</span>
-          </nav>
           <button className="hidden items-center gap-1.5 text-sm text-slate-600 md:flex">
             <Heart className="h-4 w-4" /> Favoritos
           </button>
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-5">
-        {/* Search summary */}
-        <section className="mb-5 flex flex-wrap items-center gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-          <Field label="RECOGIDA" value="Alicante Aeropuerto (ALC)" />
-          <Field label="DEVOLUCIÓN" value="Alicante Aeropuerto (ALC)" />
-          <Field label="FECHAS" value="10 Jun 2026 – 17 Jun 2026" sub="7 días" />
-          <Field label="CONDUCTOR" value="30–65 años" />
-          <button className="ml-auto rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-            Modificar búsqueda
-          </button>
-        </section>
-
+      <main className="mx-auto max-w-[1600px] px-4 py-5">
         <div className="flex items-center justify-between">
           <h1 className="flex items-center gap-1.5 text-base font-semibold text-slate-900">
-            {OPERATORS.length} proveedores encontrados
+            {OPERATORS.length} operadoras comparadas
             <Info className="h-4 w-4 text-slate-400" />
           </h1>
           <div className="flex items-center gap-2 text-sm">
@@ -139,29 +182,32 @@ function ComparadorPage() {
               <option>Mejor puntuación</option>
               <option>Precio (asc)</option>
               <option>Precio (desc)</option>
-              <option>Shuttle más rápido</option>
+              <option>Menor tiempo de espera</option>
+              <option>Mayor transparencia</option>
             </select>
           </div>
         </div>
 
-        {/* Table */}
         <div className="mt-3 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <table className="w-full min-w-[1000px] border-separate border-spacing-0 text-sm">
+          <table className="w-full min-w-[1800px] border-separate border-spacing-0 text-sm">
             <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
               <tr>
                 <Th sticky>Operadora</Th>
+                <Th>Perfil</Th>
                 <Th>Aeropuerto</Th>
                 <Th>Shuttle</Th>
                 <Th>Horarios</Th>
-                <Th>Rango de precios</Th>
+                <Th>Precio</Th>
                 <Th>Seguro todo riesgo</Th>
                 <Th>Franquicia</Th>
                 <Th>Tipo de vehículos</Th>
-                <Th className="text-right">
-                  Precio total
-                  <div className="text-[10px] font-normal normal-case text-slate-400">7 días</div>
-                </Th>
-                <Th></Th>
+                <Th>Furgonetas</Th>
+                <Th>Renting/Leasing</Th>
+                <Th>Tiempo espera</Th>
+                <Th>Oficina terminal</Th>
+                <Th>Transparencia</Th>
+                <Th>Estado vehículos</Th>
+                <Th>Riesgo incidencias</Th>
               </tr>
             </thead>
             <tbody>
@@ -169,63 +215,37 @@ function ComparadorPage() {
                 <tr key={op.id} className="group">
                   <Td sticky>
                     <div className="flex items-center gap-3">
-                      <div className="grid h-10 w-20 shrink-0 place-items-center rounded-md border border-dashed border-slate-300 bg-slate-50 text-[10px] font-medium uppercase text-slate-400">
+                      <div className="grid h-10 w-16 shrink-0 place-items-center rounded-md border border-dashed border-slate-300 bg-slate-50 text-[10px] font-medium uppercase text-slate-400">
                         logo
                       </div>
                       <span className="font-semibold text-slate-800">{op.name}</span>
                     </div>
                   </Td>
-                  <Td className="text-slate-700">{op.airport}</Td>
-                  <Td><ShuttleCell kind={op.shuttle.kind} /></Td>
-                  <Td className="text-slate-700">{op.hours}</Td>
-                  <Td>
-                    <span className={`inline-block rounded-md px-2 py-0.5 text-xs font-semibold ${PRICE_STYLES[op.price]}`}>
-                      {op.price}
-                    </span>
-                  </Td>
-                  <Td className="text-slate-700">{op.insurance}</Td>
-                  <Td className="text-slate-700">{op.franchise}</Td>
-                  <Td><VehicleIcons count={op.vehicles} /></Td>
-                  <Td className="text-right font-semibold text-emerald-600">
-                    € {op.total.toFixed(2).replace(".", ",")}
-                  </Td>
-                  <Td>
-                    <div className="flex items-center gap-2">
-                      <button className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700">
-                        Ver oferta
-                      </button>
-                      <button className="text-slate-300 hover:text-rose-500" aria-label="Favorito">
-                        <Heart className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </Td>
+                  <Td className="text-slate-600 text-xs">{op.profile}</Td>
+                  <Td><YesNo value={op.airport} /></Td>
+                  <Td><ShuttleCell value={op.shuttle} terminalOffice={op.terminalOffice} /></Td>
+                  <Td className="text-slate-700 whitespace-nowrap">{op.hours}</Td>
+                  <Td><Badge value={op.price} styles={LEVEL_STYLES} /></Td>
+                  <Td><YesNo value={op.insurance} /></Td>
+                  <Td><YesNo value={op.franchise} /></Td>
+                  <Td className="text-slate-700 text-xs">{op.vehicles}</Td>
+                  <Td><YesNo value={op.vans} /></Td>
+                  <Td><YesNo value={op.renting} /></Td>
+                  <Td><Badge value={op.waitTime} styles={LEVEL_STYLES} /></Td>
+                  <Td><YesNo value={op.terminalOffice} /></Td>
+                  <Td><Badge value={op.transparency} styles={LEVEL_STYLES} /></Td>
+                  <Td><Badge value={op.vehicleState} styles={STATE_STYLES} /></Td>
+                  <Td><Badge value={op.incidentRisk} styles={LEVEL_STYLES} /></Td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        <div className="mt-4 flex justify-center">
-          <button className="rounded-xl border border-slate-200 bg-white px-5 py-2 text-sm font-medium text-blue-600 shadow-sm hover:bg-slate-50">
-            Cargar más resultados ⌄
-          </button>
-        </div>
-
         <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-slate-500">
-          Precios actualizados hoy a las 09:30 <Info className="h-3 w-3" />
+          Datos orientativos. Desliza horizontalmente para ver todas las columnas <Info className="h-3 w-3" />
         </p>
       </main>
-    </div>
-  );
-}
-
-function Field({ label, value, sub }: { label: string; value: string; sub?: string }) {
-  return (
-    <div className="min-w-[160px]">
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{label}</p>
-      <p className="text-sm font-medium text-slate-800">{value}</p>
-      {sub && <p className="text-xs text-slate-500">{sub}</p>}
-      <button className="text-xs text-blue-600 hover:underline">Cambiar</button>
     </div>
   );
 }
@@ -243,7 +263,7 @@ function Th({
     ? "sticky left-0 z-10 bg-slate-50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]"
     : "bg-slate-50/60";
   return (
-    <th className={`border-b border-slate-200 px-4 py-3 font-semibold ${stickyCls} ${className}`}>
+    <th className={`border-b border-slate-200 px-3 py-3 font-semibold whitespace-nowrap ${stickyCls} ${className}`}>
       {children}
     </th>
   );
@@ -262,9 +282,8 @@ function Td({
     ? "sticky left-0 z-10 bg-white shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] group-hover:bg-slate-50"
     : "group-hover:bg-slate-50/50";
   return (
-    <td className={`border-b border-slate-100 px-4 py-3 align-middle ${stickyCls} ${className}`}>
+    <td className={`border-b border-slate-100 px-3 py-3 align-middle ${stickyCls} ${className}`}>
       {children}
     </td>
   );
 }
-
