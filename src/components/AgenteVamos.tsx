@@ -250,7 +250,7 @@ type DomainSpec = {
   followups: { keys: string[]; path: string; label?: string }[];
 };
 
-const SHOPPING_INTRO_REPLY =
+export const SHOPPING_INTRO_REPLY =
   "Genial, aquí te dejo una lista muy amplia de sitios para comprar, pero si lo prefieres te puedo orientar si me dices qué artículo o servicio necesitas.";
 
 const DOMAINS: DomainSpec[] = [
