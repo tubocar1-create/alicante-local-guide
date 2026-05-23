@@ -2668,15 +2668,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         const storedDomain = readStoredActiveDomain();
         const activeDomain = pendingDomainRef.current ?? storedDomain ?? routeDomain;
         const priorDomain = activeDomain;
-        let catalogForTurn = routingCatalogRef.current;
-        if (catalogForTurn.intents.length === 0) {
-          try {
-            catalogForTurn = await loadCatalog();
-            routingCatalogRef.current = catalogForTurn ?? EMPTY_ROUTING_CATALOG;
-          } catch {
-            catalogForTurn = EMPTY_ROUTING_CATALOG;
-          }
-        }
+        const catalogForTurn = routingCatalogRef.current;
         const fallback = localResolve(clean, activeDomain, catalogForTurn);
         const replyMode = pickAssistantMode(fallback.pendingDomain ?? pendingDomainRef.current ?? null);
         let reply = formatReply(replyMode, fallback.reply);
