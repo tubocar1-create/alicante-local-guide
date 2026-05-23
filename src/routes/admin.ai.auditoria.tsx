@@ -36,6 +36,7 @@ import { conversationsQO, intentsQO } from "@/lib/admin-ai-shared";
 import {
   saveAuditVerdict,
   quickResolveDubious,
+  deleteConversationTurns,
   type ConversationTurn,
   type AuditCriteria,
 } from "@/lib/admin-ai.functions";
@@ -48,6 +49,7 @@ import {
   MessageSquare,
   RefreshCw,
   ShieldCheck,
+  Trash2,
   XCircle,
 } from "lucide-react";
 
