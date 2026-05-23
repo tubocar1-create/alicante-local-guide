@@ -718,6 +718,48 @@ export const reviewDubiousInteraction = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+// ---------------- Doctrine audit (per turn) ----------------
+// Guarda la auditoría de un turno contra los 5 criterios de la doctrina
+// + la fase detectada (1..4) + veredicto global. Es SOLO análisis: no
+// modifica intents/keywords. Para aplicar correcciones se usa
+// quickResolveDubious.
+
+const CriteriaScore = z.enum(["ok", "warn", "bad", "na"]);
+const CriteriaSchema = z.object({
+  philosophy: CriteriaScore,
+  intent: CriteriaScore,
+  context: CriteriaScore,
+  route: CriteriaScore,
+  endpoint: CriteriaScore,
+});
+export type AuditCriteria = z.infer<typeof CriteriaSchema>;
+
+export const saveAuditVerdict = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    PinSchema.extend({
+      id: z.string().uuid(),
+      phase: z.number().int().min(1).max(4),
+      criteria: CriteriaSchema,
+      verdict: z.enum(["ok", "adjust", "critical"]),
+      note: z.string().max(2000).optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    assertPin(data.pin);
+    const { error } = await supabaseAdmin
+      .from("agente_learning_log")
+      .update({
+        audit_phase: data.phase,
+        audit_criteria: data.criteria,
+        audit_verdict: data.verdict,
+        audit_note: data.note ?? null,
+        audited_at: new Date().toISOString(),
+      })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
 // ---------------- Conversations (turn-by-turn replay) ----------------
 // Agrupa las filas de agente_learning_log en "conversaciones":
 //  - Si dos filas comparten session_id  → misma conversación.
@@ -742,6 +784,10 @@ export type ConversationTurn = {
   reviewed_at: string | null;
   review_status: string | null;
   review_note: string | null;
+  audit_phase: number | null;
+  audit_verdict: string | null;
+  audit_note: string | null;
+  audited_at: string | null;
   gap_ms: number | null; // ms desde el turno anterior (null en el primero)
 };
 
@@ -776,7 +822,7 @@ export const listAgentConversations = createServerFn({ method: "POST" })
     const { data: rows, error } = await supabaseAdmin
       .from("agente_learning_log")
       .select(
-        "id,created_at,session_id,raw_query,detected_intent,resolver_type,resolved,fallback_used,failure_reason,latency_ms,decision,route_origin,notes,estimated_cost,reviewed_at,review_status,review_note",
+        "id,created_at,session_id,raw_query,detected_intent,resolver_type,resolved,fallback_used,failure_reason,latency_ms,decision,route_origin,notes,estimated_cost,reviewed_at,review_status,review_note,audit_phase,audit_verdict,audit_note,audited_at",
       )
       .gte("created_at", since)
       .order("created_at", { ascending: true })
@@ -853,6 +899,10 @@ export const listAgentConversations = createServerFn({ method: "POST" })
         reviewed_at: (r.reviewed_at as string | null) ?? null,
         review_status: (r.review_status as string | null) ?? null,
         review_note: (r.review_note as string | null) ?? null,
+        audit_phase: (r.audit_phase as number | null) ?? null,
+        audit_verdict: (r.audit_verdict as string | null) ?? null,
+        audit_note: (r.audit_note as string | null) ?? null,
+        audited_at: (r.audited_at as string | null) ?? null,
         gap_ms: gapMs,
       });
       convo.total_turns += 1;

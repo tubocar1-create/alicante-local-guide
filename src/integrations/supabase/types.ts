@@ -251,6 +251,12 @@ export type Database = {
       agente_learning_log: {
         Row: {
           added_keywords: string[]
+          audit_criteria: Json | null
+          audit_note: string | null
+          audit_phase: number | null
+          audit_verdict: string | null
+          audited_at: string | null
+          audited_by: string | null
           clicked_result: string | null
           confidence: number | null
           conversion_event: string | null
@@ -285,6 +291,12 @@ export type Database = {
         }
         Insert: {
           added_keywords?: string[]
+          audit_criteria?: Json | null
+          audit_note?: string | null
+          audit_phase?: number | null
+          audit_verdict?: string | null
+          audited_at?: string | null
+          audited_by?: string | null
           clicked_result?: string | null
           confidence?: number | null
           conversion_event?: string | null
@@ -319,6 +331,12 @@ export type Database = {
         }
         Update: {
           added_keywords?: string[]
+          audit_criteria?: Json | null
+          audit_note?: string | null
+          audit_phase?: number | null
+          audit_verdict?: string | null
+          audited_at?: string | null
+          audited_by?: string | null
           clicked_result?: string | null
           confidence?: number | null
           conversion_event?: string | null

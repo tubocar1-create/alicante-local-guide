@@ -93,12 +93,15 @@ import { Route as ApiPublicBookingCreateRouteImport } from './routes/api/public/
 import { Route as ApiPublicAenaFlightsRouteImport } from './routes/api/public/aena-flights'
 import { Route as AdminAiUnknownQueriesRouteImport } from './routes/admin.ai.unknown-queries'
 import { Route as AdminAiSupervisionRouteImport } from './routes/admin.ai.supervision'
+import { Route as AdminAiOperacionRouteImport } from './routes/admin.ai.operacion'
 import { Route as AdminAiIntentsRouteImport } from './routes/admin.ai.intents'
+import { Route as AdminAiEntrenamientoRouteImport } from './routes/admin.ai.entrenamiento'
 import { Route as AdminAiEntitiesRouteImport } from './routes/admin.ai.entities'
 import { Route as AdminAiDubiousRouteImport } from './routes/admin.ai.dubious'
 import { Route as AdminAiDoctrinaRouteImport } from './routes/admin.ai.doctrina'
 import { Route as AdminAiCostsRouteImport } from './routes/admin.ai.costs'
 import { Route as AdminAiConversationsRouteImport } from './routes/admin.ai.conversations'
+import { Route as AdminAiAuditoriaRouteImport } from './routes/admin.ai.auditoria'
 import { Route as AdminAiAnalyticsRouteImport } from './routes/admin.ai.analytics'
 import { Route as OcioCinesIdCarteleraRouteImport } from './routes/ocio_.cines_.$id.cartelera'
 import { Route as ApiPublicTramValidOriginsRouteImport } from './routes/api/public/tram/valid-origins'
@@ -539,9 +542,19 @@ const AdminAiSupervisionRoute = AdminAiSupervisionRouteImport.update({
   path: '/supervision',
   getParentRoute: () => AdminAiRoute,
 } as any)
+const AdminAiOperacionRoute = AdminAiOperacionRouteImport.update({
+  id: '/operacion',
+  path: '/operacion',
+  getParentRoute: () => AdminAiRoute,
+} as any)
 const AdminAiIntentsRoute = AdminAiIntentsRouteImport.update({
   id: '/intents',
   path: '/intents',
+  getParentRoute: () => AdminAiRoute,
+} as any)
+const AdminAiEntrenamientoRoute = AdminAiEntrenamientoRouteImport.update({
+  id: '/entrenamiento',
+  path: '/entrenamiento',
   getParentRoute: () => AdminAiRoute,
 } as any)
 const AdminAiEntitiesRoute = AdminAiEntitiesRouteImport.update({
@@ -567,6 +580,11 @@ const AdminAiCostsRoute = AdminAiCostsRouteImport.update({
 const AdminAiConversationsRoute = AdminAiConversationsRouteImport.update({
   id: '/conversations',
   path: '/conversations',
+  getParentRoute: () => AdminAiRoute,
+} as any)
+const AdminAiAuditoriaRoute = AdminAiAuditoriaRouteImport.update({
+  id: '/auditoria',
+  path: '/auditoria',
   getParentRoute: () => AdminAiRoute,
 } as any)
 const AdminAiAnalyticsRoute = AdminAiAnalyticsRouteImport.update({
@@ -721,12 +739,15 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/business/': typeof BusinessIndexRoute
   '/admin/ai/analytics': typeof AdminAiAnalyticsRoute
+  '/admin/ai/auditoria': typeof AdminAiAuditoriaRoute
   '/admin/ai/conversations': typeof AdminAiConversationsRoute
   '/admin/ai/costs': typeof AdminAiCostsRoute
   '/admin/ai/doctrina': typeof AdminAiDoctrinaRoute
   '/admin/ai/dubious': typeof AdminAiDubiousRoute
   '/admin/ai/entities': typeof AdminAiEntitiesRoute
+  '/admin/ai/entrenamiento': typeof AdminAiEntrenamientoRoute
   '/admin/ai/intents': typeof AdminAiIntentsRoute
+  '/admin/ai/operacion': typeof AdminAiOperacionRoute
   '/admin/ai/supervision': typeof AdminAiSupervisionRoute
   '/admin/ai/unknown-queries': typeof AdminAiUnknownQueriesRoute
   '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
@@ -826,12 +847,15 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/business': typeof BusinessIndexRoute
   '/admin/ai/analytics': typeof AdminAiAnalyticsRoute
+  '/admin/ai/auditoria': typeof AdminAiAuditoriaRoute
   '/admin/ai/conversations': typeof AdminAiConversationsRoute
   '/admin/ai/costs': typeof AdminAiCostsRoute
   '/admin/ai/doctrina': typeof AdminAiDoctrinaRoute
   '/admin/ai/dubious': typeof AdminAiDubiousRoute
   '/admin/ai/entities': typeof AdminAiEntitiesRoute
+  '/admin/ai/entrenamiento': typeof AdminAiEntrenamientoRoute
   '/admin/ai/intents': typeof AdminAiIntentsRoute
+  '/admin/ai/operacion': typeof AdminAiOperacionRoute
   '/admin/ai/supervision': typeof AdminAiSupervisionRoute
   '/admin/ai/unknown-queries': typeof AdminAiUnknownQueriesRoute
   '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
@@ -935,12 +959,15 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/business/': typeof BusinessIndexRoute
   '/admin/ai/analytics': typeof AdminAiAnalyticsRoute
+  '/admin/ai/auditoria': typeof AdminAiAuditoriaRoute
   '/admin/ai/conversations': typeof AdminAiConversationsRoute
   '/admin/ai/costs': typeof AdminAiCostsRoute
   '/admin/ai/doctrina': typeof AdminAiDoctrinaRoute
   '/admin/ai/dubious': typeof AdminAiDubiousRoute
   '/admin/ai/entities': typeof AdminAiEntitiesRoute
+  '/admin/ai/entrenamiento': typeof AdminAiEntrenamientoRoute
   '/admin/ai/intents': typeof AdminAiIntentsRoute
+  '/admin/ai/operacion': typeof AdminAiOperacionRoute
   '/admin/ai/supervision': typeof AdminAiSupervisionRoute
   '/admin/ai/unknown-queries': typeof AdminAiUnknownQueriesRoute
   '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
@@ -1045,12 +1072,15 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/business/'
     | '/admin/ai/analytics'
+    | '/admin/ai/auditoria'
     | '/admin/ai/conversations'
     | '/admin/ai/costs'
     | '/admin/ai/doctrina'
     | '/admin/ai/dubious'
     | '/admin/ai/entities'
+    | '/admin/ai/entrenamiento'
     | '/admin/ai/intents'
+    | '/admin/ai/operacion'
     | '/admin/ai/supervision'
     | '/admin/ai/unknown-queries'
     | '/api/public/aena-flights'
@@ -1150,12 +1180,15 @@ export interface FileRouteTypes {
     | '/admin'
     | '/business'
     | '/admin/ai/analytics'
+    | '/admin/ai/auditoria'
     | '/admin/ai/conversations'
     | '/admin/ai/costs'
     | '/admin/ai/doctrina'
     | '/admin/ai/dubious'
     | '/admin/ai/entities'
+    | '/admin/ai/entrenamiento'
     | '/admin/ai/intents'
+    | '/admin/ai/operacion'
     | '/admin/ai/supervision'
     | '/admin/ai/unknown-queries'
     | '/api/public/aena-flights'
@@ -1258,12 +1291,15 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/business/'
     | '/admin/ai/analytics'
+    | '/admin/ai/auditoria'
     | '/admin/ai/conversations'
     | '/admin/ai/costs'
     | '/admin/ai/doctrina'
     | '/admin/ai/dubious'
     | '/admin/ai/entities'
+    | '/admin/ai/entrenamiento'
     | '/admin/ai/intents'
+    | '/admin/ai/operacion'
     | '/admin/ai/supervision'
     | '/admin/ai/unknown-queries'
     | '/api/public/aena-flights'
@@ -1957,11 +1993,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAiSupervisionRouteImport
       parentRoute: typeof AdminAiRoute
     }
+    '/admin/ai/operacion': {
+      id: '/admin/ai/operacion'
+      path: '/operacion'
+      fullPath: '/admin/ai/operacion'
+      preLoaderRoute: typeof AdminAiOperacionRouteImport
+      parentRoute: typeof AdminAiRoute
+    }
     '/admin/ai/intents': {
       id: '/admin/ai/intents'
       path: '/intents'
       fullPath: '/admin/ai/intents'
       preLoaderRoute: typeof AdminAiIntentsRouteImport
+      parentRoute: typeof AdminAiRoute
+    }
+    '/admin/ai/entrenamiento': {
+      id: '/admin/ai/entrenamiento'
+      path: '/entrenamiento'
+      fullPath: '/admin/ai/entrenamiento'
+      preLoaderRoute: typeof AdminAiEntrenamientoRouteImport
       parentRoute: typeof AdminAiRoute
     }
     '/admin/ai/entities': {
@@ -1997,6 +2047,13 @@ declare module '@tanstack/react-router' {
       path: '/conversations'
       fullPath: '/admin/ai/conversations'
       preLoaderRoute: typeof AdminAiConversationsRouteImport
+      parentRoute: typeof AdminAiRoute
+    }
+    '/admin/ai/auditoria': {
+      id: '/admin/ai/auditoria'
+      path: '/auditoria'
+      fullPath: '/admin/ai/auditoria'
+      preLoaderRoute: typeof AdminAiAuditoriaRouteImport
       parentRoute: typeof AdminAiRoute
     }
     '/admin/ai/analytics': {
@@ -2116,12 +2173,15 @@ declare module '@tanstack/react-router' {
 
 interface AdminAiRouteChildren {
   AdminAiAnalyticsRoute: typeof AdminAiAnalyticsRoute
+  AdminAiAuditoriaRoute: typeof AdminAiAuditoriaRoute
   AdminAiConversationsRoute: typeof AdminAiConversationsRoute
   AdminAiCostsRoute: typeof AdminAiCostsRoute
   AdminAiDoctrinaRoute: typeof AdminAiDoctrinaRoute
   AdminAiDubiousRoute: typeof AdminAiDubiousRoute
   AdminAiEntitiesRoute: typeof AdminAiEntitiesRoute
+  AdminAiEntrenamientoRoute: typeof AdminAiEntrenamientoRoute
   AdminAiIntentsRoute: typeof AdminAiIntentsRoute
+  AdminAiOperacionRoute: typeof AdminAiOperacionRoute
   AdminAiSupervisionRoute: typeof AdminAiSupervisionRoute
   AdminAiUnknownQueriesRoute: typeof AdminAiUnknownQueriesRoute
   AdminAiIndexRoute: typeof AdminAiIndexRoute
@@ -2129,12 +2189,15 @@ interface AdminAiRouteChildren {
 
 const AdminAiRouteChildren: AdminAiRouteChildren = {
   AdminAiAnalyticsRoute: AdminAiAnalyticsRoute,
+  AdminAiAuditoriaRoute: AdminAiAuditoriaRoute,
   AdminAiConversationsRoute: AdminAiConversationsRoute,
   AdminAiCostsRoute: AdminAiCostsRoute,
   AdminAiDoctrinaRoute: AdminAiDoctrinaRoute,
   AdminAiDubiousRoute: AdminAiDubiousRoute,
   AdminAiEntitiesRoute: AdminAiEntitiesRoute,
+  AdminAiEntrenamientoRoute: AdminAiEntrenamientoRoute,
   AdminAiIntentsRoute: AdminAiIntentsRoute,
+  AdminAiOperacionRoute: AdminAiOperacionRoute,
   AdminAiSupervisionRoute: AdminAiSupervisionRoute,
   AdminAiUnknownQueriesRoute: AdminAiUnknownQueriesRoute,
   AdminAiIndexRoute: AdminAiIndexRoute,
