@@ -1381,17 +1381,6 @@ function localResolve(
 
   // 1) Follow-up dentro de un dominio activo: resolvemos sub-destino.
   if (currentDomain) {
-    const d = DOMAINS.find((x) => x.id === currentDomain);
-
-    if (d?.hubPath && isAffirmativeResponse(query)) {
-      return {
-        reply: `Te llevo a ${d.id === "playas" ? "playas" : d.question.toLowerCase()}.`,
-        path: d.hubPath,
-        audio: d.audio,
-        pendingDomain: null,
-      };
-    }
-
     // 1.bis) Caso especial: estamos esperando que el usuario diga la línea
     // de bus que quiere tomar. Si la frase contiene un código de línea
     // válido (1–3 dígitos opcionalmente con "N" o letra), saltamos directos
@@ -1564,6 +1553,14 @@ function localResolve(
           reply,
           path: fuPath,
           audio: intent?.audio ?? d.audio,
+          pendingDomain: null,
+        };
+      }
+      if (d.hubPath && !d.hubPath.startsWith("action:") && isAffirmativeResponse(query)) {
+        return {
+          reply: `Te llevo a ${d.id === "playas" ? "playas" : d.question.toLowerCase()}.`,
+          path: d.hubPath,
+          audio: d.audio,
           pendingDomain: null,
         };
       }
