@@ -1085,6 +1085,7 @@ export function ChatScreen() {
         {composerMode === "voice" ? (
           <div className="mx-auto flex max-w-2xl flex-col items-center gap-2">
             <button
+              onPointerDown={() => window.dispatchEvent(new Event("vamos:prime-voice"))}
               onClick={() => window.dispatchEvent(new Event("vamos:open"))}
               aria-label="Hablar con Agente Vamos"
               className="group relative flex h-20 w-20 items-center justify-center rounded-full transition active:scale-95"
