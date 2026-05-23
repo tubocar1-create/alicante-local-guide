@@ -3641,6 +3641,8 @@ export function AgenteVamosFab() {
   useEffect(() => {
     if (hidden) return;
     if (typeof window === "undefined") return;
+    if (window.speechSynthesis) warmSpeechVoices(window.speechSynthesis);
+    primeSpanishUtterances();
     try {
       if (window.sessionStorage.getItem(GREETING_SESSION_KEY) === "1") {
         greetingPlayedRef.current = true;
