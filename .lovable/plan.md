@@ -1,95 +1,73 @@
-# Motor contextual urbano para AgenteVamos
+## Centro de observación y entrenamiento del Agente IA
 
-Refactor del agente para que actúe como orquestador contextual, no como buscador de keywords. Solo se toca la lógica/UI del agente — **no se crean ni modifican páginas** (regla de oro del proyecto: el agente navega sobre la estructura existente).
+Transformaré `/admin` añadiendo una nueva sección `/admin/ai` con 7 subrutas, sin tocar las secciones existentes (Resumen, Usuarios, Arquitectura, Integraciones, BD, Métricas). Reutilizo el sidebar, el gate por PIN y los helpers de `admin-shared.ts`.
 
-## Alcance
+### 1. Base de datos (migración)
 
-Archivos a modificar:
-- `src/components/AgenteVamos.tsx` — toda la lógica de detección, conversación y navegación.
+Ampliar `agente_learning_log` (nullable, sin romper inserts actuales):
+- `normalized_query`, `detected_intent`, `intent_confidence numeric`
+- `resolver_type text`, `resolved boolean`, `fallback_used boolean`
+- `failure_reason text` (enum lógico: `NO_INTENT_MATCH | LOW_CONFIDENCE | EMPTY_RESULTS | API_FAILURE | ENTITY_AMBIGUOUS | OUT_OF_SCOPE`)
+- `latency_ms int`, `model_used text`, `tokens_input int`, `tokens_output int`, `estimated_cost numeric`
+- `clicked_result text`, `conversion_event text`
+- `route_origin text`, `geo_context jsonb`, `session_id text`
 
-Sin cambios en: rutas, dashboards, supabase, intents en BD.
+Política RLS: mantener "admins read" y añadir INSERT vía service-role (server fn) — no se abre a `anon`.
 
-## Modelo de decisión (por turno)
+Índices: `(created_at desc)`, `(failure_reason)`, `(detected_intent)`, `(session_id)`.
 
-Antes de responder, el agente calcula un objeto interno:
+Tabla nueva `agente_unknown_query_actions` para trazar acciones de la cola (resuelta/ignorada/spam/fusionada/promovida-a-intent).
+
+Ampliar `agente_admin_supervisions` solo si falta algo (ya tiene casi todo).
+
+### 2. Helper de telemetría
+
+`src/lib/agent/logAgentLearning.ts` — wrapper sobre `supabaseAdmin` para registrar una interacción completa (input + output + métricas + coste). Server-only. Calcula `estimated_cost` con tabla de tarifas por modelo.
+
+Integración:
+- `supabase/functions/chat/index.ts` — registrar al final del turno.
+- Resolvers del agente (`src/lib/agente.functions.ts`, `agente-intents.functions.ts`) — registrar matches/fallbacks.
+
+### 3. Server functions admin (`src/lib/admin-ai.functions.ts`)
+
+Todas con `requireSupabaseAuth` + check `has_role(admin)`:
+- `getAiOverview` — KPIs agregados (totals, resolution rate, fallback rate, latencia, coste, top intents/failures).
+- `getAiTimeseries({ days })` — series para gráficas.
+- `listUnknownQueries({ status, search })`
+- `actUnknownQuery({ id, action, payload })` — promover, ignorar, spam, fusionar, crear FAQ.
+- `listSupervisionItems({ status })`
+- `submitSupervision({ id, correction })`
+- CRUD `listIntents/upsertIntent/deleteIntent` sobre `agente_intents` + `agente_faqs`.
+- CRUD `listEntities/upsertEntity` sobre `agente_proper_nouns`.
+- `getAiAnalytics`, `getAiCosts`.
+
+### 4. UI — 7 subrutas
+
+Layout: reutilizo `admin.tsx` sidebar añadiendo grupo "Agente IA" con 7 entradas.
 
 ```
-{
-  domain:        'transporte' | 'salud' | 'salud_general' | 'comer' | 'dormir'
-               | 'playas' | 'ocio' | 'fiestas' | 'compras' | 'mapa'
-               | 'clima' | 'qr' | 'perfil' | null,
-  intentConfidence: 0..1,
-  userState:    'apurado' | 'relajado' | 'explorando' | 'cansado'
-              | 'perdido' | 'enfermo' | null,
-  assistantMode:'operativo' | 'empatico' | 'inspiracional'
-              | 'social' | 'practico' | 'neutro',
-  uiAction:     'openDomain' | 'openSubmenu' | 'openEndpoint'
-              | 'askClarification' | 'none',
-}
+src/routes/admin.ai.tsx                 (layout con subnav opcional + Outlet)
+src/routes/admin.ai.overview.tsx        Dashboard: KPI cards + gráficas (recharts ya en uso)
+src/routes/admin.ai.unknown-queries.tsx Tabla filtrable + acciones rápidas
+src/routes/admin.ai.supervision.tsx     Cards revisables con acciones
+src/routes/admin.ai.intents.tsx         CRUD intents/FAQs
+src/routes/admin.ai.entities.tsx        CRUD entidades/alias
+src/routes/admin.ai.analytics.tsx       Rankings y conversiones
+src/routes/admin.ai.costs.tsx           Coste por día/modelo/intent
 ```
 
-`uiAction` se resuelve así:
-- `intentConfidence ≥ 0.80` y endpoint identificable → `openEndpoint` (navegación directa).
-- `domain` claro pero subcategoría ambigua → `openSubmenu` (mostrar opciones del dominio en el chat, sin navegar).
-- Solo dominio detectado → `openDomain`.
-- Nada claro → `askClarification` (conversar primero).
+Estilo "centro de control": cards con badges de estado (verde/ámbar/rojo), tablas con filtros, botones de acción inline, tooltips explicativos en lenguaje no técnico. Usa los componentes shadcn ya existentes (`Card`, `Table`, `Badge`, `Button`, `Dialog`, `Select`).
 
-## Reglas duras
+### Detalles técnicos
 
-1. **Hard-block sanitario**: si el mensaje contiene `dolor, fiebre, mareo, mal, enfermo, cansado, herida, síntoma(s), náuseas, vómito, sangre, urgencia`, forzar `domain = 'salud_general'`, `userState = 'enfermo'`, `assistantMode = 'empatico'`. Prohibido navegar directo a especialista/hospital/traumatología. Pregunta obligada: "¿Necesitas hospital, farmacia, urgencias o especialista?".
-2. **No first-keyword-wins**: una palabra suelta nunca dispara endpoint específico. Se exige al menos (verbo de intención + sustantivo) o número de línea concreto, etc.
-3. **Dominios primero**: nunca saltar a subcategoría sin dominio explícito y confianza ≥ 0.80.
-4. **Subcategorías válidas solo con claridad explícita**: ej. "línea 12", "Hotel Meliá", "dermatólogo".
+- TypeScript strict, sin `any`.
+- Cada server fn devuelve DTO plano (cumple regla de TanStack).
+- Comentarios JSDoc en helpers y server fns.
+- `queryOptions` con `staleTime: 30min` para overview (consistente con admin actual), `5min` para colas activas.
+- No se modifica `client.ts`, `types.ts`, ni se crean edge functions nuevas (se reutiliza la `chat` existente solo para instrumentarla).
+- Migración nullable + defaults seguros → no rompe el insert actual desde `chat`.
 
-## Tonos por dominio (assistantMode)
+### Fuera de alcance (lo aviso)
 
-- transporte → operativo, frases cortas, sin floritura.
-- salud / salud_general → empático, calmado, guiado.
-- playas → inspiracional, relajado.
-- fiestas → dinámico, social.
-- compras → práctico, directo.
-- resto → neutro.
-
-El tono solo afecta el texto que devuelve el agente, no la UI.
-
-## Flujos de ejemplo (deterministas)
-
-- "quiero tomar el bus" → transporte, conf 0.55 → askClarification: "¿Bus urbano, TRAM o interurbano?".
-- "quiero línea 12" → transporte, conf 0.95 → openEndpoint `/bus/dashboard/12`.
-- "me siento mal" → hard-block → salud_general → askClarification con 4 opciones.
-- "quiero fiesta" → fiestas, conf 0.6 → askClarification: "¿Pubs, terraza, discoteca o música en vivo?".
-- "farmacia cerca" → salud, conf 0.9 → openEndpoint `/farmacias`.
-- "Hotel Meliá" → dormir, conf 0.9 → abrir el hotel si se resuelve, si no, listado.
-
-## Detalles técnicos
-
-1. **Nuevo módulo interno en `AgenteVamos.tsx`**:
-   - `detectDomain(text)` → `{domain, confidence}` con tablas de verbos+sustantivos por dominio.
-   - `detectUserState(text)` → estado.
-   - `HEALTH_HARD_BLOCK` set de tokens; si hay match, override total.
-   - `pickAssistantMode(domain, userState)`.
-   - `decideUiAction(domain, confidence, resolvedRoute)`.
-2. **Integración con la pipeline actual**:
-   - Reemplazar el bloque "first-match" actual (matchBusLineDashboard + intents directos) por: primero `detectDomain` → si confianza alta y existe resolvedor específico (línea de bus, hotel concreto, categoría salud explícita), entonces navegar; en cualquier otro caso, generar respuesta conversacional con el submenu del dominio.
-   - Mantener `parseBusLineCode` ya existente; solo se invoca cuando `domain === 'transporte'` y el texto contiene marcador de línea.
-3. **Submenús conversacionales** (sin crear páginas):
-   - transporte → ["Bus urbano", "TRAM", "Interurbano"]
-   - salud_general → ["Hospital", "Farmacia", "Urgencias", "Especialista"]
-   - fiestas → ["Pubs", "Terraza", "Discoteca", "Música en vivo"]
-   - comer → ["Cocina típica", "Arroces", "Italiano", "Asiático", "Brunch", "Pizzas", "Rápida", "Internacional"]
-   - Cada chip, al pulsarse, dispara el mismo pipeline con el texto de la opción → resuelve a endpoint existente.
-4. **Personalidad**: helpers `formatReply(mode, text)` que ajustan longitud y registro; sin emojis salvo en fiestas/playas (máx. 1).
-5. **Logs**: en `console.debug` el objeto de decisión para depuración.
-
-## Lo que NO se toca
-
-- Rutas en `src/routes/**`.
-- Tabla `agente_intents` ni server functions de catálogo.
-- Dashboards de bus, hoteles, salud, etc.
-- routeTree.gen.ts.
-
-## Verificación
-
-- Probar en preview los 6 ejemplos del documento.
-- Confirmar que "duele la cabeza" NO abre traumatología y sí pregunta hospital/farmacia/urgencias/especialista.
-- Confirmar que "línea 22" sigue abriendo `/bus/dashboard/22` (regresión del fix anterior).
+- No conecto pagos/Stripe para costes reales (uso tarifas estáticas configurables en `src/lib/agent/model-pricing.ts`).
+- Conversion tracking depende de que los componentes de resultado emitan eventos — añado el helper `trackAgentConversion` pero solo lo cableo en 1-2 puntos clave (chat → reserva, chat → click externo); el resto queda preparado para iteraciones.
