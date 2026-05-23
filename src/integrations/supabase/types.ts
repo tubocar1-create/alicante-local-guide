@@ -1313,6 +1313,45 @@ export type Database = {
           },
         ]
       }
+      operational_event_reviews: {
+        Row: {
+          corrected_category: string | null
+          corrected_source: string | null
+          corrected_type: string | null
+          created_at: string
+          event_id: string
+          flag: string
+          id: string
+          note: string | null
+          reviewed_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          corrected_category?: string | null
+          corrected_source?: string | null
+          corrected_type?: string | null
+          created_at?: string
+          event_id: string
+          flag?: string
+          id?: string
+          note?: string | null
+          reviewed_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          corrected_category?: string | null
+          corrected_source?: string | null
+          corrected_type?: string | null
+          created_at?: string
+          event_id?: string
+          flag?: string
+          id?: string
+          note?: string | null
+          reviewed_by?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pharmacies: {
         Row: {
           address: string | null
