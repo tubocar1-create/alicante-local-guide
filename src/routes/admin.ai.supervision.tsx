@@ -31,6 +31,9 @@ function SupervisionPage() {
   const qc = useQueryClient();
   const q = useQuery(supervisionQO(status));
   const intentsQ = useQuery(intentsQO());
+  const routableIntents = (intentsQ.data?.intents ?? []).filter(
+    (i: { route?: string | null; action?: string | null }) => Boolean(i.route || i.action),
+  );
 
   const mut = useMutation({
     mutationFn: (args: {
@@ -132,7 +135,7 @@ function SupervisionPage() {
                           <SelectValue placeholder="Selecciona intent destino…" />
                         </SelectTrigger>
                         <SelectContent>
-                          {(intentsQ.data?.intents ?? []).map((i: { key: string; label: string }) => (
+                          {routableIntents.map((i: { key: string; label: string }) => (
                             <SelectItem key={i.key} value={i.key}>
                               {i.label} · <span className="text-muted-foreground">{i.key}</span>
                             </SelectItem>
