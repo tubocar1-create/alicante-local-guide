@@ -717,3 +717,164 @@ export const reviewDubiousInteraction = createServerFn({ method: "POST" })
 
     return { ok: true as const };
   });
+
+// ---------------- Conversations (turn-by-turn replay) ----------------
+// Agrupa las filas de agente_learning_log en "conversaciones":
+//  - Si dos filas comparten session_id  → misma conversación.
+//  - Si no hay session_id              → se agrupan por route_origin con
+//    una ventana temporal (gap > 5 min ⇒ nueva conversación).
+// Pensado para que el admin pueda ver la secuencia exacta de preguntas /
+// respuestas y corregir justo el turno donde el agente falló.
+
+export type ConversationTurn = {
+  id: string;
+  created_at: string;
+  raw_query: string;
+  detected_intent: string | null;
+  resolver_type: string | null;
+  resolved: boolean | null;
+  fallback_used: boolean | null;
+  failure_reason: string | null;
+  latency_ms: number | null;
+  decision: string | null;
+  route_origin: string | null;
+  notes: string | null;
+  reviewed_at: string | null;
+  review_status: string | null;
+  review_note: string | null;
+  gap_ms: number | null; // ms desde el turno anterior (null en el primero)
+};
+
+export type ConversationDTO = {
+  key: string;                // session_id real o sintético
+  session_id: string | null;  // null si fue sintética
+  started_at: string;
+  ended_at: string;
+  route_origin: string | null;
+  total_turns: number;
+  unresolved_turns: number;
+  fallback_turns: number;
+  total_latency_ms: number;
+  total_cost: number;
+  turns: ConversationTurn[];
+};
+
+export const listAgentConversations = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    PinSchema.extend({
+      days: z.number().int().min(1).max(30).default(7),
+      limit_rows: z.number().int().min(50).max(2000).default(800),
+      only_with_issues: z.boolean().default(false),
+    }).parse(d),
+  )
+  .handler(async ({ data }): Promise<{ conversations: ConversationDTO[] }> => {
+    assertPin(data.pin);
+    const since = new Date(
+      Date.now() - data.days * 24 * 60 * 60 * 1000,
+    ).toISOString();
+
+    const { data: rows, error } = await supabaseAdmin
+      .from("agente_learning_log")
+      .select(
+        "id,created_at,session_id,raw_query,detected_intent,resolver_type,resolved,fallback_used,failure_reason,latency_ms,decision,route_origin,notes,estimated_cost,reviewed_at,review_status,review_note",
+      )
+      .gte("created_at", since)
+      .order("created_at", { ascending: true })
+      .limit(data.limit_rows);
+    if (error) throw new Error(error.message);
+
+    const GAP_MS = 5 * 60 * 1000;
+    // Map<groupKey, ConversationDTO>
+    const groups = new Map<string, ConversationDTO>();
+    // Para clustering temporal cuando session_id es null: trackeamos
+    // el último timestamp visto por (route_origin || "__no_route__").
+    const lastByRoute = new Map<
+      string,
+      { key: string; lastTs: number }
+    >();
+    let syntheticCounter = 0;
+
+    for (const r of rows ?? []) {
+      const createdAt = new Date(r.created_at as string).getTime();
+      const sid = (r.session_id as string | null) ?? null;
+      const route = (r.route_origin as string | null) ?? null;
+
+      let key: string;
+      if (sid) {
+        key = `sid:${sid}`;
+      } else {
+        const bucket = route ?? "__no_route__";
+        const prev = lastByRoute.get(bucket);
+        if (prev && createdAt - prev.lastTs <= GAP_MS) {
+          key = prev.key;
+        } else {
+          syntheticCounter += 1;
+          key = `syn:${bucket}:${syntheticCounter}`;
+        }
+        lastByRoute.set(bucket, { key, lastTs: createdAt });
+      }
+
+      let convo = groups.get(key);
+      if (!convo) {
+        convo = {
+          key,
+          session_id: sid,
+          started_at: r.created_at as string,
+          ended_at: r.created_at as string,
+          route_origin: route,
+          total_turns: 0,
+          unresolved_turns: 0,
+          fallback_turns: 0,
+          total_latency_ms: 0,
+          total_cost: 0,
+          turns: [],
+        };
+        groups.set(key, convo);
+      }
+
+      const prevTurn = convo.turns[convo.turns.length - 1];
+      const gapMs = prevTurn
+        ? createdAt - new Date(prevTurn.created_at).getTime()
+        : null;
+
+      convo.turns.push({
+        id: r.id as string,
+        created_at: r.created_at as string,
+        raw_query: (r.raw_query as string) ?? "",
+        detected_intent: (r.detected_intent as string | null) ?? null,
+        resolver_type: (r.resolver_type as string | null) ?? null,
+        resolved: (r.resolved as boolean | null) ?? null,
+        fallback_used: (r.fallback_used as boolean | null) ?? null,
+        failure_reason: (r.failure_reason as string | null) ?? null,
+        latency_ms: (r.latency_ms as number | null) ?? null,
+        decision: (r.decision as string | null) ?? null,
+        route_origin: route,
+        notes: (r.notes as string | null) ?? null,
+        reviewed_at: (r.reviewed_at as string | null) ?? null,
+        review_status: (r.review_status as string | null) ?? null,
+        review_note: (r.review_note as string | null) ?? null,
+        gap_ms: gapMs,
+      });
+      convo.total_turns += 1;
+      if (r.resolved === false) convo.unresolved_turns += 1;
+      if (r.fallback_used === true) convo.fallback_turns += 1;
+      convo.total_latency_ms += Number(r.latency_ms ?? 0);
+      convo.total_cost += Number(r.estimated_cost ?? 0);
+      convo.ended_at = r.created_at as string;
+    }
+
+    let conversations = [...groups.values()];
+    if (data.only_with_issues) {
+      conversations = conversations.filter(
+        (c) => c.unresolved_turns > 0 || c.fallback_turns > 0,
+      );
+    }
+    // Más reciente primero, por ended_at.
+    conversations.sort((a, b) => (a.ended_at < b.ended_at ? 1 : -1));
+    // Redondeo de coste
+    conversations.forEach((c) => {
+      c.total_cost = Number(c.total_cost.toFixed(4));
+    });
+
+    return { conversations };
+  });
