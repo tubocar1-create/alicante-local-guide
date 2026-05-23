@@ -2969,6 +2969,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
               latencyMs: Math.round(t1 - t0),
               routeOrigin: path ?? null,
               decision: finalTarget ? "navigated" : "answered",
+              sessionId: sessionIdRef.current,
             },
           }).catch(() => {});
         } catch {
