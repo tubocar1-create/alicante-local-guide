@@ -15,6 +15,7 @@ import {
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { agenteVamosChat } from "@/lib/agente.functions";
+import { logAgentInteraction } from "@/lib/agent/agent-runtime.functions";
 import {
   loadAgenteRoutingCatalog,
   type AgenteIntentRow,
@@ -2164,6 +2165,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const askAgent = useServerFn(agenteVamosChat);
+  // Telemetría: registramos cada interacción del agente en
+  // agente_learning_log (vía server fn que usa supabaseAdmin).
+  // Fire-and-forget: si falla, no rompe la UX.
+  const logInteraction = useServerFn(logAgentInteraction);
   const scrollRef = useRef<HTMLDivElement>(null);
   const recogRef = useRef<SR | null>(null);
 
@@ -2561,6 +2566,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     async (text: string, viaVoice = false) => {
       const clean = text.trim();
       if (!clean || loadingRef.current) return;
+      // Telemetría: marca de inicio y flags para el log final.
+      const t0 = typeof performance !== "undefined" ? performance.now() : Date.now();
+      let serverCalled = false;
+      let finalTarget: string | undefined;
       bumpIdle();
       stopListening();
       const reservedReplyUtterance = viaVoice ? reserveSpanishUtterance() : null;
@@ -2679,6 +2688,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
         if (!isClarifying && !resolvedLineDashboard && !isCineIntent && !isDomainFollowupResolution) {
           try {
+            serverCalled = true;
             const res = await askAgent({
               data: {
                 messages: next.map((m) => ({ role: m.role, content: m.content })),
@@ -2935,11 +2945,31 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         }
         // La voz ya se ha lanzado arriba con speak(reply). Aquí sólo
         // gestionamos navegación tardía si procede.
+        finalTarget = target;
       } finally {
         if (!awaitingSummaryRef.current) setLoading(false);
+        // Telemetría fire-and-forget: registra la interacción.
+        // Nunca bloquea la UX y nunca lanza errores al usuario.
+        try {
+          const t1 = typeof performance !== "undefined" ? performance.now() : Date.now();
+          void logInteraction({
+            data: {
+              rawQuery: clean,
+              normalizedQuery: clean.toLowerCase().trim(),
+              resolverType: serverCalled ? "intent_ai" : "intent_keyword",
+              resolved: !!finalTarget,
+              fallbackUsed: serverCalled,
+              latencyMs: Math.round(t1 - t0),
+              routeOrigin: path ?? null,
+              decision: finalTarget ? "navigated" : "answered",
+            },
+          }).catch(() => {});
+        } catch {
+          /* noop */
+        }
       }
     },
-    [msgs, path, navigate, speak, stopListening, bumpIdle, askAgent, onClose],
+    [msgs, path, navigate, speak, stopListening, bumpIdle, askAgent, onClose, logInteraction],
   );
 
   const sendRef = useRef(send);
