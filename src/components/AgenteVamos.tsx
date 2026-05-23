@@ -533,7 +533,7 @@ const DOMAINS: DomainSpec[] = [
           "listado", "lista", "todas", "cuales", "cuáles", "playas", "playa",
           "si", "sí", "vale", "ok", "okay", "perfecto", "claro", "correcto",
           "exacto", "afirmativo", "afirmativa", "de acuerdo", "dale", "confirmo",
-        ], path: "/playas" },
+        ], path: "/playas?focus=carrusel" },
     ],
   },
   {
