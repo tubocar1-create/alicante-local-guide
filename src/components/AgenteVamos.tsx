@@ -1604,9 +1604,17 @@ function localResolve(
           };
         }
         const intent = INTENTS.find((it) => it.path === fuPath);
-        const reply = fuMatch.label
-          ? `Te puedo dirigir a ${fuMatch.label}.`
-          : (intent?.reply ?? "Te llevo allí.");
+        // Despedida especial para el dominio playas: el agente entrega el
+        // carrusel o el mapa interactivo y se despide antes de cerrar.
+        let reply: string;
+        if (d.id === "playas") {
+          const what = fuMatch.label === "mapa" ? "el mapa interactivo de playas" : "el carrusel de playas";
+          reply = `Aquí tienes ${what}. Llámame luego si quieres más información.`;
+        } else {
+          reply = fuMatch.label
+            ? `Te puedo dirigir a ${fuMatch.label}.`
+            : (intent?.reply ?? "Te llevo allí.");
+        }
         return {
           reply,
           path: fuPath,
@@ -1614,6 +1622,7 @@ function localResolve(
           pendingDomain: null,
         };
       }
+
       if (d.hubPath && !d.hubPath.startsWith("action:") && isAffirmativeResponse(query)) {
         return {
           reply: `Te llevo a ${d.id === "playas" ? "playas" : d.question.toLowerCase()}.`,
