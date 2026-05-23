@@ -215,6 +215,16 @@ export function AuditoriaPage() {
     onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Error"),
   });
 
+  const deleteMut = useMutation({
+    mutationFn: (ids: string[]) =>
+      deleteConversationTurns({ data: { pin: ADMIN_PIN, ids } }),
+    onSuccess: (r) => {
+      toast.success(`Conversación descartada (${r.deleted} turnos)`);
+      qc.invalidateQueries({ queryKey: ["admin-ai"] });
+    },
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Error"),
+  });
+
   const totals = useMemo(() => {
     const turns = conversations.reduce((a, c) => a + c.total_turns, 0);
     const issues = conversations.reduce(
