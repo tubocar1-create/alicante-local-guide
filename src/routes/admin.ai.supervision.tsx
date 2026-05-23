@@ -155,12 +155,23 @@ function SupervisionPage() {
                             toast.error("Selecciona un intent destino antes de aprobar");
                             return;
                           }
+                          const keywords = Array.from(
+                            new Set(
+                              [
+                                ...(r.suggested_keywords ?? []),
+                                r.normalized,
+                                r.raw_query,
+                              ]
+                                .map((k: string | null | undefined) => k?.toLowerCase().trim())
+                                .filter(Boolean) as string[],
+                            ),
+                          );
                           mut.mutate({
                             id: r.id,
                             status: "approved",
                             notes: notes[r.id],
                             final_intent: intent,
-                            final_keywords: r.suggested_keywords ?? [r.raw_query],
+                            final_keywords: keywords,
                           });
                         }}
                         disabled={mut.isPending}
