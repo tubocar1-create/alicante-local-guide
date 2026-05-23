@@ -124,10 +124,11 @@ const INTENTS: IntentDef[] = [
   },
   {
     keys: ["explorar", "mapa", "ciudad", "cerca de mi", "sitios cerca", "que hay cerca"],
-    reply: "Te abro el mapa de la ciudad.",
-    path: "/explore",
-    audio: "explore",
+    reply: "Aquí tienes el mapa interactivo de playas. Llámame luego si quieres más información.",
+    path: "/playas/mapa",
+    audio: "beach_map",
   },
+
   {
     keys: [
       "planificar ruta", "planificador", "como llego", "como voy a", "llegar a",
@@ -596,23 +597,18 @@ const DOMAINS: DomainSpec[] = [
   },
   {
     id: "mapa",
-    hubPath: "/explore",
+    hubPath: "/playas/mapa",
     triggers: [
-      "mapa", "ver mapa", "abrir mapa", "explorar mapa", "mapa de alicante",
-      "explorar", "explorar la ciudad", "que hay cerca", "qué hay cerca",
-      "sitios cerca de mi", "sitios cerca de mí", "cerca de mi", "cerca de mí",
-      "alrededor", "alrededor de mi", "alrededor de mí",
-      "donde estoy", "dónde estoy", "ubicacion", "ubicación",
-      "mapa interactivo", "mapa de la ciudad",
+      "mapa", "ver mapa", "abrir mapa", "mapa de alicante",
+      "mapa interactivo", "mapa de playas", "mapa de la ciudad",
+      "mapa playa", "mapa playas",
     ],
-    question: "🗺️ ¿Mapa de la ciudad, mapa de playas o mapa del TRAM?",
-    audio: "fallback",
-    followups: [
-      { keys: ["playa", "playas", "mapa de playas"], path: "/playas/mapa" },
-      { keys: ["tram", "tranvia", "tranvía", "mapa del tram"], path: "/tram/mapa" },
-      { keys: ["ciudad", "explorar", "alicante", "general"], path: "/explore" },
-    ],
+    question: "Aquí tienes el mapa interactivo de playas. Llámame luego si quieres más información.",
+    audio: "beaches",
+    followups: [],
   },
+
+
   {
     id: "clima",
     hubPath: "/clima",
