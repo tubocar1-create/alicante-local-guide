@@ -11,6 +11,7 @@ export const Route = createFileRoute("/admin/ai")({
 const TABS = [
   { to: "/admin/ai", label: "Resumen", exact: true },
   { to: "/admin/ai/unknown-queries", label: "Sin resolver" },
+  { to: "/admin/ai/dubious", label: "Dudosas" },
   { to: "/admin/ai/supervision", label: "Supervisión" },
   { to: "/admin/ai/intents", label: "Intents" },
   { to: "/admin/ai/entities", label: "Entidades" },
