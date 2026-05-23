@@ -1,5 +1,6 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQueryClient, useIsFetching } from "@tanstack/react-query";
 import {
   Lock,
   ShieldCheck,
@@ -16,6 +17,7 @@ import {
   Menu as MenuIcon,
   Bot,
   Activity,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,7 +71,9 @@ const SECTIONS = [
 
 const IA_SECTIONS = [
   { to: "/admin/ai", label: "Resumen IA", icon: Bot, exact: true },
+  { to: "/admin/ai/conversations", label: "Conversaciones", icon: Bot },
   { to: "/admin/ai/unknown-queries", label: "Consultas sin resolver", icon: Bot },
+  { to: "/admin/ai/dubious", label: "Dudosas", icon: Bot },
   { to: "/admin/ai/supervision", label: "Supervisión humana", icon: Bot },
   { to: "/admin/ai/intents", label: "Intents", icon: Bot },
   { to: "/admin/ai/entities", label: "Entidades y alias", icon: Bot },
@@ -90,6 +94,15 @@ function AdminLayout() {
   const [error, setError] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const qc = useQueryClient();
+  const isFetching = useIsFetching();
+
+  // Refresh global: invalida TODAS las queries del panel admin y fuerza
+  // un re-fetch. Útil cuando el admin acaba de hacer una acción fuera del
+  // panel y quiere ver el efecto sin recargar la página entera.
+  const refreshAll = () => {
+    qc.invalidateQueries();
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined" && sessionStorage.getItem(PIN_KEY) === "1") {
@@ -182,7 +195,23 @@ function AdminLayout() {
             <NavItem key={s.to} {...s} />
           ))}
         </nav>
-        <div className="p-3 border-t mt-2">
+        <div className="p-3 border-t mt-2 space-y-1">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-start"
+            onClick={refreshAll}
+            disabled={isFetching > 0}
+            title="Actualiza todos los datos visibles en el panel"
+          >
+            <RefreshCw
+              className={cn(
+                "h-4 w-4 mr-2",
+                isFetching > 0 && "animate-spin",
+              )}
+            />
+            {isFetching > 0 ? "Actualizando…" : "Actualizar todo"}
+          </Button>
           <Button variant="ghost" size="sm" className="w-full" onClick={logout}>
             Salir
           </Button>
@@ -207,6 +236,21 @@ function AdminLayout() {
             <MenuIcon className="h-5 w-5" />
           </Button>
           <span className="text-sm font-semibold">Admin</span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="ml-auto"
+            onClick={refreshAll}
+            disabled={isFetching > 0}
+            title="Actualizar todos los datos"
+          >
+            <RefreshCw
+              className={cn(
+                "h-5 w-5",
+                isFetching > 0 && "animate-spin",
+              )}
+            />
+          </Button>
         </div>
         <div className="p-4 md:p-8 max-w-6xl mx-auto">
           <Outlet />

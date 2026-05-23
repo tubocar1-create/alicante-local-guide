@@ -10,6 +10,7 @@ import {
   getAiAnalytics,
   getAiCosts,
   listDubiousInteractions,
+  listAgentConversations,
 } from "@/lib/admin-ai.functions";
 import { ADMIN_PIN } from "@/lib/admin-shared";
 
@@ -101,6 +102,19 @@ export const dubiousQO = (
     queryFn: () =>
       listDubiousInteractions({
         data: { pin: ADMIN_PIN, status, kind, search },
+      }),
+    staleTime: STALE_FAST,
+  });
+
+export const conversationsQO = (
+  days = 7,
+  onlyWithIssues = false,
+) =>
+  queryOptions({
+    queryKey: ["admin-ai", "conversations", days, onlyWithIssues],
+    queryFn: () =>
+      listAgentConversations({
+        data: { pin: ADMIN_PIN, days, only_with_issues: onlyWithIssues },
       }),
     staleTime: STALE_FAST,
   });
