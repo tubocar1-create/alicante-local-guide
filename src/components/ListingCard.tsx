@@ -14,6 +14,7 @@ import {
 import { type Listing } from "@/lib/overpass-listings";
 import { distanceKm, formatDistance, type Coords } from "@/hooks/useUserLocation";
 import BookingDialog from "@/components/BookingDialog";
+import { trackOperationalEvent } from "@/lib/operations/trackOperationalEvent";
 
 const BAD_IMAGE_RE =
   /(\.svg($|\?))|(map|mapa|locator|location|flag|bandera|coat[_-]?of[_-]?arms|escudo|seal|logo|icon)/i;
