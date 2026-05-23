@@ -88,6 +88,16 @@ function RentACarPage() {
           Aeropuerto Alicante-Elche (ALC) y alrededores
         </p>
 
+        <Link
+          to="/rent-a-car-comparador"
+          className="mb-5 flex items-center justify-between rounded-2xl border border-sky-300/30 bg-gradient-to-r from-sky-500 to-blue-600 px-4 py-3 text-white shadow-lg transition hover:from-sky-400 hover:to-blue-500"
+        >
+          <span className="flex items-center gap-2 font-semibold">
+            <Car className="h-5 w-5" /> Comparador de operadoras
+          </span>
+          <span className="text-xs opacity-90">15 proveedores en ALC →</span>
+        </Link>
+
         <PhotoCard
           photo={{
             src: coastImg,

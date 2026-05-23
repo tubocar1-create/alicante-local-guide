@@ -18,6 +18,7 @@ import { Route as StayRouteImport } from './routes/stay'
 import { Route as SistemaSanitarioRouteImport } from './routes/sistema-sanitario'
 import { Route as SaludRouteImport } from './routes/salud'
 import { Route as RepoRouteImport } from './routes/repo'
+import { Route as RentACarComparadorRouteImport } from './routes/rent-a-car-comparador'
 import { Route as RentACarRouteImport } from './routes/rent-a-car'
 import { Route as PlayasRouteImport } from './routes/playas'
 import { Route as PerfilRouteImport } from './routes/perfil'
@@ -164,6 +165,11 @@ const SaludRoute = SaludRouteImport.update({
 const RepoRoute = RepoRouteImport.update({
   id: '/repo',
   path: '/repo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RentACarComparadorRoute = RentACarComparadorRouteImport.update({
+  id: '/rent-a-car-comparador',
+  path: '/rent-a-car-comparador',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RentACarRoute = RentACarRouteImport.update({
@@ -704,6 +710,7 @@ export interface FileRoutesByFullPath {
   '/perfil': typeof PerfilRoute
   '/playas': typeof PlayasRouteWithChildren
   '/rent-a-car': typeof RentACarRoute
+  '/rent-a-car-comparador': typeof RentACarComparadorRoute
   '/repo': typeof RepoRoute
   '/salud': typeof SaludRoute
   '/sistema-sanitario': typeof SistemaSanitarioRoute
@@ -815,6 +822,7 @@ export interface FileRoutesByTo {
   '/perfil': typeof PerfilRoute
   '/playas': typeof PlayasRouteWithChildren
   '/rent-a-car': typeof RentACarRoute
+  '/rent-a-car-comparador': typeof RentACarComparadorRoute
   '/repo': typeof RepoRoute
   '/salud': typeof SaludRoute
   '/sistema-sanitario': typeof SistemaSanitarioRoute
@@ -928,6 +936,7 @@ export interface FileRoutesById {
   '/perfil': typeof PerfilRoute
   '/playas': typeof PlayasRouteWithChildren
   '/rent-a-car': typeof RentACarRoute
+  '/rent-a-car-comparador': typeof RentACarComparadorRoute
   '/repo': typeof RepoRoute
   '/salud': typeof SaludRoute
   '/sistema-sanitario': typeof SistemaSanitarioRoute
@@ -1043,6 +1052,7 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/playas'
     | '/rent-a-car'
+    | '/rent-a-car-comparador'
     | '/repo'
     | '/salud'
     | '/sistema-sanitario'
@@ -1154,6 +1164,7 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/playas'
     | '/rent-a-car'
+    | '/rent-a-car-comparador'
     | '/repo'
     | '/salud'
     | '/sistema-sanitario'
@@ -1266,6 +1277,7 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/playas'
     | '/rent-a-car'
+    | '/rent-a-car-comparador'
     | '/repo'
     | '/salud'
     | '/sistema-sanitario'
@@ -1380,6 +1392,7 @@ export interface RootRouteChildren {
   PerfilRoute: typeof PerfilRoute
   PlayasRoute: typeof PlayasRouteWithChildren
   RentACarRoute: typeof RentACarRoute
+  RentACarComparadorRoute: typeof RentACarComparadorRoute
   RepoRoute: typeof RepoRoute
   SaludRoute: typeof SaludRoute
   SistemaSanitarioRoute: typeof SistemaSanitarioRoute
@@ -1491,6 +1504,13 @@ declare module '@tanstack/react-router' {
       path: '/repo'
       fullPath: '/repo'
       preLoaderRoute: typeof RepoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rent-a-car-comparador': {
+      id: '/rent-a-car-comparador'
+      path: '/rent-a-car-comparador'
+      fullPath: '/rent-a-car-comparador'
+      preLoaderRoute: typeof RentACarComparadorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/rent-a-car': {
@@ -2415,6 +2435,7 @@ const rootRouteChildren: RootRouteChildren = {
   PerfilRoute: PerfilRoute,
   PlayasRoute: PlayasRouteWithChildren,
   RentACarRoute: RentACarRoute,
+  RentACarComparadorRoute: RentACarComparadorRoute,
   RepoRoute: RepoRoute,
   SaludRoute: SaludRoute,
   SistemaSanitarioRoute: SistemaSanitarioRoute,
