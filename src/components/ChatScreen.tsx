@@ -590,6 +590,20 @@ export function ChatScreen() {
       sendBeachGuide();
       return;
     }
+    if (isShoppingPrompt(trimmed)) {
+      const next = [
+        ...messages,
+        { role: "user" as const, content: trimmed },
+        { role: "assistant" as const, content: SHOPPING_INTRO_REPLY },
+      ];
+      setMessages(next);
+      setInput("");
+      setError(null);
+      setSubmenuStack([]);
+      void hablar(SHOPPING_INTRO_REPLY);
+      navigate({ to: "/comprar" });
+      return;
+    }
     // ---- Contexto conversacional persistente (activeDomain sticky) ----
     // Mientras exista un dominio activo (p.ej. TRANSPORTE/TRAM), las
     // entidades geográficas (Benidorm, Madrid…) deben interpretarse dentro
