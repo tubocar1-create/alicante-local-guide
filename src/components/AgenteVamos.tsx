@@ -573,27 +573,7 @@ const DOMAINS: DomainSpec[] = [
     ],
     question: "Genial, aquí te dejo una lista muy amplia de sitios para comprar, pero si lo prefieres te puedo orientar si me dices qué artículo o servicio necesitas.",
     audio: "fallback",
-    followups: [
-      { keys: ["ropa", "moda", "boutique", "calzado", "zapatos", "zapatillas", "sneakers", "vestido", "camisa"], path: "/comprar/sector/moda", label: "Moda" },
-      { keys: ["regalo", "regalos", "souvenir", "souvenirs", "recuerdo"], path: "/comprar/sector/regalos", label: "Regalos" },
-      { keys: ["supermercado", "supermercados", "alimentacion", "alimentación", "comida para casa"], path: "/comprar/sector/supermercados", label: "Supermercados" },
-      { keys: ["tecnologia", "tecnología", "movil", "móvil", "ordenador", "portatil", "portátil", "informatica", "informática", "electronica", "electrónica"], path: "/comprar/sector/tecnologia", label: "Tecnología" },
-      { keys: ["hogar", "muebles", "decoracion", "decoración", "menaje", "cocina para casa"], path: "/comprar/sector/hogar", label: "Hogar" },
-      { keys: ["mascota", "mascotas", "perro", "gato", "veterinario producto"], path: "/comprar/sector/mascotas", label: "Mascotas" },
-      { keys: ["belleza", "peluqueria", "peluquería", "estetica", "estética", "cosmetica", "cosmética", "perfume", "perfumeria", "perfumería"], path: "/comprar/sector/belleza", label: "Belleza y cuidado personal" },
-      { keys: ["deporte", "deportes", "deportiva", "gimnasio producto", "running"], path: "/comprar/sector/deporte", label: "Deporte" },
-      { keys: ["papeleria", "papelería", "libreria", "librería", "libro", "libros", "cultura"], path: "/comprar/sector/papeleria-cultura", label: "Papelería y cultura" },
-      { keys: ["automocion", "automoción", "coche", "taller", "neumatico", "neumático"], path: "/comprar/sector/automocion", label: "Automoción" },
-      { keys: ["movilidad", "patinete", "bici", "bicicleta", "scooter"], path: "/comprar/sector/movilidad", label: "Movilidad y traslados" },
-      { keys: ["foto", "fotografia", "fotografía", "imagen", "camara", "cámara"], path: "/comprar/sector/fotografia-imagen", label: "Fotografía e imagen" },
-      { keys: ["formacion", "formación", "academia", "curso", "clases"], path: "/comprar/sector/formacion", label: "Formación" },
-      { keys: ["asesoria", "asesoría", "legal", "abogado", "gestoria", "gestoría"], path: "/comprar/sector/asesoria-legal", label: "Asesoría y legal" },
-      { keys: ["coworking", "espacio de trabajo", "oficina alquiler"], path: "/comprar/sector/espacios-trabajo", label: "Espacios de trabajo" },
-      { keys: ["juego", "apuestas", "loteria", "lotería", "casino"], path: "/comprar/sector/juego-apuestas", label: "Juego y apuestas" },
-      { keys: ["servicios rapidos", "servicios rápidos", "copisteria", "copistería", "tintoreria", "tintorería", "cerrajero"], path: "/comprar/sector/servicios-rapidos", label: "Servicios rápidos" },
-      { keys: ["otros servicios", "otro servicio"], path: "/comprar/sector/otros-servicios", label: "Otros servicios" },
-      { keys: ["explorar", "todo", "todas las tiendas", "ver tiendas", "ver sectores"], path: "/comprar", label: "todos los sectores" },
-    ],
+    followups: [],
   },
   {
     id: "mapa",
@@ -889,6 +869,15 @@ function detectAmbiguity(query: string): LocalResult | null {
   if (!hasTransportVerb(query)) return null;
   const other = findOtherDomainHint(query);
   const entity = matchNamedEntity(query);
+  if (other?.id === "compras" && !entity) {
+    const comprasDomain = DOMAINS.find((d) => d.id === "compras");
+    return {
+      reply: comprasDomain?.question ?? "Genial, aquí te dejo una lista muy amplia de sitios para comprar, pero si lo prefieres te puedo orientar si me dices qué artículo o servicio necesitas.",
+      path: comprasDomain?.hubPath ?? "/comprar",
+      audio: comprasDomain?.audio ?? "fallback",
+      pendingDomain: null,
+    };
+  }
   if (!other && !entity) return null;
   const opts: string[] = [];
   if (entity) {
@@ -938,7 +927,8 @@ const DB_KEY_TO_DOMAIN: Record<string, string> = {
   transporte: "transporte",
   playas: "playas",
   dormir: "dormir",
-  comprar: "comprar",
+  comprar: "compras",
+  compras: "compras",
   tomar_algo: "tomar_algo",
   mapa: "mapa",
   ocio: "ocio",
@@ -1179,6 +1169,9 @@ function dbIntentToResult(intent: AgenteIntentRow): LocalResult {
   const domainId = DB_KEY_TO_DOMAIN[normalizeSpeech(intent.key)];
   if (domainId) {
     const d = DOMAINS.find((x) => x.id === domainId);
+    if (d && d.followups.length === 0 && d.hubPath && !d.hubPath.startsWith("action:")) {
+      return { reply: d.question, path: d.hubPath, audio: d.audio, pendingDomain: null, source: "trained" };
+    }
     if (d && d.followups.length > 0) {
       return { reply: d.question, audio: d.audio, pendingDomain: d.id, source: "trained" };
     }
@@ -1717,6 +1710,14 @@ function localResolve(
     if (domainId) {
       const d = DOMAINS.find((x) => x.id === domainId);
       if (d) {
+        if (!d.followups.length && d.hubPath && !d.hubPath.startsWith("action:")) {
+          return {
+            reply: d.question,
+            path: d.hubPath,
+            audio: d.audio,
+            pendingDomain: null,
+          };
+        }
         return {
           reply: d.question,
           audio: d.audio,
@@ -1792,7 +1793,7 @@ function getGreetingText() {
   const h = new Date().getHours();
   const saludo = h < 14 ? "Buenos días" : h < 20 ? "Buenas tardes" : "Buenas noches";
   const name = getLoggedUserName();
-  return name ? `${saludo}, ${name}. ¿Qué hacemos?` : `${saludo}. ¿Qué hacemos?`;
+  return name ? `${saludo}, ${name}. ¿Qué vamos a hacer hoy?` : `${saludo}. ¿Qué vamos a hacer hoy?`;
 }
 
 function makeGreeting(): Msg {
@@ -2061,7 +2062,7 @@ const POST_SPEECH_LISTEN_DELAY_MS = 30;
 
 // Voz unificada del agente: español Estados Unidos (es-US) si está disponible.
 const VA_VOICE_LANG = "es-US";
-const VA_VOICE_RATE = 1.05;
+const VA_VOICE_RATE = 0.9;
 const VA_VOICE_PITCH = 0.55;
 
 
@@ -2102,7 +2103,7 @@ function waitVoices(synth: SpeechSynthesis): Promise<SpeechSynthesisVoice[]> {
     };
     synth.onvoiceschanged = () => finish(synth.getVoices());
     // Fallback por si onvoiceschanged nunca dispara (algunos Android).
-    setTimeout(() => finish(synth.getVoices()), 1500);
+    setTimeout(() => finish(synth.getVoices()), 350);
   });
 }
 
@@ -3630,8 +3631,48 @@ export function AgenteVamosFab() {
   const startGreetingFromUserGesture = () => {
     if (voiceBootStartedRef.current) return;
     voiceBootStartedRef.current = true;
-    playGreetingAfterPermission();
+    if (!playGreetingClip()) {
+      playGreetingAfterPermission();
+    }
     setShowGreetingButton(false);
+  };
+
+  const playGreetingClip = () => {
+    try {
+      if (typeof window === "undefined") return false;
+      __vaActiveAudio?.pause();
+      const audio = new Audio(audioSrc(getGreetingClip()));
+      audio.preload = "auto";
+      audio.volume = 1;
+      __vaActiveAudio = audio;
+      __vaActiveAudioStartedAt = Date.now();
+      __vaActiveUtterance = null;
+      __vaSetGreetingSpoken(true);
+      __vaSpeechUnlocked = true;
+      greetingPlayedRef.current = true;
+      try { window.sessionStorage.setItem(GREETING_SESSION_KEY, "1"); } catch {}
+      let finished = false;
+      const finish = (fallbackToTts = false) => {
+        if (finished) return;
+        finished = true;
+        if (__vaActiveAudio === audio) __vaActiveAudio = null;
+        __vaActiveAudioStartedAt = 0;
+        markVaInteraction();
+        if (fallbackToTts) {
+          greetingPlayedRef.current = false;
+          __vaSetGreetingSpoken(false);
+          try { window.sessionStorage.removeItem(GREETING_SESSION_KEY); } catch {}
+          playGreetingAfterPermission();
+        }
+      };
+      audio.onended = () => finish(false);
+      audio.onerror = () => finish(true);
+      const started = audio.play();
+      if (started && typeof started.catch === "function") started.catch(() => finish(true));
+      return true;
+    } catch {
+      return false;
+    }
   };
 
   // Saludo corto de reentrada: cuando el panel se abre y el saludo inicial
@@ -3684,6 +3725,9 @@ export function AgenteVamosFab() {
     if (hidden) return;
     if (typeof window === "undefined") return;
     try {
+      const greetingAudio = new Audio(audioSrc(getGreetingClip()));
+      greetingAudio.preload = "auto";
+      try { greetingAudio.load(); } catch {}
       if (window.sessionStorage.getItem(GREETING_SESSION_KEY) === "1") {
         greetingPlayedRef.current = true;
         voiceBootStartedRef.current = true;
