@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { entitiesQO } from "@/lib/admin-ai-shared";
 import { upsertEntity, deleteEntity } from "@/lib/admin-ai.functions";
 import { ADMIN_PIN } from "@/lib/admin-shared";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/ai/entities")({
   component: EntitiesPage,
@@ -47,7 +47,6 @@ const empty: EntityForm = {
 
 function EntitiesPage() {
   const qc = useQueryClient();
-  const { toast } = useToast();
   const q = useQuery(entitiesQO());
   const [editing, setEditing] = useState<EntityForm | null>(null);
 
@@ -67,17 +66,17 @@ function EntitiesPage() {
         },
       }),
     onSuccess: () => {
-      toast({ title: "Guardado" });
+      toast.success("Guardado");
       setEditing(null);
       qc.invalidateQueries({ queryKey: ["admin-ai", "entities"] });
     },
-    onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   const del = useMutation({
     mutationFn: (id: string) => deleteEntity({ data: { pin: ADMIN_PIN, id } }),
     onSuccess: () => {
-      toast({ title: "Eliminada" });
+      toast.success("Eliminada");
       qc.invalidateQueries({ queryKey: ["admin-ai", "entities"] });
     },
   });

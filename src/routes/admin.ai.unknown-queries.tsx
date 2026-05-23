@@ -17,7 +17,16 @@ import {
 import { unknownQueriesQO } from "@/lib/admin-ai-shared";
 import { actUnknownQuery } from "@/lib/admin-ai.functions";
 import { ADMIN_PIN } from "@/lib/admin-shared";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
+
+type UnknownAction =
+  | "promote_intent"
+  | "add_faq"
+  | "add_alias"
+  | "spam"
+  | "ignore"
+  | "merge"
+  | "send_to_supervision";
 
 export const Route = createFileRoute("/admin/ai/unknown-queries")({
   component: UnknownQueriesPage,
@@ -29,24 +38,23 @@ function UnknownQueriesPage() {
   const [status, setStatus] = useState<Status>("pending");
   const [search, setSearch] = useState("");
   const qc = useQueryClient();
-  const { toast } = useToast();
   const q = useQuery(unknownQueriesQO(status, search));
 
   const mut = useMutation({
-    mutationFn: (args: { id: string; action: string; payload?: Record<string, unknown> }) =>
+    mutationFn: (args: { id: string; action: UnknownAction; payload?: Record<string, unknown> }) =>
       actUnknownQuery({
         data: {
           pin: ADMIN_PIN,
           id: args.id,
-          action: args.action as Parameters<typeof actUnknownQuery>[0]["data"]["action"],
+          action: args.action,
           payload: args.payload ?? {},
         },
       }),
     onSuccess: () => {
-      toast({ title: "Acción aplicada" });
+      toast.success("Acción aplicada");
       qc.invalidateQueries({ queryKey: ["admin-ai", "unknown"] });
     },
-    onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   return (

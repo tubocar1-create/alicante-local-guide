@@ -16,7 +16,7 @@ import {
 import { supervisionQO } from "@/lib/admin-ai-shared";
 import { submitSupervision } from "@/lib/admin-ai.functions";
 import { ADMIN_PIN } from "@/lib/admin-shared";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/ai/supervision")({
   component: SupervisionPage,
@@ -28,7 +28,6 @@ function SupervisionPage() {
   const [status, setStatus] = useState<Status>("pending");
   const [notes, setNotes] = useState<Record<string, string>>({});
   const qc = useQueryClient();
-  const { toast } = useToast();
   const q = useQuery(supervisionQO(status));
 
   const mut = useMutation({
@@ -42,10 +41,10 @@ function SupervisionPage() {
         },
       }),
     onSuccess: () => {
-      toast({ title: "Revisión guardada" });
+      toast.success("Revisión guardada");
       qc.invalidateQueries({ queryKey: ["admin-ai", "supervision"] });
     },
-    onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   return (

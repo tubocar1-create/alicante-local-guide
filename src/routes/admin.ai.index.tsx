@@ -10,17 +10,7 @@ import {
   Inbox,
   TrendingDown,
 } from "lucide-react";
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  BarChart,
-  Bar,
-} from "recharts";
+// Tablas en lugar de gráficas para mantener el bundle ligero.
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { aiOverviewQO, aiTimeseriesQO, FAILURE_REASON_LABEL, money, pct } from "@/lib/admin-ai-shared";
@@ -73,19 +63,28 @@ function OverviewPage() {
           <CardHeader>
             <CardTitle className="text-base">Queries por día (14d)</CardTitle>
           </CardHeader>
-          <CardContent className="h-64">
+          <CardContent className="max-h-72 overflow-auto">
             {t.data ? (
-              <ResponsiveContainer>
-                <LineChart data={t.data.days}>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                  <XAxis dataKey="date" fontSize={10} />
-                  <YAxis fontSize={10} />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="total" stroke="hsl(var(--primary))" strokeWidth={2} />
-                  <Line type="monotone" dataKey="resolved" stroke="hsl(142 70% 45%)" strokeWidth={2} />
-                  <Line type="monotone" dataKey="fallback" stroke="hsl(20 90% 55%)" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
+              <table className="w-full text-sm">
+                <thead className="text-xs text-muted-foreground sticky top-0 bg-background">
+                  <tr>
+                    <th className="text-left p-1">Día</th>
+                    <th className="text-right p-1">Total</th>
+                    <th className="text-right p-1">Resueltas</th>
+                    <th className="text-right p-1">Fallback</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {t.data.days.map((row) => (
+                    <tr key={row.date} className="border-t">
+                      <td className="p-1">{row.date}</td>
+                      <td className="p-1 text-right">{row.total}</td>
+                      <td className="p-1 text-right text-emerald-600">{row.resolved}</td>
+                      <td className="p-1 text-right text-amber-600">{row.fallback}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             ) : (
               <p className="text-sm text-muted-foreground">Cargando…</p>
             )}
@@ -96,19 +95,26 @@ function OverviewPage() {
           <CardHeader>
             <CardTitle className="text-base">Top intents (30d)</CardTitle>
           </CardHeader>
-          <CardContent className="h-64">
-            {d ? (
-              <ResponsiveContainer>
-                <BarChart data={d.topIntents}>
-                  <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                  <XAxis dataKey="intent" fontSize={10} angle={-30} textAnchor="end" height={50} />
-                  <YAxis fontSize={10} />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="hsl(var(--primary))" />
-                </BarChart>
-              </ResponsiveContainer>
+          <CardContent className="max-h-72 overflow-auto">
+            {d?.topIntents.length ? (
+              <table className="w-full text-sm">
+                <thead className="text-xs text-muted-foreground sticky top-0 bg-background">
+                  <tr>
+                    <th className="text-left p-1">Intent</th>
+                    <th className="text-right p-1">Queries</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {d.topIntents.map((i) => (
+                    <tr key={i.intent} className="border-t">
+                      <td className="p-1">{i.intent}</td>
+                      <td className="p-1 text-right font-medium">{i.count}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             ) : (
-              <p className="text-sm text-muted-foreground">Cargando…</p>
+              <p className="text-sm text-muted-foreground">Sin datos.</p>
             )}
           </CardContent>
         </Card>
