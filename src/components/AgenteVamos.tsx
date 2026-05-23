@@ -3646,7 +3646,12 @@ export function AgenteVamosFab() {
         if (__vaActiveAudio === audio) __vaActiveAudio = null;
         __vaActiveAudioStartedAt = 0;
         markVaInteraction();
-        if (fallbackToTts) playGreetingAfterPermission();
+        if (fallbackToTts) {
+          greetingPlayedRef.current = false;
+          __vaSetGreetingSpoken(false);
+          try { window.sessionStorage.removeItem(GREETING_SESSION_KEY); } catch {}
+          playGreetingAfterPermission();
+        }
       };
       audio.onended = () => finish(false);
       audio.onerror = () => finish(true);
