@@ -67,6 +67,20 @@ function DubiousPage() {
   const qc = useQueryClient();
 
   const q = useQuery(dubiousQO(status, kind, search));
+  const intentsQ = useQuery(intentsQO());
+  const intents = intentsQ.data?.intents ?? [];
+
+  // Quick-resolve form state
+  type QuickAction = "add_keyword" | "create_intent" | "add_faq";
+  const [quickAction, setQuickAction] = useState<QuickAction>("add_keyword");
+  const [targetIntentKey, setTargetIntentKey] = useState<string>("");
+  const [newIntentKey, setNewIntentKey] = useState("");
+  const [newIntentLabel, setNewIntentLabel] = useState("");
+  const [newIntentRoute, setNewIntentRoute] = useState("");
+  const [newIntentReply, setNewIntentReply] = useState("");
+  const [faqResponse, setFaqResponse] = useState("");
+  const [extraKeywords, setExtraKeywords] = useState("");
+
 
   // Estado local del formulario de revisión
   const [reviewStatus, setReviewStatus] = useState<ReviewStatus>("misrouted");
