@@ -70,6 +70,8 @@ import { Route as AdminMetricasExternasRouteImport } from './routes/admin.metric
 import { Route as AdminIntegracionesRouteImport } from './routes/admin.integraciones'
 import { Route as AdminBasesDatosRouteImport } from './routes/admin.bases-datos'
 import { Route as AdminArquitecturaRouteImport } from './routes/admin.arquitectura'
+import { Route as AdminAiRouteImport } from './routes/admin.ai'
+import { Route as AdminAiIndexRouteImport } from './routes/admin.ai.index'
 import { Route as TramParadaStopIdRouteImport } from './routes/tram.parada.$stopId'
 import { Route as TramLineaLineIdRouteImport } from './routes/tram.linea.$lineId'
 import { Route as SaludCategoriaIdRouteImport } from './routes/salud_.$categoria.$id'
@@ -88,6 +90,12 @@ import { Route as ApiPublicQrIssueRouteImport } from './routes/api/public/qr-iss
 import { Route as ApiPublicBusEtaRouteImport } from './routes/api/public/bus-eta'
 import { Route as ApiPublicBookingCreateRouteImport } from './routes/api/public/booking-create'
 import { Route as ApiPublicAenaFlightsRouteImport } from './routes/api/public/aena-flights'
+import { Route as AdminAiUnknownQueriesRouteImport } from './routes/admin.ai.unknown-queries'
+import { Route as AdminAiSupervisionRouteImport } from './routes/admin.ai.supervision'
+import { Route as AdminAiIntentsRouteImport } from './routes/admin.ai.intents'
+import { Route as AdminAiEntitiesRouteImport } from './routes/admin.ai.entities'
+import { Route as AdminAiCostsRouteImport } from './routes/admin.ai.costs'
+import { Route as AdminAiAnalyticsRouteImport } from './routes/admin.ai.analytics'
 import { Route as OcioCinesIdCarteleraRouteImport } from './routes/ocio_.cines_.$id.cartelera'
 import { Route as ApiPublicTramValidOriginsRouteImport } from './routes/api/public/tram/valid-origins'
 import { Route as ApiPublicTramStationsRouteImport } from './routes/api/public/tram/stations'
@@ -409,6 +417,16 @@ const AdminArquitecturaRoute = AdminArquitecturaRouteImport.update({
   path: '/arquitectura',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAiRoute = AdminAiRouteImport.update({
+  id: '/ai',
+  path: '/ai',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAiIndexRoute = AdminAiIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminAiRoute,
+} as any)
 const TramParadaStopIdRoute = TramParadaStopIdRouteImport.update({
   id: '/parada/$stopId',
   path: '/parada/$stopId',
@@ -501,6 +519,36 @@ const ApiPublicAenaFlightsRoute = ApiPublicAenaFlightsRouteImport.update({
   id: '/api/public/aena-flights',
   path: '/api/public/aena-flights',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminAiUnknownQueriesRoute = AdminAiUnknownQueriesRouteImport.update({
+  id: '/unknown-queries',
+  path: '/unknown-queries',
+  getParentRoute: () => AdminAiRoute,
+} as any)
+const AdminAiSupervisionRoute = AdminAiSupervisionRouteImport.update({
+  id: '/supervision',
+  path: '/supervision',
+  getParentRoute: () => AdminAiRoute,
+} as any)
+const AdminAiIntentsRoute = AdminAiIntentsRouteImport.update({
+  id: '/intents',
+  path: '/intents',
+  getParentRoute: () => AdminAiRoute,
+} as any)
+const AdminAiEntitiesRoute = AdminAiEntitiesRouteImport.update({
+  id: '/entities',
+  path: '/entities',
+  getParentRoute: () => AdminAiRoute,
+} as any)
+const AdminAiCostsRoute = AdminAiCostsRouteImport.update({
+  id: '/costs',
+  path: '/costs',
+  getParentRoute: () => AdminAiRoute,
+} as any)
+const AdminAiAnalyticsRoute = AdminAiAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AdminAiRoute,
 } as any)
 const OcioCinesIdCarteleraRoute = OcioCinesIdCarteleraRouteImport.update({
   id: '/ocio_/cines_/$id/cartelera',
@@ -610,6 +658,7 @@ export interface FileRoutesByFullPath {
   '/voces': typeof VocesRoute
   '/vuelos': typeof VuelosRoute
   '/welcome': typeof WelcomeRoute
+  '/admin/ai': typeof AdminAiRouteWithChildren
   '/admin/arquitectura': typeof AdminArquitecturaRoute
   '/admin/bases-datos': typeof AdminBasesDatosRoute
   '/admin/integraciones': typeof AdminIntegracionesRoute
@@ -646,6 +695,12 @@ export interface FileRoutesByFullPath {
   '/vuelos/$iata': typeof VuelosIataRoute
   '/admin/': typeof AdminIndexRoute
   '/business/': typeof BusinessIndexRoute
+  '/admin/ai/analytics': typeof AdminAiAnalyticsRoute
+  '/admin/ai/costs': typeof AdminAiCostsRoute
+  '/admin/ai/entities': typeof AdminAiEntitiesRoute
+  '/admin/ai/intents': typeof AdminAiIntentsRoute
+  '/admin/ai/supervision': typeof AdminAiSupervisionRoute
+  '/admin/ai/unknown-queries': typeof AdminAiUnknownQueriesRoute
   '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
   '/api/public/booking-create': typeof ApiPublicBookingCreateRoute
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
@@ -664,6 +719,7 @@ export interface FileRoutesByFullPath {
   '/salud/$categoria/$id': typeof SaludCategoriaIdRoute
   '/tram/linea/$lineId': typeof TramLineaLineIdRoute
   '/tram/parada/$stopId': typeof TramParadaStopIdRoute
+  '/admin/ai/': typeof AdminAiIndexRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
   '/api/public/hooks/agente-learn': typeof ApiPublicHooksAgenteLearnRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
@@ -740,6 +796,12 @@ export interface FileRoutesByTo {
   '/vuelos/$iata': typeof VuelosIataRoute
   '/admin': typeof AdminIndexRoute
   '/business': typeof BusinessIndexRoute
+  '/admin/ai/analytics': typeof AdminAiAnalyticsRoute
+  '/admin/ai/costs': typeof AdminAiCostsRoute
+  '/admin/ai/entities': typeof AdminAiEntitiesRoute
+  '/admin/ai/intents': typeof AdminAiIntentsRoute
+  '/admin/ai/supervision': typeof AdminAiSupervisionRoute
+  '/admin/ai/unknown-queries': typeof AdminAiUnknownQueriesRoute
   '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
   '/api/public/booking-create': typeof ApiPublicBookingCreateRoute
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
@@ -758,6 +820,7 @@ export interface FileRoutesByTo {
   '/salud/$categoria/$id': typeof SaludCategoriaIdRoute
   '/tram/linea/$lineId': typeof TramLineaLineIdRoute
   '/tram/parada/$stopId': typeof TramParadaStopIdRoute
+  '/admin/ai': typeof AdminAiIndexRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
   '/api/public/hooks/agente-learn': typeof ApiPublicHooksAgenteLearnRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
@@ -801,6 +864,7 @@ export interface FileRoutesById {
   '/voces': typeof VocesRoute
   '/vuelos': typeof VuelosRoute
   '/welcome': typeof WelcomeRoute
+  '/admin/ai': typeof AdminAiRouteWithChildren
   '/admin/arquitectura': typeof AdminArquitecturaRoute
   '/admin/bases-datos': typeof AdminBasesDatosRoute
   '/admin/integraciones': typeof AdminIntegracionesRoute
@@ -837,6 +901,12 @@ export interface FileRoutesById {
   '/vuelos_/$iata': typeof VuelosIataRoute
   '/admin/': typeof AdminIndexRoute
   '/business/': typeof BusinessIndexRoute
+  '/admin/ai/analytics': typeof AdminAiAnalyticsRoute
+  '/admin/ai/costs': typeof AdminAiCostsRoute
+  '/admin/ai/entities': typeof AdminAiEntitiesRoute
+  '/admin/ai/intents': typeof AdminAiIntentsRoute
+  '/admin/ai/supervision': typeof AdminAiSupervisionRoute
+  '/admin/ai/unknown-queries': typeof AdminAiUnknownQueriesRoute
   '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
   '/api/public/booking-create': typeof ApiPublicBookingCreateRoute
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
@@ -855,6 +925,7 @@ export interface FileRoutesById {
   '/salud_/$categoria/$id': typeof SaludCategoriaIdRoute
   '/tram/linea/$lineId': typeof TramLineaLineIdRoute
   '/tram/parada/$stopId': typeof TramParadaStopIdRoute
+  '/admin/ai/': typeof AdminAiIndexRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
   '/api/public/hooks/agente-learn': typeof ApiPublicHooksAgenteLearnRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
@@ -899,6 +970,7 @@ export interface FileRouteTypes {
     | '/voces'
     | '/vuelos'
     | '/welcome'
+    | '/admin/ai'
     | '/admin/arquitectura'
     | '/admin/bases-datos'
     | '/admin/integraciones'
@@ -935,6 +1007,12 @@ export interface FileRouteTypes {
     | '/vuelos/$iata'
     | '/admin/'
     | '/business/'
+    | '/admin/ai/analytics'
+    | '/admin/ai/costs'
+    | '/admin/ai/entities'
+    | '/admin/ai/intents'
+    | '/admin/ai/supervision'
+    | '/admin/ai/unknown-queries'
     | '/api/public/aena-flights'
     | '/api/public/booking-create'
     | '/api/public/bus-eta'
@@ -953,6 +1031,7 @@ export interface FileRouteTypes {
     | '/salud/$categoria/$id'
     | '/tram/linea/$lineId'
     | '/tram/parada/$stopId'
+    | '/admin/ai/'
     | '/api/public/hooks/aena-sync'
     | '/api/public/hooks/agente-learn'
     | '/api/public/hooks/cinemas-sync'
@@ -1029,6 +1108,12 @@ export interface FileRouteTypes {
     | '/vuelos/$iata'
     | '/admin'
     | '/business'
+    | '/admin/ai/analytics'
+    | '/admin/ai/costs'
+    | '/admin/ai/entities'
+    | '/admin/ai/intents'
+    | '/admin/ai/supervision'
+    | '/admin/ai/unknown-queries'
     | '/api/public/aena-flights'
     | '/api/public/booking-create'
     | '/api/public/bus-eta'
@@ -1047,6 +1132,7 @@ export interface FileRouteTypes {
     | '/salud/$categoria/$id'
     | '/tram/linea/$lineId'
     | '/tram/parada/$stopId'
+    | '/admin/ai'
     | '/api/public/hooks/aena-sync'
     | '/api/public/hooks/agente-learn'
     | '/api/public/hooks/cinemas-sync'
@@ -1089,6 +1175,7 @@ export interface FileRouteTypes {
     | '/voces'
     | '/vuelos'
     | '/welcome'
+    | '/admin/ai'
     | '/admin/arquitectura'
     | '/admin/bases-datos'
     | '/admin/integraciones'
@@ -1125,6 +1212,12 @@ export interface FileRouteTypes {
     | '/vuelos_/$iata'
     | '/admin/'
     | '/business/'
+    | '/admin/ai/analytics'
+    | '/admin/ai/costs'
+    | '/admin/ai/entities'
+    | '/admin/ai/intents'
+    | '/admin/ai/supervision'
+    | '/admin/ai/unknown-queries'
     | '/api/public/aena-flights'
     | '/api/public/booking-create'
     | '/api/public/bus-eta'
@@ -1143,6 +1236,7 @@ export interface FileRouteTypes {
     | '/salud_/$categoria/$id'
     | '/tram/linea/$lineId'
     | '/tram/parada/$stopId'
+    | '/admin/ai/'
     | '/api/public/hooks/aena-sync'
     | '/api/public/hooks/agente-learn'
     | '/api/public/hooks/cinemas-sync'
@@ -1654,6 +1748,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminArquitecturaRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/ai': {
+      id: '/admin/ai'
+      path: '/ai'
+      fullPath: '/admin/ai'
+      preLoaderRoute: typeof AdminAiRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/ai/': {
+      id: '/admin/ai/'
+      path: '/'
+      fullPath: '/admin/ai/'
+      preLoaderRoute: typeof AdminAiIndexRouteImport
+      parentRoute: typeof AdminAiRoute
+    }
     '/tram/parada/$stopId': {
       id: '/tram/parada/$stopId'
       path: '/parada/$stopId'
@@ -1780,6 +1888,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAenaFlightsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/ai/unknown-queries': {
+      id: '/admin/ai/unknown-queries'
+      path: '/unknown-queries'
+      fullPath: '/admin/ai/unknown-queries'
+      preLoaderRoute: typeof AdminAiUnknownQueriesRouteImport
+      parentRoute: typeof AdminAiRoute
+    }
+    '/admin/ai/supervision': {
+      id: '/admin/ai/supervision'
+      path: '/supervision'
+      fullPath: '/admin/ai/supervision'
+      preLoaderRoute: typeof AdminAiSupervisionRouteImport
+      parentRoute: typeof AdminAiRoute
+    }
+    '/admin/ai/intents': {
+      id: '/admin/ai/intents'
+      path: '/intents'
+      fullPath: '/admin/ai/intents'
+      preLoaderRoute: typeof AdminAiIntentsRouteImport
+      parentRoute: typeof AdminAiRoute
+    }
+    '/admin/ai/entities': {
+      id: '/admin/ai/entities'
+      path: '/entities'
+      fullPath: '/admin/ai/entities'
+      preLoaderRoute: typeof AdminAiEntitiesRouteImport
+      parentRoute: typeof AdminAiRoute
+    }
+    '/admin/ai/costs': {
+      id: '/admin/ai/costs'
+      path: '/costs'
+      fullPath: '/admin/ai/costs'
+      preLoaderRoute: typeof AdminAiCostsRouteImport
+      parentRoute: typeof AdminAiRoute
+    }
+    '/admin/ai/analytics': {
+      id: '/admin/ai/analytics'
+      path: '/analytics'
+      fullPath: '/admin/ai/analytics'
+      preLoaderRoute: typeof AdminAiAnalyticsRouteImport
+      parentRoute: typeof AdminAiRoute
+    }
     '/ocio_/cines_/$id/cartelera': {
       id: '/ocio_/cines_/$id/cartelera'
       path: '/ocio/cines/$id/cartelera'
@@ -1888,7 +2038,31 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminAiRouteChildren {
+  AdminAiAnalyticsRoute: typeof AdminAiAnalyticsRoute
+  AdminAiCostsRoute: typeof AdminAiCostsRoute
+  AdminAiEntitiesRoute: typeof AdminAiEntitiesRoute
+  AdminAiIntentsRoute: typeof AdminAiIntentsRoute
+  AdminAiSupervisionRoute: typeof AdminAiSupervisionRoute
+  AdminAiUnknownQueriesRoute: typeof AdminAiUnknownQueriesRoute
+  AdminAiIndexRoute: typeof AdminAiIndexRoute
+}
+
+const AdminAiRouteChildren: AdminAiRouteChildren = {
+  AdminAiAnalyticsRoute: AdminAiAnalyticsRoute,
+  AdminAiCostsRoute: AdminAiCostsRoute,
+  AdminAiEntitiesRoute: AdminAiEntitiesRoute,
+  AdminAiIntentsRoute: AdminAiIntentsRoute,
+  AdminAiSupervisionRoute: AdminAiSupervisionRoute,
+  AdminAiUnknownQueriesRoute: AdminAiUnknownQueriesRoute,
+  AdminAiIndexRoute: AdminAiIndexRoute,
+}
+
+const AdminAiRouteWithChildren =
+  AdminAiRoute._addFileChildren(AdminAiRouteChildren)
+
 interface AdminRouteChildren {
+  AdminAiRoute: typeof AdminAiRouteWithChildren
   AdminArquitecturaRoute: typeof AdminArquitecturaRoute
   AdminBasesDatosRoute: typeof AdminBasesDatosRoute
   AdminIntegracionesRoute: typeof AdminIntegracionesRoute
@@ -1902,6 +2076,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminAiRoute: AdminAiRouteWithChildren,
   AdminArquitecturaRoute: AdminArquitecturaRoute,
   AdminBasesDatosRoute: AdminBasesDatosRoute,
   AdminIntegracionesRoute: AdminIntegracionesRoute,
@@ -2102,13 +2277,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
