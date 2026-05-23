@@ -3600,44 +3600,18 @@ export function AgenteVamosFab() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  // ── Autoplay del saludo en el primer tap del usuario ──────────────────
-  // Los navegadores móviles bloquean TTS sin gesto. Adjuntamos un listener
-  // único a window que dispara el saludo en el primer toque/click. Si tras
-  // 4 s nadie ha interactuado, mostramos un botón flotante "Escuchar saludo"
-  // como fallback explícito.
+  // El saludo SOLO se dispara cuando el usuario pulsa el FAB del agente
+  // (openPanelWithGreeting → startGreetingFromUserGesture). No hay autoplay
+  // global ni fallback flotante: sin pulsación explícita, el agente calla.
   useEffect(() => {
     if (hidden) return;
     if (typeof window === "undefined") return;
-    let alreadyPlayed = false;
     try {
-      alreadyPlayed = window.sessionStorage.getItem(GREETING_SESSION_KEY) === "1";
+      if (window.sessionStorage.getItem(GREETING_SESSION_KEY) === "1") {
+        greetingPlayedRef.current = true;
+        voiceBootStartedRef.current = true;
+      }
     } catch {}
-    if (alreadyPlayed) {
-      greetingPlayedRef.current = true;
-      voiceBootStartedRef.current = true;
-      return;
-    }
-
-    const onFirstTap = () => {
-      if (!voiceBootStartedRef.current) startGreetingFromUserGesture();
-      cleanup();
-    };
-    const events: (keyof WindowEventMap)[] = ["pointerdown", "touchstart", "click", "keydown"];
-    const cleanup = () => {
-      events.forEach((ev) => window.removeEventListener(ev, onFirstTap, true));
-      window.clearTimeout(timer);
-    };
-    events.forEach((ev) =>
-      window.addEventListener(ev, onFirstTap, { capture: true, once: false }),
-    );
-
-    // Fallback visible si el usuario no interactúa pronto.
-    const timer = window.setTimeout(() => {
-      if (!greetingPlayedRef.current) setShowGreetingButton(true);
-    }, 4000);
-
-    return cleanup;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hidden]);
 
   if (hidden) return null;
