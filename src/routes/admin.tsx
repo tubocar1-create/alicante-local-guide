@@ -94,6 +94,15 @@ function AdminLayout() {
   const [error, setError] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const qc = useQueryClient();
+  const isFetching = useIsFetching();
+
+  // Refresh global: invalida TODAS las queries del panel admin y fuerza
+  // un re-fetch. Útil cuando el admin acaba de hacer una acción fuera del
+  // panel y quiere ver el efecto sin recargar la página entera.
+  const refreshAll = () => {
+    qc.invalidateQueries();
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined" && sessionStorage.getItem(PIN_KEY) === "1") {
