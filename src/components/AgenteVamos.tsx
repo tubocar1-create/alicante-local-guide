@@ -1164,11 +1164,20 @@ function matchDbIntent(
 }
 
 function dbIntentToResult(intent: AgenteIntentRow): LocalResult {
+  if (intent.route) {
+    return {
+      reply: `Te llevo a ${intent.label.toLowerCase()}.`,
+      path: intent.route,
+      audio: "fallback",
+      pendingDomain: null,
+      source: "trained",
+    };
+  }
   const domainId = DB_KEY_TO_DOMAIN[intent.key];
   if (domainId) {
     const d = DOMAINS.find((x) => x.id === domainId);
     if (d) {
-      return { reply: d.question, audio: d.audio, pendingDomain: d.id };
+      return { reply: d.question, audio: d.audio, pendingDomain: d.id, source: "trained" };
     }
   }
   return {
@@ -1176,6 +1185,7 @@ function dbIntentToResult(intent: AgenteIntentRow): LocalResult {
     path: intent.route ?? undefined,
     audio: "fallback",
     pendingDomain: null,
+    source: "trained",
   };
 }
 
@@ -1186,6 +1196,7 @@ type LocalResult = {
   pendingDomain?: string | null;
   forwardPrompt?: string;
   openSubmenu?: string;
+  source?: "trained";
 };
 
 // ─── MOTOR CONTEXTUAL URBANO ──────────────────────────────────────────
