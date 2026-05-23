@@ -2165,6 +2165,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const askAgent = useServerFn(agenteVamosChat);
+  // Telemetría: registramos cada interacción del agente en
+  // agente_learning_log (vía server fn que usa supabaseAdmin).
+  // Fire-and-forget: si falla, no rompe la UX.
+  const logInteraction = useServerFn(logAgentInteraction);
   const scrollRef = useRef<HTMLDivElement>(null);
   const recogRef = useRef<SR | null>(null);
 
