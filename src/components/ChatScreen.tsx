@@ -38,7 +38,7 @@ import hoguerasIcon from "@/assets/hogueras-alicante.png";
 import busAlicanteIcon from "@/assets/bus-alicante.png";
 import asistenteIcon from "@/assets/asistente-icon.png";
 import { VamosWord } from "@/components/VamosWord";
-import { hablar } from "@/components/AgenteVamos";
+import { hablar, SHOPPING_INTRO_REPLY } from "@/components/AgenteVamos";
 
 const TILE_SUBTITLES: Record<string, string> = {
   "Comer": "Restaurantes y tapas",
@@ -89,6 +89,11 @@ const BEACH_GUIDE_RE = /\b(playa|playas|cala|calas|costa blanca|postiguet|san ju
 
 function isBeachGuidePrompt(text: string) {
   return text === BEACH_GUIDE_PROMPT || (/charla\s+ia|gu[ií]a\s+visual|mapa|mapeo/i.test(text) && BEACH_GUIDE_RE.test(text));
+}
+
+function isShoppingPrompt(text: string) {
+  return /(^|\s)(comprar|compras|compra|tienda|tiendas|comercio|comercios|shopping|mercado|mercadillo|boutique|boutiques)(\s|$)/i.test(text) ||
+    /\b(ir de compras|quiero adquirir|necesito adquirir|centro comercial|centros comerciales|d[oó]nde comprar)\b/i.test(text);
 }
 
 const BEACH_GUIDE_RESPONSE = `La costa alicantina es un buffet libre: castillo arriba, calas con peces curiosos, kilómetros de arena y dunas al sur. Desliza las 17 playas y abre el mapa cuando una te enamore.
@@ -582,6 +587,20 @@ export function ChatScreen() {
       sendBeachGuide();
       return;
     }
+    if (isShoppingPrompt(trimmed)) {
+      const next = [
+        ...messages,
+        { role: "user" as const, content: trimmed },
+        { role: "assistant" as const, content: SHOPPING_INTRO_REPLY },
+      ];
+      setMessages(next);
+      setInput("");
+      setError(null);
+      setSubmenuStack([]);
+      void hablar(SHOPPING_INTRO_REPLY);
+      navigate({ to: "/comprar" });
+      return;
+    }
     // ---- Contexto conversacional persistente (activeDomain sticky) ----
     // Mientras exista un dominio activo (p.ej. TRANSPORTE/TRAM), las
     // entidades geográficas (Benidorm, Madrid…) deben interpretarse dentro
@@ -1008,6 +1027,10 @@ export function ChatScreen() {
                         setShowFlightPicker(true);
                       } else if (opt.href) {
                         setSubmenuStack([]);
+                        if (opt.href === "/comprar") {
+                          setMessages((prev) => [...prev, { role: "assistant", content: SHOPPING_INTRO_REPLY }]);
+                          void hablar(SHOPPING_INTRO_REPLY);
+                        }
                         if (opt.href.startsWith("/")) {
                           navigate({ to: opt.href });
                         } else {
@@ -1062,6 +1085,7 @@ export function ChatScreen() {
         {composerMode === "voice" ? (
           <div className="mx-auto flex max-w-2xl flex-col items-center gap-2">
             <button
+              onPointerDown={() => window.dispatchEvent(new Event("vamos:prime-voice"))}
               onClick={() => window.dispatchEvent(new Event("vamos:open"))}
               aria-label="Hablar con Agente Vamos"
               className="group relative flex h-20 w-20 items-center justify-center rounded-full transition active:scale-95"

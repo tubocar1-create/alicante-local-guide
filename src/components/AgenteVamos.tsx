@@ -250,7 +250,7 @@ type DomainSpec = {
   followups: { keys: string[]; path: string; label?: string }[];
 };
 
-const SHOPPING_INTRO_REPLY =
+export const SHOPPING_INTRO_REPLY =
   "Genial, aquí te dejo una lista muy amplia de sitios para comprar, pero si lo prefieres te puedo orientar si me dices qué artículo o servicio necesitas.";
 
 const DOMAINS: DomainSpec[] = [
@@ -2118,6 +2118,22 @@ function waitVoices(synth: SpeechSynthesis): Promise<SpeechSynthesisVoice[]> {
   });
 }
 
+function warmSpeechVoices(synth: SpeechSynthesis) {
+  try {
+    const voices = synth.getVoices();
+    if (voices.length) return;
+    synth.onvoiceschanged = () => {
+      try {
+        synth.getVoices();
+      } catch {
+        // Ignore voice warm-up failures.
+      }
+    };
+  } catch {
+    // Ignore voice warm-up failures.
+  }
+}
+
 export async function hablar(
   texto: unknown,
   opts: { onStart?: () => void; onEnd?: () => void } = {},
@@ -2130,8 +2146,7 @@ export async function hablar(
     return;
   }
   const synth = window.speechSynthesis;
-  const voices = await waitVoices(synth);
-  console.log("VOICES:", voices);
+  warmSpeechVoices(synth);
   synth.cancel();
   synth.resume();
   const utterance = new SpeechSynthesisUtterance(String(respuesta));
@@ -2142,9 +2157,6 @@ export async function hablar(
   const voice = pickSpanishVoice(synth);
   if (voice) {
     utterance.voice = voice;
-    console.log("VOICE PICKED:", voice.name, voice.lang);
-  } else {
-    console.warn("No hay voces disponibles para TTS.");
   }
   __vaActiveUtterance = utterance;
   let finished = false;
@@ -2656,15 +2668,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         const storedDomain = readStoredActiveDomain();
         const activeDomain = pendingDomainRef.current ?? storedDomain ?? routeDomain;
         const priorDomain = activeDomain;
-        let catalogForTurn = routingCatalogRef.current;
-        if (catalogForTurn.intents.length === 0) {
-          try {
-            catalogForTurn = await loadCatalog();
-            routingCatalogRef.current = catalogForTurn ?? EMPTY_ROUTING_CATALOG;
-          } catch {
-            catalogForTurn = EMPTY_ROUTING_CATALOG;
-          }
-        }
+        const catalogForTurn = routingCatalogRef.current;
         const fallback = localResolve(clean, activeDomain, catalogForTurn);
         const replyMode = pickAssistantMode(fallback.pendingDomain ?? pendingDomainRef.current ?? null);
         let reply = formatReply(replyMode, fallback.reply);
@@ -3548,6 +3552,10 @@ export function AgenteVamosFab() {
       const greetText = getGreetingText();
       if (typeof window === "undefined" || !window.speechSynthesis) return;
       const synth = window.speechSynthesis;
+      __vaSetGreetingSpoken(true);
+      __vaSpeechUnlocked = true;
+      greetingPlayedRef.current = true;
+      try { window.sessionStorage.setItem(GREETING_SESSION_KEY, "1"); } catch {}
 
       // Cancela cualquier utterance anterior antes de iniciar el saludo.
       try { synth.cancel(); } catch {}
@@ -3558,13 +3566,11 @@ export function AgenteVamosFab() {
       u.rate = VA_VOICE_RATE;
       u.pitch = VA_VOICE_PITCH;
       u.volume = 1;
+      warmSpeechVoices(synth);
       const voice = pickSpanishVoice(synth);
       if (voice) u.voice = voice;
       __vaActiveUtterance = u;
-      __vaSetGreetingSpoken(true);
-      __vaSpeechUnlocked = true;
-      greetingPlayedRef.current = true;
-      try { window.sessionStorage.setItem(GREETING_SESSION_KEY, "1"); } catch {}
+      keepSpeechSynthesisAwake(synth);
 
       u.onend = () => {
         if (__vaActiveUtterance === u) __vaActiveUtterance = null;
@@ -3574,7 +3580,6 @@ export function AgenteVamosFab() {
       };
 
       try { synth.speak(u); } catch {}
-      keepSpeechSynthesisAwake(synth);
       primeSpanishUtterances();
     } catch {
       /* noop */
@@ -3624,9 +3629,19 @@ export function AgenteVamosFab() {
 
   // Permitir abrir el agente desde otros botones (p.ej. el micro del chat)
   useEffect(() => {
+    const primeVoice = () => {
+      if (typeof window === "undefined" || !window.speechSynthesis) return;
+      warmSpeechVoices(window.speechSynthesis);
+      primeSpanishUtterances();
+      try { window.speechSynthesis.resume(); } catch {}
+    };
+    window.addEventListener("vamos:prime-voice", primeVoice);
     const handler = () => openPanelWithGreeting();
     window.addEventListener("vamos:open", handler);
-    return () => window.removeEventListener("vamos:open", handler);
+    return () => {
+      window.removeEventListener("vamos:prime-voice", primeVoice);
+      window.removeEventListener("vamos:open", handler);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
@@ -3636,6 +3651,8 @@ export function AgenteVamosFab() {
   useEffect(() => {
     if (hidden) return;
     if (typeof window === "undefined") return;
+    if (window.speechSynthesis) warmSpeechVoices(window.speechSynthesis);
+    primeSpanishUtterances();
     try {
       if (window.sessionStorage.getItem(GREETING_SESSION_KEY) === "1") {
         greetingPlayedRef.current = true;
