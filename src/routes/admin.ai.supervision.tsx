@@ -27,22 +27,33 @@ type Status = "pending" | "approved" | "rejected" | "all";
 function SupervisionPage() {
   const [status, setStatus] = useState<Status>("pending");
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [targetIntent, setTargetIntent] = useState<Record<string, string>>({});
   const qc = useQueryClient();
   const q = useQuery(supervisionQO(status));
+  const intentsQ = useQuery(intentsQO());
 
   const mut = useMutation({
-    mutationFn: (args: { id: string; status: "approved" | "rejected"; notes?: string }) =>
+    mutationFn: (args: {
+      id: string;
+      status: "approved" | "rejected";
+      notes?: string;
+      final_intent?: string;
+      final_keywords?: string[];
+    }) =>
       submitSupervision({
         data: {
           pin: ADMIN_PIN,
           id: args.id,
           status: args.status,
           admin_notes: args.notes,
+          final_intent: args.final_intent,
+          final_keywords: args.final_keywords,
         },
       }),
     onSuccess: () => {
       toast.success("Revisión guardada");
       qc.invalidateQueries({ queryKey: ["admin-ai", "supervision"] });
+      qc.invalidateQueries({ queryKey: ["admin-ai", "intents"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
