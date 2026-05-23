@@ -1149,7 +1149,7 @@ function matchDbIntent(
   let best: AgenteIntentRow | null = null;
   let bestLen = 0;
   for (const it of dbIntents) {
-    const canRoute = Boolean(it.route || it.action || DB_KEY_TO_DOMAIN[normalizeSpeech(it.key)]);
+    const canRoute = Boolean(it.route || it.action);
     if (!canRoute) continue;
     for (const kw of it.keywords ?? []) {
       const n = normalizeSpeech(kw);
@@ -1167,6 +1167,14 @@ function matchDbIntent(
 }
 
 function dbIntentToResult(intent: AgenteIntentRow): LocalResult {
+  if (intent.action === "logout") {
+    return {
+      reply: "Cerrando sesión…",
+      audio: "fallback",
+      pendingDomain: null,
+      source: "trained",
+    };
+  }
   if (intent.route) {
     return {
       reply: `Te llevo a ${intent.label.toLowerCase()}.`,
