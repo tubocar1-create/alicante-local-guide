@@ -1176,6 +1176,16 @@ function dbIntentToResult(intent: AgenteIntentRow): LocalResult {
       source: "trained",
     };
   }
+  // Si el intent BD pertenece a un dominio con preguntas de clarificación
+  // (followups), SIEMPRE preguntamos primero — aunque tenga `route` directa.
+  // Regla doctrinal: conversar antes de derivar.
+  const domainId = DB_KEY_TO_DOMAIN[normalizeSpeech(intent.key)];
+  if (domainId) {
+    const d = DOMAINS.find((x) => x.id === domainId);
+    if (d && d.followups.length > 0) {
+      return { reply: d.question, audio: d.audio, pendingDomain: d.id, source: "trained" };
+    }
+  }
   if (intent.route) {
     return {
       reply: `Te llevo a ${intent.label.toLowerCase()}.`,
@@ -1185,7 +1195,6 @@ function dbIntentToResult(intent: AgenteIntentRow): LocalResult {
       source: "trained",
     };
   }
-  const domainId = DB_KEY_TO_DOMAIN[normalizeSpeech(intent.key)];
   if (domainId) {
     const d = DOMAINS.find((x) => x.id === domainId);
     if (d) {
