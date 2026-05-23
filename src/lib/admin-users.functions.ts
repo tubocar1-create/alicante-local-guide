@@ -112,8 +112,9 @@ export const listAdminUsers = createServerFn({ method: "POST" })
         if (!u.name) u.name = (p.display_name as string | null) ?? null;
         u.first_name = (p.first_name as string | null) ?? null;
         u.last_name = (p.last_name as string | null) ?? null;
-        u.consents = (p.consents as Record<string, unknown>) ?? {};
-        u.preferences = (p.preferences as Record<string, unknown>) ?? {};
+        u.consents = (p.consents as Record<string, string | number | boolean | null>) ?? {};
+        u.preferences = (p.preferences as Record<string, string | number | boolean | null>) ?? {};
+
         u.marketing_opt_in = !!p.marketing_opt_in;
       }
     }
