@@ -910,13 +910,20 @@ function matchFollowup(query: string, domain: DomainSpec): { path: string; label
   for (const f of domain.followups) {
     for (const k of f.keys) {
       const n = normalizeSpeech(k);
-      if (n && query.includes(n) && n.length > bestLen) {
+      const matches = n.includes(" ") || n.length > 3
+        ? query.includes(n)
+        : new RegExp(`(^|\\s)${n}(\\s|$)`).test(query);
+      if (n && matches && n.length > bestLen) {
         best = { path: f.path, label: f.label };
         bestLen = n.length;
       }
     }
   }
   return best;
+}
+
+function isAffirmativeResponse(query: string): boolean {
+  return /^(si|sí|s[ií] claro|vale|ok|okay|perfecto|claro|correcto|exacto|afirmativo|afirmativa|de acuerdo|dale|confirmo)$/i.test(query.trim());
 }
 
 // ─── DB Intents (agente_intents) ──────────────────────────────────────
