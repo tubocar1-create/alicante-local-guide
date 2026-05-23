@@ -95,6 +95,9 @@ const BEACH_GUIDE_RESPONSE = `La costa alicantina es un buffet libre: castillo a
 
 [Abrir mapa interactivo](/playas/mapa)`;
 
+const SHOPPING_INTRO_REPLY =
+  "Genial, aquí te dejo una lista muy amplia de sitios para comprar, pero si lo prefieres te puedo orientar si me dices qué artículo o servicio necesitas.";
+
 function BeachScrollGallery() {
   const navigate = useNavigate();
   const fetcher = useServerFn(getMapBeaches);
