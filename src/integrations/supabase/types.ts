@@ -251,41 +251,92 @@ export type Database = {
       agente_learning_log: {
         Row: {
           added_keywords: string[]
+          clicked_result: string | null
           confidence: number | null
+          conversion_event: string | null
           created_at: string
           decision: string
+          detected_intent: string | null
+          estimated_cost: number | null
+          failure_reason: string | null
+          fallback_used: boolean | null
+          geo_context: Json | null
           id: string
+          intent_confidence: number | null
           intent_key: string | null
+          latency_ms: number | null
           model: string | null
+          model_used: string | null
           normalized: string
+          normalized_query: string | null
           notes: string | null
           raw_query: string
+          resolved: boolean | null
+          resolver_type: string | null
+          route_origin: string | null
+          session_id: string | null
+          tokens_input: number | null
+          tokens_output: number | null
           unknown_query_id: string | null
         }
         Insert: {
           added_keywords?: string[]
+          clicked_result?: string | null
           confidence?: number | null
+          conversion_event?: string | null
           created_at?: string
           decision: string
+          detected_intent?: string | null
+          estimated_cost?: number | null
+          failure_reason?: string | null
+          fallback_used?: boolean | null
+          geo_context?: Json | null
           id?: string
+          intent_confidence?: number | null
           intent_key?: string | null
+          latency_ms?: number | null
           model?: string | null
+          model_used?: string | null
           normalized: string
+          normalized_query?: string | null
           notes?: string | null
           raw_query: string
+          resolved?: boolean | null
+          resolver_type?: string | null
+          route_origin?: string | null
+          session_id?: string | null
+          tokens_input?: number | null
+          tokens_output?: number | null
           unknown_query_id?: string | null
         }
         Update: {
           added_keywords?: string[]
+          clicked_result?: string | null
           confidence?: number | null
+          conversion_event?: string | null
           created_at?: string
           decision?: string
+          detected_intent?: string | null
+          estimated_cost?: number | null
+          failure_reason?: string | null
+          fallback_used?: boolean | null
+          geo_context?: Json | null
           id?: string
+          intent_confidence?: number | null
           intent_key?: string | null
+          latency_ms?: number | null
           model?: string | null
+          model_used?: string | null
           normalized?: string
+          normalized_query?: string | null
           notes?: string | null
           raw_query?: string
+          resolved?: boolean | null
+          resolver_type?: string | null
+          route_origin?: string | null
+          session_id?: string | null
+          tokens_input?: number | null
+          tokens_output?: number | null
           unknown_query_id?: string | null
         }
         Relationships: [
@@ -384,6 +435,44 @@ export type Database = {
           query?: string
         }
         Relationships: []
+      }
+      agente_unknown_query_actions: {
+        Row: {
+          action: string
+          id: string
+          notes: string | null
+          payload: Json
+          performed_at: string
+          performed_by: string | null
+          unknown_query_id: string | null
+        }
+        Insert: {
+          action: string
+          id?: string
+          notes?: string | null
+          payload?: Json
+          performed_at?: string
+          performed_by?: string | null
+          unknown_query_id?: string | null
+        }
+        Update: {
+          action?: string
+          id?: string
+          notes?: string | null
+          payload?: Json
+          performed_at?: string
+          performed_by?: string | null
+          unknown_query_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agente_unknown_query_actions_unknown_query_id_fkey"
+            columns: ["unknown_query_id"]
+            isOneToOne: false
+            referencedRelation: "agente_unknown_queries"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       bookings: {
         Row: {
