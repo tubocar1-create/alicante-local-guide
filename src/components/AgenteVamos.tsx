@@ -1173,7 +1173,7 @@ function dbIntentToResult(intent: AgenteIntentRow): LocalResult {
       source: "trained",
     };
   }
-  const domainId = DB_KEY_TO_DOMAIN[intent.key];
+  const domainId = DB_KEY_TO_DOMAIN[normalizeSpeech(intent.key)];
   if (domainId) {
     const d = DOMAINS.find((x) => x.id === domainId);
     if (d) {
