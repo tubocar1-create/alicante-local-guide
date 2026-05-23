@@ -192,7 +192,7 @@ function ComparadorPage() {
           <table className="w-full min-w-[1800px] border-separate border-spacing-0 text-sm">
             <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
               <tr>
-                <Th sticky>Operadora</Th>
+                <Th sticky className="px-2 py-2">Operadora</Th>
                 <Th>Perfil</Th>
                 <Th>Aeropuerto</Th>
                 <Th>Shuttle</Th>
@@ -213,13 +213,10 @@ function ComparadorPage() {
             <tbody>
               {OPERATORS.map((op) => (
                 <tr key={op.id} className="group">
-                  <Td sticky>
-                    <div className="flex items-center gap-3">
-                      <div className="grid h-10 w-16 shrink-0 place-items-center rounded-md border border-dashed border-slate-300 bg-slate-50 text-[10px] font-medium uppercase text-slate-400">
-                        logo
-                      </div>
-                      <span className="font-semibold text-slate-800">{op.name}</span>
-                    </div>
+                  <Td sticky className="px-2 py-2">
+                    <span className="whitespace-nowrap text-xs font-semibold text-slate-800">
+                      {op.name}
+                    </span>
                   </Td>
                   <Td className="text-slate-600 text-xs">{op.profile}</Td>
                   <Td><YesNo value={op.airport} /></Td>
