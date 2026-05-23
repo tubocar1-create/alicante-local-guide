@@ -44,8 +44,9 @@ export const listAdminUsers = createServerFn({ method: "POST" })
       name: string | null;
       first_name: string | null;
       last_name: string | null;
-      consents: Record<string, unknown>;
-      preferences: Record<string, unknown>;
+      consents: Record<string, string | number | boolean | null>;
+      preferences: Record<string, string | number | boolean | null>;
+
       marketing_opt_in: boolean;
       created_at: string;
       last_sign_in_at: string | null;
