@@ -15,6 +15,7 @@ import {
   MapPinned,
   Menu as MenuIcon,
   Bot,
+  Activity,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
