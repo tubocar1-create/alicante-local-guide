@@ -26,12 +26,6 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 
-const VOICE_ASSETS = import.meta.glob("../assets/agent-voice/*.mp3", {
-  eager: true,
-  query: "?url",
-  import: "default",
-}) as Record<string, string>;
-
 // Local intent router — no AI provider needed. Maps keywords to a friendly
 // reply + optional navigation. Keeps the agent fully responsive offline.
 type VoiceClip =
@@ -56,8 +50,6 @@ type VoiceClip =
   | "hello"
   | "thanks"
   | "fallback";
-type GreetingClip = "greeting_morning" | "greeting_afternoon";
-type AgentAudioClip = VoiceClip | GreetingClip;
 
 
 // Arquitectura jerárquica de intents:
@@ -257,6 +249,9 @@ type DomainSpec = {
   hubPath?: string;
   followups: { keys: string[]; path: string; label?: string }[];
 };
+
+const SHOPPING_INTRO_REPLY =
+  "Genial, aquí te dejo una lista muy amplia de sitios para comprar, pero si lo prefieres te puedo orientar si me dices qué artículo o servicio necesitas.";
 
 const DOMAINS: DomainSpec[] = [
   {
@@ -571,7 +566,7 @@ const DOMAINS: DomainSpec[] = [
       "boutique", "boutiques", "mercado", "mercadillo",
       "donde comprar", "dónde comprar",
     ],
-    question: "Genial, aquí te dejo una lista muy amplia de sitios para comprar, pero si lo prefieres te puedo orientar si me dices qué artículo o servicio necesitas.",
+    question: SHOPPING_INTRO_REPLY,
     audio: "fallback",
     followups: [],
   },
@@ -872,7 +867,7 @@ function detectAmbiguity(query: string): LocalResult | null {
   if (other?.id === "compras" && !entity) {
     const comprasDomain = DOMAINS.find((d) => d.id === "compras");
     return {
-      reply: comprasDomain?.question ?? "Genial, aquí te dejo una lista muy amplia de sitios para comprar, pero si lo prefieres te puedo orientar si me dices qué artículo o servicio necesitas.",
+      reply: comprasDomain?.question ?? SHOPPING_INTRO_REPLY,
       path: comprasDomain?.hubPath ?? "/comprar",
       audio: comprasDomain?.audio ?? "fallback",
       pendingDomain: null,
@@ -1236,6 +1231,16 @@ function hasHealthHardBlock(query: string): boolean {
   });
 }
 
+function isShoppingRequest(query: string): boolean {
+  return /(^|\s)(comprar|compras|compra|tienda|tiendas|comercio|comercios|shopping|mercado|mercadillo|boutique|boutiques)(\s|$)/.test(query) ||
+    query.includes("ir de compras") ||
+    query.includes("quiero adquirir") ||
+    query.includes("necesito adquirir") ||
+    query.includes("centro comercial") ||
+    query.includes("centros comerciales") ||
+    query.includes("donde comprar");
+}
+
 // Adapta el tono del texto según el modo del asistente. Solo retoca
 // registro/longitud: nunca cambia el destino ni inventa información.
 function formatReply(mode: AssistantMode, base: string): string {
@@ -1308,6 +1313,15 @@ function localResolve(
   catalog: AgenteRoutingCatalog = EMPTY_ROUTING_CATALOG,
 ): LocalResult {
   const query = normalizeSpeech(text);
+
+  if (isShoppingRequest(query)) {
+    return {
+      reply: SHOPPING_INTRO_REPLY,
+      path: "/comprar",
+      audio: "fallback",
+      pendingDomain: null,
+    };
+  }
 
   // 0) Correcciones aprobadas en el CPA. Si una frase fue entrenada como
   // alias de un intent, debe ganar sobre heurísticas antiguas del cliente.
@@ -1773,27 +1787,24 @@ function localResolve(
 type Msg = { role: "user" | "assistant"; content: string };
 type Mode = "voice" | "text";
 const STORAGE_KEY = "va:agente-msgs";
-const audioSrc = (clip: AgentAudioClip) =>
-  VOICE_ASSETS[`../assets/agent-voice/${clip}.mp3`] ?? `/agent-voice/${clip}.mp3`;
-function getGreetingClip(): GreetingClip {
-  return new Date().getHours() < 14 ? "greeting_morning" : "greeting_afternoon";
-}
 function getLoggedUserName(): string {
   if (typeof window === "undefined") return "";
   try {
     const raw = localStorage.getItem("beta_user_v1");
-    if (!raw) return "";
+    if (!raw) return "Leopoldo";
     const u = JSON.parse(raw);
-    return (u?.name || "").toString().trim();
+    return (u?.name || "Leopoldo").toString().trim();
   } catch {
-    return "";
+    return "Leopoldo";
   }
 }
 function getGreetingText() {
   const h = new Date().getHours();
   const saludo = h < 14 ? "Buenos días" : h < 20 ? "Buenas tardes" : "Buenas noches";
   const name = getLoggedUserName();
-  return name ? `${saludo}, ${name}. ¿Qué vamos a hacer hoy?` : `${saludo}. ¿Qué vamos a hacer hoy?`;
+  return name
+    ? `${saludo}, ${name}. ¿Qué vamos a hacer hoy?`
+    : `${saludo}. ¿Qué vamos a hacer hoy?`;
 }
 
 function makeGreeting(): Msg {
@@ -2102,12 +2113,12 @@ function waitVoices(synth: SpeechSynthesis): Promise<SpeechSynthesisVoice[]> {
       resolve(voices);
     };
     synth.onvoiceschanged = () => finish(synth.getVoices());
-    // Fallback por si onvoiceschanged nunca dispara (algunos Android).
-    setTimeout(() => finish(synth.getVoices()), 350);
+    // Fallback breve: no bloquea la primera frase si el navegador tarda en listar voces.
+    setTimeout(() => finish(synth.getVoices()), 80);
   });
 }
 
-async function hablar(
+export async function hablar(
   texto: unknown,
   opts: { onStart?: () => void; onEnd?: () => void } = {},
 ) {
@@ -2472,65 +2483,8 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     [shouldAutoListen],
   );
 
-  const playAudioClip = useCallback(
-    (clip: AgentAudioClip, text: string, onEnd?: () => void) => {
-      if (typeof window === "undefined" || mutedRef.current) {
-        assistantSpeechMemoryRef.current = [text, ...assistantSpeechMemoryRef.current].slice(0, 6);
-        onEnd?.();
-        resumeListeningAfterEcho();
-        return true;
-      }
-      try {
-        __vaActiveAudio?.pause();
-        const audio = new Audio(audioSrc(clip));
-        audio.preload = "auto";
-        audio.volume = 1;
-        __vaActiveAudio = audio;
-        __vaActiveAudioStartedAt = Date.now();
-        assistantSpeechMemoryRef.current = [text, ...assistantSpeechMemoryRef.current].slice(0, 6);
-        speakingRef.current = true;
-        setSpeaking(true);
-        const finish = () => {
-          if (__vaActiveAudio === audio) __vaActiveAudio = null;
-          __vaActiveAudioStartedAt = 0;
-          suppressRecognitionUntilRef.current = Date.now() + POST_SPEECH_LISTEN_DELAY_MS;
-          speakingRef.current = false;
-          setSpeaking(false);
-          onEnd?.();
-          resumeListeningAfterEcho();
-        };
-        audio.onended = finish;
-        audio.onerror = () => {
-          if (__vaActiveAudio === audio) __vaActiveAudio = null;
-          __vaActiveAudioStartedAt = 0;
-          suppressRecognitionUntilRef.current = Date.now() + POST_SPEECH_LISTEN_DELAY_MS;
-          speakingRef.current = false;
-          setSpeaking(false);
-          onEnd?.();
-          resumeListeningAfterEcho();
-        };
-        const started = audio.play();
-        if (started && typeof started.catch === "function") {
-          started.catch(() => {
-            if (__vaActiveAudio === audio) __vaActiveAudio = null;
-            __vaActiveAudioStartedAt = 0;
-            suppressRecognitionUntilRef.current = Date.now() + POST_SPEECH_LISTEN_DELAY_MS;
-            speakingRef.current = false;
-            setSpeaking(false);
-            onEnd?.();
-            resumeListeningAfterEcho();
-          });
-        }
-        return true;
-      } catch {
-        return false;
-      }
-    },
-    [resumeListeningAfterEcho],
-  );
-
   const speak = useCallback(
-    (text: string, _audio?: AgentAudioClip, onEnd?: () => void, _reservedUtterance?: SpeechSynthesisUtterance | null) => {
+    (text: string, _audio?: VoiceClip, onEnd?: () => void, _reservedUtterance?: SpeechSynthesisUtterance | null) => {
       // Anti-eco: cortamos escucha activa antes de hablar.
       assistantSpeechMemoryRef.current = [text, ...assistantSpeechMemoryRef.current].slice(0, 6);
       suppressRecognitionUntilRef.current = Date.now() + 1200;
@@ -3582,7 +3536,6 @@ const GREETING_SESSION_KEY = "va:greeting-played";
 
 export function AgenteVamosFab() {
   const [open, setOpen] = useState(false);
-  const [showGreetingButton, setShowGreetingButton] = useState(false);
   const voiceBootStartedRef = useRef(false);
   const greetingPlayedRef = useRef(false);
   const path = useRouterState({ select: (s) => s.location.pathname });
@@ -3631,48 +3584,7 @@ export function AgenteVamosFab() {
   const startGreetingFromUserGesture = () => {
     if (voiceBootStartedRef.current) return;
     voiceBootStartedRef.current = true;
-    if (!playGreetingClip()) {
-      playGreetingAfterPermission();
-    }
-    setShowGreetingButton(false);
-  };
-
-  const playGreetingClip = () => {
-    try {
-      if (typeof window === "undefined") return false;
-      __vaActiveAudio?.pause();
-      const audio = new Audio(audioSrc(getGreetingClip()));
-      audio.preload = "auto";
-      audio.volume = 1;
-      __vaActiveAudio = audio;
-      __vaActiveAudioStartedAt = Date.now();
-      __vaActiveUtterance = null;
-      __vaSetGreetingSpoken(true);
-      __vaSpeechUnlocked = true;
-      greetingPlayedRef.current = true;
-      try { window.sessionStorage.setItem(GREETING_SESSION_KEY, "1"); } catch {}
-      let finished = false;
-      const finish = (fallbackToTts = false) => {
-        if (finished) return;
-        finished = true;
-        if (__vaActiveAudio === audio) __vaActiveAudio = null;
-        __vaActiveAudioStartedAt = 0;
-        markVaInteraction();
-        if (fallbackToTts) {
-          greetingPlayedRef.current = false;
-          __vaSetGreetingSpoken(false);
-          try { window.sessionStorage.removeItem(GREETING_SESSION_KEY); } catch {}
-          playGreetingAfterPermission();
-        }
-      };
-      audio.onended = () => finish(false);
-      audio.onerror = () => finish(true);
-      const started = audio.play();
-      if (started && typeof started.catch === "function") started.catch(() => finish(true));
-      return true;
-    } catch {
-      return false;
-    }
+    playGreetingAfterPermission();
   };
 
   // Saludo corto de reentrada: cuando el panel se abre y el saludo inicial
@@ -3725,9 +3637,6 @@ export function AgenteVamosFab() {
     if (hidden) return;
     if (typeof window === "undefined") return;
     try {
-      const greetingAudio = new Audio(audioSrc(getGreetingClip()));
-      greetingAudio.preload = "auto";
-      try { greetingAudio.load(); } catch {}
       if (window.sessionStorage.getItem(GREETING_SESSION_KEY) === "1") {
         greetingPlayedRef.current = true;
         voiceBootStartedRef.current = true;
