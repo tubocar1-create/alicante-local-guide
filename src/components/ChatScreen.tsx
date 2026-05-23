@@ -38,6 +38,7 @@ import hoguerasIcon from "@/assets/hogueras-alicante.png";
 import busAlicanteIcon from "@/assets/bus-alicante.png";
 import asistenteIcon from "@/assets/asistente-icon.png";
 import { VamosWord } from "@/components/VamosWord";
+import { hablar } from "@/components/AgenteVamos";
 
 const TILE_SUBTITLES: Record<string, string> = {
   "Comer": "Restaurantes y tapas",
@@ -510,20 +511,7 @@ export function ChatScreen() {
       // caso lo habla AgenteVamos para mantener continuidad de diálogo.
       try {
         if (window.sessionStorage.getItem("afp:voiceFoodSummaryPending") === "1") return;
-        const synth = window.speechSynthesis;
-        if (synth) {
-          synth.cancel();
-          synth.resume();
-          const u = new SpeechSynthesisUtterance(text);
-          u.lang = "es-ES";
-          u.rate = 1;
-          u.pitch = 1;
-          const voices = synth.getVoices();
-          const es = voices.find((v) => /es[-_]/i.test(v.lang));
-          if (es) u.voice = es;
-          synth.speak(u);
-          if (synth.paused) synth.resume();
-        }
+        void hablar(text);
       } catch {}
     };
     window.addEventListener("vamos:food-summary", handler as EventListener);
