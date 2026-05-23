@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { supervisionQO } from "@/lib/admin-ai-shared";
+import { supervisionQO, intentsQO } from "@/lib/admin-ai-shared";
 import { submitSupervision } from "@/lib/admin-ai.functions";
 import { ADMIN_PIN } from "@/lib/admin-shared";
 import { toast } from "sonner";
