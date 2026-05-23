@@ -3614,6 +3614,36 @@ export function AgenteVamosFab() {
     setShowGreetingButton(false);
   };
 
+  const playGreetingClip = (text: string, onEnd?: () => void) => {
+    try {
+      if (typeof window === "undefined") return false;
+      __vaActiveAudio?.pause();
+      const audio = new Audio(audioSrc(getGreetingClip()));
+      audio.preload = "auto";
+      audio.volume = 1;
+      __vaActiveAudio = audio;
+      __vaActiveAudioStartedAt = Date.now();
+      __vaActiveUtterance = null;
+      __vaSetGreetingSpoken(true);
+      __vaSpeechUnlocked = true;
+      greetingPlayedRef.current = true;
+      try { window.sessionStorage.setItem(GREETING_SESSION_KEY, "1"); } catch {}
+      const finish = () => {
+        if (__vaActiveAudio === audio) __vaActiveAudio = null;
+        __vaActiveAudioStartedAt = 0;
+        markVaInteraction();
+        onEnd?.();
+      };
+      audio.onended = finish;
+      audio.onerror = finish;
+      const started = audio.play();
+      if (started && typeof started.catch === "function") started.catch(finish);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   // Saludo corto de reentrada: cuando el panel se abre y el saludo inicial
   // ya se reprodujo, hablamos una micro-frase contextual vía TTS.
   const playReentryGreeting = () => {
