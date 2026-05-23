@@ -2169,6 +2169,13 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   // agente_learning_log (vía server fn que usa supabaseAdmin).
   // Fire-and-forget: si falla, no rompe la UX.
   const logInteraction = useServerFn(logAgentInteraction);
+  // ID estable por apertura del panel para agrupar turnos como una
+  // conversación real en /admin/ai/conversations.
+  const sessionIdRef = useRef<string>(
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `s_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+  );
   const scrollRef = useRef<HTMLDivElement>(null);
   const recogRef = useRef<SR | null>(null);
 
