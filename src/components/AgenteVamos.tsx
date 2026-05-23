@@ -2979,10 +2979,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
               });
             }
             // Doctrina: al llevar al usuario a /playas o /playas/mapa, el
-            // agente cierra y espera a que el usuario decida qué playa.
+            // agente se despide y cierra para que el usuario decida qué playa.
+            // Damos tiempo a que termine de hablar la despedida (~4s).
             if (pathname === "/playas" || pathname === "/playas/mapa") {
-              setTimeout(() => { try { onClose(); } catch {} }, 200);
+              setTimeout(() => { try { onClose(); } catch {} }, 4000);
             }
+
             if (Object.keys(search).length > 0) {
               return navigate({ to: pathname as any, search: search as any });
             }
