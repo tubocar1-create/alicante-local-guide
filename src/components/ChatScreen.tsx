@@ -38,7 +38,7 @@ import hoguerasIcon from "@/assets/hogueras-alicante.png";
 import busAlicanteIcon from "@/assets/bus-alicante.png";
 import asistenteIcon from "@/assets/asistente-icon.png";
 import { VamosWord } from "@/components/VamosWord";
-import { hablar } from "@/components/AgenteVamos";
+import { hablar, SHOPPING_INTRO_REPLY } from "@/components/AgenteVamos";
 
 const TILE_SUBTITLES: Record<string, string> = {
   "Comer": "Restaurantes y tapas",
@@ -99,9 +99,6 @@ function isShoppingPrompt(text: string) {
 const BEACH_GUIDE_RESPONSE = `La costa alicantina es un buffet libre: castillo arriba, calas con peces curiosos, kilómetros de arena y dunas al sur. Desliza las 17 playas y abre el mapa cuando una te enamore.
 
 [Abrir mapa interactivo](/playas/mapa)`;
-
-const SHOPPING_INTRO_REPLY =
-  "Genial, aquí te dejo una lista muy amplia de sitios para comprar, pero si lo prefieres te puedo orientar si me dices qué artículo o servicio necesitas.";
 
 function BeachScrollGallery() {
   const navigate = useNavigate();
