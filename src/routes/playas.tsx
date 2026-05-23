@@ -38,7 +38,7 @@ function PlayasPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[oklch(0.98_0.018_205)] text-[oklch(0.18_0.04_235)]">
+    <div className="h-[100dvh] overflow-y-auto overscroll-contain bg-[oklch(0.98_0.018_205)] text-[oklch(0.18_0.04_235)]">
       <header className="relative min-h-[58vh] overflow-hidden">
         <img
           src="/playas/coast-intro.jpg"
