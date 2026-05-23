@@ -230,10 +230,41 @@ function Field({ label, value, sub }: { label: string; value: string; sub?: stri
   );
 }
 
-function Th({ children, className = "" }: { children?: React.ReactNode; className?: string }) {
-  return <th className={`px-4 py-3 font-semibold ${className}`}>{children}</th>;
+function Th({
+  children,
+  className = "",
+  sticky = false,
+}: {
+  children?: React.ReactNode;
+  className?: string;
+  sticky?: boolean;
+}) {
+  const stickyCls = sticky
+    ? "sticky left-0 z-10 bg-slate-50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]"
+    : "bg-slate-50/60";
+  return (
+    <th className={`border-b border-slate-200 px-4 py-3 font-semibold ${stickyCls} ${className}`}>
+      {children}
+    </th>
+  );
 }
 
-function Td({ children, className = "" }: { children?: React.ReactNode; className?: string }) {
-  return <td className={`px-4 py-3 align-middle ${className}`}>{children}</td>;
+function Td({
+  children,
+  className = "",
+  sticky = false,
+}: {
+  children?: React.ReactNode;
+  className?: string;
+  sticky?: boolean;
+}) {
+  const stickyCls = sticky
+    ? "sticky left-0 z-10 bg-white shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] group-hover:bg-slate-50"
+    : "group-hover:bg-slate-50/50";
+  return (
+    <td className={`border-b border-slate-100 px-4 py-3 align-middle ${stickyCls} ${className}`}>
+      {children}
+    </td>
+  );
 }
+
