@@ -29,9 +29,7 @@ function AdminAiLayout() {
 
       <div className="flex flex-wrap gap-1 border-b">
         {TABS.map((t) => {
-          const active = t.exact
-            ? loc.pathname === t.to
-            : loc.pathname.startsWith(t.to);
+          const active = loc.pathname.startsWith(t.to);
           return (
             <Link
               key={t.to}
