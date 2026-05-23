@@ -1168,6 +1168,9 @@ function dbIntentToResult(intent: AgenteIntentRow): LocalResult {
   const domainId = DB_KEY_TO_DOMAIN[normalizeSpeech(intent.key)];
   if (domainId) {
     const d = DOMAINS.find((x) => x.id === domainId);
+    if (d && d.followups.length === 0 && d.hubPath && !d.hubPath.startsWith("action:")) {
+      return { reply: d.question, path: d.hubPath, audio: d.audio, pendingDomain: null, source: "trained" };
+    }
     if (d && d.followups.length > 0) {
       return { reply: d.question, audio: d.audio, pendingDomain: d.id, source: "trained" };
     }
