@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Car, ArrowLeft, Clock, Bus, Users, MapPin, Sparkles, Timer } from "lucide-react";
-import entornoImg from "@/assets/rentacar-entorno.jpg";
-import sectorImg from "@/assets/rentacar-sector.jpg";
-import carreteraImg from "@/assets/rentacar-carretera.jpg";
-import playaImg from "@/assets/rentacar-playa.jpg";
+import coastImg from "@/assets/rentacar-real-coast.jpg";
+import airportImg from "@/assets/rentacar-real-airport.jpg";
+import roadImg from "@/assets/rentacar-real-road.jpg";
+import keysImg from "@/assets/rentacar-real-keys.jpg";
+import calpeImg from "@/assets/rentacar-real-calpe.jpg";
+import fleetImg from "@/assets/rentacar-real-fleet.jpg";
 
 export const Route = createFileRoute("/rent-a-car")({
   head: () => ({
@@ -26,180 +28,182 @@ export const Route = createFileRoute("/rent-a-car")({
 });
 
 const FACTORS = [
-  {
-    icon: Clock,
-    title: "Tiempo de shuttle",
-    desc: "Cuánto tarda el traslado desde la terminal hasta la oficina de la compañía.",
-  },
-  {
-    icon: Bus,
-    title: "Frecuencia del shuttle",
-    desc: "Tiempo medio de espera entre vehículos de traslado al parking de recogida.",
-  },
-  {
-    icon: Users,
-    title: "Tiempo de cola",
-    desc: "Basado en experiencias reales de usuarios y momentos de alta ocupación.",
-  },
-  {
-    icon: MapPin,
-    title: "Oficina en terminal",
-    desc: "Uno de los factores más cómodos para familias y viajeros con equipaje.",
-  },
-  {
-    icon: Sparkles,
-    title: "Estado de los vehículos",
-    desc: "Limpieza, mantenimiento y antigüedad percibida de la flota.",
-  },
-  {
-    icon: Timer,
-    title: "Tiempo de devolución",
-    desc: "Rapidez y facilidad al entregar el coche antes del vuelo.",
-  },
+  { icon: Clock, title: "Tiempo de shuttle", desc: "Cuánto tarda el traslado desde la terminal hasta la oficina." },
+  { icon: Bus, title: "Frecuencia del shuttle", desc: "Tiempo medio de espera entre vehículos de traslado." },
+  { icon: Users, title: "Tiempo de cola", desc: "Basado en experiencias reales y momentos de alta ocupación." },
+  { icon: MapPin, title: "Oficina en terminal", desc: "Uno de los factores más cómodos para familias con equipaje." },
+  { icon: Sparkles, title: "Estado de los vehículos", desc: "Limpieza, mantenimiento y antigüedad percibida." },
+  { icon: Timer, title: "Tiempo de devolución", desc: "Rapidez y facilidad al entregar el coche antes del vuelo." },
 ];
+
+type Photo = { src: string; emoji: string; caption: string };
+
+function PhotoCard({ photo }: { photo: Photo }) {
+  return (
+    <figure className="my-5 overflow-hidden rounded-3xl bg-amber-500/90 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)]">
+      <img
+        src={photo.src}
+        alt={photo.caption}
+        loading="lazy"
+        className="h-64 w-full object-cover sm:h-80"
+      />
+      <figcaption className="px-4 py-3 text-[15px] font-medium leading-snug text-white">
+        {photo.emoji} {photo.caption}
+      </figcaption>
+    </figure>
+  );
+}
 
 function RentACarPage() {
   return (
-    <div className="h-dvh overflow-y-auto bg-background">
-    <main className="mx-auto max-w-2xl px-4 pb-24 pt-6">
-      <Link
-        to="/"
-        className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+    <div
+      className="h-dvh overflow-y-auto text-white"
+      style={{
+        background:
+          "linear-gradient(180deg, #0a1933 0%, #0d2547 40%, #0a1933 100%)",
+      }}
+    >
+      {/* Header sticky */}
+      <header
+        className="sticky top-0 z-10 flex items-center gap-3 px-4 py-3 backdrop-blur-md"
+        style={{ background: "linear-gradient(180deg, rgba(10,25,51,0.95), rgba(10,25,51,0.75))" }}
       >
-        <ArrowLeft className="h-4 w-4" /> Volver
-      </Link>
-
-      <header className="mb-6 flex items-center gap-3">
-        <div className="rounded-2xl bg-primary/10 p-3 text-primary">
-          <Car className="h-7 w-7" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold leading-tight">Rent a car en Alicante</h1>
-          <p className="text-sm text-muted-foreground">
-            Aeropuerto Alicante-Elche (ALC) y alrededores
-          </p>
+        <Link
+          to="/"
+          className="grid h-10 w-10 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20"
+          aria-label="Volver"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Link>
+        <div className="flex items-center gap-2">
+          <div className="grid h-9 w-9 place-items-center rounded-full bg-sky-400/20 text-sky-300">
+            <Car className="h-5 w-5" />
+          </div>
+          <h1 className="font-serif text-xl font-bold tracking-tight">Rent a Car · Alicante</h1>
         </div>
       </header>
 
-      <figure className="mb-5 overflow-hidden rounded-2xl border border-border shadow-sm">
-        <img
-          src={entornoImg}
-          alt="Carretera costera del Mediterráneo cerca de Alicante al atardecer"
-          width={1920}
-          height={1080}
-          className="h-56 w-full object-cover sm:h-72 md:h-80"
-        />
-        <figcaption className="bg-card px-3 py-2 text-xs text-muted-foreground">
-          Costa mediterránea cerca de Alicante — el entorno ideal para descubrir en coche.
-        </figcaption>
-      </figure>
-
-      <article className="space-y-4 text-[15px] leading-relaxed text-foreground/90">
-        <p>
-          Alicante es uno de los destinos turísticos más importantes del Mediterráneo y su
-          aeropuerto, <strong>Alicante-Elche (ALC)</strong>, recibe millones de viajeros cada año,
-          especialmente durante primavera y verano. Para muchos turistas, el alquiler de coche no
-          es un lujo: es la forma más cómoda de descubrir playas, calas, pueblos costeros y zonas
-          como <strong>Benidorm, Jávea, Calpe o Altea</strong> con libertad total.
+      <main className="mx-auto max-w-2xl px-4 pb-24 pt-4">
+        <p className="mb-4 text-sm text-sky-200/80">
+          Aeropuerto Alicante-Elche (ALC) y alrededores
         </p>
 
-        <figure className="my-2 overflow-hidden rounded-2xl border border-border shadow-sm">
-          <img
-            src={carreteraImg}
-            alt="Carretera costera mediterránea cerca de Alicante con vistas al mar"
-            width={1536}
-            height={896}
-            loading="lazy"
-            className="h-56 w-full object-cover sm:h-72 md:h-80"
-          />
-          <figcaption className="bg-card px-3 py-2 text-xs text-muted-foreground">
-            Carreteras costeras de la provincia de Alicante, ideales para recorrer en coche alquilado.
-          </figcaption>
-        </figure>
+        <PhotoCard
+          photo={{
+            src: coastImg,
+            emoji: "🌊",
+            caption: "Costa mediterránea — el motivo por el que alquilas coche",
+          }}
+        />
 
-        <p>
+        <p className="text-[16px] leading-relaxed text-white/90">
+          Alicante es uno de los destinos turísticos más importantes del Mediterráneo y su
+          aeropuerto, <strong className="text-white">Alicante-Elche (ALC)</strong>, recibe
+          millones de viajeros cada año, especialmente durante primavera y verano. Para muchos
+          turistas, el alquiler de coche no es un lujo: es la forma más cómoda de descubrir
+          playas, calas, pueblos costeros y zonas como{" "}
+          <strong className="text-white">Benidorm, Jávea, Calpe o Altea</strong> con libertad
+          total.
+        </p>
+
+        <PhotoCard
+          photo={{
+            src: roadImg,
+            emoji: "🛣️",
+            caption: "Carreteras costeras — de Alicante a la Costa Blanca en minutos",
+          }}
+        />
+
+        <p className="text-[16px] leading-relaxed text-white/90">
           La experiencia de alquilar un vehículo en Alicante puede variar mucho entre compañías.
           Dos reservas con precios similares pueden convertirse en experiencias completamente
-          diferentes una vez el viajero aterriza. Por eso, al comparar, no es conveniente
-          centrarse únicamente en el precio, sino en todo aquello que realmente impacta el inicio
-          y final de las vacaciones.
+          diferentes una vez el viajero aterriza. Por eso, al comparar, no conviene centrarse
+          únicamente en el precio, sino en todo aquello que realmente impacta el inicio y final
+          de tus vacaciones.
         </p>
 
-        <figure className="my-2 overflow-hidden rounded-2xl border border-border shadow-sm">
-          <img
-            src={sectorImg}
-            alt="Flota de coches de alquiler en el aeropuerto de Alicante-Elche"
-            width={1920}
-            height={1080}
-            loading="lazy"
-            className="h-56 w-full object-cover sm:h-72 md:h-80"
-          />
-          <figcaption className="bg-card px-3 py-2 text-xs text-muted-foreground">
-            Flota de alquiler junto a la terminal del aeropuerto de Alicante-Elche (ALC).
-          </figcaption>
-        </figure>
+        <PhotoCard
+          photo={{
+            src: airportImg,
+            emoji: "✈️",
+            caption: "Aeropuerto ALC — donde empieza tu experiencia de alquiler",
+          }}
+        />
 
-        <p>
+        <p className="text-[16px] leading-relaxed text-white/90">
           Después de un vuelo, el usuario quiere llegar al coche rápido, evitar esperas
           innecesarias y conducir hacia su destino sin estrés. Aspectos como el tiempo de
           shuttle desde la terminal, la frecuencia de recogida o la existencia de oficina dentro
-          del aeropuerto pueden marcar diferencia, especialmente en temporada alta, cuando el
-          aeropuerto opera a máxima capacidad.
+          del aeropuerto pueden marcar diferencia, especialmente en temporada alta.
         </p>
-        <p>También es importante entender cómo funciona realmente cada operadora:</p>
-        <ul className="ml-5 list-disc space-y-1 text-foreground/80">
+
+        <PhotoCard
+          photo={{
+            src: fleetImg,
+            emoji: "🚗",
+            caption: "Flotas de alquiler — no todas son iguales",
+          }}
+        />
+
+        <p className="text-[16px] leading-relaxed text-white/90">
+          También es importante entender cómo funciona realmente cada operadora:
+        </p>
+        <ul className="ml-5 mt-2 list-disc space-y-1 text-white/80">
           <li>algunas tienen oficinas dentro de la terminal,</li>
           <li>otras requieren traslado en shuttle externo,</li>
           <li>algunas priorizan rapidez,</li>
           <li>otras generan largas colas en horas punta.</li>
         </ul>
-        <p>
-          Por eso, además del precio, el usuario debe valorar factores operativos reales que
-          afectan directamente a la experiencia del viajero.
+
+        <PhotoCard
+          photo={{
+            src: keysImg,
+            emoji: "🔑",
+            caption: "Llaves en mano — el momento que define si la espera valió la pena",
+          }}
+        />
+
+        <p className="text-[16px] leading-relaxed text-white/90">
+          Por eso, además del precio, conviene valorar factores operativos reales que afectan
+          directamente a la experiencia del viajero.
         </p>
 
-        <figure className="my-2 overflow-hidden rounded-2xl border border-border shadow-sm">
-          <img
-            src={playaImg}
-            alt="Cala mediterránea con agua cristalina cerca de Alicante, accesible en coche"
-            width={1536}
-            height={896}
-            loading="lazy"
-            className="h-56 w-full object-cover sm:h-72 md:h-80"
-          />
-          <figcaption className="bg-card px-3 py-2 text-xs text-muted-foreground">
-            Calas y playas de la Costa Blanca que puedes descubrir con total libertad en coche.
-          </figcaption>
-        </figure>
-      </article>
+        <PhotoCard
+          photo={{
+            src: calpeImg,
+            emoji: "🏖️",
+            caption: "Calpe, Jávea, Altea — destinos a un trayecto de coche",
+          }}
+        />
 
-      <section className="mt-8">
-        <h2 className="mb-3 text-lg font-semibold">Qué mirar antes de reservar</h2>
-        <ul className="grid gap-3 sm:grid-cols-2">
-          {FACTORS.map(({ icon: Icon, title, desc }) => (
-            <li
-              key={title}
-              className="rounded-2xl border border-border bg-card p-4 shadow-sm"
-            >
-              <div className="mb-2 flex items-center gap-2 text-primary">
-                <Icon className="h-4 w-4" />
-                <span className="text-sm font-semibold text-foreground">{title}</span>
-              </div>
-              <p className="text-xs text-muted-foreground">{desc}</p>
-            </li>
-          ))}
-        </ul>
-      </section>
+        {/* Factores */}
+        <section className="mt-8">
+          <h2 className="mb-3 font-serif text-xl font-semibold">Qué mirar antes de reservar</h2>
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {FACTORS.map(({ icon: Icon, title, desc }) => (
+              <li
+                key={title}
+                className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm"
+              >
+                <div className="mb-2 flex items-center gap-2 text-sky-300">
+                  <Icon className="h-4 w-4" />
+                  <span className="text-sm font-semibold text-white">{title}</span>
+                </div>
+                <p className="text-xs text-white/70">{desc}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
 
-      <section className="mt-8 rounded-2xl border border-dashed border-border bg-muted/30 p-5 text-sm text-muted-foreground">
-        <p className="font-medium text-foreground">Próximamente</p>
-        <p className="mt-1">
-          Estamos preparando un comparador real de compañías de alquiler en ALC con datos
-          operativos, no solo precios. Si quieres aportar tu experiencia, escríbenos desde el
-          perfil.
-        </p>
-      </section>
-    </main>
+        <section className="mt-8 rounded-2xl border border-dashed border-white/20 bg-white/5 p-5 text-sm text-white/70">
+          <p className="font-medium text-white">Próximamente</p>
+          <p className="mt-1">
+            Estamos preparando un comparador real de compañías de alquiler en ALC con datos
+            operativos, no solo precios. Si quieres aportar tu experiencia, escríbenos desde el
+            perfil.
+          </p>
+        </section>
+      </main>
     </div>
   );
 }
