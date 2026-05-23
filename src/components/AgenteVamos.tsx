@@ -1163,6 +1163,22 @@ function matchDbIntent(
   return best ? { intent: best, len: bestLen } : null;
 }
 
+function dbIntentToResult(intent: AgenteIntentRow): LocalResult {
+  const domainId = DB_KEY_TO_DOMAIN[intent.key];
+  if (domainId) {
+    const d = DOMAINS.find((x) => x.id === domainId);
+    if (d) {
+      return { reply: d.question, audio: d.audio, pendingDomain: d.id };
+    }
+  }
+  return {
+    reply: `Te llevo a ${intent.label.toLowerCase()}.`,
+    path: intent.route ?? undefined,
+    audio: "fallback",
+    pendingDomain: null,
+  };
+}
+
 type LocalResult = {
   reply: string;
   path?: string;
