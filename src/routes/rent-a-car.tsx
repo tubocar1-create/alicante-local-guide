@@ -58,7 +58,8 @@ const FACTORS = [
 
 function RentACarPage() {
   return (
-    <main className="mx-auto min-h-screen max-w-2xl bg-background px-4 pb-24 pt-6">
+    <div className="h-dvh overflow-y-auto bg-background">
+    <main className="mx-auto max-w-2xl px-4 pb-24 pt-6">
       <Link
         to="/"
         className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
@@ -168,5 +169,6 @@ function RentACarPage() {
         </p>
       </section>
     </main>
+    </div>
   );
 }

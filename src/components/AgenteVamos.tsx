@@ -2743,8 +2743,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         // pise esa derivación con una sugerencia de otro dominio.
         const isDomainFollowupResolution = !!priorDomain && !!fallback.path;
         const isTrainedResolution = fallback.source === "trained";
+        // Intro de compras: respuesta canónica, no la pisamos con el servidor.
+        const isShoppingResolution = fallback.path === "/comprar" && fallback.reply === SHOPPING_INTRO_REPLY;
 
-        if (!isClarifying && !resolvedLineDashboard && !isCineIntent && !isDomainFollowupResolution && !isTrainedResolution) {
+        if (!isClarifying && !resolvedLineDashboard && !isCineIntent && !isDomainFollowupResolution && !isTrainedResolution && !isShoppingResolution) {
           try {
             serverCalled = true;
             const res = await askAgent({
