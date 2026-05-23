@@ -3629,9 +3629,19 @@ export function AgenteVamosFab() {
 
   // Permitir abrir el agente desde otros botones (p.ej. el micro del chat)
   useEffect(() => {
+    const primeVoice = () => {
+      if (typeof window === "undefined" || !window.speechSynthesis) return;
+      warmSpeechVoices(window.speechSynthesis);
+      primeSpanishUtterances();
+      try { window.speechSynthesis.resume(); } catch {}
+    };
+    window.addEventListener("vamos:prime-voice", primeVoice);
     const handler = () => openPanelWithGreeting();
     window.addEventListener("vamos:open", handler);
-    return () => window.removeEventListener("vamos:open", handler);
+    return () => {
+      window.removeEventListener("vamos:prime-voice", primeVoice);
+      window.removeEventListener("vamos:open", handler);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
