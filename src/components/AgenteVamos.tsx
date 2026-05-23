@@ -1791,11 +1791,11 @@ function getLoggedUserName(): string {
   if (typeof window === "undefined") return "";
   try {
     const raw = localStorage.getItem("beta_user_v1");
-    if (!raw) return "";
+    if (!raw) return "Leopoldo";
     const u = JSON.parse(raw);
-    return (u?.name || "").toString().trim();
+    return (u?.name || "Leopoldo").toString().trim();
   } catch {
-    return "";
+    return "Leopoldo";
   }
 }
 function getGreetingText() {
