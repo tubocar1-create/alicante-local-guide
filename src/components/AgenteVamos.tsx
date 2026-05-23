@@ -1287,6 +1287,13 @@ function localResolve(
 ): LocalResult {
   const query = normalizeSpeech(text);
 
+  // 0) Correcciones aprobadas en el CPA. Si una frase fue entrenada como
+  // alias de un intent, debe ganar sobre heurísticas antiguas del cliente.
+  const trainedMatch = matchDbIntent(query, catalog.intents);
+  if (trainedMatch && trainedMatch.len >= 8) {
+    return dbIntentToResult(trainedMatch.intent);
+  }
+
   // Dominio activo = prioridad máxima sobre entidades/keywords aisladas.
   // Si el agente acaba de preguntar por TRAM/transporte, respuestas cortas
   // como “Benidorm” se resuelven como destino TRAM antes de llegar a turismo.
