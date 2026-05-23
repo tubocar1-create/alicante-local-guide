@@ -9,9 +9,8 @@ export const Route = createFileRoute("/admin/ai")({
 });
 
 const TABS = [
-  { to: "/admin/ai/auditoria", label: "🔍 Auditoría" },
+  { to: "/admin/ai/correcciones", label: "✏️ Correcciones" },
   { to: "/admin/ai/doctrina", label: "📜 Doctrina" },
-  { to: "/admin/ai/entrenamiento", label: "📚 Entrenamiento" },
   { to: "/admin/ai/operacion", label: "📊 Operación" },
 ];
 
