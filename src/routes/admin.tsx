@@ -14,6 +14,7 @@ import {
   HeartPulse,
   MapPinned,
   Menu as MenuIcon,
+  Bot,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,6 +63,16 @@ const SECTIONS = [
   { to: "/admin/bases-datos", label: "Bases de datos", icon: Database },
   { to: "/admin/metricas-internas", label: "Métricas internas", icon: BarChart3 },
   { to: "/admin/metricas-externas", label: "Métricas externas", icon: Globe },
+] as const;
+
+const IA_SECTIONS = [
+  { to: "/admin/ai", label: "Resumen IA", icon: Bot, exact: true },
+  { to: "/admin/ai/unknown-queries", label: "Consultas sin resolver", icon: Bot },
+  { to: "/admin/ai/supervision", label: "Supervisión humana", icon: Bot },
+  { to: "/admin/ai/intents", label: "Intents", icon: Bot },
+  { to: "/admin/ai/entities", label: "Entidades y alias", icon: Bot },
+  { to: "/admin/ai/analytics", label: "Analítica IA", icon: Bot },
+  { to: "/admin/ai/costs", label: "Costes IA", icon: Bot },
 ] as const;
 
 const HERRAMIENTAS = [
