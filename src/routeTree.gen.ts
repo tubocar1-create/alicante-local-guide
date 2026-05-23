@@ -97,6 +97,7 @@ import { Route as AdminAiIntentsRouteImport } from './routes/admin.ai.intents'
 import { Route as AdminAiEntitiesRouteImport } from './routes/admin.ai.entities'
 import { Route as AdminAiDubiousRouteImport } from './routes/admin.ai.dubious'
 import { Route as AdminAiCostsRouteImport } from './routes/admin.ai.costs'
+import { Route as AdminAiConversationsRouteImport } from './routes/admin.ai.conversations'
 import { Route as AdminAiAnalyticsRouteImport } from './routes/admin.ai.analytics'
 import { Route as OcioCinesIdCarteleraRouteImport } from './routes/ocio_.cines_.$id.cartelera'
 import { Route as ApiPublicTramValidOriginsRouteImport } from './routes/api/public/tram/valid-origins'
@@ -557,6 +558,11 @@ const AdminAiCostsRoute = AdminAiCostsRouteImport.update({
   path: '/costs',
   getParentRoute: () => AdminAiRoute,
 } as any)
+const AdminAiConversationsRoute = AdminAiConversationsRouteImport.update({
+  id: '/conversations',
+  path: '/conversations',
+  getParentRoute: () => AdminAiRoute,
+} as any)
 const AdminAiAnalyticsRoute = AdminAiAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
@@ -709,6 +715,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/business/': typeof BusinessIndexRoute
   '/admin/ai/analytics': typeof AdminAiAnalyticsRoute
+  '/admin/ai/conversations': typeof AdminAiConversationsRoute
   '/admin/ai/costs': typeof AdminAiCostsRoute
   '/admin/ai/dubious': typeof AdminAiDubiousRoute
   '/admin/ai/entities': typeof AdminAiEntitiesRoute
@@ -812,6 +819,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/business': typeof BusinessIndexRoute
   '/admin/ai/analytics': typeof AdminAiAnalyticsRoute
+  '/admin/ai/conversations': typeof AdminAiConversationsRoute
   '/admin/ai/costs': typeof AdminAiCostsRoute
   '/admin/ai/dubious': typeof AdminAiDubiousRoute
   '/admin/ai/entities': typeof AdminAiEntitiesRoute
@@ -919,6 +927,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/business/': typeof BusinessIndexRoute
   '/admin/ai/analytics': typeof AdminAiAnalyticsRoute
+  '/admin/ai/conversations': typeof AdminAiConversationsRoute
   '/admin/ai/costs': typeof AdminAiCostsRoute
   '/admin/ai/dubious': typeof AdminAiDubiousRoute
   '/admin/ai/entities': typeof AdminAiEntitiesRoute
@@ -1027,6 +1036,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/business/'
     | '/admin/ai/analytics'
+    | '/admin/ai/conversations'
     | '/admin/ai/costs'
     | '/admin/ai/dubious'
     | '/admin/ai/entities'
@@ -1130,6 +1140,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/business'
     | '/admin/ai/analytics'
+    | '/admin/ai/conversations'
     | '/admin/ai/costs'
     | '/admin/ai/dubious'
     | '/admin/ai/entities'
@@ -1236,6 +1247,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/business/'
     | '/admin/ai/analytics'
+    | '/admin/ai/conversations'
     | '/admin/ai/costs'
     | '/admin/ai/dubious'
     | '/admin/ai/entities'
@@ -1961,6 +1973,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAiCostsRouteImport
       parentRoute: typeof AdminAiRoute
     }
+    '/admin/ai/conversations': {
+      id: '/admin/ai/conversations'
+      path: '/conversations'
+      fullPath: '/admin/ai/conversations'
+      preLoaderRoute: typeof AdminAiConversationsRouteImport
+      parentRoute: typeof AdminAiRoute
+    }
     '/admin/ai/analytics': {
       id: '/admin/ai/analytics'
       path: '/analytics'
@@ -2078,6 +2097,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminAiRouteChildren {
   AdminAiAnalyticsRoute: typeof AdminAiAnalyticsRoute
+  AdminAiConversationsRoute: typeof AdminAiConversationsRoute
   AdminAiCostsRoute: typeof AdminAiCostsRoute
   AdminAiDubiousRoute: typeof AdminAiDubiousRoute
   AdminAiEntitiesRoute: typeof AdminAiEntitiesRoute
@@ -2089,6 +2109,7 @@ interface AdminAiRouteChildren {
 
 const AdminAiRouteChildren: AdminAiRouteChildren = {
   AdminAiAnalyticsRoute: AdminAiAnalyticsRoute,
+  AdminAiConversationsRoute: AdminAiConversationsRoute,
   AdminAiCostsRoute: AdminAiCostsRoute,
   AdminAiDubiousRoute: AdminAiDubiousRoute,
   AdminAiEntitiesRoute: AdminAiEntitiesRoute,
