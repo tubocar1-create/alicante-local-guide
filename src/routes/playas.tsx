@@ -4,6 +4,9 @@ import { useEffect, useRef } from "react";
 import { getMapBeaches, getCoastIntro } from "@/lib/playas-map.functions";
 
 export const Route = createFileRoute("/playas")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    focus: typeof s.focus === "string" ? (s.focus as string) : undefined,
+  }),
   loader: async () => {
     const [beaches, intro] = await Promise.all([getMapBeaches(), getCoastIntro()]);
     return { beaches, intro };
