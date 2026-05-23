@@ -1149,12 +1149,15 @@ function matchDbIntent(
   let best: AgenteIntentRow | null = null;
   let bestLen = 0;
   for (const it of dbIntents) {
+    const canRoute = Boolean(it.route || it.action || DB_KEY_TO_DOMAIN[normalizeSpeech(it.key)]);
+    if (!canRoute) continue;
     for (const kw of it.keywords ?? []) {
       const n = normalizeSpeech(kw);
       // Exigimos longitud mínima 4 para evitar que palabras sueltas muy
       // cortas ("ir", "ver"…) disparen un dominio entero.
       if (n.length < 4) continue;
-      if (query.includes(n) && n.length > bestLen) {
+      const betterTie = n.length === bestLen && !best?.route && Boolean(it.route);
+      if (query.includes(n) && (n.length > bestLen || betterTie)) {
         best = it;
         bestLen = n.length;
       }
