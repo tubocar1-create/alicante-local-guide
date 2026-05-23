@@ -2091,12 +2091,12 @@ function waitVoices(synth: SpeechSynthesis): Promise<SpeechSynthesisVoice[]> {
       resolve(voices);
     };
     synth.onvoiceschanged = () => finish(synth.getVoices());
-    // Fallback por si onvoiceschanged nunca dispara (algunos Android).
-    setTimeout(() => finish(synth.getVoices()), 350);
+    // Fallback breve: no bloquea la primera frase si el navegador tarda en listar voces.
+    setTimeout(() => finish(synth.getVoices()), 80);
   });
 }
 
-async function hablar(
+export async function hablar(
   texto: unknown,
   opts: { onStart?: () => void; onEnd?: () => void } = {},
 ) {
