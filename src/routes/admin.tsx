@@ -168,6 +168,12 @@ function AdminLayout() {
             <NavItem key={s.to} {...s} />
           ))}
           <div className="pt-3 pb-1 px-2 text-[10px] uppercase tracking-wide text-muted-foreground">
+            Agente IA
+          </div>
+          {IA_SECTIONS.map((s) => (
+            <NavItem key={s.to} {...s} />
+          ))}
+          <div className="pt-3 pb-1 px-2 text-[10px] uppercase tracking-wide text-muted-foreground">
             Herramientas
           </div>
           {HERRAMIENTAS.map((s) => (
