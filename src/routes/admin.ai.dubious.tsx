@@ -350,6 +350,155 @@ function DubiousPage() {
                   </div>
                 </div>
 
+                {/* === Resolver al vuelo === */}
+                <div className="space-y-3 rounded-md border p-3 bg-primary/5">
+                  <div>
+                    <Label className="text-sm font-semibold">
+                      Resolver al vuelo
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Aplica el cambio directamente: la próxima consulta similar ya estará bien enrutada.
+                    </p>
+                  </div>
+
+                  <Select
+                    value={quickAction}
+                    onValueChange={(v) => setQuickAction(v as typeof quickAction)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="add_keyword">
+                        Añadir keyword a intent existente
+                      </SelectItem>
+                      <SelectItem value="create_intent">
+                        Crear nuevo intent
+                      </SelectItem>
+                      <SelectItem value="add_faq">
+                        Crear FAQ
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {quickAction === "add_keyword" && (
+                    <div className="space-y-2">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Intent destino</Label>
+                        <Select
+                          value={targetIntentKey}
+                          onValueChange={setTargetIntentKey}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Elige un intent…" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-64">
+                            {intents.map((i) => (
+                              <SelectItem key={i.key as string} value={i.key as string}>
+                                {i.key as string} — {i.label as string}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Keywords (coma)</Label>
+                        <Input
+                          value={extraKeywords}
+                          onChange={(e) => setExtraKeywords(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {quickAction === "create_intent" && (
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Key</Label>
+                          <Input
+                            value={newIntentKey}
+                            onChange={(e) => setNewIntentKey(e.target.value)}
+                            placeholder="ej. playas"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Ruta</Label>
+                          <Input
+                            value={newIntentRoute}
+                            onChange={(e) => setNewIntentRoute(e.target.value)}
+                            placeholder="/playas"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Label</Label>
+                        <Input
+                          value={newIntentLabel}
+                          onChange={(e) => setNewIntentLabel(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Respuesta hablada</Label>
+                        <Textarea
+                          value={newIntentReply}
+                          onChange={(e) => setNewIntentReply(e.target.value)}
+                          rows={2}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Keywords (coma)</Label>
+                        <Input
+                          value={extraKeywords}
+                          onChange={(e) => setExtraKeywords(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {quickAction === "add_faq" && (
+                    <div className="space-y-2">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Respuesta</Label>
+                        <Textarea
+                          value={faqResponse}
+                          onChange={(e) => setFaqResponse(e.target.value)}
+                          rows={3}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Keywords (coma)</Label>
+                        <Input
+                          value={extraKeywords}
+                          onChange={(e) => setExtraKeywords(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <Button
+                    onClick={() => quickMut.mutate()}
+                    disabled={quickMut.isPending}
+                    className="w-full"
+                    variant="default"
+                  >
+                    {quickMut.isPending ? "Aplicando…" : "Aplicar y resolver"}
+                  </Button>
+                </div>
+
+                <div className="relative py-1">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-[10px] uppercase tracking-wider">
+                    <span className="bg-background px-2 text-muted-foreground">
+                      o solo anotar / enviar a supervisión
+                    </span>
+                  </div>
+                </div>
+
+
+
                 <div className="space-y-1.5">
                   <Label>Diagnóstico</Label>
                   <Select
