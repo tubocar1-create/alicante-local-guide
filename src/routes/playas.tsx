@@ -35,7 +35,19 @@ export const Route = createFileRoute("/playas")({
 
 function PlayasPage() {
   const location = useLocation();
+  const search = useSearch({ from: "/playas" }) as { focus?: string };
   const { beaches: mapBeaches, intro } = Route.useLoaderData();
+  const carruselRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (search.focus === "carrusel" && carruselRef.current) {
+      // Pequeño delay para asegurar render completo antes del scroll.
+      const t = setTimeout(() => {
+        carruselRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 120);
+      return () => clearTimeout(t);
+    }
+  }, [search.focus]);
 
   if (location.pathname !== "/playas") {
     return <Outlet />;
