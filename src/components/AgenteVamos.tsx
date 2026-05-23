@@ -3619,13 +3619,13 @@ export function AgenteVamosFab() {
   const startGreetingFromUserGesture = () => {
     if (voiceBootStartedRef.current) return;
     voiceBootStartedRef.current = true;
-    if (!playGreetingClip(playGreetingAfterPermission)) {
+    if (!playGreetingClip()) {
       playGreetingAfterPermission();
     }
     setShowGreetingButton(false);
   };
 
-  const playGreetingClip = (onEnd?: () => void) => {
+  const playGreetingClip = () => {
     try {
       if (typeof window === "undefined") return false;
       __vaActiveAudio?.pause();
@@ -3640,18 +3640,18 @@ export function AgenteVamosFab() {
       greetingPlayedRef.current = true;
       try { window.sessionStorage.setItem(GREETING_SESSION_KEY, "1"); } catch {}
       let finished = false;
-      const finish = () => {
+      const finish = (fallbackToTts = false) => {
         if (finished) return;
         finished = true;
         if (__vaActiveAudio === audio) __vaActiveAudio = null;
         __vaActiveAudioStartedAt = 0;
         markVaInteraction();
-        onEnd?.();
+        if (fallbackToTts) playGreetingAfterPermission();
       };
-      audio.onended = finish;
-      audio.onerror = finish;
+      audio.onended = () => finish(false);
+      audio.onerror = () => finish(true);
       const started = audio.play();
-      if (started && typeof started.catch === "function") started.catch(finish);
+      if (started && typeof started.catch === "function") started.catch(() => finish(true));
       return true;
     } catch {
       return false;
