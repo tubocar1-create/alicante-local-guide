@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { entitiesQO } from "@/lib/admin-ai-shared";
 import { upsertEntity, deleteEntity } from "@/lib/admin-ai.functions";
 import { ADMIN_PIN } from "@/lib/admin-shared";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin/ai/entities")({
   component: EntitiesPage,
