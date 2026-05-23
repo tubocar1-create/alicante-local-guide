@@ -3630,7 +3630,10 @@ export function AgenteVamosFab() {
       __vaSpeechUnlocked = true;
       greetingPlayedRef.current = true;
       try { window.sessionStorage.setItem(GREETING_SESSION_KEY, "1"); } catch {}
+      let finished = false;
       const finish = () => {
+        if (finished) return;
+        finished = true;
         if (__vaActiveAudio === audio) __vaActiveAudio = null;
         __vaActiveAudioStartedAt = 0;
         markVaInteraction();
