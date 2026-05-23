@@ -527,15 +527,16 @@ const DOMAINS: DomainSpec[] = [
     question: "¿Prefieres ver el carrusel de playas o abrir el mapa interactivo?",
     audio: "beaches",
     followups: [
-      { keys: ["mapa", "mapa interactivo", "interactivo", "ver en mapa", "abrir mapa"], path: "/playas/mapa" },
+      { keys: ["mapa", "mapa interactivo", "interactivo", "ver en mapa", "abrir mapa"], path: "/playas/mapa", label: "mapa" },
       { keys: [
           "carrusel", "carousel", "scroll", "fotos", "deslizar", "desliza",
           "listado", "lista", "todas", "cuales", "cuáles", "playas", "playa",
           "si", "sí", "vale", "ok", "okay", "perfecto", "claro", "correcto",
           "exacto", "afirmativo", "afirmativa", "de acuerdo", "dale", "confirmo",
-        ], path: "/playas?focus=carrusel" },
+        ], path: "/playas?focus=carrusel", label: "carrusel" },
     ],
   },
+
   {
     id: "dormir",
     hubPath: "/donde-dormir",
@@ -1603,9 +1604,17 @@ function localResolve(
           };
         }
         const intent = INTENTS.find((it) => it.path === fuPath);
-        const reply = fuMatch.label
-          ? `Te puedo dirigir a ${fuMatch.label}.`
-          : (intent?.reply ?? "Te llevo allí.");
+        // Despedida especial para el dominio playas: el agente entrega el
+        // carrusel o el mapa interactivo y se despide antes de cerrar.
+        let reply: string;
+        if (d.id === "playas") {
+          const what = fuMatch.label === "mapa" ? "el mapa interactivo de playas" : "el carrusel de playas";
+          reply = `Aquí tienes ${what}. Llámame luego si quieres más información.`;
+        } else {
+          reply = fuMatch.label
+            ? `Te puedo dirigir a ${fuMatch.label}.`
+            : (intent?.reply ?? "Te llevo allí.");
+        }
         return {
           reply,
           path: fuPath,
@@ -1613,6 +1622,7 @@ function localResolve(
           pendingDomain: null,
         };
       }
+
       if (d.hubPath && !d.hubPath.startsWith("action:") && isAffirmativeResponse(query)) {
         return {
           reply: `Te llevo a ${d.id === "playas" ? "playas" : d.question.toLowerCase()}.`,
@@ -2969,10 +2979,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
               });
             }
             // Doctrina: al llevar al usuario a /playas o /playas/mapa, el
-            // agente cierra y espera a que el usuario decida qué playa.
+            // agente se despide y cierra para que el usuario decida qué playa.
+            // Damos tiempo a que termine de hablar la despedida (~4s).
             if (pathname === "/playas" || pathname === "/playas/mapa") {
-              setTimeout(() => { try { onClose(); } catch {} }, 200);
+              setTimeout(() => { try { onClose(); } catch {} }, 4000);
             }
+
             if (Object.keys(search).length > 0) {
               return navigate({ to: pathname as any, search: search as any });
             }
