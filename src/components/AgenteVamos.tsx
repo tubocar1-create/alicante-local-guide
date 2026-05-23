@@ -1765,11 +1765,6 @@ function localResolve(
 type Msg = { role: "user" | "assistant"; content: string };
 type Mode = "voice" | "text";
 const STORAGE_KEY = "va:agente-msgs";
-const audioSrc = (clip: AgentAudioClip) =>
-  VOICE_ASSETS[`../assets/agent-voice/${clip}.mp3`] ?? `/agent-voice/${clip}.mp3`;
-function getGreetingClip(): GreetingClip {
-  return new Date().getHours() < 14 ? "greeting_morning" : "greeting_afternoon";
-}
 function getLoggedUserName(): string {
   if (typeof window === "undefined") return "";
   try {
@@ -1785,7 +1780,9 @@ function getGreetingText() {
   const h = new Date().getHours();
   const saludo = h < 14 ? "Buenos días" : h < 20 ? "Buenas tardes" : "Buenas noches";
   const name = getLoggedUserName();
-  return name ? `${saludo}, ${name}. ¿Qué vamos a hacer hoy?` : `${saludo}. ¿Qué vamos a hacer hoy?`;
+  return name
+    ? `${saludo}, ${name}. ¿Qué vamos a hacer hoy?`
+    : `${saludo}. ¿Qué vamos a hacer hoy?`;
 }
 
 function makeGreeting(): Msg {
