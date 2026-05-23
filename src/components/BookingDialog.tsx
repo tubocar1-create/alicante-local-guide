@@ -4,6 +4,7 @@ import { CalendarClock, Loader2, Users, X } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import type { Listing } from "@/lib/overpass-listings";
+import { trackOperationalEvent } from "@/lib/operations/trackOperationalEvent";
 
 const LOCAL_BOOKINGS_KEY = "local_booking_threads_v1";
 
@@ -82,6 +83,16 @@ export default function BookingDialog({ listing, onClose }: Props) {
         party_size: partySize,
         customer_name: name.trim().slice(0, 120),
         created_at: new Date().toISOString(),
+      });
+      // Track: reserva creada correctamente
+      trackOperationalEvent({
+        type: "booking_created",
+        source: "booking_dialog",
+        conversion_status: "converted",
+        metadata: {
+          business_name: listing.name,
+          party_size: partySize,
+        },
       });
       onClose();
       if (json.thread_id && userId) {

@@ -15,6 +15,7 @@ import {
   MapPinned,
   Menu as MenuIcon,
   Bot,
+  Activity,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,6 +58,7 @@ function useAdminManifest() {
 
 const SECTIONS = [
   { to: "/admin", label: "Resumen", icon: LayoutDashboard, exact: true },
+  { to: "/admin/operations", label: "Centro Operativo", icon: Activity },
   { to: "/admin/usuarios", label: "Usuarios", icon: Users },
   { to: "/admin/arquitectura", label: "Arquitectura", icon: Network },
   { to: "/admin/integraciones", label: "Integraciones", icon: PlugZap },
