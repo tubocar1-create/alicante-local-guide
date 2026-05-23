@@ -571,7 +571,7 @@ const DOMAINS: DomainSpec[] = [
       "boutique", "boutiques", "mercado", "mercadillo",
       "donde comprar", "dónde comprar",
     ],
-    question: "🛍️ Te abro los sectores de compras y servicios. ¿Qué artículo o servicio deseas adquirir?",
+    question: "Genial, aquí te dejo una lista muy amplia de sitios para comprar, pero si lo prefieres te puedo orientar si me dices qué artículo o servicio necesitas.",
     audio: "fallback",
     followups: [
       { keys: ["ropa", "moda", "boutique", "calzado", "zapatos", "zapatillas", "sneakers", "vestido", "camisa"], path: "/comprar/sector/moda", label: "Moda" },
