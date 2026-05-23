@@ -250,6 +250,9 @@ type DomainSpec = {
   followups: { keys: string[]; path: string; label?: string }[];
 };
 
+const SHOPPING_INTRO_REPLY =
+  "Genial, aquí te dejo una lista muy amplia de sitios para comprar, pero si lo prefieres te puedo orientar si me dices qué artículo o servicio necesitas.";
+
 const DOMAINS: DomainSpec[] = [
   {
     id: "salud",
@@ -563,7 +566,7 @@ const DOMAINS: DomainSpec[] = [
       "boutique", "boutiques", "mercado", "mercadillo",
       "donde comprar", "dónde comprar",
     ],
-    question: "Genial, aquí te dejo una lista muy amplia de sitios para comprar, pero si lo prefieres te puedo orientar si me dices qué artículo o servicio necesitas.",
+    question: SHOPPING_INTRO_REPLY,
     audio: "fallback",
     followups: [],
   },
