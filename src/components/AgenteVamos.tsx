@@ -3725,6 +3725,9 @@ export function AgenteVamosFab() {
     if (hidden) return;
     if (typeof window === "undefined") return;
     try {
+      const greetingAudio = new Audio(audioSrc(getGreetingClip()));
+      greetingAudio.preload = "auto";
+      try { greetingAudio.load(); } catch {}
       if (window.sessionStorage.getItem(GREETING_SESSION_KEY) === "1") {
         greetingPlayedRef.current = true;
         voiceBootStartedRef.current = true;
