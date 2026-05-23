@@ -1,5 +1,6 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQueryClient, useIsFetching } from "@tanstack/react-query";
 import {
   Lock,
   ShieldCheck,
@@ -16,6 +17,7 @@ import {
   Menu as MenuIcon,
   Bot,
   Activity,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
