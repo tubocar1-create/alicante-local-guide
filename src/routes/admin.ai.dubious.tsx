@@ -98,7 +98,72 @@ function DubiousPage() {
     setPromote(true);
     setSuggestedIntent(row.detected_intent ?? "");
     setSuggestedKeywords(row.raw_query);
+    setQuickAction("add_keyword");
+    setTargetIntentKey(row.detected_intent ?? "");
+    setNewIntentKey("");
+    setNewIntentLabel(row.raw_query);
+    setNewIntentRoute("");
+    setNewIntentReply(`Te llevo a ${row.raw_query}.`);
+    setFaqResponse("");
+    setExtraKeywords(row.raw_query);
   }
+
+  const quickMut = useMutation({
+    mutationFn: () => {
+      if (!selected) throw new Error("no row");
+      const extras = extraKeywords
+        .split(",")
+        .map((k) => k.trim())
+        .filter(Boolean);
+      if (quickAction === "add_keyword") {
+        return quickResolveDubious({
+          data: {
+            pin: ADMIN_PIN,
+            id: selected.id,
+            action: "add_keyword",
+            target_key: targetIntentKey,
+            keywords: extras,
+            note: note || undefined,
+          },
+        });
+      }
+      if (quickAction === "create_intent") {
+        return quickResolveDubious({
+          data: {
+            pin: ADMIN_PIN,
+            id: selected.id,
+            action: "create_intent",
+            intent_key: newIntentKey,
+            intent_label: newIntentLabel,
+            intent_route: newIntentRoute || undefined,
+            intent_spoken_reply: newIntentReply,
+            keywords: extras,
+            note: note || undefined,
+          },
+        });
+      }
+      return quickResolveDubious({
+        data: {
+          pin: ADMIN_PIN,
+          id: selected.id,
+          action: "add_faq",
+          faq_response: faqResponse,
+          keywords: extras,
+          note: note || undefined,
+        },
+      });
+    },
+    onSuccess: (res) => {
+      toast.success(res.summary ?? "Resuelto");
+      qc.invalidateQueries({ queryKey: ["admin-ai", "dubious"] });
+      qc.invalidateQueries({ queryKey: ["admin-ai", "intents"] });
+      qc.invalidateQueries({ queryKey: ["admin-ai"] });
+      setSelected(null);
+    },
+    onError: (e: unknown) =>
+      toast.error(e instanceof Error ? e.message : "Error"),
+  });
+
 
   const mut = useMutation({
     mutationFn: () => {
