@@ -177,7 +177,15 @@ export function ListingCard({ it, me, onWantToGo }: Props) {
         <div className="mt-2 flex flex-wrap gap-1">
           <button
             type="button"
-            onClick={() => setBooking(true)}
+            onClick={() => {
+              // Track: usuario inició una reserva desde una tarjeta
+              trackOperationalEvent({
+                type: "booking_started",
+                source: "listing_card",
+                metadata: { name: it.name, kind: it.kind },
+              });
+              setBooking(true);
+            }}
             className="inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-[11px] font-semibold text-primary-foreground active:scale-95"
           >
             <CalendarPlus className="h-3 w-3" /> Reservar
@@ -186,6 +194,14 @@ export function ListingCard({ it, me, onWantToGo }: Props) {
             href={mapsHref}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => {
+              // Track: apertura de Google Maps desde una tarjeta
+              trackOperationalEvent({
+                type: "maps_opened",
+                source: "listing_card",
+                metadata: { name: it.name },
+              });
+            }}
             className="inline-flex items-center gap-1 rounded-full bg-secondary px-3 py-1.5 text-[11px] font-semibold text-secondary-foreground"
           >
             <Navigation className="h-3 w-3" /> Cómo llegar
