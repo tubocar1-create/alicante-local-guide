@@ -528,7 +528,11 @@ const DOMAINS: DomainSpec[] = [
     audio: "beaches",
     followups: [
       { keys: ["mapa"], path: "/playas/mapa" },
-      { keys: ["listado", "lista", "todas", "cuales", "cuáles", "playas", "playa"], path: "/playas" },
+      { keys: [
+          "si", "sí", "vale", "ok", "okay", "perfecto", "claro", "correcto",
+          "exacto", "afirmativo", "afirmativa", "de acuerdo", "dale", "confirmo",
+          "listado", "lista", "todas", "cuales", "cuáles", "playas", "playa",
+        ], path: "/playas" },
     ],
   },
   {
