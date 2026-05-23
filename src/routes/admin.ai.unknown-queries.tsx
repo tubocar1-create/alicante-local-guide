@@ -38,24 +38,23 @@ function UnknownQueriesPage() {
   const [status, setStatus] = useState<Status>("pending");
   const [search, setSearch] = useState("");
   const qc = useQueryClient();
-  const { toast } = useToast();
   const q = useQuery(unknownQueriesQO(status, search));
 
   const mut = useMutation({
-    mutationFn: (args: { id: string; action: string; payload?: Record<string, unknown> }) =>
+    mutationFn: (args: { id: string; action: UnknownAction; payload?: Record<string, unknown> }) =>
       actUnknownQuery({
         data: {
           pin: ADMIN_PIN,
           id: args.id,
-          action: args.action as Parameters<typeof actUnknownQuery>[0]["data"]["action"],
+          action: args.action,
           payload: args.payload ?? {},
         },
       }),
     onSuccess: () => {
-      toast({ title: "Acción aplicada" });
+      toast.success("Acción aplicada");
       qc.invalidateQueries({ queryKey: ["admin-ai", "unknown"] });
     },
-    onError: (e: Error) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+    onError: (e: Error) => toast.error(e.message),
   });
 
   return (
