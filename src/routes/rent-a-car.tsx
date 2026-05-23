@@ -102,6 +102,21 @@ function RentACarPage() {
           es un lujo: es la forma más cómoda de descubrir playas, calas, pueblos costeros y zonas
           como <strong>Benidorm, Jávea, Calpe o Altea</strong> con libertad total.
         </p>
+
+        <figure className="my-2 overflow-hidden rounded-2xl border border-border shadow-sm">
+          <img
+            src={carreteraImg}
+            alt="Carretera costera mediterránea cerca de Alicante con vistas al mar"
+            width={1536}
+            height={896}
+            loading="lazy"
+            className="h-56 w-full object-cover sm:h-72 md:h-80"
+          />
+          <figcaption className="bg-card px-3 py-2 text-xs text-muted-foreground">
+            Carreteras costeras de la provincia de Alicante, ideales para recorrer en coche alquilado.
+          </figcaption>
+        </figure>
+
         <p>
           La experiencia de alquilar un vehículo en Alicante puede variar mucho entre compañías.
           Dos reservas con precios similares pueden convertirse en experiencias completamente
