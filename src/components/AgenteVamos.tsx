@@ -869,6 +869,15 @@ function detectAmbiguity(query: string): LocalResult | null {
   if (!hasTransportVerb(query)) return null;
   const other = findOtherDomainHint(query);
   const entity = matchNamedEntity(query);
+  if (other?.id === "compras" && !entity) {
+    const comprasDomain = DOMAINS.find((d) => d.id === "compras");
+    return {
+      reply: comprasDomain?.question ?? "Genial, aquí te dejo una lista muy amplia de sitios para comprar, pero si lo prefieres te puedo orientar si me dices qué artículo o servicio necesitas.",
+      path: comprasDomain?.hubPath ?? "/comprar",
+      audio: comprasDomain?.audio ?? "fallback",
+      pendingDomain: null,
+    };
+  }
   if (!other && !entity) return null;
   const opts: string[] = [];
   if (entity) {
