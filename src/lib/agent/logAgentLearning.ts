@@ -87,7 +87,7 @@ export async function logAgentLearning(input: LogAgentLearningInput): Promise<vo
       clicked_result: input.clickedResult ?? null,
       conversion_event: input.conversionEvent ?? null,
       route_origin: input.routeOrigin ?? null,
-      geo_context: input.geoContext ?? null,
+      geo_context: (input.geoContext ?? null) as never,
       session_id: input.sessionId ?? null,
     };
 
