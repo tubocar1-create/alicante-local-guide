@@ -105,3 +105,16 @@ export const dubiousQO = (
       }),
     staleTime: STALE_FAST,
   });
+
+export const conversationsQO = (
+  days = 7,
+  onlyWithIssues = false,
+) =>
+  queryOptions({
+    queryKey: ["admin-ai", "conversations", days, onlyWithIssues],
+    queryFn: () =>
+      listAgentConversations({
+        data: { pin: ADMIN_PIN, days, only_with_issues: onlyWithIssues },
+      }),
+    staleTime: STALE_FAST,
+  });
