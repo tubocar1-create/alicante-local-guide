@@ -2061,7 +2061,7 @@ const POST_SPEECH_LISTEN_DELAY_MS = 30;
 
 // Voz unificada del agente: español Estados Unidos (es-US) si está disponible.
 const VA_VOICE_LANG = "es-US";
-const VA_VOICE_RATE = 1.05;
+const VA_VOICE_RATE = 0.9;
 const VA_VOICE_PITCH = 0.55;
 
 
@@ -2102,7 +2102,7 @@ function waitVoices(synth: SpeechSynthesis): Promise<SpeechSynthesisVoice[]> {
     };
     synth.onvoiceschanged = () => finish(synth.getVoices());
     // Fallback por si onvoiceschanged nunca dispara (algunos Android).
-    setTimeout(() => finish(synth.getVoices()), 1500);
+    setTimeout(() => finish(synth.getVoices()), 350);
   });
 }
 
