@@ -3514,7 +3514,6 @@ const GREETING_SESSION_KEY = "va:greeting-played";
 
 export function AgenteVamosFab() {
   const [open, setOpen] = useState(false);
-  const [showGreetingButton, setShowGreetingButton] = useState(false);
   const voiceBootStartedRef = useRef(false);
   const greetingPlayedRef = useRef(false);
   const path = useRouterState({ select: (s) => s.location.pathname });
@@ -3564,7 +3563,6 @@ export function AgenteVamosFab() {
     if (voiceBootStartedRef.current) return;
     voiceBootStartedRef.current = true;
     playGreetingAfterPermission();
-    setShowGreetingButton(false);
   };
 
   // Saludo corto de reentrada: cuando el panel se abre y el saludo inicial
