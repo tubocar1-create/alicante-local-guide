@@ -84,6 +84,16 @@ export default function BookingDialog({ listing, onClose }: Props) {
         customer_name: name.trim().slice(0, 120),
         created_at: new Date().toISOString(),
       });
+      // Track: reserva creada correctamente
+      trackOperationalEvent({
+        type: "booking_created",
+        source: "booking_dialog",
+        conversion_status: "converted",
+        metadata: {
+          business_name: listing.name,
+          party_size: partySize,
+        },
+      });
       onClose();
       if (json.thread_id && userId) {
         navigate({ to: "/threads/$id", params: { id: json.thread_id } });
