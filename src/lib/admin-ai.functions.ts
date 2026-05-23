@@ -878,3 +878,128 @@ export const listAgentConversations = createServerFn({ method: "POST" })
 
     return { conversations };
   });
+
+// ---------------- Quick resolve (in-panel fix) ----------------
+// Permite resolver la incidencia directamente desde el panel:
+//  - add_keyword     → añade keyword(s) a un intent existente
+//  - create_intent   → crea un nuevo intent (key/label/route/keywords/spoken_reply)
+//  - add_faq         → crea una FAQ
+//  - add_alias       → añade alias a un proper_noun (entidad)
+// Además marca la fila del log como revisada con review_status="resolved_in_panel".
+
+export const quickResolveDubious = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    PinSchema.extend({
+      id: z.string().uuid(),
+      action: z.enum(["add_keyword", "create_intent", "add_faq", "add_alias"]),
+      // add_keyword / add_alias
+      target_key: z.string().max(120).optional(),
+      keywords: z.array(z.string().min(1).max(120)).max(20).default([]),
+      // create_intent
+      intent_key: z.string().max(80).optional(),
+      intent_label: z.string().max(160).optional(),
+      intent_route: z.string().max(200).optional(),
+      intent_spoken_reply: z.string().max(500).optional(),
+      // add_faq
+      faq_response: z.string().max(2000).optional(),
+      note: z.string().max(1000).optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    assertPin(data.pin);
+
+    const { data: row, error: getErr } = await supabaseAdmin
+      .from("agente_learning_log")
+      .select("id,raw_query,normalized")
+      .eq("id", data.id)
+      .single();
+    if (getErr || !row) throw new Error(getErr?.message ?? "Not found");
+
+    const baseKeyword =
+      ((row.normalized as string | null) ?? (row.raw_query as string) ?? "")
+        .trim()
+        .toLowerCase();
+    const kws = Array.from(
+      new Set(
+        [baseKeyword, ...data.keywords]
+          .map((k) => k.trim().toLowerCase())
+          .filter(Boolean),
+      ),
+    );
+
+    let summary = "";
+
+    if (data.action === "add_keyword") {
+      if (!data.target_key) throw new Error("Falta intent destino");
+      const { data: existing, error: e1 } = await supabaseAdmin
+        .from("agente_intents")
+        .select("id,keywords")
+        .eq("key", data.target_key)
+        .single();
+      if (e1 || !existing) throw new Error(e1?.message ?? "Intent no existe");
+      const merged = Array.from(
+        new Set([...(existing.keywords as string[] ?? []), ...kws]),
+      );
+      const { error: e2 } = await supabaseAdmin
+        .from("agente_intents")
+        .update({ keywords: merged })
+        .eq("id", existing.id);
+      if (e2) throw new Error(e2.message);
+      summary = `Keywords añadidas a "${data.target_key}"`;
+    } else if (data.action === "create_intent") {
+      if (!data.intent_key || !data.intent_label || !data.intent_spoken_reply) {
+        throw new Error("key, label y respuesta son obligatorios");
+      }
+      const { error } = await supabaseAdmin.from("agente_intents").insert({
+        key: data.intent_key,
+        label: data.intent_label,
+        route: data.intent_route ?? null,
+        keywords: kws,
+        spoken_reply: data.intent_spoken_reply,
+        priority: 100,
+        active: true,
+      });
+      if (error) throw new Error(error.message);
+      summary = `Intent "${data.intent_key}" creado`;
+    } else if (data.action === "add_faq") {
+      if (!data.faq_response) throw new Error("Falta la respuesta de la FAQ");
+      const { error } = await supabaseAdmin.from("agente_faqs").insert({
+        response: data.faq_response,
+        keywords: kws,
+        any_of: [],
+        priority: 100,
+        active: true,
+      });
+      if (error) throw new Error(error.message);
+      summary = "FAQ creada";
+    } else if (data.action === "add_alias") {
+      if (!data.target_key) throw new Error("Falta entidad destino");
+      const { data: existing, error: e1 } = await supabaseAdmin
+        .from("agente_proper_nouns")
+        .select("id,aliases")
+        .eq("normalized", data.target_key)
+        .maybeSingle();
+      if (e1) throw new Error(e1.message);
+      if (!existing) throw new Error("Entidad no encontrada");
+      const merged = Array.from(
+        new Set([...(existing.aliases as string[] ?? []), ...kws]),
+      );
+      const { error: e2 } = await supabaseAdmin
+        .from("agente_proper_nouns")
+        .update({ aliases: merged })
+        .eq("id", existing.id);
+      if (e2) throw new Error(e2.message);
+      summary = `Alias añadidos a "${data.target_key}"`;
+    }
+
+    await supabaseAdmin
+      .from("agente_learning_log")
+      .update({
+        reviewed_at: new Date().toISOString(),
+        review_status: "resolved_in_panel",
+        review_note: data.note ? `${summary} — ${data.note}` : summary,
+      })
+      .eq("id", data.id);
+
+    return { ok: true as const, summary };
+  });
