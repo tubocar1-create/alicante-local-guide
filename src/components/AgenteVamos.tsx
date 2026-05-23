@@ -2566,6 +2566,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
     async (text: string, viaVoice = false) => {
       const clean = text.trim();
       if (!clean || loadingRef.current) return;
+      // Telemetría: marca de inicio y flags para el log final.
+      const t0 = typeof performance !== "undefined" ? performance.now() : Date.now();
+      let serverCalled = false;
+      let finalTarget: string | undefined;
       bumpIdle();
       stopListening();
       const reservedReplyUtterance = viaVoice ? reserveSpanishUtterance() : null;
