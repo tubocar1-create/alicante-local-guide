@@ -603,3 +603,117 @@ function isoWeek(d: Date): string {
   const week = 1 + Math.round(diff / (7 * 24 * 60 * 60 * 1000));
   return `${target.getFullYear()}-W${String(week).padStart(2, "0")}`;
 }
+
+// ---------------- Dubious resolutions ----------------
+// Lista interacciones del log donde resolved=false o fallback_used=true,
+// para que el admin pueda revisarlas, anotarlas y/o promoverlas a supervisión.
+
+export type DubiousRow = {
+  id: string;
+  raw_query: string;
+  normalized: string | null;
+  detected_intent: string | null;
+  resolver_type: string | null;
+  resolved: boolean | null;
+  fallback_used: boolean | null;
+  failure_reason: string | null;
+  route_origin: string | null;
+  latency_ms: number | null;
+  created_at: string;
+  reviewed_at: string | null;
+  review_status: string | null;
+  review_note: string | null;
+};
+
+export const listDubiousInteractions = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    PinSchema.extend({
+      status: z.enum(["pending", "reviewed", "all"]).default("pending"),
+      kind: z.enum(["all", "unresolved", "fallback", "low_confidence"]).default("all"),
+      search: z.string().max(200).optional(),
+      limit: z.number().int().min(1).max(500).default(200),
+    }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    assertPin(data.pin);
+    let q = supabaseAdmin
+      .from("agente_learning_log")
+      .select(
+        "id,raw_query,normalized,detected_intent,resolver_type,resolved,fallback_used,failure_reason,route_origin,latency_ms,created_at,reviewed_at,review_status,review_note",
+      )
+      .or("resolved.is.false,fallback_used.is.true")
+      .order("created_at", { ascending: false })
+      .limit(data.limit);
+
+    if (data.status === "pending") q = q.is("reviewed_at", null);
+    if (data.status === "reviewed") q = q.not("reviewed_at", "is", null);
+    if (data.kind === "unresolved") q = q.is("resolved", false);
+    if (data.kind === "fallback") q = q.eq("fallback_used", true);
+    if (data.kind === "low_confidence") q = q.eq("failure_reason", "LOW_CONFIDENCE");
+    if (data.search && data.search.trim()) {
+      q = q.ilike("raw_query", `%${data.search.trim()}%`);
+    }
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+    return { rows: (rows ?? []) as DubiousRow[] };
+  });
+
+export const reviewDubiousInteraction = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) =>
+    PinSchema.extend({
+      id: z.string().uuid(),
+      status: z.enum([
+        "ok",                 // está bien, marcado como revisado
+        "misrouted",          // mal enrutada
+        "missing_intent",     // falta intent / falta keyword
+        "needs_faq",          // debería responder con FAQ
+        "spam",
+        "ignore",
+      ]),
+      note: z.string().max(2000).optional(),
+      promote_to_supervision: z.boolean().default(false),
+      suggested_intent: z.string().max(80).optional(),
+      suggested_keywords: z.array(z.string()).max(50).default([]),
+    }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    assertPin(data.pin);
+
+    // 1) marcar la fila como revisada en el log
+    const { data: row, error: getErr } = await supabaseAdmin
+      .from("agente_learning_log")
+      .select("id,raw_query,normalized")
+      .eq("id", data.id)
+      .single();
+    if (getErr || !row) throw new Error(getErr?.message ?? "Not found");
+
+    const { error: updErr } = await supabaseAdmin
+      .from("agente_learning_log")
+      .update({
+        reviewed_at: new Date().toISOString(),
+        review_status: data.status,
+        review_note: data.note ?? null,
+      })
+      .eq("id", data.id);
+    if (updErr) throw new Error(updErr.message);
+
+    // 2) opcional: crear item de supervisión para entrenar el agente
+    if (data.promote_to_supervision) {
+      const { error: supErr } = await supabaseAdmin
+        .from("agente_admin_supervisions")
+        .insert({
+          source: "manual_review",
+          learning_log_id: data.id,
+          raw_query: row.raw_query as string,
+          normalized: (row.normalized as string) ?? (row.raw_query as string).toLowerCase(),
+          suggested_intent: data.suggested_intent ?? null,
+          suggested_keywords: data.suggested_keywords ?? [],
+          status: "pending",
+          reason: data.status,
+          admin_notes: data.note ?? null,
+        });
+      if (supErr) throw new Error(supErr.message);
+    }
+
+    return { ok: true as const };
+  });

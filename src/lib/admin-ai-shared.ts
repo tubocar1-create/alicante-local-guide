@@ -9,6 +9,7 @@ import {
   listEntities,
   getAiAnalytics,
   getAiCosts,
+  listDubiousInteractions,
 } from "@/lib/admin-ai.functions";
 import { ADMIN_PIN } from "@/lib/admin-shared";
 
@@ -89,3 +90,17 @@ export function pct(n: number): string {
 export function money(n: number): string {
   return `$${n.toFixed(4)}`;
 }
+
+export const dubiousQO = (
+  status: "pending" | "reviewed" | "all" = "pending",
+  kind: "all" | "unresolved" | "fallback" | "low_confidence" = "all",
+  search?: string,
+) =>
+  queryOptions({
+    queryKey: ["admin-ai", "dubious", status, kind, search ?? ""],
+    queryFn: () =>
+      listDubiousInteractions({
+        data: { pin: ADMIN_PIN, status, kind, search },
+      }),
+    staleTime: STALE_FAST,
+  });
