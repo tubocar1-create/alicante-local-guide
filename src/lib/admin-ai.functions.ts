@@ -784,6 +784,10 @@ export type ConversationTurn = {
   reviewed_at: string | null;
   review_status: string | null;
   review_note: string | null;
+  audit_phase: number | null;
+  audit_verdict: string | null;
+  audit_note: string | null;
+  audited_at: string | null;
   gap_ms: number | null; // ms desde el turno anterior (null en el primero)
 };
 
@@ -818,7 +822,7 @@ export const listAgentConversations = createServerFn({ method: "POST" })
     const { data: rows, error } = await supabaseAdmin
       .from("agente_learning_log")
       .select(
-        "id,created_at,session_id,raw_query,detected_intent,resolver_type,resolved,fallback_used,failure_reason,latency_ms,decision,route_origin,notes,estimated_cost,reviewed_at,review_status,review_note",
+        "id,created_at,session_id,raw_query,detected_intent,resolver_type,resolved,fallback_used,failure_reason,latency_ms,decision,route_origin,notes,estimated_cost,reviewed_at,review_status,review_note,audit_phase,audit_verdict,audit_note,audited_at",
       )
       .gte("created_at", since)
       .order("created_at", { ascending: true })
@@ -895,6 +899,10 @@ export const listAgentConversations = createServerFn({ method: "POST" })
         reviewed_at: (r.reviewed_at as string | null) ?? null,
         review_status: (r.review_status as string | null) ?? null,
         review_note: (r.review_note as string | null) ?? null,
+        audit_phase: (r.audit_phase as number | null) ?? null,
+        audit_verdict: (r.audit_verdict as string | null) ?? null,
+        audit_note: (r.audit_note as string | null) ?? null,
+        audited_at: (r.audited_at as string | null) ?? null,
         gap_ms: gapMs,
       });
       convo.total_turns += 1;
