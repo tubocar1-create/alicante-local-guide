@@ -157,6 +157,21 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
+
+  // Track de page_view en cada cambio de ruta (telemetría operacional)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    // Evita trackear el panel admin para no contaminar las métricas
+    const path = window.location.pathname;
+    if (path.startsWith("/admin")) return;
+    // Importación dinámica para no impactar el bundle inicial
+    void import("@/lib/operations/trackOperationalEvent").then(
+      ({ trackOperationalEvent }) => {
+        trackOperationalEvent({ type: "page_view", route: path });
+      },
+    );
+  }, [router.state.location.pathname]);
 
   return (
     <QueryClientProvider client={queryClient}>
