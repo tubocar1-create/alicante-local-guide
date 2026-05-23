@@ -17,7 +17,16 @@ import {
 import { unknownQueriesQO } from "@/lib/admin-ai-shared";
 import { actUnknownQuery } from "@/lib/admin-ai.functions";
 import { ADMIN_PIN } from "@/lib/admin-shared";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
+
+type UnknownAction =
+  | "promote_intent"
+  | "add_faq"
+  | "add_alias"
+  | "spam"
+  | "ignore"
+  | "merge"
+  | "send_to_supervision";
 
 export const Route = createFileRoute("/admin/ai/unknown-queries")({
   component: UnknownQueriesPage,
