@@ -46,7 +46,7 @@ const emptyForm: IntentForm = {
   active: true,
 };
 
-function IntentsPage() {
+export function IntentsPage() {
   const qc = useQueryClient();
   const q = useQuery(intentsQO());
   const [editing, setEditing] = useState<IntentForm | null>(null);

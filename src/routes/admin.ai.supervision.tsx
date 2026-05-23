@@ -24,7 +24,7 @@ export const Route = createFileRoute("/admin/ai/supervision")({
 
 type Status = "pending" | "approved" | "rejected" | "all";
 
-function SupervisionPage() {
+export function SupervisionPage() {
   const [status, setStatus] = useState<Status>("pending");
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [targetIntent, setTargetIntent] = useState<Record<string, string>>({});

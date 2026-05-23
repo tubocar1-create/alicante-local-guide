@@ -45,7 +45,7 @@ const empty: EntityForm = {
   active: true,
 };
 
-function EntitiesPage() {
+export function EntitiesPage() {
   const qc = useQueryClient();
   const q = useQuery(entitiesQO());
   const [editing, setEditing] = useState<EntityForm | null>(null);

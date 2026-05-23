@@ -5,10 +5,8 @@ import { createFileRoute, Link, Outlet, useLocation, redirect } from "@tanstack/
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/ai/entrenamiento")({
-  beforeLoad: ({ location }) => {
-    if (location.pathname === "/admin/ai/entrenamiento") {
-      throw redirect({ to: "/admin/ai/intents" });
-    }
+  beforeLoad: () => {
+    throw redirect({ to: "/admin/ai/correcciones" });
   },
   component: TrainingLayout,
 });

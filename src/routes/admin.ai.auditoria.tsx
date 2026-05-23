@@ -109,7 +109,7 @@ function defaultCriteria(): AuditCriteria {
   return { philosophy: "ok", intent: "ok", context: "ok", route: "ok", endpoint: "na" };
 }
 
-function AuditoriaPage() {
+export function AuditoriaPage() {
   const [days, setDays] = useState(7);
   const [onlyIssues, setOnlyIssues] = useState(false);
   const [selectedTurn, setSelectedTurn] = useState<ConversationTurn | null>(null);
