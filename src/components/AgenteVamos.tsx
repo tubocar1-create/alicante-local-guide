@@ -3610,13 +3610,13 @@ export function AgenteVamosFab() {
   const startGreetingFromUserGesture = () => {
     if (voiceBootStartedRef.current) return;
     voiceBootStartedRef.current = true;
-    if (!playGreetingClip(getGreetingText(), playGreetingAfterPermission)) {
+    if (!playGreetingClip(playGreetingAfterPermission)) {
       playGreetingAfterPermission();
     }
     setShowGreetingButton(false);
   };
 
-  const playGreetingClip = (text: string, onEnd?: () => void) => {
+  const playGreetingClip = (onEnd?: () => void) => {
     try {
       if (typeof window === "undefined") return false;
       __vaActiveAudio?.pause();
