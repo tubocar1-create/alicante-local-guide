@@ -3560,6 +3560,10 @@ export function AgenteVamosFab() {
       const greetText = getGreetingText();
       if (typeof window === "undefined" || !window.speechSynthesis) return;
       const synth = window.speechSynthesis;
+      __vaSetGreetingSpoken(true);
+      __vaSpeechUnlocked = true;
+      greetingPlayedRef.current = true;
+      try { window.sessionStorage.setItem(GREETING_SESSION_KEY, "1"); } catch {}
 
       // Cancela cualquier utterance anterior antes de iniciar el saludo.
       try { synth.cancel(); } catch {}
@@ -3570,13 +3574,11 @@ export function AgenteVamosFab() {
       u.rate = VA_VOICE_RATE;
       u.pitch = VA_VOICE_PITCH;
       u.volume = 1;
+      warmSpeechVoices(synth);
       const voice = pickSpanishVoice(synth);
       if (voice) u.voice = voice;
       __vaActiveUtterance = u;
-      __vaSetGreetingSpoken(true);
-      __vaSpeechUnlocked = true;
-      greetingPlayedRef.current = true;
-      try { window.sessionStorage.setItem(GREETING_SESSION_KEY, "1"); } catch {}
+      keepSpeechSynthesisAwake(synth);
 
       u.onend = () => {
         if (__vaActiveUtterance === u) __vaActiveUtterance = null;
@@ -3586,7 +3588,6 @@ export function AgenteVamosFab() {
       };
 
       try { synth.speak(u); } catch {}
-      keepSpeechSynthesisAwake(synth);
       primeSpanishUtterances();
     } catch {
       /* noop */
