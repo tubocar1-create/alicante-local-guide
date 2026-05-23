@@ -218,11 +218,24 @@ function ComparadorPage() {
             <tbody>
               {OPERATORS.map((op) => (
                 <tr key={op.id} className="group">
-                  <Td sticky className="px-2 py-2">
+                <Td sticky className="px-2 py-2">
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={logoUrl(op.domain)}
+                      alt={op.name}
+                      width={24}
+                      height={24}
+                      loading="lazy"
+                      className="h-6 w-6 shrink-0 rounded-sm object-contain bg-white"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).style.visibility = "hidden";
+                      }}
+                    />
                     <span className="whitespace-nowrap text-xs font-semibold text-slate-800">
                       {op.name}
                     </span>
-                  </Td>
+                  </div>
+                </Td>
                   <Td className="text-slate-600 text-xs">{op.profile}</Td>
                   <Td><YesNo value={op.airport} /></Td>
                   <Td><ShuttleCell value={op.shuttle} terminalOffice={op.terminalOffice} /></Td>
