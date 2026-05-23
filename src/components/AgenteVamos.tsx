@@ -2331,7 +2331,6 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   // Carga catálogo real de intents + subcategorías existentes la primera vez que se abre el panel.
   useEffect(() => {
     if (!open) return;
-    if (routingCatalogRef.current.intents.length > 0) return;
     loadCatalog()
       .then((catalog: AgenteRoutingCatalog) => {
         routingCatalogRef.current = catalog ?? EMPTY_ROUTING_CATALOG;
