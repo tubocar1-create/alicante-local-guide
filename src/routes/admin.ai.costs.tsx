@@ -24,17 +24,24 @@ function CostsPage() {
         <CardHeader>
           <CardTitle className="text-base">Coste diario</CardTitle>
         </CardHeader>
-        <CardContent className="h-64">
+        <CardContent className="max-h-72 overflow-auto">
           {d?.byDay.length ? (
-            <ResponsiveContainer>
-              <BarChart data={d.byDay}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-                <XAxis dataKey="key" fontSize={10} />
-                <YAxis fontSize={10} />
-                <Tooltip />
-                <Bar dataKey="value" fill="hsl(var(--primary))" />
-              </BarChart>
-            </ResponsiveContainer>
+            <table className="w-full text-sm">
+              <thead className="text-xs text-muted-foreground sticky top-0 bg-background">
+                <tr>
+                  <th className="text-left p-1">Día</th>
+                  <th className="text-right p-1">Coste</th>
+                </tr>
+              </thead>
+              <tbody>
+                {d.byDay.map((row) => (
+                  <tr key={row.key} className="border-t">
+                    <td className="p-1">{row.key}</td>
+                    <td className="p-1 text-right font-medium">{money(row.value)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           ) : (
             <p className="text-sm text-muted-foreground">Sin datos.</p>
           )}
