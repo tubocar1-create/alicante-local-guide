@@ -78,6 +78,19 @@ function RentACarPage() {
         </div>
       </header>
 
+      <figure className="mb-5 overflow-hidden rounded-2xl border border-border shadow-sm">
+        <img
+          src={entornoImg}
+          alt="Carretera costera del Mediterráneo cerca de Alicante al atardecer"
+          width={1920}
+          height={1080}
+          className="h-56 w-full object-cover sm:h-72 md:h-80"
+        />
+        <figcaption className="bg-card px-3 py-2 text-xs text-muted-foreground">
+          Costa mediterránea cerca de Alicante — el entorno ideal para descubrir en coche.
+        </figcaption>
+      </figure>
+
       <article className="space-y-4 text-[15px] leading-relaxed text-foreground/90">
         <p>
           Alicante es uno de los destinos turísticos más importantes del Mediterráneo y su
@@ -93,6 +106,21 @@ function RentACarPage() {
           centrarse únicamente en el precio, sino en todo aquello que realmente impacta el inicio
           y final de las vacaciones.
         </p>
+
+        <figure className="my-2 overflow-hidden rounded-2xl border border-border shadow-sm">
+          <img
+            src={sectorImg}
+            alt="Flota de coches de alquiler en el aeropuerto de Alicante-Elche"
+            width={1920}
+            height={1080}
+            loading="lazy"
+            className="h-56 w-full object-cover sm:h-72 md:h-80"
+          />
+          <figcaption className="bg-card px-3 py-2 text-xs text-muted-foreground">
+            Flota de alquiler junto a la terminal del aeropuerto de Alicante-Elche (ALC).
+          </figcaption>
+        </figure>
+
         <p>
           Después de un vuelo, el usuario quiere llegar al coche rápido, evitar esperas
           innecesarias y conducir hacia su destino sin estrés. Aspectos como el tiempo de
