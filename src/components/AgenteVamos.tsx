@@ -2743,8 +2743,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         // pise esa derivación con una sugerencia de otro dominio.
         const isDomainFollowupResolution = !!priorDomain && !!fallback.path;
         const isTrainedResolution = fallback.source === "trained";
+        // Intro de compras: respuesta canónica, no la pisamos con el servidor.
+        const isShoppingResolution = fallback.path === "/comprar" && fallback.reply === SHOPPING_INTRO_REPLY;
 
-        if (!isClarifying && !resolvedLineDashboard && !isCineIntent && !isDomainFollowupResolution && !isTrainedResolution) {
+        if (!isClarifying && !resolvedLineDashboard && !isCineIntent && !isDomainFollowupResolution && !isTrainedResolution && !isShoppingResolution) {
           try {
             serverCalled = true;
             const res = await askAgent({
@@ -3659,6 +3661,34 @@ export function AgenteVamosFab() {
         voiceBootStartedRef.current = true;
       }
     } catch {}
+
+    // Pre-warm TTS al primer gesto del usuario (cualquier toque/clic).
+    // Desbloquea el motor de voz y carga voces antes de que se necesite
+    // hablar, eliminando la latencia inicial en frío (sin caché).
+    let primed = false;
+    const primeOnce = () => {
+      if (primed) return;
+      primed = true;
+      try {
+        iniciarAudio();
+        if (window.speechSynthesis) {
+          warmSpeechVoices(window.speechSynthesis);
+          window.speechSynthesis.resume();
+        }
+        primeSpanishUtterances();
+      } catch { /* noop */ }
+      window.removeEventListener("pointerdown", primeOnce, true);
+      window.removeEventListener("touchstart", primeOnce, true);
+      window.removeEventListener("keydown", primeOnce, true);
+    };
+    window.addEventListener("pointerdown", primeOnce, true);
+    window.addEventListener("touchstart", primeOnce, true);
+    window.addEventListener("keydown", primeOnce, true);
+    return () => {
+      window.removeEventListener("pointerdown", primeOnce, true);
+      window.removeEventListener("touchstart", primeOnce, true);
+      window.removeEventListener("keydown", primeOnce, true);
+    };
   }, [hidden]);
 
   if (hidden) return null;
