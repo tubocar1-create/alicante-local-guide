@@ -157,6 +157,20 @@ function RentACarPage() {
           Por eso, además del precio, el usuario debe valorar factores operativos reales que
           afectan directamente a la experiencia del viajero.
         </p>
+
+        <figure className="my-2 overflow-hidden rounded-2xl border border-border shadow-sm">
+          <img
+            src={playaImg}
+            alt="Cala mediterránea con agua cristalina cerca de Alicante, accesible en coche"
+            width={1536}
+            height={896}
+            loading="lazy"
+            className="h-56 w-full object-cover sm:h-72 md:h-80"
+          />
+          <figcaption className="bg-card px-3 py-2 text-xs text-muted-foreground">
+            Calas y playas de la Costa Blanca que puedes descubrir con total libertad en coche.
+          </figcaption>
+        </figure>
       </article>
 
       <section className="mt-8">
