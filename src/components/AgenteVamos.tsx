@@ -1314,6 +1314,15 @@ function localResolve(
 ): LocalResult {
   const query = normalizeSpeech(text);
 
+  if (isShoppingRequest(query)) {
+    return {
+      reply: SHOPPING_INTRO_REPLY,
+      path: "/comprar",
+      audio: "fallback",
+      pendingDomain: null,
+    };
+  }
+
   // 0) Correcciones aprobadas en el CPA. Si una frase fue entrenada como
   // alias de un intent, debe ganar sobre heurísticas antiguas del cliente.
   const trainedMatch = matchDbIntent(query, catalog.intents);
