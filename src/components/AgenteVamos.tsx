@@ -533,7 +533,7 @@ const DOMAINS: DomainSpec[] = [
           "listado", "lista", "todas", "cuales", "cuáles", "playas", "playa",
           "si", "sí", "vale", "ok", "okay", "perfecto", "claro", "correcto",
           "exacto", "afirmativo", "afirmativa", "de acuerdo", "dale", "confirmo",
-        ], path: "/playas" },
+        ], path: "/playas?focus=carrusel" },
     ],
   },
   {
@@ -2967,6 +2967,11 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                 params: { iata: vueloMatch[1] },
                 search: search as any,
               });
+            }
+            // Doctrina: al llevar al usuario a /playas o /playas/mapa, el
+            // agente cierra y espera a que el usuario decida qué playa.
+            if (pathname === "/playas" || pathname === "/playas/mapa") {
+              setTimeout(() => { try { onClose(); } catch {} }, 200);
             }
             if (Object.keys(search).length > 0) {
               return navigate({ to: pathname as any, search: search as any });

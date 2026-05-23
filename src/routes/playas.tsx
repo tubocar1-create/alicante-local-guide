@@ -1,8 +1,12 @@
-import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useLocation, useSearch } from "@tanstack/react-router";
 import { ArrowLeft, MapPin, Waves, Sparkles } from "lucide-react";
+import { useEffect, useRef } from "react";
 import { getMapBeaches, getCoastIntro } from "@/lib/playas-map.functions";
 
 export const Route = createFileRoute("/playas")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    focus: typeof s.focus === "string" ? (s.focus as string) : undefined,
+  }),
   loader: async () => {
     const [beaches, intro] = await Promise.all([getMapBeaches(), getCoastIntro()]);
     return { beaches, intro };
@@ -31,7 +35,19 @@ export const Route = createFileRoute("/playas")({
 
 function PlayasPage() {
   const location = useLocation();
+  const search = useSearch({ from: "/playas" }) as { focus?: string };
   const { beaches: mapBeaches, intro } = Route.useLoaderData();
+  const carruselRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (search.focus === "carrusel" && carruselRef.current) {
+      // Pequeño delay para asegurar render completo antes del scroll.
+      const t = setTimeout(() => {
+        carruselRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 120);
+      return () => clearTimeout(t);
+    }
+  }, [search.focus]);
 
   if (location.pathname !== "/playas") {
     return <Outlet />;
@@ -73,7 +89,7 @@ function PlayasPage() {
           <p className="mt-3 text-[15px] font-medium leading-relaxed text-slate-800">{intro.text}</p>
         </section>
 
-        <section className="mt-6">
+        <section id="carrusel" ref={carruselRef} className="mt-6 scroll-mt-4">
           <div className="mb-3 flex items-end justify-between gap-3">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-700">17 playas</p>
