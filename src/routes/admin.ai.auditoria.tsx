@@ -306,7 +306,7 @@ export function AuditoriaPage() {
                         · {c.route_origin}
                       </span>
                     )}
-                    <div className="ml-auto flex gap-1">
+                    <div className="ml-auto flex items-center gap-1">
                       {c.unresolved_turns > 0 && (
                         <Badge variant="destructive">{c.unresolved_turns} sin resolver</Badge>
                       )}
@@ -316,8 +316,27 @@ export function AuditoriaPage() {
                       {!hasIssues && (
                         <Badge className="bg-emerald-600 hover:bg-emerald-600">ok</Badge>
                       )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                        title="Descartar esta conversación (borra los turnos del log)"
+                        disabled={deleteMut.isPending}
+                        onClick={() => {
+                          if (
+                            window.confirm(
+                              `¿Descartar esta conversación y borrar sus ${c.total_turns} turnos del log? Esta acción no se puede deshacer.`,
+                            )
+                          ) {
+                            deleteMut.mutate(c.turns.map((t) => t.id));
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
                   </div>
+
 
                   <ol className="divide-y">
                     {c.turns.map((t, idx) => {
