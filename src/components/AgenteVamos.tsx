@@ -1381,6 +1381,8 @@ function localResolve(
 
   // 1) Follow-up dentro de un dominio activo: resolvemos sub-destino.
   if (currentDomain) {
+    const d = DOMAINS.find((x) => x.id === currentDomain);
+
     // 1.bis) Caso especial: estamos esperando que el usuario diga la línea
     // de bus que quiere tomar. Si la frase contiene un código de línea
     // válido (1–3 dígitos opcionalmente con "N" o letra), saltamos directos
