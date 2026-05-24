@@ -140,8 +140,8 @@ function ComparadorPage() {
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
-          <h1 className="flex items-center gap-1.5 text-base font-semibold text-white">
-            {OPERATORS.length} operadoras comparadas
+          <h1 className="flex items-center gap-1.5 text-base font-semibold text-white uppercase">
+            {OPERATORS.length} OPERADORAS COMPARADAS
             <Info className="h-4 w-4 text-white" />
           </h1>
         </div>
