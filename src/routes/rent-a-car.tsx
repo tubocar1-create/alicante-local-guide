@@ -98,7 +98,7 @@ function RentACarPage() {
 
         <PhotoCard
           photo={{
-            src: "https://mochilaexpres.com/wp-content/uploads/Altea-que-ver-en-Alicante-provincia.jpeg",
+            src: "/alicante/altea.jpeg",
             emoji: "🌊",
             caption: "Altea — postal mediterránea de la Costa Blanca",
           }}
@@ -116,7 +116,7 @@ function RentACarPage() {
 
         <PhotoCard
           photo={{
-            src: "https://mochilaexpres.com/wp-content/uploads/Moraira-que-ver-en-alicante-provincia.jpg",
+            src: "/alicante/moraira.jpg",
             emoji: "🛣️",
             caption: "Moraira — calas tranquilas a un trayecto de coche desde ALC",
           }}
@@ -132,7 +132,7 @@ function RentACarPage() {
 
         <PhotoCard
           photo={{
-            src: "https://mochilaexpres.com/wp-content/uploads/Guadalest-que-ver-en-Alicante-provincia-2-1.jpg",
+            src: "/alicante/guadalest.jpg",
             emoji: "🏰",
             caption: "Guadalest — interior espectacular a 1 h de Benidorm",
           }}
@@ -147,7 +147,7 @@ function RentACarPage() {
 
         <PhotoCard
           photo={{
-            src: "https://mochilaexpres.com/wp-content/uploads/Fuentes-del-ALgar.jpg",
+            src: "/alicante/algar.jpg",
             emoji: "💧",
             caption: "Fuentes del Algar — naturaleza al alcance en coche",
           }}
@@ -165,7 +165,7 @@ function RentACarPage() {
 
         <PhotoCard
           photo={{
-            src: "https://mochilaexpres.com/wp-content/uploads/Isla-de-Tabarca-que-ver-en-Alicante-provincia-1-1000x750.jpg",
+            src: "/alicante/tabarca.jpg",
             emoji: "🏝️",
             caption: "Isla de Tabarca — escapada en barco desde el puerto de Alicante",
           }}
@@ -178,7 +178,7 @@ function RentACarPage() {
 
         <PhotoCard
           photo={{
-            src: "https://mochilaexpres.com/wp-content/uploads/Villajoyosa-que-ver-en-Alicante-provincia.jpg",
+            src: "/alicante/villajoyosa.jpg",
             emoji: "🎨",
             caption: "Villajoyosa — fachadas de colores frente al Mediterráneo",
           }}
