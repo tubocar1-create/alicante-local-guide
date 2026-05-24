@@ -96,8 +96,6 @@ export const getMapBeaches = createServerFn({ method: "GET" }).handler(
   async (): Promise<MapBeachWithCover[]> => {
     const results = await Promise.all(
       MAP_BEACHES.map(async (b) => {
-        const local = LOCAL_BEACH_PHOTOS[b.slug] ?? [];
-        if (local.length > 0) return { ...b, photo: local[0] };
         let photo: string | null = null;
         const placeId = await findPlaceId(b);
         if (placeId) {
@@ -105,6 +103,10 @@ export const getMapBeaches = createServerFn({ method: "GET" }).handler(
           const skip = GOOGLE_PHOTO_SKIP[b.slug] ?? 0;
           const firstPhoto = details?.photoNames?.[skip];
           if (firstPhoto) photo = await photoMediaUri(firstPhoto, 1200);
+        }
+        if (!photo) {
+          const local = LOCAL_BEACH_PHOTOS[b.slug] ?? [];
+          if (local.length > 0) photo = local[0];
         }
         return { ...b, photo };
       }),
