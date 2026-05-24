@@ -87,6 +87,22 @@ const OPERATORS: Operator[] = [
   { id: "primoti",   name: "PRIMOTI",            domain: "primoti.com",           url: "https://www.primoti.com",           profile: "Industrial/logística",    airport: false, shuttle: false, hours: "08:00–18:00", price: "Medio-alto",  insurance: "Sí",       franchise: "Sí",       vehicles: "Comerciales e industriales",    vans: "Especialista", renting: "Sí", waitTime: "Bajo",       terminalOffice: false, cityOffice: true, transparency: "Alta",       vehicleState: "Muy bueno", incidentRisk: "Bajo" },
 ];
 
+const CITY_OFFICE_LOCATION: Record<string, string> = {
+  centauro: "Benidorm",
+  record: "Benidorm / centro",
+  ok: "Estación Renfe",
+  sixt: "Estación Renfe",
+  hertz: "Estación Renfe",
+  europcar: "Estación Renfe",
+  avis: "Estación Renfe",
+  enterprise: "Centro / puerto",
+  northgate: "Pol. Las Atalayas",
+  telefurgo: "Pol. industrial",
+  covey: "Pol. industrial",
+  demetrio: "Pol. San Blas",
+  primoti: "Pol. industrial",
+};
+
 
 
 function Badge({ value }: { value: string; styles?: Record<string, string> }) {
@@ -212,7 +228,14 @@ function ComparadorPage() {
                     )}
                   </Td>
                   <Td className="whitespace-nowrap"><ShuttleCell value={op.shuttle} terminalOffice={op.terminalOffice} airport={op.airport} /></Td>
-                  <Td className="whitespace-nowrap"><span className="text-xs font-medium text-white">{op.cityOffice ? "Sí" : "No"}</span></Td>
+                  <Td className="whitespace-nowrap">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-medium text-white">{op.cityOffice ? "Sí" : "No"}</span>
+                      {op.cityOffice && CITY_OFFICE_LOCATION[op.id] && (
+                        <span className="text-[10px] text-white/70">· {CITY_OFFICE_LOCATION[op.id]}</span>
+                      )}
+                    </div>
+                  </Td>
                   <Td className="text-white whitespace-nowrap">{op.hours}</Td>
                   <Td className="whitespace-nowrap"><Badge value={op.price} /></Td>
                   <Td className="whitespace-nowrap min-w-[100px]"><YesNo value={op.insurance} /></Td>
