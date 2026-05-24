@@ -250,11 +250,12 @@ function Th({
   className?: string;
   sticky?: boolean;
 }) {
+  const base = "sticky top-0 z-10 bg-neutral-900";
   const stickyCls = sticky
-    ? "sticky left-0 z-10 bg-slate-50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]"
-    : "bg-slate-50/60";
+    ? "sticky left-0 top-0 z-20 bg-neutral-900 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.6)]"
+    : base;
   return (
-    <th className={`border-b border-slate-200 px-1.5 py-1.5 font-semibold whitespace-nowrap ${stickyCls} ${className}`}>
+    <th className={`border-b border-white/10 px-1.5 py-1.5 font-semibold whitespace-nowrap ${stickyCls} ${className}`}>
       {children}
     </th>
   );
@@ -270,10 +271,10 @@ function Td({
   sticky?: boolean;
 }) {
   const stickyCls = sticky
-    ? "sticky left-0 z-10 bg-white shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] group-hover:bg-slate-50"
-    : "group-hover:bg-slate-50/50";
+    ? "sticky left-0 z-10 bg-black shadow-[2px_0_4px_-2px_rgba(0,0,0,0.6)] group-hover:bg-neutral-900"
+    : "group-hover:bg-white/5";
   return (
-    <td className={`border-b border-slate-100 px-1.5 py-1.5 align-middle ${stickyCls} ${className}`}>
+    <td className={`border-b border-white/5 px-1.5 py-1.5 align-middle ${stickyCls} ${className}`}>
       {children}
     </td>
   );
