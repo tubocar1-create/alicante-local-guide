@@ -1158,6 +1158,9 @@ function dbIntentToResult(intent: AgenteIntentRow): LocalResult {
       source: "trained",
     };
   }
+  // Respuesta hablada entrenada en BD (spoken_reply) tiene prioridad
+  // absoluta: refleja la doctrina curada por el CPA.
+  const trainedReply = (intent.spoken_reply ?? "").trim();
   // Si el intent BD pertenece a un dominio con preguntas de clarificación
   // (followups), SIEMPRE preguntamos primero — aunque tenga `route` directa.
   // Regla doctrinal: conversar antes de derivar.
@@ -1165,15 +1168,15 @@ function dbIntentToResult(intent: AgenteIntentRow): LocalResult {
   if (domainId) {
     const d = DOMAINS.find((x) => x.id === domainId);
     if (d && d.followups.length === 0 && d.hubPath && !d.hubPath.startsWith("action:")) {
-      return { reply: d.question, path: d.hubPath, audio: d.audio, pendingDomain: null, source: "trained" };
+      return { reply: trainedReply || d.question, path: d.hubPath, audio: d.audio, pendingDomain: null, source: "trained" };
     }
     if (d && d.followups.length > 0) {
-      return { reply: d.question, audio: d.audio, pendingDomain: d.id, source: "trained" };
+      return { reply: trainedReply || d.question, audio: d.audio, pendingDomain: d.id, source: "trained" };
     }
   }
   if (intent.route) {
     return {
-      reply: `Te llevo a ${intent.label.toLowerCase()}.`,
+      reply: trainedReply || `Te llevo a ${intent.label.toLowerCase()}.`,
       path: intent.route,
       audio: "fallback",
       pendingDomain: null,
@@ -1183,17 +1186,18 @@ function dbIntentToResult(intent: AgenteIntentRow): LocalResult {
   if (domainId) {
     const d = DOMAINS.find((x) => x.id === domainId);
     if (d) {
-      return { reply: d.question, audio: d.audio, pendingDomain: d.id, source: "trained" };
+      return { reply: trainedReply || d.question, audio: d.audio, pendingDomain: d.id, source: "trained" };
     }
   }
   return {
-    reply: `Te llevo a ${intent.label.toLowerCase()}.`,
+    reply: trainedReply || `Te llevo a ${intent.label.toLowerCase()}.`,
     path: intent.route ?? undefined,
     audio: "fallback",
     pendingDomain: null,
     source: "trained",
   };
 }
+
 
 type LocalResult = {
   reply: string;
@@ -1314,21 +1318,28 @@ function localResolve(
 ): LocalResult {
   const query = normalizeSpeech(text);
 
+  // 0) Correcciones aprobadas en el CPA. Si una frase fue entrenada como
+  // alias de un intent, debe ganar sobre heurísticas antiguas del cliente
+  // (incluida la intro genérica de compras), para que subsectores como
+  // "comprar_moda" o "comprar_tecnologia" se resuelvan al endpoint exacto.
+  const trainedMatch = matchDbIntent(query, catalog.intents);
+  const isComprarSubsector = trainedMatch?.intent.key.startsWith("comprar_") ?? false;
+  if (trainedMatch && (trainedMatch.len >= 8 || isComprarSubsector)) {
+    return dbIntentToResult(trainedMatch.intent);
+  }
+
+
   if (isShoppingRequest(query)) {
+    const hubIntent = catalog.intents.find((i) => i.key === "comprar");
+    const trainedReply = (hubIntent?.spoken_reply ?? "").trim();
     return {
-      reply: SHOPPING_INTRO_REPLY,
+      reply: trainedReply || SHOPPING_INTRO_REPLY,
       path: "/comprar",
       audio: "fallback",
       pendingDomain: null,
     };
   }
 
-  // 0) Correcciones aprobadas en el CPA. Si una frase fue entrenada como
-  // alias de un intent, debe ganar sobre heurísticas antiguas del cliente.
-  const trainedMatch = matchDbIntent(query, catalog.intents);
-  if (trainedMatch && trainedMatch.len >= 8) {
-    return dbIntentToResult(trainedMatch.intent);
-  }
 
   // Dominio activo = prioridad máxima sobre entidades/keywords aisladas.
   // Si el agente acaba de preguntar por TRAM/transporte, respuestas cortas
