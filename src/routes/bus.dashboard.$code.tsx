@@ -1,9 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ArrowDown, ArrowUp, Bus, ChevronDown, Radio, RefreshCw, Loader2, MapPin } from "lucide-react";
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { classifyLine } from "@/components/BusKnownPicker";
 import busAlicanteImg from "@/assets/bus-alicante.png";
+import type { LineStopPoint } from "@/components/BusLineLiveMap";
+
+const BusLineLiveMap = lazy(() =>
+  import("@/components/BusLineLiveMap").then((m) => ({ default: m.BusLineLiveMap })),
+);
 
 function haversineMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
   const R = 6371000;
@@ -176,6 +181,19 @@ function BusDashboardPage() {
   }, [userPos, stopsByDir, stopCoords]);
 
 
+  // Puntos georreferenciados de la línea para el mapa en vivo
+  const lineStopPoints = useMemo<LineStopPoint[]>(() => {
+    const out: LineStopPoint[] = [];
+    for (const dir of [1, 2] as const) {
+      for (const s of stopsByDir[dir]) {
+        const c = stopCoords.get(s.code);
+        if (!c) continue;
+        out.push({ code: s.code, name: s.name, direction: dir, seq: s.seq, lat: c.lat, lng: c.lng });
+      }
+    }
+    return out;
+  }, [stopsByDir, stopCoords]);
+
   // Realtime: por cada parada del recorrido (ambas direcciones), pedir su ETA.
   // Guardamos hasta 2 próximos tiempos por parada (índice 0 y 1).
   const [etas, setEtas] = useState<Record<string, number[]>>({});
@@ -296,6 +314,26 @@ function BusDashboardPage() {
           now={clock}
           updatedAt={updatedAt}
         />
+
+        {/* MAPA EN VIVO DE LA LÍNEA */}
+        {lineStopPoints.length > 0 && (
+          <div className="mt-3">
+            <Suspense
+              fallback={
+                <div className="flex h-[280px] w-full items-center justify-center rounded-2xl border border-white/10 bg-white/[0.02] text-sm text-white/60">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Cargando mapa…
+                </div>
+              }
+            >
+              <BusLineLiveMap
+                lineCode={code}
+                color={lineColor}
+                stops={lineStopPoints}
+                user={userPos}
+              />
+            </Suspense>
+          </div>
+        )}
 
 
 
