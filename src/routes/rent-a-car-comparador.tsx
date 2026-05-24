@@ -87,6 +87,22 @@ const OPERATORS: Operator[] = [
   { id: "primoti",   name: "PRIMOTI",            domain: "primoti.com",           url: "https://www.primoti.com",           profile: "Industrial/logística",    airport: false, shuttle: false, hours: "08:00–18:00", price: "Medio-alto",  insurance: "Sí",       franchise: "Sí",       vehicles: "Comerciales e industriales",    vans: "Especialista", renting: "Sí", waitTime: "Bajo",       terminalOffice: false, cityOffice: true, transparency: "Alta",       vehicleState: "Muy bueno", incidentRisk: "Bajo" },
 ];
 
+const CITY_OFFICE_LOCATION: Record<string, string> = {
+  centauro: "Benidorm",
+  record: "Benidorm / centro",
+  ok: "Estación Renfe",
+  sixt: "Estación Renfe",
+  hertz: "Estación Renfe",
+  europcar: "Estación Renfe",
+  avis: "Estación Renfe",
+  enterprise: "Centro / puerto",
+  northgate: "Pol. Las Atalayas",
+  telefurgo: "Pol. industrial",
+  covey: "Pol. industrial",
+  demetrio: "Pol. San Blas",
+  primoti: "Pol. industrial",
+};
+
 
 
 function Badge({ value }: { value: string; styles?: Record<string, string> }) {
