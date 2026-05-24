@@ -237,39 +237,71 @@ function BusUrbanoPage() {
           )}
         </section>
 
-        {/* Líneas principales */}
-        <section>
-          <div className="mb-2 flex items-center gap-2">
-            <RouteIcon className="h-4 w-4 text-cyan-300" />
-            <h2 className="text-sm font-bold text-white">Líneas principales</h2>
-          </div>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {LINEAS.map((l) => (
-              <Link
-                key={l.num}
-                to="/bus/dashboard/$code"
-                params={{ code: l.num }}
-                className="group flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] p-3 backdrop-blur-xl transition-all hover:border-cyan-400/40 hover:bg-white/[0.07] active:scale-[0.98]"
-              >
-                <div
-                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-bold text-white shadow-md"
-                  style={{ background: l.color }}
-                >
-                  {l.num}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[11px] font-medium text-white">
-                    {l.route}
-                  </p>
-                  <p className="text-[10px] text-white/50">
-                    Frecuencia: {l.freq} · Ver en vivo
-                  </p>
-                </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-white/30 group-hover:text-cyan-300" />
-              </Link>
-            ))}
-          </div>
-        </section>
+        {/* Líneas reales */}
+        {(["urban", "extraurban", "night"] as const).map((cat) => {
+          const items = groupedLines[cat];
+          if (!items || items.length === 0) return null;
+          const meta = {
+            urban: {
+              title: "Líneas urbanas",
+              icon: <RouteIcon className="h-4 w-4 text-cyan-300" />,
+            },
+            extraurban: {
+              title: "Líneas TAM (interurbanas)",
+              icon: <MapPinned className="h-4 w-4 text-blue-300" />,
+            },
+            night: {
+              title: "Líneas nocturnas",
+              icon: <Moon className="h-4 w-4 text-indigo-300" />,
+            },
+          }[cat];
+          return (
+            <section key={cat}>
+              <div className="mb-2 flex items-center gap-2">
+                {meta.icon}
+                <h2 className="text-sm font-bold text-white">{meta.title}</h2>
+                <span className="text-[10px] text-white/40">· {items.length}</span>
+              </div>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {items.map((l) => (
+                  <Link
+                    key={l.code}
+                    to="/bus/dashboard/$code"
+                    params={{ code: l.code }}
+                    className="group flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] p-3 backdrop-blur-xl transition-all hover:border-cyan-400/40 hover:bg-white/[0.07] active:scale-[0.98]"
+                  >
+                    <div
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-bold text-white shadow-md"
+                      style={{ background: l.color }}
+                    >
+                      {l.code}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[11px] font-medium text-white">
+                        {l.origin && l.destination
+                          ? `${l.origin} ↔ ${l.destination}`
+                          : l.name}
+                      </p>
+                      <p className="text-[10px] text-white/50">
+                        Ver tiempos en vivo
+                      </p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-white/30 group-hover:text-cyan-300" />
+                  </Link>
+                ))}
+              </div>
+            </section>
+          );
+        })}
+        {graphLoading && (
+          <p className="text-center text-[11px] text-white/40">Cargando líneas…</p>
+        )}
+        {!graphLoading && graph && graph.lines.length === 0 && (
+          <p className="text-center text-[11px] text-white/40">
+            No hay líneas disponibles.
+          </p>
+        )}
+
 
         {/* Tarifas */}
         <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl">
