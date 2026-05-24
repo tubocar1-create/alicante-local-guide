@@ -221,17 +221,19 @@ function Th({
   children,
   className = "",
   sticky = false,
+  title,
 }: {
   children?: React.ReactNode;
   className?: string;
   sticky?: boolean;
+  title?: string;
 }) {
   const base = "sticky top-0 z-10 bg-neutral-900";
   const stickyCls = sticky
     ? "sticky left-0 top-0 z-20 bg-neutral-900 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.6)]"
     : base;
   return (
-    <th className={`border-b border-white/10 px-1.5 py-1 font-semibold whitespace-nowrap ${stickyCls} ${className}`}>
+    <th title={title} className={`border-b border-white/10 px-1.5 py-1 font-semibold whitespace-nowrap ${stickyCls} ${className}`}>
       {children}
     </th>
   );
