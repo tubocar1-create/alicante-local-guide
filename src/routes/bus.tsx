@@ -1,9 +1,7 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   X,
-  Bus,
-  MapPin,
   Clock,
   ExternalLink,
   QrCode,
@@ -12,8 +10,12 @@ import {
   ChevronRight,
   Route as RouteIcon,
   Euro,
-  Info,
+  Moon,
+  Building2,
+  MapPinned,
 } from "lucide-react";
+import { useBusGraph } from "@/hooks/useBusGraph";
+import { classifyLine } from "@/components/BusKnownPicker";
 
 export const Route = createFileRoute("/bus")({
   head: () => ({
@@ -45,18 +47,9 @@ function BusRouteShell() {
   return <BusUrbanoPage />;
 }
 
-const LINEAS = [
-  { num: "1", route: "San Vicente – Centro – Playa", color: "#ef4444", freq: "10-15 min" },
-  { num: "2", route: "Universidad – Centro – Hospital", color: "#3b82f6", freq: "15-20 min" },
-  { num: "3", route: "Virgen del Remedio – Centro – Playa", color: "#22c55e", freq: "15 min" },
-  { num: "4", route: "Pla – Centro – Vistahermosa", color: "#f59e0b", freq: "20 min" },
-  { num: "6", route: "San Blas – Centro – Juan XXIII", color: "#a855f7", freq: "20 min" },
-  { num: "9", route: "El Palmeral – Centro – Ciudad Jardín", color: "#ec4899", freq: "20 min" },
-  { num: "12", route: "Altozano – Centro – Lucentum", color: "#06b6d4", freq: "25 min" },
-  { num: "14", route: "Autobús Puerto – Castillo Santa Bárbara", color: "#f97316", freq: "30 min" },
-  { num: "23", route: "Circular Centro – Mercado – MARQ", color: "#8b5cf6", freq: "20 min" },
-  { num: "24", route: "Circular Playa de San Juan", color: "#14b8a6", freq: "30 min" },
-];
+// Líneas reales se obtienen desde la base de datos vía useBusGraph().
+// Se clasifican como urbanas / extraurbanas (TAM) / nocturnas y el origen-destino
+// se deriva de la primera y última parada de cada sentido.
 
 const RECURSOS = [
   {
@@ -80,9 +73,61 @@ function isValidStopCode(code: string): boolean {
   return /^\d{3,5}$/.test(code.trim());
 }
 
+type LineEntry = {
+  code: string;
+  name: string;
+  color: string;
+  origin: string;
+  destination: string;
+  category: "urban" | "extraurban" | "night";
+};
+
+const CAT_COLOR: Record<LineEntry["category"], string> = {
+  urban: "#DC2626",
+  extraurban: "#1E3A8A",
+  night: "#312E81",
+};
+
 function BusUrbanoPage() {
   const [stopCode, setStopCode] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const { data: graph, loading: graphLoading } = useBusGraph();
+
+  const groupedLines = useMemo(() => {
+    const groups: Record<LineEntry["category"], LineEntry[]> = {
+      urban: [],
+      extraurban: [],
+      night: [],
+    };
+    if (!graph) return groups;
+    for (const ln of graph.lines) {
+      const dir1 = graph.stops
+        .filter((s) => s.line_code === ln.code && s.direction === 1)
+        .sort((a, b) => a.seq - b.seq);
+      const origin = dir1[0]?.stop_name ?? "";
+      const destination = dir1[dir1.length - 1]?.stop_name ?? "";
+      const category = classifyLine(ln.code);
+      groups[category].push({
+        code: ln.code,
+        name: ln.name,
+        color: ln.color ?? CAT_COLOR[category],
+        origin,
+        destination,
+        category,
+      });
+    }
+    const byCode = (a: LineEntry, b: LineEntry) => {
+      const na = parseInt(a.code, 10);
+      const nb = parseInt(b.code, 10);
+      if (isNaN(na) || isNaN(nb)) return a.code.localeCompare(b.code);
+      return na - nb;
+    };
+    groups.urban.sort(byCode);
+    groups.extraurban.sort(byCode);
+    groups.night.sort(byCode);
+    return groups;
+  }, [graph]);
+
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -192,39 +237,71 @@ function BusUrbanoPage() {
           )}
         </section>
 
-        {/* Líneas principales */}
-        <section>
-          <div className="mb-2 flex items-center gap-2">
-            <RouteIcon className="h-4 w-4 text-cyan-300" />
-            <h2 className="text-sm font-bold text-white">Líneas principales</h2>
-          </div>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {LINEAS.map((l) => (
-              <Link
-                key={l.num}
-                to="/bus/dashboard/$code"
-                params={{ code: l.num }}
-                className="group flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] p-3 backdrop-blur-xl transition-all hover:border-cyan-400/40 hover:bg-white/[0.07] active:scale-[0.98]"
-              >
-                <div
-                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-bold text-white shadow-md"
-                  style={{ background: l.color }}
-                >
-                  {l.num}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[11px] font-medium text-white">
-                    {l.route}
-                  </p>
-                  <p className="text-[10px] text-white/50">
-                    Frecuencia: {l.freq} · Ver en vivo
-                  </p>
-                </div>
-                <ChevronRight className="h-4 w-4 shrink-0 text-white/30 group-hover:text-cyan-300" />
-              </Link>
-            ))}
-          </div>
-        </section>
+        {/* Líneas reales */}
+        {(["urban", "extraurban", "night"] as const).map((cat) => {
+          const items = groupedLines[cat];
+          if (!items || items.length === 0) return null;
+          const meta = {
+            urban: {
+              title: "Líneas urbanas",
+              icon: <RouteIcon className="h-4 w-4 text-cyan-300" />,
+            },
+            extraurban: {
+              title: "Líneas TAM (interurbanas)",
+              icon: <MapPinned className="h-4 w-4 text-blue-300" />,
+            },
+            night: {
+              title: "Líneas nocturnas",
+              icon: <Moon className="h-4 w-4 text-indigo-300" />,
+            },
+          }[cat];
+          return (
+            <section key={cat}>
+              <div className="mb-2 flex items-center gap-2">
+                {meta.icon}
+                <h2 className="text-sm font-bold text-white">{meta.title}</h2>
+                <span className="text-[10px] text-white/40">· {items.length}</span>
+              </div>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {items.map((l) => (
+                  <Link
+                    key={l.code}
+                    to="/bus/dashboard/$code"
+                    params={{ code: l.code }}
+                    className="group flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] p-3 backdrop-blur-xl transition-all hover:border-cyan-400/40 hover:bg-white/[0.07] active:scale-[0.98]"
+                  >
+                    <div
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-bold text-white shadow-md"
+                      style={{ background: l.color }}
+                    >
+                      {l.code}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[11px] font-medium text-white">
+                        {l.origin && l.destination
+                          ? `${l.origin} ↔ ${l.destination}`
+                          : l.name}
+                      </p>
+                      <p className="text-[10px] text-white/50">
+                        Ver tiempos en vivo
+                      </p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-white/30 group-hover:text-cyan-300" />
+                  </Link>
+                ))}
+              </div>
+            </section>
+          );
+        })}
+        {graphLoading && (
+          <p className="text-center text-[11px] text-white/40">Cargando líneas…</p>
+        )}
+        {!graphLoading && graph && graph.lines.length === 0 && (
+          <p className="text-center text-[11px] text-white/40">
+            No hay líneas disponibles.
+          </p>
+        )}
+
 
         {/* Tarifas */}
         <section className="rounded-2xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl">
