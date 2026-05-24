@@ -46,7 +46,7 @@ const TILE_SUBTITLES: Record<string, string> = {
   "Turismo, playa y aventuras": "Turismo, sol y planes",
   "Comprar": "Tiendas y mercados",
   "Tomar algo": "Bares y copas",
-  "Transporte público": "Bus, TRAM, taxis",
+  "Transporte multimodal inteligente": "Bus, TRAM, taxis",
   "Mapa": "Explora la ciudad",
   "Servicios sanitarios": "Farmacias y hospitales",
   "Ocio": "Cines, teatros y conciertos",
