@@ -83,30 +83,31 @@ const OPERATORS: Operator[] = [
 ];
 
 const LEVEL_STYLES: Record<string, string> = {
-  "Muy bajo":    "bg-emerald-100 text-emerald-700",
-  "Bajo":        "bg-emerald-50 text-emerald-700",
-  "Medio-bajo":  "bg-lime-100 text-lime-700",
-  "Medio":       "bg-amber-100 text-amber-700",
-  "Medio-alto":  "bg-orange-100 text-orange-700",
-  "Alto":        "bg-rose-100 text-rose-700",
-  "Muy alto":    "bg-rose-200 text-rose-800",
-  "Baja":        "bg-rose-100 text-rose-700",
-  "Media-baja":  "bg-orange-100 text-orange-700",
-  "Media":       "bg-amber-100 text-amber-700",
-  "Media-alta":  "bg-lime-100 text-lime-700",
-  "Alta":        "bg-emerald-50 text-emerald-700",
-  "Muy alta":    "bg-emerald-100 text-emerald-700",
+  "Muy bajo":    "text-emerald-300",
+  "Bajo":        "text-emerald-300",
+  "Medio-bajo":  "text-lime-300",
+  "Medio":       "text-amber-300",
+  "Medio-alto":  "text-orange-300",
+  "Alto":        "text-rose-300",
+  "Muy alto":    "text-rose-400",
+  "Baja":        "text-rose-300",
+  "Media-baja":  "text-orange-300",
+  "Media":       "text-amber-300",
+  "Media-alta":  "text-lime-300",
+  "Alta":        "text-emerald-300",
+  "Muy alta":    "text-emerald-200",
 };
 
 // For "Precio" higher = worse (red). For transparency/state higher = better (green).
 // LEVEL_STYLES already maps both name sets.
 
 const STATE_STYLES: Record<string, string> = {
-  "Correcto":  "bg-amber-100 text-amber-700",
-  "Bueno":     "bg-lime-100 text-lime-700",
-  "Muy bueno": "bg-emerald-100 text-emerald-700",
-  "Excelente": "bg-emerald-200 text-emerald-800",
+  "Correcto":  "text-amber-300",
+  "Bueno":     "text-lime-300",
+  "Muy bueno": "text-emerald-300",
+  "Excelente": "text-emerald-200",
 };
+
 
 function Badge({ value, styles }: { value: string; styles: Record<string, string> }) {
   const cls = (styles[value] ?? "text-slate-300").replace(/bg-\S+/g, "").trim();
