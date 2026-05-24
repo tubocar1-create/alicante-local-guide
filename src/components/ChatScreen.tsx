@@ -15,7 +15,7 @@ import { LiveEta } from "@/components/LiveEta";
 import { BusKnownPicker, type BusStopPick } from "@/components/BusKnownPicker";
 import { FlightPicker } from "@/components/FlightPicker";
 import { TramInline } from "@/components/TramInline";
-import { useAuth } from "@/hooks/useAuth";
+import { useAppAuth } from "@/hooks/useAppAuth";
 import { findPlaceOverride } from "@/data/places";
 import { resolveOpeningStatus, getTodayClosingTime, getTodayOpeningTime } from "@/lib/opening-hours";
 import { useServerFn } from "@tanstack/react-start";
