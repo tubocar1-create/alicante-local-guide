@@ -47,18 +47,9 @@ function BusRouteShell() {
   return <BusUrbanoPage />;
 }
 
-const LINEAS = [
-  { num: "1", route: "San Vicente – Centro – Playa", color: "#ef4444", freq: "10-15 min" },
-  { num: "2", route: "Universidad – Centro – Hospital", color: "#3b82f6", freq: "15-20 min" },
-  { num: "3", route: "Virgen del Remedio – Centro – Playa", color: "#22c55e", freq: "15 min" },
-  { num: "4", route: "Pla – Centro – Vistahermosa", color: "#f59e0b", freq: "20 min" },
-  { num: "6", route: "San Blas – Centro – Juan XXIII", color: "#a855f7", freq: "20 min" },
-  { num: "9", route: "El Palmeral – Centro – Ciudad Jardín", color: "#ec4899", freq: "20 min" },
-  { num: "12", route: "Altozano – Centro – Lucentum", color: "#06b6d4", freq: "25 min" },
-  { num: "14", route: "Autobús Puerto – Castillo Santa Bárbara", color: "#f97316", freq: "30 min" },
-  { num: "23", route: "Circular Centro – Mercado – MARQ", color: "#8b5cf6", freq: "20 min" },
-  { num: "24", route: "Circular Playa de San Juan", color: "#14b8a6", freq: "30 min" },
-];
+// Líneas reales se obtienen desde la base de datos vía useBusGraph().
+// Se clasifican como urbanas / extraurbanas (TAM) / nocturnas y el origen-destino
+// se deriva de la primera y última parada de cada sentido.
 
 const RECURSOS = [
   {
