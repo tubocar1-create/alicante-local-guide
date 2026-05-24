@@ -93,7 +93,7 @@ function RentACarPage() {
           to="/rent-a-car-comparador"
           className="mb-5 flex items-center justify-center rounded-2xl border border-sky-300/30 bg-gradient-to-r from-sky-500 to-blue-600 px-4 py-3 text-center font-semibold text-white shadow-lg transition hover:from-sky-400 hover:to-blue-500"
         >
-          Tabla comparativa
+          Ver compañías de Alquiler de Vehículos
         </Link>
 
         <PhotoCard
@@ -187,6 +187,13 @@ function RentACarPage() {
         <p className="text-xs text-white/50">
           Fotos: <a href="https://mochilaexpres.com/que-ver-en-alicante-provincia/" target="_blank" rel="noopener noreferrer" className="underline hover:text-white/70">mochilaexpres.com</a>
         </p>
+
+        <Link
+          to="/rent-a-car-comparador"
+          className="mt-6 flex items-center justify-center rounded-2xl border border-sky-300/30 bg-gradient-to-r from-sky-500 to-blue-600 px-4 py-3 text-center font-semibold text-white shadow-lg transition hover:from-sky-400 hover:to-blue-500"
+        >
+          Ver compañías de Alquiler de Vehículos
+        </Link>
 
 
         {/* Factores */}
