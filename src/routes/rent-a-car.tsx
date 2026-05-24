@@ -1,11 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Car, ArrowLeft, Clock, Bus, Users, MapPin, Sparkles, Timer } from "lucide-react";
-import coastImg from "@/assets/rentacar-real-coast.jpg";
-import airportImg from "@/assets/rentacar-real-airport.jpg";
-import roadImg from "@/assets/rentacar-real-road.jpg";
-import keysImg from "@/assets/rentacar-real-keys.jpg";
-import calpeImg from "@/assets/rentacar-real-calpe.jpg";
-import fleetImg from "@/assets/rentacar-real-fleet.jpg";
+import { Car, ArrowLeft, Clock, Bus, Users, MapPin, Sparkles, Timer, ImagePlus } from "lucide-react";
 
 export const Route = createFileRoute("/rent-a-car")({
   head: () => ({
@@ -36,18 +30,25 @@ const FACTORS = [
   { icon: Timer, title: "Tiempo de devolución", desc: "Rapidez y facilidad al entregar el coche antes del vuelo." },
 ];
 
-type Photo = { src: string; emoji: string; caption: string };
+type Photo = { src?: string; emoji: string; caption: string };
 
 function PhotoCard({ photo }: { photo: Photo }) {
   return (
-    <figure className="my-5 overflow-hidden rounded-3xl bg-amber-500/90 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)]">
-      <img
-        src={photo.src}
-        alt={photo.caption}
-        loading="lazy"
-        className="h-64 w-full object-cover sm:h-80"
-      />
-      <figcaption className="px-4 py-3 text-[15px] font-medium leading-snug text-white">
+    <figure className="my-5 overflow-hidden rounded-3xl bg-white/5 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)] ring-1 ring-white/10">
+      {photo.src ? (
+        <img
+          src={photo.src}
+          alt={photo.caption}
+          loading="lazy"
+          className="h-64 w-full object-cover sm:h-80"
+        />
+      ) : (
+        <div className="flex h-64 w-full flex-col items-center justify-center gap-2 border-b border-dashed border-white/15 bg-white/[0.03] text-white/40 sm:h-80">
+          <ImagePlus className="h-8 w-8" />
+          <span className="text-xs">Espacio para foto real</span>
+        </div>
+      )}
+      <figcaption className="px-4 py-3 text-[15px] font-medium leading-snug text-white/90">
         {photo.emoji} {photo.caption}
       </figcaption>
     </figure>
