@@ -227,9 +227,10 @@ function markRestaurantReturn() {
 export function ChatScreen() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user: authUser } = useAuth();
+  const { profile: authProfile } = useAppAuth();
   const [canShowPersonalName, setCanShowPersonalName] = useState(false);
-  const firstName = canShowPersonalName ? authUser?.name?.trim().split(" ")[0] : "";
+  const displayName = authProfile?.full_name || authProfile?.display_name || "";
+  const firstName = canShowPersonalName ? displayName.trim().split(" ")[0] : "";
   const [messages, setMessages] = useState<Msg[]>([GREETING]);
   const restoredReturnRef = useRef(false);
   const [input, setInput] = useState("");
