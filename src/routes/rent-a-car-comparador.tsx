@@ -137,7 +137,7 @@ function ComparadorPage() {
           <table className="w-full min-w-[1180px] border-separate border-spacing-0 text-[11px]">
             <thead className="text-left text-[10px] uppercase tracking-wide text-white">
               <tr>
-                <Th sticky className="px-2 py-1.5">Operadora</Th>
+                <Th sticky className="px-2 py-1.5 bg-[#b8a88a] text-black">Operadora</Th>
                 <Th>Perfil</Th>
                 <Th>Aerop.</Th>
                 <Th>Shuttle</Th>
