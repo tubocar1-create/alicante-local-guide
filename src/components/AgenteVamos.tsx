@@ -3557,7 +3557,9 @@ export function AgenteVamosFab() {
   const greetingPlayedRef = useRef(false);
   const path = useRouterState({ select: (s) => s.location.pathname });
   const hidden =
-    ["/login", "/magic", "/welcome"].includes(path) || path.startsWith("/business/login");
+    ["/welcome"].includes(path) ||
+    path.startsWith("/auth/") ||
+    path.startsWith("/business/login");
 
   const playGreetingAfterPermission = () => {
     if (greetingPlayedRef.current) return;
