@@ -73,9 +73,61 @@ function isValidStopCode(code: string): boolean {
   return /^\d{3,5}$/.test(code.trim());
 }
 
+type LineEntry = {
+  code: string;
+  name: string;
+  color: string;
+  origin: string;
+  destination: string;
+  category: "urban" | "extraurban" | "night";
+};
+
+const CAT_COLOR: Record<LineEntry["category"], string> = {
+  urban: "#DC2626",
+  extraurban: "#1E3A8A",
+  night: "#312E81",
+};
+
 function BusUrbanoPage() {
   const [stopCode, setStopCode] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const { data: graph, loading: graphLoading } = useBusGraph();
+
+  const groupedLines = useMemo(() => {
+    const groups: Record<LineEntry["category"], LineEntry[]> = {
+      urban: [],
+      extraurban: [],
+      night: [],
+    };
+    if (!graph) return groups;
+    for (const ln of graph.lines) {
+      const dir1 = graph.stops
+        .filter((s) => s.line_code === ln.code && s.direction === 1)
+        .sort((a, b) => a.seq - b.seq);
+      const origin = dir1[0]?.stop_name ?? "";
+      const destination = dir1[dir1.length - 1]?.stop_name ?? "";
+      const category = classifyLine(ln.code);
+      groups[category].push({
+        code: ln.code,
+        name: ln.name,
+        color: ln.color ?? CAT_COLOR[category],
+        origin,
+        destination,
+        category,
+      });
+    }
+    const byCode = (a: LineEntry, b: LineEntry) => {
+      const na = parseInt(a.code, 10);
+      const nb = parseInt(b.code, 10);
+      if (isNaN(na) || isNaN(nb)) return a.code.localeCompare(b.code);
+      return na - nb;
+    };
+    groups.urban.sort(byCode);
+    groups.extraurban.sort(byCode);
+    groups.night.sort(byCode);
+    return groups;
+  }, [graph]);
+
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
