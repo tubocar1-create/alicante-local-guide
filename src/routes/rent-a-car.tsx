@@ -91,19 +91,16 @@ function RentACarPage() {
 
         <Link
           to="/rent-a-car-comparador"
-          className="mb-5 flex items-center justify-between rounded-2xl border border-sky-300/30 bg-gradient-to-r from-sky-500 to-blue-600 px-4 py-3 text-white shadow-lg transition hover:from-sky-400 hover:to-blue-500"
+          className="mb-5 flex items-center justify-center rounded-2xl border border-sky-300/30 bg-gradient-to-r from-sky-500 to-blue-600 px-4 py-3 text-center font-semibold text-white shadow-lg transition hover:from-sky-400 hover:to-blue-500"
         >
-          <span className="flex items-center gap-2 font-semibold">
-            <Car className="h-5 w-5" /> Comparador de operadoras
-          </span>
-          <span className="text-xs opacity-90">15 proveedores en ALC →</span>
+          Tabla comparativa
         </Link>
 
         <PhotoCard
           photo={{
-            // src: undefined,
+            src: "https://mochilaexpres.com/wp-content/uploads/Altea-que-ver-en-Alicante-provincia.jpeg",
             emoji: "🌊",
-            caption: "Costa mediterránea — el motivo por el que alquilas coche",
+            caption: "Altea — postal mediterránea de la Costa Blanca",
           }}
         />
 
@@ -119,9 +116,9 @@ function RentACarPage() {
 
         <PhotoCard
           photo={{
-            // src: undefined,
+            src: "https://mochilaexpres.com/wp-content/uploads/Moraira-que-ver-en-alicante-provincia.jpg",
             emoji: "🛣️",
-            caption: "Carreteras costeras — de Alicante a la Costa Blanca en minutos",
+            caption: "Moraira — calas tranquilas a un trayecto de coche desde ALC",
           }}
         />
 
@@ -135,9 +132,9 @@ function RentACarPage() {
 
         <PhotoCard
           photo={{
-            // src: undefined,
-            emoji: "✈️",
-            caption: "Aeropuerto ALC — donde empieza tu experiencia de alquiler",
+            src: "https://mochilaexpres.com/wp-content/uploads/Guadalest-que-ver-en-Alicante-provincia-2-1.jpg",
+            emoji: "🏰",
+            caption: "Guadalest — interior espectacular a 1 h de Benidorm",
           }}
         />
 
@@ -150,9 +147,9 @@ function RentACarPage() {
 
         <PhotoCard
           photo={{
-            // src: undefined,
-            emoji: "🚗",
-            caption: "Flotas de alquiler — no todas son iguales",
+            src: "https://mochilaexpres.com/wp-content/uploads/Fuentes-del-ALgar.jpg",
+            emoji: "💧",
+            caption: "Fuentes del Algar — naturaleza al alcance en coche",
           }}
         />
 
@@ -168,9 +165,9 @@ function RentACarPage() {
 
         <PhotoCard
           photo={{
-            // src: undefined,
-            emoji: "🔑",
-            caption: "Llaves en mano — el momento que define si la espera valió la pena",
+            src: "https://mochilaexpres.com/wp-content/uploads/Isla-de-Tabarca-que-ver-en-Alicante-provincia-1-1000x750.jpg",
+            emoji: "🏝️",
+            caption: "Isla de Tabarca — escapada en barco desde el puerto de Alicante",
           }}
         />
 
@@ -181,11 +178,16 @@ function RentACarPage() {
 
         <PhotoCard
           photo={{
-            // src: undefined,
-            emoji: "🏖️",
-            caption: "Calpe, Jávea, Altea — destinos a un trayecto de coche",
+            src: "https://mochilaexpres.com/wp-content/uploads/Villajoyosa-que-ver-en-Alicante-provincia.jpg",
+            emoji: "🎨",
+            caption: "Villajoyosa — fachadas de colores frente al Mediterráneo",
           }}
         />
+
+        <p className="text-xs text-white/50">
+          Fotos: <a href="https://mochilaexpres.com/que-ver-en-alicante-provincia/" target="_blank" rel="noopener noreferrer" className="underline hover:text-white/70">mochilaexpres.com</a>
+        </p>
+
 
         {/* Factores */}
         <section className="mt-8">
