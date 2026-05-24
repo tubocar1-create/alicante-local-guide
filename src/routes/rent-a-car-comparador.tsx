@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowLeft, Bus, XCircle, Car, Info, Check, PersonStanding,
   Plane, Clock, Tag, Shield, Lock, Truck, FileText,
-  Hourglass, Eye, Star, Building2, Fingerprint, CircleDollarSign,
+  Hourglass, Star, Building2, Fingerprint, CircleDollarSign,
   MapPinOff,
 } from "lucide-react";
 
