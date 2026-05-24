@@ -118,20 +118,15 @@ function Badge({ value }: { value: string; styles?: Record<string, string> }) {
 }
 
 function YesNo({ value }: { value: YesNoOpt | boolean }) {
-  if (value === true) return <Check className="h-4 w-4 text-emerald-600" />;
-  if (value === false) return <XCircle className="h-4 w-4 text-rose-400" />;
-  const tone =
-    value === "Sí"           ? "text-emerald-600" :
-    value === "No"           ? "text-rose-500" :
-    value === "Especialista" ? "text-blue-600 font-semibold" :
-                               "text-amber-600";
-  return <span className={`text-xs font-medium ${tone}`}>{value}</span>;
+  if (value === true) return <Check className="h-4 w-4 text-white" />;
+  if (value === false) return <XCircle className="h-4 w-4 text-white" />;
+  return <span className="text-xs font-medium text-white">{value}</span>;
 }
 
 function ShuttleCell({ value, terminalOffice }: { value: boolean; terminalOffice: boolean }) {
   if (value) {
     return (
-      <div className="flex items-center gap-1.5 text-emerald-600">
+      <div className="flex items-center gap-1.5 text-white">
         <Bus className="h-4 w-4" />
         <span className="text-sm font-medium">Sí</span>
       </div>
@@ -139,11 +134,11 @@ function ShuttleCell({ value, terminalOffice }: { value: boolean; terminalOffice
   }
   return (
     <div className="flex flex-col">
-      <div className="flex items-center gap-1.5 text-rose-500">
+      <div className="flex items-center gap-1.5 text-white">
         <XCircle className="h-4 w-4" />
         <span className="text-sm font-medium">No</span>
       </div>
-      {terminalOffice && <span className="text-[11px] text-muted-foreground">(Terminal)</span>}
+      {terminalOffice && <span className="text-[11px] text-white">(Terminal)</span>}
     </div>
   );
 }
