@@ -1158,6 +1158,9 @@ function dbIntentToResult(intent: AgenteIntentRow): LocalResult {
       source: "trained",
     };
   }
+  // Respuesta hablada entrenada en BD (spoken_reply) tiene prioridad
+  // absoluta: refleja la doctrina curada por el CPA.
+  const trainedReply = (intent.spoken_reply ?? "").trim();
   // Si el intent BD pertenece a un dominio con preguntas de clarificación
   // (followups), SIEMPRE preguntamos primero — aunque tenga `route` directa.
   // Regla doctrinal: conversar antes de derivar.
@@ -1165,15 +1168,15 @@ function dbIntentToResult(intent: AgenteIntentRow): LocalResult {
   if (domainId) {
     const d = DOMAINS.find((x) => x.id === domainId);
     if (d && d.followups.length === 0 && d.hubPath && !d.hubPath.startsWith("action:")) {
-      return { reply: d.question, path: d.hubPath, audio: d.audio, pendingDomain: null, source: "trained" };
+      return { reply: trainedReply || d.question, path: d.hubPath, audio: d.audio, pendingDomain: null, source: "trained" };
     }
     if (d && d.followups.length > 0) {
-      return { reply: d.question, audio: d.audio, pendingDomain: d.id, source: "trained" };
+      return { reply: trainedReply || d.question, audio: d.audio, pendingDomain: d.id, source: "trained" };
     }
   }
   if (intent.route) {
     return {
-      reply: `Te llevo a ${intent.label.toLowerCase()}.`,
+      reply: trainedReply || `Te llevo a ${intent.label.toLowerCase()}.`,
       path: intent.route,
       audio: "fallback",
       pendingDomain: null,
@@ -1183,17 +1186,18 @@ function dbIntentToResult(intent: AgenteIntentRow): LocalResult {
   if (domainId) {
     const d = DOMAINS.find((x) => x.id === domainId);
     if (d) {
-      return { reply: d.question, audio: d.audio, pendingDomain: d.id, source: "trained" };
+      return { reply: trainedReply || d.question, audio: d.audio, pendingDomain: d.id, source: "trained" };
     }
   }
   return {
-    reply: `Te llevo a ${intent.label.toLowerCase()}.`,
+    reply: trainedReply || `Te llevo a ${intent.label.toLowerCase()}.`,
     path: intent.route ?? undefined,
     audio: "fallback",
     pendingDomain: null,
     source: "trained",
   };
 }
+
 
 type LocalResult = {
   reply: string;
