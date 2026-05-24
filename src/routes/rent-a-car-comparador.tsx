@@ -155,8 +155,8 @@ function ComparadorPage() {
             </thead>
             <tbody>
               {OPERATORS.map((op) => (
-                <tr key={op.id} className="group">
-                <Td sticky className="px-1.5 py-1.5">
+                <tr key={op.id} className="group h-10">
+                <Td sticky className="px-1.5 py-1 whitespace-nowrap">
                   <div className="flex items-center gap-1">
                     <img
                       src={logoUrl(op.domain)}
@@ -179,8 +179,8 @@ function ComparadorPage() {
                     </a>
                   </div>
                 </Td>
-                  <Td className="text-white">{op.profile}</Td>
-                  <Td>
+                  <Td className="text-white whitespace-nowrap">{op.profile}</Td>
+                  <Td className="whitespace-nowrap">
                     {op.airport ? (
                       <span className="inline-block whitespace-nowrap rounded-md bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-white">
                         Terminal
@@ -189,17 +189,17 @@ function ComparadorPage() {
                       <span className="text-white">—</span>
                     )}
                   </Td>
-                  <Td><ShuttleCell value={op.shuttle} terminalOffice={op.terminalOffice} /></Td>
+                  <Td className="whitespace-nowrap"><ShuttleCell value={op.shuttle} terminalOffice={op.terminalOffice} /></Td>
                   <Td className="text-white whitespace-nowrap">{op.hours}</Td>
-                  <Td><Badge value={op.price} /></Td>
-                  <Td><YesNo value={op.insurance} /></Td>
-                  <Td><YesNo value={op.franchise} /></Td>
-                  <Td className="text-white">{op.vehicles}</Td>
-                  <Td><YesNo value={op.vans} /></Td>
-                  <Td><YesNo value={op.renting} /></Td>
-                  <Td><Badge value={op.waitTime} /></Td>
-                  <Td><Badge value={op.transparency} /></Td>
-                  <Td><Badge value={op.vehicleState} /></Td>
+                  <Td className="whitespace-nowrap"><Badge value={op.price} /></Td>
+                  <Td className="whitespace-nowrap"><YesNo value={op.insurance} /></Td>
+                  <Td className="whitespace-nowrap"><YesNo value={op.franchise} /></Td>
+                  <Td className="text-white whitespace-nowrap">{op.vehicles}</Td>
+                  <Td className="whitespace-nowrap"><YesNo value={op.vans} /></Td>
+                  <Td className="whitespace-nowrap"><YesNo value={op.renting} /></Td>
+                  <Td className="whitespace-nowrap"><Badge value={op.waitTime} /></Td>
+                  <Td className="whitespace-nowrap"><Badge value={op.transparency} /></Td>
+                  <Td className="whitespace-nowrap"><Badge value={op.vehicleState} /></Td>
                 </tr>
               ))}
             </tbody>
