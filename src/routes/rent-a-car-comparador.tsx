@@ -1,5 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Bus, XCircle, Car, Info, Heart, Check } from "lucide-react";
+import {
+  ArrowLeft, Bus, XCircle, Car, Info, Check,
+  Plane, Clock, Tag, Shield, Lock, Truck, FileText,
+  Hourglass, Eye, Star,
+} from "lucide-react";
 
 export const Route = createFileRoute("/rent-a-car-comparador")({
   head: () => ({
