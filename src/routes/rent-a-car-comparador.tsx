@@ -148,7 +148,7 @@ function ComparadorPage() {
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
-          <h1 className="flex items-center gap-1.5 text-base font-semibold text-[#d4c5a5] uppercase">
+          <h1 className="flex items-center gap-1.5 text-[11px] font-semibold text-[#d4c5a5] uppercase">
             TABLA COMPARATIVA
             <Info className="h-4 w-4 text-[#d4c5a5]" />
           </h1>
