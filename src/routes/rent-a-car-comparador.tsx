@@ -98,21 +98,19 @@ function YesNo({ value }: { value: YesNoOpt | boolean }) {
 }
 
 function ShuttleCell({ value, terminalOffice }: { value: boolean; terminalOffice: boolean }) {
+  const terminal = terminalOffice ? " (Terminal)" : "";
   if (value) {
     return (
-      <div className="flex items-center gap-1.5 text-white">
-        <Bus className="h-4 w-4" />
-        <span className="text-sm font-medium">Sí</span>
+      <div className="flex items-center gap-1.5 text-white whitespace-nowrap">
+        <Bus className="h-4 w-4 shrink-0" />
+        <span className="text-sm font-medium">Sí{terminal}</span>
       </div>
     );
   }
   return (
-    <div className="flex flex-col">
-      <div className="flex items-center gap-1.5 text-white">
-        <XCircle className="h-4 w-4" />
-        <span className="text-sm font-medium">No</span>
-      </div>
-      {terminalOffice && <span className="text-[11px] text-white">(Terminal)</span>}
+    <div className="flex items-center gap-1.5 text-white whitespace-nowrap">
+      <XCircle className="h-4 w-4 shrink-0" />
+      <span className="text-sm font-medium">No{terminal}</span>
     </div>
   );
 }
