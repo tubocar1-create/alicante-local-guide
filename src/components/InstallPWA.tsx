@@ -50,8 +50,8 @@ export function InstallPWA() {
     };
     window.addEventListener("appinstalled", installedHandler);
 
-    // iOS has no beforeinstallprompt → show button anyway
-    if (isIOS) setShowButton(true);
+    // iOS and desktop have no reliable beforeinstallprompt → show button anyway
+    if (isIOS || (!isAndroid && !isIOS)) setShowButton(true);
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handler);
