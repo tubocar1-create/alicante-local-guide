@@ -82,31 +82,6 @@ const OPERATORS: Operator[] = [
   { id: "primoti",   name: "PRIMOTI",            domain: "primoti.com",           url: "https://www.primoti.com",           profile: "Industrial/logística",    airport: false, shuttle: false, hours: "08:00–18:00", price: "Medio-alto",  insurance: "Sí",       franchise: "Sí",       vehicles: "Comerciales e industriales",    vans: "Especialista", renting: "Sí", waitTime: "Bajo",       terminalOffice: false, transparency: "Alta",       vehicleState: "Muy bueno", incidentRisk: "Bajo" },
 ];
 
-const LEVEL_STYLES: Record<string, string> = {
-  "Muy bajo":    "text-emerald-300",
-  "Bajo":        "text-emerald-300",
-  "Medio-bajo":  "text-lime-300",
-  "Medio":       "text-amber-300",
-  "Medio-alto":  "text-orange-300",
-  "Alto":        "text-rose-300",
-  "Muy alto":    "text-rose-400",
-  "Baja":        "text-rose-300",
-  "Media-baja":  "text-orange-300",
-  "Media":       "text-amber-300",
-  "Media-alta":  "text-lime-300",
-  "Alta":        "text-emerald-300",
-  "Muy alta":    "text-emerald-200",
-};
-
-// For "Precio" higher = worse (red). For transparency/state higher = better (green).
-// LEVEL_STYLES already maps both name sets.
-
-const STATE_STYLES: Record<string, string> = {
-  "Correcto":  "text-amber-300",
-  "Bueno":     "text-lime-300",
-  "Muy bueno": "text-emerald-300",
-  "Excelente": "text-emerald-200",
-};
 
 
 function Badge({ value }: { value: string; styles?: Record<string, string> }) {
