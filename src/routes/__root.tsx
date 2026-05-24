@@ -11,7 +11,7 @@ import {
 import { InstallPWA } from "@/components/InstallPWA";
 import { AgenteVamosFab } from "@/components/AgenteVamos";
 import { AppVersionWatcher } from "@/components/AppVersionWatcher";
-import { DesktopFrame } from "@/components/DesktopFrame";
+
 
 
 import { useEffect } from "react";
@@ -177,7 +177,6 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
-      <DesktopFrame />
       <Toaster />
       <InstallPWA />
       <AgenteVamosFab />
