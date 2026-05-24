@@ -12,7 +12,6 @@ import {
   MapPin,
 } from "lucide-react";
 import { isGeoEnabled, setGeoEnabled, useUserLocation, formatDistance, distanceKm } from "@/hooks/useUserLocation";
-import { useAuth } from "@/hooks/useAuth";
 import { useAppAuth } from "@/hooks/useAppAuth";
 import { PermissionPrompt } from "@/components/PermissionPrompt";
 import { listQrs, subscribeQrs, type LocalQr } from "@/lib/qr-storage";
@@ -31,8 +30,15 @@ export const Route = createFileRoute("/perfil")({
 });
 
 function PerfilPage() {
-  const { user, isAuthenticated, signOut } = useAuth();
   const appAuth = useAppAuth();
+  const { isAuthenticated, signOut } = appAuth;
+  const user = appAuth.user
+    ? {
+        id: appAuth.user.id,
+        name: appAuth.profile?.full_name || appAuth.profile?.display_name || appAuth.user.email || "",
+        email: appAuth.user.email ?? "",
+      }
+    : null;
   const [qrs, setQrs] = useState<LocalQr[]>([]);
   const [geoEnabled, setGeoEnabledState] = useState(false);
   const loc = useUserLocation();
@@ -140,8 +146,8 @@ function PerfilPage() {
               </button>
             ) : (
               <Link
-                to="/login"
-                search={{ redirect: "/perfil" }}
+                to="/auth/login"
+                search={{ redirect: "/perfil" } as never}
                 className="inline-flex items-center gap-1.5 rounded-full gradient-warm px-3 py-1.5 text-xs font-semibold text-primary-foreground active:scale-95"
               >
                 <LogIn className="h-3.5 w-3.5" />

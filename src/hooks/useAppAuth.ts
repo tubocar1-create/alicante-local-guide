@@ -53,7 +53,14 @@ export function useAppAuth() {
       )
       .eq("id", user.id)
       .maybeSingle()
-      .then(({ data }) => setProfile((data as AppProfile) ?? null));
+      .then(({ data }) => {
+        const p = (data as AppProfile) ?? null;
+        setProfile(p);
+        if (typeof window !== "undefined") {
+          const name = p?.full_name || p?.display_name || "";
+          if (name) localStorage.setItem("va:display-name", name);
+        }
+      });
     supabase
       .from("user_roles")
       .select("role")
@@ -62,6 +69,9 @@ export function useAppAuth() {
   }, [user]);
 
   const signOut = useCallback(async () => {
+    if (typeof window !== "undefined") {
+      try { localStorage.removeItem("va:display-name"); } catch {}
+    }
     await supabase.auth.signOut();
   }, []);
 

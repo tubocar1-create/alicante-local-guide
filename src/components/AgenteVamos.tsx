@@ -1801,12 +1801,11 @@ const STORAGE_KEY = "va:agente-msgs";
 function getLoggedUserName(): string {
   if (typeof window === "undefined") return "";
   try {
-    const raw = localStorage.getItem("beta_user_v1");
-    if (!raw) return "Leopoldo";
-    const u = JSON.parse(raw);
-    return (u?.name || "Leopoldo").toString().trim();
+    // Read display name cached by useAppAuth (best-effort; falls back to empty).
+    const cached = localStorage.getItem("va:display-name");
+    return (cached || "").toString().trim();
   } catch {
-    return "Leopoldo";
+    return "";
   }
 }
 function getGreetingText() {
@@ -3557,7 +3556,9 @@ export function AgenteVamosFab() {
   const greetingPlayedRef = useRef(false);
   const path = useRouterState({ select: (s) => s.location.pathname });
   const hidden =
-    ["/login", "/magic", "/welcome"].includes(path) || path.startsWith("/business/login");
+    ["/welcome"].includes(path) ||
+    path.startsWith("/auth/") ||
+    path.startsWith("/business/login");
 
   const playGreetingAfterPermission = () => {
     if (greetingPlayedRef.current) return;

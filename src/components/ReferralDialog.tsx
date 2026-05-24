@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { useAuth } from "@/hooks/useAuth";
+import { useAppAuth } from "@/hooks/useAppAuth";
 import { addQr, findTodayQr } from "@/lib/qr-storage";
 
 type Props = {
@@ -26,7 +26,16 @@ function todayStamp(): string {
 }
 
 export default function ReferralDialog({ placeId, placeName, autoCelebrate, onClose }: Props) {
-  const { user, loading, isAuthenticated } = useAuth();
+  const { user: authUser, profile, loading, isAuthenticated } = useAppAuth();
+  const user = authUser
+    ? {
+        id: authUser.id,
+        name: profile?.full_name || profile?.display_name || authUser.email?.split("@")[0] || "Tú",
+        surname: null as string | null,
+        email: authUser.email ?? null,
+        phone: null as string | null,
+      }
+    : null;
   const [step, setStep] = useState<"rules" | "qr">("rules");
   const [copied, setCopied] = useState(false);
   const [code, setCode] = useState<string>("");
@@ -175,11 +184,11 @@ export default function ReferralDialog({ placeId, placeName, autoCelebrate, onCl
                 Ahora no
               </button>
               <Link
-                to="/login"
-                search={{ redirect: `/?ref=${encodeURIComponent(placeName)}` }}
+                to="/auth/login"
+                search={{ redirect: `/?ref=${encodeURIComponent(placeName)}` } as never}
                 className="flex-1 rounded-full gradient-warm py-2.5 text-center text-sm font-semibold text-primary-foreground shadow-soft active:scale-95"
               >
-                Poner mi nombre
+                Iniciar sesión
               </Link>
             </div>
           </>
