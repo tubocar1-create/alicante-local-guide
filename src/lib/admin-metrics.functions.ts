@@ -7,10 +7,10 @@ const ADMIN_PIN = "7910511";
 
 async function countOf(
   table: string,
-  filter?: (q: ReturnType<typeof supabaseAdmin.from>) => unknown,
+  filter?: (q: unknown) => unknown,
 ): Promise<number> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let q: any = supabaseAdmin.from(table).select("*", { count: "exact", head: true });
+  let q: any = (supabaseAdmin.from as any)(table).select("*", { count: "exact", head: true });
   if (filter) q = filter(q) ?? q;
   const { count, error } = await q;
   if (error) {
