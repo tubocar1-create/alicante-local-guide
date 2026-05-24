@@ -55,4 +55,18 @@ export const HIDDEN_BUTTONS: HiddenButton[] = [
     file: "src/components/ChatScreen.tsx",
     reason: "Pendiente de integración con apps de movilidad.",
   },
+  {
+    id: "perfil-soy-un-local",
+    label: "Soy un local",
+    location: "Perfil · card de usuario",
+    file: "src/routes/perfil.tsx",
+    reason: "Funcionalidad de negocio para locales aún no lista para producción.",
+  },
+  {
+    id: "perfil-mis-qr",
+    label: "Mis QR",
+    location: "Perfil · sección QR",
+    file: "src/routes/perfil.tsx",
+    reason: "Sistema de QR en fase de validación, pendiente de lanzamiento.",
+  },
 ];
