@@ -103,6 +103,31 @@ const CITY_OFFICE_LOCATION: Record<string, string> = {
   primoti: "Pol. industrial",
 };
 
+const DEPOSIT_DATA: Record<string, { zero: "Sí" | "No" | "Parcial" | "—"; approx: string }> = {
+  goldcar:   { zero: "Sí",      approx: "0–300 €" },
+  centauro:  { zero: "Sí",      approx: "0–300 €" },
+  record:    { zero: "Sí",      approx: "0–300 €" },
+  clickrent: { zero: "Parcial", approx: "300–600 €" },
+  wiber:     { zero: "Sí",      approx: "0–200 €" },
+  ok:        { zero: "Parcial", approx: "300–800 €" },
+  sixt:      { zero: "Parcial", approx: "300–900 €" },
+  hertz:     { zero: "Parcial", approx: "400–1.000 €" },
+  europcar:  { zero: "Parcial", approx: "300–800 €" },
+  avis:      { zero: "Parcial", approx: "400–1.200 €" },
+  enterprise:{ zero: "Parcial", approx: "300–700 €" },
+  budget:    { zero: "Parcial", approx: "500–1.200 €" },
+  drivalia:  { zero: "Parcial", approx: "300–700 €" },
+  firefly:   { zero: "No",      approx: "1.200–1.800 €" },
+  victoria:  { zero: "—",       approx: "—" },
+  northgate: { zero: "—",       approx: "—" },
+  telefurgo: { zero: "—",       approx: "—" },
+  covey:     { zero: "—",       approx: "—" },
+  demetrio:  { zero: "—",       approx: "—" },
+  primoti:   { zero: "—",       approx: "—" },
+};
+
+
+
 
 
 function Badge({ value }: { value: string; styles?: Record<string, string> }) {
