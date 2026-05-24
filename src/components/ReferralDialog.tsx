@@ -26,7 +26,16 @@ function todayStamp(): string {
 }
 
 export default function ReferralDialog({ placeId, placeName, autoCelebrate, onClose }: Props) {
-  const { user, loading, isAuthenticated } = useAuth();
+  const { user: authUser, profile, loading, isAuthenticated } = useAppAuth();
+  const user = authUser
+    ? {
+        id: authUser.id,
+        name: profile?.full_name || profile?.display_name || authUser.email?.split("@")[0] || "Tú",
+        surname: null as string | null,
+        email: authUser.email ?? null,
+        phone: null as string | null,
+      }
+    : null;
   const [step, setStep] = useState<"rules" | "qr">("rules");
   const [copied, setCopied] = useState(false);
   const [code, setCode] = useState<string>("");
