@@ -161,10 +161,10 @@ function ComparadorPage() {
                     <img
                       src={logoUrl(op.domain)}
                       alt={op.name}
-                      width={18}
-                      height={18}
+                      width={24}
+                      height={24}
                       loading="lazy"
-                      className="h-[18px] w-[18px] shrink-0 rounded-sm object-contain bg-white/90"
+                      className="h-6 w-6 shrink-0 rounded-sm object-contain bg-white/90"
                       onError={(e) => {
                         (e.currentTarget as HTMLImageElement).style.visibility = "hidden";
                       }}
