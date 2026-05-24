@@ -12,7 +12,6 @@ import {
   MapPin,
 } from "lucide-react";
 import { isGeoEnabled, setGeoEnabled, useUserLocation, formatDistance, distanceKm } from "@/hooks/useUserLocation";
-import { useAuth } from "@/hooks/useAuth";
 import { useAppAuth } from "@/hooks/useAppAuth";
 import { PermissionPrompt } from "@/components/PermissionPrompt";
 import { listQrs, subscribeQrs, type LocalQr } from "@/lib/qr-storage";
