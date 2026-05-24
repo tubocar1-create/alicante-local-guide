@@ -1323,9 +1323,11 @@ function localResolve(
   // (incluida la intro genérica de compras), para que subsectores como
   // "comprar_moda" o "comprar_tecnologia" se resuelvan al endpoint exacto.
   const trainedMatch = matchDbIntent(query, catalog.intents);
-  if (trainedMatch && trainedMatch.len >= 4) {
+  const isComprarSubsector = trainedMatch?.intent.key.startsWith("comprar_") ?? false;
+  if (trainedMatch && (trainedMatch.len >= 8 || isComprarSubsector)) {
     return dbIntentToResult(trainedMatch.intent);
   }
+
 
   if (isShoppingRequest(query)) {
     const hubIntent = catalog.intents.find((i) => i.key === "comprar");
