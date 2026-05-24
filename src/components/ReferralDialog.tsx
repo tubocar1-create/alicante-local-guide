@@ -184,11 +184,11 @@ export default function ReferralDialog({ placeId, placeName, autoCelebrate, onCl
                 Ahora no
               </button>
               <Link
-                to="/login"
-                search={{ redirect: `/?ref=${encodeURIComponent(placeName)}` }}
+                to="/auth/login"
+                search={{ redirect: `/?ref=${encodeURIComponent(placeName)}` } as never}
                 className="flex-1 rounded-full gradient-warm py-2.5 text-center text-sm font-semibold text-primary-foreground shadow-soft active:scale-95"
               >
-                Poner mi nombre
+                Iniciar sesión
               </Link>
             </div>
           </>
