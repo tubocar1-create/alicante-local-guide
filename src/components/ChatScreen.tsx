@@ -167,12 +167,12 @@ const SUGGESTIONS: Suggestion[] = [
   { label: "🛍️ Comprar", href: "/comprar" },
   { label: "🍹 Tomar algo", prompt: "¿Dónde voy a tomar algo abierto ahora?" },
   {
-    label: "🚆 Transporte público",
+    label: "🚆 Transporte multimodal inteligente",
     submenu: [
       { label: "🚌 Buses urbanos", action: "bus-picker" },
-      { label: "🚍 Buses extra urbanos", prompt: "¿Cómo me muevo en bus extraurbano desde Alicante? Líneas, compañías (ALSA, Vectalia…), estación de autobuses y destinos principales (Elche, Benidorm, Murcia, Valencia, pueblos del interior)." },
-      { label: "🚊 Tram", action: "tram-inline" },
-      { label: "🚆 Tren", prompt: "¿Cómo me muevo en tren por Alicante y alrededores? Horarios, estaciones de Cercanías y Renfe." },
+      { label: "🚍 Buses larga distancia", previewOnly: true, prompt: "¿Cómo me muevo en bus de larga distancia desde Alicante? Líneas, compañías (ALSA, Vectalia…), estación de autobuses y destinos principales (Elche, Benidorm, Murcia, Valencia, pueblos del interior)." },
+      { label: "🚊 Tram Alicante", action: "tram-inline" },
+      { label: "🚆 Tren", previewOnly: true, prompt: "¿Cómo me muevo en tren por Alicante y alrededores? Horarios, estaciones de Cercanías y Renfe." },
       {
         label: "✈️ Avión",
         submenu: [
@@ -182,6 +182,7 @@ const SUGGESTIONS: Suggestion[] = [
         ],
       },
       { label: "🚗 Rent a car", href: "/rent-a-car" },
+      { label: "🚕 Taxis, Uber, Cabify", previewOnly: true, prompt: "¿Cómo pido un taxi, Uber o Cabify en Alicante? Paradas de taxi, apps disponibles, tarifas aproximadas y zonas de cobertura." },
     ],
   },
 ];
