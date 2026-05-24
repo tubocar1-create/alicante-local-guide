@@ -25,13 +25,6 @@ const SOURCES: Source[] = [
     icon: Globe,
   },
   {
-    name: "Lovable Insights",
-    status: "conectado",
-    url: "https://lovable.dev/projects/a8ec37f9-59bf-4ebb-a372-974e51dc0567/settings/project-insights",
-    desc: "Visitas, top pages, países y dispositivos.",
-    icon: TrendingUp,
-  },
-  {
     name: "Google Search Console",
     status: "por construir",
     desc: "Impresiones, clics, posición media en SERP.",
