@@ -243,7 +243,7 @@ function Td({
   sticky?: boolean;
 }) {
   const stickyCls = sticky
-    ? "sticky left-0 z-10 bg-[#d4c5a5] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.6)] group-hover:bg-[#c4b495]"
+    ? "sticky left-0 z-10 bg-black shadow-[2px_0_4px_-2px_rgba(0,0,0,0.6)] group-hover:bg-neutral-900"
     : "group-hover:bg-white/5";
   return (
     <td className={`border-b border-white/5 px-1.5 py-1 align-middle whitespace-nowrap ${stickyCls} ${className}`}>
