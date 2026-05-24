@@ -54,8 +54,9 @@ type Operator = {
 };
 
 const BRANDFETCH_CLIENT_ID = "5unc4ZkmCB_cM9wUkf4rXax4Iz3YgiZIuVd9IeZJ6lg0gvQhC-nDk2SwM3tACcRQCNRe2XBOd3ruhdgjch1fag";
+// Brandfetch CDN: icon variant + lettermark fallback so it always renders something.
 const logoUrl = (domain: string) =>
-  `https://cdn.brandfetch.io/${domain}/w/64/h/64?c=${BRANDFETCH_CLIENT_ID}`;
+  `https://cdn.brandfetch.io/${domain}/fallback/lettermark/icon/theme/light/h/48/w/48?c=${BRANDFETCH_CLIENT_ID}`;
 
 const OPERATORS: Operator[] = [
   { id: "goldcar",   name: "Goldcar",            domain: "goldcar.es",            profile: "Low cost masivo",         airport: true,  shuttle: true,  hours: "07:30–23:00", price: "Muy bajo",    insurance: "Opcional", franchise: "Sí",       vehicles: "Turismo, SUV",                  vans: "No",           renting: "No", waitTime: "Alto",       terminalOffice: false, transparency: "Media-baja", vehicleState: "Correcto",  incidentRisk: "Alto" },
