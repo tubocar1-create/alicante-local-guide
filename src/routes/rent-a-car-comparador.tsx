@@ -137,7 +137,7 @@ function ComparadorPage() {
           <table className="w-full min-w-[1180px] border-separate border-spacing-0 text-[11px]">
             <thead className="text-left text-[10px] uppercase tracking-wide text-white">
               <tr>
-                <Th sticky className="px-2 py-1.5 bg-[#b8a88a] text-black">Operadora</Th>
+                <Th sticky className="px-2 py-1.5 bg-black text-[#d4c5a5]">Operadora</Th>
                 <Th>Perfil</Th>
                 <Th>Aerop.</Th>
                 <Th>Shuttle</Th>
@@ -173,7 +173,7 @@ function ComparadorPage() {
                       href={op.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="whitespace-nowrap text-[11px] font-semibold text-sky-400 hover:text-sky-300 hover:underline"
+                      className="whitespace-nowrap text-[11px] font-semibold text-[#d4c5a5] hover:text-[#e8dcc8] hover:underline"
                     >
                       {op.name}
                     </a>
@@ -243,7 +243,7 @@ function Td({
   sticky?: boolean;
 }) {
   const stickyCls = sticky
-    ? "sticky left-0 z-10 bg-[#d4c5a5] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.6)] group-hover:bg-[#c4b495]"
+    ? "sticky left-0 z-10 bg-black shadow-[2px_0_4px_-2px_rgba(0,0,0,0.6)] group-hover:bg-neutral-900"
     : "group-hover:bg-white/5";
   return (
     <td className={`border-b border-white/5 px-1.5 py-1 align-middle whitespace-nowrap ${stickyCls} ${className}`}>
