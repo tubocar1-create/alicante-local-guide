@@ -14,6 +14,7 @@ import {
 import { isGeoEnabled, setGeoEnabled, useUserLocation, formatDistance, distanceKm } from "@/hooks/useUserLocation";
 import { useAuth } from "@/hooks/useAuth";
 import { listQrs, subscribeQrs, type LocalQr } from "@/lib/qr-storage";
+import { isPreviewHost } from "@/lib/hidden-buttons";
 
 const PUERTA_DEL_MAR = { lat: 38.3414, lng: -0.481 };
 
@@ -99,13 +100,15 @@ function PerfilPage() {
                 Iniciar sesión
               </Link>
             )}
-            <Link
-              to="/business"
-              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold active:scale-95"
-            >
-              <Briefcase className="h-3.5 w-3.5" />
-              Soy un local
-            </Link>
+            {isPreviewHost() && (
+              <Link
+                to="/business"
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-semibold active:scale-95"
+              >
+                <Briefcase className="h-3.5 w-3.5" />
+                Soy un local
+              </Link>
+            )}
           </div>
         </section>
 
@@ -138,49 +141,51 @@ function PerfilPage() {
           )}
         </section>
 
-        <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-          <div className="mb-3 flex items-center gap-2">
-            <QrCode className="h-4 w-4 text-primary" />
-            <h2 className="text-sm font-semibold">Mis QR</h2>
-          </div>
-          {qrs.length === 0 ? (
-            <p className="text-xs text-muted-foreground">
-              Aún no has generado ningún QR. Pulsa <VamosWord /> en una recomendación para crear uno.
-            </p>
-          ) : (
-            <ul className="space-y-2">
-              {qrs.map((q) => (
-                <li
-                  key={q.id}
-                  className="flex items-center justify-between gap-2 rounded-xl border border-border bg-background/60 p-3"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold">{q.place_name}</p>
-                    <p className="truncate text-[11px] text-muted-foreground">
-                      {new Date(q.created_at).toLocaleString("es-ES", {
-                        day: "2-digit",
-                        month: "short",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-                  </div>
-                  <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
-                      q.status === "active"
-                        ? "bg-primary/15 text-primary"
-                        : q.status === "used"
-                        ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-                        : "bg-muted text-muted-foreground"
-                    }`}
+        {isPreviewHost() && (
+          <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+            <div className="mb-3 flex items-center gap-2">
+              <QrCode className="h-4 w-4 text-primary" />
+              <h2 className="text-sm font-semibold">Mis QR</h2>
+            </div>
+            {qrs.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                Aún no has generado ningún QR. Pulsa <VamosWord /> en una recomendación para crear uno.
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {qrs.map((q) => (
+                  <li
+                    key={q.id}
+                    className="flex items-center justify-between gap-2 rounded-xl border border-border bg-background/60 p-3"
                   >
-                    {q.status === "active" ? "Activo" : q.status === "used" ? "Usado" : "Caducado"}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold">{q.place_name}</p>
+                      <p className="truncate text-[11px] text-muted-foreground">
+                        {new Date(q.created_at).toLocaleString("es-ES", {
+                          day: "2-digit",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    </div>
+                    <span
+                      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+                        q.status === "active"
+                          ? "bg-primary/15 text-primary"
+                          : q.status === "used"
+                          ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {q.status === "active" ? "Activo" : q.status === "used" ? "Usado" : "Caducado"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
 
         {isAuthenticated && (
           <button
