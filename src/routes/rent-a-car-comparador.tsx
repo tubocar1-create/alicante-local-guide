@@ -181,7 +181,7 @@ function ComparadorPage() {
           <table className="w-full min-w-[1180px] border-separate border-spacing-0 text-[11px]">
             <thead className="text-left text-[10px] uppercase tracking-wide text-white">
               <tr>
-                <Th sticky className="px-2 py-3 bg-black text-[#d4c5a5]" title="Operadora"><span className="flex items-center gap-1.5"><Building2 className="h-4 w-4" />Operadora</span></Th>
+                <Th sticky className="px-2 py-3 bg-[#0d2547] text-[#d4c5a5]" title="Operadora"><span className="flex items-center gap-1.5"><Building2 className="h-4 w-4" />Operadora</span></Th>
                 <Th title="Categoría">CATEGORÍA</Th>
                 <Th title="Aeropuerto"><span className="flex items-center gap-1.5"><Plane className="h-4 w-4" />Aerop.</span></Th>
                 <Th title="Shuttle"><span className="flex items-center gap-1.5"><Bus className="h-4 w-4" />Shuttle</span></Th>
