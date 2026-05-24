@@ -73,6 +73,7 @@ import { Route as AdminMetricasExternasRouteImport } from './routes/admin.metric
 import { Route as AdminIntegracionesRouteImport } from './routes/admin.integraciones'
 import { Route as AdminBotonesOcultosRouteImport } from './routes/admin.botones-ocultos'
 import { Route as AdminBasesDatosRouteImport } from './routes/admin.bases-datos'
+import { Route as AdminAuditoriaRouteImport } from './routes/admin.auditoria'
 import { Route as AdminArquitecturaRouteImport } from './routes/admin.arquitectura'
 import { Route as AdminAiRouteImport } from './routes/admin.ai'
 import { Route as AdminAiIndexRouteImport } from './routes/admin.ai.index'
@@ -443,6 +444,11 @@ const AdminBasesDatosRoute = AdminBasesDatosRouteImport.update({
   path: '/bases-datos',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAuditoriaRoute = AdminAuditoriaRouteImport.update({
+  id: '/auditoria',
+  path: '/auditoria',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminArquitecturaRoute = AdminArquitecturaRouteImport.update({
   id: '/arquitectura',
   path: '/arquitectura',
@@ -728,6 +734,7 @@ export interface FileRoutesByFullPath {
   '/welcome': typeof WelcomeRoute
   '/admin/ai': typeof AdminAiRouteWithChildren
   '/admin/arquitectura': typeof AdminArquitecturaRoute
+  '/admin/auditoria': typeof AdminAuditoriaRoute
   '/admin/bases-datos': typeof AdminBasesDatosRoute
   '/admin/botones-ocultos': typeof AdminBotonesOcultosRoute
   '/admin/integraciones': typeof AdminIntegracionesRoute
@@ -840,6 +847,7 @@ export interface FileRoutesByTo {
   '/vuelos': typeof VuelosRoute
   '/welcome': typeof WelcomeRoute
   '/admin/arquitectura': typeof AdminArquitecturaRoute
+  '/admin/auditoria': typeof AdminAuditoriaRoute
   '/admin/bases-datos': typeof AdminBasesDatosRoute
   '/admin/botones-ocultos': typeof AdminBotonesOcultosRoute
   '/admin/integraciones': typeof AdminIntegracionesRoute
@@ -956,6 +964,7 @@ export interface FileRoutesById {
   '/welcome': typeof WelcomeRoute
   '/admin/ai': typeof AdminAiRouteWithChildren
   '/admin/arquitectura': typeof AdminArquitecturaRoute
+  '/admin/auditoria': typeof AdminAuditoriaRoute
   '/admin/bases-datos': typeof AdminBasesDatosRoute
   '/admin/botones-ocultos': typeof AdminBotonesOcultosRoute
   '/admin/integraciones': typeof AdminIntegracionesRoute
@@ -1073,6 +1082,7 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/admin/ai'
     | '/admin/arquitectura'
+    | '/admin/auditoria'
     | '/admin/bases-datos'
     | '/admin/botones-ocultos'
     | '/admin/integraciones'
@@ -1185,6 +1195,7 @@ export interface FileRouteTypes {
     | '/vuelos'
     | '/welcome'
     | '/admin/arquitectura'
+    | '/admin/auditoria'
     | '/admin/bases-datos'
     | '/admin/botones-ocultos'
     | '/admin/integraciones'
@@ -1300,6 +1311,7 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/admin/ai'
     | '/admin/arquitectura'
+    | '/admin/auditoria'
     | '/admin/bases-datos'
     | '/admin/botones-ocultos'
     | '/admin/integraciones'
@@ -1903,6 +1915,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminBasesDatosRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/auditoria': {
+      id: '/admin/auditoria'
+      path: '/auditoria'
+      fullPath: '/admin/auditoria'
+      preLoaderRoute: typeof AdminAuditoriaRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/arquitectura': {
       id: '/admin/arquitectura'
       path: '/arquitectura'
@@ -2289,6 +2308,7 @@ const AdminAiRouteWithChildren =
 interface AdminRouteChildren {
   AdminAiRoute: typeof AdminAiRouteWithChildren
   AdminArquitecturaRoute: typeof AdminArquitecturaRoute
+  AdminAuditoriaRoute: typeof AdminAuditoriaRoute
   AdminBasesDatosRoute: typeof AdminBasesDatosRoute
   AdminBotonesOcultosRoute: typeof AdminBotonesOcultosRoute
   AdminIntegracionesRoute: typeof AdminIntegracionesRoute
@@ -2305,6 +2325,7 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAiRoute: AdminAiRouteWithChildren,
   AdminArquitecturaRoute: AdminArquitecturaRoute,
+  AdminAuditoriaRoute: AdminAuditoriaRoute,
   AdminBasesDatosRoute: AdminBasesDatosRoute,
   AdminBotonesOcultosRoute: AdminBotonesOcultosRoute,
   AdminIntegracionesRoute: AdminIntegracionesRoute,
@@ -2508,13 +2529,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

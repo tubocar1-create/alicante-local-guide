@@ -19,6 +19,7 @@ import {
   Activity,
   RefreshCw,
   EyeOff,
+  ClipboardCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,6 +84,7 @@ const HERRAMIENTAS = [
   { to: "/admin/places", label: "Poblar sitios", icon: MapPinned },
   { to: "/admin/salud", label: "Poblar salud", icon: HeartPulse },
   { to: "/admin/botones-ocultos", label: "Botones ocultos", icon: EyeOff },
+  { to: "/admin/auditoria", label: "Auditoría pre-lanzamiento", icon: ClipboardCheck },
   { to: "/admin/system", label: "Sistema", icon: Wrench },
 ] as const;
 
