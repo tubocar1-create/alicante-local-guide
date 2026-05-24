@@ -9,7 +9,9 @@ export type AgenteIntentRow = {
   action: string | null;
   priority: number;
   keywords: string[];
+  spoken_reply?: string | null;
 };
+
 
 export type AgenteSubcategory = {
   domain: string;
