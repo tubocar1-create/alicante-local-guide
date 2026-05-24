@@ -1801,12 +1801,11 @@ const STORAGE_KEY = "va:agente-msgs";
 function getLoggedUserName(): string {
   if (typeof window === "undefined") return "";
   try {
-    const raw = localStorage.getItem("beta_user_v1");
-    if (!raw) return "Leopoldo";
-    const u = JSON.parse(raw);
-    return (u?.name || "Leopoldo").toString().trim();
+    // Read display name cached by useAppAuth (best-effort; falls back to empty).
+    const cached = localStorage.getItem("va:display-name");
+    return (cached || "").toString().trim();
   } catch {
-    return "Leopoldo";
+    return "";
   }
 }
 function getGreetingText() {
