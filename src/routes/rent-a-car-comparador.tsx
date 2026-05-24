@@ -36,6 +36,7 @@ type Operator = {
   id: string;
   name: string;
   domain: string;
+  url: string;
   profile: string;
   airport: boolean;
   shuttle: boolean;
