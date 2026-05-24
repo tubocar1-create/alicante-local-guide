@@ -9,7 +9,7 @@ import {
 export const Route = createFileRoute("/rent-a-car-comparador")({
   head: () => ({
     meta: [
-      { title: "Comparador Rent a Car Alicante (ALC) — 20 operadoras" },
+      { title: "COMPARADOR RENT A CAR ALICANTE (ALC) — 20 OPERADORAS" },
       {
         name: "description",
         content:
