@@ -71,6 +71,7 @@ import { Route as AdminOperationsRouteImport } from './routes/admin.operations'
 import { Route as AdminMetricasInternasRouteImport } from './routes/admin.metricas-internas'
 import { Route as AdminMetricasExternasRouteImport } from './routes/admin.metricas-externas'
 import { Route as AdminIntegracionesRouteImport } from './routes/admin.integraciones'
+import { Route as AdminBotonesOcultosRouteImport } from './routes/admin.botones-ocultos'
 import { Route as AdminBasesDatosRouteImport } from './routes/admin.bases-datos'
 import { Route as AdminArquitecturaRouteImport } from './routes/admin.arquitectura'
 import { Route as AdminAiRouteImport } from './routes/admin.ai'
@@ -432,6 +433,11 @@ const AdminIntegracionesRoute = AdminIntegracionesRouteImport.update({
   path: '/integraciones',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminBotonesOcultosRoute = AdminBotonesOcultosRouteImport.update({
+  id: '/botones-ocultos',
+  path: '/botones-ocultos',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminBasesDatosRoute = AdminBasesDatosRouteImport.update({
   id: '/bases-datos',
   path: '/bases-datos',
@@ -723,6 +729,7 @@ export interface FileRoutesByFullPath {
   '/admin/ai': typeof AdminAiRouteWithChildren
   '/admin/arquitectura': typeof AdminArquitecturaRoute
   '/admin/bases-datos': typeof AdminBasesDatosRoute
+  '/admin/botones-ocultos': typeof AdminBotonesOcultosRoute
   '/admin/integraciones': typeof AdminIntegracionesRoute
   '/admin/metricas-externas': typeof AdminMetricasExternasRoute
   '/admin/metricas-internas': typeof AdminMetricasInternasRoute
@@ -834,6 +841,7 @@ export interface FileRoutesByTo {
   '/welcome': typeof WelcomeRoute
   '/admin/arquitectura': typeof AdminArquitecturaRoute
   '/admin/bases-datos': typeof AdminBasesDatosRoute
+  '/admin/botones-ocultos': typeof AdminBotonesOcultosRoute
   '/admin/integraciones': typeof AdminIntegracionesRoute
   '/admin/metricas-externas': typeof AdminMetricasExternasRoute
   '/admin/metricas-internas': typeof AdminMetricasInternasRoute
@@ -949,6 +957,7 @@ export interface FileRoutesById {
   '/admin/ai': typeof AdminAiRouteWithChildren
   '/admin/arquitectura': typeof AdminArquitecturaRoute
   '/admin/bases-datos': typeof AdminBasesDatosRoute
+  '/admin/botones-ocultos': typeof AdminBotonesOcultosRoute
   '/admin/integraciones': typeof AdminIntegracionesRoute
   '/admin/metricas-externas': typeof AdminMetricasExternasRoute
   '/admin/metricas-internas': typeof AdminMetricasInternasRoute
@@ -1065,6 +1074,7 @@ export interface FileRouteTypes {
     | '/admin/ai'
     | '/admin/arquitectura'
     | '/admin/bases-datos'
+    | '/admin/botones-ocultos'
     | '/admin/integraciones'
     | '/admin/metricas-externas'
     | '/admin/metricas-internas'
@@ -1176,6 +1186,7 @@ export interface FileRouteTypes {
     | '/welcome'
     | '/admin/arquitectura'
     | '/admin/bases-datos'
+    | '/admin/botones-ocultos'
     | '/admin/integraciones'
     | '/admin/metricas-externas'
     | '/admin/metricas-internas'
@@ -1290,6 +1301,7 @@ export interface FileRouteTypes {
     | '/admin/ai'
     | '/admin/arquitectura'
     | '/admin/bases-datos'
+    | '/admin/botones-ocultos'
     | '/admin/integraciones'
     | '/admin/metricas-externas'
     | '/admin/metricas-internas'
@@ -1877,6 +1889,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIntegracionesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/botones-ocultos': {
+      id: '/admin/botones-ocultos'
+      path: '/botones-ocultos'
+      fullPath: '/admin/botones-ocultos'
+      preLoaderRoute: typeof AdminBotonesOcultosRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/bases-datos': {
       id: '/admin/bases-datos'
       path: '/bases-datos'
@@ -2271,6 +2290,7 @@ interface AdminRouteChildren {
   AdminAiRoute: typeof AdminAiRouteWithChildren
   AdminArquitecturaRoute: typeof AdminArquitecturaRoute
   AdminBasesDatosRoute: typeof AdminBasesDatosRoute
+  AdminBotonesOcultosRoute: typeof AdminBotonesOcultosRoute
   AdminIntegracionesRoute: typeof AdminIntegracionesRoute
   AdminMetricasExternasRoute: typeof AdminMetricasExternasRoute
   AdminMetricasInternasRoute: typeof AdminMetricasInternasRoute
@@ -2286,6 +2306,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAiRoute: AdminAiRouteWithChildren,
   AdminArquitecturaRoute: AdminArquitecturaRoute,
   AdminBasesDatosRoute: AdminBasesDatosRoute,
+  AdminBotonesOcultosRoute: AdminBotonesOcultosRoute,
   AdminIntegracionesRoute: AdminIntegracionesRoute,
   AdminMetricasExternasRoute: AdminMetricasExternasRoute,
   AdminMetricasInternasRoute: AdminMetricasInternasRoute,
