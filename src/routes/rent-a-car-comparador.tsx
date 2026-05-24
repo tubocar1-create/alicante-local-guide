@@ -149,54 +149,25 @@ function ShuttleCell({ value, terminalOffice }: { value: boolean; terminalOffice
 
 function ComparadorPage() {
   return (
-    <div className="h-dvh overflow-y-auto bg-slate-50">
-      <header className="sticky top-0 z-20 border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3">
-          <div className="flex items-center gap-3">
-            <Link
-              to="/rent-a-car"
-              className="grid h-9 w-9 place-items-center rounded-full text-slate-600 hover:bg-slate-100"
-              aria-label="Volver"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <div className="flex items-center gap-2">
-              <div className="grid h-9 w-9 place-items-center rounded-lg bg-blue-600 text-white">
-                <Car className="h-5 w-5" />
-              </div>
-              <div className="leading-tight">
-                <p className="text-base font-bold text-slate-900">RentCompare</p>
-                <p className="text-[11px] text-slate-500">Alicante</p>
-              </div>
-            </div>
-          </div>
-          <button className="hidden items-center gap-1.5 text-sm text-slate-600 md:flex">
-            <Heart className="h-4 w-4" /> Favoritos
-          </button>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-[1600px] px-4 py-5">
-        <div className="flex items-center justify-between">
-          <h1 className="flex items-center gap-1.5 text-base font-semibold text-slate-900">
+    <div className="h-dvh overflow-hidden bg-black text-slate-100 flex flex-col">
+      <main className="mx-auto w-full max-w-[1600px] flex-1 min-h-0 flex flex-col px-4 py-4">
+        <div className="mb-3 flex items-center gap-2">
+          <Link
+            to="/rent-a-car"
+            className="grid h-8 w-8 place-items-center rounded-full text-slate-300 hover:bg-white/10"
+            aria-label="Volver"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+          <h1 className="flex items-center gap-1.5 text-base font-semibold text-white">
             {OPERATORS.length} operadoras comparadas
-            <Info className="h-4 w-4 text-slate-400" />
+            <Info className="h-4 w-4 text-slate-500" />
           </h1>
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-slate-500">Ordenar por:</span>
-            <select className="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm">
-              <option>Mejor puntuación</option>
-              <option>Precio (asc)</option>
-              <option>Precio (desc)</option>
-              <option>Menor tiempo de espera</option>
-              <option>Mayor transparencia</option>
-            </select>
-          </div>
         </div>
 
-        <div className="mt-3 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <table className="w-full min-w-[1280px] border-separate border-spacing-0 text-[11px]">
-            <thead className="text-left text-[10px] uppercase tracking-wide text-slate-500">
+        <div className="flex-1 min-h-0 overflow-auto rounded-2xl border border-white/10 bg-black">
+          <table className="w-full min-w-[1180px] border-separate border-spacing-0 text-[11px]">
+            <thead className="text-left text-[10px] uppercase tracking-wide text-slate-400">
               <tr>
                 <Th sticky className="px-2 py-1.5">Operadora</Th>
                 <Th>Perfil</Th>
@@ -210,56 +181,60 @@ function ComparadorPage() {
                 <Th>Furgo.</Th>
                 <Th>Renting</Th>
                 <Th>Espera</Th>
-                <Th>Of. term.</Th>
                 <Th>Transp.</Th>
                 <Th>Estado</Th>
-                <Th>Riesgo</Th>
               </tr>
             </thead>
             <tbody>
               {OPERATORS.map((op) => (
                 <tr key={op.id} className="group">
-                <Td sticky className="px-2 py-1.5">
-                  <div className="flex items-center gap-1.5">
+                <Td sticky className="px-1.5 py-1.5">
+                  <div className="flex items-center gap-1">
                     <img
                       src={logoUrl(op.domain)}
                       alt={op.name}
-                      width={20}
-                      height={20}
+                      width={18}
+                      height={18}
                       loading="lazy"
-                      className="h-5 w-5 shrink-0 rounded-sm object-contain bg-white"
+                      className="h-[18px] w-[18px] shrink-0 rounded-sm object-contain bg-white/90"
                       onError={(e) => {
                         (e.currentTarget as HTMLImageElement).style.visibility = "hidden";
                       }}
                     />
-                    <span className="whitespace-nowrap text-[11px] font-semibold text-slate-800">
+                    <span className="whitespace-nowrap text-[11px] font-semibold text-white">
                       {op.name}
                     </span>
                   </div>
                 </Td>
-                  <Td className="text-slate-600">{op.profile}</Td>
-                  <Td><YesNo value={op.airport} /></Td>
+                  <Td className="text-slate-300">{op.profile}</Td>
+                  <Td>
+                    {op.airport ? (
+                      <span className="inline-block whitespace-nowrap rounded-md bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-sky-300">
+                        Terminal
+                      </span>
+                    ) : (
+                      <span className="text-slate-600">—</span>
+                    )}
+                  </Td>
                   <Td><ShuttleCell value={op.shuttle} terminalOffice={op.terminalOffice} /></Td>
-                  <Td className="text-slate-700 whitespace-nowrap">{op.hours}</Td>
+                  <Td className="text-slate-300 whitespace-nowrap">{op.hours}</Td>
                   <Td><Badge value={op.price} styles={LEVEL_STYLES} /></Td>
                   <Td><YesNo value={op.insurance} /></Td>
                   <Td><YesNo value={op.franchise} /></Td>
-                  <Td className="text-slate-700">{op.vehicles}</Td>
+                  <Td className="text-slate-300">{op.vehicles}</Td>
                   <Td><YesNo value={op.vans} /></Td>
                   <Td><YesNo value={op.renting} /></Td>
                   <Td><Badge value={op.waitTime} styles={LEVEL_STYLES} /></Td>
-                  <Td><YesNo value={op.terminalOffice} /></Td>
                   <Td><Badge value={op.transparency} styles={LEVEL_STYLES} /></Td>
                   <Td><Badge value={op.vehicleState} styles={STATE_STYLES} /></Td>
-                  <Td><Badge value={op.incidentRisk} styles={LEVEL_STYLES} /></Td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-slate-500">
-          Datos orientativos. Desliza horizontalmente para ver todas las columnas <Info className="h-3 w-3" />
+        <p className="mt-2 text-center text-[11px] text-slate-500">
+          Datos orientativos. Desliza horizontalmente para ver todas las columnas
         </p>
       </main>
     </div>
@@ -275,11 +250,12 @@ function Th({
   className?: string;
   sticky?: boolean;
 }) {
+  const base = "sticky top-0 z-10 bg-neutral-900";
   const stickyCls = sticky
-    ? "sticky left-0 z-10 bg-slate-50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]"
-    : "bg-slate-50/60";
+    ? "sticky left-0 top-0 z-20 bg-neutral-900 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.6)]"
+    : base;
   return (
-    <th className={`border-b border-slate-200 px-1.5 py-1.5 font-semibold whitespace-nowrap ${stickyCls} ${className}`}>
+    <th className={`border-b border-white/10 px-1.5 py-1.5 font-semibold whitespace-nowrap ${stickyCls} ${className}`}>
       {children}
     </th>
   );
@@ -295,10 +271,10 @@ function Td({
   sticky?: boolean;
 }) {
   const stickyCls = sticky
-    ? "sticky left-0 z-10 bg-white shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] group-hover:bg-slate-50"
-    : "group-hover:bg-slate-50/50";
+    ? "sticky left-0 z-10 bg-black shadow-[2px_0_4px_-2px_rgba(0,0,0,0.6)] group-hover:bg-neutral-900"
+    : "group-hover:bg-white/5";
   return (
-    <td className={`border-b border-slate-100 px-1.5 py-1.5 align-middle ${stickyCls} ${className}`}>
+    <td className={`border-b border-white/5 px-1.5 py-1.5 align-middle ${stickyCls} ${className}`}>
       {children}
     </td>
   );
