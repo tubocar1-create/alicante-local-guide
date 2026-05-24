@@ -1,9 +1,7 @@
 import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   X,
-  Bus,
-  MapPin,
   Clock,
   ExternalLink,
   QrCode,
@@ -12,8 +10,12 @@ import {
   ChevronRight,
   Route as RouteIcon,
   Euro,
-  Info,
+  Moon,
+  Building2,
+  MapPinned,
 } from "lucide-react";
+import { useBusGraph } from "@/hooks/useBusGraph";
+import { classifyLine } from "@/components/BusKnownPicker";
 
 export const Route = createFileRoute("/bus")({
   head: () => ({
