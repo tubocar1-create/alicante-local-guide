@@ -956,7 +956,7 @@ export function ChatScreen() {
                   const pastel = PASTEL[t.label] ?? { bg: "oklch(0.95 0.02 80)", fg: "oklch(0.40 0.05 80)" };
                   const displayLabel =
                     t.label === "Turismo, playa y aventuras" ? "Playas"
-                    : t.label === "Transporte público" ? "Transporte"
+                    : t.label === "Transporte multimodal inteligente" ? "Transporte"
                     : t.label === "Servicios sanitarios" ? "Salud"
                     : t.label === "Fiestas de Alicante" ? "Fiestas"
                     : t.label;
