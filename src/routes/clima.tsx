@@ -11,7 +11,7 @@ export const Route = createFileRoute("/clima")({
         name: "description",
         content:
           "Tiempo actual y previsión de los próximos días en Alicante: temperatura, lluvia, viento y humedad.",
-      },,
+      },
       { property: "og:url", content: "https://vamosalicante.com/clima" }
     ],
   links: [
