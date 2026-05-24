@@ -31,7 +31,7 @@ export const loadAgenteIntents = createServerFn({ method: "GET" }).handler(
   async (): Promise<AgenteIntentRow[]> => {
     const { data, error } = await supabaseAdmin
       .from("agente_intents")
-      .select("key,label,route,action,priority,keywords")
+      .select("key,label,route,action,priority,keywords,spoken_reply")
       .eq("active", true)
       .order("priority", { ascending: true });
     if (error) {
@@ -46,7 +46,7 @@ export const loadAgenteRoutingCatalog = createServerFn({ method: "GET" }).handle
   async (): Promise<AgenteRoutingCatalog> => {
     const { data: intentRows, error: intentsError } = await supabaseAdmin
       .from("agente_intents")
-      .select("key,label,route,action,priority,keywords")
+      .select("key,label,route,action,priority,keywords,spoken_reply")
       .eq("active", true)
       .order("priority", { ascending: true });
     if (intentsError) console.error("loadAgenteRoutingCatalog intents error", intentsError);
