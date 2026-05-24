@@ -228,7 +228,14 @@ function ComparadorPage() {
                     )}
                   </Td>
                   <Td className="whitespace-nowrap"><ShuttleCell value={op.shuttle} terminalOffice={op.terminalOffice} airport={op.airport} /></Td>
-                  <Td className="whitespace-nowrap"><span className="text-xs font-medium text-white">{op.cityOffice ? "Sí" : "No"}</span></Td>
+                  <Td className="whitespace-nowrap">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-medium text-white">{op.cityOffice ? "Sí" : "No"}</span>
+                      {op.cityOffice && CITY_OFFICE_LOCATION[op.id] && (
+                        <span className="text-[10px] text-white/70">· {CITY_OFFICE_LOCATION[op.id]}</span>
+                      )}
+                    </div>
+                  </Td>
                   <Td className="text-white whitespace-nowrap">{op.hours}</Td>
                   <Td className="whitespace-nowrap"><Badge value={op.price} /></Td>
                   <Td className="whitespace-nowrap min-w-[100px]"><YesNo value={op.insurance} /></Td>
