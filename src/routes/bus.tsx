@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   X,
@@ -36,8 +36,14 @@ export const Route = createFileRoute("/bus")({
       { rel: "canonical", href: "https://vamosalicante.com/bus" },
     ],
   }),
-  component: BusUrbanoPage,
+  component: BusRouteShell,
 });
+
+function BusRouteShell() {
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  if (pathname !== "/bus") return <Outlet />;
+  return <BusUrbanoPage />;
+}
 
 const LINEAS = [
   { num: "1", route: "San Vicente – Centro – Playa", color: "#ef4444", freq: "10-15 min" },
