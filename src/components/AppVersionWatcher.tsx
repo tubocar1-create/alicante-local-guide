@@ -29,7 +29,7 @@ async function fetchLatestVersion(signal?: AbortSignal): Promise<string | null> 
 }
 
 export function AppVersionWatcher() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAppAuth();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
