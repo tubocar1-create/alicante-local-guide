@@ -1010,7 +1010,13 @@ export function ChatScreen() {
                 </button>
               </div>
               <div className="grid grid-cols-2 gap-1.5">
-                {activeSubmenu.submenu?.map((opt) => (
+                {activeSubmenu.submenu?.filter((opt) => {
+                  if (!opt.previewOnly) return true;
+                  if (typeof window === "undefined") return true;
+                  const h = window.location.hostname;
+                  // Preview = sandbox/localhost/lovable preview subdomain. Production = published .lovable.app o dominio propio.
+                  return h.includes("preview") || h === "localhost" || h.startsWith("127.") || h.endsWith(".lovableproject.com") || h.endsWith(".lovable.dev");
+                }).map((opt) => (
                   <button
                     key={opt.label}
                     onClick={() => {
