@@ -83,6 +83,7 @@ type Suggestion = {
   submenu?: Suggestion[];
   action?: "bus-picker" | "flight-picker" | "tram-inline";
   href?: string;
+  previewOnly?: boolean;
 };
 const BEACH_GUIDE_PROMPT = "Quiero una guía visual de las playas alrededor de Alicante, con mapa por zonas y muchas fotos reales.";
 const BEACH_GUIDE_RE = /\b(playa|playas|cala|calas|costa blanca|postiguet|san juan|albufereta|urbanova|cabo de las huertas)\b/i;
