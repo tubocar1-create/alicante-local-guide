@@ -315,6 +315,26 @@ function BusDashboardPage() {
           updatedAt={updatedAt}
         />
 
+        {/* MAPA EN VIVO DE LA LÍNEA */}
+        {lineStopPoints.length > 0 && (
+          <div className="mt-3">
+            <Suspense
+              fallback={
+                <div className="flex h-[280px] w-full items-center justify-center rounded-2xl border border-white/10 bg-white/[0.02] text-sm text-white/60">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Cargando mapa…
+                </div>
+              }
+            >
+              <BusLineLiveMap
+                lineCode={code}
+                color={lineColor}
+                stops={lineStopPoints}
+                user={userPos}
+              />
+            </Suspense>
+          </div>
+        )}
+
 
 
         {/* COLUMNAS IDA / VUELTA */}
