@@ -298,7 +298,7 @@ function Td({
     ? "sticky left-0 z-10 bg-white shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)] group-hover:bg-slate-50"
     : "group-hover:bg-slate-50/50";
   return (
-    <td className={`border-b border-slate-100 px-3 py-3 align-middle ${stickyCls} ${className}`}>
+    <td className={`border-b border-slate-100 px-1.5 py-1.5 align-middle ${stickyCls} ${className}`}>
       {children}
     </td>
   );
