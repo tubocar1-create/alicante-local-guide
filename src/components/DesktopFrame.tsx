@@ -33,12 +33,29 @@ export function DesktopFrame() {
       aria-hidden="true"
       className="hidden md:block fixed inset-0 z-40 pointer-events-none"
     >
-      {/* Fondo global desktop: foto difuminada */}
+      {/* Panel izquierdo: fondo + branding (NO cubre el centro) */}
       <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(${portada})` }}
-      />
-      <div className="absolute inset-0 bg-background/70 backdrop-blur-2xl" />
+        className="absolute inset-y-0 left-0 overflow-hidden"
+        style={{ right: "calc(50% + 220px)" }}
+      >
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${portada})` }}
+        />
+        <div className="absolute inset-0 bg-background/75 backdrop-blur-2xl" />
+      </div>
+      {/* Panel derecho: fondo (NO cubre el centro) */}
+      <div
+        className="absolute inset-y-0 right-0 overflow-hidden"
+        style={{ left: "calc(50% + 220px)" }}
+      >
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${portada})` }}
+        />
+        <div className="absolute inset-0 bg-background/75 backdrop-blur-2xl" />
+      </div>
+
 
       {/* Panel izquierdo: branding */}
       <aside
