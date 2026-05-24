@@ -279,7 +279,7 @@ function Th({
     ? "sticky left-0 z-10 bg-slate-50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]"
     : "bg-slate-50/60";
   return (
-    <th className={`border-b border-slate-200 px-3 py-3 font-semibold whitespace-nowrap ${stickyCls} ${className}`}>
+    <th className={`border-b border-slate-200 px-1.5 py-1.5 font-semibold whitespace-nowrap ${stickyCls} ${className}`}>
       {children}
     </th>
   );
