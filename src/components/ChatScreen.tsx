@@ -46,7 +46,7 @@ const TILE_SUBTITLES: Record<string, string> = {
   "Turismo, playa y aventuras": "Turismo, sol y planes",
   "Comprar": "Tiendas y mercados",
   "Tomar algo": "Bares y copas",
-  "Transporte público": "Bus, TRAM, taxis",
+  "Transporte multimodal inteligente": "Bus, TRAM, taxis",
   "Mapa": "Explora la ciudad",
   "Servicios sanitarios": "Farmacias y hospitales",
   "Ocio": "Cines, teatros y conciertos",
@@ -59,7 +59,7 @@ const TILE_ICONS: Record<string, LucideIcon> = {
   "Turismo, playa y aventuras": Umbrella,
   "Comprar": ShoppingBag,
   "Tomar algo": Martini,
-  "Transporte público": Bus,
+  "Transporte multimodal inteligente": Bus,
   "Mapa": MapPin,
   "Servicios sanitarios": Stethoscope,
   "Ocio": CalendarDays,
@@ -83,6 +83,7 @@ type Suggestion = {
   submenu?: Suggestion[];
   action?: "bus-picker" | "flight-picker" | "tram-inline";
   href?: string;
+  previewOnly?: boolean;
 };
 const BEACH_GUIDE_PROMPT = "Quiero una guía visual de las playas alrededor de Alicante, con mapa por zonas y muchas fotos reales.";
 const BEACH_GUIDE_RE = /\b(playa|playas|cala|calas|costa blanca|postiguet|san juan|albufereta|urbanova|cabo de las huertas)\b/i;
@@ -167,12 +168,12 @@ const SUGGESTIONS: Suggestion[] = [
   { label: "🛍️ Comprar", href: "/comprar" },
   { label: "🍹 Tomar algo", prompt: "¿Dónde voy a tomar algo abierto ahora?" },
   {
-    label: "🚆 Transporte público",
+    label: "🚆 Transporte multimodal inteligente",
     submenu: [
       { label: "🚌 Buses urbanos", action: "bus-picker" },
-      { label: "🚍 Buses extra urbanos", prompt: "¿Cómo me muevo en bus extraurbano desde Alicante? Líneas, compañías (ALSA, Vectalia…), estación de autobuses y destinos principales (Elche, Benidorm, Murcia, Valencia, pueblos del interior)." },
-      { label: "🚊 Tram", action: "tram-inline" },
-      { label: "🚆 Tren", prompt: "¿Cómo me muevo en tren por Alicante y alrededores? Horarios, estaciones de Cercanías y Renfe." },
+      { label: "🚍 Buses larga distancia", previewOnly: true, prompt: "¿Cómo me muevo en bus de larga distancia desde Alicante? Líneas, compañías (ALSA, Vectalia…), estación de autobuses y destinos principales (Elche, Benidorm, Murcia, Valencia, pueblos del interior)." },
+      { label: "🚊 Tram Alicante", action: "tram-inline" },
+      { label: "🚆 Tren", previewOnly: true, prompt: "¿Cómo me muevo en tren por Alicante y alrededores? Horarios, estaciones de Cercanías y Renfe." },
       {
         label: "✈️ Avión",
         submenu: [
@@ -182,6 +183,7 @@ const SUGGESTIONS: Suggestion[] = [
         ],
       },
       { label: "🚗 Rent a car", href: "/rent-a-car" },
+      { label: "🚕 Taxis, Uber, Cabify", previewOnly: true, prompt: "¿Cómo pido un taxi, Uber o Cabify en Alicante? Paradas de taxi, apps disponibles, tarifas aproximadas y zonas de cobertura." },
     ],
   },
 ];
@@ -945,7 +947,7 @@ export function ChatScreen() {
                     "Turismo, playa y aventuras": { bg: "oklch(0.93 0.07 220)", fg: "oklch(0.50 0.16 230)" },
                     "Comprar":             { bg: "oklch(0.94 0.07 340)", fg: "oklch(0.55 0.18 350)" },
                     "Tomar algo":          { bg: "oklch(0.94 0.08 40)",  fg: "oklch(0.58 0.18 35)" },
-                    "Transporte público":  { bg: "oklch(0.93 0.07 190)", fg: "oklch(0.50 0.14 210)" },
+                    "Transporte multimodal inteligente":  { bg: "oklch(0.93 0.07 190)", fg: "oklch(0.50 0.14 210)" },
                     "Mapa":                { bg: "oklch(0.93 0.07 160)", fg: "oklch(0.48 0.14 165)" },
                     "Servicios sanitarios":{ bg: "oklch(0.94 0.06 25)",  fg: "oklch(0.55 0.18 25)" },
                     "Ocio":                { bg: "oklch(0.94 0.07 310)", fg: "oklch(0.50 0.18 315)" },
@@ -954,7 +956,7 @@ export function ChatScreen() {
                   const pastel = PASTEL[t.label] ?? { bg: "oklch(0.95 0.02 80)", fg: "oklch(0.40 0.05 80)" };
                   const displayLabel =
                     t.label === "Turismo, playa y aventuras" ? "Playas"
-                    : t.label === "Transporte público" ? "Transporte"
+                    : t.label === "Transporte multimodal inteligente" ? "Transporte"
                     : t.label === "Servicios sanitarios" ? "Salud"
                     : t.label === "Fiestas de Alicante" ? "Fiestas"
                     : t.label;
@@ -972,7 +974,7 @@ export function ChatScreen() {
                       >
                         {t.label === "Fiestas de Alicante" ? (
                           <img src={hoguerasIcon} alt="" className="h-full w-full rounded-full object-cover" />
-                        ) : t.label === "Transporte público" ? (
+                        ) : t.label === "Transporte multimodal inteligente" ? (
                           <img src={busAlicanteIcon} alt="" className="h-[78%] w-[78%] object-contain" />
                         ) : Icon ? (
                           <Icon className="h-5 w-5" strokeWidth={1.9} style={{ color: pastel.fg }} />
@@ -997,7 +999,7 @@ export function ChatScreen() {
           {isWelcome && activeSubmenu && (
             <div className="mt-2 rounded-2xl border border-border bg-card/90 p-3 shadow-sm backdrop-blur">
               <div className="mb-2 flex items-center justify-between">
-                <p className="text-sm font-medium">{activeSubmenu.label} — ¿qué te apetece?</p>
+                <p className="text-sm font-medium">{activeSubmenu.label}</p>
                 <button
                   onClick={() =>
                     setSubmenuStack((stack) => stack.slice(0, -1))
@@ -1008,7 +1010,13 @@ export function ChatScreen() {
                 </button>
               </div>
               <div className="grid grid-cols-2 gap-1.5">
-                {activeSubmenu.submenu?.map((opt) => (
+                {activeSubmenu.submenu?.filter((opt) => {
+                  if (!opt.previewOnly) return true;
+                  if (typeof window === "undefined") return true;
+                  const h = window.location.hostname;
+                  // Preview = sandbox/localhost/lovable preview subdomain. Production = published .lovable.app o dominio propio.
+                  return h.includes("preview") || h === "localhost" || h.startsWith("127.") || h.endsWith(".lovableproject.com") || h.endsWith(".lovable.dev");
+                }).map((opt) => (
                   <button
                     key={opt.label}
                     onClick={() => {
