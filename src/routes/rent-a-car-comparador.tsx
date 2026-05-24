@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  ArrowLeft, Bus, XCircle, Car, Info, Check,
+  ArrowLeft, Bus, XCircle, Car, Info, Check, PersonStanding,
   Plane, Clock, Tag, Shield, Lock, Truck, FileText,
   Hourglass, Eye, Star, Building2, Fingerprint, CircleDollarSign,
 } from "lucide-react";
@@ -113,8 +113,8 @@ function ShuttleCell({ value, terminalOffice }: { value: boolean; terminalOffice
   }
   return (
     <div className="flex items-center gap-1.5 text-white whitespace-nowrap">
-      <XCircle className="h-4 w-4 shrink-0" />
-      <span className="text-sm font-medium">No{terminal}</span>
+      <PersonStanding className="h-4 w-4 shrink-0" />
+      <span className="text-sm font-medium">aerop</span>
     </div>
   );
 }
