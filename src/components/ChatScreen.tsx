@@ -999,7 +999,7 @@ export function ChatScreen() {
           {isWelcome && activeSubmenu && (
             <div className="mt-2 rounded-2xl border border-border bg-card/90 p-3 shadow-sm backdrop-blur">
               <div className="mb-2 flex items-center justify-between">
-                <p className="text-sm font-medium">{activeSubmenu.label} — ¿qué te apetece?</p>
+                <p className="text-sm font-medium">{activeSubmenu.label}</p>
                 <button
                   onClick={() =>
                     setSubmenuStack((stack) => stack.slice(0, -1))
