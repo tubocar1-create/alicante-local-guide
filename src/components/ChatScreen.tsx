@@ -59,7 +59,7 @@ const TILE_ICONS: Record<string, LucideIcon> = {
   "Turismo, playa y aventuras": Umbrella,
   "Comprar": ShoppingBag,
   "Tomar algo": Martini,
-  "Transporte público": Bus,
+  "Transporte multimodal inteligente": Bus,
   "Mapa": MapPin,
   "Servicios sanitarios": Stethoscope,
   "Ocio": CalendarDays,
