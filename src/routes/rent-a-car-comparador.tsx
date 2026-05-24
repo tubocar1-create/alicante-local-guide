@@ -88,8 +88,8 @@ const OPERATORS: Operator[] = [
 ];
 
 const CITY_OFFICE_LOCATION: Record<string, string> = {
-  centauro: "Renfe",
-  record: "Renfe",
+  centauro: "Estación Renfe",
+  record: "Estación Renfe",
   ok: "Estación Renfe",
   sixt: "Estación Renfe",
   hertz: "Estación Renfe",
