@@ -171,7 +171,7 @@ function ComparadorPage() {
                 <Th title="Renting"><span className="flex items-center gap-1.5"><FileText className="h-4 w-4" />Renting</span></Th>
                 <Th title="Tiempo de espera"><span className="flex items-center gap-1.5"><Hourglass className="h-4 w-4" />Espera</span></Th>
                 <Th title="Transparencia" className="min-w-[110px]"><span className="flex items-center gap-1.5"><Eye className="h-4 w-4" />Transparencia</span></Th>
-                <Th title="Estado de vehículos" className="min-w-[120px]"><span className="flex items-center gap-1.5"><Star className="h-4 w-4" />Estado</span></Th>
+                <Th title="Estado de vehículos" className="min-w-[120px]"><span className="flex items-center gap-1.5"><Star className="h-4 w-4" />Estado Vehículos</span></Th>
               </tr>
             </thead>
             <tbody>
