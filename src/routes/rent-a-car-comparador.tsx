@@ -151,7 +151,7 @@ function ShuttleCell({ value, terminalOffice }: { value: boolean; terminalOffice
 
 function ComparadorPage() {
   return (
-    <div className="h-dvh overflow-hidden bg-black text-slate-100 flex flex-col">
+    <div className="h-dvh overflow-hidden bg-black text-white flex flex-col">
       <main className="mx-auto w-full max-w-[1600px] flex-1 min-h-0 flex flex-col px-4 py-4">
         <div className="mb-3 flex items-center gap-2">
           <Link
@@ -169,7 +169,7 @@ function ComparadorPage() {
 
         <div className="flex-1 min-h-0 overflow-auto rounded-2xl border border-white/10 bg-black">
           <table className="w-full min-w-[1180px] border-separate border-spacing-0 text-[11px]">
-            <thead className="text-left text-[10px] uppercase tracking-wide text-slate-400">
+            <thead className="text-left text-[10px] uppercase tracking-wide text-white">
               <tr>
                 <Th sticky className="px-2 py-1.5">Operadora</Th>
                 <Th>Perfil</Th>
@@ -213,22 +213,22 @@ function ComparadorPage() {
                     </a>
                   </div>
                 </Td>
-                  <Td className="text-slate-300">{op.profile}</Td>
+                  <Td className="text-white">{op.profile}</Td>
                   <Td>
                     {op.airport ? (
-                      <span className="inline-block whitespace-nowrap rounded-md bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-sky-300">
+                      <span className="inline-block whitespace-nowrap rounded-md bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-white">
                         Terminal
                       </span>
                     ) : (
-                      <span className="text-slate-600">—</span>
+                      <span className="text-white">—</span>
                     )}
                   </Td>
                   <Td><ShuttleCell value={op.shuttle} terminalOffice={op.terminalOffice} /></Td>
-                  <Td className="text-slate-300 whitespace-nowrap">{op.hours}</Td>
+                  <Td className="text-white whitespace-nowrap">{op.hours}</Td>
                   <Td><Badge value={op.price} styles={LEVEL_STYLES} /></Td>
                   <Td><YesNo value={op.insurance} /></Td>
                   <Td><YesNo value={op.franchise} /></Td>
-                  <Td className="text-slate-300">{op.vehicles}</Td>
+                  <Td className="text-white">{op.vehicles}</Td>
                   <Td><YesNo value={op.vans} /></Td>
                   <Td><YesNo value={op.renting} /></Td>
                   <Td><Badge value={op.waitTime} styles={LEVEL_STYLES} /></Td>
@@ -240,8 +240,7 @@ function ComparadorPage() {
           </table>
         </div>
 
-        <p className="mt-2 text-center text-[11px] text-slate-500">
-          Datos orientativos. Desliza horizontalmente para ver todas las columnas
+        <p className="mt-2 text-center text-[11px] text-white">
         </p>
       </main>
     </div>
