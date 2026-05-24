@@ -30,8 +30,15 @@ export const Route = createFileRoute("/perfil")({
 });
 
 function PerfilPage() {
-  const { user, isAuthenticated, signOut } = useAuth();
   const appAuth = useAppAuth();
+  const { isAuthenticated, signOut } = appAuth;
+  const user = appAuth.user
+    ? {
+        id: appAuth.user.id,
+        name: appAuth.profile?.full_name || appAuth.profile?.display_name || appAuth.user.email || "",
+        email: appAuth.user.email ?? "",
+      }
+    : null;
   const [qrs, setQrs] = useState<LocalQr[]>([]);
   const [geoEnabled, setGeoEnabledState] = useState(false);
   const loc = useUserLocation();
