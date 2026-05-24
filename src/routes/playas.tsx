@@ -28,6 +28,10 @@ export const Route = createFileRoute("/playas")({
         content:
           "Desliza las 17 playas de Alicante y abre el mapa interactivo para situarte.",
       },
+      { property: "og:url", content: "https://vamosalicante.com/playas" }
+    ],
+  links: [
+      { rel: "canonical", href: "https://vamosalicante.com/playas" },
     ],
   }),
   component: PlayasPage,
