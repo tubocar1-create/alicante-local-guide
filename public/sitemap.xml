@@ -41,6 +41,11 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://vamosalicante.com/bares</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://vamosalicante.com/ocio</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
