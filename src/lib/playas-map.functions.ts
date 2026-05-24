@@ -60,13 +60,17 @@ type PlaceDetails = {
 };
 
 async function getPlaceDetails(placeId: string): Promise<PlaceDetails | null> {
+  const key = getKey();
+  if (!key) return null;
   try {
-    const res = await fetch(`${GATEWAY}/places/v1/places/${encodeURIComponent(placeId)}?languageCode=es`, {
-      headers: gwHeaders({
+    const res = await fetch(`${PLACES_BASE}/places/${encodeURIComponent(placeId)}?languageCode=es`, {
+      headers: {
+        "X-Goog-Api-Key": key,
         "X-Goog-FieldMask":
           "id,photos,reviews,rating,userRatingCount,googleMapsUri,formattedAddress",
-      }),
+      },
     });
+
     if (!res.ok) return null;
     const j: any = await res.json();
     const photos: any[] = j.photos ?? [];
