@@ -38,7 +38,7 @@ function WelcomePage() {
     if (isStandalone) {
       // Ya está abierta como app instalada → al login directamente.
       localStorage.setItem(WELCOMED_KEY, "1");
-      navigate({ to: "/login", replace: true });
+      navigate({ to: "/auth/login", replace: true });
       return;
     }
 
@@ -93,7 +93,7 @@ function WelcomePage() {
 
   const goLogin = () => {
     localStorage.setItem(WELCOMED_KEY, "1");
-    navigate({ to: "/login", replace: true });
+    navigate({ to: "/auth/login", replace: true });
   };
 
   return (
