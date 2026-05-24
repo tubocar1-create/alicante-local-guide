@@ -125,14 +125,14 @@ function ComparadorPage() {
         <div className="mb-3 flex items-center gap-2">
           <Link
             to="/rent-a-car"
-            className="grid h-8 w-8 place-items-center rounded-full text-slate-300 hover:bg-white/10"
+            className="grid h-8 w-8 place-items-center rounded-full text-white hover:bg-white/10"
             aria-label="Volver"
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <h1 className="flex items-center gap-1.5 text-base font-semibold text-white">
             {OPERATORS.length} operadoras comparadas
-            <Info className="h-4 w-4 text-slate-500" />
+            <Info className="h-4 w-4 text-white" />
           </h1>
         </div>
 
