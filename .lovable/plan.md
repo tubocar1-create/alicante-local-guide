@@ -1,66 +1,84 @@
-## Reestructuración del CPA según la Doctrina (4 fases)
+# Sistema de Autenticación y Gestión de Usuarios
 
-### Objetivo
-Simplificar el CPA y unificar toda revisión bajo un único esquema de auditoría basado en las 4 fases de la doctrina. Cada conversación se abre Q&A por Q&A y se evalúa contra los 5 criterios obligatorios.
+Implementación end-to-end sobre Lovable Cloud (Supabase Auth) respetando lo ya existente: hay `useBusinessAuth`, tabla `profiles`, `user_roles`, trigger `handle_new_user`, `assign_admin_role_if_allowed`, y rutas `business.login` / `business.onboarding`. El público hoy usa un sistema "beta" simulado (`beta_user_v1` en localStorage vía `useAuth` + `/magic`). Vamos a **añadir** auth real para todos los usuarios sin romper el flujo beta existente.
 
-### Nueva estructura de tabs (simplificada)
-De 10 tabs a 4:
+## Alcance
 
-```
-📜 Doctrina    →  referencia inmutable (ya existe)
-🔍 Auditoría   →  NUEVA — flujo único de revisión conversación-por-conversación
-📚 Entrenamiento →  Intents + Entidades + FAQs (fusionadas)
-📊 Operación   →  Resumen + Analítica + Costes (fusionadas)
-```
+### 1. Base de datos (migración)
+- Ampliar `profiles` con: `full_name`, `city`, `language`, `terms_accepted_at`, `last_seen_at`, `login_method`, `blocked` (bool, futuro). `avatar_url` ya existe.
+- Tabla `user_consents` (user_id, type, accepted_at, version) para timestamp de consentimientos.
+- Tabla `user_permissions` (user_id, permission ['geolocation'|'microphone'], granted bool, updated_at) para registrar permisos del navegador.
+- Trigger `update_last_seen` opcional vía RPC ligero (`touch_last_seen()`).
+- Asegurar RLS: cada usuario lee/edita su propio perfil/consents/permissions; admin (vía `has_role`) lee todo.
+- Storage bucket `avatars` (público) con políticas: upload solo en carpeta `{user_id}/`.
 
-Tabs que desaparecen como pestaña independiente (su contenido se absorbe):
-- Conversaciones, Dudosas, Sin resolver, Supervisión → todas se unifican en **Auditoría**
-- Intents, Entidades → fusionadas en **Entrenamiento**
-- Resumen, Analítica, Costes → fusionadas en **Operación**
+### 2. Auth (cliente)
+- Habilitar Google OAuth managed (`configure_social_auth: ["google"]`) sin desactivar email.
+- **No** activar auto-confirm: verificación email obligatoria.
+- Hook unificado `useAppAuth` (basado en `useBusinessAuth`, expuesto para toda la app) con: `user`, `session`, `profile`, `roles`, `isAuthenticated`, `emailVerified`, `signOut`.
+- Mantener `useAuth` beta intacto (no romper rutas que dependen).
 
-### Tab "Auditoría" — flujo único
+### 3. Rutas nuevas
+- `/auth/signup` — email + password + confirmar + nombre + checkbox términos. Validación con zod, errores amigables.
+- `/auth/login` — email/password + botón Google (vía `lovable.auth.signInWithOAuth`).
+- `/auth/forgot-password` — pide email → `resetPasswordForEmail` con `redirectTo: /auth/reset-password`.
+- `/auth/reset-password` — detecta `type=recovery`, formulario nueva contraseña, `updateUser`.
+- `/auth/verify-email` — pantalla post-signup con botón "Reenviar correo" y mensaje 📩.
+- `/auth/callback` — landing del OAuth si hace falta (sino redirect a `/`).
+- `/perfil` ya existe → reemplazar/ampliar con: avatar (upload a bucket), nombre, ciudad, idioma, método login, estado verificación, permisos activos, botón **Cerrar sesión**.
+- `/admin/usuarios` ya existe → reescribir como tabla real de `auth.users` + `profiles`: email, verificado, último acceso, método, permisos, rol. Solo `admin`.
 
-Una sola cola de trabajo. Lista de conversaciones recientes (con filtros: pendientes, con incidencias, todas). Al abrir una conversación:
+### 4. Permisos contextuales
+- Componente `<PermissionPrompt type="geolocation|microphone">` reutilizable con copy explicativo y botón "Permitir / Ahora no".
+- Al conceder/denegar, persistir en `user_permissions` (si hay sesión) y en `localStorage` (fallback anónimo).
+- Hook `useGeolocationPermission` y `useMicrophonePermission` que leen `navigator.permissions.query`.
+- Degradación elegante: si denegado, ocultar features o mostrar CTA secundario.
 
-1. **Cabecera**: sesión, ruta inicial, dominio activo, duración.
-2. **Línea de tiempo Q&A**: cada turno (pregunta usuario → respuesta agente) se muestra como una tarjeta auditable.
-3. **Panel de evaluación por turno** (los 5 criterios de la doctrina):
-   - ✅/⚠️/❌ Cumplimiento filosófico (¿enrutamiento o se desvió?)
-   - ✅/⚠️/❌ Precisión de intención
-   - ✅/⚠️/❌ Coherencia contextual (¿respetó dominio activo?)
-   - ✅/⚠️/❌ Consistencia de ruta
-   - ✅/⚠️/❌ Calidad del endpoint
-   - **Fase detectada** (1/2/3/4) badge
-   - Nota libre + acción correctiva ("Resolver al vuelo" ya existente: añadir keyword, crear intent, añadir FAQ, añadir alias)
-4. **Veredicto global** de la conversación: OK / requiere ajuste / crítica.
+### 5. Política de datos
+- Páginas `/legal/privacidad` y `/legal/terminos` (placeholder con copy básico, editable).
+- Checkbox obligatorio en signup → inserta fila en `user_consents` con timestamp y versión.
+- Link visible en footer del signup.
 
-Estado persistido en `agente_admin_supervisions` (ya existe) extendiendo el payload con `phase`, `criteria_scores`, `verdict`.
+### 6. Sesión
+- `onAuthStateChange` ya cableado en `__root.tsx` (verificar). Añadir invalidación de queries.
+- Auto-refresh token (default de supabase-js, ya activo).
+- `last_seen_at` update on app open (RPC ligero o update directo con RLS propia).
+- Botón Sign Out en perfil + en menú lateral si existe.
 
-### Tab "Entrenamiento"
-Sub-secciones internas (acordeón o tabs secundarias) — sin cambiar la lógica existente, solo agrupar:
-- Intents (lista + edición existente)
-- Entidades / nombres propios
-- FAQs
+### 7. Admin Usuarios
+- Server fn `listUsersAdmin` con `requireSupabaseAuth` + check `has_role(admin)` que usa `supabaseAdmin.auth.admin.listUsers()` y joinea `profiles`, `user_permissions`, `user_roles`.
+- UI: tabla con búsqueda, paginación, columnas: email, verificado ✅, método (`identities[0].provider`), último acceso, creado, permisos, rol.
+- Acción "Bloquear" deshabilitada (futuro), pero columna preparada.
 
-### Tab "Operación"
-Dashboard plano con: KPIs del Resumen + serie temporal + costes. Sin acciones, solo lectura.
+### 8. UX
+- Mobile-first, diseño coherente con el resto (Tailwind tokens existentes, rounded-3xl, soft shadows).
+- Toasts con `sonner` para errores/éxitos.
+- Max 2 pasos en onboarding (signup → verificar email → entra).
 
-### Archivos a tocar
-- `src/routes/admin.ai.tsx` — reducir `TABS` a 4.
-- `src/routes/admin.ai.auditoria.tsx` — **NUEVO** — flujo unificado de revisión.
-- `src/routes/admin.ai.entrenamiento.tsx` — **NUEVO** — wrapper con sub-secciones de intents/entidades/faqs.
-- `src/routes/admin.ai.operacion.tsx` — **NUEVO** — KPIs + serie + costes.
-- `src/routes/admin.ai.index.tsx` — redirige a `/admin/ai/auditoria` (cola de trabajo por defecto).
-- Rutas antiguas (`admin.ai.conversations.tsx`, `admin.ai.dubious.tsx`, `admin.ai.unknown-queries.tsx`, `admin.ai.supervision.tsx`, `admin.ai.intents.tsx`, `admin.ai.entities.tsx`, `admin.ai.analytics.tsx`, `admin.ai.costs.tsx`) — **se conservan los componentes internos** pero dejan de ser tabs; sus piezas se importan desde los 3 nuevos wrappers para no perder funcionalidad ya construida.
-- `src/lib/admin-ai.functions.ts` — añadir `saveAuditVerdict({ logId, phase, criteria, verdict, note })`.
-- Migración SQL: añadir columnas `phase smallint`, `criteria_scores jsonb`, `verdict text` a `agente_admin_supervisions`.
+## Detalles técnicos
 
-### Detalle técnico
-- La lista de "Auditoría" se alimenta de `listAgentConversations` (ya existe) + `listDubiousInteractions` fusionadas por `session_id`.
-- "Resolver al vuelo" se reutiliza tal cual (`quickResolveDubious`) en cada turno.
-- La doctrina se renderiza como panel lateral colapsable dentro de "Auditoría" para que el revisor tenga los 5 criterios siempre a la vista.
+- **Google OAuth**: usar exclusivamente `lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin })`. Llamar `supabase--configure_social_auth providers:["google"]` en el mismo turno.
+- **Email signup**: `supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin + "/auth/verify-email", data: { full_name } } })`. El trigger `handle_new_user` ya crea profile.
+- **Reset**: `supabase.auth.resetPasswordForEmail(email, { redirectTo: origin + "/auth/reset-password" })`.
+- **Avatar storage**: bucket `avatars` público, política insert/update `auth.uid()::text = (storage.foldername(name))[1]`.
+- **Admin listUsers**: server fn dedicada, NO exponer service role al cliente.
+- **RLS profiles**: las policies actuales (todos pueden leer) son aceptables si solo exponemos campos públicos. Restringir UPDATE a `auth.uid() = id`.
+- **No tocar** `useAuth` (beta) ni `/magic` ni `/login` actual del beta (queda como acceso beta paralelo). Las nuevas rutas viven bajo `/auth/*` para no colisionar.
 
-### Lo que NO se toca
-- `AgenteVamos.tsx` (regla de oro: las instrucciones al agente no modifican la estructura del producto).
-- Tabla `agente_intents`, `agente_entities`, `agente_faqs` — sólo lectura/escritura ya existente.
-- Rutas públicas del usuario final.
+## Lo que NO hago en este pase
+- Bloqueo real de usuarios (solo dejo columna `blocked`).
+- Favoritos / historial / rutas recientes (campos futuros).
+- Borrado de cuenta (no pedido explícitamente).
+- Editor de contenido legal (páginas con copy fijo inicial).
+
+## Pasos de ejecución
+1. Migración SQL (tablas, columnas, bucket, RLS).
+2. `configure_social_auth` Google.
+3. Hook `useAppAuth` + componentes auth (signup/login/forgot/reset/verify).
+4. Rutas `/auth/*` y refactor `/perfil`.
+5. Componentes de permisos + persistencia.
+6. Páginas legales placeholder.
+7. Server fn admin + refactor `/admin/usuarios`.
+8. Verificar build, smoke test del flujo.
+
+¿Apruebas el plan para implementar?
