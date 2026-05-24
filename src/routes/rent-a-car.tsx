@@ -209,15 +209,6 @@ function RentACarPage() {
             ))}
           </ul>
         </section>
-
-        <section className="mt-8 rounded-2xl border border-dashed border-white/20 bg-white/5 p-5 text-sm text-white/70">
-          <p className="font-medium text-white">Próximamente</p>
-          <p className="mt-1">
-            Estamos preparando un comparador real de compañías de alquiler en ALC con datos
-            operativos, no solo precios. Si quieres aportar tu experiencia, escríbenos desde el
-            perfil.
-          </p>
-        </section>
       </main>
     </div>
   );
