@@ -271,7 +271,8 @@ function ComparadorPage() {
                   <Td className="text-white whitespace-nowrap">{op.hours}</Td>
                   <Td className="whitespace-nowrap"><Badge value={op.price} /></Td>
                   <Td className="whitespace-nowrap min-w-[100px]"><YesNo value={op.insurance} /></Td>
-                  <Td className="whitespace-nowrap"><YesNo value={op.franchise} /></Td>
+                  <Td className="whitespace-nowrap text-white text-[11px] font-medium">{DEPOSIT_DATA[op.id]?.approx ?? "—"}</Td>
+                  <Td className="whitespace-nowrap"><YesNo value={(DEPOSIT_DATA[op.id]?.zero ?? "—") as YesNoOpt} /></Td>
                   <Td className="text-white whitespace-nowrap">{op.vehicles}</Td>
                   <Td className="whitespace-nowrap"><YesNo value={op.vans} /></Td>
                   <Td className="whitespace-nowrap"><YesNo value={op.renting} /></Td>
