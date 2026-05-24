@@ -194,12 +194,14 @@ function BusUrbanoPage() {
           </div>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {LINEAS.map((l) => (
-              <div
+              <Link
                 key={l.num}
-                className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] p-3 backdrop-blur-xl"
+                to="/bus/dashboard/$code"
+                params={{ code: l.num }}
+                className="group flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] p-3 backdrop-blur-xl transition-all hover:border-cyan-400/40 hover:bg-white/[0.07] active:scale-[0.98]"
               >
                 <div
-                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-bold text-white"
+                  className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-bold text-white shadow-md"
                   style={{ background: l.color }}
                 >
                   {l.num}
@@ -209,10 +211,11 @@ function BusUrbanoPage() {
                     {l.route}
                   </p>
                   <p className="text-[10px] text-white/50">
-                    Frecuencia: {l.freq}
+                    Frecuencia: {l.freq} · Ver en vivo
                   </p>
                 </div>
-              </div>
+                <ChevronRight className="h-4 w-4 shrink-0 text-white/30 group-hover:text-cyan-300" />
+              </Link>
             ))}
           </div>
         </section>
