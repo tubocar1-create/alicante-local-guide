@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  ArrowLeft, Bus, XCircle, Car, Info, Check,
+  ArrowLeft, Bus, XCircle, Car, Info, Check, PersonStanding,
   Plane, Clock, Tag, Shield, Lock, Truck, FileText,
   Hourglass, Eye, Star, Building2, Fingerprint, CircleDollarSign,
 } from "lucide-react";
