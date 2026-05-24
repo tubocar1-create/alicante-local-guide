@@ -1,5 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Bus, XCircle, Car, Info, Heart, Check } from "lucide-react";
+import {
+  ArrowLeft, Bus, XCircle, Car, Info, Check,
+  Plane, Clock, Tag, Shield, Lock, Truck, FileText,
+  Hourglass, Eye, Star, Building2, Fingerprint, CircleDollarSign,
+} from "lucide-react";
 
 export const Route = createFileRoute("/rent-a-car-comparador")({
   head: () => ({
@@ -137,20 +141,20 @@ function ComparadorPage() {
           <table className="w-full min-w-[1180px] border-separate border-spacing-0 text-[11px]">
             <thead className="text-left text-[10px] uppercase tracking-wide text-white">
               <tr>
-                <Th sticky className="px-2 py-1.5 bg-black text-[#d4c5a5]">Operadora</Th>
-                <Th>Perfil</Th>
-                <Th>Aerop.</Th>
-                <Th>Shuttle</Th>
-                <Th>Horario</Th>
-                <Th>Precio</Th>
-                <Th>Seguro TR</Th>
-                <Th>Franq.</Th>
-                <Th>Vehículos</Th>
-                <Th>Furgo.</Th>
-                <Th>Renting</Th>
-                <Th>Espera</Th>
-                <Th>Transp.</Th>
-                <Th>Estado</Th>
+                <Th sticky className="px-2 py-1.5 bg-black text-[#d4c5a5]" title="Operadora"><Building2 className="h-4 w-4" /></Th>
+                <Th title="Perfil"><Fingerprint className="h-4 w-4" /></Th>
+                <Th title="Aeropuerto"><Plane className="h-4 w-4" /></Th>
+                <Th title="Shuttle"><Bus className="h-4 w-4" /></Th>
+                <Th title="Horario"><Clock className="h-4 w-4" /></Th>
+                <Th title="Precio"><CircleDollarSign className="h-4 w-4" /></Th>
+                <Th title="Seguro a todo riesgo"><Shield className="h-4 w-4" /></Th>
+                <Th title="Franquicia"><Lock className="h-4 w-4" /></Th>
+                <Th title="Vehículos"><Car className="h-4 w-4" /></Th>
+                <Th title="Furgonetas"><Truck className="h-4 w-4" /></Th>
+                <Th title="Renting"><FileText className="h-4 w-4" /></Th>
+                <Th title="Tiempo de espera"><Hourglass className="h-4 w-4" /></Th>
+                <Th title="Transparencia"><Eye className="h-4 w-4" /></Th>
+                <Th title="Estado de vehículos"><Star className="h-4 w-4" /></Th>
               </tr>
             </thead>
             <tbody>
@@ -217,17 +221,19 @@ function Th({
   children,
   className = "",
   sticky = false,
+  title,
 }: {
   children?: React.ReactNode;
   className?: string;
   sticky?: boolean;
+  title?: string;
 }) {
   const base = "sticky top-0 z-10 bg-neutral-900";
   const stickyCls = sticky
     ? "sticky left-0 top-0 z-20 bg-neutral-900 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.6)]"
     : base;
   return (
-    <th className={`border-b border-white/10 px-1.5 py-1 font-semibold whitespace-nowrap ${stickyCls} ${className}`}>
+    <th title={title} className={`border-b border-white/10 px-1.5 py-1 font-semibold whitespace-nowrap ${stickyCls} ${className}`}>
       {children}
     </th>
   );
