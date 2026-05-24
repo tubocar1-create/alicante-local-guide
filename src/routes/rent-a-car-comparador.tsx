@@ -155,7 +155,13 @@ const SORTED_OPERATORS = [...OPERATORS].sort((a, b) => {
 
 function ComparadorPage() {
   return (
-    <div className="h-dvh overflow-hidden bg-black text-white flex flex-col">
+    <div
+      className="h-dvh overflow-hidden text-white flex flex-col"
+      style={{
+        background:
+          "linear-gradient(180deg, #0a1933 0%, #0d2547 40%, #0a1933 100%)",
+      }}
+    >
       <main className="mx-auto w-full max-w-[1600px] flex-1 min-h-0 flex flex-col px-4 py-4">
         <div className="mb-3 flex items-center gap-2">
           <Link
@@ -171,7 +177,7 @@ function ComparadorPage() {
           </h1>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-auto rounded-2xl border border-white/10 bg-black">
+        <div className="flex-1 min-h-0 overflow-auto rounded-2xl border border-white/10 bg-[#0a1933]/60">
           <table className="w-full min-w-[1180px] border-separate border-spacing-0 text-[11px]">
             <thead className="text-left text-[10px] uppercase tracking-wide text-white">
               <tr>
