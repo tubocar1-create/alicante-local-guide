@@ -192,15 +192,17 @@ function RentACarPage() {
           <h2 className="mb-3 font-serif text-xl font-semibold">Qué mirar antes de reservar</h2>
           <ul className="grid gap-3 sm:grid-cols-2">
             {FACTORS.map(({ icon: Icon, title, desc }) => (
-              <li
-                key={title}
-                className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm"
-              >
-                <div className="mb-2 flex items-center gap-2 text-sky-300">
-                  <Icon className="h-4 w-4" />
-                  <span className="text-sm font-semibold text-white">{title}</span>
-                </div>
-                <p className="text-xs text-white/70">{desc}</p>
+              <li key={title}>
+                <Link
+                  to="/rent-a-car-comparador"
+                  className="block rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition hover:border-sky-300/40 hover:bg-white/10"
+                >
+                  <div className="mb-2 flex items-center gap-2 text-sky-300">
+                    <Icon className="h-4 w-4" />
+                    <span className="text-sm font-semibold text-white">{title}</span>
+                  </div>
+                  <p className="text-xs text-white/70">{desc}</p>
+                </Link>
               </li>
             ))}
           </ul>
