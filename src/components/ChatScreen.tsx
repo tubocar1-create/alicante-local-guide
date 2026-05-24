@@ -766,13 +766,15 @@ export function ChatScreen() {
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <WeatherChip />
-            <Link
-              to="/threads"
-              aria-label="Mis reservas"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/70 ring-1 ring-border/60 text-foreground active:scale-95"
-            >
-              <Bell className="h-4 w-4" />
-            </Link>
+            {isPreviewHost() && (
+              <Link
+                to="/threads"
+                aria-label="Notificaciones"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/70 ring-1 ring-border/60 text-foreground active:scale-95"
+              >
+                <Bell className="h-4 w-4" />
+              </Link>
+            )}
           </div>
         </header>
       ) : (
