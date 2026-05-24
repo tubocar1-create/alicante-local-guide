@@ -195,56 +195,56 @@ function ComparadorPage() {
         </div>
 
         <div className="mt-3 overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <table className="w-full min-w-[1800px] border-separate border-spacing-0 text-sm">
-            <thead className="text-left text-xs uppercase tracking-wide text-slate-500">
+          <table className="w-full min-w-[1280px] border-separate border-spacing-0 text-[11px]">
+            <thead className="text-left text-[10px] uppercase tracking-wide text-slate-500">
               <tr>
-                <Th sticky className="px-2 py-2">Operadora</Th>
+                <Th sticky className="px-2 py-1.5">Operadora</Th>
                 <Th>Perfil</Th>
-                <Th>Aeropuerto</Th>
+                <Th>Aerop.</Th>
                 <Th>Shuttle</Th>
-                <Th>Horarios</Th>
+                <Th>Horario</Th>
                 <Th>Precio</Th>
-                <Th>Seguro todo riesgo</Th>
-                <Th>Franquicia</Th>
-                <Th>Tipo de vehículos</Th>
-                <Th>Furgonetas</Th>
-                <Th>Renting/Leasing</Th>
-                <Th>Tiempo espera</Th>
-                <Th>Oficina terminal</Th>
-                <Th>Transparencia</Th>
-                <Th>Estado vehículos</Th>
-                <Th>Riesgo incidencias</Th>
+                <Th>Seguro TR</Th>
+                <Th>Franq.</Th>
+                <Th>Vehículos</Th>
+                <Th>Furgo.</Th>
+                <Th>Renting</Th>
+                <Th>Espera</Th>
+                <Th>Of. term.</Th>
+                <Th>Transp.</Th>
+                <Th>Estado</Th>
+                <Th>Riesgo</Th>
               </tr>
             </thead>
             <tbody>
               {OPERATORS.map((op) => (
                 <tr key={op.id} className="group">
-                <Td sticky className="px-2 py-2">
-                  <div className="flex items-center gap-2">
+                <Td sticky className="px-2 py-1.5">
+                  <div className="flex items-center gap-1.5">
                     <img
                       src={logoUrl(op.domain)}
                       alt={op.name}
-                      width={24}
-                      height={24}
+                      width={20}
+                      height={20}
                       loading="lazy"
-                      className="h-6 w-6 shrink-0 rounded-sm object-contain bg-white"
+                      className="h-5 w-5 shrink-0 rounded-sm object-contain bg-white"
                       onError={(e) => {
                         (e.currentTarget as HTMLImageElement).style.visibility = "hidden";
                       }}
                     />
-                    <span className="whitespace-nowrap text-xs font-semibold text-slate-800">
+                    <span className="whitespace-nowrap text-[11px] font-semibold text-slate-800">
                       {op.name}
                     </span>
                   </div>
                 </Td>
-                  <Td className="text-slate-600 text-xs">{op.profile}</Td>
+                  <Td className="text-slate-600">{op.profile}</Td>
                   <Td><YesNo value={op.airport} /></Td>
                   <Td><ShuttleCell value={op.shuttle} terminalOffice={op.terminalOffice} /></Td>
                   <Td className="text-slate-700 whitespace-nowrap">{op.hours}</Td>
                   <Td><Badge value={op.price} styles={LEVEL_STYLES} /></Td>
                   <Td><YesNo value={op.insurance} /></Td>
                   <Td><YesNo value={op.franchise} /></Td>
-                  <Td className="text-slate-700 text-xs">{op.vehicles}</Td>
+                  <Td className="text-slate-700">{op.vehicles}</Td>
                   <Td><YesNo value={op.vans} /></Td>
                   <Td><YesNo value={op.renting} /></Td>
                   <Td><Badge value={op.waitTime} styles={LEVEL_STYLES} /></Td>
