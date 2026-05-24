@@ -1,5 +1,5 @@
-import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
 import {
   X,
   Clock,
@@ -43,8 +43,18 @@ export const Route = createFileRoute("/bus")({
 
 function BusRouteShell() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (pathname !== "/bus" || typeof window === "undefined") return;
+    try {
+      sessionStorage.setItem("agent:open-bus-picker", "1");
+    } catch {
+      /* noop */
+    }
+    navigate({ to: "/", replace: true });
+  }, [navigate, pathname]);
   if (pathname !== "/bus") return <Outlet />;
-  return <BusUrbanoPage />;
+  return null;
 }
 
 // Líneas reales se obtienen desde la base de datos vía useBusGraph().

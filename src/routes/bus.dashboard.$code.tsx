@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ArrowDown, ArrowUp, Bus, ChevronDown, Radio, RefreshCw, Loader2, MapPin } from "lucide-react";
 import { useBusGraph } from "@/hooks/useBusGraph";
@@ -263,13 +263,21 @@ function BusDashboardPage() {
       <div className="mx-auto max-w-3xl px-3 py-4">
         {/* HEADER */}
         <div className="flex items-start gap-3">
-          <Link
-            to="/bus"
+          <button
+            type="button"
+            onClick={() => {
+              try {
+                sessionStorage.setItem("agent:open-bus-picker", "1");
+              } catch {
+                /* noop */
+              }
+              navigate({ to: "/" });
+            }}
             className="mt-1 inline-flex h-9 w-9 items-center justify-center rounded-full text-white hover:bg-white/10"
             aria-label="Volver"
           >
             <ArrowLeft className="h-5 w-5" />
-          </Link>
+          </button>
           <div
             className="flex h-11 w-11 shrink-0 items-center justify-center gap-0.5 text-base font-black text-white shadow-lg"
             style={{
