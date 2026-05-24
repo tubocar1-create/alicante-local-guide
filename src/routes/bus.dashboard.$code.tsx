@@ -181,6 +181,19 @@ function BusDashboardPage() {
   }, [userPos, stopsByDir, stopCoords]);
 
 
+  // Puntos georreferenciados de la línea para el mapa en vivo
+  const lineStopPoints = useMemo<LineStopPoint[]>(() => {
+    const out: LineStopPoint[] = [];
+    for (const dir of [1, 2] as const) {
+      for (const s of stopsByDir[dir]) {
+        const c = stopCoords.get(s.code);
+        if (!c) continue;
+        out.push({ code: s.code, name: s.name, direction: dir, seq: s.seq, lat: c.lat, lng: c.lng });
+      }
+    }
+    return out;
+  }, [stopsByDir, stopCoords]);
+
   // Realtime: por cada parada del recorrido (ambas direcciones), pedir su ETA.
   // Guardamos hasta 2 próximos tiempos por parada (índice 0 y 1).
   const [etas, setEtas] = useState<Record<string, number[]>>({});
