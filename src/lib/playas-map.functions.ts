@@ -96,8 +96,10 @@ export const getMapBeaches = createServerFn({ method: "GET" }).handler(
   async (): Promise<MapBeachWithCover[]> => {
     const results = await Promise.all(
       MAP_BEACHES.map(async (b) => {
-        const placeId = await findPlaceId(b);
+        const local = LOCAL_BEACH_PHOTOS[b.slug] ?? [];
+        if (local.length > 0) return { ...b, photo: local[0] };
         let photo: string | null = null;
+        const placeId = await findPlaceId(b);
         if (placeId) {
           const details = await getPlaceDetails(placeId);
           const skip = GOOGLE_PHOTO_SKIP[b.slug] ?? 0;
@@ -110,6 +112,7 @@ export const getMapBeaches = createServerFn({ method: "GET" }).handler(
     return results;
   },
 );
+
 
 export type BeachReview = { author: string; rating: number; text: string; relativeTime?: string };
 
