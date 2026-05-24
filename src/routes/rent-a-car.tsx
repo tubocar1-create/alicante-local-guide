@@ -15,7 +15,11 @@ export const Route = createFileRoute("/rent-a-car")({
         property: "og:description",
         content:
           "Compara compañías de alquiler en el aeropuerto de Alicante por experiencia real, no solo por precio.",
-      },
+      },,
+      { property: "og:url", content: "https://vamosalicante.com/rent-a-car" }
+    ],
+  links: [
+      { rel: "canonical", href: "https://vamosalicante.com/rent-a-car" },
     ],
   }),
   component: RentACarPage,

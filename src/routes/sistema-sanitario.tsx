@@ -13,7 +13,11 @@ export const Route = createFileRoute("/sistema-sanitario")({
         name: "description",
         content:
           "Guía oficial del sistema sanitario público de Alicante: atención primaria, hospitales, especialidades, urgencias, salud mental y trámites.",
-      },
+      },,
+      { property: "og:url", content: "https://vamosalicante.com/sistema-sanitario" }
+    ],
+  links: [
+      { rel: "canonical", href: "https://vamosalicante.com/sistema-sanitario" },
     ],
   }),
   component: SistemaSanitarioPage,

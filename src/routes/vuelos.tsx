@@ -18,7 +18,11 @@ export const Route = createFileRoute("/vuelos")({
         name: "description",
         content:
           "Mapa interactivo con destinos y orígenes del aeropuerto de Alicante-Elche. Selecciona una ciudad para ver sus métricas semanales.",
-      },
+      },,
+      { property: "og:url", content: "https://vamosalicante.com/vuelos" }
+    ],
+  links: [
+      { rel: "canonical", href: "https://vamosalicante.com/vuelos" },
     ],
   }),
   component: VuelosDashboard,
