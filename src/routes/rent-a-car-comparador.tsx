@@ -202,9 +202,14 @@ function ComparadorPage() {
                         (e.currentTarget as HTMLImageElement).style.visibility = "hidden";
                       }}
                     />
-                    <span className="whitespace-nowrap text-[11px] font-semibold text-white">
+                    <a
+                      href={op.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="whitespace-nowrap text-[11px] font-semibold text-sky-400 hover:text-sky-300 hover:underline"
+                    >
                       {op.name}
-                    </span>
+                    </a>
                   </div>
                 </Td>
                   <Td className="text-slate-300">{op.profile}</Td>
