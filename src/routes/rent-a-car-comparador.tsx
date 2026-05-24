@@ -173,7 +173,7 @@ function ComparadorPage() {
                       href={op.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="whitespace-nowrap text-[11px] font-semibold text-sky-400 hover:text-sky-300 hover:underline"
+                      className="whitespace-nowrap text-[11px] font-semibold text-[#d4c5a5] hover:text-[#e8dcc8] hover:underline"
                     >
                       {op.name}
                     </a>
