@@ -224,15 +224,15 @@ function ComparadorPage() {
                   </Td>
                   <Td><ShuttleCell value={op.shuttle} terminalOffice={op.terminalOffice} /></Td>
                   <Td className="text-white whitespace-nowrap">{op.hours}</Td>
-                  <Td><Badge value={op.price} styles={LEVEL_STYLES} /></Td>
+                  <Td><Badge value={op.price} /></Td>
                   <Td><YesNo value={op.insurance} /></Td>
                   <Td><YesNo value={op.franchise} /></Td>
                   <Td className="text-white">{op.vehicles}</Td>
                   <Td><YesNo value={op.vans} /></Td>
                   <Td><YesNo value={op.renting} /></Td>
-                  <Td><Badge value={op.waitTime} styles={LEVEL_STYLES} /></Td>
-                  <Td><Badge value={op.transparency} styles={LEVEL_STYLES} /></Td>
-                  <Td><Badge value={op.vehicleState} styles={STATE_STYLES} /></Td>
+                  <Td><Badge value={op.waitTime} /></Td>
+                  <Td><Badge value={op.transparency} /></Td>
+                  <Td><Badge value={op.vehicleState} /></Td>
                 </tr>
               ))}
             </tbody>
