@@ -197,7 +197,9 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     const isPublic =
       PUBLIC_ROUTES.includes(path) ||
       path.startsWith("/api/") ||
-      path.startsWith("/business");
+      path.startsWith("/business") ||
+      path.startsWith("/auth/") ||
+      path.startsWith("/legal/");
     if (!isAuthenticated && !isPublic) {
       const isStandalone =
         window.matchMedia("(display-mode: standalone)").matches ||
@@ -229,7 +231,9 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     const isPublic =
       PUBLIC_ROUTES.includes(path) ||
       path.startsWith("/api/") ||
-      path.startsWith("/business");
+      path.startsWith("/business") ||
+      path.startsWith("/auth/") ||
+      path.startsWith("/legal/");
     if (!isPublic) return null;
   }
 

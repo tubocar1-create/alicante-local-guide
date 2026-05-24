@@ -1529,41 +1529,62 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          blocked: boolean
+          city: string | null
           consents: Json
           created_at: string
           display_name: string | null
           email: string | null
           first_name: string | null
+          full_name: string | null
           id: string
+          language: string | null
           last_name: string | null
+          last_seen_at: string | null
+          login_method: string | null
           marketing_opt_in: boolean
           preferences: Json
+          terms_accepted_at: string | null
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
+          blocked?: boolean
+          city?: string | null
           consents?: Json
           created_at?: string
           display_name?: string | null
           email?: string | null
           first_name?: string | null
+          full_name?: string | null
           id: string
+          language?: string | null
           last_name?: string | null
+          last_seen_at?: string | null
+          login_method?: string | null
           marketing_opt_in?: boolean
           preferences?: Json
+          terms_accepted_at?: string | null
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
+          blocked?: boolean
+          city?: string | null
           consents?: Json
           created_at?: string
           display_name?: string | null
           email?: string | null
           first_name?: string | null
+          full_name?: string | null
           id?: string
+          language?: string | null
           last_name?: string | null
+          last_seen_at?: string | null
+          login_method?: string | null
           marketing_opt_in?: boolean
           preferences?: Json
+          terms_accepted_at?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -2577,6 +2598,54 @@ export type Database = {
           },
         ]
       }
+      user_consents: {
+        Row: {
+          accepted_at: string
+          consent_type: string
+          id: string
+          user_id: string
+          version: string
+        }
+        Insert: {
+          accepted_at?: string
+          consent_type: string
+          id?: string
+          user_id: string
+          version?: string
+        }
+        Update: {
+          accepted_at?: string
+          consent_type?: string
+          id?: string
+          user_id?: string
+          version?: string
+        }
+        Relationships: []
+      }
+      user_permissions: {
+        Row: {
+          granted: boolean
+          id: string
+          permission: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          granted: boolean
+          id?: string
+          permission: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          granted?: boolean
+          id?: string
+          permission?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -2660,6 +2729,7 @@ export type Database = {
         Args: { _business_id: string; _user_id: string }
         Returns: boolean
       }
+      touch_last_seen: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "public_user" | "business_user" | "admin"

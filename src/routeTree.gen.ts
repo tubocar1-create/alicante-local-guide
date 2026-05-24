@@ -53,6 +53,8 @@ import { Route as OcioTeatrosRouteImport } from './routes/ocio_.teatros'
 import { Route as OcioConciertosRouteImport } from './routes/ocio_.conciertos'
 import { Route as OcioCinesRouteImport } from './routes/ocio_.cines'
 import { Route as OcioCarteleraRouteImport } from './routes/ocio_.cartelera'
+import { Route as LegalTerminosRouteImport } from './routes/legal.terminos'
+import { Route as LegalPrivacidadRouteImport } from './routes/legal.privacidad'
 import { Route as HotelIdRouteImport } from './routes/hotel.$id'
 import { Route as HospitalesIdRouteImport } from './routes/hospitales_.$id'
 import { Route as ComprarSubsectorRouteImport } from './routes/comprar_.$subsector'
@@ -65,6 +67,12 @@ import { Route as BusinessIssuedRouteImport } from './routes/business.issued'
 import { Route as BusinessInboxRouteImport } from './routes/business.inbox'
 import { Route as BusinessBookingsRouteImport } from './routes/business.bookings'
 import { Route as BusPlannerRouteImport } from './routes/bus.planner'
+import { Route as AuthVerifyEmailRouteImport } from './routes/auth.verify-email'
+import { Route as AuthSignupRouteImport } from './routes/auth.signup'
+import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
+import { Route as AuthLoginRouteImport } from './routes/auth.login'
+import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-password'
+import { Route as AdminUsuariosAuthRouteImport } from './routes/admin.usuarios-auth'
 import { Route as AdminUsuariosRouteImport } from './routes/admin.usuarios'
 import { Route as AdminSystemRouteImport } from './routes/admin.system'
 import { Route as AdminSaludRouteImport } from './routes/admin.salud'
@@ -346,6 +354,16 @@ const OcioCarteleraRoute = OcioCarteleraRouteImport.update({
   path: '/ocio/cartelera',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LegalTerminosRoute = LegalTerminosRouteImport.update({
+  id: '/legal/terminos',
+  path: '/legal/terminos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalPrivacidadRoute = LegalPrivacidadRouteImport.update({
+  id: '/legal/privacidad',
+  path: '/legal/privacidad',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HotelIdRoute = HotelIdRouteImport.update({
   id: '/hotel/$id',
   path: '/hotel/$id',
@@ -405,6 +423,36 @@ const BusPlannerRoute = BusPlannerRouteImport.update({
   id: '/planner',
   path: '/planner',
   getParentRoute: () => BusRoute,
+} as any)
+const AuthVerifyEmailRoute = AuthVerifyEmailRouteImport.update({
+  id: '/auth/verify-email',
+  path: '/auth/verify-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthSignupRoute = AuthSignupRouteImport.update({
+  id: '/auth/signup',
+  path: '/auth/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
+  id: '/auth/reset-password',
+  path: '/auth/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthLoginRoute = AuthLoginRouteImport.update({
+  id: '/auth/login',
+  path: '/auth/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
+  id: '/auth/forgot-password',
+  path: '/auth/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminUsuariosAuthRoute = AdminUsuariosAuthRouteImport.update({
+  id: '/usuarios-auth',
+  path: '/usuarios-auth',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminUsuariosRoute = AdminUsuariosRouteImport.update({
   id: '/usuarios',
@@ -759,6 +807,12 @@ export interface FileRoutesByFullPath {
   '/admin/salud': typeof AdminSaludRoute
   '/admin/system': typeof AdminSystemRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
+  '/admin/usuarios-auth': typeof AdminUsuariosAuthRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/auth/signup': typeof AuthSignupRoute
+  '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
   '/business/inbox': typeof BusinessInboxRouteWithChildren
@@ -771,6 +825,8 @@ export interface FileRoutesByFullPath {
   '/comprar/$subsector': typeof ComprarSubsectorRoute
   '/hospitales/$id': typeof HospitalesIdRoute
   '/hotel/$id': typeof HotelIdRoute
+  '/legal/privacidad': typeof LegalPrivacidadRoute
+  '/legal/terminos': typeof LegalTerminosRoute
   '/ocio/cartelera': typeof OcioCarteleraRoute
   '/ocio/cines': typeof OcioCinesRouteWithChildren
   '/ocio/conciertos': typeof OcioConciertosRoute
@@ -874,6 +930,12 @@ export interface FileRoutesByTo {
   '/admin/salud': typeof AdminSaludRoute
   '/admin/system': typeof AdminSystemRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
+  '/admin/usuarios-auth': typeof AdminUsuariosAuthRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/auth/signup': typeof AuthSignupRoute
+  '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
   '/business/inbox': typeof BusinessInboxRouteWithChildren
@@ -886,6 +948,8 @@ export interface FileRoutesByTo {
   '/comprar/$subsector': typeof ComprarSubsectorRoute
   '/hospitales/$id': typeof HospitalesIdRoute
   '/hotel/$id': typeof HotelIdRoute
+  '/legal/privacidad': typeof LegalPrivacidadRoute
+  '/legal/terminos': typeof LegalTerminosRoute
   '/ocio/cartelera': typeof OcioCarteleraRoute
   '/ocio/cines': typeof OcioCinesRouteWithChildren
   '/ocio/conciertos': typeof OcioConciertosRoute
@@ -993,6 +1057,12 @@ export interface FileRoutesById {
   '/admin/salud': typeof AdminSaludRoute
   '/admin/system': typeof AdminSystemRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
+  '/admin/usuarios-auth': typeof AdminUsuariosAuthRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
+  '/auth/signup': typeof AuthSignupRoute
+  '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/bus/planner': typeof BusPlannerRoute
   '/business/bookings': typeof BusinessBookingsRoute
   '/business/inbox': typeof BusinessInboxRouteWithChildren
@@ -1005,6 +1075,8 @@ export interface FileRoutesById {
   '/comprar_/$subsector': typeof ComprarSubsectorRoute
   '/hospitales_/$id': typeof HospitalesIdRoute
   '/hotel/$id': typeof HotelIdRoute
+  '/legal/privacidad': typeof LegalPrivacidadRoute
+  '/legal/terminos': typeof LegalTerminosRoute
   '/ocio_/cartelera': typeof OcioCarteleraRoute
   '/ocio_/cines': typeof OcioCinesRouteWithChildren
   '/ocio_/conciertos': typeof OcioConciertosRoute
@@ -1113,6 +1185,12 @@ export interface FileRouteTypes {
     | '/admin/salud'
     | '/admin/system'
     | '/admin/usuarios'
+    | '/admin/usuarios-auth'
+    | '/auth/forgot-password'
+    | '/auth/login'
+    | '/auth/reset-password'
+    | '/auth/signup'
+    | '/auth/verify-email'
     | '/bus/planner'
     | '/business/bookings'
     | '/business/inbox'
@@ -1125,6 +1203,8 @@ export interface FileRouteTypes {
     | '/comprar/$subsector'
     | '/hospitales/$id'
     | '/hotel/$id'
+    | '/legal/privacidad'
+    | '/legal/terminos'
     | '/ocio/cartelera'
     | '/ocio/cines'
     | '/ocio/conciertos'
@@ -1228,6 +1308,12 @@ export interface FileRouteTypes {
     | '/admin/salud'
     | '/admin/system'
     | '/admin/usuarios'
+    | '/admin/usuarios-auth'
+    | '/auth/forgot-password'
+    | '/auth/login'
+    | '/auth/reset-password'
+    | '/auth/signup'
+    | '/auth/verify-email'
     | '/bus/planner'
     | '/business/bookings'
     | '/business/inbox'
@@ -1240,6 +1326,8 @@ export interface FileRouteTypes {
     | '/comprar/$subsector'
     | '/hospitales/$id'
     | '/hotel/$id'
+    | '/legal/privacidad'
+    | '/legal/terminos'
     | '/ocio/cartelera'
     | '/ocio/cines'
     | '/ocio/conciertos'
@@ -1346,6 +1434,12 @@ export interface FileRouteTypes {
     | '/admin/salud'
     | '/admin/system'
     | '/admin/usuarios'
+    | '/admin/usuarios-auth'
+    | '/auth/forgot-password'
+    | '/auth/login'
+    | '/auth/reset-password'
+    | '/auth/signup'
+    | '/auth/verify-email'
     | '/bus/planner'
     | '/business/bookings'
     | '/business/inbox'
@@ -1358,6 +1452,8 @@ export interface FileRouteTypes {
     | '/comprar_/$subsector'
     | '/hospitales_/$id'
     | '/hotel/$id'
+    | '/legal/privacidad'
+    | '/legal/terminos'
     | '/ocio_/cartelera'
     | '/ocio_/cines'
     | '/ocio_/conciertos'
@@ -1452,9 +1548,16 @@ export interface RootRouteChildren {
   VocesRoute: typeof VocesRoute
   VuelosRoute: typeof VuelosRoute
   WelcomeRoute: typeof WelcomeRoute
+  AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
+  AuthLoginRoute: typeof AuthLoginRoute
+  AuthResetPasswordRoute: typeof AuthResetPasswordRoute
+  AuthSignupRoute: typeof AuthSignupRoute
+  AuthVerifyEmailRoute: typeof AuthVerifyEmailRoute
   ComprarSubsectorRoute: typeof ComprarSubsectorRoute
   HospitalesIdRoute: typeof HospitalesIdRoute
   HotelIdRoute: typeof HotelIdRoute
+  LegalPrivacidadRoute: typeof LegalPrivacidadRoute
+  LegalTerminosRoute: typeof LegalTerminosRoute
   OcioCarteleraRoute: typeof OcioCarteleraRoute
   OcioCinesRoute: typeof OcioCinesRouteWithChildren
   OcioConciertosRoute: typeof OcioConciertosRoute
@@ -1800,6 +1903,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OcioCarteleraRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/legal/terminos': {
+      id: '/legal/terminos'
+      path: '/legal/terminos'
+      fullPath: '/legal/terminos'
+      preLoaderRoute: typeof LegalTerminosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal/privacidad': {
+      id: '/legal/privacidad'
+      path: '/legal/privacidad'
+      fullPath: '/legal/privacidad'
+      preLoaderRoute: typeof LegalPrivacidadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/hotel/$id': {
       id: '/hotel/$id'
       path: '/hotel/$id'
@@ -1883,6 +2000,48 @@ declare module '@tanstack/react-router' {
       fullPath: '/bus/planner'
       preLoaderRoute: typeof BusPlannerRouteImport
       parentRoute: typeof BusRoute
+    }
+    '/auth/verify-email': {
+      id: '/auth/verify-email'
+      path: '/auth/verify-email'
+      fullPath: '/auth/verify-email'
+      preLoaderRoute: typeof AuthVerifyEmailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/signup': {
+      id: '/auth/signup'
+      path: '/auth/signup'
+      fullPath: '/auth/signup'
+      preLoaderRoute: typeof AuthSignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/reset-password': {
+      id: '/auth/reset-password'
+      path: '/auth/reset-password'
+      fullPath: '/auth/reset-password'
+      preLoaderRoute: typeof AuthResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/login': {
+      id: '/auth/login'
+      path: '/auth/login'
+      fullPath: '/auth/login'
+      preLoaderRoute: typeof AuthLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/forgot-password': {
+      id: '/auth/forgot-password'
+      path: '/auth/forgot-password'
+      fullPath: '/auth/forgot-password'
+      preLoaderRoute: typeof AuthForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/usuarios-auth': {
+      id: '/admin/usuarios-auth'
+      path: '/usuarios-auth'
+      fullPath: '/admin/usuarios-auth'
+      preLoaderRoute: typeof AdminUsuariosAuthRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/admin/usuarios': {
       id: '/admin/usuarios'
@@ -2358,6 +2517,7 @@ interface AdminRouteChildren {
   AdminSaludRoute: typeof AdminSaludRoute
   AdminSystemRoute: typeof AdminSystemRoute
   AdminUsuariosRoute: typeof AdminUsuariosRoute
+  AdminUsuariosAuthRoute: typeof AdminUsuariosAuthRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
@@ -2375,6 +2535,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSaludRoute: AdminSaludRoute,
   AdminSystemRoute: AdminSystemRoute,
   AdminUsuariosRoute: AdminUsuariosRoute,
+  AdminUsuariosAuthRoute: AdminUsuariosAuthRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 
@@ -2540,9 +2701,16 @@ const rootRouteChildren: RootRouteChildren = {
   VocesRoute: VocesRoute,
   VuelosRoute: VuelosRoute,
   WelcomeRoute: WelcomeRoute,
+  AuthForgotPasswordRoute: AuthForgotPasswordRoute,
+  AuthLoginRoute: AuthLoginRoute,
+  AuthResetPasswordRoute: AuthResetPasswordRoute,
+  AuthSignupRoute: AuthSignupRoute,
+  AuthVerifyEmailRoute: AuthVerifyEmailRoute,
   ComprarSubsectorRoute: ComprarSubsectorRoute,
   HospitalesIdRoute: HospitalesIdRoute,
   HotelIdRoute: HotelIdRoute,
+  LegalPrivacidadRoute: LegalPrivacidadRoute,
+  LegalTerminosRoute: LegalTerminosRoute,
   OcioCarteleraRoute: OcioCarteleraRoute,
   OcioCinesRoute: OcioCinesRouteWithChildren,
   OcioConciertosRoute: OcioConciertosRoute,
@@ -2581,13 +2749,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
