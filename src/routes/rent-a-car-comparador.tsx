@@ -141,20 +141,20 @@ function ComparadorPage() {
           <table className="w-full min-w-[1180px] border-separate border-spacing-0 text-[11px]">
             <thead className="text-left text-[10px] uppercase tracking-wide text-white">
               <tr>
-                <Th sticky className="px-2 py-1.5 bg-black text-[#d4c5a5]" title="Operadora"><Building2 className="h-4 w-4" /></Th>
-                <Th title="Perfil"><Fingerprint className="h-4 w-4" /></Th>
-                <Th title="Aeropuerto"><Plane className="h-4 w-4" /></Th>
-                <Th title="Shuttle"><Bus className="h-4 w-4" /></Th>
-                <Th title="Horario"><Clock className="h-4 w-4" /></Th>
-                <Th title="Precio"><CircleDollarSign className="h-4 w-4" /></Th>
-                <Th title="Seguro a todo riesgo"><Shield className="h-4 w-4" /></Th>
-                <Th title="Franquicia"><Lock className="h-4 w-4" /></Th>
-                <Th title="Vehículos"><Car className="h-4 w-4" /></Th>
-                <Th title="Furgonetas"><Truck className="h-4 w-4" /></Th>
-                <Th title="Renting"><FileText className="h-4 w-4" /></Th>
-                <Th title="Tiempo de espera"><Hourglass className="h-4 w-4" /></Th>
-                <Th title="Transparencia"><Eye className="h-4 w-4" /></Th>
-                <Th title="Estado de vehículos"><Star className="h-4 w-4" /></Th>
+                <Th sticky className="px-2 py-3 bg-black text-[#d4c5a5]" title="Operadora"><span className="flex items-center gap-1.5"><Building2 className="h-4 w-4" />Operadora</span></Th>
+                <Th title="Perfil"><span className="flex items-center gap-1.5"><Fingerprint className="h-4 w-4" />Perfil</span></Th>
+                <Th title="Aeropuerto"><span className="flex items-center gap-1.5"><Plane className="h-4 w-4" />Aerop.</span></Th>
+                <Th title="Shuttle"><span className="flex items-center gap-1.5"><Bus className="h-4 w-4" />Shuttle</span></Th>
+                <Th title="Horario"><span className="flex items-center gap-1.5"><Clock className="h-4 w-4" />Horario</span></Th>
+                <Th title="Precio"><span className="flex items-center gap-1.5"><CircleDollarSign className="h-4 w-4" />Precio</span></Th>
+                <Th title="Seguro a todo riesgo"><span className="flex items-center gap-1.5"><Shield className="h-4 w-4" />Seguro</span></Th>
+                <Th title="Franquicia"><span className="flex items-center gap-1.5"><Lock className="h-4 w-4" />Franq.</span></Th>
+                <Th title="Vehículos"><span className="flex items-center gap-1.5"><Car className="h-4 w-4" />Vehíc.</span></Th>
+                <Th title="Furgonetas"><span className="flex items-center gap-1.5"><Truck className="h-4 w-4" />Furgo.</span></Th>
+                <Th title="Renting"><span className="flex items-center gap-1.5"><FileText className="h-4 w-4" />Renting</span></Th>
+                <Th title="Tiempo de espera"><span className="flex items-center gap-1.5"><Hourglass className="h-4 w-4" />Espera</span></Th>
+                <Th title="Transparencia"><span className="flex items-center gap-1.5"><Eye className="h-4 w-4" />Transp.</span></Th>
+                <Th title="Estado de vehículos"><span className="flex items-center gap-1.5"><Star className="h-4 w-4" />Estado</span></Th>
               </tr>
             </thead>
             <tbody>
