@@ -128,12 +128,12 @@ function ShuttleCell({ value, terminalOffice, airport }: { value: boolean; termi
   );
 }
 
-const waitTimeOrder: Record<string, number> = {
+const priceOrder: Record<string, number> = {
   "Muy bajo": 1, "Bajo": 2, "Medio-bajo": 3, "Medio": 4, "Medio-alto": 5, "Alto": 6, "Muy alto": 7,
 };
 
 const SORTED_OPERATORS = [...OPERATORS].sort((a, b) => {
-  return (waitTimeOrder[a.waitTime] || 99) - (waitTimeOrder[b.waitTime] || 99);
+  return (priceOrder[a.price] || 99) - (priceOrder[b.price] || 99);
 });
 
 function ComparadorPage() {
