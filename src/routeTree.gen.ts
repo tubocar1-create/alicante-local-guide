@@ -17,6 +17,7 @@ import { Route as ThreadsRouteImport } from './routes/threads'
 import { Route as StayRouteImport } from './routes/stay'
 import { Route as SistemaSanitarioRouteImport } from './routes/sistema-sanitario'
 import { Route as SaludRouteImport } from './routes/salud'
+import { Route as RestaurantsRouteImport } from './routes/restaurants'
 import { Route as RepoRouteImport } from './routes/repo'
 import { Route as RentACarComparadorRouteImport } from './routes/rent-a-car-comparador'
 import { Route as RentACarRouteImport } from './routes/rent-a-car'
@@ -164,6 +165,11 @@ const SaludRoute = SaludRouteImport.update({
   path: '/salud',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RestaurantsRoute = RestaurantsRouteImport.update({
+  id: '/restaurants',
+  path: '/restaurants',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RepoRoute = RepoRouteImport.update({
   id: '/repo',
   path: '/repo',
@@ -300,9 +306,9 @@ const SaludCategoriaRoute = SaludCategoriaRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const RestaurantsPlaceIdRoute = RestaurantsPlaceIdRouteImport.update({
-  id: '/restaurants/$placeId',
-  path: '/restaurants/$placeId',
-  getParentRoute: () => rootRouteImport,
+  id: '/$placeId',
+  path: '/$placeId',
+  getParentRoute: () => RestaurantsRoute,
 } as any)
 const PlayasMapaRoute = PlayasMapaRouteImport.update({
   id: '/mapa',
@@ -724,6 +730,7 @@ export interface FileRoutesByFullPath {
   '/rent-a-car': typeof RentACarRoute
   '/rent-a-car-comparador': typeof RentACarComparadorRoute
   '/repo': typeof RepoRoute
+  '/restaurants': typeof RestaurantsRouteWithChildren
   '/salud': typeof SaludRoute
   '/sistema-sanitario': typeof SistemaSanitarioRoute
   '/stay': typeof StayRoute
@@ -838,6 +845,7 @@ export interface FileRoutesByTo {
   '/rent-a-car': typeof RentACarRoute
   '/rent-a-car-comparador': typeof RentACarComparadorRoute
   '/repo': typeof RepoRoute
+  '/restaurants': typeof RestaurantsRouteWithChildren
   '/salud': typeof SaludRoute
   '/sistema-sanitario': typeof SistemaSanitarioRoute
   '/stay': typeof StayRoute
@@ -954,6 +962,7 @@ export interface FileRoutesById {
   '/rent-a-car': typeof RentACarRoute
   '/rent-a-car-comparador': typeof RentACarComparadorRoute
   '/repo': typeof RepoRoute
+  '/restaurants': typeof RestaurantsRouteWithChildren
   '/salud': typeof SaludRoute
   '/sistema-sanitario': typeof SistemaSanitarioRoute
   '/stay': typeof StayRoute
@@ -1072,6 +1081,7 @@ export interface FileRouteTypes {
     | '/rent-a-car'
     | '/rent-a-car-comparador'
     | '/repo'
+    | '/restaurants'
     | '/salud'
     | '/sistema-sanitario'
     | '/stay'
@@ -1186,6 +1196,7 @@ export interface FileRouteTypes {
     | '/rent-a-car'
     | '/rent-a-car-comparador'
     | '/repo'
+    | '/restaurants'
     | '/salud'
     | '/sistema-sanitario'
     | '/stay'
@@ -1301,6 +1312,7 @@ export interface FileRouteTypes {
     | '/rent-a-car'
     | '/rent-a-car-comparador'
     | '/repo'
+    | '/restaurants'
     | '/salud'
     | '/sistema-sanitario'
     | '/stay'
@@ -1418,6 +1430,7 @@ export interface RootRouteChildren {
   RentACarRoute: typeof RentACarRoute
   RentACarComparadorRoute: typeof RentACarComparadorRoute
   RepoRoute: typeof RepoRoute
+  RestaurantsRoute: typeof RestaurantsRouteWithChildren
   SaludRoute: typeof SaludRoute
   SistemaSanitarioRoute: typeof SistemaSanitarioRoute
   StayRoute: typeof StayRoute
@@ -1433,7 +1446,6 @@ export interface RootRouteChildren {
   OcioCinesRoute: typeof OcioCinesRouteWithChildren
   OcioConciertosRoute: typeof OcioConciertosRoute
   OcioTeatrosRoute: typeof OcioTeatrosRoute
-  RestaurantsPlaceIdRoute: typeof RestaurantsPlaceIdRoute
   SaludCategoriaRoute: typeof SaludCategoriaRouteWithChildren
   VuelosIataRoute: typeof VuelosIataRoute
   ApiPublicAenaFlightsRoute: typeof ApiPublicAenaFlightsRoute
@@ -1521,6 +1533,13 @@ declare module '@tanstack/react-router' {
       path: '/salud'
       fullPath: '/salud'
       preLoaderRoute: typeof SaludRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/restaurants': {
+      id: '/restaurants'
+      path: '/restaurants'
+      fullPath: '/restaurants'
+      preLoaderRoute: typeof RestaurantsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/repo': {
@@ -1714,10 +1733,10 @@ declare module '@tanstack/react-router' {
     }
     '/restaurants/$placeId': {
       id: '/restaurants/$placeId'
-      path: '/restaurants/$placeId'
+      path: '/$placeId'
       fullPath: '/restaurants/$placeId'
       preLoaderRoute: typeof RestaurantsPlaceIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof RestaurantsRoute
     }
     '/playas/mapa': {
       id: '/playas/mapa'
@@ -2406,6 +2425,18 @@ const PlayasRouteChildren: PlayasRouteChildren = {
 const PlayasRouteWithChildren =
   PlayasRoute._addFileChildren(PlayasRouteChildren)
 
+interface RestaurantsRouteChildren {
+  RestaurantsPlaceIdRoute: typeof RestaurantsPlaceIdRoute
+}
+
+const RestaurantsRouteChildren: RestaurantsRouteChildren = {
+  RestaurantsPlaceIdRoute: RestaurantsPlaceIdRoute,
+}
+
+const RestaurantsRouteWithChildren = RestaurantsRoute._addFileChildren(
+  RestaurantsRouteChildren,
+)
+
 interface ThreadsRouteChildren {
   ThreadsIdRoute: typeof ThreadsIdRoute
 }
@@ -2479,6 +2510,7 @@ const rootRouteChildren: RootRouteChildren = {
   RentACarRoute: RentACarRoute,
   RentACarComparadorRoute: RentACarComparadorRoute,
   RepoRoute: RepoRoute,
+  RestaurantsRoute: RestaurantsRouteWithChildren,
   SaludRoute: SaludRoute,
   SistemaSanitarioRoute: SistemaSanitarioRoute,
   StayRoute: StayRoute,
@@ -2494,7 +2526,6 @@ const rootRouteChildren: RootRouteChildren = {
   OcioCinesRoute: OcioCinesRouteWithChildren,
   OcioConciertosRoute: OcioConciertosRoute,
   OcioTeatrosRoute: OcioTeatrosRoute,
-  RestaurantsPlaceIdRoute: RestaurantsPlaceIdRoute,
   SaludCategoriaRoute: SaludCategoriaRouteWithChildren,
   VuelosIataRoute: VuelosIataRoute,
   ApiPublicAenaFlightsRoute: ApiPublicAenaFlightsRoute,
