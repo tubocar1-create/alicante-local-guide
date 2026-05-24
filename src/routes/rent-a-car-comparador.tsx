@@ -103,6 +103,31 @@ const CITY_OFFICE_LOCATION: Record<string, string> = {
   primoti: "Pol. industrial",
 };
 
+const DEPOSIT_DATA: Record<string, { zero: "Sí" | "No" | "Parcial" | "—"; approx: string }> = {
+  goldcar:   { zero: "Sí",      approx: "0–300 €" },
+  centauro:  { zero: "Sí",      approx: "0–300 €" },
+  record:    { zero: "Sí",      approx: "0–300 €" },
+  clickrent: { zero: "Parcial", approx: "300–600 €" },
+  wiber:     { zero: "Sí",      approx: "0–200 €" },
+  ok:        { zero: "Parcial", approx: "300–800 €" },
+  sixt:      { zero: "Parcial", approx: "300–900 €" },
+  hertz:     { zero: "Parcial", approx: "400–1.000 €" },
+  europcar:  { zero: "Parcial", approx: "300–800 €" },
+  avis:      { zero: "Parcial", approx: "400–1.200 €" },
+  enterprise:{ zero: "Parcial", approx: "300–700 €" },
+  budget:    { zero: "Parcial", approx: "500–1.200 €" },
+  drivalia:  { zero: "Parcial", approx: "300–700 €" },
+  firefly:   { zero: "No",      approx: "1.200–1.800 €" },
+  victoria:  { zero: "—",       approx: "—" },
+  northgate: { zero: "—",       approx: "—" },
+  telefurgo: { zero: "—",       approx: "—" },
+  covey:     { zero: "—",       approx: "—" },
+  demetrio:  { zero: "—",       approx: "—" },
+  primoti:   { zero: "—",       approx: "—" },
+};
+
+
+
 
 
 function Badge({ value }: { value: string; styles?: Record<string, string> }) {
@@ -189,7 +214,8 @@ function ComparadorPage() {
                 <Th title="Horario"><span className="flex items-center gap-1.5"><Clock className="h-4 w-4" />Horario</span></Th>
                 <Th title="Precio"><span className="flex items-center gap-1.5"><CircleDollarSign className="h-4 w-4" />Precio</span></Th>
                 <Th title="Todo Riesgo" className="min-w-[100px]"><span className="flex items-center gap-1.5"><Shield className="h-4 w-4" />Todo Riesgo</span></Th>
-                <Th title="Franquicia"><span className="flex items-center gap-1.5"><Lock className="h-4 w-4" />FRANQUICIA</span></Th>
+                <Th title="Depósito aproximado"><span className="flex items-center gap-1.5"><CircleDollarSign className="h-4 w-4" />Depósito aprox.</span></Th>
+                <Th title="Cero depósito"><span className="flex items-center gap-1.5"><Lock className="h-4 w-4" />Cero Depósito</span></Th>
                 <Th title="Vehículos"><span className="flex items-center gap-1.5"><Car className="h-4 w-4" />Vehíc.</span></Th>
                 <Th title="Furgonetas"><span className="flex items-center gap-1.5"><Truck className="h-4 w-4" />Furgo.</span></Th>
                 <Th title="Renting"><span className="flex items-center gap-1.5"><FileText className="h-4 w-4" />Renting</span></Th>
@@ -245,7 +271,8 @@ function ComparadorPage() {
                   <Td className="text-white whitespace-nowrap">{op.hours}</Td>
                   <Td className="whitespace-nowrap"><Badge value={op.price} /></Td>
                   <Td className="whitespace-nowrap min-w-[100px]"><YesNo value={op.insurance} /></Td>
-                  <Td className="whitespace-nowrap"><YesNo value={op.franchise} /></Td>
+                  <Td className="whitespace-nowrap text-white text-[11px] font-medium">{DEPOSIT_DATA[op.id]?.approx ?? "—"}</Td>
+                  <Td className="whitespace-nowrap"><YesNo value={(DEPOSIT_DATA[op.id]?.zero ?? "—") as YesNoOpt} /></Td>
                   <Td className="text-white whitespace-nowrap">{op.vehicles}</Td>
                   <Td className="whitespace-nowrap"><YesNo value={op.vans} /></Td>
                   <Td className="whitespace-nowrap"><YesNo value={op.renting} /></Td>
