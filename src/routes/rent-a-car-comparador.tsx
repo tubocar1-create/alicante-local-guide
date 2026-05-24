@@ -137,7 +137,7 @@ function ComparadorPage() {
           <table className="w-full min-w-[1180px] border-separate border-spacing-0 text-[11px]">
             <thead className="text-left text-[10px] uppercase tracking-wide text-white">
               <tr>
-                <Th sticky className="px-2 py-1.5">Operadora</Th>
+                <Th sticky className="px-2 py-1.5 bg-[#b8a88a] text-black">Operadora</Th>
                 <Th>Perfil</Th>
                 <Th>Aerop.</Th>
                 <Th>Shuttle</Th>
@@ -161,10 +161,10 @@ function ComparadorPage() {
                     <img
                       src={logoUrl(op.domain)}
                       alt={op.name}
-                      width={18}
-                      height={18}
+                      width={24}
+                      height={24}
                       loading="lazy"
-                      className="h-[18px] w-[18px] shrink-0 rounded-sm object-contain bg-white/90"
+                      className="h-6 w-6 shrink-0 rounded-sm object-contain bg-white/90"
                       onError={(e) => {
                         (e.currentTarget as HTMLImageElement).style.visibility = "hidden";
                       }}
@@ -243,7 +243,7 @@ function Td({
   sticky?: boolean;
 }) {
   const stickyCls = sticky
-    ? "sticky left-0 z-10 bg-black shadow-[2px_0_4px_-2px_rgba(0,0,0,0.6)] group-hover:bg-neutral-900"
+    ? "sticky left-0 z-10 bg-[#d4c5a5] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.6)] group-hover:bg-[#c4b495]"
     : "group-hover:bg-white/5";
   return (
     <td className={`border-b border-white/5 px-1.5 py-1 align-middle whitespace-nowrap ${stickyCls} ${className}`}>
