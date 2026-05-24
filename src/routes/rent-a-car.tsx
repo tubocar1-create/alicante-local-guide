@@ -101,7 +101,7 @@ function RentACarPage() {
 
         <PhotoCard
           photo={{
-            src: coastImg,
+            // src: undefined,
             emoji: "🌊",
             caption: "Costa mediterránea — el motivo por el que alquilas coche",
           }}
@@ -119,7 +119,7 @@ function RentACarPage() {
 
         <PhotoCard
           photo={{
-            src: roadImg,
+            // src: undefined,
             emoji: "🛣️",
             caption: "Carreteras costeras — de Alicante a la Costa Blanca en minutos",
           }}
@@ -135,7 +135,7 @@ function RentACarPage() {
 
         <PhotoCard
           photo={{
-            src: airportImg,
+            // src: undefined,
             emoji: "✈️",
             caption: "Aeropuerto ALC — donde empieza tu experiencia de alquiler",
           }}
@@ -150,7 +150,7 @@ function RentACarPage() {
 
         <PhotoCard
           photo={{
-            src: fleetImg,
+            // src: undefined,
             emoji: "🚗",
             caption: "Flotas de alquiler — no todas son iguales",
           }}
@@ -168,7 +168,7 @@ function RentACarPage() {
 
         <PhotoCard
           photo={{
-            src: keysImg,
+            // src: undefined,
             emoji: "🔑",
             caption: "Llaves en mano — el momento que define si la espera valió la pena",
           }}
@@ -181,7 +181,7 @@ function RentACarPage() {
 
         <PhotoCard
           photo={{
-            src: calpeImg,
+            // src: undefined,
             emoji: "🏖️",
             caption: "Calpe, Jávea, Altea — destinos a un trayecto de coche",
           }}
