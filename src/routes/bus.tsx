@@ -10,7 +10,7 @@ import {
   AlertCircle,
   Smartphone,
   ChevronRight,
-  Route,
+  Route as RouteIcon,
   Euro,
   Info,
 } from "lucide-react";
