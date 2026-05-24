@@ -974,7 +974,7 @@ export function ChatScreen() {
                       >
                         {t.label === "Fiestas de Alicante" ? (
                           <img src={hoguerasIcon} alt="" className="h-full w-full rounded-full object-cover" />
-                        ) : t.label === "Transporte público" ? (
+                        ) : t.label === "Transporte multimodal inteligente" ? (
                           <img src={busAlicanteIcon} alt="" className="h-[78%] w-[78%] object-contain" />
                         ) : Icon ? (
                           <Icon className="h-5 w-5" strokeWidth={1.9} style={{ color: pastel.fg }} />
