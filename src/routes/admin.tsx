@@ -1,9 +1,10 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { useQueryClient, useIsFetching } from "@tanstack/react-query";
+import { useQueryClient, useIsFetching, useQuery } from "@tanstack/react-query";
 import {
   Lock,
   ShieldCheck,
+  ShieldAlert,
   LayoutDashboard,
   Users,
   Network,
@@ -20,12 +21,15 @@ import {
   RefreshCw,
   EyeOff,
   ClipboardCheck,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ADMIN_PIN, PIN_KEY } from "@/lib/admin-shared";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
+import { checkIsAdmin } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -90,76 +94,77 @@ const HERRAMIENTAS = [
 
 function AdminLayout() {
   useAdminManifest();
-  const [pin, setPin] = useState("");
-  const [authed, setAuthed] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [sessionUser, setSessionUser] = useState<{ id: string; email: string | null } | null>(null);
+  const [authReady, setAuthReady] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const qc = useQueryClient();
   const isFetching = useIsFetching();
 
-  // Refresh global: invalida TODAS las queries del panel admin y fuerza
-  // un re-fetch. Útil cuando el admin acaba de hacer una acción fuera del
-  // panel y quiere ver el efecto sin recargar la página entera.
-  const refreshAll = () => {
-    qc.invalidateQueries();
-  };
-
+  // Hidratar sesión Supabase y suscribirse a cambios.
   useEffect(() => {
-    if (typeof window !== "undefined" && sessionStorage.getItem(PIN_KEY) === "1") {
-      setAuthed(true);
-    }
+    let mounted = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (!mounted) return;
+      const u = data.session?.user;
+      setSessionUser(u ? { id: u.id, email: u.email ?? null } : null);
+      setAuthReady(true);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+      const u = session?.user;
+      setSessionUser(u ? { id: u.id, email: u.email ?? null } : null);
+    });
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
+
+  const adminQuery = useQuery({
+    queryKey: ["is-admin", sessionUser?.id ?? null],
+    queryFn: () => checkIsAdmin(),
+    enabled: !!sessionUser,
+    staleTime: 5 * 60 * 1000,
+  });
 
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
 
-  if (!authed) {
+  const refreshAll = () => {
+    qc.invalidateQueries();
+  };
+
+  // Pantalla de carga inicial
+  if (!authReady) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-6">
-        <Card className="w-full max-w-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Lock className="h-5 w-5" /> Acceso restringido
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (pin === ADMIN_PIN) {
-                  sessionStorage.setItem(PIN_KEY, "1");
-                  setAuthed(true);
-                  setError(null);
-                } else {
-                  setError("Contraseña incorrecta");
-                }
-              }}
-              className="space-y-3"
-            >
-              <Input
-                type="password"
-                inputMode="numeric"
-                autoFocus
-                value={pin}
-                onChange={(e) => setPin(e.target.value)}
-                placeholder="Contraseña"
-              />
-              {error && <p className="text-sm text-destructive">{error}</p>}
-              <Button type="submit" className="w-full">
-                Entrar
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
-  const logout = () => {
-    sessionStorage.removeItem(PIN_KEY);
-    window.location.reload();
+  // No autenticado -> login
+  if (!sessionUser) {
+    return <AdminLogin />;
+  }
+
+  // Autenticado pero comprobando rol
+  if (adminQuery.isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // Autenticado pero NO admin -> bloqueo
+  if (!adminQuery.data?.isAdmin) {
+    return <AdminForbidden email={sessionUser.email} />;
+  }
+
+  const logout = async () => {
+    await supabase.auth.signOut();
   };
 
   return (
@@ -175,8 +180,8 @@ function AdminLayout() {
           <div className="flex items-center gap-2 font-bold">
             <ShieldCheck className="h-5 w-5 text-primary" /> Admin
           </div>
-          <p className="text-[11px] text-muted-foreground mt-1">
-            Panel privado · noindex
+          <p className="text-[11px] text-muted-foreground mt-1 truncate">
+            {sessionUser.email ?? "Sesión admin"}
           </p>
         </div>
         <nav className="p-2 space-y-0.5">
@@ -206,15 +211,12 @@ function AdminLayout() {
             title="Actualiza todos los datos visibles en el panel"
           >
             <RefreshCw
-              className={cn(
-                "h-4 w-4 mr-2",
-                isFetching > 0 && "animate-spin",
-              )}
+              className={cn("h-4 w-4 mr-2", isFetching > 0 && "animate-spin")}
             />
             {isFetching > 0 ? "Actualizando…" : "Actualizar todo"}
           </Button>
           <Button variant="ghost" size="sm" className="w-full" onClick={logout}>
-            Salir
+            Cerrar sesión
           </Button>
         </div>
       </aside>
@@ -245,12 +247,7 @@ function AdminLayout() {
             disabled={isFetching > 0}
             title="Actualizar todos los datos"
           >
-            <RefreshCw
-              className={cn(
-                "h-5 w-5",
-                isFetching > 0 && "animate-spin",
-              )}
-            />
+            <RefreshCw className={cn("h-5 w-5", isFetching > 0 && "animate-spin")} />
           </Button>
         </div>
         <div className="p-4 md:p-8 max-w-6xl mx-auto">
@@ -281,5 +278,112 @@ function NavItem({
       <Icon className="h-4 w-4 shrink-0" />
       <span className="truncate">{label}</span>
     </Link>
+  );
+}
+
+function AdminLogin() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const onEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    setLoading(false);
+    if (error) setError(error.message);
+  };
+
+  const onGoogle = async () => {
+    setError(null);
+    setLoading(true);
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: typeof window !== "undefined" ? `${window.location.origin}/admin` : undefined,
+    });
+    if (result.error) {
+      setError(result.error.message);
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background p-6">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Lock className="h-5 w-5" /> Acceso administrador
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={onGoogle}
+            disabled={loading}
+          >
+            Continuar con Google
+          </Button>
+          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+            <div className="h-px flex-1 bg-border" />
+            o con email
+            <div className="h-px flex-1 bg-border" />
+          </div>
+          <form onSubmit={onEmailLogin} className="space-y-3">
+            <Input
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="email"
+              required
+            />
+            <Input
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="contraseña"
+              required
+            />
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Entrando…" : "Entrar"}
+            </Button>
+          </form>
+          <p className="text-[11px] text-muted-foreground text-center">
+            Solo cuentas autorizadas pueden acceder.
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function AdminForbidden({ email }: { email: string | null }) {
+  const logout = async () => {
+    await supabase.auth.signOut();
+  };
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background p-6">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <ShieldAlert className="h-5 w-5" /> Sin permisos
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            La cuenta <span className="font-medium">{email ?? "actual"}</span> no
+            tiene permisos de administrador.
+          </p>
+          <Button variant="outline" className="w-full" onClick={logout}>
+            Cerrar sesión
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
