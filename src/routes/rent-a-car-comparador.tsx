@@ -98,21 +98,19 @@ function YesNo({ value }: { value: YesNoOpt | boolean }) {
 }
 
 function ShuttleCell({ value, terminalOffice }: { value: boolean; terminalOffice: boolean }) {
+  const terminal = terminalOffice ? " (Terminal)" : "";
   if (value) {
     return (
-      <div className="flex items-center gap-1.5 text-white">
-        <Bus className="h-4 w-4" />
-        <span className="text-sm font-medium">Sí</span>
+      <div className="flex items-center gap-1.5 text-white whitespace-nowrap">
+        <Bus className="h-4 w-4 shrink-0" />
+        <span className="text-sm font-medium">Sí{terminal}</span>
       </div>
     );
   }
   return (
-    <div className="flex flex-col">
-      <div className="flex items-center gap-1.5 text-white">
-        <XCircle className="h-4 w-4" />
-        <span className="text-sm font-medium">No</span>
-      </div>
-      {terminalOffice && <span className="text-[11px] text-white">(Terminal)</span>}
+    <div className="flex items-center gap-1.5 text-white whitespace-nowrap">
+      <XCircle className="h-4 w-4 shrink-0" />
+      <span className="text-sm font-medium">No{terminal}</span>
     </div>
   );
 }
@@ -157,8 +155,8 @@ function ComparadorPage() {
             </thead>
             <tbody>
               {OPERATORS.map((op) => (
-                <tr key={op.id} className="group">
-                <Td sticky className="px-1.5 py-1.5">
+                <tr key={op.id} className="group h-10">
+                <Td sticky className="px-1.5 py-1 whitespace-nowrap">
                   <div className="flex items-center gap-1">
                     <img
                       src={logoUrl(op.domain)}
@@ -181,8 +179,8 @@ function ComparadorPage() {
                     </a>
                   </div>
                 </Td>
-                  <Td className="text-white">{op.profile}</Td>
-                  <Td>
+                  <Td className="text-white whitespace-nowrap">{op.profile}</Td>
+                  <Td className="whitespace-nowrap">
                     {op.airport ? (
                       <span className="inline-block whitespace-nowrap rounded-md bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-white">
                         Terminal
@@ -191,17 +189,17 @@ function ComparadorPage() {
                       <span className="text-white">—</span>
                     )}
                   </Td>
-                  <Td><ShuttleCell value={op.shuttle} terminalOffice={op.terminalOffice} /></Td>
+                  <Td className="whitespace-nowrap"><ShuttleCell value={op.shuttle} terminalOffice={op.terminalOffice} /></Td>
                   <Td className="text-white whitespace-nowrap">{op.hours}</Td>
-                  <Td><Badge value={op.price} /></Td>
-                  <Td><YesNo value={op.insurance} /></Td>
-                  <Td><YesNo value={op.franchise} /></Td>
-                  <Td className="text-white">{op.vehicles}</Td>
-                  <Td><YesNo value={op.vans} /></Td>
-                  <Td><YesNo value={op.renting} /></Td>
-                  <Td><Badge value={op.waitTime} /></Td>
-                  <Td><Badge value={op.transparency} /></Td>
-                  <Td><Badge value={op.vehicleState} /></Td>
+                  <Td className="whitespace-nowrap"><Badge value={op.price} /></Td>
+                  <Td className="whitespace-nowrap"><YesNo value={op.insurance} /></Td>
+                  <Td className="whitespace-nowrap"><YesNo value={op.franchise} /></Td>
+                  <Td className="text-white whitespace-nowrap">{op.vehicles}</Td>
+                  <Td className="whitespace-nowrap"><YesNo value={op.vans} /></Td>
+                  <Td className="whitespace-nowrap"><YesNo value={op.renting} /></Td>
+                  <Td className="whitespace-nowrap"><Badge value={op.waitTime} /></Td>
+                  <Td className="whitespace-nowrap"><Badge value={op.transparency} /></Td>
+                  <Td className="whitespace-nowrap"><Badge value={op.vehicleState} /></Td>
                 </tr>
               ))}
             </tbody>
@@ -229,7 +227,7 @@ function Th({
     ? "sticky left-0 top-0 z-20 bg-neutral-900 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.6)]"
     : base;
   return (
-    <th className={`border-b border-white/10 px-1.5 py-1.5 font-semibold whitespace-nowrap ${stickyCls} ${className}`}>
+    <th className={`border-b border-white/10 px-1.5 py-1 font-semibold whitespace-nowrap ${stickyCls} ${className}`}>
       {children}
     </th>
   );
@@ -248,7 +246,7 @@ function Td({
     ? "sticky left-0 z-10 bg-black shadow-[2px_0_4px_-2px_rgba(0,0,0,0.6)] group-hover:bg-neutral-900"
     : "group-hover:bg-white/5";
   return (
-    <td className={`border-b border-white/5 px-1.5 py-1.5 align-middle ${stickyCls} ${className}`}>
+    <td className={`border-b border-white/5 px-1.5 py-1 align-middle whitespace-nowrap ${stickyCls} ${className}`}>
       {children}
     </td>
   );
