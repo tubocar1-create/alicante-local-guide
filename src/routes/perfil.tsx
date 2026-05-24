@@ -71,6 +71,51 @@ function PerfilPage() {
       </header>
 
       <main className="mx-auto max-w-md space-y-4 px-3 py-4">
+        {/* Real-auth (Supabase) account block */}
+        {appAuth.isAuthenticated ? (
+          <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+            <p className="text-xs font-semibold uppercase text-muted-foreground">Mi cuenta</p>
+            <p className="mt-1 text-sm font-bold">
+              {appAuth.profile?.full_name || appAuth.profile?.display_name || appAuth.user?.email}
+            </p>
+            <p className="truncate text-xs text-muted-foreground">{appAuth.user?.email}</p>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              {appAuth.emailVerified ? "✓ Email verificado" : "⚠ Email pendiente de verificar"}
+              {appAuth.profile?.login_method && ` · ${appAuth.profile.login_method}`}
+            </p>
+            <button
+              onClick={appAuth.signOut}
+              className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-3 py-1.5 text-xs font-semibold active:scale-95"
+            >
+              <LogOut className="h-3.5 w-3.5" /> Cerrar sesión
+            </button>
+          </section>
+        ) : (
+          <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+            <p className="text-sm font-semibold">¿Aún no tienes cuenta?</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Crea una cuenta para guardar favoritos y sincronizar entre dispositivos.
+            </p>
+            <div className="mt-3 flex gap-2">
+              <Link
+                to="/auth/signup"
+                className="rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
+              >
+                Crear cuenta
+              </Link>
+              <Link
+                to="/auth/login"
+                className="rounded-full border border-border bg-secondary px-3 py-1.5 text-xs font-semibold"
+              >
+                Iniciar sesión
+              </Link>
+            </div>
+          </section>
+        )}
+
+        <PermissionPrompt permission="geolocation" />
+        <PermissionPrompt permission="microphone" />
+
         <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-base font-bold text-primary-foreground">
