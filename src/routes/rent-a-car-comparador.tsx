@@ -212,7 +212,7 @@ function ComparadorPage() {
                     )}
                   </Td>
                   <Td className="whitespace-nowrap"><ShuttleCell value={op.shuttle} terminalOffice={op.terminalOffice} airport={op.airport} /></Td>
-                  <Td className="whitespace-nowrap"><YesNo value={op.cityOffice} /></Td>
+                  <Td className="whitespace-nowrap"><span className="text-xs font-medium text-white">{op.cityOffice ? "Sí" : "No"}</span></Td>
                   <Td className="text-white whitespace-nowrap">{op.hours}</Td>
                   <Td className="whitespace-nowrap"><Badge value={op.price} /></Td>
                   <Td className="whitespace-nowrap min-w-[100px]"><YesNo value={op.insurance} /></Td>
