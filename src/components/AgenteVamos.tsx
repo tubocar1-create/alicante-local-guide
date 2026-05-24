@@ -1318,21 +1318,26 @@ function localResolve(
 ): LocalResult {
   const query = normalizeSpeech(text);
 
+  // 0) Correcciones aprobadas en el CPA. Si una frase fue entrenada como
+  // alias de un intent, debe ganar sobre heurísticas antiguas del cliente
+  // (incluida la intro genérica de compras), para que subsectores como
+  // "comprar_moda" o "comprar_tecnologia" se resuelvan al endpoint exacto.
+  const trainedMatch = matchDbIntent(query, catalog.intents);
+  if (trainedMatch && trainedMatch.len >= 4) {
+    return dbIntentToResult(trainedMatch.intent);
+  }
+
   if (isShoppingRequest(query)) {
+    const hubIntent = catalog.intents.find((i) => i.key === "comprar");
+    const trainedReply = (hubIntent?.spoken_reply ?? "").trim();
     return {
-      reply: SHOPPING_INTRO_REPLY,
+      reply: trainedReply || SHOPPING_INTRO_REPLY,
       path: "/comprar",
       audio: "fallback",
       pendingDomain: null,
     };
   }
 
-  // 0) Correcciones aprobadas en el CPA. Si una frase fue entrenada como
-  // alias de un intent, debe ganar sobre heurísticas antiguas del cliente.
-  const trainedMatch = matchDbIntent(query, catalog.intents);
-  if (trainedMatch && trainedMatch.len >= 8) {
-    return dbIntentToResult(trainedMatch.intent);
-  }
 
   // Dominio activo = prioridad máxima sobre entidades/keywords aisladas.
   // Si el agente acaba de preguntar por TRAM/transporte, respuestas cortas
