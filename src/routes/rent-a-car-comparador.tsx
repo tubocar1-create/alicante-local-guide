@@ -170,7 +170,6 @@ function ComparadorPage() {
                 <Th title="Furgonetas"><span className="flex items-center gap-1.5"><Truck className="h-4 w-4" />Furgo.</span></Th>
                 <Th title="Renting"><span className="flex items-center gap-1.5"><FileText className="h-4 w-4" />Renting</span></Th>
                 <Th title="Tiempo de espera"><span className="flex items-center gap-1.5"><Hourglass className="h-4 w-4" />Espera</span></Th>
-                <Th title="Transparencia" className="min-w-[110px]"><span className="flex items-center gap-1.5"><Eye className="h-4 w-4" />Transparencia</span></Th>
                 <Th title="Estado de vehículos" className="min-w-[120px]"><span className="flex items-center gap-1.5"><Star className="h-4 w-4" />Estado Vehículos</span></Th>
               </tr>
             </thead>
@@ -182,10 +181,10 @@ function ComparadorPage() {
                     <img
                       src={logoUrl(op.domain)}
                       alt={op.name}
-                      width={24}
-                      height={24}
+                      width={28}
+                      height={28}
                       loading="lazy"
-                      className="h-6 w-6 shrink-0 rounded-sm object-contain bg-white/90"
+                      className="h-7 w-7 shrink-0 rounded-sm object-contain bg-white/90"
                       onError={(e) => {
                         (e.currentTarget as HTMLImageElement).style.visibility = "hidden";
                       }}
@@ -219,7 +218,6 @@ function ComparadorPage() {
                   <Td className="whitespace-nowrap"><YesNo value={op.vans} /></Td>
                   <Td className="whitespace-nowrap"><YesNo value={op.renting} /></Td>
                   <Td className="whitespace-nowrap"><Badge value={op.waitTime} /></Td>
-                  <Td className="whitespace-nowrap"><Badge value={op.transparency} /></Td>
                   <Td className="whitespace-nowrap"><Badge value={op.vehicleState} /></Td>
                 </tr>
               ))}
