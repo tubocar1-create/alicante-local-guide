@@ -1319,10 +1319,11 @@ function QrVamosInfo({ onClose }: { onClose: () => void }) {
 }
 
 function ProfileButton({ large = false }: { large?: boolean }) {
-  const { user, isAuthenticated } = useAuth();
+  const { profile, user, isAuthenticated } = useAppAuth();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  const initial = user?.name?.trim().charAt(0).toUpperCase();
+  const name = profile?.full_name || profile?.display_name || user?.email || "";
+  const initial = name.trim().charAt(0).toUpperCase();
   const sizeCls = large
     ? "h-11 w-11 text-base bg-primary text-primary-foreground border-0"
     : "h-8 w-8 text-xs bg-card text-primary border border-border";
@@ -1339,8 +1340,8 @@ function ProfileButton({ large = false }: { large?: boolean }) {
   }
   return (
     <Link
-      to="/login"
-      search={{ redirect: "/perfil" }}
+      to="/auth/login"
+      search={{ redirect: "/perfil" } as never}
       aria-label="Iniciar sesión"
       className={`flex items-center justify-center overflow-hidden rounded-full shadow-sm active:scale-95 ${sizeCls}`}
     >
