@@ -82,57 +82,26 @@ const OPERATORS: Operator[] = [
   { id: "primoti",   name: "PRIMOTI",            domain: "primoti.com",           url: "https://www.primoti.com",           profile: "Industrial/logística",    airport: false, shuttle: false, hours: "08:00–18:00", price: "Medio-alto",  insurance: "Sí",       franchise: "Sí",       vehicles: "Comerciales e industriales",    vans: "Especialista", renting: "Sí", waitTime: "Bajo",       terminalOffice: false, transparency: "Alta",       vehicleState: "Muy bueno", incidentRisk: "Bajo" },
 ];
 
-const LEVEL_STYLES: Record<string, string> = {
-  "Muy bajo":    "text-emerald-300",
-  "Bajo":        "text-emerald-300",
-  "Medio-bajo":  "text-lime-300",
-  "Medio":       "text-amber-300",
-  "Medio-alto":  "text-orange-300",
-  "Alto":        "text-rose-300",
-  "Muy alto":    "text-rose-400",
-  "Baja":        "text-rose-300",
-  "Media-baja":  "text-orange-300",
-  "Media":       "text-amber-300",
-  "Media-alta":  "text-lime-300",
-  "Alta":        "text-emerald-300",
-  "Muy alta":    "text-emerald-200",
-};
-
-// For "Precio" higher = worse (red). For transparency/state higher = better (green).
-// LEVEL_STYLES already maps both name sets.
-
-const STATE_STYLES: Record<string, string> = {
-  "Correcto":  "text-amber-300",
-  "Bueno":     "text-lime-300",
-  "Muy bueno": "text-emerald-300",
-  "Excelente": "text-emerald-200",
-};
 
 
-function Badge({ value, styles }: { value: string; styles: Record<string, string> }) {
-  const cls = (styles[value] ?? "text-slate-300").replace(/bg-\S+/g, "").trim();
+function Badge({ value }: { value: string; styles?: Record<string, string> }) {
   return (
-    <span className={`whitespace-nowrap text-[11px] font-semibold ${cls}`}>
+    <span className="whitespace-nowrap text-[11px] font-semibold text-white">
       {value}
     </span>
   );
 }
 
 function YesNo({ value }: { value: YesNoOpt | boolean }) {
-  if (value === true) return <Check className="h-4 w-4 text-emerald-600" />;
-  if (value === false) return <XCircle className="h-4 w-4 text-rose-400" />;
-  const tone =
-    value === "Sí"           ? "text-emerald-600" :
-    value === "No"           ? "text-rose-500" :
-    value === "Especialista" ? "text-blue-600 font-semibold" :
-                               "text-amber-600";
-  return <span className={`text-xs font-medium ${tone}`}>{value}</span>;
+  if (value === true) return <Check className="h-4 w-4 text-white" />;
+  if (value === false) return <XCircle className="h-4 w-4 text-white" />;
+  return <span className="text-xs font-medium text-white">{value}</span>;
 }
 
 function ShuttleCell({ value, terminalOffice }: { value: boolean; terminalOffice: boolean }) {
   if (value) {
     return (
-      <div className="flex items-center gap-1.5 text-emerald-600">
+      <div className="flex items-center gap-1.5 text-white">
         <Bus className="h-4 w-4" />
         <span className="text-sm font-medium">Sí</span>
       </div>
@@ -140,36 +109,36 @@ function ShuttleCell({ value, terminalOffice }: { value: boolean; terminalOffice
   }
   return (
     <div className="flex flex-col">
-      <div className="flex items-center gap-1.5 text-rose-500">
+      <div className="flex items-center gap-1.5 text-white">
         <XCircle className="h-4 w-4" />
         <span className="text-sm font-medium">No</span>
       </div>
-      {terminalOffice && <span className="text-[11px] text-muted-foreground">(Terminal)</span>}
+      {terminalOffice && <span className="text-[11px] text-white">(Terminal)</span>}
     </div>
   );
 }
 
 function ComparadorPage() {
   return (
-    <div className="h-dvh overflow-hidden bg-black text-slate-100 flex flex-col">
+    <div className="h-dvh overflow-hidden bg-black text-white flex flex-col">
       <main className="mx-auto w-full max-w-[1600px] flex-1 min-h-0 flex flex-col px-4 py-4">
         <div className="mb-3 flex items-center gap-2">
           <Link
             to="/rent-a-car"
-            className="grid h-8 w-8 place-items-center rounded-full text-slate-300 hover:bg-white/10"
+            className="grid h-8 w-8 place-items-center rounded-full text-white hover:bg-white/10"
             aria-label="Volver"
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <h1 className="flex items-center gap-1.5 text-base font-semibold text-white">
             {OPERATORS.length} operadoras comparadas
-            <Info className="h-4 w-4 text-slate-500" />
+            <Info className="h-4 w-4 text-white" />
           </h1>
         </div>
 
         <div className="flex-1 min-h-0 overflow-auto rounded-2xl border border-white/10 bg-black">
           <table className="w-full min-w-[1180px] border-separate border-spacing-0 text-[11px]">
-            <thead className="text-left text-[10px] uppercase tracking-wide text-slate-400">
+            <thead className="text-left text-[10px] uppercase tracking-wide text-white">
               <tr>
                 <Th sticky className="px-2 py-1.5">Operadora</Th>
                 <Th>Perfil</Th>
@@ -213,35 +182,34 @@ function ComparadorPage() {
                     </a>
                   </div>
                 </Td>
-                  <Td className="text-slate-300">{op.profile}</Td>
+                  <Td className="text-white">{op.profile}</Td>
                   <Td>
                     {op.airport ? (
-                      <span className="inline-block whitespace-nowrap rounded-md bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-sky-300">
+                      <span className="inline-block whitespace-nowrap rounded-md bg-sky-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-white">
                         Terminal
                       </span>
                     ) : (
-                      <span className="text-slate-600">—</span>
+                      <span className="text-white">—</span>
                     )}
                   </Td>
                   <Td><ShuttleCell value={op.shuttle} terminalOffice={op.terminalOffice} /></Td>
-                  <Td className="text-slate-300 whitespace-nowrap">{op.hours}</Td>
-                  <Td><Badge value={op.price} styles={LEVEL_STYLES} /></Td>
+                  <Td className="text-white whitespace-nowrap">{op.hours}</Td>
+                  <Td><Badge value={op.price} /></Td>
                   <Td><YesNo value={op.insurance} /></Td>
                   <Td><YesNo value={op.franchise} /></Td>
-                  <Td className="text-slate-300">{op.vehicles}</Td>
+                  <Td className="text-white">{op.vehicles}</Td>
                   <Td><YesNo value={op.vans} /></Td>
                   <Td><YesNo value={op.renting} /></Td>
-                  <Td><Badge value={op.waitTime} styles={LEVEL_STYLES} /></Td>
-                  <Td><Badge value={op.transparency} styles={LEVEL_STYLES} /></Td>
-                  <Td><Badge value={op.vehicleState} styles={STATE_STYLES} /></Td>
+                  <Td><Badge value={op.waitTime} /></Td>
+                  <Td><Badge value={op.transparency} /></Td>
+                  <Td><Badge value={op.vehicleState} /></Td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        <p className="mt-2 text-center text-[11px] text-slate-500">
-          Datos orientativos. Desliza horizontalmente para ver todas las columnas
+        <p className="mt-2 text-center text-[11px] text-white">
         </p>
       </main>
     </div>
