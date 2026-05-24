@@ -13,18 +13,16 @@ import { AgenteVamosFab } from "@/components/AgenteVamos";
 import { AppVersionWatcher } from "@/components/AppVersionWatcher";
 
 
-import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
+import { AuthPromptDialog } from "@/components/AuthPrompt";
 
 import appCss from "../styles.css?url";
 import "@/integrations/supabase/server-fn-fetch";
 
-const PUBLIC_ROUTES = ["/login", "/magic", "/welcome", "/playas", "/playas/mapa", "/admin"];
-const WELCOMED_KEY = "vamos-welcomed-v1";
-
 // Stable per server/worker boot — changes on every deploy. Used by
 // AppVersionWatcher to silently reload tabs running an old bundle.
 const APP_VERSION = String(Date.now());
+
 
 
 function NotFoundComponent() {
@@ -177,65 +175,13 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthGate>
-        <Outlet />
-      </AuthGate>
+      <Outlet />
       <Toaster />
       <InstallPWA />
       <AgenteVamosFab />
       <AppVersionWatcher />
+      <AuthPromptDialog />
     </QueryClientProvider>
   );
 }
 
-function AuthGate({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, loading } = useAuth();
-
-  useEffect(() => {
-    if (typeof window === "undefined" || loading) return;
-    const path = window.location.pathname;
-    const isPublic =
-      PUBLIC_ROUTES.includes(path) ||
-      path.startsWith("/api/") ||
-      path.startsWith("/business") ||
-      path.startsWith("/auth/") ||
-      path.startsWith("/legal/");
-    if (!isAuthenticated && !isPublic) {
-      const isStandalone =
-        window.matchMedia("(display-mode: standalone)").matches ||
-        // @ts-expect-error iOS
-        window.navigator.standalone === true;
-      const welcomed = localStorage.getItem(WELCOMED_KEY) === "1";
-      // Skip the install/welcome step in the Lovable preview (iframe or lovable host).
-      // It only applies to real https navigation in production.
-      let inPreview = false;
-      try {
-        inPreview = window.self !== window.top;
-      } catch {
-        inPreview = true;
-      }
-      const host = window.location.hostname;
-      const isLovableHost =
-        host.endsWith("lovable.app") ||
-        host.endsWith("lovableproject.com") ||
-        host === "localhost";
-      const skipWelcome = inPreview || isLovableHost;
-      const target = !skipWelcome && !isStandalone && !welcomed ? "/welcome" : "/login";
-      const redirect = encodeURIComponent(path + window.location.search);
-      window.location.replace(`${target}?redirect=${redirect}`);
-    }
-  }, [isAuthenticated, loading]);
-
-  if (typeof window !== "undefined" && !loading && !isAuthenticated) {
-    const path = window.location.pathname;
-    const isPublic =
-      PUBLIC_ROUTES.includes(path) ||
-      path.startsWith("/api/") ||
-      path.startsWith("/business") ||
-      path.startsWith("/auth/") ||
-      path.startsWith("/legal/");
-    if (!isPublic) return null;
-  }
-
-  return <>{children}</>;
-}
