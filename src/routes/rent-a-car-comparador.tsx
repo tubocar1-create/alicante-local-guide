@@ -3,6 +3,7 @@ import {
   ArrowLeft, Bus, XCircle, Car, Info, Check, PersonStanding,
   Plane, Clock, Tag, Shield, Lock, Truck, FileText,
   Hourglass, Eye, Star, Building2, Fingerprint, CircleDollarSign,
+  MapPinOff,
 } from "lucide-react";
 
 export const Route = createFileRoute("/rent-a-car-comparador")({
@@ -101,13 +102,21 @@ function YesNo({ value }: { value: YesNoOpt | boolean }) {
   return <span className="text-xs font-medium text-white">{value}</span>;
 }
 
-function ShuttleCell({ value, terminalOffice }: { value: boolean; terminalOffice: boolean }) {
+function ShuttleCell({ value, terminalOffice, airport }: { value: boolean; terminalOffice: boolean; airport: boolean }) {
   const terminal = terminalOffice ? " (Terminal)" : "";
   if (value) {
     return (
       <div className="flex items-center gap-1.5 text-white whitespace-nowrap">
         <Bus className="h-4 w-4 shrink-0" />
         <span className="text-sm font-medium">Sí{terminal}</span>
+      </div>
+    );
+  }
+  if (!airport) {
+    return (
+      <div className="flex items-center gap-1.5 text-white whitespace-nowrap">
+        <MapPinOff className="h-4 w-4 shrink-0" />
+        <span className="text-sm font-medium">lejos</span>
       </div>
     );
   }
@@ -193,7 +202,7 @@ function ComparadorPage() {
                       <span className="text-white">—</span>
                     )}
                   </Td>
-                  <Td className="whitespace-nowrap"><ShuttleCell value={op.shuttle} terminalOffice={op.terminalOffice} /></Td>
+                  <Td className="whitespace-nowrap"><ShuttleCell value={op.shuttle} terminalOffice={op.terminalOffice} airport={op.airport} /></Td>
                   <Td className="text-white whitespace-nowrap">{op.hours}</Td>
                   <Td className="whitespace-nowrap"><Badge value={op.price} /></Td>
                   <Td className="whitespace-nowrap"><YesNo value={op.insurance} /></Td>
