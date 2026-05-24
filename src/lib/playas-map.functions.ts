@@ -2,26 +2,23 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { MAP_BEACHES, getBeachBySlug, LOCAL_BEACH_PHOTOS, GOOGLE_PHOTO_SKIP, type MapBeach } from "./playas-map-data";
 
-const GATEWAY = "https://connector-gateway.lovable.dev/google_maps";
+const PLACES_BASE = "https://places.googleapis.com/v1";
 
-function gwHeaders(extra?: Record<string, string>) {
-  const lovable = process.env.LOVABLE_API_KEY;
-  const gmaps = process.env.GOOGLE_MAPS_API_KEY;
-  if (!lovable) throw new Error("LOVABLE_API_KEY missing");
-  if (!gmaps) throw new Error("GOOGLE_MAPS_API_KEY missing");
-  return {
-    Authorization: `Bearer ${lovable}`,
-    "X-Connection-Api-Key": gmaps,
-    "Content-Type": "application/json",
-    ...(extra ?? {}),
-  };
+function getKey(): string | null {
+  return process.env.GOOGLE_PLACES_API_KEY ?? null;
 }
 
 async function findPlaceId(beach: MapBeach): Promise<string | null> {
+  const key = getKey();
+  if (!key) return null;
   try {
-    const res = await fetch(`${GATEWAY}/places/v1/places:searchText`, {
+    const res = await fetch(`${PLACES_BASE}/places:searchText`, {
       method: "POST",
-      headers: gwHeaders({ "X-Goog-FieldMask": "places.id,places.displayName" }),
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": key,
+        "X-Goog-FieldMask": "places.id,places.displayName",
+      },
       body: JSON.stringify({
         textQuery: `${beach.name} Alicante`,
         locationBias: { circle: { center: { latitude: beach.lat, longitude: beach.lng }, radius: 3000 } },
@@ -38,9 +35,11 @@ async function findPlaceId(beach: MapBeach): Promise<string | null> {
 }
 
 async function photoMediaUri(photoName: string, maxWidthPx = 1600): Promise<string | null> {
+  const key = getKey();
+  if (!key) return null;
   try {
-    const url = `${GATEWAY}/places/v1/${photoName}/media?maxWidthPx=${maxWidthPx}&skipHttpRedirect=true`;
-    const res = await fetch(url, { headers: gwHeaders() });
+    const url = `${PLACES_BASE}/${photoName}/media?maxWidthPx=${maxWidthPx}&skipHttpRedirect=true&key=${key}`;
+    const res = await fetch(url);
     if (!res.ok) return null;
     const j: any = await res.json();
     return (j.photoUri as string) ?? null;
@@ -48,6 +47,7 @@ async function photoMediaUri(photoName: string, maxWidthPx = 1600): Promise<stri
     return null;
   }
 }
+
 
 type PlaceDetails = {
   id: string;
@@ -60,13 +60,17 @@ type PlaceDetails = {
 };
 
 async function getPlaceDetails(placeId: string): Promise<PlaceDetails | null> {
+  const key = getKey();
+  if (!key) return null;
   try {
-    const res = await fetch(`${GATEWAY}/places/v1/places/${encodeURIComponent(placeId)}?languageCode=es`, {
-      headers: gwHeaders({
+    const res = await fetch(`${PLACES_BASE}/places/${encodeURIComponent(placeId)}?languageCode=es`, {
+      headers: {
+        "X-Goog-Api-Key": key,
         "X-Goog-FieldMask":
           "id,photos,reviews,rating,userRatingCount,googleMapsUri,formattedAddress",
-      }),
+      },
     });
+
     if (!res.ok) return null;
     const j: any = await res.json();
     const photos: any[] = j.photos ?? [];
