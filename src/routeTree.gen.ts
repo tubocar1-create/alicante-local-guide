@@ -24,8 +24,6 @@ import { Route as RentACarRouteImport } from './routes/rent-a-car'
 import { Route as PlayasRouteImport } from './routes/playas'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as OcioRouteImport } from './routes/ocio'
-import { Route as MagicRouteImport } from './routes/magic'
-import { Route as LoginRouteImport } from './routes/login'
 import { Route as HospitalesRouteImport } from './routes/hospitales'
 import { Route as FiestasRouteImport } from './routes/fiestas'
 import { Route as FarmaciasRouteImport } from './routes/farmacias'
@@ -207,16 +205,6 @@ const PerfilRoute = PerfilRouteImport.update({
 const OcioRoute = OcioRouteImport.update({
   id: '/ocio',
   path: '/ocio',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MagicRoute = MagicRouteImport.update({
-  id: '/magic',
-  path: '/magic',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HospitalesRoute = HospitalesRouteImport.update({
@@ -777,8 +765,6 @@ export interface FileRoutesByFullPath {
   '/farmacias': typeof FarmaciasRoute
   '/fiestas': typeof FiestasRoute
   '/hospitales': typeof HospitalesRoute
-  '/login': typeof LoginRoute
-  '/magic': typeof MagicRoute
   '/ocio': typeof OcioRoute
   '/perfil': typeof PerfilRoute
   '/playas': typeof PlayasRouteWithChildren
@@ -901,8 +887,6 @@ export interface FileRoutesByTo {
   '/farmacias': typeof FarmaciasRoute
   '/fiestas': typeof FiestasRoute
   '/hospitales': typeof HospitalesRoute
-  '/login': typeof LoginRoute
-  '/magic': typeof MagicRoute
   '/ocio': typeof OcioRoute
   '/perfil': typeof PerfilRoute
   '/playas': typeof PlayasRouteWithChildren
@@ -1027,8 +1011,6 @@ export interface FileRoutesById {
   '/farmacias': typeof FarmaciasRoute
   '/fiestas': typeof FiestasRoute
   '/hospitales': typeof HospitalesRoute
-  '/login': typeof LoginRoute
-  '/magic': typeof MagicRoute
   '/ocio': typeof OcioRoute
   '/perfil': typeof PerfilRoute
   '/playas': typeof PlayasRouteWithChildren
@@ -1155,8 +1137,6 @@ export interface FileRouteTypes {
     | '/farmacias'
     | '/fiestas'
     | '/hospitales'
-    | '/login'
-    | '/magic'
     | '/ocio'
     | '/perfil'
     | '/playas'
@@ -1279,8 +1259,6 @@ export interface FileRouteTypes {
     | '/farmacias'
     | '/fiestas'
     | '/hospitales'
-    | '/login'
-    | '/magic'
     | '/ocio'
     | '/perfil'
     | '/playas'
@@ -1404,8 +1382,6 @@ export interface FileRouteTypes {
     | '/farmacias'
     | '/fiestas'
     | '/hospitales'
-    | '/login'
-    | '/magic'
     | '/ocio'
     | '/perfil'
     | '/playas'
@@ -1531,8 +1507,6 @@ export interface RootRouteChildren {
   FarmaciasRoute: typeof FarmaciasRoute
   FiestasRoute: typeof FiestasRoute
   HospitalesRoute: typeof HospitalesRoute
-  LoginRoute: typeof LoginRoute
-  MagicRoute: typeof MagicRoute
   OcioRoute: typeof OcioRoute
   PerfilRoute: typeof PerfilRoute
   PlayasRoute: typeof PlayasRouteWithChildren
@@ -1698,20 +1672,6 @@ declare module '@tanstack/react-router' {
       path: '/ocio'
       fullPath: '/ocio'
       preLoaderRoute: typeof OcioRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/magic': {
-      id: '/magic'
-      path: '/magic'
-      fullPath: '/magic'
-      preLoaderRoute: typeof MagicRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/hospitales': {
@@ -2684,8 +2644,6 @@ const rootRouteChildren: RootRouteChildren = {
   FarmaciasRoute: FarmaciasRoute,
   FiestasRoute: FiestasRoute,
   HospitalesRoute: HospitalesRoute,
-  LoginRoute: LoginRoute,
-  MagicRoute: MagicRoute,
   OcioRoute: OcioRoute,
   PerfilRoute: PerfilRoute,
   PlayasRoute: PlayasRouteWithChildren,

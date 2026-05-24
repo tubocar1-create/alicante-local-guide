@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAppAuth } from "@/hooks/useAppAuth";
 
 // Silently reloads the page when a new deploy is detected.
 // Strategy: each SSR response embeds <meta name="app-version" content="..."/>.
