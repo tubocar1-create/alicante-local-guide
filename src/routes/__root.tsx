@@ -13,18 +13,16 @@ import { AgenteVamosFab } from "@/components/AgenteVamos";
 import { AppVersionWatcher } from "@/components/AppVersionWatcher";
 
 
-import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
+import { AuthPromptDialog } from "@/components/AuthPrompt";
 
 import appCss from "../styles.css?url";
 import "@/integrations/supabase/server-fn-fetch";
 
-const PUBLIC_ROUTES = ["/login", "/magic", "/welcome", "/playas", "/playas/mapa", "/admin"];
-const WELCOMED_KEY = "vamos-welcomed-v1";
-
 // Stable per server/worker boot — changes on every deploy. Used by
 // AppVersionWatcher to silently reload tabs running an old bundle.
 const APP_VERSION = String(Date.now());
+
 
 
 function NotFoundComponent() {
