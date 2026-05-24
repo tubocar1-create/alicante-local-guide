@@ -177,7 +177,7 @@ function ComparadorPage() {
               {SORTED_OPERATORS.map((op) => (
                 <tr key={op.id} className="group h-10">
                 <Td sticky className="px-1.5 py-1 whitespace-nowrap">
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2">
                     <img
                       src={logoUrl(op.domain)}
                       alt={op.name}
