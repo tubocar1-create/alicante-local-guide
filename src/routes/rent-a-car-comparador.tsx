@@ -155,7 +155,13 @@ const SORTED_OPERATORS = [...OPERATORS].sort((a, b) => {
 
 function ComparadorPage() {
   return (
-    <div className="h-dvh overflow-hidden bg-black text-white flex flex-col">
+    <div
+      className="h-dvh overflow-hidden text-white flex flex-col"
+      style={{
+        background:
+          "linear-gradient(180deg, #0a1933 0%, #0d2547 40%, #0a1933 100%)",
+      }}
+    >
       <main className="mx-auto w-full max-w-[1600px] flex-1 min-h-0 flex flex-col px-4 py-4">
         <div className="mb-3 flex items-center gap-2">
           <Link
@@ -171,11 +177,11 @@ function ComparadorPage() {
           </h1>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-auto rounded-2xl border border-white/10 bg-black">
+        <div className="flex-1 min-h-0 overflow-auto rounded-2xl border border-white/10 bg-[#0a1933]/60">
           <table className="w-full min-w-[1180px] border-separate border-spacing-0 text-[11px]">
             <thead className="text-left text-[10px] uppercase tracking-wide text-white">
               <tr>
-                <Th sticky className="px-2 py-3 bg-black text-[#d4c5a5]" title="Operadora"><span className="flex items-center gap-1.5"><Building2 className="h-4 w-4" />Operadora</span></Th>
+                <Th sticky className="px-2 py-3 bg-[#0d2547] text-[#d4c5a5]" title="Operadora"><span className="flex items-center gap-1.5"><Building2 className="h-4 w-4" />Operadora</span></Th>
                 <Th title="Categoría">CATEGORÍA</Th>
                 <Th title="Aeropuerto"><span className="flex items-center gap-1.5"><Plane className="h-4 w-4" />Aerop.</span></Th>
                 <Th title="Shuttle"><span className="flex items-center gap-1.5"><Bus className="h-4 w-4" />Shuttle</span></Th>
@@ -269,9 +275,9 @@ function Th({
   sticky?: boolean;
   title?: string;
 }) {
-  const base = "sticky top-0 z-10 bg-neutral-900";
+  const base = "sticky top-0 z-10 bg-[#0d2547]";
   const stickyCls = sticky
-    ? "sticky left-0 top-0 z-20 bg-neutral-900 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.6)]"
+    ? "sticky left-0 top-0 z-20 bg-[#0d2547] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.6)]"
     : base;
   return (
     <th title={title} className={`border-b border-white/10 px-1.5 py-1 font-semibold whitespace-nowrap ${stickyCls} ${className}`}>
@@ -290,7 +296,7 @@ function Td({
   sticky?: boolean;
 }) {
   const stickyCls = sticky
-    ? "sticky left-0 z-10 bg-black shadow-[2px_0_4px_-2px_rgba(0,0,0,0.6)] group-hover:bg-neutral-900"
+    ? "sticky left-0 z-10 bg-[#0d2547] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.6)] group-hover:bg-[#0f2e52]"
     : "group-hover:bg-white/5";
   return (
     <td className={`border-b border-white/5 px-1.5 py-1 align-middle whitespace-nowrap ${stickyCls} ${className}`}>
