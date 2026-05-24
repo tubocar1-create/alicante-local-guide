@@ -189,7 +189,7 @@ function BusUrbanoPage() {
         {/* Líneas principales */}
         <section>
           <div className="mb-2 flex items-center gap-2">
-            <Route className="h-4 w-4 text-cyan-300" />
+            <RouteIcon className="h-4 w-4 text-cyan-300" />
             <h2 className="text-sm font-bold text-white">Líneas principales</h2>
           </div>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
