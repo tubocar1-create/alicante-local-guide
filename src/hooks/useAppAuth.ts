@@ -69,6 +69,9 @@ export function useAppAuth() {
   }, [user]);
 
   const signOut = useCallback(async () => {
+    if (typeof window !== "undefined") {
+      try { localStorage.removeItem("va:display-name"); } catch {}
+    }
     await supabase.auth.signOut();
   }, []);
 
