@@ -164,7 +164,7 @@ function ComparadorPage() {
                 <Th title="Shuttle"><span className="flex items-center gap-1.5"><Bus className="h-4 w-4" />Shuttle</span></Th>
                 <Th title="Horario"><span className="flex items-center gap-1.5"><Clock className="h-4 w-4" />Horario</span></Th>
                 <Th title="Precio"><span className="flex items-center gap-1.5"><CircleDollarSign className="h-4 w-4" />Precio</span></Th>
-                <Th title="Todo riesgo completo" className="min-w-[100px]"><span className="flex items-center gap-1.5"><Shield className="h-4 w-4" />TR completo</span></Th>
+                <Th title="Todo Riesgo" className="min-w-[100px]"><span className="flex items-center gap-1.5"><Shield className="h-4 w-4" />Todo Riesgo</span></Th>
                 <Th title="Franquicia"><span className="flex items-center gap-1.5"><Lock className="h-4 w-4" />Franq.</span></Th>
                 <Th title="Vehículos"><span className="flex items-center gap-1.5"><Car className="h-4 w-4" />Vehíc.</span></Th>
                 <Th title="Furgonetas"><span className="flex items-center gap-1.5"><Truck className="h-4 w-4" />Furgo.</span></Th>
