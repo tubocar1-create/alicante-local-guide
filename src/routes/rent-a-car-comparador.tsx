@@ -54,6 +54,7 @@ type Operator = {
   renting: YesNoOpt;
   waitTime: Level;
   terminalOffice: boolean;
+  cityOffice: boolean;
   transparency: Level;
   vehicleState: string;
   incidentRisk: Level;
