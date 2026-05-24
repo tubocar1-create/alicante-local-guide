@@ -128,6 +128,14 @@ function ShuttleCell({ value, terminalOffice, airport }: { value: boolean; termi
   );
 }
 
+const waitTimeOrder: Record<string, number> = {
+  "Muy bajo": 1, "Bajo": 2, "Medio-bajo": 3, "Medio": 4, "Medio-alto": 5, "Alto": 6, "Muy alto": 7,
+};
+
+const SORTED_OPERATORS = [...OPERATORS].sort((a, b) => {
+  return (waitTimeOrder[a.waitTime] || 99) - (waitTimeOrder[b.waitTime] || 99);
+});
+
 function ComparadorPage() {
   return (
     <div className="h-dvh overflow-hidden bg-black text-white flex flex-col">
@@ -140,9 +148,9 @@ function ComparadorPage() {
           >
             <ArrowLeft className="h-4 w-4" />
           </Link>
-          <h1 className="flex items-center gap-1.5 text-base font-semibold text-white uppercase">
-            {OPERATORS.length} OPERADORAS COMPARADAS
-            <Info className="h-4 w-4 text-white" />
+          <h1 className="flex items-center gap-1.5 text-base font-semibold text-[#d4c5a5] uppercase">
+            TABLA COMPARATIVA
+            <Info className="h-4 w-4 text-[#d4c5a5]" />
           </h1>
         </div>
 
@@ -167,7 +175,7 @@ function ComparadorPage() {
               </tr>
             </thead>
             <tbody>
-              {OPERATORS.map((op) => (
+              {SORTED_OPERATORS.map((op) => (
                 <tr key={op.id} className="group h-10">
                 <Td sticky className="px-1.5 py-1 whitespace-nowrap">
                   <div className="flex items-center gap-1">
