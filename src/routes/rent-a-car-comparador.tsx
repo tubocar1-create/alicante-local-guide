@@ -109,9 +109,9 @@ const STATE_STYLES: Record<string, string> = {
 };
 
 function Badge({ value, styles }: { value: string; styles: Record<string, string> }) {
-  const cls = styles[value] ?? "bg-slate-100 text-slate-700";
+  const cls = (styles[value] ?? "text-slate-300").replace(/bg-\S+/g, "").trim();
   return (
-    <span className={`inline-block whitespace-nowrap rounded-md px-2 py-0.5 text-[11px] font-semibold ${cls}`}>
+    <span className={`whitespace-nowrap text-[11px] font-semibold ${cls}`}>
       {value}
     </span>
   );
