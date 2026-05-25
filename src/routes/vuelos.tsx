@@ -655,7 +655,9 @@ function ConnectivityMap({
               <TransformComponent
                 wrapperClass="!h-full !w-full"
                 contentClass="!h-full !w-full"
+                wrapperStyle={lockZoom ? { touchAction: "pan-y" } : undefined}
               >
+
         <svg
           viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
           className="absolute inset-0 h-full w-full"
