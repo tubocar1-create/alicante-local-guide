@@ -31,6 +31,8 @@ type NavItem = {
   label: string;
   icon: typeof Home;
   exact?: boolean;
+  /** Activa el item solo cuando ?type=<match>. "none" = solo si NO hay ?type=L. */
+  typeMatch?: "L" | "none";
 };
 
 const NAV_ITEMS: NavItem[] = [
@@ -42,7 +44,8 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/ocio", label: "Ocio", icon: Sparkles },
   { to: "/fiestas", label: "Fiestas", icon: PartyPopper },
   { to: "/tram", label: "Tram", icon: TramFront },
-  { to: "/vuelos", label: "Vuelos", icon: Plane },
+  { to: "/vuelos", label: "Vuelos de salida", icon: Plane, typeMatch: "none" },
+  { to: "/vuelos?type=L", label: "Vuelos de llegada", icon: Plane, typeMatch: "L" },
   { to: "/clima", label: "Clima", icon: CloudSun },
   { to: "/explore", label: "Explorar mapa", icon: MapIcon },
   { to: "/threads", label: "Mensajes", icon: MessageSquare },
