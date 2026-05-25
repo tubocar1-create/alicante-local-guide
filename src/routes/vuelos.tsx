@@ -556,11 +556,13 @@ function ConnectivityMap({
   selectedCity,
   onSelectCity,
   flightType,
+  lockZoom = false,
 }: {
   cities: CityAgg[];
   selectedCity: string | null;
   onSelectCity: (iata: string) => void;
   flightType: "S" | "L";
+  lockZoom?: boolean;
 }) {
   const alc = project(COORDS.ALC);
 
