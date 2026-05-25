@@ -519,6 +519,33 @@ export type Database = {
           },
         ]
       }
+      beach_covers: {
+        Row: {
+          attribution: string | null
+          created_at: string
+          public_url: string
+          slug: string
+          storage_path: string
+          updated_at: string
+        }
+        Insert: {
+          attribution?: string | null
+          created_at?: string
+          public_url: string
+          slug: string
+          storage_path: string
+          updated_at?: string
+        }
+        Update: {
+          attribution?: string | null
+          created_at?: string
+          public_url?: string
+          slug?: string
+          storage_path?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           business_id: string
