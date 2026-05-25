@@ -888,8 +888,9 @@ export function ChatScreen() {
           )}
 
           {isWelcome && !activeSubmenu && (
-            <div className="mt-1 px-1">
-              <div className="grid grid-cols-5 gap-x-1 gap-y-3">
+            <div className="mt-1 px-1 lg:mt-0 lg:flex-1 lg:self-center">
+              <div className="grid grid-cols-5 gap-x-1 gap-y-3 lg:grid-cols-3 lg:gap-x-4 lg:gap-y-6">
+
                 {[
                   ...SUGGESTIONS.map((s) => {
                     const match = s.label.match(/^(\p{Extended_Pictographic}+)/u);
