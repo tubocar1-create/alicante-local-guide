@@ -444,7 +444,7 @@ function DestinationDashboard() {
               <span>Llegada</span>
               <span>Duración</span>
             </div>
-            <div className="max-h-[320px] divide-y divide-slate-800/60 overflow-y-auto">
+            <div className="always-scroll max-h-[320px] divide-y divide-slate-800/60">
               {window14Flights.map((f, i) => {
                 const d = parseDate(f.fecha);
                 const day = `${WEEKDAYS_PRETTY[(d.getDay() + 6) % 7]} ${d.getDate()} ${MONTHS_LONG[d.getMonth()].slice(0, 3)}`;
