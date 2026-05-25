@@ -122,6 +122,7 @@ function PerfilPage() {
         <PermissionPrompt permission="geolocation" />
         <PermissionPrompt permission="microphone" />
 
+        {isAuthenticated && (
         <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-base font-bold text-primary-foreground">
@@ -136,24 +137,13 @@ function PerfilPage() {
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
-            {isAuthenticated ? (
-              <button
-                onClick={signOut}
-                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-3 py-1.5 text-xs font-semibold active:scale-95"
-              >
-                <LogOut className="h-3.5 w-3.5" />
-                Cerrar sesión
-              </button>
-            ) : (
-              <Link
-                to="/auth/login"
-                search={{ redirect: "/perfil" } as never}
-                className="inline-flex items-center gap-1.5 rounded-full gradient-warm px-3 py-1.5 text-xs font-semibold text-primary-foreground active:scale-95"
-              >
-                <LogIn className="h-3.5 w-3.5" />
-                Iniciar sesión
-              </Link>
-            )}
+            <button
+              onClick={signOut}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary px-3 py-1.5 text-xs font-semibold active:scale-95"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              Cerrar sesión
+            </button>
             {isPreviewHost() && (
               <Link
                 to="/business"
@@ -165,6 +155,8 @@ function PerfilPage() {
             )}
           </div>
         </section>
+        )}
+
 
         <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
           <div className="flex items-center justify-between">
