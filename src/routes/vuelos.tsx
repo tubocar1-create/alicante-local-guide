@@ -647,10 +647,11 @@ function ConnectivityMap({
           ref={trRef}
           initialScale={3.7}
           minScale={3.7}
-          maxScale={10}
-          wheel={{ step: 0.15 }}
-          doubleClick={{ mode: "zoomIn", step: 0.6 }}
-          panning={{ velocityDisabled: true }}
+          maxScale={lockZoom ? 3.7 : 10}
+          wheel={{ step: 0.15, disabled: lockZoom }}
+          doubleClick={{ mode: "zoomIn", step: 0.6, disabled: lockZoom }}
+          pinch={{ disabled: lockZoom }}
+          panning={{ velocityDisabled: true, disabled: lockZoom }}
           limitToBounds={true}
         >
           {({ zoomIn, resetTransform }) => {
