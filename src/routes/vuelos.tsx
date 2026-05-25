@@ -389,6 +389,25 @@ function VuelosDashboard() {
           "linear-gradient(180deg, #020617 0%, #06111f 50%, #020617 100%)",
       }}
     >
+      {/* Scrollbar doble de ancho — sólo web */}
+      <style>{`
+        @media (min-width: 1024px) {
+          html { scrollbar-width: auto; scrollbar-color: rgba(34,211,238,0.45) rgba(0,0,0,0.25); }
+          html::-webkit-scrollbar, body::-webkit-scrollbar { width: 24px; }
+          html::-webkit-scrollbar-track, body::-webkit-scrollbar-track { background: rgba(0,0,0,0.25); }
+          html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb {
+            background: rgba(34,211,238,0.45);
+            border-radius: 12px;
+            border: 4px solid transparent;
+            background-clip: padding-box;
+          }
+          html::-webkit-scrollbar-thumb:hover, body::-webkit-scrollbar-thumb:hover {
+            background: rgba(34,211,238,0.7);
+            background-clip: padding-box;
+            border: 4px solid transparent;
+          }
+        }
+      `}</style>
       {/* ambient glow */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -top-40 left-1/2 h-[28rem] w-[28rem] -translate-x-1/2 rounded-full bg-cyan-500/[0.06] blur-3xl" />
