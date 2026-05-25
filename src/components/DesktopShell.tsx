@@ -31,6 +31,8 @@ type NavItem = {
   label: string;
   icon: typeof Home;
   exact?: boolean;
+  /** Activa el item solo cuando ?type=<match>. "none" = solo si NO hay ?type=L. */
+  typeMatch?: "L" | "none";
 };
 
 const NAV_ITEMS: NavItem[] = [
@@ -42,7 +44,8 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/ocio", label: "Ocio", icon: Sparkles },
   { to: "/fiestas", label: "Fiestas", icon: PartyPopper },
   { to: "/tram", label: "Tram", icon: TramFront },
-  { to: "/vuelos", label: "Vuelos", icon: Plane },
+  { to: "/vuelos", label: "Vuelos de salida", icon: Plane, typeMatch: "none" },
+  { to: "/vuelos?type=L", label: "Vuelos de llegada", icon: Plane, typeMatch: "L" },
   { to: "/clima", label: "Clima", icon: CloudSun },
   { to: "/explore", label: "Explorar mapa", icon: MapIcon },
   { to: "/threads", label: "Mensajes", icon: MessageSquare },
@@ -160,6 +163,8 @@ function getPastelTheme(pathname: string): PastelTheme {
 
 export function DesktopShell({ children }: { children: React.ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const search = useRouterState({ select: (s) => s.location.search as Record<string, unknown> });
+  const currentType = typeof search?.type === "string" ? (search.type as string) : "";
 
   if (isExcluded(pathname)) {
     return <>{children}</>;
@@ -201,14 +206,21 @@ export function DesktopShell({ children }: { children: React.ReactNode }) {
 
         <nav className="flex-1 overflow-y-auto px-2 pb-2">
           <ul className="space-y-0.5">
-            {NAV_ITEMS.map(({ to, label, icon: Icon, exact }) => {
-              const active = exact
-                ? pathname === to
-                : pathname === to || pathname.startsWith(to + "/");
+            {NAV_ITEMS.map(({ to, label, icon: Icon, exact, typeMatch }) => {
+              const basePath = to.split("?")[0];
+              const pathActive = exact
+                ? pathname === basePath
+                : pathname === basePath || pathname.startsWith(basePath + "/");
+              let active = pathActive;
+              if (pathActive && typeMatch) {
+                if (typeMatch === "L") active = currentType === "L";
+                else if (typeMatch === "none") active = currentType !== "L";
+              }
               return (
                 <li key={to}>
                   <Link
-                    to={to as string}
+                    to={basePath as string}
+                    search={typeMatch === "L" ? ({ type: "L" } as Record<string, string>) : undefined}
                     className={cn(
                       "flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-colors",
                       "text-foreground/85 hover:text-foreground",
