@@ -265,6 +265,19 @@ function DestinationDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [popup, setPopup] = useState<{ airlineCode: string; flight?: { numVuelo: string; fecha: string; salida: string; llegada: string; duracion: string; ruta: string } } | null>(null);
+  const [visibleCount, setVisibleCount] = useState(15);
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mql = window.matchMedia("(min-width: 1024px)");
+    const update = () => setIsDesktop(mql.matches);
+    update();
+    mql.addEventListener("change", update);
+    return () => mql.removeEventListener("change", update);
+  }, []);
+  useEffect(() => {
+    setVisibleCount(15);
+  }, [code, flightType]);
 
   useEffect(() => {
     let cancel = false;
