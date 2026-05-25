@@ -13,11 +13,42 @@ export const Route = createFileRoute("/api/public/tram/departures")({
         if (!stopId) return new Response(JSON.stringify({ error: "stop_id required" }), { status: 400 });
 
         const today = new Date();
+        const hasExplicitDate = url.searchParams.has("date");
         const dateStr = url.searchParams.get("date") || today.toISOString().slice(0, 10);
         const from = url.searchParams.get("from") || `${String(today.getHours()).padStart(2, "0")}:${String(today.getMinutes()).padStart(2, "0")}`;
         const limit = Math.min(Number(url.searchParams.get("limit") || 20), 100);
         const [fh, fm] = from.split(":").map(Number);
         const fromSecs = fh * 3600 + fm * 60;
+
+        if (!hasExplicitDate) {
+          const fromAt = new Date(Date.now() + 60_000 * Math.max(0, fromSecs - (today.getHours() * 3600 + today.getMinutes() * 60)));
+          const { data: liveRows } = await supabaseAdmin
+            .from("tram_live_departures")
+            .select("trip_id, route_id, headsign, direction, line_short_name, line_long_name, line_color, arrival_at, departure_at")
+            .eq("stop_id", stopId)
+            .gte("departure_at", fromAt.toISOString())
+            .order("departure_at", { ascending: true })
+            .limit(limit);
+
+          if ((liveRows ?? []).length > 0) {
+            return Response.json({
+              stop_id: stopId,
+              date: dateStr,
+              from,
+              departures: (liveRows ?? []).map((r: any) => ({
+                trip_id: r.trip_id,
+                route_id: r.route_id,
+                line_short_name: r.line_short_name,
+                line_long_name: r.line_long_name,
+                line_color: r.line_color,
+                headsign: r.headsign,
+                direction: r.direction,
+                arrival_time: r.arrival_at ? new Date(r.arrival_at).toISOString().slice(11, 19) : null,
+                departure_time: r.departure_at ? new Date(r.departure_at).toISOString().slice(11, 19) : null,
+              })),
+            });
+          }
+        }
 
         // 1. Servicios activos.
         const dow = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"][new Date(dateStr + "T00:00:00").getDay()];
