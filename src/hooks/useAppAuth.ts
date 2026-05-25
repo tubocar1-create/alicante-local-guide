@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { sendWelcomeEmailFn } from "@/lib/email/email.functions";
 
 export type AppRole = "public_user" | "business_user" | "admin";
 
@@ -59,6 +60,16 @@ export function useAppAuth() {
         if (typeof window !== "undefined") {
           const name = p?.full_name || p?.display_name || "";
           if (name) localStorage.setItem("va:display-name", name);
+          // Send branded welcome email once, after email is verified.
+          const verified = !!user?.email_confirmed_at;
+          const flagKey = `va:welcomed:${user.id}`;
+          if (verified && !localStorage.getItem(flagKey)) {
+            localStorage.setItem(flagKey, "1");
+            sendWelcomeEmailFn({ data: { name: name || undefined } }).catch(() => {
+              // best-effort; rollback flag so next session can retry
+              try { localStorage.removeItem(flagKey); } catch {}
+            });
+          }
         }
       });
     supabase
