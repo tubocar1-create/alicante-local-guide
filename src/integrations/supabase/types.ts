@@ -2827,6 +2827,28 @@ export type Database = {
         Returns: boolean
       }
       purge_aena_flights: { Args: { p_retention?: string }; Returns: number }
+      purge_agente_learning_log: {
+        Args: { p_retention?: string }
+        Returns: number
+      }
+      purge_agente_unknown_queries: {
+        Args: { p_retention?: string }
+        Returns: number
+      }
+      purge_agente_unknown_query_actions: {
+        Args: { p_retention?: string }
+        Returns: number
+      }
+      purge_hotels_calendar_past: { Args: never; Returns: number }
+      purge_interaction_events: {
+        Args: { p_retention?: string }
+        Returns: number
+      }
+      purge_operational_event_reviews: {
+        Args: { p_retention?: string }
+        Returns: number
+      }
+      purge_showtimes_past: { Args: { p_retention?: string }; Returns: number }
       purge_tram_expired_services: { Args: never; Returns: number }
       refresh_tram_live_departures: {
         Args: { p_from?: string; p_to?: string }
