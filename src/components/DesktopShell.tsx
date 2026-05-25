@@ -211,10 +211,9 @@ export function DesktopShell({ children }: { children: React.ReactNode }) {
                     to={to as string}
                     className={cn(
                       "flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-colors",
-                      active
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "text-foreground/75 hover:text-foreground",
+                      "text-foreground/85 hover:text-foreground",
                     )}
+                    style={active ? { backgroundColor: theme.hover } : undefined}
                     onMouseEnter={(e) => {
                       if (!active) e.currentTarget.style.backgroundColor = theme.hover;
                     }}
@@ -228,6 +227,25 @@ export function DesktopShell({ children }: { children: React.ReactNode }) {
                 </li>
               );
             })}
+            <li>
+              <button
+                type="button"
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  window.location.href = "/";
+                }}
+                className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium text-foreground/85 hover:text-foreground transition-colors"
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = theme.hover;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "";
+                }}
+              >
+                <LogOut className="h-4 w-4 shrink-0" />
+                <span className="truncate">Salir</span>
+              </button>
+            </li>
           </ul>
         </nav>
 
