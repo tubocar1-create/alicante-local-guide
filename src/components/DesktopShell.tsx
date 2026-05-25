@@ -206,14 +206,21 @@ export function DesktopShell({ children }: { children: React.ReactNode }) {
 
         <nav className="flex-1 overflow-y-auto px-2 pb-2">
           <ul className="space-y-0.5">
-            {NAV_ITEMS.map(({ to, label, icon: Icon, exact }) => {
-              const active = exact
-                ? pathname === to
-                : pathname === to || pathname.startsWith(to + "/");
+            {NAV_ITEMS.map(({ to, label, icon: Icon, exact, typeMatch }) => {
+              const basePath = to.split("?")[0];
+              const pathActive = exact
+                ? pathname === basePath
+                : pathname === basePath || pathname.startsWith(basePath + "/");
+              let active = pathActive;
+              if (pathActive && typeMatch) {
+                if (typeMatch === "L") active = currentType === "L";
+                else if (typeMatch === "none") active = currentType !== "L";
+              }
               return (
                 <li key={to}>
                   <Link
-                    to={to as string}
+                    to={basePath}
+                    search={typeMatch === "L" ? { type: "L" } : undefined}
                     className={cn(
                       "flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-colors",
                       "text-foreground/85 hover:text-foreground",
