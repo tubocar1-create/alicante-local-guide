@@ -974,7 +974,7 @@ export function ChatScreen() {
                       style={{ animationDelay: `${(idx % 9) * 60}ms` }}
                     >
                       <div
-                        className="relative grid h-12 w-12 place-items-center rounded-full transition-transform duration-300 ease-out group-active:scale-90 overflow-hidden"
+                        className="relative grid h-12 w-12 place-items-center rounded-full transition-transform duration-300 ease-out group-active:scale-90 overflow-hidden lg:h-16 lg:w-16"
                         style={{ backgroundColor: t.label === "Fiestas de Alicante" ? "transparent" : pastel.bg }}
                       >
                         {t.label === "Fiestas de Alicante" ? (
@@ -982,19 +982,20 @@ export function ChatScreen() {
                         ) : t.label === "Transporte multimodal inteligente" ? (
                           <img src={busAlicanteIcon} alt="" className="h-[78%] w-[78%] object-contain" />
                         ) : Icon ? (
-                          <Icon className="h-5 w-5" strokeWidth={1.9} style={{ color: pastel.fg }} />
+                          <Icon className="h-5 w-5 lg:h-7 lg:w-7" strokeWidth={1.9} style={{ color: pastel.fg }} />
                         ) : (
-                          <span className="text-[20px]">{t.emoji}</span>
+                          <span className="text-[20px] lg:text-[26px]">{t.emoji}</span>
                         )}
                       </div>
-                      <span className="mt-1 block text-[11px] font-extrabold leading-tight tracking-tight text-foreground">
+                      <span className="mt-1 block text-[11px] font-extrabold leading-tight tracking-tight text-foreground lg:text-[13px]">
                         {displayLabel}
                       </span>
                       {subtitle && (
-                        <span className="mt-0.5 block text-[9px] leading-tight text-muted-foreground">
+                        <span className="mt-0.5 block text-[9px] leading-tight text-muted-foreground lg:text-[11px]">
                           {subtitle}
                         </span>
                       )}
+
                     </button>
                   );
                 })}
