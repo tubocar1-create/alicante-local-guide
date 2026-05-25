@@ -658,9 +658,10 @@ function DestinationDashboard() {
 function Shell({ children, flightType }: { children: React.ReactNode; flightType?: "S" | "L" }) {
   return (
     <div
-      className="min-h-screen text-slate-100"
+      className="h-dvh overflow-y-auto overscroll-contain text-slate-100 lg:min-h-screen lg:h-auto lg:overflow-visible"
       style={{
         background: "linear-gradient(180deg, #020617 0%, #06111f 50%, #020617 100%)",
+        WebkitOverflowScrolling: "touch",
       }}
     >
       <style>{`
