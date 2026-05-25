@@ -637,7 +637,7 @@ function ConnectivityMap({
           "radial-gradient(ellipse at center, #06122a 0%, #030917 60%, #01060f 100%)",
       }}
     >
-      <div ref={wrapRef} className="relative h-[55vh] w-full sm:aspect-[16/9] sm:h-auto lg:aspect-auto lg:h-[82vh]">
+      <div ref={wrapRef} className="relative h-[55vh] w-full sm:aspect-[16/9] sm:h-auto lg:aspect-auto lg:h-[82vh]" style={lockZoom ? { touchAction: "pan-y" } : undefined}>
         <TransformWrapper
           ref={trRef}
           initialScale={5.7}
