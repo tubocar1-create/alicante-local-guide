@@ -816,6 +816,19 @@ export function ChatScreen() {
         <div className={["mx-auto flex max-w-2xl flex-col gap-3", isWelcome ? "lg:max-w-5xl lg:flex-row lg:items-center lg:gap-10" : ""].join(" ")}>
           {isWelcome && (
             <div className="lg:flex lg:flex-col lg:items-center lg:gap-4 lg:flex-none">
+              <div className="mx-auto w-full max-w-[320px] lg:mx-0 lg:max-w-[520px]">
+                <h2
+                  className="mb-1 text-center font-bold uppercase tracking-tight lg:text-left"
+                  style={{
+                    fontFamily: "'Quicksand', sans-serif",
+                    color: "#4FC3F7",
+                    fontSize: "clamp(1.75rem, 5vw, 2.5rem)",
+                    lineHeight: 1,
+                  }}
+                >
+                  ALICANTE
+                </h2>
+              </div>
               <div className="relative mx-auto mb-1 w-full max-w-[320px] overflow-visible rounded-xl lg:mx-0 lg:mb-0 lg:max-w-[520px] lg:flex-none lg:shadow-[0_20px_50px_-15px_oklch(0.55_0.14_70/0.45)]">
                 <img
                   src={portadaImg}
