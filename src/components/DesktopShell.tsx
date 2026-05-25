@@ -163,6 +163,8 @@ function getPastelTheme(pathname: string): PastelTheme {
 
 export function DesktopShell({ children }: { children: React.ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const search = useRouterState({ select: (s) => s.location.search as Record<string, unknown> });
+  const currentType = typeof search?.type === "string" ? (search.type as string) : "";
 
   if (isExcluded(pathname)) {
     return <>{children}</>;
