@@ -177,7 +177,9 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <DesktopShell>
+        <Outlet />
+      </DesktopShell>
       <Toaster />
       <InstallPWA />
       <AgenteVamosFab />
