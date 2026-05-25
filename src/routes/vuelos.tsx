@@ -637,7 +637,7 @@ function ConnectivityMap({
           "radial-gradient(ellipse at center, #06122a 0%, #030917 60%, #01060f 100%)",
       }}
     >
-      <div ref={wrapRef} className="relative h-[55vh] w-full sm:aspect-[16/9] sm:h-auto lg:aspect-auto lg:h-[82vh]">
+      <div ref={wrapRef} className="relative h-[55vh] w-full sm:aspect-[16/9] sm:h-auto lg:aspect-auto lg:h-[82vh]" style={lockZoom ? { touchAction: "pan-y" } : undefined}>
         <TransformWrapper
           ref={trRef}
           initialScale={5.7}
@@ -655,7 +655,9 @@ function ConnectivityMap({
               <TransformComponent
                 wrapperClass="!h-full !w-full"
                 contentClass="!h-full !w-full"
+                wrapperStyle={lockZoom ? { touchAction: "pan-y" } : undefined}
               >
+
         <svg
           viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
           className="absolute inset-0 h-full w-full"
