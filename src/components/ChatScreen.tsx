@@ -1148,12 +1148,12 @@ export function ChatScreen() {
           </div>
         )}
         {composerMode === "voice" ? (
-          <div className="mx-auto flex max-w-2xl flex-col items-center gap-2 lg:fixed lg:bottom-6 lg:right-6 lg:z-40 lg:max-w-none lg:mx-0">
+          <div className="mx-auto flex max-w-2xl flex-col items-center gap-2 lg:hidden">
             <button
               onPointerDown={() => window.dispatchEvent(new Event("vamos:prime-voice"))}
               onClick={() => window.dispatchEvent(new Event("vamos:open"))}
               aria-label="Hablar con Agente Vamos"
-              className="group relative flex h-20 w-20 items-center justify-center rounded-full transition active:scale-95 lg:h-14 lg:w-14"
+              className="group relative flex h-20 w-20 items-center justify-center rounded-full transition active:scale-95"
               style={{
                 filter:
                   "drop-shadow(0 0 14px rgba(255,165,0,0.65)) drop-shadow(0 0 28px rgba(255,140,0,0.45))",
