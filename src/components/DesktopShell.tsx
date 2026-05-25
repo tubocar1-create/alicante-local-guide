@@ -219,8 +219,8 @@ export function DesktopShell({ children }: { children: React.ReactNode }) {
               return (
                 <li key={to}>
                   <Link
-                    to={basePath}
-                    search={typeMatch === "L" ? { type: "L" } : undefined}
+                    to={basePath as string}
+                    search={typeMatch === "L" ? ({ type: "L" } as Record<string, string>) : undefined}
                     className={cn(
                       "flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-colors",
                       "text-foreground/85 hover:text-foreground",
