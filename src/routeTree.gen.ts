@@ -100,8 +100,10 @@ import { Route as ApiPublicRefreshIncidenciasRouteImport } from './routes/api/pu
 import { Route as ApiPublicRefreshAlicantePressRouteImport } from './routes/api/public/refresh-alicante-press'
 import { Route as ApiPublicQrValidateRouteImport } from './routes/api/public/qr-validate'
 import { Route as ApiPublicQrIssueRouteImport } from './routes/api/public/qr-issue'
+import { Route as ApiPublicContactRouteImport } from './routes/api/public/contact'
 import { Route as ApiPublicBusEtaRouteImport } from './routes/api/public/bus-eta'
 import { Route as ApiPublicBookingCreateRouteImport } from './routes/api/public/booking-create'
+import { Route as ApiPublicAuthEmailHookRouteImport } from './routes/api/public/auth-email-hook'
 import { Route as ApiPublicAenaFlightsRouteImport } from './routes/api/public/aena-flights'
 import { Route as AdminAiUnknownQueriesRouteImport } from './routes/admin.ai.unknown-queries'
 import { Route as AdminAiSupervisionRouteImport } from './routes/admin.ai.supervision'
@@ -591,6 +593,11 @@ const ApiPublicQrIssueRoute = ApiPublicQrIssueRouteImport.update({
   path: '/api/public/qr-issue',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicContactRoute = ApiPublicContactRouteImport.update({
+  id: '/api/public/contact',
+  path: '/api/public/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicBusEtaRoute = ApiPublicBusEtaRouteImport.update({
   id: '/api/public/bus-eta',
   path: '/api/public/bus-eta',
@@ -599,6 +606,11 @@ const ApiPublicBusEtaRoute = ApiPublicBusEtaRouteImport.update({
 const ApiPublicBookingCreateRoute = ApiPublicBookingCreateRouteImport.update({
   id: '/api/public/booking-create',
   path: '/api/public/booking-create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAuthEmailHookRoute = ApiPublicAuthEmailHookRouteImport.update({
+  id: '/api/public/auth-email-hook',
+  path: '/api/public/auth-email-hook',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicAenaFlightsRoute = ApiPublicAenaFlightsRouteImport.update({
@@ -849,8 +861,10 @@ export interface FileRoutesByFullPath {
   '/admin/ai/supervision': typeof AdminAiSupervisionRoute
   '/admin/ai/unknown-queries': typeof AdminAiUnknownQueriesRoute
   '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
+  '/api/public/auth-email-hook': typeof ApiPublicAuthEmailHookRoute
   '/api/public/booking-create': typeof ApiPublicBookingCreateRoute
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
+  '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/qr-issue': typeof ApiPublicQrIssueRoute
   '/api/public/qr-validate': typeof ApiPublicQrValidateRoute
   '/api/public/refresh-alicante-press': typeof ApiPublicRefreshAlicantePressRoute
@@ -971,8 +985,10 @@ export interface FileRoutesByTo {
   '/admin/ai/supervision': typeof AdminAiSupervisionRoute
   '/admin/ai/unknown-queries': typeof AdminAiUnknownQueriesRoute
   '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
+  '/api/public/auth-email-hook': typeof ApiPublicAuthEmailHookRoute
   '/api/public/booking-create': typeof ApiPublicBookingCreateRoute
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
+  '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/qr-issue': typeof ApiPublicQrIssueRoute
   '/api/public/qr-validate': typeof ApiPublicQrValidateRoute
   '/api/public/refresh-alicante-press': typeof ApiPublicRefreshAlicantePressRoute
@@ -1097,8 +1113,10 @@ export interface FileRoutesById {
   '/admin/ai/supervision': typeof AdminAiSupervisionRoute
   '/admin/ai/unknown-queries': typeof AdminAiUnknownQueriesRoute
   '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
+  '/api/public/auth-email-hook': typeof ApiPublicAuthEmailHookRoute
   '/api/public/booking-create': typeof ApiPublicBookingCreateRoute
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
+  '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/qr-issue': typeof ApiPublicQrIssueRoute
   '/api/public/qr-validate': typeof ApiPublicQrValidateRoute
   '/api/public/refresh-alicante-press': typeof ApiPublicRefreshAlicantePressRoute
@@ -1224,8 +1242,10 @@ export interface FileRouteTypes {
     | '/admin/ai/supervision'
     | '/admin/ai/unknown-queries'
     | '/api/public/aena-flights'
+    | '/api/public/auth-email-hook'
     | '/api/public/booking-create'
     | '/api/public/bus-eta'
+    | '/api/public/contact'
     | '/api/public/qr-issue'
     | '/api/public/qr-validate'
     | '/api/public/refresh-alicante-press'
@@ -1346,8 +1366,10 @@ export interface FileRouteTypes {
     | '/admin/ai/supervision'
     | '/admin/ai/unknown-queries'
     | '/api/public/aena-flights'
+    | '/api/public/auth-email-hook'
     | '/api/public/booking-create'
     | '/api/public/bus-eta'
+    | '/api/public/contact'
     | '/api/public/qr-issue'
     | '/api/public/qr-validate'
     | '/api/public/refresh-alicante-press'
@@ -1471,8 +1493,10 @@ export interface FileRouteTypes {
     | '/admin/ai/supervision'
     | '/admin/ai/unknown-queries'
     | '/api/public/aena-flights'
+    | '/api/public/auth-email-hook'
     | '/api/public/booking-create'
     | '/api/public/bus-eta'
+    | '/api/public/contact'
     | '/api/public/qr-issue'
     | '/api/public/qr-validate'
     | '/api/public/refresh-alicante-press'
@@ -1552,8 +1576,10 @@ export interface RootRouteChildren {
   SaludCategoriaRoute: typeof SaludCategoriaRouteWithChildren
   VuelosIataRoute: typeof VuelosIataRoute
   ApiPublicAenaFlightsRoute: typeof ApiPublicAenaFlightsRoute
+  ApiPublicAuthEmailHookRoute: typeof ApiPublicAuthEmailHookRoute
   ApiPublicBookingCreateRoute: typeof ApiPublicBookingCreateRoute
   ApiPublicBusEtaRoute: typeof ApiPublicBusEtaRoute
+  ApiPublicContactRoute: typeof ApiPublicContactRoute
   ApiPublicQrIssueRoute: typeof ApiPublicQrIssueRoute
   ApiPublicQrValidateRoute: typeof ApiPublicQrValidateRoute
   ApiPublicRefreshAlicantePressRoute: typeof ApiPublicRefreshAlicantePressRoute
@@ -2220,6 +2246,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicQrIssueRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/contact': {
+      id: '/api/public/contact'
+      path: '/api/public/contact'
+      fullPath: '/api/public/contact'
+      preLoaderRoute: typeof ApiPublicContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/bus-eta': {
       id: '/api/public/bus-eta'
       path: '/api/public/bus-eta'
@@ -2232,6 +2265,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/booking-create'
       fullPath: '/api/public/booking-create'
       preLoaderRoute: typeof ApiPublicBookingCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/auth-email-hook': {
+      id: '/api/public/auth-email-hook'
+      path: '/api/public/auth-email-hook'
+      fullPath: '/api/public/auth-email-hook'
+      preLoaderRoute: typeof ApiPublicAuthEmailHookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/aena-flights': {
@@ -2697,8 +2737,10 @@ const rootRouteChildren: RootRouteChildren = {
   SaludCategoriaRoute: SaludCategoriaRouteWithChildren,
   VuelosIataRoute: VuelosIataRoute,
   ApiPublicAenaFlightsRoute: ApiPublicAenaFlightsRoute,
+  ApiPublicAuthEmailHookRoute: ApiPublicAuthEmailHookRoute,
   ApiPublicBookingCreateRoute: ApiPublicBookingCreateRoute,
   ApiPublicBusEtaRoute: ApiPublicBusEtaRoute,
+  ApiPublicContactRoute: ApiPublicContactRoute,
   ApiPublicQrIssueRoute: ApiPublicQrIssueRoute,
   ApiPublicQrValidateRoute: ApiPublicQrValidateRoute,
   ApiPublicRefreshAlicantePressRoute: ApiPublicRefreshAlicantePressRoute,
@@ -2729,13 +2771,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
