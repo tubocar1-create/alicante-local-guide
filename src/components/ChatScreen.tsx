@@ -815,16 +815,67 @@ export function ChatScreen() {
       <div ref={scrollRef} className={["relative min-h-0 flex-1 px-4 pt-3", isWelcome ? "overflow-hidden pb-0" : "overflow-y-auto pb-5"].join(" ")}>
         <div className={["mx-auto flex max-w-2xl flex-col gap-3", isWelcome ? "lg:max-w-5xl lg:flex-row lg:items-center lg:gap-10" : ""].join(" ")}>
           {isWelcome && (
-            <div className="relative mx-auto mb-1 w-full max-w-[320px] overflow-visible rounded-xl lg:mx-0 lg:mb-0 lg:max-w-[460px] lg:flex-none lg:shadow-[0_20px_50px_-15px_oklch(0.55_0.12_60/0.35)]">
-              <img
-                src={portadaImg}
-                alt="Alicante"
-                className="h-auto w-full rounded-xl object-cover lg:rounded-2xl"
-                loading="eager"
-                fetchPriority="high"
-                decoding="async"
-              />
-              
+            <div className="lg:flex lg:flex-col lg:items-center lg:gap-4 lg:flex-none">
+              <div className="relative mx-auto mb-1 w-full max-w-[320px] overflow-visible rounded-xl lg:mx-0 lg:mb-0 lg:max-w-[520px] lg:flex-none lg:shadow-[0_20px_50px_-15px_oklch(0.55_0.14_70/0.45)]">
+                <img
+                  src={portadaImg}
+                  alt="Alicante"
+                  className="h-auto w-full rounded-xl object-cover lg:rounded-2xl"
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
+                />
+              </div>
+              {/* Desktop-only: asistente + Inicio + Perfil bajo la foto */}
+              <div className="hidden lg:flex lg:items-center lg:gap-6 lg:mt-2">
+                <button
+                  type="button"
+                  onPointerDown={() => window.dispatchEvent(new Event("vamos:prime-voice"))}
+                  onClick={() => window.dispatchEvent(new Event("vamos:open"))}
+                  aria-label="Hablar con Agente Vamos"
+                  className="group relative flex h-16 w-16 items-center justify-center rounded-full transition active:scale-95"
+                  style={{
+                    filter:
+                      "drop-shadow(0 0 14px rgba(255,165,0,0.65)) drop-shadow(0 0 28px rgba(255,140,0,0.45))",
+                  }}
+                >
+                  <span
+                    aria-hidden
+                    className="absolute inset-0 rounded-full animate-pulse"
+                    style={{
+                      background:
+                        "radial-gradient(circle, rgba(255,180,60,0.45) 0%, rgba(255,140,0,0.15) 55%, transparent 75%)",
+                    }}
+                  />
+                  <img
+                    src={asistenteIcon}
+                    alt="Asistente"
+                    className="relative h-full w-full rounded-full object-cover"
+                  />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMessages([GREETING]);
+                    setActiveSubmenu(null);
+                    setError(null);
+                    setInput("");
+                  }}
+                  className="flex flex-col items-center gap-1 px-5 py-2 rounded-2xl bg-white/70 ring-1 ring-border/60 shadow-sm text-primary"
+                  aria-label="Inicio"
+                >
+                  <Home className="h-6 w-6" />
+                  <span className="text-[13px] font-bold">Inicio</span>
+                </button>
+                <Link
+                  to="/perfil"
+                  className="flex flex-col items-center gap-1 px-5 py-2 rounded-2xl bg-white/70 ring-1 ring-border/60 shadow-sm text-primary active:scale-95"
+                  aria-label="Perfil"
+                >
+                  <UserIcon className="h-6 w-6" />
+                  <span className="text-[13px] font-bold">Perfil</span>
+                </Link>
+              </div>
             </div>
           )}
 
