@@ -404,10 +404,12 @@ function AdminLogin() {
 function AdminCheckError({
   email,
   error,
+  timedOut,
   onRetry,
 }: {
   email: string | null;
-  error: Error;
+  error: Error | null;
+  timedOut?: boolean;
   onRetry: () => void;
 }) {
   const logout = async () => {
@@ -427,7 +429,9 @@ function AdminCheckError({
             <span className="font-medium">{email ?? "tu cuenta"}</span>.
           </p>
           <p className="text-[11px] text-muted-foreground break-words">
-            {error?.message ?? "Error desconocido"}
+            {timedOut
+              ? "La comprobación tardó demasiado. Puedes reintentar o volver a iniciar sesión."
+              : error?.message ?? "Error desconocido"}
           </p>
           <Button className="w-full" onClick={onRetry}>
             Reintentar
