@@ -259,6 +259,16 @@ function VuelosDashboard() {
 
   const flightType = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("type") === "L" ? "L" : "S";
 
+  const [isWeb, setIsWeb] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mql = window.matchMedia("(min-width: 1024px)");
+    const update = () => setIsWeb(mql.matches);
+    update();
+    mql.addEventListener("change", update);
+    return () => mql.removeEventListener("change", update);
+  }, []);
+
   useEffect(() => {
     let cancel = false;
     const loadFlights = () => {
@@ -379,6 +389,25 @@ function VuelosDashboard() {
           "linear-gradient(180deg, #020617 0%, #06111f 50%, #020617 100%)",
       }}
     >
+      {/* Scrollbar doble de ancho — sólo web */}
+      <style>{`
+        @media (min-width: 1024px) {
+          html { scrollbar-width: auto; scrollbar-color: rgba(34,211,238,0.45) rgba(0,0,0,0.25); }
+          html::-webkit-scrollbar, body::-webkit-scrollbar { width: 24px; }
+          html::-webkit-scrollbar-track, body::-webkit-scrollbar-track { background: rgba(0,0,0,0.25); }
+          html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb {
+            background: rgba(34,211,238,0.45);
+            border-radius: 12px;
+            border: 4px solid transparent;
+            background-clip: padding-box;
+          }
+          html::-webkit-scrollbar-thumb:hover, body::-webkit-scrollbar-thumb:hover {
+            background: rgba(34,211,238,0.7);
+            background-clip: padding-box;
+            border: 4px solid transparent;
+          }
+        }
+      `}</style>
       {/* ambient glow */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -top-40 left-1/2 h-[28rem] w-[28rem] -translate-x-1/2 rounded-full bg-cyan-500/[0.06] blur-3xl" />
@@ -404,21 +433,63 @@ function VuelosDashboard() {
           </div>
         </header>
 
-        <div className="mb-5">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-400/70">
-            {flightType === "L" ? "Dashboard de llegadas" : "Dashboard de salidas"}
-          </p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight md:text-4xl">
-            {flightType === "L" ? "Vuelos de llegada " : "Vuelos de salida "}
-            <span className="bg-gradient-to-r from-cyan-300 via-white to-violet-300 bg-clip-text text-transparent">
-              {flightType === "L" ? "hacia Alicante" : "desde Alicante"}
-            </span>
-          </h1>
-          <p className="mt-1 text-xs text-cyan-300/80 md:text-sm">
-            {flightType === "L"
-              ? "Métricas semanales (7 días) de vuelos que aterrizan en Alicante-Elche (ALC), agrupados por ciudad de origen."
-              : "Métricas semanales (7 días) de vuelos que despegan de Alicante-Elche (ALC), agrupados por ciudad de destino."}
-          </p>
+        <div className="mb-5 lg:flex lg:items-start lg:justify-between lg:gap-6">
+          <div className="lg:flex-1">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-400/70">
+              {flightType === "L" ? "Dashboard de llegadas" : "Dashboard de salidas"}
+            </p>
+            {/* Mobile/PWA title (sin cambios) */}
+            <h1 className="mt-1 text-2xl font-bold tracking-tight md:text-4xl lg:hidden">
+              {flightType === "L" ? "Vuelos de llegada " : "Vuelos de salida "}
+              <span className="bg-gradient-to-r from-cyan-300 via-white to-violet-300 bg-clip-text text-transparent">
+                {flightType === "L" ? "hacia Alicante" : "desde Alicante"}
+              </span>
+            </h1>
+            {/* Web title */}
+            <h1 className="mt-1 hidden text-2xl font-bold tracking-tight md:text-4xl lg:block">
+              A donde ir{" "}
+              <span className="bg-gradient-to-r from-cyan-300 via-white to-violet-300 bg-clip-text text-transparent">
+                desde Alicante
+              </span>
+              <span className="ml-3 align-middle text-base font-normal text-cyan-300/80">
+                ({cities.filter((c) => c.total > 0).length}) ciudades
+              </span>
+            </h1>
+            <p className="mt-1 text-xs text-cyan-300/80 md:text-sm lg:hidden">
+              {flightType === "L"
+                ? "Métricas semanales (7 días) de vuelos que aterrizan en Alicante-Elche (ALC), agrupados por ciudad de origen."
+                : "Métricas semanales (7 días) de vuelos que despegan de Alicante-Elche (ALC), agrupados por ciudad de destino."}
+            </p>
+          </div>
+          {/* Manual city selector — web only */}
+          <div className="mt-3 hidden rounded-2xl border border-cyan-400/30 bg-cyan-400/5 px-3 py-2 lg:mt-0 lg:flex lg:items-center lg:gap-2">
+            <label className="text-[10px] uppercase tracking-[0.2em] text-cyan-300/70">
+              Tu ciudad:
+            </label>
+            <select
+              className="rounded-lg border border-white/10 bg-black/40 px-3 py-1.5 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+              value=""
+              onChange={(e) => {
+                const iata = e.target.value;
+                if (!iata) return;
+                if (typeof window !== "undefined") {
+                  window.open(`/vuelos/${iata}?type=${flightType}`, "_blank", "noopener,noreferrer");
+                }
+                e.target.value = "";
+              }}
+            >
+              <option value="">— Elige una ciudad —</option>
+              {cities
+                .filter((c) => c.total > 0)
+                .slice()
+                .sort((a, b) => cleanCityNamePublic(a.ciudad).localeCompare(cleanCityNamePublic(b.ciudad), "es"))
+                .map((c) => (
+                  <option key={c.iata} value={c.iata}>
+                    {cleanCityNamePublic(c.ciudad)} ({c.iata})
+                  </option>
+                ))}
+            </select>
+          </div>
         </div>
 
         {false && loading && (
@@ -435,33 +506,52 @@ function VuelosDashboard() {
         )}
 
         {!loading && (
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)]">
-            <div className="order-2 lg:order-1">
-              <ConnectivityMap
-                cities={cities}
-                selectedCity={selectedCity}
-                flightType={flightType}
-                onSelectCity={(c) => {
-                  if (typeof window !== "undefined") {
-                    window.open(`/vuelos/${c}?type=${flightType}`, "_blank", "noopener,noreferrer");
-                  }
-                }}
-              />
+          <>
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)]">
+              <div className="order-2 lg:order-1">
+                <ConnectivityMap
+                  cities={cities}
+                  selectedCity={selectedCity}
+                  flightType={flightType}
+                  lockZoom={isWeb}
+                  onSelectCity={(c) => {
+                    if (typeof window !== "undefined") {
+                      window.open(`/vuelos/${c}?type=${flightType}`, "_blank", "noopener,noreferrer");
+                    }
+                  }}
+                />
+              </div>
+              <div className="order-1 lg:order-2">
+                <InfoPanel
+                  cities={topCities}
+                  airlines={airlinesAgg.slice(0, 9)}
+                  destinos={destinationsCount}
+                  aerolineas={airlinesCount}
+                  vuelos={totalFlights}
+                  region={principalRegion}
+                  weekStart={weekRange.start}
+                  weekEnd={weekRange.end}
+                  flightType={flightType}
+                  pageSize={isWeb ? 12 : 20}
+                  hideAirlines={isWeb}
+                />
+              </div>
             </div>
-            <div className="order-1 lg:order-2">
-              <InfoPanel
-                cities={topCities}
-                airlines={airlinesAgg.slice(0, 9)}
-                destinos={destinationsCount}
-                aerolineas={airlinesCount}
-                vuelos={totalFlights}
-                region={principalRegion}
-                weekStart={weekRange.start}
-                weekEnd={weekRange.end}
-                flightType={flightType}
-              />
-            </div>
-          </div>
+
+            {/* Full-width airlines + footer stats — web only */}
+            {isWeb && (
+              <div className="mt-4 hidden lg:block">
+                <AirlinesFullPanel
+                  airlines={airlinesAgg}
+                  destinos={destinationsCount}
+                  aerolineas={airlinesCount}
+                  vuelos={totalFlights}
+                  region={principalRegion}
+                  flightType={flightType}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -485,11 +575,13 @@ function ConnectivityMap({
   selectedCity,
   onSelectCity,
   flightType,
+  lockZoom = false,
 }: {
   cities: CityAgg[];
   selectedCity: string | null;
   onSelectCity: (iata: string) => void;
   flightType: "S" | "L";
+  lockZoom?: boolean;
 }) {
   const alc = project(COORDS.ALC);
 
@@ -574,10 +666,11 @@ function ConnectivityMap({
           ref={trRef}
           initialScale={3.7}
           minScale={3.7}
-          maxScale={10}
-          wheel={{ step: 0.15 }}
-          doubleClick={{ mode: "zoomIn", step: 0.6 }}
-          panning={{ velocityDisabled: true }}
+          maxScale={lockZoom ? 3.7 : 10}
+          wheel={{ step: 0.15, disabled: lockZoom }}
+          doubleClick={{ mode: "zoomIn", step: 0.6, disabled: lockZoom }}
+          pinch={{ disabled: lockZoom }}
+          panning={{ velocityDisabled: true, disabled: lockZoom }}
           limitToBounds={true}
         >
           {({ zoomIn, resetTransform }) => {
@@ -848,29 +941,33 @@ function ConnectivityMap({
                 </p>
               </div>
 
-              {/* Zoom controls — solo acercar (la vista inicial está bloqueada) */}
-              <div className="absolute right-3 top-3 z-10 flex flex-col gap-1 rounded-xl border border-white/10 bg-black/50 p-1 backdrop-blur-md">
-                <button
-                  type="button"
-                  onClick={() => zoomIn()}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-200 transition hover:bg-white/10 hover:text-cyan-300"
-                  aria-label="Acercar"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => resetTransform()}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-200 transition hover:bg-white/10 hover:text-cyan-300"
-                  aria-label="Vista inicial"
-                >
-                  <Maximize2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
+              {/* Zoom controls — ocultos cuando el zoom está bloqueado (web) */}
+              {!lockZoom && (
+                <div className="absolute right-3 top-3 z-10 flex flex-col gap-1 rounded-xl border border-white/10 bg-black/50 p-1 backdrop-blur-md">
+                  <button
+                    type="button"
+                    onClick={() => zoomIn()}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-200 transition hover:bg-white/10 hover:text-cyan-300"
+                    aria-label="Acercar"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => resetTransform()}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-200 transition hover:bg-white/10 hover:text-cyan-300"
+                    aria-label="Vista inicial"
+                  >
+                    <Maximize2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
 
-              <div className="pointer-events-none absolute bottom-3 left-3 z-10 rounded-md border border-white/5 bg-black/40 px-2 py-1 text-[10px] uppercase tracking-widest text-slate-400 backdrop-blur-sm">
-                Pellizca · arrastra · toca
-              </div>
+              {!lockZoom && (
+                <div className="pointer-events-none absolute bottom-3 left-3 z-10 rounded-md border border-white/5 bg-black/40 px-2 py-1 text-[10px] uppercase tracking-widest text-slate-400 backdrop-blur-sm">
+                  Pellizca · arrastra · toca
+                </div>
+              )}
             </>
             );
           }}
@@ -1052,6 +1149,8 @@ function InfoPanel({
   weekStart,
   weekEnd,
   flightType,
+  pageSize = 20,
+  hideAirlines = false,
 }: {
   cities: CityAgg[];
   airlines: [string, number][];
@@ -1062,6 +1161,8 @@ function InfoPanel({
   weekStart: string;
   weekEnd: string;
   flightType: "S" | "L";
+  pageSize?: number;
+  hideAirlines?: boolean;
 }) {
   const isArrivals = flightType === "L";
   const noun = isArrivals ? "Orígenes" : "Destinos";
@@ -1072,7 +1173,10 @@ function InfoPanel({
     { icon: "✓", value: vuelos.toLocaleString("es-ES"), label: "Vuelos / 7d" },
     { icon: "🌍", value: region, label: isArrivals ? "Principal origen" : "Principal" },
   ];
-  const [visibleCount, setVisibleCount] = useState(20);
+  const [visibleCount, setVisibleCount] = useState(pageSize);
+  useEffect(() => {
+    setVisibleCount(pageSize);
+  }, [pageSize]);
   const visibleCities = cities.slice(0, visibleCount);
   const hasMore = cities.length > visibleCount;
   return (
@@ -1131,16 +1235,18 @@ function InfoPanel({
       {hasMore && (
         <button
           type="button"
-          onClick={() => setVisibleCount((n) => n + 20)}
+          onClick={() => setVisibleCount((n) => n + pageSize)}
           className="mb-5 w-full rounded-lg border border-cyan-400/30 bg-cyan-400/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.15em] text-cyan-300 transition hover:bg-cyan-400/10"
         >
-          Ver más ({Math.min(20, cities.length - visibleCount)} de {cities.length - visibleCount} restantes)
+          Ver más ({Math.min(pageSize, cities.length - visibleCount)} de {cities.length - visibleCount} restantes)
         </button>
       )}
 
-      <p className="mb-3 text-sm font-semibold text-slate-100">
-        Aerolíneas por número de vuelos
-      </p>
+      {!hideAirlines && (
+        <>
+          <p className="mb-3 text-sm font-semibold text-slate-100">
+            Aerolíneas por número de vuelos
+          </p>
       <ul className="mb-5 space-y-1">
         {airlines.map(([code, count], i) => {
           const color = airlineColor(code, i);
@@ -1180,6 +1286,84 @@ function InfoPanel({
             </div>
             <p className="text-sm font-bold text-white">{it.value}</p>
             <p className="text-[9px] uppercase tracking-[0.2em] text-slate-500">
+              {it.label}
+            </p>
+          </div>
+        ))}
+      </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function AirlinesFullPanel({
+  airlines,
+  destinos,
+  aerolineas,
+  vuelos,
+  region,
+  flightType,
+}: {
+  airlines: [string, number][];
+  destinos: number;
+  aerolineas: number;
+  vuelos: number;
+  region: string;
+  flightType: "S" | "L";
+}) {
+  const isArrivals = flightType === "L";
+  const noun = isArrivals ? "Orígenes" : "Destinos";
+  const items = [
+    { icon: "✈", value: `${destinos}`, label: `${noun} / 7d` },
+    { icon: "🛫", value: `${aerolineas}`, label: "Aerolíneas / 7d" },
+    { icon: "✓", value: vuelos.toLocaleString("es-ES"), label: "Vuelos / 7d" },
+    { icon: "🌍", value: region, label: isArrivals ? "Principal origen" : "Principal" },
+  ];
+  return (
+    <div className="rounded-2xl border border-white/[0.08] bg-[rgba(8,12,22,0.7)] p-5 backdrop-blur-xl">
+      <p className="mb-4 text-base font-semibold text-slate-100">
+        Aerolíneas por número de vuelos
+      </p>
+      <ul className="mb-5 grid grid-cols-2 gap-x-6 gap-y-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        {airlines.map(([code, count], i) => {
+          const color = airlineColor(code, i);
+          return (
+            <li
+              key={code}
+              className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[12.5px] text-slate-200"
+            >
+              <span
+                className="h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ background: color, boxShadow: `0 0 6px ${color}` }}
+              />
+              <span className="flex-1 truncate">
+                <span className="font-semibold" style={{ color }}>
+                  {airlineName(code)}
+                </span>{" "}
+                <span className="font-mono text-[10px] text-slate-500">
+                  {code}
+                </span>
+              </span>
+              <span className="font-mono tabular-nums text-slate-300">
+                {count.toLocaleString("es-ES")}
+              </span>
+            </li>
+          );
+        })}
+        {airlines.length === 0 && (
+          <li className="text-xs text-slate-500">Sin datos disponibles.</li>
+        )}
+      </ul>
+
+      <div className="grid grid-cols-2 gap-3 border-t border-white/[0.06] pt-4 sm:grid-cols-4">
+        {items.map((it) => (
+          <div key={it.label} className="flex flex-col items-center text-center">
+            <div className="mb-1 flex h-9 w-9 items-center justify-center rounded-full border border-cyan-400/30 text-cyan-300">
+              <span className="text-base leading-none">{it.icon}</span>
+            </div>
+            <p className="text-base font-bold text-white">{it.value}</p>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">
               {it.label}
             </p>
           </div>
