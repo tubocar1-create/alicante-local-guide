@@ -67,9 +67,9 @@ export function DesktopShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-[100dvh] w-full lg:flex lg:bg-gradient-to-br lg:from-secondary/40 lg:via-background lg:to-secondary/30">
+    <div className="min-h-[100dvh] w-full lg:flex lg:h-[100dvh] lg:bg-gradient-to-br lg:from-[oklch(0.96_0.04_75)] lg:via-[oklch(0.97_0.025_60)] lg:to-[oklch(0.95_0.05_50)]">
       {/* Sidebar: solo desktop */}
-      <aside className="hidden lg:flex lg:fixed lg:inset-y-0 lg:left-0 lg:w-64 lg:flex-col lg:border-r lg:border-border/60 lg:bg-card/80 lg:backdrop-blur-xl lg:z-30">
+      <aside className="hidden lg:flex lg:fixed lg:inset-y-0 lg:left-0 lg:w-64 lg:flex-col lg:border-r lg:border-[oklch(0.88_0.04_60)] lg:bg-[oklch(0.96_0.035_70)]/85 lg:backdrop-blur-xl lg:z-30">
         <div className="px-6 pt-6 pb-4">
           <Link to="/" className="flex items-center gap-2">
             <span className="font-display text-2xl font-bold tracking-tight text-primary">
@@ -98,7 +98,7 @@ export function DesktopShell({ children }: { children: React.ReactNode }) {
                       "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
                       active
                         ? "bg-primary text-primary-foreground shadow-sm"
-                        : "text-foreground/75 hover:bg-secondary hover:text-foreground",
+                        : "text-foreground/75 hover:bg-[oklch(0.92_0.05_70)] hover:text-foreground",
                     )}
                   >
                     <Icon className="h-[18px] w-[18px] shrink-0" />
@@ -110,13 +110,13 @@ export function DesktopShell({ children }: { children: React.ReactNode }) {
           </ul>
         </nav>
 
-        <div className="border-t border-border/60 px-6 py-4 text-[11px] text-muted-foreground">
+        <div className="border-t border-[oklch(0.88_0.04_60)] px-6 py-4 text-[11px] text-muted-foreground">
           © {new Date().getFullYear()} Vamos Alicante
         </div>
       </aside>
 
       {/* Contenido principal */}
-      <main className="w-full lg:ml-64 lg:flex-1">
+      <main className="w-full lg:ml-64 lg:flex-1 lg:h-[100dvh] lg:overflow-y-auto lg:overscroll-contain">
         <div className="mx-auto w-full lg:max-w-6xl lg:px-8 lg:py-8">
           {children}
         </div>
