@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { MAP_BEACHES, getBeachBySlug, LOCAL_BEACH_PHOTOS, GOOGLE_PHOTO_SKIP, type MapBeach } from "./playas-map-data";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const PLACES_BASE = "https://places.googleapis.com/v1";
 
