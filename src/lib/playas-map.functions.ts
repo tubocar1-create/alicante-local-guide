@@ -99,8 +99,26 @@ export type MapBeachWithCover = MapBeach & { photo: string | null };
 
 export const getMapBeaches = createServerFn({ method: "GET" }).handler(
   async (): Promise<MapBeachWithCover[]> => {
+    // 1) Read cached covers from DB (one query for all slugs).
+    const { data: cached } = await supabaseAdmin
+      .from("beach_covers")
+      .select("slug, public_url");
+    const cacheMap = new Map<string, string>();
+    for (const row of cached ?? []) {
+      if (row.public_url) cacheMap.set(row.slug, row.public_url);
+    }
+
     const results = await Promise.all(
       MAP_BEACHES.map(async (b) => {
+        // Cache hit → no Google call.
+        const cachedUrl = cacheMap.get(b.slug);
+        if (cachedUrl) return { ...b, photo: cachedUrl };
+
+        // Local fallback.
+        const local = LOCAL_BEACH_PHOTOS[b.slug] ?? [];
+        if (local.length > 0) return { ...b, photo: local[0] };
+
+        // Last resort: live Google fetch.
         let photo: string | null = null;
         const placeId = await findPlaceId(b);
         if (placeId) {
@@ -108,10 +126,6 @@ export const getMapBeaches = createServerFn({ method: "GET" }).handler(
           const skip = GOOGLE_PHOTO_SKIP[b.slug] ?? 0;
           const firstPhoto = details?.photoNames?.[skip];
           if (firstPhoto) photo = await photoMediaUri(firstPhoto, 1200);
-        }
-        if (!photo) {
-          const local = LOCAL_BEACH_PHOTOS[b.slug] ?? [];
-          if (local.length > 0) photo = local[0];
         }
         return { ...b, photo };
       }),
