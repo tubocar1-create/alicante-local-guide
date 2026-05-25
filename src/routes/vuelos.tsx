@@ -489,7 +489,7 @@ function VuelosDashboard() {
                   cities={cities}
                   selectedCity={selectedCity}
                   flightType={flightType}
-                  lockZoom={isWeb}
+                  lockZoom={true}
                   onSelectCity={(c) => {
                     if (typeof window !== "undefined") {
                       window.open(`/vuelos/${c}?type=${flightType}`, "_blank", "noopener,noreferrer");
