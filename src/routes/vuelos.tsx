@@ -1077,39 +1077,53 @@ function InfoPanel({
   const hasMore = cities.length > visibleCount;
   return (
     <div className="rounded-2xl border border-white/[0.08] bg-[rgba(8,12,22,0.7)] p-4 backdrop-blur-xl">
-      <p className="text-sm font-semibold text-slate-100">
+      {/* Mobile / PWA title (sin cambios) */}
+      <p className="text-sm font-semibold text-slate-100 lg:hidden">
         {weekStart && weekEnd
           ? `${noun} de la semana del ${weekStart} al ${weekEnd}`
           : `${noun} de la semana`}
       </p>
-      <p className="mb-3 text-[10px] uppercase tracking-[0.2em] text-cyan-400/70">
+      <p className="mb-3 text-[10px] uppercase tracking-[0.2em] text-cyan-400/70 lg:hidden">
         {cities.length} {nounLower} · clic para abrir el dashboard
       </p>
+      {/* Web title */}
+      <p className="hidden lg:block text-base font-semibold text-slate-100">
+        A donde ir desde Alicante
+      </p>
+      <p className="mb-3 hidden lg:block text-[11px] text-cyan-300/80">
+        ({cities.length}) Ciudades{weekStart && weekEnd ? ` en la semana del ${weekStart} al ${weekEnd}` : ""}
+      </p>
       <ul className="mb-3 space-y-1">
-        {visibleCities.map((c, i) => (
-          <li key={c.iata} className="odd:bg-white/[0.02] rounded-lg">
-            <Link
-              to="/vuelos/$iata"
-              params={{ iata: c.iata }}
-              search={{ type: flightType }}
-              className="flex items-center gap-2 px-2 py-1 text-[12px] text-slate-200 transition hover:text-cyan-300"
-            >
-              <span className="w-4 text-right font-mono text-[11px] text-slate-500">
-                {i + 1}
-              </span>
-              <span className="text-base leading-none">{flagEmoji(c.iata)}</span>
-              <span className="flex-1 truncate">
-                {cleanCityNamePublic(c.ciudad)}{" "}
-                <span className="font-mono text-[10px] text-slate-500">
-                  ({c.iata})
+        {visibleCities.map((c, i) => {
+          const country = COUNTRY_NAME[IATA_COUNTRY[c.iata] ?? ""] ?? "";
+          return (
+            <li key={c.iata} className="odd:bg-white/[0.02] rounded-lg">
+              <Link
+                to="/vuelos/$iata"
+                params={{ iata: c.iata }}
+                search={{ type: flightType }}
+                className="flex items-center gap-2 px-2 py-1 text-[12px] text-slate-200 transition hover:text-cyan-300"
+              >
+                <span className="w-4 text-right font-mono text-[11px] text-slate-500">
+                  {i + 1}
                 </span>
-              </span>
-              <span className="font-mono tabular-nums text-slate-300">
-                {c.total}
-              </span>
-            </Link>
-          </li>
-        ))}
+                <span className="text-base leading-none">{flagEmoji(c.iata)}</span>
+                <span className="flex-1 truncate">
+                  {cleanCityNamePublic(c.ciudad)}{" "}
+                  <span className="font-mono text-[10px] text-slate-500">
+                    ({c.iata})
+                  </span>
+                  {country && (
+                    <span className="hidden lg:inline text-slate-400"> - {country}</span>
+                  )}
+                </span>
+                <span className="font-mono tabular-nums text-slate-300">
+                  {c.total}
+                </span>
+              </Link>
+            </li>
+          );
+        })}
         {cities.length === 0 && (
           <li className="text-xs text-slate-500">Sin datos disponibles.</li>
         )}
