@@ -1178,7 +1178,7 @@ export function ChatScreen() {
       )}
       {isWelcome && (
         <>
-          <nav className="relative flex items-center justify-around border-t border-border/60 bg-[oklch(0.985_0.018_88)]/95 px-2 pt-2 pb-[max(0.25rem,env(safe-area-inset-bottom))] backdrop-blur">
+          <nav className="relative flex items-center justify-around border-t border-border/60 bg-[oklch(0.985_0.018_88)]/95 px-2 pt-2 pb-[max(0.25rem,env(safe-area-inset-bottom))] backdrop-blur lg:justify-center lg:gap-10 lg:bg-transparent lg:border-t-0 lg:py-4">
             <button
               type="button"
               onClick={() => {
@@ -1187,21 +1187,22 @@ export function ChatScreen() {
                 setError(null);
                 setInput("");
               }}
-              className="flex flex-col items-center gap-0.5 px-3 py-1 text-primary"
+              className="flex flex-col items-center gap-0.5 px-3 py-1 text-primary lg:gap-1 lg:px-5 lg:py-2 lg:rounded-2xl lg:bg-white/70 lg:ring-1 lg:ring-border/60 lg:shadow-sm"
               aria-label="Inicio"
             >
-              <Home className="h-5 w-5" />
-              <span className="text-[10px] font-bold">Inicio</span>
+              <Home className="h-5 w-5 lg:h-6 lg:w-6" />
+              <span className="text-[10px] font-bold lg:text-[13px]">Inicio</span>
             </button>
             <Link
               to="/perfil"
-              className="flex flex-col items-center gap-0.5 px-3 py-1 text-primary active:scale-95"
+              className="flex flex-col items-center gap-0.5 px-3 py-1 text-primary active:scale-95 lg:gap-1 lg:px-5 lg:py-2 lg:rounded-2xl lg:bg-white/70 lg:ring-1 lg:ring-border/60 lg:shadow-sm"
               aria-label="Perfil"
             >
-              <UserIcon className="h-5 w-5" />
-              <span className="text-[10px] font-bold">Perfil</span>
+              <UserIcon className="h-5 w-5 lg:h-6 lg:w-6" />
+              <span className="text-[10px] font-bold lg:text-[13px]">Perfil</span>
             </Link>
           </nav>
+
         </>)}
         {showQrInfo && <QrVamosInfo onClose={() => setShowQrInfo(false)} />}
     </div>
