@@ -11,6 +11,7 @@ import {
 import { InstallPWA } from "@/components/InstallPWA";
 import { AgenteVamosFab } from "@/components/AgenteVamos";
 import { AppVersionWatcher } from "@/components/AppVersionWatcher";
+import { DesktopShell } from "@/components/DesktopShell";
 
 
 
