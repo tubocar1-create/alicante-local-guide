@@ -264,7 +264,7 @@ function DestinationDashboard() {
   const [flights, setFlights] = useState<Flight[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [popup, setPopup] = useState<{ airlineCode: string } | null>(null);
+  const [popup, setPopup] = useState<{ airlineCode: string; flight?: { numVuelo: string; fecha: string; salida: string; llegada: string; duracion: string; ruta: string } } | null>(null);
 
   useEffect(() => {
     let cancel = false;
