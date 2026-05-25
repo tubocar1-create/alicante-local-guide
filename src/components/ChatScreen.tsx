@@ -1240,15 +1240,16 @@ function WeatherChip() {
     <Link
       to="/clima"
       aria-label="Ver clima en Alicante"
-      className="flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 ring-1 ring-border/60 active:scale-95 transition"
+      className="flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 ring-1 ring-border/60 active:scale-95 transition lg:gap-2 lg:px-4 lg:py-2 lg:ring-2"
     >
-      <Icon className="h-4 w-4 text-[oklch(0.78_0.16_70)]" />
-      <p className="text-[12px] font-bold text-foreground leading-tight">
+      <Icon className="h-4 w-4 text-[oklch(0.78_0.16_70)] lg:h-6 lg:w-6" />
+      <p className="text-[12px] font-bold text-foreground leading-tight lg:text-[18px]">
         {loading || !data ? "—" : `${data.tempC}°`}
       </p>
     </Link>
   );
 }
+
 
 function QrVamosInfo({ onClose }: { onClose: () => void }) {
   const benefits = [
