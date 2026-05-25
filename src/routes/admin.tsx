@@ -96,6 +96,7 @@ function AdminLayout() {
   useAdminManifest();
   const [sessionUser, setSessionUser] = useState<{ id: string; email: string | null } | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  const [adminCheckTimedOut, setAdminCheckTimedOut] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const qc = useQueryClient();
@@ -104,11 +105,11 @@ function AdminLayout() {
   // Hidratar sesión Supabase y suscribirse a cambios.
   useEffect(() => {
     let mounted = true;
-    // Fallback: si getSession() no resuelve en 4s, no dejamos al usuario
-    // colgado en el spinner.
+    // Fallback: si getSession() no resuelve rápido, mostramos login/reintento
+    // en vez de dejar al usuario colgado en el spinner.
     const timeout = window.setTimeout(() => {
       if (mounted) setAuthReady(true);
-    }, 4000);
+    }, 1500);
     supabase.auth
       .getSession()
       .then(({ data }) => {
@@ -143,6 +144,13 @@ function AdminLayout() {
   });
 
   useEffect(() => {
+    setAdminCheckTimedOut(false);
+    if (!sessionUser || !adminQuery.isLoading) return;
+    const timeout = window.setTimeout(() => setAdminCheckTimedOut(true), 6000);
+    return () => window.clearTimeout(timeout);
+  }, [sessionUser, adminQuery.isLoading]);
+
+  useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
 
@@ -165,7 +173,7 @@ function AdminLayout() {
   }
 
   // Autenticado pero comprobando rol
-  if (adminQuery.isLoading) {
+  if (adminQuery.isLoading && !adminCheckTimedOut) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-3">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -175,12 +183,16 @@ function AdminLayout() {
   }
 
   // Error verificando rol -> permitir reintento o cerrar sesión
-  if (adminQuery.isError) {
+  if (adminQuery.isError || adminCheckTimedOut) {
     return (
       <AdminCheckError
         email={sessionUser.email}
-        error={adminQuery.error as Error}
-        onRetry={() => adminQuery.refetch()}
+        error={adminQuery.error instanceof Error ? adminQuery.error : null}
+        timedOut={adminCheckTimedOut && !adminQuery.isError}
+        onRetry={() => {
+          setAdminCheckTimedOut(false);
+          adminQuery.refetch();
+        }}
       />
     );
   }
@@ -392,10 +404,12 @@ function AdminLogin() {
 function AdminCheckError({
   email,
   error,
+  timedOut,
   onRetry,
 }: {
   email: string | null;
-  error: Error;
+  error: Error | null;
+  timedOut?: boolean;
   onRetry: () => void;
 }) {
   const logout = async () => {
@@ -415,7 +429,9 @@ function AdminCheckError({
             <span className="font-medium">{email ?? "tu cuenta"}</span>.
           </p>
           <p className="text-[11px] text-muted-foreground break-words">
-            {error?.message ?? "Error desconocido"}
+            {timedOut
+              ? "La comprobación tardó demasiado. Puedes reintentar o volver a iniciar sesión."
+              : error?.message ?? "Error desconocido"}
           </p>
           <Button className="w-full" onClick={onRetry}>
             Reintentar
