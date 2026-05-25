@@ -913,7 +913,7 @@ function Relato() {
 function FiestasPage() {
   return (
     <div
-      className="fixed inset-0 z-[60] overflow-y-auto text-white"
+      className="fixed inset-0 z-[60] lg:relative lg:inset-auto lg:z-auto lg:min-h-[60vh] overflow-y-auto text-white"
       style={{
         background:
           "linear-gradient(180deg,#ff6b35 0%, #ec4899 30%, #a21caf 55%, #7a2410 80%, #2a0a14 100%)",

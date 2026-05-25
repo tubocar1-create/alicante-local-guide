@@ -231,7 +231,7 @@ function FarmaciasPage() {
 
   return (
     <div
-      className="fixed inset-0 z-[60] overflow-y-auto"
+      className="fixed inset-0 z-[60] lg:relative lg:inset-auto lg:z-auto lg:min-h-[60vh] overflow-y-auto"
       style={{
         background:
           "linear-gradient(160deg, #04130d 0%, #06241a 45%, #0a1f2e 100%)",

@@ -11,7 +11,7 @@ export const Route = createFileRoute("/ocio_/conciertos")({
 function ConciertosPage() {
   return (
     <div
-      className="fixed inset-0 z-[60] flex flex-col items-center justify-center px-6 text-center text-white"
+      className="fixed inset-0 z-[60] lg:relative lg:inset-auto lg:z-auto lg:min-h-[60vh] flex flex-col items-center justify-center px-6 text-center text-white"
       style={{
         background:
           "linear-gradient(180deg, #1e1b4b 0%, #3730a3 50%, #0f0820 100%)",

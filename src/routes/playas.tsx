@@ -58,7 +58,7 @@ function PlayasPage() {
   }
 
   return (
-    <div className="h-[100dvh] overflow-y-auto overscroll-contain bg-[oklch(0.98_0.018_205)] text-[oklch(0.18_0.04_235)]">
+    <div className="h-[100dvh] lg:h-auto overflow-y-auto lg:overflow-visible overscroll-contain bg-[oklch(0.98_0.018_205)] text-[oklch(0.18_0.04_235)]">
       <header className="relative min-h-[58vh] overflow-hidden">
         <img
           src="/playas/coast-intro.jpg"
@@ -106,13 +106,13 @@ function PlayasPage() {
               <MapPin className="h-3.5 w-3.5" /> Mapa
             </Link>
           </div>
-          <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-3">
+          <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-3 lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-5 lg:overflow-visible lg:px-0 lg:snap-none">
             {mapBeaches.map((b: typeof mapBeaches[number]) => (
               <Link
                 key={b.slug}
                 to="/playas/$slug"
                 params={{ slug: b.slug }}
-                className="group relative h-[80vh] w-[85vw] max-w-[520px] flex-none snap-center overflow-hidden rounded-3xl bg-slate-200 shadow-xl ring-1 ring-sky-100"
+                className="group relative h-[80vh] w-[85vw] max-w-[520px] flex-none snap-center overflow-hidden rounded-3xl bg-slate-200 shadow-xl ring-1 ring-sky-100 lg:h-72 lg:w-auto lg:max-w-none lg:flex-initial lg:snap-align-none"
               >
                 {b.photo ? (
                   <img

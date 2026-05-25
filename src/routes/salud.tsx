@@ -169,7 +169,7 @@ function ScrollSection({
 function SaludDashboard() {
   return (
     <div
-      className="fixed inset-0 z-[60] overflow-y-auto text-white"
+      className="fixed inset-0 z-[60] lg:relative lg:inset-auto lg:z-auto lg:min-h-[60vh] overflow-y-auto text-white"
       style={{
         background:
           "linear-gradient(180deg, #0a1f1a 0%, #0c2340 50%, #07101f 100%)",

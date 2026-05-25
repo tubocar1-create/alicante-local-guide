@@ -73,7 +73,7 @@ function ComprarPage() {
   if (subsectors.length === 0) return <div className="p-6">No hay sectores configurados.</div>;
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-black text-white">
+    <div className="flex h-full lg:h-auto lg:min-h-[80vh] flex-col overflow-hidden lg:overflow-visible bg-black lg:rounded-3xl text-white">
       <header className="border-b border-white/10 bg-black">
         <div className="mx-auto flex max-w-3xl items-center gap-2 px-3 py-2">
           <Link to="/" className="rounded-full p-1.5 hover:bg-white/10" aria-label="Volver">
@@ -87,7 +87,7 @@ function ComprarPage() {
       </header>
 
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col overflow-hidden px-2 py-2">
-        <div className="grid min-h-0 flex-1 grid-cols-3 gap-1.5 sm:grid-cols-4">
+        <div className="grid min-h-0 flex-1 grid-cols-3 gap-1.5 sm:grid-cols-4 lg:grid-cols-6 lg:gap-3 xl:grid-cols-8">
           {subsectors.map((ss) => (
             <Link
               key={ss.id}
