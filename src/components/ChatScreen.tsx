@@ -813,13 +813,13 @@ export function ChatScreen() {
 
       {/* Messages */}
       <div ref={scrollRef} className={["relative min-h-0 flex-1 px-4 pt-3", isWelcome ? "overflow-hidden pb-0" : "overflow-y-auto pb-5"].join(" ")}>
-        <div className="mx-auto flex max-w-2xl flex-col gap-3">
+        <div className={["mx-auto flex max-w-2xl flex-col gap-3", isWelcome ? "lg:max-w-5xl lg:flex-row lg:items-center lg:gap-10" : ""].join(" ")}>
           {isWelcome && (
-            <div className="relative mx-auto mb-1 w-full max-w-[320px] overflow-visible rounded-xl">
+            <div className="relative mx-auto mb-1 w-full max-w-[320px] overflow-visible rounded-xl lg:mx-0 lg:mb-0 lg:max-w-[460px] lg:flex-none lg:shadow-[0_20px_50px_-15px_oklch(0.55_0.12_60/0.35)]">
               <img
                 src={portadaImg}
                 alt="Alicante"
-                className="h-auto w-full rounded-xl object-cover"
+                className="h-auto w-full rounded-xl object-cover lg:rounded-2xl"
                 loading="eager"
                 fetchPriority="high"
                 decoding="async"
@@ -888,8 +888,9 @@ export function ChatScreen() {
           )}
 
           {isWelcome && !activeSubmenu && (
-            <div className="mt-1 px-1">
-              <div className="grid grid-cols-5 gap-x-1 gap-y-3">
+            <div className="mt-1 px-1 lg:mt-0 lg:flex-1 lg:self-center">
+              <div className="grid grid-cols-5 gap-x-1 gap-y-3 lg:grid-cols-3 lg:gap-x-4 lg:gap-y-6">
+
                 {[
                   ...SUGGESTIONS.map((s) => {
                     const match = s.label.match(/^(\p{Extended_Pictographic}+)/u);
@@ -973,7 +974,7 @@ export function ChatScreen() {
                       style={{ animationDelay: `${(idx % 9) * 60}ms` }}
                     >
                       <div
-                        className="relative grid h-12 w-12 place-items-center rounded-full transition-transform duration-300 ease-out group-active:scale-90 overflow-hidden"
+                        className="relative grid h-12 w-12 place-items-center rounded-full transition-transform duration-300 ease-out group-active:scale-90 overflow-hidden lg:h-16 lg:w-16"
                         style={{ backgroundColor: t.label === "Fiestas de Alicante" ? "transparent" : pastel.bg }}
                       >
                         {t.label === "Fiestas de Alicante" ? (
@@ -981,19 +982,20 @@ export function ChatScreen() {
                         ) : t.label === "Transporte multimodal inteligente" ? (
                           <img src={busAlicanteIcon} alt="" className="h-[78%] w-[78%] object-contain" />
                         ) : Icon ? (
-                          <Icon className="h-5 w-5" strokeWidth={1.9} style={{ color: pastel.fg }} />
+                          <Icon className="h-5 w-5 lg:h-7 lg:w-7" strokeWidth={1.9} style={{ color: pastel.fg }} />
                         ) : (
-                          <span className="text-[20px]">{t.emoji}</span>
+                          <span className="text-[20px] lg:text-[26px]">{t.emoji}</span>
                         )}
                       </div>
-                      <span className="mt-1 block text-[11px] font-extrabold leading-tight tracking-tight text-foreground">
+                      <span className="mt-1 block text-[11px] font-extrabold leading-tight tracking-tight text-foreground lg:text-[13px]">
                         {displayLabel}
                       </span>
                       {subtitle && (
-                        <span className="mt-0.5 block text-[9px] leading-tight text-muted-foreground">
+                        <span className="mt-0.5 block text-[9px] leading-tight text-muted-foreground lg:text-[11px]">
                           {subtitle}
                         </span>
                       )}
+
                     </button>
                   );
                 })}
@@ -1086,21 +1088,21 @@ export function ChatScreen() {
       </div>
 
       {/* Composer */}
-      <div className="relative border-t border-border/60 bg-background/70 px-3 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/50">
+      <div className="relative border-t border-border/60 bg-background/70 px-3 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/50 lg:border-t-0 lg:bg-transparent lg:px-4 lg:py-2 lg:backdrop-blur-0">
         {geoStatus === "ok" && geo?.city && (
-          <div className="mx-auto mb-2 max-w-2xl text-center text-[11px] text-muted-foreground">
+          <div className="mx-auto mb-2 max-w-2xl text-center text-[11px] text-muted-foreground lg:mb-0 lg:text-left">
             <MapPin className="mr-1 inline h-3 w-3 text-primary" />
             Te tengo en {geo.area ? `${geo.area}, ` : ""}
             {geo.city}
           </div>
         )}
         {composerMode === "voice" ? (
-          <div className="mx-auto flex max-w-2xl flex-col items-center gap-2">
+          <div className="mx-auto flex max-w-2xl flex-col items-center gap-2 lg:fixed lg:bottom-6 lg:right-6 lg:z-40 lg:max-w-none lg:mx-0">
             <button
               onPointerDown={() => window.dispatchEvent(new Event("vamos:prime-voice"))}
               onClick={() => window.dispatchEvent(new Event("vamos:open"))}
               aria-label="Hablar con Agente Vamos"
-              className="group relative flex h-20 w-20 items-center justify-center rounded-full transition active:scale-95"
+              className="group relative flex h-20 w-20 items-center justify-center rounded-full transition active:scale-95 lg:h-14 lg:w-14"
               style={{
                 filter:
                   "drop-shadow(0 0 14px rgba(255,165,0,0.65)) drop-shadow(0 0 28px rgba(255,140,0,0.45))",
@@ -1121,6 +1123,7 @@ export function ChatScreen() {
               />
             </button>
           </div>
+
         ) : (
           <div className="mx-auto flex max-w-2xl items-end gap-2">
             <button
@@ -1175,7 +1178,7 @@ export function ChatScreen() {
       )}
       {isWelcome && (
         <>
-          <nav className="relative flex items-center justify-around border-t border-border/60 bg-[oklch(0.985_0.018_88)]/95 px-2 pt-2 pb-[max(0.25rem,env(safe-area-inset-bottom))] backdrop-blur">
+          <nav className="relative flex items-center justify-around border-t border-border/60 bg-[oklch(0.985_0.018_88)]/95 px-2 pt-2 pb-[max(0.25rem,env(safe-area-inset-bottom))] backdrop-blur lg:justify-center lg:gap-10 lg:bg-transparent lg:border-t-0 lg:py-4">
             <button
               type="button"
               onClick={() => {
@@ -1184,21 +1187,22 @@ export function ChatScreen() {
                 setError(null);
                 setInput("");
               }}
-              className="flex flex-col items-center gap-0.5 px-3 py-1 text-primary"
+              className="flex flex-col items-center gap-0.5 px-3 py-1 text-primary lg:gap-1 lg:px-5 lg:py-2 lg:rounded-2xl lg:bg-white/70 lg:ring-1 lg:ring-border/60 lg:shadow-sm"
               aria-label="Inicio"
             >
-              <Home className="h-5 w-5" />
-              <span className="text-[10px] font-bold">Inicio</span>
+              <Home className="h-5 w-5 lg:h-6 lg:w-6" />
+              <span className="text-[10px] font-bold lg:text-[13px]">Inicio</span>
             </button>
             <Link
               to="/perfil"
-              className="flex flex-col items-center gap-0.5 px-3 py-1 text-primary active:scale-95"
+              className="flex flex-col items-center gap-0.5 px-3 py-1 text-primary active:scale-95 lg:gap-1 lg:px-5 lg:py-2 lg:rounded-2xl lg:bg-white/70 lg:ring-1 lg:ring-border/60 lg:shadow-sm"
               aria-label="Perfil"
             >
-              <UserIcon className="h-5 w-5" />
-              <span className="text-[10px] font-bold">Perfil</span>
+              <UserIcon className="h-5 w-5 lg:h-6 lg:w-6" />
+              <span className="text-[10px] font-bold lg:text-[13px]">Perfil</span>
             </Link>
           </nav>
+
         </>)}
         {showQrInfo && <QrVamosInfo onClose={() => setShowQrInfo(false)} />}
     </div>
@@ -1238,15 +1242,16 @@ function WeatherChip() {
     <Link
       to="/clima"
       aria-label="Ver clima en Alicante"
-      className="flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 ring-1 ring-border/60 active:scale-95 transition"
+      className="flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 ring-1 ring-border/60 active:scale-95 transition lg:gap-2 lg:px-4 lg:py-2 lg:ring-2"
     >
-      <Icon className="h-4 w-4 text-[oklch(0.78_0.16_70)]" />
-      <p className="text-[12px] font-bold text-foreground leading-tight">
+      <Icon className="h-4 w-4 text-[oklch(0.78_0.16_70)] lg:h-6 lg:w-6" />
+      <p className="text-[12px] font-bold text-foreground leading-tight lg:text-[18px]">
         {loading || !data ? "—" : `${data.tempC}°`}
       </p>
     </Link>
   );
 }
+
 
 function QrVamosInfo({ onClose }: { onClose: () => void }) {
   const benefits = [
