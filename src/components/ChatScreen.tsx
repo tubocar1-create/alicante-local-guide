@@ -1088,21 +1088,21 @@ export function ChatScreen() {
       </div>
 
       {/* Composer */}
-      <div className="relative border-t border-border/60 bg-background/70 px-3 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/50">
+      <div className="relative border-t border-border/60 bg-background/70 px-3 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/50 lg:border-t-0 lg:bg-transparent lg:px-4 lg:py-2 lg:backdrop-blur-0">
         {geoStatus === "ok" && geo?.city && (
-          <div className="mx-auto mb-2 max-w-2xl text-center text-[11px] text-muted-foreground">
+          <div className="mx-auto mb-2 max-w-2xl text-center text-[11px] text-muted-foreground lg:mb-0 lg:text-left">
             <MapPin className="mr-1 inline h-3 w-3 text-primary" />
             Te tengo en {geo.area ? `${geo.area}, ` : ""}
             {geo.city}
           </div>
         )}
         {composerMode === "voice" ? (
-          <div className="mx-auto flex max-w-2xl flex-col items-center gap-2">
+          <div className="mx-auto flex max-w-2xl flex-col items-center gap-2 lg:fixed lg:bottom-6 lg:right-6 lg:z-40 lg:max-w-none lg:mx-0">
             <button
               onPointerDown={() => window.dispatchEvent(new Event("vamos:prime-voice"))}
               onClick={() => window.dispatchEvent(new Event("vamos:open"))}
               aria-label="Hablar con Agente Vamos"
-              className="group relative flex h-20 w-20 items-center justify-center rounded-full transition active:scale-95"
+              className="group relative flex h-20 w-20 items-center justify-center rounded-full transition active:scale-95 lg:h-14 lg:w-14"
               style={{
                 filter:
                   "drop-shadow(0 0 14px rgba(255,165,0,0.65)) drop-shadow(0 0 28px rgba(255,140,0,0.45))",
@@ -1123,6 +1123,7 @@ export function ChatScreen() {
               />
             </button>
           </div>
+
         ) : (
           <div className="mx-auto flex max-w-2xl items-end gap-2">
             <button
