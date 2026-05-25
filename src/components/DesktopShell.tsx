@@ -14,6 +14,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import vamosAlicanteLogo from "@/assets/vamos-alicante-logo.png";
 
 /**
  * DesktopShell — Solo afecta a pantallas ≥ lg (1024px).
