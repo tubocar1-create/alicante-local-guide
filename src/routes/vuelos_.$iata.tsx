@@ -458,7 +458,19 @@ function DestinationDashboard() {
                 return (
                   <div
                     key={i}
-                    onClick={() => setPopup({ airlineCode: ac })}
+                    onClick={() =>
+                      setPopup({
+                        airlineCode: ac,
+                        flight: {
+                          numVuelo: f.numVuelo,
+                          fecha: day,
+                          salida,
+                          llegada,
+                          duracion: dur.label,
+                          ruta: isArrival ? `${code} → ALC` : `ALC → ${code}`,
+                        },
+                      })
+                    }
                     className="grid cursor-pointer grid-cols-[auto_auto_auto_auto_auto_auto_auto] items-center gap-x-2 px-2 py-1.5 text-[11px] transition hover:bg-cyan-500/10"
                     title="Ver info del destino"
                   >
