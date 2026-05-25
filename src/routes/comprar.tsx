@@ -87,7 +87,7 @@ function ComprarPage() {
       </header>
 
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col overflow-hidden px-2 py-2">
-        <div className="grid min-h-0 flex-1 grid-cols-3 gap-1.5 sm:grid-cols-4">
+        <div className="grid min-h-0 flex-1 grid-cols-3 gap-1.5 sm:grid-cols-4 lg:grid-cols-6 lg:gap-3 xl:grid-cols-8">
           {subsectors.map((ss) => (
             <Link
               key={ss.id}
