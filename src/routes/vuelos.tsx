@@ -664,9 +664,9 @@ function ConnectivityMap({
       <div ref={wrapRef} className="relative h-[55vh] w-full sm:aspect-[16/9] sm:h-auto lg:aspect-auto lg:h-[82vh]">
         <TransformWrapper
           ref={trRef}
-          initialScale={3.7}
-          minScale={3.7}
-          maxScale={lockZoom ? 3.7 : 10}
+          initialScale={5.7}
+          minScale={5.7}
+          maxScale={lockZoom ? 5.7 : 10}
           wheel={{ step: 0.15, disabled: lockZoom }}
           doubleClick={{ mode: "zoomIn", step: 0.6, disabled: lockZoom }}
           pinch={{ disabled: lockZoom }}
