@@ -447,9 +447,9 @@ function VuelosDashboard() {
             </h1>
             {/* Web title */}
             <h1 className="mt-1 hidden text-2xl font-bold tracking-tight md:text-4xl lg:block">
-              A donde ir{" "}
+              {flightType === "L" ? "De donde vienen" : "A donde ir"}{" "}
               <span className="bg-gradient-to-r from-cyan-300 via-white to-violet-300 bg-clip-text text-transparent">
-                desde Alicante
+                {flightType === "L" ? "a Alicante" : "desde Alicante"}
               </span>
               <span className="ml-3 align-middle text-base font-normal text-cyan-300/80">
                 ({cities.filter((c) => c.total > 0).length}) ciudades
@@ -1168,7 +1168,7 @@ function InfoPanel({
       </p>
       {/* Web title */}
       <p className="hidden lg:block text-base font-semibold text-slate-100">
-        A donde ir desde Alicante
+        {isArrivals ? "De donde vienen a Alicante" : "A donde ir desde Alicante"}
       </p>
       <p className="mb-3 hidden lg:block text-[11px] text-cyan-300/80">
         ({cities.length}) Ciudades{weekStart && weekEnd ? ` en la semana del ${weekStart} al ${weekEnd}` : ""}

@@ -264,7 +264,7 @@ function DestinationDashboard() {
   const [flights, setFlights] = useState<Flight[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [popup, setPopup] = useState<{ airlineCode: string } | null>(null);
+  const [popup, setPopup] = useState<{ airlineCode: string; flight?: { numVuelo: string; fecha: string; salida: string; llegada: string; duracion: string; ruta: string } } | null>(null);
 
   useEffect(() => {
     let cancel = false;
@@ -444,7 +444,7 @@ function DestinationDashboard() {
               <span>Llegada</span>
               <span>Duración</span>
             </div>
-            <div className="max-h-[320px] divide-y divide-slate-800/60 overflow-y-auto">
+            <div className="always-scroll max-h-[320px] divide-y divide-slate-800/60">
               {window14Flights.map((f, i) => {
                 const d = parseDate(f.fecha);
                 const day = `${WEEKDAYS_PRETTY[(d.getDay() + 6) % 7]} ${d.getDate()} ${MONTHS_LONG[d.getMonth()].slice(0, 3)}`;
@@ -458,7 +458,19 @@ function DestinationDashboard() {
                 return (
                   <div
                     key={i}
-                    onClick={() => setPopup({ airlineCode: ac })}
+                    onClick={() =>
+                      setPopup({
+                        airlineCode: ac,
+                        flight: {
+                          numVuelo: f.numVuelo,
+                          fecha: day,
+                          salida,
+                          llegada,
+                          duracion: dur.label,
+                          ruta: isArrival ? `${code} → ALC` : `ALC → ${code}`,
+                        },
+                      })
+                    }
                     className="grid cursor-pointer grid-cols-[auto_auto_auto_auto_auto_auto_auto] items-center gap-x-2 px-2 py-1.5 text-[11px] transition hover:bg-cyan-500/10"
                     title="Ver info del destino"
                   >
@@ -593,6 +605,7 @@ function DestinationDashboard() {
           country={isArrival ? "España" : pais}
           airlineCode={popup.airlineCode}
           originIata={isArrival ? code : "ALC"}
+          flight={popup.flight}
           onClose={() => setPopup(null)}
         />
       )}
@@ -610,6 +623,22 @@ function Shell({ children, flightType }: { children: React.ReactNode; flightType
         background: "linear-gradient(180deg, #020617 0%, #06111f 50%, #020617 100%)",
       }}
     >
+      <style>{`
+        html { scrollbar-gutter: stable; scrollbar-width: auto; scrollbar-color: rgba(34,211,238,0.55) rgba(0,0,0,0.25); }
+        html::-webkit-scrollbar, body::-webkit-scrollbar { width: 24px; }
+        html::-webkit-scrollbar-track, body::-webkit-scrollbar-track { background: rgba(0,0,0,0.25); }
+        html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb {
+          background: rgba(34,211,238,0.55);
+          border-radius: 12px;
+          border: 4px solid transparent;
+          background-clip: padding-box;
+        }
+        .always-scroll { overflow-y: scroll !important; scrollbar-gutter: stable; scrollbar-width: thin; scrollbar-color: rgba(34,211,238,0.55) rgba(255,255,255,0.04); }
+        .always-scroll::-webkit-scrollbar { width: 12px; }
+        .always-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); border-radius: 8px; }
+        .always-scroll::-webkit-scrollbar-thumb { background: rgba(34,211,238,0.55); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+        .always-scroll::-webkit-scrollbar-thumb:hover { background: rgba(34,211,238,0.8); background-clip: padding-box; border: 2px solid transparent; }
+      `}</style>
       <div className="relative mx-auto max-w-7xl px-3 pb-6 pt-3 md:px-6">
         <header className="mb-2 flex items-center justify-between">
           <a
@@ -708,6 +737,7 @@ function DestinationPopup({
   country,
   airlineCode,
   originIata,
+  flight,
   onClose,
 }: {
   iata: string;
@@ -715,6 +745,7 @@ function DestinationPopup({
   country: string;
   airlineCode: string;
   originIata: string;
+  flight?: { numVuelo: string; fecha: string; salida: string; llegada: string; duracion: string; ruta: string };
   onClose: () => void;
 }) {
   const fetchComment = useServerFn(getDestinationComment);
@@ -785,14 +816,51 @@ function DestinationPopup({
           </div>
         </div>
 
-        <div className="min-h-[80px] rounded-xl border border-slate-700/40 bg-slate-950/30 p-3 text-[13px] leading-relaxed text-slate-100">
+        {flight && (
+          <div className="mb-3 grid grid-cols-2 gap-2 rounded-xl border border-cyan-500/20 bg-slate-950/40 p-3 text-[12px] text-slate-200">
+            <div>
+              <p className="text-[9px] uppercase tracking-wider text-cyan-300/70">Vuelo</p>
+              <p className="font-mono font-semibold text-white">{flight.numVuelo}</p>
+            </div>
+            <div>
+              <p className="text-[9px] uppercase tracking-wider text-cyan-300/70">Ruta</p>
+              <p className="font-mono font-semibold text-cyan-300">{flight.ruta}</p>
+            </div>
+            <div>
+              <p className="text-[9px] uppercase tracking-wider text-cyan-300/70">Fecha</p>
+              <p className="font-semibold text-white">{flight.fecha}</p>
+            </div>
+            <div>
+              <p className="text-[9px] uppercase tracking-wider text-cyan-300/70">Aerolínea</p>
+              <p className="font-semibold" style={{ color: colorFor(airlineCode, 0) }}>{airlineName(airlineCode)}</p>
+            </div>
+            <div>
+              <p className="text-[9px] uppercase tracking-wider text-cyan-300/70">Salida</p>
+              <p className="font-mono font-semibold text-white">{flight.salida}</p>
+            </div>
+            <div>
+              <p className="text-[9px] uppercase tracking-wider text-cyan-300/70">Llegada</p>
+              <p className="font-mono font-semibold text-white">{flight.llegada}</p>
+            </div>
+            <div className="col-span-2">
+              <p className="text-[9px] uppercase tracking-wider text-cyan-300/70">Duración estimada</p>
+              <p className="font-mono font-semibold text-white">{flight.duracion}</p>
+            </div>
+          </div>
+        )}
+
+        <div className="min-h-[60px] rounded-xl border border-slate-700/40 bg-slate-950/30 p-3 text-[13px] leading-relaxed text-slate-100">
           {loading && (
             <div className="flex items-center gap-2 text-slate-400">
               <span className="h-3 w-3 animate-spin rounded-full border-2 border-cyan-500/30 border-t-cyan-400" />
-              Preparando recomendación…
+              Preparando recomendación sobre {city}…
             </div>
           )}
-          {error && <p className="text-rose-300">No se pudo cargar el comentario.</p>}
+          {error && (
+            <p className="text-slate-300">
+              {city} ({iata}), {country}. Destino servido por {airlineName(airlineCode)} desde el aeropuerto de {originIata}.
+            </p>
+          )}
           {!loading && !error && <p>{text}</p>}
         </div>
 
