@@ -389,6 +389,46 @@ function AdminLogin() {
   );
 }
 
+function AdminCheckError({
+  email,
+  error,
+  onRetry,
+}: {
+  email: string | null;
+  error: Error;
+  onRetry: () => void;
+}) {
+  const logout = async () => {
+    await supabase.auth.signOut();
+  };
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background p-6">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <ShieldAlert className="h-5 w-5" /> No se pudo verificar permisos
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Hubo un problema comprobando los permisos de{" "}
+            <span className="font-medium">{email ?? "tu cuenta"}</span>.
+          </p>
+          <p className="text-[11px] text-muted-foreground break-words">
+            {error?.message ?? "Error desconocido"}
+          </p>
+          <Button className="w-full" onClick={onRetry}>
+            Reintentar
+          </Button>
+          <Button variant="outline" className="w-full" onClick={logout}>
+            Cerrar sesión
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 function AdminForbidden({ email }: { email: string | null }) {
   const logout = async () => {
     await supabase.auth.signOut();
