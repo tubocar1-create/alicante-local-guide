@@ -242,7 +242,7 @@ function HospitalDetailPage() {
 
   return (
     <div
-      className="fixed inset-0 z-[60] overflow-y-auto"
+      className="fixed inset-0 z-[60] lg:relative lg:inset-auto lg:z-auto lg:min-h-[60vh] overflow-y-auto"
       style={{
         background:
           "linear-gradient(160deg, #022c22 0%, #064e3b 45%, #052e2b 100%)",

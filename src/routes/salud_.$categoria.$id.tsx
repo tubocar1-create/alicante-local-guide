@@ -93,7 +93,7 @@ function ProviderDetailPage() {
 
   return (
     <div
-      className="fixed inset-0 z-[60] overflow-y-auto"
+      className="fixed inset-0 z-[60] lg:relative lg:inset-auto lg:z-auto lg:min-h-[60vh] overflow-y-auto"
       style={{
         background: `linear-gradient(160deg, ${cat.gradFrom} 0%, ${cat.gradVia} 45%, ${cat.gradTo} 100%)`,
       }}

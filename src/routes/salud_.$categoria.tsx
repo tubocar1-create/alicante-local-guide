@@ -83,7 +83,7 @@ function CategoryDashboard() {
 
   return (
     <div
-      className="fixed inset-0 z-[60] overflow-y-auto text-white"
+      className="fixed inset-0 z-[60] lg:relative lg:inset-auto lg:z-auto lg:min-h-[60vh] overflow-y-auto text-white"
       style={{
         background: `linear-gradient(180deg, ${cat.gradFrom} 0%, ${cat.gradVia} 50%, ${cat.gradTo} 100%)`,
       }}

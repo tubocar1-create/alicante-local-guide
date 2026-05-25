@@ -109,7 +109,7 @@ function SectorDashboard() {
 
   return (
     <div
-      className="fixed inset-0 z-[60] overflow-y-auto text-white"
+      className="fixed inset-0 z-[60] lg:relative lg:inset-auto lg:z-auto lg:min-h-[60vh] overflow-y-auto text-white"
       style={{
         background:
           "linear-gradient(180deg, #1a0f04 0%, #2a1707 45%, #160a02 100%)",

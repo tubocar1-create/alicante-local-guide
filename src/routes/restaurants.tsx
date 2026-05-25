@@ -128,7 +128,7 @@ function useCategoryPlaces(fn: typeof getTypicalPlaces, enabled: boolean) {
 function RestaurantsDashboard() {
   return (
     <div
-      className="fixed inset-0 z-[60] overflow-y-auto text-white"
+      className="fixed inset-0 z-[60] lg:relative lg:inset-auto lg:z-auto lg:min-h-[60vh] overflow-y-auto text-white"
       style={{
         background:
           "linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #0a0f1c 100%)",

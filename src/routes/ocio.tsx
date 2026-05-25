@@ -54,7 +54,7 @@ const SUBS: Sub[] = [
 function OcioDashboard() {
   return (
     <div
-      className="fixed inset-0 z-[60] overflow-y-auto text-white"
+      className="fixed inset-0 z-[60] lg:relative lg:inset-auto lg:z-auto lg:min-h-[60vh] overflow-y-auto text-white"
       style={{
         background:
           "linear-gradient(180deg, #1a0a2e 0%, #2d1b4e 50%, #0f0820 100%)",

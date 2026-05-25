@@ -66,7 +66,7 @@ function DondeDormirPage() {
 
   return (
     <div
-      className="fixed inset-0 z-[60] overflow-y-auto text-amber-50"
+      className="fixed inset-0 z-[60] lg:relative lg:inset-auto lg:z-auto lg:min-h-[60vh] overflow-y-auto text-amber-50"
       style={{
         background: "linear-gradient(180deg, #050b1f 0%, #0a1638 50%, #03081a 100%)",
       }}
