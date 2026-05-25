@@ -112,7 +112,7 @@ function PlayasPage() {
                 key={b.slug}
                 to="/playas/$slug"
                 params={{ slug: b.slug }}
-                className="group relative h-[80vh] w-[85vw] max-w-[520px] flex-none snap-center overflow-hidden rounded-3xl bg-slate-200 shadow-xl ring-1 ring-sky-100"
+                className="group relative h-[80vh] w-[85vw] max-w-[520px] flex-none snap-center overflow-hidden rounded-3xl bg-slate-200 shadow-xl ring-1 ring-sky-100 lg:h-72 lg:w-auto lg:max-w-none lg:flex-initial lg:snap-align-none"
               >
                 {b.photo ? (
                   <img
