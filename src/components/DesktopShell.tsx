@@ -211,8 +211,19 @@ export function DesktopShell({ children }: { children: React.ReactNode }) {
                       "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
                       active
                         ? "bg-primary text-primary-foreground shadow-sm"
-                        : "text-foreground/75 hover:bg-[oklch(0.92_0.05_70)] hover:text-foreground",
+                        : "text-foreground/75 hover:text-foreground",
                     )}
+                    style={
+                      !active
+                        ? ({ ["--tw-hover-bg" as string]: theme.hover } as React.CSSProperties)
+                        : undefined
+                    }
+                    onMouseEnter={(e) => {
+                      if (!active) e.currentTarget.style.backgroundColor = theme.hover;
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!active) e.currentTarget.style.backgroundColor = "";
+                    }}
                   >
                     <Icon className="h-[18px] w-[18px] shrink-0" />
                     <span className="truncate">{label}</span>
@@ -223,7 +234,10 @@ export function DesktopShell({ children }: { children: React.ReactNode }) {
           </ul>
         </nav>
 
-        <div className="border-t border-[oklch(0.88_0.04_60)] px-6 py-4 text-[11px] text-muted-foreground">
+        <div
+          className="border-t px-6 py-4 text-[11px] text-muted-foreground"
+          style={{ borderTopColor: theme.border }}
+        >
           © {new Date().getFullYear()} Vamos Alicante
         </div>
       </aside>
