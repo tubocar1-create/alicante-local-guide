@@ -922,29 +922,33 @@ function ConnectivityMap({
                 </p>
               </div>
 
-              {/* Zoom controls — solo acercar (la vista inicial está bloqueada) */}
-              <div className="absolute right-3 top-3 z-10 flex flex-col gap-1 rounded-xl border border-white/10 bg-black/50 p-1 backdrop-blur-md">
-                <button
-                  type="button"
-                  onClick={() => zoomIn()}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-200 transition hover:bg-white/10 hover:text-cyan-300"
-                  aria-label="Acercar"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => resetTransform()}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-200 transition hover:bg-white/10 hover:text-cyan-300"
-                  aria-label="Vista inicial"
-                >
-                  <Maximize2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
+              {/* Zoom controls — ocultos cuando el zoom está bloqueado (web) */}
+              {!lockZoom && (
+                <div className="absolute right-3 top-3 z-10 flex flex-col gap-1 rounded-xl border border-white/10 bg-black/50 p-1 backdrop-blur-md">
+                  <button
+                    type="button"
+                    onClick={() => zoomIn()}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-200 transition hover:bg-white/10 hover:text-cyan-300"
+                    aria-label="Acercar"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => resetTransform()}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-200 transition hover:bg-white/10 hover:text-cyan-300"
+                    aria-label="Vista inicial"
+                  >
+                    <Maximize2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
 
-              <div className="pointer-events-none absolute bottom-3 left-3 z-10 rounded-md border border-white/5 bg-black/40 px-2 py-1 text-[10px] uppercase tracking-widest text-slate-400 backdrop-blur-sm">
-                Pellizca · arrastra · toca
-              </div>
+              {!lockZoom && (
+                <div className="pointer-events-none absolute bottom-3 left-3 z-10 rounded-md border border-white/5 bg-black/40 px-2 py-1 text-[10px] uppercase tracking-widest text-slate-400 backdrop-blur-sm">
+                  Pellizca · arrastra · toca
+                </div>
+              )}
             </>
             );
           }}
