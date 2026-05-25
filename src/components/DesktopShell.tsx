@@ -22,7 +22,14 @@ import { cn } from "@/lib/utils";
  * No se aplica en rutas full-bleed (admin, business, auth, mapas, api).
  */
 
-const NAV_ITEMS = [
+type NavItem = {
+  to: string;
+  label: string;
+  icon: typeof Home;
+  exact?: boolean;
+};
+
+const NAV_ITEMS: NavItem[] = [
   { to: "/", label: "Inicio", icon: Home, exact: true },
   { to: "/playas", label: "Playas", icon: Waves },
   { to: "/ocio", label: "Ocio", icon: Sparkles },
@@ -35,7 +42,7 @@ const NAV_ITEMS = [
   { to: "/explore", label: "Explorar mapa", icon: MapIcon },
   { to: "/threads", label: "Mensajes", icon: MessageSquare },
   { to: "/perfil", label: "Perfil", icon: User },
-] as const;
+];
 
 const EXCLUDED_PREFIXES = [
   "/admin",
