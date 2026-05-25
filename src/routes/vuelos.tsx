@@ -1168,7 +1168,7 @@ function InfoPanel({
       </p>
       {/* Web title */}
       <p className="hidden lg:block text-base font-semibold text-slate-100">
-        A donde ir desde Alicante
+        {isArrivals ? "De donde vienen a Alicante" : "A donde ir desde Alicante"}
       </p>
       <p className="mb-3 hidden lg:block text-[11px] text-cyan-300/80">
         ({cities.length}) Ciudades{weekStart && weekEnd ? ` en la semana del ${weekStart} al ${weekEnd}` : ""}
