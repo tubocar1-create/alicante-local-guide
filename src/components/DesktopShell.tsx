@@ -59,6 +59,99 @@ function isExcluded(pathname: string) {
   return EXCLUDED_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/") || pathname.startsWith(p));
 }
 
+type PastelTheme = {
+  bg: string;
+  bgSoft: string;
+  border: string;
+  hover: string;
+};
+
+/**
+ * Devuelve la paleta pastel del sidebar acorde al tema de cada página.
+ * Solo afecta el menú izquierdo en desktop.
+ */
+function getPastelTheme(pathname: string): PastelTheme {
+  // /ocio → rosa (acento #f472b6)
+  if (pathname.startsWith("/ocio") || pathname.startsWith("/restaurants") || pathname.startsWith("/bares"))
+    return {
+      bg: "oklch(0.96 0.035 350)",
+      bgSoft: "oklch(0.97 0.025 350)",
+      border: "oklch(0.88 0.05 350)",
+      hover: "oklch(0.92 0.06 350)",
+    };
+  // /fiestas → naranja/coral
+  if (pathname.startsWith("/fiestas"))
+    return {
+      bg: "oklch(0.96 0.04 50)",
+      bgSoft: "oklch(0.97 0.03 50)",
+      border: "oklch(0.88 0.06 50)",
+      hover: "oklch(0.92 0.07 50)",
+    };
+  // /donde-dormir, /hotel, /stay → azul navy pastel
+  if (pathname.startsWith("/donde-dormir") || pathname.startsWith("/hotel") || pathname.startsWith("/stay"))
+    return {
+      bg: "oklch(0.95 0.03 245)",
+      bgSoft: "oklch(0.97 0.02 245)",
+      border: "oklch(0.86 0.05 245)",
+      hover: "oklch(0.91 0.06 245)",
+    };
+  // /comprar → ámbar
+  if (pathname.startsWith("/comprar"))
+    return {
+      bg: "oklch(0.96 0.04 80)",
+      bgSoft: "oklch(0.97 0.03 80)",
+      border: "oklch(0.88 0.06 80)",
+      hover: "oklch(0.92 0.07 80)",
+    };
+  // /bus, /tram → slate/azul frío
+  if (pathname.startsWith("/bus") || pathname.startsWith("/tram"))
+    return {
+      bg: "oklch(0.95 0.02 230)",
+      bgSoft: "oklch(0.97 0.015 230)",
+      border: "oklch(0.86 0.03 230)",
+      hover: "oklch(0.91 0.04 230)",
+    };
+  // /vuelos, /clima → cielo
+  if (pathname.startsWith("/vuelos") || pathname.startsWith("/clima"))
+    return {
+      bg: "oklch(0.95 0.035 220)",
+      bgSoft: "oklch(0.97 0.025 220)",
+      border: "oklch(0.86 0.05 220)",
+      hover: "oklch(0.91 0.06 220)",
+    };
+  // /salud, /hospitales, /farmacias → verde menta/teal
+  if (pathname.startsWith("/salud") || pathname.startsWith("/hospitales") || pathname.startsWith("/farmacias") || pathname.startsWith("/sistema-sanitario"))
+    return {
+      bg: "oklch(0.95 0.035 170)",
+      bgSoft: "oklch(0.97 0.025 170)",
+      border: "oklch(0.86 0.05 170)",
+      hover: "oklch(0.91 0.06 170)",
+    };
+  // /playas → turquesa
+  if (pathname.startsWith("/playas"))
+    return {
+      bg: "oklch(0.95 0.035 200)",
+      bgSoft: "oklch(0.97 0.025 200)",
+      border: "oklch(0.86 0.05 200)",
+      hover: "oklch(0.91 0.06 200)",
+    };
+  // /threads, /perfil → lavanda neutra
+  if (pathname.startsWith("/threads") || pathname.startsWith("/perfil"))
+    return {
+      bg: "oklch(0.95 0.03 290)",
+      bgSoft: "oklch(0.97 0.02 290)",
+      border: "oklch(0.86 0.05 290)",
+      hover: "oklch(0.91 0.06 290)",
+    };
+  // default (home/index) → arena cálida
+  return {
+    bg: "oklch(0.96 0.035 70)",
+    bgSoft: "oklch(0.97 0.025 60)",
+    border: "oklch(0.88 0.04 60)",
+    hover: "oklch(0.92 0.05 70)",
+  };
+}
+
 export function DesktopShell({ children }: { children: React.ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
@@ -66,10 +159,30 @@ export function DesktopShell({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
 
+  const theme = getPastelTheme(pathname);
+
   return (
-    <div className="min-h-[100dvh] w-full lg:flex lg:h-[100dvh] lg:bg-gradient-to-br lg:from-[oklch(0.96_0.04_75)] lg:via-[oklch(0.97_0.025_60)] lg:to-[oklch(0.95_0.05_50)]">
+    <div
+      className="min-h-[100dvh] w-full lg:flex lg:h-[100dvh]"
+      style={{
+        // El fondo general en desktop sigue el mismo tono pastel suave
+        ["--ds-bg" as string]: theme.bg,
+      }}
+    >
+      <div
+        className="hidden lg:block lg:fixed lg:inset-0 lg:-z-10"
+        style={{
+          background: `linear-gradient(135deg, ${theme.bg} 0%, ${theme.bgSoft} 60%, ${theme.bg} 100%)`,
+        }}
+      />
       {/* Sidebar: solo desktop */}
-      <aside className="hidden lg:flex lg:fixed lg:inset-y-0 lg:left-0 lg:w-64 lg:flex-col lg:border-r lg:border-[oklch(0.88_0.04_60)] lg:bg-[oklch(0.96_0.035_70)]/85 lg:backdrop-blur-xl lg:z-30">
+      <aside
+        className="hidden lg:flex lg:fixed lg:inset-y-0 lg:left-0 lg:w-64 lg:flex-col lg:border-r lg:backdrop-blur-xl lg:z-30"
+        style={{
+          backgroundColor: theme.bg,
+          borderRightColor: theme.border,
+        }}
+      >
         <div className="px-6 pt-6 pb-4">
           <Link to="/" className="flex items-center gap-2">
             <span className="font-display text-2xl font-bold tracking-tight text-primary">
