@@ -143,13 +143,14 @@ function getPastelTheme(pathname: string): PastelTheme {
       border: "oklch(0.86 0.05 290)",
       hover: "oklch(0.91 0.06 290)",
     };
-  // default (home/index) → arena cálida
+  // default (home/index) → ocre cálido
   return {
-    bg: "oklch(0.96 0.035 70)",
-    bgSoft: "oklch(0.97 0.025 60)",
-    border: "oklch(0.88 0.04 60)",
-    hover: "oklch(0.92 0.05 70)",
+    bg: "oklch(0.91 0.07 75)",
+    bgSoft: "oklch(0.94 0.055 70)",
+    border: "oklch(0.80 0.09 70)",
+    hover: "oklch(0.87 0.09 70)",
   };
+
 }
 
 export function DesktopShell({ children }: { children: React.ReactNode }) {
