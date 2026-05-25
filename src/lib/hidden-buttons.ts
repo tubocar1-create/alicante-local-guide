@@ -63,10 +63,18 @@ export const HIDDEN_BUTTONS: HiddenButton[] = [
     reason: "Funcionalidad de negocio para locales aún no lista para producción.",
   },
   {
+    id: "perfil-tarjeta-invitado",
+    label: "Tarjeta Invitado (con Iniciar sesión + Soy un local)",
+    location: "Perfil · tarjeta de usuario para invitados",
+    file: "src/routes/perfil.tsx",
+    reason: "Ocultada en todas las versiones: duplica el CTA superior '¿Aún no tienes cuenta?'.",
+  },
+  {
     id: "perfil-mis-qr",
     label: "Mis QR",
     location: "Perfil · sección QR",
     file: "src/routes/perfil.tsx",
     reason: "Sistema de QR en fase de validación, pendiente de lanzamiento.",
   },
+
 ];
