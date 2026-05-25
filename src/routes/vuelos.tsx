@@ -1272,6 +1272,84 @@ function InfoPanel({
           </div>
         ))}
       </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function AirlinesFullPanel({
+  airlines,
+  destinos,
+  aerolineas,
+  vuelos,
+  region,
+  flightType,
+}: {
+  airlines: [string, number][];
+  destinos: number;
+  aerolineas: number;
+  vuelos: number;
+  region: string;
+  flightType: "S" | "L";
+}) {
+  const isArrivals = flightType === "L";
+  const noun = isArrivals ? "Orígenes" : "Destinos";
+  const items = [
+    { icon: "✈", value: `${destinos}`, label: `${noun} / 7d` },
+    { icon: "🛫", value: `${aerolineas}`, label: "Aerolíneas / 7d" },
+    { icon: "✓", value: vuelos.toLocaleString("es-ES"), label: "Vuelos / 7d" },
+    { icon: "🌍", value: region, label: isArrivals ? "Principal origen" : "Principal" },
+  ];
+  return (
+    <div className="rounded-2xl border border-white/[0.08] bg-[rgba(8,12,22,0.7)] p-5 backdrop-blur-xl">
+      <p className="mb-4 text-base font-semibold text-slate-100">
+        Aerolíneas por número de vuelos
+      </p>
+      <ul className="mb-5 grid grid-cols-2 gap-x-6 gap-y-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        {airlines.map(([code, count], i) => {
+          const color = airlineColor(code, i);
+          return (
+            <li
+              key={code}
+              className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[12.5px] text-slate-200"
+            >
+              <span
+                className="h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ background: color, boxShadow: `0 0 6px ${color}` }}
+              />
+              <span className="flex-1 truncate">
+                <span className="font-semibold" style={{ color }}>
+                  {airlineName(code)}
+                </span>{" "}
+                <span className="font-mono text-[10px] text-slate-500">
+                  {code}
+                </span>
+              </span>
+              <span className="font-mono tabular-nums text-slate-300">
+                {count.toLocaleString("es-ES")}
+              </span>
+            </li>
+          );
+        })}
+        {airlines.length === 0 && (
+          <li className="text-xs text-slate-500">Sin datos disponibles.</li>
+        )}
+      </ul>
+
+      <div className="grid grid-cols-2 gap-3 border-t border-white/[0.06] pt-4 sm:grid-cols-4">
+        {items.map((it) => (
+          <div key={it.label} className="flex flex-col items-center text-center">
+            <div className="mb-1 flex h-9 w-9 items-center justify-center rounded-full border border-cyan-400/30 text-cyan-300">
+              <span className="text-base leading-none">{it.icon}</span>
+            </div>
+            <p className="text-base font-bold text-white">{it.value}</p>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">
+              {it.label}
+            </p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
