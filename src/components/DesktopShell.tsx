@@ -186,11 +186,15 @@ export function DesktopShell({ children }: { children: React.ReactNode }) {
         }}
       >
         <div className="px-4 pt-3 pb-2 flex flex-col items-center">
-          <Link to="/" className="block">
+          <Link
+            to="/"
+            className="block rounded-full bg-white overflow-hidden shadow-md ring-1"
+            style={{ borderColor: theme.border, ['--tw-ring-color' as string]: theme.border }}
+          >
             <img
               src={vamosAlicanteLogo}
               alt="Vamos Alicante"
-              className="h-20 w-20 object-contain"
+              className="h-36 w-36 object-cover rounded-full"
             />
           </Link>
         </div>
