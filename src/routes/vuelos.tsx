@@ -435,19 +435,8 @@ function VuelosDashboard() {
         )}
 
         {!loading && (
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
-            <InfoPanel
-              cities={topCities}
-              airlines={airlinesAgg.slice(0, 9)}
-              destinos={destinationsCount}
-              aerolineas={airlinesCount}
-              vuelos={totalFlights}
-              region={principalRegion}
-              weekStart={weekRange.start}
-              weekEnd={weekRange.end}
-              flightType={flightType}
-            />
-            <div>
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)]">
+            <div className="order-2 lg:order-1">
               <ConnectivityMap
                 cities={cities}
                 selectedCity={selectedCity}
@@ -457,6 +446,19 @@ function VuelosDashboard() {
                     window.open(`/vuelos/${c}?type=${flightType}`, "_blank", "noopener,noreferrer");
                   }
                 }}
+              />
+            </div>
+            <div className="order-1 lg:order-2">
+              <InfoPanel
+                cities={topCities}
+                airlines={airlinesAgg.slice(0, 9)}
+                destinos={destinationsCount}
+                aerolineas={airlinesCount}
+                vuelos={totalFlights}
+                region={principalRegion}
+                weekStart={weekRange.start}
+                weekEnd={weekRange.end}
+                flightType={flightType}
               />
             </div>
           </div>
