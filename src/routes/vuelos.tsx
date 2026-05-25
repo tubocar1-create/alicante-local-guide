@@ -1216,16 +1216,18 @@ function InfoPanel({
       {hasMore && (
         <button
           type="button"
-          onClick={() => setVisibleCount((n) => n + 20)}
+          onClick={() => setVisibleCount((n) => n + pageSize)}
           className="mb-5 w-full rounded-lg border border-cyan-400/30 bg-cyan-400/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.15em] text-cyan-300 transition hover:bg-cyan-400/10"
         >
-          Ver más ({Math.min(20, cities.length - visibleCount)} de {cities.length - visibleCount} restantes)
+          Ver más ({Math.min(pageSize, cities.length - visibleCount)} de {cities.length - visibleCount} restantes)
         </button>
       )}
 
-      <p className="mb-3 text-sm font-semibold text-slate-100">
-        Aerolíneas por número de vuelos
-      </p>
+      {!hideAirlines && (
+        <>
+          <p className="mb-3 text-sm font-semibold text-slate-100">
+            Aerolíneas por número de vuelos
+          </p>
       <ul className="mb-5 space-y-1">
         {airlines.map(([code, count], i) => {
           const color = airlineColor(code, i);
