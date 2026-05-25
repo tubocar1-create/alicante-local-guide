@@ -143,12 +143,12 @@ function getPastelTheme(pathname: string): PastelTheme {
       border: "oklch(0.86 0.05 290)",
       hover: "oklch(0.91 0.06 290)",
     };
-  // default (home/index) → ocre cálido
+  // default (home/index) → amarillo fuerte / ocre cálido
   return {
-    bg: "oklch(0.91 0.07 75)",
-    bgSoft: "oklch(0.94 0.055 70)",
-    border: "oklch(0.80 0.09 70)",
-    hover: "oklch(0.87 0.09 70)",
+    bg: "oklch(0.88 0.13 85)",
+    bgSoft: "oklch(0.92 0.10 82)",
+    border: "oklch(0.74 0.14 75)",
+    hover: "oklch(0.83 0.15 80)",
   };
 
 }
