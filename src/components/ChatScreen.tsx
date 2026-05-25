@@ -1229,7 +1229,7 @@ export function ChatScreen() {
       )}
       {isWelcome && (
         <>
-          <nav className="relative flex items-center justify-around border-t border-border/60 bg-[oklch(0.985_0.018_88)]/95 px-2 pt-2 pb-[max(0.25rem,env(safe-area-inset-bottom))] backdrop-blur lg:justify-center lg:gap-10 lg:bg-transparent lg:border-t-0 lg:py-4">
+          <nav className="relative flex items-center justify-around border-t border-border/60 bg-[oklch(0.985_0.018_88)]/95 px-2 pt-2 pb-[max(0.25rem,env(safe-area-inset-bottom))] backdrop-blur lg:hidden">
             <button
               type="button"
               onClick={() => {
