@@ -610,6 +610,22 @@ function Shell({ children, flightType }: { children: React.ReactNode; flightType
         background: "linear-gradient(180deg, #020617 0%, #06111f 50%, #020617 100%)",
       }}
     >
+      <style>{`
+        html { scrollbar-gutter: stable; scrollbar-width: auto; scrollbar-color: rgba(34,211,238,0.55) rgba(0,0,0,0.25); }
+        html::-webkit-scrollbar, body::-webkit-scrollbar { width: 24px; }
+        html::-webkit-scrollbar-track, body::-webkit-scrollbar-track { background: rgba(0,0,0,0.25); }
+        html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb {
+          background: rgba(34,211,238,0.55);
+          border-radius: 12px;
+          border: 4px solid transparent;
+          background-clip: padding-box;
+        }
+        .always-scroll { overflow-y: scroll !important; scrollbar-gutter: stable; scrollbar-width: thin; scrollbar-color: rgba(34,211,238,0.55) rgba(255,255,255,0.04); }
+        .always-scroll::-webkit-scrollbar { width: 12px; }
+        .always-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); border-radius: 8px; }
+        .always-scroll::-webkit-scrollbar-thumb { background: rgba(34,211,238,0.55); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+        .always-scroll::-webkit-scrollbar-thumb:hover { background: rgba(34,211,238,0.8); background-clip: padding-box; border: 2px solid transparent; }
+      `}</style>
       <div className="relative mx-auto max-w-7xl px-3 pb-6 pt-3 md:px-6">
         <header className="mb-2 flex items-center justify-between">
           <a
