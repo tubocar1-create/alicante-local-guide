@@ -605,6 +605,7 @@ function DestinationDashboard() {
           country={isArrival ? "España" : pais}
           airlineCode={popup.airlineCode}
           originIata={isArrival ? code : "ALC"}
+          flight={popup.flight}
           onClose={() => setPopup(null)}
         />
       )}
