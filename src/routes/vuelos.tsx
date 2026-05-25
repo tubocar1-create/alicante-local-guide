@@ -414,21 +414,63 @@ function VuelosDashboard() {
           </div>
         </header>
 
-        <div className="mb-5">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-400/70">
-            {flightType === "L" ? "Dashboard de llegadas" : "Dashboard de salidas"}
-          </p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight md:text-4xl">
-            {flightType === "L" ? "Vuelos de llegada " : "Vuelos de salida "}
-            <span className="bg-gradient-to-r from-cyan-300 via-white to-violet-300 bg-clip-text text-transparent">
-              {flightType === "L" ? "hacia Alicante" : "desde Alicante"}
-            </span>
-          </h1>
-          <p className="mt-1 text-xs text-cyan-300/80 md:text-sm">
-            {flightType === "L"
-              ? "Métricas semanales (7 días) de vuelos que aterrizan en Alicante-Elche (ALC), agrupados por ciudad de origen."
-              : "Métricas semanales (7 días) de vuelos que despegan de Alicante-Elche (ALC), agrupados por ciudad de destino."}
-          </p>
+        <div className="mb-5 lg:flex lg:items-start lg:justify-between lg:gap-6">
+          <div className="lg:flex-1">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-400/70">
+              {flightType === "L" ? "Dashboard de llegadas" : "Dashboard de salidas"}
+            </p>
+            {/* Mobile/PWA title (sin cambios) */}
+            <h1 className="mt-1 text-2xl font-bold tracking-tight md:text-4xl lg:hidden">
+              {flightType === "L" ? "Vuelos de llegada " : "Vuelos de salida "}
+              <span className="bg-gradient-to-r from-cyan-300 via-white to-violet-300 bg-clip-text text-transparent">
+                {flightType === "L" ? "hacia Alicante" : "desde Alicante"}
+              </span>
+            </h1>
+            {/* Web title */}
+            <h1 className="mt-1 hidden text-2xl font-bold tracking-tight md:text-4xl lg:block">
+              A donde ir{" "}
+              <span className="bg-gradient-to-r from-cyan-300 via-white to-violet-300 bg-clip-text text-transparent">
+                desde Alicante
+              </span>
+              <span className="ml-3 align-middle text-base font-normal text-cyan-300/80">
+                ({cities.filter((c) => c.total > 0).length}) ciudades
+              </span>
+            </h1>
+            <p className="mt-1 text-xs text-cyan-300/80 md:text-sm lg:hidden">
+              {flightType === "L"
+                ? "Métricas semanales (7 días) de vuelos que aterrizan en Alicante-Elche (ALC), agrupados por ciudad de origen."
+                : "Métricas semanales (7 días) de vuelos que despegan de Alicante-Elche (ALC), agrupados por ciudad de destino."}
+            </p>
+          </div>
+          {/* Manual city selector — web only */}
+          <div className="mt-3 hidden rounded-2xl border border-cyan-400/30 bg-cyan-400/5 px-3 py-2 lg:mt-0 lg:flex lg:items-center lg:gap-2">
+            <label className="text-[10px] uppercase tracking-[0.2em] text-cyan-300/70">
+              Tu ciudad:
+            </label>
+            <select
+              className="rounded-lg border border-white/10 bg-black/40 px-3 py-1.5 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
+              value=""
+              onChange={(e) => {
+                const iata = e.target.value;
+                if (!iata) return;
+                if (typeof window !== "undefined") {
+                  window.open(`/vuelos/${iata}?type=${flightType}`, "_blank", "noopener,noreferrer");
+                }
+                e.target.value = "";
+              }}
+            >
+              <option value="">— Elige una ciudad —</option>
+              {cities
+                .filter((c) => c.total > 0)
+                .slice()
+                .sort((a, b) => cleanCityNamePublic(a.ciudad).localeCompare(cleanCityNamePublic(b.ciudad), "es"))
+                .map((c) => (
+                  <option key={c.iata} value={c.iata}>
+                    {cleanCityNamePublic(c.ciudad)} ({c.iata})
+                  </option>
+                ))}
+            </select>
+          </div>
         </div>
 
         {false && loading && (
