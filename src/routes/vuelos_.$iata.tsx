@@ -737,6 +737,7 @@ function DestinationPopup({
   country,
   airlineCode,
   originIata,
+  flight,
   onClose,
 }: {
   iata: string;
@@ -744,6 +745,7 @@ function DestinationPopup({
   country: string;
   airlineCode: string;
   originIata: string;
+  flight?: { numVuelo: string; fecha: string; salida: string; llegada: string; duracion: string; ruta: string };
   onClose: () => void;
 }) {
   const fetchComment = useServerFn(getDestinationComment);
