@@ -106,7 +106,7 @@ function PlayasPage() {
               <MapPin className="h-3.5 w-3.5" /> Mapa
             </Link>
           </div>
-          <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-3">
+          <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-3 lg:mx-0 lg:grid lg:grid-cols-3 lg:gap-5 lg:overflow-visible lg:px-0 lg:snap-none">
             {mapBeaches.map((b: typeof mapBeaches[number]) => (
               <Link
                 key={b.slug}
