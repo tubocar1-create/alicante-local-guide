@@ -1130,6 +1130,8 @@ function InfoPanel({
   weekStart,
   weekEnd,
   flightType,
+  pageSize = 20,
+  hideAirlines = false,
 }: {
   cities: CityAgg[];
   airlines: [string, number][];
@@ -1140,6 +1142,8 @@ function InfoPanel({
   weekStart: string;
   weekEnd: string;
   flightType: "S" | "L";
+  pageSize?: number;
+  hideAirlines?: boolean;
 }) {
   const isArrivals = flightType === "L";
   const noun = isArrivals ? "Orígenes" : "Destinos";
@@ -1150,7 +1154,10 @@ function InfoPanel({
     { icon: "✓", value: vuelos.toLocaleString("es-ES"), label: "Vuelos / 7d" },
     { icon: "🌍", value: region, label: isArrivals ? "Principal origen" : "Principal" },
   ];
-  const [visibleCount, setVisibleCount] = useState(20);
+  const [visibleCount, setVisibleCount] = useState(pageSize);
+  useEffect(() => {
+    setVisibleCount(pageSize);
+  }, [pageSize]);
   const visibleCities = cities.slice(0, visibleCount);
   const hasMore = cities.length > visibleCount;
   return (
