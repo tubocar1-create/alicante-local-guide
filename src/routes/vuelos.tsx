@@ -508,7 +508,7 @@ function VuelosDashboard() {
                   weekStart={weekRange.start}
                   weekEnd={weekRange.end}
                   flightType={flightType}
-                  pageSize={isWeb ? 12 : 20}
+                  pageSize={isWeb ? 12 : 15}
                   hideAirlines={isWeb}
                 />
               </div>
