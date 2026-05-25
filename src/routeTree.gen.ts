@@ -127,6 +127,7 @@ import { Route as ApiPublicTramBusConnectionsRouteImport } from './routes/api/pu
 import { Route as ApiPublicShopPhotoSplatRouteImport } from './routes/api/public/shop-photo.$'
 import { Route as ApiPublicHooksTramSyncRouteImport } from './routes/api/public/hooks/tram-sync'
 import { Route as ApiPublicHooksSyncHotelsStaticRouteImport } from './routes/api/public/hooks/sync-hotels-static'
+import { Route as ApiPublicHooksSyncBeachCoversRouteImport } from './routes/api/public/hooks/sync-beach-covers'
 import { Route as ApiPublicHooksRefreshHotelsDynamicRouteImport } from './routes/api/public/hooks/refresh-hotels-dynamic'
 import { Route as ApiPublicHooksCinemasSyncRouteImport } from './routes/api/public/hooks/cinemas-sync'
 import { Route as ApiPublicHooksAgenteLearnRouteImport } from './routes/api/public/hooks/agente-learn'
@@ -728,6 +729,12 @@ const ApiPublicHooksSyncHotelsStaticRoute =
     path: '/api/public/hooks/sync-hotels-static',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksSyncBeachCoversRoute =
+  ApiPublicHooksSyncBeachCoversRouteImport.update({
+    id: '/api/public/hooks/sync-beach-covers',
+    path: '/api/public/hooks/sync-beach-covers',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksRefreshHotelsDynamicRoute =
   ApiPublicHooksRefreshHotelsDynamicRouteImport.update({
     id: '/api/public/hooks/refresh-hotels-dynamic',
@@ -864,6 +871,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/agente-learn': typeof ApiPublicHooksAgenteLearnRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
   '/api/public/hooks/refresh-hotels-dynamic': typeof ApiPublicHooksRefreshHotelsDynamicRoute
+  '/api/public/hooks/sync-beach-covers': typeof ApiPublicHooksSyncBeachCoversRoute
   '/api/public/hooks/sync-hotels-static': typeof ApiPublicHooksSyncHotelsStaticRoute
   '/api/public/hooks/tram-sync': typeof ApiPublicHooksTramSyncRoute
   '/api/public/shop-photo/$': typeof ApiPublicShopPhotoSplatRoute
@@ -985,6 +993,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/agente-learn': typeof ApiPublicHooksAgenteLearnRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
   '/api/public/hooks/refresh-hotels-dynamic': typeof ApiPublicHooksRefreshHotelsDynamicRoute
+  '/api/public/hooks/sync-beach-covers': typeof ApiPublicHooksSyncBeachCoversRoute
   '/api/public/hooks/sync-hotels-static': typeof ApiPublicHooksSyncHotelsStaticRoute
   '/api/public/hooks/tram-sync': typeof ApiPublicHooksTramSyncRoute
   '/api/public/shop-photo/$': typeof ApiPublicShopPhotoSplatRoute
@@ -1110,6 +1119,7 @@ export interface FileRoutesById {
   '/api/public/hooks/agente-learn': typeof ApiPublicHooksAgenteLearnRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
   '/api/public/hooks/refresh-hotels-dynamic': typeof ApiPublicHooksRefreshHotelsDynamicRoute
+  '/api/public/hooks/sync-beach-covers': typeof ApiPublicHooksSyncBeachCoversRoute
   '/api/public/hooks/sync-hotels-static': typeof ApiPublicHooksSyncHotelsStaticRoute
   '/api/public/hooks/tram-sync': typeof ApiPublicHooksTramSyncRoute
   '/api/public/shop-photo/$': typeof ApiPublicShopPhotoSplatRoute
@@ -1236,6 +1246,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/agente-learn'
     | '/api/public/hooks/cinemas-sync'
     | '/api/public/hooks/refresh-hotels-dynamic'
+    | '/api/public/hooks/sync-beach-covers'
     | '/api/public/hooks/sync-hotels-static'
     | '/api/public/hooks/tram-sync'
     | '/api/public/shop-photo/$'
@@ -1357,6 +1368,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/agente-learn'
     | '/api/public/hooks/cinemas-sync'
     | '/api/public/hooks/refresh-hotels-dynamic'
+    | '/api/public/hooks/sync-beach-covers'
     | '/api/public/hooks/sync-hotels-static'
     | '/api/public/hooks/tram-sync'
     | '/api/public/shop-photo/$'
@@ -1481,6 +1493,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/agente-learn'
     | '/api/public/hooks/cinemas-sync'
     | '/api/public/hooks/refresh-hotels-dynamic'
+    | '/api/public/hooks/sync-beach-covers'
     | '/api/public/hooks/sync-hotels-static'
     | '/api/public/hooks/tram-sync'
     | '/api/public/shop-photo/$'
@@ -1554,6 +1567,7 @@ export interface RootRouteChildren {
   ApiPublicHooksAgenteLearnRoute: typeof ApiPublicHooksAgenteLearnRoute
   ApiPublicHooksCinemasSyncRoute: typeof ApiPublicHooksCinemasSyncRoute
   ApiPublicHooksRefreshHotelsDynamicRoute: typeof ApiPublicHooksRefreshHotelsDynamicRoute
+  ApiPublicHooksSyncBeachCoversRoute: typeof ApiPublicHooksSyncBeachCoversRoute
   ApiPublicHooksSyncHotelsStaticRoute: typeof ApiPublicHooksSyncHotelsStaticRoute
   ApiPublicHooksTramSyncRoute: typeof ApiPublicHooksTramSyncRoute
   ApiPublicShopPhotoSplatRoute: typeof ApiPublicShopPhotoSplatRoute
@@ -2395,6 +2409,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksSyncHotelsStaticRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/sync-beach-covers': {
+      id: '/api/public/hooks/sync-beach-covers'
+      path: '/api/public/hooks/sync-beach-covers'
+      fullPath: '/api/public/hooks/sync-beach-covers'
+      preLoaderRoute: typeof ApiPublicHooksSyncBeachCoversRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/refresh-hotels-dynamic': {
       id: '/api/public/hooks/refresh-hotels-dynamic'
       path: '/api/public/hooks/refresh-hotels-dynamic'
@@ -2692,6 +2713,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksCinemasSyncRoute: ApiPublicHooksCinemasSyncRoute,
   ApiPublicHooksRefreshHotelsDynamicRoute:
     ApiPublicHooksRefreshHotelsDynamicRoute,
+  ApiPublicHooksSyncBeachCoversRoute: ApiPublicHooksSyncBeachCoversRoute,
   ApiPublicHooksSyncHotelsStaticRoute: ApiPublicHooksSyncHotelsStaticRoute,
   ApiPublicHooksTramSyncRoute: ApiPublicHooksTramSyncRoute,
   ApiPublicShopPhotoSplatRoute: ApiPublicShopPhotoSplatRoute,
