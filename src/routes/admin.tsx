@@ -104,18 +104,32 @@ function AdminLayout() {
   // Hidratar sesión Supabase y suscribirse a cambios.
   useEffect(() => {
     let mounted = true;
-    supabase.auth.getSession().then(({ data }) => {
-      if (!mounted) return;
-      const u = data.session?.user;
-      setSessionUser(u ? { id: u.id, email: u.email ?? null } : null);
-      setAuthReady(true);
-    });
+    // Fallback: si getSession() no resuelve en 4s, no dejamos al usuario
+    // colgado en el spinner.
+    const timeout = window.setTimeout(() => {
+      if (mounted) setAuthReady(true);
+    }, 4000);
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (!mounted) return;
+        const u = data.session?.user;
+        setSessionUser(u ? { id: u.id, email: u.email ?? null } : null);
+        setAuthReady(true);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setSessionUser(null);
+        setAuthReady(true);
+      });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
       const u = session?.user;
       setSessionUser(u ? { id: u.id, email: u.email ?? null } : null);
+      setAuthReady(true);
     });
     return () => {
       mounted = false;
+      window.clearTimeout(timeout);
       subscription.unsubscribe();
     };
   }, []);
@@ -125,6 +139,7 @@ function AdminLayout() {
     queryFn: () => checkIsAdmin(),
     enabled: !!sessionUser,
     staleTime: 5 * 60 * 1000,
+    retry: 1,
   });
 
   useEffect(() => {
@@ -152,9 +167,21 @@ function AdminLayout() {
   // Autenticado pero comprobando rol
   if (adminQuery.isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-3">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <p className="text-xs text-muted-foreground">Comprobando permisos…</p>
       </div>
+    );
+  }
+
+  // Error verificando rol -> permitir reintento o cerrar sesión
+  if (adminQuery.isError) {
+    return (
+      <AdminCheckError
+        email={sessionUser.email}
+        error={adminQuery.error as Error}
+        onRetry={() => adminQuery.refetch()}
+      />
     );
   }
 
@@ -356,6 +383,46 @@ function AdminLogin() {
           <p className="text-[11px] text-muted-foreground text-center">
             Solo cuentas autorizadas pueden acceder.
           </p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function AdminCheckError({
+  email,
+  error,
+  onRetry,
+}: {
+  email: string | null;
+  error: Error;
+  onRetry: () => void;
+}) {
+  const logout = async () => {
+    await supabase.auth.signOut();
+  };
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background p-6">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <ShieldAlert className="h-5 w-5" /> No se pudo verificar permisos
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            Hubo un problema comprobando los permisos de{" "}
+            <span className="font-medium">{email ?? "tu cuenta"}</span>.
+          </p>
+          <p className="text-[11px] text-muted-foreground break-words">
+            {error?.message ?? "Error desconocido"}
+          </p>
+          <Button className="w-full" onClick={onRetry}>
+            Reintentar
+          </Button>
+          <Button variant="outline" className="w-full" onClick={logout}>
+            Cerrar sesión
+          </Button>
         </CardContent>
       </Card>
     </div>
