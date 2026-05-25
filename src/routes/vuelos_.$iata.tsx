@@ -457,8 +457,8 @@ function DestinationDashboard() {
               <span>Llegada</span>
               <span>Duración</span>
             </div>
-            <div className="always-scroll max-h-[320px] divide-y divide-slate-800/60">
-              {window14Flights.map((f, i) => {
+            <div className={`divide-y divide-slate-800/60 ${isDesktop ? "always-scroll max-h-[320px]" : ""}`}>
+              {(isDesktop ? window14Flights : window14Flights.slice(0, visibleCount)).map((f, i) => {
                 const d = parseDate(f.fecha);
                 const day = `${WEEKDAYS_PRETTY[(d.getDay() + 6) % 7]} ${d.getDate()} ${MONTHS_LONG[d.getMonth()].slice(0, 3)}`;
                 const ac = f.iataCompania || "??";
@@ -509,6 +509,15 @@ function DestinationDashboard() {
               })}
             </div>
           </div>
+          {!isDesktop && window14Flights.length > visibleCount && (
+            <button
+              type="button"
+              onClick={() => setVisibleCount((n) => n + 15)}
+              className="mt-2 w-full rounded-lg border border-cyan-400/30 bg-cyan-400/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.15em] text-cyan-300 transition hover:bg-cyan-400/10"
+            >
+              Ver más ({Math.min(15, window14Flights.length - visibleCount)} de {window14Flights.length - visibleCount} restantes)
+            </button>
+          )}
           <p className="mt-2 text-center text-[10px] text-slate-500">
             {isArrival
               ? "* Salida y duración estimadas. Datos de llegada en tiempo real."
