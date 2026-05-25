@@ -2408,6 +2408,76 @@ export type Database = {
         }
         Relationships: []
       }
+      tram_live_departures: {
+        Row: {
+          arrival_at: string | null
+          created_at: string
+          departure_at: string
+          direction: number | null
+          headsign: string | null
+          line_color: string | null
+          line_long_name: string | null
+          line_short_name: string | null
+          route_id: string
+          service_date: string
+          service_id: string
+          stop_id: string
+          trip_id: string
+        }
+        Insert: {
+          arrival_at?: string | null
+          created_at?: string
+          departure_at: string
+          direction?: number | null
+          headsign?: string | null
+          line_color?: string | null
+          line_long_name?: string | null
+          line_short_name?: string | null
+          route_id: string
+          service_date: string
+          service_id: string
+          stop_id: string
+          trip_id: string
+        }
+        Update: {
+          arrival_at?: string | null
+          created_at?: string
+          departure_at?: string
+          direction?: number | null
+          headsign?: string | null
+          line_color?: string | null
+          line_long_name?: string | null
+          line_short_name?: string | null
+          route_id?: string
+          service_date?: string
+          service_id?: string
+          stop_id?: string
+          trip_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tram_live_departures_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "tram_routes"
+            referencedColumns: ["route_id"]
+          },
+          {
+            foreignKeyName: "tram_live_departures_stop_id_fkey"
+            columns: ["stop_id"]
+            isOneToOne: false
+            referencedRelation: "tram_stops"
+            referencedColumns: ["stop_id"]
+          },
+          {
+            foreignKeyName: "tram_live_departures_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "tram_trips"
+            referencedColumns: ["trip_id"]
+          },
+        ]
+      }
       tram_routes: {
         Row: {
           agency_id: string | null
@@ -2755,6 +2825,12 @@ export type Database = {
       is_business_member: {
         Args: { _business_id: string; _user_id: string }
         Returns: boolean
+      }
+      purge_aena_flights: { Args: { p_retention?: string }; Returns: number }
+      purge_tram_expired_services: { Args: never; Returns: number }
+      refresh_tram_live_departures: {
+        Args: { p_from?: string; p_to?: string }
+        Returns: number
       }
       touch_last_seen: { Args: never; Returns: undefined }
     }
