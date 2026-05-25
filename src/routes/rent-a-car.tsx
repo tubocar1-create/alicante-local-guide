@@ -100,95 +100,50 @@ function RentACarPage() {
           Ver compañías de Alquiler de Vehículos
         </Link>
 
-        <PhotoCard
-          photo={{
-            src: "/alicante/altea.jpeg",
-            emoji: "🌊",
-            caption: "Altea — postal mediterránea de la Costa Blanca",
-          }}
-        />
+        {/* Carrusel horizontal de fotos */}
+        <div className="-mx-4 mb-5 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex gap-3 px-4 snap-x snap-mandatory">
+            {[
+              { src: "/alicante/altea.jpeg", emoji: "🌊", caption: "Altea — postal mediterránea" },
+              { src: "/alicante/moraira.jpg", emoji: "🛣️", caption: "Moraira — calas tranquilas" },
+              { src: "/alicante/guadalest.jpg", emoji: "🏰", caption: "Guadalest — interior espectacular" },
+              { src: "/alicante/algar.jpg", emoji: "💧", caption: "Fuentes del Algar" },
+              { src: "/alicante/tabarca.jpg", emoji: "🏝️", caption: "Isla de Tabarca" },
+              { src: "/alicante/villajoyosa.jpg", emoji: "🎨", caption: "Villajoyosa — fachadas de colores" },
+            ].map((p) => (
+              <figure
+                key={p.src}
+                className="snap-start shrink-0 w-[78%] sm:w-[55%] overflow-hidden rounded-3xl bg-white/5 ring-1 ring-white/10 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.6)]"
+              >
+                <img src={p.src} alt={p.caption} loading="lazy" className="h-48 w-full object-cover sm:h-64" />
+                <figcaption className="px-3 py-2 text-xs font-medium text-white/90">
+                  {p.emoji} {p.caption}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </div>
 
         <p className="text-[16px] leading-relaxed text-white/90">
           Alicante es uno de los destinos turísticos más importantes del Mediterráneo y su
-          aeropuerto, <strong className="text-white">Alicante-Elche (ALC)</strong>, recibe
-          millones de viajeros cada año, especialmente durante primavera y verano. Para muchos
-          turistas, el alquiler de coche no es un lujo: es la forma más cómoda de descubrir
-          playas, calas, pueblos costeros y zonas como{" "}
-          <strong className="text-white">Benidorm, Jávea, Calpe o Altea</strong> con libertad
-          total.
+          aeropuerto, <strong className="text-white">Alicante-Elche (ALC)</strong>, recibe millones
+          de viajeros cada año. Alquilar coche es la forma más cómoda de descubrir{" "}
+          <strong className="text-white">Benidorm, Jávea, Calpe o Altea</strong> con libertad total.
         </p>
 
-        <PhotoCard
-          photo={{
-            src: "/alicante/moraira.jpg",
-            emoji: "🛣️",
-            caption: "Moraira — calas tranquilas a un trayecto de coche desde ALC",
-          }}
-        />
-
-        <p className="text-[16px] leading-relaxed text-white/90">
-          La experiencia de alquilar un vehículo en Alicante puede variar mucho entre compañías.
-          Dos reservas con precios similares pueden convertirse en experiencias completamente
-          diferentes una vez el viajero aterriza. Por eso, al comparar, no conviene centrarse
-          únicamente en el precio, sino en todo aquello que realmente impacta el inicio y final
-          de tus vacaciones.
+        <p className="mt-4 text-[16px] leading-relaxed text-white/90">
+          La experiencia entre compañías varía mucho: tiempo de shuttle, frecuencia de recogida y la
+          existencia de oficina dentro del aeropuerto marcan la diferencia, sobre todo en temporada
+          alta.
         </p>
 
-        <PhotoCard
-          photo={{
-            src: "/alicante/guadalest.jpg",
-            emoji: "🏰",
-            caption: "Guadalest — interior espectacular a 1 h de Benidorm",
-          }}
-        />
-
-        <p className="text-[16px] leading-relaxed text-white/90">
-          Después de un vuelo, el usuario quiere llegar al coche rápido, evitar esperas
-          innecesarias y conducir hacia su destino sin estrés. Aspectos como el tiempo de
-          shuttle desde la terminal, la frecuencia de recogida o la existencia de oficina dentro
-          del aeropuerto pueden marcar diferencia, especialmente en temporada alta.
-        </p>
-
-        <PhotoCard
-          photo={{
-            src: "/alicante/algar.jpg",
-            emoji: "💧",
-            caption: "Fuentes del Algar — naturaleza al alcance en coche",
-          }}
-        />
-
-        <p className="text-[16px] leading-relaxed text-white/90">
-          También es importante entender cómo funciona realmente cada operadora:
-        </p>
-        <ul className="ml-5 mt-2 list-disc space-y-1 text-white/80">
+        <ul className="ml-5 mt-3 list-disc space-y-1 text-white/80">
           <li>algunas tienen oficinas dentro de la terminal,</li>
           <li>otras requieren traslado en shuttle externo,</li>
-          <li>algunas priorizan rapidez,</li>
-          <li>otras generan largas colas en horas punta.</li>
+          <li>algunas priorizan rapidez, otras generan largas colas.</li>
         </ul>
 
-        <PhotoCard
-          photo={{
-            src: "/alicante/tabarca.jpg",
-            emoji: "🏝️",
-            caption: "Isla de Tabarca — escapada en barco desde el puerto de Alicante",
-          }}
-        />
-
-        <p className="text-[16px] leading-relaxed text-white/90">
-          Por eso, además del precio, conviene valorar factores operativos reales que afectan
-          directamente a la experiencia del viajero.
-        </p>
-
-        <PhotoCard
-          photo={{
-            src: "/alicante/villajoyosa.jpg",
-            emoji: "🎨",
-            caption: "Villajoyosa — fachadas de colores frente al Mediterráneo",
-          }}
-        />
-
-        <p className="text-xs text-white/50">
+        <p className="mt-4 text-xs text-white/50">
           Fotos: <a href="https://mochilaexpres.com/que-ver-en-alicante-provincia/" target="_blank" rel="noopener noreferrer" className="underline hover:text-white/70">mochilaexpres.com</a>
         </p>
 
