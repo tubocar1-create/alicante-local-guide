@@ -816,14 +816,51 @@ function DestinationPopup({
           </div>
         </div>
 
-        <div className="min-h-[80px] rounded-xl border border-slate-700/40 bg-slate-950/30 p-3 text-[13px] leading-relaxed text-slate-100">
+        {flight && (
+          <div className="mb-3 grid grid-cols-2 gap-2 rounded-xl border border-cyan-500/20 bg-slate-950/40 p-3 text-[12px] text-slate-200">
+            <div>
+              <p className="text-[9px] uppercase tracking-wider text-cyan-300/70">Vuelo</p>
+              <p className="font-mono font-semibold text-white">{flight.numVuelo}</p>
+            </div>
+            <div>
+              <p className="text-[9px] uppercase tracking-wider text-cyan-300/70">Ruta</p>
+              <p className="font-mono font-semibold text-cyan-300">{flight.ruta}</p>
+            </div>
+            <div>
+              <p className="text-[9px] uppercase tracking-wider text-cyan-300/70">Fecha</p>
+              <p className="font-semibold text-white">{flight.fecha}</p>
+            </div>
+            <div>
+              <p className="text-[9px] uppercase tracking-wider text-cyan-300/70">Aerolínea</p>
+              <p className="font-semibold" style={{ color: colorFor(airlineCode, 0) }}>{airlineName(airlineCode)}</p>
+            </div>
+            <div>
+              <p className="text-[9px] uppercase tracking-wider text-cyan-300/70">Salida</p>
+              <p className="font-mono font-semibold text-white">{flight.salida}</p>
+            </div>
+            <div>
+              <p className="text-[9px] uppercase tracking-wider text-cyan-300/70">Llegada</p>
+              <p className="font-mono font-semibold text-white">{flight.llegada}</p>
+            </div>
+            <div className="col-span-2">
+              <p className="text-[9px] uppercase tracking-wider text-cyan-300/70">Duración estimada</p>
+              <p className="font-mono font-semibold text-white">{flight.duracion}</p>
+            </div>
+          </div>
+        )}
+
+        <div className="min-h-[60px] rounded-xl border border-slate-700/40 bg-slate-950/30 p-3 text-[13px] leading-relaxed text-slate-100">
           {loading && (
             <div className="flex items-center gap-2 text-slate-400">
               <span className="h-3 w-3 animate-spin rounded-full border-2 border-cyan-500/30 border-t-cyan-400" />
-              Preparando recomendación…
+              Preparando recomendación sobre {city}…
             </div>
           )}
-          {error && <p className="text-rose-300">No se pudo cargar el comentario.</p>}
+          {error && (
+            <p className="text-slate-300">
+              {city} ({iata}), {country}. Destino servido por {airlineName(airlineCode)} desde el aeropuerto de {originIata}.
+            </p>
+          )}
           {!loading && !error && <p>{text}</p>}
         </div>
 
