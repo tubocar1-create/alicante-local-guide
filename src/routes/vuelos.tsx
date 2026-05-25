@@ -645,7 +645,7 @@ function ConnectivityMap({
       const c = project([16, 36]);
       const fx = c[0] / VIEW_W;
       const fy = c[1] / VIEW_H;
-      const s = 3.7;
+      const s = 5.7;
       const x = w / 2 - fx * s * w;
       const y = h / 2 - fy * s * h;
       tr.setTransform(x, y, s, 0);
