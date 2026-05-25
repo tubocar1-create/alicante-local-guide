@@ -34,9 +34,10 @@ export type AuthPromptOptions = {
  * Lanza el diálogo de registro contextual desde cualquier parte de la app.
  * No bloquea la navegación: solo invita al registro cuando aparece valor real.
  */
-export function requestAuth(opts: AuthPromptOptions = {}) {
-  if (typeof window === "undefined") return;
-  window.dispatchEvent(new CustomEvent<AuthPromptOptions>(EVT, { detail: opts }));
+export function requestAuth(_opts: AuthPromptOptions = {}) {
+  // MODO LIBRE: no-op. Navegación anónima sin prompts.
+  // Para reactivar: window.dispatchEvent(new CustomEvent(EVT, { detail: _opts }));
+  return;
 }
 
 export function AuthPromptDialog() {
