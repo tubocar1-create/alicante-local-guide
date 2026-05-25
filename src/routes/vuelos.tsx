@@ -461,35 +461,11 @@ function VuelosDashboard() {
                 : "Métricas semanales (7 días) de vuelos que despegan de Alicante-Elche (ALC), agrupados por ciudad de destino."}
             </p>
           </div>
-          {/* Manual city selector — web only */}
-          <div className="mt-3 hidden rounded-2xl border border-cyan-400/30 bg-cyan-400/5 px-3 py-2 lg:mt-0 lg:flex lg:items-center lg:gap-2">
-            <label className="text-[10px] uppercase tracking-[0.2em] text-cyan-300/70">
-              Tu ciudad:
-            </label>
-            <select
-              className="rounded-lg border border-white/10 bg-black/40 px-3 py-1.5 text-sm text-white focus:border-cyan-400/60 focus:outline-none"
-              value=""
-              onChange={(e) => {
-                const iata = e.target.value;
-                if (!iata) return;
-                if (typeof window !== "undefined") {
-                  window.open(`/vuelos/${iata}?type=${flightType}`, "_blank", "noopener,noreferrer");
-                }
-                e.target.value = "";
-              }}
-            >
-              <option value="">— Elige una ciudad —</option>
-              {cities
-                .filter((c) => c.total > 0)
-                .slice()
-                .sort((a, b) => cleanCityNamePublic(a.ciudad).localeCompare(cleanCityNamePublic(b.ciudad), "es"))
-                .map((c) => (
-                  <option key={c.iata} value={c.iata}>
-                    {cleanCityNamePublic(c.ciudad)} ({c.iata})
-                  </option>
-                ))}
-            </select>
-          </div>
+          {/* Manual city autocomplete — web only */}
+          <CityAutocomplete
+            cities={cities.filter((c) => c.total > 0).map((c) => ({ iata: c.iata, ciudad: cleanCityNamePublic(c.ciudad) }))}
+            flightType={flightType}
+          />
         </div>
 
         {false && loading && (
