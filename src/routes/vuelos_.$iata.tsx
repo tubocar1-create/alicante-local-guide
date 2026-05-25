@@ -510,12 +510,30 @@ function DestinationDashboard() {
             </div>
           </div>
           {!isDesktop && window14Flights.length > visibleCount && (
+            <div className="mt-2 grid grid-cols-2 gap-1.5">
+              <button
+                type="button"
+                onClick={() => setVisibleCount((n) => n + 15)}
+                className="rounded-lg border border-cyan-400/30 bg-cyan-400/5 px-2 py-1.5 text-[11px] font-semibold uppercase tracking-[0.15em] text-cyan-300 transition hover:bg-cyan-400/10"
+              >
+                Ver más ({Math.min(15, window14Flights.length - visibleCount)})
+              </button>
+              <button
+                type="button"
+                onClick={() => setVisibleCount(window14Flights.length)}
+                className="rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-2 py-1.5 text-[11px] font-semibold uppercase tracking-[0.15em] text-cyan-200 transition hover:bg-cyan-400/20"
+              >
+                Ver todos ({window14Flights.length})
+              </button>
+            </div>
+          )}
+          {!isDesktop && visibleCount > 15 && window14Flights.length > 15 && (
             <button
               type="button"
-              onClick={() => setVisibleCount((n) => n + 15)}
-              className="mt-2 w-full rounded-lg border border-cyan-400/30 bg-cyan-400/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.15em] text-cyan-300 transition hover:bg-cyan-400/10"
+              onClick={() => setVisibleCount(15)}
+              className="mt-1.5 w-full rounded-lg border border-slate-700 bg-slate-800/40 px-3 py-1 text-[10px] uppercase tracking-[0.15em] text-slate-400 transition hover:bg-slate-800"
             >
-              Ver más ({Math.min(15, window14Flights.length - visibleCount)} de {window14Flights.length - visibleCount} restantes)
+              Contraer
             </button>
           )}
           <p className="mt-2 text-center text-[10px] text-slate-500">
