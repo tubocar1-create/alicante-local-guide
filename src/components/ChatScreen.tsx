@@ -813,13 +813,13 @@ export function ChatScreen() {
 
       {/* Messages */}
       <div ref={scrollRef} className={["relative min-h-0 flex-1 px-4 pt-3", isWelcome ? "overflow-hidden pb-0" : "overflow-y-auto pb-5"].join(" ")}>
-        <div className="mx-auto flex max-w-2xl flex-col gap-3">
+        <div className={["mx-auto flex max-w-2xl flex-col gap-3", isWelcome ? "lg:max-w-5xl lg:flex-row lg:items-center lg:gap-10" : ""].join(" ")}>
           {isWelcome && (
-            <div className="relative mx-auto mb-1 w-full max-w-[320px] overflow-visible rounded-xl">
+            <div className="relative mx-auto mb-1 w-full max-w-[320px] overflow-visible rounded-xl lg:mx-0 lg:mb-0 lg:max-w-[460px] lg:flex-none lg:shadow-[0_20px_50px_-15px_oklch(0.55_0.12_60/0.35)]">
               <img
                 src={portadaImg}
                 alt="Alicante"
-                className="h-auto w-full rounded-xl object-cover"
+                className="h-auto w-full rounded-xl object-cover lg:rounded-2xl"
                 loading="eager"
                 fetchPriority="high"
                 decoding="async"
