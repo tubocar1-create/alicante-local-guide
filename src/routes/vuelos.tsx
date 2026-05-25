@@ -618,7 +618,7 @@ function ConnectivityMap({
       if (!el || !tr) return;
       const w = el.clientWidth;
       const h = el.clientHeight;
-      const c = project([16, 36]);
+      const c = project([10, 44]);
       const fx = c[0] / VIEW_W;
       const fy = c[1] / VIEW_H;
       const s = 5.7;
