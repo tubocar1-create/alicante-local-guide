@@ -1671,3 +1671,125 @@ function Stat({
     </div>
   );
 }
+
+function CityAutocomplete({
+  cities,
+  flightType,
+}: {
+  cities: { iata: string; ciudad: string }[];
+  flightType: "S" | "L";
+}) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const [highlight, setHighlight] = useState(0);
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+
+  const norm = (s: string) =>
+    s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  const suggestions = useMemo(() => {
+    const q = norm(query.trim());
+    const sorted = cities
+      .slice()
+      .sort((a, b) => a.ciudad.localeCompare(b.ciudad, "es"));
+    if (!q) return sorted.slice(0, 8);
+    return sorted
+      .filter(
+        (c) =>
+          norm(c.ciudad).includes(q) || norm(c.iata).includes(q),
+      )
+      .slice(0, 8);
+  }, [cities, query]);
+
+  useEffect(() => {
+    setHighlight(0);
+  }, [query]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onClick = (e: MouseEvent) => {
+      if (!wrapRef.current) return;
+      if (!wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    window.addEventListener("mousedown", onClick);
+    return () => window.removeEventListener("mousedown", onClick);
+  }, []);
+
+  const go = (iata: string) => {
+    if (typeof window !== "undefined") {
+      window.open(
+        `/vuelos/${iata}?type=${flightType}`,
+        "_blank",
+        "noopener,noreferrer",
+      );
+    }
+    setQuery("");
+    setOpen(false);
+  };
+
+  return (
+    <div
+      ref={wrapRef}
+      className="relative mt-3 hidden rounded-2xl border border-cyan-400/30 bg-cyan-400/5 px-3 py-2 lg:mt-0 lg:flex lg:items-center lg:gap-2"
+    >
+      <label className="text-[10px] uppercase tracking-[0.2em] text-cyan-300/70">
+        Tu ciudad:
+      </label>
+      <div className="relative">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowDown") {
+              e.preventDefault();
+              setHighlight((h) => Math.min(h + 1, suggestions.length - 1));
+            } else if (e.key === "ArrowUp") {
+              e.preventDefault();
+              setHighlight((h) => Math.max(h - 1, 0));
+            } else if (e.key === "Enter") {
+              e.preventDefault();
+              const pick = suggestions[highlight];
+              if (pick) go(pick.iata);
+            } else if (e.key === "Escape") {
+              setOpen(false);
+            }
+          }}
+          placeholder="Escribe tu ciudad…"
+          className="w-56 rounded-lg border border-white/10 bg-black/40 px-3 py-1.5 text-sm text-white placeholder:text-white/40 focus:border-cyan-400/60 focus:outline-none"
+          autoComplete="off"
+        />
+        {open && suggestions.length > 0 && (
+          <ul className="absolute left-0 right-0 top-full z-50 mt-1 max-h-72 overflow-y-auto rounded-lg border border-cyan-400/30 bg-slate-900/95 py-1 text-sm shadow-2xl backdrop-blur">
+            {suggestions.map((c, i) => (
+              <li key={c.iata}>
+                <button
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    go(c.iata);
+                  }}
+                  onMouseEnter={() => setHighlight(i)}
+                  className={`block w-full px-3 py-1.5 text-left text-white transition ${
+                    i === highlight ? "bg-cyan-400/20" : "hover:bg-white/5"
+                  }`}
+                >
+                  {c.ciudad} <span className="text-cyan-300/70">({c.iata})</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {open && query.trim() && suggestions.length === 0 && (
+          <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-lg border border-white/10 bg-slate-900/95 px-3 py-2 text-xs text-white/60 backdrop-blur">
+            Sin resultados
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
