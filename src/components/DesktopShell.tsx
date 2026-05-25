@@ -185,22 +185,18 @@ export function DesktopShell({ children }: { children: React.ReactNode }) {
           borderRightColor: theme.border,
         }}
       >
-        <div className="px-6 pt-6 pb-4">
-          <Link to="/" className="flex items-center gap-2">
-            <span className="font-display text-2xl font-bold tracking-tight text-primary">
-              Vamos
-            </span>
-            <span className="font-display text-2xl font-semibold text-foreground/80">
-              Alicante
-            </span>
+        <div className="px-4 pt-3 pb-2 flex flex-col items-center">
+          <Link to="/" className="block">
+            <img
+              src={vamosAlicanteLogo}
+              alt="Vamos Alicante"
+              className="h-20 w-20 object-contain"
+            />
           </Link>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Tu amigo local en Alicante
-          </p>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 pb-6">
-          <ul className="space-y-1">
+        <nav className="flex-1 overflow-y-auto px-2 pb-2">
+          <ul className="space-y-0.5">
             {NAV_ITEMS.map(({ to, label, icon: Icon, exact }) => {
               const active = exact
                 ? pathname === to
@@ -210,16 +206,11 @@ export function DesktopShell({ children }: { children: React.ReactNode }) {
                   <Link
                     to={to as string}
                     className={cn(
-                      "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                      "flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-colors",
                       active
                         ? "bg-primary text-primary-foreground shadow-sm"
                         : "text-foreground/75 hover:text-foreground",
                     )}
-                    style={
-                      !active
-                        ? ({ ["--tw-hover-bg" as string]: theme.hover } as React.CSSProperties)
-                        : undefined
-                    }
                     onMouseEnter={(e) => {
                       if (!active) e.currentTarget.style.backgroundColor = theme.hover;
                     }}
@@ -227,7 +218,7 @@ export function DesktopShell({ children }: { children: React.ReactNode }) {
                       if (!active) e.currentTarget.style.backgroundColor = "";
                     }}
                   >
-                    <Icon className="h-[18px] w-[18px] shrink-0" />
+                    <Icon className="h-4 w-4 shrink-0" />
                     <span className="truncate">{label}</span>
                   </Link>
                 </li>
@@ -237,7 +228,7 @@ export function DesktopShell({ children }: { children: React.ReactNode }) {
         </nav>
 
         <div
-          className="border-t px-6 py-4 text-[11px] text-muted-foreground"
+          className="border-t px-4 py-2 text-[10px] text-muted-foreground text-center"
           style={{ borderTopColor: theme.border }}
         >
           © {new Date().getFullYear()} Vamos Alicante
