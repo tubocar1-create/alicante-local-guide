@@ -296,30 +296,56 @@ function ParadaFavoritaPage() {
           >
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-stone-200" />
             <h3 className="mb-2 text-lg font-extrabold text-stone-900">Buscar parada</h3>
-            <div className="flex items-center gap-2 rounded-xl bg-stone-100 px-3 py-2">
+            <div className="relative flex items-center gap-2 rounded-xl bg-stone-100 px-3 py-2">
               <Search className="h-4 w-4 text-stone-500" />
-              <input
-                autoFocus
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Nombre, línea o código…"
-                list="paradas-sugerencias"
-                autoComplete="on"
-                autoCorrect="on"
-                autoCapitalize="words"
-                spellCheck
-                inputMode="search"
-                className="flex-1 bg-transparent text-sm outline-none placeholder:text-stone-400"
-              />
-              <datalist id="paradas-sugerencias">
-                {options.slice(0, 500).map((o) => (
-                  <option
-                    key={`${o.line}-${o.stopId}`}
-                    value={`${o.stopName} (${o.line})`}
-                  />
-                ))}
-              </datalist>
+              <div className="relative flex-1">
+                {/* Ghost text: shows the rest of the top suggestion inline */}
+                {query && filtered[0] && (() => {
+                  const label = `${filtered[0].stopName} (${filtered[0].line})`;
+                  const nq = normalize(query);
+                  const nl = normalize(label);
+                  if (!nl.startsWith(nq)) return null;
+                  const completion = label.slice(query.length);
+                  return (
+                    <div
+                      aria-hidden
+                      className="pointer-events-none absolute inset-0 flex items-center text-sm"
+                    >
+                      <span className="invisible">{query}</span>
+                      <span className="text-stone-400">{completion}</span>
+                    </div>
+                  );
+                })()}
+                <input
+                  autoFocus
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if ((e.key === "Tab" || e.key === "ArrowRight") && filtered[0]) {
+                      const label = `${filtered[0].stopName} (${filtered[0].line})`;
+                      if (normalize(label).startsWith(normalize(query)) && query.length < label.length) {
+                        e.preventDefault();
+                        setQuery(label);
+                      }
+                    } else if (e.key === "Enter" && filtered[0]) {
+                      e.preventDefault();
+                      selectStop(filtered[0]);
+                    }
+                  }}
+                  placeholder="Nombre, línea o código…"
+                  autoComplete="off"
+                  autoCorrect="on"
+                  autoCapitalize="words"
+                  spellCheck
+                  inputMode="search"
+                  className="relative w-full bg-transparent text-sm outline-none placeholder:text-stone-400"
+                />
+              </div>
             </div>
+            <p className="mt-1 px-1 text-[10px] text-stone-400">
+              Pulsa <kbd className="rounded bg-stone-200 px-1 font-mono">Tab</kbd> o → para completar
+            </p>
+
             <ul className="mt-3 max-h-[50vh] divide-y divide-stone-100 overflow-y-auto">
               {filtered.map((s) => (
                 <li key={s.stopId}>
