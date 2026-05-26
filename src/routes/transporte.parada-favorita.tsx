@@ -210,17 +210,28 @@ function ParadaFavoritaPage() {
             <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 text-center leading-tight">
               Llegada estimada
             </span>
-            <div
-              key={minutes}
-              className="flex flex-col items-center animate-in fade-in zoom-in-95 duration-300"
-            >
-              <span className="text-[96px] font-extrabold leading-none tabular-nums text-[#0d3b8a]">
-                {minutes}
-              </span>
-              <span className="-mt-1 text-sm font-bold uppercase tracking-wider text-stone-600">
-                Min
-              </span>
-            </div>
+            {isArriving ? (
+              <div className="mt-2 animate-blink rounded-2xl bg-[#0d3b8a] px-5 py-4 text-center shadow-lg">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-white/80">
+                  Faltan
+                </div>
+                <div className="text-3xl font-black uppercase tracking-tight text-white">
+                  ¡Llegando!
+                </div>
+              </div>
+            ) : (
+              <div
+                key={minutes}
+                className="flex flex-col items-center animate-in fade-in zoom-in-95 duration-300"
+              >
+                <span className="text-[96px] font-extrabold leading-none tabular-nums text-[#0d3b8a]">
+                  {minutes}
+                </span>
+                <span className="-mt-1 text-sm font-bold uppercase tracking-wider text-stone-600">
+                  Min
+                </span>
+              </div>
+            )}
             <div className="mt-2 rounded-xl bg-stone-50 px-3 py-1.5 text-center ring-1 ring-stone-200">
               <div className="flex items-center justify-center gap-1 text-[9px] font-bold uppercase text-stone-500">
                 <Clock className="h-3 w-3" />
@@ -231,6 +242,7 @@ function ParadaFavoritaPage() {
               </div>
             </div>
           </div>
+
         </div>
 
         <div className="mt-2 flex items-center gap-2 border-t border-stone-100 pt-2 text-stone-600">
