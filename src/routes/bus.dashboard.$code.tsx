@@ -162,7 +162,7 @@ function BusDashboardPage() {
         list.push({ code: s.code, distance: haversineMeters(userPos, c) });
       }
       list.sort((a, b) => a.distance - b.distance);
-      out[dir] = list.slice(0, 2);
+      out[dir] = list.slice(0, 1);
     }
     return out;
   }, [userPos, stopsByDir, stopCoords]);
@@ -297,18 +297,17 @@ function BusDashboardPage() {
           </div>
         </div>
 
-        {/* TIEMPOS DE ESPERA EN LA PARADA MÁS CERCANA */}
-        <HeaderEtas
-          nearestIda={nearestByDir[1][0] ?? null}
-          nearestVuelta={nearestByDir[2][0] ?? null}
-          stopsIda={stopsByDir[1]}
-          stopsVuelta={stopsByDir[2]}
-          etas={etas}
-          geoStatus={geoStatus}
-          color={lineColor}
-          now={clock}
-          updatedAt={updatedAt}
-        />
+        {/* Etiqueta de paradas cercanas */}
+        {geoStatus === "ok" && (nearestByDir[1].length > 0 || nearestByDir[2].length > 0) && (
+          <div className="mt-3 flex items-center gap-2 rounded-xl border border-emerald-400/40 bg-emerald-400/10 px-3 py-2">
+            <MapPin className="h-4 w-4 text-emerald-300" />
+            <span className="font-sans text-[11px] font-bold not-italic uppercase tracking-wide text-emerald-200">
+              Paradas más cercanas a tu ubicación
+            </span>
+          </div>
+        )}
+
+
 
 
 
