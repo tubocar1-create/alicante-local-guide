@@ -136,6 +136,7 @@ import { Route as ApiPublicHooksTramSyncRouteImport } from './routes/api/public/
 import { Route as ApiPublicHooksSyncHotelsStaticRouteImport } from './routes/api/public/hooks/sync-hotels-static'
 import { Route as ApiPublicHooksSyncBeachCoversRouteImport } from './routes/api/public/hooks/sync-beach-covers'
 import { Route as ApiPublicHooksRefreshHotelsDynamicRouteImport } from './routes/api/public/hooks/refresh-hotels-dynamic'
+import { Route as ApiPublicHooksEventosSyncRouteImport } from './routes/api/public/hooks/eventos-sync'
 import { Route as ApiPublicHooksCinemasSyncRouteImport } from './routes/api/public/hooks/cinemas-sync'
 import { Route as ApiPublicHooksAgenteLearnRouteImport } from './routes/api/public/hooks/agente-learn'
 import { Route as ApiPublicHooksAenaSyncRouteImport } from './routes/api/public/hooks/aena-sync'
@@ -783,6 +784,12 @@ const ApiPublicHooksRefreshHotelsDynamicRoute =
     path: '/api/public/hooks/refresh-hotels-dynamic',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksEventosSyncRoute =
+  ApiPublicHooksEventosSyncRouteImport.update({
+    id: '/api/public/hooks/eventos-sync',
+    path: '/api/public/hooks/eventos-sync',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksCinemasSyncRoute =
   ApiPublicHooksCinemasSyncRouteImport.update({
     id: '/api/public/hooks/cinemas-sync',
@@ -918,6 +925,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
   '/api/public/hooks/agente-learn': typeof ApiPublicHooksAgenteLearnRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
+  '/api/public/hooks/eventos-sync': typeof ApiPublicHooksEventosSyncRoute
   '/api/public/hooks/refresh-hotels-dynamic': typeof ApiPublicHooksRefreshHotelsDynamicRoute
   '/api/public/hooks/sync-beach-covers': typeof ApiPublicHooksSyncBeachCoversRoute
   '/api/public/hooks/sync-hotels-static': typeof ApiPublicHooksSyncHotelsStaticRoute
@@ -1047,6 +1055,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
   '/api/public/hooks/agente-learn': typeof ApiPublicHooksAgenteLearnRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
+  '/api/public/hooks/eventos-sync': typeof ApiPublicHooksEventosSyncRoute
   '/api/public/hooks/refresh-hotels-dynamic': typeof ApiPublicHooksRefreshHotelsDynamicRoute
   '/api/public/hooks/sync-beach-covers': typeof ApiPublicHooksSyncBeachCoversRoute
   '/api/public/hooks/sync-hotels-static': typeof ApiPublicHooksSyncHotelsStaticRoute
@@ -1180,6 +1189,7 @@ export interface FileRoutesById {
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
   '/api/public/hooks/agente-learn': typeof ApiPublicHooksAgenteLearnRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
+  '/api/public/hooks/eventos-sync': typeof ApiPublicHooksEventosSyncRoute
   '/api/public/hooks/refresh-hotels-dynamic': typeof ApiPublicHooksRefreshHotelsDynamicRoute
   '/api/public/hooks/sync-beach-covers': typeof ApiPublicHooksSyncBeachCoversRoute
   '/api/public/hooks/sync-hotels-static': typeof ApiPublicHooksSyncHotelsStaticRoute
@@ -1314,6 +1324,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/aena-sync'
     | '/api/public/hooks/agente-learn'
     | '/api/public/hooks/cinemas-sync'
+    | '/api/public/hooks/eventos-sync'
     | '/api/public/hooks/refresh-hotels-dynamic'
     | '/api/public/hooks/sync-beach-covers'
     | '/api/public/hooks/sync-hotels-static'
@@ -1443,6 +1454,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/aena-sync'
     | '/api/public/hooks/agente-learn'
     | '/api/public/hooks/cinemas-sync'
+    | '/api/public/hooks/eventos-sync'
     | '/api/public/hooks/refresh-hotels-dynamic'
     | '/api/public/hooks/sync-beach-covers'
     | '/api/public/hooks/sync-hotels-static'
@@ -1575,6 +1587,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/aena-sync'
     | '/api/public/hooks/agente-learn'
     | '/api/public/hooks/cinemas-sync'
+    | '/api/public/hooks/eventos-sync'
     | '/api/public/hooks/refresh-hotels-dynamic'
     | '/api/public/hooks/sync-beach-covers'
     | '/api/public/hooks/sync-hotels-static'
@@ -1653,6 +1666,7 @@ export interface RootRouteChildren {
   ApiPublicHooksAenaSyncRoute: typeof ApiPublicHooksAenaSyncRoute
   ApiPublicHooksAgenteLearnRoute: typeof ApiPublicHooksAgenteLearnRoute
   ApiPublicHooksCinemasSyncRoute: typeof ApiPublicHooksCinemasSyncRoute
+  ApiPublicHooksEventosSyncRoute: typeof ApiPublicHooksEventosSyncRoute
   ApiPublicHooksRefreshHotelsDynamicRoute: typeof ApiPublicHooksRefreshHotelsDynamicRoute
   ApiPublicHooksSyncBeachCoversRoute: typeof ApiPublicHooksSyncBeachCoversRoute
   ApiPublicHooksSyncHotelsStaticRoute: typeof ApiPublicHooksSyncHotelsStaticRoute
@@ -2559,6 +2573,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksRefreshHotelsDynamicRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/eventos-sync': {
+      id: '/api/public/hooks/eventos-sync'
+      path: '/api/public/hooks/eventos-sync'
+      fullPath: '/api/public/hooks/eventos-sync'
+      preLoaderRoute: typeof ApiPublicHooksEventosSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/cinemas-sync': {
       id: '/api/public/hooks/cinemas-sync'
       path: '/api/public/hooks/cinemas-sync'
@@ -2868,6 +2889,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksAenaSyncRoute: ApiPublicHooksAenaSyncRoute,
   ApiPublicHooksAgenteLearnRoute: ApiPublicHooksAgenteLearnRoute,
   ApiPublicHooksCinemasSyncRoute: ApiPublicHooksCinemasSyncRoute,
+  ApiPublicHooksEventosSyncRoute: ApiPublicHooksEventosSyncRoute,
   ApiPublicHooksRefreshHotelsDynamicRoute:
     ApiPublicHooksRefreshHotelsDynamicRoute,
   ApiPublicHooksSyncBeachCoversRoute: ApiPublicHooksSyncBeachCoversRoute,
