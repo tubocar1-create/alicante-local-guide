@@ -70,7 +70,7 @@ function EventosLanding() {
       className="fixed inset-0 z-[60] lg:relative lg:inset-auto lg:z-auto lg:min-h-[60vh] overflow-y-auto text-white"
       style={{
         background:
-          "linear-gradient(180deg, #1e1235 0%, #3b1f5e 50%, #100820 100%)",
+          "linear-gradient(180deg, #2a0a2e 0%, #4a1238 50%, #1a0820 100%)",
       }}
     >
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
