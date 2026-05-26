@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ArrowDown, ArrowUp, Bus, ChevronDown, Radio, RefreshCw, Loader2, MapPin } from "lucide-react";
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { classifyLine } from "@/components/BusKnownPicker";
@@ -150,19 +150,19 @@ function BusDashboardPage() {
     return m;
   }, [data]);
 
-  // Parada más cercana por sentido (solo si hay geo)
+  // Dos paradas más cercanas por sentido (solo si hay geo)
   const nearestByDir = useMemo(() => {
-    const out: Record<1 | 2, { code: string; distance: number } | null> = { 1: null, 2: null };
+    const out: Record<1 | 2, { code: string; distance: number }[]> = { 1: [], 2: [] };
     if (!userPos) return out;
     for (const dir of [1, 2] as const) {
-      let best: { code: string; distance: number } | null = null;
+      const list: { code: string; distance: number }[] = [];
       for (const s of stopsByDir[dir]) {
         const c = stopCoords.get(s.code);
         if (!c) continue;
-        const d = haversineMeters(userPos, c);
-        if (!best || d < best.distance) best = { code: s.code, distance: d };
+        list.push({ code: s.code, distance: haversineMeters(userPos, c) });
       }
-      out[dir] = best;
+      list.sort((a, b) => a.distance - b.distance);
+      out[dir] = list.slice(0, 2);
     }
     return out;
   }, [userPos, stopsByDir, stopCoords]);
@@ -224,7 +224,7 @@ function BusDashboardPage() {
       if (!cancelled) {
         setUpdatedAt(new Date().toISOString());
         setLoadingEtas(false);
-        timer = setTimeout(tick, 30_000);
+        timer = setTimeout(tick, 15_000);
       }
     };
     tick();
@@ -299,8 +299,8 @@ function BusDashboardPage() {
 
         {/* TIEMPOS DE ESPERA EN LA PARADA MÁS CERCANA */}
         <HeaderEtas
-          nearestIda={nearestByDir[1]}
-          nearestVuelta={nearestByDir[2]}
+          nearestIda={nearestByDir[1][0] ?? null}
+          nearestVuelta={nearestByDir[2][0] ?? null}
           stopsIda={stopsByDir[1]}
           stopsVuelta={stopsByDir[2]}
           etas={etas}
@@ -328,7 +328,7 @@ function BusDashboardPage() {
               return topTransfers.filter((t) => others.has(t.code));
             }}
             onPickStop={handlePickStop}
-            nearest={nearestByDir[1]}
+            nearestList={nearestByDir[1]}
             geoStatus={geoStatus}
           />
           <DirectionColumn
@@ -344,7 +344,7 @@ function BusDashboardPage() {
               return topTransfers.filter((t) => others.has(t.code));
             }}
             onPickStop={handlePickStop}
-            nearest={nearestByDir[2]}
+            nearestList={nearestByDir[2]}
             geoStatus={geoStatus}
 
           />
@@ -498,7 +498,7 @@ function DirectionColumn({
   inService,
   transferLines,
   onPickStop,
-  nearest,
+  nearestList,
   geoStatus,
 }: {
   label: string;
@@ -509,11 +509,30 @@ function DirectionColumn({
   inService: boolean;
   transferLines: (stopCode: string) => { code: string; color: string }[];
   onPickStop: (stopCode: string, stopName: string) => void;
-  nearest: { code: string; distance: number } | null;
+  nearestList: { code: string; distance: number }[];
   geoStatus: "idle" | "loading" | "ok" | "unavailable";
 }) {
 
   const now = new Date();
+  const nearest = nearestList[0] ?? null;
+  const nearestCodes = useMemo(() => new Set(nearestList.map((n) => n.code)), [nearestList]);
+  const distanceByCode = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const n of nearestList) m.set(n.code, n.distance);
+    return m;
+  }, [nearestList]);
+
+  // Auto-scroll: cuando conocemos la parada más cercana, llevarla a la vista.
+  const firstNearestRef = useRef<HTMLLIElement | null>(null);
+  const scrolledForRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!nearest) return;
+    if (scrolledForRef.current === nearest.code) return;
+    const el = firstNearestRef.current;
+    if (!el) return;
+    scrolledForRef.current = nearest.code;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [nearest]);
 
   return (
     <div className="px-1">
@@ -587,11 +606,14 @@ function DirectionColumn({
             ? formatHHMM(new Date(now.getTime() + eta1 * 60_000))
             : null;
 
-          const isNearest = nearest?.code === s.code;
+          const isNearest = nearestCodes.has(s.code);
+          const isPrimaryNearest = nearest?.code === s.code;
+          const nearestDistance = distanceByCode.get(s.code);
 
           return (
             <li
               key={`${s.code}-${i}`}
+              ref={isPrimaryNearest ? firstNearestRef : undefined}
               className="relative flex flex-col gap-1 rounded-md pb-2"
               style={{
                 borderBottom: "1px solid rgba(255,255,255,0.06)",
@@ -681,10 +703,10 @@ function DirectionColumn({
                     <span className="truncate font-sans text-[12px] font-semibold not-italic leading-snug text-white">
                       {s.name}
                     </span>
-                    {isNearest && (
+                    {isNearest && nearestDistance != null && (
                       <span className="inline-flex shrink-0 items-center gap-0.5 rounded bg-emerald-400 px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-black">
                         <MapPin className="h-2.5 w-2.5" />
-                        {Math.round(nearest!.distance)} m
+                        {Math.round(nearestDistance)} m
                       </span>
                     )}
                   </div>
