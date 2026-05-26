@@ -76,20 +76,50 @@ export function computeUpcomingArrivals(
 
 export function FavoriteStopWidget() {
   const [stop, setStop] = useState<FavoriteStop>(DEFAULT_FAVORITE_STOP);
+  const [liveMin, setLiveMin] = useState<number | null>(null);
   const [, setTick] = useState(0);
 
   useEffect(() => {
     setStop(loadFavoriteStop());
     const onChange = () => setStop(loadFavoriteStop());
     window.addEventListener("vamos:favorite-stop-changed", onChange);
-    const id = window.setInterval(() => setTick((t) => t + 1), 45_000);
+    const id = window.setInterval(() => setTick((t) => t + 1), 30_000);
     return () => {
       window.removeEventListener("vamos:favorite-stop-changed", onChange);
       window.clearInterval(id);
     };
   }, []);
 
-  const { minutes, arrivalTime } = computeNextArrival(stop);
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchLive() {
+      try {
+        const r = await fetch(
+          `/api/public/bus-eta?stop=${encodeURIComponent(stop.stopId)}&line=${encodeURIComponent(stop.line)}&_=${Date.now()}`,
+          { cache: "no-store" },
+        );
+        if (!r.ok) return;
+        const j = (await r.json()) as { etaMin: number | null };
+        if (!cancelled) setLiveMin(typeof j.etaMin === "number" ? j.etaMin : null);
+      } catch {
+        if (!cancelled) setLiveMin(null);
+      }
+    }
+    fetchLive();
+    const id = window.setInterval(fetchLive, 30_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [stop.stopId, stop.line]);
+
+  const fallback = computeNextArrival(stop);
+  const minutes = liveMin ?? fallback.minutes;
+  const arrivalDate = new Date(Date.now() + minutes * 60_000);
+  const arrivalTime =
+    liveMin != null
+      ? `${String(arrivalDate.getHours()).padStart(2, "0")}:${String(arrivalDate.getMinutes()).padStart(2, "0")}`
+      : fallback.arrivalTime;
 
   return (
     <Link
