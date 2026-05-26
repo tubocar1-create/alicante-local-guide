@@ -95,7 +95,7 @@ export function FavoriteStopWidget() {
     <Link
       to="/transporte/parada-favorita"
       aria-label="Abrir mi parada favorita"
-      className="group flex w-full max-w-[180px] items-stretch gap-2 rounded-2xl border border-amber-100/80 bg-[#fffaf2] p-1.5 shadow-[0_6px_18px_-8px_rgba(180,120,40,0.35)] transition active:scale-[0.98]"
+      className="group flex w-full max-w-[150px] items-stretch gap-1.5 rounded-2xl border border-amber-100/80 bg-[#fffaf2] p-1.5 shadow-[0_6px_18px_-8px_rgba(180,120,40,0.35)] transition active:scale-[0.98]"
     >
       <div className="flex flex-1 flex-col justify-center gap-1 min-w-0">
         <div className="flex items-center gap-1">
