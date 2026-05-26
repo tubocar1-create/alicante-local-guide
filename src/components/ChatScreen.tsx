@@ -40,6 +40,7 @@ import busAlicanteIcon from "@/assets/bus-alicante.png";
 import asistenteIcon from "@/assets/asistente-icon.png";
 import { VamosWord } from "@/components/VamosWord";
 import { hablar, SHOPPING_INTRO_REPLY } from "@/components/AgenteVamos";
+import { FavoriteStopWidget } from "@/components/FavoriteStopWidget";
 
 const TILE_SUBTITLES: Record<string, string> = {
   "Comer": "Restaurantes y tapas",
