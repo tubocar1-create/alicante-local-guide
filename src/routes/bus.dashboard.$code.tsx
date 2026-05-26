@@ -703,10 +703,10 @@ function DirectionColumn({
                     <span className="truncate font-sans text-[12px] font-semibold not-italic leading-snug text-white">
                       {s.name}
                     </span>
-                    {isNearest && (
+                    {isNearest && nearestDistance != null && (
                       <span className="inline-flex shrink-0 items-center gap-0.5 rounded bg-emerald-400 px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-black">
                         <MapPin className="h-2.5 w-2.5" />
-                        {Math.round(nearest!.distance)} m
+                        {Math.round(nearestDistance)} m
                       </span>
                     )}
                   </div>
