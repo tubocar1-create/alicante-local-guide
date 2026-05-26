@@ -177,60 +177,20 @@ function EventosLanding() {
               Aún no hay eventos vigentes. El scraping mensual los incorporará.
             </p>
           ) : (
-            <table className="w-full table-fixed border-separate border-spacing-y-0.5 text-left text-[11px]">
-              <colgroup>
-                <col className="w-[88px]" />
-                <col />
-                <col className="w-[26%]" />
-                <col className="w-[60px]" />
-                <col className="w-[32px]" />
-              </colgroup>
-              <thead>
-                <tr
-                  className="text-[9px] uppercase tracking-[0.12em]"
-                  style={{ color: `${ACCENT}99` }}
+            <ul className="space-y-1">
+              {filtered.map(({ showtime, event, venue }) => (
+                <li
+                  key={showtime.id}
+                  className="rounded-md bg-white/[0.04] px-2 py-1.5"
                 >
-                  <th className="px-1 py-1 font-medium">Fecha</th>
-                  <th className="px-1 py-1 font-medium">Evento</th>
-                  <th className="px-1 py-1 font-medium">Lugar</th>
-                  <th className="px-1 py-1 text-right font-medium">Precio</th>
-                  <th className="px-1 py-1 text-center font-medium"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map(({ showtime, event, venue }) => (
-                  <tr key={showtime.id} className="bg-white/[0.03]">
-                    <td className="rounded-l-md px-1.5 py-1.5 align-middle font-mono text-[10px] text-white/80">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-mono text-[10px] uppercase tracking-wider text-white/80">
                       {fmtDate(showtime.starts_at)}
-                    </td>
-                    <td className="px-1 py-1 align-middle">
-                      <Link
-                        to="/ocio/eventos/$id"
-                        params={{ id: event.slug }}
-                        className="block truncate text-[11px] font-medium text-white hover:underline"
-                      >
-                        {event.title}
-                      </Link>
-                      <span
-                        className="text-[9px] uppercase tracking-wider"
-                        style={{ color: `${ACCENT}aa` }}
-                      >
-                        {event.category}
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <span className="font-mono text-[11px] tabular-nums text-white">
+                        {fmtPrice(showtime.price_min, showtime.price_max, showtime.currency)}
                       </span>
-                    </td>
-                    <td className="px-1 py-1 align-middle">
-                      <Link
-                        to="/ocio/eventos/venue/$id"
-                        params={{ id: venue.slug }}
-                        className="block truncate text-[11px] text-white/80 hover:text-white hover:underline"
-                      >
-                        {venue.name}
-                      </Link>
-                    </td>
-                    <td className="px-1 py-1 text-right align-middle font-mono text-[11px] tabular-nums text-white">
-                      {fmtPrice(showtime.price_min, showtime.price_max, showtime.currency)}
-                    </td>
-                    <td className="rounded-r-md px-1 py-1 text-center align-middle">
                       {showtime.ticket_url ? (
                         <a
                           href={showtime.ticket_url}
@@ -242,14 +202,34 @@ function EventosLanding() {
                         >
                           <Ticket className="h-3 w-3" />
                         </a>
-                      ) : (
-                        <span className="text-[10px] text-white/30">n/d</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      ) : null}
+                    </span>
+                  </div>
+                  <Link
+                    to="/ocio/eventos/$id"
+                    params={{ id: event.slug }}
+                    className="mt-0.5 block text-[12px] font-medium leading-tight text-white hover:underline"
+                  >
+                    {event.title}
+                  </Link>
+                  <div className="mt-0.5 flex items-center justify-between gap-2">
+                    <Link
+                      to="/ocio/eventos/venue/$id"
+                      params={{ id: venue.slug }}
+                      className="min-w-0 flex-1 truncate text-[10px] text-white/70 hover:text-white hover:underline"
+                    >
+                      {venue.name}
+                    </Link>
+                    <span
+                      className="shrink-0 text-[9px] uppercase tracking-wider"
+                      style={{ color: `${ACCENT}aa` }}
+                    >
+                      {event.category}
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
 
