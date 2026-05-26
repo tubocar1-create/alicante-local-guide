@@ -147,16 +147,32 @@ function ParadaFavoritaPage() {
         }
       }
     }
-    // Ensure key lines (C6, 23) are always selectable even if graph lacks them
-    const ensure = (line: string, fallback: { stopId: string; stopName: string; destination: string }) => {
-      if (!out.some((o) => o.line.toUpperCase() === line.toUpperCase())) {
-        out.push({ line, ...fallback });
+    // Ensure key lines (C6, 23) are always selectable with sus paradas principales.
+    const ensureMany = (line: string, destination: string, stops: Array<{ stopId: string; stopName: string }>) => {
+      const exists = (sid: string) =>
+        out.some((o) => o.line.toUpperCase() === line.toUpperCase() && o.stopId === sid);
+      for (const s of stops) {
+        if (!exists(s.stopId)) out.push({ line, destination, stopId: s.stopId, stopName: s.stopName });
       }
     };
-    ensure("C6", { stopId: "3101", stopName: "Luceros", destination: "Aeropuerto" });
-    ensure("23", { stopId: "1820", stopName: "Plaza España", destination: "Playa de San Juan" });
+    ensureMany("C6", "Aeropuerto", [
+      { stopId: "3101", stopName: "Luceros" },
+      { stopId: "1851", stopName: "Mercado Central" },
+      { stopId: "1900", stopName: "Avda. Aguilera" },
+      { stopId: "3933", stopName: "Princesa Mercedes" },
+      { stopId: "3950", stopName: "Hospital General" },
+      { stopId: "3980", stopName: "Aeropuerto T1" },
+    ]);
+    ensureMany("23", "Playa de San Juan", [
+      { stopId: "1820", stopName: "Plaza España" },
+      { stopId: "1830", stopName: "Maisonnave" },
+      { stopId: "1845", stopName: "Estación Renfe" },
+      { stopId: "2300", stopName: "Vía Parque" },
+      { stopId: "2350", stopName: "Playa San Juan" },
+    ]);
     return out;
   }, [graph]);
+
 
   // Apply ?stop & ?line search params once options are ready
   useEffect(() => {
