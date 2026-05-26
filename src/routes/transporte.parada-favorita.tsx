@@ -260,8 +260,8 @@ function ParadaFavoritaPage() {
 
       {/* Live block */}
       <section className="mx-3 rounded-3xl bg-white p-3 shadow-[0_8px_24px_-12px_rgba(60,40,10,0.25)]">
-        <div className="grid grid-cols-[1fr_auto] gap-2">
-          <div>
+        <div className="grid grid-cols-[minmax(0,1fr)_128px] gap-2">
+          <div className="min-w-0">
             <div className="mb-1.5 flex items-center gap-1.5">
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400/70" />
@@ -272,10 +272,10 @@ function ParadaFavoritaPage() {
               </span>
             </div>
             <div className="mb-2 flex items-center gap-2">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0d3b8a] text-base font-extrabold text-white">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0d3b8a] text-base font-extrabold text-white">
                 {stop.line}
               </span>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
+              <span className="truncate text-[10px] font-bold uppercase tracking-wider text-stone-500">
                 Bus línea ({stop.line})
               </span>
             </div>
@@ -284,7 +284,7 @@ function ParadaFavoritaPage() {
             <div className="rounded-2xl bg-stone-50 p-2.5 ring-1 ring-stone-200">
               <div className="flex items-center gap-1.5">
                 <MapPin className="h-4 w-4 shrink-0 text-[#0d3b8a]" />
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="text-[9px] font-bold uppercase tracking-wider text-stone-500">
                     Tu parada
                   </div>
@@ -311,7 +311,7 @@ function ParadaFavoritaPage() {
                       {stop.destination}
                     </span>
                     {stop.destination.toLowerCase().includes("aeropuerto") && (
-                      <Plane className="h-3.5 w-3.5 text-[#0d3b8a]" />
+                      <Plane className="h-3.5 w-3.5 shrink-0 text-[#0d3b8a]" />
                     )}
                   </div>
                 </div>
@@ -326,23 +326,23 @@ function ParadaFavoritaPage() {
             </div>
           </div>
 
-          <div className="flex flex-col items-center justify-start">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 text-center leading-tight">
-              Llegada estimada
+          <div className="flex w-full flex-col items-center justify-start">
+            <span className="w-full text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-stone-500">
+              Llegada<br />estimada
             </span>
             {isArriving ? (
-              <div className="mt-2 animate-blink rounded-2xl bg-[#0d3b8a] px-5 py-4 text-center shadow-lg">
-                <div className="text-[10px] font-bold uppercase tracking-widest text-white/80">
+              <div className="mt-2 w-full animate-blink rounded-2xl bg-[#0d3b8a] px-2 py-3 text-center shadow-lg">
+                <div className="text-[9px] font-bold uppercase tracking-widest text-white/80">
                   Faltan
                 </div>
-                <div className="text-3xl font-black uppercase tracking-tight text-white">
+                <div className="text-lg font-black uppercase leading-tight tracking-tight text-white">
                   ¡Llegando!
                 </div>
               </div>
             ) : (
               <div
                 key={minutes}
-                className="flex flex-col items-center animate-in fade-in zoom-in-95 duration-300"
+                className="flex w-full flex-col items-center animate-in fade-in zoom-in-95 duration-300"
               >
                 <span className="text-[96px] font-extrabold leading-none tabular-nums text-[#0d3b8a]">
                   {minutes}
@@ -352,12 +352,12 @@ function ParadaFavoritaPage() {
                 </span>
               </div>
             )}
-            <div className="mt-2 rounded-xl bg-stone-50 px-3 py-1.5 text-center ring-1 ring-stone-200">
+            <div className="mt-2 w-full rounded-xl bg-stone-50 px-2 py-1.5 text-center ring-1 ring-stone-200">
               <div className="flex items-center justify-center gap-1 text-[9px] font-bold uppercase text-stone-500">
                 <Clock className="h-3 w-3" />
                 Llega a las
               </div>
-              <div className="text-base font-extrabold tabular-nums text-stone-900">
+              <div className="text-sm font-extrabold tabular-nums text-stone-900">
                 {arrivalTime}
               </div>
             </div>
