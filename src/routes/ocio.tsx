@@ -21,35 +21,23 @@ export const Route = createFileRoute("/ocio")({
 });
 
 type Sub = {
-  slug: "teatros" | "conciertos";
+  to: "/ocio/eventos";
   label: string;
-  emoji: string;
   description: string;
   accent: string;
   Icon: typeof Film;
-  ready: boolean;
 };
 
 const SUBS: Sub[] = [
   {
-    slug: "teatros",
-    label: "Teatros",
-    emoji: "🎭",
-    description: "Principal, Arniches, Aula CAM…",
-    accent: "#fbbf24",
-    Icon: Drama,
-    ready: false,
-  },
-  {
-    slug: "conciertos",
-    label: "Conciertos",
-    emoji: "🎤",
-    description: "Salas, festivales y giras",
+    to: "/ocio/eventos",
+    label: "Teatro, conciertos y eventos",
+    description: "Principal, ADDA, Plaza de Toros, Área 12, Muelle Live…",
     accent: "#a78bfa",
-    Icon: Music2,
-    ready: false,
+    Icon: Drama,
   },
 ];
+void Music2;
 
 function OcioDashboard() {
   return (
@@ -179,11 +167,11 @@ function OcioDashboard() {
         </Link>
 
         {/* Otros sectores */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {SUBS.map((s) => {
-            const card = (
+        <div className="grid grid-cols-1 gap-3">
+          {SUBS.map((s) => (
+            <Link key={s.to} to={s.to} className="block">
               <div
-                className="group flex h-full flex-col gap-2 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-left backdrop-blur-xl transition-all hover:border-white/25 hover:bg-white/[0.07] active:scale-[0.98]"
+                className="group flex h-full items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-left backdrop-blur-xl transition-all hover:border-white/25 hover:bg-white/[0.07] active:scale-[0.98]"
                 style={{ boxShadow: `0 6px 20px -12px ${s.accent}66` }}
               >
                 <div
@@ -205,19 +193,14 @@ function OcioDashboard() {
                   </div>
                 </div>
                 <div
-                  className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em]"
-                  style={{ color: s.ready ? s.accent : "#9ca3af" }}
+                  className="text-[10px] font-bold uppercase tracking-[0.18em]"
+                  style={{ color: s.accent }}
                 >
-                  {s.ready ? "Explorar →" : "Próximamente"}
+                  Explorar →
                 </div>
               </div>
-            );
-            return (
-              <div key={s.slug} className="block opacity-60">
-                {card}
-              </div>
-            );
-          })}
+            </Link>
+          ))}
         </div>
       </main>
     </div>
