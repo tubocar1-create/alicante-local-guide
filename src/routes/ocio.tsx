@@ -21,7 +21,7 @@ export const Route = createFileRoute("/ocio")({
 });
 
 type Sub = {
-  to: "/ocio/eventos";
+  to: "/ocio/eventos/cartelera";
   label: string;
   description: string;
   accent: string;
