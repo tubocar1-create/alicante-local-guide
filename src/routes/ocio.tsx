@@ -21,35 +21,23 @@ export const Route = createFileRoute("/ocio")({
 });
 
 type Sub = {
-  slug: "teatros" | "conciertos";
+  to: "/ocio/eventos";
   label: string;
-  emoji: string;
   description: string;
   accent: string;
   Icon: typeof Film;
-  ready: boolean;
 };
 
 const SUBS: Sub[] = [
   {
-    slug: "teatros",
-    label: "Teatros",
-    emoji: "🎭",
-    description: "Principal, Arniches, Aula CAM…",
-    accent: "#fbbf24",
-    Icon: Drama,
-    ready: false,
-  },
-  {
-    slug: "conciertos",
-    label: "Conciertos",
-    emoji: "🎤",
-    description: "Salas, festivales y giras",
+    to: "/ocio/eventos",
+    label: "Teatro, conciertos y eventos",
+    description: "Principal, ADDA, Plaza de Toros, Área 12, Muelle Live…",
     accent: "#a78bfa",
-    Icon: Music2,
-    ready: false,
+    Icon: Drama,
   },
 ];
+void Music2;
 
 function OcioDashboard() {
   return (
