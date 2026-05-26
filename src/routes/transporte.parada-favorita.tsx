@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { ArrowLeft, Bus, ChevronRight, Clock, Info, MapPin, Plane, RefreshCcw, Search, Star } from "lucide-react";
 import {
   DEFAULT_FAVORITE_STOP,
@@ -9,6 +9,7 @@ import {
   loadFavoriteStop,
   saveFavoriteStop,
 } from "@/components/FavoriteStopWidget";
+import { useBusGraph } from "@/hooks/useBusGraph";
 
 export const Route = createFileRoute("/transporte/parada-favorita")({
   head: () => ({
@@ -23,18 +24,19 @@ export const Route = createFileRoute("/transporte/parada-favorita")({
   component: ParadaFavoritaPage,
 });
 
-const KNOWN_STOPS: FavoriteStop[] = [
-  { stopId: "3101", stopName: "Plaza Luceros", line: "C6", destination: "Aeropuerto" },
-  { stopId: "0123", stopName: "Mercado Central", line: "02", destination: "Vistahermosa" },
-  { stopId: "0244", stopName: "Explanada", line: "21", destination: "Playa San Juan" },
-  { stopId: "0337", stopName: "Renfe", line: "24", destination: "Universidad" },
-  { stopId: "0418", stopName: "Maisonnave", line: "09", destination: "El Campello" },
-];
+function normalize(s: string) {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
 
 function ParadaFavoritaPage() {
   const router = useRouter();
+  const { data: graph } = useBusGraph();
   const [stop, setStop] = useState<FavoriteStop>(DEFAULT_FAVORITE_STOP);
-  const [tick, setTick] = useState(0);
+  const [, setTick] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [showOnHome, setShowOnHome] = useState(true);
@@ -48,12 +50,45 @@ function ParadaFavoritaPage() {
   const { minutes, arrivalTime } = computeNextArrival(stop);
   const upcoming = computeUpcomingArrivals(stop, 4);
 
-  const filtered = KNOWN_STOPS.filter(
-    (s) =>
-      s.stopName.toLowerCase().includes(query.toLowerCase()) ||
-      s.stopId.includes(query) ||
-      s.line.toLowerCase().includes(query.toLowerCase()),
-  );
+  // Build (line+direction) options with real terminal as destination.
+  const options = useMemo<FavoriteStop[]>(() => {
+    if (!graph?.stops?.length) return [];
+    const byKey = new Map<string, typeof graph.stops>();
+    for (const r of graph.stops) {
+      const k = `${r.line_code}|${r.direction}`;
+      if (!byKey.has(k)) byKey.set(k, []);
+      byKey.get(k)!.push(r);
+    }
+    const out: FavoriteStop[] = [];
+    for (const [, rows] of byKey) {
+      const sorted = [...rows].sort((a, b) => a.seq - b.seq);
+      const terminal = sorted[sorted.length - 1]?.stop_name ?? "";
+      for (const r of sorted) {
+        if (!r.stop_code) continue;
+        // Skip the terminal itself as an origin choice
+        if (r.seq === sorted[sorted.length - 1].seq) continue;
+        out.push({
+          stopId: String(r.stop_code),
+          stopName: r.stop_name,
+          line: r.line_code,
+          destination: terminal,
+        });
+      }
+    }
+    return out;
+  }, [graph]);
+
+  const filtered = useMemo(() => {
+    const q = normalize(query);
+    if (!q) return options.slice(0, 80);
+    const tokens = q.split(/\s+/).filter(Boolean);
+    return options
+      .filter((o) => {
+        const hay = normalize(`${o.line} ${o.stopName} ${o.stopId} ${o.destination}`);
+        return tokens.every((t) => hay.includes(t));
+      })
+      .slice(0, 80);
+  }, [options, query]);
 
   function selectStop(s: FavoriteStop) {
     saveFavoriteStop(s);
