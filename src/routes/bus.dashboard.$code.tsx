@@ -299,8 +299,8 @@ function BusDashboardPage() {
 
         {/* TIEMPOS DE ESPERA EN LA PARADA MÁS CERCANA */}
         <HeaderEtas
-          nearestIda={nearestByDir[1]}
-          nearestVuelta={nearestByDir[2]}
+          nearestIda={nearestByDir[1][0] ?? null}
+          nearestVuelta={nearestByDir[2][0] ?? null}
           stopsIda={stopsByDir[1]}
           stopsVuelta={stopsByDir[2]}
           etas={etas}
@@ -328,7 +328,7 @@ function BusDashboardPage() {
               return topTransfers.filter((t) => others.has(t.code));
             }}
             onPickStop={handlePickStop}
-            nearest={nearestByDir[1]}
+            nearestList={nearestByDir[1]}
             geoStatus={geoStatus}
           />
           <DirectionColumn
@@ -344,7 +344,7 @@ function BusDashboardPage() {
               return topTransfers.filter((t) => others.has(t.code));
             }}
             onPickStop={handlePickStop}
-            nearest={nearestByDir[2]}
+            nearestList={nearestByDir[2]}
             geoStatus={geoStatus}
 
           />
