@@ -29,8 +29,19 @@ type ParsedEvent = {
   duration_min?: number | null;
   age_rating?: string | null;
   source_url?: string | null;
+  venue_name?: string | null; // sólo agregadores: nombre del recinto a resolver
   showtimes: ParsedShowtime[];
 };
+
+function normalizeName(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
 
 function slugify(s: string): string {
   return s
