@@ -95,53 +95,55 @@ export function FavoriteStopWidget() {
     <Link
       to="/transporte/parada-favorita"
       aria-label="Abrir mi parada favorita"
-      className="group flex w-full max-w-[240px] items-stretch gap-2 rounded-2xl border border-amber-100/80 bg-[#fffaf2] p-2 shadow-[0_6px_18px_-8px_rgba(180,120,40,0.35)] transition active:scale-[0.98]"
+      className="group flex w-full max-w-[210px] items-stretch gap-1.5 rounded-2xl border border-amber-100/80 bg-[#fffaf2] p-1.5 shadow-[0_6px_18px_-8px_rgba(180,120,40,0.35)] transition active:scale-[0.98]"
     >
       <div className="flex flex-1 flex-col gap-0.5 min-w-0">
-        <div className="flex items-center gap-1.5">
-          <span className="rounded-md bg-[#0d3b8a] px-1.5 py-0.5 text-[11px] font-extrabold leading-none text-white">
-            {stop.line}
+        <div className="flex items-center gap-1">
+          <span className="rounded-md bg-[#0d3b8a] px-1.5 py-0.5 text-[10px] font-extrabold leading-none text-white">
+            Línea ({stop.line})
           </span>
-          <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-700">
-            ● en directo
+          <span className="text-[8px] font-bold uppercase tracking-wider text-emerald-700 leading-none">
+            ● live
           </span>
         </div>
         <div className="min-w-0">
-          <div className="text-[8px] font-bold uppercase tracking-wider text-stone-400 leading-none">
+          <div className="text-[7px] font-bold uppercase tracking-wider text-stone-400 leading-none">
             Destino
           </div>
-          <div className="truncate text-[12px] font-bold leading-tight text-stone-900">
+          <div className="truncate text-[11px] font-bold leading-tight text-stone-900">
             {stop.destination}
           </div>
         </div>
         <div className="min-w-0">
-          <div className="text-[8px] font-bold uppercase tracking-wider text-stone-400 leading-none">
+          <div className="text-[7px] font-bold uppercase tracking-wider text-stone-400 leading-none">
             Origen
           </div>
-          <div className="truncate text-[11px] font-semibold leading-tight text-stone-700">
+          <div className="truncate text-[10px] font-semibold leading-tight text-stone-700">
             {stop.stopName}
           </div>
-        </div>
-        <div className="text-[9px] text-stone-500 leading-tight">
-          Llega a las{" "}
-          <span className="font-bold tabular-nums text-stone-700">{arrivalTime}</span>
         </div>
       </div>
       <div
         key={minutes}
-        className="flex flex-col items-center justify-center rounded-xl bg-white px-2.5 py-1 ring-1 ring-stone-200 animate-in fade-in zoom-in-95 duration-300"
+        className="flex flex-col items-center justify-center rounded-xl bg-white px-2 py-1 ring-1 ring-stone-200 animate-in fade-in zoom-in-95 duration-300"
       >
-        <span className="text-[8px] font-bold uppercase tracking-wider text-stone-400 leading-none">
+        <span className="text-[7px] font-bold uppercase tracking-wider text-stone-400 leading-none">
           Espera
         </span>
         <span
-          className="text-[30px] font-extrabold leading-none tabular-nums text-[#0d3b8a]"
+          className="text-[28px] font-extrabold leading-none tabular-nums text-[#0d3b8a]"
           aria-live="polite"
         >
           {minutes}
         </span>
-        <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-600 leading-none mt-0.5">
+        <span className="text-[8px] font-bold uppercase tracking-wider text-emerald-600 leading-none mt-0.5">
           min
+        </span>
+        <span className="mt-1 text-[9px] font-bold tabular-nums leading-none text-stone-600">
+          {arrivalTime}
+        </span>
+        <span className="text-[7px] font-bold uppercase tracking-wider text-stone-400 leading-none mt-0.5">
+          llega
         </span>
       </div>
     </Link>
