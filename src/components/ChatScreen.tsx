@@ -968,21 +968,6 @@ export function ChatScreen() {
                     };
                   }),
                   {
-                    key: "mapa",
-                    emoji: "🗺️",
-                    label: "Mapa",
-                    onClick: () => {
-                      const url = geo
-                        ? `https://www.google.com/maps/search/?api=1&query=${geo.lat},${geo.lng}`
-                        : `https://www.google.com/maps/search/?api=1&query=Alicante`;
-                      try {
-                        (window.top ?? window).open(url, "_blank", "noopener,noreferrer");
-                      } catch {
-                        window.open(url, "_blank", "noopener,noreferrer");
-                      }
-                    },
-                  },
-                  {
                     key: "servicios-sanitarios",
                     emoji: "🩺",
                     label: "Servicios sanitarios",
