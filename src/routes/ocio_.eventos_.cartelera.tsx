@@ -53,7 +53,7 @@ function CarteleraEventosPage() {
 
   return (
     <div
-      className="fixed inset-0 z-[60] lg:relative lg:inset-auto lg:z-auto lg:min-h-[60vh] overflow-y-auto text-white"
+      className="fixed inset-0 z-[60] lg:relative lg:inset-auto lg:z-auto lg:min-h-[60vh] overflow-y-auto overscroll-contain text-white [-webkit-overflow-scrolling:touch]"
       style={{
         background:
           "linear-gradient(180deg, #1e1235 0%, #3b1f5e 50%, #100820 100%)",
