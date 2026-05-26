@@ -66,7 +66,7 @@ function CarteleraEventosPage() {
         />
       </div>
 
-      <div className="relative mx-auto max-w-5xl px-4 pb-10 pt-5 md:px-6">
+      <div className="relative mx-auto max-w-5xl px-4 pb-32 pt-5 md:px-6">
         <header className="mb-5 flex items-center justify-between">
           <Link
             to="/ocio/eventos"
