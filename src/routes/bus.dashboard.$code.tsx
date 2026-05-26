@@ -150,19 +150,19 @@ function BusDashboardPage() {
     return m;
   }, [data]);
 
-  // Parada más cercana por sentido (solo si hay geo)
+  // Dos paradas más cercanas por sentido (solo si hay geo)
   const nearestByDir = useMemo(() => {
-    const out: Record<1 | 2, { code: string; distance: number } | null> = { 1: null, 2: null };
+    const out: Record<1 | 2, { code: string; distance: number }[]> = { 1: [], 2: [] };
     if (!userPos) return out;
     for (const dir of [1, 2] as const) {
-      let best: { code: string; distance: number } | null = null;
+      const list: { code: string; distance: number }[] = [];
       for (const s of stopsByDir[dir]) {
         const c = stopCoords.get(s.code);
         if (!c) continue;
-        const d = haversineMeters(userPos, c);
-        if (!best || d < best.distance) best = { code: s.code, distance: d };
+        list.push({ code: s.code, distance: haversineMeters(userPos, c) });
       }
-      out[dir] = best;
+      list.sort((a, b) => a.distance - b.distance);
+      out[dir] = list.slice(0, 2);
     }
     return out;
   }, [userPos, stopsByDir, stopCoords]);
