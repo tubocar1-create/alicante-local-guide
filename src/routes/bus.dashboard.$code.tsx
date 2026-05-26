@@ -79,24 +79,11 @@ function BusDashboardPage() {
   }, []);
 
 
-  const handlePickStop = (stopCode: string, stopName: string) => {
-    const pick = {
-      line: code,
-      lineName: line?.name,
-      stopCode,
-      stopName,
-    };
-    try {
-      sessionStorage.setItem("afp:showBusStop", JSON.stringify(pick));
-    } catch {}
-    navigate({ to: "/" });
-    setTimeout(() => {
-      try {
-        window.dispatchEvent(
-          new CustomEvent("afp:show-busstop", { detail: pick }),
-        );
-      } catch {}
-    }, 350);
+  const handlePickStop = (stopCode: string, _stopName: string) => {
+    navigate({
+      to: "/transporte/parada-favorita",
+      search: { stop: stopCode, line: code },
+    });
   };
 
 
