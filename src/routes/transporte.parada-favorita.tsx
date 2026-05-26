@@ -98,27 +98,27 @@ function ParadaFavoritaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fdf7ee] pb-10">
+    <div className="min-h-screen bg-[#fdf7ee] pb-6">
       {/* Header */}
-      <header className="flex items-center gap-3 px-4 pt-5 pb-3">
+      <header className="flex items-center gap-3 px-4 pt-3 pb-2">
         <button
           onClick={() => router.history.back()}
           aria-label="Volver"
-          className="flex h-10 w-10 items-center justify-center rounded-full text-orange-500 active:scale-95"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-orange-500 active:scale-95"
         >
-          <ArrowLeft className="h-6 w-6" />
+          <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="flex-1 text-center">
-          <h1 className="text-xl font-extrabold text-stone-900">Mi parada favorita</h1>
-          <p className="text-xs text-stone-500">Información en tiempo real</p>
+          <h1 className="text-lg font-extrabold text-stone-900">Mi parada favorita</h1>
+          <p className="text-[11px] text-stone-500">Información en tiempo real</p>
         </div>
         <button
           onClick={() => setSearchOpen(true)}
           aria-label="Cambiar parada"
-          className="flex h-12 w-12 flex-col items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-stone-200 active:scale-95"
+          className="flex h-11 w-11 flex-col items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-stone-200 active:scale-95"
         >
-          <Star className="h-5 w-5 fill-orange-500 text-orange-500" />
-          <span className="text-[9px] font-semibold text-stone-600">Cambiar</span>
+          <Star className="h-4 w-4 fill-orange-500 text-orange-500" />
+          <span className="text-[8px] font-semibold text-stone-600">Cambiar</span>
         </button>
       </header>
 
