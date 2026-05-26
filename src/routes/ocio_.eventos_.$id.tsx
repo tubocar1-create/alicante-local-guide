@@ -7,7 +7,7 @@ import { getEventoWithShowtimes } from "@/lib/eventos.functions";
 
 const ACCENT = "#a78bfa";
 
-export const Route = createFileRoute("/ocio_/eventos/$id")({
+export const Route = createFileRoute("/ocio_/eventos_/$id")({
   head: () => ({
     meta: [{ title: "Evento · Agenda Alicante" }],
   }),
