@@ -303,8 +303,22 @@ function ParadaFavoritaPage() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Nombre, línea o código…"
+                list="paradas-sugerencias"
+                autoComplete="on"
+                autoCorrect="on"
+                autoCapitalize="words"
+                spellCheck
+                inputMode="search"
                 className="flex-1 bg-transparent text-sm outline-none placeholder:text-stone-400"
               />
+              <datalist id="paradas-sugerencias">
+                {options.slice(0, 500).map((o) => (
+                  <option
+                    key={`${o.line}-${o.stopId}`}
+                    value={`${o.stopName} (${o.line})`}
+                  />
+                ))}
+              </datalist>
             </div>
             <ul className="mt-3 max-h-[50vh] divide-y divide-stone-100 overflow-y-auto">
               {filtered.map((s) => (
