@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Bus, ChevronRight, Clock, Info, MapPin, Plane, RefreshCcw, Search, Star } from "lucide-react";
+import { ArrowLeft, ArrowRight, Bus, ChevronRight, Clock, Info, MapPin, Plane, RefreshCcw, Search, Star } from "lucide-react";
 import {
   DEFAULT_FAVORITE_STOP,
   FavoriteStop,
@@ -45,8 +45,8 @@ function ParadaFavoritaPage() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [showOnHome, setShowOnHome] = useState(true);
-  // Real-time ETAs (índices 0..3) en minutos. null = sin paso o no disponible.
-  const [liveEtas, setLiveEtas] = useState<(number | null)[]>([null, null, null, null]);
+  // Real-time ETAs en minutos (lista completa devuelta por Vectalia).
+  const [liveAll, setLiveAll] = useState<number[]>([]);
   const [liveLoading, setLiveLoading] = useState(false);
   const [liveUpdatedAt, setLiveUpdatedAt] = useState<number>(Date.now());
 
@@ -56,30 +56,28 @@ function ParadaFavoritaPage() {
     return () => window.clearInterval(id);
   }, []);
 
-  // Fetch real-time ETAs from Vectalia proxy (/api/public/bus-eta) every 30s
+  // Una sola petición a Vectalia: trae todos los ETAs disponibles.
   useEffect(() => {
     let cancelled = false;
     const fetchAll = async () => {
       setLiveLoading(true);
       try {
-        const results = await Promise.all(
-          [0, 1, 2, 3].map(async (idx) => {
-            try {
-              const params = new URLSearchParams({ stop: stop.stopId, line: stop.line });
-              if (idx > 0) params.set("index", String(idx));
-              const r = await fetch(`/api/public/bus-eta?${params.toString()}`, { cache: "no-store" });
-              if (!r.ok) return null;
-              const j = await r.json();
-              return typeof j.etaMin === "number" ? j.etaMin : null;
-            } catch {
-              return null;
-            }
-          }),
-        );
+        const params = new URLSearchParams({ stop: stop.stopId, line: stop.line });
+        const r = await fetch(`/api/public/bus-eta?${params.toString()}`, { cache: "no-store" });
+        if (!r.ok) {
+          if (!cancelled) setLiveAll([]);
+          return;
+        }
+        const j = await r.json();
+        const all: number[] = Array.isArray(j?.all)
+          ? j.all.filter((n: unknown) => typeof n === "number")
+          : [];
         if (!cancelled) {
-          setLiveEtas(results);
+          setLiveAll(all);
           setLiveUpdatedAt(Date.now());
         }
+      } catch {
+        if (!cancelled) setLiveAll([]);
       } finally {
         if (!cancelled) setLiveLoading(false);
       }
@@ -92,34 +90,51 @@ function ParadaFavoritaPage() {
     };
   }, [stop.stopId, stop.line]);
 
-  // Compute live arrival from real ETA + tiempo transcurrido desde la última actualización
-  const liveMinutes = (() => {
-    const eta0 = liveEtas[0];
-    if (eta0 == null) return null;
-    const elapsed = Math.floor((Date.now() - liveUpdatedAt) / 60_000);
-    return Math.max(0, eta0 - elapsed);
-  })();
+  const elapsedMin = Math.floor((Date.now() - liveUpdatedAt) / 60_000);
+  const liveMinutes = liveAll.length > 0 ? Math.max(0, liveAll[0] - elapsedMin) : null;
   const fallback = computeNextArrival(stop);
   const minutes = liveMinutes ?? fallback.minutes;
   const arrivalDate = new Date(Date.now() + minutes * 60_000);
   const arrivalTime = `${String(arrivalDate.getHours()).padStart(2, "0")}:${String(arrivalDate.getMinutes()).padStart(2, "0")}`;
   const fallbackUpcoming = computeUpcomingArrivals(stop, 4);
-  const upcoming = [0, 1, 2, 3].map((i) => {
-    const eta = liveEtas[i];
-    if (eta != null) {
-      const elapsed = Math.floor((Date.now() - liveUpdatedAt) / 60_000);
-      const m = Math.max(0, eta - elapsed);
+  // Construye las 4 próximas llegadas: primero las live (en orden), luego
+  // completa con estimaciones basadas en la frecuencia inferida.
+  const upcoming = (() => {
+    const out: Array<{ minutes: number; arrivalTime: string; live: boolean }> = [];
+    const liveAdjusted = liveAll.map((m) => Math.max(0, m - elapsedMin)).sort((a, b) => a - b);
+    for (const m of liveAdjusted.slice(0, 4)) {
       const d = new Date(Date.now() + m * 60_000);
-      return {
+      out.push({
         minutes: m,
         arrivalTime: `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`,
         live: true,
-      };
+      });
     }
-    return { ...fallbackUpcoming[i], live: false };
-  });
+    // Frecuencia inferida a partir de los ETAs live; por defecto 15 min.
+    let freq = 15;
+    if (liveAdjusted.length >= 2) {
+      const diffs: number[] = [];
+      for (let i = 1; i < liveAdjusted.length; i++) diffs.push(liveAdjusted[i] - liveAdjusted[i - 1]);
+      diffs.sort((a, b) => a - b);
+      const med = diffs[Math.floor(diffs.length / 2)];
+      if (med >= 5 && med <= 60) freq = med;
+    }
+    const lastMin = out.length > 0 ? out[out.length - 1].minutes : null;
+    let idx = 0;
+    while (out.length < 4) {
+      const base = lastMin != null ? lastMin + freq * (idx + 1) : fallbackUpcoming[idx].minutes;
+      const d = new Date(Date.now() + base * 60_000);
+      out.push({
+        minutes: base,
+        arrivalTime: `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`,
+        live: false,
+      });
+      idx++;
+    }
+    return out;
+  })();
   const isArriving = minutes <= 1;
-  const hasLiveData = liveEtas.some((e) => e != null);
+  const hasLiveData = liveAll.length > 0;
 
 
   // Build (line+direction) options with real terminal as destination.
@@ -256,31 +271,54 @@ function ParadaFavoritaPage() {
                 En directo
               </span>
             </div>
-            <div className="mb-1.5 flex items-center gap-2">
+            <div className="mb-2 flex items-center gap-2">
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0d3b8a] text-base font-extrabold text-white">
                 {stop.line}
               </span>
-              <div className="min-w-0">
-                <div className="flex items-center gap-1">
-                  <span className="truncate text-sm font-extrabold text-stone-900">
-                    {stop.destination}
-                  </span>
-                  {stop.destination.toLowerCase().includes("aeropuerto") && (
-                    <Plane className="h-3.5 w-3.5 text-[#0d3b8a]" />
-                  )}
-                </div>
-                <p className="text-[10px] text-stone-500 truncate">
-                  Dirección: {stop.destination}
-                </p>
-              </div>
-            </div>
-            <div className="mt-2 flex items-center gap-1.5">
-              <MapPin className="h-4 w-4 text-[#0d3b8a]" />
-              <span className="text-sm font-extrabold text-stone-900 truncate">
-                {stop.stopName}
+              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
+                Bus línea ({stop.line})
               </span>
             </div>
-            <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-stone-100 px-2 py-0.5 text-[10px]">
+
+            {/* Parada → Destino, separados visualmente con flecha */}
+            <div className="rounded-2xl bg-stone-50 p-2.5 ring-1 ring-stone-200">
+              <div className="flex items-center gap-1.5">
+                <MapPin className="h-4 w-4 shrink-0 text-[#0d3b8a]" />
+                <div className="min-w-0">
+                  <div className="text-[9px] font-bold uppercase tracking-wider text-stone-500">
+                    Tu parada
+                  </div>
+                  <div className="truncate text-sm font-extrabold text-stone-900">
+                    {stop.stopName}
+                  </div>
+                </div>
+              </div>
+
+              <div className="my-2 flex items-center gap-2 pl-1">
+                <div className="h-px flex-1 bg-stone-300" />
+                <ArrowRight className="h-4 w-4 text-orange-500" />
+                <div className="h-px flex-1 bg-stone-300" />
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <Bus className="h-4 w-4 shrink-0 text-[#0d3b8a]" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-[9px] font-bold uppercase tracking-wider text-stone-500">
+                    Dirección
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="truncate text-sm font-extrabold text-stone-900">
+                      {stop.destination}
+                    </span>
+                    {stop.destination.toLowerCase().includes("aeropuerto") && (
+                      <Plane className="h-3.5 w-3.5 text-[#0d3b8a]" />
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-stone-100 px-2 py-0.5 text-[10px]">
               <span className="text-stone-600">Código</span>
               <span className="rounded-md bg-[#0d3b8a] px-1.5 py-0.5 font-extrabold text-white">
                 {stop.stopId}
