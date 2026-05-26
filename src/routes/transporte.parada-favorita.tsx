@@ -180,9 +180,9 @@ function ParadaFavoritaPage() {
               </span>
               <div className="min-w-0">
                 <div className="flex items-center gap-1">
-                  <h2 className="truncate text-base font-extrabold uppercase tracking-tight text-stone-900">
+                  <span className="truncate text-sm font-extrabold text-stone-900">
                     {stop.destination}
-                  </h2>
+                  </span>
                   {stop.destination.toLowerCase().includes("aeropuerto") && (
                     <Plane className="h-3.5 w-3.5 text-[#0d3b8a]" />
                   )}
