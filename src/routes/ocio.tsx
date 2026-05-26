@@ -21,7 +21,7 @@ export const Route = createFileRoute("/ocio")({
 });
 
 type Sub = {
-  to: "/ocio/eventos";
+  to: "/ocio/eventos/cartelera";
   label: string;
   description: string;
   accent: string;
@@ -30,7 +30,7 @@ type Sub = {
 
 const SUBS: Sub[] = [
   {
-    to: "/ocio/eventos",
+    to: "/ocio/eventos/cartelera",
     label: "Teatro, conciertos y eventos",
     description: "Principal, ADDA, Plaza de Toros, Área 12, Muelle Live…",
     accent: "#a78bfa",
