@@ -168,26 +168,26 @@ function ParadaFavoritaPage() {
           </div>
 
           <div className="flex flex-col items-center justify-start">
-            <span className="text-[8px] font-bold uppercase tracking-wider text-stone-500 text-center leading-tight">
-              Llegada<br/>estimada
+            <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 text-center leading-tight">
+              Llegada estimada
             </span>
             <div
               key={minutes}
               className="flex flex-col items-center animate-in fade-in zoom-in-95 duration-300"
             >
-              <span className="text-[40px] font-extrabold leading-none tabular-nums text-[#0d3b8a]">
+              <span className="text-[96px] font-extrabold leading-none tabular-nums text-[#0d3b8a]">
                 {minutes}
               </span>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-600">
+              <span className="-mt-1 text-sm font-bold uppercase tracking-wider text-stone-600">
                 Min
               </span>
             </div>
-            <div className="mt-1.5 rounded-xl bg-stone-50 px-2 py-1 text-center ring-1 ring-stone-200">
-              <div className="flex items-center justify-center gap-1 text-[8px] font-bold uppercase text-stone-500">
-                <Clock className="h-2.5 w-2.5" />
-                Próximo
+            <div className="mt-2 rounded-xl bg-stone-50 px-3 py-1.5 text-center ring-1 ring-stone-200">
+              <div className="flex items-center justify-center gap-1 text-[9px] font-bold uppercase text-stone-500">
+                <Clock className="h-3 w-3" />
+                Llega a las
               </div>
-              <div className="text-xs font-extrabold tabular-nums text-stone-900">
+              <div className="text-base font-extrabold tabular-nums text-stone-900">
                 {arrivalTime}
               </div>
             </div>
