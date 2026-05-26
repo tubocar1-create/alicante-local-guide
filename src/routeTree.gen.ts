@@ -39,6 +39,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as BusinessIndexRouteImport } from './routes/business.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as VuelosIataRouteImport } from './routes/vuelos_.$iata'
+import { Route as TransporteParadaFavoritaRouteImport } from './routes/transporte.parada-favorita'
 import { Route as TramMapaRouteImport } from './routes/tram.mapa'
 import { Route as TramFavoritosRouteImport } from './routes/tram.favoritos'
 import { Route as TramEstacionesRouteImport } from './routes/tram.estaciones'
@@ -291,6 +292,12 @@ const VuelosIataRoute = VuelosIataRouteImport.update({
   path: '/vuelos/$iata',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TransporteParadaFavoritaRoute =
+  TransporteParadaFavoritaRouteImport.update({
+    id: '/transporte/parada-favorita',
+    path: '/transporte/parada-favorita',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const TramMapaRoute = TramMapaRouteImport.update({
   id: '/mapa',
   path: '/mapa',
@@ -882,6 +889,7 @@ export interface FileRoutesByFullPath {
   '/tram/estaciones': typeof TramEstacionesRoute
   '/tram/favoritos': typeof TramFavoritosRoute
   '/tram/mapa': typeof TramMapaRoute
+  '/transporte/parada-favorita': typeof TransporteParadaFavoritaRoute
   '/vuelos/$iata': typeof VuelosIataRoute
   '/admin/': typeof AdminIndexRoute
   '/business/': typeof BusinessIndexRoute
@@ -1012,6 +1020,7 @@ export interface FileRoutesByTo {
   '/tram/estaciones': typeof TramEstacionesRoute
   '/tram/favoritos': typeof TramFavoritosRoute
   '/tram/mapa': typeof TramMapaRoute
+  '/transporte/parada-favorita': typeof TransporteParadaFavoritaRoute
   '/vuelos/$iata': typeof VuelosIataRoute
   '/admin': typeof AdminIndexRoute
   '/business': typeof BusinessIndexRoute
@@ -1146,6 +1155,7 @@ export interface FileRoutesById {
   '/tram/estaciones': typeof TramEstacionesRoute
   '/tram/favoritos': typeof TramFavoritosRoute
   '/tram/mapa': typeof TramMapaRoute
+  '/transporte/parada-favorita': typeof TransporteParadaFavoritaRoute
   '/vuelos_/$iata': typeof VuelosIataRoute
   '/admin/': typeof AdminIndexRoute
   '/business/': typeof BusinessIndexRoute
@@ -1281,6 +1291,7 @@ export interface FileRouteTypes {
     | '/tram/estaciones'
     | '/tram/favoritos'
     | '/tram/mapa'
+    | '/transporte/parada-favorita'
     | '/vuelos/$iata'
     | '/admin/'
     | '/business/'
@@ -1411,6 +1422,7 @@ export interface FileRouteTypes {
     | '/tram/estaciones'
     | '/tram/favoritos'
     | '/tram/mapa'
+    | '/transporte/parada-favorita'
     | '/vuelos/$iata'
     | '/admin'
     | '/business'
@@ -1544,6 +1556,7 @@ export interface FileRouteTypes {
     | '/tram/estaciones'
     | '/tram/favoritos'
     | '/tram/mapa'
+    | '/transporte/parada-favorita'
     | '/vuelos_/$iata'
     | '/admin/'
     | '/business/'
@@ -1648,6 +1661,7 @@ export interface RootRouteChildren {
   OcioEventosRoute: typeof OcioEventosRoute
   OcioTeatrosRoute: typeof OcioTeatrosRoute
   SaludCategoriaRoute: typeof SaludCategoriaRouteWithChildren
+  TransporteParadaFavoritaRoute: typeof TransporteParadaFavoritaRoute
   VuelosIataRoute: typeof VuelosIataRoute
   ApiPublicAenaFlightsRoute: typeof ApiPublicAenaFlightsRoute
   ApiPublicAuthEmailHookRoute: typeof ApiPublicAuthEmailHookRoute
@@ -1896,6 +1910,13 @@ declare module '@tanstack/react-router' {
       path: '/vuelos/$iata'
       fullPath: '/vuelos/$iata'
       preLoaderRoute: typeof VuelosIataRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/transporte/parada-favorita': {
+      id: '/transporte/parada-favorita'
+      path: '/transporte/parada-favorita'
+      fullPath: '/transporte/parada-favorita'
+      preLoaderRoute: typeof TransporteParadaFavoritaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tram/mapa': {
@@ -2857,6 +2878,7 @@ const rootRouteChildren: RootRouteChildren = {
   OcioEventosRoute: OcioEventosRoute,
   OcioTeatrosRoute: OcioTeatrosRoute,
   SaludCategoriaRoute: SaludCategoriaRouteWithChildren,
+  TransporteParadaFavoritaRoute: TransporteParadaFavoritaRoute,
   VuelosIataRoute: VuelosIataRoute,
   ApiPublicAenaFlightsRoute: ApiPublicAenaFlightsRoute,
   ApiPublicAuthEmailHookRoute: ApiPublicAuthEmailHookRoute,
