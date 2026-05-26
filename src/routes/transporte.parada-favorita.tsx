@@ -45,16 +45,82 @@ function ParadaFavoritaPage() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [showOnHome, setShowOnHome] = useState(true);
+  // Real-time ETAs (índices 0..3) en minutos. null = sin paso o no disponible.
+  const [liveEtas, setLiveEtas] = useState<(number | null)[]>([null, null, null, null]);
+  const [liveLoading, setLiveLoading] = useState(false);
+  const [liveUpdatedAt, setLiveUpdatedAt] = useState<number>(Date.now());
 
   useEffect(() => {
     setStop(loadFavoriteStop());
-    const id = window.setInterval(() => setTick((t) => t + 1), 45_000);
+    const id = window.setInterval(() => setTick((t) => t + 1), 30_000);
     return () => window.clearInterval(id);
   }, []);
 
-  const { minutes, arrivalTime } = computeNextArrival(stop);
-  const upcoming = computeUpcomingArrivals(stop, 4);
+  // Fetch real-time ETAs from Vectalia proxy (/api/public/bus-eta) every 30s
+  useEffect(() => {
+    let cancelled = false;
+    const fetchAll = async () => {
+      setLiveLoading(true);
+      try {
+        const results = await Promise.all(
+          [0, 1, 2, 3].map(async (idx) => {
+            try {
+              const params = new URLSearchParams({ stop: stop.stopId, line: stop.line });
+              if (idx > 0) params.set("index", String(idx));
+              const r = await fetch(`/api/public/bus-eta?${params.toString()}`, { cache: "no-store" });
+              if (!r.ok) return null;
+              const j = await r.json();
+              return typeof j.etaMin === "number" ? j.etaMin : null;
+            } catch {
+              return null;
+            }
+          }),
+        );
+        if (!cancelled) {
+          setLiveEtas(results);
+          setLiveUpdatedAt(Date.now());
+        }
+      } finally {
+        if (!cancelled) setLiveLoading(false);
+      }
+    };
+    fetchAll();
+    const id = window.setInterval(fetchAll, 30_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [stop.stopId, stop.line]);
+
+  // Compute live arrival from real ETA + tiempo transcurrido desde la última actualización
+  const liveMinutes = (() => {
+    const eta0 = liveEtas[0];
+    if (eta0 == null) return null;
+    const elapsed = Math.floor((Date.now() - liveUpdatedAt) / 60_000);
+    return Math.max(0, eta0 - elapsed);
+  })();
+  const fallback = computeNextArrival(stop);
+  const minutes = liveMinutes ?? fallback.minutes;
+  const arrivalDate = new Date(Date.now() + minutes * 60_000);
+  const arrivalTime = `${String(arrivalDate.getHours()).padStart(2, "0")}:${String(arrivalDate.getMinutes()).padStart(2, "0")}`;
+  const fallbackUpcoming = computeUpcomingArrivals(stop, 4);
+  const upcoming = [0, 1, 2, 3].map((i) => {
+    const eta = liveEtas[i];
+    if (eta != null) {
+      const elapsed = Math.floor((Date.now() - liveUpdatedAt) / 60_000);
+      const m = Math.max(0, eta - elapsed);
+      const d = new Date(Date.now() + m * 60_000);
+      return {
+        minutes: m,
+        arrivalTime: `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`,
+        live: true,
+      };
+    }
+    return { ...fallbackUpcoming[i], live: false };
+  });
   const isArriving = minutes <= 1;
+  const hasLiveData = liveEtas.some((e) => e != null);
+
 
   // Build (line+direction) options with real terminal as destination.
   const options = useMemo<FavoriteStop[]>(() => {
@@ -81,16 +147,32 @@ function ParadaFavoritaPage() {
         }
       }
     }
-    // Ensure key lines (C6, 23) are always selectable even if graph lacks them
-    const ensure = (line: string, fallback: { stopId: string; stopName: string; destination: string }) => {
-      if (!out.some((o) => o.line.toUpperCase() === line.toUpperCase())) {
-        out.push({ line, ...fallback });
+    // Ensure key lines (C6, 23) are always selectable with sus paradas principales.
+    const ensureMany = (line: string, destination: string, stops: Array<{ stopId: string; stopName: string }>) => {
+      const exists = (sid: string) =>
+        out.some((o) => o.line.toUpperCase() === line.toUpperCase() && o.stopId === sid);
+      for (const s of stops) {
+        if (!exists(s.stopId)) out.push({ line, destination, stopId: s.stopId, stopName: s.stopName });
       }
     };
-    ensure("C6", { stopId: "3101", stopName: "Luceros", destination: "Aeropuerto" });
-    ensure("23", { stopId: "1820", stopName: "Plaza España", destination: "Playa de San Juan" });
+    ensureMany("C6", "Aeropuerto", [
+      { stopId: "3101", stopName: "Luceros" },
+      { stopId: "1851", stopName: "Mercado Central" },
+      { stopId: "1900", stopName: "Avda. Aguilera" },
+      { stopId: "3933", stopName: "Princesa Mercedes" },
+      { stopId: "3950", stopName: "Hospital General" },
+      { stopId: "3980", stopName: "Aeropuerto T1" },
+    ]);
+    ensureMany("23", "Playa de San Juan", [
+      { stopId: "1820", stopName: "Plaza España" },
+      { stopId: "1830", stopName: "Maisonnave" },
+      { stopId: "1845", stopName: "Estación Renfe" },
+      { stopId: "2300", stopName: "Vía Parque" },
+      { stopId: "2350", stopName: "Playa San Juan" },
+    ]);
     return out;
   }, [graph]);
+
 
   // Apply ?stop & ?line search params once options are ready
   useEffect(() => {
@@ -246,20 +328,30 @@ function ParadaFavoritaPage() {
         </div>
 
         <div className="mt-2 flex items-center gap-2 border-t border-stone-100 pt-2 text-stone-600">
-          <Bus className="h-4 w-4 text-[#0d3b8a]" />
+          <span
+            className={`h-1.5 w-1.5 rounded-full ${
+              liveLoading ? "bg-amber-500 animate-pulse" : hasLiveData ? "bg-emerald-500" : "bg-stone-300"
+            }`}
+          />
           <div className="text-xs">
-            <span className="text-[9px] uppercase tracking-wider text-stone-500">
-              Frecuencia:
-            </span>{" "}
-            <span className="font-extrabold text-stone-800">12–15 min</span>
+            <span className="text-[9px] uppercase tracking-wider text-stone-500">Datos:</span>{" "}
+            <span className="font-extrabold text-stone-800">
+              {hasLiveData ? "tiempo real (Vectalia)" : "estimación · sin paso en vivo"}
+            </span>
           </div>
         </div>
       </section>
 
       {/* Upcoming buses */}
       <section className="mx-3 mt-2 rounded-3xl bg-white p-3 shadow-[0_8px_24px_-12px_rgba(60,40,10,0.25)]">
-        <h3 className="mb-1 text-[10px] font-bold uppercase tracking-wider text-stone-500">
-          Próximos buses
+        <h3 className="mb-1 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-stone-500">
+          <span>Próximos buses</span>
+          {hasLiveData && (
+            <span className="inline-flex items-center gap-1 normal-case text-emerald-700">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              en vivo
+            </span>
+          )}
         </h3>
         <ul className="divide-y divide-stone-100">
           {upcoming.map((u, i) => (
@@ -275,14 +367,18 @@ function ParadaFavoritaPage() {
                 {stop.line}
               </span>
               <span className="truncate text-xs text-stone-800">{stop.destination}</span>
-              <span className="text-xs font-extrabold tabular-nums text-[#0d3b8a]">
-                {u.minutes} <span className="text-[9px] font-semibold text-stone-500">min</span>
+              <span className={`text-xs font-extrabold tabular-nums ${u.live ? "text-emerald-700" : "text-stone-400"}`}>
+                {u.minutes}{" "}
+                <span className="text-[9px] font-semibold text-stone-500">
+                  {u.live ? "min · live" : "min est."}
+                </span>
               </span>
               <ChevronRight className="h-3.5 w-3.5 text-stone-400" />
             </li>
           ))}
         </ul>
       </section>
+
 
       {/* Change favorite */}
       <section className="mx-3 mt-2 flex items-center gap-2 rounded-2xl bg-white p-2.5 shadow-sm ring-1 ring-stone-200">
