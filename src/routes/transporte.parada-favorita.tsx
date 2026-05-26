@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Bus, ChevronRight, Clock, Info, MapPin, Plane, RefreshCcw, Search, Star } from "lucide-react";
+import { ArrowLeft, ArrowRight, Bus, ChevronRight, Clock, Info, MapPin, Plane, RefreshCcw, Search, Star } from "lucide-react";
 import {
   DEFAULT_FAVORITE_STOP,
   FavoriteStop,
