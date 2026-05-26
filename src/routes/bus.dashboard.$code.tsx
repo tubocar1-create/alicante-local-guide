@@ -498,7 +498,7 @@ function DirectionColumn({
   inService,
   transferLines,
   onPickStop,
-  nearest,
+  nearestList,
   geoStatus,
 }: {
   label: string;
@@ -509,11 +509,30 @@ function DirectionColumn({
   inService: boolean;
   transferLines: (stopCode: string) => { code: string; color: string }[];
   onPickStop: (stopCode: string, stopName: string) => void;
-  nearest: { code: string; distance: number } | null;
+  nearestList: { code: string; distance: number }[];
   geoStatus: "idle" | "loading" | "ok" | "unavailable";
 }) {
 
   const now = new Date();
+  const nearest = nearestList[0] ?? null;
+  const nearestCodes = useMemo(() => new Set(nearestList.map((n) => n.code)), [nearestList]);
+  const distanceByCode = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const n of nearestList) m.set(n.code, n.distance);
+    return m;
+  }, [nearestList]);
+
+  // Auto-scroll: cuando conocemos la parada más cercana, llevarla a la vista.
+  const firstNearestRef = useRef<HTMLLIElement | null>(null);
+  const scrolledForRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!nearest) return;
+    if (scrolledForRef.current === nearest.code) return;
+    const el = firstNearestRef.current;
+    if (!el) return;
+    scrolledForRef.current = nearest.code;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [nearest]);
 
   return (
     <div className="px-1">
