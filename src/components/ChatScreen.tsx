@@ -40,6 +40,7 @@ import busAlicanteIcon from "@/assets/bus-alicante.png";
 import asistenteIcon from "@/assets/asistente-icon.png";
 import { VamosWord } from "@/components/VamosWord";
 import { hablar, SHOPPING_INTRO_REPLY } from "@/components/AgenteVamos";
+import { FavoriteStopWidget } from "@/components/FavoriteStopWidget";
 
 const TILE_SUBTITLES: Record<string, string> = {
   "Comer": "Restaurantes y tapas",
@@ -1161,12 +1162,15 @@ export function ChatScreen() {
           </div>
         )}
         {composerMode === "voice" ? (
-          <div className="mx-auto flex max-w-2xl flex-col items-center gap-2 lg:hidden">
+          <div className="mx-auto flex max-w-2xl items-center justify-center gap-3 lg:hidden">
+            <div className="flex-1 flex justify-end">
+              <FavoriteStopWidget />
+            </div>
             <button
               onPointerDown={() => window.dispatchEvent(new Event("vamos:prime-voice"))}
               onClick={() => window.dispatchEvent(new Event("vamos:open"))}
               aria-label="Hablar con Agente Vamos"
-              className="group relative flex h-20 w-20 items-center justify-center rounded-full transition active:scale-95"
+              className="group relative flex h-20 w-20 shrink-0 items-center justify-center rounded-full transition active:scale-95"
               style={{
                 filter:
                   "drop-shadow(0 0 14px rgba(255,165,0,0.65)) drop-shadow(0 0 28px rgba(255,140,0,0.45))",
@@ -1186,7 +1190,9 @@ export function ChatScreen() {
                 className="relative h-full w-full rounded-full object-cover"
               />
             </button>
+            <div className="flex-1" />
           </div>
+
 
         ) : (
           <div className="mx-auto flex max-w-2xl items-end gap-2">
