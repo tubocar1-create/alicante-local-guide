@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { MapPin, Clock } from "lucide-react";
 
 export type FavoriteStop = {
   stopId: string;
@@ -37,13 +36,11 @@ export function saveFavoriteStop(stop: FavoriteStop) {
   window.dispatchEvent(new Event("vamos:favorite-stop-changed"));
 }
 
-// Mock arrival generator — deterministic per minute so it feels "live"
 export function computeNextArrival(stop: FavoriteStop): {
   minutes: number;
   arrivalTime: string;
 } {
   const now = new Date();
-  // base frequency 15 min, offset by stopId hash
   const hash = stop.stopId.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
   const freq = 15;
   const offset = hash % freq;
@@ -79,7 +76,7 @@ export function computeUpcomingArrivals(
 
 export function FavoriteStopWidget() {
   const [stop, setStop] = useState<FavoriteStop>(DEFAULT_FAVORITE_STOP);
-  const [tick, setTick] = useState(0);
+  const [, setTick] = useState(0);
 
   useEffect(() => {
     setStop(loadFavoriteStop());
@@ -98,48 +95,52 @@ export function FavoriteStopWidget() {
     <Link
       to="/transporte/parada-favorita"
       aria-label="Abrir mi parada favorita"
-      className="group flex w-full max-w-[230px] items-center gap-2 rounded-2xl border border-amber-100/80 bg-[#fffaf2] px-2.5 py-2 shadow-[0_6px_18px_-8px_rgba(180,120,40,0.35)] transition active:scale-[0.98]"
+      className="group flex w-full max-w-[240px] items-stretch gap-2 rounded-2xl border border-amber-100/80 bg-[#fffaf2] p-2 shadow-[0_6px_18px_-8px_rgba(180,120,40,0.35)] transition active:scale-[0.98]"
     >
-      <div className="flex flex-1 flex-col gap-1 min-w-0">
-        <div className="flex items-center gap-1.5">
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/70" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-          </span>
-          <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-700">
-            En directo
-          </span>
-        </div>
+      <div className="flex flex-1 flex-col gap-0.5 min-w-0">
         <div className="flex items-center gap-1.5">
           <span className="rounded-md bg-[#0d3b8a] px-1.5 py-0.5 text-[11px] font-extrabold leading-none text-white">
             {stop.line}
           </span>
-          <span className="truncate text-[12px] font-semibold text-stone-800">
-            {stop.destination}
+          <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-700">
+            ● en directo
           </span>
         </div>
-        <div className="flex items-center gap-2 text-[10px] text-stone-600">
-          <span className="inline-flex items-center gap-0.5 truncate">
-            <MapPin className="h-2.5 w-2.5 text-stone-500" />
-            <span className="truncate">{stop.stopName}</span>
-          </span>
-          <span className="inline-flex items-center gap-0.5">
-            <Clock className="h-2.5 w-2.5 text-stone-500" />
-            {arrivalTime}
-          </span>
+        <div className="min-w-0">
+          <div className="text-[8px] font-bold uppercase tracking-wider text-stone-400 leading-none">
+            Destino
+          </div>
+          <div className="truncate text-[12px] font-bold leading-tight text-stone-900">
+            {stop.destination}
+          </div>
+        </div>
+        <div className="min-w-0">
+          <div className="text-[8px] font-bold uppercase tracking-wider text-stone-400 leading-none">
+            Origen
+          </div>
+          <div className="truncate text-[11px] font-semibold leading-tight text-stone-700">
+            {stop.stopName}
+          </div>
+        </div>
+        <div className="text-[9px] text-stone-500 leading-tight">
+          Llega a las{" "}
+          <span className="font-bold tabular-nums text-stone-700">{arrivalTime}</span>
         </div>
       </div>
       <div
         key={minutes}
-        className="flex flex-col items-center justify-center rounded-xl bg-white px-2 py-1 ring-1 ring-stone-200 animate-in fade-in zoom-in-95 duration-300"
+        className="flex flex-col items-center justify-center rounded-xl bg-white px-2.5 py-1 ring-1 ring-stone-200 animate-in fade-in zoom-in-95 duration-300"
       >
+        <span className="text-[8px] font-bold uppercase tracking-wider text-stone-400 leading-none">
+          Espera
+        </span>
         <span
-          className="text-[22px] font-extrabold leading-none tabular-nums text-[#0d3b8a]"
+          className="text-[30px] font-extrabold leading-none tabular-nums text-[#0d3b8a]"
           aria-live="polite"
         >
           {minutes}
         </span>
-        <span className="text-[8px] font-bold uppercase tracking-wider text-emerald-600">
+        <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-600 leading-none mt-0.5">
           min
         </span>
       </div>
