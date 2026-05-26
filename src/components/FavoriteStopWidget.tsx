@@ -99,8 +99,8 @@ export function FavoriteStopWidget() {
     >
       <div className="flex flex-1 flex-col justify-center gap-1 min-w-0">
         <div className="flex items-center gap-1">
-          <span className="rounded-md bg-[#0d3b8a] px-1.5 py-0.5 text-[9px] font-extrabold leading-none text-white">
-            L ({stop.line})
+          <span className="rounded-md bg-[#0d3b8a] px-1.5 py-0.5 text-[8px] font-extrabold leading-none text-white">
+            Bus línea ({stop.line})
           </span>
           <span className="text-[7px] font-bold uppercase tracking-wider text-emerald-700 leading-none">
             ● live
