@@ -271,31 +271,54 @@ function ParadaFavoritaPage() {
                 En directo
               </span>
             </div>
-            <div className="mb-1.5 flex items-center gap-2">
+            <div className="mb-2 flex items-center gap-2">
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#0d3b8a] text-base font-extrabold text-white">
                 {stop.line}
               </span>
-              <div className="min-w-0">
-                <div className="flex items-center gap-1">
-                  <span className="truncate text-sm font-extrabold text-stone-900">
-                    {stop.destination}
-                  </span>
-                  {stop.destination.toLowerCase().includes("aeropuerto") && (
-                    <Plane className="h-3.5 w-3.5 text-[#0d3b8a]" />
-                  )}
-                </div>
-                <p className="text-[10px] text-stone-500 truncate">
-                  Dirección: {stop.destination}
-                </p>
-              </div>
-            </div>
-            <div className="mt-2 flex items-center gap-1.5">
-              <MapPin className="h-4 w-4 text-[#0d3b8a]" />
-              <span className="text-sm font-extrabold text-stone-900 truncate">
-                {stop.stopName}
+              <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500">
+                Bus línea ({stop.line})
               </span>
             </div>
-            <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-stone-100 px-2 py-0.5 text-[10px]">
+
+            {/* Parada → Destino, separados visualmente con flecha */}
+            <div className="rounded-2xl bg-stone-50 p-2.5 ring-1 ring-stone-200">
+              <div className="flex items-center gap-1.5">
+                <MapPin className="h-4 w-4 shrink-0 text-[#0d3b8a]" />
+                <div className="min-w-0">
+                  <div className="text-[9px] font-bold uppercase tracking-wider text-stone-500">
+                    Tu parada
+                  </div>
+                  <div className="truncate text-sm font-extrabold text-stone-900">
+                    {stop.stopName}
+                  </div>
+                </div>
+              </div>
+
+              <div className="my-2 flex items-center gap-2 pl-1">
+                <div className="h-px flex-1 bg-stone-300" />
+                <ArrowRight className="h-4 w-4 text-orange-500" />
+                <div className="h-px flex-1 bg-stone-300" />
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <Bus className="h-4 w-4 shrink-0 text-[#0d3b8a]" />
+                <div className="min-w-0 flex-1">
+                  <div className="text-[9px] font-bold uppercase tracking-wider text-stone-500">
+                    Dirección
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="truncate text-sm font-extrabold text-stone-900">
+                      {stop.destination}
+                    </span>
+                    {stop.destination.toLowerCase().includes("aeropuerto") && (
+                      <Plane className="h-3.5 w-3.5 text-[#0d3b8a]" />
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-stone-100 px-2 py-0.5 text-[10px]">
               <span className="text-stone-600">Código</span>
               <span className="rounded-md bg-[#0d3b8a] px-1.5 py-0.5 font-extrabold text-white">
                 {stop.stopId}
