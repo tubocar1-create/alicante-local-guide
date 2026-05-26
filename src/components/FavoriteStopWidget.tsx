@@ -124,20 +124,28 @@ export function FavoriteStopWidget() {
         </div>
       </div>
       <div className="flex flex-col items-center justify-center gap-1">
-        <div
-          key={minutes}
-          className="flex h-[48px] w-[48px] flex-col items-center justify-center rounded-full bg-white ring-1 ring-stone-200 animate-in fade-in zoom-in-95 duration-300"
-        >
-          <span
-            className="text-[24px] font-extrabold leading-none tabular-nums text-[#0d3b8a]"
-            aria-live="polite"
+        {minutes <= 1 ? (
+          <div className="flex h-[48px] w-[48px] flex-col items-center justify-center rounded-full bg-[#0d3b8a] animate-blink ring-1 ring-[#0d3b8a]">
+            <span className="text-[9px] font-extrabold uppercase leading-none text-white">
+              ¡Llega!
+            </span>
+          </div>
+        ) : (
+          <div
+            key={minutes}
+            className="flex h-[48px] w-[48px] flex-col items-center justify-center rounded-full bg-white ring-1 ring-stone-200 animate-in fade-in zoom-in-95 duration-300"
           >
-            {minutes}
-          </span>
-          <span className="text-[8px] font-bold uppercase tracking-wider text-emerald-600 leading-none mt-0.5">
-            min
-          </span>
-        </div>
+            <span
+              className="text-[24px] font-extrabold leading-none tabular-nums text-[#0d3b8a]"
+              aria-live="polite"
+            >
+              {minutes}
+            </span>
+            <span className="text-[8px] font-bold uppercase tracking-wider text-emerald-600 leading-none mt-0.5">
+              min
+            </span>
+          </div>
+        )}
         <div className="flex flex-col items-center leading-none">
           <span className="text-[7px] font-bold uppercase tracking-wider text-stone-400">
             Llega
@@ -147,6 +155,7 @@ export function FavoriteStopWidget() {
           </span>
         </div>
       </div>
+
     </Link>
   );
 }
