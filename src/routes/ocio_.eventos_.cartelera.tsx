@@ -53,7 +53,7 @@ function CarteleraEventosPage() {
 
   return (
     <div
-      className="fixed inset-0 z-[60] lg:relative lg:inset-auto lg:z-auto lg:min-h-[60vh] overflow-y-auto text-white"
+      className="fixed inset-0 z-[60] lg:relative lg:inset-auto lg:z-auto lg:min-h-[60vh] overflow-y-auto overscroll-contain text-white [-webkit-overflow-scrolling:touch]"
       style={{
         background:
           "linear-gradient(180deg, #1e1235 0%, #3b1f5e 50%, #100820 100%)",
@@ -66,7 +66,7 @@ function CarteleraEventosPage() {
         />
       </div>
 
-      <div className="relative mx-auto max-w-5xl px-4 pb-10 pt-5 md:px-6">
+      <div className="relative mx-auto max-w-5xl px-4 pb-32 pt-5 md:px-6">
         <header className="mb-5 flex items-center justify-between">
           <Link
             to="/ocio/eventos"
