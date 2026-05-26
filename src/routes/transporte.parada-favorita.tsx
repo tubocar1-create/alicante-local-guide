@@ -233,53 +233,53 @@ function ParadaFavoritaPage() {
         </ul>
       </section>
 
-      {/* Info banner */}
-      <div className="mx-3 mt-4 flex items-start gap-2 rounded-2xl bg-[#fff3da] px-3 py-3 ring-1 ring-amber-200/60">
-        <Info className="mt-0.5 h-5 w-5 shrink-0 text-stone-600" />
-        <p className="text-[12px] leading-snug text-stone-700">
-          El código de tu parada favorita puede consultarse en la marquesina correspondiente.
-        </p>
-      </div>
-
       {/* Change favorite */}
-      <section className="mx-3 mt-3 flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-stone-200">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full ring-1 ring-orange-200">
-          <RefreshCcw className="h-5 w-5 text-orange-500" />
+      <section className="mx-3 mt-2 flex items-center gap-2 rounded-2xl bg-white p-2.5 shadow-sm ring-1 ring-stone-200">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full ring-1 ring-orange-200">
+          <RefreshCcw className="h-4 w-4 text-orange-500" />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-extrabold text-stone-900">Cambiar parada favorita</div>
-          <p className="text-[11px] leading-snug text-stone-500">
+          <div className="text-xs font-extrabold text-stone-900">Cambiar parada favorita</div>
+          <p className="text-[10px] leading-snug text-stone-500">
             Elige otra parada y línea para ver su información en tiempo real.
           </p>
         </div>
         <button
           onClick={() => setSearchOpen(true)}
-          className="flex items-center gap-1 rounded-xl bg-orange-500 px-3 py-2.5 text-sm font-bold text-white shadow-sm active:scale-95"
+          className="flex items-center gap-1 rounded-xl bg-orange-500 px-2.5 py-2 text-xs font-bold text-white shadow-sm active:scale-95"
         >
-          <Search className="h-4 w-4" />
+          <Search className="h-3.5 w-3.5" />
           Buscar
         </button>
       </section>
 
       {/* Show on home toggle */}
-      <section className="mx-3 mt-2 flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-stone-200">
-        <Star className="h-5 w-5 text-orange-500" />
-        <span className="flex-1 text-sm text-stone-800">Mostrar en página principal</span>
+      <section className="mx-3 mt-2 flex items-center gap-3 rounded-2xl bg-white p-2.5 shadow-sm ring-1 ring-stone-200">
+        <Star className="h-4 w-4 text-orange-500" />
+        <span className="flex-1 text-xs text-stone-800">Mostrar en página principal</span>
         <button
           role="switch"
           aria-checked={showOnHome}
           onClick={() => setShowOnHome((v) => !v)}
-          className={`relative h-7 w-12 rounded-full transition ${
+          className={`relative h-6 w-11 rounded-full transition ${
             showOnHome ? "bg-[#0d3b8a]" : "bg-stone-300"
           }`}
         >
           <span
-            className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition ${
+            className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${
               showOnHome ? "left-[22px]" : "left-0.5"
             }`}
           />
         </button>
       </section>
+
+      {/* Info banner — footer */}
+      <footer className="mx-3 mt-3 flex items-start gap-2 rounded-2xl bg-[#fff3da] px-3 py-2 ring-1 ring-amber-200/60">
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-stone-600" />
+        <p className="text-[10px] leading-snug text-stone-700">
+          El código de tu parada favorita puede consultarse en la marquesina correspondiente.
+        </p>
+      </footer>
 
       {/* Search modal */}
       {searchOpen && (
