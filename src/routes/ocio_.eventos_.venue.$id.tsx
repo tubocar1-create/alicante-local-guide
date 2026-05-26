@@ -56,7 +56,7 @@ function VenueDetail() {
       className="fixed inset-0 z-40 overflow-y-auto"
       style={{
         background:
-          "linear-gradient(160deg, #1e1235 0%, #3b1f5e 45%, #100820 100%)",
+          "linear-gradient(160deg, #2a0a2e 0%, #4a1238 45%, #1a0820 100%)",
       }}
     >
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
