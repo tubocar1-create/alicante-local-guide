@@ -606,11 +606,14 @@ function DirectionColumn({
             ? formatHHMM(new Date(now.getTime() + eta1 * 60_000))
             : null;
 
-          const isNearest = nearest?.code === s.code;
+          const isNearest = nearestCodes.has(s.code);
+          const isPrimaryNearest = nearest?.code === s.code;
+          const nearestDistance = distanceByCode.get(s.code);
 
           return (
             <li
               key={`${s.code}-${i}`}
+              ref={isPrimaryNearest ? firstNearestRef : undefined}
               className="relative flex flex-col gap-1 rounded-md pb-2"
               style={{
                 borderBottom: "1px solid rgba(255,255,255,0.06)",
