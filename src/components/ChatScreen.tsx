@@ -873,6 +873,24 @@ export function ChatScreen() {
                   <Home className="h-6 w-6" />
                   <span className="text-[13px] font-bold">Inicio</span>
                 </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = geo
+                      ? `https://www.google.com/maps/search/?api=1&query=${geo.lat},${geo.lng}`
+                      : `https://www.google.com/maps/search/?api=1&query=Alicante`;
+                    try {
+                      (window.top ?? window).open(url, "_blank", "noopener,noreferrer");
+                    } catch {
+                      window.open(url, "_blank", "noopener,noreferrer");
+                    }
+                  }}
+                  className="flex flex-col items-center gap-1 px-5 py-2 rounded-2xl bg-white/70 ring-1 ring-border/60 shadow-sm text-primary active:scale-95"
+                  aria-label="Mapa"
+                >
+                  <MapIcon className="h-6 w-6" />
+                  <span className="text-[13px] font-bold">Mapa</span>
+                </button>
                 <Link
                   to="/perfil"
                   className="flex flex-col items-center gap-1 px-5 py-2 rounded-2xl bg-white/70 ring-1 ring-border/60 shadow-sm text-primary active:scale-95"
