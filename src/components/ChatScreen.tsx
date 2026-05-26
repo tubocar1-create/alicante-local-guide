@@ -426,16 +426,12 @@ export function ChatScreen() {
       })();
       const pick = detail ?? stored;
       if (!pick) return;
-      setMode("transit");
-      const userText = `Quiero coger la línea ${pick.line} en la parada ${pick.stopName} (${pick.stopCode}).`;
-      const payload = encodeURIComponent(JSON.stringify(pick));
-      const reply = `¡Perfecto! Te muestro el tiempo de llegada en tu parada.\n\n[[busstop:${payload}]]`;
-      setMessages((prev) => [
-        ...prev,
-        { role: "user", content: userText },
-        { role: "assistant", content: reply },
-      ]);
+      navigate({
+        to: "/transporte/parada-favorita",
+        search: { stop: pick.stopCode, line: pick.line },
+      });
     };
+
     window.addEventListener("afp:forward-prompt", onForward);
     window.addEventListener("afp:open-submenu", onOpenSubmenu);
     window.addEventListener("afp:show-busstop", onShowBusStop);
