@@ -1162,10 +1162,8 @@ export function ChatScreen() {
           </div>
         )}
         {composerMode === "voice" ? (
-          <div className="mx-auto flex max-w-2xl items-center justify-center gap-3 lg:hidden">
-            <div className="flex-1 flex justify-end">
-              <FavoriteStopWidget />
-            </div>
+          <div className="mx-auto flex max-w-2xl items-center justify-between gap-2 pl-1 pr-2 lg:hidden">
+            <FavoriteStopWidget />
             <button
               onPointerDown={() => window.dispatchEvent(new Event("vamos:prime-voice"))}
               onClick={() => window.dispatchEvent(new Event("vamos:open"))}
@@ -1190,7 +1188,6 @@ export function ChatScreen() {
                 className="relative h-full w-full rounded-full object-cover"
               />
             </button>
-            <div className="flex-1" />
           </div>
 
 
