@@ -955,6 +955,161 @@ export type Database = {
         }
         Relationships: []
       }
+      event_showtimes: {
+        Row: {
+          availability: string | null
+          created_at: string
+          currency: string | null
+          ends_at: string | null
+          event_id: string
+          id: string
+          price_max: number | null
+          price_min: number | null
+          source: string | null
+          starts_at: string
+          ticket_url: string | null
+          venue_id: string
+        }
+        Insert: {
+          availability?: string | null
+          created_at?: string
+          currency?: string | null
+          ends_at?: string | null
+          event_id: string
+          id?: string
+          price_max?: number | null
+          price_min?: number | null
+          source?: string | null
+          starts_at: string
+          ticket_url?: string | null
+          venue_id: string
+        }
+        Update: {
+          availability?: string | null
+          created_at?: string
+          currency?: string | null
+          ends_at?: string | null
+          event_id?: string
+          id?: string
+          price_max?: number | null
+          price_min?: number | null
+          source?: string | null
+          starts_at?: string
+          ticket_url?: string | null
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_showtimes_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_showtimes_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      event_sources: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          id: string
+          last_error: string | null
+          last_scraped_at: string | null
+          parser: string | null
+          url: string
+          venue_id: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_error?: string | null
+          last_scraped_at?: string | null
+          parser?: string | null
+          url: string
+          venue_id: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          last_error?: string | null
+          last_scraped_at?: string | null
+          parser?: string | null
+          url?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_sources_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          active: boolean
+          age_rating: string | null
+          artist: string | null
+          category: string
+          created_at: string
+          description: string | null
+          duration_min: number | null
+          external_ids: Json | null
+          genre: string | null
+          id: string
+          poster_url: string | null
+          slug: string
+          source_url: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          age_rating?: string | null
+          artist?: string | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          duration_min?: number | null
+          external_ids?: Json | null
+          genre?: string | null
+          id?: string
+          poster_url?: string | null
+          slug: string
+          source_url?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          age_rating?: string | null
+          artist?: string | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          duration_min?: number | null
+          external_ids?: Json | null
+          genre?: string | null
+          id?: string
+          poster_url?: string | null
+          slug?: string
+          source_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       films: {
         Row: {
           active: boolean
@@ -2764,6 +2919,57 @@ export type Database = {
         }
         Relationships: []
       }
+      venues: {
+        Row: {
+          active: boolean
+          address: string | null
+          cover_url: string | null
+          created_at: string
+          id: string
+          kind: string
+          lat: number | null
+          lng: number | null
+          name: string
+          notes: string | null
+          phone: string | null
+          slug: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          active?: boolean
+          address?: string | null
+          cover_url?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          lat?: number | null
+          lng?: number | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          slug: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          active?: boolean
+          address?: string | null
+          cover_url?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          lat?: number | null
+          lng?: number | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          slug?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       visits: {
         Row: {
           business_id: string
@@ -2839,6 +3045,11 @@ export type Database = {
         Args: { p_retention?: string }
         Returns: number
       }
+      purge_event_showtimes_past: {
+        Args: { p_retention?: string }
+        Returns: number
+      }
+      purge_events_orphan: { Args: never; Returns: number }
       purge_hotels_calendar_past: { Args: never; Returns: number }
       purge_interaction_events: {
         Args: { p_retention?: string }
