@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Mic, Keyboard, MapPin, Home, User as UserIcon, QrCode, X, Gift, Ticket, Sparkles, ShieldCheck, CalendarPlus, CalendarCheck, CalendarDays, Sun, Cloud, CloudRain, CloudSnow, CloudLightning, CloudFog, Bell, Heart, Bookmark, ChevronRight, Utensils, Bed, Umbrella, ShoppingBag, Martini, Bus, Stethoscope, type LucideIcon } from "lucide-react";
+import { Send, Mic, Keyboard, MapPin, Map as MapIcon, Home, User as UserIcon, QrCode, X, Gift, Ticket, Sparkles, ShieldCheck, CalendarPlus, CalendarCheck, CalendarDays, Sun, Cloud, CloudRain, CloudSnow, CloudLightning, CloudFog, Bell, Heart, Bookmark, ChevronRight, Utensils, Bed, Umbrella, ShoppingBag, Martini, Bus, Plane, Stethoscope, type LucideIcon } from "lucide-react";
 import { useWeather } from "@/hooks/useWeather";
 import BookingDialog from "@/components/BookingDialog";
 import { AdBanner } from "@/components/AdBanner";
@@ -49,7 +49,7 @@ const TILE_SUBTITLES: Record<string, string> = {
   "Comprar": "Tiendas y mercados",
   "Tomar algo": "Bares y copas",
   "Transporte multimodal inteligente": "Bus, TRAM, taxis",
-  "Mapa": "Explora la ciudad",
+  "Vuelos": "Salidas y llegadas",
   "Servicios sanitarios": "Farmacias y hospitales",
   "Ocio": "Cines, teatros y conciertos",
   "Fiestas de Alicante": "Hogueras y mascletá",
@@ -62,7 +62,7 @@ const TILE_ICONS: Record<string, LucideIcon> = {
   "Comprar": ShoppingBag,
   "Tomar algo": Martini,
   "Transporte multimodal inteligente": Bus,
-  "Mapa": MapPin,
+  "Vuelos": Plane,
   "Servicios sanitarios": Stethoscope,
   "Ocio": CalendarDays,
 };
@@ -176,16 +176,16 @@ const SUGGESTIONS: Suggestion[] = [
       { label: "🚍 Buses larga distancia", previewOnly: true, prompt: "¿Cómo me muevo en bus de larga distancia desde Alicante? Líneas, compañías (ALSA, Vectalia…), estación de autobuses y destinos principales (Elche, Benidorm, Murcia, Valencia, pueblos del interior)." },
       { label: "🚊 Tram Alicante", action: "tram-inline" },
       { label: "🚆 Tren", previewOnly: true, prompt: "¿Cómo me muevo en tren por Alicante y alrededores? Horarios, estaciones de Cercanías y Renfe." },
-      {
-        label: "✈️ Avión",
-        submenu: [
-          { label: "🛫 Vuelos de salida", href: "/vuelos?type=S" },
-          { label: "🛬 Vuelos de llegada", href: "/vuelos?type=L" },
-          { label: "🔎 Seleccione su vuelo", action: "flight-picker" },
-        ],
-      },
       { label: "🚗 Rent a car", href: "/rent-a-car" },
       { label: "🚕 Taxis, Uber, Cabify", previewOnly: true, prompt: "¿Cómo pido un taxi, Uber o Cabify en Alicante? Paradas de taxi, apps disponibles, tarifas aproximadas y zonas de cobertura." },
+    ],
+  },
+  {
+    label: "✈️ Vuelos",
+    submenu: [
+      { label: "🛫 Vuelos de salida", href: "/vuelos?type=S" },
+      { label: "🛬 Vuelos de llegada", href: "/vuelos?type=L" },
+      { label: "🔎 Seleccione su vuelo", action: "flight-picker" },
     ],
   },
 ];
@@ -873,6 +873,24 @@ export function ChatScreen() {
                   <Home className="h-6 w-6" />
                   <span className="text-[13px] font-bold">Inicio</span>
                 </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = geo
+                      ? `https://www.google.com/maps/search/?api=1&query=${geo.lat},${geo.lng}`
+                      : `https://www.google.com/maps/search/?api=1&query=Alicante`;
+                    try {
+                      (window.top ?? window).open(url, "_blank", "noopener,noreferrer");
+                    } catch {
+                      window.open(url, "_blank", "noopener,noreferrer");
+                    }
+                  }}
+                  className="flex flex-col items-center gap-1 px-5 py-2 rounded-2xl bg-white/70 ring-1 ring-border/60 shadow-sm text-primary active:scale-95"
+                  aria-label="Mapa"
+                >
+                  <MapIcon className="h-6 w-6" />
+                  <span className="text-[13px] font-bold">Mapa</span>
+                </button>
                 <Link
                   to="/perfil"
                   className="flex flex-col items-center gap-1 px-5 py-2 rounded-2xl bg-white/70 ring-1 ring-border/60 shadow-sm text-primary active:scale-95"
@@ -968,21 +986,6 @@ export function ChatScreen() {
                     };
                   }),
                   {
-                    key: "mapa",
-                    emoji: "🗺️",
-                    label: "Mapa",
-                    onClick: () => {
-                      const url = geo
-                        ? `https://www.google.com/maps/search/?api=1&query=${geo.lat},${geo.lng}`
-                        : `https://www.google.com/maps/search/?api=1&query=Alicante`;
-                      try {
-                        (window.top ?? window).open(url, "_blank", "noopener,noreferrer");
-                      } catch {
-                        window.open(url, "_blank", "noopener,noreferrer");
-                      }
-                    },
-                  },
-                  {
                     key: "servicios-sanitarios",
                     emoji: "🩺",
                     label: "Servicios sanitarios",
@@ -1010,7 +1013,7 @@ export function ChatScreen() {
                     "Comprar":             { bg: "oklch(0.94 0.07 340)", fg: "oklch(0.55 0.18 350)" },
                     "Tomar algo":          { bg: "oklch(0.94 0.08 40)",  fg: "oklch(0.58 0.18 35)" },
                     "Transporte multimodal inteligente":  { bg: "oklch(0.93 0.07 190)", fg: "oklch(0.50 0.14 210)" },
-                    "Mapa":                { bg: "oklch(0.93 0.07 160)", fg: "oklch(0.48 0.14 165)" },
+                    "Vuelos":              { bg: "oklch(0.93 0.07 240)", fg: "oklch(0.48 0.16 250)" },
                     "Servicios sanitarios":{ bg: "oklch(0.94 0.06 25)",  fg: "oklch(0.55 0.18 25)" },
                     "Ocio":                { bg: "oklch(0.94 0.07 310)", fg: "oklch(0.50 0.18 315)" },
                     "Fiestas de Alicante": { bg: "oklch(0.93 0.08 55)",  fg: "oklch(0.55 0.18 50)" },
@@ -1251,6 +1254,24 @@ export function ChatScreen() {
             >
               <Home className="h-5 w-5 lg:h-6 lg:w-6" />
               <span className="text-[10px] font-bold lg:text-[13px]">Inicio</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const url = geo
+                  ? `https://www.google.com/maps/search/?api=1&query=${geo.lat},${geo.lng}`
+                  : `https://www.google.com/maps/search/?api=1&query=Alicante`;
+                try {
+                  (window.top ?? window).open(url, "_blank", "noopener,noreferrer");
+                } catch {
+                  window.open(url, "_blank", "noopener,noreferrer");
+                }
+              }}
+              className="flex flex-col items-center gap-0.5 px-3 py-1 text-primary active:scale-95 lg:gap-1 lg:px-5 lg:py-2 lg:rounded-2xl lg:bg-white/70 lg:ring-1 lg:ring-border/60 lg:shadow-sm"
+              aria-label="Mapa"
+            >
+              <MapIcon className="h-5 w-5 lg:h-6 lg:w-6" />
+              <span className="text-[10px] font-bold lg:text-[13px]">Mapa</span>
             </button>
             <Link
               to="/perfil"
