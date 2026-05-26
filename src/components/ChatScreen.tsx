@@ -1879,7 +1879,8 @@ function BusStopCard({ data }: { data: BusStopCardData }) {
       <div className="px-5 py-5">
         <BigLiveEta line={data.line} stop={data.stopCode} />
       </div>
-    </div>
+    </Link>
+
   );
 }
 
