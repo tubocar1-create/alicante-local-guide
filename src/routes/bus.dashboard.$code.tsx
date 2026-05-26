@@ -224,7 +224,7 @@ function BusDashboardPage() {
       if (!cancelled) {
         setUpdatedAt(new Date().toISOString());
         setLoadingEtas(false);
-        timer = setTimeout(tick, 30_000);
+        timer = setTimeout(tick, 15_000);
       }
     };
     tick();
