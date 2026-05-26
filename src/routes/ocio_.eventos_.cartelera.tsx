@@ -6,7 +6,7 @@ import { listEventosCartelera } from "@/lib/eventos.functions";
 
 const ACCENT = "#a78bfa";
 
-export const Route = createFileRoute("/ocio_/eventos/cartelera")({
+export const Route = createFileRoute("/ocio_/eventos_/cartelera")({
   head: () => ({
     meta: [
       { title: "Cartelera de eventos · Alicante" },

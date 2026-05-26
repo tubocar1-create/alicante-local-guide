@@ -90,9 +90,9 @@ import { Route as TramParadaStopIdRouteImport } from './routes/tram.parada.$stop
 import { Route as TramLineaLineIdRouteImport } from './routes/tram.linea.$lineId'
 import { Route as SaludCategoriaIdRouteImport } from './routes/salud_.$categoria.$id'
 import { Route as OcioPeliculaIdRouteImport } from './routes/ocio_.pelicula.$id'
-import { Route as OcioEventosCarteleraRouteImport } from './routes/ocio_.eventos.cartelera'
-import { Route as OcioEventosAgendaRouteImport } from './routes/ocio_.eventos.agenda'
-import { Route as OcioEventosIdRouteImport } from './routes/ocio_.eventos.$id'
+import { Route as OcioEventosCarteleraRouteImport } from './routes/ocio_.eventos_.cartelera'
+import { Route as OcioEventosAgendaRouteImport } from './routes/ocio_.eventos_.agenda'
+import { Route as OcioEventosIdRouteImport } from './routes/ocio_.eventos_.$id'
 import { Route as OcioCinesIdRouteImport } from './routes/ocio_.cines.$id'
 import { Route as ComprarTiendaIdRouteImport } from './routes/comprar_.tienda.$id'
 import { Route as ComprarSectorSectorRouteImport } from './routes/comprar_.sector.$sector'
@@ -122,7 +122,7 @@ import { Route as AdminAiCorreccionesRouteImport } from './routes/admin.ai.corre
 import { Route as AdminAiConversationsRouteImport } from './routes/admin.ai.conversations'
 import { Route as AdminAiAuditoriaRouteImport } from './routes/admin.ai.auditoria'
 import { Route as AdminAiAnalyticsRouteImport } from './routes/admin.ai.analytics'
-import { Route as OcioEventosVenueIdRouteImport } from './routes/ocio_.eventos.venue.$id'
+import { Route as OcioEventosVenueIdRouteImport } from './routes/ocio_.eventos_.venue.$id'
 import { Route as OcioCinesIdCarteleraRouteImport } from './routes/ocio_.cines_.$id.cartelera'
 import { Route as ApiPublicTramValidOriginsRouteImport } from './routes/api/public/tram/valid-origins'
 import { Route as ApiPublicTramStationsRouteImport } from './routes/api/public/tram/stations'
@@ -547,19 +547,19 @@ const OcioPeliculaIdRoute = OcioPeliculaIdRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const OcioEventosCarteleraRoute = OcioEventosCarteleraRouteImport.update({
-  id: '/cartelera',
-  path: '/cartelera',
-  getParentRoute: () => OcioEventosRoute,
+  id: '/ocio_/eventos_/cartelera',
+  path: '/ocio/eventos/cartelera',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const OcioEventosAgendaRoute = OcioEventosAgendaRouteImport.update({
-  id: '/agenda',
-  path: '/agenda',
-  getParentRoute: () => OcioEventosRoute,
+  id: '/ocio_/eventos_/agenda',
+  path: '/ocio/eventos/agenda',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const OcioEventosIdRoute = OcioEventosIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => OcioEventosRoute,
+  id: '/ocio_/eventos_/$id',
+  path: '/ocio/eventos/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const OcioCinesIdRoute = OcioCinesIdRouteImport.update({
   id: '/$id',
@@ -710,9 +710,9 @@ const AdminAiAnalyticsRoute = AdminAiAnalyticsRouteImport.update({
   getParentRoute: () => AdminAiRoute,
 } as any)
 const OcioEventosVenueIdRoute = OcioEventosVenueIdRouteImport.update({
-  id: '/venue/$id',
-  path: '/venue/$id',
-  getParentRoute: () => OcioEventosRoute,
+  id: '/ocio_/eventos_/venue/$id',
+  path: '/ocio/eventos/venue/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const OcioCinesIdCarteleraRoute = OcioCinesIdCarteleraRouteImport.update({
   id: '/ocio_/cines_/$id/cartelera',
@@ -872,7 +872,7 @@ export interface FileRoutesByFullPath {
   '/ocio/cartelera': typeof OcioCarteleraRoute
   '/ocio/cines': typeof OcioCinesRouteWithChildren
   '/ocio/conciertos': typeof OcioConciertosRoute
-  '/ocio/eventos': typeof OcioEventosRouteWithChildren
+  '/ocio/eventos': typeof OcioEventosRoute
   '/ocio/teatros': typeof OcioTeatrosRoute
   '/playas/$slug': typeof PlayasSlugRoute
   '/playas/mapa': typeof PlayasMapaRoute
@@ -1002,7 +1002,7 @@ export interface FileRoutesByTo {
   '/ocio/cartelera': typeof OcioCarteleraRoute
   '/ocio/cines': typeof OcioCinesRouteWithChildren
   '/ocio/conciertos': typeof OcioConciertosRoute
-  '/ocio/eventos': typeof OcioEventosRouteWithChildren
+  '/ocio/eventos': typeof OcioEventosRoute
   '/ocio/teatros': typeof OcioTeatrosRoute
   '/playas/$slug': typeof PlayasSlugRoute
   '/playas/mapa': typeof PlayasMapaRoute
@@ -1136,7 +1136,7 @@ export interface FileRoutesById {
   '/ocio_/cartelera': typeof OcioCarteleraRoute
   '/ocio_/cines': typeof OcioCinesRouteWithChildren
   '/ocio_/conciertos': typeof OcioConciertosRoute
-  '/ocio_/eventos': typeof OcioEventosRouteWithChildren
+  '/ocio_/eventos': typeof OcioEventosRoute
   '/ocio_/teatros': typeof OcioTeatrosRoute
   '/playas/$slug': typeof PlayasSlugRoute
   '/playas/mapa': typeof PlayasMapaRoute
@@ -1178,9 +1178,9 @@ export interface FileRoutesById {
   '/comprar_/sector/$sector': typeof ComprarSectorSectorRoute
   '/comprar_/tienda/$id': typeof ComprarTiendaIdRoute
   '/ocio_/cines/$id': typeof OcioCinesIdRoute
-  '/ocio_/eventos/$id': typeof OcioEventosIdRoute
-  '/ocio_/eventos/agenda': typeof OcioEventosAgendaRoute
-  '/ocio_/eventos/cartelera': typeof OcioEventosCarteleraRoute
+  '/ocio_/eventos_/$id': typeof OcioEventosIdRoute
+  '/ocio_/eventos_/agenda': typeof OcioEventosAgendaRoute
+  '/ocio_/eventos_/cartelera': typeof OcioEventosCarteleraRoute
   '/ocio_/pelicula/$id': typeof OcioPeliculaIdRoute
   '/salud_/$categoria/$id': typeof SaludCategoriaIdRoute
   '/tram/linea/$lineId': typeof TramLineaLineIdRoute
@@ -1203,7 +1203,7 @@ export interface FileRoutesById {
   '/api/public/tram/stations': typeof ApiPublicTramStationsRoute
   '/api/public/tram/valid-origins': typeof ApiPublicTramValidOriginsRoute
   '/ocio_/cines_/$id/cartelera': typeof OcioCinesIdCarteleraRoute
-  '/ocio_/eventos/venue/$id': typeof OcioEventosVenueIdRoute
+  '/ocio_/eventos_/venue/$id': typeof OcioEventosVenueIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -1576,9 +1576,9 @@ export interface FileRouteTypes {
     | '/comprar_/sector/$sector'
     | '/comprar_/tienda/$id'
     | '/ocio_/cines/$id'
-    | '/ocio_/eventos/$id'
-    | '/ocio_/eventos/agenda'
-    | '/ocio_/eventos/cartelera'
+    | '/ocio_/eventos_/$id'
+    | '/ocio_/eventos_/agenda'
+    | '/ocio_/eventos_/cartelera'
     | '/ocio_/pelicula/$id'
     | '/salud_/$categoria/$id'
     | '/tram/linea/$lineId'
@@ -1601,7 +1601,7 @@ export interface FileRouteTypes {
     | '/api/public/tram/stations'
     | '/api/public/tram/valid-origins'
     | '/ocio_/cines_/$id/cartelera'
-    | '/ocio_/eventos/venue/$id'
+    | '/ocio_/eventos_/venue/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1645,7 +1645,7 @@ export interface RootRouteChildren {
   OcioCarteleraRoute: typeof OcioCarteleraRoute
   OcioCinesRoute: typeof OcioCinesRouteWithChildren
   OcioConciertosRoute: typeof OcioConciertosRoute
-  OcioEventosRoute: typeof OcioEventosRouteWithChildren
+  OcioEventosRoute: typeof OcioEventosRoute
   OcioTeatrosRoute: typeof OcioTeatrosRoute
   SaludCategoriaRoute: typeof SaludCategoriaRouteWithChildren
   VuelosIataRoute: typeof VuelosIataRoute
@@ -1662,6 +1662,9 @@ export interface RootRouteChildren {
   ComprarSubsectorSubsubsectorRoute: typeof ComprarSubsectorSubsubsectorRoute
   ComprarSectorSectorRoute: typeof ComprarSectorSectorRoute
   ComprarTiendaIdRoute: typeof ComprarTiendaIdRoute
+  OcioEventosIdRoute: typeof OcioEventosIdRoute
+  OcioEventosAgendaRoute: typeof OcioEventosAgendaRoute
+  OcioEventosCarteleraRoute: typeof OcioEventosCarteleraRoute
   OcioPeliculaIdRoute: typeof OcioPeliculaIdRoute
   ApiPublicHooksAenaSyncRoute: typeof ApiPublicHooksAenaSyncRoute
   ApiPublicHooksAgenteLearnRoute: typeof ApiPublicHooksAgenteLearnRoute
@@ -1680,6 +1683,7 @@ export interface RootRouteChildren {
   ApiPublicTramStationsRoute: typeof ApiPublicTramStationsRoute
   ApiPublicTramValidOriginsRoute: typeof ApiPublicTramValidOriginsRoute
   OcioCinesIdCarteleraRoute: typeof OcioCinesIdCarteleraRoute
+  OcioEventosVenueIdRoute: typeof OcioEventosVenueIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -2251,26 +2255,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OcioPeliculaIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/ocio_/eventos/cartelera': {
-      id: '/ocio_/eventos/cartelera'
-      path: '/cartelera'
+    '/ocio_/eventos_/cartelera': {
+      id: '/ocio_/eventos_/cartelera'
+      path: '/ocio/eventos/cartelera'
       fullPath: '/ocio/eventos/cartelera'
       preLoaderRoute: typeof OcioEventosCarteleraRouteImport
-      parentRoute: typeof OcioEventosRoute
+      parentRoute: typeof rootRouteImport
     }
-    '/ocio_/eventos/agenda': {
-      id: '/ocio_/eventos/agenda'
-      path: '/agenda'
+    '/ocio_/eventos_/agenda': {
+      id: '/ocio_/eventos_/agenda'
+      path: '/ocio/eventos/agenda'
       fullPath: '/ocio/eventos/agenda'
       preLoaderRoute: typeof OcioEventosAgendaRouteImport
-      parentRoute: typeof OcioEventosRoute
+      parentRoute: typeof rootRouteImport
     }
-    '/ocio_/eventos/$id': {
-      id: '/ocio_/eventos/$id'
-      path: '/$id'
+    '/ocio_/eventos_/$id': {
+      id: '/ocio_/eventos_/$id'
+      path: '/ocio/eventos/$id'
       fullPath: '/ocio/eventos/$id'
       preLoaderRoute: typeof OcioEventosIdRouteImport
-      parentRoute: typeof OcioEventosRoute
+      parentRoute: typeof rootRouteImport
     }
     '/ocio_/cines/$id': {
       id: '/ocio_/cines/$id'
@@ -2475,12 +2479,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAiAnalyticsRouteImport
       parentRoute: typeof AdminAiRoute
     }
-    '/ocio_/eventos/venue/$id': {
-      id: '/ocio_/eventos/venue/$id'
-      path: '/venue/$id'
+    '/ocio_/eventos_/venue/$id': {
+      id: '/ocio_/eventos_/venue/$id'
+      path: '/ocio/eventos/venue/$id'
       fullPath: '/ocio/eventos/venue/$id'
       preLoaderRoute: typeof OcioEventosVenueIdRouteImport
-      parentRoute: typeof OcioEventosRoute
+      parentRoute: typeof rootRouteImport
     }
     '/ocio_/cines_/$id/cartelera': {
       id: '/ocio_/cines_/$id/cartelera'
@@ -2797,24 +2801,6 @@ const OcioCinesRouteWithChildren = OcioCinesRoute._addFileChildren(
   OcioCinesRouteChildren,
 )
 
-interface OcioEventosRouteChildren {
-  OcioEventosIdRoute: typeof OcioEventosIdRoute
-  OcioEventosAgendaRoute: typeof OcioEventosAgendaRoute
-  OcioEventosCarteleraRoute: typeof OcioEventosCarteleraRoute
-  OcioEventosVenueIdRoute: typeof OcioEventosVenueIdRoute
-}
-
-const OcioEventosRouteChildren: OcioEventosRouteChildren = {
-  OcioEventosIdRoute: OcioEventosIdRoute,
-  OcioEventosAgendaRoute: OcioEventosAgendaRoute,
-  OcioEventosCarteleraRoute: OcioEventosCarteleraRoute,
-  OcioEventosVenueIdRoute: OcioEventosVenueIdRoute,
-}
-
-const OcioEventosRouteWithChildren = OcioEventosRoute._addFileChildren(
-  OcioEventosRouteChildren,
-)
-
 interface SaludCategoriaRouteChildren {
   SaludCategoriaIdRoute: typeof SaludCategoriaIdRoute
 }
@@ -2868,7 +2854,7 @@ const rootRouteChildren: RootRouteChildren = {
   OcioCarteleraRoute: OcioCarteleraRoute,
   OcioCinesRoute: OcioCinesRouteWithChildren,
   OcioConciertosRoute: OcioConciertosRoute,
-  OcioEventosRoute: OcioEventosRouteWithChildren,
+  OcioEventosRoute: OcioEventosRoute,
   OcioTeatrosRoute: OcioTeatrosRoute,
   SaludCategoriaRoute: SaludCategoriaRouteWithChildren,
   VuelosIataRoute: VuelosIataRoute,
@@ -2885,6 +2871,9 @@ const rootRouteChildren: RootRouteChildren = {
   ComprarSubsectorSubsubsectorRoute: ComprarSubsectorSubsubsectorRoute,
   ComprarSectorSectorRoute: ComprarSectorSectorRoute,
   ComprarTiendaIdRoute: ComprarTiendaIdRoute,
+  OcioEventosIdRoute: OcioEventosIdRoute,
+  OcioEventosAgendaRoute: OcioEventosAgendaRoute,
+  OcioEventosCarteleraRoute: OcioEventosCarteleraRoute,
   OcioPeliculaIdRoute: OcioPeliculaIdRoute,
   ApiPublicHooksAenaSyncRoute: ApiPublicHooksAenaSyncRoute,
   ApiPublicHooksAgenteLearnRoute: ApiPublicHooksAgenteLearnRoute,
@@ -2904,6 +2893,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicTramStationsRoute: ApiPublicTramStationsRoute,
   ApiPublicTramValidOriginsRoute: ApiPublicTramValidOriginsRoute,
   OcioCinesIdCarteleraRoute: OcioCinesIdCarteleraRoute,
+  OcioEventosVenueIdRoute: OcioEventosVenueIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

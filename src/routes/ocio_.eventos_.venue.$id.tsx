@@ -7,7 +7,7 @@ import { getVenueWithEvents } from "@/lib/eventos.functions";
 
 const ACCENT = "#a78bfa";
 
-export const Route = createFileRoute("/ocio_/eventos/venue/$id")({
+export const Route = createFileRoute("/ocio_/eventos_/venue/$id")({
   head: () => ({
     meta: [{ title: "Recinto · Agenda Alicante" }],
   }),
