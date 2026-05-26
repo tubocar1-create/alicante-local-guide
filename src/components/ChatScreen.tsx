@@ -441,17 +441,13 @@ export function ChatScreen() {
       if (raw) {
         window.sessionStorage.removeItem("afp:showBusStop");
         const pick = JSON.parse(raw) as BusStopPick;
-        setMode("transit");
-        const userText = `Quiero coger la línea ${pick.line} en la parada ${pick.stopName} (${pick.stopCode}).`;
-        const payload = encodeURIComponent(JSON.stringify(pick));
-        const reply = `¡Perfecto! Te muestro el tiempo de llegada en tu parada.\n\n[[busstop:${payload}]]`;
-        setMessages((prev) => [
-          ...prev,
-          { role: "user", content: userText },
-          { role: "assistant", content: reply },
-        ]);
+        navigate({
+          to: "/transporte/parada-favorita",
+          search: { stop: pick.stopCode, line: pick.line },
+        });
       }
     } catch {}
+
     return () => {
       window.removeEventListener("afp:forward-prompt", onForward);
       window.removeEventListener("afp:open-submenu", onOpenSubmenu);
