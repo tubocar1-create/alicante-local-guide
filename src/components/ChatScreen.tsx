@@ -49,7 +49,7 @@ const TILE_SUBTITLES: Record<string, string> = {
   "Comprar": "Tiendas y mercados",
   "Tomar algo": "Bares y copas",
   "Transporte multimodal inteligente": "Bus, TRAM, taxis",
-  "Mapa": "Explora la ciudad",
+  "Vuelos": "Salidas y llegadas",
   "Servicios sanitarios": "Farmacias y hospitales",
   "Ocio": "Cines, teatros y conciertos",
   "Fiestas de Alicante": "Hogueras y mascletá",
@@ -62,7 +62,7 @@ const TILE_ICONS: Record<string, LucideIcon> = {
   "Comprar": ShoppingBag,
   "Tomar algo": Martini,
   "Transporte multimodal inteligente": Bus,
-  "Mapa": MapPin,
+  "Vuelos": Plane,
   "Servicios sanitarios": Stethoscope,
   "Ocio": CalendarDays,
 };
