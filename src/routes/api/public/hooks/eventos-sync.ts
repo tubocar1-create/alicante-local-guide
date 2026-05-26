@@ -86,12 +86,17 @@ async function extractEvents(
   venueName: string,
   sourceUrl: string,
   markdown: string,
+  isAggregator: boolean,
 ): Promise<ParsedEvent[]> {
   const key = process.env.LOVABLE_API_KEY;
   if (!key) throw new Error("LOVABLE_API_KEY missing");
 
+  const venueFieldDoc = isAggregator
+    ? `  "venue_name": string (nombre EXACTO del recinto en Alicante donde ocurre el evento),\n`
+    : "";
+
   const sys = `Eres un parser de agendas culturales en Alicante (España).
-Recibes el markdown de la web oficial de un recinto y devuelves SOLO JSON con la
+Recibes el markdown de ${isAggregator ? "un AGREGADOR de eventos (varios recintos)" : "la web oficial de un recinto"} y devuelves SOLO JSON con la
 siguiente forma exacta:
 
 {"events":[{
@@ -104,7 +109,7 @@ siguiente forma exacta:
   "duration_min": number|null,
   "age_rating": string|null,
   "source_url": string|null (URL de la ficha del evento si la hay),
-  "showtimes": [{
+${venueFieldDoc}  "showtimes": [{
     "starts_at": string (ISO 8601 con zona horaria Europe/Madrid expresada en UTC, ej. "2026-06-15T19:30:00.000Z"),
     "ends_at": string|null,
     "price_min": number|null,
@@ -119,11 +124,11 @@ Reglas:
 - Si no hay fecha exacta, OMITE el evento.
 - Si no hay precio, deja null. NUNCA inventes.
 - Asume zona horaria Europe/Madrid al convertir a UTC (CEST=+2 en verano, CET=+1 en invierno).
-- Devuelve {"events":[]} si no hay nada utilizable.
+${isAggregator ? "- venue_name OBLIGATORIO: usa el nombre tal cual aparece (ej. 'Teatro Principal de Alicante', 'ADDA', 'Las Cigarreras', 'IFA Fira Alicante'). Si no se identifica recinto en Alicante ciudad o área metropolitana, OMITE el evento.\n" : ""}- Devuelve {"events":[]} si no hay nada utilizable.
 - NO incluyas texto fuera del JSON.`;
 
-  const user = `Recinto: ${venueName}
-URL fuente: ${sourceUrl}
+  const user = `Fuente: ${venueName}
+URL: ${sourceUrl}
 
 MARKDOWN:
 ${markdown.slice(0, 20000)}`;
@@ -160,6 +165,7 @@ ${markdown.slice(0, 20000)}`;
   }
   return Array.isArray(parsed.events) ? parsed.events : [];
 }
+
 
 async function upsertEvent(
   ev: ParsedEvent,
