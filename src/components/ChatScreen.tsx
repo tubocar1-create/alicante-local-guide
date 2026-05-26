@@ -1841,7 +1841,12 @@ function parseBusStopParts(text: string): AssistantPart[] | null {
 
 function BusStopCard({ data }: { data: BusStopCardData }) {
   return (
-    <div className="my-3 overflow-hidden rounded-[28px] border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-card shadow-xl backdrop-blur">
+    <Link
+      to="/transporte/parada-favorita"
+      search={{ stop: data.stopCode, line: data.line }}
+      className="my-3 block overflow-hidden rounded-[28px] border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-card shadow-xl backdrop-blur transition active:scale-[0.99]"
+      aria-label={`Ver parada ${data.stopName} en directo`}
+    >
       {/* Header band */}
       <div className="flex items-center gap-3 border-b border-primary/15 bg-primary/5 px-5 py-4">
         <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary text-2xl font-black text-primary-foreground shadow-lg ring-4 ring-primary/20">
@@ -1856,6 +1861,7 @@ function BusStopCard({ data }: { data: BusStopCardData }) {
           <h3 className="mt-0.5 text-lg font-extrabold leading-tight text-foreground break-words">
             {data.stopName}
           </h3>
+
           {data.lineName && (
             <p className="mt-0.5 truncate text-[11px] font-medium text-muted-foreground">
               {data.lineName}
@@ -1873,7 +1879,8 @@ function BusStopCard({ data }: { data: BusStopCardData }) {
       <div className="px-5 py-5">
         <BigLiveEta line={data.line} stop={data.stopCode} />
       </div>
-    </div>
+    </Link>
+
   );
 }
 

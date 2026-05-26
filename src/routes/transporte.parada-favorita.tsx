@@ -12,6 +12,10 @@ import {
 import { useBusGraph } from "@/hooks/useBusGraph";
 
 export const Route = createFileRoute("/transporte/parada-favorita")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    stop: typeof s.stop === "string" ? s.stop : undefined,
+    line: typeof s.line === "string" ? s.line : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Mi parada favorita — VAMOS Alicante" },
@@ -34,6 +38,7 @@ function normalize(s: string) {
 
 function ParadaFavoritaPage() {
   const router = useRouter();
+  const search = Route.useSearch();
   const { data: graph } = useBusGraph();
   const [stop, setStop] = useState<FavoriteStop>(DEFAULT_FAVORITE_STOP);
   const [, setTick] = useState(0);
@@ -49,45 +54,78 @@ function ParadaFavoritaPage() {
 
   const { minutes, arrivalTime } = computeNextArrival(stop);
   const upcoming = computeUpcomingArrivals(stop, 4);
+  const isArriving = minutes <= 1;
 
   // Build (line+direction) options with real terminal as destination.
   const options = useMemo<FavoriteStop[]>(() => {
-    if (!graph?.stops?.length) return [];
-    const byKey = new Map<string, typeof graph.stops>();
-    for (const r of graph.stops) {
-      const k = `${r.line_code}|${r.direction}`;
-      if (!byKey.has(k)) byKey.set(k, []);
-      byKey.get(k)!.push(r);
-    }
     const out: FavoriteStop[] = [];
-    for (const [, rows] of byKey) {
-      const sorted = [...rows].sort((a, b) => a.seq - b.seq);
-      const terminal = sorted[sorted.length - 1]?.stop_name ?? "";
-      for (const r of sorted) {
-        if (!r.stop_code) continue;
-        // Skip the terminal itself as an origin choice
-        if (r.seq === sorted[sorted.length - 1].seq) continue;
-        out.push({
-          stopId: String(r.stop_code),
-          stopName: r.stop_name,
-          line: r.line_code,
-          destination: terminal,
-        });
+    if (graph?.stops?.length) {
+      const byKey = new Map<string, typeof graph.stops>();
+      for (const r of graph.stops) {
+        const k = `${r.line_code}|${r.direction}`;
+        if (!byKey.has(k)) byKey.set(k, []);
+        byKey.get(k)!.push(r);
+      }
+      for (const [, rows] of byKey) {
+        const sorted = [...rows].sort((a, b) => a.seq - b.seq);
+        const terminal = sorted[sorted.length - 1]?.stop_name ?? "";
+        for (const r of sorted) {
+          if (!r.stop_code) continue;
+          if (r.seq === sorted[sorted.length - 1].seq) continue;
+          out.push({
+            stopId: String(r.stop_code),
+            stopName: r.stop_name,
+            line: r.line_code,
+            destination: terminal,
+          });
+        }
       }
     }
+    // Ensure key lines (C6, 23) are always selectable even if graph lacks them
+    const ensure = (line: string, fallback: { stopId: string; stopName: string; destination: string }) => {
+      if (!out.some((o) => o.line.toUpperCase() === line.toUpperCase())) {
+        out.push({ line, ...fallback });
+      }
+    };
+    ensure("C6", { stopId: "3101", stopName: "Luceros", destination: "Aeropuerto" });
+    ensure("23", { stopId: "1820", stopName: "Plaza España", destination: "Playa de San Juan" });
     return out;
   }, [graph]);
+
+  // Apply ?stop & ?line search params once options are ready
+  useEffect(() => {
+    if (!search.stop) return;
+    const match = options.find(
+      (o) =>
+        o.stopId === search.stop &&
+        (!search.line || o.line.toUpperCase() === search.line.toUpperCase()),
+    );
+    if (match) {
+      saveFavoriteStop(match);
+      setStop(match);
+    }
+  }, [search.stop, search.line, options]);
 
   const filtered = useMemo(() => {
     const q = normalize(query);
     if (!q) return options.slice(0, 80);
     const tokens = q.split(/\s+/).filter(Boolean);
-    return options
-      .filter((o) => {
-        const hay = normalize(`${o.line} ${o.stopName} ${o.stopId} ${o.destination}`);
-        return tokens.every((t) => hay.includes(t));
-      })
-      .slice(0, 80);
+    const matches = options.filter((o) => {
+      const hay = normalize(`${o.line} ${o.stopName} ${o.stopId} ${o.destination}`);
+      return tokens.every((t) => hay.includes(t));
+    });
+    // Priority: exact stopId, stopId startsWith, line code, then rest
+    const score = (o: FavoriteStop) => {
+      const id = o.stopId.toLowerCase();
+      const ln = o.line.toLowerCase();
+      if (id === q) return 0;
+      if (id.startsWith(q)) return 1;
+      if (id.includes(q)) return 2;
+      if (ln === q) return 3;
+      if (ln.startsWith(q)) return 4;
+      return 5;
+    };
+    return matches.sort((a, b) => score(a) - score(b)).slice(0, 80);
   }, [options, query]);
 
   function selectStop(s: FavoriteStop) {
@@ -96,6 +134,7 @@ function ParadaFavoritaPage() {
     setSearchOpen(false);
     setQuery("");
   }
+
 
   return (
     <div className="min-h-screen bg-[#fdf7ee] pb-6">
@@ -171,17 +210,28 @@ function ParadaFavoritaPage() {
             <span className="text-[10px] font-bold uppercase tracking-wider text-stone-500 text-center leading-tight">
               Llegada estimada
             </span>
-            <div
-              key={minutes}
-              className="flex flex-col items-center animate-in fade-in zoom-in-95 duration-300"
-            >
-              <span className="text-[96px] font-extrabold leading-none tabular-nums text-[#0d3b8a]">
-                {minutes}
-              </span>
-              <span className="-mt-1 text-sm font-bold uppercase tracking-wider text-stone-600">
-                Min
-              </span>
-            </div>
+            {isArriving ? (
+              <div className="mt-2 animate-blink rounded-2xl bg-[#0d3b8a] px-5 py-4 text-center shadow-lg">
+                <div className="text-[10px] font-bold uppercase tracking-widest text-white/80">
+                  Faltan
+                </div>
+                <div className="text-3xl font-black uppercase tracking-tight text-white">
+                  ¡Llegando!
+                </div>
+              </div>
+            ) : (
+              <div
+                key={minutes}
+                className="flex flex-col items-center animate-in fade-in zoom-in-95 duration-300"
+              >
+                <span className="text-[96px] font-extrabold leading-none tabular-nums text-[#0d3b8a]">
+                  {minutes}
+                </span>
+                <span className="-mt-1 text-sm font-bold uppercase tracking-wider text-stone-600">
+                  Min
+                </span>
+              </div>
+            )}
             <div className="mt-2 rounded-xl bg-stone-50 px-3 py-1.5 text-center ring-1 ring-stone-200">
               <div className="flex items-center justify-center gap-1 text-[9px] font-bold uppercase text-stone-500">
                 <Clock className="h-3 w-3" />
@@ -192,6 +242,7 @@ function ParadaFavoritaPage() {
               </div>
             </div>
           </div>
+
         </div>
 
         <div className="mt-2 flex items-center gap-2 border-t border-stone-100 pt-2 text-stone-600">
