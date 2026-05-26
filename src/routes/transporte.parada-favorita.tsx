@@ -328,20 +328,30 @@ function ParadaFavoritaPage() {
         </div>
 
         <div className="mt-2 flex items-center gap-2 border-t border-stone-100 pt-2 text-stone-600">
-          <Bus className="h-4 w-4 text-[#0d3b8a]" />
+          <span
+            className={`h-1.5 w-1.5 rounded-full ${
+              liveLoading ? "bg-amber-500 animate-pulse" : hasLiveData ? "bg-emerald-500" : "bg-stone-300"
+            }`}
+          />
           <div className="text-xs">
-            <span className="text-[9px] uppercase tracking-wider text-stone-500">
-              Frecuencia:
-            </span>{" "}
-            <span className="font-extrabold text-stone-800">12–15 min</span>
+            <span className="text-[9px] uppercase tracking-wider text-stone-500">Datos:</span>{" "}
+            <span className="font-extrabold text-stone-800">
+              {hasLiveData ? "tiempo real (Vectalia)" : "estimación · sin paso en vivo"}
+            </span>
           </div>
         </div>
       </section>
 
       {/* Upcoming buses */}
       <section className="mx-3 mt-2 rounded-3xl bg-white p-3 shadow-[0_8px_24px_-12px_rgba(60,40,10,0.25)]">
-        <h3 className="mb-1 text-[10px] font-bold uppercase tracking-wider text-stone-500">
-          Próximos buses
+        <h3 className="mb-1 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-stone-500">
+          <span>Próximos buses</span>
+          {hasLiveData && (
+            <span className="inline-flex items-center gap-1 normal-case text-emerald-700">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              en vivo
+            </span>
+          )}
         </h3>
         <ul className="divide-y divide-stone-100">
           {upcoming.map((u, i) => (
@@ -357,14 +367,18 @@ function ParadaFavoritaPage() {
                 {stop.line}
               </span>
               <span className="truncate text-xs text-stone-800">{stop.destination}</span>
-              <span className="text-xs font-extrabold tabular-nums text-[#0d3b8a]">
-                {u.minutes} <span className="text-[9px] font-semibold text-stone-500">min</span>
+              <span className={`text-xs font-extrabold tabular-nums ${u.live ? "text-emerald-700" : "text-stone-400"}`}>
+                {u.minutes}{" "}
+                <span className="text-[9px] font-semibold text-stone-500">
+                  {u.live ? "min · live" : "min est."}
+                </span>
               </span>
               <ChevronRight className="h-3.5 w-3.5 text-stone-400" />
             </li>
           ))}
         </ul>
       </section>
+
 
       {/* Change favorite */}
       <section className="mx-3 mt-2 flex items-center gap-2 rounded-2xl bg-white p-2.5 shadow-sm ring-1 ring-stone-200">
