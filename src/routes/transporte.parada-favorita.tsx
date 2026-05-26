@@ -45,8 +45,8 @@ function ParadaFavoritaPage() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [showOnHome, setShowOnHome] = useState(true);
-  // Real-time ETAs (índices 0..3) en minutos. null = sin paso o no disponible.
-  const [liveEtas, setLiveEtas] = useState<(number | null)[]>([null, null, null, null]);
+  // Real-time ETAs en minutos (lista completa devuelta por Vectalia).
+  const [liveAll, setLiveAll] = useState<number[]>([]);
   const [liveLoading, setLiveLoading] = useState(false);
   const [liveUpdatedAt, setLiveUpdatedAt] = useState<number>(Date.now());
 
@@ -56,30 +56,28 @@ function ParadaFavoritaPage() {
     return () => window.clearInterval(id);
   }, []);
 
-  // Fetch real-time ETAs from Vectalia proxy (/api/public/bus-eta) every 30s
+  // Una sola petición a Vectalia: trae todos los ETAs disponibles.
   useEffect(() => {
     let cancelled = false;
     const fetchAll = async () => {
       setLiveLoading(true);
       try {
-        const results = await Promise.all(
-          [0, 1, 2, 3].map(async (idx) => {
-            try {
-              const params = new URLSearchParams({ stop: stop.stopId, line: stop.line });
-              if (idx > 0) params.set("index", String(idx));
-              const r = await fetch(`/api/public/bus-eta?${params.toString()}`, { cache: "no-store" });
-              if (!r.ok) return null;
-              const j = await r.json();
-              return typeof j.etaMin === "number" ? j.etaMin : null;
-            } catch {
-              return null;
-            }
-          }),
-        );
+        const params = new URLSearchParams({ stop: stop.stopId, line: stop.line });
+        const r = await fetch(`/api/public/bus-eta?${params.toString()}`, { cache: "no-store" });
+        if (!r.ok) {
+          if (!cancelled) setLiveAll([]);
+          return;
+        }
+        const j = await r.json();
+        const all: number[] = Array.isArray(j?.all)
+          ? j.all.filter((n: unknown) => typeof n === "number")
+          : [];
         if (!cancelled) {
-          setLiveEtas(results);
+          setLiveAll(all);
           setLiveUpdatedAt(Date.now());
         }
+      } catch {
+        if (!cancelled) setLiveAll([]);
       } finally {
         if (!cancelled) setLiveLoading(false);
       }
@@ -92,34 +90,51 @@ function ParadaFavoritaPage() {
     };
   }, [stop.stopId, stop.line]);
 
-  // Compute live arrival from real ETA + tiempo transcurrido desde la última actualización
-  const liveMinutes = (() => {
-    const eta0 = liveEtas[0];
-    if (eta0 == null) return null;
-    const elapsed = Math.floor((Date.now() - liveUpdatedAt) / 60_000);
-    return Math.max(0, eta0 - elapsed);
-  })();
+  const elapsedMin = Math.floor((Date.now() - liveUpdatedAt) / 60_000);
+  const liveMinutes = liveAll.length > 0 ? Math.max(0, liveAll[0] - elapsedMin) : null;
   const fallback = computeNextArrival(stop);
   const minutes = liveMinutes ?? fallback.minutes;
   const arrivalDate = new Date(Date.now() + minutes * 60_000);
   const arrivalTime = `${String(arrivalDate.getHours()).padStart(2, "0")}:${String(arrivalDate.getMinutes()).padStart(2, "0")}`;
   const fallbackUpcoming = computeUpcomingArrivals(stop, 4);
-  const upcoming = [0, 1, 2, 3].map((i) => {
-    const eta = liveEtas[i];
-    if (eta != null) {
-      const elapsed = Math.floor((Date.now() - liveUpdatedAt) / 60_000);
-      const m = Math.max(0, eta - elapsed);
+  // Construye las 4 próximas llegadas: primero las live (en orden), luego
+  // completa con estimaciones basadas en la frecuencia inferida.
+  const upcoming = (() => {
+    const out: Array<{ minutes: number; arrivalTime: string; live: boolean }> = [];
+    const liveAdjusted = liveAll.map((m) => Math.max(0, m - elapsedMin)).sort((a, b) => a - b);
+    for (const m of liveAdjusted.slice(0, 4)) {
       const d = new Date(Date.now() + m * 60_000);
-      return {
+      out.push({
         minutes: m,
         arrivalTime: `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`,
         live: true,
-      };
+      });
     }
-    return { ...fallbackUpcoming[i], live: false };
-  });
+    // Frecuencia inferida a partir de los ETAs live; por defecto 15 min.
+    let freq = 15;
+    if (liveAdjusted.length >= 2) {
+      const diffs: number[] = [];
+      for (let i = 1; i < liveAdjusted.length; i++) diffs.push(liveAdjusted[i] - liveAdjusted[i - 1]);
+      diffs.sort((a, b) => a - b);
+      const med = diffs[Math.floor(diffs.length / 2)];
+      if (med >= 5 && med <= 60) freq = med;
+    }
+    const lastMin = out.length > 0 ? out[out.length - 1].minutes : null;
+    let idx = 0;
+    while (out.length < 4) {
+      const base = lastMin != null ? lastMin + freq * (idx + 1) : fallbackUpcoming[idx].minutes;
+      const d = new Date(Date.now() + base * 60_000);
+      out.push({
+        minutes: base,
+        arrivalTime: `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`,
+        live: false,
+      });
+      idx++;
+    }
+    return out;
+  })();
   const isArriving = minutes <= 1;
-  const hasLiveData = liveEtas.some((e) => e != null);
+  const hasLiveData = liveAll.length > 0;
 
 
   // Build (line+direction) options with real terminal as destination.
