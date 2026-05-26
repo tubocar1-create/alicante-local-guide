@@ -521,17 +521,6 @@ function DirectionColumn({
     return m;
   }, [nearestList]);
 
-  // Auto-scroll: cuando conocemos la parada más cercana, llevarla a la vista.
-  const firstNearestRef = useRef<HTMLLIElement | null>(null);
-  const scrolledForRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!nearest) return;
-    if (scrolledForRef.current === nearest.code) return;
-    const el = firstNearestRef.current;
-    if (!el) return;
-    scrolledForRef.current = nearest.code;
-    el.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [nearest]);
 
   return (
     <div className="px-1">
