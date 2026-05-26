@@ -166,42 +166,76 @@ function OcioDashboard() {
           </div>
         </Link>
 
-        {/* Otros sectores */}
-        <div className="grid grid-cols-1 gap-3">
-          {SUBS.map((s) => (
-            <Link key={s.to} to={s.to} className="block">
-              <div
-                className="group flex h-full items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-left backdrop-blur-xl transition-all hover:border-white/25 hover:bg-white/[0.07] active:scale-[0.98]"
-                style={{ boxShadow: `0 6px 20px -12px ${s.accent}66` }}
-              >
+        {/* Teatro, conciertos y eventos — Destacado */}
+        {SUBS.map((s) => (
+          <Link
+            key={s.to}
+            to={s.to}
+            className="group relative block overflow-hidden rounded-2xl border-0"
+          >
+            {/* Glow exterior */}
+            <div
+              className="absolute -inset-0.5 rounded-2xl opacity-60 blur-sm transition duration-500 group-hover:opacity-100 group-hover:blur-md"
+              style={{
+                background: `linear-gradient(135deg, ${s.accent} 0%, #c084fc 40%, #a78bfa 100%)`,
+              }}
+            />
+            <div className="relative flex items-center gap-5 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.08] to-white/[0.03] p-5 backdrop-blur-xl transition-all group-hover:from-white/[0.12] group-hover:to-white/[0.05] active:scale-[0.98]">
+              {/* Icono grande con brillo */}
+              <div className="relative shrink-0">
                 <div
-                  className="grid h-11 w-11 shrink-0 place-items-center rounded-full"
+                  className="absolute inset-0 rounded-2xl blur-lg transition duration-500 group-hover:blur-xl"
+                  style={{ background: s.accent, opacity: 0.35 }}
+                />
+                <div
+                  className="relative grid h-16 w-16 place-items-center rounded-2xl border"
                   style={{
-                    background: `${s.accent}22`,
-                    color: s.accent,
-                    border: `1px solid ${s.accent}55`,
+                    background: `linear-gradient(135deg, ${s.accent}22, #c084fc22)`,
+                    borderColor: `${s.accent}88`,
+                    boxShadow: `0 0 20px -4px ${s.accent}66`,
                   }}
                 >
-                  <s.Icon className="h-5 w-5" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-base font-semibold leading-tight text-white">
-                    {s.label}
-                  </div>
-                  <div className="mt-0.5 text-[11px] text-white/55">
-                    {s.description}
-                  </div>
-                </div>
-                <div
-                  className="text-[10px] font-bold uppercase tracking-[0.18em]"
-                  style={{ color: s.accent }}
-                >
-                  Explorar →
+                  <s.Icon
+                    className="h-8 w-8 transition-transform duration-500 group-hover:scale-110"
+                    style={{ color: s.accent }}
+                  />
                 </div>
               </div>
-            </Link>
-          ))}
-        </div>
+
+              {/* Texto */}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-violet-400 opacity-70" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-violet-300" />
+                  </span>
+                  <span
+                    className="text-[10px] font-bold uppercase tracking-[0.2em]"
+                    style={{ color: s.accent }}
+                  >
+                    En vivo
+                  </span>
+                </div>
+                <div className="mt-1 text-xl font-bold leading-tight tracking-tight text-white">
+                  {s.label}
+                </div>
+                <div className="mt-1 text-[11px] text-white/55">
+                  {s.description}
+                </div>
+              </div>
+
+              {/* Flecha / ticket */}
+              <div className="shrink-0">
+                <div className="grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.05] transition-all duration-500 group-hover:border-white/25 group-hover:bg-white/[0.10]">
+                  <Ticket
+                    className="h-5 w-5 rotate-[-15deg] transition-transform duration-500 group-hover:rotate-0"
+                    style={{ color: s.accent }}
+                  />
+                </div>
+              </div>
+            </div>
+          </Link>
+        ))}
       </main>
     </div>
   );
