@@ -45,16 +45,82 @@ function ParadaFavoritaPage() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [showOnHome, setShowOnHome] = useState(true);
+  // Real-time ETAs (índices 0..3) en minutos. null = sin paso o no disponible.
+  const [liveEtas, setLiveEtas] = useState<(number | null)[]>([null, null, null, null]);
+  const [liveLoading, setLiveLoading] = useState(false);
+  const [liveUpdatedAt, setLiveUpdatedAt] = useState<number>(Date.now());
 
   useEffect(() => {
     setStop(loadFavoriteStop());
-    const id = window.setInterval(() => setTick((t) => t + 1), 45_000);
+    const id = window.setInterval(() => setTick((t) => t + 1), 30_000);
     return () => window.clearInterval(id);
   }, []);
 
-  const { minutes, arrivalTime } = computeNextArrival(stop);
-  const upcoming = computeUpcomingArrivals(stop, 4);
+  // Fetch real-time ETAs from Vectalia proxy (/api/public/bus-eta) every 30s
+  useEffect(() => {
+    let cancelled = false;
+    const fetchAll = async () => {
+      setLiveLoading(true);
+      try {
+        const results = await Promise.all(
+          [0, 1, 2, 3].map(async (idx) => {
+            try {
+              const params = new URLSearchParams({ stop: stop.stopId, line: stop.line });
+              if (idx > 0) params.set("index", String(idx));
+              const r = await fetch(`/api/public/bus-eta?${params.toString()}`, { cache: "no-store" });
+              if (!r.ok) return null;
+              const j = await r.json();
+              return typeof j.etaMin === "number" ? j.etaMin : null;
+            } catch {
+              return null;
+            }
+          }),
+        );
+        if (!cancelled) {
+          setLiveEtas(results);
+          setLiveUpdatedAt(Date.now());
+        }
+      } finally {
+        if (!cancelled) setLiveLoading(false);
+      }
+    };
+    fetchAll();
+    const id = window.setInterval(fetchAll, 30_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [stop.stopId, stop.line]);
+
+  // Compute live arrival from real ETA + tiempo transcurrido desde la última actualización
+  const liveMinutes = (() => {
+    const eta0 = liveEtas[0];
+    if (eta0 == null) return null;
+    const elapsed = Math.floor((Date.now() - liveUpdatedAt) / 60_000);
+    return Math.max(0, eta0 - elapsed);
+  })();
+  const fallback = computeNextArrival(stop);
+  const minutes = liveMinutes ?? fallback.minutes;
+  const arrivalDate = new Date(Date.now() + minutes * 60_000);
+  const arrivalTime = `${String(arrivalDate.getHours()).padStart(2, "0")}:${String(arrivalDate.getMinutes()).padStart(2, "0")}`;
+  const fallbackUpcoming = computeUpcomingArrivals(stop, 4);
+  const upcoming = [0, 1, 2, 3].map((i) => {
+    const eta = liveEtas[i];
+    if (eta != null) {
+      const elapsed = Math.floor((Date.now() - liveUpdatedAt) / 60_000);
+      const m = Math.max(0, eta - elapsed);
+      const d = new Date(Date.now() + m * 60_000);
+      return {
+        minutes: m,
+        arrivalTime: `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`,
+        live: true,
+      };
+    }
+    return { ...fallbackUpcoming[i], live: false };
+  });
   const isArriving = minutes <= 1;
+  const hasLiveData = liveEtas.some((e) => e != null);
+
 
   // Build (line+direction) options with real terminal as destination.
   const options = useMemo<FavoriteStop[]>(() => {
