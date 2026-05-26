@@ -126,7 +126,7 @@ export function FavoriteStopWidget() {
       <div className="flex flex-col items-center justify-center gap-1">
         <div
           key={minutes}
-          className="flex h-[56px] w-[56px] flex-col items-center justify-center rounded-full bg-white ring-1 ring-stone-200 animate-in fade-in zoom-in-95 duration-300"
+          className="flex h-[48px] w-[48px] flex-col items-center justify-center rounded-full bg-white ring-1 ring-stone-200 animate-in fade-in zoom-in-95 duration-300"
         >
           <span
             className="text-[24px] font-extrabold leading-none tabular-nums text-[#0d3b8a]"
