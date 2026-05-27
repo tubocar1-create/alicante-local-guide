@@ -447,8 +447,7 @@ const DOMAINS: DomainSpec[] = [
       "agenda festiva", "fiesta popular", "fiestas populares",
       "verbena", "verbenas", "procesion", "procesión",
     ],
-    question:
-      "¡Vamos! ¿Quieres ver el programa de fiestas, hogueras o moros y cristianos?",
+    question: "Te abro fiestas; elige la categoría en pantalla.",
     audio: "leisure",
     followups: [
       { keys: ["hoguera", "hogueras", "san juan", "fogueres"], path: "/fiestas" },
