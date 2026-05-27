@@ -11,7 +11,6 @@ import {
   VolumeX,
   Pause,
   Play,
-  Sparkles,
 } from "lucide-react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
