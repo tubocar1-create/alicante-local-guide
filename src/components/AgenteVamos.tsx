@@ -3705,11 +3705,11 @@ export function AgenteVamosFab() {
   };
 
   const openPanelWithGreeting = () => {
-    if (!voiceBootStartedRef.current) {
+    if (!open) {
+      greetingPlayedRef.current = false;
+      __vaSetGreetingSpoken(false);
+      voiceBootStartedRef.current = false;
       startGreetingFromUserGesture();
-    } else if (!open) {
-      // Reentrada: el saludo inicial ya se reprodujo en esta sesión.
-      playReentryGreeting();
     }
     setOpen(true);
   };
@@ -3777,6 +3777,8 @@ export function AgenteVamosFab() {
         open={open}
         onClose={() => {
           voiceBootStartedRef.current = false;
+          greetingPlayedRef.current = false;
+          __vaSetGreetingSpoken(false);
           setOpen(false);
         }}
       />
