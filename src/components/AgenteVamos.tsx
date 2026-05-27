@@ -1861,6 +1861,41 @@ function makeGreeting(): Msg {
 const VA_LAST_INTERACTION_KEY = "va:last-interaction-ts";
 const VA_LAST_TOPIC_KEY = "va:last-topic";
 const VA_LAST_REENTRY_KEY = "va:last-reentry";
+const VA_LAST_AGENT_ROUTE_KEY = "va:last-agent-route";
+const VA_LAST_AGENT_ROUTE_TTL_MS = 10 * 60 * 1000;
+
+type LastAgentRoute = { route: string; reply?: string; at: number };
+
+function rememberAgentRoute(route: string | undefined, reply?: string) {
+  if (typeof window === "undefined" || !route) return;
+  try {
+    window.sessionStorage.setItem(
+      VA_LAST_AGENT_ROUTE_KEY,
+      JSON.stringify({ route, reply, at: Date.now() } satisfies LastAgentRoute),
+    );
+  } catch {}
+}
+
+function readLastAgentRoute(): LastAgentRoute | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const parsed = JSON.parse(window.sessionStorage.getItem(VA_LAST_AGENT_ROUTE_KEY) ?? "null") as LastAgentRoute | null;
+    if (!parsed?.route || Date.now() - parsed.at > VA_LAST_AGENT_ROUTE_TTL_MS) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function isNavigationFailureReport(query: string): boolean {
+  const q = normalizeSpeech(query);
+  return /\b(no\s+(abre|abrio|abrio|carga|cargo|veo|sale|aparece)|pagina\s+no\s+abre|pantalla\s+en\s+blanco|me\s+lleva\s+pero|no\s+veo\s+nada|se\s+queda|quede\s+esperando|no\s+me\s+(lleva|llevo|abre))\b/.test(q);
+}
+
+function navigationRetryReply(route: string, currentPath: string): string {
+  if (route === currentPath) return "Perdona, refresco esa sección para que cargue bien.";
+  return "Perdona, reintento abrir la sección correcta.";
+}
 
 export function markVaInteraction(topic?: string) {
   if (typeof window === "undefined") return;
