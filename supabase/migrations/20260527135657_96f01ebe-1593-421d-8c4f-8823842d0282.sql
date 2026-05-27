@@ -1,0 +1,1 @@
+UPDATE public.agente_intents SET spoken_reply = 'Te abro Comprar; elige el sector en pantalla.' WHERE key = 'comprar';

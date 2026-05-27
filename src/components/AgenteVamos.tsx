@@ -248,11 +248,11 @@ type DomainSpec = {
   question: string;
   audio: VoiceClip;
   hubPath?: string;
+  // Si está presente, al enrutar al hub abrimos también este submenú de
+  // la pantalla destino (sincroniza el selector con la decisión del agente).
+  openSubmenuKey?: string;
   followups: { keys: string[]; path: string; label?: string }[];
 };
-
-export const SHOPPING_INTRO_REPLY =
-  "Genial, aquí te dejo una lista muy amplia de sitios para comprar, pero si lo prefieres te puedo orientar si me dices qué artículo o servicio necesitas.";
 
 const DOMAINS: DomainSpec[] = [
   {
@@ -322,6 +322,7 @@ const DOMAINS: DomainSpec[] = [
     ],
     question: "Te llevo a la sección para comer; elige el tipo en pantalla.",
     audio: "eat",
+    openSubmenuKey: "comer",
     followups: [
       { keys: ["restaurante", "restaurantes", "cenar", "almorzar", "desayunar"], path: "/" },
       { keys: ["tapas", "tapeo", "picar"], path: "/" },
@@ -864,7 +865,7 @@ function detectAmbiguity(query: string): LocalResult | null {
   if (other?.id === "compras" && !entity) {
     const comprasDomain = DOMAINS.find((d) => d.id === "compras");
     return {
-      reply: comprasDomain?.question ?? SHOPPING_INTRO_REPLY,
+      reply: comprasDomain?.question ?? "Te abro compras.",
       path: comprasDomain?.hubPath ?? "/comprar",
       audio: comprasDomain?.audio ?? "fallback",
       pendingDomain: null,
@@ -1165,7 +1166,10 @@ function dbIntentToResult(intent: AgenteIntentRow): LocalResult {
   if (domainId) {
     const d = DOMAINS.find((x) => x.id === domainId);
     if (d && d.followups.length === 0 && d.hubPath && !d.hubPath.startsWith("action:")) {
-      return { reply: trainedReply || d.question, path: d.hubPath, audio: d.audio, pendingDomain: null, source: "trained" };
+      return { reply: trainedReply || d.question, path: d.hubPath, audio: d.audio, pendingDomain: null, source: "trained", openSubmenu: d.openSubmenuKey };
+    }
+    if (d && d.openSubmenuKey && d.hubPath && !d.hubPath.startsWith("action:")) {
+      return { reply: trainedReply || d.question, path: d.hubPath, audio: d.audio, pendingDomain: null, source: "trained", openSubmenu: d.openSubmenuKey };
     }
     if (d && d.followups.length > 0) {
       return { reply: trainedReply || d.question, audio: d.audio, pendingDomain: d.id, source: "trained" };
@@ -1362,16 +1366,11 @@ function localResolve(
   }
 
 
-  if (isShoppingRequest(query)) {
-    const hubIntent = catalog.intents.find((i) => i.key === "comprar");
-    const trainedReply = (hubIntent?.spoken_reply ?? "").trim();
-    return {
-      reply: trainedReply || SHOPPING_INTRO_REPLY,
-      path: "/comprar",
-      audio: "fallback",
-      pendingDomain: null,
-    };
-  }
+  // Las peticiones de compras se resuelven vía el dominio "compras" en
+  // matchDomain — no devolvemos aquí ninguna respuesta hardcodeada que
+  // enumere sectores; dejamos que el selector de /comprar guíe al usuario.
+
+
 
 
   // Dominio activo = prioridad máxima sobre entidades/keywords aisladas.
@@ -1743,6 +1742,18 @@ function localResolve(
         path: domain.hubPath,
         audio: domain.audio,
         pendingDomain: null,
+        openSubmenu: domain.openSubmenuKey,
+      };
+    }
+    // Dominio con openSubmenuKey: navegamos al hub y abrimos el selector
+    // de la pantalla destino, sin esperar a una segunda respuesta del usuario.
+    if (domain.openSubmenuKey && domain.hubPath && !domain.hubPath.startsWith("action:")) {
+      return {
+        reply: domain.question,
+        path: domain.hubPath,
+        audio: domain.audio,
+        pendingDomain: null,
+        openSubmenu: domain.openSubmenuKey,
       };
     }
     return {
@@ -2958,8 +2969,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         // pise esa derivación con una sugerencia de otro dominio.
         const isDomainFollowupResolution = !!priorDomain && !!fallback.path;
         const isTrainedResolution = fallback.source === "trained";
-        // Intro de compras: respuesta canónica, no la pisamos con el servidor.
-        const isShoppingResolution = fallback.path === "/comprar" && fallback.reply === SHOPPING_INTRO_REPLY;
+        const isShoppingResolution = fallback.path === "/comprar";
 
         // El agente local es soberano: si ya resolvió a una ruta concreta
         // (cualquier path que no sea "/"), NO invocamos al LLM. Gemini solo

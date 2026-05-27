@@ -39,7 +39,7 @@ import hoguerasIcon from "@/assets/hogueras-alicante.png";
 import busAlicanteIcon from "@/assets/bus-alicante.png";
 import asistenteIcon from "@/assets/asistente-icon.png";
 import { VamosWord } from "@/components/VamosWord";
-import { hablar, SHOPPING_INTRO_REPLY, speakGreetingFromUserGesture } from "@/components/AgenteVamos";
+import { hablar, speakGreetingFromUserGesture } from "@/components/AgenteVamos";
 import { FavoriteStopWidget } from "@/components/FavoriteStopWidget";
 
 const TILE_SUBTITLES: Record<string, string> = {
@@ -588,13 +588,11 @@ export function ChatScreen() {
       const next = [
         ...messages,
         { role: "user" as const, content: trimmed },
-        { role: "assistant" as const, content: SHOPPING_INTRO_REPLY },
       ];
       setMessages(next);
       setInput("");
       setError(null);
       setSubmenuStack([]);
-      void hablar(SHOPPING_INTRO_REPLY);
       navigate({ to: "/comprar" });
       return;
     }
@@ -1103,10 +1101,6 @@ export function ChatScreen() {
                         setShowFlightPicker(true);
                       } else if (opt.href) {
                         setSubmenuStack([]);
-                        if (opt.href === "/comprar") {
-                          setMessages((prev) => [...prev, { role: "assistant", content: SHOPPING_INTRO_REPLY }]);
-                          void hablar(SHOPPING_INTRO_REPLY);
-                        }
                         if (opt.href.startsWith("/")) {
                           navigate({ to: opt.href });
                         } else {
