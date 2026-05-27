@@ -1813,8 +1813,8 @@ function getGreetingText() {
   const saludo = h < 14 ? "Buenos días" : h < 20 ? "Buenas tardes" : "Buenas noches";
   const name = getLoggedUserName();
   return name
-    ? `${saludo}, ${name}. ¿Qué vamos a hacer hoy?`
-    : `${saludo}. ¿Qué vamos a hacer hoy?`;
+    ? `${saludo} ${name}, ¿en qué te puedo ayudar?`
+    : `${saludo}, ¿en qué te puedo ayudar?`;
 }
 
 function makeGreeting(): Msg {
