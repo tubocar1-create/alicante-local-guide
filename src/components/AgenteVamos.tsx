@@ -3229,7 +3229,14 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           return;
         } else if (target && target !== path) {
           setTimeout(() => {
-            goTo(target);
+            const done = goTo(target);
+            Promise.resolve(done).finally(() => {
+              if (localOpenSubmenu && typeof window !== "undefined") {
+                window.dispatchEvent(
+                  new CustomEvent("afp:open-submenu", { detail: { path: localOpenSubmenu } }),
+                );
+              }
+            });
           }, 50);
         } else if (target && target === path && navigationRetry) {
           setTimeout(() => {
@@ -3239,6 +3246,11 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
               goTo(target);
             }
           }, 50);
+        } else if (target && target === path && localOpenSubmenu && typeof window !== "undefined") {
+          // Ya estamos en el hub: solo abrimos el submenú.
+          window.dispatchEvent(
+            new CustomEvent("afp:open-submenu", { detail: { path: localOpenSubmenu } }),
+          );
         }
         // La voz ya se ha lanzado arriba con speak(reply). Aquí sólo
         // gestionamos navegación tardía si procede.
