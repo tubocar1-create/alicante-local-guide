@@ -751,14 +751,17 @@ const extractKeywords = (normalized: string): string[] => {
       normalized
         .split(/\s+/)
         .map((t) => t.trim())
-        .filter((t) => t.length >= 4 && !LEARN_STOPWORDS.has(t))
+        .filter((t) => t.length >= 3 && !LEARN_STOPWORDS.has(t))
     )
-  ).slice(0, 6);
+  ).slice(0, 10);
 };
 
-const PROMOTION_THRESHOLD = 3;
+// Maximizado: el agente aprende al primer paso por Gemini (sin esperar repeticiones).
+const PROMOTION_THRESHOLD = 1;
 
 // Match determinista contra agente_intents aprendidos (sin Gemini).
+// Maximizado: acepta coincidencia total O mayoría (hits ≥ max(2, ceil(n/2))),
+// devolviendo el intent con mayor score relativo (hits/total).
 const matchLearnedIntent = async (
   db: AdminClient,
   normalized: string,
@@ -770,15 +773,26 @@ const matchLearnedIntent = async (
       .select("id, key, spoken_reply, route, keywords, priority")
       .eq("active", true)
       .order("priority", { ascending: true })
-      .limit(500);
+      .limit(1000);
     const rows = (data ?? []) as Array<{ id: string; key: string; spoken_reply: string; route: string | null; keywords: string[] }>;
+    let best: { id: string; reply: string; route: string | null; key: string; score: number } | null = null;
     for (const r of rows) {
       const kws = (r.keywords ?? []).map(normalizeText).filter(Boolean);
       if (kws.length === 0) continue;
-      const allMatch = kws.every((k) => hasWord(normalized, k));
-      if (!allMatch) continue;
+      const hits = kws.filter((k) => hasWord(normalized, k)).length;
+      if (hits === 0) continue;
+      const needed = Math.max(2, Math.ceil(kws.length / 2));
+      const passes = hits === kws.length || hits >= needed;
+      if (!passes) continue;
       if (r.route && r.route === currentPath) continue;
-      return { id: r.id, reply: r.spoken_reply, route: r.route, key: r.key };
+      const score = hits / kws.length;
+      if (!best || score > best.score) {
+        best = { id: r.id, reply: r.spoken_reply, route: r.route, key: r.key, score };
+      }
+    }
+    if (best) {
+      const { score: _s, ...rest } = best;
+      return rest;
     }
   } catch (e) {
     console.warn("matchLearnedIntent failed", e);
