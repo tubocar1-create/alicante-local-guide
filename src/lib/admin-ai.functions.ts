@@ -949,6 +949,8 @@ export const listAgentConversations = createServerFn({ method: "POST" })
         audit_note: (r.audit_note as string | null) ?? null,
         audited_at: (r.audited_at as string | null) ?? null,
         gap_ms: gapMs,
+        model_used: (r.model_used as string | null) ?? null,
+        reply_text: (r.notes as string | null) ?? null,
       });
       convo.total_turns += 1;
       if (r.resolved === false) convo.unresolved_turns += 1;
