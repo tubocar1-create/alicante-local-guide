@@ -2953,8 +2953,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         // pise esa derivación con una sugerencia de otro dominio.
         const isDomainFollowupResolution = !!priorDomain && !!fallback.path;
         const isTrainedResolution = fallback.source === "trained";
-        // Intro de compras: respuesta canónica, no la pisamos con el servidor.
-        const isShoppingResolution = fallback.path === "/comprar" && fallback.reply === SHOPPING_INTRO_REPLY;
+        const isShoppingResolution = fallback.path === "/comprar";
 
         // El agente local es soberano: si ya resolvió a una ruta concreta
         // (cualquier path que no sea "/"), NO invocamos al LLM. Gemini solo
