@@ -1158,40 +1158,38 @@ function dbIntentToResult(intent: AgenteIntentRow): LocalResult {
   // Respuesta hablada entrenada en BD (spoken_reply) tiene prioridad
   // absoluta: refleja la doctrina curada por el CPA.
   const trainedReply = (intent.spoken_reply ?? "").trim();
-  // Si el intent BD pertenece a un dominio con preguntas de clarificación
-  // (followups), SIEMPRE preguntamos primero — aunque tenga `route` directa.
-  // Regla doctrinal: conversar antes de derivar.
   const domainId = DB_KEY_TO_DOMAIN[normalizeSpeech(intent.key)];
-  if (domainId) {
-    const d = DOMAINS.find((x) => x.id === domainId);
-    if (d && d.followups.length === 0 && d.hubPath && !d.hubPath.startsWith("action:")) {
-      return { reply: trainedReply || d.question, path: d.hubPath, audio: d.audio, pendingDomain: null, source: "trained", openSubmenu: d.openSubmenuKey };
-    }
-    if (d && d.openSubmenuKey && d.hubPath && !d.hubPath.startsWith("action:")) {
-      return { reply: trainedReply || d.question, path: d.hubPath, audio: d.audio, pendingDomain: null, source: "trained", openSubmenu: d.openSubmenuKey };
-    }
-    if (d && d.followups.length > 0) {
-      return { reply: trainedReply || d.question, audio: d.audio, pendingDomain: d.id, source: "trained" };
-    }
-  }
+  const d = domainId ? DOMAINS.find((x) => x.id === domainId) : undefined;
+
+  // PRIORIDAD DOCTRINAL: si el intent en BD tiene `route` explícita, esa ruta
+  // manda sobre el hubPath del DOMAIN. La BD es la fuente única de verdad
+  // para enrutamiento; el DOMAIN sólo aporta audio, openSubmenu y followups.
   if (intent.route) {
     return {
       reply: trainedReply || selectorReplyFor(intent.route, `Te llevo a ${intent.label.toLowerCase()}.`),
       path: intent.route,
-      audio: "fallback",
+      audio: d?.audio ?? "fallback",
       pendingDomain: null,
       source: "trained",
+      openSubmenu: d?.openSubmenuKey,
     };
   }
-  if (domainId) {
-    const d = DOMAINS.find((x) => x.id === domainId);
-    if (d) {
+
+  // Sin ruta en BD → caemos al comportamiento del DOMAIN (clarificación o hub).
+  if (d) {
+    if (d.followups.length === 0 && d.hubPath && !d.hubPath.startsWith("action:")) {
+      return { reply: trainedReply || d.question, path: d.hubPath, audio: d.audio, pendingDomain: null, source: "trained", openSubmenu: d.openSubmenuKey };
+    }
+    if (d.openSubmenuKey && d.hubPath && !d.hubPath.startsWith("action:")) {
+      return { reply: trainedReply || d.question, path: d.hubPath, audio: d.audio, pendingDomain: null, source: "trained", openSubmenu: d.openSubmenuKey };
+    }
+    if (d.followups.length > 0) {
       return { reply: trainedReply || d.question, audio: d.audio, pendingDomain: d.id, source: "trained" };
     }
   }
+
   return {
-    reply: trainedReply || selectorReplyFor(intent.route ?? undefined, `Te llevo a ${intent.label.toLowerCase()}.`),
-    path: intent.route ?? undefined,
+    reply: trainedReply || `Te llevo a ${intent.label.toLowerCase()}.`,
     audio: "fallback",
     pendingDomain: null,
     source: "trained",
