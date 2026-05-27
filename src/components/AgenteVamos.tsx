@@ -16,6 +16,7 @@ import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { agenteVamosChat } from "@/lib/agente.functions";
 import { logAgentInteraction } from "@/lib/agent/agent-runtime.functions";
+import { listAgenteRespuestas } from "@/lib/agente-respuestas.functions";
 import {
   loadAgenteRoutingCatalog,
   type AgenteIntentRow,
@@ -2440,6 +2441,24 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const askAgent = useServerFn(agenteVamosChat);
+  // Carga las preguntas de desambiguación desde BD (tabla agente_respuestas).
+  // Sobreescribe en sitio el array DOMAINS para que todas las llamadas existentes
+  // a d.question devuelvan el texto editable desde admin en vez del fallback.
+  const loadRespuestas = useServerFn(listAgenteRespuestas);
+  useEffect(() => {
+    let cancelled = false;
+    loadRespuestas()
+      .then(({ items }) => {
+        if (cancelled) return;
+        const map = new Map(items.map((r) => [r.intent_id, r.question]));
+        for (const d of DOMAINS) {
+          const q = map.get(d.id);
+          if (q && typeof q === "string" && q.trim()) d.question = q;
+        }
+      })
+      .catch(() => { /* fallback silencioso a textos por defecto */ });
+    return () => { cancelled = true; };
+  }, [loadRespuestas]);
   // Telemetría: registramos cada interacción del agente en
   // agente_learning_log (vía server fn que usa supabaseAdmin).
   // Fire-and-forget: si falla, no rompe la UX.
