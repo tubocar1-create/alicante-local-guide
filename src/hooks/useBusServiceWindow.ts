@@ -191,19 +191,20 @@ export type NightEstimate = {
 export function getNightLineEstimates(
   rows: ServiceWindowRow[] | null,
   lineCode: string,
-  destinationTerminal: string,
+  originTerminalName: string,
   offsetMinutes: number,
   now: Date = new Date(),
   count = 4,
 ): NightEstimate | null {
   if (!rows) return null;
   const dayType = dayTypeOf(now);
-  // El bus que va hacia destinationTerminal sale del OTRO terminal.
+  // Buscar la ventana cuyo terminal de salida coincide con el origen del
+  // recorrido del usuario (primera parada de su sentido en bus_line_stops).
   const todayRows = rows.filter(
     (r) =>
       r.line_code === lineCode &&
       r.day_type === dayType &&
-      r.terminal_name !== destinationTerminal,
+      r.terminal_name === originTerminalName,
   );
   if (todayRows.length === 0) return null;
   const sw = todayRows[0];
