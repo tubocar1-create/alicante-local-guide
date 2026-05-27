@@ -384,17 +384,29 @@ export function ChatScreen() {
       // Si también hay un forwardPrompt pendiente, ese tiene prioridad
       // (categoría concreta) y el submenu se descarta.
       if (window.sessionStorage.getItem(key)) return;
-      const comer = SUGGESTIONS.find((s) => s.label.includes("Comer"));
-      if (!comer) return;
+
+      // Resolvemos el submenú real por su label en SUGGESTIONS, sin
+      // hardcodear la respuesta: solo abrimos lo que ya existe en el menú.
+      const SUBMENU_LABELS: Record<string, string> = {
+        comer: "Comer",
+        transporte: "Transporte",
+        vuelos: "Vuelos",
+      };
+      const baseKey = path.split(".")[0];
+      const labelHint = SUBMENU_LABELS[baseKey];
+      if (!labelHint) return;
+      const root = SUGGESTIONS.find((s) => s.label.includes(labelHint));
+      if (!root) return;
       setMessages([GREETING]);
       window.sessionStorage.removeItem(CHAT_STATE_KEY);
       if (path === "comer.comida-rapida") {
-        const fast = comer.submenu?.find((s) => s.label.includes("Comida rápida"));
-        setSubmenuStack(fast ? [comer, fast] : [comer]);
+        const fast = root.submenu?.find((s) => s.label.includes("Comida rápida"));
+        setSubmenuStack(fast ? [root, fast] : [root]);
       } else {
-        setSubmenuStack([comer]);
+        setSubmenuStack([root]);
       }
     };
+
     // NO consumimos sessionStorage en el mount ni en focus: solo reaccionamos
     // a los eventos del agente. Si quedó un valor obsoleto de una sesión
     // anterior, lo descartamos al iniciar.
