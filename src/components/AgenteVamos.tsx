@@ -3687,6 +3687,7 @@ export function AgenteVamosFab() {
       voiceBootStartedRef.current = false;
       startGreetingFromUserGesture();
     }
+    openedAtRef.current = Date.now();
     setOpen(true);
   };
 
