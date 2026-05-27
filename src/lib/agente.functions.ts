@@ -1116,7 +1116,7 @@ Aplica la doctrina: si enrutas a una categoría, enumera en "reply" SOLO las ram
             }
           }
         }
-      })();
+      }
     };
 
     try {
