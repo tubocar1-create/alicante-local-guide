@@ -563,7 +563,7 @@ const DOMAINS: DomainSpec[] = [
       "boutique", "boutiques", "mercado", "mercadillo",
       "donde comprar", "dónde comprar",
     ],
-    question: SHOPPING_INTRO_REPLY,
+    question: "Te abro compras; elige el sector en pantalla.",
     audio: "fallback",
     followups: [],
   },
