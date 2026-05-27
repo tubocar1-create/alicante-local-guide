@@ -184,6 +184,7 @@ function AdminOverview() {
         <QuickLink to="/admin/operations" title="Centro Operativo" desc="Eventos en directo, errores, latencia" />
         <QuickLink to="/admin/usuarios" title="Usuarios" desc="Listado con perfil, consentimientos y origen" />
         <QuickLink to="/admin/ai/operacion" title="Agente IA · operación" desc="Logs, costes y aprendizaje" />
+        <QuickLink to="/admin/ai/dialogos" title="Agente IA · diálogos" desc="Conversaciones completas con tiempos e intents" />
         <QuickLink to="/admin/bases-datos" title="Bases de datos" desc="Tablas y a qué módulos alimentan" />
       </div>
     </div>
