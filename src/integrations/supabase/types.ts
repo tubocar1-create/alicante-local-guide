@@ -394,6 +394,54 @@ export type Database = {
           },
         ]
       }
+      agente_llm_cache: {
+        Row: {
+          active: boolean
+          created_at: string
+          forward_prompt: string | null
+          hits: number
+          id: string
+          last_used_at: string
+          model: string | null
+          navigate: string | null
+          normalized: string
+          path: string
+          raw_query: string
+          reply: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          forward_prompt?: string | null
+          hits?: number
+          id?: string
+          last_used_at?: string
+          model?: string | null
+          navigate?: string | null
+          normalized: string
+          path?: string
+          raw_query: string
+          reply: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          forward_prompt?: string | null
+          hits?: number
+          id?: string
+          last_used_at?: string
+          model?: string | null
+          navigate?: string | null
+          normalized?: string
+          path?: string
+          raw_query?: string
+          reply?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       agente_proper_nouns: {
         Row: {
           active: boolean
