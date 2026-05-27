@@ -836,11 +836,10 @@ export function ChatScreen() {
               <div className="hidden lg:flex lg:items-center lg:gap-6 lg:mt-2">
                 <button
                   type="button"
-                  onPointerDown={(event) => {
-                    event.preventDefault();
+                  onClick={() => {
+                    speakGreetingFromUserGesture();
                     window.dispatchEvent(new Event("vamos:open"));
                   }}
-                  onClick={() => window.dispatchEvent(new Event("vamos:open"))}
                   aria-label="Hablar con Agente Vamos"
                   className="group relative flex h-16 w-16 items-center justify-center rounded-full transition active:scale-95"
                   style={{
