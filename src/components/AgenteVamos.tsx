@@ -1245,6 +1245,42 @@ function isShoppingRequest(query: string): boolean {
     query.includes("donde comprar");
 }
 
+// ─── RAMAS DEL SELECTOR POR CATEGORÍA (DOCTRINA CPA) ─────────────────
+// Al enrutar a una categoría, el agente DEBE enumerar las MISMAS ramas
+// que ofrece el selector/submenú de esa pantalla. Nunca "Te llevo a X."
+// a secas. Estas frases reflejan literalmente el selector visible.
+const SELECTOR_REPLIES: Record<string, string> = {
+  "/": "Te llevo al inicio. ¿Buscas comer, tomar algo, ocio nocturno o un sitio concreto?",
+  "/salud": "Te llevo a Salud. ¿Farmacia de guardia, hospital/urgencias, centro de salud o info del sistema sanitario?",
+  "/farmacias": "Aquí tienes las farmacias de guardia más cercanas. Pulsa una para ver dirección y horario.",
+  "/hospitales": "Estos son los hospitales y urgencias. ¿Quieres el más cercano o uno concreto?",
+  "/sistema-sanitario": "Info del sistema sanitario. ¿Tarjeta sanitaria, cita previa o derechos del paciente?",
+  "/ocio": "Te llevo a Ocio. ¿Cartelera de cines, cines, teatros, conciertos o salir de noche?",
+  "/ocio/cartelera": "Aquí tienes la cartelera. ¿Filtramos por sala u hora de la película?",
+  "/ocio/cines": "Estos son los cines de Alicante. Dime cuál te interesa.",
+  "/ocio/teatros": "Cartel de teatros. ¿Algún género o sala en concreto?",
+  "/ocio/conciertos": "Conciertos próximos. ¿Te oriento por fecha o por artista?",
+  "/playas": "Te llevo a Playas. ¿Postiguet, San Juan, Albufereta, El Campello, Tabarca o calas escondidas? También puedo abrirte el mapa.",
+  "/playas/mapa": "Mapa interactivo de playas. Pulsa una para ver fotos y reseñas.",
+  "/donde-dormir": "Te llevo a Alojamientos. ¿Por zona, por precio o por estilo (hotel, apartamento, hostal)?",
+  "/comprar": "Te llevo a Comprar. ¿Centro comercial, tiendas del centro, mercados o algo concreto?",
+  "/explore": "Te llevo a Explorar. ¿Centro histórico, museos, rutas o mapa general?",
+  "/vuelos": "Te llevo a Vuelos del ALC. ¿Llegadas o salidas?",
+  "/clima": "Previsión del tiempo en Alicante. ¿Hoy, mañana o la semana?",
+  "/fiestas": "Te llevo a Fiestas. ¿Hogueras de San Juan, Moros y Cristianos, mascletà o agenda general?",
+  "/threads": "Tus hilos abiertos con negocios.",
+  "/perfil": "Tu perfil. ¿Datos personales, preferencias o cerrar sesión?",
+};
+
+function selectorReplyFor(path: string | undefined, fallback: string): string {
+  if (!path) return fallback;
+  if (SELECTOR_REPLIES[path]) return SELECTOR_REPLIES[path];
+  // Rutas con parámetro → usar el padre si lo tenemos catalogado.
+  const parent = path.split("/").slice(0, -1).join("/") || "/";
+  if (SELECTOR_REPLIES[parent]) return SELECTOR_REPLIES[parent];
+  return fallback;
+}
+
 // Adapta el tono del texto según el modo del asistente. Solo retoca
 // registro/longitud: nunca cambia el destino ni inventa información.
 function formatReply(mode: AssistantMode, base: string): string {
