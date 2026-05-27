@@ -2087,15 +2087,13 @@ const POST_SPEECH_LISTEN_DELAY_MS = 30;
  * autorice la síntesis de voz. Crea el utterance y llama a speak() sin
  * ningún await previo.
  */
-export function speakGreetingFromUserGesture() {
-  if (typeof window === "undefined" || !window.speechSynthesis) return;
-  if (typeof SpeechSynthesisUtterance === "undefined") return;
-  if (__vaGreetingSpoken) return;
+export function speakGreetingFromUserGesture(force = false): boolean {
+  if (typeof window === "undefined" || !window.speechSynthesis) return false;
+  if (typeof SpeechSynthesisUtterance === "undefined") return false;
+  if (__vaGreetingSpoken && !force) return true;
   try {
     const text = getGreetingText();
     const synth = window.speechSynthesis;
-    try { synth.cancel(); } catch {}
-    try { synth.resume(); } catch {}
     const u = new SpeechSynthesisUtterance(text);
     u.lang = VA_VOICE_LANG;
     u.rate = VA_VOICE_RATE;
@@ -2106,12 +2104,21 @@ export function speakGreetingFromUserGesture() {
     __vaActiveUtterance = u;
     __vaGreetingSpoken = true;
     __vaSpeechUnlocked = true;
-    u.onend = () => { if (__vaActiveUtterance === u) __vaActiveUtterance = null; };
-    u.onerror = () => { if (__vaActiveUtterance === u) __vaActiveUtterance = null; };
+    u.onstart = () => console.log("GREETING VOICE START");
+    u.onend = () => {
+      console.log("GREETING VOICE END");
+      if (__vaActiveUtterance === u) __vaActiveUtterance = null;
+    };
+    u.onerror = (e) => {
+      console.log("GREETING VOICE ERROR", e);
+      if (__vaActiveUtterance === u) __vaActiveUtterance = null;
+    };
     synth.speak(u);
+    try { synth.resume(); } catch {}
     keepSpeechSynthesisAwake(synth);
+    return true;
   } catch {
-    /* noop */
+    return false;
   }
 }
 
@@ -2274,8 +2281,7 @@ if (typeof window !== "undefined") {
 function iniciarAudio() {
   if (typeof window === "undefined" || __vaSpeechUnlocked || !window.speechSynthesis) return;
   try {
-    const unlock = new SpeechSynthesisUtterance(" ");
-    window.speechSynthesis.speak(unlock);
+    warmSpeechVoices(window.speechSynthesis);
     window.speechSynthesis.resume();
     __vaSpeechUnlocked = true;
   } catch {
@@ -3672,36 +3678,11 @@ export function AgenteVamosFab() {
   const playGreetingAfterPermission = () => {
     if (greetingPlayedRef.current) return;
     try {
-      const greetText = getGreetingText();
       if (typeof window === "undefined" || !window.speechSynthesis) return;
       const synth = window.speechSynthesis;
-      __vaSetGreetingSpoken(true);
-      __vaSpeechUnlocked = true;
-      greetingPlayedRef.current = true;
-
-      // Cancela cualquier utterance anterior antes de iniciar el saludo.
-      try { synth.cancel(); } catch {}
       try { synth.resume(); } catch {}
-
-      const u = new SpeechSynthesisUtterance(greetText);
-      u.lang = VA_VOICE_LANG;
-      u.rate = VA_VOICE_RATE;
-      u.pitch = VA_VOICE_PITCH;
-      u.volume = 1;
       warmSpeechVoices(synth);
-      const voice = pickSpanishVoice(synth);
-      if (voice) u.voice = voice;
-      __vaActiveUtterance = u;
-      keepSpeechSynthesisAwake(synth);
-
-      u.onend = () => {
-        if (__vaActiveUtterance === u) __vaActiveUtterance = null;
-      };
-      u.onerror = () => {
-        if (__vaActiveUtterance === u) __vaActiveUtterance = null;
-      };
-
-      try { synth.speak(u); } catch {}
+      greetingPlayedRef.current = speakGreetingFromUserGesture(true);
       primeSpanishUtterances();
     } catch {
       /* noop */
@@ -3716,10 +3697,10 @@ export function AgenteVamosFab() {
 
   const openPanelWithGreeting = () => {
     if (!open) {
-      greetingPlayedRef.current = false;
-      __vaSetGreetingSpoken(false);
+      const greetingAlreadyStarted = __vaGetGreetingSpoken() || isAgentSpeechOutputActive();
+      greetingPlayedRef.current = greetingAlreadyStarted;
+      if (!greetingAlreadyStarted) __vaSetGreetingSpoken(false);
       voiceBootStartedRef.current = false;
-      startGreetingFromUserGesture();
     }
     openedAtRef.current = Date.now();
     setOpen(true);
