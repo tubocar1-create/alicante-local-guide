@@ -732,6 +732,100 @@ const FOOD_INTENTS: FoodIntent[] = [
   { test: /\b(comer|cenar|cena|almorzar|almuerzo|comida|restaurante|restaurantes|hambre|tengo hambre|me apetece comer|qu[eé] comemos|qu[eé] cenamos)\b/i, openSubmenu: "comer", blurb: "Abro el submenú Comer: dime qué te apetece (cocina típica, arroces, italiano, japonés, vegano, brunch, postres, comida rápida, barato o internacional)." },
 ];
 
+// === Stopwords genéricas (ES) para extracción de keywords aprendidas ===
+const LEARN_STOPWORDS = new Set<string>([
+  ...PROPER_NOUN_STOPWORDS,
+  "que","cual","cuales","como","donde","cuando","cuanto","cuanta","cuantos","cuantas","quien","quienes",
+  "me","mi","mis","tu","tus","su","sus","nos","nuestro","nuestra","te","se","le","les",
+  "ya","aqui","alli","ahi","hoy","ahora","manana","tarde","noche","dia","dias","semana","mes",
+  "quiero","quisiera","necesito","busco","buscar","ver","ir","hacer","tomar","comer","beber","comprar","saber","decir",
+  "puedo","puede","podria","sabes","dime","dame","dale","abre","abrir","muestra","mostrar",
+  "hay","esta","estan","ser","estar","tener","va","van","voy","vamos","si","no","tambien","pero","con","sin",
+  "muy","mas","menos","mucho","poco","algo","alguno","alguna","todo","toda","nada","favor","gracias","hola",
+  "porfavor","please","entre","sobre","hasta","desde","cerca","lejos","mejor","peor","bueno","buena",
+]);
+
+const extractKeywords = (normalized: string): string[] => {
+  return Array.from(
+    new Set(
+      normalized
+        .split(/\s+/)
+        .map((t) => t.trim())
+        .filter((t) => t.length >= 4 && !LEARN_STOPWORDS.has(t))
+    )
+  ).slice(0, 6);
+};
+
+const PROMOTION_THRESHOLD = 3;
+
+// Match determinista contra agente_intents aprendidos (sin Gemini).
+const matchLearnedIntent = async (
+  db: AdminClient,
+  normalized: string,
+  currentPath: string,
+): Promise<{ id: string; reply: string; route: string | null; key: string } | null> => {
+  try {
+    const { data } = await db
+      .from("agente_intents")
+      .select("id, key, spoken_reply, route, keywords, priority")
+      .eq("active", true)
+      .order("priority", { ascending: true })
+      .limit(500);
+    const rows = (data ?? []) as Array<{ id: string; key: string; spoken_reply: string; route: string | null; keywords: string[] }>;
+    for (const r of rows) {
+      const kws = (r.keywords ?? []).map(normalizeText).filter(Boolean);
+      if (kws.length === 0) continue;
+      const allMatch = kws.every((k) => hasWord(normalized, k));
+      if (!allMatch) continue;
+      if (r.route && r.route === currentPath) continue;
+      return { id: r.id, reply: r.spoken_reply, route: r.route, key: r.key };
+    }
+  } catch (e) {
+    console.warn("matchLearnedIntent failed", e);
+  }
+  return null;
+};
+
+// Promueve una entrada de caché a agente_intents cuando se repite ≥ threshold.
+const promoteToIntent = async (
+  db: AdminClient,
+  normalized: string,
+  reply: string,
+  navigate: string | null,
+  hits: number,
+) => {
+  if (hits < PROMOTION_THRESHOLD) return;
+  const keywords = extractKeywords(normalized);
+  if (keywords.length === 0) return;
+  const key = `learned:${normalized.slice(0, 60).replace(/\s+/g, "_")}`;
+  try {
+    const { data: existing } = await db
+      .from("agente_intents")
+      .select("id")
+      .eq("key", key)
+      .maybeSingle();
+    if (existing) {
+      await db
+        .from("agente_intents")
+        .update({ spoken_reply: reply, route: navigate, keywords, active: true, updated_at: new Date().toISOString() })
+        .eq("id", existing.id);
+    } else {
+      await db.from("agente_intents").insert({
+        key,
+        label: `Aprendido: ${normalized.slice(0, 80)}`,
+        spoken_reply: reply,
+        route: navigate,
+        keywords,
+        priority: 50,
+        active: true,
+        notes: `Auto-promovido tras ${hits} repeticiones (origen: caché LLM).`,
+      });
+    }
+  } catch (e) {
+    console.warn("promoteToIntent failed", e);
+  }
+};
+
 export const agenteVamosChat = createServerFn({ method: "POST" })
   .inputValidator((d: { messages: Array<{ role: "user" | "assistant"; content: string }>; path?: string }) => d)
   .handler(async ({ data }) => {
@@ -744,8 +838,21 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
     // Registramos siempre para auto-aprendizaje (sin bloquear).
     void logUnknown(supabaseAdmin, lastUserMessage, normalized, currentPath);
 
-    // 0) CACHÉ APRENDIDA — si ya respondimos a esta consulta normalizada en
-    // esta ruta, servimos sin llamar al modelo y bumpeamos los hits.
+    // 0a) INTENT APRENDIDO — coincidencia por keywords contra agente_intents.
+    // Es la capa más generalizable: una misma intención puede expresarse de
+    // muchas formas, pero comparte tokens distintivos. Cero llamadas a Gemini.
+    const learned = await matchLearnedIntent(supabaseAdmin, normalized, currentPath);
+    if (learned) {
+      return {
+        ok: true as const,
+        content: learned.reply,
+        navigate: learned.route,
+        forwardPrompt: undefined,
+        source: "intent" as const,
+      };
+    }
+
+    // 0b) CACHÉ APRENDIDA — coincidencia exacta por (normalized, path).
     try {
       const { data: cached } = await supabaseAdmin
         .from("agente_llm_cache")
@@ -755,10 +862,13 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
         .eq("active", true)
         .maybeSingle();
       if (cached?.reply) {
+        const newHits = (cached.hits ?? 0) + 1;
         void supabaseAdmin
           .from("agente_llm_cache")
-          .update({ hits: (cached.hits ?? 0) + 1, last_used_at: new Date().toISOString() })
+          .update({ hits: newHits, last_used_at: new Date().toISOString() })
           .eq("id", cached.id);
+        // Auto-promoción a intent cuando la consulta se repite ≥3 veces.
+        void promoteToIntent(supabaseAdmin, normalized, cached.reply, cached.navigate ?? null, newHits);
         return {
           ok: true as const,
           content: cached.reply,
@@ -862,5 +972,7 @@ Aplica la doctrina: si enrutas a una categoría, enumera en "reply" SOLO las ram
       };
     }
   });
+
+
 
 
