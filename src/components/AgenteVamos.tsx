@@ -3781,7 +3781,7 @@ export function AgenteVamosFab() {
         onClose={() => {
           // Evita el cierre fantasma: el click sintético posterior al
           // pointerdown del FAB aterriza sobre "Cerrar" recién montado.
-          if (Date.now() - openedAtRef.current < 600) return;
+          if (Date.now() - openedAtRef.current < 100) return;
           voiceBootStartedRef.current = false;
           greetingPlayedRef.current = false;
           __vaSetGreetingSpoken(false);
