@@ -51,7 +51,11 @@ function ParadaFavoritaPage() {
   const [liveLoading, setLiveLoading] = useState(false);
   const [liveUpdatedAt, setLiveUpdatedAt] = useState<number>(Date.now());
 
-  const outOfService = isBusOutOfService();
+  const serviceWindows = useBusServiceWindows();
+  const serviceStatus = getServiceStatus(serviceWindows, stop.line);
+  const outOfService = serviceStatus.outOfService;
+  const reopensAt = serviceStatus.reopensAt ?? "07:00";
+  const lastDeparture = serviceStatus.lastDeparture ?? "22:30";
 
   useEffect(() => {
     setStop(loadFavoriteStop());
