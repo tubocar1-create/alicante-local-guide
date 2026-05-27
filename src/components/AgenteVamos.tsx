@@ -3689,6 +3689,17 @@ export function AgenteVamosFab() {
     setOpen(true);
   };
 
+  useEffect(() => {
+    if (!open) return;
+    if (greetingPlayedRef.current || __vaGetGreetingSpoken()) return;
+    const t = window.setTimeout(() => {
+      if (open && !greetingPlayedRef.current && !__vaGetGreetingSpoken()) {
+        playGreetingAfterPermission();
+      }
+    }, 80);
+    return () => window.clearTimeout(t);
+  }, [open]);
+
   // Permitir abrir el agente desde otros botones (p.ej. el micro del chat)
   useEffect(() => {
     const primeVoice = () => {
