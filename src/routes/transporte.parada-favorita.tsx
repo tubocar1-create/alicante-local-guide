@@ -394,7 +394,7 @@ function ParadaFavoritaPage() {
             <span className="text-[9px] uppercase tracking-wider text-stone-500">Datos:</span>{" "}
             <span className="font-extrabold text-stone-800">
               {outOfService
-                ? "servicio nocturno · sin buses 23:30 – 07:00"
+                ? "servicio nocturno · sin buses 22:30 – 07:00"
                 : hasLiveData
                   ? "tiempo real (Vectalia)"
                   : "estimación · sin paso en vivo"}
