@@ -3559,6 +3559,21 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
         <button
           onClick={() => {
+            setLlmDisabled((v) => {
+              const next = !v;
+              try { window.localStorage.setItem("va:disableLLM", next ? "1" : "0"); } catch {}
+              return next;
+            });
+          }}
+          aria-label={llmDisabled ? "Activar IA externa (Gemini)" : "Desactivar IA externa (Gemini)"}
+          title={llmDisabled ? "IA externa OFF · solo aprendizaje" : "IA externa ON · usa Gemini si no hay match"}
+          className={`flex h-9 w-9 items-center justify-center rounded-full border ${llmDisabled ? "bg-destructive/15 text-destructive border-destructive/40" : "bg-background text-foreground"} hover:bg-muted`}
+        >
+          <Sparkles className={`h-4 w-4 ${llmDisabled ? "opacity-50 line-through" : ""}`} />
+        </button>
+
+        <button
+          onClick={() => {
             iniciarAudio();
             if (paused) {
               primeSpanishUtterances();
