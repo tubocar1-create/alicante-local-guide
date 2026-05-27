@@ -140,15 +140,9 @@ const INTENTS: IntentDef[] = [
     path: "action:bus-picker",
     audio: "bus",
   },
-  {
-    keys: [
-      "vuelo", "vuelos", "aeropuerto", "aena", "avion", "aviones", "alc",
-      "salida de vuelo", "llegada de vuelo", "facturar",
-    ],
-    reply: "Vuelos del aeropuerto de Alicante.",
-    path: "/vuelos",
-    audio: "flights",
-  },
+  // (vuelos se gestiona como dominio para abrir el submenú "Vuelos" en
+  // pantalla, en vez de saltar directo al dashboard de salidas)
+
   {
     keys: [
       "clima", "tiempo", "llueve", "lluvia", "sol", "temperatura", "calor",
@@ -332,7 +326,8 @@ const DOMAINS: DomainSpec[] = [
   },
   {
     id: "transporte",
-    hubPath: "action:bus-picker",
+    hubPath: "/",
+    openSubmenuKey: "transporte",
     triggers: [
       "quiero moverme", "necesito moverme", "como me muevo", "quiero desplazarme",
       "tengo que ir", "necesito ir", "como llego", "como voy",
@@ -352,19 +347,23 @@ const DOMAINS: DomainSpec[] = [
       "universidad", "campus", "hospital general",
       "transporte", "transporte publico", "transporte público",
     ],
-    question: "Te abro la sección de transporte; elige el medio en pantalla.",
+    question: "Te abro el menú de transporte; elige el medio en pantalla.",
     audio: "bus",
-    followups: [
-      { keys: [
-          "bus", "buses", "autobus", "autobús", "autobuses", "urbano", "urbanos",
-          "bus urbano", "buses urbanos", "emt", "vectalia",
-        ], path: "action:transporte-bus" },
-      { keys: [
-          "tram", "tranvia", "tranvía", "tranvias", "tranvías", "fgv",
-        ], path: "action:tram-pick" },
-      { keys: ["vuelo", "vuelos", "avion", "aeropuerto"], path: "/vuelos" },
-    ],
+    followups: [],
   },
+  {
+    id: "vuelos",
+    hubPath: "/",
+    openSubmenuKey: "vuelos",
+    triggers: [
+      "vuelo", "vuelos", "aeropuerto", "aena", "avion", "aviones", "alc",
+      "salida de vuelo", "llegada de vuelo", "facturar", "el altet",
+    ],
+    question: "Te abro el menú de vuelos; elige en pantalla.",
+    audio: "flights",
+    followups: [],
+  },
+
   {
     id: "transporte_bus",
     hubPath: "action:bus-picker",
