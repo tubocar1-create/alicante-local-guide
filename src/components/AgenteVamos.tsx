@@ -2192,6 +2192,47 @@ export async function hablar(
   synth.speak(utterance);
 }
 
+function speakPreparedUtterance(
+  texto: unknown,
+  utterance: SpeechSynthesisUtterance,
+  opts: { onStart?: () => void; onEnd?: () => void } = {},
+) {
+  const { onStart, onEnd } = opts;
+  const respuesta = plainText(extractSpeechText(texto));
+  if (!respuesta || typeof window === "undefined" || !window.speechSynthesis) {
+    onEnd?.();
+    return;
+  }
+  const synth = window.speechSynthesis;
+  warmSpeechVoices(synth);
+  synth.cancel();
+  synth.resume();
+  configureSpanishUtterance(utterance, respuesta);
+  utterance.volume = 1;
+  let finished = false;
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    if (__vaActiveUtterance === utterance) __vaActiveUtterance = null;
+    markVaInteraction();
+    onEnd?.();
+  };
+  utterance.onstart = () => {
+    console.log("VOICE START");
+    onStart?.();
+  };
+  utterance.onend = () => {
+    console.log("VOICE END");
+    finish();
+  };
+  utterance.onerror = (e) => {
+    console.log("VOICE ERROR", e);
+    finish();
+  };
+  keepSpeechSynthesisAwake(synth);
+  synth.speak(utterance);
+}
+
 if (typeof window !== "undefined") {
   (window as any).hablar = hablar;
 }
