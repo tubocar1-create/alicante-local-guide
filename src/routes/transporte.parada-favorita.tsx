@@ -6,11 +6,11 @@ import {
   FavoriteStop,
   computeNextArrival,
   computeUpcomingArrivals,
-  isBusOutOfService,
   loadFavoriteStop,
   saveFavoriteStop,
 } from "@/components/FavoriteStopWidget";
 import { useBusGraph } from "@/hooks/useBusGraph";
+import { useBusServiceWindows, getServiceStatus } from "@/hooks/useBusServiceWindow";
 
 export const Route = createFileRoute("/transporte/parada-favorita")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -51,7 +51,11 @@ function ParadaFavoritaPage() {
   const [liveLoading, setLiveLoading] = useState(false);
   const [liveUpdatedAt, setLiveUpdatedAt] = useState<number>(Date.now());
 
-  const outOfService = isBusOutOfService();
+  const serviceWindows = useBusServiceWindows();
+  const serviceStatus = getServiceStatus(serviceWindows, stop.line);
+  const outOfService = serviceStatus.outOfService;
+  const reopensAt = serviceStatus.reopensAt ?? "07:00";
+  const lastDeparture = serviceStatus.lastDeparture ?? "22:30";
 
   useEffect(() => {
     setStop(loadFavoriteStop());
@@ -344,7 +348,7 @@ function ParadaFavoritaPage() {
                   Fuera de<br />servicio
                 </span>
                 <span className="mt-1 text-[9px] font-semibold text-stone-500">
-                  Reanuda 07:00
+                  Reanuda {reopensAt}
                 </span>
               </div>
             ) : isArriving ? (
@@ -394,7 +398,7 @@ function ParadaFavoritaPage() {
             <span className="text-[9px] uppercase tracking-wider text-stone-500">Datos:</span>{" "}
             <span className="font-extrabold text-stone-800">
               {outOfService
-                ? "servicio nocturno · sin buses 22:30 – 07:00"
+                ? `fuera de servicio · reanuda ${reopensAt}`
                 : hasLiveData
                   ? "tiempo real (Vectalia)"
                   : "estimación · sin paso en vivo"}
@@ -418,8 +422,8 @@ function ParadaFavoritaPage() {
           <div className="flex flex-col items-center gap-1 py-4 text-center">
             <span className="text-sm font-extrabold text-stone-700">Fuera de servicio</span>
             <span className="text-[11px] text-stone-500">
-              El servicio se reanuda mañana a las 07:00. El último bus parte de la
-              parada extrema a las 22:30.
+              El servicio se reanuda a las {reopensAt}. El último bus parte de la
+              parada extrema a las {lastDeparture}.
             </span>
           </div>
         ) : (
