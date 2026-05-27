@@ -469,8 +469,7 @@ const DOMAINS: DomainSpec[] = [
       "vida nocturna", "noche alicantina", "marcha", "after",
       "vermut", "vermouth", "vinos", "cocteles", "cócteles", "gin tonic",
     ],
-    question:
-      "🍸 ¿Prefieres terraza, pubs, discoteca o música en vivo?",
+    question: "Te abro la sección para tomar algo; elige el ambiente en pantalla.",
     audio: "leisure",
     followups: [
       { keys: ["terraza", "terrazas", "azotea", "rooftop"], path: "/" },
