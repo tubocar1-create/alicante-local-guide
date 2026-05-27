@@ -1861,6 +1861,41 @@ function makeGreeting(): Msg {
 const VA_LAST_INTERACTION_KEY = "va:last-interaction-ts";
 const VA_LAST_TOPIC_KEY = "va:last-topic";
 const VA_LAST_REENTRY_KEY = "va:last-reentry";
+const VA_LAST_AGENT_ROUTE_KEY = "va:last-agent-route";
+const VA_LAST_AGENT_ROUTE_TTL_MS = 10 * 60 * 1000;
+
+type LastAgentRoute = { route: string; reply?: string; at: number };
+
+function rememberAgentRoute(route: string | undefined, reply?: string) {
+  if (typeof window === "undefined" || !route) return;
+  try {
+    window.sessionStorage.setItem(
+      VA_LAST_AGENT_ROUTE_KEY,
+      JSON.stringify({ route, reply, at: Date.now() } satisfies LastAgentRoute),
+    );
+  } catch {}
+}
+
+function readLastAgentRoute(): LastAgentRoute | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const parsed = JSON.parse(window.sessionStorage.getItem(VA_LAST_AGENT_ROUTE_KEY) ?? "null") as LastAgentRoute | null;
+    if (!parsed?.route || Date.now() - parsed.at > VA_LAST_AGENT_ROUTE_TTL_MS) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function isNavigationFailureReport(query: string): boolean {
+  const q = normalizeSpeech(query);
+  return /\b(no\s+(abre|abrio|carga|cargo|veo|sale|aparece)|pagina\s+no\s+abre|pantalla\s+en\s+blanco|me\s+lleva\s+pero|no\s+veo\s+nada|se\s+queda|quede\s+esperando|no\s+me\s+(lleva|llevo|abre))\b/.test(q);
+}
+
+function navigationRetryReply(route: string, currentPath: string): string {
+  if (route === currentPath) return "Perdona, refresco esa sección para que cargue bien.";
+  return "Perdona, reintento abrir la sección correcta.";
+}
 
 export function markVaInteraction(topic?: string) {
   if (typeof window === "undefined") return;
@@ -2808,10 +2843,27 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         const activeDomain = pendingDomainRef.current ?? storedDomain ?? routeDomain;
         const priorDomain = activeDomain;
         const catalogForTurn = routingCatalogRef.current;
-        const fallback = localResolve(clean, activeDomain, catalogForTurn);
+        const lastAgentRoute = readLastAgentRoute();
+        const navigationRetry = isNavigationFailureReport(clean) && lastAgentRoute?.route
+          ? lastAgentRoute
+          : null;
+        const fallback: LocalResult = navigationRetry
+          ? {
+              reply: navigationRetryReply(navigationRetry.route, path),
+              path: navigationRetry.route,
+              audio: "fallback" as VoiceClip,
+              pendingDomain: null,
+            }
+          : localResolve(clean, activeDomain, catalogForTurn);
         const replyMode = pickAssistantMode(fallback.pendingDomain ?? pendingDomainRef.current ?? null);
         let reply = formatReply(replyMode, fallback.reply);
         let target: string | undefined = fallback.path;
+        const pendingDomainSpec = fallback.pendingDomain
+          ? DOMAINS.find((d) => d.id === fallback.pendingDomain)
+          : null;
+        if (!target && pendingDomainSpec?.hubPath && !pendingDomainSpec.hubPath.startsWith("action:")) {
+          target = pendingDomainSpec.hubPath;
+        }
         let forwardPrompt: string | undefined =
           fallback.path === "/" && fallback.reply.includes("Dashboard Nocturno")
             ? clean
@@ -2934,7 +2986,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         if (hasHealthHardBlock(normalizeSpeech(clean)) && pendingDomainRef.current !== "salud") {
           const saludDomain = DOMAINS.find((d) => d.id === "salud");
           if (saludDomain) {
-            target = undefined;
+            target = saludDomain.hubPath;
             reply = saludDomain.question;
             forwardPrompt = undefined;
             pendingDomainRef.current = "salud";
@@ -3155,10 +3207,19 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           setTimeout(() => {
             goTo(target);
           }, 50);
+        } else if (target && target === path && navigationRetry) {
+          setTimeout(() => {
+            try {
+              window.location.assign(target);
+            } catch {
+              goTo(target);
+            }
+          }, 50);
         }
         // La voz ya se ha lanzado arriba con speak(reply). Aquí sólo
         // gestionamos navegación tardía si procede.
         finalTarget = target;
+        rememberAgentRoute(finalTarget, finalReply);
       } finally {
         if (!awaitingSummaryRef.current) setLoading(false);
         // Telemetría fire-and-forget: registra la interacción.
