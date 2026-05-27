@@ -517,7 +517,7 @@ const DOMAINS: DomainSpec[] = [
       "postiguet", "san juan", "san gabriel", "albufereta", "almadraba",
       "que playa", "qué playa", "playa para hoy",
     ],
-    question: "¿Prefieres ver el carrusel de playas o abrir el mapa interactivo?",
+    question: "Te abro playas; elige carrusel o mapa en pantalla.",
     audio: "beaches",
     followups: [
       { keys: ["mapa", "mapa interactivo", "interactivo", "ver en mapa", "abrir mapa"], path: "/playas/mapa", label: "mapa" },
