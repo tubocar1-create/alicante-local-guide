@@ -1739,6 +1739,18 @@ function localResolve(
         path: domain.hubPath,
         audio: domain.audio,
         pendingDomain: null,
+        openSubmenu: domain.openSubmenuKey,
+      };
+    }
+    // Dominio con openSubmenuKey: navegamos al hub y abrimos el selector
+    // de la pantalla destino, sin esperar a una segunda respuesta del usuario.
+    if (domain.openSubmenuKey && domain.hubPath && !domain.hubPath.startsWith("action:")) {
+      return {
+        reply: domain.question,
+        path: domain.hubPath,
+        audio: domain.audio,
+        pendingDomain: null,
+        openSubmenu: domain.openSubmenuKey,
       };
     }
     return {
