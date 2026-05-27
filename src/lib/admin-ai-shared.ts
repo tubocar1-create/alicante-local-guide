@@ -76,6 +76,14 @@ export const costsQO = () =>
     staleTime: STALE_SLOW,
   });
 
+export const learnedQO = () =>
+  queryOptions({
+    queryKey: ["admin-ai", "learned"],
+    queryFn: () => listLearned({ data: { pin: ADMIN_PIN } }),
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: true,
+  });
+
 export const FAILURE_REASON_LABEL: Record<string, string> = {
   NO_INTENT_MATCH: "Sin intent",
   LOW_CONFIDENCE: "Baja confianza",
