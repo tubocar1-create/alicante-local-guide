@@ -862,11 +862,54 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
       // Si falla la BD, caemos al fallback de desconocido.
     }
 
-    // 4) Desconocido → registramos para auto-aprendizaje y respondemos plantilla
+    // 4) Desconocido → intentamos LLM con la doctrina (SYSTEM_PROMPT) antes de rendirnos.
     void logUnknown(supabaseAdmin, lastUserMessage, normalized, currentPath);
+    try {
+      const apiKey = process.env.LOVABLE_API_KEY;
+      if (apiKey) {
+        const history = data.messages.slice(-8).map((m) => ({ role: m.role, content: m.content }));
+        const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash",
+            messages: [
+              { role: "system", content: SYSTEM_PROMPT },
+              { role: "system", content: `Ruta actual del usuario: ${currentPath}. Responde SIEMPRE en JSON: {"reply": string breve para decir en voz alta, "navigate": string|null con la ruta a la que llevar al usuario o null si no debes navegar}. Si enrutas a una categoría, en "reply" enumera brevemente las ramas reales del selector de esa pantalla. NUNCA mezcles categorías ajenas a la ruta actual ni al tema del usuario.` },
+              ...history,
+            ],
+            response_format: { type: "json_object" },
+          }),
+        });
+        if (res.ok) {
+          const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+          const raw = json.choices?.[0]?.message?.content ?? "";
+          try {
+            const parsed = JSON.parse(raw) as { reply?: string; navigate?: string | null };
+            if (parsed.reply) {
+              return {
+                ok: true as const,
+                content: parsed.reply,
+                navigate: parsed.navigate ?? null,
+                source: "llm" as const,
+              };
+            }
+          } catch {
+            if (raw.trim()) {
+              return { ok: true as const, content: raw.trim(), navigate: null, source: "llm" as const };
+            }
+          }
+        } else {
+          console.warn("agenteVamosChat LLM fallback error", res.status);
+        }
+      }
+    } catch (e) {
+      console.warn("agenteVamosChat LLM fallback exception", e);
+    }
+
     return {
       ok: true as const,
-      content: "Lo siento, desconozco ese tema. ¿Puedo ayudarte con playas, comer, ocio, transporte, vuelos, clima, salud o alojamiento?",
+      content: "No te he entendido del todo. ¿Puedes reformularlo o decirme qué quieres hacer ahora mismo?",
       navigate: null,
       source: "unknown" as const,
     };
