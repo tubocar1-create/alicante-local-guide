@@ -739,179 +739,75 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
     const currentPath = data.path ?? "/";
     const normalized = normalizeText(lastUserMessage);
 
-    // 1) Saludo / despedida / agradecimiento → local instantáneo
-    const smalltalk = smalltalkReply(lastUserMessage);
-    if (smalltalk) {
-      return { ok: true as const, content: smalltalk, navigate: null, source: "smalltalk" as const };
+    // Registramos siempre para auto-aprendizaje (sin bloquear).
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      void logUnknown(supabaseAdmin, lastUserMessage, normalized, currentPath);
+    } catch {
+      // ignore
     }
 
-    // 1.amb) AMBIGÜEDAD DE RUTA — preguntar antes de navegar.
-    // Frases que pueden encajar en varias rutas a la vez (p.ej. "tomar el sol"
-    // → playa o clima). No navegamos: devolvemos una pregunta de aclaración.
-    const ambiguous = detectAmbiguity(normalized);
-    if (ambiguous) {
+    const apiKey = process.env.LOVABLE_API_KEY;
+    if (!apiKey) {
       return {
-        ok: true as const,
-        content: ambiguous,
+        ok: false as const,
+        content: "",
         navigate: null,
-        source: "clarify" as const,
+        source: "no_api_key" as const,
       };
     }
 
-    // 1.bis) Tomar algo / cerveza / copas / discoteca → reenviar al chat principal
-    // El Dashboard Nocturno vive inline dentro de ChatScreen y se dispara con el prompt.
-    if (DRINKS_INTENT_RE.test(lastUserMessage)) {
+    const history = data.messages.slice(-12).map((m) => ({ role: m.role, content: m.content }));
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          {
+            role: "system",
+            content: `Ruta actual del usuario: ${currentPath}.
+Responde SIEMPRE en JSON estricto con la forma: {"reply": string breve para decir en voz alta (1-2 frases naturales), "navigate": string|null (ruta a la que llevar al usuario, o null), "forwardPrompt": string|null (prompt que el chat principal debe procesar al llegar, o null)}.
+Aplica la doctrina: si enrutas a una categoría, enumera en "reply" SOLO las ramas reales del selector de esa pantalla. Nunca mezcles categorías ajenas al tema activo. No inventes opciones. No te inventes rutas: usa solo las del SYSTEM_PROMPT.`,
+          },
+          ...history,
+        ],
+        response_format: { type: "json_object" },
+      }),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "");
+      console.error("agenteVamosChat LLM error", res.status, errText);
       return {
-        ok: true as const,
-        content: "Abro el Dashboard Nocturno: bares, cervecerías, pubs y discotecas abiertos ahora.",
-        navigate: "/",
-        forwardPrompt: lastUserMessage,
-        source: "drinks" as const,
+        ok: false as const,
+        content: "",
+        navigate: null,
+        source: "llm_error" as const,
+        status: res.status,
       };
     }
 
-    // 1.ter) Comer / restaurantes / categorías de comida → reenviar al chat principal
-    // Cada categoría dispara su Dashboard inline; "comer" o "comida rápida" genéricos
-    // abren el submenú correspondiente para que el usuario elija.
-    for (const intent of FOOD_INTENTS) {
-      if (intent.test.test(lastUserMessage)) {
-        return {
-          ok: true as const,
-          content: intent.blurb,
-          navigate: "/",
-          forwardPrompt: intent.forwardPrompt,
-          openSubmenu: intent.openSubmenu,
-          source: "food" as const,
-        };
-      }
-    }
-
-    // Import dinámico: client.server NO debe estar al top-level de un .functions.ts mixto.
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    // 1.quater) CIUDAD/DESTINO de vuelo (Madrid, Londres, París…) — prioridad sobre BD
-    // de nombres propios para evitar que "Madrid" matchee una clínica con "Madrid"
-    // en su nombre. Solo dispara con intención de viaje.
-    const cityRoute = getPriorityRoute(lastUserMessage, currentPath);
-    if (cityRoute && /^\/vuelos\/[A-Z]{3}(\?type=L)?$/.test(cityRoute.path)) {
-      const flightBlurb = await flightsCountBlurb(supabaseAdmin, cityRoute.path);
-      return {
-        ok: true as const,
-        content: flightBlurb ?? blurbFor(cityRoute.path) ?? `Te llevo al destino.`,
-        navigate: cityRoute.path,
-        source: "router" as const,
-      };
-    }
-
-    // 2) NOMBRE PROPIO desde BD (máxima prioridad sobre el sustantivo genérico)
+    const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+    const raw = json.choices?.[0]?.message?.content ?? "";
     try {
-      const rows = await loadProperNouns(supabaseAdmin);
-      const pn = matchProperNoun(normalized, rows, currentPath);
-      if (pn) {
-        // Si es una ficha de vuelo /vuelos/{IATA} y el viajero indica origen
-        // ("desde X", "vengo de X", "vuelo desde X"…) reescribimos a la
-        // ficha de origen /vuelos/{IATA}?type=L.
-        let targetPath = pn.path;
-        const flightMatch = pn.path.match(/^\/vuelos\/([A-Z]{3})$/);
-        if (flightMatch) {
-          const isFrom = /\b(desde|vengo de|vienen de|origen|procedente de|salgo de|salimos de|partimos de|parto de)\b/.test(normalized);
-          if (isFrom) targetPath = `/vuelos/${flightMatch[1]}?type=L`;
-        }
-        const flightBlurb = await flightsCountBlurb(supabaseAdmin, targetPath);
-        return {
-          ok: true as const,
-          content: flightBlurb ?? blurbFor(targetPath) ?? `Te llevo a ${pn.name}.`,
-          navigate: targetPath,
-          source: "proper_noun" as const,
-        };
-      }
+      const parsed = JSON.parse(raw) as { reply?: string; navigate?: string | null; forwardPrompt?: string | null };
+      return {
+        ok: true as const,
+        content: parsed.reply ?? "",
+        navigate: parsed.navigate ?? null,
+        forwardPrompt: parsed.forwardPrompt ?? undefined,
+        source: "llm" as const,
+      };
     } catch {
-      // si falla, seguimos con el clasificador determinista
-    }
-
-    // 3) Clasificador determinista (nombres propios hardcodeados + sustantivo + navegación relativa)
-    const priorityRoute = getPriorityRoute(lastUserMessage, currentPath);
-    if (priorityRoute) {
-      const flightBlurb = await flightsCountBlurb(supabaseAdmin, priorityRoute.path);
       return {
         ok: true as const,
-        content: flightBlurb ?? blurbFor(priorityRoute.path),
-        navigate: priorityRoute.path,
-        source: "router" as const,
+        content: raw.trim(),
+        navigate: null,
+        source: "llm" as const,
       };
     }
-
-    // 3) FAQ desde BD
-    try {
-      const { data: faqs } = await supabaseAdmin
-        .from("agente_faqs")
-        .select("id, keywords, any_of, response, route, priority")
-        .eq("active", true)
-        .order("priority", { ascending: true });
-      const match = matchFaq(normalized, (faqs ?? []) as FaqRow[]);
-      if (match) {
-        void bumpFaqHits(supabaseAdmin, match.id);
-        return {
-          ok: true as const,
-          content: match.response,
-          navigate: match.route ?? null,
-          source: "faq" as const,
-        };
-      }
-    } catch {
-      // Si falla la BD, caemos al fallback de desconocido.
-    }
-
-    // 4) Desconocido → intentamos LLM con la doctrina (SYSTEM_PROMPT) antes de rendirnos.
-    void logUnknown(supabaseAdmin, lastUserMessage, normalized, currentPath);
-    try {
-      const apiKey = process.env.LOVABLE_API_KEY;
-      if (apiKey) {
-        const history = data.messages.slice(-8).map((m) => ({ role: m.role, content: m.content }));
-        const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: "google/gemini-2.5-flash",
-            messages: [
-              { role: "system", content: SYSTEM_PROMPT },
-              { role: "system", content: `Ruta actual del usuario: ${currentPath}. Responde SIEMPRE en JSON: {"reply": string breve para decir en voz alta, "navigate": string|null con la ruta a la que llevar al usuario o null si no debes navegar}. Si enrutas a una categoría, en "reply" enumera brevemente las ramas reales del selector de esa pantalla. NUNCA mezcles categorías ajenas a la ruta actual ni al tema del usuario.` },
-              ...history,
-            ],
-            response_format: { type: "json_object" },
-          }),
-        });
-        if (res.ok) {
-          const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
-          const raw = json.choices?.[0]?.message?.content ?? "";
-          try {
-            const parsed = JSON.parse(raw) as { reply?: string; navigate?: string | null };
-            if (parsed.reply) {
-              return {
-                ok: true as const,
-                content: parsed.reply,
-                navigate: parsed.navigate ?? null,
-                source: "llm" as const,
-              };
-            }
-          } catch {
-            if (raw.trim()) {
-              return { ok: true as const, content: raw.trim(), navigate: null, source: "llm" as const };
-            }
-          }
-        } else {
-          console.warn("agenteVamosChat LLM fallback error", res.status);
-        }
-      }
-    } catch (e) {
-      console.warn("agenteVamosChat LLM fallback exception", e);
-    }
-
-    return {
-      ok: true as const,
-      content: "No te he entendido del todo. ¿Puedes reformularlo o decirme qué quieres hacer ahora mismo?",
-      navigate: null,
-      source: "unknown" as const,
-    };
   });
+
 
