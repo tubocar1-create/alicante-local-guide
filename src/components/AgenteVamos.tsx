@@ -2575,7 +2575,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       try {
         speakingRef.current = true;
         setSpeaking(true);
-        hablar(text, {
+        const speechOpts = {
           onStart: () => {
             speakingRef.current = true;
             setSpeaking(true);
@@ -2587,7 +2587,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             onEnd?.();
             resumeListeningAfterEcho();
           },
-        });
+        };
+        if (_reservedUtterance) {
+          speakPreparedUtterance(text, _reservedUtterance, speechOpts);
+        } else {
+          hablar(text, speechOpts);
+        }
       } catch {
         onEnd?.();
         resumeListeningAfterEcho();
