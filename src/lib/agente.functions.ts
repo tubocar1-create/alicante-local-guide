@@ -896,6 +896,15 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
       console.warn("agente_llm_cache lookup failed", e);
     }
 
+    if (disableLLM) {
+      return {
+        ok: false as const,
+        content: "",
+        navigate: null,
+        source: "llm_disabled" as const,
+      };
+    }
+
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
       return {
