@@ -1362,16 +1362,11 @@ function localResolve(
   }
 
 
-  if (isShoppingRequest(query)) {
-    const hubIntent = catalog.intents.find((i) => i.key === "comprar");
-    const trainedReply = (hubIntent?.spoken_reply ?? "").trim();
-    return {
-      reply: trainedReply || SHOPPING_INTRO_REPLY,
-      path: "/comprar",
-      audio: "fallback",
-      pendingDomain: null,
-    };
-  }
+  // Las peticiones de compras se resuelven vía el dominio "compras" en
+  // matchDomain — no devolvemos aquí ninguna respuesta hardcodeada que
+  // enumere sectores; dejamos que el selector de /comprar guíe al usuario.
+
+
 
 
   // Dominio activo = prioridad máxima sobre entidades/keywords aisladas.
