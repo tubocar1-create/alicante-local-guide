@@ -1166,7 +1166,10 @@ function dbIntentToResult(intent: AgenteIntentRow): LocalResult {
   if (domainId) {
     const d = DOMAINS.find((x) => x.id === domainId);
     if (d && d.followups.length === 0 && d.hubPath && !d.hubPath.startsWith("action:")) {
-      return { reply: trainedReply || d.question, path: d.hubPath, audio: d.audio, pendingDomain: null, source: "trained" };
+      return { reply: trainedReply || d.question, path: d.hubPath, audio: d.audio, pendingDomain: null, source: "trained", openSubmenu: d.openSubmenuKey };
+    }
+    if (d && d.openSubmenuKey && d.hubPath && !d.hubPath.startsWith("action:")) {
+      return { reply: trainedReply || d.question, path: d.hubPath, audio: d.audio, pendingDomain: null, source: "trained", openSubmenu: d.openSubmenuKey };
     }
     if (d && d.followups.length > 0) {
       return { reply: trainedReply || d.question, audio: d.audio, pendingDomain: d.id, source: "trained" };
