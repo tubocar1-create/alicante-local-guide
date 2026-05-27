@@ -153,21 +153,20 @@ export type NightEstimate = {
 
 /**
  * Para líneas nocturnas: estima las próximas llegadas a la parada del usuario
- * asumiendo salidas horarias desde el terminal de origen (Vectalia opera N
- * con cadencia ~60 min). El offset por parada se aproxima linealmente con
- * `tripMinutes` (30 min por defecto). Los resultados son estimados, no live.
+ * asumiendo salidas horarias desde el terminal de origen (cadencia ~60 min,
+ * según la tabla oficial de Vectalia). `offsetMinutes` es el tiempo
+ * estimado desde el terminal de origen hasta la parada del usuario,
+ * calculado por el llamador a partir de la distancia recorrida.
  */
 export function getNightLineEstimates(
   rows: ServiceWindowRow[] | null,
   lineCode: string,
   destinationTerminal: string,
-  stopSeq: number,
-  totalStops: number,
+  offsetMinutes: number,
   now: Date = new Date(),
-  tripMinutes = 30,
   count = 4,
 ): NightEstimate | null {
-  if (!rows || totalStops <= 0) return null;
+  if (!rows) return null;
   const dayType = dayTypeOf(now);
   // El bus que va hacia destinationTerminal sale del OTRO terminal.
   const todayRows = rows.filter(
@@ -183,18 +182,13 @@ export function getNightLineEstimates(
   const isNight = lastMin < firstMin;
   if (!isNight) return null;
 
-  // Lista de salidas (cadencia 60 min) en minutos absolutos desde firstMin.
+  // Salidas horarias desde el terminal de origen (23:30, 00:30, 01:30…).
   const departures: number[] = [];
-  // Total minutos operativos: si nocturna, lastMin + 24h.
   const windowEnd = lastMin + 24 * 60;
   for (let t = firstMin; t <= windowEnd; t += 60) departures.push(t);
 
-  // Offset por parada (fracción del recorrido).
-  const offset = Math.round((stopSeq / totalStops) * tripMinutes);
-
-  // Convertir "ahora" a minutos comparables con departures.
+  const offset = Math.max(0, Math.round(offsetMinutes));
   const nowMin = now.getHours() * 60 + now.getMinutes();
-  // Si nowMin < firstMin pero estamos en madrugada, sumamos 24h.
   const nowAdj = nowMin < firstMin && nowMin <= lastMin ? nowMin + 24 * 60 : nowMin;
 
   const upcoming: NightEstimate["upcoming"] = [];
@@ -210,5 +204,5 @@ export function getNightLineEstimates(
     if (upcoming.length >= count) break;
   }
   if (upcoming.length === 0) return null;
-  return { upcoming, originTerminal: sw.terminal_name, tripMinutes };
+  return { upcoming, originTerminal: sw.terminal_name, tripMinutes: offset };
 }
