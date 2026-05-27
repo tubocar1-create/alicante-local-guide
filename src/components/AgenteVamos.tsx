@@ -3626,6 +3626,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
 export function AgenteVamosFab() {
   const [open, setOpen] = useState(false);
+  const openedAtRef = useRef(0);
   const voiceBootStartedRef = useRef(false);
   const greetingPlayedRef = useRef(false);
   const path = useRouterState({ select: (s) => s.location.pathname });
