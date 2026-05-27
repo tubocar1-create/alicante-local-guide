@@ -588,13 +588,11 @@ export function ChatScreen() {
       const next = [
         ...messages,
         { role: "user" as const, content: trimmed },
-        { role: "assistant" as const, content: SHOPPING_INTRO_REPLY },
       ];
       setMessages(next);
       setInput("");
       setError(null);
       setSubmenuStack([]);
-      void hablar(SHOPPING_INTRO_REPLY);
       navigate({ to: "/comprar" });
       return;
     }
