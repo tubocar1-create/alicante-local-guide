@@ -407,37 +407,47 @@ function ParadaFavoritaPage() {
       <section className="mx-3 mt-2 rounded-3xl bg-white p-3 shadow-[0_8px_24px_-12px_rgba(60,40,10,0.25)]">
         <h3 className="mb-1 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-stone-500">
           <span>Próximos buses</span>
-          {hasLiveData && (
+          {!outOfService && hasLiveData && (
             <span className="inline-flex items-center gap-1 normal-case text-emerald-700">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
               en vivo
             </span>
           )}
         </h3>
-        <ul className="divide-y divide-stone-100">
-          {upcoming.map((u, i) => (
-            <li
-              key={i}
-              className="grid grid-cols-[auto_auto_auto_1fr_auto_auto] items-center gap-1.5 py-1.5"
-            >
-              <Bus className="h-4 w-4 text-[#0d3b8a]" />
-              <span className="text-sm font-extrabold tabular-nums text-stone-900">
-                {u.arrivalTime}
-              </span>
-              <span className="rounded-md bg-[#0d3b8a] px-1.5 py-0.5 text-[10px] font-extrabold text-white">
-                {stop.line}
-              </span>
-              <span className="truncate text-xs text-stone-800">{stop.destination}</span>
-              <span className={`text-xs font-extrabold tabular-nums ${u.live ? "text-emerald-700" : "text-stone-400"}`}>
-                {u.minutes}{" "}
-                <span className="text-[9px] font-semibold text-stone-500">
-                  {u.live ? "min · live" : "min est."}
+        {outOfService ? (
+          <div className="flex flex-col items-center gap-1 py-4 text-center">
+            <span className="text-sm font-extrabold text-stone-700">Fuera de servicio</span>
+            <span className="text-[11px] text-stone-500">
+              El servicio se reanuda mañana a las 07:00. El último bus parte de la
+              parada extrema a las 22:30.
+            </span>
+          </div>
+        ) : (
+          <ul className="divide-y divide-stone-100">
+            {upcoming.map((u, i) => (
+              <li
+                key={i}
+                className="grid grid-cols-[auto_auto_auto_1fr_auto_auto] items-center gap-1.5 py-1.5"
+              >
+                <Bus className="h-4 w-4 text-[#0d3b8a]" />
+                <span className="text-sm font-extrabold tabular-nums text-stone-900">
+                  {u.arrivalTime}
                 </span>
-              </span>
-              <ChevronRight className="h-3.5 w-3.5 text-stone-400" />
-            </li>
-          ))}
-        </ul>
+                <span className="rounded-md bg-[#0d3b8a] px-1.5 py-0.5 text-[10px] font-extrabold text-white">
+                  {stop.line}
+                </span>
+                <span className="truncate text-xs text-stone-800">{stop.destination}</span>
+                <span className={`text-xs font-extrabold tabular-nums ${u.live ? "text-emerald-700" : "text-stone-400"}`}>
+                  {u.minutes}{" "}
+                  <span className="text-[9px] font-semibold text-stone-500">
+                    {u.live ? "min · live" : "min est."}
+                  </span>
+                </span>
+                <ChevronRight className="h-3.5 w-3.5 text-stone-400" />
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
 
