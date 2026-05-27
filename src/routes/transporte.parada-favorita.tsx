@@ -55,7 +55,9 @@ function ParadaFavoritaPage() {
   const serviceWindows = useBusServiceWindows();
   const serviceStatus = getServiceStatus(serviceWindows, stop.line);
   const outOfService = serviceStatus.outOfService;
+  const reopensDayLabel = serviceStatus.reopensDayLabel;
   const reopensAt = serviceStatus.reopensAt ?? "07:00";
+  const reopensLabel = reopensDayLabel ? `${reopensDayLabel} ${reopensAt}` : reopensAt;
   const lastDeparture = serviceStatus.lastDeparture ?? "22:30";
   const isNightLine = serviceStatus.isNightLine;
 
