@@ -2843,7 +2843,18 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         const activeDomain = pendingDomainRef.current ?? storedDomain ?? routeDomain;
         const priorDomain = activeDomain;
         const catalogForTurn = routingCatalogRef.current;
-        const fallback = localResolve(clean, activeDomain, catalogForTurn);
+        const lastAgentRoute = readLastAgentRoute();
+        const navigationRetry = isNavigationFailureReport(clean) && lastAgentRoute?.route
+          ? lastAgentRoute
+          : null;
+        const fallback = navigationRetry
+          ? {
+              reply: navigationRetryReply(navigationRetry.route, path),
+              path: navigationRetry.route,
+              audio: "fallback" as VoiceClip,
+              pendingDomain: null,
+            }
+          : localResolve(clean, activeDomain, catalogForTurn);
         const replyMode = pickAssistantMode(fallback.pendingDomain ?? pendingDomainRef.current ?? null);
         let reply = formatReply(replyMode, fallback.reply);
         let target: string | undefined = fallback.path;
