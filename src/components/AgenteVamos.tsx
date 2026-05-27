@@ -3201,10 +3201,19 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           setTimeout(() => {
             goTo(target);
           }, 50);
+        } else if (target && target === path && navigationRetry) {
+          setTimeout(() => {
+            try {
+              window.location.assign(target);
+            } catch {
+              goTo(target);
+            }
+          }, 50);
         }
         // La voz ya se ha lanzado arriba con speak(reply). Aquí sólo
         // gestionamos navegación tardía si procede.
         finalTarget = target;
+        rememberAgentRoute(finalTarget, finalReply);
       } finally {
         if (!awaitingSummaryRef.current) setLoading(false);
         // Telemetría fire-and-forget: registra la interacción.
