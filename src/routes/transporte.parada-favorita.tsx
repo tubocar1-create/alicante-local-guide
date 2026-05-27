@@ -51,6 +51,8 @@ function ParadaFavoritaPage() {
   const [liveLoading, setLiveLoading] = useState(false);
   const [liveUpdatedAt, setLiveUpdatedAt] = useState<number>(Date.now());
 
+  const outOfService = isBusOutOfService();
+
   useEffect(() => {
     setStop(loadFavoriteStop());
     const id = window.setInterval(() => setTick((t) => t + 1), 30_000);
