@@ -118,6 +118,7 @@ import { Route as AdminAiEntrenamientoRouteImport } from './routes/admin.ai.entr
 import { Route as AdminAiEntitiesRouteImport } from './routes/admin.ai.entities'
 import { Route as AdminAiDubiousRouteImport } from './routes/admin.ai.dubious'
 import { Route as AdminAiDoctrinaRouteImport } from './routes/admin.ai.doctrina'
+import { Route as AdminAiDialogosRouteImport } from './routes/admin.ai.dialogos'
 import { Route as AdminAiCostsRouteImport } from './routes/admin.ai.costs'
 import { Route as AdminAiCorreccionesRouteImport } from './routes/admin.ai.correcciones'
 import { Route as AdminAiConversationsRouteImport } from './routes/admin.ai.conversations'
@@ -691,6 +692,11 @@ const AdminAiDoctrinaRoute = AdminAiDoctrinaRouteImport.update({
   path: '/doctrina',
   getParentRoute: () => AdminAiRoute,
 } as any)
+const AdminAiDialogosRoute = AdminAiDialogosRouteImport.update({
+  id: '/dialogos',
+  path: '/dialogos',
+  getParentRoute: () => AdminAiRoute,
+} as any)
 const AdminAiCostsRoute = AdminAiCostsRouteImport.update({
   id: '/costs',
   path: '/costs',
@@ -898,6 +904,7 @@ export interface FileRoutesByFullPath {
   '/admin/ai/conversations': typeof AdminAiConversationsRoute
   '/admin/ai/correcciones': typeof AdminAiCorreccionesRoute
   '/admin/ai/costs': typeof AdminAiCostsRoute
+  '/admin/ai/dialogos': typeof AdminAiDialogosRoute
   '/admin/ai/doctrina': typeof AdminAiDoctrinaRoute
   '/admin/ai/dubious': typeof AdminAiDubiousRoute
   '/admin/ai/entities': typeof AdminAiEntitiesRoute
@@ -1029,6 +1036,7 @@ export interface FileRoutesByTo {
   '/admin/ai/conversations': typeof AdminAiConversationsRoute
   '/admin/ai/correcciones': typeof AdminAiCorreccionesRoute
   '/admin/ai/costs': typeof AdminAiCostsRoute
+  '/admin/ai/dialogos': typeof AdminAiDialogosRoute
   '/admin/ai/doctrina': typeof AdminAiDoctrinaRoute
   '/admin/ai/dubious': typeof AdminAiDubiousRoute
   '/admin/ai/entities': typeof AdminAiEntitiesRoute
@@ -1164,6 +1172,7 @@ export interface FileRoutesById {
   '/admin/ai/conversations': typeof AdminAiConversationsRoute
   '/admin/ai/correcciones': typeof AdminAiCorreccionesRoute
   '/admin/ai/costs': typeof AdminAiCostsRoute
+  '/admin/ai/dialogos': typeof AdminAiDialogosRoute
   '/admin/ai/doctrina': typeof AdminAiDoctrinaRoute
   '/admin/ai/dubious': typeof AdminAiDubiousRoute
   '/admin/ai/entities': typeof AdminAiEntitiesRoute
@@ -1300,6 +1309,7 @@ export interface FileRouteTypes {
     | '/admin/ai/conversations'
     | '/admin/ai/correcciones'
     | '/admin/ai/costs'
+    | '/admin/ai/dialogos'
     | '/admin/ai/doctrina'
     | '/admin/ai/dubious'
     | '/admin/ai/entities'
@@ -1431,6 +1441,7 @@ export interface FileRouteTypes {
     | '/admin/ai/conversations'
     | '/admin/ai/correcciones'
     | '/admin/ai/costs'
+    | '/admin/ai/dialogos'
     | '/admin/ai/doctrina'
     | '/admin/ai/dubious'
     | '/admin/ai/entities'
@@ -1565,6 +1576,7 @@ export interface FileRouteTypes {
     | '/admin/ai/conversations'
     | '/admin/ai/correcciones'
     | '/admin/ai/costs'
+    | '/admin/ai/dialogos'
     | '/admin/ai/doctrina'
     | '/admin/ai/dubious'
     | '/admin/ai/entities'
@@ -2465,6 +2477,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAiDoctrinaRouteImport
       parentRoute: typeof AdminAiRoute
     }
+    '/admin/ai/dialogos': {
+      id: '/admin/ai/dialogos'
+      path: '/dialogos'
+      fullPath: '/admin/ai/dialogos'
+      preLoaderRoute: typeof AdminAiDialogosRouteImport
+      parentRoute: typeof AdminAiRoute
+    }
     '/admin/ai/costs': {
       id: '/admin/ai/costs'
       path: '/costs'
@@ -2635,6 +2654,7 @@ interface AdminAiRouteChildren {
   AdminAiConversationsRoute: typeof AdminAiConversationsRoute
   AdminAiCorreccionesRoute: typeof AdminAiCorreccionesRoute
   AdminAiCostsRoute: typeof AdminAiCostsRoute
+  AdminAiDialogosRoute: typeof AdminAiDialogosRoute
   AdminAiDoctrinaRoute: typeof AdminAiDoctrinaRoute
   AdminAiDubiousRoute: typeof AdminAiDubiousRoute
   AdminAiEntitiesRoute: typeof AdminAiEntitiesRoute
@@ -2652,6 +2672,7 @@ const AdminAiRouteChildren: AdminAiRouteChildren = {
   AdminAiConversationsRoute: AdminAiConversationsRoute,
   AdminAiCorreccionesRoute: AdminAiCorreccionesRoute,
   AdminAiCostsRoute: AdminAiCostsRoute,
+  AdminAiDialogosRoute: AdminAiDialogosRoute,
   AdminAiDoctrinaRoute: AdminAiDoctrinaRoute,
   AdminAiDubiousRoute: AdminAiDubiousRoute,
   AdminAiEntitiesRoute: AdminAiEntitiesRoute,
