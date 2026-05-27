@@ -867,7 +867,7 @@ export const listAgentConversations = createServerFn({ method: "POST" })
     const { data: rows, error } = await supabaseAdmin
       .from("agente_learning_log")
       .select(
-        "id,created_at,session_id,raw_query,detected_intent,resolver_type,resolved,fallback_used,failure_reason,latency_ms,decision,route_origin,notes,estimated_cost,reviewed_at,review_status,review_note,audit_phase,audit_verdict,audit_note,audited_at",
+        "id,created_at,session_id,raw_query,detected_intent,resolver_type,resolved,fallback_used,failure_reason,latency_ms,decision,route_origin,notes,model_used,estimated_cost,reviewed_at,review_status,review_note,audit_phase,audit_verdict,audit_note,audited_at",
       )
       .gte("created_at", since)
       .order("created_at", { ascending: true })
