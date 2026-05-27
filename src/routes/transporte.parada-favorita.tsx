@@ -336,9 +336,18 @@ function ParadaFavoritaPage() {
 
           <div className="flex w-full flex-col items-center justify-start">
             <span className="w-full text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-stone-500">
-              Llegada<br />estimada
+              {outOfService ? <>Servicio<br />nocturno</> : <>Llegada<br />estimada</>}
             </span>
-            {isArriving ? (
+            {outOfService ? (
+              <div className="mt-2 flex w-full flex-col items-center rounded-2xl bg-stone-100 px-2 py-3 text-center ring-1 ring-stone-300">
+                <span className="text-xs font-black uppercase leading-tight tracking-tight text-stone-600">
+                  Fuera de<br />servicio
+                </span>
+                <span className="mt-1 text-[9px] font-semibold text-stone-500">
+                  Reanuda 07:00
+                </span>
+              </div>
+            ) : isArriving ? (
               <div className="mt-2 w-full animate-blink rounded-2xl bg-[#0d3b8a] px-2 py-3 text-center shadow-lg">
                 <div className="text-[9px] font-bold uppercase tracking-widest text-white/80">
                   Faltan
@@ -360,15 +369,17 @@ function ParadaFavoritaPage() {
                 </span>
               </div>
             )}
-            <div className="mt-2 w-full rounded-xl bg-stone-50 px-2 py-1.5 text-center ring-1 ring-stone-200">
-              <div className="flex items-center justify-center gap-1 text-[9px] font-bold uppercase text-stone-500">
-                <Clock className="h-3 w-3" />
-                Llega a las
+            {!outOfService && (
+              <div className="mt-2 w-full rounded-xl bg-stone-50 px-2 py-1.5 text-center ring-1 ring-stone-200">
+                <div className="flex items-center justify-center gap-1 text-[9px] font-bold uppercase text-stone-500">
+                  <Clock className="h-3 w-3" />
+                  Llega a las
+                </div>
+                <div className="text-sm font-extrabold tabular-nums text-stone-900">
+                  {arrivalTime}
+                </div>
               </div>
-              <div className="text-sm font-extrabold tabular-nums text-stone-900">
-                {arrivalTime}
-              </div>
-            </div>
+            )}
           </div>
 
         </div>
