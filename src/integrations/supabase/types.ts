@@ -487,6 +487,24 @@ export type Database = {
         }
         Relationships: []
       }
+      agente_respuestas: {
+        Row: {
+          intent_id: string
+          question: string
+          updated_at: string
+        }
+        Insert: {
+          intent_id: string
+          question: string
+          updated_at?: string
+        }
+        Update: {
+          intent_id?: string
+          question?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       agente_unknown_queries: {
         Row: {
           auto_added_keywords: string[]
