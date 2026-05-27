@@ -1190,7 +1190,7 @@ function dbIntentToResult(intent: AgenteIntentRow): LocalResult {
     }
   }
   return {
-    reply: trainedReply || `Te llevo a ${intent.label.toLowerCase()}.`,
+    reply: trainedReply || selectorReplyFor(intent.route, `Te llevo a ${intent.label.toLowerCase()}.`),
     path: intent.route ?? undefined,
     audio: "fallback",
     pendingDomain: null,
