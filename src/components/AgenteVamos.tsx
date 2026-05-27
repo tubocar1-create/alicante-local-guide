@@ -1570,7 +1570,7 @@ function localResolve(
     const subcategory = matchExistingSubcategory(query, catalog.subcategories[currentDomain]);
     if (subcategory) {
       return {
-        reply: `Te llevo a ${subcategory.label}.`,
+        reply: selectorReplyFor(subcategory.route, `Te llevo a ${subcategory.label}.`),
         path: subcategory.route,
         audio: d?.audio ?? "fallback",
         pendingDomain: null,
