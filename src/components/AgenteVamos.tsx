@@ -248,11 +248,11 @@ type DomainSpec = {
   question: string;
   audio: VoiceClip;
   hubPath?: string;
+  // Si está presente, al enrutar al hub abrimos también este submenú de
+  // la pantalla destino (sincroniza el selector con la decisión del agente).
+  openSubmenuKey?: string;
   followups: { keys: string[]; path: string; label?: string }[];
 };
-
-export const SHOPPING_INTRO_REPLY =
-  "Genial, aquí te dejo una lista muy amplia de sitios para comprar, pero si lo prefieres te puedo orientar si me dices qué artículo o servicio necesitas.";
 
 const DOMAINS: DomainSpec[] = [
   {
