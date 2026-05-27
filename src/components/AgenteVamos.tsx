@@ -2319,6 +2319,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
   const [muted, setMuted] = useState(false);
   const [paused, setPaused] = useState(false);
   const [voiceError, setVoiceError] = useState<string | null>(null);
+  const [llmDisabled, setLlmDisabled] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    try { return window.localStorage.getItem("va:disableLLM") === "1"; } catch { return false; }
+  });
+  const llmDisabledRef = useRef(llmDisabled);
+  useEffect(() => { llmDisabledRef.current = llmDisabled; }, [llmDisabled]);
 
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
@@ -2809,6 +2815,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
               data: {
                 messages: next.map((m) => ({ role: m.role, content: m.content })),
                 path,
+                disableLLM: llmDisabledRef.current,
               },
             });
             if (res && (res as any).ok) {
@@ -3549,6 +3556,21 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
               );
             })()}
         </div>
+
+        <button
+          onClick={() => {
+            setLlmDisabled((v) => {
+              const next = !v;
+              try { window.localStorage.setItem("va:disableLLM", next ? "1" : "0"); } catch {}
+              return next;
+            });
+          }}
+          aria-label={llmDisabled ? "Activar IA externa (Gemini)" : "Desactivar IA externa (Gemini)"}
+          title={llmDisabled ? "IA externa OFF · solo aprendizaje" : "IA externa ON · usa Gemini si no hay match"}
+          className={`flex h-9 w-9 items-center justify-center rounded-full border ${llmDisabled ? "bg-destructive/15 text-destructive border-destructive/40" : "bg-background text-foreground"} hover:bg-muted`}
+        >
+          <Sparkles className={`h-4 w-4 ${llmDisabled ? "opacity-50 line-through" : ""}`} />
+        </button>
 
         <button
           onClick={() => {

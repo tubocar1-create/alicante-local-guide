@@ -841,10 +841,11 @@ const promoteToIntent = async (
 };
 
 export const agenteVamosChat = createServerFn({ method: "POST" })
-  .inputValidator((d: { messages: Array<{ role: "user" | "assistant"; content: string }>; path?: string }) => d)
+  .inputValidator((d: { messages: Array<{ role: "user" | "assistant"; content: string }>; path?: string; disableLLM?: boolean }) => d)
   .handler(async ({ data }) => {
     const lastUserMessage = [...data.messages].reverse().find((m) => m.role === "user")?.content ?? "";
     const currentPath = data.path ?? "/";
+    const disableLLM = data.disableLLM === true;
     const normalized = normalizeText(lastUserMessage);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -893,6 +894,15 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
       }
     } catch (e) {
       console.warn("agente_llm_cache lookup failed", e);
+    }
+
+    if (disableLLM) {
+      return {
+        ok: false as const,
+        content: "",
+        navigate: null,
+        source: "llm_disabled" as const,
+      };
     }
 
     const apiKey = process.env.LOVABLE_API_KEY;
