@@ -1147,7 +1147,7 @@ Aplica la doctrina: si enrutas a una categoría, enumera en "reply" SOLO las ram
       };
     } catch {
       const reply = raw.trim();
-      persistCache(reply, null, null);
+      await persistCache(reply, null, null);
       return {
         ok: true as const,
         content: reply,
