@@ -2986,7 +2986,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         if (hasHealthHardBlock(normalizeSpeech(clean)) && pendingDomainRef.current !== "salud") {
           const saludDomain = DOMAINS.find((d) => d.id === "salud");
           if (saludDomain) {
-            target = undefined;
+            target = saludDomain.hubPath;
             reply = saludDomain.question;
             forwardPrompt = undefined;
             pendingDomainRef.current = "salud";
