@@ -39,11 +39,21 @@ export function useBusServiceWindows() {
   return rows;
 }
 
-function dayTypeOf(d: Date): "laborable" | "sabado" | "domingo" {
+export function dayTypeOf(d: Date): "laborable" | "sabado" | "domingo" {
   const dow = d.getDay();
   if (dow === 0) return "domingo";
   if (dow === 6) return "sabado";
   return "laborable";
+}
+
+export function toMinHM(hms: string): number {
+  const [h, m] = hms.split(":").map(Number);
+  return h * 60 + m;
+}
+
+export function fmtHMMin(mins: number): string {
+  const m = ((mins % (24 * 60)) + 24 * 60) % (24 * 60);
+  return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 }
 
 function toMin(hms: string): number {
