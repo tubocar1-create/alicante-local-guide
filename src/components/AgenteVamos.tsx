@@ -3697,8 +3697,9 @@ export function AgenteVamosFab() {
 
   const openPanelWithGreeting = () => {
     if (!open) {
-      greetingPlayedRef.current = false;
-      __vaSetGreetingSpoken(false);
+      const greetingAlreadyStarted = __vaGetGreetingSpoken() || isAgentSpeechOutputActive();
+      greetingPlayedRef.current = greetingAlreadyStarted;
+      if (!greetingAlreadyStarted) __vaSetGreetingSpoken(false);
       voiceBootStartedRef.current = false;
     }
     openedAtRef.current = Date.now();
