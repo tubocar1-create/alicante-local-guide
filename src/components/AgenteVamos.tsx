@@ -2996,6 +2996,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         if (!navigatingToDashboard) {
           setMsgs((m) => [...m, { role: "assistant", content: reply }]);
         }
+        finalReply = reply;
 
         // CRÍTICO: hablar SIEMPRE la respuesta del agente en cuanto llega,
         // sin depender de eventos posteriores (food-summary sólo existe
