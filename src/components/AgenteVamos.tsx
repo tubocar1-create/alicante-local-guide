@@ -1675,7 +1675,7 @@ function localResolve(
 
       if (d.hubPath && !d.hubPath.startsWith("action:") && isAffirmativeResponse(query)) {
         return {
-          reply: `Te llevo a ${d.id === "playas" ? "playas" : d.question.toLowerCase()}.`,
+          reply: selectorReplyFor(d.hubPath, `Te llevo a ${d.id === "playas" ? "playas" : d.question.toLowerCase()}.`),
           path: d.hubPath,
           audio: d.audio,
           pendingDomain: null,
