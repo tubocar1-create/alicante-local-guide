@@ -3173,7 +3173,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
               sessionId: sessionIdRef.current,
               detectedIntent: finalTarget ?? null,
               modelUsed: serverCalled ? "google/gemini-2.5-flash" : "local-resolver",
-              notes: (reply ?? "").slice(0, 3500),
+              notes: (finalReply ?? "").slice(0, 3500),
             },
           }).catch(() => {});
         } catch {
