@@ -3678,36 +3678,11 @@ export function AgenteVamosFab() {
   const playGreetingAfterPermission = () => {
     if (greetingPlayedRef.current) return;
     try {
-      const greetText = getGreetingText();
       if (typeof window === "undefined" || !window.speechSynthesis) return;
       const synth = window.speechSynthesis;
-      __vaSetGreetingSpoken(true);
-      __vaSpeechUnlocked = true;
-      greetingPlayedRef.current = true;
-
-      // Cancela cualquier utterance anterior antes de iniciar el saludo.
-      try { synth.cancel(); } catch {}
       try { synth.resume(); } catch {}
-
-      const u = new SpeechSynthesisUtterance(greetText);
-      u.lang = VA_VOICE_LANG;
-      u.rate = VA_VOICE_RATE;
-      u.pitch = VA_VOICE_PITCH;
-      u.volume = 1;
       warmSpeechVoices(synth);
-      const voice = pickSpanishVoice(synth);
-      if (voice) u.voice = voice;
-      __vaActiveUtterance = u;
-      keepSpeechSynthesisAwake(synth);
-
-      u.onend = () => {
-        if (__vaActiveUtterance === u) __vaActiveUtterance = null;
-      };
-      u.onerror = () => {
-        if (__vaActiveUtterance === u) __vaActiveUtterance = null;
-      };
-
-      try { synth.speak(u); } catch {}
+      greetingPlayedRef.current = speakGreetingFromUserGesture(true);
       primeSpanishUtterances();
     } catch {
       /* noop */
@@ -3725,7 +3700,6 @@ export function AgenteVamosFab() {
       greetingPlayedRef.current = false;
       __vaSetGreetingSpoken(false);
       voiceBootStartedRef.current = false;
-      startGreetingFromUserGesture();
     }
     openedAtRef.current = Date.now();
     setOpen(true);
