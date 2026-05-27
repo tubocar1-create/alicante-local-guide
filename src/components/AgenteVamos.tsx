@@ -494,7 +494,7 @@ const DOMAINS: DomainSpec[] = [
       // pasar por la pregunta de desambiguación)
       "exposicion", "exposición", "museo", "museos", "cultura",
     ],
-    question: "¿Te apetece cine, conciertos, teatro o fiestas?",
+    question: "Te abro ocio; elige la categoría en pantalla.",
     audio: "leisure",
     followups: [
       { keys: ["cine", "pelicula", "peliculas", "cartelera"], path: "/ocio/cartelera" },
