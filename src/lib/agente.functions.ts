@@ -739,12 +739,36 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
     const currentPath = data.path ?? "/";
     const normalized = normalizeText(lastUserMessage);
 
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
     // Registramos siempre para auto-aprendizaje (sin bloquear).
+    void logUnknown(supabaseAdmin, lastUserMessage, normalized, currentPath);
+
+    // 0) CACHÉ APRENDIDA — si ya respondimos a esta consulta normalizada en
+    // esta ruta, servimos sin llamar al modelo y bumpeamos los hits.
     try {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      void logUnknown(supabaseAdmin, lastUserMessage, normalized, currentPath);
-    } catch {
-      // ignore
+      const { data: cached } = await supabaseAdmin
+        .from("agente_llm_cache")
+        .select("id, reply, navigate, forward_prompt, hits")
+        .eq("normalized", normalized)
+        .eq("path", currentPath)
+        .eq("active", true)
+        .maybeSingle();
+      if (cached?.reply) {
+        void supabaseAdmin
+          .from("agente_llm_cache")
+          .update({ hits: (cached.hits ?? 0) + 1, last_used_at: new Date().toISOString() })
+          .eq("id", cached.id);
+        return {
+          ok: true as const,
+          content: cached.reply,
+          navigate: cached.navigate ?? null,
+          forwardPrompt: cached.forward_prompt ?? undefined,
+          source: "cache" as const,
+        };
+      }
+    } catch (e) {
+      console.warn("agente_llm_cache lookup failed", e);
     }
 
     const apiKey = process.env.LOVABLE_API_KEY;
@@ -757,12 +781,13 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
       };
     }
 
+    const model = "google/gemini-2.5-flash";
     const history = data.messages.slice(-12).map((m) => ({ role: m.role, content: m.content }));
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model,
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           {
@@ -791,19 +816,47 @@ Aplica la doctrina: si enrutas a una categoría, enumera en "reply" SOLO las ram
 
     const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
     const raw = json.choices?.[0]?.message?.content ?? "";
+
+    const persistCache = (reply: string, navigate: string | null, forwardPrompt: string | null) => {
+      if (!reply) return;
+      void supabaseAdmin
+        .from("agente_llm_cache")
+        .upsert(
+          {
+            normalized,
+            path: currentPath,
+            raw_query: lastUserMessage.slice(0, 500),
+            reply,
+            navigate,
+            forward_prompt: forwardPrompt,
+            model,
+            hits: 1,
+            last_used_at: new Date().toISOString(),
+            active: true,
+          },
+          { onConflict: "normalized,path" }
+        );
+    };
+
     try {
       const parsed = JSON.parse(raw) as { reply?: string; navigate?: string | null; forwardPrompt?: string | null };
+      const reply = parsed.reply ?? "";
+      const navigate = parsed.navigate ?? null;
+      const forwardPrompt = parsed.forwardPrompt ?? null;
+      persistCache(reply, navigate, forwardPrompt);
       return {
         ok: true as const,
-        content: parsed.reply ?? "",
-        navigate: parsed.navigate ?? null,
-        forwardPrompt: parsed.forwardPrompt ?? undefined,
+        content: reply,
+        navigate,
+        forwardPrompt: forwardPrompt ?? undefined,
         source: "llm" as const,
       };
     } catch {
+      const reply = raw.trim();
+      persistCache(reply, null, null);
       return {
         ok: true as const,
-        content: raw.trim(),
+        content: reply,
         navigate: null,
         source: "llm" as const,
       };
