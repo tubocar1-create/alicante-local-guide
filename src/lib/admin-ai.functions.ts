@@ -832,6 +832,8 @@ export type ConversationTurn = {
   audit_note: string | null;
   audited_at: string | null;
   gap_ms: number | null; // ms desde el turno anterior (null en el primero)
+  model_used: string | null;
+  reply_text: string | null;
 };
 
 export type ConversationDTO = {
