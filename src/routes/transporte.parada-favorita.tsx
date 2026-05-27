@@ -422,8 +422,8 @@ function ParadaFavoritaPage() {
           <div className="flex flex-col items-center gap-1 py-4 text-center">
             <span className="text-sm font-extrabold text-stone-700">Fuera de servicio</span>
             <span className="text-[11px] text-stone-500">
-              El servicio se reanuda mañana a las 07:00. El último bus parte de la
-              parada extrema a las 22:30.
+              El servicio se reanuda a las {reopensAt}. El último bus parte de la
+              parada extrema a las {lastDeparture}.
             </span>
           </div>
         ) : (
