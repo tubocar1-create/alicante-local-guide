@@ -612,6 +612,39 @@ export type Database = {
           },
         ]
       }
+      bus_line_departures: {
+        Row: {
+          created_at: string
+          day_type: string
+          departure_time: string
+          direction: number
+          estimated: boolean
+          id: string
+          line_code: string
+          source: string | null
+        }
+        Insert: {
+          created_at?: string
+          day_type: string
+          departure_time: string
+          direction: number
+          estimated?: boolean
+          id?: string
+          line_code: string
+          source?: string | null
+        }
+        Update: {
+          created_at?: string
+          day_type?: string
+          departure_time?: string
+          direction?: number
+          estimated?: boolean
+          id?: string
+          line_code?: string
+          source?: string | null
+        }
+        Relationships: []
+      }
       bus_line_service_windows: {
         Row: {
           created_at: string
