@@ -56,6 +56,42 @@ function ParadaFavoritaPage() {
   const outOfService = serviceStatus.outOfService;
   const reopensAt = serviceStatus.reopensAt ?? "07:00";
   const lastDeparture = serviceStatus.lastDeparture ?? "22:30";
+  const isNightLine = serviceStatus.isNightLine;
+
+  // Para líneas nocturnas en servicio: estimar llegadas a partir de la salida
+  // horaria desde el terminal de origen (Vectalia no provee live para N).
+  const nightEstimate = useMemo(() => {
+    if (!isNightLine || outOfService || !graph) return null;
+    const lineRows = graph.stops.filter((r) => r.line_code === stop.line);
+    if (lineRows.length === 0) return null;
+    // Agrupar por dirección y buscar la que termina en stop.destination.
+    const byDir = new Map<number, typeof lineRows>();
+    for (const r of lineRows) {
+      if (!byDir.has(r.direction)) byDir.set(r.direction, []);
+      byDir.get(r.direction)!.push(r);
+    }
+    let mySeq = -1;
+    let totalSteps = 0;
+    for (const [, rows] of byDir) {
+      const sorted = [...rows].sort((a, b) => a.seq - b.seq);
+      const terminal = sorted[sorted.length - 1]?.stop_name;
+      if (terminal !== stop.destination) continue;
+      const idx = sorted.findIndex((r) => String(r.stop_code) === stop.stopId);
+      if (idx >= 0) {
+        mySeq = idx;
+        totalSteps = sorted.length - 1;
+        break;
+      }
+    }
+    if (mySeq < 0 || totalSteps <= 0) return null;
+    return getNightLineEstimates(
+      serviceWindows,
+      stop.line,
+      stop.destination,
+      mySeq,
+      totalSteps,
+    );
+  }, [isNightLine, outOfService, graph, serviceWindows, stop]);
 
   useEffect(() => {
     setStop(loadFavoriteStop());
