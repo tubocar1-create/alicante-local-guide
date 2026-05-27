@@ -544,7 +544,7 @@ const DOMAINS: DomainSpec[] = [
       "habitacion", "habitación", "reservar hotel", "buscar hotel",
       "donde alojarme", "dónde alojarme", "alojarme",
     ],
-    question: "¿Buscas hotel, hostal o apartamento?",
+    question: "Te abro alojamiento; elige el tipo en pantalla.",
     audio: "hotel",
     followups: [
       { keys: ["hotel", "hoteles"], path: "/donde-dormir" },
