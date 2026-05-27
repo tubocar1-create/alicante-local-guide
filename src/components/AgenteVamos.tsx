@@ -2858,6 +2858,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         const replyMode = pickAssistantMode(fallback.pendingDomain ?? pendingDomainRef.current ?? null);
         let reply = formatReply(replyMode, fallback.reply);
         let target: string | undefined = fallback.path;
+        const pendingDomainSpec = fallback.pendingDomain
+          ? DOMAINS.find((d) => d.id === fallback.pendingDomain)
+          : null;
+        if (!target && pendingDomainSpec?.hubPath && !pendingDomainSpec.hubPath.startsWith("action:")) {
+          target = pendingDomainSpec.hubPath;
+        }
         let forwardPrompt: string | undefined =
           fallback.path === "/" && fallback.reply.includes("Dashboard Nocturno")
             ? clean
