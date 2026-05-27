@@ -1176,7 +1176,7 @@ function dbIntentToResult(intent: AgenteIntentRow): LocalResult {
   }
   if (intent.route) {
     return {
-      reply: trainedReply || `Te llevo a ${intent.label.toLowerCase()}.`,
+      reply: trainedReply || selectorReplyFor(intent.route, `Te llevo a ${intent.label.toLowerCase()}.`),
       path: intent.route,
       audio: "fallback",
       pendingDomain: null,
