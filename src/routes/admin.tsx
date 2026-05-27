@@ -76,6 +76,7 @@ const SECTIONS = [
 ] as const;
 
 const IA_SECTIONS = [
+  { to: "/admin/ai/dialogos", label: "Diálogos", icon: Bot },
   { to: "/admin/ai/correcciones", label: "Correcciones", icon: Bot },
   { to: "/admin/ai/doctrina", label: "Doctrina", icon: Bot },
   { to: "/admin/ai/operacion", label: "Operación", icon: Bot },
