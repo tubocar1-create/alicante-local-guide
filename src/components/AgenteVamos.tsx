@@ -401,7 +401,7 @@ const DOMAINS: DomainSpec[] = [
     id: "tram_pick",
     hubPath: "/tram",
     triggers: [],
-    question: "🚋 ¿Hacia qué estación del TRAM quieres ir?",
+    question: "Te abro el TRAM; elige la estación en pantalla.",
     audio: "bus",
     followups: [
       { keys: [
