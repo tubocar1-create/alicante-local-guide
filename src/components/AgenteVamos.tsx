@@ -1889,7 +1889,7 @@ function readLastAgentRoute(): LastAgentRoute | null {
 
 function isNavigationFailureReport(query: string): boolean {
   const q = normalizeSpeech(query);
-  return /\b(no\s+(abre|abrio|abrio|carga|cargo|veo|sale|aparece)|pagina\s+no\s+abre|pantalla\s+en\s+blanco|me\s+lleva\s+pero|no\s+veo\s+nada|se\s+queda|quede\s+esperando|no\s+me\s+(lleva|llevo|abre))\b/.test(q);
+  return /\b(no\s+(abre|abrio|carga|cargo|veo|sale|aparece)|pagina\s+no\s+abre|pantalla\s+en\s+blanco|me\s+lleva\s+pero|no\s+veo\s+nada|se\s+queda|quede\s+esperando|no\s+me\s+(lleva|llevo|abre))\b/.test(q);
 }
 
 function navigationRetryReply(route: string, currentPath: string): string {
@@ -2847,7 +2847,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         const navigationRetry = isNavigationFailureReport(clean) && lastAgentRoute?.route
           ? lastAgentRoute
           : null;
-        const fallback = navigationRetry
+        const fallback: LocalResult = navigationRetry
           ? {
               reply: navigationRetryReply(navigationRetry.route, path),
               path: navigationRetry.route,
