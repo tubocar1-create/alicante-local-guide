@@ -1,0 +1,4 @@
+UPDATE public.bus_line_service_windows SET terminal_name = 'PUERTA DEL MAR' WHERE line_code IN ('3N','13N','22N') AND terminal_name IN ('Plaza del Mar','Puerta del Mar');
+UPDATE public.bus_line_service_windows SET terminal_name = 'LA LUNA-TANATORIO' WHERE line_code = '3N' AND terminal_name = 'Plaza de la Luna';
+UPDATE public.bus_line_service_windows SET terminal_name = 'VILLAFRANQUEZA-IGLESIA' WHERE line_code = '13N' AND terminal_name = 'Villafranqueza';
+UPDATE public.bus_line_service_windows SET terminal_name = 'PAU 5-CONSTITUCIÓN' WHERE line_code = '22N' AND terminal_name = 'Playa de San Juan';
