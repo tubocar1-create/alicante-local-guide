@@ -10,7 +10,7 @@ import {
   saveFavoriteStop,
 } from "@/components/FavoriteStopWidget";
 import { useBusGraph } from "@/hooks/useBusGraph";
-import { useBusServiceWindows, getServiceStatus } from "@/hooks/useBusServiceWindow";
+import { useBusServiceWindows, getServiceStatus, getNightLineEstimates } from "@/hooks/useBusServiceWindow";
 
 export const Route = createFileRoute("/transporte/parada-favorita")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -56,6 +56,42 @@ function ParadaFavoritaPage() {
   const outOfService = serviceStatus.outOfService;
   const reopensAt = serviceStatus.reopensAt ?? "07:00";
   const lastDeparture = serviceStatus.lastDeparture ?? "22:30";
+  const isNightLine = serviceStatus.isNightLine;
+
+  // Para líneas nocturnas en servicio: estimar llegadas a partir de la salida
+  // horaria desde el terminal de origen (Vectalia no provee live para N).
+  const nightEstimate = useMemo(() => {
+    if (!isNightLine || outOfService || !graph) return null;
+    const lineRows = graph.stops.filter((r) => r.line_code === stop.line);
+    if (lineRows.length === 0) return null;
+    // Agrupar por dirección y buscar la que termina en stop.destination.
+    const byDir = new Map<number, typeof lineRows>();
+    for (const r of lineRows) {
+      if (!byDir.has(r.direction)) byDir.set(r.direction, []);
+      byDir.get(r.direction)!.push(r);
+    }
+    let mySeq = -1;
+    let totalSteps = 0;
+    for (const [, rows] of byDir) {
+      const sorted = [...rows].sort((a, b) => a.seq - b.seq);
+      const terminal = sorted[sorted.length - 1]?.stop_name;
+      if (terminal !== stop.destination) continue;
+      const idx = sorted.findIndex((r) => String(r.stop_code) === stop.stopId);
+      if (idx >= 0) {
+        mySeq = idx;
+        totalSteps = sorted.length - 1;
+        break;
+      }
+    }
+    if (mySeq < 0 || totalSteps <= 0) return null;
+    return getNightLineEstimates(
+      serviceWindows,
+      stop.line,
+      stop.destination,
+      mySeq,
+      totalSteps,
+    );
+  }, [isNightLine, outOfService, graph, serviceWindows, stop]);
 
   useEffect(() => {
     setStop(loadFavoriteStop());
@@ -64,8 +100,10 @@ function ParadaFavoritaPage() {
   }, []);
 
   // Una sola petición a Vectalia: trae todos los ETAs disponibles.
+  // Para líneas nocturnas no consultamos Vectalia (sin cobertura live) y
+  // usamos estimados horarios desde el terminal de origen.
   useEffect(() => {
-    if (outOfService) {
+    if (outOfService || isNightLine) {
       setLiveAll([]);
       setLiveLoading(false);
       return;
@@ -100,18 +138,29 @@ function ParadaFavoritaPage() {
       cancelled = true;
       window.clearInterval(id);
     };
-  }, [stop.stopId, stop.line, outOfService]);
+  }, [stop.stopId, stop.line, outOfService, isNightLine]);
 
   const elapsedMin = Math.floor((Date.now() - liveUpdatedAt) / 60_000);
   const liveMinutes = liveAll.length > 0 ? Math.max(0, liveAll[0] - elapsedMin) : null;
   const fallback = computeNextArrival(stop);
-  const minutes = liveMinutes ?? fallback.minutes;
+  // Si hay estimado nocturno, lo usamos como fuente principal.
+  const nightFirst = nightEstimate?.upcoming[0];
+  const minutes = nightFirst ? nightFirst.minutes : (liveMinutes ?? fallback.minutes);
   const arrivalDate = new Date(Date.now() + minutes * 60_000);
-  const arrivalTime = `${String(arrivalDate.getHours()).padStart(2, "0")}:${String(arrivalDate.getMinutes()).padStart(2, "0")}`;
+  const arrivalTime = nightFirst
+    ? nightFirst.arrivalTime
+    : `${String(arrivalDate.getHours()).padStart(2, "0")}:${String(arrivalDate.getMinutes()).padStart(2, "0")}`;
   const fallbackUpcoming = computeUpcomingArrivals(stop, 4);
-  // Construye las 4 próximas llegadas: primero las live (en orden), luego
-  // completa con estimaciones basadas en la frecuencia inferida.
+  // Construye las 4 próximas llegadas. Para líneas nocturnas en servicio
+  // usamos los estimados horarios; en el resto, live Vectalia + relleno.
   const upcoming = (() => {
+    if (nightEstimate) {
+      return nightEstimate.upcoming.map((u) => ({
+        minutes: u.minutes,
+        arrivalTime: u.arrivalTime,
+        live: false,
+      }));
+    }
     const out: Array<{ minutes: number; arrivalTime: string; live: boolean }> = [];
     const liveAdjusted = liveAll.map((m) => Math.max(0, m - elapsedMin)).sort((a, b) => a - b);
     for (const m of liveAdjusted.slice(0, 4)) {
@@ -145,8 +194,9 @@ function ParadaFavoritaPage() {
     }
     return out;
   })();
-  const isArriving = minutes <= 1;
-  const hasLiveData = liveAll.length > 0;
+  const isArriving = minutes <= 1 && !nightEstimate; // los estimados no parpadean
+  const hasLiveData = liveAll.length > 0 && !isNightLine;
+
 
 
   // Build (line+direction) options with real terminal as destination.
@@ -391,7 +441,7 @@ function ParadaFavoritaPage() {
         <div className="mt-2 flex items-center gap-2 border-t border-stone-100 pt-2 text-stone-600">
           <span
             className={`h-1.5 w-1.5 rounded-full ${
-              outOfService ? "bg-stone-400" : liveLoading ? "bg-amber-500 animate-pulse" : hasLiveData ? "bg-emerald-500" : "bg-stone-300"
+              outOfService ? "bg-stone-400" : nightEstimate ? "bg-indigo-500" : liveLoading ? "bg-amber-500 animate-pulse" : hasLiveData ? "bg-emerald-500" : "bg-stone-300"
             }`}
           />
           <div className="text-xs">
@@ -399,13 +449,21 @@ function ParadaFavoritaPage() {
             <span className="font-extrabold text-stone-800">
               {outOfService
                 ? `fuera de servicio · reanuda ${reopensAt}`
-                : hasLiveData
-                  ? "tiempo real (Vectalia)"
-                  : "estimación · sin paso en vivo"}
+                : nightEstimate
+                  ? `estimado nocturno · salidas cada hora desde ${nightEstimate.originTerminal}`
+                  : hasLiveData
+                    ? "tiempo real (Vectalia)"
+                    : "estimación · sin paso en vivo"}
             </span>
           </div>
         </div>
+        {nightEstimate && (
+          <p className="mt-1 text-[10px] leading-snug text-stone-500">
+            ⓘ Horarios <strong>estimados</strong>, no en tiempo real. Calculados a partir de la salida horaria desde {nightEstimate.originTerminal}.
+          </p>
+        )}
       </section>
+
 
       {/* Upcoming buses */}
       <section className="mx-3 mt-2 rounded-3xl bg-white p-3 shadow-[0_8px_24px_-12px_rgba(60,40,10,0.25)]">
