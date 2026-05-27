@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useBusGraph } from "@/hooks/useBusGraph";
 
-// Último bus parte de la parada extrema a las 22:30. Damos margen de ~1h
-// para que termine el recorrido: fuera de servicio entre 23:30 y 06:00.
-function isOutOfService(d = new Date()): boolean {
+// Servicio activo: 07:00 - 23:30. Último bus parte de la parada extrema a
+// las 22:30; damos margen de ~1h para que termine el recorrido.
+export function isBusOutOfService(d = new Date()): boolean {
   const m = d.getHours() * 60 + d.getMinutes();
-  return m >= 23 * 60 + 30 || m < 6 * 60;
+  return m >= 23 * 60 + 30 || m < 7 * 60;
 }
+const isOutOfService = isBusOutOfService;
 
 export type FavoriteStop = {
   stopId: string;

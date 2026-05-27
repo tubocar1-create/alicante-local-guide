@@ -6,6 +6,7 @@ import {
   FavoriteStop,
   computeNextArrival,
   computeUpcomingArrivals,
+  isBusOutOfService,
   loadFavoriteStop,
   saveFavoriteStop,
 } from "@/components/FavoriteStopWidget";
@@ -50,6 +51,8 @@ function ParadaFavoritaPage() {
   const [liveLoading, setLiveLoading] = useState(false);
   const [liveUpdatedAt, setLiveUpdatedAt] = useState<number>(Date.now());
 
+  const outOfService = isBusOutOfService();
+
   useEffect(() => {
     setStop(loadFavoriteStop());
     const id = window.setInterval(() => setTick((t) => t + 1), 30_000);
@@ -58,6 +61,11 @@ function ParadaFavoritaPage() {
 
   // Una sola petición a Vectalia: trae todos los ETAs disponibles.
   useEffect(() => {
+    if (outOfService) {
+      setLiveAll([]);
+      setLiveLoading(false);
+      return;
+    }
     let cancelled = false;
     const fetchAll = async () => {
       setLiveLoading(true);
@@ -88,7 +96,7 @@ function ParadaFavoritaPage() {
       cancelled = true;
       window.clearInterval(id);
     };
-  }, [stop.stopId, stop.line]);
+  }, [stop.stopId, stop.line, outOfService]);
 
   const elapsedMin = Math.floor((Date.now() - liveUpdatedAt) / 60_000);
   const liveMinutes = liveAll.length > 0 ? Math.max(0, liveAll[0] - elapsedMin) : null;
@@ -328,9 +336,18 @@ function ParadaFavoritaPage() {
 
           <div className="flex w-full flex-col items-center justify-start">
             <span className="w-full text-center text-[10px] font-bold uppercase tracking-wider leading-tight text-stone-500">
-              Llegada<br />estimada
+              {outOfService ? <>Servicio<br />nocturno</> : <>Llegada<br />estimada</>}
             </span>
-            {isArriving ? (
+            {outOfService ? (
+              <div className="mt-2 flex w-full flex-col items-center rounded-2xl bg-stone-100 px-2 py-3 text-center ring-1 ring-stone-300">
+                <span className="text-xs font-black uppercase leading-tight tracking-tight text-stone-600">
+                  Fuera de<br />servicio
+                </span>
+                <span className="mt-1 text-[9px] font-semibold text-stone-500">
+                  Reanuda 07:00
+                </span>
+              </div>
+            ) : isArriving ? (
               <div className="mt-2 w-full animate-blink rounded-2xl bg-[#0d3b8a] px-2 py-3 text-center shadow-lg">
                 <div className="text-[9px] font-bold uppercase tracking-widest text-white/80">
                   Faltan
@@ -352,15 +369,17 @@ function ParadaFavoritaPage() {
                 </span>
               </div>
             )}
-            <div className="mt-2 w-full rounded-xl bg-stone-50 px-2 py-1.5 text-center ring-1 ring-stone-200">
-              <div className="flex items-center justify-center gap-1 text-[9px] font-bold uppercase text-stone-500">
-                <Clock className="h-3 w-3" />
-                Llega a las
+            {!outOfService && (
+              <div className="mt-2 w-full rounded-xl bg-stone-50 px-2 py-1.5 text-center ring-1 ring-stone-200">
+                <div className="flex items-center justify-center gap-1 text-[9px] font-bold uppercase text-stone-500">
+                  <Clock className="h-3 w-3" />
+                  Llega a las
+                </div>
+                <div className="text-sm font-extrabold tabular-nums text-stone-900">
+                  {arrivalTime}
+                </div>
               </div>
-              <div className="text-sm font-extrabold tabular-nums text-stone-900">
-                {arrivalTime}
-              </div>
-            </div>
+            )}
           </div>
 
         </div>
@@ -368,13 +387,17 @@ function ParadaFavoritaPage() {
         <div className="mt-2 flex items-center gap-2 border-t border-stone-100 pt-2 text-stone-600">
           <span
             className={`h-1.5 w-1.5 rounded-full ${
-              liveLoading ? "bg-amber-500 animate-pulse" : hasLiveData ? "bg-emerald-500" : "bg-stone-300"
+              outOfService ? "bg-stone-400" : liveLoading ? "bg-amber-500 animate-pulse" : hasLiveData ? "bg-emerald-500" : "bg-stone-300"
             }`}
           />
           <div className="text-xs">
             <span className="text-[9px] uppercase tracking-wider text-stone-500">Datos:</span>{" "}
             <span className="font-extrabold text-stone-800">
-              {hasLiveData ? "tiempo real (Vectalia)" : "estimación · sin paso en vivo"}
+              {outOfService
+                ? "servicio nocturno · sin buses 23:30 – 07:00"
+                : hasLiveData
+                  ? "tiempo real (Vectalia)"
+                  : "estimación · sin paso en vivo"}
             </span>
           </div>
         </div>
@@ -384,37 +407,47 @@ function ParadaFavoritaPage() {
       <section className="mx-3 mt-2 rounded-3xl bg-white p-3 shadow-[0_8px_24px_-12px_rgba(60,40,10,0.25)]">
         <h3 className="mb-1 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-stone-500">
           <span>Próximos buses</span>
-          {hasLiveData && (
+          {!outOfService && hasLiveData && (
             <span className="inline-flex items-center gap-1 normal-case text-emerald-700">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
               en vivo
             </span>
           )}
         </h3>
-        <ul className="divide-y divide-stone-100">
-          {upcoming.map((u, i) => (
-            <li
-              key={i}
-              className="grid grid-cols-[auto_auto_auto_1fr_auto_auto] items-center gap-1.5 py-1.5"
-            >
-              <Bus className="h-4 w-4 text-[#0d3b8a]" />
-              <span className="text-sm font-extrabold tabular-nums text-stone-900">
-                {u.arrivalTime}
-              </span>
-              <span className="rounded-md bg-[#0d3b8a] px-1.5 py-0.5 text-[10px] font-extrabold text-white">
-                {stop.line}
-              </span>
-              <span className="truncate text-xs text-stone-800">{stop.destination}</span>
-              <span className={`text-xs font-extrabold tabular-nums ${u.live ? "text-emerald-700" : "text-stone-400"}`}>
-                {u.minutes}{" "}
-                <span className="text-[9px] font-semibold text-stone-500">
-                  {u.live ? "min · live" : "min est."}
+        {outOfService ? (
+          <div className="flex flex-col items-center gap-1 py-4 text-center">
+            <span className="text-sm font-extrabold text-stone-700">Fuera de servicio</span>
+            <span className="text-[11px] text-stone-500">
+              El servicio se reanuda mañana a las 07:00. El último bus parte de la
+              parada extrema a las 22:30.
+            </span>
+          </div>
+        ) : (
+          <ul className="divide-y divide-stone-100">
+            {upcoming.map((u, i) => (
+              <li
+                key={i}
+                className="grid grid-cols-[auto_auto_auto_1fr_auto_auto] items-center gap-1.5 py-1.5"
+              >
+                <Bus className="h-4 w-4 text-[#0d3b8a]" />
+                <span className="text-sm font-extrabold tabular-nums text-stone-900">
+                  {u.arrivalTime}
                 </span>
-              </span>
-              <ChevronRight className="h-3.5 w-3.5 text-stone-400" />
-            </li>
-          ))}
-        </ul>
+                <span className="rounded-md bg-[#0d3b8a] px-1.5 py-0.5 text-[10px] font-extrabold text-white">
+                  {stop.line}
+                </span>
+                <span className="truncate text-xs text-stone-800">{stop.destination}</span>
+                <span className={`text-xs font-extrabold tabular-nums ${u.live ? "text-emerald-700" : "text-stone-400"}`}>
+                  {u.minutes}{" "}
+                  <span className="text-[9px] font-semibold text-stone-500">
+                    {u.live ? "min · live" : "min est."}
+                  </span>
+                </span>
+                <ChevronRight className="h-3.5 w-3.5 text-stone-400" />
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
 
