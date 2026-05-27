@@ -1132,7 +1132,7 @@ Aplica la doctrina: si enrutas a una categoría, enumera en "reply" SOLO las ram
       const reply = parsed.reply ?? "";
       const navigate = parsed.navigate ?? null;
       const forwardPrompt = parsed.forwardPrompt ?? null;
-      persistCache(reply, navigate, forwardPrompt, {
+      await persistCache(reply, navigate, forwardPrompt, {
         intentKey: parsed.intentKey ?? null,
         intentLabel: parsed.intentLabel ?? null,
         keywords: parsed.keywords ?? null,
