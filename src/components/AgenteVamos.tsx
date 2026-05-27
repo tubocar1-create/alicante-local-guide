@@ -2815,6 +2815,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
               data: {
                 messages: next.map((m) => ({ role: m.role, content: m.content })),
                 path,
+                disableLLM: llmDisabledRef.current,
               },
             });
             if (res && (res as any).ok) {
