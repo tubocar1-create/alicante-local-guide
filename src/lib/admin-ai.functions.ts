@@ -1122,3 +1122,89 @@ export const deleteConversationTurns = createServerFn({ method: "POST" })
     return { ok: true as const, deleted: data.ids.length };
   });
 
+// ---------------- Aprendizaje (qué ha aprendido el agente desde Gemini) ----------------
+
+export type LearnedItem = {
+  kind: "intent" | "proper_noun" | "cache";
+  id: string;
+  title: string;
+  detail: string;
+  route: string | null;
+  keywords: string[];
+  reply: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export const listLearned = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => PinSchema.parse(d))
+  .handler(async ({ data }): Promise<{ items: LearnedItem[] }> => {
+    assertPin(data.pin);
+
+    const [intentsRes, nounsRes, cacheRes] = await Promise.all([
+      supabaseAdmin
+        .from("agente_intents")
+        .select("id, key, label, route, keywords, spoken_reply, created_at, updated_at")
+        .like("key", "learned:%")
+        .order("created_at", { ascending: false })
+        .limit(500),
+      supabaseAdmin
+        .from("agente_proper_nouns")
+        .select("id, name, normalized, category, route, aliases, created_at, updated_at")
+        .eq("source", "llm_learned")
+        .order("created_at", { ascending: false })
+        .limit(500),
+      supabaseAdmin
+        .from("agente_llm_cache")
+        .select("id, raw_query, normalized, path, reply, navigate, hits, created_at, updated_at")
+        .order("created_at", { ascending: false })
+        .limit(500),
+    ]);
+
+    const items: LearnedItem[] = [];
+
+    for (const r of (intentsRes.data ?? []) as any[]) {
+      items.push({
+        kind: "intent",
+        id: r.id,
+        title: r.label || r.key,
+        detail: r.key,
+        route: r.route ?? null,
+        keywords: (r.keywords ?? []) as string[],
+        reply: r.spoken_reply ?? null,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+      });
+    }
+    for (const r of (nounsRes.data ?? []) as any[]) {
+      items.push({
+        kind: "proper_noun",
+        id: r.id,
+        title: r.name,
+        detail: `${r.category} · ${r.normalized}`,
+        route: r.route ?? null,
+        keywords: (r.aliases ?? []) as string[],
+        reply: null,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+      });
+    }
+    for (const r of (cacheRes.data ?? []) as any[]) {
+      items.push({
+        kind: "cache",
+        id: r.id,
+        title: r.raw_query || r.normalized,
+        detail: `path: ${r.path} · hits: ${r.hits}`,
+        route: r.navigate ?? null,
+        keywords: [],
+        reply: r.reply ?? null,
+        createdAt: r.created_at,
+        updatedAt: r.updated_at,
+      });
+    }
+
+    items.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+    return { items };
+  });
+
+

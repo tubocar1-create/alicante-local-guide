@@ -11,6 +11,7 @@ import {
   getAiCosts,
   listDubiousInteractions,
   listAgentConversations,
+  listLearned,
 } from "@/lib/admin-ai.functions";
 import { ADMIN_PIN } from "@/lib/admin-shared";
 
@@ -73,6 +74,14 @@ export const costsQO = () =>
     queryKey: ["admin-ai", "costs"],
     queryFn: () => getAiCosts({ data: { pin: ADMIN_PIN } }),
     staleTime: STALE_SLOW,
+  });
+
+export const learnedQO = () =>
+  queryOptions({
+    queryKey: ["admin-ai", "learned"],
+    queryFn: () => listLearned({ data: { pin: ADMIN_PIN } }),
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: true,
   });
 
 export const FAILURE_REASON_LABEL: Record<string, string> = {

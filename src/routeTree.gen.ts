@@ -123,6 +123,7 @@ import { Route as AdminAiCostsRouteImport } from './routes/admin.ai.costs'
 import { Route as AdminAiCorreccionesRouteImport } from './routes/admin.ai.correcciones'
 import { Route as AdminAiConversationsRouteImport } from './routes/admin.ai.conversations'
 import { Route as AdminAiAuditoriaRouteImport } from './routes/admin.ai.auditoria'
+import { Route as AdminAiAprendizajeRouteImport } from './routes/admin.ai.aprendizaje'
 import { Route as AdminAiAnalyticsRouteImport } from './routes/admin.ai.analytics'
 import { Route as OcioEventosVenueIdRouteImport } from './routes/ocio_.eventos_.venue.$id'
 import { Route as OcioCinesIdCarteleraRouteImport } from './routes/ocio_.cines_.$id.cartelera'
@@ -717,6 +718,11 @@ const AdminAiAuditoriaRoute = AdminAiAuditoriaRouteImport.update({
   path: '/auditoria',
   getParentRoute: () => AdminAiRoute,
 } as any)
+const AdminAiAprendizajeRoute = AdminAiAprendizajeRouteImport.update({
+  id: '/aprendizaje',
+  path: '/aprendizaje',
+  getParentRoute: () => AdminAiRoute,
+} as any)
 const AdminAiAnalyticsRoute = AdminAiAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
@@ -900,6 +906,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/business/': typeof BusinessIndexRoute
   '/admin/ai/analytics': typeof AdminAiAnalyticsRoute
+  '/admin/ai/aprendizaje': typeof AdminAiAprendizajeRoute
   '/admin/ai/auditoria': typeof AdminAiAuditoriaRoute
   '/admin/ai/conversations': typeof AdminAiConversationsRoute
   '/admin/ai/correcciones': typeof AdminAiCorreccionesRoute
@@ -1032,6 +1039,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/business': typeof BusinessIndexRoute
   '/admin/ai/analytics': typeof AdminAiAnalyticsRoute
+  '/admin/ai/aprendizaje': typeof AdminAiAprendizajeRoute
   '/admin/ai/auditoria': typeof AdminAiAuditoriaRoute
   '/admin/ai/conversations': typeof AdminAiConversationsRoute
   '/admin/ai/correcciones': typeof AdminAiCorreccionesRoute
@@ -1168,6 +1176,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/business/': typeof BusinessIndexRoute
   '/admin/ai/analytics': typeof AdminAiAnalyticsRoute
+  '/admin/ai/aprendizaje': typeof AdminAiAprendizajeRoute
   '/admin/ai/auditoria': typeof AdminAiAuditoriaRoute
   '/admin/ai/conversations': typeof AdminAiConversationsRoute
   '/admin/ai/correcciones': typeof AdminAiCorreccionesRoute
@@ -1305,6 +1314,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/business/'
     | '/admin/ai/analytics'
+    | '/admin/ai/aprendizaje'
     | '/admin/ai/auditoria'
     | '/admin/ai/conversations'
     | '/admin/ai/correcciones'
@@ -1437,6 +1447,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/business'
     | '/admin/ai/analytics'
+    | '/admin/ai/aprendizaje'
     | '/admin/ai/auditoria'
     | '/admin/ai/conversations'
     | '/admin/ai/correcciones'
@@ -1572,6 +1583,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/business/'
     | '/admin/ai/analytics'
+    | '/admin/ai/aprendizaje'
     | '/admin/ai/auditoria'
     | '/admin/ai/conversations'
     | '/admin/ai/correcciones'
@@ -2512,6 +2524,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAiAuditoriaRouteImport
       parentRoute: typeof AdminAiRoute
     }
+    '/admin/ai/aprendizaje': {
+      id: '/admin/ai/aprendizaje'
+      path: '/aprendizaje'
+      fullPath: '/admin/ai/aprendizaje'
+      preLoaderRoute: typeof AdminAiAprendizajeRouteImport
+      parentRoute: typeof AdminAiRoute
+    }
     '/admin/ai/analytics': {
       id: '/admin/ai/analytics'
       path: '/analytics'
@@ -2650,6 +2669,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminAiRouteChildren {
   AdminAiAnalyticsRoute: typeof AdminAiAnalyticsRoute
+  AdminAiAprendizajeRoute: typeof AdminAiAprendizajeRoute
   AdminAiAuditoriaRoute: typeof AdminAiAuditoriaRoute
   AdminAiConversationsRoute: typeof AdminAiConversationsRoute
   AdminAiCorreccionesRoute: typeof AdminAiCorreccionesRoute
@@ -2668,6 +2688,7 @@ interface AdminAiRouteChildren {
 
 const AdminAiRouteChildren: AdminAiRouteChildren = {
   AdminAiAnalyticsRoute: AdminAiAnalyticsRoute,
+  AdminAiAprendizajeRoute: AdminAiAprendizajeRoute,
   AdminAiAuditoriaRoute: AdminAiAuditoriaRoute,
   AdminAiConversationsRoute: AdminAiConversationsRoute,
   AdminAiCorreccionesRoute: AdminAiCorreccionesRoute,
