@@ -864,7 +864,7 @@ function detectAmbiguity(query: string): LocalResult | null {
   if (other?.id === "compras" && !entity) {
     const comprasDomain = DOMAINS.find((d) => d.id === "compras");
     return {
-      reply: comprasDomain?.question ?? SHOPPING_INTRO_REPLY,
+      reply: comprasDomain?.question ?? "Te abro compras.",
       path: comprasDomain?.hubPath ?? "/comprar",
       audio: comprasDomain?.audio ?? "fallback",
       pendingDomain: null,
