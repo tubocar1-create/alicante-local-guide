@@ -2192,6 +2192,47 @@ export async function hablar(
   synth.speak(utterance);
 }
 
+function speakPreparedUtterance(
+  texto: unknown,
+  utterance: SpeechSynthesisUtterance,
+  opts: { onStart?: () => void; onEnd?: () => void } = {},
+) {
+  const { onStart, onEnd } = opts;
+  const respuesta = plainText(extractSpeechText(texto));
+  if (!respuesta || typeof window === "undefined" || !window.speechSynthesis) {
+    onEnd?.();
+    return;
+  }
+  const synth = window.speechSynthesis;
+  warmSpeechVoices(synth);
+  synth.cancel();
+  synth.resume();
+  configureSpanishUtterance(utterance, respuesta);
+  utterance.volume = 1;
+  let finished = false;
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    if (__vaActiveUtterance === utterance) __vaActiveUtterance = null;
+    markVaInteraction();
+    onEnd?.();
+  };
+  utterance.onstart = () => {
+    console.log("VOICE START");
+    onStart?.();
+  };
+  utterance.onend = () => {
+    console.log("VOICE END");
+    finish();
+  };
+  utterance.onerror = (e) => {
+    console.log("VOICE ERROR", e);
+    finish();
+  };
+  keepSpeechSynthesisAwake(synth);
+  synth.speak(utterance);
+}
+
 if (typeof window !== "undefined") {
   (window as any).hablar = hablar;
 }
@@ -2534,7 +2575,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       try {
         speakingRef.current = true;
         setSpeaking(true);
-        hablar(text, {
+        const speechOpts = {
           onStart: () => {
             speakingRef.current = true;
             setSpeaking(true);
@@ -2546,7 +2587,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             onEnd?.();
             resumeListeningAfterEcho();
           },
-        });
+        };
+        if (_reservedUtterance) {
+          speakPreparedUtterance(text, _reservedUtterance, speechOpts);
+        } else {
+          hablar(text, speechOpts);
+        }
       } catch {
         onEnd?.();
         resumeListeningAfterEcho();
@@ -3556,8 +3602,6 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
 }
 
-const GREETING_SESSION_KEY = "va:greeting-played";
-
 export function AgenteVamosFab() {
   const [open, setOpen] = useState(false);
   const voiceBootStartedRef = useRef(false);
@@ -3577,7 +3621,6 @@ export function AgenteVamosFab() {
       __vaSetGreetingSpoken(true);
       __vaSpeechUnlocked = true;
       greetingPlayedRef.current = true;
-      try { window.sessionStorage.setItem(GREETING_SESSION_KEY, "1"); } catch {}
 
       // Cancela cualquier utterance anterior antes de iniciar el saludo.
       try { synth.cancel(); } catch {}
@@ -3675,13 +3718,6 @@ export function AgenteVamosFab() {
     if (typeof window === "undefined") return;
     if (window.speechSynthesis) warmSpeechVoices(window.speechSynthesis);
     primeSpanishUtterances();
-    try {
-      if (window.sessionStorage.getItem(GREETING_SESSION_KEY) === "1") {
-        greetingPlayedRef.current = true;
-        voiceBootStartedRef.current = true;
-      }
-    } catch {}
-
     // Pre-warm TTS al primer gesto del usuario (cualquier toque/clic).
     // Desbloquea el motor de voz y carga voces antes de que se necesite
     // hablar, eliminando la latencia inicial en frío (sin caché).
