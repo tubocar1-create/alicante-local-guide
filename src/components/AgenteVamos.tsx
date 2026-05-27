@@ -3602,8 +3602,6 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
 }
 
-const GREETING_SESSION_KEY = "va:greeting-played";
-
 export function AgenteVamosFab() {
   const [open, setOpen] = useState(false);
   const voiceBootStartedRef = useRef(false);
@@ -3623,7 +3621,6 @@ export function AgenteVamosFab() {
       __vaSetGreetingSpoken(true);
       __vaSpeechUnlocked = true;
       greetingPlayedRef.current = true;
-      try { window.sessionStorage.setItem(GREETING_SESSION_KEY, "1"); } catch {}
 
       // Cancela cualquier utterance anterior antes de iniciar el saludo.
       try { synth.cancel(); } catch {}
@@ -3721,13 +3718,6 @@ export function AgenteVamosFab() {
     if (typeof window === "undefined") return;
     if (window.speechSynthesis) warmSpeechVoices(window.speechSynthesis);
     primeSpanishUtterances();
-    try {
-      if (window.sessionStorage.getItem(GREETING_SESSION_KEY) === "1") {
-        greetingPlayedRef.current = true;
-        voiceBootStartedRef.current = true;
-      }
-    } catch {}
-
     // Pre-warm TTS al primer gesto del usuario (cualquier toque/clic).
     // Desbloquea el motor de voz y carga voces antes de que se necesite
     // hablar, eliminando la latencia inicial en frío (sin caché).
