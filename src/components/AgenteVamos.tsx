@@ -1667,6 +1667,10 @@ function localResolve(
           path: fuPath,
           audio: intent?.audio ?? d.audio,
           pendingDomain: null,
+          // Si el followup nos devuelve al hub "/" (caso comer), señalamos
+          // al ChatScreen que debe abrir el submenú correspondiente; si no
+          // lo hacemos, el usuario aterriza en la home sin selector visible.
+          openSubmenu: fuPath === "/" && d.id === "comer" ? "comer" : undefined,
         };
       }
 
@@ -1676,6 +1680,7 @@ function localResolve(
           path: d.hubPath,
           audio: d.audio,
           pendingDomain: null,
+          openSubmenu: d.hubPath === "/" && d.id === "comer" ? "comer" : undefined,
         };
       }
     }
@@ -2888,6 +2893,10 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
             window.sessionStorage.setItem("afp:fwdPrompt", forwardPrompt);
           } catch {}
         }
+        // Si el resolver local pidió abrir un submenú (p.ej. "comer"),
+        // lo despachamos tras navegar. NO usamos sessionStorage aquí para
+        // no activar el flujo "navigatingToDashboard" que espera resumen.
+        const localOpenSubmenu = fallback.openSubmenu ?? null;
 
         // Enriquecer respuesta TRAM con la parada más cercana cuando hay geo.
         if (fallback.pendingDomain === "tram_origin_confirm" && typeof window !== "undefined") {
@@ -3220,7 +3229,14 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           return;
         } else if (target && target !== path) {
           setTimeout(() => {
-            goTo(target);
+            const done = goTo(target);
+            Promise.resolve(done).finally(() => {
+              if (localOpenSubmenu && typeof window !== "undefined") {
+                window.dispatchEvent(
+                  new CustomEvent("afp:open-submenu", { detail: { path: localOpenSubmenu } }),
+                );
+              }
+            });
           }, 50);
         } else if (target && target === path && navigationRetry) {
           setTimeout(() => {
@@ -3230,6 +3246,11 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
               goTo(target);
             }
           }, 50);
+        } else if (target && target === path && localOpenSubmenu && typeof window !== "undefined") {
+          // Ya estamos en el hub: solo abrimos el submenú.
+          window.dispatchEvent(
+            new CustomEvent("afp:open-submenu", { detail: { path: localOpenSubmenu } }),
+          );
         }
         // La voz ya se ha lanzado arriba con speak(reply). Aquí sólo
         // gestionamos navegación tardía si procede.
