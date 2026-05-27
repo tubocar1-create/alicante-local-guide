@@ -407,7 +407,7 @@ function ParadaFavoritaPage() {
                   Fuera de<br />servicio
                 </span>
                 <span className="mt-1 text-[9px] font-semibold text-stone-500">
-                  Reanuda {reopensAt}
+                  Reanuda {reopensLabel}
                 </span>
               </div>
             ) : isArriving ? (
@@ -457,7 +457,7 @@ function ParadaFavoritaPage() {
             <span className="text-[9px] uppercase tracking-wider text-stone-500">Datos:</span>{" "}
             <span className="font-extrabold text-stone-800">
               {outOfService
-                ? `fuera de servicio · reanuda ${reopensAt}`
+                ? `fuera de servicio · reanuda ${reopensLabel}`
                 : nightEstimate
                   ? `estimado nocturno · salidas cada hora desde ${nightEstimate.originTerminal}`
                   : hasLiveData
@@ -489,7 +489,7 @@ function ParadaFavoritaPage() {
           <div className="flex flex-col items-center gap-1 py-4 text-center">
             <span className="text-sm font-extrabold text-stone-700">Fuera de servicio</span>
             <span className="text-[11px] text-stone-500">
-              El servicio se reanuda a las {reopensAt}. El último bus parte de la
+              El servicio se reanuda el {reopensLabel}. El último bus parte de la
               parada extrema a las {lastDeparture}.
             </span>
           </div>
