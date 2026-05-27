@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 export type ServiceWindowRow = {
   line_code: string;
   direction: number;
+  terminal_name: string;
   day_type: string; // laborable | sabado | domingo | festivo
   first_departure: string; // HH:MM:SS
   last_departure: string; // HH:MM:SS
