@@ -391,7 +391,7 @@ const DOMAINS: DomainSpec[] = [
     id: "bus_known",
     hubPath: "action:bus-picker",
     triggers: [],
-    question: "Perfecto. ¿Cuál es la línea que quieres tomar? (por ejemplo: 22, 7, 13N…)",
+    question: "Te abro el selector de líneas de bus.",
     audio: "bus",
     followups: [
       { keys: ["no se", "no sé", "ayuda", "ayudame", "ayúdame", "no lo se", "no lo sé"], path: "action:bus-picker" },
