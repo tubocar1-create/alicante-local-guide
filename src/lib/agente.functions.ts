@@ -896,6 +896,25 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
       console.warn("agente_llm_cache lookup failed", e);
     }
 
+    // 0c) NOMBRE PROPIO APRENDIDO — BD agente_proper_nouns (sin Gemini).
+    // Cada vez que el LLM resuelve una entidad concreta la persistimos en
+    // esta tabla; la próxima vez el agente local la encuentra directamente.
+    try {
+      const properRows = await loadProperNouns(supabaseAdmin);
+      const properHit = matchProperNoun(normalized, properRows, currentPath);
+      if (properHit) {
+        return {
+          ok: true as const,
+          content: `Te llevo a ${properHit.name}.`,
+          navigate: properHit.path,
+          forwardPrompt: undefined,
+          source: "proper_noun" as const,
+        };
+      }
+    } catch (e) {
+      console.warn("matchProperNoun lookup failed", e);
+    }
+
     if (disableLLM) {
       return {
         ok: false as const,
