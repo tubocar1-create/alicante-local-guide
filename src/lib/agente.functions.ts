@@ -946,9 +946,19 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
           {
             role: "system",
             content: `Ruta actual del usuario: ${currentPath}.
-Responde SIEMPRE en JSON estricto con la forma: {"reply": string breve para decir en voz alta (1-2 frases naturales), "navigate": string|null (ruta a la que llevar al usuario, o null), "forwardPrompt": string|null (prompt que el chat principal debe procesar al llegar, o null)}.
-Aplica la doctrina: si enrutas a una categoría, enumera en "reply" SOLO las ramas reales del selector de esa pantalla. Nunca mezcles categorías ajenas al tema activo. No inventes opciones. No te inventes rutas: usa solo las del SYSTEM_PROMPT.`,
+Responde SIEMPRE en JSON estricto con la forma:
+{
+  "reply": string breve para decir en voz alta (1-2 frases naturales, tono cálido como tú responderías),
+  "navigate": string|null (ruta exacta o null),
+  "forwardPrompt": string|null,
+  "intentKey": string corto en snake_case que identifica la intención (ej: "salud_dolor_cabeza", "farmacia_guardia", "vuelo_madrid"),
+  "intentLabel": string humano que describe la intención (ej: "Síntoma: dolor de cabeza → Salud"),
+  "keywords": string[] de 3 a 10 términos NORMALIZADOS (minúsculas, sin tildes) que el agente local debe usar la próxima vez para reconocer ESTA intención SIN llamarte. Incluye sinónimos, síntomas, marcas, nombres propios y contexto (ej: ["dolor","cabeza","jaqueca","migraña","cefalea","duele","molestia"]).
+  "contextTags": string[] opcional con el dominio/sector (ej: ["salud","sintoma"], ["transporte","aereo"]).
+}
+Aplica la doctrina: si enrutas a una categoría, enumera en "reply" SOLO las ramas reales del selector de esa pantalla. Nunca mezcles categorías ajenas al tema activo. No inventes opciones. No te inventes rutas: usa solo las del SYSTEM_PROMPT. Las "keywords" son CRÍTICAS — son lo que el agente memorizará para no volver a llamarte ante consultas similares.`,
           },
+
           ...history,
         ],
         response_format: { type: "json_object" },
@@ -970,7 +980,19 @@ Aplica la doctrina: si enrutas a una categoría, enumera en "reply" SOLO las ram
     const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
     const raw = json.choices?.[0]?.message?.content ?? "";
 
-    const persistCache = (reply: string, navigate: string | null, forwardPrompt: string | null) => {
+    type LLMTeach = {
+      intentKey?: string | null;
+      intentLabel?: string | null;
+      keywords?: string[] | null;
+      contextTags?: string[] | null;
+    };
+
+    const persistCache = (
+      reply: string,
+      navigate: string | null,
+      forwardPrompt: string | null,
+      teach: LLMTeach = {},
+    ) => {
       if (!reply) return;
       void supabaseAdmin
         .from("agente_llm_cache")
@@ -990,10 +1012,65 @@ Aplica la doctrina: si enrutas a una categoría, enumera en "reply" SOLO las ram
           { onConflict: "normalized,path" }
         );
 
+      // APRENDIZAJE SEMÁNTICO — Gemini nos enseña intent + keywords + estilo de
+      // respuesta. Lo persistimos en agente_intents para que el agente local
+      // resuelva la próxima consulta similar SIN llamar a Gemini.
+      const teachedKws = (teach.keywords ?? [])
+        .map((k) => normalizeText(String(k)))
+        .filter((k) => k.length >= 3 && !LEARN_STOPWORDS.has(k));
+      const ctxTags = (teach.contextTags ?? [])
+        .map((t) => normalizeText(String(t)))
+        .filter((t) => t.length >= 3);
+      const mergedKws = Array.from(new Set([...teachedKws, ...ctxTags, ...extractKeywords(normalized)])).slice(0, 15);
+
+      if (mergedKws.length >= 2) {
+        const rawKey = teach.intentKey
+          ? normalizeText(teach.intentKey).replace(/\s+/g, "_")
+          : `learned_${normalized.slice(0, 40).replace(/\s+/g, "_")}`;
+        const key = `learned:${rawKey}`.slice(0, 80);
+        const label = teach.intentLabel?.toString().slice(0, 120)
+          || `Aprendido (Gemini): ${normalized.slice(0, 80)}`;
+        void (async () => {
+          try {
+            const { data: existing } = await supabaseAdmin
+              .from("agente_intents")
+              .select("id, keywords")
+              .eq("key", key)
+              .maybeSingle();
+            if (existing) {
+              const fused = Array.from(new Set([...(existing.keywords ?? []), ...mergedKws])).slice(0, 20);
+              await supabaseAdmin
+                .from("agente_intents")
+                .update({
+                  spoken_reply: reply,
+                  route: navigate,
+                  keywords: fused,
+                  label,
+                  active: true,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq("id", existing.id);
+            } else {
+              await supabaseAdmin.from("agente_intents").insert({
+                key,
+                label,
+                spoken_reply: reply,
+                route: navigate,
+                keywords: mergedKws,
+                priority: 40,
+                active: true,
+                notes: `Aprendido de Gemini. Tags: ${ctxTags.join(",") || "n/a"}`,
+              });
+            }
+          } catch (e) {
+            console.warn("learn intent from LLM failed", e);
+          }
+        })();
+      }
+
       // APRENDIZAJE DE ENTIDAD CONCRETA — si Gemini devuelve una ruta "hoja"
       // (p.ej. /farmacias/<slug>, /hospitales/<slug>, /ocio/cines/<id>, /vuelos/<iata>),
-      // persistimos el nombre propio en agente_proper_nouns para que el próximo
-      // turno lo resuelva el agente local sin volver a llamar a Gemini.
+      // persistimos el nombre propio en agente_proper_nouns.
       if (navigate && navigate.startsWith("/")) {
         const segs = navigate.split("/").filter(Boolean);
         if (segs.length >= 2) {
@@ -1003,7 +1080,10 @@ Aplica la doctrina: si enrutas a una categoría, enumera en "reply" SOLO las ram
           const displayName = lastUserMessage.trim().slice(0, 120) || nameFromSlug;
           const normName = normalizeText(displayName);
           if (normName && normName.length >= 3) {
-            const aliases = Array.from(new Set([normalizeText(nameFromSlug)].filter(Boolean)));
+            const aliases = Array.from(new Set([
+              normalizeText(nameFromSlug),
+              ...teachedKws,
+            ].filter(Boolean)));
             void supabaseAdmin
               .from("agente_proper_nouns")
               .upsert(
@@ -1019,7 +1099,6 @@ Aplica la doctrina: si enrutas a una categoría, enumera en "reply" SOLO las ram
                 },
                 { onConflict: "normalized,route" }
               );
-            // invalidamos cache in-memory para que el próximo turno cargue la nueva fila
             _properNounsCache = null;
           }
         }
@@ -1027,11 +1106,24 @@ Aplica la doctrina: si enrutas a una categoría, enumera en "reply" SOLO las ram
     };
 
     try {
-      const parsed = JSON.parse(raw) as { reply?: string; navigate?: string | null; forwardPrompt?: string | null };
+      const parsed = JSON.parse(raw) as {
+        reply?: string;
+        navigate?: string | null;
+        forwardPrompt?: string | null;
+        intentKey?: string | null;
+        intentLabel?: string | null;
+        keywords?: string[] | null;
+        contextTags?: string[] | null;
+      };
       const reply = parsed.reply ?? "";
       const navigate = parsed.navigate ?? null;
       const forwardPrompt = parsed.forwardPrompt ?? null;
-      persistCache(reply, navigate, forwardPrompt);
+      persistCache(reply, navigate, forwardPrompt, {
+        intentKey: parsed.intentKey ?? null,
+        intentLabel: parsed.intentLabel ?? null,
+        keywords: parsed.keywords ?? null,
+        contextTags: parsed.contextTags ?? null,
+      });
       return {
         ok: true as const,
         content: reply,
@@ -1050,6 +1142,7 @@ Aplica la doctrina: si enrutas a una categoría, enumera en "reply" SOLO las ram
       };
     }
   });
+
 
 
 
