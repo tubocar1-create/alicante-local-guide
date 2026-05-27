@@ -575,7 +575,7 @@ const DOMAINS: DomainSpec[] = [
       "mapa interactivo", "mapa de playas", "mapa de la ciudad",
       "mapa playa", "mapa playas",
     ],
-    question: "Aquí tienes el mapa interactivo de playas. Llámame luego si quieres más información.",
+    question: "Te abro el mapa interactivo.",
     audio: "beaches",
     followups: [],
   },
