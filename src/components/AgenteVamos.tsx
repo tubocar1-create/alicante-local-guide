@@ -2764,6 +2764,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       const t0 = typeof performance !== "undefined" ? performance.now() : Date.now();
       let serverCalled = false;
       let finalTarget: string | undefined;
+      let finalReply: string = "";
       bumpIdle();
       stopListening();
       const reservedReplyUtterance = viaVoice ? reserveSpanishUtterance() : null;
@@ -2995,6 +2996,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         if (!navigatingToDashboard) {
           setMsgs((m) => [...m, { role: "assistant", content: reply }]);
         }
+        finalReply = reply;
 
         // CRÍTICO: hablar SIEMPRE la respuesta del agente en cuanto llega,
         // sin depender de eventos posteriores (food-summary sólo existe
@@ -3169,6 +3171,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
               routeOrigin: path ?? null,
               decision: finalTarget ? "navigated" : "answered",
               sessionId: sessionIdRef.current,
+              detectedIntent: finalTarget ?? null,
+              modelUsed: serverCalled ? "google/gemini-2.5-flash" : "local-resolver",
+              notes: (finalReply ?? "").slice(0, 3500),
             },
           }).catch(() => {});
         } catch {

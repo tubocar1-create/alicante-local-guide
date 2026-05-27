@@ -832,6 +832,8 @@ export type ConversationTurn = {
   audit_note: string | null;
   audited_at: string | null;
   gap_ms: number | null; // ms desde el turno anterior (null en el primero)
+  model_used: string | null;
+  reply_text: string | null;
 };
 
 export type ConversationDTO = {
@@ -865,7 +867,7 @@ export const listAgentConversations = createServerFn({ method: "POST" })
     const { data: rows, error } = await supabaseAdmin
       .from("agente_learning_log")
       .select(
-        "id,created_at,session_id,raw_query,detected_intent,resolver_type,resolved,fallback_used,failure_reason,latency_ms,decision,route_origin,notes,estimated_cost,reviewed_at,review_status,review_note,audit_phase,audit_verdict,audit_note,audited_at",
+        "id,created_at,session_id,raw_query,detected_intent,resolver_type,resolved,fallback_used,failure_reason,latency_ms,decision,route_origin,notes,model_used,estimated_cost,reviewed_at,review_status,review_note,audit_phase,audit_verdict,audit_note,audited_at",
       )
       .gte("created_at", since)
       .order("created_at", { ascending: true })
@@ -947,6 +949,8 @@ export const listAgentConversations = createServerFn({ method: "POST" })
         audit_note: (r.audit_note as string | null) ?? null,
         audited_at: (r.audited_at as string | null) ?? null,
         gap_ms: gapMs,
+        model_used: (r.model_used as string | null) ?? null,
+        reply_text: (r.notes as string | null) ?? null,
       });
       convo.total_turns += 1;
       if (r.resolved === false) convo.unresolved_turns += 1;
