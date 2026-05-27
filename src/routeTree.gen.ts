@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as VuelosRouteImport } from './routes/vuelos'
 import { Route as VocesRouteImport } from './routes/voces'
+import { Route as TransporteRouteImport } from './routes/transporte'
 import { Route as TramRouteImport } from './routes/tram'
 import { Route as ThreadsRouteImport } from './routes/threads'
 import { Route as StayRouteImport } from './routes/stay'
@@ -159,6 +160,11 @@ const VocesRoute = VocesRouteImport.update({
   path: '/voces',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TransporteRoute = TransporteRouteImport.update({
+  id: '/transporte',
+  path: '/transporte',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TramRoute = TramRouteImport.update({
   id: '/tram',
   path: '/tram',
@@ -296,9 +302,9 @@ const VuelosIataRoute = VuelosIataRouteImport.update({
 } as any)
 const TransporteParadaFavoritaRoute =
   TransporteParadaFavoritaRouteImport.update({
-    id: '/transporte/parada-favorita',
-    path: '/transporte/parada-favorita',
-    getParentRoute: () => rootRouteImport,
+    id: '/parada-favorita',
+    path: '/parada-favorita',
+    getParentRoute: () => TransporteRoute,
   } as any)
 const TramMapaRoute = TramMapaRouteImport.update({
   id: '/mapa',
@@ -852,6 +858,7 @@ export interface FileRoutesByFullPath {
   '/stay': typeof StayRoute
   '/threads': typeof ThreadsRouteWithChildren
   '/tram': typeof TramRouteWithChildren
+  '/transporte': typeof TransporteRouteWithChildren
   '/voces': typeof VocesRoute
   '/vuelos': typeof VuelosRoute
   '/welcome': typeof WelcomeRoute
@@ -986,6 +993,7 @@ export interface FileRoutesByTo {
   '/stay': typeof StayRoute
   '/threads': typeof ThreadsRouteWithChildren
   '/tram': typeof TramRouteWithChildren
+  '/transporte': typeof TransporteRouteWithChildren
   '/voces': typeof VocesRoute
   '/vuelos': typeof VuelosRoute
   '/welcome': typeof WelcomeRoute
@@ -1122,6 +1130,7 @@ export interface FileRoutesById {
   '/stay': typeof StayRoute
   '/threads': typeof ThreadsRouteWithChildren
   '/tram': typeof TramRouteWithChildren
+  '/transporte': typeof TransporteRouteWithChildren
   '/voces': typeof VocesRoute
   '/vuelos': typeof VuelosRoute
   '/welcome': typeof WelcomeRoute
@@ -1260,6 +1269,7 @@ export interface FileRouteTypes {
     | '/stay'
     | '/threads'
     | '/tram'
+    | '/transporte'
     | '/voces'
     | '/vuelos'
     | '/welcome'
@@ -1394,6 +1404,7 @@ export interface FileRouteTypes {
     | '/stay'
     | '/threads'
     | '/tram'
+    | '/transporte'
     | '/voces'
     | '/vuelos'
     | '/welcome'
@@ -1529,6 +1540,7 @@ export interface FileRouteTypes {
     | '/stay'
     | '/threads'
     | '/tram'
+    | '/transporte'
     | '/voces'
     | '/vuelos'
     | '/welcome'
@@ -1666,6 +1678,7 @@ export interface RootRouteChildren {
   StayRoute: typeof StayRoute
   ThreadsRoute: typeof ThreadsRouteWithChildren
   TramRoute: typeof TramRouteWithChildren
+  TransporteRoute: typeof TransporteRouteWithChildren
   VocesRoute: typeof VocesRoute
   VuelosRoute: typeof VuelosRoute
   WelcomeRoute: typeof WelcomeRoute
@@ -1685,7 +1698,6 @@ export interface RootRouteChildren {
   OcioEventosRoute: typeof OcioEventosRoute
   OcioTeatrosRoute: typeof OcioTeatrosRoute
   SaludCategoriaRoute: typeof SaludCategoriaRouteWithChildren
-  TransporteParadaFavoritaRoute: typeof TransporteParadaFavoritaRoute
   VuelosIataRoute: typeof VuelosIataRoute
   ApiPublicAenaFlightsRoute: typeof ApiPublicAenaFlightsRoute
   ApiPublicAuthEmailHookRoute: typeof ApiPublicAuthEmailHookRoute
@@ -1745,6 +1757,13 @@ declare module '@tanstack/react-router' {
       path: '/voces'
       fullPath: '/voces'
       preLoaderRoute: typeof VocesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/transporte': {
+      id: '/transporte'
+      path: '/transporte'
+      fullPath: '/transporte'
+      preLoaderRoute: typeof TransporteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tram': {
@@ -1938,10 +1957,10 @@ declare module '@tanstack/react-router' {
     }
     '/transporte/parada-favorita': {
       id: '/transporte/parada-favorita'
-      path: '/transporte/parada-favorita'
+      path: '/parada-favorita'
       fullPath: '/transporte/parada-favorita'
       preLoaderRoute: typeof TransporteParadaFavoritaRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof TransporteRoute
     }
     '/tram/mapa': {
       id: '/tram/mapa'
@@ -2852,6 +2871,18 @@ const TramRouteChildren: TramRouteChildren = {
 
 const TramRouteWithChildren = TramRoute._addFileChildren(TramRouteChildren)
 
+interface TransporteRouteChildren {
+  TransporteParadaFavoritaRoute: typeof TransporteParadaFavoritaRoute
+}
+
+const TransporteRouteChildren: TransporteRouteChildren = {
+  TransporteParadaFavoritaRoute: TransporteParadaFavoritaRoute,
+}
+
+const TransporteRouteWithChildren = TransporteRoute._addFileChildren(
+  TransporteRouteChildren,
+)
+
 interface OcioCinesRouteChildren {
   OcioCinesIdRoute: typeof OcioCinesIdRoute
 }
@@ -2901,6 +2932,7 @@ const rootRouteChildren: RootRouteChildren = {
   StayRoute: StayRoute,
   ThreadsRoute: ThreadsRouteWithChildren,
   TramRoute: TramRouteWithChildren,
+  TransporteRoute: TransporteRouteWithChildren,
   VocesRoute: VocesRoute,
   VuelosRoute: VuelosRoute,
   WelcomeRoute: WelcomeRoute,
@@ -2920,7 +2952,6 @@ const rootRouteChildren: RootRouteChildren = {
   OcioEventosRoute: OcioEventosRoute,
   OcioTeatrosRoute: OcioTeatrosRoute,
   SaludCategoriaRoute: SaludCategoriaRouteWithChildren,
-  TransporteParadaFavoritaRoute: TransporteParadaFavoritaRoute,
   VuelosIataRoute: VuelosIataRoute,
   ApiPublicAenaFlightsRoute: ApiPublicAenaFlightsRoute,
   ApiPublicAuthEmailHookRoute: ApiPublicAuthEmailHookRoute,
