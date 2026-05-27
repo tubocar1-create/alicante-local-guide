@@ -61,6 +61,11 @@ function ParadaFavoritaPage() {
 
   // Una sola petición a Vectalia: trae todos los ETAs disponibles.
   useEffect(() => {
+    if (outOfService) {
+      setLiveAll([]);
+      setLiveLoading(false);
+      return;
+    }
     let cancelled = false;
     const fetchAll = async () => {
       setLiveLoading(true);
@@ -91,7 +96,7 @@ function ParadaFavoritaPage() {
       cancelled = true;
       window.clearInterval(id);
     };
-  }, [stop.stopId, stop.line]);
+  }, [stop.stopId, stop.line, outOfService]);
 
   const elapsedMin = Math.floor((Date.now() - liveUpdatedAt) / 60_000);
   const liveMinutes = liveAll.length > 0 ? Math.max(0, liveAll[0] - elapsedMin) : null;
