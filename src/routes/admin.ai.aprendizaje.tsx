@@ -19,13 +19,13 @@ type Filter = "all" | "intent" | "proper_noun" | "cache";
 const KIND_LABEL: Record<LearnedItem["kind"], string> = {
   intent: "Intent",
   proper_noun: "Nombre propio",
-  cache: "Caché",
+  cache: "Respuesta aprendida",
 };
 
 const KIND_COLOR: Record<LearnedItem["kind"], string> = {
   intent: "bg-blue-500/15 text-blue-700 border-blue-500/30",
   proper_noun: "bg-emerald-500/15 text-emerald-700 border-emerald-500/30",
-  cache: "bg-amber-500/15 text-amber-700 border-amber-500/30",
+  cache: "bg-purple-500/15 text-purple-700 border-purple-500/30",
 };
 
 function fmt(d: string) {
