@@ -371,7 +371,7 @@ const DOMAINS: DomainSpec[] = [
       "bus", "buses", "autobus", "autobuses", "emt", "vectalia",
       "linea de bus", "parada", "parada de bus", "bus urbano", "buses urbanos",
     ],
-    question: "🚌 ¿Ya sabes qué bus tomar? Dime «sí, lo sé» y te pregunto la línea, o «ayúdame» y planificamos la ruta.",
+    question: "Te abro el selector de buses para que elijas en pantalla.",
     audio: "bus",
     followups: [
       { keys: [
