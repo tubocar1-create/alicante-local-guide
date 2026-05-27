@@ -21,7 +21,7 @@ async function load(): Promise<Cache> {
   inflight = (async () => {
     const { data } = await supabase
       .from("bus_line_service_windows")
-      .select("line_code,direction,day_type,first_departure,last_departure");
+      .select("line_code,direction,terminal_name,day_type,first_departure,last_departure");
     cache = (data ?? []) as Cache;
     return cache;
   })();
