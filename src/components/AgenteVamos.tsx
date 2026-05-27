@@ -284,8 +284,7 @@ const DOMAINS: DomainSpec[] = [
       "me he cortado", "me sangra", "no puedo respirar", "me cuesta respirar",
       "malestar", "estoy fatal", "salud", "medico", "doctor", "sanitario",
     ],
-    question:
-      "Entiendo. ¿Necesitas hospital, farmacia, urgencias o especialista?",
+    question: "Te abro la sección de salud para que elijas en pantalla.",
     audio: "health",
     followups: [
       { keys: ["hospital", "hospitales", "urgencia", "urgencias", "ambulancia", "emergencia"], path: "/hospitales" },
@@ -321,8 +320,7 @@ const DOMAINS: DomainSpec[] = [
       "kebab", "tacos", "mexicano", "hindu", "hindú", "indio",
       "cafe", "café", "cafeteria", "cafetería",
     ],
-    question:
-      "¿Buscas restaurante, tapas, paella o algo rápido?",
+    question: "Te llevo a la sección para comer; elige el tipo en pantalla.",
     audio: "eat",
     followups: [
       { keys: ["restaurante", "restaurantes", "cenar", "almorzar", "desayunar"], path: "/" },
@@ -353,7 +351,7 @@ const DOMAINS: DomainSpec[] = [
       "universidad", "campus", "hospital general",
       "transporte", "transporte publico", "transporte público",
     ],
-    question: "🚍 ¿Quieres ir en bus urbano o en TRAM (tranvía)?",
+    question: "Te abro la sección de transporte; elige el medio en pantalla.",
     audio: "bus",
     followups: [
       { keys: [
@@ -373,7 +371,7 @@ const DOMAINS: DomainSpec[] = [
       "bus", "buses", "autobus", "autobuses", "emt", "vectalia",
       "linea de bus", "parada", "parada de bus", "bus urbano", "buses urbanos",
     ],
-    question: "🚌 ¿Ya sabes qué bus tomar? Dime «sí, lo sé» y te pregunto la línea, o «ayúdame» y planificamos la ruta.",
+    question: "Te abro el selector de buses para que elijas en pantalla.",
     audio: "bus",
     followups: [
       { keys: [
@@ -393,7 +391,7 @@ const DOMAINS: DomainSpec[] = [
     id: "bus_known",
     hubPath: "action:bus-picker",
     triggers: [],
-    question: "Perfecto. ¿Cuál es la línea que quieres tomar? (por ejemplo: 22, 7, 13N…)",
+    question: "Te abro el selector de líneas de bus.",
     audio: "bus",
     followups: [
       { keys: ["no se", "no sé", "ayuda", "ayudame", "ayúdame", "no lo se", "no lo sé"], path: "action:bus-picker" },
@@ -403,7 +401,7 @@ const DOMAINS: DomainSpec[] = [
     id: "tram_pick",
     hubPath: "/tram",
     triggers: [],
-    question: "🚋 ¿Hacia qué estación del TRAM quieres ir?",
+    question: "Te abro el TRAM; elige la estación en pantalla.",
     audio: "bus",
     followups: [
       { keys: [
@@ -420,7 +418,7 @@ const DOMAINS: DomainSpec[] = [
     id: "tram_origin_confirm",
     hubPath: "/tram",
     triggers: [],
-    question: "¿Quieres salir desde esa parada o prefieres otra?",
+    question: "Confirma la parada de origen en pantalla.",
     audio: "bus",
     followups: [
       { keys: [
@@ -449,8 +447,7 @@ const DOMAINS: DomainSpec[] = [
       "agenda festiva", "fiesta popular", "fiestas populares",
       "verbena", "verbenas", "procesion", "procesión",
     ],
-    question:
-      "¡Vamos! ¿Quieres ver el programa de fiestas, hogueras o moros y cristianos?",
+    question: "Te abro fiestas; elige la categoría en pantalla.",
     audio: "leisure",
     followups: [
       { keys: ["hoguera", "hogueras", "san juan", "fogueres"], path: "/fiestas" },
@@ -472,8 +469,7 @@ const DOMAINS: DomainSpec[] = [
       "vida nocturna", "noche alicantina", "marcha", "after",
       "vermut", "vermouth", "vinos", "cocteles", "cócteles", "gin tonic",
     ],
-    question:
-      "🍸 ¿Prefieres terraza, pubs, discoteca o música en vivo?",
+    question: "Te abro la sección para tomar algo; elige el ambiente en pantalla.",
     audio: "leisure",
     followups: [
       { keys: ["terraza", "terrazas", "azotea", "rooftop"], path: "/" },
@@ -498,7 +494,7 @@ const DOMAINS: DomainSpec[] = [
       // pasar por la pregunta de desambiguación)
       "exposicion", "exposición", "museo", "museos", "cultura",
     ],
-    question: "¿Te apetece cine, conciertos, teatro o fiestas?",
+    question: "Te abro ocio; elige la categoría en pantalla.",
     audio: "leisure",
     followups: [
       { keys: ["cine", "pelicula", "peliculas", "cartelera"], path: "/ocio/cartelera" },
@@ -521,7 +517,7 @@ const DOMAINS: DomainSpec[] = [
       "postiguet", "san juan", "san gabriel", "albufereta", "almadraba",
       "que playa", "qué playa", "playa para hoy",
     ],
-    question: "¿Prefieres ver el carrusel de playas o abrir el mapa interactivo?",
+    question: "Te abro playas; elige carrusel o mapa en pantalla.",
     audio: "beaches",
     followups: [
       { keys: ["mapa", "mapa interactivo", "interactivo", "ver en mapa", "abrir mapa"], path: "/playas/mapa", label: "mapa" },
@@ -548,7 +544,7 @@ const DOMAINS: DomainSpec[] = [
       "habitacion", "habitación", "reservar hotel", "buscar hotel",
       "donde alojarme", "dónde alojarme", "alojarme",
     ],
-    question: "¿Buscas hotel, hostal o apartamento?",
+    question: "Te abro alojamiento; elige el tipo en pantalla.",
     audio: "hotel",
     followups: [
       { keys: ["hotel", "hoteles"], path: "/donde-dormir" },
@@ -567,7 +563,7 @@ const DOMAINS: DomainSpec[] = [
       "boutique", "boutiques", "mercado", "mercadillo",
       "donde comprar", "dónde comprar",
     ],
-    question: SHOPPING_INTRO_REPLY,
+    question: "Te abro compras; elige el sector en pantalla.",
     audio: "fallback",
     followups: [],
   },
@@ -579,7 +575,7 @@ const DOMAINS: DomainSpec[] = [
       "mapa interactivo", "mapa de playas", "mapa de la ciudad",
       "mapa playa", "mapa playas",
     ],
-    question: "Aquí tienes el mapa interactivo de playas. Llámame luego si quieres más información.",
+    question: "Te abro el mapa interactivo.",
     audio: "beaches",
     followups: [],
   },
