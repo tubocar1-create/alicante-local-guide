@@ -320,8 +320,7 @@ const DOMAINS: DomainSpec[] = [
       "kebab", "tacos", "mexicano", "hindu", "hindú", "indio",
       "cafe", "café", "cafeteria", "cafetería",
     ],
-    question:
-      "¿Buscas restaurante, tapas, paella o algo rápido?",
+    question: "Te llevo a la sección para comer; elige el tipo en pantalla.",
     audio: "eat",
     followups: [
       { keys: ["restaurante", "restaurantes", "cenar", "almorzar", "desayunar"], path: "/" },
