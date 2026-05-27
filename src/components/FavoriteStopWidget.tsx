@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useBusGraph } from "@/hooks/useBusGraph";
 
-// Servicio activo: 07:00 - 23:30. Último bus parte de la parada extrema a
-// las 22:30; damos margen de ~1h para que termine el recorrido.
+// Servicio urbano: el último bus parte de la parada extrema a las 22:30 y
+// cada línea abre a una hora particular por la mañana. Como cota segura
+// usamos 07:00; refinar por línea cuando tengamos el horario oficial.
 export function isBusOutOfService(d = new Date()): boolean {
   const m = d.getHours() * 60 + d.getMinutes();
-  return m >= 23 * 60 + 30 || m < 7 * 60;
+  // Fuera de servicio entre 22:31 y 06:59.
+  return m > 22 * 60 + 30 || m < 7 * 60;
 }
-const isOutOfService = isBusOutOfService;
 
 export type FavoriteStop = {
   stopId: string;
@@ -100,13 +101,9 @@ export function FavoriteStopWidget() {
     };
   }, []);
 
-  const outOfService = isOutOfService();
-
+  // Siempre consultamos a Vectalia. Si hay servicio, devuelve ETA;
+  // si no, devuelve null y mostramos n/d. No imponemos lógica de horario.
   useEffect(() => {
-    if (outOfService) {
-      setLiveMin(null);
-      return;
-    }
     let cancelled = false;
     async function fetchLive() {
       try {
@@ -114,7 +111,10 @@ export function FavoriteStopWidget() {
           `/api/public/bus-eta?stop=${encodeURIComponent(stop.stopId)}&line=${encodeURIComponent(stop.line)}&_=${Date.now()}`,
           { cache: "no-store" },
         );
-        if (!r.ok) return;
+        if (!r.ok) {
+          if (!cancelled) setLiveMin(null);
+          return;
+        }
         const j = (await r.json()) as { etaMin: number | null };
         if (!cancelled) setLiveMin(typeof j.etaMin === "number" ? j.etaMin : null);
       } catch {
@@ -127,18 +127,17 @@ export function FavoriteStopWidget() {
       cancelled = true;
       window.clearInterval(id);
     };
-  }, [stop.stopId, stop.line, outOfService]);
+  }, [stop.stopId, stop.line]);
 
   const lineColor =
     graph?.lines.find((l) => l.code === stop.line)?.color || "#0d3b8a";
 
-  const fallback = computeNextArrival(stop);
-  const minutes = liveMin ?? fallback.minutes;
+  const hasLive = liveMin != null;
+  const minutes = liveMin ?? 0;
   const arrivalDate = new Date(Date.now() + minutes * 60_000);
-  const arrivalTime =
-    liveMin != null
-      ? `${String(arrivalDate.getHours()).padStart(2, "0")}:${String(arrivalDate.getMinutes()).padStart(2, "0")}`
-      : fallback.arrivalTime;
+  const arrivalTime = hasLive
+    ? `${String(arrivalDate.getHours()).padStart(2, "0")}:${String(arrivalDate.getMinutes()).padStart(2, "0")}`
+    : "n/d";
 
   return (
     <Link
@@ -154,7 +153,7 @@ export function FavoriteStopWidget() {
           >
             Bus línea ({stop.line})
           </span>
-          {!outOfService && (
+          {hasLive && (
             <span className="text-[7px] font-bold uppercase tracking-wider text-emerald-700 leading-none">
               ● live
             </span>
@@ -178,10 +177,13 @@ export function FavoriteStopWidget() {
         </div>
       </div>
       <div className="flex flex-col items-center justify-center gap-1">
-        {outOfService ? (
-          <div className="flex h-[48px] w-[48px] flex-col items-center justify-center rounded-full bg-stone-100 ring-1 ring-stone-300 px-1 text-center">
-            <span className="text-[8px] font-extrabold uppercase leading-tight text-stone-500">
-              Fuera de servicio
+        {!hasLive ? (
+          <div className="flex h-[48px] w-[48px] flex-col items-center justify-center rounded-full bg-stone-100 ring-1 ring-stone-300">
+            <span
+              className="text-[18px] font-extrabold leading-none tabular-nums text-stone-500"
+              aria-live="polite"
+            >
+              n/d
             </span>
           </div>
         ) : minutes <= 1 ? (
@@ -210,18 +212,15 @@ export function FavoriteStopWidget() {
             </span>
           </div>
         )}
-        {!outOfService && (
-          <div className="flex flex-col items-center leading-none">
-            <span className="text-[7px] font-bold uppercase tracking-wider text-stone-400">
-              Llega
-            </span>
-            <span className="text-[10px] font-extrabold tabular-nums text-stone-700 mt-0.5">
-              {arrivalTime}
-            </span>
-          </div>
-        )}
+        <div className="flex flex-col items-center leading-none">
+          <span className="text-[7px] font-bold uppercase tracking-wider text-stone-400">
+            Llega
+          </span>
+          <span className="text-[10px] font-extrabold tabular-nums text-stone-700 mt-0.5">
+            {arrivalTime}
+          </span>
+        </div>
       </div>
     </Link>
   );
 }
-
