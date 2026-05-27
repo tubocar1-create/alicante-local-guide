@@ -946,9 +946,19 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
           {
             role: "system",
             content: `Ruta actual del usuario: ${currentPath}.
-Responde SIEMPRE en JSON estricto con la forma: {"reply": string breve para decir en voz alta (1-2 frases naturales), "navigate": string|null (ruta a la que llevar al usuario, o null), "forwardPrompt": string|null (prompt que el chat principal debe procesar al llegar, o null)}.
-Aplica la doctrina: si enrutas a una categoría, enumera en "reply" SOLO las ramas reales del selector de esa pantalla. Nunca mezcles categorías ajenas al tema activo. No inventes opciones. No te inventes rutas: usa solo las del SYSTEM_PROMPT.`,
+Responde SIEMPRE en JSON estricto con la forma:
+{
+  "reply": string breve para decir en voz alta (1-2 frases naturales, tono cálido como tú responderías),
+  "navigate": string|null (ruta exacta o null),
+  "forwardPrompt": string|null,
+  "intentKey": string corto en snake_case que identifica la intención (ej: "salud_dolor_cabeza", "farmacia_guardia", "vuelo_madrid"),
+  "intentLabel": string humano que describe la intención (ej: "Síntoma: dolor de cabeza → Salud"),
+  "keywords": string[] de 3 a 10 términos NORMALIZADOS (minúsculas, sin tildes) que el agente local debe usar la próxima vez para reconocer ESTA intención SIN llamarte. Incluye sinónimos, síntomas, marcas, nombres propios y contexto (ej: ["dolor","cabeza","jaqueca","migraña","cefalea","duele","molestia"]).
+  "contextTags": string[] opcional con el dominio/sector (ej: ["salud","sintoma"], ["transporte","aereo"]).
+}
+Aplica la doctrina: si enrutas a una categoría, enumera en "reply" SOLO las ramas reales del selector de esa pantalla. Nunca mezcles categorías ajenas al tema activo. No inventes opciones. No te inventes rutas: usa solo las del SYSTEM_PROMPT. Las "keywords" son CRÍTICAS — son lo que el agente memorizará para no volver a llamarte ante consultas similares.`,
           },
+
           ...history,
         ],
         response_format: { type: "json_object" },
