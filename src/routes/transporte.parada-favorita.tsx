@@ -348,7 +348,7 @@ function ParadaFavoritaPage() {
                   Fuera de<br />servicio
                 </span>
                 <span className="mt-1 text-[9px] font-semibold text-stone-500">
-                  Reanuda 07:00
+                  Reanuda {reopensAt}
                 </span>
               </div>
             ) : isArriving ? (
