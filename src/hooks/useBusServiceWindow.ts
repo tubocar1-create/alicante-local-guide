@@ -96,6 +96,7 @@ export function getServiceStatus(
   rows: ServiceWindowRow[] | null,
   lineCode: string | undefined,
   now: Date = new Date(),
+  originTerminalName?: string,
 ): ServiceStatus {
   const empty: ServiceStatus = {
     outOfService: false,
@@ -108,33 +109,47 @@ export function getServiceStatus(
   };
   if (!rows || !lineCode) return empty;
 
-  const lineRows = rows.filter((r) => r.line_code === lineCode);
-  if (lineRows.length === 0) return empty;
+  const allLineRows = rows.filter((r) => r.line_code === lineCode);
+  if (allLineRows.length === 0) return empty;
 
-  // Línea nocturna si CUALQUIER row cruza medianoche.
-  const isNight = lineRows.some(
+  // Si conocemos el terminal de origen del recorrido del usuario, filtramos
+  // por esa dirección para no mezclar horarios de ambos sentidos.
+  const dirRows = originTerminalName
+    ? allLineRows.filter((r) => r.terminal_name === originTerminalName)
+    : allLineRows;
+  const effectiveRows = dirRows.length > 0 ? dirRows : allLineRows;
+
+  const isNight = effectiveRows.some(
     (r) => toMin(r.last_departure) < toMin(r.first_departure),
   );
 
   const dayType = dayTypeOf(now);
-  const todayRows = lineRows.filter((r) => r.day_type === dayType);
+  const todayRows = effectiveRows.filter((r) => r.day_type === dayType);
 
   if (todayRows.length === 0) {
-    // Sin servicio hoy. Si es nocturna, indicar próxima fecha de servicio.
     if (isNight) {
-      const nxt = nextServiceDay(rows, lineCode, now);
+      const nxt = nextServiceDay(allLineRows, lineCode, now);
       if (nxt) {
-        const nxtRows = lineRows.filter((r) => r.day_type === nxt.dayType);
-        const firstMin = Math.min(...nxtRows.map((r) => toMin(r.first_departure)));
-        return {
-          outOfService: true,
-          firstDeparture: fmtHM(firstMin),
-          lastDeparture: null,
-          reopensAt: fmtHM(firstMin),
-          reopensDayLabel: DAY_NAMES[nxt.date.getDay()],
-          isNightLine: true,
-          hasData: true,
-        };
+        const nxtRows = effectiveRows.filter((r) => r.day_type === nxt.dayType);
+        if (nxtRows.length > 0) {
+          const firstMin = Math.min(...nxtRows.map((r) => toMin(r.first_departure)));
+          // Un servicio nocturno con day_type "sabado"/"festivo" que arranca
+          // a última hora (>= 18:00) en realidad parte la tarde-noche del
+          // día anterior. Mostramos ese día en la etiqueta.
+          const physicalDate =
+            firstMin >= 18 * 60
+              ? new Date(nxt.date.getTime() - 24 * 60 * 60_000)
+              : nxt.date;
+          return {
+            outOfService: true,
+            firstDeparture: fmtHM(firstMin),
+            lastDeparture: null,
+            reopensAt: fmtHM(firstMin),
+            reopensDayLabel: DAY_NAMES[physicalDate.getDay()],
+            isNightLine: true,
+            hasData: true,
+          };
+        }
       }
     }
     return { ...empty, isNightLine: isNight, hasData: false };
@@ -158,7 +173,7 @@ export function getServiceStatus(
     outOfService = true;
     const tomorrow = new Date(now.getTime() + 24 * 60 * 60_000);
     const tDay = dayTypeOf(tomorrow);
-    const tRows = lineRows.filter((r) => r.day_type === tDay);
+    const tRows = effectiveRows.filter((r) => r.day_type === tDay);
     reopensMin = tRows.length
       ? Math.min(...tRows.map((r) => toMin(r.first_departure)))
       : firstMin;
@@ -167,7 +182,7 @@ export function getServiceStatus(
   return {
     outOfService,
     firstDeparture: fmtHM(firstMin),
-    lastDeparture: fmtHM(lastMin),
+    lastDeparture: isNight ? null : fmtHM(lastMin),
     reopensAt: reopensMin == null ? null : fmtHM(reopensMin),
     reopensDayLabel: null,
     isNightLine: isNight,
