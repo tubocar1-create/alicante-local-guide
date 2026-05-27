@@ -841,10 +841,11 @@ const promoteToIntent = async (
 };
 
 export const agenteVamosChat = createServerFn({ method: "POST" })
-  .inputValidator((d: { messages: Array<{ role: "user" | "assistant"; content: string }>; path?: string }) => d)
+  .inputValidator((d: { messages: Array<{ role: "user" | "assistant"; content: string }>; path?: string; disableLLM?: boolean }) => d)
   .handler(async ({ data }) => {
     const lastUserMessage = [...data.messages].reverse().find((m) => m.role === "user")?.content ?? "";
     const currentPath = data.path ?? "/";
+    const disableLLM = data.disableLLM === true;
     const normalized = normalizeText(lastUserMessage);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
