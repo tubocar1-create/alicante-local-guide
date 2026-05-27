@@ -53,12 +53,28 @@ function ParadaFavoritaPage() {
   const [liveUpdatedAt, setLiveUpdatedAt] = useState<number>(Date.now());
 
   const serviceWindows = useBusServiceWindows();
-  const serviceStatus = getServiceStatus(serviceWindows, stop.line);
+  // Terminal de origen del recorrido del usuario (primera parada en su sentido).
+  const originTerminalName = useMemo(() => {
+    if (!graph) return undefined;
+    const lineRows = graph.stops.filter((r) => r.line_code === stop.line);
+    const byDir = new Map<number, typeof lineRows>();
+    for (const r of lineRows) {
+      if (!byDir.has(r.direction)) byDir.set(r.direction, []);
+      byDir.get(r.direction)!.push(r);
+    }
+    for (const [, rows] of byDir) {
+      const sorted = [...rows].sort((a, b) => a.seq - b.seq);
+      const terminal = sorted[sorted.length - 1]?.stop_name;
+      if (terminal === stop.destination) return sorted[0]?.stop_name;
+    }
+    return undefined;
+  }, [graph, stop]);
+  const serviceStatus = getServiceStatus(serviceWindows, stop.line, new Date(), originTerminalName);
   const outOfService = serviceStatus.outOfService;
   const reopensDayLabel = serviceStatus.reopensDayLabel;
   const reopensAt = serviceStatus.reopensAt ?? "07:00";
   const reopensLabel = reopensDayLabel ? `${reopensDayLabel} ${reopensAt}` : reopensAt;
-  const lastDeparture = serviceStatus.lastDeparture ?? "22:30";
+  const lastDeparture = serviceStatus.lastDeparture;
   const isNightLine = serviceStatus.isNightLine;
 
   // Para líneas nocturnas en servicio: estimar llegadas a partir de la salida
