@@ -3626,6 +3626,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
 
 export function AgenteVamosFab() {
   const [open, setOpen] = useState(false);
+  const openedAtRef = useRef(0);
   const voiceBootStartedRef = useRef(false);
   const greetingPlayedRef = useRef(false);
   const path = useRouterState({ select: (s) => s.location.pathname });
@@ -3686,6 +3687,7 @@ export function AgenteVamosFab() {
       voiceBootStartedRef.current = false;
       startGreetingFromUserGesture();
     }
+    openedAtRef.current = Date.now();
     setOpen(true);
   };
 
@@ -3762,6 +3764,9 @@ export function AgenteVamosFab() {
       <AgenteVamosPanel
         open={open}
         onClose={() => {
+          // Evita el cierre fantasma: el click sintético posterior al
+          // pointerdown del FAB aterriza sobre "Cerrar" recién montado.
+          if (Date.now() - openedAtRef.current < 600) return;
           voiceBootStartedRef.current = false;
           greetingPlayedRef.current = false;
           __vaSetGreetingSpoken(false);
