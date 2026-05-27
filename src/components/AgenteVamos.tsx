@@ -3491,9 +3491,17 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
                     ? "pensando…"
                     : "preparando…"}
           </p>
-          {interim && (
+          {interim ? (
             <p className="truncate text-[11px] italic text-muted-foreground">"{interim}…"</p>
-          )}
+          ) : (() => {
+              const lastAssistant = [...msgs].reverse().find((m) => m.role === "assistant");
+              if (!lastAssistant?.content) return null;
+              return (
+                <p className="line-clamp-2 text-[11px] leading-snug text-muted-foreground">
+                  {lastAssistant.content}
+                </p>
+              );
+            })()}
         </div>
 
         <button
