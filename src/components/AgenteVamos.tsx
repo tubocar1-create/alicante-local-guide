@@ -2081,6 +2081,40 @@ let __vaContinuityInFlight = false;
 let __vaContinuitySpokenAt = 0;
 const POST_SPEECH_LISTEN_DELAY_MS = 30;
 
+/**
+ * Saludo sincrónico desde gesto del usuario. DEBE invocarse dentro del
+ * onClick (no en handlers asíncronos posteriores) para que el navegador
+ * autorice la síntesis de voz. Crea el utterance y llama a speak() sin
+ * ningún await previo.
+ */
+export function speakGreetingFromUserGesture() {
+  if (typeof window === "undefined" || !window.speechSynthesis) return;
+  if (typeof SpeechSynthesisUtterance === "undefined") return;
+  if (__vaGreetingSpoken) return;
+  try {
+    const text = getGreetingText();
+    const synth = window.speechSynthesis;
+    try { synth.cancel(); } catch {}
+    try { synth.resume(); } catch {}
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = VA_VOICE_LANG;
+    u.rate = VA_VOICE_RATE;
+    u.pitch = VA_VOICE_PITCH;
+    u.volume = 1;
+    const voice = pickSpanishVoice(synth);
+    if (voice) u.voice = voice;
+    __vaActiveUtterance = u;
+    __vaGreetingSpoken = true;
+    __vaSpeechUnlocked = true;
+    u.onend = () => { if (__vaActiveUtterance === u) __vaActiveUtterance = null; };
+    u.onerror = () => { if (__vaActiveUtterance === u) __vaActiveUtterance = null; };
+    synth.speak(u);
+    keepSpeechSynthesisAwake(synth);
+  } catch {
+    /* noop */
+  }
+}
+
 // Voz unificada del agente: español Estados Unidos (es-US) si está disponible.
 const VA_VOICE_LANG = "es-US";
 const VA_VOICE_RATE = 0.9;
