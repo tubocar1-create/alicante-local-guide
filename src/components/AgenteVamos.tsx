@@ -140,15 +140,9 @@ const INTENTS: IntentDef[] = [
     path: "action:bus-picker",
     audio: "bus",
   },
-  {
-    keys: [
-      "vuelo", "vuelos", "aeropuerto", "aena", "avion", "aviones", "alc",
-      "salida de vuelo", "llegada de vuelo", "facturar",
-    ],
-    reply: "Vuelos del aeropuerto de Alicante.",
-    path: "/vuelos",
-    audio: "flights",
-  },
+  // (vuelos se gestiona como dominio para abrir el submenú "Vuelos" en
+  // pantalla, en vez de saltar directo al dashboard de salidas)
+
   {
     keys: [
       "clima", "tiempo", "llueve", "lluvia", "sol", "temperatura", "calor",
