@@ -6,11 +6,11 @@ import {
   FavoriteStop,
   computeNextArrival,
   computeUpcomingArrivals,
-  isBusOutOfService,
   loadFavoriteStop,
   saveFavoriteStop,
 } from "@/components/FavoriteStopWidget";
 import { useBusGraph } from "@/hooks/useBusGraph";
+import { useBusServiceWindows, getServiceStatus } from "@/hooks/useBusServiceWindow";
 
 export const Route = createFileRoute("/transporte/parada-favorita")({
   validateSearch: (s: Record<string, unknown>) => ({
