@@ -2764,6 +2764,7 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
       const t0 = typeof performance !== "undefined" ? performance.now() : Date.now();
       let serverCalled = false;
       let finalTarget: string | undefined;
+      let finalReply: string = "";
       bumpIdle();
       stopListening();
       const reservedReplyUtterance = viaVoice ? reserveSpanishUtterance() : null;
