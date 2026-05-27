@@ -322,6 +322,7 @@ const DOMAINS: DomainSpec[] = [
     ],
     question: "Te llevo a la sección para comer; elige el tipo en pantalla.",
     audio: "eat",
+    openSubmenuKey: "comer",
     followups: [
       { keys: ["restaurante", "restaurantes", "cenar", "almorzar", "desayunar"], path: "/" },
       { keys: ["tapas", "tapeo", "picar"], path: "/" },
