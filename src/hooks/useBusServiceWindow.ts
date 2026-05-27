@@ -65,74 +65,103 @@ export type ServiceStatus = {
   firstDeparture: string | null; // HH:MM
   lastDeparture: string | null; // HH:MM
   reopensAt: string | null; // HH:MM si está fuera de servicio
+  reopensDayLabel: string | null; // p.ej. "viernes" si no opera hoy
   isNightLine: boolean;
   hasData: boolean;
 };
 
+const DAY_NAMES = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+
+function nextServiceDay(
+  rows: ServiceWindowRow[],
+  lineCode: string,
+  from: Date,
+): { dayType: string; date: Date } | null {
+  for (let i = 1; i <= 7; i++) {
+    const d = new Date(from.getTime() + i * 24 * 60 * 60_000);
+    const dt = dayTypeOf(d);
+    if (rows.some((r) => r.line_code === lineCode && r.day_type === dt)) {
+      return { dayType: dt, date: d };
+    }
+  }
+  return null;
+}
+
 /**
  * Devuelve el estado de servicio para una línea en `now`.
- * Toma la unión de ambos sentidos: primera salida = MIN, última = MAX.
- * Para líneas nocturnas (last < first) la ventana cruza medianoche.
+ * Para líneas nocturnas detectadas a partir de cualquier día_type, indica
+ * cuándo es el próximo servicio si hoy no opera.
  */
 export function getServiceStatus(
   rows: ServiceWindowRow[] | null,
   lineCode: string | undefined,
   now: Date = new Date(),
 ): ServiceStatus {
-  if (!rows || !lineCode) {
-    return {
-      outOfService: false,
-      firstDeparture: null,
-      lastDeparture: null,
-      reopensAt: null,
-      isNightLine: false,
-      hasData: false,
-    };
-  }
-  const dayType = dayTypeOf(now);
-  const todayRows = rows.filter(
-    (r) => r.line_code === lineCode && r.day_type === dayType,
+  const empty: ServiceStatus = {
+    outOfService: false,
+    firstDeparture: null,
+    lastDeparture: null,
+    reopensAt: null,
+    reopensDayLabel: null,
+    isNightLine: false,
+    hasData: false,
+  };
+  if (!rows || !lineCode) return empty;
+
+  const lineRows = rows.filter((r) => r.line_code === lineCode);
+  if (lineRows.length === 0) return empty;
+
+  // Línea nocturna si CUALQUIER row cruza medianoche.
+  const isNight = lineRows.some(
+    (r) => toMin(r.last_departure) < toMin(r.first_departure),
   );
+
+  const dayType = dayTypeOf(now);
+  const todayRows = lineRows.filter((r) => r.day_type === dayType);
+
   if (todayRows.length === 0) {
-    // sin datos: no bloqueamos
-    return {
-      outOfService: false,
-      firstDeparture: null,
-      lastDeparture: null,
-      reopensAt: null,
-      isNightLine: false,
-      hasData: false,
-    };
+    // Sin servicio hoy. Si es nocturna, indicar próxima fecha de servicio.
+    if (isNight) {
+      const nxt = nextServiceDay(rows, lineCode, now);
+      if (nxt) {
+        const nxtRows = lineRows.filter((r) => r.day_type === nxt.dayType);
+        const firstMin = Math.min(...nxtRows.map((r) => toMin(r.first_departure)));
+        return {
+          outOfService: true,
+          firstDeparture: fmtHM(firstMin),
+          lastDeparture: null,
+          reopensAt: fmtHM(firstMin),
+          reopensDayLabel: DAY_NAMES[nxt.date.getDay()],
+          isNightLine: true,
+          hasData: true,
+        };
+      }
+    }
+    return { ...empty, isNightLine: isNight, hasData: false };
   }
+
   const firstMin = Math.min(...todayRows.map((r) => toMin(r.first_departure)));
   const lastMin = Math.max(...todayRows.map((r) => toMin(r.last_departure)));
-  const isNight = lastMin < firstMin;
   const nowMin = now.getHours() * 60 + now.getMinutes();
 
   let outOfService = false;
   let reopensMin: number | null = null;
 
   if (isNight) {
-    // Nocturna: en servicio si nowMin >= firstMin || nowMin <= lastMin
     const inService = nowMin >= firstMin || nowMin <= lastMin;
     outOfService = !inService;
     if (outOfService) reopensMin = firstMin;
-  } else {
-    if (nowMin < firstMin) {
-      outOfService = true;
-      reopensMin = firstMin;
-    } else if (nowMin > lastMin) {
-      outOfService = true;
-      // mañana — usamos el firstMin del siguiente día_type
-      const tomorrow = new Date(now.getTime() + 24 * 60 * 60_000);
-      const tDay = dayTypeOf(tomorrow);
-      const tRows = rows.filter(
-        (r) => r.line_code === lineCode && r.day_type === tDay,
-      );
-      reopensMin = tRows.length
-        ? Math.min(...tRows.map((r) => toMin(r.first_departure)))
-        : firstMin;
-    }
+  } else if (nowMin < firstMin) {
+    outOfService = true;
+    reopensMin = firstMin;
+  } else if (nowMin > lastMin) {
+    outOfService = true;
+    const tomorrow = new Date(now.getTime() + 24 * 60 * 60_000);
+    const tDay = dayTypeOf(tomorrow);
+    const tRows = lineRows.filter((r) => r.day_type === tDay);
+    reopensMin = tRows.length
+      ? Math.min(...tRows.map((r) => toMin(r.first_departure)))
+      : firstMin;
   }
 
   return {
@@ -140,6 +169,7 @@ export function getServiceStatus(
     firstDeparture: fmtHM(firstMin),
     lastDeparture: fmtHM(lastMin),
     reopensAt: reopensMin == null ? null : fmtHM(reopensMin),
+    reopensDayLabel: null,
     isNightLine: isNight,
     hasData: true,
   };
