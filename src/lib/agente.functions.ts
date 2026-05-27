@@ -994,52 +994,59 @@ Aplica la doctrina: si enrutas a una categoría, enumera en "reply" SOLO las ram
       teach: LLMTeach = {},
     ) => {
       if (!reply) return;
-      void supabaseAdmin
-        .from("agente_llm_cache")
-        .upsert(
-          {
-            normalized,
-            path: currentPath,
-            raw_query: lastUserMessage.slice(0, 500),
-            reply,
-            navigate,
-            forward_prompt: forwardPrompt,
-            model,
-            hits: 1,
-            last_used_at: new Date().toISOString(),
-            active: true,
-          },
-          { onConflict: "normalized,path" }
-        );
+      // CRÍTICO: los query builders de Supabase son lazy — sólo se ejecutan al
+      // await/.then(). Envolvemos TODO en una IIFE async para garantizar que
+      // caché + intent + nombre propio se persisten realmente en BD.
+      void (async () => {
+        try {
+          const { error: cacheErr } = await supabaseAdmin
+            .from("agente_llm_cache")
+            .upsert(
+              {
+                normalized,
+                path: currentPath,
+                raw_query: lastUserMessage.slice(0, 500),
+                reply,
+                navigate,
+                forward_prompt: forwardPrompt,
+                model,
+                hits: 1,
+                last_used_at: new Date().toISOString(),
+                active: true,
+              },
+              { onConflict: "normalized,path" }
+            );
+          if (cacheErr) console.warn("[learn] cache upsert failed:", cacheErr.message);
+        } catch (e) {
+          console.warn("[learn] cache upsert threw:", e);
+        }
 
-      // APRENDIZAJE SEMÁNTICO — Gemini nos enseña intent + keywords + estilo de
-      // respuesta. Lo persistimos en agente_intents para que el agente local
-      // resuelva la próxima consulta similar SIN llamar a Gemini.
-      const teachedKws = (teach.keywords ?? [])
-        .map((k) => normalizeText(String(k)))
-        .filter((k) => k.length >= 3 && !LEARN_STOPWORDS.has(k));
-      const ctxTags = (teach.contextTags ?? [])
-        .map((t) => normalizeText(String(t)))
-        .filter((t) => t.length >= 3);
-      const mergedKws = Array.from(new Set([...teachedKws, ...ctxTags, ...extractKeywords(normalized)])).slice(0, 15);
+        // APRENDIZAJE SEMÁNTICO en agente_intents
+        const teachedKws = (teach.keywords ?? [])
+          .map((k) => normalizeText(String(k)))
+          .filter((k) => k.length >= 3 && !LEARN_STOPWORDS.has(k));
+        const ctxTags = (teach.contextTags ?? [])
+          .map((t) => normalizeText(String(t)))
+          .filter((t) => t.length >= 3);
+        const mergedKws = Array.from(new Set([...teachedKws, ...ctxTags, ...extractKeywords(normalized)])).slice(0, 15);
 
-      if (mergedKws.length >= 2) {
-        const rawKey = teach.intentKey
-          ? normalizeText(teach.intentKey).replace(/\s+/g, "_")
-          : `learned_${normalized.slice(0, 40).replace(/\s+/g, "_")}`;
-        const key = `learned:${rawKey}`.slice(0, 80);
-        const label = teach.intentLabel?.toString().slice(0, 120)
-          || `Aprendido (Gemini): ${normalized.slice(0, 80)}`;
-        void (async () => {
+        if (mergedKws.length >= 2) {
+          const rawKey = teach.intentKey
+            ? normalizeText(teach.intentKey).replace(/\s+/g, "_")
+            : `learned_${normalized.slice(0, 40).replace(/\s+/g, "_")}`;
+          const key = `learned:${rawKey}`.slice(0, 80);
+          const label = teach.intentLabel?.toString().slice(0, 120)
+            || `Aprendido (Gemini): ${normalized.slice(0, 80)}`;
           try {
-            const { data: existing } = await supabaseAdmin
+            const { data: existing, error: selErr } = await supabaseAdmin
               .from("agente_intents")
               .select("id, keywords")
               .eq("key", key)
               .maybeSingle();
+            if (selErr) console.warn("[learn] intent select failed:", selErr.message);
             if (existing) {
               const fused = Array.from(new Set([...(existing.keywords ?? []), ...mergedKws])).slice(0, 20);
-              await supabaseAdmin
+              const { error: updErr } = await supabaseAdmin
                 .from("agente_intents")
                 .update({
                   spoken_reply: reply,
@@ -1050,8 +1057,9 @@ Aplica la doctrina: si enrutas a una categoría, enumera en "reply" SOLO las ram
                   updated_at: new Date().toISOString(),
                 })
                 .eq("id", existing.id);
+              if (updErr) console.warn("[learn] intent update failed:", updErr.message);
             } else {
-              await supabaseAdmin.from("agente_intents").insert({
+              const { error: insErr } = await supabaseAdmin.from("agente_intents").insert({
                 key,
                 label,
                 spoken_reply: reply,
@@ -1061,48 +1069,52 @@ Aplica la doctrina: si enrutas a una categoría, enumera en "reply" SOLO las ram
                 active: true,
                 notes: `Aprendido de Gemini. Tags: ${ctxTags.join(",") || "n/a"}`,
               });
+              if (insErr) console.warn("[learn] intent insert failed:", insErr.message);
             }
           } catch (e) {
-            console.warn("learn intent from LLM failed", e);
-          }
-        })();
-      }
-
-      // APRENDIZAJE DE ENTIDAD CONCRETA — si Gemini devuelve una ruta "hoja"
-      // (p.ej. /farmacias/<slug>, /hospitales/<slug>, /ocio/cines/<id>, /vuelos/<iata>),
-      // persistimos el nombre propio en agente_proper_nouns.
-      if (navigate && navigate.startsWith("/")) {
-        const segs = navigate.split("/").filter(Boolean);
-        if (segs.length >= 2) {
-          const category = segs[0];
-          const slug = segs[segs.length - 1].split("?")[0];
-          const nameFromSlug = decodeURIComponent(slug).replace(/-/g, " ").trim();
-          const displayName = lastUserMessage.trim().slice(0, 120) || nameFromSlug;
-          const normName = normalizeText(displayName);
-          if (normName && normName.length >= 3) {
-            const aliases = Array.from(new Set([
-              normalizeText(nameFromSlug),
-              ...teachedKws,
-            ].filter(Boolean)));
-            void supabaseAdmin
-              .from("agente_proper_nouns")
-              .upsert(
-                {
-                  name: displayName,
-                  normalized: normName,
-                  aliases,
-                  category,
-                  route: navigate,
-                  priority: 50,
-                  source: "llm_learned",
-                  active: true,
-                },
-                { onConflict: "normalized,route" }
-              );
-            _properNounsCache = null;
+            console.warn("[learn] intent threw:", e);
           }
         }
-      }
+
+        // APRENDIZAJE DE ENTIDAD CONCRETA en agente_proper_nouns
+        if (navigate && navigate.startsWith("/")) {
+          const segs = navigate.split("/").filter(Boolean);
+          if (segs.length >= 2) {
+            const category = segs[0];
+            const slug = segs[segs.length - 1].split("?")[0];
+            const nameFromSlug = decodeURIComponent(slug).replace(/-/g, " ").trim();
+            const displayName = lastUserMessage.trim().slice(0, 120) || nameFromSlug;
+            const normName = normalizeText(displayName);
+            if (normName && normName.length >= 3) {
+              const aliases = Array.from(new Set([
+                normalizeText(nameFromSlug),
+                ...teachedKws,
+              ].filter(Boolean)));
+              try {
+                const { error: pnErr } = await supabaseAdmin
+                  .from("agente_proper_nouns")
+                  .upsert(
+                    {
+                      name: displayName,
+                      normalized: normName,
+                      aliases,
+                      category,
+                      route: navigate,
+                      priority: 50,
+                      source: "llm_learned",
+                      active: true,
+                    },
+                    { onConflict: "normalized,route" }
+                  );
+                if (pnErr) console.warn("[learn] proper_noun upsert failed:", pnErr.message);
+                else _properNounsCache = null;
+              } catch (e) {
+                console.warn("[learn] proper_noun threw:", e);
+              }
+            }
+          }
+        }
+      })();
     };
 
     try {
