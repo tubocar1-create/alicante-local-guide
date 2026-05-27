@@ -6,6 +6,7 @@ import {
   FavoriteStop,
   computeNextArrival,
   computeUpcomingArrivals,
+  isBusOutOfService,
   loadFavoriteStop,
   saveFavoriteStop,
 } from "@/components/FavoriteStopWidget";
