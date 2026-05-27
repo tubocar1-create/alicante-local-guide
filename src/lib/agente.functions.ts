@@ -845,7 +845,8 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const lastUserMessage = [...data.messages].reverse().find((m) => m.role === "user")?.content ?? "";
     const currentPath = data.path ?? "/";
-    const disableLLM = data.disableLLM === true;
+    // TEST: Gemini desactivado para el agente. Mantenemos otras funciones IA del proyecto.
+    const disableLLM = true;
     const normalized = normalizeText(lastUserMessage);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
