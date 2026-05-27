@@ -987,17 +987,19 @@ Aplica la doctrina: si enrutas a una categoría, enumera en "reply" SOLO las ram
       contextTags?: string[] | null;
     };
 
-    const persistCache = (
+    const persistCache = async (
       reply: string,
       navigate: string | null,
       forwardPrompt: string | null,
       teach: LLMTeach = {},
     ) => {
       if (!reply) return;
-      // CRÍTICO: los query builders de Supabase son lazy — sólo se ejecutan al
-      // await/.then(). Envolvemos TODO en una IIFE async para garantizar que
-      // caché + intent + nombre propio se persisten realmente en BD.
-      void (async () => {
+      // CRÍTICO: hay que AWAIT esta función antes de devolver la respuesta.
+      // En el runtime de Cloudflare Workers, el trabajo asíncrono no awaitado
+      // se cancela al devolver la respuesta — por eso la caché quedaba vacía
+      // aunque los intents sí se persistían (esos se hacen dentro de
+      // logAgentLearning, que sí está awaitado).
+      {
         try {
           const { error: cacheErr } = await supabaseAdmin
             .from("agente_llm_cache")
@@ -1114,7 +1116,7 @@ Aplica la doctrina: si enrutas a una categoría, enumera en "reply" SOLO las ram
             }
           }
         }
-      })();
+      }
     };
 
     try {
@@ -1130,7 +1132,7 @@ Aplica la doctrina: si enrutas a una categoría, enumera en "reply" SOLO las ram
       const reply = parsed.reply ?? "";
       const navigate = parsed.navigate ?? null;
       const forwardPrompt = parsed.forwardPrompt ?? null;
-      persistCache(reply, navigate, forwardPrompt, {
+      await persistCache(reply, navigate, forwardPrompt, {
         intentKey: parsed.intentKey ?? null,
         intentLabel: parsed.intentLabel ?? null,
         keywords: parsed.keywords ?? null,
@@ -1145,7 +1147,7 @@ Aplica la doctrina: si enrutas a una categoría, enumera en "reply" SOLO las ram
       };
     } catch {
       const reply = raw.trim();
-      persistCache(reply, null, null);
+      await persistCache(reply, null, null);
       return {
         ok: true as const,
         content: reply,
