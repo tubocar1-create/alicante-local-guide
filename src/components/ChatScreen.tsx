@@ -1101,10 +1101,6 @@ export function ChatScreen() {
                         setShowFlightPicker(true);
                       } else if (opt.href) {
                         setSubmenuStack([]);
-                        if (opt.href === "/comprar") {
-                          setMessages((prev) => [...prev, { role: "assistant", content: SHOPPING_INTRO_REPLY }]);
-                          void hablar(SHOPPING_INTRO_REPLY);
-                        }
                         if (opt.href.startsWith("/")) {
                           navigate({ to: opt.href });
                         } else {
