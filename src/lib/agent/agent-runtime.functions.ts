@@ -45,6 +45,7 @@ const InteractionSchema = z.object({
   routeOrigin: z.string().max(500).nullable().optional(),
   sessionId: z.string().max(120).nullable().optional(),
   decision: z.string().max(120).optional(),
+  notes: z.string().max(4000).nullable().optional(),
 });
 
 export const logAgentInteraction = createServerFn({ method: "POST" })
