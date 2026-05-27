@@ -3679,40 +3679,26 @@ export function AgenteVamosFab() {
     playGreetingAfterPermission();
   };
 
-  // Saludo corto de reentrada: cuando el panel se abre y el saludo inicial
-  // ya se reprodujo, hablamos una micro-frase contextual vía TTS.
-  const playReentryGreeting = () => {
-    try {
-      if (typeof window === "undefined" || !window.speechSynthesis) return;
-      const synth = window.speechSynthesis;
-      const text = getReentryGreeting();
-      try { synth.cancel(); } catch {}
-      try { synth.resume(); } catch {}
-      const u = new SpeechSynthesisUtterance(text);
-      u.lang = VA_VOICE_LANG;
-      u.rate = VA_VOICE_RATE;
-      u.pitch = VA_VOICE_PITCH;
-      u.volume = 1;
-      const voice = pickSpanishVoice(synth);
-      if (voice) u.voice = voice;
-      __vaActiveUtterance = u;
-      u.onend = () => { if (__vaActiveUtterance === u) __vaActiveUtterance = null; };
-      u.onerror = () => { if (__vaActiveUtterance === u) __vaActiveUtterance = null; };
-      try { synth.speak(u); } catch {}
-      keepSpeechSynthesisAwake(synth);
-      markVaInteraction();
-    } catch { /* noop */ }
-  };
-
   const openPanelWithGreeting = () => {
-    if (!voiceBootStartedRef.current) {
+    if (!open) {
+      greetingPlayedRef.current = false;
+      __vaSetGreetingSpoken(false);
+      voiceBootStartedRef.current = false;
       startGreetingFromUserGesture();
-    } else if (!open) {
-      // Reentrada: el saludo inicial ya se reprodujo en esta sesión.
-      playReentryGreeting();
     }
     setOpen(true);
   };
+
+  useEffect(() => {
+    if (!open) return;
+    if (greetingPlayedRef.current || __vaGetGreetingSpoken()) return;
+    const t = window.setTimeout(() => {
+      if (open && !greetingPlayedRef.current && !__vaGetGreetingSpoken()) {
+        playGreetingAfterPermission();
+      }
+    }, 80);
+    return () => window.clearTimeout(t);
+  }, [open]);
 
   // Permitir abrir el agente desde otros botones (p.ej. el micro del chat)
   useEffect(() => {
@@ -3777,6 +3763,8 @@ export function AgenteVamosFab() {
         open={open}
         onClose={() => {
           voiceBootStartedRef.current = false;
+          greetingPlayedRef.current = false;
+          __vaSetGreetingSpoken(false);
           setOpen(false);
         }}
       />

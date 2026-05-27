@@ -836,7 +836,10 @@ export function ChatScreen() {
               <div className="hidden lg:flex lg:items-center lg:gap-6 lg:mt-2">
                 <button
                   type="button"
-                  onPointerDown={() => window.dispatchEvent(new Event("vamos:prime-voice"))}
+                  onPointerDown={(event) => {
+                    event.preventDefault();
+                    window.dispatchEvent(new Event("vamos:open"));
+                  }}
                   onClick={() => window.dispatchEvent(new Event("vamos:open"))}
                   aria-label="Hablar con Agente Vamos"
                   className="group relative flex h-16 w-16 items-center justify-center rounded-full transition active:scale-95"
@@ -1160,7 +1163,10 @@ export function ChatScreen() {
           <div className="mx-auto flex max-w-2xl items-center justify-between gap-2 pl-1 pr-2 lg:hidden">
             <FavoriteStopWidget />
             <button
-              onPointerDown={() => window.dispatchEvent(new Event("vamos:prime-voice"))}
+              onPointerDown={(event) => {
+                event.preventDefault();
+                window.dispatchEvent(new Event("vamos:open"));
+              }}
               onClick={() => window.dispatchEvent(new Event("vamos:open"))}
               aria-label="Hablar con Agente Vamos"
               className="group relative flex h-20 w-20 shrink-0 items-center justify-center rounded-full transition active:scale-95"
