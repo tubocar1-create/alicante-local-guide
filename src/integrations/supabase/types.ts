@@ -3199,6 +3199,7 @@ export type Database = {
       }
       purge_showtimes_past: { Args: { p_retention?: string }; Returns: number }
       purge_tram_expired_services: { Args: never; Returns: number }
+      purge_tram_keep_window: { Args: { p_days?: number }; Returns: number }
       refresh_tram_live_departures: {
         Args: { p_from?: string; p_to?: string }
         Returns: number
