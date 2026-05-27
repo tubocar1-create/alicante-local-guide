@@ -1667,6 +1667,10 @@ function localResolve(
           path: fuPath,
           audio: intent?.audio ?? d.audio,
           pendingDomain: null,
+          // Si el followup nos devuelve al hub "/" (caso comer), señalamos
+          // al ChatScreen que debe abrir el submenú correspondiente; si no
+          // lo hacemos, el usuario aterriza en la home sin selector visible.
+          openSubmenu: fuPath === "/" && d.id === "comer" ? "comer" : undefined,
         };
       }
 
@@ -1676,6 +1680,7 @@ function localResolve(
           path: d.hubPath,
           audio: d.audio,
           pendingDomain: null,
+          openSubmenu: d.hubPath === "/" && d.id === "comer" ? "comer" : undefined,
         };
       }
     }
