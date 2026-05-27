@@ -2894,12 +2894,9 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
           } catch {}
         }
         // Si el resolver local pidió abrir un submenú (p.ej. "comer"),
-        // lo encolamos para que ChatScreen lo abra tras la navegación.
-        if (fallback.openSubmenu && typeof window !== "undefined") {
-          try {
-            window.sessionStorage.setItem("afp:openSubmenu", fallback.openSubmenu);
-          } catch {}
-        }
+        // lo despachamos tras navegar. NO usamos sessionStorage aquí para
+        // no activar el flujo "navigatingToDashboard" que espera resumen.
+        const localOpenSubmenu = fallback.openSubmenu ?? null;
 
         // Enriquecer respuesta TRAM con la parada más cercana cuando hay geo.
         if (fallback.pendingDomain === "tram_origin_confirm" && typeof window !== "undefined") {
