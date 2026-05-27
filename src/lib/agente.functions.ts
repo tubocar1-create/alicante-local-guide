@@ -989,6 +989,41 @@ Aplica la doctrina: si enrutas a una categoría, enumera en "reply" SOLO las ram
           },
           { onConflict: "normalized,path" }
         );
+
+      // APRENDIZAJE DE ENTIDAD CONCRETA — si Gemini devuelve una ruta "hoja"
+      // (p.ej. /farmacias/<slug>, /hospitales/<slug>, /ocio/cines/<id>, /vuelos/<iata>),
+      // persistimos el nombre propio en agente_proper_nouns para que el próximo
+      // turno lo resuelva el agente local sin volver a llamar a Gemini.
+      if (navigate && navigate.startsWith("/")) {
+        const segs = navigate.split("/").filter(Boolean);
+        if (segs.length >= 2) {
+          const category = segs[0];
+          const slug = segs[segs.length - 1].split("?")[0];
+          const nameFromSlug = decodeURIComponent(slug).replace(/-/g, " ").trim();
+          const displayName = lastUserMessage.trim().slice(0, 120) || nameFromSlug;
+          const normName = normalizeText(displayName);
+          if (normName && normName.length >= 3) {
+            const aliases = Array.from(new Set([normalizeText(nameFromSlug)].filter(Boolean)));
+            void supabaseAdmin
+              .from("agente_proper_nouns")
+              .upsert(
+                {
+                  name: displayName,
+                  normalized: normName,
+                  aliases,
+                  category,
+                  route: navigate,
+                  priority: 50,
+                  source: "llm_learned",
+                  active: true,
+                },
+                { onConflict: "normalized,route" }
+              );
+            // invalidamos cache in-memory para que el próximo turno cargue la nueva fila
+            _properNounsCache = null;
+          }
+        }
+      }
     };
 
     try {
