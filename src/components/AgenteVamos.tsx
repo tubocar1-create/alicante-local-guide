@@ -1807,7 +1807,7 @@ function localResolve(
       };
     }
     return {
-      reply: `Te llevo a ${intent.label.toLowerCase()}.`,
+      reply: selectorReplyFor(intent.route ?? undefined, `Te llevo a ${intent.label.toLowerCase()}.`),
       path: intent.route ?? undefined,
       audio: "fallback",
       pendingDomain: null,
