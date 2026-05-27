@@ -387,13 +387,17 @@ function ParadaFavoritaPage() {
         <div className="mt-2 flex items-center gap-2 border-t border-stone-100 pt-2 text-stone-600">
           <span
             className={`h-1.5 w-1.5 rounded-full ${
-              liveLoading ? "bg-amber-500 animate-pulse" : hasLiveData ? "bg-emerald-500" : "bg-stone-300"
+              outOfService ? "bg-stone-400" : liveLoading ? "bg-amber-500 animate-pulse" : hasLiveData ? "bg-emerald-500" : "bg-stone-300"
             }`}
           />
           <div className="text-xs">
             <span className="text-[9px] uppercase tracking-wider text-stone-500">Datos:</span>{" "}
             <span className="font-extrabold text-stone-800">
-              {hasLiveData ? "tiempo real (Vectalia)" : "estimación · sin paso en vivo"}
+              {outOfService
+                ? "servicio nocturno · sin buses 23:30 – 07:00"
+                : hasLiveData
+                  ? "tiempo real (Vectalia)"
+                  : "estimación · sin paso en vivo"}
             </span>
           </div>
         </div>
