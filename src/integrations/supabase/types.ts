@@ -612,6 +612,45 @@ export type Database = {
           },
         ]
       }
+      bus_line_service_windows: {
+        Row: {
+          created_at: string
+          day_type: string
+          direction: number
+          first_departure: string
+          id: string
+          last_departure: string
+          line_code: string
+          source: string | null
+          terminal_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day_type: string
+          direction: number
+          first_departure: string
+          id?: string
+          last_departure: string
+          line_code: string
+          source?: string | null
+          terminal_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day_type?: string
+          direction?: number
+          first_departure?: string
+          id?: string
+          last_departure?: string
+          line_code?: string
+          source?: string | null
+          terminal_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bus_line_stops: {
         Row: {
           created_at: string
