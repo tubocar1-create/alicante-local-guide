@@ -2885,7 +2885,12 @@ export function AgenteVamosPanel({ open, onClose }: { open: boolean; onClose: ()
         // Intro de compras: respuesta canónica, no la pisamos con el servidor.
         const isShoppingResolution = fallback.path === "/comprar" && fallback.reply === SHOPPING_INTRO_REPLY;
 
-        if (!isClarifying && !resolvedLineDashboard && !isCineIntent && !isDomainFollowupResolution && !isTrainedResolution && !isShoppingResolution) {
+        // El agente local es soberano: si ya resolvió a una ruta concreta
+        // (cualquier path que no sea "/"), NO invocamos al LLM. Gemini solo
+        // entra cuando el resolver local no encuentra nada (path vacío o "/")
+        // y no es un turno de desambiguación.
+        const localResolvedConcretely = !!fallback.path && fallback.path !== "/";
+        if (!isClarifying && !resolvedLineDashboard && !isCineIntent && !isDomainFollowupResolution && !isTrainedResolution && !isShoppingResolution && !localResolvedConcretely) {
           try {
             serverCalled = true;
             const res = await askAgent({
