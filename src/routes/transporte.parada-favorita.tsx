@@ -441,7 +441,7 @@ function ParadaFavoritaPage() {
         <div className="mt-2 flex items-center gap-2 border-t border-stone-100 pt-2 text-stone-600">
           <span
             className={`h-1.5 w-1.5 rounded-full ${
-              outOfService ? "bg-stone-400" : liveLoading ? "bg-amber-500 animate-pulse" : hasLiveData ? "bg-emerald-500" : "bg-stone-300"
+              outOfService ? "bg-stone-400" : nightEstimate ? "bg-indigo-500" : liveLoading ? "bg-amber-500 animate-pulse" : hasLiveData ? "bg-emerald-500" : "bg-stone-300"
             }`}
           />
           <div className="text-xs">
@@ -449,13 +449,21 @@ function ParadaFavoritaPage() {
             <span className="font-extrabold text-stone-800">
               {outOfService
                 ? `fuera de servicio · reanuda ${reopensAt}`
-                : hasLiveData
-                  ? "tiempo real (Vectalia)"
-                  : "estimación · sin paso en vivo"}
+                : nightEstimate
+                  ? `estimado nocturno · salidas cada hora desde ${nightEstimate.originTerminal}`
+                  : hasLiveData
+                    ? "tiempo real (Vectalia)"
+                    : "estimación · sin paso en vivo"}
             </span>
           </div>
         </div>
+        {nightEstimate && (
+          <p className="mt-1 text-[10px] leading-snug text-stone-500">
+            ⓘ Horarios <strong>estimados</strong>, no en tiempo real. Calculados a partir de la salida horaria desde {nightEstimate.originTerminal}.
+          </p>
+        )}
       </section>
+
 
       {/* Upcoming buses */}
       <section className="mx-3 mt-2 rounded-3xl bg-white p-3 shadow-[0_8px_24px_-12px_rgba(60,40,10,0.25)]">
