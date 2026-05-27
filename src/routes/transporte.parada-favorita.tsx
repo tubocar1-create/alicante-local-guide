@@ -100,8 +100,10 @@ function ParadaFavoritaPage() {
   }, []);
 
   // Una sola petición a Vectalia: trae todos los ETAs disponibles.
+  // Para líneas nocturnas no consultamos Vectalia (sin cobertura live) y
+  // usamos estimados horarios desde el terminal de origen.
   useEffect(() => {
-    if (outOfService) {
+    if (outOfService || isNightLine) {
       setLiveAll([]);
       setLiveLoading(false);
       return;
@@ -136,18 +138,29 @@ function ParadaFavoritaPage() {
       cancelled = true;
       window.clearInterval(id);
     };
-  }, [stop.stopId, stop.line, outOfService]);
+  }, [stop.stopId, stop.line, outOfService, isNightLine]);
 
   const elapsedMin = Math.floor((Date.now() - liveUpdatedAt) / 60_000);
   const liveMinutes = liveAll.length > 0 ? Math.max(0, liveAll[0] - elapsedMin) : null;
   const fallback = computeNextArrival(stop);
-  const minutes = liveMinutes ?? fallback.minutes;
+  // Si hay estimado nocturno, lo usamos como fuente principal.
+  const nightFirst = nightEstimate?.upcoming[0];
+  const minutes = nightFirst ? nightFirst.minutes : (liveMinutes ?? fallback.minutes);
   const arrivalDate = new Date(Date.now() + minutes * 60_000);
-  const arrivalTime = `${String(arrivalDate.getHours()).padStart(2, "0")}:${String(arrivalDate.getMinutes()).padStart(2, "0")}`;
+  const arrivalTime = nightFirst
+    ? nightFirst.arrivalTime
+    : `${String(arrivalDate.getHours()).padStart(2, "0")}:${String(arrivalDate.getMinutes()).padStart(2, "0")}`;
   const fallbackUpcoming = computeUpcomingArrivals(stop, 4);
-  // Construye las 4 próximas llegadas: primero las live (en orden), luego
-  // completa con estimaciones basadas en la frecuencia inferida.
+  // Construye las 4 próximas llegadas. Para líneas nocturnas en servicio
+  // usamos los estimados horarios; en el resto, live Vectalia + relleno.
   const upcoming = (() => {
+    if (nightEstimate) {
+      return nightEstimate.upcoming.map((u) => ({
+        minutes: u.minutes,
+        arrivalTime: u.arrivalTime,
+        live: false,
+      }));
+    }
     const out: Array<{ minutes: number; arrivalTime: string; live: boolean }> = [];
     const liveAdjusted = liveAll.map((m) => Math.max(0, m - elapsedMin)).sort((a, b) => a - b);
     for (const m of liveAdjusted.slice(0, 4)) {
@@ -181,8 +194,9 @@ function ParadaFavoritaPage() {
     }
     return out;
   })();
-  const isArriving = minutes <= 1;
-  const hasLiveData = liveAll.length > 0;
+  const isArriving = minutes <= 1 && !nightEstimate; // los estimados no parpadean
+  const hasLiveData = liveAll.length > 0 && !isNightLine;
+
 
 
   // Build (line+direction) options with real terminal as destination.
