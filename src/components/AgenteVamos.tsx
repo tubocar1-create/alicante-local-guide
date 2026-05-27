@@ -418,7 +418,7 @@ const DOMAINS: DomainSpec[] = [
     id: "tram_origin_confirm",
     hubPath: "/tram",
     triggers: [],
-    question: "¿Quieres salir desde esa parada o prefieres otra?",
+    question: "Confirma la parada de origen en pantalla.",
     audio: "bus",
     followups: [
       { keys: [
