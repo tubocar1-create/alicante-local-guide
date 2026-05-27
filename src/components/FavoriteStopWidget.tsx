@@ -86,6 +86,7 @@ export function FavoriteStopWidget() {
   const [stop, setStop] = useState<FavoriteStop>(DEFAULT_FAVORITE_STOP);
   const [liveMin, setLiveMin] = useState<number | null>(null);
   const [, setTick] = useState(0);
+  const { data: graph } = useBusGraph();
 
   useEffect(() => {
     setStop(loadFavoriteStop());
@@ -98,7 +99,13 @@ export function FavoriteStopWidget() {
     };
   }, []);
 
+  const outOfService = isOutOfService();
+
   useEffect(() => {
+    if (outOfService) {
+      setLiveMin(null);
+      return;
+    }
     let cancelled = false;
     async function fetchLive() {
       try {
@@ -119,7 +126,10 @@ export function FavoriteStopWidget() {
       cancelled = true;
       window.clearInterval(id);
     };
-  }, [stop.stopId, stop.line]);
+  }, [stop.stopId, stop.line, outOfService]);
+
+  const lineColor =
+    graph?.lines.find((l) => l.code === stop.line)?.color || "#0d3b8a";
 
   const fallback = computeNextArrival(stop);
   const minutes = liveMin ?? fallback.minutes;
@@ -137,12 +147,17 @@ export function FavoriteStopWidget() {
     >
       <div className="flex flex-1 flex-col justify-center gap-1 min-w-0">
         <div className="flex items-center gap-1">
-          <span className="rounded-md bg-[#0d3b8a] px-1.5 py-0.5 text-[8px] font-extrabold leading-none text-white">
+          <span
+            className="rounded-md px-1.5 py-0.5 text-[8px] font-extrabold leading-none text-white"
+            style={{ background: lineColor }}
+          >
             Bus línea ({stop.line})
           </span>
-          <span className="text-[7px] font-bold uppercase tracking-wider text-emerald-700 leading-none">
-            ● live
-          </span>
+          {!outOfService && (
+            <span className="text-[7px] font-bold uppercase tracking-wider text-emerald-700 leading-none">
+              ● live
+            </span>
+          )}
         </div>
         <div className="min-w-0">
           <div className="text-[7px] font-bold uppercase tracking-wider text-stone-400 leading-none">
@@ -162,8 +177,17 @@ export function FavoriteStopWidget() {
         </div>
       </div>
       <div className="flex flex-col items-center justify-center gap-1">
-        {minutes <= 1 ? (
-          <div className="flex h-[48px] w-[48px] flex-col items-center justify-center rounded-full bg-[#0d3b8a] animate-blink ring-1 ring-[#0d3b8a]">
+        {outOfService ? (
+          <div className="flex h-[48px] w-[48px] flex-col items-center justify-center rounded-full bg-stone-100 ring-1 ring-stone-300 px-1 text-center">
+            <span className="text-[8px] font-extrabold uppercase leading-tight text-stone-500">
+              Fuera de servicio
+            </span>
+          </div>
+        ) : minutes <= 1 ? (
+          <div
+            className="flex h-[48px] w-[48px] flex-col items-center justify-center rounded-full animate-blink ring-1"
+            style={{ background: lineColor, borderColor: lineColor }}
+          >
             <span className="text-[9px] font-extrabold uppercase leading-none text-white">
               ¡Llega!
             </span>
@@ -174,7 +198,8 @@ export function FavoriteStopWidget() {
             className="flex h-[48px] w-[48px] flex-col items-center justify-center rounded-full bg-white ring-1 ring-stone-200 animate-in fade-in zoom-in-95 duration-300"
           >
             <span
-              className="text-[24px] font-extrabold leading-none tabular-nums text-[#0d3b8a]"
+              className="text-[24px] font-extrabold leading-none tabular-nums"
+              style={{ color: lineColor }}
               aria-live="polite"
             >
               {minutes}
@@ -184,16 +209,18 @@ export function FavoriteStopWidget() {
             </span>
           </div>
         )}
-        <div className="flex flex-col items-center leading-none">
-          <span className="text-[7px] font-bold uppercase tracking-wider text-stone-400">
-            Llega
-          </span>
-          <span className="text-[10px] font-extrabold tabular-nums text-stone-700 mt-0.5">
-            {arrivalTime}
-          </span>
-        </div>
+        {!outOfService && (
+          <div className="flex flex-col items-center leading-none">
+            <span className="text-[7px] font-bold uppercase tracking-wider text-stone-400">
+              Llega
+            </span>
+            <span className="text-[10px] font-extrabold tabular-nums text-stone-700 mt-0.5">
+              {arrivalTime}
+            </span>
+          </div>
+        )}
       </div>
-
     </Link>
   );
 }
+
