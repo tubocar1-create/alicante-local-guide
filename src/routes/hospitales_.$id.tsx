@@ -200,10 +200,57 @@ type Hospital = {
 };
 
 export const Route = createFileRoute("/hospitales_/$id")({
-  head: () => ({
-    meta: [{ title: "Ficha hospitalaria · Alicante" }],
-    links: [LEAFLET_HEAD_LINK],
-  }),
+  loader: async ({ params }) => {
+    const { data } = await supabase
+      .from("health_centers")
+      .select("id, name, address, municipality, phone")
+      .eq("id", params.id)
+      .maybeSingle();
+    return { hospital: data as { id: string; name: string; address: string | null; municipality: string; phone: string | null } | null };
+  },
+  head: ({ params, loaderData }) => {
+    const h = loaderData?.hospital;
+    const name = h?.name ?? "Ficha hospitalaria";
+    const muni = h?.municipality ?? "Alicante";
+    const title = `${name} · Hospital en ${muni}`;
+    const description = `${name} en ${muni}: servicios sanitarios, urgencias 24h, especialidades, dirección${h?.phone ? ", teléfono" : ""} y cómo llegar. Información actualizada del sistema sanitario público de Alicante.`;
+    const url = `https://vamosalicante.com/hospitales_/${params.id}`;
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description.slice(0, 160) },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description.slice(0, 160) },
+        { property: "og:url", content: url },
+        { property: "og:type", content: "website" },
+      ],
+      links: [
+        LEAFLET_HEAD_LINK,
+        { rel: "canonical", href: url },
+      ],
+      scripts: h
+        ? [
+            {
+              type: "application/ld+json",
+              children: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Hospital",
+                name: h.name,
+                address: {
+                  "@type": "PostalAddress",
+                  streetAddress: h.address ?? undefined,
+                  addressLocality: h.municipality,
+                  addressRegion: "Alicante",
+                  addressCountry: "ES",
+                },
+                telephone: h.phone ?? undefined,
+                url,
+              }),
+            },
+          ]
+        : [],
+    };
+  },
   component: HospitalDetailPage,
 });
 
