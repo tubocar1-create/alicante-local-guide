@@ -64,7 +64,7 @@ async function findPlaceId(beach: MapBeach): Promise<string | null> {
 
 // Devuelve URL del proxy interno (cachea en Storage en la 1ª petición y nunca
 // más vuelve a llamar a Google para esa foto).
-function photoMediaUri(photoName: string, maxWidthPx = 1600): string |async function getKey(): Promise<string | null> {
+function photoMediaUri(photoName: string, maxWidthPx = 1600): string | null {
   if (!photoName?.startsWith("places/")) return null;
   const w = Math.min(Math.max(Math.round(maxWidthPx), 80), 1600);
   return `/api/public/google-photo/${photoName}?w=${w}`;
