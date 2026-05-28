@@ -15,6 +15,20 @@ export const Route = createFileRoute("/comprar")({
       },
       { property: "og:title", content: "Comprar en Alicante — Guía de compras por intención" },
       { property: "og:description", content: "Descubre dónde comprar en Alicante por categoría: moda, tecnología, hogar, mascotas y más. Guía urbana contextual." },
+      { property: "og:url", content: "https://vamosalicante.com/comprar" },
+    ],
+    links: [{ rel: "canonical", href: "https://vamosalicante.com/comprar" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: "Dónde comprar en Alicante",
+          description: "Listado de categorías y subsectores de tiendas en Alicante: moda, tecnología, hogar, mascotas y más.",
+          url: "https://vamosalicante.com/comprar",
+        }),
+      },
     ],
   }),
   loader: () => getShopTree(),

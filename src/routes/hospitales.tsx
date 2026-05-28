@@ -73,6 +73,20 @@ export const Route = createFileRoute("/hospitales")({
       },
       { property: "og:title", content: "Hospitales públicos de Alicante" },
       { property: "og:description", content: "Hospitales del SNS en la provincia de Alicante con dirección, teléfono, urgencias 24h y distancia." },
+      { property: "og:url", content: "https://vamosalicante.com/hospitales" },
+    ],
+    links: [{ rel: "canonical", href: "https://vamosalicante.com/hospitales" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: "Hospitales públicos de Alicante",
+          description: "Directorio de hospitales del Sistema Nacional de Salud en la provincia de Alicante.",
+          url: "https://vamosalicante.com/hospitales",
+        }),
+      },
     ],
   }),
   component: HospitalesPage,

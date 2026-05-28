@@ -8,7 +8,11 @@ export const Route = createFileRoute("/tram/mapa")({
     meta: [
       { title: "Mapa de líneas TRAM Alicante" },
       { name: "description", content: "Plano zonal tarifario del TRAM Metropolità d'Alacant (FGV) con todas las líneas." },
+      { property: "og:title", content: "Mapa de líneas TRAM Alicante" },
+      { property: "og:description", content: "Plano interactivo de líneas y zonas tarifarias del TRAM de Alicante (FGV)." },
+      { property: "og:url", content: "https://vamosalicante.com/tram/mapa" },
     ],
+    links: [{ rel: "canonical", href: "https://vamosalicante.com/tram/mapa" }],
   }),
   component: TramMapaPage,
 });

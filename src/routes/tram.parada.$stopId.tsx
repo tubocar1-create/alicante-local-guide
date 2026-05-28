@@ -3,12 +3,21 @@ import { useEffect, useState } from "react";
 import { ChevronLeft, MapPin, Star, Map as MapIcon, Sunrise, Moon } from "lucide-react";
 
 export const Route = createFileRoute("/tram/parada/$stopId")({
-  head: ({ params }) => ({
-    meta: [
-      { title: `TRAM Alicante — Próximas salidas` },
-      { name: "description", content: `Próximas salidas del TRAM de Alicante desde la parada ${params.stopId}.` },
-    ],
-  }),
+  head: ({ params }) => {
+    const title = `Próximas salidas en ${params.stopId} — TRAM Alicante`;
+    const description = `Horarios y próximas salidas del TRAM de Alicante desde la parada ${params.stopId}: línea, destino y minutos restantes en tiempo real.`;
+    const url = `https://vamosalicante.com/tram/parada/${params.stopId}`;
+    return {
+      meta: [
+        { title: title.slice(0, 60) },
+        { name: "description", content: description.slice(0, 160) },
+        { property: "og:title", content: title.slice(0, 60) },
+        { property: "og:description", content: description.slice(0, 160) },
+        { property: "og:url", content: url },
+      ],
+      links: [{ rel: "canonical", href: url }],
+    };
+  },
   component: ParadaPage,
 });
 

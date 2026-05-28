@@ -137,6 +137,20 @@ export const Route = createFileRoute("/farmacias")({
       },
       { property: "og:title", content: "Farmacias de Alicante — Dashboard por sector y código postal" },
       { property: "og:description", content: "Encuentra farmacias en Alicante por sector y CP: direcciones, teléfonos, horarios y mapa interactivo." },
+      { property: "og:url", content: "https://vamosalicante.com/farmacias" },
+    ],
+    links: [{ rel: "canonical", href: "https://vamosalicante.com/farmacias" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: "Farmacias de Alicante",
+          description: "Directorio de farmacias en Alicante por sector y código postal con direcciones y teléfonos.",
+          url: "https://vamosalicante.com/farmacias",
+        }),
+      },
     ],
   }),
   component: FarmaciasPage,
