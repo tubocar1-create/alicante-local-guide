@@ -1061,7 +1061,7 @@ export function ChatScreen() {
                         ) : t.label === "Transporte multimodal inteligente" ? (
                           <img src={busAlicanteIcon} alt="" className="h-[78%] w-[78%] object-contain" />
                         ) : t.label === "Vuelos" ? (
-                          <img src={vuelosAvionIcon} alt="" className="h-[82%] w-[82%] object-contain" />
+                          <img src={vuelosAvionIcon} alt="" className="absolute inset-0 m-auto h-[95%] w-[95%] object-contain" />
                         ) : t.label === "Servicios sanitarios" ? (
                           <img src={saludTiritaIcon} alt="" className="h-[82%] w-[82%] object-contain" />
                         ) : Icon ? (
