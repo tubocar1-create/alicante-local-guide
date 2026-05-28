@@ -326,8 +326,7 @@ const DOMAINS: DomainSpec[] = [
   },
   {
     id: "transporte",
-    hubPath: "/",
-    openSubmenuKey: "transporte",
+    hubPath: "/transporte",
     triggers: [
       "quiero moverme", "necesito moverme", "como me muevo", "quiero desplazarme",
       "tengo que ir", "necesito ir", "como llego", "como voy",
@@ -360,8 +359,7 @@ const DOMAINS: DomainSpec[] = [
   },
   {
     id: "vuelos",
-    hubPath: "/",
-    openSubmenuKey: "vuelos",
+    hubPath: "/vuelos",
     triggers: [
       "vuelo", "vuelos", "aeropuerto", "aena", "avion", "aviones", "avión", "alc",
       "salida de vuelo", "llegada de vuelo", "salidas de vuelos", "llegadas de vuelos",
@@ -377,8 +375,7 @@ const DOMAINS: DomainSpec[] = [
 
   {
     id: "transporte_bus",
-    hubPath: "/",
-    openSubmenuKey: "transporte",
+    hubPath: "/transporte",
     triggers: [
       "bus", "buses", "autobus", "autobuses", "emt", "vectalia",
       "linea de bus", "parada", "parada de bus", "bus urbano", "buses urbanos",
