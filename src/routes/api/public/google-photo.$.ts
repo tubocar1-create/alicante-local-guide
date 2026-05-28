@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getGooglePlacesKey } from "@/lib/google-killswitch.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 // Proxy genérico cache-on-first-hit para fotos de Google Places (New).
