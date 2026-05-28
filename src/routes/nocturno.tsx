@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { getDrinksPlaces } from "@/lib/places.functions";
 
-export const Route = createFileRoute("/bares")({
+export const Route = createFileRoute("/nocturno")({
   head: () => ({
     meta: [
       { title: "Bares y Zona de Copas en Alicante" },
@@ -30,10 +30,10 @@ export const Route = createFileRoute("/bares")({
         content:
           "Bares, pubs, cocktail bars y discotecas en Alicante.",
       },
-      { property: "og:url", content: "https://vamosalicante.com/bares" },
+      { property: "og:url", content: "https://vamosalicante.com/nocturno" },
     ],
     links: [
-      { rel: "canonical", href: "https://vamosalicante.com/bares" },
+      { rel: "canonical", href: "https://vamosalicante.com/nocturno" },
     ],
   }),
   component: BaresDashboard,

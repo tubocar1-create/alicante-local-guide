@@ -25,6 +25,7 @@ import { Route as RentACarRouteImport } from './routes/rent-a-car'
 import { Route as PlayasRouteImport } from './routes/playas'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as OcioRouteImport } from './routes/ocio'
+import { Route as NocturnoRouteImport } from './routes/nocturno'
 import { Route as HospitalesRouteImport } from './routes/hospitales'
 import { Route as FiestasRouteImport } from './routes/fiestas'
 import { Route as FarmaciasRouteImport } from './routes/farmacias'
@@ -34,7 +35,6 @@ import { Route as ComprarRouteImport } from './routes/comprar'
 import { Route as ClimaRouteImport } from './routes/clima'
 import { Route as BusinessRouteImport } from './routes/business'
 import { Route as BusRouteImport } from './routes/bus'
-import { Route as BaresRouteImport } from './routes/bares'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BusinessIndexRouteImport } from './routes/business.index'
@@ -225,6 +225,11 @@ const OcioRoute = OcioRouteImport.update({
   path: '/ocio',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NocturnoRoute = NocturnoRouteImport.update({
+  id: '/nocturno',
+  path: '/nocturno',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HospitalesRoute = HospitalesRouteImport.update({
   id: '/hospitales',
   path: '/hospitales',
@@ -268,11 +273,6 @@ const BusinessRoute = BusinessRouteImport.update({
 const BusRoute = BusRouteImport.update({
   id: '/bus',
   path: '/bus',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BaresRoute = BaresRouteImport.update({
-  id: '/bares',
-  path: '/bares',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -836,7 +836,6 @@ const ApiPublicHooksAenaSyncRoute = ApiPublicHooksAenaSyncRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
-  '/bares': typeof BaresRoute
   '/bus': typeof BusRouteWithChildren
   '/business': typeof BusinessRouteWithChildren
   '/clima': typeof ClimaRoute
@@ -846,6 +845,7 @@ export interface FileRoutesByFullPath {
   '/farmacias': typeof FarmaciasRoute
   '/fiestas': typeof FiestasRoute
   '/hospitales': typeof HospitalesRoute
+  '/nocturno': typeof NocturnoRoute
   '/ocio': typeof OcioRoute
   '/perfil': typeof PerfilRoute
   '/playas': typeof PlayasRouteWithChildren
@@ -972,7 +972,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/bares': typeof BaresRoute
   '/bus': typeof BusRouteWithChildren
   '/clima': typeof ClimaRoute
   '/comprar': typeof ComprarRoute
@@ -981,6 +980,7 @@ export interface FileRoutesByTo {
   '/farmacias': typeof FarmaciasRoute
   '/fiestas': typeof FiestasRoute
   '/hospitales': typeof HospitalesRoute
+  '/nocturno': typeof NocturnoRoute
   '/ocio': typeof OcioRoute
   '/perfil': typeof PerfilRoute
   '/playas': typeof PlayasRouteWithChildren
@@ -1108,7 +1108,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
-  '/bares': typeof BaresRoute
   '/bus': typeof BusRouteWithChildren
   '/business': typeof BusinessRouteWithChildren
   '/clima': typeof ClimaRoute
@@ -1118,6 +1117,7 @@ export interface FileRoutesById {
   '/farmacias': typeof FarmaciasRoute
   '/fiestas': typeof FiestasRoute
   '/hospitales': typeof HospitalesRoute
+  '/nocturno': typeof NocturnoRoute
   '/ocio': typeof OcioRoute
   '/perfil': typeof PerfilRoute
   '/playas': typeof PlayasRouteWithChildren
@@ -1247,7 +1247,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
-    | '/bares'
     | '/bus'
     | '/business'
     | '/clima'
@@ -1257,6 +1256,7 @@ export interface FileRouteTypes {
     | '/farmacias'
     | '/fiestas'
     | '/hospitales'
+    | '/nocturno'
     | '/ocio'
     | '/perfil'
     | '/playas'
@@ -1383,7 +1383,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/bares'
     | '/bus'
     | '/clima'
     | '/comprar'
@@ -1392,6 +1391,7 @@ export interface FileRouteTypes {
     | '/farmacias'
     | '/fiestas'
     | '/hospitales'
+    | '/nocturno'
     | '/ocio'
     | '/perfil'
     | '/playas'
@@ -1518,7 +1518,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
-    | '/bares'
     | '/bus'
     | '/business'
     | '/clima'
@@ -1528,6 +1527,7 @@ export interface FileRouteTypes {
     | '/farmacias'
     | '/fiestas'
     | '/hospitales'
+    | '/nocturno'
     | '/ocio'
     | '/perfil'
     | '/playas'
@@ -1656,7 +1656,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
-  BaresRoute: typeof BaresRoute
   BusRoute: typeof BusRouteWithChildren
   BusinessRoute: typeof BusinessRouteWithChildren
   ClimaRoute: typeof ClimaRoute
@@ -1666,6 +1665,7 @@ export interface RootRouteChildren {
   FarmaciasRoute: typeof FarmaciasRoute
   FiestasRoute: typeof FiestasRoute
   HospitalesRoute: typeof HospitalesRoute
+  NocturnoRoute: typeof NocturnoRoute
   OcioRoute: typeof OcioRoute
   PerfilRoute: typeof PerfilRoute
   PlayasRoute: typeof PlayasRouteWithChildren
@@ -1850,6 +1850,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OcioRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/nocturno': {
+      id: '/nocturno'
+      path: '/nocturno'
+      fullPath: '/nocturno'
+      preLoaderRoute: typeof NocturnoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/hospitales': {
       id: '/hospitales'
       path: '/hospitales'
@@ -1911,13 +1918,6 @@ declare module '@tanstack/react-router' {
       path: '/bus'
       fullPath: '/bus'
       preLoaderRoute: typeof BusRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/bares': {
-      id: '/bares'
-      path: '/bares'
-      fullPath: '/bares'
-      preLoaderRoute: typeof BaresRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -2910,7 +2910,6 @@ const SaludCategoriaRouteWithChildren = SaludCategoriaRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
-  BaresRoute: BaresRoute,
   BusRoute: BusRouteWithChildren,
   BusinessRoute: BusinessRouteWithChildren,
   ClimaRoute: ClimaRoute,
@@ -2920,6 +2919,7 @@ const rootRouteChildren: RootRouteChildren = {
   FarmaciasRoute: FarmaciasRoute,
   FiestasRoute: FiestasRoute,
   HospitalesRoute: HospitalesRoute,
+  NocturnoRoute: NocturnoRoute,
   OcioRoute: OcioRoute,
   PerfilRoute: PerfilRoute,
   PlayasRoute: PlayasRouteWithChildren,
