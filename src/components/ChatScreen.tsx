@@ -824,7 +824,7 @@ export function ChatScreen() {
                   className="mb-1 text-center font-bold uppercase tracking-tight lg:text-left"
                   style={{
                     fontFamily: "'Quicksand', sans-serif",
-                    color: "#4FC3F7",
+                    color: "#0277BD",
                     fontSize: "clamp(1.75rem, 5vw, 2.5rem)",
                     lineHeight: 1,
                   }}
