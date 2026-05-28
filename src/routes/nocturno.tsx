@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { DrinksTable } from "@/components/ChatScreen";
 
 export const Route = createFileRoute("/nocturno")({
@@ -24,9 +24,18 @@ export const Route = createFileRoute("/nocturno")({
 });
 
 function NocturnoPage() {
+  const navigate = useNavigate();
+  const router = useRouter();
+  const handleExit = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.history.back();
+    } else {
+      navigate({ to: "/" });
+    }
+  };
   return (
     <div className="mx-auto max-w-4xl px-3 pb-24 pt-4">
-      <DrinksTable cards={[]} />
+      <DrinksTable cards={[]} onExit={handleExit} />
     </div>
   );
 }
