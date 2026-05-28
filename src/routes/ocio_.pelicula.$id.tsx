@@ -8,9 +8,63 @@ import { getFilmWithShowtimes } from "@/lib/ocio.functions";
 const ACCENT = "#f472b6";
 
 export const Route = createFileRoute("/ocio_/pelicula/$id")({
-  head: () => ({
-    meta: [{ title: "Película · Cartelera Alicante" }],
-  }),
+  loader: async ({ params }) => {
+    try {
+      const res = await getFilmWithShowtimes({ data: { slug: params.id } });
+      return { film: res.film };
+    } catch {
+      return { film: null };
+    }
+  },
+  head: ({ params, loaderData }) => {
+    const film = loaderData?.film ?? null;
+    const url = `https://vamosalicante.com/ocio/pelicula/${params.id}`;
+    const rawTitle = film?.title?.trim();
+    const title = rawTitle
+      ? `${rawTitle} — Cartelera Alicante`.slice(0, 60)
+      : "Película · Cartelera Alicante";
+    const baseDesc = rawTitle
+      ? `${rawTitle}${film?.director ? `, dirigida por ${film.director}` : ""}: horarios y entradas en los cines de Alicante (Kinepolis, Yelmo, Aana, Odeon).`
+      : "Detalles de la película, horarios y compra de entradas en los cines de Alicante.";
+    const description = baseDesc.length > 160 ? baseDesc.slice(0, 157) + "…" : baseDesc;
+    const meta = [
+      { title },
+      { name: "description", content: description },
+      { property: "og:title", content: title },
+      { property: "og:description", content: description },
+      { property: "og:url", content: url },
+      { property: "og:type", content: "video.movie" },
+    ];
+    if (film?.poster_url) {
+      meta.push({ property: "og:image", content: film.poster_url });
+      meta.push({ name: "twitter:image", content: film.poster_url });
+    }
+    const scripts = film
+      ? [
+          {
+            type: "application/ld+json",
+            children: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Movie",
+              name: film.title,
+              image: film.poster_url ?? undefined,
+              director: film.director
+                ? { "@type": "Person", name: film.director }
+                : undefined,
+              genre: film.genre ?? undefined,
+              duration: film.duration_min ? `PT${film.duration_min}M` : undefined,
+              description: film.synopsis ?? undefined,
+              url,
+            }),
+          },
+        ]
+      : undefined;
+    return {
+      meta,
+      links: [{ rel: "canonical", href: url }],
+      ...(scripts ? { scripts } : {}),
+    };
+  },
   component: FilmDetail,
 });
 
