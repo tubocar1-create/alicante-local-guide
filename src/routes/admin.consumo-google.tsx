@@ -176,3 +176,65 @@ function Table({ headers, children }: { headers: string[]; children: React.React
     </table>
   );
 }
+
+function KillSwitchCard() {
+  const qc = useQueryClient();
+  const getFn = useServerFn(getGoogleKillSwitch);
+  const setFn = useServerFn(setGoogleKillSwitch);
+  const q = useQuery({
+    queryKey: ["google-killswitch"],
+    queryFn: () => getFn(),
+  });
+  const m = useMutation({
+    mutationFn: (enabled: boolean) => setFn({ data: { enabled } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["google-killswitch"] }),
+  });
+  const enabled = q.data?.enabled ?? false;
+  return (
+    <Card className={enabled ? "border-emerald-500/50" : "border-red-500/50"}>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          🛑 Kill-switch global de Google API
+          <span
+            className={
+              "ml-auto rounded-full px-3 py-1 text-xs font-semibold " +
+              (enabled
+                ? "bg-emerald-500/20 text-emerald-700"
+                : "bg-red-500/20 text-red-700")
+            }
+          >
+            {enabled ? "ACTIVADO (llamadas permitidas)" : "APAGADO (llamadas bloqueadas)"}
+          </span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Cuando está apagado, ningún server function de la app llamará a Google
+          Places, Maps, Geocoding o Directions. Los proxies de fotos devolverán
+          503. La caché perpetua de detalles sigue sirviendo lo ya guardado.
+        </p>
+        <div className="flex gap-2">
+          <Button
+            variant={enabled ? "default" : "outline"}
+            onClick={() => m.mutate(true)}
+            disabled={m.isPending}
+          >
+            Permitir llamadas
+          </Button>
+          <Button
+            variant={!enabled ? "destructive" : "outline"}
+            onClick={() => m.mutate(false)}
+            disabled={m.isPending}
+          >
+            🛑 Cortar todas
+          </Button>
+        </div>
+        {q.data?.updatedAt && (
+          <p className="text-xs text-muted-foreground">
+            Último cambio: {new Date(q.data.updatedAt).toLocaleString("es-ES")}
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
