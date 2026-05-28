@@ -90,6 +90,9 @@ const IA_SECTIONS = [
 const HERRAMIENTAS = [
   { to: "/admin/places", label: "Poblar sitios", icon: MapPinned },
   { to: "/admin/salud", label: "Poblar salud", icon: HeartPulse },
+  { to: "/admin/refresco-google", label: "Refresco Google", icon: RefreshCw },
+  { to: "/admin/consumo-google", label: "Consumo Google", icon: Cloud },
+  { to: "/admin/consumo-ia", label: "Consumo IA", icon: Sparkles },
   { to: "/admin/botones-ocultos", label: "Botones ocultos", icon: EyeOff },
   { to: "/admin/auditoria", label: "Auditoría pre-lanzamiento", icon: ClipboardCheck },
   { to: "/admin/system", label: "Sistema", icon: Wrench },
