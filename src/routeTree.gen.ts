@@ -35,7 +35,6 @@ import { Route as ComprarRouteImport } from './routes/comprar'
 import { Route as ClimaRouteImport } from './routes/clima'
 import { Route as BusinessRouteImport } from './routes/business'
 import { Route as BusRouteImport } from './routes/bus'
-import { Route as BaresRouteImport } from './routes/bares'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BusinessIndexRouteImport } from './routes/business.index'
@@ -274,11 +273,6 @@ const BusinessRoute = BusinessRouteImport.update({
 const BusRoute = BusRouteImport.update({
   id: '/bus',
   path: '/bus',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BaresRoute = BaresRouteImport.update({
-  id: '/bares',
-  path: '/bares',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -842,7 +836,6 @@ const ApiPublicHooksAenaSyncRoute = ApiPublicHooksAenaSyncRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
-  '/bares': typeof BaresRoute
   '/bus': typeof BusRouteWithChildren
   '/business': typeof BusinessRouteWithChildren
   '/clima': typeof ClimaRoute
@@ -979,7 +972,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/bares': typeof BaresRoute
   '/bus': typeof BusRouteWithChildren
   '/clima': typeof ClimaRoute
   '/comprar': typeof ComprarRoute
@@ -1116,7 +1108,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
-  '/bares': typeof BaresRoute
   '/bus': typeof BusRouteWithChildren
   '/business': typeof BusinessRouteWithChildren
   '/clima': typeof ClimaRoute
@@ -1256,7 +1247,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
-    | '/bares'
     | '/bus'
     | '/business'
     | '/clima'
@@ -1393,7 +1383,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/bares'
     | '/bus'
     | '/clima'
     | '/comprar'
@@ -1529,7 +1518,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
-    | '/bares'
     | '/bus'
     | '/business'
     | '/clima'
@@ -1668,7 +1656,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
-  BaresRoute: typeof BaresRoute
   BusRoute: typeof BusRouteWithChildren
   BusinessRoute: typeof BusinessRouteWithChildren
   ClimaRoute: typeof ClimaRoute
@@ -1931,13 +1918,6 @@ declare module '@tanstack/react-router' {
       path: '/bus'
       fullPath: '/bus'
       preLoaderRoute: typeof BusRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/bares': {
-      id: '/bares'
-      path: '/bares'
-      fullPath: '/bares'
-      preLoaderRoute: typeof BaresRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -2930,7 +2910,6 @@ const SaludCategoriaRouteWithChildren = SaludCategoriaRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
-  BaresRoute: BaresRoute,
   BusRoute: BusRouteWithChildren,
   BusinessRoute: BusinessRouteWithChildren,
   ClimaRoute: ClimaRoute,
