@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getConsumptionSummary } from "@/lib/admin-consumption.functions";
+import { getGoogleKillSwitch, setGoogleKillSwitch } from "@/lib/admin-killswitch.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+
 
 export const Route = createFileRoute("/admin/consumo-google")({
   head: () => ({ meta: [{ title: "Admin · Consumo Google" }] }),
