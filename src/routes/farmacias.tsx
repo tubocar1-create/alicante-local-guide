@@ -135,6 +135,8 @@ export const Route = createFileRoute("/farmacias")({
         content:
           "Dashboard de farmacias de Alicante por sector y código postal. Direcciones, teléfonos y mapa.",
       },
+      { property: "og:title", content: "Farmacias de Alicante — Dashboard por sector y código postal" },
+      { property: "og:description", content: "Encuentra farmacias en Alicante por sector y CP: direcciones, teléfonos, horarios y mapa interactivo." },
     ],
   }),
   component: FarmaciasPage,
