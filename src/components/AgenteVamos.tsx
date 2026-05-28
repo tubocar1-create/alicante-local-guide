@@ -1388,7 +1388,7 @@ function localResolve(
   const flightDomain = DOMAINS.find((d) => d.id === "vuelos");
   const matchedDomain = matchDomain(query);
   const hasGroundTransportMode = EXPLICIT_TRANSPORT_MODE_RE.test(query);
-  const hasFlightTravelIntent = /(^|\s)(vuelo|vuelos|volar|avion|aviones|aena|facturar|facturacion|check\s?in|check-in|checkin|terminal|embarque|aerolinea|aeropuerto|altet|alc)(\s|$)/.test(query);
+  const hasFlightTravelIntent = /(^|\s)(vuelo|vuelos|volar|avion|aviones|aena|facturar|facturacion|check\s?in|terminal|embarque|aerolinea|aeropuerto|altet|alc)(\s|$)/.test(query);
   if (matchedDomain?.domain.id === "vuelos" && !hasGroundTransportMode && hasFlightTravelIntent && flightDomain?.hubPath) {
     return {
       reply: flightDomain.question,
