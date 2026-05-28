@@ -17,8 +17,28 @@ export const Route = createFileRoute("/explore")({
         content:
           "Descubre cultura, naturaleza, playas y miradores en la provincia de Alicante con un mapa abierto.",
       },
+      { property: "og:url", content: "https://vamosalicante.com/explore" },
+      { property: "og:type", content: "website" },
     ],
-    links: [LEAFLET_HEAD_LINK],
+    links: [
+      LEAFLET_HEAD_LINK,
+      { rel: "canonical", href: "https://vamosalicante.com/explore" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "Explora Alicante",
+          description:
+            "Mapa interactivo de museos, castillos, playas, miradores y rutas de senderismo en la provincia de Alicante.",
+          url: "https://vamosalicante.com/explore",
+          isPartOf: { "@type": "WebSite", url: "https://vamosalicante.com/" },
+          about: { "@type": "Place", name: "Alicante, España" },
+        }),
+      },
+    ],
   }),
   component: ExplorePage,
 });
