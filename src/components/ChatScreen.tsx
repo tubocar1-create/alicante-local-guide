@@ -38,6 +38,7 @@ import portadaImg from "@/assets/alicante-portada.webp";
 import hoguerasIcon from "@/assets/hogueras-alicante.png";
 import busAlicanteIcon from "@/assets/bus-alicante.png";
 import vuelosAvionIcon from "@/assets/vuelos-avion.png";
+import saludTiritaIcon from "@/assets/salud-tirita.png";
 import asistenteIcon from "@/assets/asistente-icon.png";
 import { VamosWord } from "@/components/VamosWord";
 import { hablar, speakGreetingFromUserGesture } from "@/components/AgenteVamos";
