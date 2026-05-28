@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_variants_cache: {
+        Row: {
+          advertiser_id: string
+          created_at: string
+          day_madrid: string
+          payload: Json
+        }
+        Insert: {
+          advertiser_id: string
+          created_at?: string
+          day_madrid: string
+          payload: Json
+        }
+        Update: {
+          advertiser_id?: string
+          created_at?: string
+          day_madrid?: string
+          payload?: Json
+        }
+        Relationships: []
+      }
       admin_allowed_emails: {
         Row: {
           created_at: string
@@ -3214,6 +3235,10 @@ export type Database = {
       is_business_member: {
         Args: { _business_id: string; _user_id: string }
         Returns: boolean
+      }
+      purge_ad_variants_cache: {
+        Args: { p_retention?: string }
+        Returns: number
       }
       purge_aena_flights: { Args: { p_retention?: string }; Returns: number }
       purge_agente_learning_log: {
