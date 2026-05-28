@@ -1296,6 +1296,7 @@ const SELECTOR_REPLIES: Record<string, string> = {
   "/donde-dormir": "Te llevo a Alojamientos. ¿Por zona, por precio o por estilo (hotel, apartamento, hostal)?",
   "/comprar": "Te llevo a Comprar. ¿Centro comercial, tiendas del centro, mercados o algo concreto?",
   "/explore": "Te llevo a Explorar. ¿Centro histórico, museos, rutas o mapa general?",
+  "/transporte": "Te llevo a Transporte. ¿TRAM, autobús urbano, vuelos, rent-a-car o tu parada favorita?",
   "/vuelos": "Te llevo a Vuelos del ALC. ¿Llegadas o salidas?",
   "/clima": "Previsión del tiempo en Alicante. ¿Hoy, mañana o la semana?",
   "/fiestas": "Te llevo a Fiestas. ¿Hogueras de San Juan, Moros y Cristianos, mascletà o agenda general?",
