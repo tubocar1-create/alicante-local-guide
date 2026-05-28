@@ -77,6 +77,7 @@ import { Route as AdminUsuariosAuthRouteImport } from './routes/admin.usuarios-a
 import { Route as AdminUsuariosRouteImport } from './routes/admin.usuarios'
 import { Route as AdminSystemRouteImport } from './routes/admin.system'
 import { Route as AdminSaludRouteImport } from './routes/admin.salud'
+import { Route as AdminRefrescoGoogleRouteImport } from './routes/admin.refresco-google'
 import { Route as AdminPlacesRouteImport } from './routes/admin.places'
 import { Route as AdminOperationsRouteImport } from './routes/admin.operations'
 import { Route as AdminMetricasInternasRouteImport } from './routes/admin.metricas-internas'
@@ -489,6 +490,11 @@ const AdminSaludRoute = AdminSaludRouteImport.update({
   path: '/salud',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminRefrescoGoogleRoute = AdminRefrescoGoogleRouteImport.update({
+  id: '/refresco-google',
+  path: '/refresco-google',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminPlacesRoute = AdminPlacesRouteImport.update({
   id: '/places',
   path: '/places',
@@ -893,6 +899,7 @@ export interface FileRoutesByFullPath {
   '/admin/metricas-internas': typeof AdminMetricasInternasRoute
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/places': typeof AdminPlacesRoute
+  '/admin/refresco-google': typeof AdminRefrescoGoogleRoute
   '/admin/salud': typeof AdminSaludRoute
   '/admin/system': typeof AdminSystemRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
@@ -1030,6 +1037,7 @@ export interface FileRoutesByTo {
   '/admin/metricas-internas': typeof AdminMetricasInternasRoute
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/places': typeof AdminPlacesRoute
+  '/admin/refresco-google': typeof AdminRefrescoGoogleRoute
   '/admin/salud': typeof AdminSaludRoute
   '/admin/system': typeof AdminSystemRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
@@ -1171,6 +1179,7 @@ export interface FileRoutesById {
   '/admin/metricas-internas': typeof AdminMetricasInternasRoute
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/places': typeof AdminPlacesRoute
+  '/admin/refresco-google': typeof AdminRefrescoGoogleRoute
   '/admin/salud': typeof AdminSaludRoute
   '/admin/system': typeof AdminSystemRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
@@ -1313,6 +1322,7 @@ export interface FileRouteTypes {
     | '/admin/metricas-internas'
     | '/admin/operations'
     | '/admin/places'
+    | '/admin/refresco-google'
     | '/admin/salud'
     | '/admin/system'
     | '/admin/usuarios'
@@ -1450,6 +1460,7 @@ export interface FileRouteTypes {
     | '/admin/metricas-internas'
     | '/admin/operations'
     | '/admin/places'
+    | '/admin/refresco-google'
     | '/admin/salud'
     | '/admin/system'
     | '/admin/usuarios'
@@ -1590,6 +1601,7 @@ export interface FileRouteTypes {
     | '/admin/metricas-internas'
     | '/admin/operations'
     | '/admin/places'
+    | '/admin/refresco-google'
     | '/admin/salud'
     | '/admin/system'
     | '/admin/usuarios'
@@ -2252,6 +2264,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSaludRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/refresco-google': {
+      id: '/admin/refresco-google'
+      path: '/refresco-google'
+      fullPath: '/admin/refresco-google'
+      preLoaderRoute: typeof AdminRefrescoGoogleRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/places': {
       id: '/admin/places'
       path: '/places'
@@ -2799,6 +2818,7 @@ interface AdminRouteChildren {
   AdminMetricasInternasRoute: typeof AdminMetricasInternasRoute
   AdminOperationsRoute: typeof AdminOperationsRoute
   AdminPlacesRoute: typeof AdminPlacesRoute
+  AdminRefrescoGoogleRoute: typeof AdminRefrescoGoogleRoute
   AdminSaludRoute: typeof AdminSaludRoute
   AdminSystemRoute: typeof AdminSystemRoute
   AdminUsuariosRoute: typeof AdminUsuariosRoute
@@ -2819,6 +2839,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminMetricasInternasRoute: AdminMetricasInternasRoute,
   AdminOperationsRoute: AdminOperationsRoute,
   AdminPlacesRoute: AdminPlacesRoute,
+  AdminRefrescoGoogleRoute: AdminRefrescoGoogleRoute,
   AdminSaludRoute: AdminSaludRoute,
   AdminSystemRoute: AdminSystemRoute,
   AdminUsuariosRoute: AdminUsuariosRoute,
