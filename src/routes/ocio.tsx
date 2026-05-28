@@ -15,6 +15,7 @@ export const Route = createFileRoute("/ocio")({
         property: "og:description",
         content: "Cines, teatros y conciertos en Alicante.",
       },
+      { property: "og:url", content: "https://vamosalicante.com/ocio" },
     ],
   }),
   component: OcioDashboard,
