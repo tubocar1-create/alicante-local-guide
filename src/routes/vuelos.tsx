@@ -9,6 +9,8 @@ import type { Topology } from "topojson-specification";
 import type { Feature, FeatureCollection, Geometry } from "geojson";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { Plus, Maximize2 } from "lucide-react";
+import { trackPageView } from "@/lib/gtag";
+
 
 export const Route = createFileRoute("/vuelos")({
   head: () => ({
@@ -258,6 +260,8 @@ function VuelosDashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
+  useEffect(() => { trackPageView("vuelos"); }, []);
+
 
   const flightType = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("type") === "L" ? "L" : "S";
 

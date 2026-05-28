@@ -34,6 +34,8 @@ import {
 import { MOROS_BARRIOS, MOROS_ELEMENTOS } from "@/data/moros-cristianos";
 import hoguerasIcon from "@/assets/hogueras-alicante.png";
 import { askFiestasAI } from "@/lib/fiestas-ai.functions";
+import { trackPageView } from "@/lib/gtag";
+
 
 export const Route = createFileRoute("/fiestas")({
   head: () => ({
@@ -937,7 +939,9 @@ function Relato() {
 }
 
 function FiestasPage() {
+  useEffect(() => { trackPageView("fiestas"); }, []);
   return (
+
     <div
       className="fixed inset-0 z-[60] lg:relative lg:inset-auto lg:z-auto lg:min-h-[60vh] overflow-y-auto text-white"
       style={{
