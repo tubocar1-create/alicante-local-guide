@@ -258,6 +258,8 @@ function VuelosDashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
+  useEffect(() => { trackPageView("vuelos"); }, []);
+
 
   const flightType = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("type") === "L" ? "L" : "S";
 
