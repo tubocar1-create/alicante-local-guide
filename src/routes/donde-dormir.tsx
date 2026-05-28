@@ -139,6 +139,7 @@ function DondeDormirPage() {
         </div>
 
         <div className="rounded-2xl border border-amber-100/[0.08] bg-[rgba(20,10,4,0.7)] p-2 backdrop-blur-xl md:p-4">
+          <h2 className="mb-2 text-sm font-semibold text-amber-50">Disponibilidad esta noche</h2>
           <div className="mb-2 flex items-baseline justify-between gap-2">
             <p className="text-[12px] font-semibold text-amber-50">
               {isLoading
