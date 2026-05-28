@@ -7,6 +7,7 @@ import {
   useRouter,
   HeadContent,
   Scripts,
+  ScriptOnce,
 } from "@tanstack/react-router";
 import { InstallPWA } from "@/components/InstallPWA";
 import { AgenteVamosFab } from "@/components/AgenteVamos";
@@ -127,6 +128,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Nunito:wght@400;500;600;700&family=Quicksand:wght@700&display=swap",
       },
     ],
+    scripts: [
+      {
+        src: "https://www.googletagmanager.com/gtag/js?id=AW-18186927022",
+        async: true,
+      },
+    ],
   }),
 
   shellComponent: RootShell,
@@ -169,6 +176,12 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <ScriptOnce
+        children={`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'AW-18186927022');`}
+      />
       <DesktopShell>
         <Outlet />
       </DesktopShell>
