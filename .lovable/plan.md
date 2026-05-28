@@ -1,97 +1,78 @@
 ## Objetivo
 
-Crear el módulo **Teatro, conciertos y eventos** clonando la arquitectura de Cines (Dashboard cronológico + Cartelera visual + BD + scraping + purga), reemplazando los dos botones actuales (`/ocio/teatros` y `/ocio/conciertos`) por uno único.
+Registrar TODA llamada externa de pago (Lovable AI Gateway + Google Maps/Places) para auditar consumo real, y exponerlo en dos páginas de admin con acceso desde el menú lateral.
 
-## 1. Cambios en Ocio (entrada)
+## 1. Tabla `external_api_calls` (migración)
 
-- En `src/routes/ocio.tsx`: sustituir los botones de **Teatros** y **Conciertos** por uno solo: **🎭 Teatro, conciertos y eventos** → `/ocio/eventos`.
-- Mantener `ocio_.teatros.tsx` y `ocio_.conciertos.tsx` como redirects a `/ocio/eventos` (compatibilidad).
+Una sola tabla para los dos proveedores, con índice por `provider + created_at`:
 
-## 2. Base de datos (nuevas tablas)
+```
+external_api_calls
+  id, created_at
+  provider          'lovable_ai' | 'google_places' | 'google_maps' | 'google_geocoding' | 'google_directions'
+  endpoint          texto corto (ej: 'chat/completions', 'places:searchText', 'directions')
+  model             nullable (sólo IA)
+  caller            nombre del server fn o ruta que llama (ej: 'ai-review', 'places.search')
+  status_code       int
+  latency_ms        int
+  tokens_input      int nullable
+  tokens_output     int nullable
+  estimated_cost    numeric(10,6) nullable (USD)
+  meta              jsonb
+```
 
-Inspirado en `cinemas` / `films` / `showtimes`:
+RLS: solo admins leen; inserts vía service role desde server functions.
 
-- **`venues`** — recintos (Teatro Principal, ADDA, Plaza de Toros, Área 12, Muelle Live, etc.)
-  - `id`, `slug`, `name`, `kind` (teatro|sala|auditorio|recinto|waterfront|congresos), `address`, `lat`, `lng`, `website`, `cover_url`, `phone`
-- **`events`** — eventos en cartel
-  - `id`, `slug`, `title`, `category` (teatro|concierto|opera|danza|musical|festival|humor|otro), `description`, `poster_url`, `duration_min`, `age_rating`, `genre`, `artist`, `source_url`, `created_at`, `updated_at`
-- **`event_showtimes`** — pases (1 evento puede tener varias fechas/sitios)
-  - `id`, `event_id` FK, `venue_id` FK, `starts_at` (timestamptz), `price_min`, `price_max`, `currency`, `ticket_url`, `availability` (disponible|agotado|n/d)
-- **`event_sources`** — fuentes para el scraper (las 15 webs del prompt)
-  - `id`, `venue_id`, `url`, `last_scraped_at`, `enabled`
+## 2. Wrapper único — `src/lib/observability/track-external-call.ts`
 
-Reglas:
-- RLS pública SELECT en las 4 tablas (lectura abierta como `cinemas`).
-- Insert/update solo vía `supabaseAdmin` (scraper).
-- Trigger `update_updated_at_column` en `events`.
-- Constraint: `starts_at <= '2026-12-31 23:59:59 Europe/Madrid'` (validación via trigger, no CHECK).
-- Función `purge_event_showtimes_past(p_retention interval default '1 day')` análoga a `purge_showtimes_past`.
-- Función `purge_events_orphan()` para borrar eventos sin pases vigentes.
-- Seed inicial: insertar las 15 `venues` del listado con su `website`.
+Función `trackExternalCall({provider, endpoint, caller, model, ...})` que inserta con `supabaseAdmin`. Try/catch silencioso para no romper la llamada original.
 
-## 3. Scraping
+## 3. Helpers por proveedor
 
-- Server route `src/routes/api/public/hooks/eventos-sync.ts` (estilo `cinemas-sync.ts`).
-- Usa **Firecrawl** (`FIRECRAWL_API_KEY` ya disponible) para extraer eventos por venue.
-- Para cada venue habilitado: scrape → parseo con Lovable AI (`google/gemini-2.5-flash`) → upsert en `events` + `event_showtimes`.
-- Descarta eventos con `starts_at < now()` o `> 2026-12-31`.
-- **pg_cron mensual** (día 1 a las 03:00) llama al endpoint con `apikey`.
-- **pg_cron semanal** (domingos 04:00) ejecuta `purge_event_showtimes_past()` + `purge_events_orphan()`.
+- `src/lib/observability/lovable-ai.ts` → `callLovableAI({caller, model, messages, ...})` que envuelve el fetch a `ai.gateway.lovable.dev`, parsea `usage.prompt_tokens`/`completion_tokens`, calcula coste con `MODEL_PRICING` y trackea.
+- `src/lib/observability/google.ts` → `fetchGoogle({provider, endpoint, caller, url, init})` que mide latencia, status y registra.
 
-## 4. UI nuevo (estilo cines)
+## 4. Refactor de los 16 sitios IA + sitios Google
 
-Rutas a crear, copiando layout/estética/paleta de `ocio_.cines.*` y `ocio_.cartelera.tsx`:
+Sustituir cada `fetch("https://ai.gateway.lovable.dev/...")` por `callLovableAI(...)` con el `caller` correcto. Misma cosa para los call sites de Google Maps/Places (los localizo con `rg`).
 
-- **`/ocio/eventos`** — landing con dos accesos:
-  - 📋 **Cronograma** (Dashboard) → `/ocio/eventos/agenda`
-  - 🎟️ **Cartelera** (visual) → `/ocio/eventos/cartelera`
-  - Lista de venues (tipo `ocio_.cines.tsx`)
+## 5. Server functions de lectura
 
-- **`/ocio/eventos/agenda`** — Dashboard cronológico
-  - Tabla compacta ordenada por fecha+lugar
-  - Columnas: Fecha · Evento · Lugar · Precio · Ticket
-  - Campos faltantes → "n/d"
-  - Filtros: categoría, venue, mes
+`src/lib/admin-consumption.functions.ts`:
+- `getAiConsumption({ hours })` → agregado por hora/modelo/caller con coste.
+- `getGoogleConsumption({ hours })` → agregado por endpoint/caller con conteo.
+- `getRecentExternalCalls({ provider, hours, limit })` → últimas N llamadas.
 
-- **`/ocio/eventos/cartelera`** — Cartelera visual (clon de `ocio_.cartelera.tsx`)
-  - Grid de posters 2/3/4/5 cols
-  - Cada tarjeta: poster, título, categoría, próxima fecha, venue
-  - Link a `/ocio/eventos/$id`
+## 6. Páginas admin nuevas
 
-- **`/ocio/eventos/$id`** — detalle de evento (clon de `ocio_.pelicula.$id.tsx`)
-  - Poster grande, descripción, lista de pases con fecha/lugar/precio/botón ticket
+- `src/routes/admin.consumo-ia.tsx`
+  - Selector de rango: 1 h / 12 h / 24 h / 7 d / 30 d
+  - Totales: nº llamadas, tokens in/out, coste USD
+  - Tabla por modelo y por caller
+  - Gráfico simple por hora
+  - Lista de las últimas 50 llamadas
 
-- **`/ocio/eventos/venue/$id`** — eventos por recinto (clon de `ocio_.cines.$id.tsx`)
+- `src/routes/admin.consumo-google.tsx`
+  - Mismo selector
+  - Totales por API (Places / Maps / Geocoding / Directions)
+  - Tabla por endpoint y por caller
+  - Lista últimas 50
 
-Paleta: morado profundo (`#7c3aed` / `#f472b6`) para distinguir de cines (rosa) — pero misma estructura visual.
+## 7. Menú lateral admin
 
-## 5. Server functions
+Añadir en `src/routes/admin.tsx` (sidebar) dos entradas:
+- "🤖 Consumo IA" → `/admin/consumo-ia`
+- "☁️ Consumo Google" → `/admin/consumo-google`
 
-`src/lib/eventos.functions.ts`:
-- `listEvents({ from?, to?, category?, venueId? })` — para Dashboard
-- `listEventsCartelera()` — agrupados por evento con próximo pase
-- `getEventDetail(id|slug)`
-- `listVenues()` / `getVenueWithEvents(id)`
+## Lo que NO toco
 
-Todas usan `supabase` (publishable) — son lectura pública.
+- No cambio el comportamiento del agente.
+- No cambio el flujo de ninguna llamada existente, solo la envuelvo.
+- No toco `agente_learning_log` (sigue como está; las páginas nuevas se nutren de la nueva tabla).
 
-## 6. Doctrina del agente (CPA)
+## Riesgos
 
-Añadir intent `eventos_culturales` con keywords: teatro, concierto, ópera, ADDA, principal, plaza toros, área 12, muelle live, etc. → endpoint `/ocio/eventos`.
+- Refactor de 16+ archivos: lo hago en una sola pasada y con la misma firma para minimizar diff.
+- Los call sites de Google Maps en cliente (browser) NO se pueden trackear desde servidor; sólo registro los que ya pasan por server fns. El resto se ve en Google Cloud Console.
 
-## Detalles técnicos
-
-- **Posters faltantes**: placeholder con icono según categoría (🎭/🎵/🎤/💃) sobre gradiente del venue.
-- **Remasterización visual**: usar `imagegen` solo bajo demanda (no automático en scraper para no quemar créditos); por ahora solo guardamos URL fuente y aplicamos `object-cover` + overlay.
-- **Realtime no necesario** — refresh mensual es suficiente.
-- **Compatibilidad**: las rutas viejas `/ocio/teatros` y `/ocio/conciertos` redirigen a `/ocio/eventos`.
-
-## Orden de implementación
-
-1. Migración BD (4 tablas + RLS + funciones de purga + seed de 15 venues).
-2. `eventos.functions.ts` con queries de lectura.
-3. UI: `ocio.eventos.tsx`, `ocio_.eventos.agenda.tsx`, `ocio_.eventos.cartelera.tsx`, `ocio_.eventos.$id.tsx`, `ocio_.eventos.venue.$id.tsx`.
-4. Actualizar `ocio.tsx` (botón único) + redirects de teatros/conciertos.
-5. Endpoint scraper `api/public/hooks/eventos-sync.ts`.
-6. pg_cron (mensual scrape + semanal purga).
-7. Intent CPA.
+¿Adelante con todo, o prefieres que arranque solo por la tabla + wrapper IA + página IA, y dejamos Google para una segunda iteración?
