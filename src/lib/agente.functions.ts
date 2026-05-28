@@ -16,9 +16,8 @@ const ROUTES: Array<{ path: string; desc: string }> = [
   { path: "/ocio/teatros", desc: "SUBMENÚ Ocio · Teatros — obras, musicales, sala concreta" },
   { path: "/ocio/conciertos", desc: "SUBMENÚ Ocio · Conciertos — música en vivo, festivales, artista, agenda" },
   { path: "/explore", desc: "MENÚ PRINCIPAL · Mapa explorar la ciudad (rutas urbanas, lugares, descubrir)" },
-  { path: "action:bus-picker", desc: "MENÚ PRINCIPAL · Bus urbano — abre el selector '¿Ya sabes qué bus tomar?' (bus urbano, parada, tarjeta, billete, 'cómo llego')" },
-  { path: "action:bus-picker", desc: "SUBMENÚ Transporte · Líneas de bus — abre el selector de bus (al elegir una línea se muestra el Dashboard de esa línea con sus paradas)" },
-  { path: "action:bus-picker", desc: "SUBMENÚ Transporte · Planificador de rutas (origen → destino, 'cómo voy de X a Y') — abre el selector de bus en el Inicio" },
+  { path: "/transporte", desc: "MENÚ PRINCIPAL · Transporte multimodal — selector de TRAM, autobús urbano, vuelos, rent-a-car y parada favorita. Palabras: transporte, bus, EMT, TRAM, tren, taxi, coche, cómo llego, cómo voy" },
+  { path: "/transporte", desc: "SUBMENÚ Transporte · Selector multimodal — usar para cualquier transporte terrestre o movilidad general; desde ahí el usuario elige el medio" },
   { path: "/vuelos", desc: "Vuelos AENA Alicante-Elche (ALC) — estado de vuelo, llegadas, salidas, retrasos, aeropuerto" },
   { path: "/clima", desc: "Clima y previsión (hoy, mañana, fin de semana, lluvia, viento, alerta)" },
   { path: "/salud", desc: "MENÚ PRINCIPAL · Salud (hub) — farmacias, hospitales, urgencias, médico, sistema sanitario" },
@@ -231,8 +230,7 @@ const getPriorityRoute = (
     { path: "/vuelos", reason: "tema vuelos/aeropuerto", terms: ["vuelo", "vuelos", "aeropuerto", "llegadas", "salidas", "retraso", "retrasos", "aena"] },
     { path: "/clima", reason: "tema clima", terms: ["clima", "tiempo", "lluvia", "llueve", "llover", "viento", "temperatura", "calor", "frio", "alerta"] },
     { path: "/fiestas", reason: "tema fiestas", terms: ["fiesta", "fiestas", "hogueras", "mascleta", "moros", "cristianos"] },
-    { path: "action:bus-picker", reason: "tema líneas de bus", terms: ["linea", "lineas"], test: () => isTransportTheme },
-    { path: "action:bus-picker", reason: "tema planificador de transporte", terms: ["bus", "emt", "parada", "paradas", "billete", "bonobus", "tarjeta"], test: () => isTransportTheme || hasOriginDestination },
+    { path: "/transporte", reason: "tema transporte multimodal", terms: ["bus", "emt", "parada", "paradas", "linea", "lineas", "billete", "bonobus", "tarjeta", "tram", "tranvia", "tren", "taxi"], test: () => isTransportTheme || hasOriginDestination },
     { path: "/ocio", reason: "tema ocio/planes", terms: ["ocio", "plan", "planes", "aburrido", "aburrida", "hacer", "hoy", "noche", "salir"] },
     { path: "/explore", reason: "tema explorar ciudad", terms: ["explorar", "descubrir", "ruta", "rutas", "paseo", "monumento", "monumentos", "lugar", "lugares"] },
     { path: "/salud", reason: "tema salud", terms: ["salud", "medico", "medica", "doctor", "doctora"] },
@@ -248,7 +246,7 @@ const getPriorityRoute = (
   }
 
   if (hasOriginDestination && isTransportTheme && currentPath !== "/") {
-    return { path: "/", reason: "origen y destino con transporte" };
+    return { path: "/transporte", reason: "origen y destino con transporte" };
   }
   return null;
 };
