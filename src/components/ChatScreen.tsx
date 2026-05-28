@@ -2853,7 +2853,7 @@ function DrinksTableInner({ ranked, loading, originLabel, onClose }: {
   );
 }
 
-function DrinksTable({ cards }: { cards: PlaceCardData[] }) {
+export function DrinksTable({ cards }: { cards: PlaceCardData[] }) {
   const [extra, setExtra] = useState<PlaceCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
