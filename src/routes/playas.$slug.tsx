@@ -27,15 +27,20 @@ export const Route = createFileRoute("/playas/$slug")({
   head: ({ params }) => {
     const b = getBeachBySlug(params.slug);
     const name = b?.name ?? "Playa de Alicante";
+    const url = `https://vamosalicante.com/playas/${params.slug}`;
     return {
       meta: [
-        { title: `${name} — Fotos, reseñas y cómo ir` },
-        { name: "description", content: b?.description ?? "Playa de Alicante con fotos reales, reseñas y cómo llegar." },
+        { title: `${name} — Fotos, reseñas y cómo ir`.slice(0, 60) },
+        { name: "description", content: (b?.description ?? "Playa de Alicante con fotos reales, reseñas y cómo llegar.").slice(0, 160) },
         { property: "og:title", content: `${name} — Playas de Alicante` },
-        { property: "og:description", content: b?.description ?? "" },
+        { property: "og:description", content: (b?.description ?? "").slice(0, 160) },
+        { property: "og:url", content: url },
+        { property: "og:type", content: "article" },
       ],
+      links: [{ rel: "canonical", href: url }],
     };
   },
+
   notFoundComponent: () => (
     <div className="flex min-h-screen items-center justify-center bg-sky-50 p-6 text-center">
       <div>
