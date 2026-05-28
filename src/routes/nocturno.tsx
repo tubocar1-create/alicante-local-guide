@@ -1,34 +1,24 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import {
-  X,
-  Wine,
-  Beer,
-  Music,
-  Star,
-  MapPin,
-  Euro,
-  Clock,
-  Martini,
-  Sparkles,
-} from "lucide-react";
+import { useMemo, useState } from "react";
+import { X, Star, Search } from "lucide-react";
 import { getDrinksPlaces } from "@/lib/places.functions";
 
 export const Route = createFileRoute("/nocturno")({
   head: () => ({
     meta: [
-      { title: "Bares y Zona de Copas en Alicante" },
+      { title: "Dashboard Nocturno · Bares y Copas en Alicante" },
       {
         name: "description",
         content:
-          "Los mejores bares, pubs, cocktail bars y discotecas de Alicante. Valoraciones, precios y ubicación.",
+          "Tabla con todos los bares, pubs, cocktail bars, cervecerías y discotecas de Alicante. Ordena por valoración, precio o estado.",
       },
-      { property: "og:title", content: "Bares y Zona de Copas en Alicante" },
+      { property: "og:title", content: "Dashboard Nocturno · Alicante" },
       {
         property: "og:description",
         content:
-          "Bares, pubs, cocktail bars y discotecas en Alicante.",
+          "Bares, pubs, coctelerías, cervecerías y discotecas de Alicante en una sola tabla.",
       },
       { property: "og:url", content: "https://vamosalicante.com/nocturno" },
     ],
@@ -36,10 +26,68 @@ export const Route = createFileRoute("/nocturno")({
       { rel: "canonical", href: "https://vamosalicante.com/nocturno" },
     ],
   }),
-  component: BaresDashboard,
+  component: NocturnoDashboard,
 });
 
-function BaresDashboard() {
+type DrinkPlace = {
+  google_place_id: string;
+  name: string;
+  cuisine: string | null;
+  primary_type: string | null;
+  address: string | null;
+  rating: number | null;
+  user_rating_count: number | null;
+  price_level: string | null;
+  open_now: boolean | null;
+  lat: number | null;
+  lng: number | null;
+};
+
+// Bounding box aproximada de la provincia de Alicante.
+function isInAlicante(p: DrinkPlace): boolean {
+  if (p.lat != null && p.lng != null) {
+    return p.lat >= 37.8 && p.lat <= 38.9 && p.lng >= -1.5 && p.lng <= 0.5;
+  }
+  const addr = (p.address ?? "").toLowerCase();
+  return /alicante|alacant|elche|elx|benidorm|torrevieja|denia|altea|villajoyosa|orihuela|sant joan|santa pola|petrer|elda|alcoy|alcoi/.test(
+    addr,
+  );
+}
+
+function classify(p: DrinkPlace): "Discoteca" | "Cervecería" | "Coctelería" | "Pub" | "Bar" {
+  const t = (p.primary_type ?? "").toLowerCase();
+  const c = (p.cuisine ?? "").toLowerCase();
+  if (t.includes("night_club") || t.includes("nightclub") || /discoteca|club/.test(c))
+    return "Discoteca";
+  if (/cerveceria|cervecería|brewery|cerveza/.test(c) || t.includes("brewery"))
+    return "Cervecería";
+  if (/cocktail|cocteler|coctel/.test(c)) return "Coctelería";
+  if (/pub|irland/.test(c)) return "Pub";
+  return "Bar";
+}
+
+function priceStr(p: DrinkPlace): string {
+  if (!p.price_level) return "—";
+  const n = Math.min(4, Math.max(1, Number(p.price_level.replace(/\D/g, "")) || 2));
+  return "€".repeat(n);
+}
+
+function shortZone(addr: string | null): string {
+  if (!addr) return "—";
+  // Extrae la ciudad: penúltimo segmento por comas, o el primer match conocido.
+  const parts = addr.split(",").map((s) => s.trim());
+  for (const part of parts) {
+    const m = part.match(
+      /(Alicante|Alacant|Elche|Elx|Benidorm|Torrevieja|Denia|Altea|Villajoyosa|Orihuela|Sant Joan|Santa Pola|Petrer|Elda|Alcoy|Alcoi)/i,
+    );
+    if (m) return m[1];
+  }
+  return parts[parts.length - 2] ?? parts[0] ?? "—";
+}
+
+type SortKey = "rating" | "name" | "type" | "price" | "open";
+
+function NocturnoDashboard() {
   const fetcher = useServerFn(getDrinksPlaces);
   const { data, isLoading } = useQuery({
     queryKey: ["places", "drinks"],
@@ -47,34 +95,66 @@ function BaresDashboard() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const places = (data?.places ?? []) as Array<{
-    google_place_id: string;
-    name: string;
-    cuisine: string | null;
-    primary_type: string | null;
-    address: string | null;
-    rating: number | null;
-    user_rating_count: number | null;
-    price_level: string | null;
-    open_now: boolean | null;
-    lat: number | null;
-    lng: number | null;
-  }>;
+  const [query, setQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState<string>("Todos");
+  const [sortKey, setSortKey] = useState<SortKey>("rating");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
-  const bars = places.filter(
-    (p) =>
-      !p.primary_type?.includes("night_club") &&
-      !p.primary_type?.includes("nightclub") &&
-      !p.cuisine?.toLowerCase().includes("discoteca"),
-  );
-  const clubs = places.filter(
-    (p) =>
-      p.primary_type?.includes("night_club") ||
-      p.primary_type?.includes("nightclub") ||
-      p.cuisine?.toLowerCase().includes("discoteca"),
-  );
+  const rows = useMemo(() => {
+    const all = ((data?.places ?? []) as DrinkPlace[]).filter(isInAlicante);
+    const enriched = all.map((p) => ({ ...p, _kind: classify(p) }));
 
-  const openCount = places.filter((p) => p.open_now).length;
+    const filtered = enriched.filter((p) => {
+      if (typeFilter !== "Todos" && p._kind !== typeFilter) return false;
+      if (query.trim()) {
+        const q = query.toLowerCase();
+        if (
+          !p.name.toLowerCase().includes(q) &&
+          !(p.address ?? "").toLowerCase().includes(q)
+        )
+          return false;
+      }
+      return true;
+    });
+
+    const dir = sortDir === "asc" ? 1 : -1;
+    filtered.sort((a, b) => {
+      switch (sortKey) {
+        case "name":
+          return a.name.localeCompare(b.name) * dir;
+        case "type":
+          return a._kind.localeCompare(b._kind) * dir;
+        case "price":
+          return (priceStr(a).length - priceStr(b).length) * dir;
+        case "open":
+          return ((a.open_now ? 1 : 0) - (b.open_now ? 1 : 0)) * dir;
+        case "rating":
+        default:
+          return ((a.rating ?? 0) - (b.rating ?? 0)) * dir;
+      }
+    });
+    return filtered;
+  }, [data, query, typeFilter, sortKey, sortDir]);
+
+  const counts = useMemo(() => {
+    const all = ((data?.places ?? []) as DrinkPlace[]).filter(isInAlicante);
+    const c: Record<string, number> = { Todos: all.length };
+    for (const p of all) {
+      const k = classify(p);
+      c[k] = (c[k] ?? 0) + 1;
+    }
+    return c;
+  }, [data]);
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) setSortDir(sortDir === "asc" ? "desc" : "asc");
+    else {
+      setSortKey(key);
+      setSortDir(key === "name" || key === "type" ? "asc" : "desc");
+    }
+  };
+
+  const TABS = ["Todos", "Bar", "Pub", "Coctelería", "Cervecería", "Discoteca"];
 
   return (
     <div
@@ -84,188 +164,199 @@ function BaresDashboard() {
           "linear-gradient(180deg, #1a0a2e 0%, #2d1b4e 50%, #0f0820 100%)",
       }}
     >
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 left-1/2 h-[28rem] w-[28rem] -translate-x-1/2 rounded-full bg-violet-400/[0.10] blur-3xl" />
-        <div className="absolute bottom-0 right-0 h-[24rem] w-[24rem] rounded-full bg-fuchsia-400/[0.08] blur-3xl" />
-      </div>
-
-      <main className="relative mx-auto max-w-4xl space-y-4 px-4 pb-24 pt-5">
-        <header className="mb-1 flex items-center justify-between">
+      <main className="relative mx-auto max-w-6xl space-y-3 px-3 pb-24 pt-4">
+        <header className="flex items-center justify-between">
           <Link
             to="/"
-            className="text-[11px] uppercase tracking-[0.25em] text-white/60 transition hover:text-white"
+            className="text-[11px] uppercase tracking-[0.25em] text-white/60 hover:text-white"
           >
-            ← Volver al inicio
+            ← Volver
           </Link>
           <div className="flex items-center gap-2">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-violet-400 opacity-60" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-violet-400" />
-            </span>
             <span className="text-[10px] uppercase tracking-[0.25em] text-violet-300">
               Live · ALC
             </span>
             <Link
               to="/"
               aria-label="Cerrar"
-              className="ml-2 rounded-full border border-white/20 p-1.5 text-white/70 hover:border-white/40 hover:text-white"
+              className="rounded-full border border-white/20 p-1.5 text-white/70 hover:border-white/40 hover:text-white"
             >
               <X className="h-4 w-4" />
             </Link>
           </div>
         </header>
 
-        <div className="mb-2">
+        <div>
           <p className="text-[10px] uppercase tracking-[0.3em] text-violet-300/90">
-            Vida Nocturna
+            Dashboard Nocturno
           </p>
-          <h1 className="mt-1 font-display text-2xl font-bold tracking-tight text-white md:text-4xl">
-            Bares{" "}
-            <span className="bg-gradient-to-r from-violet-300 via-white to-fuchsia-300 bg-clip-text text-transparent">
-              y Copas
-            </span>
+          <h1 className="mt-1 font-display text-2xl font-bold tracking-tight md:text-3xl">
+            Bares, copas y discotecas de Alicante
           </h1>
-          <p className="mt-1 text-xs text-white/70 md:text-sm">
-            Bares, pubs, cocktail bars y discotecas de Alicante.
-          </p>
         </div>
 
-        {isLoading && (
-          <div className="space-y-3">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-24 animate-pulse rounded-2xl bg-white/[0.04]"
-              />
-            ))}
-          </div>
-        )}
+        {/* Buscador */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/40" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar por nombre o dirección…"
+            className="w-full rounded-xl border border-white/10 bg-white/[0.04] py-2 pl-9 pr-3 text-sm text-white placeholder-white/40 outline-none focus:border-violet-400/40"
+          />
+        </div>
 
-        {!isLoading && places.length === 0 && (
-          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 text-center">
-            <Martini className="mx-auto h-8 w-8 text-white/30" />
-            <p className="mt-2 text-sm text-white/60">
-              No hay datos de bares disponibles en este momento.
-            </p>
-          </div>
-        )}
+        {/* Filtros tipo */}
+        <div className="flex flex-wrap gap-1.5">
+          {TABS.map((t) => {
+            const active = typeFilter === t;
+            return (
+              <button
+                key={t}
+                onClick={() => setTypeFilter(t)}
+                className={`rounded-full border px-2.5 py-1 text-[11px] transition ${
+                  active
+                    ? "border-violet-400 bg-violet-500/20 text-white"
+                    : "border-white/15 bg-white/[0.04] text-white/70 hover:border-white/30"
+                }`}
+              >
+                {t}
+                <span className="ml-1 text-white/40">{counts[t] ?? 0}</span>
+              </button>
+            );
+          })}
+        </div>
 
-        {/* Bares y Pubs */}
-        {bars.length > 0 && (
-          <section>
-            <div className="mb-2 flex items-center gap-2">
-              <Wine className="h-4 w-4 text-violet-300" />
-              <h2 className="text-sm font-bold text-white">Bares y Pubs</h2>
-              <span className="ml-auto text-[10px] text-white/50">
-                {bars.length} locales
-              </span>
-            </div>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {bars.map((p) => (
-                <PlaceCard key={p.google_place_id} place={p} />
-              ))}
-            </div>
-          </section>
-        )}
+        {/* Tabla */}
+        <div className="overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl">
+          <table className="min-w-full text-left text-xs md:text-sm">
+            <thead className="bg-white/[0.04] text-[10px] uppercase tracking-wider text-white/50">
+              <tr>
+                <Th onClick={() => toggleSort("open")} active={sortKey === "open"} dir={sortDir}>
+                  •
+                </Th>
+                <Th onClick={() => toggleSort("name")} active={sortKey === "name"} dir={sortDir}>
+                  Local
+                </Th>
+                <Th onClick={() => toggleSort("type")} active={sortKey === "type"} dir={sortDir} className="hidden sm:table-cell">
+                  Tipo
+                </Th>
+                <Th className="hidden md:table-cell">Zona</Th>
+                <Th onClick={() => toggleSort("rating")} active={sortKey === "rating"} dir={sortDir}>
+                  ⭐
+                </Th>
+                <Th onClick={() => toggleSort("price")} active={sortKey === "price"} dir={sortDir} className="hidden sm:table-cell">
+                  €
+                </Th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading &&
+                Array.from({ length: 8 }).map((_, i) => (
+                  <tr key={i} className="border-t border-white/5">
+                    <td colSpan={6} className="p-3">
+                      <div className="h-4 animate-pulse rounded bg-white/[0.05]" />
+                    </td>
+                  </tr>
+                ))}
 
-        {/* Discotecas y Clubs */}
-        {clubs.length > 0 && (
-          <section>
-            <div className="mb-2 flex items-center gap-2">
-              <Music className="h-4 w-4 text-fuchsia-300" />
-              <h2 className="text-sm font-bold text-white">
-                Discotecas y Clubs
-              </h2>
-              <span className="ml-auto text-[10px] text-white/50">
-                {clubs.length} locales
-              </span>
-            </div>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {clubs.map((p) => (
-                <PlaceCard key={p.google_place_id} place={p} />
-              ))}
-            </div>
-          </section>
-        )}
+              {!isLoading && rows.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="p-6 text-center text-white/50">
+                    Sin resultados con esos filtros.
+                  </td>
+                </tr>
+              )}
+
+              {!isLoading &&
+                rows.map((p) => (
+                  <tr
+                    key={p.google_place_id}
+                    className="border-t border-white/5 transition hover:bg-white/[0.05]"
+                  >
+                    <td className="px-2 py-2">
+                      <span
+                        className={`inline-block h-2 w-2 rounded-full ${
+                          p.open_now == null
+                            ? "bg-white/20"
+                            : p.open_now
+                              ? "bg-emerald-400"
+                              : "bg-rose-400"
+                        }`}
+                        title={
+                          p.open_now == null
+                            ? "Horario desconocido"
+                            : p.open_now
+                              ? "Abierto"
+                              : "Cerrado"
+                        }
+                      />
+                    </td>
+                    <td className="px-2 py-2">
+                      <Link
+                        to="/restaurants/$placeId"
+                        params={{ placeId: p.google_place_id }}
+                        className="font-medium text-white hover:text-violet-300"
+                      >
+                        {p.name}
+                      </Link>
+                      <div className="text-[10px] text-white/40 sm:hidden">
+                        {p._kind} · {shortZone(p.address)}
+                      </div>
+                    </td>
+                    <td className="hidden px-2 py-2 text-white/70 sm:table-cell">
+                      {p._kind}
+                    </td>
+                    <td className="hidden px-2 py-2 text-white/60 md:table-cell">
+                      {shortZone(p.address)}
+                    </td>
+                    <td className="px-2 py-2">
+                      {p.rating != null ? (
+                        <span className="inline-flex items-center gap-1 text-amber-300">
+                          <Star className="h-3 w-3 fill-amber-300" />
+                          {p.rating.toFixed(1)}
+                        </span>
+                      ) : (
+                        <span className="text-white/30">—</span>
+                      )}
+                    </td>
+                    <td className="hidden px-2 py-2 text-white/60 sm:table-cell">
+                      {priceStr(p)}
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+
+        <p className="pt-2 text-center text-[10px] text-white/40">
+          {rows.length} resultados · datos en vivo
+        </p>
       </main>
     </div>
   );
 }
 
-function PlaceCard({
-  place,
+function Th({
+  children,
+  onClick,
+  active,
+  dir,
+  className = "",
 }: {
-  place: {
-    google_place_id: string;
-    name: string;
-    cuisine: string | null;
-    address: string | null;
-    rating: number | null;
-    user_rating_count: number | null;
-    price_level: string | null;
-    open_now: boolean | null;
-    lat: number | null;
-    lng: number | null;
-  };
+  children: React.ReactNode;
+  onClick?: () => void;
+  active?: boolean;
+  dir?: "asc" | "desc";
+  className?: string;
 }) {
-  const priceLabel = place.price_level
-    ? "€".repeat(
-        Math.min(
-          4,
-          Math.max(
-            1,
-            Number(place.price_level.replace(/\D/g, "")) || 2,
-          ),
-        ),
-      )
-    : "—";
-
   return (
-    <Link
-      to="/restaurants/$placeId"
-      params={{ placeId: place.google_place_id }}
-      className="group flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3 backdrop-blur-xl transition-all hover:border-white/25 hover:bg-white/[0.07] active:scale-[0.98]"
+    <th
+      onClick={onClick}
+      className={`px-2 py-2 font-medium ${onClick ? "cursor-pointer select-none hover:text-white" : ""} ${active ? "text-violet-300" : ""} ${className}`}
     >
-      <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-300">
-        <Beer className="h-5 w-5" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="truncate text-sm font-semibold text-white">
-            {place.name}
-          </span>
-          {place.open_now != null && (
-            <span
-              className={`inline-block h-2 w-2 shrink-0 rounded-full ${
-                place.open_now ? "bg-emerald-400" : "bg-rose-400"
-              }`}
-            />
-          )}
-        </div>
-        {place.cuisine && (
-          <p className="mt-0.5 text-[10px] text-white/50">{place.cuisine}</p>
-        )}
-        {place.address && (
-          <p className="mt-0.5 flex items-center gap-1 text-[10px] text-white/40">
-            <MapPin className="h-2.5 w-2.5" />
-            <span className="truncate">{place.address}</span>
-          </p>
-        )}
-        <div className="mt-1.5 flex items-center gap-3">
-          {place.rating != null && (
-            <span className="inline-flex items-center gap-0.5 text-[10px] text-amber-300">
-              <Star className="h-3 w-3 fill-amber-300" />
-              {place.rating.toFixed(1)}
-            </span>
-          )}
-          {place.user_rating_count != null && (
-            <span className="text-[10px] text-white/40">
-              {place.user_rating_count.toLocaleString("es-ES")} reseñas
-            </span>
-          )}
-          <span className="ml-auto text-[10px] text-white/40">{priceLabel}</span>
-        </div>
-      </div>
-    </Link>
+      {children}
+      {active && <span className="ml-0.5">{dir === "asc" ? "↑" : "↓"}</span>}
+    </th>
   );
 }
