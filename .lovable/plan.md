@@ -1,78 +1,60 @@
 ## Objetivo
 
-Registrar TODA llamada externa de pago (Lovable AI Gateway + Google Maps/Places) para auditar consumo real, y exponerlo en dos páginas de admin con acceso desde el menú lateral.
+Reducir las llamadas a Google API a su mínima expresión: **una sola vez por dato, y para siempre**. Los refrescos los decide la administración (botón manual o cron muy espaciado, no por visita de usuario).
 
-## 1. Tabla `external_api_calls` (migración)
+## Principio
 
-Una sola tabla para los dos proveedores, con índice por `provider + created_at`:
+Hay 2 tipos de llamadas a Google y cada una tiene su tratamiento:
 
-```
-external_api_calls
-  id, created_at
-  provider          'lovable_ai' | 'google_places' | 'google_maps' | 'google_geocoding' | 'google_directions'
-  endpoint          texto corto (ej: 'chat/completions', 'places:searchText', 'directions')
-  model             nullable (sólo IA)
-  caller            nombre del server fn o ruta que llama (ej: 'ai-review', 'places.search')
-  status_code       int
-  latency_ms        int
-  tokens_input      int nullable
-  tokens_output     int nullable
-  estimated_cost    numeric(10,6) nullable (USD)
-  meta              jsonb
-```
+1. **Fotos** (Places Photos) → se descargan **una vez** y se guardan como archivo en nuestro Storage. A partir de ahí, las imágenes se sirven desde nuestro propio dominio. Google no se vuelve a llamar **nunca** para esa foto.
+2. **Datos** (searchText, place details, nearby) → se guardan en base de datos **sin caducidad automática**. Solo se refrescan cuando el admin pulsa "Refrescar" o por un cron mensual/bimestral.
 
-RLS: solo admins leen; inserts vía service role desde server functions.
+## Cambios concretos
 
-## 2. Wrapper único — `src/lib/observability/track-external-call.ts`
+### 1. Proxy único de fotos `/api/public/google-photo/$`
+- Generalizar el patrón que ya usa `shop-photo.$.ts`.
+- Acepta cualquier referencia `places/{placeId}/photos/{photoId}`.
+- Flujo: ¿existe en Storage? → redirigir. Si no → 1 llamada a Google, descargar bytes, subir a Storage, redirigir. **Nunca más se vuelve a llamar a Google para esa foto.**
 
-Función `trackExternalCall({provider, endpoint, caller, model, ...})` que inserta con `supabaseAdmin`. Try/catch silencioso para no romper la llamada original.
+### 2. Migrar todos los call-sites de fotos al proxy
+Eliminar las llamadas directas a `places.googleapis.com/.../media` en:
+- `hotels.server.ts` → `main_image` deja de ser una URL firmada con la API key; pasa a ser una URL del proxy. (Bonus: ya no se filtra la API key en el HTML).
+- `hotels.functions.ts` → `getHotelPhotos` devuelve URLs del proxy, no llama a Google.
+- `places.functions.ts` → `resolvePhotoUri` y `getPlacePhotos` devuelven URLs del proxy.
+- `health.functions.ts` y `health-google.functions.ts` → idem.
 
-## 3. Helpers por proveedor
+Resultado: **0 llamadas a Google por visita de usuario** una vez que la foto se ha cacheado la primera vez.
 
-- `src/lib/observability/lovable-ai.ts` → `callLovableAI({caller, model, messages, ...})` que envuelve el fetch a `ai.gateway.lovable.dev`, parsea `usage.prompt_tokens`/`completion_tokens`, calcula coste con `MODEL_PRICING` y trackea.
-- `src/lib/observability/google.ts` → `fetchGoogle({provider, endpoint, caller, url, init})` que mide latencia, status y registra.
+### 3. Datos (searchText / details / nearby) sin auto-refresco
+- Subir `STALE_MS` de `places_cache` de 60 días a **infinito** (solo refresco manual).
+- `hotels_static`: ya es manual. Quitar cualquier llamada a `syncStaticHotelsImpl` desde rutas públicas o loaders. Solo se invoca desde admin.
+- Confirmar que `playas-map`, `bus-geocode`, `health-google` solo se llaman bajo demanda y cachean lo que devuelven.
 
-## 4. Refactor de los 16 sitios IA + sitios Google
+### 4. Panel admin "Refresco de datos Google"
+Nueva sección en `/admin/consumo-google` (o página dedicada `/admin/refresco-google`) con botones para disparar manualmente:
+- Refrescar hoteles (re-ejecuta `syncStaticHotelsImpl`).
+- Refrescar restaurantes por categoría (places_cache).
+- Refrescar fotos de playas.
+- Refrescar lugares de salud.
+Cada botón muestra: última fecha de refresco, nº de registros, llamadas estimadas.
 
-Sustituir cada `fetch("https://ai.gateway.lovable.dev/...")` por `callLovableAI(...)` con el `caller` correcto. Misma cosa para los call sites de Google Maps/Places (los localizo con `rg`).
+### 5. Cron opcional (muy espaciado)
+Dejar preparado pero **desactivado por defecto**: un cron mensual/bimestral que llama a los mismos endpoints de admin. Lo activa el admin si quiere.
 
-## 5. Server functions de lectura
+## Resultado esperado
 
-`src/lib/admin-consumption.functions.ts`:
-- `getAiConsumption({ hours })` → agregado por hora/modelo/caller con coste.
-- `getGoogleConsumption({ hours })` → agregado por endpoint/caller con conteo.
-- `getRecentExternalCalls({ provider, hours, limit })` → últimas N llamadas.
+| Antes | Después |
+|---|---|
+| Cada visita a `/hotel/:id` → hasta 20 llamadas a Google | 0 llamadas (todo en Storage) |
+| Cada `<img main_image>` de hotel → 1 llamada Google | 0 llamadas (URL del proxy) |
+| Lista de restaurantes → fotos via Google cada vez | 0 llamadas (proxy + Storage) |
+| `places_cache` se refresca solo a los 60 días | Nunca, salvo botón admin |
+| Coste Google previsto | ~0 € en régimen permanente, picos solo al refrescar manualmente |
 
-## 6. Páginas admin nuevas
+## Detalles técnicos
 
-- `src/routes/admin.consumo-ia.tsx`
-  - Selector de rango: 1 h / 12 h / 24 h / 7 d / 30 d
-  - Totales: nº llamadas, tokens in/out, coste USD
-  - Tabla por modelo y por caller
-  - Gráfico simple por hora
-  - Lista de las últimas 50 llamadas
+- El proxy guarda en bucket público `shop-photos` (reutilizar) bajo `places/{placeId}/photos/{photoId}/w{width}.jpg`.
+- Para `hotels_static.main_image`: durante el próximo `syncStaticHotelsImpl`, guardar la **referencia `photo.name`** en `raw`, y construir `main_image` como `/api/public/google-photo/{photo.name}?w=600`. Backfill: una migración SQL que reescribe los `main_image` existentes desde `raw.photos[0].name`.
+- Plan de borrado: no se borra nada. Si una foto cambia en Google, el admin pulsa "Invalidar foto" (botón opcional) que borra el objeto del bucket y la siguiente petición la vuelve a descargar.
 
-- `src/routes/admin.consumo-google.tsx`
-  - Mismo selector
-  - Totales por API (Places / Maps / Geocoding / Directions)
-  - Tabla por endpoint y por caller
-  - Lista últimas 50
-
-## 7. Menú lateral admin
-
-Añadir en `src/routes/admin.tsx` (sidebar) dos entradas:
-- "🤖 Consumo IA" → `/admin/consumo-ia`
-- "☁️ Consumo Google" → `/admin/consumo-google`
-
-## Lo que NO toco
-
-- No cambio el comportamiento del agente.
-- No cambio el flujo de ninguna llamada existente, solo la envuelvo.
-- No toco `agente_learning_log` (sigue como está; las páginas nuevas se nutren de la nueva tabla).
-
-## Riesgos
-
-- Refactor de 16+ archivos: lo hago en una sola pasada y con la misma firma para minimizar diff.
-- Los call sites de Google Maps en cliente (browser) NO se pueden trackear desde servidor; sólo registro los que ya pasan por server fns. El resto se ve en Google Cloud Console.
-
-¿Adelante con todo, o prefieres que arranque solo por la tabla + wrapper IA + página IA, y dejamos Google para una segunda iteración?
+¿Confirmas y lo implemento en este orden? (1) proxy genérico, (2) migrar hotels (sangrado nº1), (3) migrar places/health, (4) admin de refresco.
