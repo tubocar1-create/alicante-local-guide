@@ -9,6 +9,32 @@ function getKey(): string | null {
   return process.env.GOOGLE_PLACES_API_KEY ?? null;
 }
 
+// Caché perpetua de detalles de Google Places por slug de playa.
+// Una vez cacheado, NUNCA se vuelve a llamar a Google salvo refresco manual del admin.
+async function loadCachedBySlug(slug: string): Promise<PlaceDetails | null> {
+  const { data } = await supabaseAdmin
+    .from("google_place_details_cache")
+    .select("details")
+    .eq("cache_key", `beach:${slug}`)
+    .maybeSingle();
+  if (!data?.details) return null;
+  return data.details as unknown as PlaceDetails;
+}
+
+async function saveCachedBySlug(slug: string, details: PlaceDetails): Promise<void> {
+  await supabaseAdmin
+    .from("google_place_details_cache")
+    .upsert(
+      {
+        place_id: details.id,
+        cache_key: `beach:${slug}`,
+        details: details as never,
+        fetched_at: new Date().toISOString(),
+      },
+      { onConflict: "cache_key" },
+    );
+}
+
 async function findPlaceId(beach: MapBeach): Promise<string | null> {
   const key = getKey();
   if (!key) return null;
@@ -18,7 +44,7 @@ async function findPlaceId(beach: MapBeach): Promise<string | null> {
       headers: {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": key,
-        "X-Goog-FieldMask": "places.id,places.displayName",
+        "X-Goog-FieldMask": "places.id",
       },
       body: JSON.stringify({
         textQuery: `${beach.name} Alicante`,
@@ -54,7 +80,7 @@ type PlaceDetails = {
   formattedAddress?: string;
 };
 
-async function getPlaceDetails(placeId: string): Promise<PlaceDetails | null> {
+async function getPlaceDetailsLive(placeId: string): Promise<PlaceDetails | null> {
   const key = getKey();
   if (!key) return null;
   try {
@@ -89,6 +115,17 @@ async function getPlaceDetails(placeId: string): Promise<PlaceDetails | null> {
   }
 }
 
+// Versión cacheada perpetuamente por slug. Esta es la que deben usar las rutas públicas.
+async function getPlaceDetailsForBeach(beach: MapBeach): Promise<PlaceDetails | null> {
+  const cached = await loadCachedBySlug(beach.slug);
+  if (cached) return cached;
+  const placeId = await findPlaceId(beach);
+  if (!placeId) return null;
+  const live = await getPlaceDetailsLive(placeId);
+  if (live) await saveCachedBySlug(beach.slug, live);
+  return live;
+}
+
 export type MapBeachWithCover = MapBeach & { photo: string | null };
 
 export const getMapBeaches = createServerFn({ method: "GET" }).handler(
@@ -112,13 +149,12 @@ export const getMapBeaches = createServerFn({ method: "GET" }).handler(
         const local = LOCAL_BEACH_PHOTOS[b.slug] ?? [];
         if (local.length > 0) return { ...b, photo: local[0] };
 
-        // Last resort: live Google fetch.
+        // Last resort: live Google fetch (cacheada perpetuamente por slug).
         let photo: string | null = null;
-        const placeId = await findPlaceId(b);
-        if (placeId) {
-          const details = await getPlaceDetails(placeId);
+        const details = await getPlaceDetailsForBeach(b);
+        if (details) {
           const skip = GOOGLE_PHOTO_SKIP[b.slug] ?? 0;
-          const firstPhoto = details?.photoNames?.[skip];
+          const firstPhoto = details.photoNames?.[skip];
           if (firstPhoto) photo = await photoMediaUri(firstPhoto, 1200);
         }
         return { ...b, photo };
@@ -184,13 +220,12 @@ export const getBeachQuick = createServerFn({ method: "POST" })
     if (local.length > 0) {
       return { beach, cover: local[0] };
     }
-    const placeId = await findPlaceId(beach);
-    if (!placeId) return { beach, cover: null };
-    const details = await getPlaceDetails(placeId);
+    const details = await getPlaceDetailsForBeach(beach);
+    if (!details) return { beach, cover: null };
     const skip = GOOGLE_PHOTO_SKIP[beach.slug] ?? 0;
-    const first = details?.photoNames?.[skip];
+    const first = details.photoNames?.[skip];
     const cover = first ? await photoMediaUri(first, 1200) : null;
-    return { beach, cover, googleMapsUri: details?.googleMapsUri };
+    return { beach, cover, googleMapsUri: details.googleMapsUri };
   });
 
 // Slow: photos beyond cover, AI review, Google reviews, address.
@@ -201,28 +236,28 @@ export const getBeachExtras = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<BeachExtras | null> => {
     const beach = getBeachBySlug(data.slug);
     if (!beach) return null;
-    const [placeId, review] = await Promise.all([findPlaceId(beach), aiBeachReview(beach)]);
+    const [details, review] = await Promise.all([
+      getPlaceDetailsForBeach(beach),
+      aiBeachReview(beach),
+    ]);
     let photos: string[] = [];
     let reviews: BeachReview[] = [];
     let rating: number | undefined;
     let userRatingCount: number | undefined;
     let googleMapsUri: string | undefined;
     let formattedAddress: string | undefined;
-    if (placeId) {
-      const details = await getPlaceDetails(placeId);
-      if (details) {
-        reviews = details.reviews;
-        rating = details.rating;
-        userRatingCount = details.userRatingCount;
-        googleMapsUri = details.googleMapsUri;
-        formattedAddress = details.formattedAddress;
-        const local = LOCAL_BEACH_PHOTOS[beach.slug] ?? [];
-        const skip = GOOGLE_PHOTO_SKIP[beach.slug] ?? 0;
-        const maxGoogle = Math.max(0, 20 - local.length);
-        const photoNames = details.photoNames.slice(skip, skip + maxGoogle);
-        const uris = await Promise.all(photoNames.map((n) => photoMediaUri(n, 1600)));
-        photos = uris.filter((u): u is string => !!u);
-      }
+    if (details) {
+      reviews = details.reviews;
+      rating = details.rating;
+      userRatingCount = details.userRatingCount;
+      googleMapsUri = details.googleMapsUri;
+      formattedAddress = details.formattedAddress;
+      const local = LOCAL_BEACH_PHOTOS[beach.slug] ?? [];
+      const skip = GOOGLE_PHOTO_SKIP[beach.slug] ?? 0;
+      const maxGoogle = Math.max(0, 20 - local.length);
+      const photoNames = details.photoNames.slice(skip, skip + maxGoogle);
+      const uris = await Promise.all(photoNames.map((n: string) => photoMediaUri(n, 1600)));
+      photos = uris.filter((u): u is string => !!u);
     }
     const local = LOCAL_BEACH_PHOTOS[beach.slug] ?? [];
     const merged = [...local, ...photos.filter((p) => !local.includes(p))];

@@ -1377,6 +1377,27 @@ export type Database = {
         }
         Relationships: []
       }
+      google_place_details_cache: {
+        Row: {
+          cache_key: string | null
+          details: Json
+          fetched_at: string
+          place_id: string
+        }
+        Insert: {
+          cache_key?: string | null
+          details: Json
+          fetched_at?: string
+          place_id: string
+        }
+        Update: {
+          cache_key?: string | null
+          details?: Json
+          fetched_at?: string
+          place_id?: string
+        }
+        Relationships: []
+      }
       health_centers: {
         Row: {
           address: string | null

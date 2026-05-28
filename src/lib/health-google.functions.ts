@@ -7,6 +7,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 // Pensado para "Punto de Atención Continuada" (PAC) y "Punto de
 // Atención Sanitaria" (PAS) por toda la provincia de Alicante.
 
+// FIELD_MASK adelgazado al MÍNIMO (solo Basic Data, ~$5/1000).
+// Sin Pro/Enterprise fields. Refresco solo manual desde admin.
 const FIELD_MASK = [
   "places.id",
   "places.displayName",
@@ -14,11 +16,6 @@ const FIELD_MASK = [
   "places.location",
   "places.types",
   "places.primaryType",
-  "places.regularOpeningHours",
-  "places.rating",
-  "places.userRatingCount",
-  "places.nationalPhoneNumber",
-  "places.websiteUri",
 ].join(",");
 
 type GPlace = {
