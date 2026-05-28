@@ -90,7 +90,7 @@ function PlayasPage() {
               <Waves className="h-4 w-4" /> Playas de Alicante
             </div>
             <h1 className="mt-4 max-w-3xl text-4xl font-black leading-none sm:text-6xl">
-              La costa, en un scroll
+              Playas de Alicante — la costa, en un scroll
             </h1>
           </div>
         </div>
