@@ -114,6 +114,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
       { name: "apple-mobile-web-app-title", content: "Vamos Alicante" },
+      { name: "google-site-verification", content: "QsNkwC2wgqZPOSUKY80yKrSibd7TOHZy3C_CzK5jXvM" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
