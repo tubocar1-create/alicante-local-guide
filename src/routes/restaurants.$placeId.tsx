@@ -24,18 +24,40 @@ const PlaceLocationMap = lazy(() => import("@/components/PlaceLocationMap"));
 import OpeningHoursCard from "@/components/OpeningHoursCard";
 
 export const Route = createFileRoute("/restaurants/$placeId")({
-  head: () => ({
-    meta: [
-      { title: "Restaurante — Alicante Friend" },
-      {
-        name: "description",
-        content: "Detalles del restaurante: horario, precio, valoración y ubicación.",
-      },
-    ],
-    links: [LEAFLET_HEAD_LINK],
-  }),
+  loader: async ({ params }) => {
+    try {
+      const r = await getPlaceById({ data: { placeId: params.placeId } });
+      return { name: r.place?.name ?? null, cuisine: r.place?.cuisine ?? null };
+    } catch {
+      return { name: null, cuisine: null };
+    }
+  },
+  head: ({ loaderData, params }) => {
+    const name = loaderData?.name?.trim() || "Restaurante";
+    const cuisine = loaderData?.cuisine?.trim();
+    const title = `${name} — Restaurantes de Alicante`;
+    const desc = cuisine
+      ? `${name} (${cuisine}) en Alicante: horario, valoraciones, fotos y cómo llegar.`
+      : `${name} en Alicante: horario, precio, valoración, fotos y ubicación.`;
+    const url = `https://vamosalicante.com/restaurants/${params.placeId}`;
+    return {
+      meta: [
+        { title: title.slice(0, 60) },
+        { name: "description", content: desc.slice(0, 160) },
+        { property: "og:title", content: title.slice(0, 60) },
+        { property: "og:description", content: desc.slice(0, 160) },
+        { property: "og:url", content: url },
+        { property: "og:type", content: "article" },
+      ],
+      links: [
+        LEAFLET_HEAD_LINK,
+        { rel: "canonical", href: url },
+      ],
+    };
+  },
   component: RestaurantDashboard,
 });
+
 
 type Place = Awaited<ReturnType<typeof getPlaceById>>["place"];
 
