@@ -8,9 +8,75 @@ import { getEventoWithShowtimes } from "@/lib/eventos.functions";
 const ACCENT = "#a78bfa";
 
 export const Route = createFileRoute("/ocio_/eventos_/$id")({
-  head: () => ({
-    meta: [{ title: "Evento · Agenda Alicante" }],
-  }),
+  loader: async ({ params }) => {
+    try {
+      const data = await getEventoWithShowtimes({ data: { slug: params.id } });
+      return { evento: data?.evento ?? null, showtimes: data?.showtimes ?? [], venues: data?.venues ?? [] };
+    } catch {
+      return { evento: null, showtimes: [], venues: [] };
+    }
+  },
+  head: ({ params, loaderData }) => {
+    const e = loaderData?.evento;
+    const url = `https://vamosalicante.com/ocio/eventos/${params.id}`;
+    if (!e) {
+      return {
+        meta: [
+          { title: "Evento · Agenda cultural de Alicante" },
+          { name: "description", content: "Ficha de evento cultural en Alicante: teatro, conciertos, ópera y festivales con fechas, recinto y entradas." },
+          { property: "og:url", content: url },
+        ],
+        links: [{ rel: "canonical", href: url }],
+      };
+    }
+    const baseTitle = e.artist ? `${e.title} — ${e.artist}` : e.title;
+    const title = `${baseTitle} · ${e.category ?? "Evento"} en Alicante`;
+    const description = (e.description?.trim() || `${baseTitle} en Alicante. Consulta fechas, recinto, precios y entradas oficiales.`).slice(0, 160);
+    const firstShow = (loaderData?.showtimes ?? [])[0];
+    const venue = firstShow ? (loaderData?.venues ?? []).find((v) => v.id === firstShow.venue_id) : null;
+    const jsonLd: Record<string, unknown> = {
+      "@context": "https://schema.org",
+      "@type": "Event",
+      name: baseTitle,
+      description,
+      url,
+      image: e.poster_url || undefined,
+      eventStatus: "https://schema.org/EventScheduled",
+      eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    };
+    if (firstShow) {
+      jsonLd.startDate = firstShow.starts_at;
+      if (firstShow.price_min != null) {
+        jsonLd.offers = {
+          "@type": "Offer",
+          price: firstShow.price_min,
+          priceCurrency: firstShow.currency || "EUR",
+          url: firstShow.ticket_url || url,
+          availability: "https://schema.org/InStock",
+        };
+      }
+    }
+    if (venue) {
+      jsonLd.location = {
+        "@type": "Place",
+        name: venue.name,
+        address: venue.address || "Alicante, España",
+      };
+    }
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:url", content: url },
+        { property: "og:type", content: "event" },
+        ...(e.poster_url ? [{ property: "og:image", content: e.poster_url } as const, { name: "twitter:image", content: e.poster_url } as const] : []),
+      ],
+      links: [{ rel: "canonical", href: url }],
+      scripts: [{ type: "application/ld+json", children: JSON.stringify(jsonLd) }],
+    };
+  },
   component: EventoDetail,
 });
 
