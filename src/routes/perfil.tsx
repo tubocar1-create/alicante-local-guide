@@ -23,7 +23,9 @@ export const Route = createFileRoute("/perfil")({
   head: () => ({
     meta: [
       { title: "Mi perfil — Alicante Friend" },
-      { name: "description", content: "Tu perfil y tus QR guardados en Alicante Friend." },
+      { name: "description", content: "Gestiona tu perfil personal, tus favoritos y tus códigos QR guardados en Alicante Friend." },
+      { property: "og:title", content: "Mi perfil — Alicante Friend" },
+      { property: "og:description", content: "Gestiona tu perfil personal, tus favoritos y tus códigos QR guardados en Alicante Friend." },
     ],
   }),
   component: PerfilPage,

@@ -27,4 +27,7 @@
   <url><loc>https://vamosalicante.com/perfil</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
   <url><loc>https://vamosalicante.com/repo</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
   <url><loc>https://vamosalicante.com/business</loc><changefreq>weekly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://vamosalicante.com/transporte</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://vamosalicante.com/voces</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>
+  <url><loc>https://vamosalicante.com/welcome</loc><changefreq>monthly</changefreq><priority>0.4</priority></url>
 </urlset>

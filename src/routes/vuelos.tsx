@@ -19,6 +19,8 @@ export const Route = createFileRoute("/vuelos")({
         content:
           "Mapa interactivo con destinos y orígenes del aeropuerto de Alicante-Elche. Selecciona una ciudad para ver sus métricas semanales.",
       },
+      { property: "og:title", content: "Mapa de vuelos del aeropuerto de Alicante-Elche" },
+      { property: "og:description", content: "Destinos y orígenes en tiempo real del aeropuerto ALC con métricas semanales por ciudad." },
       { property: "og:url", content: "https://vamosalicante.com/vuelos" }
     ],
   links: [

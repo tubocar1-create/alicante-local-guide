@@ -15,6 +15,8 @@ export const Route = createFileRoute("/donde-dormir")({
         content:
           "Hoteles disponibles esta noche en Alicante: tarifas por tipo de habitación, desayuno, cancelación y distancia.",
       },
+      { property: "og:title", content: "Hoteles para hoy en Alicante" },
+      { property: "og:description", content: "Hoteles disponibles esta noche en Alicante con tarifas, desayuno, cancelación y distancia desde tu ubicación." },
     ],
   }),
   component: DondeDormirPage,

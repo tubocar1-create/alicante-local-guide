@@ -71,6 +71,8 @@ export const Route = createFileRoute("/hospitales")({
         content:
           "Hospitales públicos del Sistema Nacional de Salud en la provincia de Alicante. Dirección, teléfono, urgencias 24h y distancia desde tu ubicación.",
       },
+      { property: "og:title", content: "Hospitales públicos de Alicante" },
+      { property: "og:description", content: "Hospitales del SNS en la provincia de Alicante con dirección, teléfono, urgencias 24h y distancia." },
     ],
   }),
   component: HospitalesPage,
