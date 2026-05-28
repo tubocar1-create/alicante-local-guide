@@ -35,18 +35,12 @@ async function findPlaceId(beach: MapBeach): Promise<string | null> {
   }
 }
 
-async function photoMediaUri(photoName: string, maxWidthPx = 1600): Promise<string | null> {
-  const key = getKey();
-  if (!key) return null;
-  try {
-    const url = `${PLACES_BASE}/${photoName}/media?maxWidthPx=${maxWidthPx}&skipHttpRedirect=true&key=${key}`;
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    const j: any = await res.json();
-    return (j.photoUri as string) ?? null;
-  } catch {
-    return null;
-  }
+// Devuelve URL del proxy interno (cachea en Storage en la 1ª petición y nunca
+// más vuelve a llamar a Google para esa foto).
+function photoMediaUri(photoName: string, maxWidthPx = 1600): string | null {
+  if (!photoName?.startsWith("places/")) return null;
+  const w = Math.min(Math.max(Math.round(maxWidthPx), 80), 1600);
+  return `/api/public/google-photo/${photoName}?w=${w}`;
 }
 
 
