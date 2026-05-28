@@ -236,28 +236,28 @@ export const getBeachExtras = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<BeachExtras | null> => {
     const beach = getBeachBySlug(data.slug);
     if (!beach) return null;
-    const [placeId, review] = await Promise.all([findPlaceId(beach), aiBeachReview(beach)]);
+    const [details, review] = await Promise.all([
+      getPlaceDetailsForBeach(beach),
+      aiBeachReview(beach),
+    ]);
     let photos: string[] = [];
     let reviews: BeachReview[] = [];
     let rating: number | undefined;
     let userRatingCount: number | undefined;
     let googleMapsUri: string | undefined;
     let formattedAddress: string | undefined;
-    if (placeId) {
-      const details = await getPlaceDetails(placeId);
-      if (details) {
-        reviews = details.reviews;
-        rating = details.rating;
-        userRatingCount = details.userRatingCount;
-        googleMapsUri = details.googleMapsUri;
-        formattedAddress = details.formattedAddress;
-        const local = LOCAL_BEACH_PHOTOS[beach.slug] ?? [];
-        const skip = GOOGLE_PHOTO_SKIP[beach.slug] ?? 0;
-        const maxGoogle = Math.max(0, 20 - local.length);
-        const photoNames = details.photoNames.slice(skip, skip + maxGoogle);
-        const uris = await Promise.all(photoNames.map((n) => photoMediaUri(n, 1600)));
-        photos = uris.filter((u): u is string => !!u);
-      }
+    if (details) {
+      reviews = details.reviews;
+      rating = details.rating;
+      userRatingCount = details.userRatingCount;
+      googleMapsUri = details.googleMapsUri;
+      formattedAddress = details.formattedAddress;
+      const local = LOCAL_BEACH_PHOTOS[beach.slug] ?? [];
+      const skip = GOOGLE_PHOTO_SKIP[beach.slug] ?? 0;
+      const maxGoogle = Math.max(0, 20 - local.length);
+      const photoNames = details.photoNames.slice(skip, skip + maxGoogle);
+      const uris = await Promise.all(photoNames.map((n: string) => photoMediaUri(n, 1600)));
+      photos = uris.filter((u): u is string => !!u);
     }
     const local = LOCAL_BEACH_PHOTOS[beach.slug] ?? [];
     const merged = [...local, ...photos.filter((p) => !local.includes(p))];
