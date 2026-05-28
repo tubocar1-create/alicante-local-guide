@@ -12,7 +12,7 @@ async function key() {
 
 
 async function findPlaceId(b: MapBeach): Promise<string | null> {
-  const k = key();
+  const k = await key();
   if (!k) return null;
   const res = await fetch(`${PLACES_BASE}/places:searchText`, {
     method: "POST",
@@ -34,7 +34,7 @@ async function findPlaceId(b: MapBeach): Promise<string | null> {
 }
 
 async function getCoverPhotoName(placeId: string, skip: number): Promise<{ name: string; attribution: string } | null> {
-  const k = key();
+  const k = await key();
   if (!k) return null;
   const res = await fetch(`${PLACES_BASE}/places/${encodeURIComponent(placeId)}?languageCode=es`, {
     headers: { "X-Goog-Api-Key": k, "X-Goog-FieldMask": "photos" },
@@ -48,7 +48,7 @@ async function getCoverPhotoName(placeId: string, skip: number): Promise<{ name:
 }
 
 async function fetchPhotoBytes(photoName: string): Promise<{ buf: ArrayBuffer; contentType: string } | null> {
-  const k = key();
+  const k = await key();
   if (!k) return null;
   const url = `${PLACES_BASE}/${photoName}/media?maxWidthPx=1600&key=${k}`;
   const res = await fetch(url, { redirect: "follow" });
