@@ -1382,6 +1382,8 @@ export type Database = {
           address: string | null
           associated_services: string[]
           created_at: string
+          google_photo_refs: string[]
+          google_place_id: string | null
           health_department: string | null
           id: string
           lat: number | null
@@ -1401,6 +1403,8 @@ export type Database = {
           address?: string | null
           associated_services?: string[]
           created_at?: string
+          google_photo_refs?: string[]
+          google_place_id?: string | null
           health_department?: string | null
           id?: string
           lat?: number | null
@@ -1420,6 +1424,8 @@ export type Database = {
           address?: string | null
           associated_services?: string[]
           created_at?: string
+          google_photo_refs?: string[]
+          google_place_id?: string | null
           health_department?: string | null
           id?: string
           lat?: number | null
