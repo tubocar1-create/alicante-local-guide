@@ -33,8 +33,6 @@ export const Route = createFileRoute("/api/public/google-photo/$")({
         if (!ref || !ref.startsWith("places/")) {
           return new Response("Missing or invalid ref", { status: 400 });
         }
-        const key = await getGooglePlacesKey();
-        if (!key) return new Response("No key", { status: 500 });
 
         const url = new URL(request.url);
         const w = Math.min(
@@ -46,6 +44,8 @@ export const Route = createFileRoute("/api/public/google-photo/$")({
         const cachedUrl = publicUrl(objectPath);
 
         // 1. ¿Está cacheada? HEAD a la URL pública (no cuenta como llamada a Google).
+        //    Esto se hace SIEMPRE, incluso con el kill-switch apagado: las fotos
+        //    ya descargadas viven en nuestro Storage, no cuestan nada servirlas.
         try {
           const head = await fetch(cachedUrl, { method: "HEAD" });
           if (head.ok) {
@@ -60,6 +60,11 @@ export const Route = createFileRoute("/api/public/google-photo/$")({
         } catch {
           /* fall through */
         }
+
+        // 2. No estaba en Storage → ahora sí necesitamos la API key de Google.
+        //    Si el kill-switch está apagado, devolvemos 404 (sin foto), no 500.
+        const key = await getGooglePlacesKey();
+        if (!key) return new Response("Photo not cached, Google API disabled", { status: 404 });
 
         // 2. Pedir a Google la URL firmada de la foto.
         const apiUrl = `https://places.googleapis.com/v1/${ref}/media?maxWidthPx=${w}&skipHttpRedirect=true&key=${encodeURIComponent(
