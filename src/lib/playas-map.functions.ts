@@ -9,6 +9,32 @@ function getKey(): string | null {
   return process.env.GOOGLE_PLACES_API_KEY ?? null;
 }
 
+// Caché perpetua de detalles de Google Places por slug de playa.
+// Una vez cacheado, NUNCA se vuelve a llamar a Google salvo refresco manual del admin.
+async function loadCachedBySlug(slug: string): Promise<PlaceDetails | null> {
+  const { data } = await supabaseAdmin
+    .from("google_place_details_cache")
+    .select("details")
+    .eq("cache_key", `beach:${slug}`)
+    .maybeSingle();
+  if (!data?.details) return null;
+  return data.details as unknown as PlaceDetails;
+}
+
+async function saveCachedBySlug(slug: string, details: PlaceDetails): Promise<void> {
+  await supabaseAdmin
+    .from("google_place_details_cache")
+    .upsert(
+      {
+        place_id: details.id,
+        cache_key: `beach:${slug}`,
+        details: details as unknown as Record<string, unknown>,
+        fetched_at: new Date().toISOString(),
+      },
+      { onConflict: "cache_key" },
+    );
+}
+
 async function findPlaceId(beach: MapBeach): Promise<string | null> {
   const key = getKey();
   if (!key) return null;
@@ -18,7 +44,7 @@ async function findPlaceId(beach: MapBeach): Promise<string | null> {
       headers: {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": key,
-        "X-Goog-FieldMask": "places.id,places.displayName",
+        "X-Goog-FieldMask": "places.id",
       },
       body: JSON.stringify({
         textQuery: `${beach.name} Alicante`,
@@ -54,7 +80,7 @@ type PlaceDetails = {
   formattedAddress?: string;
 };
 
-async function getPlaceDetails(placeId: string): Promise<PlaceDetails | null> {
+async function getPlaceDetailsLive(placeId: string): Promise<PlaceDetails | null> {
   const key = getKey();
   if (!key) return null;
   try {
@@ -87,6 +113,17 @@ async function getPlaceDetails(placeId: string): Promise<PlaceDetails | null> {
   } catch {
     return null;
   }
+}
+
+// Versión cacheada perpetuamente por slug. Esta es la que deben usar las rutas públicas.
+async function getPlaceDetailsForBeach(beach: MapBeach): Promise<PlaceDetails | null> {
+  const cached = await loadCachedBySlug(beach.slug);
+  if (cached) return cached;
+  const placeId = await findPlaceId(beach);
+  if (!placeId) return null;
+  const live = await getPlaceDetailsLive(placeId);
+  if (live) await saveCachedBySlug(beach.slug, live);
+  return live;
 }
 
 export type MapBeachWithCover = MapBeach & { photo: string | null };
