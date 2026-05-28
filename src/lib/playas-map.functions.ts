@@ -28,7 +28,7 @@ async function saveCachedBySlug(slug: string, details: PlaceDetails): Promise<vo
       {
         place_id: details.id,
         cache_key: `beach:${slug}`,
-        details: details as unknown as Record<string, unknown>,
+        details: details as never,
         fetched_at: new Date().toISOString(),
       },
       { onConflict: "cache_key" },
