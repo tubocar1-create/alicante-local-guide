@@ -13,7 +13,7 @@ import { useBusGraph } from "@/hooks/useBusGraph";
 import { useBusServiceWindows, getServiceStatus, getNightLineEstimates } from "@/hooks/useBusServiceWindow";
 import { cumulativeMinutes } from "@/lib/bus-eta";
 
-export const Route = createFileRoute("/transporte/parada-favorita")({
+export const Route = createFileRoute("/transporte_/parada-favorita")({
   validateSearch: (s: Record<string, unknown>) => ({
     stop: typeof s.stop === "string" ? s.stop : undefined,
     line: typeof s.line === "string" ? s.line : undefined,
