@@ -1882,7 +1882,7 @@ function BusStopCard({ data }: { data: BusStopCardData }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-primary/80">
             <span>🚌 Línea {data.line}</span>
-            <span className="text-muted-foreground/60">·</span>
+            <span className="text-muted-foreground">·</span>
             <span className="text-muted-foreground">#{data.stopCode}</span>
           </div>
           <h3 className="mt-0.5 text-lg font-extrabold leading-tight text-foreground break-words">
