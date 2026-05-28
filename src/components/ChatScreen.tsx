@@ -747,6 +747,9 @@ export function ChatScreen() {
         isWelcome ? "bg-[oklch(0.985_0.018_88)] text-foreground" : "bg-background",
       ].join(" ")}
     >
+      {!isWelcome && (
+        <h1 className="sr-only">Alicante Friend — Tu guía local con IA</h1>
+      )}
       {/* Persistent background photo of Puerto de Alicante (only when chatting) */}
       {!isWelcome && (
         <div className="pointer-events-none absolute inset-0 -z-10">
