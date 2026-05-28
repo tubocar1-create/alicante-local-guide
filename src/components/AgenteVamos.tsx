@@ -1382,6 +1382,32 @@ function localResolve(
 ): LocalResult {
   const query = normalizeSpeech(text);
 
+  const flightDomain = DOMAINS.find((d) => d.id === "vuelos");
+  const flightMatch = flightDomain ? matchDomain(query) : null;
+  if (flightMatch?.domain.id === "vuelos" && flightDomain?.hubPath) {
+    return {
+      reply: flightDomain.question,
+      path: flightDomain.hubPath,
+      audio: flightDomain.audio,
+      pendingDomain: null,
+      openSubmenu: flightDomain.openSubmenuKey,
+    };
+  }
+
+  const transportDomain = DOMAINS.find((d) => d.id === "transporte");
+  const transportLike = transportDomain
+    ? matchDomain(query)?.domain.id === "transporte" || matchDomain(query)?.domain.id === "transporte_bus"
+    : false;
+  if (transportLike && transportDomain?.hubPath) {
+    return {
+      reply: transportDomain.question,
+      path: transportDomain.hubPath,
+      audio: transportDomain.audio,
+      pendingDomain: null,
+      openSubmenu: transportDomain.openSubmenuKey,
+    };
+  }
+
   // 0) Correcciones aprobadas en el CPA. Si una frase fue entrenada como
   // alias de un intent, debe ganar sobre heurísticas antiguas del cliente
   // (incluida la intro genérica de compras), para que subsectores como
