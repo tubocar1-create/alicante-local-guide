@@ -1,8 +1,18 @@
 User-agent: *
 Allow: /
-Disallow: /admin/
 Disallow: /admin
+Disallow: /admin/
+Disallow: /business
 Disallow: /business/
 Disallow: /auth/
+Disallow: /perfil
+Disallow: /threads
+Disallow: /repo
+Disallow: /consumo-ia
+Disallow: /consumo-ia/
+Disallow: /refresco-google
+Disallow: /refresco-google/
+Disallow: /*?utm_
+Disallow: /*?ref=
 
 Sitemap: https://vamosalicante.com/sitemap.xml
