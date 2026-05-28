@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, RefreshCw, CheckCircle2, AlertCircle } from "lucide-react";
 import { getRefreshStats } from "@/lib/admin-refresh.functions";
+import { geocodeBusStops } from "@/lib/bus-geocode.functions";
 
 export const Route = createFileRoute("/admin/refresco-google")({
   head: () => ({ meta: [{ title: "Admin · Refresco Google" }] }),
@@ -16,37 +17,45 @@ type Action = {
   key: string;
   title: string;
   desc: string;
-  url: string;
+  url?: string;
+  run?: () => Promise<unknown>;
 };
-
-const ACTIONS: Action[] = [
-  {
-    key: "hotels",
-    title: "Hoteles (Places)",
-    desc: "Re-ejecuta la búsqueda completa de hoteles en 30 km. Genera muchas llamadas a Google. Ejecutar 1× cada 2-3 meses como mucho.",
-    url: "/api/public/hooks/sync-hotels-static",
-  },
-  {
-    key: "hotels-dynamic",
-    title: "Hoteles (LiteAPI dinámico)",
-    desc: "Refresca precios/disponibilidad vía LiteAPI. No consume Google.",
-    url: "/api/public/hooks/refresh-hotels-dynamic",
-  },
-  {
-    key: "beaches",
-    title: "Portadas de playas",
-    desc: "Vuelve a buscar y cachear en Storage la foto de portada de cada playa. ~50 llamadas a Google.",
-    url: "/api/public/hooks/sync-beach-covers",
-  },
-];
 
 function RefrescoGoogle() {
   const fetchStats = useServerFn(getRefreshStats);
+  const runGeocode = useServerFn(geocodeBusStops);
   const stats = useQuery({
     queryKey: ["refresco-google-stats"],
     queryFn: () => fetchStats(),
     staleTime: 30_000,
   });
+
+  const actions: Action[] = [
+    {
+      key: "hotels",
+      title: "Hoteles (Places)",
+      desc: "Re-ejecuta la búsqueda completa de hoteles en 30 km. Genera muchas llamadas a Google. Ejecutar 1× cada 2-3 meses como mucho.",
+      url: "/api/public/hooks/sync-hotels-static",
+    },
+    {
+      key: "hotels-dynamic",
+      title: "Hoteles (LiteAPI dinámico)",
+      desc: "Refresca precios/disponibilidad vía LiteAPI. No consume Google.",
+      url: "/api/public/hooks/refresh-hotels-dynamic",
+    },
+    {
+      key: "beaches",
+      title: "Portadas de playas",
+      desc: "Vuelve a buscar y cachear en Storage la foto de portada de cada playa. ~50 llamadas a Google.",
+      url: "/api/public/hooks/sync-beach-covers",
+    },
+    {
+      key: "bus-geocode",
+      title: `Geocodificar paradas de bus (${stats.data?.busPending ?? "—"} pendientes)`,
+      desc: "Geocodifica hasta 120 paradas SIN coordenadas por ejecución. Una parada solo se llama una vez en su vida; el coste tiende a 0 cuando todas tengan lat/lng.",
+      run: () => runGeocode(),
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -55,28 +64,33 @@ function RefrescoGoogle() {
         <p className="text-sm text-muted-foreground">
           Las llamadas a Google solo ocurren cuando aquí pulsas un botón.
           Las fotos se cachean para siempre en nuestro Storage; los datos
-          (hoteles, lugares) viven en la base de datos sin caducidad
-          automática.
+          (hoteles, lugares, coordenadas de paradas) viven en la base de datos
+          sin caducidad automática.
         </p>
       </header>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         <Stat label="Hoteles en BD" value={stats.data?.hotels ?? "—"} />
         <Stat label="Lugares cacheados" value={stats.data?.places ?? "—"} />
         <Stat label="Playas con foto" value={stats.data?.beaches ?? "—"} />
         <Stat label="Centros salud cacheados" value={stats.data?.health ?? "—"} />
+        <Stat label="Paradas de bus" value={stats.data?.busTotal ?? "—"} />
+        <Stat
+          label="Paradas sin geocodificar"
+          value={stats.data?.busPending ?? "—"}
+        />
       </div>
 
       <div className="space-y-3">
-        {ACTIONS.map((a) => (
-          <ActionCard key={a.key} action={a} />
+        {actions.map((a) => (
+          <ActionCard key={a.key} action={a} onDone={() => stats.refetch()} />
         ))}
       </div>
     </div>
   );
 }
 
-function ActionCard({ action }: { action: Action }) {
+function ActionCard({ action, onDone }: { action: Action; onDone?: () => void }) {
   const [state, setState] = useState<"idle" | "running" | "ok" | "err">("idle");
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -84,15 +98,22 @@ function ActionCard({ action }: { action: Action }) {
     setState("running");
     setMsg(null);
     try {
-      const res = await fetch(action.url, { method: "POST" });
-      const j = await res.json().catch(() => ({}));
-      if (!res.ok || j.ok === false) {
-        setState("err");
-        setMsg(j.error || `HTTP ${res.status}`);
-      } else {
-        setState("ok");
-        setMsg(JSON.stringify(j));
+      let result: unknown;
+      if (action.run) {
+        result = await action.run();
+      } else if (action.url) {
+        const res = await fetch(action.url, { method: "POST" });
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok || (j && j.ok === false)) {
+          setState("err");
+          setMsg(j?.error || `HTTP ${res.status}`);
+          return;
+        }
+        result = j;
       }
+      setState("ok");
+      setMsg(JSON.stringify(result));
+      onDone?.();
     } catch (e) {
       setState("err");
       setMsg(e instanceof Error ? e.message : String(e));
