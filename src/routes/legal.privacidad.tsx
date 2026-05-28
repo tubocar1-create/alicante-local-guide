@@ -8,7 +8,10 @@ export const Route = createFileRoute("/legal/privacidad")({
       { name: "description", content: "Conoce cómo tratamos tus datos personales, qué información recopilamos y cómo protegemos tu privacidad en Alicante Friend." },
       { property: "og:title", content: "Política de privacidad · Alicante Friend" },
       { property: "og:description", content: "Cómo recopilamos, usamos y protegemos tus datos personales en Alicante Friend, tu guía local con IA." },
+      { property: "og:url", content: "https://vamosalicante.com/legal/privacidad" },
+      { property: "og:type", content: "website" },
     ],
+    links: [{ rel: "canonical", href: "https://vamosalicante.com/legal/privacidad" }],
   }),
   component: PrivacyPage,
 });
