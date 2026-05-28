@@ -127,8 +127,8 @@ const INTENTS: IntentDef[] = [
       "planificar ruta", "planificador", "como llego", "como voy a", "llegar a",
       "ir a", "llevarme a", "ruta hasta", "trayecto",
     ],
-    reply: "Te abro los buses urbanos para planificar tu ruta.",
-    path: "action:bus-picker",
+    reply: "Te llevo al selector de transporte para elegir el medio adecuado.",
+    path: "/transporte",
     audio: "planner",
   },
   {
@@ -136,8 +136,8 @@ const INTENTS: IntentDef[] = [
       "bus", "buses", "emt", "autobus", "autobuses", "transporte publico",
       "linea de bus", "parada",
     ],
-    reply: "Te abro los buses urbanos.",
-    path: "action:bus-picker",
+    reply: "Te llevo al selector de transporte.",
+    path: "/transporte",
     audio: "bus",
   },
   // (vuelos se gestiona como dominio para abrir el submenú "Vuelos" en
