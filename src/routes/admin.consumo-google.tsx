@@ -64,6 +64,10 @@ function ConsumoGoogle() {
         </p>
       </header>
 
+      <KillSwitchCard />
+
+
+
       <div className="flex flex-wrap gap-2">
         {RANGES.map((r) => (
           <Button
