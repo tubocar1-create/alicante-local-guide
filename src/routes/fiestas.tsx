@@ -51,6 +51,32 @@ export const Route = createFileRoute("/fiestas")({
       },
       { property: "og:image", content: hoguera1 },
     ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Event",
+          name: "Hogueras de San Juan 2026",
+          startDate: "2026-06-20",
+          endDate: "2026-06-24",
+          eventStatus: "https://schema.org/EventScheduled",
+          eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+          location: {
+            "@type": "Place",
+            name: "Alicante",
+            address: {
+              "@type": "PostalAddress",
+              addressLocality: "Alicante",
+              addressRegion: "Comunidad Valenciana",
+              addressCountry: "ES",
+            },
+          },
+          description:
+            "Hogueras de San Juan: mascletás, desfiles, fuegos artificiales y la cremà en Alicante.",
+        }),
+      },
+    ],
   }),
   component: FiestasPage,
 });

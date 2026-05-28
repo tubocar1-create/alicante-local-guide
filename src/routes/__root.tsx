@@ -103,8 +103,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Alicante Friend — Tu guía local con IA en Alicante" },
-      { name: "description", content: "Guía local con IA para descubrir Alicante: playas, restaurantes, ocio, transporte y planes diarios sin trampas turísticas." },
       { name: "author", content: "Alicante Friend" },
       { name: "app-version", content: APP_VERSION },
       { property: "og:site_name", content: "Alicante Friend" },
