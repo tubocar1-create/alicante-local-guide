@@ -355,6 +355,7 @@ function FarmaciasPage() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Buscar farmacia, calle, CP…"
+              aria-label="Buscar farmacias"
               className="h-9 w-full rounded-full border border-emerald-300/20 bg-white/[0.04] pl-8 pr-3 text-[12px] text-emerald-50 placeholder:text-emerald-200/40 focus:border-emerald-300/50 focus:outline-none"
             />
           </div>
@@ -391,9 +392,9 @@ function FarmaciasPage() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="mb-3 flex shrink-0 items-center justify-between">
-                <h3 className="flex items-center gap-1.5 text-sm font-semibold text-emerald-50">
+                <h2 className="flex items-center gap-1.5 text-sm font-semibold text-emerald-50">
                   <PharmacyCross className="h-4 w-4" /> Elige zona
-                </h3>
+                </h2>
                 <button
                   onClick={() => setZoneOpen(false)}
                   className="inline-flex h-7 w-7 items-center justify-center rounded-full hover:bg-white/10"
@@ -438,6 +439,7 @@ function FarmaciasPage() {
                   value={zoneSearch}
                   onChange={(e) => setZoneSearch(e.target.value)}
                   placeholder="Buscar zona…"
+                  aria-label="Filtrar por zona"
                   className="flex-1 bg-transparent text-[12px] text-emerald-50 outline-none placeholder:text-emerald-200/40"
                 />
               </div>

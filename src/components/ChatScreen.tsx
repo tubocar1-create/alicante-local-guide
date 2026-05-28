@@ -871,7 +871,7 @@ export function ChatScreen() {
                   />
                   <img
                     src={asistenteIcon}
-                    alt="Asistente"
+                    alt="Icono del asistente virtual"
                     className="relative h-full w-full rounded-full object-cover"
                   />
                 </button>
@@ -1193,7 +1193,7 @@ export function ChatScreen() {
               />
               <img
                 src={asistenteIcon}
-                alt="Asistente"
+                alt="Icono del asistente virtual"
                 className="relative h-full w-full rounded-full object-cover"
               />
             </button>
