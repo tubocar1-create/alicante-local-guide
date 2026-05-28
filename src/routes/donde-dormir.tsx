@@ -17,6 +17,22 @@ export const Route = createFileRoute("/donde-dormir")({
       },
       { property: "og:title", content: "Hoteles para hoy en Alicante" },
       { property: "og:description", content: "Hoteles disponibles esta noche en Alicante con tarifas, desayuno, cancelación y distancia desde tu ubicación." },
+      { property: "og:url", content: "https://vamosalicante.com/donde-dormir" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://vamosalicante.com/donde-dormir" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: "Hoteles para hoy en Alicante",
+          description: "Listado de hoteles con disponibilidad esta noche en Alicante.",
+          url: "https://vamosalicante.com/donde-dormir",
+        }),
+      },
     ],
   }),
   component: DondeDormirPage,
@@ -123,6 +139,7 @@ function DondeDormirPage() {
         </div>
 
         <div className="rounded-2xl border border-amber-100/[0.08] bg-[rgba(20,10,4,0.7)] p-2 backdrop-blur-xl md:p-4">
+          <h2 className="mb-2 text-sm font-semibold text-amber-50">Disponibilidad esta noche</h2>
           <div className="mb-2 flex items-baseline justify-between gap-2">
             <p className="text-[12px] font-semibold text-amber-50">
               {isLoading
