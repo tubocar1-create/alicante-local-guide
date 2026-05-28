@@ -455,8 +455,9 @@ function VuelosDashboard() {
                 <span className="bg-gradient-to-r from-cyan-300 via-white to-violet-300 bg-clip-text text-transparent">
                   {flightType === "L" ? "a Alicante" : "desde Alicante"}
                 </span>
-              <span className="ml-3 align-middle text-base font-normal text-cyan-300/80">
-                ({cities.filter((c) => c.total > 0).length}) ciudades
+                <span className="ml-3 align-middle text-base font-normal text-cyan-300/80">
+                  ({cities.filter((c) => c.total > 0).length}) ciudades
+                </span>
               </span>
             </h1>
             <p className="mt-1 text-xs text-cyan-300/80 md:text-sm lg:hidden">
