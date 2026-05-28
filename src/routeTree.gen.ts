@@ -25,6 +25,7 @@ import { Route as RentACarRouteImport } from './routes/rent-a-car'
 import { Route as PlayasRouteImport } from './routes/playas'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as OcioRouteImport } from './routes/ocio'
+import { Route as NocturnoRouteImport } from './routes/nocturno'
 import { Route as HospitalesRouteImport } from './routes/hospitales'
 import { Route as FiestasRouteImport } from './routes/fiestas'
 import { Route as FarmaciasRouteImport } from './routes/farmacias'
@@ -223,6 +224,11 @@ const PerfilRoute = PerfilRouteImport.update({
 const OcioRoute = OcioRouteImport.update({
   id: '/ocio',
   path: '/ocio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NocturnoRoute = NocturnoRouteImport.update({
+  id: '/nocturno',
+  path: '/nocturno',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HospitalesRoute = HospitalesRouteImport.update({
@@ -846,6 +852,7 @@ export interface FileRoutesByFullPath {
   '/farmacias': typeof FarmaciasRoute
   '/fiestas': typeof FiestasRoute
   '/hospitales': typeof HospitalesRoute
+  '/nocturno': typeof NocturnoRoute
   '/ocio': typeof OcioRoute
   '/perfil': typeof PerfilRoute
   '/playas': typeof PlayasRouteWithChildren
@@ -981,6 +988,7 @@ export interface FileRoutesByTo {
   '/farmacias': typeof FarmaciasRoute
   '/fiestas': typeof FiestasRoute
   '/hospitales': typeof HospitalesRoute
+  '/nocturno': typeof NocturnoRoute
   '/ocio': typeof OcioRoute
   '/perfil': typeof PerfilRoute
   '/playas': typeof PlayasRouteWithChildren
@@ -1118,6 +1126,7 @@ export interface FileRoutesById {
   '/farmacias': typeof FarmaciasRoute
   '/fiestas': typeof FiestasRoute
   '/hospitales': typeof HospitalesRoute
+  '/nocturno': typeof NocturnoRoute
   '/ocio': typeof OcioRoute
   '/perfil': typeof PerfilRoute
   '/playas': typeof PlayasRouteWithChildren
@@ -1257,6 +1266,7 @@ export interface FileRouteTypes {
     | '/farmacias'
     | '/fiestas'
     | '/hospitales'
+    | '/nocturno'
     | '/ocio'
     | '/perfil'
     | '/playas'
@@ -1392,6 +1402,7 @@ export interface FileRouteTypes {
     | '/farmacias'
     | '/fiestas'
     | '/hospitales'
+    | '/nocturno'
     | '/ocio'
     | '/perfil'
     | '/playas'
@@ -1528,6 +1539,7 @@ export interface FileRouteTypes {
     | '/farmacias'
     | '/fiestas'
     | '/hospitales'
+    | '/nocturno'
     | '/ocio'
     | '/perfil'
     | '/playas'
@@ -1666,6 +1678,7 @@ export interface RootRouteChildren {
   FarmaciasRoute: typeof FarmaciasRoute
   FiestasRoute: typeof FiestasRoute
   HospitalesRoute: typeof HospitalesRoute
+  NocturnoRoute: typeof NocturnoRoute
   OcioRoute: typeof OcioRoute
   PerfilRoute: typeof PerfilRoute
   PlayasRoute: typeof PlayasRouteWithChildren
@@ -1848,6 +1861,13 @@ declare module '@tanstack/react-router' {
       path: '/ocio'
       fullPath: '/ocio'
       preLoaderRoute: typeof OcioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nocturno': {
+      id: '/nocturno'
+      path: '/nocturno'
+      fullPath: '/nocturno'
+      preLoaderRoute: typeof NocturnoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/hospitales': {
@@ -2920,6 +2940,7 @@ const rootRouteChildren: RootRouteChildren = {
   FarmaciasRoute: FarmaciasRoute,
   FiestasRoute: FiestasRoute,
   HospitalesRoute: HospitalesRoute,
+  NocturnoRoute: NocturnoRoute,
   OcioRoute: OcioRoute,
   PerfilRoute: PerfilRoute,
   PlayasRoute: PlayasRouteWithChildren,
