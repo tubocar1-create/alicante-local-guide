@@ -6,12 +6,12 @@ export const Route = createFileRoute("/comprar_/$subsector")({
   loader: ({ params }) => getSubsectorPage({ data: { slug: params.subsector } }),
   head: ({ loaderData }) => ({
     meta: [
-      { title: loaderData ? `${loaderData.name} — Comprar en Alicante` : "Comprar" },
+      { title: loaderData ? `${loaderData.name} — Comprar en Alicante` : "Categoría de compras — Vamos Alicante" },
       {
         name: "description",
         content: loaderData
-          ? `Categorías de ${loaderData.name.toLowerCase()} en Alicante.`
-          : "Comprar en Alicante",
+          ? `Descubre las mejores tiendas y categorías de ${loaderData.name.toLowerCase()} en Alicante. Guía local con direcciones, horarios y recomendaciones.`
+          : "Explora categorías de compras en Alicante: tiendas locales, comercios y marcas con guía, mapa y recomendaciones de Vamos Alicante.",
       },
     ],
   }),
