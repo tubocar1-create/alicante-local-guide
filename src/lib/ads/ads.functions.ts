@@ -217,6 +217,48 @@ function describeWmo(code: number): string {
   return "variable";
 }
 
+function todayMadrid(): string {
+  // YYYY-MM-DD en zona Europe/Madrid
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Madrid",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  return fmt.format(new Date());
+}
+
+async function readDailyCache(advertiserId: string): Promise<AdVariantsResponse | null> {
+  try {
+    const { data } = await supabaseAdmin
+      .from("ad_variants_cache")
+      .select("payload")
+      .eq("advertiser_id", advertiserId)
+      .eq("day_madrid", todayMadrid())
+      .maybeSingle();
+    return (data?.payload as AdVariantsResponse | undefined) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function writeDailyCache(advertiserId: string, payload: AdVariantsResponse) {
+  try {
+    await supabaseAdmin
+      .from("ad_variants_cache")
+      .upsert(
+        {
+          advertiser_id: advertiserId,
+          day_madrid: todayMadrid(),
+          payload: payload as never,
+        },
+        { onConflict: "advertiser_id,day_madrid" },
+      );
+  } catch (e) {
+    console.error("[ads] cache write failed", e);
+  }
+}
+
 export const getAdVariants = createServerFn({ method: "POST" })
   .inputValidator(
     (input: { advertiserId: string; count?: number }) =>
@@ -231,6 +273,10 @@ export const getAdVariants = createServerFn({ method: "POST" })
     const advertiser = getAdvertiser(data.advertiserId) ?? ADVERTISERS[0];
     const count = data.count ?? 6;
 
+    // Caché diario: 1 generación por banner por día (zona Madrid).
+    const cached = await readDailyCache(advertiser.id);
+    if (cached) return cached;
+
     const baseResp = {
       advertiser: {
         id: advertiser.id,
@@ -239,6 +285,7 @@ export const getAdVariants = createServerFn({ method: "POST" })
         theme: advertiser.theme,
       },
     };
+
 
     let weatherCtx = "";
     if (advertiser.kind === "weather") {
