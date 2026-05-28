@@ -13,6 +13,8 @@ export const Route = createFileRoute("/comprar")({
         content:
           "Encuentra a dónde ir según lo que necesitas: moda, tecnología, hogar, mascotas y más. Guía urbana contextual de Alicante.",
       },
+      { property: "og:title", content: "Comprar en Alicante — Guía de compras por intención" },
+      { property: "og:description", content: "Descubre dónde comprar en Alicante por categoría: moda, tecnología, hogar, mascotas y más. Guía urbana contextual." },
     ],
   }),
   loader: () => getShopTree(),

@@ -4,7 +4,7 @@ import { Car, ArrowLeft, Clock, Bus, Users, MapPin, Sparkles, Timer, ImagePlus }
 export const Route = createFileRoute("/rent-a-car")({
   head: () => ({
     meta: [
-      { title: "Rent a Car en Alicante — Alquiler de coches en el aeropuerto ALC" },
+      { title: "Rent a Car Alicante — Alquiler en aeropuerto ALC" },
       {
         name: "description",
         content:
