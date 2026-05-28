@@ -5,7 +5,9 @@ export const Route = createFileRoute("/legal/terminos")({
   head: () => ({
     meta: [
       { title: "Términos de uso · Alicante Friend" },
-      { name: "description", content: "Condiciones de uso de Alicante Friend." },
+      { name: "description", content: "Consulta los términos y condiciones de uso de Alicante Friend: derechos, responsabilidades y reglas para usuarios y visitantes." },
+      { property: "og:title", content: "Términos de uso · Alicante Friend" },
+      { property: "og:description", content: "Condiciones de uso de la plataforma Alicante Friend: derechos, responsabilidades y reglas para usuarios y visitantes." },
     ],
   }),
   component: TermsPage,
