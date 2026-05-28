@@ -17,6 +17,22 @@ export const Route = createFileRoute("/donde-dormir")({
       },
       { property: "og:title", content: "Hoteles para hoy en Alicante" },
       { property: "og:description", content: "Hoteles disponibles esta noche en Alicante con tarifas, desayuno, cancelación y distancia desde tu ubicación." },
+      { property: "og:url", content: "https://vamosalicante.com/donde-dormir" },
+    ],
+    links: [
+      { rel: "canonical", href: "https://vamosalicante.com/donde-dormir" },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: "Hoteles para hoy en Alicante",
+          description: "Listado de hoteles con disponibilidad esta noche en Alicante.",
+          url: "https://vamosalicante.com/donde-dormir",
+        }),
+      },
     ],
   }),
   component: DondeDormirPage,
