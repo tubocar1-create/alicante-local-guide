@@ -28,6 +28,17 @@ export const Route = createFileRoute("/playas/$slug")({
     const b = getBeachBySlug(params.slug);
     const name = b?.name ?? "Playa de Alicante";
     const url = `https://vamosalicante.com/playas/${params.slug}`;
+    const ld: Record<string, unknown> = {
+      "@context": "https://schema.org",
+      "@type": "TouristAttraction",
+      name,
+      url,
+      description: b?.description ?? "Playa de Alicante con fotos reales, reseñas y cómo llegar.",
+      address: { "@type": "PostalAddress", addressLocality: "Alicante", addressCountry: "ES" },
+    };
+    if (b?.lat && b?.lng) {
+      ld.geo = { "@type": "GeoCoordinates", latitude: b.lat, longitude: b.lng };
+    }
     return {
       meta: [
         { title: `${name} — Fotos, reseñas y cómo ir`.slice(0, 60) },
@@ -38,6 +49,7 @@ export const Route = createFileRoute("/playas/$slug")({
         { property: "og:type", content: "article" },
       ],
       links: [{ rel: "canonical", href: url }],
+      scripts: [{ type: "application/ld+json", children: JSON.stringify(ld) }],
     };
   },
 
