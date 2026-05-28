@@ -835,12 +835,13 @@ export function ChatScreen() {
               <div className="relative mx-auto mb-1 w-full max-w-[320px] overflow-visible rounded-xl lg:mx-0 lg:mb-0 lg:max-w-[520px] lg:flex-none lg:shadow-[0_20px_50px_-15px_oklch(0.55_0.14_70/0.45)]">
                 <img
                   src={portadaImg}
-                  alt="Alicante"
+                  alt="Vista aérea del puerto y la costa de Alicante al atardecer"
                   className="h-auto w-full rounded-xl object-cover lg:rounded-2xl"
                   loading="eager"
                   fetchPriority="high"
                   decoding="async"
                 />
+
               </div>
               {/* Desktop-only: asistente + Inicio + Perfil bajo la foto */}
               <div className="hidden lg:flex lg:items-center lg:gap-6 lg:mt-2">
