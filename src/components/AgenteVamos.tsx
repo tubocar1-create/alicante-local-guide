@@ -336,14 +336,21 @@ const DOMAINS: DomainSpec[] = [
       "ir a ", "ir al ", "ir hasta", "llegar a ", "llegar al ", "llegar hasta",
       "ir hacia", "desplazarme", "moverme",
       "ir en bus", "ir en tram", "ir en tranvia", "ir en tranvía",
-      "ir en autobus", "ir en autobús",
+      "ir en autobus", "ir en autobús", "ir en tren", "ir en taxi", "ir en coche",
       "coger el tram", "coger tram", "tomar el tram", "tomar tram",
       "coger el tranvia", "coger el tranvía", "tomar el tranvia", "tomar el tranvía",
+      "coger un taxi", "pedir un taxi", "coger el tren", "tomar el tren",
       "quiero coger el tram", "quiero coger tram", "quiero tomar el tram",
       "como llegar", "que bus", "qué bus", "que tram", "qué tram",
-      // destinos típicos que implican transporte
-      "al aeropuerto", "al altet", "estacion de tren", "estación de tren",
-      "renfe", "alsa", "playa san juan", "san juan playa",
+      // medios de transporte (incluye los aún no desarrollados)
+      "tren", "trenes", "renfe", "cercanias", "cercanías", "ave",
+      "taxi", "taxis", "uber", "cabify", "vtc",
+      "metro", "tranvia", "tranvía", "tram",
+      "alquilar coche", "rent a car", "rentacar",
+      "alsa", "autocar", "autocares",
+      // destinos típicos que implican transporte (sin aeropuerto)
+      "estacion de tren", "estación de tren",
+      "playa san juan", "san juan playa",
       "universidad", "campus", "hospital general",
       "transporte", "transporte publico", "transporte público",
     ],
@@ -356,8 +363,12 @@ const DOMAINS: DomainSpec[] = [
     hubPath: "/",
     openSubmenuKey: "vuelos",
     triggers: [
-      "vuelo", "vuelos", "aeropuerto", "aena", "avion", "aviones", "alc",
-      "salida de vuelo", "llegada de vuelo", "facturar", "el altet",
+      "vuelo", "vuelos", "aeropuerto", "aena", "avion", "aviones", "avión", "alc",
+      "salida de vuelo", "llegada de vuelo", "salidas de vuelos", "llegadas de vuelos",
+      "facturar", "facturacion", "facturación", "check in", "check-in", "checkin",
+      "el altet", "al altet", "al aeropuerto", "ir al aeropuerto", "ir en avion", "ir en avión",
+      "volar", "quiero volar", "tomar un vuelo", "coger un vuelo", "coger un avion", "coger un avión",
+      "terminal", "puerta de embarque", "embarque", "aerolinea", "aerolínea",
     ],
     question: "Te abro el menú de vuelos; elige en pantalla.",
     audio: "flights",
@@ -376,6 +387,7 @@ const DOMAINS: DomainSpec[] = [
     audio: "bus",
     followups: [],
   },
+
   {
     id: "bus_known",
     hubPath: "action:bus-picker",
