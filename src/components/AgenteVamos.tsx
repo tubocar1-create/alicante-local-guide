@@ -77,7 +77,7 @@ const INTENTS: IntentDef[] = [
     ],
     context: ["salir de fiesta noche", "ir de copas", "vamos a beber"],
     reply: "Abro el Dashboard Nocturno: bares, cervecerías, pubs y discotecas abiertos ahora.",
-    path: "/nocturno",
+    path: "/",
     audio: "leisure",
   },
   {
@@ -462,7 +462,7 @@ const DOMAINS: DomainSpec[] = [
   },
   {
     id: "tomar_algo",
-    hubPath: "/nocturno",
+    hubPath: "/",
     triggers: [
       // Bailar / discoteca
       "bailar", "ir a bailar", "salir a bailar", "irnos a bailar", "vamos a bailar", "baile", "bailoteo", "bailongo",
@@ -508,9 +508,9 @@ const DOMAINS: DomainSpec[] = [
     question: "Te abro el Dashboard Nocturno; elige el ambiente en pantalla.",
     audio: "leisure",
     followups: [
-      { keys: ["terraza", "terrazas", "azotea", "rooftop"], path: "/nocturno" },
-      { keys: ["pub", "pubs", "bar", "bares", "cerveza", "cervezas", "copa", "copas", "birra", "birras"], path: "/nocturno" },
-      { keys: ["discoteca", "discotecas", "club", "clubs", "disco"], path: "/nocturno" },
+      { keys: ["terraza", "terrazas", "azotea", "rooftop"], path: "/" },
+      { keys: ["pub", "pubs", "bar", "bares", "cerveza", "cervezas", "copa", "copas", "birra", "birras"], path: "/" },
+      { keys: ["discoteca", "discotecas", "club", "clubs", "disco"], path: "/" },
       { keys: ["musica en vivo", "música en vivo", "concierto", "directo", "live"], path: "/ocio/conciertos" },
     ],
   },

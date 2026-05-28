@@ -80,7 +80,7 @@ type PastelTheme = {
  */
 function getPastelTheme(pathname: string): PastelTheme {
   // /ocio → rosa (acento #f472b6)
-  if (pathname.startsWith("/ocio") || pathname.startsWith("/restaurants") || pathname.startsWith("/nocturno"))
+  if (pathname.startsWith("/ocio") || pathname.startsWith("/restaurants"))
     return {
       bg: "oklch(0.96 0.035 350)",
       bgSoft: "oklch(0.97 0.025 350)",
