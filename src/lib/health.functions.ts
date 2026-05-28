@@ -268,9 +268,12 @@ export const getHealthProvider = createServerFn({ method: "GET" })
     if (!center) return null;
     const dto = healthCenterToDTO(center, (center.service_type as string) ?? "publico");
     const { photos, placeId } = await fetchGooglePhotosForCenter(
+      center.id as string,
       center.name as string,
       (center.address as string) ?? null,
       (center.municipality as string) ?? null,
+      (center.google_place_id as string | null) ?? null,
+      (center.google_photo_refs as string[] | null) ?? null,
     );
     return { ...dto, photos, google_place_id: placeId };
   });
