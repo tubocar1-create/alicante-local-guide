@@ -21,6 +21,7 @@ export const Route = createFileRoute("/playas/mapa")({
         property: "og:description",
         content: "Explora la costa alicantina sobre un mapa real e interactivo.",
       },
+      { property: "og:url", content: "https://vamosalicante.com/playas/mapa" },
     ],
   }),
   component: MapaPlayasPage,

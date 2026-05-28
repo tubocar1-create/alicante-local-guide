@@ -11,6 +11,8 @@ export const Route = createFileRoute("/tram")({
         content:
           "Consulta líneas, estaciones y próximas salidas del TRAM de Alicante (FGV) en tiempo real.",
       },
+      { property: "og:title", content: "TRAM Alicante — Líneas, paradas y próximas salidas" },
+      { property: "og:description", content: "Consulta líneas, estaciones y próximas salidas del TRAM de Alicante (FGV) en tiempo real." },
       { property: "og:url", content: "https://vamosalicante.com/tram" }
     ],
   links: [

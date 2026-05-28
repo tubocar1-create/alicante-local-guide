@@ -16,6 +16,9 @@ export const Route = createFileRoute("/ocio_/eventos")({
         content:
           "Agenda de teatro, conciertos, ópera, festivales y eventos culturales en Alicante. Programación de Teatro Principal, ADDA, Plaza de Toros, Área 12 y más.",
       },
+      { property: "og:title", content: "Teatro, conciertos y eventos · Alicante" },
+      { property: "og:description", content: "Agenda de teatro, conciertos, ópera, festivales y eventos culturales en Alicante." },
+      { property: "og:url", content: "https://vamosalicante.com/ocio/eventos" },
     ],
   }),
   component: EventosLanding,
