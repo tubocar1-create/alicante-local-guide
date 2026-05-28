@@ -837,6 +837,8 @@ export function ChatScreen() {
                 <img
                   src={portadaImg}
                   alt="Vista aérea del puerto y la costa de Alicante al atardecer"
+                  width={1068}
+                  height={578}
                   className="h-auto w-full rounded-xl object-cover lg:rounded-2xl"
                   loading="eager"
                   fetchPriority="high"
