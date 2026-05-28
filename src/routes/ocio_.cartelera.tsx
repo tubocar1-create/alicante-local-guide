@@ -7,16 +7,23 @@ import { listCartelera } from "@/lib/ocio.functions";
 const ACCENT = "#f472b6";
 
 export const Route = createFileRoute("/ocio_/cartelera")({
-  head: () => ({
-    meta: [
-      { title: "Cartelera de cines · Alicante" },
-      {
-        name: "description",
-        content:
-          "Cartelera completa de los cines de Alicante: Kinepolis, Yelmo, Aana y Odeon. Horarios y compra de entradas.",
-      },
-    ],
-  }),
+  head: () => {
+    const title = "Cartelera de cines · Alicante";
+    const description =
+      "Cartelera completa de los cines de Alicante: Kinepolis, Yelmo, Aana y Odeon. Horarios y compra de entradas.";
+    const url = "https://vamosalicante.com/ocio/cartelera";
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:url", content: url },
+        { property: "og:type", content: "website" },
+      ],
+      links: [{ rel: "canonical", href: url }],
+    };
+  },
   component: CarteleraPage,
 });
 
