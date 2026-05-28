@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { callLovableAI } from "@/lib/observability/lovable-ai";
 
 export const getAiReview = createServerFn({ method: "POST" })
   .inputValidator((data: { name: string; cuisine?: string | null; address?: string | null; kind?: string | null }) => data)
