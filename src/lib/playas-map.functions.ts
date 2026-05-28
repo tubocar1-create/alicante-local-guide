@@ -6,7 +6,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const PLACES_BASE = "https://places.googleapis.com/v1";
 
-async function getKey(): Promise<string | null> {| null {
+async function getKey(): Promise<string | null> {
   return await getGooglePlacesKey();
 }
 
