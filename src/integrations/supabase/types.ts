@@ -1248,6 +1248,51 @@ export type Database = {
         }
         Relationships: []
       }
+      external_api_calls: {
+        Row: {
+          caller: string
+          created_at: string
+          endpoint: string
+          estimated_cost: number | null
+          id: string
+          latency_ms: number | null
+          meta: Json
+          model: string | null
+          provider: string
+          status_code: number | null
+          tokens_input: number | null
+          tokens_output: number | null
+        }
+        Insert: {
+          caller: string
+          created_at?: string
+          endpoint: string
+          estimated_cost?: number | null
+          id?: string
+          latency_ms?: number | null
+          meta?: Json
+          model?: string | null
+          provider: string
+          status_code?: number | null
+          tokens_input?: number | null
+          tokens_output?: number | null
+        }
+        Update: {
+          caller?: string
+          created_at?: string
+          endpoint?: string
+          estimated_cost?: number | null
+          id?: string
+          latency_ms?: number | null
+          meta?: Json
+          model?: string | null
+          provider?: string
+          status_code?: number | null
+          tokens_input?: number | null
+          tokens_output?: number | null
+        }
+        Relationships: []
+      }
       films: {
         Row: {
           active: boolean
@@ -3188,6 +3233,10 @@ export type Database = {
         Returns: number
       }
       purge_events_orphan: { Args: never; Returns: number }
+      purge_external_api_calls: {
+        Args: { p_retention?: string }
+        Returns: number
+      }
       purge_hotels_calendar_past: { Args: never; Returns: number }
       purge_interaction_events: {
         Args: { p_retention?: string }
