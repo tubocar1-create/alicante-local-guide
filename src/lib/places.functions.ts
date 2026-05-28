@@ -120,6 +120,10 @@ const CATEGORY_QUERIES: Record<string, string[]> = {
 // los lugares fijos no cambian y no queremos sangrar Google API en cada visita.
 const STALE_MS = Number.POSITIVE_INFINITY;
 
+// FIELD_MASK adelgazado al MÍNIMO posible (solo Basic Data, ~$5/1000 llamadas).
+// Eliminados Pro fields (rating, priceLevel, opening hours) y Enterprise fields
+// (phone, website) — la diferencia es ~10× menos coste por llamada.
+// La caché es perpetua: solo se rellena en refrescos manuales desde admin.
 const FIELD_MASK = [
   "places.id",
   "places.displayName",
@@ -128,14 +132,6 @@ const FIELD_MASK = [
   "places.types",
   "places.primaryType",
   "places.primaryTypeDisplayName",
-  "places.regularOpeningHours",
-  "places.currentOpeningHours",
-  "places.priceLevel",
-  "places.priceRange",
-  "places.rating",
-  "places.userRatingCount",
-  "places.nationalPhoneNumber",
-  "places.websiteUri",
   "places.photos",
 ].join(",");
 
