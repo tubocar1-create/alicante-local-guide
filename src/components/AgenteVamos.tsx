@@ -508,9 +508,9 @@ const DOMAINS: DomainSpec[] = [
     question: "Te abro el Dashboard Nocturno; elige el ambiente en pantalla.",
     audio: "leisure",
     followups: [
-      { keys: ["terraza", "terrazas", "azotea", "rooftop"], path: "/nocturno" },
-      { keys: ["pub", "pubs", "bar", "bares", "cerveza", "cervezas", "copa", "copas", "birra", "birras"], path: "/nocturno" },
-      { keys: ["discoteca", "discotecas", "club", "clubs", "disco"], path: "/nocturno" },
+      { keys: ["terraza", "terrazas", "azotea", "rooftop"], path: "/" },
+      { keys: ["pub", "pubs", "bar", "bares", "cerveza", "cervezas", "copa", "copas", "birra", "birras"], path: "/" },
+      { keys: ["discoteca", "discotecas", "club", "clubs", "disco"], path: "/" },
       { keys: ["musica en vivo", "música en vivo", "concierto", "directo", "live"], path: "/ocio/conciertos" },
     ],
   },
