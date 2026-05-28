@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getGooglePlacesKey } from "@/lib/google-killswitch.server";
 import { z } from "zod";
 import { MAP_BEACHES, getBeachBySlug, LOCAL_BEACH_PHOTOS, GOOGLE_PHOTO_SKIP, type MapBeach } from "./playas-map-data";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -6,7 +7,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 const PLACES_BASE = "https://places.googleapis.com/v1";
 
 function getKey(): string | null {
-  return process.env.GOOGLE_PLACES_API_KEY ?? null;
+  return await getGooglePlacesKey();
 }
 
 // Caché perpetua de detalles de Google Places por slug de playa.

@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { getGooglePlacesKey } from "@/lib/google-killswitch.server";
 import { MAP_BEACHES, LOCAL_BEACH_PHOTOS, GOOGLE_PHOTO_SKIP, type MapBeach } from "@/lib/playas-map-data";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -6,7 +7,7 @@ const PLACES_BASE = "https://places.googleapis.com/v1";
 const BUCKET = "beach-photos";
 
 function key() {
-  return process.env.GOOGLE_PLACES_API_KEY ?? null;
+  return await getGooglePlacesKey();
 }
 
 async function findPlaceId(b: MapBeach): Promise<string | null> {

@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getGooglePlacesKey } from "@/lib/google-killswitch.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 // Bounding box for Alicante metro area to constrain Places results.
@@ -37,7 +38,7 @@ async function geocodeOne(name: string, apiKey: string): Promise<{ lat: number; 
 }
 
 export const geocodeBusStops = createServerFn({ method: "POST" }).handler(async () => {
-  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  const apiKey = await getGooglePlacesKey();
   if (!apiKey) return { ok: false, error: "GOOGLE_PLACES_API_KEY no configurada", updated: 0 };
 
   const { data: stops, error } = await supabaseAdmin

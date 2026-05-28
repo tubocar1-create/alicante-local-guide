@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getGooglePlacesKey } from "@/lib/google-killswitch.server";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -202,7 +203,7 @@ async function fetchGooglePhotosForCenter(
     };
   }
 
-  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  const apiKey = await getGooglePlacesKey();
   if (!apiKey) return { photos: [], placeId: cachedPlaceId };
 
   try {
