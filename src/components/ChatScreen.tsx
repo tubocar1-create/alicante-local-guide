@@ -1065,7 +1065,6 @@ export function ChatScreen() {
                         ) : t.label === "Servicios sanitarios" ? (
                           <img src={saludTiritaIcon} alt="" className="h-[82%] w-[82%] object-contain" />
                         ) : Icon ? (
-                        ) : Icon ? (
                           <Icon className="h-5 w-5 lg:h-7 lg:w-7" strokeWidth={1.9} style={{ color: pastel.fg }} />
                         ) : (
                           <span className="text-[20px] lg:text-[26px]">{t.emoji}</span>
