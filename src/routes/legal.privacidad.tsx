@@ -5,7 +5,9 @@ export const Route = createFileRoute("/legal/privacidad")({
   head: () => ({
     meta: [
       { title: "Política de privacidad · Alicante Friend" },
-      { name: "description", content: "Cómo tratamos tus datos en Alicante Friend." },
+      { name: "description", content: "Conoce cómo tratamos tus datos personales, qué información recopilamos y cómo protegemos tu privacidad en Alicante Friend." },
+      { property: "og:title", content: "Política de privacidad · Alicante Friend" },
+      { property: "og:description", content: "Cómo recopilamos, usamos y protegemos tus datos personales en Alicante Friend, tu guía local con IA." },
     ],
   }),
   component: PrivacyPage,
