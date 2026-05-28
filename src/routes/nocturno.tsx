@@ -30,10 +30,10 @@ export const Route = createFileRoute("/nocturno")({
         content:
           "Bares, pubs, cocktail bars y discotecas en Alicante.",
       },
-      { property: "og:url", content: "https://vamosalicante.com/bares" },
+      { property: "og:url", content: "https://vamosalicante.com/nocturno" },
     ],
     links: [
-      { rel: "canonical", href: "https://vamosalicante.com/bares" },
+      { rel: "canonical", href: "https://vamosalicante.com/nocturno" },
     ],
   }),
   component: BaresDashboard,
