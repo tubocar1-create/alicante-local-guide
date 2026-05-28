@@ -694,7 +694,9 @@ export const getAdVariants = createServerFn({ method: "POST" })
         };
       }
 
-      return { ...baseResp, variants };
+      const success = { ...baseResp, variants };
+      await writeDailyCache(advertiser.id, success);
+      return success;
     } catch (e) {
       console.error("[ads] error", e);
       return {
