@@ -9,7 +9,7 @@ import { X, Loader2, Sparkles } from "lucide-react";
 const FREQUENCY_MS = 10 * 1000; // 10 s entre apariciones
 const VISIBLE_MS = 10 * 1000; // 10 s visible
 const FIRST_DELAY_MS = 5 * 1000;
-const CACHE_TTL_MS = 5 * 60 * 1000;
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 h: 1 generación por banner por día
 
 type Cached = { at: number; data: AdVariantsResponse };
 const cacheKey = (id: string) => `banner:${id}:variants:v4`;
