@@ -326,7 +326,8 @@ const DOMAINS: DomainSpec[] = [
   },
   {
     id: "transporte",
-    hubPath: "/transporte",
+    hubPath: "/",
+    openSubmenuKey: "transporte",
     triggers: [
       "quiero moverme", "necesito moverme", "como me muevo", "quiero desplazarme",
       "tengo que ir", "necesito ir", "como llego", "como voy",
@@ -353,10 +354,11 @@ const DOMAINS: DomainSpec[] = [
       "universidad", "campus", "hospital general",
       "transporte", "transporte publico", "transporte público",
     ],
-    question: "Te abro el menú de transporte; elige el medio en pantalla.",
+    question: "Te abro el selector de transporte multimodal; elige el medio en pantalla.",
     audio: "bus",
     followups: [],
   },
+
   {
     id: "vuelos",
     hubPath: "/vuelos",
@@ -378,7 +380,8 @@ const DOMAINS: DomainSpec[] = [
 
   {
     id: "transporte_bus",
-    hubPath: "/transporte",
+    hubPath: "/",
+    openSubmenuKey: "transporte",
     triggers: [
       "bus", "buses", "autobus", "autobuses", "emt", "vectalia",
       "linea de bus", "parada", "parada de bus", "bus urbano", "buses urbanos",
@@ -387,6 +390,7 @@ const DOMAINS: DomainSpec[] = [
     audio: "bus",
     followups: [],
   },
+
 
   {
     id: "bus_known",
