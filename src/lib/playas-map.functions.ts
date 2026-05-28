@@ -149,13 +149,12 @@ export const getMapBeaches = createServerFn({ method: "GET" }).handler(
         const local = LOCAL_BEACH_PHOTOS[b.slug] ?? [];
         if (local.length > 0) return { ...b, photo: local[0] };
 
-        // Last resort: live Google fetch.
+        // Last resort: live Google fetch (cacheada perpetuamente por slug).
         let photo: string | null = null;
-        const placeId = await findPlaceId(b);
-        if (placeId) {
-          const details = await getPlaceDetails(placeId);
+        const details = await getPlaceDetailsForBeach(b);
+        if (details) {
           const skip = GOOGLE_PHOTO_SKIP[b.slug] ?? 0;
-          const firstPhoto = details?.photoNames?.[skip];
+          const firstPhoto = details.photoNames?.[skip];
           if (firstPhoto) photo = await photoMediaUri(firstPhoto, 1200);
         }
         return { ...b, photo };
