@@ -1033,7 +1033,7 @@ export function ChatScreen() {
                     "Tomar algo":          { bg: "oklch(0.94 0.08 40)",  fg: "oklch(0.58 0.18 35)" },
                     "Transporte multimodal inteligente":  { bg: "oklch(0.93 0.07 190)", fg: "oklch(0.50 0.14 210)" },
                     "Vuelos":              { bg: "oklch(0.93 0.07 240)", fg: "oklch(0.48 0.16 250)" },
-                    "Servicios sanitarios":{ bg: "oklch(0.94 0.06 25)",  fg: "oklch(0.55 0.18 25)" },
+                    "Servicios sanitarios":{ bg: "oklch(0.93 0.07 150)",  fg: "oklch(0.40 0.14 145)" },
                     "Ocio":                { bg: "oklch(0.94 0.07 310)", fg: "oklch(0.50 0.18 315)" },
                     "Fiestas de Alicante": { bg: "oklch(0.93 0.08 55)",  fg: "oklch(0.55 0.18 50)" },
                   };
