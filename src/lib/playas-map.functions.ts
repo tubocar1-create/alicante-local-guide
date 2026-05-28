@@ -6,7 +6,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const PLACES_BASE = "https://places.googleapis.com/v1";
 
-function getKey(): string | null {
+async function getKey(): Promise<string | null> {| null {
   return await getGooglePlacesKey();
 }
 
@@ -37,7 +37,7 @@ async function saveCachedBySlug(slug: string, details: PlaceDetails): Promise<vo
 }
 
 async function findPlaceId(beach: MapBeach): Promise<string | null> {
-  const key = getKey();
+  const key = await getKey();
   if (!key) return null;
   try {
     const res = await fetch(`${PLACES_BASE}/places:searchText`, {
@@ -64,7 +64,7 @@ async function findPlaceId(beach: MapBeach): Promise<string | null> {
 
 // Devuelve URL del proxy interno (cachea en Storage en la 1ª petición y nunca
 // más vuelve a llamar a Google para esa foto).
-function photoMediaUri(photoName: string, maxWidthPx = 1600): string | null {
+function photoMediaUri(photoName: string, maxWidthPx = 1600): string |async function getKey(): Promise<string | null> {
   if (!photoName?.startsWith("places/")) return null;
   const w = Math.min(Math.max(Math.round(maxWidthPx), 80), 1600);
   return `/api/public/google-photo/${photoName}?w=${w}`;
@@ -82,7 +82,7 @@ type PlaceDetails = {
 };
 
 async function getPlaceDetailsLive(placeId: string): Promise<PlaceDetails | null> {
-  const key = getKey();
+  const key = await getKey();
   if (!key) return null;
   try {
     const res = await fetch(`${PLACES_BASE}/places/${encodeURIComponent(placeId)}?languageCode=es`, {
