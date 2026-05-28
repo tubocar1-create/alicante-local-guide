@@ -50,9 +50,12 @@ function distanceKm(lat: number, lng: number) {
   return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 10) / 10;
 }
 
-function photoUrl(name: string | undefined, apiKey: string) {
+// Construye una URL del proxy interno en lugar de la URL firmada de Google.
+// Así, cada visita NO genera llamada a Google: la primera petición cachea la
+// imagen en Storage y las siguientes la sirven desde nuestro propio dominio.
+function photoUrl(name: string | undefined, _apiKey: string) {
   if (!name) return null;
-  return `https://places.googleapis.com/v1/${name}/media?maxHeightPx=600&key=${apiKey}`;
+  return `/api/public/google-photo/${name}?w=600`;
 }
 
 async function nearbyPage(apiKey: string) {

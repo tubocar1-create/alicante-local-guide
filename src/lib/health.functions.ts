@@ -182,13 +182,29 @@ export const listHealthProviders = createServerFn({ method: "GET" })
     return providers;
   });
 
+// Devuelve fotos de un centro de salud público. Para no llamar a Google en
+// cada visita, persistimos en health_centers el google_place_id y la lista
+// de google_photo_refs la PRIMERA vez. A partir de ahí, devolvemos URLs del
+// proxy interno y NUNCA más se llama a Google para este centro.
 async function fetchGooglePhotosForCenter(
+  centerId: string,
   name: string,
   address: string | null,
   municipality: string | null,
+  cachedPlaceId: string | null,
+  cachedRefs: string[] | null,
 ): Promise<{ photos: string[]; placeId: string | null }> {
+  const refs = cachedRefs ?? [];
+  if (refs.length) {
+    return {
+      photos: refs.map((pn) => `/api/public/google-photo/${pn}?w=1600`),
+      placeId: cachedPlaceId,
+    };
+  }
+
   const apiKey = process.env.GOOGLE_PLACES_API_KEY;
-  if (!apiKey) return { photos: [], placeId: null };
+  if (!apiKey) return { photos: [], placeId: cachedPlaceId };
+
   try {
     const textQuery = [name, address, municipality].filter(Boolean).join(", ");
     const searchRes = await fetch("https://places.googleapis.com/v1/places:searchText", {
@@ -205,33 +221,29 @@ async function fetchGooglePhotosForCenter(
         maxResultCount: 1,
       }),
     });
-    if (!searchRes.ok) return { photos: [], placeId: null };
+    if (!searchRes.ok) return { photos: [], placeId: cachedPlaceId };
     const sj = (await searchRes.json()) as {
       places?: Array<{ id?: string; photos?: Array<{ name: string }> }>;
     };
     const place = sj.places?.[0];
-    if (!place?.photos?.length) return { photos: [], placeId: place?.id ?? null };
-    const photoNames = place.photos.slice(0, 6).map((p) => p.name);
-    const photos = await Promise.all(
-      photoNames.map(async (pn) => {
-        try {
-          const r = await fetch(
-            `https://places.googleapis.com/v1/${pn}/media?maxWidthPx=1600&skipHttpRedirect=true&key=${apiKey}`,
-          );
-          if (!r.ok) return null;
-          const j = (await r.json()) as { photoUri?: string };
-          return j.photoUri ?? null;
-        } catch {
-          return null;
-        }
-      }),
-    );
+    const placeId = place?.id ?? cachedPlaceId ?? null;
+    const photoRefs = (place?.photos ?? []).slice(0, 6).map((p) => p.name);
+
+    // Persistir para no volver a llamar a Google nunca más para este centro.
+    await supabaseAdmin
+      .from("health_centers")
+      .update({
+        google_place_id: placeId,
+        google_photo_refs: photoRefs,
+      })
+      .eq("id", centerId);
+
     return {
-      photos: photos.filter((x): x is string => !!x),
-      placeId: place.id ?? null,
+      photos: photoRefs.map((pn) => `/api/public/google-photo/${pn}?w=1600`),
+      placeId,
     };
   } catch {
-    return { photos: [], placeId: null };
+    return { photos: [], placeId: cachedPlaceId };
   }
 }
 
@@ -256,9 +268,12 @@ export const getHealthProvider = createServerFn({ method: "GET" })
     if (!center) return null;
     const dto = healthCenterToDTO(center, (center.service_type as string) ?? "publico");
     const { photos, placeId } = await fetchGooglePhotosForCenter(
+      center.id as string,
       center.name as string,
       (center.address as string) ?? null,
       (center.municipality as string) ?? null,
+      (center.google_place_id as string | null) ?? null,
+      (center.google_photo_refs as string[] | null) ?? null,
     );
     return { ...dto, photos, google_place_id: placeId };
   });

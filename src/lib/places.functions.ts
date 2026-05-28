@@ -116,7 +116,9 @@ const CATEGORY_QUERIES: Record<string, string[]> = {
   pizzas: PIZZAS_QUERIES,
   brunch: BRUNCH_QUERIES,
 };
-const STALE_MS = 60 * 24 * 60 * 60 * 1000; // 60 días
+// Refresco SOLO manual desde el panel admin. Sin caducidad automática:
+// los lugares fijos no cambian y no queremos sangrar Google API en cada visita.
+const STALE_MS = Number.POSITIVE_INFINITY;
 
 const FIELD_MASK = [
   "places.id",
@@ -225,18 +227,6 @@ function toRow(p: GPlace, category: string): CachedPlace | null {
   };
 }
 
-async function resolvePhotoUri(photoName: string, apiKey: string, maxWidth = 1200): Promise<string | null> {
-  try {
-    const url = `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=${maxWidth}&skipHttpRedirect=true&key=${apiKey}`;
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    const j = (await res.json()) as { photoUri?: string };
-    return j.photoUri ?? null;
-  } catch {
-    return null;
-  }
-}
-
 export const getPlacePhotos = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => {
     const o = d as { placeId?: string; max?: number };
@@ -244,8 +234,10 @@ export const getPlacePhotos = createServerFn({ method: "GET" })
     return { placeId: o.placeId, max: Math.min(o.max ?? 4, 8) };
   })
   .handler(async ({ data }) => {
+    // Sin llamadas a Google en cada visita. Devolvemos URLs del proxy interno.
+    // Solo si NO hay refs cacheadas aún, hacemos UNA llamada a Place Details
+    // para sembrar la lista, y nunca más.
     const apiKey = process.env.GOOGLE_PLACES_API_KEY;
-    if (!apiKey) return { photos: [] as string[] };
     const { data: row } = await supabaseAdmin
       .from("places_cache")
       .select("raw")
@@ -253,8 +245,7 @@ export const getPlacePhotos = createServerFn({ method: "GET" })
       .maybeSingle();
     let photos = ((row?.raw as { photos?: Array<{ name: string }> } | null)?.photos ?? []);
 
-    // Backfill: if no photos cached, fetch Place Details once and persist
-    if (photos.length === 0) {
+    if (photos.length === 0 && apiKey) {
       try {
         const res = await fetch(`https://places.googleapis.com/v1/places/${data.placeId}?languageCode=es`, {
           headers: { "X-Goog-Api-Key": apiKey, "X-Goog-FieldMask": "photos" },
@@ -275,10 +266,11 @@ export const getPlacePhotos = createServerFn({ method: "GET" })
       }
     }
 
-    const urls = await Promise.all(
-      photos.slice(0, data.max).map((p) => resolvePhotoUri(p.name, apiKey)),
-    );
-    return { photos: urls.filter((u): u is string => !!u) };
+    return {
+      photos: photos
+        .slice(0, data.max)
+        .map((p) => `/api/public/google-photo/${p.name}?w=1200`),
+    };
   });
 
 // Curated lists: for categories where Google's text search mixes in unrelated

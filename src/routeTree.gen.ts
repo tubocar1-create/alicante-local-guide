@@ -146,6 +146,7 @@ import { Route as ApiPublicHooksEventosSyncRouteImport } from './routes/api/publ
 import { Route as ApiPublicHooksCinemasSyncRouteImport } from './routes/api/public/hooks/cinemas-sync'
 import { Route as ApiPublicHooksAgenteLearnRouteImport } from './routes/api/public/hooks/agente-learn'
 import { Route as ApiPublicHooksAenaSyncRouteImport } from './routes/api/public/hooks/aena-sync'
+import { Route as ApiPublicGooglePhotoSplatRouteImport } from './routes/api/public/google-photo.$'
 
 const WelcomeRoute = WelcomeRouteImport.update({
   id: '/welcome',
@@ -844,6 +845,12 @@ const ApiPublicHooksAenaSyncRoute = ApiPublicHooksAenaSyncRouteImport.update({
   path: '/api/public/hooks/aena-sync',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicGooglePhotoSplatRoute =
+  ApiPublicGooglePhotoSplatRouteImport.update({
+    id: '/api/public/google-photo/$',
+    path: '/api/public/google-photo/$',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -965,6 +972,7 @@ export interface FileRoutesByFullPath {
   '/tram/linea/$lineId': typeof TramLineaLineIdRoute
   '/tram/parada/$stopId': typeof TramParadaStopIdRoute
   '/admin/ai/': typeof AdminAiIndexRoute
+  '/api/public/google-photo/$': typeof ApiPublicGooglePhotoSplatRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
   '/api/public/hooks/agente-learn': typeof ApiPublicHooksAgenteLearnRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
@@ -1101,6 +1109,7 @@ export interface FileRoutesByTo {
   '/tram/linea/$lineId': typeof TramLineaLineIdRoute
   '/tram/parada/$stopId': typeof TramParadaStopIdRoute
   '/admin/ai': typeof AdminAiIndexRoute
+  '/api/public/google-photo/$': typeof ApiPublicGooglePhotoSplatRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
   '/api/public/hooks/agente-learn': typeof ApiPublicHooksAgenteLearnRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
@@ -1241,6 +1250,7 @@ export interface FileRoutesById {
   '/tram/linea/$lineId': typeof TramLineaLineIdRoute
   '/tram/parada/$stopId': typeof TramParadaStopIdRoute
   '/admin/ai/': typeof AdminAiIndexRoute
+  '/api/public/google-photo/$': typeof ApiPublicGooglePhotoSplatRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
   '/api/public/hooks/agente-learn': typeof ApiPublicHooksAgenteLearnRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
@@ -1382,6 +1392,7 @@ export interface FileRouteTypes {
     | '/tram/linea/$lineId'
     | '/tram/parada/$stopId'
     | '/admin/ai/'
+    | '/api/public/google-photo/$'
     | '/api/public/hooks/aena-sync'
     | '/api/public/hooks/agente-learn'
     | '/api/public/hooks/cinemas-sync'
@@ -1518,6 +1529,7 @@ export interface FileRouteTypes {
     | '/tram/linea/$lineId'
     | '/tram/parada/$stopId'
     | '/admin/ai'
+    | '/api/public/google-photo/$'
     | '/api/public/hooks/aena-sync'
     | '/api/public/hooks/agente-learn'
     | '/api/public/hooks/cinemas-sync'
@@ -1657,6 +1669,7 @@ export interface FileRouteTypes {
     | '/tram/linea/$lineId'
     | '/tram/parada/$stopId'
     | '/admin/ai/'
+    | '/api/public/google-photo/$'
     | '/api/public/hooks/aena-sync'
     | '/api/public/hooks/agente-learn'
     | '/api/public/hooks/cinemas-sync'
@@ -1740,6 +1753,7 @@ export interface RootRouteChildren {
   OcioEventosAgendaRoute: typeof OcioEventosAgendaRoute
   OcioEventosCarteleraRoute: typeof OcioEventosCarteleraRoute
   OcioPeliculaIdRoute: typeof OcioPeliculaIdRoute
+  ApiPublicGooglePhotoSplatRoute: typeof ApiPublicGooglePhotoSplatRoute
   ApiPublicHooksAenaSyncRoute: typeof ApiPublicHooksAenaSyncRoute
   ApiPublicHooksAgenteLearnRoute: typeof ApiPublicHooksAgenteLearnRoute
   ApiPublicHooksCinemasSyncRoute: typeof ApiPublicHooksCinemasSyncRoute
@@ -2721,6 +2735,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksAenaSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/google-photo/$': {
+      id: '/api/public/google-photo/$'
+      path: '/api/public/google-photo/$'
+      fullPath: '/api/public/google-photo/$'
+      preLoaderRoute: typeof ApiPublicGooglePhotoSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -3012,6 +3033,7 @@ const rootRouteChildren: RootRouteChildren = {
   OcioEventosAgendaRoute: OcioEventosAgendaRoute,
   OcioEventosCarteleraRoute: OcioEventosCarteleraRoute,
   OcioPeliculaIdRoute: OcioPeliculaIdRoute,
+  ApiPublicGooglePhotoSplatRoute: ApiPublicGooglePhotoSplatRoute,
   ApiPublicHooksAenaSyncRoute: ApiPublicHooksAenaSyncRoute,
   ApiPublicHooksAgenteLearnRoute: ApiPublicHooksAgenteLearnRoute,
   ApiPublicHooksCinemasSyncRoute: ApiPublicHooksCinemasSyncRoute,

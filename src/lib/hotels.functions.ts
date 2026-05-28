@@ -87,8 +87,9 @@ async function hasForegroundPerson(url: string, aiKey: string): Promise<boolean>
 export const getHotelPhotos = createServerFn({ method: "GET" })
   .inputValidator((d: { id: string }) => d)
   .handler(async ({ data }) => {
-    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
-    if (!apiKey) return { photos: [] as string[] };
+    // Ya NO se llama a Google en cada visita. Devolvemos URLs del proxy
+    // interno (/api/public/google-photo/...) que cachea la imagen en Storage
+    // la primera vez y la sirve para siempre desde nuestro dominio.
     const { data: row } = await supabaseAdmin
       .from("hotels_static")
       .select("raw")
@@ -101,42 +102,39 @@ export const getHotelPhotos = createServerFn({ method: "GET" })
     const photos = (raw.photos ?? []).slice(0, 20);
     if (!photos.length) return { photos: [] as string[] };
 
-    // Resolve URLs in parallel
-    const resolved = await Promise.all(
-      photos.map(async (p) => {
-        try {
-          const r = await fetch(
-            `https://places.googleapis.com/v1/${p.name}/media?maxWidthPx=1200&skipHttpRedirect=true&key=${apiKey}`,
-          );
-          if (!r.ok) return null;
-          const j = (await r.json()) as { photoUri?: string };
-          return j.photoUri ? { name: p.name, url: j.photoUri } : null;
-        } catch {
-          return null;
-        }
-      }),
-    );
-    const ok = resolved.filter((x): x is { name: string; url: string } => !!x);
+    const filter = raw.photo_filter ?? {};
+    const urls = photos
+      .filter((p) => filter[p.name] !== "person")
+      .map((p) => `/api/public/google-photo/${p.name}?w=1200`);
 
-    // Classify (cached per photo name) — drop foreground people
+    // Clasificación con IA: solo ocurre si todavía hay fotos sin clasificar.
+    // Se hace una sola vez por foto (resultado persistido en raw.photo_filter)
+    // y se sirve la URL proxy a la IA (también cacheada en Storage).
     const aiKey = process.env.LOVABLE_API_KEY;
-    const cache = { ...(raw.photo_filter ?? {}) };
-    if (aiKey) {
-      const toCheck = ok.filter((p) => !cache[p.name]);
+    const toCheck = photos.filter((p) => !filter[p.name]);
+    if (aiKey && toCheck.length) {
+      const origin = process.env.SUPABASE_URL ?? "";
+      const newFilter = { ...filter };
       const verdicts = await Promise.all(
         toCheck.map(async (p) => ({
           name: p.name,
-          person: await hasForegroundPerson(p.url, aiKey),
+          person: await hasForegroundPerson(
+            `${origin.replace(/\/$/, "")}/api/public/google-photo/${p.name}?w=600`,
+            aiKey,
+          ),
         })),
       );
-      for (const v of verdicts) cache[v.name] = v.person ? "person" : "ok";
-      if (verdicts.length) {
-        await supabaseAdmin
-          .from("hotels_static")
-          .update({ raw: { ...raw, photo_filter: cache } as never })
-          .eq("id", data.id);
-      }
+      for (const v of verdicts) newFilter[v.name] = v.person ? "person" : "ok";
+      await supabaseAdmin
+        .from("hotels_static")
+        .update({ raw: { ...raw, photo_filter: newFilter } as never })
+        .eq("id", data.id);
+      return {
+        photos: photos
+          .filter((p) => newFilter[p.name] !== "person")
+          .map((p) => `/api/public/google-photo/${p.name}?w=1200`),
+      };
     }
 
-    return { photos: ok.filter((p) => cache[p.name] !== "person").map((p) => p.url) };
+    return { photos: urls };
   });
