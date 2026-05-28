@@ -31,8 +31,6 @@ export const Route = createFileRoute("/api/public/shop-photo/$")({
       GET: async ({ request, params }) => {
         const ref = params._splat;
         if (!ref) return new Response("Missing ref", { status: 400 });
-        const key = await getGooglePlacesKey();
-        if (!key) return new Response("No key", { status: 500 });
 
         const url = new URL(request.url);
         const w = Math.min(parseInt(url.searchParams.get("w") || "800", 10) || 800, 1600);
@@ -40,7 +38,7 @@ export const Route = createFileRoute("/api/public/shop-photo/$")({
         const objectPath = sanitizeKey(ref, w);
         const cachedUrl = publicUrl(objectPath);
 
-        // 1. Check cache: HEAD the public URL (cheap, no Google call).
+        // 1. Check cache first (no Google call) — sirve siempre, incluso con kill-switch off.
         try {
           const head = await fetch(cachedUrl, { method: "HEAD" });
           if (head.ok) {
@@ -55,6 +53,10 @@ export const Route = createFileRoute("/api/public/shop-photo/$")({
         } catch {
           /* fall through to fetch */
         }
+
+        // 2. Cache miss → ahora sí necesitamos la API key.
+        const key = await getGooglePlacesKey();
+        if (!key) return new Response("Photo not cached, Google API disabled", { status: 404 });
 
         // 2. Ask Google for the signed photoUri.
         const apiUrl = `https://places.googleapis.com/v1/${ref}/media?maxWidthPx=${w}&skipHttpRedirect=true&key=${encodeURIComponent(
