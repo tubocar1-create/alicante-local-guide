@@ -442,19 +442,19 @@ function VuelosDashboard() {
             <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-400/70">
               {flightType === "L" ? "Dashboard de llegadas" : "Dashboard de salidas"}
             </p>
-            {/* Mobile/PWA title (sin cambios) */}
-            <h1 className="mt-1 text-2xl font-bold tracking-tight md:text-4xl lg:hidden">
-              {flightType === "L" ? "Vuelos de llegada " : "Vuelos de salida "}
-              <span className="bg-gradient-to-r from-cyan-300 via-white to-violet-300 bg-clip-text text-transparent">
-                {flightType === "L" ? "hacia Alicante" : "desde Alicante"}
+            {/* Single responsive h1 (mobile/desktop variants via spans) */}
+            <h1 className="mt-1 text-2xl font-bold tracking-tight md:text-4xl">
+              <span className="lg:hidden">
+                {flightType === "L" ? "Vuelos de llegada " : "Vuelos de salida "}
+                <span className="bg-gradient-to-r from-cyan-300 via-white to-violet-300 bg-clip-text text-transparent">
+                  {flightType === "L" ? "hacia Alicante" : "desde Alicante"}
+                </span>
               </span>
-            </h1>
-            {/* Web title */}
-            <h1 className="mt-1 hidden text-2xl font-bold tracking-tight md:text-4xl lg:block">
-              {flightType === "L" ? "De donde vienen" : "A donde ir"}{" "}
-              <span className="bg-gradient-to-r from-cyan-300 via-white to-violet-300 bg-clip-text text-transparent">
-                {flightType === "L" ? "a Alicante" : "desde Alicante"}
-              </span>
+              <span className="hidden lg:inline">
+                {flightType === "L" ? "De donde vienen" : "A donde ir"}{" "}
+                <span className="bg-gradient-to-r from-cyan-300 via-white to-violet-300 bg-clip-text text-transparent">
+                  {flightType === "L" ? "a Alicante" : "desde Alicante"}
+                </span>
               <span className="ml-3 align-middle text-base font-normal text-cyan-300/80">
                 ({cities.filter((c) => c.total > 0).length}) ciudades
               </span>
