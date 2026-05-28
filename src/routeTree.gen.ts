@@ -40,7 +40,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as BusinessIndexRouteImport } from './routes/business.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as VuelosIataRouteImport } from './routes/vuelos_.$iata'
-import { Route as TransporteParadaFavoritaRouteImport } from './routes/transporte.parada-favorita'
+import { Route as TransporteParadaFavoritaRouteImport } from './routes/transporte_.parada-favorita'
 import { Route as TramMapaRouteImport } from './routes/tram.mapa'
 import { Route as TramFavoritosRouteImport } from './routes/tram.favoritos'
 import { Route as TramEstacionesRouteImport } from './routes/tram.estaciones'
@@ -306,9 +306,9 @@ const VuelosIataRoute = VuelosIataRouteImport.update({
 } as any)
 const TransporteParadaFavoritaRoute =
   TransporteParadaFavoritaRouteImport.update({
-    id: '/parada-favorita',
-    path: '/parada-favorita',
-    getParentRoute: () => TransporteRoute,
+    id: '/transporte_/parada-favorita',
+    path: '/transporte/parada-favorita',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const TramMapaRoute = TramMapaRouteImport.update({
   id: '/mapa',
@@ -883,7 +883,7 @@ export interface FileRoutesByFullPath {
   '/stay': typeof StayRoute
   '/threads': typeof ThreadsRouteWithChildren
   '/tram': typeof TramRouteWithChildren
-  '/transporte': typeof TransporteRouteWithChildren
+  '/transporte': typeof TransporteRoute
   '/voces': typeof VocesRoute
   '/vuelos': typeof VuelosRoute
   '/welcome': typeof WelcomeRoute
@@ -1022,7 +1022,7 @@ export interface FileRoutesByTo {
   '/stay': typeof StayRoute
   '/threads': typeof ThreadsRouteWithChildren
   '/tram': typeof TramRouteWithChildren
-  '/transporte': typeof TransporteRouteWithChildren
+  '/transporte': typeof TransporteRoute
   '/voces': typeof VocesRoute
   '/vuelos': typeof VuelosRoute
   '/welcome': typeof WelcomeRoute
@@ -1163,7 +1163,7 @@ export interface FileRoutesById {
   '/stay': typeof StayRoute
   '/threads': typeof ThreadsRouteWithChildren
   '/tram': typeof TramRouteWithChildren
-  '/transporte': typeof TransporteRouteWithChildren
+  '/transporte': typeof TransporteRoute
   '/voces': typeof VocesRoute
   '/vuelos': typeof VuelosRoute
   '/welcome': typeof WelcomeRoute
@@ -1216,7 +1216,7 @@ export interface FileRoutesById {
   '/tram/estaciones': typeof TramEstacionesRoute
   '/tram/favoritos': typeof TramFavoritosRoute
   '/tram/mapa': typeof TramMapaRoute
-  '/transporte/parada-favorita': typeof TransporteParadaFavoritaRoute
+  '/transporte_/parada-favorita': typeof TransporteParadaFavoritaRoute
   '/vuelos_/$iata': typeof VuelosIataRoute
   '/admin/': typeof AdminIndexRoute
   '/business/': typeof BusinessIndexRoute
@@ -1638,7 +1638,7 @@ export interface FileRouteTypes {
     | '/tram/estaciones'
     | '/tram/favoritos'
     | '/tram/mapa'
-    | '/transporte/parada-favorita'
+    | '/transporte_/parada-favorita'
     | '/vuelos_/$iata'
     | '/admin/'
     | '/business/'
@@ -1727,7 +1727,7 @@ export interface RootRouteChildren {
   StayRoute: typeof StayRoute
   ThreadsRoute: typeof ThreadsRouteWithChildren
   TramRoute: typeof TramRouteWithChildren
-  TransporteRoute: typeof TransporteRouteWithChildren
+  TransporteRoute: typeof TransporteRoute
   VocesRoute: typeof VocesRoute
   VuelosRoute: typeof VuelosRoute
   WelcomeRoute: typeof WelcomeRoute
@@ -1747,6 +1747,7 @@ export interface RootRouteChildren {
   OcioEventosRoute: typeof OcioEventosRoute
   OcioTeatrosRoute: typeof OcioTeatrosRoute
   SaludCategoriaRoute: typeof SaludCategoriaRouteWithChildren
+  TransporteParadaFavoritaRoute: typeof TransporteParadaFavoritaRoute
   VuelosIataRoute: typeof VuelosIataRoute
   ApiPublicAenaFlightsRoute: typeof ApiPublicAenaFlightsRoute
   ApiPublicAuthEmailHookRoute: typeof ApiPublicAuthEmailHookRoute
@@ -2005,12 +2006,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VuelosIataRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/transporte/parada-favorita': {
-      id: '/transporte/parada-favorita'
-      path: '/parada-favorita'
+    '/transporte_/parada-favorita': {
+      id: '/transporte_/parada-favorita'
+      path: '/transporte/parada-favorita'
       fullPath: '/transporte/parada-favorita'
       preLoaderRoute: typeof TransporteParadaFavoritaRouteImport
-      parentRoute: typeof TransporteRoute
+      parentRoute: typeof rootRouteImport
     }
     '/tram/mapa': {
       id: '/tram/mapa'
@@ -2955,18 +2956,6 @@ const TramRouteChildren: TramRouteChildren = {
 
 const TramRouteWithChildren = TramRoute._addFileChildren(TramRouteChildren)
 
-interface TransporteRouteChildren {
-  TransporteParadaFavoritaRoute: typeof TransporteParadaFavoritaRoute
-}
-
-const TransporteRouteChildren: TransporteRouteChildren = {
-  TransporteParadaFavoritaRoute: TransporteParadaFavoritaRoute,
-}
-
-const TransporteRouteWithChildren = TransporteRoute._addFileChildren(
-  TransporteRouteChildren,
-)
-
 interface OcioCinesRouteChildren {
   OcioCinesIdRoute: typeof OcioCinesIdRoute
 }
@@ -3016,7 +3005,7 @@ const rootRouteChildren: RootRouteChildren = {
   StayRoute: StayRoute,
   ThreadsRoute: ThreadsRouteWithChildren,
   TramRoute: TramRouteWithChildren,
-  TransporteRoute: TransporteRouteWithChildren,
+  TransporteRoute: TransporteRoute,
   VocesRoute: VocesRoute,
   VuelosRoute: VuelosRoute,
   WelcomeRoute: WelcomeRoute,
@@ -3036,6 +3025,7 @@ const rootRouteChildren: RootRouteChildren = {
   OcioEventosRoute: OcioEventosRoute,
   OcioTeatrosRoute: OcioTeatrosRoute,
   SaludCategoriaRoute: SaludCategoriaRouteWithChildren,
+  TransporteParadaFavoritaRoute: TransporteParadaFavoritaRoute,
   VuelosIataRoute: VuelosIataRoute,
   ApiPublicAenaFlightsRoute: ApiPublicAenaFlightsRoute,
   ApiPublicAuthEmailHookRoute: ApiPublicAuthEmailHookRoute,
@@ -3078,3 +3068,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
