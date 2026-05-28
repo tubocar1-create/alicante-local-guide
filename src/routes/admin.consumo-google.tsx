@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getConsumptionSummary } from "@/lib/admin-consumption.functions";
+import { getGoogleKillSwitch, setGoogleKillSwitch } from "@/lib/admin-killswitch.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+
 
 export const Route = createFileRoute("/admin/consumo-google")({
   head: () => ({ meta: [{ title: "Admin · Consumo Google" }] }),
@@ -61,6 +63,10 @@ function ConsumoGoogle() {
           Console.
         </p>
       </header>
+
+      <KillSwitchCard />
+
+
 
       <div className="flex flex-wrap gap-2">
         {RANGES.map((r) => (
@@ -168,5 +174,67 @@ function Table({ headers, children }: { headers: string[]; children: React.React
       </thead>
       <tbody>{children}</tbody>
     </table>
+  );
+}
+
+function KillSwitchCard() {
+  const qc = useQueryClient();
+  const getFn = useServerFn(getGoogleKillSwitch);
+  const setFn = useServerFn(setGoogleKillSwitch);
+  const q = useQuery({
+    queryKey: ["google-killswitch"],
+    queryFn: () => getFn(),
+  });
+  const m = useMutation({
+    mutationFn: (enabled: boolean) => setFn({ data: { enabled } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["google-killswitch"] }),
+  });
+  const enabled = q.data?.enabled ?? false;
+  return (
+    <Card className={enabled ? "border-emerald-500/50" : "border-red-500/50"}>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          🛑 Kill-switch global de Google API
+          <span
+            className={
+              "ml-auto rounded-full px-3 py-1 text-xs font-semibold " +
+              (enabled
+                ? "bg-emerald-500/20 text-emerald-700"
+                : "bg-red-500/20 text-red-700")
+            }
+          >
+            {enabled ? "ACTIVADO (llamadas permitidas)" : "APAGADO (llamadas bloqueadas)"}
+          </span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Cuando está apagado, ningún server function de la app llamará a Google
+          Places, Maps, Geocoding o Directions. Los proxies de fotos devolverán
+          503. La caché perpetua de detalles sigue sirviendo lo ya guardado.
+        </p>
+        <div className="flex gap-2">
+          <Button
+            variant={enabled ? "default" : "outline"}
+            onClick={() => m.mutate(true)}
+            disabled={m.isPending}
+          >
+            Permitir llamadas
+          </Button>
+          <Button
+            variant={!enabled ? "destructive" : "outline"}
+            onClick={() => m.mutate(false)}
+            disabled={m.isPending}
+          >
+            🛑 Cortar todas
+          </Button>
+        </div>
+        {q.data?.updatedAt && (
+          <p className="text-xs text-muted-foreground">
+            Último cambio: {new Date(q.data.updatedAt).toLocaleString("es-ES")}
+          </p>
+        )}
+      </CardContent>
+    </Card>
   );
 }

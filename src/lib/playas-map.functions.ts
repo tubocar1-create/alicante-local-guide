@@ -1,12 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getGooglePlacesKey } from "@/lib/google-killswitch.server";
 import { z } from "zod";
 import { MAP_BEACHES, getBeachBySlug, LOCAL_BEACH_PHOTOS, GOOGLE_PHOTO_SKIP, type MapBeach } from "./playas-map-data";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const PLACES_BASE = "https://places.googleapis.com/v1";
 
-function getKey(): string | null {
-  return process.env.GOOGLE_PLACES_API_KEY ?? null;
+async function getKey(): Promise<string | null> {
+  return await getGooglePlacesKey();
 }
 
 // Caché perpetua de detalles de Google Places por slug de playa.
@@ -36,7 +37,7 @@ async function saveCachedBySlug(slug: string, details: PlaceDetails): Promise<vo
 }
 
 async function findPlaceId(beach: MapBeach): Promise<string | null> {
-  const key = getKey();
+  const key = await getKey();
   if (!key) return null;
   try {
     const res = await fetch(`${PLACES_BASE}/places:searchText`, {
@@ -81,7 +82,7 @@ type PlaceDetails = {
 };
 
 async function getPlaceDetailsLive(placeId: string): Promise<PlaceDetails | null> {
-  const key = getKey();
+  const key = await getKey();
   if (!key) return null;
   try {
     const res = await fetch(`${PLACES_BASE}/places/${encodeURIComponent(placeId)}?languageCode=es`, {

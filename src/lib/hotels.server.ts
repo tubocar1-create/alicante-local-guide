@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { getGooglePlacesKey } from "@/lib/google-killswitch.server";
 
 // Centro de búsqueda: Puerta del Mar, Alicante
 const ALICANTE_LAT = 38.3402;
@@ -83,7 +84,7 @@ async function nearbyPage(apiKey: string) {
 }
 
 export async function syncStaticHotelsImpl() {
-  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  const apiKey = await getGooglePlacesKey();
   if (!apiKey) throw new Error("GOOGLE_PLACES_API_KEY not configured");
 
   // Google Places (New) Nearby devuelve como máximo 20 resultados por llamada,

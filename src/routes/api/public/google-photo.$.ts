@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { getGooglePlacesKey } from "@/lib/google-killswitch.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 // Proxy genérico cache-on-first-hit para fotos de Google Places (New).
@@ -32,7 +33,7 @@ export const Route = createFileRoute("/api/public/google-photo/$")({
         if (!ref || !ref.startsWith("places/")) {
           return new Response("Missing or invalid ref", { status: 400 });
         }
-        const key = process.env.GOOGLE_PLACES_API_KEY;
+        const key = await getGooglePlacesKey();
         if (!key) return new Response("No key", { status: 500 });
 
         const url = new URL(request.url);

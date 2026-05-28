@@ -1,16 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { getGooglePlacesKey } from "@/lib/google-killswitch.server";
 import { MAP_BEACHES, LOCAL_BEACH_PHOTOS, GOOGLE_PHOTO_SKIP, type MapBeach } from "@/lib/playas-map-data";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const PLACES_BASE = "https://places.googleapis.com/v1";
 const BUCKET = "beach-photos";
 
-function key() {
-  return process.env.GOOGLE_PLACES_API_KEY ?? null;
+async function key() {
+  return await getGooglePlacesKey();
 }
 
+
 async function findPlaceId(b: MapBeach): Promise<string | null> {
-  const k = key();
+  const k = await key();
   if (!k) return null;
   const res = await fetch(`${PLACES_BASE}/places:searchText`, {
     method: "POST",
@@ -32,7 +34,7 @@ async function findPlaceId(b: MapBeach): Promise<string | null> {
 }
 
 async function getCoverPhotoName(placeId: string, skip: number): Promise<{ name: string; attribution: string } | null> {
-  const k = key();
+  const k = await key();
   if (!k) return null;
   const res = await fetch(`${PLACES_BASE}/places/${encodeURIComponent(placeId)}?languageCode=es`, {
     headers: { "X-Goog-Api-Key": k, "X-Goog-FieldMask": "photos" },
@@ -46,7 +48,7 @@ async function getCoverPhotoName(placeId: string, skip: number): Promise<{ name:
 }
 
 async function fetchPhotoBytes(photoName: string): Promise<{ buf: ArrayBuffer; contentType: string } | null> {
-  const k = key();
+  const k = await key();
   if (!k) return null;
   const url = `${PLACES_BASE}/${photoName}/media?maxWidthPx=1600&key=${k}`;
   const res = await fetch(url, { redirect: "follow" });

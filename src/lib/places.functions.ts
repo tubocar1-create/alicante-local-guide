@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getGooglePlacesKey } from "@/lib/google-killswitch.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export type CachedPlace = {
@@ -233,7 +234,7 @@ export const getPlacePhotos = createServerFn({ method: "GET" })
     // Sin llamadas a Google en cada visita. Devolvemos URLs del proxy interno.
     // Solo si NO hay refs cacheadas aún, hacemos UNA llamada a Place Details
     // para sembrar la lista, y nunca más.
-    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+    const apiKey = await getGooglePlacesKey();
     const { data: row } = await supabaseAdmin
       .from("places_cache")
       .select("raw")
@@ -472,7 +473,7 @@ export const discoverNearbyPlaces = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ data }) => {
-    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+    const apiKey = await getGooglePlacesKey();
     if (!apiKey) return { added: 0 };
     const queries = CATEGORY_QUERIES[data.category]!;
     const seen = new Map<string, CachedPlace>();
@@ -522,7 +523,7 @@ async function searchOne(textQuery: string, apiKey: string): Promise<GPlace | nu
 }
 
 async function refreshCuratedCategory(category: string) {
-  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  const apiKey = await getGooglePlacesKey();
   if (!apiKey) throw new Error("GOOGLE_PLACES_API_KEY missing");
   const names = CURATED_LISTS[category];
   if (!names || !names.length) return [];
@@ -558,7 +559,7 @@ async function refreshCuratedCategory(category: string) {
 async function refreshCategoryFromGoogle(category: string) {
   if (CURATED_LISTS[category]) return refreshCuratedCategory(category);
 
-  const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+  const apiKey = await getGooglePlacesKey();
   if (!apiKey) throw new Error("GOOGLE_PLACES_API_KEY missing");
   const queries = CATEGORY_QUERIES[category];
   if (!queries) throw new Error(`unknown category: ${category}`);
@@ -711,7 +712,7 @@ export const resolvePlaceByName = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ data }) => {
-    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+    const apiKey = await getGooglePlacesKey();
     if (!apiKey) return { placeId: null as string | null };
 
     // Haversine distance in meters
@@ -905,7 +906,7 @@ export const addPlaceFromGoogle = createServerFn({ method: "POST" })
     return { input: o.input.trim(), category: o.category };
   })
   .handler(async ({ data }) => {
-    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+    const apiKey = await getGooglePlacesKey();
     if (!apiKey) throw new Error("GOOGLE_PLACES_API_KEY no configurada");
 
     let place: GPlace | null = null;

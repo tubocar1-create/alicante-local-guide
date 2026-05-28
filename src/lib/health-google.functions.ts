@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getGooglePlacesKey } from "@/lib/google-killswitch.server";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -122,7 +123,7 @@ export const populateAtencionContinuada = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!roleRow) throw new Error("Forbidden: admin role required");
 
-    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+    const apiKey = await getGooglePlacesKey();
     if (!apiKey) throw new Error("GOOGLE_PLACES_API_KEY missing");
 
     const queries = QUERY_MAP[data.kind];
