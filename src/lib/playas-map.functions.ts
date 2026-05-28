@@ -220,13 +220,12 @@ export const getBeachQuick = createServerFn({ method: "POST" })
     if (local.length > 0) {
       return { beach, cover: local[0] };
     }
-    const placeId = await findPlaceId(beach);
-    if (!placeId) return { beach, cover: null };
-    const details = await getPlaceDetails(placeId);
+    const details = await getPlaceDetailsForBeach(beach);
+    if (!details) return { beach, cover: null };
     const skip = GOOGLE_PHOTO_SKIP[beach.slug] ?? 0;
-    const first = details?.photoNames?.[skip];
+    const first = details.photoNames?.[skip];
     const cover = first ? await photoMediaUri(first, 1200) : null;
-    return { beach, cover, googleMapsUri: details?.googleMapsUri };
+    return { beach, cover, googleMapsUri: details.googleMapsUri };
   });
 
 // Slow: photos beyond cover, AI review, Google reviews, address.
