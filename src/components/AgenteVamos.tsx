@@ -946,6 +946,7 @@ const DB_KEY_TO_DOMAIN: Record<string, string> = {
   salud: "salud",
   comer: "comer",
   transporte: "transporte",
+  vuelos: "vuelos",
   playas: "playas",
   dormir: "dormir",
   comprar: "compras",
