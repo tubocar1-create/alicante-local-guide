@@ -77,7 +77,7 @@ const INTENTS: IntentDef[] = [
     ],
     context: ["salir de fiesta noche", "ir de copas", "vamos a beber"],
     reply: "Abro el Dashboard Nocturno: bares, cervecerías, pubs y discotecas abiertos ahora.",
-    path: "/",
+    path: "/nocturno",
     audio: "leisure",
   },
   {
