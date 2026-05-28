@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { getGooglePlacesKey } from "@/lib/google-killswitch.server";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 // Proxy genérico cache-on-first-hit para fotos de Google Places (New).
@@ -61,10 +60,11 @@ export const Route = createFileRoute("/api/public/google-photo/$")({
           /* fall through */
         }
 
-        // 2. No estaba en Storage → ahora sí necesitamos la API key de Google.
-        //    Si el kill-switch está apagado, devolvemos 404 (sin foto), no 500.
-        const key = await getGooglePlacesKey();
-        if (!key) return new Response("Photo not cached, Google API disabled", { status: 404 });
+        // 2. No estaba en Storage → llamar a Google UNA VEZ y cachear para siempre.
+        //    Bypass del kill-switch: el coste está acotado (1 llamada por foto+ancho),
+        //    no es lo que dispara el consumo.
+        const key = process.env.GOOGLE_PLACES_API_KEY;
+        if (!key) return new Response("Photo not cached, no API key", { status: 404 });
 
         // 2. Pedir a Google la URL firmada de la foto.
         const apiUrl = `https://places.googleapis.com/v1/${ref}/media?maxWidthPx=${w}&skipHttpRedirect=true&key=${encodeURIComponent(
