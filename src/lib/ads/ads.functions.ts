@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { ADVERTISERS, getAdvertiser, type Advertiser } from "./advertisers";
 import {
   fetchAlicanteParkings,
