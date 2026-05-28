@@ -20,6 +20,30 @@ export const Route = createFileRoute("/stay")({
       { property: "og:type", content: "website" },
     ],
     links: [{ rel: "canonical", href: "https://vamosalicante.com/stay" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "Dormir en Alicante",
+          description:
+            "Listado de hoteles, hostales y apartamentos turísticos en la provincia de Alicante.",
+          url: "https://vamosalicante.com/stay",
+          isPartOf: { "@type": "WebSite", url: "https://vamosalicante.com/" },
+          about: { "@type": "Place", name: "Alicante, España" },
+          mainEntity: {
+            "@type": "ItemList",
+            name: "Alojamientos en Alicante",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, item: { "@type": "LodgingBusiness", name: "Hoteles", url: "https://vamosalicante.com/stay" } },
+              { "@type": "ListItem", position: 2, item: { "@type": "LodgingBusiness", name: "Hostales", url: "https://vamosalicante.com/stay" } },
+              { "@type": "ListItem", position: 3, item: { "@type": "LodgingBusiness", name: "Apartamentos turísticos", url: "https://vamosalicante.com/stay" } },
+            ],
+          },
+        }),
+      },
+    ],
   }),
   component: StayPage,
 });
