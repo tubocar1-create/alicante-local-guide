@@ -1383,8 +1383,10 @@ function localResolve(
   const query = normalizeSpeech(text);
 
   const flightDomain = DOMAINS.find((d) => d.id === "vuelos");
-  const flightMatch = flightDomain ? matchDomain(query) : null;
-  if (flightMatch?.domain.id === "vuelos" && flightDomain?.hubPath) {
+  const matchedDomain = matchDomain(query);
+  const hasGroundTransportMode = EXPLICIT_TRANSPORT_MODE_RE.test(query);
+  const hasFlightTravelIntent = /(^|\s)(vuelo|vuelos|volar|avion|aviones|aena|facturar|facturacion|check\s?in|check-in|checkin|terminal|embarque|aerolinea|aeropuerto|altet|alc)(\s|$)/.test(query);
+  if (matchedDomain?.domain.id === "vuelos" && !hasGroundTransportMode && hasFlightTravelIntent && flightDomain?.hubPath) {
     return {
       reply: flightDomain.question,
       path: flightDomain.hubPath,
@@ -1396,7 +1398,7 @@ function localResolve(
 
   const transportDomain = DOMAINS.find((d) => d.id === "transporte");
   const transportLike = transportDomain
-    ? matchDomain(query)?.domain.id === "transporte" || matchDomain(query)?.domain.id === "transporte_bus"
+    ? matchedDomain?.domain.id === "transporte" || matchedDomain?.domain.id === "transporte_bus" || hasGroundTransportMode
     : false;
   if (transportLike && transportDomain?.hubPath) {
     return {
