@@ -2858,7 +2858,7 @@ function DrinksTableInner({ ranked, loading, originLabel, onClose }: {
   );
 }
 
-export function DrinksTable({ cards }: { cards: PlaceCardData[] }) {
+export function DrinksTable({ cards, onExit }: { cards: PlaceCardData[]; onExit?: () => void }) {
   const [extra, setExtra] = useState<PlaceCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
