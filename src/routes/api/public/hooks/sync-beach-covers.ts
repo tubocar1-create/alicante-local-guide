@@ -6,9 +6,10 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 const PLACES_BASE = "https://places.googleapis.com/v1";
 const BUCKET = "beach-photos";
 
-function key() {
+async function key() {
   return await getGooglePlacesKey();
 }
+
 
 async function findPlaceId(b: MapBeach): Promise<string | null> {
   const k = key();
