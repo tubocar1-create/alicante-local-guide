@@ -380,7 +380,8 @@ const DOMAINS: DomainSpec[] = [
 
   {
     id: "transporte_bus",
-    hubPath: "/transporte",
+    hubPath: "/",
+    openSubmenuKey: "transporte",
     triggers: [
       "bus", "buses", "autobus", "autobuses", "emt", "vectalia",
       "linea de bus", "parada", "parada de bus", "bus urbano", "buses urbanos",
@@ -389,6 +390,7 @@ const DOMAINS: DomainSpec[] = [
     audio: "bus",
     followups: [],
   },
+
 
   {
     id: "bus_known",
