@@ -2929,7 +2929,7 @@ export function DrinksTable({ cards, onExit }: { cards: PlaceCardData[]; onExit?
     );
   }
 
-  return <DrinksTableInner ranked={ranked} loading={loading} originLabel={originLabel} onClose={() => setOpen(false)} />;
+  return <DrinksTableInner ranked={ranked} loading={loading} originLabel={originLabel} onClose={onExit ?? (() => setOpen(false))} />;
 }
 
 
