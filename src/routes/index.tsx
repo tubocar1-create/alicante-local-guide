@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ChatScreen } from "@/components/ChatScreen";
-import portadaImg from "@/assets/alicante-portada.jpg";
+import portadaImg from "@/assets/alicante-portada.webp";
 
 const SITE_URL = "https://vamosalicante.com";
 const OG_IMAGE = "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/093254f8-3ab2-40aa-af9e-c02f37b4a16e/id-preview-b19d7e32--a8ec37f9-59bf-4ebb-a372-974e51dc0567.lovable.app-1778306557524.png";
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/")({
     ],
     links: [
       { rel: "canonical", href: SITE_URL + "/" },
-      { rel: "preload", as: "image", href: portadaImg, fetchpriority: "high" },
+      { rel: "preload", as: "image", href: portadaImg, fetchpriority: "high", type: "image/webp" },
     ],
     scripts: [
       {

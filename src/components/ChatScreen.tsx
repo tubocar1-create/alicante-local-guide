@@ -34,7 +34,7 @@ import {
   getInternationalPlaces,
 } from "@/lib/places.functions";
 import heroImg from "@/assets/alicante-hero.jpg";
-import portadaImg from "@/assets/alicante-portada.jpg";
+import portadaImg from "@/assets/alicante-portada.webp";
 import hoguerasIcon from "@/assets/hogueras-alicante.png";
 import busAlicanteIcon from "@/assets/bus-alicante.png";
 import asistenteIcon from "@/assets/asistente-icon.png";
@@ -837,6 +837,8 @@ export function ChatScreen() {
                 <img
                   src={portadaImg}
                   alt="Vista aérea del puerto y la costa de Alicante al atardecer"
+                  width={1068}
+                  height={578}
                   className="h-auto w-full rounded-xl object-cover lg:rounded-2xl"
                   loading="eager"
                   fetchPriority="high"
@@ -1880,7 +1882,7 @@ function BusStopCard({ data }: { data: BusStopCardData }) {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-primary/80">
             <span>🚌 Línea {data.line}</span>
-            <span className="text-muted-foreground/60">·</span>
+            <span className="text-muted-foreground">·</span>
             <span className="text-muted-foreground">#{data.stopCode}</span>
           </div>
           <h3 className="mt-0.5 text-lg font-extrabold leading-tight text-foreground break-words">
