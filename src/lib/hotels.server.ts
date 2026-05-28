@@ -22,20 +22,18 @@ const INCLUDED_TYPES = [
   "private_guest_room",
 ];
 
+// FIELD_MASK adelgazado al MÍNIMO (solo Basic Data, ~$5/1000).
+// Eliminados Pro/Enterprise fields. Sincronización SOLO manual desde admin.
 const FIELD_MASK = [
   "places.id",
   "places.displayName",
   "places.formattedAddress",
+  "places.shortFormattedAddress",
   "places.location",
-  "places.rating",
-  "places.userRatingCount",
-  "places.priceLevel",
   "places.primaryType",
   "places.types",
   "places.googleMapsUri",
-  "places.websiteUri",
   "places.photos",
-  "places.shortFormattedAddress",
 ].join(",");
 
 function distanceKm(lat: number, lng: number) {
