@@ -27,6 +27,58 @@ import {
 const PUERTA_DEL_MAR = { lat: 38.3404, lng: -0.4811 };
 
 export const Route = createFileRoute("/hotel/$id")({
+  loader: ({ params }) => getHotel({ data: { id: params.id } }),
+  head: ({ params, loaderData }) => {
+    const h: any = loaderData?.hotel;
+    const name: string = h?.name ?? "Hotel en Alicante";
+    const city: string = h?.city ?? "Alicante";
+    const title = `${name} — Hotel en ${city}`.slice(0, 60);
+    const description = (
+      h?.description?.toString().trim() ||
+      `Ficha del ${name} en ${city}: fotos, valoraciones, ubicación y disponibilidad. Reserva al mejor precio con Vamos Alicante.`
+    ).slice(0, 160);
+    const url = `https://vamosalicante.com/hotel/${params.id}`;
+    const image: string | undefined =
+      h?.photo_url || h?.image_url || h?.thumbnail_url || undefined;
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:url", content: url },
+        { property: "og:type", content: "website" },
+        ...(image
+          ? [
+              { property: "og:image", content: image },
+              { name: "twitter:image", content: image },
+            ]
+          : []),
+      ],
+      links: [{ rel: "canonical", href: url }],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Hotel",
+            name,
+            description,
+            url,
+            image: image ?? undefined,
+            address: h?.address
+              ? {
+                  "@type": "PostalAddress",
+                  streetAddress: h.address,
+                  addressLocality: city,
+                  addressCountry: "ES",
+                }
+              : undefined,
+          }),
+        },
+      ],
+    };
+  },
   component: HotelDetail,
 });
 

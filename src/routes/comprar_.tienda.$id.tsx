@@ -4,19 +4,67 @@ import { getShopBusiness, type ShopBusinessDetail } from "@/lib/comprar.function
 
 export const Route = createFileRoute("/comprar_/tienda/$id")({
   loader: ({ params }) => getShopBusiness({ data: { id: params.id } }),
-  head: ({ loaderData }) => ({
-    meta: [
-      {
-        title: loaderData
-          ? `${loaderData.name} — ${loaderData.zone?.name ?? "Alicante"}`
-          : "Tienda",
-      },
-      {
-        name: "description",
-        content: loaderData?.address ?? "Ficha de comercio en Alicante",
-      },
-    ],
-  }),
+  head: ({ params, loaderData }) => {
+    const name = loaderData?.name ?? "Tienda en Alicante";
+    const zone = loaderData?.zone?.name ?? "Alicante";
+    const title = `${name} — ${zone}`.slice(0, 60);
+    const baseDesc = loaderData
+      ? `${name} en ${zone}${loaderData.address ? ` (${loaderData.address})` : ""}: horarios, fotos, valoraciones y cómo llegar. Guía de comercios de Vamos Alicante.`
+      : "Ficha de comercio en Alicante: horarios, fotos, valoraciones y cómo llegar. Guía de tiendas locales en Vamos Alicante.";
+    const description = baseDesc.slice(0, 160);
+    const url = `https://vamosalicante.com/comprar/tienda/${params.id}`;
+    const image = loaderData?.photo_ref
+      ? `https://vamosalicante.com/api/public/shop-photo/${loaderData.photo_ref}?w=1200`
+      : undefined;
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:url", content: url },
+        { property: "og:type", content: "website" },
+        ...(image
+          ? [
+              { property: "og:image", content: image },
+              { name: "twitter:image", content: image },
+            ]
+          : []),
+      ],
+      links: [{ rel: "canonical", href: url }],
+      scripts: loaderData
+        ? [
+            {
+              type: "application/ld+json",
+              children: JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Store",
+                name,
+                url,
+                image: image ?? undefined,
+                address: loaderData.address
+                  ? {
+                      "@type": "PostalAddress",
+                      streetAddress: loaderData.address,
+                      addressLocality: zone,
+                      addressCountry: "ES",
+                    }
+                  : undefined,
+                telephone: (loaderData as any).phone ?? undefined,
+                geo:
+                  loaderData.lat && loaderData.lng
+                    ? {
+                        "@type": "GeoCoordinates",
+                        latitude: loaderData.lat,
+                        longitude: loaderData.lng,
+                      }
+                    : undefined,
+              }),
+            },
+          ]
+        : undefined,
+    };
+  },
   errorComponent: ({ error, reset }) => {
     const router = useRouter();
     return (
