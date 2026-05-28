@@ -34,12 +34,30 @@ export const Route = createFileRoute("/")({
         type: "application/ld+json",
         children: JSON.stringify({
           "@context": "https://schema.org",
-          "@type": "WebSite",
-          name: "Alicante Friend",
-          url: SITE_URL,
-          inLanguage: "es-ES",
-          description:
-            "Guía local con IA para descubrir Alicante: playas, restaurantes, ocio, transporte y planes diarios.",
+          "@graph": [
+            {
+              "@type": "WebSite",
+              "@id": SITE_URL + "/#website",
+              name: "Alicante Friend",
+              url: SITE_URL,
+              inLanguage: "es-ES",
+              description:
+                "Guía local con IA para descubrir Alicante: playas, restaurantes, ocio, transporte y planes diarios.",
+              potentialAction: {
+                "@type": "SearchAction",
+                target: SITE_URL + "/?q={search_term_string}",
+                "query-input": "required name=search_term_string",
+              },
+            },
+            {
+              "@type": "Organization",
+              "@id": SITE_URL + "/#organization",
+              name: "Alicante Friend",
+              url: SITE_URL,
+              logo: SITE_URL + "/icon-512.png",
+              areaServed: { "@type": "City", name: "Alicante" },
+            },
+          ],
         }),
       },
     ],

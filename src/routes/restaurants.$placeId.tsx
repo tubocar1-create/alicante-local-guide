@@ -27,9 +27,15 @@ export const Route = createFileRoute("/restaurants/$placeId")({
   loader: async ({ params }) => {
     try {
       const r = await getPlaceById({ data: { placeId: params.placeId } });
-      return { name: r.place?.name ?? null, cuisine: r.place?.cuisine ?? null };
+      return {
+        name: r.place?.name ?? null,
+        cuisine: r.place?.cuisine ?? null,
+        address: r.place?.address ?? null,
+        rating: r.place?.rating ?? null,
+        ratingCount: r.place?.user_rating_count ?? null,
+      };
     } catch {
-      return { name: null, cuisine: null };
+      return { name: null, cuisine: null, address: null, rating: null, ratingCount: null };
     }
   },
   head: ({ loaderData, params }) => {
@@ -40,6 +46,23 @@ export const Route = createFileRoute("/restaurants/$placeId")({
       ? `${name} (${cuisine}) en Alicante: horario, valoraciones, fotos y cómo llegar.`
       : `${name} en Alicante: horario, precio, valoración, fotos y ubicación.`;
     const url = `https://vamosalicante.com/restaurants/${params.placeId}`;
+    const ld: Record<string, unknown> = {
+      "@context": "https://schema.org",
+      "@type": "Restaurant",
+      name,
+      url,
+      address: loaderData?.address
+        ? { "@type": "PostalAddress", streetAddress: loaderData.address, addressLocality: "Alicante", addressCountry: "ES" }
+        : { "@type": "PostalAddress", addressLocality: "Alicante", addressCountry: "ES" },
+    };
+    if (cuisine) ld.servesCuisine = cuisine;
+    if (loaderData?.rating && loaderData?.ratingCount) {
+      ld.aggregateRating = {
+        "@type": "AggregateRating",
+        ratingValue: loaderData.rating,
+        reviewCount: loaderData.ratingCount,
+      };
+    }
     return {
       meta: [
         { title: title.slice(0, 60) },
@@ -53,6 +76,7 @@ export const Route = createFileRoute("/restaurants/$placeId")({
         LEAFLET_HEAD_LINK,
         { rel: "canonical", href: url },
       ],
+      scripts: [{ type: "application/ld+json", children: JSON.stringify(ld) }],
     };
   },
   component: RestaurantDashboard,

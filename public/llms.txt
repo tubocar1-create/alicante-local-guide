@@ -1,0 +1,35 @@
+# Alicante Friend (Vamos Alicante)
+
+> Guía local con IA para descubrir Alicante: playas, restaurantes, ocio, transporte, clima y planes diarios sin trampas turísticas.
+
+Vamos Alicante (Alicante Friend) es una guía conversacional con IA para residentes y visitantes de Alicante (España). Combina datos en tiempo real (tram, autobús urbano, vuelos AENA, clima) con recomendaciones locales sobre playas, gastronomía, ocio nocturno, cines, fiestas y servicios sanitarios.
+
+## Pages
+
+- [Inicio](/): Chat con el amigo local con IA de Alicante.
+- [Explorar](/explore): Mapa para explorar la ciudad y descubrir sitios.
+- [Playas](/playas): Listado de playas y calas de Alicante con fotos, reseñas y cómo llegar.
+- [Mapa de playas](/playas/mapa): Mapa interactivo con todas las playas de la zona.
+- [Restaurantes](/restaurants): Restaurantes recomendados en Alicante.
+- [Dónde dormir](/donde-dormir): Hoteles y alojamientos en Alicante.
+- [Ocio](/ocio): Planes de ocio, conciertos y eventos.
+- [Cartelera](/ocio/cartelera): Cartelera de cines de Alicante.
+- [Cines](/ocio/cines): Salas de cine en Alicante.
+- [Nocturno](/nocturno): Ocio nocturno, bares y discotecas.
+- [Fiestas](/fiestas): Hogueras de San Juan, Moros y Cristianos y programa de fiestas.
+- [Tram](/tram): TRAM Metropolitano de Alicante: líneas, paradas y horarios en tiempo real.
+- [Autobús](/bus): Líneas y paradas del autobús urbano (TAM) con ETAs en vivo.
+- [Vuelos](/vuelos): Vuelos del aeropuerto de Alicante-Elche (AENA) en tiempo real.
+- [Clima](/clima): Tiempo y previsión meteorológica de Alicante.
+- [Rent a car](/rent-a-car): Alquiler de coches en el aeropuerto de Alicante.
+- [Comparador rent-a-car](/rent-a-car-comparador): Comparador de alquiler de coches.
+- [Comprar](/comprar): Tiendas y comercios locales por sector.
+- [Salud](/salud): Servicios sanitarios y centros médicos.
+- [Sistema sanitario](/sistema-sanitario): Guía del sistema sanitario español para turistas.
+- [Hospitales](/hospitales): Hospitales de Alicante.
+- [Farmacias](/farmacias): Farmacias y farmacias de guardia.
+
+## Optional
+
+- [Business](/business): Portal para negocios locales (reservas, QR y métricas).
+- [Threads](/threads): Hilos de la comunidad.
