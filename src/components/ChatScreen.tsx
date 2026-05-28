@@ -34,7 +34,7 @@ import {
   getInternationalPlaces,
 } from "@/lib/places.functions";
 import heroImg from "@/assets/alicante-hero.jpg";
-import portadaImg from "@/assets/alicante-portada.jpg";
+import portadaImg from "@/assets/alicante-portada.webp";
 import hoguerasIcon from "@/assets/hogueras-alicante.png";
 import busAlicanteIcon from "@/assets/bus-alicante.png";
 import asistenteIcon from "@/assets/asistente-icon.png";
