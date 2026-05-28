@@ -7,7 +7,11 @@ export const Route = createFileRoute("/tram/estaciones")({
     meta: [
       { title: "TRAM Alicante — Estaciones" },
       { name: "description", content: "Busca cualquier estación del TRAM de Alicante y consulta sus próximas salidas." },
+      { property: "og:title", content: "Estaciones del TRAM de Alicante" },
+      { property: "og:description", content: "Buscador de estaciones del TRAM de Alicante con próximas salidas en tiempo real." },
+      { property: "og:url", content: "https://vamosalicante.com/tram/estaciones" },
     ],
+    links: [{ rel: "canonical", href: "https://vamosalicante.com/tram/estaciones" }],
   }),
   component: EstacionesPage,
 });
