@@ -16,9 +16,8 @@ const ROUTES: Array<{ path: string; desc: string }> = [
   { path: "/ocio/teatros", desc: "SUBMENÚ Ocio · Teatros — obras, musicales, sala concreta" },
   { path: "/ocio/conciertos", desc: "SUBMENÚ Ocio · Conciertos — música en vivo, festivales, artista, agenda" },
   { path: "/explore", desc: "MENÚ PRINCIPAL · Mapa explorar la ciudad (rutas urbanas, lugares, descubrir)" },
-  { path: "action:bus-picker", desc: "MENÚ PRINCIPAL · Bus urbano — abre el selector '¿Ya sabes qué bus tomar?' (bus urbano, parada, tarjeta, billete, 'cómo llego')" },
-  { path: "action:bus-picker", desc: "SUBMENÚ Transporte · Líneas de bus — abre el selector de bus (al elegir una línea se muestra el Dashboard de esa línea con sus paradas)" },
-  { path: "action:bus-picker", desc: "SUBMENÚ Transporte · Planificador de rutas (origen → destino, 'cómo voy de X a Y') — abre el selector de bus en el Inicio" },
+  { path: "/transporte", desc: "MENÚ PRINCIPAL · Transporte multimodal — selector de TRAM, autobús urbano, vuelos, rent-a-car y parada favorita. Palabras: transporte, bus, EMT, TRAM, tren, taxi, coche, cómo llego, cómo voy" },
+  { path: "/transporte", desc: "SUBMENÚ Transporte · Selector multimodal — usar para cualquier transporte terrestre o movilidad general; desde ahí el usuario elige el medio" },
   { path: "/vuelos", desc: "Vuelos AENA Alicante-Elche (ALC) — estado de vuelo, llegadas, salidas, retrasos, aeropuerto" },
   { path: "/clima", desc: "Clima y previsión (hoy, mañana, fin de semana, lluvia, viento, alerta)" },
   { path: "/salud", desc: "MENÚ PRINCIPAL · Salud (hub) — farmacias, hospitales, urgencias, médico, sistema sanitario" },
@@ -231,8 +230,7 @@ const getPriorityRoute = (
     { path: "/vuelos", reason: "tema vuelos/aeropuerto", terms: ["vuelo", "vuelos", "aeropuerto", "llegadas", "salidas", "retraso", "retrasos", "aena"] },
     { path: "/clima", reason: "tema clima", terms: ["clima", "tiempo", "lluvia", "llueve", "llover", "viento", "temperatura", "calor", "frio", "alerta"] },
     { path: "/fiestas", reason: "tema fiestas", terms: ["fiesta", "fiestas", "hogueras", "mascleta", "moros", "cristianos"] },
-    { path: "action:bus-picker", reason: "tema líneas de bus", terms: ["linea", "lineas"], test: () => isTransportTheme },
-    { path: "action:bus-picker", reason: "tema planificador de transporte", terms: ["bus", "emt", "parada", "paradas", "billete", "bonobus", "tarjeta"], test: () => isTransportTheme || hasOriginDestination },
+    { path: "/transporte", reason: "tema transporte multimodal", terms: ["bus", "emt", "parada", "paradas", "linea", "lineas", "billete", "bonobus", "tarjeta", "tram", "tranvia", "tren", "taxi"], test: () => isTransportTheme || hasOriginDestination },
     { path: "/ocio", reason: "tema ocio/planes", terms: ["ocio", "plan", "planes", "aburrido", "aburrida", "hacer", "hoy", "noche", "salir"] },
     { path: "/explore", reason: "tema explorar ciudad", terms: ["explorar", "descubrir", "ruta", "rutas", "paseo", "monumento", "monumentos", "lugar", "lugares"] },
     { path: "/salud", reason: "tema salud", terms: ["salud", "medico", "medica", "doctor", "doctora"] },
@@ -248,7 +246,7 @@ const getPriorityRoute = (
   }
 
   if (hasOriginDestination && isTransportTheme && currentPath !== "/") {
-    return { path: "/", reason: "origen y destino con transporte" };
+    return { path: "/transporte", reason: "origen y destino con transporte" };
   }
   return null;
 };
@@ -298,6 +296,7 @@ Nunca: fría, robótica, corporativa, excesivamente técnica.
 
 # OBJETIVO PRINCIPAL
 Ayudar al usuario a: descubrir Alicante, encontrar alojamiento, moverse por la ciudad, descubrir ocio y restaurantes, consultar vuelos, resolver incidencias, coordinar reservas, interactuar con negocios, gestionar servicios urbanos.
+Movilidad terrestre o general va al selector /transporte. Viajar por avión, volar, vuelos o aeropuerto va a /vuelos.
 
 # ALCANCE
 Puedes ayudar con: hoteles, apartamentos, hostales, restaurantes, ocio, playas, EMT Alicante, vuelos, clima, salud básica, coordinación, reservas, incidencias, negocios asociados.
@@ -376,8 +375,9 @@ PASO 3 — DECIDIR MENÚ vs SUBMENÚ.
 
 PASO 4 — NAVEGAR EN EL MISMO TURNO con navigate_to. No preguntes "¿quieres que te lleve?". Comenta breve lo que verá.
 
-REGLA ANTI-COLISIÓN CON el selector de buses:
-- "/" (selector de buses) SÓLO se usa cuando el tema es transporte público en sí mismo: el usuario menciona "bus", "EMT", "parada", "línea", "tarjeta", "billete", o nombra DOS lugares (origen → destino, "de X a Y"). Desde el selector, al elegir una línea se entra a su Dashboard, y desde ahí a una parada concreta.
+REGLA ANTI-COLISIÓN CON TRANSPORTE:
+- Transporte terrestre o movilidad general (bus, EMT, TRAM, tren, taxi, rent-a-car, cómo llego, cómo voy, de X a Y) → navigate_to("/transporte") para abrir el selector multimodal.
+- Avión / volar / vuelos / aeropuerto / AENA / terminal / embarque → navigate_to("/vuelos").
 - "Quiero IR al cine / a la playa / a un restaurante" NO es transporte: el tema es cine / playa / restaurante. Verbo "ir" + actividad ⇒ enruta a la actividad, NO al selector de buses.
 - Sólo si después de estar en la página de la actividad el usuario pregunta "¿cómo llego?" o "¿qué bus cojo?", entonces sí navega a "/" para abrir el selector de buses.
 
@@ -393,8 +393,8 @@ Ejemplos correctos:
 - "Quiero dormir cerca de la playa" → navigate_to("/donde-dormir").
 - "¿Llueve mañana?" → navigate_to("/clima").
 - "¿Mi vuelo llega a tiempo?" → navigate_to("/vuelos").
-- "Cómo voy del centro a San Juan" → AQUÍ sí: dos lugares → navigate_to("/") y se abre el selector de buses.
-- "¿Qué bus va al aeropuerto?" → navigate_to("/").
+- "Cómo voy del centro a San Juan" → navigate_to("/transporte") y se abre el selector multimodal.
+- "¿Qué bus va al aeropuerto?" → transporte terrestre hacia aeropuerto → navigate_to("/transporte").
 
 Sólo responde sin navegar si NO hay ninguna ruta razonable, en saludo/despedida casual, o si el usuario ya está en la página correcta y pide un detalle puntual.
 

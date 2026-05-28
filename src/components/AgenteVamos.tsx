@@ -127,8 +127,8 @@ const INTENTS: IntentDef[] = [
       "planificar ruta", "planificador", "como llego", "como voy a", "llegar a",
       "ir a", "llevarme a", "ruta hasta", "trayecto",
     ],
-    reply: "Te abro los buses urbanos para planificar tu ruta.",
-    path: "action:bus-picker",
+    reply: "Te llevo al selector de transporte para elegir el medio adecuado.",
+    path: "/transporte",
     audio: "planner",
   },
   {
@@ -136,8 +136,8 @@ const INTENTS: IntentDef[] = [
       "bus", "buses", "emt", "autobus", "autobuses", "transporte publico",
       "linea de bus", "parada",
     ],
-    reply: "Te abro los buses urbanos.",
-    path: "action:bus-picker",
+    reply: "Te llevo al selector de transporte.",
+    path: "/transporte",
     audio: "bus",
   },
   // (vuelos se gestiona como dominio para abrir el submenú "Vuelos" en
@@ -326,8 +326,7 @@ const DOMAINS: DomainSpec[] = [
   },
   {
     id: "transporte",
-    hubPath: "/",
-    openSubmenuKey: "transporte",
+    hubPath: "/transporte",
     triggers: [
       "quiero moverme", "necesito moverme", "como me muevo", "quiero desplazarme",
       "tengo que ir", "necesito ir", "como llego", "como voy",
@@ -360,15 +359,17 @@ const DOMAINS: DomainSpec[] = [
   },
   {
     id: "vuelos",
-    hubPath: "/",
-    openSubmenuKey: "vuelos",
+    hubPath: "/vuelos",
     triggers: [
       "vuelo", "vuelos", "aeropuerto", "aena", "avion", "aviones", "avión", "alc",
       "salida de vuelo", "llegada de vuelo", "salidas de vuelos", "llegadas de vuelos",
       "facturar", "facturacion", "facturación", "check in", "check-in", "checkin",
       "el altet", "al altet", "al aeropuerto", "ir al aeropuerto", "ir en avion", "ir en avión",
       "volar", "quiero volar", "tomar un vuelo", "coger un vuelo", "coger un avion", "coger un avión",
-      "terminal", "puerta de embarque", "embarque", "aerolinea", "aerolínea",
+      "viajar en avion", "viajar en avión", "viajar por avion", "viajar por avión",
+      "viaje en avion", "viaje en avión", "billete de avion", "billete de avión",
+      "pasaje de avion", "pasaje de avión", "salir en avion", "salir en avión",
+      "llegar en avion", "llegar en avión", "terminal", "puerta de embarque", "embarque", "aerolinea", "aerolínea",
     ],
     question: "Te abro el menú de vuelos; elige en pantalla.",
     audio: "flights",
@@ -377,8 +378,7 @@ const DOMAINS: DomainSpec[] = [
 
   {
     id: "transporte_bus",
-    hubPath: "/",
-    openSubmenuKey: "transporte",
+    hubPath: "/transporte",
     triggers: [
       "bus", "buses", "autobus", "autobuses", "emt", "vectalia",
       "linea de bus", "parada", "parada de bus", "bus urbano", "buses urbanos",
@@ -949,6 +949,7 @@ const DB_KEY_TO_DOMAIN: Record<string, string> = {
   salud: "salud",
   comer: "comer",
   transporte: "transporte",
+  vuelos: "vuelos",
   playas: "playas",
   dormir: "dormir",
   comprar: "compras",
@@ -1295,6 +1296,7 @@ const SELECTOR_REPLIES: Record<string, string> = {
   "/donde-dormir": "Te llevo a Alojamientos. ¿Por zona, por precio o por estilo (hotel, apartamento, hostal)?",
   "/comprar": "Te llevo a Comprar. ¿Centro comercial, tiendas del centro, mercados o algo concreto?",
   "/explore": "Te llevo a Explorar. ¿Centro histórico, museos, rutas o mapa general?",
+  "/transporte": "Te llevo a Transporte. ¿TRAM, autobús urbano, vuelos, rent-a-car o tu parada favorita?",
   "/vuelos": "Te llevo a Vuelos del ALC. ¿Llegadas o salidas?",
   "/clima": "Previsión del tiempo en Alicante. ¿Hoy, mañana o la semana?",
   "/fiestas": "Te llevo a Fiestas. ¿Hogueras de San Juan, Moros y Cristianos, mascletà o agenda general?",
@@ -1383,6 +1385,34 @@ function localResolve(
   catalog: AgenteRoutingCatalog = EMPTY_ROUTING_CATALOG,
 ): LocalResult {
   const query = normalizeSpeech(text);
+
+  const flightDomain = DOMAINS.find((d) => d.id === "vuelos");
+  const matchedDomain = matchDomain(query);
+  const hasGroundTransportMode = EXPLICIT_TRANSPORT_MODE_RE.test(query);
+  const hasFlightTravelIntent = /(^|\s)(vuelo|vuelos|volar|avion|aviones|aena|facturar|facturacion|check\s?in|terminal|embarque|aerolinea|aeropuerto|altet|alc)(\s|$)/.test(query);
+  if (matchedDomain?.domain.id === "vuelos" && !hasGroundTransportMode && hasFlightTravelIntent && flightDomain?.hubPath) {
+    return {
+      reply: flightDomain.question,
+      path: flightDomain.hubPath,
+      audio: flightDomain.audio,
+      pendingDomain: null,
+      openSubmenu: flightDomain.openSubmenuKey,
+    };
+  }
+
+  const transportDomain = DOMAINS.find((d) => d.id === "transporte");
+  const transportLike = transportDomain
+    ? matchedDomain?.domain.id === "transporte" || matchedDomain?.domain.id === "transporte_bus" || hasGroundTransportMode
+    : false;
+  if (transportLike && transportDomain?.hubPath) {
+    return {
+      reply: transportDomain.question,
+      path: transportDomain.hubPath,
+      audio: transportDomain.audio,
+      pendingDomain: null,
+      openSubmenu: transportDomain.openSubmenuKey,
+    };
+  }
 
   // 0) Correcciones aprobadas en el CPA. Si una frase fue entrenada como
   // alias de un intent, debe ganar sobre heurísticas antiguas del cliente
