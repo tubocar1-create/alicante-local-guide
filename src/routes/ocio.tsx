@@ -16,7 +16,9 @@ export const Route = createFileRoute("/ocio")({
         content: "Cines, teatros y conciertos en Alicante.",
       },
       { property: "og:url", content: "https://vamosalicante.com/ocio" },
+      { property: "og:type", content: "website" },
     ],
+    links: [{ rel: "canonical", href: "https://vamosalicante.com/ocio" }],
   }),
   component: OcioDashboard,
 });

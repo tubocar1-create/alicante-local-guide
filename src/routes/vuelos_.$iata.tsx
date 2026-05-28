@@ -240,12 +240,24 @@ const WEEKDAYS_PRETTY = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 export const Route = createFileRoute("/vuelos_/$iata")({
   head: ({ params }) => {
     const code = params.iata.toUpperCase();
-    const isArrival =
-      typeof window !== "undefined" &&
-      new URLSearchParams(window.location.search).get("type") === "L";
-    const label = isArrival ? "Ficha de origen" : "Ficha de destino";
+    const cityName = COUNTRY_NAME[IATA_COUNTRY[code]] ?? code;
+    const title = `Vuelos Alicante ↔ ${code} — Horarios y aerolíneas`.slice(0, 60);
+    const description =
+      `Vuelos entre Alicante (ALC) y ${code} (${cityName}): horarios, aerolíneas, frecuencias y enlaces de reserva. Datos en tiempo real de Aena.`.slice(
+        0,
+        160,
+      );
+    const url = `https://vamosalicante.com/vuelos/${code}`;
     return {
-      meta: [{ title: `Vuelos · Alicante ↔ ${code} · ${label}` }],
+      meta: [
+        { title },
+        { name: "description", content: description },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:url", content: url },
+        { property: "og:type", content: "website" },
+      ],
+      links: [{ rel: "canonical", href: url }],
     };
   },
   component: DestinationDashboard,

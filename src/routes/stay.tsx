@@ -16,7 +16,10 @@ export const Route = createFileRoute("/stay")({
         property: "og:description",
         content: "Hoteles, hostales y apartamentos turísticos en Alicante.",
       },
+      { property: "og:url", content: "https://vamosalicante.com/stay" },
+      { property: "og:type", content: "website" },
     ],
+    links: [{ rel: "canonical", href: "https://vamosalicante.com/stay" }],
   }),
   component: StayPage,
 });
