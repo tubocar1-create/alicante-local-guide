@@ -38,6 +38,7 @@ import portadaImg from "@/assets/alicante-portada.webp";
 import hoguerasIcon from "@/assets/hogueras-alicante.png";
 import busAlicanteIcon from "@/assets/bus-alicante.png";
 import vuelosAvionIcon from "@/assets/vuelos-avion.png";
+import saludTiritaIcon from "@/assets/salud-tirita.png";
 import asistenteIcon from "@/assets/asistente-icon.png";
 import { VamosWord } from "@/components/VamosWord";
 import { hablar, speakGreetingFromUserGesture } from "@/components/AgenteVamos";
@@ -1061,6 +1062,8 @@ export function ChatScreen() {
                           <img src={busAlicanteIcon} alt="" className="h-[78%] w-[78%] object-contain" />
                         ) : t.label === "Vuelos" ? (
                           <img src={vuelosAvionIcon} alt="" className="h-[82%] w-[82%] object-contain" />
+                        ) : t.label === "Servicios sanitarios" ? (
+                          <img src={saludTiritaIcon} alt="" className="h-[82%] w-[82%] object-contain" />
                         ) : Icon ? (
                           <Icon className="h-5 w-5 lg:h-7 lg:w-7" strokeWidth={1.9} style={{ color: pastel.fg }} />
                         ) : (
