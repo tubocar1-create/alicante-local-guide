@@ -462,7 +462,7 @@ const DOMAINS: DomainSpec[] = [
   },
   {
     id: "tomar_algo",
-    hubPath: "/nocturno",
+    hubPath: "/",
     triggers: [
       // Bailar / discoteca
       "bailar", "ir a bailar", "salir a bailar", "irnos a bailar", "vamos a bailar", "baile", "bailoteo", "bailongo",
