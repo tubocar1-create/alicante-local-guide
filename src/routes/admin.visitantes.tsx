@@ -123,27 +123,3 @@ function VisitantesPage() {
   );
 }
 
-function SummaryCard({
-  title,
-  stats,
-}: {
-  title: string;
-  stats: { sessions: number; unique_identities: number; registered_users: number; guests: number };
-}) {
-  return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm text-muted-foreground">{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-1">
-        <div className="text-2xl font-bold">{stats.sessions}</div>
-        <p className="text-xs text-muted-foreground">sesiones totales</p>
-        <div className="flex gap-3 text-xs pt-1">
-          <span><b>{stats.unique_identities}</b> únicos</span>
-          <span className="text-primary"><b>{stats.registered_users}</b> usuarios</span>
-          <span className="text-muted-foreground"><b>{stats.guests}</b> invitados</span>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
