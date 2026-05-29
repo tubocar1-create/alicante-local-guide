@@ -12,7 +12,17 @@ import { createFileRoute } from "@tanstack/react-router";
 
 const BUCKET = "shop-photos";
 const PROJECT_URL = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "";
-const FALLBACK_PHOTO = "/playas/coast-intro.jpg";
+
+// 1x1 transparent GIF. Se sirve cuando no hay foto cacheada para un negocio,
+// para evitar que un restaurante (o cualquier comercio) salga con una imagen
+// equivocada (antes caía a /playas/coast-intro.jpg → foto de playa).
+const TRANSPARENT_PIXEL = Uint8Array.from([
+  0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x01, 0x00, 0x01, 0x00, 0x80, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x21, 0xf9, 0x04, 0x01, 0x00, 0x00, 0x00,
+  0x00, 0x2c, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x02, 0x02,
+  0x44, 0x01, 0x00, 0x3b,
+]);
+
 
 function publicUrl(path: string) {
   return `${PROJECT_URL}/storage/v1/object/public/${BUCKET}/${path}`;
@@ -69,10 +79,14 @@ export const Route = createFileRoute("/api/public/shop-photo/$")({
         const cached = await redirectIfCached([objectPath, googlePhotoCacheKey(ref, w)]);
         if (cached) return cached;
 
-        return new Response(null, {
-          status: 302,
-          headers: { Location: FALLBACK_PHOTO, "Cache-Control": "public, max-age=3600" },
+        return new Response(TRANSPARENT_PIXEL, {
+          status: 200,
+          headers: {
+            "Content-Type": "image/gif",
+            "Cache-Control": "public, max-age=3600",
+          },
         });
+
       },
     },
   },
