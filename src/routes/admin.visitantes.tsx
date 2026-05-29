@@ -8,6 +8,17 @@ import { Badge } from "@/components/ui/badge";
 import { listVisitors } from "@/lib/admin/visitors.functions";
 import { fmtDateTime } from "@/lib/admin-shared";
 
+function formatDuration(ms: number | null | undefined): string {
+  if (!ms || ms < 1000) return "—";
+  const s = Math.floor(ms / 1000);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${sec}s`;
+  return `${sec}s`;
+}
+
 export const Route = createFileRoute("/admin/visitantes")({
   head: () => ({ meta: [{ title: "Admin · Visitantes" }] }),
   component: VisitantesPage,
