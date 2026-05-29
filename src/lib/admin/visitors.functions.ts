@@ -85,6 +85,7 @@ export const listVisitors = createServerFn({ method: "POST" })
       os: string | null;
       device: string | null;
       top_paths: Record<string, number>;
+      timestamps: number[];
     };
 
     const map = new Map<string, Agg>();
