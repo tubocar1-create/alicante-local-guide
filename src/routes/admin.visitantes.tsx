@@ -66,15 +66,16 @@ function VisitantesPage() {
             <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
               <tr>
                 <th className="px-3 py-2 text-left">Identidad</th>
+                <th className="px-3 py-2 text-right">Visitas</th>
                 <th className="px-3 py-2 text-left">Ubicación</th>
                 <th className="px-3 py-2 text-left">Dispositivo</th>
                 <th className="px-3 py-2 text-left">Sección top</th>
-                <th className="px-3 py-2 text-right">Visitas</th>
                 <th className="px-3 py-2 text-right">Eventos</th>
                 <th className="px-3 py-2 text-right">Duración</th>
                 <th className="px-3 py-2 text-left">Fecha</th>
                 <th className="px-3 py-2 text-left">Hora</th>
               </tr>
+
             </thead>
             <tbody>
               {(q.data?.visitors ?? []).map((v) => {
