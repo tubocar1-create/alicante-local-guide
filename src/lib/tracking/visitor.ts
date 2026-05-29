@@ -11,6 +11,7 @@
 
 const VISITOR_KEY = "vamos_vid";
 const UTM_KEY = "vamos_utm";
+const SESSION_KEY = "vamos_sid";
 
 function uuidv4(): string {
   // Crypto.randomUUID si está disponible (navegadores modernos + workers)
