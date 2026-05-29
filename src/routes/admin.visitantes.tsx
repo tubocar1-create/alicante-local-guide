@@ -91,6 +91,9 @@ function VisitantesPage() {
                       {v.email && <span className="text-xs text-muted-foreground truncate max-w-[180px]">· {v.email}</span>}
                     </Link>
                   </td>
+                  <td className="px-3 py-2 text-right">
+                    <Badge variant="outline">{v.visits}</Badge>
+                  </td>
                   <td className="px-3 py-2 text-muted-foreground">
                     {[v.city, v.country].filter(Boolean).join(", ") || "—"}
                   </td>
@@ -99,11 +102,9 @@ function VisitantesPage() {
                   </td>
                   <td className="px-3 py-2 text-xs">{v.top_path ?? "—"}</td>
                   <td className="px-3 py-2 text-right">
-                    <Badge variant="outline">{v.visits}</Badge>
-                  </td>
-                  <td className="px-3 py-2 text-right">
                     <Badge variant="secondary">{v.events}</Badge>
                   </td>
+
                   <td className="px-3 py-2 text-right text-xs text-muted-foreground">{formatDuration(v.duration_ms)}</td>
                   <td className="px-3 py-2 text-muted-foreground text-xs">{fecha}</td>
                   <td className="px-3 py-2 text-muted-foreground text-xs">{hora}</td>
