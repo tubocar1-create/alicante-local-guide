@@ -57,19 +57,17 @@ const ListInput = z.object({
   days: z.number().int().min(1).max(90).optional().default(30),
 });
 
-export type SessionRow = {
-  session_id: string;          // identity_id + start_at
-  identity_id: string;         // "u:..." | "v:..."
+export type VisitRow = {
+  event_id: string;
+  identity_id: string;        // "u:..." | "v:..."
   kind: "user" | "visitor";
   label: string;
   email: string | null;
-  session_index: number;       // 1..total_sessions para esa identidad
-  total_sessions: number;
-  start_at: string;
-  end_at: string;
-  duration_ms: number;
-  events_count: number;
-  pages_count: number;
+  visit_index: number;        // 1..total cronológico de esa identidad
+  total_visits: number;
+  occurred_at: string;
+  type: string;
+  path: string | null;
   country: string | null;
   city: string | null;
   browser: string | null;
@@ -137,94 +135,64 @@ export const listVisitors = createServerFn({ method: "POST" })
       );
     }
 
-    // Agrupar eventos por identidad
-    const byIdentity = new Map<string, typeof rows>();
-    for (const r of rows) {
+    // Totales por identidad
+    const totals = new Map<string, number>();
+    rows.forEach((r) => {
       const key = r.user_id ? `u:${r.user_id}` : r.visitor_id ? `v:${r.visitor_id}` : null;
-      if (!key) continue;
-      const arr = byIdentity.get(key) ?? [];
-      arr.push(r);
-      byIdentity.set(key, arr);
-    }
+      if (!key) return;
+      totals.set(key, (totals.get(key) ?? 0) + 1);
+    });
 
-    // Construir sesiones por identidad
-    const sessions: SessionRow[] = [];
-    byIdentity.forEach((evs, key) => {
-      const isUser = key.startsWith("u:");
-      const uid = key.slice(2);
-      const profile = isUser ? profileMap.get(uid) : undefined;
+    const counters = new Map<string, number>();
+    const visits: VisitRow[] = [];
+    rows.forEach((r) => {
+      const key = r.user_id ? `u:${r.user_id}` : r.visitor_id ? `v:${r.visitor_id}` : null;
+      if (!key) return;
+      const idx = (counters.get(key) ?? 0) + 1;
+      counters.set(key, idx);
+
+      const isUser = r.user_id !== null;
+      const profile = isUser ? profileMap.get(r.user_id!) : undefined;
       const label =
         profile?.name ??
         profile?.email ??
-        (isUser ? `Usuario · ${uid.slice(0, 8)}` : `Anónimo · ${uid.slice(0, 8)}`);
+        (isUser ? `Usuario · ${r.user_id!.slice(0, 8)}` : `Anónimo · ${r.visitor_id!.slice(0, 8)}`);
 
-      // group into segments
-      const segs: typeof rows[] = [];
-      let cur: typeof rows = [];
-      let lastTs = 0;
-      for (const e of evs) {
-        const t = new Date(e.occurred_at).getTime();
-        if (cur.length === 0 || t - lastTs <= SESSION_GAP_MS) {
-          cur.push(e);
-        } else {
-          segs.push(cur);
-          cur = [e];
-        }
-        lastTs = t;
-      }
-      if (cur.length > 0) segs.push(cur);
-
-      const total = segs.length;
-      segs.forEach((seg, idx) => {
-        const start = seg[0];
-        const last = seg[seg.length - 1];
-        const startT = new Date(start.occurred_at).getTime();
-        const endT = new Date(last.occurred_at).getTime();
-        const firstWithGeo = seg.find((e) => e.country || e.city) ?? start;
-        const firstWithUa = seg.find((e) => e.browser || e.os || e.device) ?? start;
-        const firstWithRef = seg.find((e) => e.referrer || (e.utm && Object.keys(e.utm).length > 0)) ?? start;
-        const pages = new Set(seg.map((e) => e.path).filter(Boolean) as string[]).size;
-        sessions.push({
-          session_id: `${key}@${start.occurred_at}`,
-          identity_id: key,
-          kind: isUser ? "user" : "visitor",
-          label,
-          email: profile?.email ?? null,
-          session_index: idx + 1,
-          total_sessions: total,
-          start_at: start.occurred_at,
-          end_at: last.occurred_at,
-          duration_ms: endT - startT,
-          events_count: seg.length,
-          pages_count: pages,
-          country: firstWithGeo.country,
-          city: firstWithGeo.city,
-          browser: firstWithUa.browser,
-          os: firstWithUa.os,
-          device: firstWithUa.device,
-          source: sourceFromRef(firstWithRef.referrer, firstWithRef.utm),
-        });
+      visits.push({
+        event_id: r.id,
+        identity_id: key,
+        kind: isUser ? "user" : "visitor",
+        label,
+        email: profile?.email ?? null,
+        visit_index: idx,
+        total_visits: totals.get(key) ?? idx,
+        occurred_at: r.occurred_at,
+        type: r.type,
+        path: r.path,
+        country: r.country,
+        city: r.city,
+        browser: r.browser,
+        os: r.os,
+        device: r.device,
+        source: sourceFromRef(r.referrer, r.utm),
       });
     });
 
-    // Filtrado por búsqueda
     const filter = data.search.trim().toLowerCase();
     const filtered = filter
-      ? sessions.filter((s) =>
-          [s.label, s.email, s.country, s.city, s.identity_id, s.source]
+      ? visits.filter((s) =>
+          [s.label, s.email, s.country, s.city, s.identity_id, s.path, s.type, s.source]
             .filter(Boolean)
             .join(" ")
             .toLowerCase()
             .includes(filter),
         )
-      : sessions;
+      : visits;
 
-    filtered.sort((a, b) => (a.start_at < b.start_at ? 1 : -1));
+    filtered.sort((a, b) => (a.occurred_at < b.occurred_at ? 1 : -1));
 
     // ---------- AGREGADOS (excluyendo Leopoldo Cadavid) ----------
-    const isExcluded = (r: { user_id: string | null }) => r.user_id === LEOPOLDO_USER_ID;
-    const cleanRows = rows.filter((r) => !isExcluded(r));
-
+    const cleanRows = rows.filter((r) => r.user_id !== LEOPOLDO_USER_ID);
     const identityOf = (r: { user_id: string | null; visitor_id: string | null }) =>
       r.user_id ? `u:${r.user_id}` : r.visitor_id ? `v:${r.visitor_id}` : null;
 
@@ -251,9 +219,6 @@ export const listVisitors = createServerFn({ method: "POST" })
     const totalUniqueVisitors = new Set(
       cleanRows.map(identityOf).filter(Boolean) as string[],
     ).size;
-    const totalSessions = sessions.filter(
-      (s) => !s.identity_id.startsWith(`u:${LEOPOLDO_USER_ID}`),
-    ).length;
 
     return {
       visits: filtered.slice(0, data.limit),
@@ -264,11 +229,11 @@ export const listVisitors = createServerFn({ method: "POST" })
         sources,
         devices,
         total_unique_visitors: totalUniqueVisitors,
-        total_sessions: totalSessions,
         total_events: cleanRows.length,
       },
     };
   });
+
 
 
 // ---------- DETALLE ----------
