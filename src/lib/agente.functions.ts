@@ -653,6 +653,12 @@ const PROPER_NOUN_STOPWORDS = new Set([
   "vuelos","vuelo","destino","aerolinea","aerolínea","compania","compañia","compañía",
   "alicante","elche","santa","san","santo","sant","playa","calle","avenida","plaza","centro","ciudad","alacant",
   "cine","cines","teatro","teatros","sala","farmacia","farmacias","hospital","hospitales",
+  // Palabras de pregunta/intención que NO identifican un nombre propio
+  "donde","dónde","cuando","cuándo","como","cómo","cual","cuál","cuales","cuáles","que","qué","quien","quién",
+  "voy","vamos","quiero","quisiera","necesito","busco","apetece","puedo","puede","dime","dame","abre","abrir",
+  "abierto","abierta","abiertos","abiertas","ahora","hoy","manana","mañana","tarde","noche","cerca","lejos","mejor","peor","bueno","buena","buenos","buenas",
+  "siempre","nunca","jamas","jamás","tambien","también","todavia","todavía",
+  "tomar","beber","comer","cenar","desayunar","comprar","tapear",
 ]);
 
 const matchProperNoun = (
