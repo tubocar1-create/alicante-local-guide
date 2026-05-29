@@ -32,7 +32,7 @@ export function LeafletMap({ beaches }: { beaches: Beach[] }) {
       boxZoom: false,
       keyboard: false,
       touchZoom: false,
-      tap: false,
+      
     });
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
