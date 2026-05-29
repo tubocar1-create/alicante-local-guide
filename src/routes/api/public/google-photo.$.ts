@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { isGoogleEnabled } from "@/lib/google-killswitch.server";
+import { fetchGoogle } from "@/lib/observability/google";
 
 // Proxy genérico cache-on-first-hit para fotos de Google Places (New).
 // URL: /api/public/google-photo/places/{placeId}/photos/{photoId}?w=800
@@ -73,7 +74,12 @@ export const Route = createFileRoute("/api/public/google-photo/$")({
         const apiUrl = `https://places.googleapis.com/v1/${ref}/media?maxWidthPx=${w}&skipHttpRedirect=true&key=${encodeURIComponent(
           key,
         )}`;
-        const r = await fetch(apiUrl);
+        const r = await fetchGoogle({
+          provider: "google_places",
+          endpoint: "places:photo:media",
+          caller: "google-photo:proxy",
+          url: apiUrl,
+        });
         if (!r.ok) return new Response("Photo error", { status: r.status });
         const j = (await r.json()) as { photoUri?: string };
         if (!j.photoUri) return new Response("No photoUri", { status: 502 });

@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getGooglePlacesKey } from "@/lib/google-killswitch.server";
+import { fetchGoogle } from "@/lib/observability/google";
 import { MAP_BEACHES, LOCAL_BEACH_PHOTOS, GOOGLE_PHOTO_SKIP, type MapBeach } from "@/lib/playas-map-data";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
@@ -14,19 +15,25 @@ async function key() {
 async function findPlaceId(b: MapBeach): Promise<string | null> {
   const k = await key();
   if (!k) return null;
-  const res = await fetch(`${PLACES_BASE}/places:searchText`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Goog-Api-Key": k,
-      "X-Goog-FieldMask": "places.id",
+  const res = await fetchGoogle({
+    provider: "google_places",
+    endpoint: "places:searchText",
+    caller: "sync-beach-covers:findPlaceId",
+    url: `${PLACES_BASE}/places:searchText`,
+    init: {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": k,
+        "X-Goog-FieldMask": "places.id",
+      },
+      body: JSON.stringify({
+        textQuery: `${b.name} Alicante`,
+        locationBias: { circle: { center: { latitude: b.lat, longitude: b.lng }, radius: 3000 } },
+        maxResultCount: 1,
+        languageCode: "es",
+      }),
     },
-    body: JSON.stringify({
-      textQuery: `${b.name} Alicante`,
-      locationBias: { circle: { center: { latitude: b.lat, longitude: b.lng }, radius: 3000 } },
-      maxResultCount: 1,
-      languageCode: "es",
-    }),
   });
   if (!res.ok) return null;
   const j: any = await res.json();
@@ -36,8 +43,12 @@ async function findPlaceId(b: MapBeach): Promise<string | null> {
 async function getCoverPhotoName(placeId: string, skip: number): Promise<{ name: string; attribution: string } | null> {
   const k = await key();
   if (!k) return null;
-  const res = await fetch(`${PLACES_BASE}/places/${encodeURIComponent(placeId)}?languageCode=es`, {
-    headers: { "X-Goog-Api-Key": k, "X-Goog-FieldMask": "photos" },
+  const res = await fetchGoogle({
+    provider: "google_places",
+    endpoint: "places:details",
+    caller: "sync-beach-covers:getCoverPhotoName",
+    url: `${PLACES_BASE}/places/${encodeURIComponent(placeId)}?languageCode=es`,
+    init: { headers: { "X-Goog-Api-Key": k, "X-Goog-FieldMask": "photos" } },
   });
   if (!res.ok) return null;
   const j: any = await res.json();
@@ -51,7 +62,13 @@ async function fetchPhotoBytes(photoName: string): Promise<{ buf: ArrayBuffer; c
   const k = await key();
   if (!k) return null;
   const url = `${PLACES_BASE}/${photoName}/media?maxWidthPx=1600&key=${k}`;
-  const res = await fetch(url, { redirect: "follow" });
+  const res = await fetchGoogle({
+    provider: "google_places",
+    endpoint: "places:photo:media",
+    caller: "sync-beach-covers:fetchPhotoBytes",
+    url,
+    init: { redirect: "follow" },
+  });
   if (!res.ok) return null;
   const buf = await res.arrayBuffer();
   const contentType = res.headers.get("content-type") ?? "image/jpeg";

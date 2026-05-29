@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getGooglePlacesKey } from "@/lib/google-killswitch.server";
+import { fetchGoogle } from "@/lib/observability/google";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export type CachedPlace = {
@@ -163,25 +164,31 @@ type GPlace = {
 };
 
 async function searchGoogle(textQuery: string, apiKey: string): Promise<GPlace[]> {
-  const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Goog-Api-Key": apiKey,
-      "X-Goog-FieldMask": FIELD_MASK,
-    },
-    body: JSON.stringify({
-      textQuery: `${textQuery} Alicante`,
-      languageCode: "es",
-      regionCode: "ES",
-      maxResultCount: 20,
-      locationBias: {
-        circle: {
-          center: { latitude: ALC_CENTER.lat, longitude: ALC_CENTER.lng },
-          radius: 6000,
-        },
+  const res = await fetchGoogle({
+    provider: "google_places",
+    endpoint: "places:searchText",
+    caller: "places:searchGoogle",
+    url: "https://places.googleapis.com/v1/places:searchText",
+    init: {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask": FIELD_MASK,
       },
-    }),
+      body: JSON.stringify({
+        textQuery: `${textQuery} Alicante`,
+        languageCode: "es",
+        regionCode: "ES",
+        maxResultCount: 20,
+        locationBias: {
+          circle: {
+            center: { latitude: ALC_CENTER.lat, longitude: ALC_CENTER.lng },
+            radius: 6000,
+          },
+        },
+      }),
+    },
   });
   if (!res.ok) {
     console.error("Google Places error", res.status, await res.text());
@@ -244,8 +251,12 @@ export const getPlacePhotos = createServerFn({ method: "GET" })
 
     if (photos.length === 0 && apiKey) {
       try {
-        const res = await fetch(`https://places.googleapis.com/v1/places/${data.placeId}?languageCode=es`, {
-          headers: { "X-Goog-Api-Key": apiKey, "X-Goog-FieldMask": "photos" },
+        const res = await fetchGoogle({
+          provider: "google_places",
+          endpoint: "places:details",
+          caller: "places:getPlacePhotos",
+          url: `https://places.googleapis.com/v1/places/${data.placeId}?languageCode=es`,
+          init: { headers: { "X-Goog-Api-Key": apiKey, "X-Goog-FieldMask": "photos" } },
         });
         if (res.ok) {
           const j = (await res.json()) as { photos?: Array<{ name: string }> };
@@ -428,25 +439,31 @@ async function searchGoogleNear(
   center: { lat: number; lng: number },
   radius = 3000,
 ): Promise<GPlace[]> {
-  const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Goog-Api-Key": apiKey,
-      "X-Goog-FieldMask": FIELD_MASK,
-    },
-    body: JSON.stringify({
-      textQuery,
-      languageCode: "es",
-      regionCode: "ES",
-      maxResultCount: 20,
-      locationBias: {
-        circle: {
-          center: { latitude: center.lat, longitude: center.lng },
-          radius,
-        },
+  const res = await fetchGoogle({
+    provider: "google_places",
+    endpoint: "places:searchText",
+    caller: "places:searchGoogleNear",
+    url: "https://places.googleapis.com/v1/places:searchText",
+    init: {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask": FIELD_MASK,
       },
-    }),
+      body: JSON.stringify({
+        textQuery,
+        languageCode: "es",
+        regionCode: "ES",
+        maxResultCount: 20,
+        locationBias: {
+          circle: {
+            center: { latitude: center.lat, longitude: center.lng },
+            radius,
+          },
+        },
+      }),
+    },
   });
   if (!res.ok) {
     console.error("Google Places nearby error", res.status, await res.text());
@@ -497,25 +514,31 @@ export const discoverNearbyPlaces = createServerFn({ method: "POST" })
   });
 
 async function searchOne(textQuery: string, apiKey: string): Promise<GPlace | null> {
-  const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Goog-Api-Key": apiKey,
-      "X-Goog-FieldMask": FIELD_MASK,
-    },
-    body: JSON.stringify({
-      textQuery: `${textQuery} Alicante`,
-      languageCode: "es",
-      regionCode: "ES",
-      maxResultCount: 3,
-      locationBias: {
-        circle: {
-          center: { latitude: ALC_CENTER.lat, longitude: ALC_CENTER.lng },
-          radius: 8000,
-        },
+  const res = await fetchGoogle({
+    provider: "google_places",
+    endpoint: "places:searchText",
+    caller: "places:searchOne",
+    url: "https://places.googleapis.com/v1/places:searchText",
+    init: {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask": FIELD_MASK,
       },
-    }),
+      body: JSON.stringify({
+        textQuery: `${textQuery} Alicante`,
+        languageCode: "es",
+        regionCode: "ES",
+        maxResultCount: 3,
+        locationBias: {
+          circle: {
+            center: { latitude: ALC_CENTER.lat, longitude: ALC_CENTER.lng },
+            radius: 8000,
+          },
+        },
+      }),
+    },
   });
   if (!res.ok) return null;
   const json = (await res.json()) as { places?: GPlace[] };
@@ -868,15 +891,18 @@ function parseMapsUrl(longUrl: string): { name?: string; lat?: number; lng?: num
 }
 
 async function fetchPlaceDetailsById(placeId: string, apiKey: string): Promise<GPlace | null> {
-  const res = await fetch(
-    `https://places.googleapis.com/v1/places/${placeId}?languageCode=es&regionCode=ES`,
-    {
+  const res = await fetchGoogle({
+    provider: "google_places",
+    endpoint: "places:details",
+    caller: "places:fetchPlaceDetailsById",
+    url: `https://places.googleapis.com/v1/places/${placeId}?languageCode=es&regionCode=ES`,
+    init: {
       headers: {
         "X-Goog-Api-Key": apiKey,
         "X-Goog-FieldMask": FIELD_MASK.replace(/places\./g, ""),
       },
     },
-  );
+  });
   if (!res.ok) {
     console.error("place details error", res.status, await res.text());
     return null;
