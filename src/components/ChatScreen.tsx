@@ -1030,6 +1030,15 @@ export function ChatScreen() {
                           <img src={comerPaellaIcon} alt="" className="h-[82%] w-[82%] object-contain" />
                         ) : t.label === "Ocio" ? (
                           <img src={ocioClaquetaIcon} alt="" className="h-[82%] w-[82%] object-contain" />
+                        ) : t.label === "Dormir" ? (
+                          <img src={dormirCamaIcon} alt="" className="h-[88%] w-[88%] object-contain" />
+                        ) : t.label === "Turismo, playa y aventuras" ? (
+                          <img src={playasCastilloIcon} alt="" className="h-[88%] w-[88%] object-contain" />
+                        ) : t.label === "Comprar" ? (
+                          <img src={comprarTaconesIcon} alt="" className="h-[82%] w-[82%] object-contain" />
+                        ) : t.label === "Tomar algo" ? (
+                          <img src={tomarCocktailIcon} alt="" className="h-[82%] w-[82%] object-contain" />
+
 
                         ) : Icon ? (
                           <Icon className="h-5 w-5 lg:h-7 lg:w-7" strokeWidth={1.9} style={{ color: pastel.fg }} />
