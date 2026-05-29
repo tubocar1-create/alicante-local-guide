@@ -19,6 +19,7 @@ import { useAppAuth } from "@/hooks/useAppAuth";
 import { findPlaceOverride } from "@/data/places";
 import { resolveOpeningStatus, getTodayClosingTime, getTodayOpeningTime } from "@/lib/opening-hours";
 import { useServerFn } from "@tanstack/react-start";
+import { agenteVamosChat } from "@/lib/agente.functions";
 import { getMapBeaches } from "@/lib/playas-map.functions";
 import {
   getAsianPlaces,
@@ -232,6 +233,7 @@ function markRestaurantReturn() {
 export function ChatScreen() {
   const navigate = useNavigate();
   const location = useLocation();
+  const askAgent = useServerFn(agenteVamosChat);
   const { profile: authProfile } = useAppAuth();
   const [canShowPersonalName, setCanShowPersonalName] = useState(false);
   const displayName = authProfile?.full_name || authProfile?.display_name || "";
@@ -662,82 +664,20 @@ export function ChatScreen() {
     };
 
     try {
-      const resp = await fetch(CHAT_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({
+      const res = await askAgent({
+        data: {
           messages: next.map((m) => ({ role: m.role, content: m.content })),
-          context: {
-            maxOptions: 4,
-            location: geo
-              ? {
-                  lat: geo.lat,
-                  lng: geo.lng,
-                  area: geo.area,
-                  city: geo.city,
-                  distanceFromAlicanteKm: geo.distanceFromAlicanteKm,
-                }
-              : null,
-            locationStatus: geoStatus,
-            mode: effectiveMode,
-          },
-        }),
+          path: typeof window !== "undefined" ? window.location.pathname : "/",
+        },
       });
-
-      if (!resp.ok || !resp.body) {
-        const data = await resp.json().catch(() => ({ error: "Something went wrong" }));
-        if (resp.status === 402) {
-          upsert("Se han agotado los créditos de IA del proyecto. Añade créditos en Settings → Workspace → Usage para seguir chateando.");
-          return;
-        }
-        if (resp.status === 429) {
-          upsert("Demasiadas peticiones a la vez. Espera unos segundos e inténtalo de nuevo.");
-          return;
-        }
-        throw new Error(data.error || "Failed to reach Alicante Friend");
-      }
-
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-      let done = false;
-
-      while (!done) {
-        const { done: d, value } = await reader.read();
-        if (d) break;
-        buffer += decoder.decode(value, { stream: true });
-
-        let nl: number;
-        while ((nl = buffer.indexOf("\n")) !== -1) {
-          let line = buffer.slice(0, nl);
-          buffer = buffer.slice(nl + 1);
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (!line || line.startsWith(":")) continue;
-          if (!line.startsWith("data: ")) continue;
-          const json = line.slice(6).trim();
-          if (json === "[DONE]") {
-            done = true;
-            break;
-          }
-          try {
-            const parsed = JSON.parse(json);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) upsert(content);
-          } catch {
-            buffer = line + "\n" + buffer;
-            break;
-          }
-        }
+      if (res?.content) upsert(res.content);
+      if (res?.navigate) {
+        try { navigate({ to: res.navigate as string }); } catch { /* noop */ }
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Connection issue");
     } finally {
       setLoading(false);
-      // No re-enfocar el input automáticamente: en móvil abre el teclado
-      // y empuja la respuesta hacia arriba antes de poder leerla.
     }
   }
 
