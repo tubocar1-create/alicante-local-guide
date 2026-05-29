@@ -62,6 +62,8 @@ type Pharmacy = {
   hours: string | null;
   is_24h: boolean;
   on_duty: boolean;
+  lat: number | null;
+  lng: number | null;
 };
 
 // Calcula estado abierto/cerrado a partir de la cadena de horario.
