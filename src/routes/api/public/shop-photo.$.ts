@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { isGoogleEnabled } from "@/lib/google-killswitch.server";
+import { fetchGoogle } from "@/lib/observability/google";
 
 // Cache-on-first-hit proxy for Google Places (New) photos.
 // URL shape: /api/public/shop-photo/places/{placeId}/photos/{photoId}?w=800
