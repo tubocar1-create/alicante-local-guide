@@ -12,6 +12,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 const BUCKET = "shop-photos";
 const PROJECT_URL = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "";
+const FALLBACK_PHOTO = "/playas/coast-intro.jpg";
 
 function publicUrl(path: string) {
   return `${PROJECT_URL}/storage/v1/object/public/${BUCKET}/${path}`;
@@ -68,7 +69,10 @@ export const Route = createFileRoute("/api/public/shop-photo/$")({
         const cached = await redirectIfCached([objectPath, googlePhotoCacheKey(ref, w)]);
         if (cached) return cached;
 
-        return new Response("Photo not cached", { status: 404 });
+        return new Response(null, {
+          status: 302,
+          headers: { Location: FALLBACK_PHOTO, "Cache-Control": "public, max-age=3600" },
+        });
       },
     },
   },
