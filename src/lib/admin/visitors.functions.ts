@@ -108,10 +108,12 @@ export const listVisitors = createServerFn({ method: "POST" })
           os: r.os,
           device: r.device,
           top_paths: {},
+          timestamps: [],
         };
         map.set(key, a);
       }
       a.events += 1;
+      a.timestamps.push(new Date(r.occurred_at).getTime());
       if (r.occurred_at > a.last_seen) a.last_seen = r.occurred_at;
       if (r.occurred_at < a.first_seen) a.first_seen = r.occurred_at;
       if (!a.country && r.country) a.country = r.country;
