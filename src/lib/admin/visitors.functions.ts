@@ -1,13 +1,16 @@
 /**
- * Vista de visitantes — server functions admin
+ * Vista de visitantes — server functions admin.
  *
- * `listVisitors` devuelve UNA fila por SESIÓN (entrada → salida).
- * Una sesión se cierra cuando hay > 30 min de inactividad de esa identidad.
- * Además devuelve agregados estilo Lovable (páginas, países, fuentes,
- * dispositivos) calculados sobre VISITANTES ÚNICOS, EXCLUYENDO al usuario
+ * `listVisitors` devuelve UNA fila por SESIÓN de pestaña (entrada → salida).
+ * Una sesión se identifica por `metadata.session_id` que el cliente genera
+ * y guarda en sessionStorage (vive lo que vive la pestaña). NO hay límite
+ * de duración: una sesión puede durar 10 segundos o varias horas.
+ *
+ * Para eventos legacy sin session_id se hace fallback a identidad + día.
+ *
+ * Agregados estilo Lovable (páginas, países, fuentes, dispositivos)
+ * calculados sobre VISITANTES ÚNICOS, EXCLUYENDO al usuario
  * "Leopoldo Cadavid" para que las métricas reflejen tráfico real.
- *
- * Protegidas con `requireSupabaseAuth` + check de rol admin.
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
