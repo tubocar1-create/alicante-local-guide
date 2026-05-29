@@ -31,7 +31,10 @@ export class GoogleApiDisabledError extends Error {
 
 export async function fetchGoogle(input: FetchGoogleInput): Promise<Response> {
   // CHOKEPOINT GLOBAL: si el kill-switch está apagado, ni siquiera abrimos
-  // el socket. Logueamos el intento como blocked para auditoría.
+  // el socket. Devolvemos un Response 503 sintético en lugar de lanzar:
+  // los callers ya tienen `if (!res.ok) return fallback/null/[]`, así que
+  // degradan a "sin datos nuevos" SIN propagar errores al usuario.
+  // El usuario solo ve lo que ya esté en BD; ni se entera del corte.
   if (!(await isGoogleEnabled())) {
     void trackExternalCall({
       provider: input.provider,
@@ -41,7 +44,10 @@ export async function fetchGoogle(input: FetchGoogleInput): Promise<Response> {
       latencyMs: 0,
       meta: { ...(input.meta ?? {}), blocked: "killswitch_off" },
     });
-    throw new GoogleApiDisabledError();
+    return new Response("google api disabled", {
+      status: 503,
+      headers: { "x-killswitch": "off" },
+    });
   }
 
   const startedAt = Date.now();
