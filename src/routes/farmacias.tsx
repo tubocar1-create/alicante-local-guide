@@ -174,7 +174,7 @@ function FarmaciasPage() {
       const { data, error } = await supabase
         .from("pharmacies")
         .select(
-          "id, code, name, address, postal_code, city, phone, hours, is_24h, on_duty",
+          "id, code, name, address, postal_code, city, phone, hours, is_24h, on_duty, lat, lng",
         )
         .order("postal_code", { ascending: true })
         .order("name", { ascending: true });
@@ -184,7 +184,12 @@ function FarmaciasPage() {
   }, []);
 
   const distFor = (p: Pharmacy): number | null => {
-    if (!userCoords || !p.postal_code) return null;
+    if (!userCoords) return null;
+    // Prefer real geocoded coords when available
+    if (p.lat != null && p.lng != null) {
+      return haversineMeters(userCoords, { lat: p.lat, lng: p.lng });
+    }
+    if (!p.postal_code) return null;
     const c = CP_CENTROIDS[p.postal_code];
     if (!c) return null;
     return haversineMeters(userCoords, { lat: c[0], lng: c[1] });
