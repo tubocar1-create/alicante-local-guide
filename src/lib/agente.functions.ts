@@ -661,6 +661,15 @@ const PROPER_NOUN_STOPWORDS = new Set([
   "tomar","beber","comer","cenar","desayunar","comprar","tapear",
 ]);
 
+// Match de NOMBRE PROPIO — regla global:
+// Solo aceptamos coincidencia sobre el nombre completo o un alias completo
+// del registro (frase contigua, con límites de palabra). NUNCA por un solo
+// token del nombre, porque eso provoca falsos positivos masivos: cualquier
+// pregunta con "donde", "puerto", "central", "real", "plaza"… disparaba
+// la ficha de un negocio cuyo nombre contiene esa palabra.
+//
+// Si un negocio se conoce popularmente por una sola palabra (p.ej. "Meliá",
+// "Maestral"), esa palabra debe declararse como alias explícito en la BD.
 const matchProperNoun = (
   normalizedText: string,
   rows: ProperNounRow[],
@@ -669,23 +678,19 @@ const matchProperNoun = (
   if (!normalizedText) return null;
   let best: { path: string; reason: string; name: string; len: number; prio: number } | null = null;
   for (const r of rows) {
-    // Candidatos: el nombre normalizado completo, cada alias, y además los tokens
-    // distintivos del nombre (palabra ≥4 chars que no esté en stopwords). Esto
-    // permite que "Meliá" matchee "Meliá Alicante" sin necesidad de añadir alias.
-    const baseCandidates = [r.normalized, ...(r.aliases ?? [])].filter((s) => s && s.length >= 3);
-    const distinctiveTokens = (r.normalized || "")
-      .split(/\s+/)
-      .map((t) => t.trim())
-      .filter((t) => t.length >= 4 && !PROPER_NOUN_STOPWORDS.has(t));
-    const candidates = Array.from(new Set([...baseCandidates, ...distinctiveTokens]));
-    for (const cand of candidates) {
-      const c = cand.trim();
-      if (!c) continue;
-      // Match por palabra completa (límites) o substring si tiene espacios (nombre compuesto)
-      const matched = c.includes(" ")
-        ? normalizedText.includes(c)
-        : new RegExp(`(^|\\s)${c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}($|\\s)`).test(normalizedText);
+    // Candidatos = nombre normalizado completo + alias explícitos. Nada más.
+    const candidates = [r.normalized, ...(r.aliases ?? [])]
+      .map((s) => (s || "").trim())
+      .filter((s) => s.length >= 3);
+    for (const c of candidates) {
+      // Exigimos siempre límites de palabra para evitar matches dentro de otra palabra.
+      const escaped = c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const matched = new RegExp(`(^|\\s)${escaped}($|\\s)`).test(normalizedText);
       if (!matched) continue;
+      // Salvaguarda extra: si el candidato es una sola palabra corta y además
+      // figura como genérica (stopword), no la aceptamos aunque sea un alias mal
+      // declarado en la BD.
+      if (!c.includes(" ") && c.length < 5 && PROPER_NOUN_STOPWORDS.has(c)) continue;
       if (r.route === currentPath) continue; // ya estamos allí
       const score = c.length;
       if (
@@ -699,6 +704,7 @@ const matchProperNoun = (
   }
   return best ? { path: best.path, reason: best.reason, name: best.name } : null;
 };
+
 
 // Intención "tomar algo" — reenvía al chat principal para que renderice el
 // Dashboard Nocturno inline (no existe ruta /tomar-algo dedicada).
