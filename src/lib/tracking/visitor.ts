@@ -11,6 +11,7 @@
 
 const VISITOR_KEY = "vamos_vid";
 const UTM_KEY = "vamos_utm";
+const SESSION_KEY = "vamos_sid";
 
 function uuidv4(): string {
   // Crypto.randomUUID si está disponible (navegadores modernos + workers)
@@ -60,6 +61,27 @@ export function getVisitorId(): string {
     writeCookie(VISITOR_KEY, vid, 365);
   }
   return vid;
+}
+
+/**
+ * Identificador de SESIÓN de pestaña (sessionStorage).
+ *
+ * Vive lo que vive la pestaña: se crea al entrar y desaparece cuando el
+ * usuario cierra la pestaña/navegador. No tiene timeout: una sesión puede
+ * durar 10 segundos o varias horas mientras la pestaña siga abierta.
+ */
+export function getSessionId(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    let sid = window.sessionStorage.getItem(SESSION_KEY);
+    if (!sid) {
+      sid = uuidv4();
+      window.sessionStorage.setItem(SESSION_KEY, sid);
+    }
+    return sid;
+  } catch {
+    return "";
+  }
 }
 
 export type UtmData = {

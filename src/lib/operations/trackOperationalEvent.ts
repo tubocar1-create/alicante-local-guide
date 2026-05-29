@@ -12,7 +12,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import { logOperationalEvent } from "./operations.functions";
-import { getVisitorId, getUtm, getReferrer } from "@/lib/tracking/visitor";
+import { getVisitorId, getUtm, getReferrer, getSessionId } from "@/lib/tracking/visitor";
 
 export type OperationalEventType =
   | "listing_opened"
@@ -56,6 +56,7 @@ export function trackOperationalEvent(input: TrackOperationalEventInput): void {
       const visitorId = getVisitorId();
       const utm = getUtm();
       const referrer = getReferrer();
+      const sessionId = getSessionId();
 
       await logOperationalEvent({
         data: {
@@ -66,7 +67,10 @@ export function trackOperationalEvent(input: TrackOperationalEventInput): void {
           campaign_id: input.campaign_id ?? undefined,
           user_id: userId ?? undefined,
           conversion_status: input.conversion_status ?? undefined,
-          metadata: input.metadata ?? {},
+          metadata: {
+            ...(input.metadata ?? {}),
+            ...(sessionId ? { session_id: sessionId } : {}),
+          },
           visitor_id: visitorId || undefined,
           referrer: referrer ?? undefined,
           utm: Object.keys(utm).length > 0 ? utm : undefined,
