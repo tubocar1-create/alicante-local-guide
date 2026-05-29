@@ -30,7 +30,7 @@ export function LeafletMap({ beaches }: { beaches: Beach[] }) {
       zoomSnap: 0.25,
     });
     const bounds = L.latLngBounds(beaches.map((b) => [b.lat, b.lng] as [number, number]));
-    map.fitBounds(bounds, { padding: [28, 28] });
+    map.fitBounds(bounds, { padding: [10, 10] });
     const fitZoom = map.getZoom();
     map.setMinZoom(fitZoom);
     map.setMaxZoom(fitZoom);
