@@ -1,12 +1,12 @@
 /**
  * Vista de visitantes — server functions admin
  *
- * Agrupa `interaction_events` por (user_id, visitor_id) para mostrar:
- *  - Lista de usuarios + visitantes anónimos con país/ciudad/eventos/última visita
- *  - Detalle por id: cabecera, preferencias inferidas, adquisición y timeline
+ * Cada sesión (gap > 30 min de inactividad) se cuenta y se devuelve como
+ * fila individual: hora de entrada, hora de salida, duración real y nº
+ * de eventos. Se mantiene `total_visits` por identidad para saber cuántas
+ * veces ha entrado ese visitante/usuario.
  *
- * Protegidas con `requireSupabaseAuth` + check de rol admin. Usan
- * `supabaseAdmin` para leer la tabla bypassando RLS y poder agregar.
+ * Protegidas con `requireSupabaseAuth` + check de rol admin.
  */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
@@ -46,12 +46,34 @@ type RawEvent = {
   metadata: Json | null;
 };
 
-// ---------- LISTA ----------
+const SESSION_GAP_MS = 30 * 60 * 1000; // 30 min inactividad → nueva sesión
+
+// ---------- LISTA (UNA FILA POR SESIÓN) ----------
 
 const ListInput = z.object({
-  limit: z.number().int().min(1).max(500).optional().default(100),
+  limit: z.number().int().min(1).max(2000).optional().default(300),
   search: z.string().max(120).optional().default(""),
 });
+
+type SessionRow = {
+  session_id: string;       // identidad + start
+  identity_id: string;      // "u:..." | "v:..."
+  kind: "user" | "visitor";
+  label: string;
+  email: string | null;
+  visit_index: number;      // 1..total_visits (cronológico)
+  total_visits: number;
+  start_at: string;
+  end_at: string;
+  duration_ms: number;
+  events: number;
+  country: string | null;
+  city: string | null;
+  browser: string | null;
+  os: string | null;
+  device: string | null;
+  top_path: string | null;
+};
 
 export const listVisitors = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -59,7 +81,6 @@ export const listVisitors = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAdmin(context.supabase, context.userId);
 
-    // Traemos los últimos 30 días, hasta 5000 eventos, y agregamos en memoria.
     const since = new Date(Date.now() - 30 * 86400 * 1000).toISOString();
     const { data: rows, error } = await supabaseAdmin
       .from("interaction_events")
@@ -67,118 +88,175 @@ export const listVisitors = createServerFn({ method: "POST" })
         "id,type,user_id,visitor_id,occurred_at,country,city,browser,os,device,path,referrer,utm",
       )
       .gte("occurred_at", since)
-      .order("occurred_at", { ascending: false })
-      .limit(5000);
+      .order("occurred_at", { ascending: true })
+      .limit(10000);
     if (error) throw new Error(error.message);
 
-    type Agg = {
-      id: string; // "u:<uuid>" | "v:<vid>"
-      kind: "user" | "visitor";
-      user_id: string | null;
-      visitor_id: string | null;
-      events: number;
-      first_seen: string;
-      last_seen: string;
+    // Agrupar por identidad
+    type EvLite = {
+      ts: number;
+      occurred_at: string;
+      path: string | null;
       country: string | null;
       city: string | null;
       browser: string | null;
       os: string | null;
       device: string | null;
-      top_paths: Record<string, number>;
-      timestamps: number[];
     };
-
-    const map = new Map<string, Agg>();
+    const byIdentity = new Map<string, { kind: "user" | "visitor"; user_id: string | null; visitor_id: string | null; events: EvLite[] }>();
     (rows ?? []).forEach((r) => {
       const key = r.user_id ? `u:${r.user_id}` : r.visitor_id ? `v:${r.visitor_id}` : null;
       if (!key) return;
-      let a = map.get(key);
-      if (!a) {
-        a = {
-          id: key,
+      let bucket = byIdentity.get(key);
+      if (!bucket) {
+        bucket = {
           kind: r.user_id ? "user" : "visitor",
           user_id: r.user_id,
           visitor_id: r.visitor_id,
-          events: 0,
-          first_seen: r.occurred_at,
-          last_seen: r.occurred_at,
-          country: r.country,
-          city: r.city,
-          browser: r.browser,
-          os: r.os,
-          device: r.device,
-          top_paths: {},
-          timestamps: [],
+          events: [],
         };
-        map.set(key, a);
+        byIdentity.set(key, bucket);
       }
-      a.events += 1;
-      a.timestamps.push(new Date(r.occurred_at).getTime());
-      if (r.occurred_at > a.last_seen) a.last_seen = r.occurred_at;
-      if (r.occurred_at < a.first_seen) a.first_seen = r.occurred_at;
-      if (!a.country && r.country) a.country = r.country;
-      if (!a.city && r.city) a.city = r.city;
-      if (!a.browser && r.browser) a.browser = r.browser;
-      if (!a.os && r.os) a.os = r.os;
-      if (!a.device && r.device) a.device = r.device;
-      if (r.path) a.top_paths[r.path] = (a.top_paths[r.path] ?? 0) + 1;
+      bucket.events.push({
+        ts: new Date(r.occurred_at).getTime(),
+        occurred_at: r.occurred_at,
+        path: r.path,
+        country: r.country,
+        city: r.city,
+        browser: r.browser,
+        os: r.os,
+        device: r.device,
+      });
     });
 
-    // Resolver emails de los usuarios autenticados
-    const userIds = Array.from(map.values())
+    // Resolver emails/nombres
+    const userIds = Array.from(byIdentity.values())
       .filter((a) => a.user_id)
       .map((a) => a.user_id as string);
-    const emails = new Map<string, { email: string | null; name: string | null }>();
+    const profileMap = new Map<string, { email: string | null; name: string | null }>();
     if (userIds.length > 0) {
       const { data: profiles } = await supabaseAdmin
         .from("profiles")
         .select("id,email,display_name")
         .in("id", userIds);
       (profiles ?? []).forEach((p: { id: string; email: string | null; display_name: string | null }) =>
-        emails.set(p.id, { email: p.email, name: p.display_name }),
+        profileMap.set(p.id, { email: p.email, name: p.display_name }),
       );
     }
 
-    const all = Array.from(map.values()).map((a) => {
-      const profile = a.user_id ? emails.get(a.user_id) : undefined;
-      const topPath =
-        Object.entries(a.top_paths).sort((x, y) => y[1] - x[1])[0]?.[0] ?? null;
-      const { sessions, duration_ms } = computeSessionsAndDuration(a.timestamps);
-      return {
-        id: a.id,
-        kind: a.kind,
-        label:
-          profile?.name ??
-          profile?.email ??
-          (a.visitor_id ? `Anónimo · ${a.visitor_id.slice(0, 8)}` : "Anónimo"),
-        email: profile?.email ?? null,
-        events: a.events,
-        first_seen: a.first_seen,
-        last_seen: a.last_seen,
-        country: a.country,
-        city: a.city,
-        browser: a.browser,
-        device: a.device,
-        os: a.os,
-        top_path: topPath,
-        visits: sessions,
-        duration_ms,
-      };
+    // Partir en sesiones por identidad
+    const sessions: SessionRow[] = [];
+    byIdentity.forEach((bucket, identity_id) => {
+      const evs = bucket.events.slice().sort((a, b) => a.ts - b.ts);
+      const sliced: EvLite[][] = [];
+      let current: EvLite[] = [];
+      let last = 0;
+      for (const e of evs) {
+        if (current.length === 0 || e.ts - last <= SESSION_GAP_MS) {
+          current.push(e);
+        } else {
+          sliced.push(current);
+          current = [e];
+        }
+        last = e.ts;
+      }
+      if (current.length > 0) sliced.push(current);
+
+      const total = sliced.length;
+      const profile = bucket.user_id ? profileMap.get(bucket.user_id) : undefined;
+      const label =
+        profile?.name ??
+        profile?.email ??
+        (bucket.visitor_id ? `Anónimo · ${bucket.visitor_id.slice(0, 8)}` : "Anónimo");
+      const email = profile?.email ?? null;
+
+      sliced.forEach((seg, idx) => {
+        const first = seg[0];
+        const lastEv = seg[seg.length - 1];
+        const pathCounts: Record<string, number> = {};
+        let country: string | null = null;
+        let city: string | null = null;
+        let browser: string | null = null;
+        let os: string | null = null;
+        let device: string | null = null;
+        for (const e of seg) {
+          if (e.path) pathCounts[e.path] = (pathCounts[e.path] ?? 0) + 1;
+          country ??= e.country;
+          city ??= e.city;
+          browser ??= e.browser;
+          os ??= e.os;
+          device ??= e.device;
+        }
+        const top_path =
+          Object.entries(pathCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+        sessions.push({
+          session_id: `${identity_id}@${first.ts}`,
+          identity_id,
+          kind: bucket.kind,
+          label,
+          email,
+          visit_index: idx + 1,
+          total_visits: total,
+          start_at: first.occurred_at,
+          end_at: lastEv.occurred_at,
+          duration_ms: lastEv.ts - first.ts,
+          events: seg.length,
+          country,
+          city,
+          browser,
+          os,
+          device,
+          top_path,
+        });
+      });
     });
+
+    // Resumen por día/semana/mes (basado en start_at)
+    const now = Date.now();
+    const dayMs = 86400 * 1000;
+    const startToday = new Date();
+    startToday.setHours(0, 0, 0, 0);
+    const startTodayMs = startToday.getTime();
+    const startWeekMs = startTodayMs - 6 * dayMs; // últimos 7 días
+    const startMonthMs = now - 30 * dayMs;        // últimos 30 días
+
+    function bucketStats(fromMs: number) {
+      const segs = sessions.filter((s) => new Date(s.start_at).getTime() >= fromMs);
+      const idents = new Set(segs.map((s) => s.identity_id));
+      const users = new Set(segs.filter((s) => s.kind === "user").map((s) => s.identity_id));
+      const guests = new Set(segs.filter((s) => s.kind === "visitor").map((s) => s.identity_id));
+      return {
+        sessions: segs.length,
+        unique_identities: idents.size,
+        registered_users: users.size,
+        guests: guests.size,
+      };
+    }
+
+    const summary = {
+      today: bucketStats(startTodayMs),
+      week: bucketStats(startWeekMs),
+      month: bucketStats(startMonthMs),
+    };
 
     const filter = data.search.trim().toLowerCase();
     const filtered = filter
-      ? all.filter((x) =>
-          [x.label, x.email, x.country, x.city, x.id]
+      ? sessions.filter((s) =>
+          [s.label, s.email, s.country, s.city, s.identity_id]
             .filter(Boolean)
             .join(" ")
             .toLowerCase()
             .includes(filter),
         )
-      : all;
+      : sessions;
 
-    filtered.sort((a, b) => (a.last_seen < b.last_seen ? 1 : -1));
-    return { visitors: filtered.slice(0, data.limit), total: filtered.length };
+    filtered.sort((a, b) => (a.start_at < b.start_at ? 1 : -1));
+
+    return {
+      sessions: filtered.slice(0, data.limit),
+      total: filtered.length,
+      summary,
+    };
   });
 
 // ---------- DETALLE ----------
@@ -205,10 +283,9 @@ export const getVisitorDetail = createServerFn({ method: "POST" })
 
     const events = (rows ?? []) as RawEvent[];
     if (events.length === 0) {
-      return { header: null, prefs: null, acquisition: null, events: [] };
+      return { header: null, prefs: null, acquisition: null, events: [], sessions: [] };
     }
 
-    // Cabecera: tomamos el evento más reciente con país/UA poblado
     const latestWithGeo = events.find((e) => e.country || e.city) ?? events[0];
     const latestWithUa = events.find((e) => e.browser || e.os) ?? events[0];
     const first = events[events.length - 1];
@@ -225,6 +302,38 @@ export const getVisitorDetail = createServerFn({ method: "POST" })
       label = profile?.display_name ?? profile?.email ?? `Usuario · ${ref.slice(0, 8)}`;
     }
 
+    // Sesiones cronológicas
+    const asc = events.slice().reverse();
+    const sessions: { index: number; start_at: string; end_at: string; duration_ms: number; events: number }[] = [];
+    let segStart = asc[0];
+    let segLast = asc[0];
+    let segCount = 1;
+    for (let i = 1; i < asc.length; i++) {
+      const t = new Date(asc[i].occurred_at).getTime();
+      const prev = new Date(segLast.occurred_at).getTime();
+      if (t - prev > SESSION_GAP_MS) {
+        sessions.push({
+          index: sessions.length + 1,
+          start_at: segStart.occurred_at,
+          end_at: segLast.occurred_at,
+          duration_ms: prev - new Date(segStart.occurred_at).getTime(),
+          events: segCount,
+        });
+        segStart = asc[i];
+        segCount = 1;
+      } else {
+        segCount++;
+      }
+      segLast = asc[i];
+    }
+    sessions.push({
+      index: sessions.length + 1,
+      start_at: segStart.occurred_at,
+      end_at: segLast.occurred_at,
+      duration_ms: new Date(segLast.occurred_at).getTime() - new Date(segStart.occurred_at).getTime(),
+      events: segCount,
+    });
+
     const header = {
       id: data.id,
       kind,
@@ -240,10 +349,9 @@ export const getVisitorDetail = createServerFn({ method: "POST" })
       device: latestWithUa.device,
       ip_trunc: latestWithGeo.ip_trunc,
       total_events: events.length,
-      sessions_estimate: estimateSessions(events),
+      sessions_estimate: sessions.length,
     };
 
-    // Preferencias inferidas
     const sectionCounts: Record<string, number> = {};
     const typeCounts: Record<string, number> = {};
     const hourBuckets = { morning: 0, afternoon: 0, evening: 0, night: 0 };
@@ -266,7 +374,6 @@ export const getVisitorDetail = createServerFn({ method: "POST" })
       schedule: hourBuckets,
     };
 
-    // Adquisición: el primer evento con referrer o UTM
     const firstAcq =
       events
         .slice()
@@ -280,7 +387,6 @@ export const getVisitorDetail = createServerFn({ method: "POST" })
       first_path: first.path,
     };
 
-    // Timeline: últimos 100 eventos
     const timeline = events.slice(0, 100).map((e) => ({
       id: e.id,
       type: e.type,
@@ -290,7 +396,7 @@ export const getVisitorDetail = createServerFn({ method: "POST" })
       metadata: e.metadata,
     }));
 
-    return { header, prefs, acquisition, events: timeline };
+    return { header, prefs, acquisition, events: timeline, sessions: sessions.slice().reverse() };
   });
 
 function topN(counts: Record<string, number>, n: number) {
@@ -298,45 +404,4 @@ function topN(counts: Record<string, number>, n: number) {
     .sort((a, b) => b[1] - a[1])
     .slice(0, n)
     .map(([key, value]) => ({ key, value }));
-}
-
-function estimateSessions(events: RawEvent[]): number {
-  if (events.length === 0) return 0;
-  // Ordenadas desc por occurred_at: invertimos para recorrer cronológicamente
-  const asc = events.slice().reverse();
-  let sessions = 1;
-  let last = new Date(asc[0].occurred_at).getTime();
-  for (let i = 1; i < asc.length; i++) {
-    const t = new Date(asc[i].occurred_at).getTime();
-    if (t - last > 30 * 60 * 1000) sessions++; // 30 min de inactividad = nueva sesión
-    last = t;
-  }
-  return sessions;
-}
-
-// Agrupa timestamps (ms) en sesiones (gap > 30 min) y suma la duración
-// total como la suma de (max-min) de cada sesión. Sesiones de 1 evento
-// aportan 0 ms.
-function computeSessionsAndDuration(timestamps: number[]): {
-  sessions: number;
-  duration_ms: number;
-} {
-  if (timestamps.length === 0) return { sessions: 0, duration_ms: 0 };
-  const asc = timestamps.slice().sort((a, b) => a - b);
-  const GAP = 30 * 60 * 1000;
-  let sessions = 1;
-  let duration = 0;
-  let sessionStart = asc[0];
-  let last = asc[0];
-  for (let i = 1; i < asc.length; i++) {
-    const t = asc[i];
-    if (t - last > GAP) {
-      duration += last - sessionStart;
-      sessions++;
-      sessionStart = t;
-    }
-    last = t;
-  }
-  duration += last - sessionStart;
-  return { sessions, duration_ms: duration };
 }
