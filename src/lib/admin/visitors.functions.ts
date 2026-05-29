@@ -161,6 +161,8 @@ export const listVisitors = createServerFn({ method: "POST" })
         device: a.device,
         os: a.os,
         top_path: topPath,
+        visits: sessions,
+        duration_ms,
       };
     });
 
