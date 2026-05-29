@@ -735,9 +735,6 @@ export const resolvePlaceByName = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ data }) => {
-    const apiKey = await getGooglePlacesKey();
-    if (!apiKey) return { placeId: null as string | null };
-
     // Haversine distance in meters
     const distM = (la1: number, lo1: number, la2: number, lo2: number) => {
       const R = 6371000;
@@ -766,27 +763,30 @@ export const resolvePlaceByName = createServerFn({ method: "POST" })
     const { data: cached } = await supabaseAdmin
       .from("places_cache")
       .select("google_place_id,name,lat,lng");
-    if (cached && cached.length && data.lat != null && data.lon != null) {
-      const candidates = cached
-        .filter(
-          (r) =>
-            r.lat != null &&
-            r.lng != null &&
-            norm(r.name as string) === wantedNorm,
-        )
-        .map((r) => ({
-          id: r.google_place_id as string,
-          d: distM(
-            data.lat as number,
-            data.lon as number,
-            r.lat as number,
-            r.lng as number,
-          ),
-        }))
-        .sort((a, b) => a.d - b.d);
-      const hit = candidates[0];
-      if (hit && hit.d <= MAX_DIST_M) return { placeId: hit.id };
+    if (cached && cached.length) {
+      const exact = cached.filter((r) => norm(r.name as string) === wantedNorm);
+      if (data.lat != null && data.lon != null) {
+        const candidates = exact
+          .filter((r) => r.lat != null && r.lng != null)
+          .map((r) => ({
+            id: r.google_place_id as string,
+            d: distM(
+              data.lat as number,
+              data.lon as number,
+              r.lat as number,
+              r.lng as number,
+            ),
+          }))
+          .sort((a, b) => a.d - b.d);
+        const hit = candidates[0];
+        if (hit && hit.d <= MAX_DIST_M) return { placeId: hit.id };
+      } else if (exact[0]?.google_place_id) {
+        return { placeId: exact[0].google_place_id as string };
+      }
     }
+
+    const apiKey = await getGooglePlacesKey();
+    if (!apiKey) return { placeId: null as string | null };
 
     // 2) Ask Google Places
     const places = await searchGoogle(data.name, apiKey);
