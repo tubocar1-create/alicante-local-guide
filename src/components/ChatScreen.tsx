@@ -1020,9 +1020,8 @@ export function ChatScreen() {
                         ) : t.label === "Vuelos" ? (
                           <img src={vuelosAvionIcon} alt="" className="h-[82%] w-[82%] object-contain" />
                         ) : t.label === "Servicios sanitarios" ? (
-                          <svg viewBox="0 0 24 24" className="h-[70%] w-[70%] object-contain" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 2V22M2 12H22" stroke="#00C853" strokeWidth="5" strokeLinecap="round" />
-                          </svg>
+                          <img src={saludCruzVerdeIcon} alt="" className="h-[82%] w-[82%] object-contain" />
+
                         ) : t.label === "Comer" ? (
                           <img src={comerPaellaIcon} alt="" className="h-[82%] w-[82%] object-contain" />
                         ) : t.label === "Ocio" ? (
