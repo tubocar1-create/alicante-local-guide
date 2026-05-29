@@ -143,6 +143,7 @@ export const listVisitors = createServerFn({ method: "POST" })
       const profile = a.user_id ? emails.get(a.user_id) : undefined;
       const topPath =
         Object.entries(a.top_paths).sort((x, y) => y[1] - x[1])[0]?.[0] ?? null;
+      const { sessions, duration_ms } = computeSessionsAndDuration(a.timestamps);
       return {
         id: a.id,
         kind: a.kind,
