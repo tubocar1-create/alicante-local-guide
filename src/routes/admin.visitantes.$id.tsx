@@ -116,6 +116,34 @@ function VisitorDetailPage() {
       </div>
 
       <Card>
+        <CardHeader><CardTitle className="text-base">Sesiones ({sessions?.length ?? 0})</CardTitle></CardHeader>
+        <CardContent className="p-0 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
+              <tr>
+                <th className="px-3 py-2 text-left">#</th>
+                <th className="px-3 py-2 text-left">Entrada</th>
+                <th className="px-3 py-2 text-left">Salida</th>
+                <th className="px-3 py-2 text-right">Duración</th>
+                <th className="px-3 py-2 text-right">Eventos</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(sessions ?? []).map((s) => (
+                <tr key={s.index} className="border-t">
+                  <td className="px-3 py-1.5 text-xs">#{s.index}</td>
+                  <td className="px-3 py-1.5 text-xs">{fmtDateTime(s.start_at)}</td>
+                  <td className="px-3 py-1.5 text-xs">{fmtDateTime(s.end_at)}</td>
+                  <td className="px-3 py-1.5 text-xs text-right">{formatDur(s.duration_ms)}</td>
+                  <td className="px-3 py-1.5 text-xs text-right"><Badge variant="secondary">{s.events}</Badge></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader><CardTitle className="text-base">Timeline ({events.length} eventos)</CardTitle></CardHeader>
         <CardContent className="p-0 overflow-x-auto">
           <table className="w-full text-sm">
