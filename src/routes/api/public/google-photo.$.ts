@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 // Proxy genérico cache-on-first-hit para fotos de Google Places (New).
 // URL: /api/public/google-photo/places/{placeId}/photos/{photoId}?w=800
@@ -40,6 +41,27 @@ function cachedCandidates(ref: string, requestedWidth: number) {
   ]);
 }
 
+async function findAnyCachedPhotoForPlace(ref: string, requestedWidth: number) {
+  const match = ref.match(/^places\/([^/]+)\/photos\//);
+  const placeId = match?.[1];
+  if (!placeId) return null;
+
+  const widths = [requestedWidth, 800, 1200, 600, 1600].filter(
+    (width, index, all) => all.indexOf(width) === index,
+  );
+  const prefixes = [`places/${placeId}/photos`, `gphotos/places/${placeId}/photos`];
+
+  for (const prefix of prefixes) {
+    const { data } = await supabaseAdmin.storage.from(BUCKET).list(prefix, { limit: 50 });
+    const files = data ?? [];
+    for (const width of widths) {
+      const file = files.find((item) => item.name === `w${width}.jpg`);
+      if (file) return `${prefix}/${file.name}`;
+    }
+  }
+  return null;
+}
+
 export const Route = createFileRoute("/api/public/google-photo/$")({
   server: {
     handlers: {
@@ -75,6 +97,17 @@ export const Route = createFileRoute("/api/public/google-photo/$")({
           } catch {
             /* try next cache layout */
           }
+        }
+
+        const samePlacePath = await findAnyCachedPhotoForPlace(ref, w);
+        if (samePlacePath) {
+          return new Response(null, {
+            status: 302,
+            headers: {
+              Location: publicUrl(samePlacePath),
+              "Cache-Control": "public, max-age=31536000, immutable",
+            },
+          });
         }
 
         return new Response(TRANSPARENT_PIXEL, {
