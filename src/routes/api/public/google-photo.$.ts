@@ -1,7 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { isGoogleEnabled } from "@/lib/google-killswitch.server";
-import { fetchGoogle } from "@/lib/observability/google";
 
 // Proxy genérico cache-on-first-hit para fotos de Google Places (New).
 // URL: /api/public/google-photo/places/{placeId}/photos/{photoId}?w=800
@@ -62,62 +59,7 @@ export const Route = createFileRoute("/api/public/google-photo/$")({
           /* fall through */
         }
 
-        // 2. No estaba en Storage → llamar a Google UNA VEZ y cachear para siempre.
-        //    HONRA el kill-switch: si está OFF, devolvemos 404 sin llamar a Google.
-        if (!(await isGoogleEnabled())) {
-          return new Response("Photo not cached, Google API disabled", { status: 404 });
-        }
-        const key = process.env.GOOGLE_PLACES_API_KEY;
-        if (!key) return new Response("Photo not cached, no API key", { status: 404 });
-
-        // 2. Pedir a Google la URL firmada de la foto.
-        const apiUrl = `https://places.googleapis.com/v1/${ref}/media?maxWidthPx=${w}&skipHttpRedirect=true&key=${encodeURIComponent(
-          key,
-        )}`;
-        const r = await fetchGoogle({
-          provider: "google_places",
-          endpoint: "places:photo:media",
-          caller: "google-photo:proxy",
-          url: apiUrl,
-        });
-        if (!r.ok) return new Response("Photo error", { status: r.status });
-        const j = (await r.json()) as { photoUri?: string };
-        if (!j.photoUri) return new Response("No photoUri", { status: 502 });
-
-        // 3. Descargar bytes desde la CDN de Google.
-        const imgRes = await fetch(j.photoUri);
-        if (!imgRes.ok) {
-          return new Response(null, {
-            status: 302,
-            headers: { Location: j.photoUri, "Cache-Control": "public, max-age=3600" },
-          });
-        }
-        const contentType = imgRes.headers.get("content-type") ?? "image/jpeg";
-        const bytes = new Uint8Array(await imgRes.arrayBuffer());
-
-        // 4. Subir a Storage (upsert por si dos peticiones concurrentes coinciden).
-        const { error: upErr } = await supabaseAdmin.storage
-          .from(BUCKET)
-          .upload(objectPath, bytes, {
-            contentType,
-            cacheControl: "31536000",
-            upsert: true,
-          });
-        if (upErr) {
-          console.error("google-photo storage upload failed", upErr);
-          return new Response(null, {
-            status: 302,
-            headers: { Location: j.photoUri, "Cache-Control": "public, max-age=3600" },
-          });
-        }
-
-        return new Response(null, {
-          status: 302,
-          headers: {
-            Location: cachedUrl,
-            "Cache-Control": "public, max-age=31536000, immutable",
-          },
-        });
+        return new Response("Photo not cached", { status: 404 });
       },
     },
   },
