@@ -28,9 +28,16 @@ type Action = {
 function RefrescoGoogle() {
   const fetchStats = useServerFn(getRefreshStats);
   const runGeocode = useServerFn(geocodeBusStops);
+  const runPharmGeocode = useServerFn(geocodePharmacies);
+  const fetchPharmStats = useServerFn(getPharmaciesGeocodeStats);
   const stats = useQuery({
     queryKey: ["refresco-google-stats"],
     queryFn: () => fetchStats(),
+    staleTime: 30_000,
+  });
+  const pharmStats = useQuery({
+    queryKey: ["refresco-pharm-stats"],
+    queryFn: () => fetchPharmStats(),
     staleTime: 30_000,
   });
 
