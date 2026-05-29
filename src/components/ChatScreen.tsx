@@ -39,6 +39,7 @@ import portadaImg from "@/assets/alicante-portada.webp";
 import hoguerasIcon from "@/assets/hogueras-alicante.png";
 import busAlicanteIcon from "@/assets/bus-alicante.png";
 import vuelosAvionIcon from "@/assets/vuelos-avion.png";
+import saludCruzVerdeIcon from "@/assets/salud-cruz-verde.jpg";
 import comerPaellaIcon from "@/assets/comer-paella.png";
 import ocioClaquetaIcon from "@/assets/ocio-claqueta.png";
 import asistenteIcon from "@/assets/asistente-icon.png";
