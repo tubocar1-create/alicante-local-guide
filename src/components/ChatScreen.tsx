@@ -2798,13 +2798,29 @@ function DrinksTableInner({ ranked, loading, originLabel, onClose }: {
                   </span>
                 );
                 return (
-                  <tr key={i} className="bg-white/[0.02]">
+                  <tr
+                    key={i}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Abrir ficha de ${c.name}`}
+                    onClick={() => openDashboard(c)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        openDashboard(c);
+                      }
+                    }}
+                    className="cursor-pointer bg-white/[0.02] transition hover:bg-white/[0.06] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                  >
                     <td className="rounded-l-md px-1.5 py-1 align-middle">
                       {c.placeId ? (
                         <Link
                           to="/restaurants/$placeId"
                           params={{ placeId: c.placeId }}
-                          onClick={markRestaurantReturn}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            markRestaurantReturn();
+                          }}
                           className="block"
                         >
                           {nameNode}
@@ -2812,7 +2828,10 @@ function DrinksTableInner({ ranked, loading, originLabel, onClose }: {
                       ) : (
                         <button
                           type="button"
-                          onClick={() => openDashboard(c)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openDashboard(c);
+                          }}
                           disabled={resolving === c.name}
                           className="block w-full text-left disabled:opacity-60"
                         >
