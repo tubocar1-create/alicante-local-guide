@@ -58,16 +58,18 @@ const ListInput = z.object({
 });
 
 export type VisitRow = {
-  event_id: string;
+  session_id: string;
   identity_id: string;        // "u:..." | "v:..."
   kind: "user" | "visitor";
   label: string;
   email: string | null;
-  visit_index: number;        // 1..total cronológico de esa identidad
+  visit_index: number;        // 1..total_visits para esa identidad
   total_visits: number;
-  occurred_at: string;
-  type: string;
-  path: string | null;
+  start_at: string;
+  end_at: string;
+  duration_ms: number;
+  events_count: number;
+  pages_count: number;
   country: string | null;
   city: string | null;
   browser: string | null;
@@ -135,53 +137,75 @@ export const listVisitors = createServerFn({ method: "POST" })
       );
     }
 
-    // Totales por identidad
-    const totals = new Map<string, number>();
-    rows.forEach((r) => {
+    // Agrupar eventos por identidad → sesiones (gap > 30 min)
+    const byIdentity = new Map<string, typeof rows>();
+    for (const r of rows) {
       const key = r.user_id ? `u:${r.user_id}` : r.visitor_id ? `v:${r.visitor_id}` : null;
-      if (!key) return;
-      totals.set(key, (totals.get(key) ?? 0) + 1);
-    });
+      if (!key) continue;
+      const arr = byIdentity.get(key) ?? [];
+      arr.push(r);
+      byIdentity.set(key, arr);
+    }
 
-    const counters = new Map<string, number>();
     const visits: VisitRow[] = [];
-    rows.forEach((r) => {
-      const key = r.user_id ? `u:${r.user_id}` : r.visitor_id ? `v:${r.visitor_id}` : null;
-      if (!key) return;
-      const idx = (counters.get(key) ?? 0) + 1;
-      counters.set(key, idx);
-
-      const isUser = r.user_id !== null;
-      const profile = isUser ? profileMap.get(r.user_id!) : undefined;
+    byIdentity.forEach((evs, key) => {
+      const isUser = key.startsWith("u:");
+      const refId = key.slice(2);
+      const profile = isUser ? profileMap.get(refId) : undefined;
       const label =
         profile?.name ??
         profile?.email ??
-        (isUser ? `Usuario · ${r.user_id!.slice(0, 8)}` : `Anónimo · ${r.visitor_id!.slice(0, 8)}`);
+        (isUser ? `Usuario · ${refId.slice(0, 8)}` : `Anónimo · ${refId.slice(0, 8)}`);
 
-      visits.push({
-        event_id: r.id,
-        identity_id: key,
-        kind: isUser ? "user" : "visitor",
-        label,
-        email: profile?.email ?? null,
-        visit_index: idx,
-        total_visits: totals.get(key) ?? idx,
-        occurred_at: r.occurred_at,
-        type: r.type,
-        path: r.path,
-        country: r.country,
-        city: r.city,
-        browser: r.browser,
-        os: r.os,
-        device: r.device,
-        source: sourceFromRef(r.referrer, r.utm),
+      // segmentar
+      const segs: typeof rows[] = [];
+      let cur: typeof rows = [];
+      let lastTs = 0;
+      for (const e of evs) {
+        const t = new Date(e.occurred_at).getTime();
+        if (cur.length === 0 || t - lastTs <= SESSION_GAP_MS) cur.push(e);
+        else { segs.push(cur); cur = [e]; }
+        lastTs = t;
+      }
+      if (cur.length > 0) segs.push(cur);
+
+      const total = segs.length;
+      segs.forEach((seg, idx) => {
+        const start = seg[0];
+        const last = seg[seg.length - 1];
+        const startT = new Date(start.occurred_at).getTime();
+        const endT = new Date(last.occurred_at).getTime();
+        const firstWithGeo = seg.find((e) => e.country || e.city) ?? start;
+        const firstWithUa = seg.find((e) => e.browser || e.os || e.device) ?? start;
+        const firstWithRef = seg.find((e) => e.referrer || (e.utm && Object.keys(e.utm).length > 0)) ?? start;
+        const pages = new Set(seg.map((e) => e.path).filter(Boolean) as string[]).size;
+        visits.push({
+          session_id: `${key}@${start.occurred_at}`,
+          identity_id: key,
+          kind: isUser ? "user" : "visitor",
+          label,
+          email: profile?.email ?? null,
+          visit_index: idx + 1,
+          total_visits: total,
+          start_at: start.occurred_at,
+          end_at: last.occurred_at,
+          duration_ms: endT - startT,
+          events_count: seg.length,
+          pages_count: pages,
+          country: firstWithGeo.country,
+          city: firstWithGeo.city,
+          browser: firstWithUa.browser,
+          os: firstWithUa.os,
+          device: firstWithUa.device,
+          source: sourceFromRef(firstWithRef.referrer, firstWithRef.utm),
+        });
       });
     });
 
     const filter = data.search.trim().toLowerCase();
     const filtered = filter
       ? visits.filter((s) =>
-          [s.label, s.email, s.country, s.city, s.identity_id, s.path, s.type, s.source]
+          [s.label, s.email, s.country, s.city, s.identity_id, s.source]
             .filter(Boolean)
             .join(" ")
             .toLowerCase()
@@ -189,7 +213,7 @@ export const listVisitors = createServerFn({ method: "POST" })
         )
       : visits;
 
-    filtered.sort((a, b) => (a.occurred_at < b.occurred_at ? 1 : -1));
+    filtered.sort((a, b) => (a.start_at < b.start_at ? 1 : -1));
 
     // ---------- AGREGADOS (excluyendo Leopoldo Cadavid) ----------
     const cleanRows = rows.filter((r) => r.user_id !== LEOPOLDO_USER_ID);
@@ -219,6 +243,7 @@ export const listVisitors = createServerFn({ method: "POST" })
     const totalUniqueVisitors = new Set(
       cleanRows.map(identityOf).filter(Boolean) as string[],
     ).size;
+    const totalSessions = visits.filter((v) => v.identity_id !== `u:${LEOPOLDO_USER_ID}`).length;
 
     return {
       visits: filtered.slice(0, data.limit),
@@ -229,10 +254,12 @@ export const listVisitors = createServerFn({ method: "POST" })
         sources,
         devices,
         total_unique_visitors: totalUniqueVisitors,
+        total_sessions: totalSessions,
         total_events: cleanRows.length,
       },
     };
   });
+
 
 
 
