@@ -89,7 +89,7 @@ function VisitantesPage() {
             {q.isLoading ? (
               <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Cargando…</span>
             ) : (
-              `${q.data?.visits.length ?? 0} de ${q.data?.total ?? 0} eventos`
+              `${q.data?.visits.length ?? 0} de ${q.data?.total ?? 0} sesiones`
             )}
           </CardTitle>
         </CardHeader>
@@ -98,45 +98,58 @@ function VisitantesPage() {
             <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
               <tr>
                 <th className="px-3 py-2 text-left">Identidad</th>
-                <th className="px-3 py-2 text-right">Visita</th>
+                <th className="px-3 py-2 text-right">Sesión</th>
+                <th className="px-3 py-2 text-left">Entrada</th>
+                <th className="px-3 py-2 text-left">Salida</th>
+                <th className="px-3 py-2 text-right">Duración</th>
+                <th className="px-3 py-2 text-right">Páginas</th>
                 <th className="px-3 py-2 text-left">Ubicación</th>
                 <th className="px-3 py-2 text-left">Dispositivo</th>
-                <th className="px-3 py-2 text-left">Ruta</th>
-                <th className="px-3 py-2 text-left">Tipo</th>
                 <th className="px-3 py-2 text-left">Fuente</th>
-                <th className="px-3 py-2 text-left">Fecha</th>
-                <th className="px-3 py-2 text-left">Hora</th>
               </tr>
             </thead>
             <tbody>
               {(q.data?.visits ?? []).map((s) => {
-                const d = new Date(s.occurred_at);
+                const ds = new Date(s.start_at);
+                const de = new Date(s.end_at);
+                const sec = Math.floor(s.duration_ms / 1000);
+                const h = Math.floor(sec / 3600);
+                const m = Math.floor((sec % 3600) / 60);
+                const ss = sec % 60;
+                const dur = h > 0 ? `${h}h ${m}m` : m > 0 ? `${m}m ${ss}s` : `${ss}s`;
                 return (
-                  <tr key={s.event_id} className="border-t hover:bg-muted/30">
+                  <tr key={s.session_id} className="border-t hover:bg-muted/30">
                     <td className="px-3 py-2">
                       <Link to="/admin/visitantes/$id" params={{ id: s.identity_id }} className="flex items-center gap-2 hover:underline">
                         {s.kind === "user" ? <User className="h-3.5 w-3.5 text-primary" /> : <UserX className="h-3.5 w-3.5 text-muted-foreground" />}
-                        <span className="font-medium truncate max-w-[220px]">{s.label}</span>
-                        {s.email && <span className="text-xs text-muted-foreground truncate max-w-[180px]">· {s.email}</span>}
+                        <span className="font-medium truncate max-w-[200px]">{s.label}</span>
                       </Link>
+                      {s.email && <div className="text-xs text-muted-foreground truncate max-w-[260px] pl-5">{s.email}</div>}
                     </td>
                     <td className="px-3 py-2 text-right">
                       <Badge variant="outline">{s.visit_index} / {s.total_visits}</Badge>
                     </td>
+                    <td className="px-3 py-2 text-xs text-muted-foreground">
+                      <div>{ds.toLocaleDateString("es-ES")}</div>
+                      <div>{ds.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}</div>
+                    </td>
+                    <td className="px-3 py-2 text-xs text-muted-foreground">
+                      <div>{de.toLocaleDateString("es-ES")}</div>
+                      <div>{de.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}</div>
+                    </td>
+                    <td className="px-3 py-2 text-right text-xs">{dur}</td>
+                    <td className="px-3 py-2 text-right text-xs">{s.pages_count}</td>
                     <td className="px-3 py-2 text-muted-foreground text-xs">
                       {[s.city, s.country].filter(Boolean).join(", ") || "—"}
                     </td>
                     <td className="px-3 py-2 text-muted-foreground text-xs">
                       {[s.browser, s.os, s.device].filter(Boolean).join(" · ") || "—"}
                     </td>
-                    <td className="px-3 py-2 text-xs truncate max-w-[220px]">{s.path ?? "—"}</td>
-                    <td className="px-3 py-2 text-xs text-muted-foreground">{s.type}</td>
                     <td className="px-3 py-2 text-xs text-muted-foreground truncate max-w-[140px]">{s.source ?? "—"}</td>
-                    <td className="px-3 py-2 text-muted-foreground text-xs">{d.toLocaleDateString("es-ES")}</td>
-                    <td className="px-3 py-2 text-muted-foreground text-xs">{d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}</td>
                   </tr>
                 );
               })}
+
               {!q.isLoading && (q.data?.visits.length ?? 0) === 0 && (
                 <tr>
                   <td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">
