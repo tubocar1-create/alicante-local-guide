@@ -670,7 +670,21 @@ export function ChatScreen() {
           path: typeof window !== "undefined" ? window.location.pathname : "/",
         },
       });
-      if (res?.content) upsert(res.content);
+      if (res?.content) {
+        upsert(res.content);
+      } else if (
+        DRINKS_RE.test(trimmed) || TYPICAL_RE.test(trimmed) || RICE_FISH_RE.test(trimmed) ||
+        ITALIAN_RE.test(trimmed) || PIZZAS_RE.test(trimmed) || BRUNCH_RE.test(trimmed) ||
+        ASIAN_RE.test(trimmed) || FAST_FOOD_RE.test(trimmed) || BURGERS_RE.test(trimmed) ||
+        MONTADITOS_RE.test(trimmed) || KEBAB_RE.test(trimmed) || FRIED_CHICKEN_RE.test(trimmed) ||
+        MEXICAN_RE.test(trimmed) || VEGAN_RE.test(trimmed) || DESSERTS_RE.test(trimmed) ||
+        CHEAP_RE.test(trimmed) || INTERNATIONAL_RE.test(trimmed)
+      ) {
+        // El agente no devolvió texto, pero el prompt coincide con una
+        // categoría con Dashboard inline propio. Insertamos una burbuja
+        // vacía para que <AssistantContent> renderice la tabla de la categoría.
+        upsert("");
+      }
       if (res?.navigate) {
         try { navigate({ to: res.navigate as string }); } catch { /* noop */ }
       }
@@ -680,6 +694,7 @@ export function ChatScreen() {
       setLoading(false);
     }
   }
+
 
   const isWelcome = messages.length === 1 && !loading;
 
