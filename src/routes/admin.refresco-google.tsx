@@ -7,6 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, RefreshCw, CheckCircle2, AlertCircle } from "lucide-react";
 import { getRefreshStats } from "@/lib/admin-refresh.functions";
 import { geocodeBusStops } from "@/lib/bus-geocode.functions";
+import {
+  geocodePharmacies,
+  getPharmaciesGeocodeStats,
+} from "@/lib/pharmacies-geocode.functions";
 
 export const Route = createFileRoute("/admin/refresco-google")({
   head: () => ({ meta: [{ title: "Admin · Refresco Google" }] }),
