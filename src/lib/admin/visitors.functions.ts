@@ -1,10 +1,11 @@
 /**
  * Vista de visitantes — server functions admin
  *
- * Cada sesión (gap > 30 min de inactividad) se cuenta y se devuelve como
- * fila individual: hora de entrada, hora de salida, duración real y nº
- * de eventos. Se mantiene `total_visits` por identidad para saber cuántas
- * veces ha entrado ese visitante/usuario.
+ * `listVisitors` devuelve UNA fila por SESIÓN (entrada → salida).
+ * Una sesión se cierra cuando hay > 30 min de inactividad de esa identidad.
+ * Además devuelve agregados estilo Lovable (páginas, países, fuentes,
+ * dispositivos) calculados sobre VISITANTES ÚNICOS, EXCLUYENDO al usuario
+ * "Leopoldo Cadavid" para que las métricas reflejen tráfico real.
  *
  * Protegidas con `requireSupabaseAuth` + check de rol admin.
  */
@@ -46,33 +47,50 @@ type RawEvent = {
   metadata: Json | null;
 };
 
-const SESSION_GAP_MS = 30 * 60 * 1000; // 30 min inactividad → nueva sesión
+const SESSION_GAP_MS = 30 * 60 * 1000; // 30 min → nueva sesión
 
-// ---------- LISTA (UNA FILA POR EVENTO/VISITA, SIN AGRUPAR) ----------
+// ---------- LISTA (UNA FILA POR SESIÓN) ----------
 
 const ListInput = z.object({
   limit: z.number().int().min(1).max(5000).optional().default(500),
   search: z.string().max(120).optional().default(""),
+  days: z.number().int().min(1).max(90).optional().default(30),
 });
 
-type VisitRow = {
-  event_id: string;
-  identity_id: string;        // "u:..." | "v:..."
+export type SessionRow = {
+  session_id: string;          // identity_id + start_at
+  identity_id: string;         // "u:..." | "v:..."
   kind: "user" | "visitor";
   label: string;
   email: string | null;
-  visit_index: number;        // 1..total_visits cronológico de esa identidad
-  total_visits: number;       // total acumulado de visitas de esa identidad
-  occurred_at: string;
-  gap_ms: number | null;      // ms desde la visita anterior de esa identidad
-  type: string;
-  path: string | null;
+  session_index: number;       // 1..total_sessions para esa identidad
+  total_sessions: number;
+  start_at: string;
+  end_at: string;
+  duration_ms: number;
+  events_count: number;
+  pages_count: number;
   country: string | null;
   city: string | null;
   browser: string | null;
   os: string | null;
   device: string | null;
+  source: string | null;
 };
+
+export type AggregateRow = { key: string; visitors: number };
+
+const LEOPOLDO_USER_ID = "5cf72db3-6a97-4078-9039-8a3cbf654060";
+
+function sourceFromRef(referrer: string | null, utm: Record<string, string> | null): string {
+  if (utm && utm.utm_source) return utm.utm_source;
+  if (!referrer) return "Direct";
+  try {
+    return new URL(referrer).hostname.replace(/^www\./, "");
+  } catch {
+    return referrer;
+  }
+}
 
 export const listVisitors = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -80,33 +98,33 @@ export const listVisitors = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAdmin(context.supabase, context.userId);
 
-    const since = new Date(Date.now() - 30 * 86400 * 1000).toISOString();
-    // PostgREST limita a 1000 filas por request → paginamos en chunks
+    const since = new Date(Date.now() - data.days * 86400 * 1000).toISOString();
     const CHUNK = 1000;
-    const MAX_ROWS = 20000;
+    const MAX_ROWS = 30000;
     const rows: Array<{
       id: string; type: string; user_id: string | null; visitor_id: string | null;
       occurred_at: string; country: string | null; city: string | null;
       browser: string | null; os: string | null; device: string | null; path: string | null;
+      referrer: string | null; utm: Record<string, string> | null;
     }> = [];
     for (let from = 0; from < MAX_ROWS; from += CHUNK) {
       const { data: chunk, error } = await supabaseAdmin
         .from("interaction_events")
         .select(
-          "id,type,user_id,visitor_id,occurred_at,country,city,browser,os,device,path",
+          "id,type,user_id,visitor_id,occurred_at,country,city,browser,os,device,path,referrer,utm",
         )
         .gte("occurred_at", since)
         .order("occurred_at", { ascending: true })
         .range(from, from + CHUNK - 1);
       if (error) throw new Error(error.message);
       if (!chunk || chunk.length === 0) break;
-      rows.push(...chunk);
+      rows.push(...(chunk as typeof rows));
       if (chunk.length < CHUNK) break;
     }
 
-    // Resolver perfiles
+    // Perfiles
     const userIds = Array.from(
-      new Set((rows ?? []).map((r) => r.user_id).filter(Boolean) as string[]),
+      new Set(rows.map((r) => r.user_id).filter(Boolean) as string[]),
     );
     const profileMap = new Map<string, { email: string | null; name: string | null }>();
     if (userIds.length > 0) {
@@ -119,70 +137,136 @@ export const listVisitors = createServerFn({ method: "POST" })
       );
     }
 
-    // Contador por identidad
-    const counters = new Map<string, number>();
-    const totals = new Map<string, number>();
-    const lastTs = new Map<string, number>();
-
-    // Calcular totales primero
-    (rows ?? []).forEach((r) => {
+    // Agrupar eventos por identidad
+    const byIdentity = new Map<string, typeof rows>();
+    for (const r of rows) {
       const key = r.user_id ? `u:${r.user_id}` : r.visitor_id ? `v:${r.visitor_id}` : null;
-      if (!key) return;
-      totals.set(key, (totals.get(key) ?? 0) + 1);
-    });
+      if (!key) continue;
+      const arr = byIdentity.get(key) ?? [];
+      arr.push(r);
+      byIdentity.set(key, arr);
+    }
 
-    const visits: VisitRow[] = [];
-    (rows ?? []).forEach((r) => {
-      const key = r.user_id ? `u:${r.user_id}` : r.visitor_id ? `v:${r.visitor_id}` : null;
-      if (!key) return;
-      const idx = (counters.get(key) ?? 0) + 1;
-      counters.set(key, idx);
-      const ts = new Date(r.occurred_at).getTime();
-      const prev = lastTs.get(key);
-      lastTs.set(key, ts);
-
-      const profile = r.user_id ? profileMap.get(r.user_id) : undefined;
+    // Construir sesiones por identidad
+    const sessions: SessionRow[] = [];
+    byIdentity.forEach((evs, key) => {
+      const isUser = key.startsWith("u:");
+      const uid = key.slice(2);
+      const profile = isUser ? profileMap.get(uid) : undefined;
       const label =
         profile?.name ??
         profile?.email ??
-        (r.visitor_id ? `Anónimo · ${r.visitor_id.slice(0, 8)}` : "Anónimo");
+        (isUser ? `Usuario · ${uid.slice(0, 8)}` : `Anónimo · ${uid.slice(0, 8)}`);
 
-      visits.push({
-        event_id: r.id,
-        identity_id: key,
-        kind: r.user_id ? "user" : "visitor",
-        label,
-        email: profile?.email ?? null,
-        visit_index: idx,
-        total_visits: totals.get(key) ?? idx,
-        occurred_at: r.occurred_at,
-        gap_ms: prev ? ts - prev : null,
-        type: r.type,
-        path: r.path,
-        country: r.country,
-        city: r.city,
-        browser: r.browser,
-        os: r.os,
-        device: r.device,
+      // group into segments
+      const segs: typeof rows[] = [];
+      let cur: typeof rows = [];
+      let lastTs = 0;
+      for (const e of evs) {
+        const t = new Date(e.occurred_at).getTime();
+        if (cur.length === 0 || t - lastTs <= SESSION_GAP_MS) {
+          cur.push(e);
+        } else {
+          segs.push(cur);
+          cur = [e];
+        }
+        lastTs = t;
+      }
+      if (cur.length > 0) segs.push(cur);
+
+      const total = segs.length;
+      segs.forEach((seg, idx) => {
+        const start = seg[0];
+        const last = seg[seg.length - 1];
+        const startT = new Date(start.occurred_at).getTime();
+        const endT = new Date(last.occurred_at).getTime();
+        const firstWithGeo = seg.find((e) => e.country || e.city) ?? start;
+        const firstWithUa = seg.find((e) => e.browser || e.os || e.device) ?? start;
+        const firstWithRef = seg.find((e) => e.referrer || (e.utm && Object.keys(e.utm).length > 0)) ?? start;
+        const pages = new Set(seg.map((e) => e.path).filter(Boolean) as string[]).size;
+        sessions.push({
+          session_id: `${key}@${start.occurred_at}`,
+          identity_id: key,
+          kind: isUser ? "user" : "visitor",
+          label,
+          email: profile?.email ?? null,
+          session_index: idx + 1,
+          total_sessions: total,
+          start_at: start.occurred_at,
+          end_at: last.occurred_at,
+          duration_ms: endT - startT,
+          events_count: seg.length,
+          pages_count: pages,
+          country: firstWithGeo.country,
+          city: firstWithGeo.city,
+          browser: firstWithUa.browser,
+          os: firstWithUa.os,
+          device: firstWithUa.device,
+          source: sourceFromRef(firstWithRef.referrer, firstWithRef.utm),
+        });
       });
     });
 
+    // Filtrado por búsqueda
     const filter = data.search.trim().toLowerCase();
     const filtered = filter
-      ? visits.filter((s) =>
-          [s.label, s.email, s.country, s.city, s.identity_id, s.path, s.type]
+      ? sessions.filter((s) =>
+          [s.label, s.email, s.country, s.city, s.identity_id, s.source]
             .filter(Boolean)
             .join(" ")
             .toLowerCase()
             .includes(filter),
         )
-      : visits;
+      : sessions;
 
-    filtered.sort((a, b) => (a.occurred_at < b.occurred_at ? 1 : -1));
+    filtered.sort((a, b) => (a.start_at < b.start_at ? 1 : -1));
+
+    // ---------- AGREGADOS (excluyendo Leopoldo Cadavid) ----------
+    const isExcluded = (r: { user_id: string | null }) => r.user_id === LEOPOLDO_USER_ID;
+    const cleanRows = rows.filter((r) => !isExcluded(r));
+
+    const identityOf = (r: { user_id: string | null; visitor_id: string | null }) =>
+      r.user_id ? `u:${r.user_id}` : r.visitor_id ? `v:${r.visitor_id}` : null;
+
+    const uniqueBy = (field: (r: typeof cleanRows[number]) => string | null): AggregateRow[] => {
+      const map = new Map<string, Set<string>>();
+      for (const r of cleanRows) {
+        const k = field(r);
+        const id = identityOf(r);
+        if (!k || !id) continue;
+        const set = map.get(k) ?? new Set<string>();
+        set.add(id);
+        map.set(k, set);
+      }
+      return Array.from(map.entries())
+        .map(([key, set]) => ({ key, visitors: set.size }))
+        .sort((a, b) => b.visitors - a.visitors);
+    };
+
+    const pages = uniqueBy((r) => r.path).slice(0, 15);
+    const countries = uniqueBy((r) => r.country).slice(0, 15);
+    const sources = uniqueBy((r) => sourceFromRef(r.referrer, r.utm)).slice(0, 15);
+    const devices = uniqueBy((r) => r.device).slice(0, 10);
+
+    const totalUniqueVisitors = new Set(
+      cleanRows.map(identityOf).filter(Boolean) as string[],
+    ).size;
+    const totalSessions = sessions.filter(
+      (s) => !s.identity_id.startsWith(`u:${LEOPOLDO_USER_ID}`),
+    ).length;
 
     return {
       visits: filtered.slice(0, data.limit),
       total: filtered.length,
+      aggregates: {
+        pages,
+        countries,
+        sources,
+        devices,
+        total_unique_visitors: totalUniqueVisitors,
+        total_sessions: totalSessions,
+        total_events: cleanRows.length,
+      },
     };
   });
 
@@ -230,7 +314,6 @@ export const getVisitorDetail = createServerFn({ method: "POST" })
       label = profile?.display_name ?? profile?.email ?? `Usuario · ${ref.slice(0, 8)}`;
     }
 
-    // Sesiones cronológicas
     const asc = events.slice().reverse();
     const sessions: { index: number; start_at: string; end_at: string; duration_ms: number; events: number }[] = [];
     let segStart = asc[0];
