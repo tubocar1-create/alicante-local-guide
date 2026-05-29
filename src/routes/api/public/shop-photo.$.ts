@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { isGoogleEnabled } from "@/lib/google-killswitch.server";
 
 // Cache-on-first-hit proxy for Google Places (New) photos.
 // URL shape: /api/public/shop-photo/places/{placeId}/photos/{photoId}?w=800
@@ -54,7 +55,10 @@ export const Route = createFileRoute("/api/public/shop-photo/$")({
         }
 
         // 2. Cache miss → 1 llamada a Google y cacheada para siempre.
-        //    Bypass del kill-switch: coste acotado por foto.
+        //    HONRA el kill-switch: si está OFF, no llamamos a Google.
+        if (!(await isGoogleEnabled())) {
+          return new Response("Photo not cached, Google API disabled", { status: 404 });
+        }
         const key = process.env.GOOGLE_PLACES_API_KEY;
         if (!key) return new Response("Photo not cached, no API key", { status: 404 });
 
