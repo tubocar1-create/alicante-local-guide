@@ -66,6 +66,16 @@ function RefrescoGoogle() {
       desc: "Geocodifica hasta 120 paradas SIN coordenadas por ejecución. Una parada solo se llama una vez en su vida; el coste tiende a 0 cuando todas tengan lat/lng.",
       run: () => runGeocode(),
     },
+    {
+      key: "pharm-geocode",
+      title: `Geocodificar farmacias (${pharmStats.data?.pending ?? "—"} pendientes)`,
+      desc: "Geocodifica hasta 60 farmacias SIN coordenadas por ejecución usando Nominatim (OpenStreetMap, gratis). Tarda ~1 min/lote por el límite de 1 req/s. NO consume Google.",
+      run: async () => {
+        const r = await runPharmGeocode();
+        pharmStats.refetch();
+        return r;
+      },
+    },
   ];
 
   return (
