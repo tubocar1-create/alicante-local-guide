@@ -1018,27 +1018,27 @@ export function ChatScreen() {
                         style={{ backgroundColor: t.label === "Fiestas de Alicante" ? "transparent" : pastel.bg }}
                       >
                         {t.label === "Fiestas de Alicante" ? (
-                          <img src={hoguerasIcon} alt="" className="h-full w-full rounded-full object-cover" />
+                          <img src={hoguerasIcon} alt="Icono de fiestas de Alicante" className="h-full w-full rounded-full object-cover" />
                         ) : t.label === "Transporte multimodal inteligente" ? (
-                          <img src={busAlicanteIcon} alt="" className="h-[78%] w-[78%] object-contain" />
+                          <img src={busAlicanteIcon} alt="Icono de transporte" className="h-[78%] w-[78%] object-contain" />
                         ) : t.label === "Vuelos" ? (
-                          <img src={vuelosAvionIcon} alt="" className="h-[98%] w-[98%] object-contain" />
+                          <img src={vuelosAvionIcon} alt="Icono de vuelos" className="h-[98%] w-[98%] object-contain" />
                         ) : t.label === "Servicios sanitarios" ? (
-                          <img src={saludCruzVerdeIcon} alt="" className="h-[82%] w-[82%] object-contain" />
+                          <img src={saludCruzVerdeIcon} alt="Icono de servicios sanitarios" className="h-[82%] w-[82%] object-contain" />
 
                         ) : t.label === "Comer" ? (
-                          <img src={comerPaellaIcon} alt="" className="h-[98%] w-[98%] object-contain" />
+                          <img src={comerPaellaIcon} alt="Icono de comer" className="h-[98%] w-[98%] object-contain" />
                         ) : t.label === "Ocio" ? (
-                          <img src={ocioClaquetaIcon} alt="" className="h-[82%] w-[82%] object-contain" />
+                          <img src={ocioClaquetaIcon} alt="Icono de ocio" className="h-[82%] w-[82%] object-contain" />
                         ) : t.label === "Dormir" ? (
-                          <img src={dormirCamaIcon} alt="" className="h-full w-full object-cover scale-[1.45]" />
+                          <img src={dormirCamaIcon} alt="Icono de dormir" className="h-full w-full object-cover scale-[1.45]" />
                         ) : t.label === "Turismo, playa y aventuras" ? (
-                          <img src={playasCastilloIcon} alt="" className="h-full w-full object-cover scale-[1.45]" />
+                          <img src={playasCastilloIcon} alt="Icono de playas" className="h-full w-full object-cover scale-[1.45]" />
 
                         ) : t.label === "Comprar" ? (
-                          <img src={comprarTaconesIcon} alt="" className="h-[82%] w-[82%] object-contain" />
+                          <img src={comprarTaconesIcon} alt="Icono de comprar" className="h-[82%] w-[82%] object-contain" />
                         ) : t.label === "Tomar algo" ? (
-                          <img src={tomarCocktailIcon} alt="" className="h-[82%] w-[82%] object-contain" />
+                          <img src={tomarCocktailIcon} alt="Icono de tomar algo" className="h-[82%] w-[82%] object-contain" />
 
 
                         ) : Icon ? (
@@ -1217,7 +1217,7 @@ export function ChatScreen() {
             <button
               onClick={() => send(input)}
               disabled={loading || !input.trim()}
-              aria-label="Send"
+              aria-label="Enviar mensaje"
               className="flex h-12 w-12 items-center justify-center rounded-full gradient-warm text-primary-foreground shadow-soft transition active:scale-95 disabled:opacity-60"
             >
               <Send className="h-5 w-5" />
@@ -1646,7 +1646,7 @@ function PlaceCard({ data }: { data: PlaceCardData }) {
       <div className="px-2.5 py-2">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <h4 className="font-semibold text-[14px] leading-tight text-card-foreground truncate">{data.name}</h4>
+            <p className="font-semibold text-[14px] leading-tight text-card-foreground truncate">{data.name}</p>
             {data.cuisine && (
               <p className="text-[10px] uppercase tracking-wide text-muted-foreground mt-0.5 truncate">
                 {data.cuisine.replace(/;/g, ", ")}
@@ -1871,9 +1871,9 @@ function BusStopCard({ data }: { data: BusStopCardData }) {
             <span className="text-muted-foreground">·</span>
             <span className="text-muted-foreground">#{data.stopCode}</span>
           </div>
-          <h3 className="mt-0.5 text-lg font-extrabold leading-tight text-foreground break-words">
+          <p className="mt-0.5 text-lg font-extrabold leading-tight text-foreground break-words">
             {data.stopName}
-          </h3>
+          </p>
 
           {data.lineName && (
             <p className="mt-0.5 truncate text-[11px] font-medium text-muted-foreground">
@@ -2369,12 +2369,12 @@ function AsianTableInner({ ranked, loading, originLabel, onClose }: {
           <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-400/70">
             Dashboard gastro
           </p>
-          <h1 className="mt-1 font-display text-2xl font-bold tracking-tight md:text-4xl">
+          <h2 className="mt-1 font-display text-2xl font-bold tracking-tight md:text-4xl">
             Restaurantes asiáticos{" "}
             <span className="bg-gradient-to-r from-cyan-300 via-white to-violet-300 bg-clip-text text-transparent">
               en Alicante
             </span>
-          </h1>
+          </h2>
           <p className="mt-1 text-xs text-cyan-300/80 md:text-sm">
             Listado completo · ordenados por cercanía a {originLabel}.
           </p>
@@ -2699,12 +2699,12 @@ function DrinksTableInner({ ranked, loading, originLabel, onClose }: {
           <p className="text-[10px] uppercase tracking-[0.3em] text-amber-400/80">
             Dashboard nocturno
           </p>
-          <h1 className="mt-1 font-display text-2xl font-bold tracking-tight text-amber-50 md:text-4xl">
+          <h2 className="mt-1 font-display text-2xl font-bold tracking-tight text-amber-50 md:text-4xl">
             Para tomar algo{" "}
             <span className="bg-gradient-to-r from-amber-300 via-white to-rose-300 bg-clip-text text-transparent">
               en Alicante
             </span>
-          </h1>
+          </h2>
           <p className="mt-1 text-xs text-amber-200/80 md:text-sm">
             Bares, copas y cervecerías · ordenados por cercanía a {originLabel}.
           </p>
@@ -3764,12 +3764,12 @@ function CategoryTableInner({
           <p className={`text-[10px] uppercase tracking-[0.3em] ${theme.eyebrow}`}>
             {theme.eyebrowLabel}
           </p>
-          <h1 className={`mt-1 font-display text-2xl font-bold tracking-tight ${theme.title} md:text-4xl`}>
+          <h2 className={`mt-1 font-display text-2xl font-bold tracking-tight ${theme.title} md:text-4xl`}>
             {theme.title1}{" "}
             <span className={`bg-gradient-to-r ${theme.titleGradient} bg-clip-text text-transparent`}>
               {theme.title2}
             </span>
-          </h1>
+          </h2>
           <p className={`mt-1 text-xs ${theme.subtitle} md:text-sm`}>
             {theme.subtitleText.replace("Puerta del Mar", originLabel)}
           </p>
