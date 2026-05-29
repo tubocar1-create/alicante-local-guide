@@ -26,6 +26,32 @@ function sanitizeKey(ref: string, w: number) {
   return `${safe}/w${w}.jpg`;
 }
 
+function googlePhotoCacheKey(ref: string, w: number) {
+  const safe = ref.replace(/[^a-zA-Z0-9/_-]/g, "_");
+  return `gphotos/${safe}/w${w}.jpg`;
+}
+
+async function redirectIfCached(paths: string[]) {
+  for (const path of paths) {
+    const url = publicUrl(path);
+    try {
+      const head = await fetch(url, { method: "HEAD" });
+      if (head.ok) {
+        return new Response(null, {
+          status: 302,
+          headers: {
+            Location: url,
+            "Cache-Control": "public, max-age=31536000, immutable",
+          },
+        });
+      }
+    } catch {
+      // Try the next known cache location.
+    }
+  }
+  return null;
+}
+
 export const Route = createFileRoute("/api/public/shop-photo/$")({
   server: {
     handlers: {
@@ -39,21 +65,11 @@ export const Route = createFileRoute("/api/public/shop-photo/$")({
         const objectPath = sanitizeKey(ref, w);
         const cachedUrl = publicUrl(objectPath);
 
-        // 1. Check cache first (no Google call) — sirve siempre, incluso con kill-switch off.
-        try {
-          const head = await fetch(cachedUrl, { method: "HEAD" });
-          if (head.ok) {
-            return new Response(null, {
-              status: 302,
-              headers: {
-                Location: cachedUrl,
-                "Cache-Control": "public, max-age=31536000, immutable",
-              },
-            });
-          }
-        } catch {
-          /* fall through to fetch */
-        }
+        // 1. Check every existing cache layout first (no Google call) — sirve siempre,
+        //    incluso con kill-switch off. Históricamente `/google-photo` guardaba
+        //    en `gphotos/...`, así que `/shop-photo` debe reutilizarlo.
+        const cached = await redirectIfCached([objectPath, googlePhotoCacheKey(ref, w)]);
+        if (cached) return cached;
 
         // 2. Cache miss → 1 llamada a Google y cacheada para siempre.
         //    HONRA el kill-switch: si está OFF, no llamamos a Google.
