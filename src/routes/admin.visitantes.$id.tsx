@@ -38,7 +38,7 @@ function VisitorDetailPage() {
     );
   }
 
-  const { header, prefs, acquisition, events } = q.data;
+  const { header, prefs, acquisition, events, sessions } = q.data;
 
   return (
     <div className="space-y-4">
