@@ -6,10 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { listVisitors } from "@/lib/admin/visitors.functions";
-import { fmtDateTime } from "@/lib/admin-shared";
 
 function formatDuration(ms: number | null | undefined): string {
-  if (!ms || ms < 1000) return "—";
+  if (!ms || ms < 1000) return "<1s";
   const s = Math.floor(ms / 1000);
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
@@ -28,18 +27,28 @@ function VisitantesPage() {
   const [search, setSearch] = useState("");
   const q = useQuery({
     queryKey: ["admin-visitors", search],
-    queryFn: () => listVisitors({ data: { search, limit: 200 } }),
+    queryFn: () => listVisitors({ data: { search, limit: 500 } }),
     staleTime: 60_000,
   });
+
+  const summary = q.data?.summary;
 
   return (
     <div className="space-y-4">
       <header>
         <h1 className="text-2xl font-bold">Visitantes</h1>
         <p className="text-sm text-muted-foreground">
-          Actividad de últimos 30 días. Agrupa usuarios registrados y visitantes anónimos por cookie.
+          Una fila por sesión (gap &gt; 30 min = nueva sesión). Últimos 30 días.
         </p>
       </header>
+
+      {summary && (
+        <div className="grid gap-3 sm:grid-cols-3">
+          <SummaryCard title="Hoy" stats={summary.today} />
+          <SummaryCard title="Últimos 7 días" stats={summary.week} />
+          <SummaryCard title="Últimos 30 días" stats={summary.month} />
+        </div>
+      )}
 
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -57,7 +66,7 @@ function VisitantesPage() {
             {q.isLoading ? (
               <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Cargando…</span>
             ) : (
-              `${q.data?.visitors.length ?? 0} de ${q.data?.total ?? 0}`
+              `${q.data?.sessions.length ?? 0} de ${q.data?.total ?? 0} sesiones`
             )}
           </CardTitle>
         </CardHeader>
@@ -66,52 +75,50 @@ function VisitantesPage() {
             <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
               <tr>
                 <th className="px-3 py-2 text-left">Identidad</th>
-                <th className="px-3 py-2 text-right">Visitas</th>
+                <th className="px-3 py-2 text-right">Visita</th>
                 <th className="px-3 py-2 text-left">Ubicación</th>
                 <th className="px-3 py-2 text-left">Dispositivo</th>
                 <th className="px-3 py-2 text-left">Sección top</th>
                 <th className="px-3 py-2 text-right">Eventos</th>
                 <th className="px-3 py-2 text-right">Duración</th>
                 <th className="px-3 py-2 text-left">Fecha</th>
-                <th className="px-3 py-2 text-left">Hora</th>
+                <th className="px-3 py-2 text-left">Entrada</th>
               </tr>
-
             </thead>
             <tbody>
-              {(q.data?.visitors ?? []).map((v) => {
-                const d = new Date(v.last_seen);
+              {(q.data?.sessions ?? []).map((s) => {
+                const d = new Date(s.start_at);
                 const fecha = d.toLocaleDateString("es-ES");
                 const hora = d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
                 return (
-                <tr key={v.id} className="border-t hover:bg-muted/30">
-                  <td className="px-3 py-2">
-                    <Link to="/admin/visitantes/$id" params={{ id: v.id }} className="flex items-center gap-2 hover:underline">
-                      {v.kind === "user" ? <User className="h-3.5 w-3.5 text-primary" /> : <UserX className="h-3.5 w-3.5 text-muted-foreground" />}
-                      <span className="font-medium truncate max-w-[220px]">{v.label}</span>
-                      {v.email && <span className="text-xs text-muted-foreground truncate max-w-[180px]">· {v.email}</span>}
-                    </Link>
-                  </td>
-                  <td className="px-3 py-2 text-right">
-                    <Badge variant="outline">{v.visits}</Badge>
-                  </td>
-                  <td className="px-3 py-2 text-muted-foreground">
-                    {[v.city, v.country].filter(Boolean).join(", ") || "—"}
-                  </td>
-                  <td className="px-3 py-2 text-muted-foreground text-xs">
-                    {[v.browser, v.os, v.device].filter(Boolean).join(" · ") || "—"}
-                  </td>
-                  <td className="px-3 py-2 text-xs">{v.top_path ?? "—"}</td>
-                  <td className="px-3 py-2 text-right">
-                    <Badge variant="secondary">{v.events}</Badge>
-                  </td>
-
-                  <td className="px-3 py-2 text-right text-xs text-muted-foreground">{formatDuration(v.duration_ms)}</td>
-                  <td className="px-3 py-2 text-muted-foreground text-xs">{fecha}</td>
-                  <td className="px-3 py-2 text-muted-foreground text-xs">{hora}</td>
-                </tr>
+                  <tr key={s.session_id} className="border-t hover:bg-muted/30">
+                    <td className="px-3 py-2">
+                      <Link to="/admin/visitantes/$id" params={{ id: s.identity_id }} className="flex items-center gap-2 hover:underline">
+                        {s.kind === "user" ? <User className="h-3.5 w-3.5 text-primary" /> : <UserX className="h-3.5 w-3.5 text-muted-foreground" />}
+                        <span className="font-medium truncate max-w-[220px]">{s.label}</span>
+                        {s.email && <span className="text-xs text-muted-foreground truncate max-w-[180px]">· {s.email}</span>}
+                      </Link>
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      <Badge variant="outline">{s.visit_index} / {s.total_visits}</Badge>
+                    </td>
+                    <td className="px-3 py-2 text-muted-foreground">
+                      {[s.city, s.country].filter(Boolean).join(", ") || "—"}
+                    </td>
+                    <td className="px-3 py-2 text-muted-foreground text-xs">
+                      {[s.browser, s.os, s.device].filter(Boolean).join(" · ") || "—"}
+                    </td>
+                    <td className="px-3 py-2 text-xs">{s.top_path ?? "—"}</td>
+                    <td className="px-3 py-2 text-right">
+                      <Badge variant="secondary">{s.events}</Badge>
+                    </td>
+                    <td className="px-3 py-2 text-right text-xs text-muted-foreground">{formatDuration(s.duration_ms)}</td>
+                    <td className="px-3 py-2 text-muted-foreground text-xs">{fecha}</td>
+                    <td className="px-3 py-2 text-muted-foreground text-xs">{hora}</td>
+                  </tr>
                 );
               })}
-              {!q.isLoading && (q.data?.visitors.length ?? 0) === 0 && (
+              {!q.isLoading && (q.data?.sessions.length ?? 0) === 0 && (
                 <tr>
                   <td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">
                     Sin actividad registrada.
@@ -123,5 +130,30 @@ function VisitantesPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function SummaryCard({
+  title,
+  stats,
+}: {
+  title: string;
+  stats: { sessions: number; unique_identities: number; registered_users: number; guests: number };
+}) {
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm text-muted-foreground">{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-1">
+        <div className="text-2xl font-bold">{stats.sessions}</div>
+        <p className="text-xs text-muted-foreground">sesiones totales</p>
+        <div className="flex gap-3 text-xs pt-1">
+          <span><b>{stats.unique_identities}</b> únicos</span>
+          <span className="text-primary"><b>{stats.registered_users}</b> usuarios</span>
+          <span className="text-muted-foreground"><b>{stats.guests}</b> invitados</span>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

@@ -11,6 +11,17 @@ export const Route = createFileRoute("/admin/visitantes/$id")({
   component: VisitorDetailPage,
 });
 
+function formatDur(ms: number | null | undefined): string {
+  if (!ms || ms < 1000) return "<1s";
+  const s = Math.floor(ms / 1000);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${sec}s`;
+  return `${sec}s`;
+}
+
 function VisitorDetailPage() {
   const { id } = Route.useParams();
   const q = useQuery({
@@ -38,7 +49,7 @@ function VisitorDetailPage() {
     );
   }
 
-  const { header, prefs, acquisition, events } = q.data;
+  const { header, prefs, acquisition, events, sessions } = q.data;
 
   return (
     <div className="space-y-4">
@@ -114,6 +125,34 @@ function VisitorDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader><CardTitle className="text-base">Sesiones ({sessions?.length ?? 0})</CardTitle></CardHeader>
+        <CardContent className="p-0 overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
+              <tr>
+                <th className="px-3 py-2 text-left">#</th>
+                <th className="px-3 py-2 text-left">Entrada</th>
+                <th className="px-3 py-2 text-left">Salida</th>
+                <th className="px-3 py-2 text-right">Duración</th>
+                <th className="px-3 py-2 text-right">Eventos</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(sessions ?? []).map((s) => (
+                <tr key={s.index} className="border-t">
+                  <td className="px-3 py-1.5 text-xs">#{s.index}</td>
+                  <td className="px-3 py-1.5 text-xs">{fmtDateTime(s.start_at)}</td>
+                  <td className="px-3 py-1.5 text-xs">{fmtDateTime(s.end_at)}</td>
+                  <td className="px-3 py-1.5 text-xs text-right">{formatDur(s.duration_ms)}</td>
+                  <td className="px-3 py-1.5 text-xs text-right"><Badge variant="secondary">{s.events}</Badge></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader><CardTitle className="text-base">Timeline ({events.length} eventos)</CardTitle></CardHeader>
