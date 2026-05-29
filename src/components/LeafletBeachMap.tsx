@@ -58,9 +58,9 @@ export function LeafletMap({ beaches }: { beaches: Beach[] }) {
 
     const beachIcon = L.divIcon({
       className: "beach-marker",
-      html: '<div style="width:26px;height:26px;border-radius:50%;background:#1e88e5;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;font-size:14px;">🏖️</div>',
-      iconSize: [26, 26],
-      iconAnchor: [13, 13],
+      html: '<div style="width:16px;height:16px;border-radius:50%;background:#1e88e5;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.4);"></div>',
+      iconSize: [16, 16],
+      iconAnchor: [8, 8],
     });
 
     const pixelCache: { beach: Beach; x: number; y: number }[] = [];
