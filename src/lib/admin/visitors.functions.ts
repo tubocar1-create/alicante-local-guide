@@ -81,15 +81,28 @@ export const listVisitors = createServerFn({ method: "POST" })
     await assertAdmin(context.supabase, context.userId);
 
     const since = new Date(Date.now() - 30 * 86400 * 1000).toISOString();
-    const { data: rows, error } = await supabaseAdmin
-      .from("interaction_events")
-      .select(
-        "id,type,user_id,visitor_id,occurred_at,country,city,browser,os,device,path",
-      )
-      .gte("occurred_at", since)
-      .order("occurred_at", { ascending: true })
-      .limit(10000);
-    if (error) throw new Error(error.message);
+    // PostgREST limita a 1000 filas por request → paginamos en chunks
+    const CHUNK = 1000;
+    const MAX_ROWS = 20000;
+    const rows: Array<{
+      id: string; type: string; user_id: string | null; visitor_id: string | null;
+      occurred_at: string; country: string | null; city: string | null;
+      browser: string | null; os: string | null; device: string | null; path: string | null;
+    }> = [];
+    for (let from = 0; from < MAX_ROWS; from += CHUNK) {
+      const { data: chunk, error } = await supabaseAdmin
+        .from("interaction_events")
+        .select(
+          "id,type,user_id,visitor_id,occurred_at,country,city,browser,os,device,path",
+        )
+        .gte("occurred_at", since)
+        .order("occurred_at", { ascending: true })
+        .range(from, from + CHUNK - 1);
+      if (error) throw new Error(error.message);
+      if (!chunk || chunk.length === 0) break;
+      rows.push(...chunk);
+      if (chunk.length < CHUNK) break;
+    }
 
     // Resolver perfiles
     const userIds = Array.from(
