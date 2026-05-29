@@ -1,7 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { isGoogleEnabled } from "@/lib/google-killswitch.server";
-import { fetchGoogle } from "@/lib/observability/google";
 
 // Cache-on-first-hit proxy for Google Places (New) photos.
 // URL shape: /api/public/shop-photo/places/{placeId}/photos/{photoId}?w=800
@@ -71,64 +68,7 @@ export const Route = createFileRoute("/api/public/shop-photo/$")({
         const cached = await redirectIfCached([objectPath, googlePhotoCacheKey(ref, w)]);
         if (cached) return cached;
 
-        // 2. Cache miss → 1 llamada a Google y cacheada para siempre.
-        //    HONRA el kill-switch: si está OFF, no llamamos a Google.
-        if (!(await isGoogleEnabled())) {
-          return new Response("Photo not cached, Google API disabled", { status: 404 });
-        }
-        const key = process.env.GOOGLE_PLACES_API_KEY;
-        if (!key) return new Response("Photo not cached, no API key", { status: 404 });
-
-        // 2. Ask Google for the signed photoUri.
-        const apiUrl = `https://places.googleapis.com/v1/${ref}/media?maxWidthPx=${w}&skipHttpRedirect=true&key=${encodeURIComponent(
-          key,
-        )}`;
-        const r = await fetchGoogle({
-          provider: "google_places",
-          endpoint: "places:photo:media",
-          caller: "shop-photo:proxy",
-          url: apiUrl,
-        });
-        if (!r.ok) return new Response("Photo error", { status: r.status });
-        const j = (await r.json()) as { photoUri?: string };
-        if (!j.photoUri) return new Response("No photoUri", { status: 502 });
-
-        // 3. Download the image bytes from Google's CDN.
-        const imgRes = await fetch(j.photoUri);
-        if (!imgRes.ok) {
-          // Couldn't cache — fall back to direct redirect so the user still sees the image.
-          return new Response(null, {
-            status: 302,
-            headers: { Location: j.photoUri, "Cache-Control": "public, max-age=3600" },
-          });
-        }
-        const contentType = imgRes.headers.get("content-type") ?? "image/jpeg";
-        const bytes = new Uint8Array(await imgRes.arrayBuffer());
-
-        // 4. Upload to Storage (idempotent — upsert in case of race).
-        const { error: upErr } = await supabaseAdmin.storage
-          .from(BUCKET)
-          .upload(objectPath, bytes, {
-            contentType,
-            cacheControl: "31536000",
-            upsert: true,
-          });
-        if (upErr) {
-          console.error("shop-photo storage upload failed", upErr);
-          // Fall back: still serve the image via direct redirect.
-          return new Response(null, {
-            status: 302,
-            headers: { Location: j.photoUri, "Cache-Control": "public, max-age=3600" },
-          });
-        }
-
-        return new Response(null, {
-          status: 302,
-          headers: {
-            Location: cachedUrl,
-            "Cache-Control": "public, max-age=31536000, immutable",
-          },
-        });
+        return new Response("Photo not cached", { status: 404 });
       },
     },
   },
