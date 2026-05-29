@@ -238,41 +238,14 @@ export const getPlacePhotos = createServerFn({ method: "GET" })
     return { placeId: o.placeId, max: Math.min(o.max ?? 4, 8) };
   })
   .handler(async ({ data }) => {
-    // Sin llamadas a Google en cada visita. Devolvemos URLs del proxy interno.
-    // Solo si NO hay refs cacheadas aún, hacemos UNA llamada a Place Details
-    // para sembrar la lista, y nunca más.
-    const apiKey = await getGooglePlacesKey();
+    // Solo devolvemos referencias ya cacheadas. Este endpoint NO hace llamadas
+    // a Google: si no hay refs, no inventa ni repaga datos externos.
     const { data: row } = await supabaseAdmin
       .from("places_cache")
       .select("raw")
       .eq("google_place_id", data.placeId)
       .maybeSingle();
-    let photos = ((row?.raw as { photos?: Array<{ name: string }> } | null)?.photos ?? []);
-
-    if (photos.length === 0 && apiKey) {
-      try {
-        const res = await fetchGoogle({
-          provider: "google_places",
-          endpoint: "places:details",
-          caller: "places:getPlacePhotos",
-          url: `https://places.googleapis.com/v1/places/${data.placeId}?languageCode=es`,
-          init: { headers: { "X-Goog-Api-Key": apiKey, "X-Goog-FieldMask": "photos" } },
-        });
-        if (res.ok) {
-          const j = (await res.json()) as { photos?: Array<{ name: string }> };
-          photos = j.photos ?? [];
-          if (photos.length) {
-            const newRaw = { ...(row?.raw as object ?? {}), photos };
-            await supabaseAdmin
-              .from("places_cache")
-              .update({ raw: newRaw as never })
-              .eq("google_place_id", data.placeId);
-          }
-        }
-      } catch (e) {
-        console.error("place details photos fetch failed", e);
-      }
-    }
+    const photos = ((row?.raw as { photos?: Array<{ name: string }> } | null)?.photos ?? []);
 
     return {
       photos: photos
