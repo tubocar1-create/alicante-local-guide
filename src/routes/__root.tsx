@@ -172,9 +172,10 @@ function RootComponent() {
     );
   }, [router.state.location.pathname]);
 
-  // Heartbeat de sesión: registra un evento cada 30s mientras la pestaña
-  // está visible y uno final al cerrarla. Sin esto, las sesiones de un
-  // solo page_view duran 0 segundos porque start_at == end_at.
+  // Heartbeat de sesión: registra un evento cada 10s durante el primer
+  // minuto y después cada 30s mientras la pestaña está visible. Un evento
+  // final se envía al cerrarla. Sin esto, las sesiones de un solo page_view
+  // duran 0 segundos porque start_at == end_at.
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (window.location.pathname.startsWith("/admin")) return;
@@ -187,14 +188,22 @@ function RootComponent() {
       );
     };
 
-    const interval = window.setInterval(() => {
+    let interval = window.setInterval(() => {
       if (document.visibilityState === "visible") ping("session_heartbeat");
-    }, 30_000);
+    }, 10_000);
+
+    const transitionTimer = window.setTimeout(() => {
+      window.clearInterval(interval);
+      interval = window.setInterval(() => {
+        if (document.visibilityState === "visible") ping("session_heartbeat");
+      }, 30_000);
+    }, 60_000);
 
     const onHide = () => ping("session_end");
     window.addEventListener("pagehide", onHide);
 
     return () => {
+      window.clearTimeout(transitionTimer);
       window.clearInterval(interval);
       window.removeEventListener("pagehide", onHide);
     };
