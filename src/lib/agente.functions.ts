@@ -653,6 +653,12 @@ const PROPER_NOUN_STOPWORDS = new Set([
   "vuelos","vuelo","destino","aerolinea","aerolínea","compania","compañia","compañía",
   "alicante","elche","santa","san","santo","sant","playa","calle","avenida","plaza","centro","ciudad","alacant",
   "cine","cines","teatro","teatros","sala","farmacia","farmacias","hospital","hospitales",
+  // Palabras de pregunta/intención que NO identifican un nombre propio
+  "donde","dónde","cuando","cuándo","como","cómo","cual","cuál","cuales","cuáles","que","qué","quien","quién",
+  "voy","vamos","quiero","quisiera","necesito","busco","apetece","puedo","puede","dime","dame","abre","abrir",
+  "abierto","abierta","abiertos","abiertas","ahora","hoy","manana","mañana","tarde","noche","cerca","lejos","mejor","peor","bueno","buena","buenos","buenas",
+  "siempre","nunca","jamas","jamás","tambien","también","todavia","todavía",
+  "tomar","beber","comer","cenar","desayunar","comprar","tapear",
 ]);
 
 const matchProperNoun = (
@@ -900,21 +906,30 @@ export const agenteVamosChat = createServerFn({ method: "POST" })
     // 0c) NOMBRE PROPIO APRENDIDO — BD agente_proper_nouns (sin Gemini).
     // Cada vez que el LLM resuelve una entidad concreta la persistimos en
     // esta tabla; la próxima vez el agente local la encuentra directamente.
-    try {
-      const properRows = await loadProperNouns(supabaseAdmin);
-      const properHit = matchProperNoun(normalized, properRows, currentPath);
-      if (properHit) {
-        return {
-          ok: true as const,
-          content: `Te llevo a ${properHit.name}.`,
-          navigate: properHit.path,
-          forwardPrompt: undefined,
-          source: "proper_noun" as const,
-        };
+    // IMPORTANTE: si el prompt encaja con una categoría (tomar algo, comer,
+    // hamburguesas, etc.) NO buscamos nombre propio — la categoría manda y
+    // la UI abrirá el Dashboard inline correspondiente.
+    const matchesCategoryIntent =
+      DRINKS_INTENT_RE.test(lastUserMessage) ||
+      FOOD_INTENTS.some((fi) => fi.test.test(lastUserMessage));
+    if (!matchesCategoryIntent) {
+      try {
+        const properRows = await loadProperNouns(supabaseAdmin);
+        const properHit = matchProperNoun(normalized, properRows, currentPath);
+        if (properHit) {
+          return {
+            ok: true as const,
+            content: `Te llevo a ${properHit.name}.`,
+            navigate: properHit.path,
+            forwardPrompt: undefined,
+            source: "proper_noun" as const,
+          };
+        }
+      } catch (e) {
+        console.warn("matchProperNoun lookup failed", e);
       }
-    } catch (e) {
-      console.warn("matchProperNoun lookup failed", e);
     }
+
 
     // Agente 100% local: sin dependencia de Gemini ni de ningún LLM.
     // Si llegamos aquí es que ni intents aprendidos ni caché ni proper_nouns
