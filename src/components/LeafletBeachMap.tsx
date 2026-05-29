@@ -69,6 +69,12 @@ export function LeafletMap({ beaches }: { beaches: Beach[] }) {
       marker.on("click", () => {
         window.location.href = `/playas/${b.slug}`;
       });
+      marker.bindTooltip(b.name, {
+        permanent: true,
+        direction: "right",
+        offset: [10, 0],
+        className: "beach-label",
+      });
       const p = map.latLngToContainerPoint([b.lat, b.lng]);
       pixelCache.push({ beach: b, x: p.x, y: p.y });
     });
