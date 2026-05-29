@@ -714,7 +714,7 @@ export function ChatScreen() {
       {/* Persistent background photo of Puerto de Alicante (only when chatting) */}
       {!isWelcome && (
         <div className="pointer-events-none absolute inset-0 -z-10">
-          <img src={heroImg} alt="" aria-hidden loading="lazy" decoding="async" className="h-full w-full object-cover" />
+          <img src={heroImg} alt="" aria-hidden decoding="async" className="h-full w-full object-cover" />
           <div className="absolute inset-0 bg-background/85 backdrop-blur-sm" />
         </div>
       )}
