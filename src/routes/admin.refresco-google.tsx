@@ -7,6 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, RefreshCw, CheckCircle2, AlertCircle } from "lucide-react";
 import { getRefreshStats } from "@/lib/admin-refresh.functions";
 import { geocodeBusStops } from "@/lib/bus-geocode.functions";
+import {
+  geocodePharmacies,
+  getPharmaciesGeocodeStats,
+} from "@/lib/pharmacies-geocode.functions";
 
 export const Route = createFileRoute("/admin/refresco-google")({
   head: () => ({ meta: [{ title: "Admin · Refresco Google" }] }),
@@ -24,9 +28,16 @@ type Action = {
 function RefrescoGoogle() {
   const fetchStats = useServerFn(getRefreshStats);
   const runGeocode = useServerFn(geocodeBusStops);
+  const runPharmGeocode = useServerFn(geocodePharmacies);
+  const fetchPharmStats = useServerFn(getPharmaciesGeocodeStats);
   const stats = useQuery({
     queryKey: ["refresco-google-stats"],
     queryFn: () => fetchStats(),
+    staleTime: 30_000,
+  });
+  const pharmStats = useQuery({
+    queryKey: ["refresco-pharm-stats"],
+    queryFn: () => fetchPharmStats(),
     staleTime: 30_000,
   });
 
@@ -54,6 +65,16 @@ function RefrescoGoogle() {
       title: `Geocodificar paradas de bus (${stats.data?.busPending ?? "—"} pendientes)`,
       desc: "Geocodifica hasta 120 paradas SIN coordenadas por ejecución. Una parada solo se llama una vez en su vida; el coste tiende a 0 cuando todas tengan lat/lng.",
       run: () => runGeocode(),
+    },
+    {
+      key: "pharm-geocode",
+      title: `Geocodificar farmacias (${pharmStats.data?.pending ?? "—"} pendientes)`,
+      desc: "Geocodifica hasta 60 farmacias SIN coordenadas por ejecución usando Nominatim (OpenStreetMap, gratis). Tarda ~1 min/lote por el límite de 1 req/s. NO consume Google.",
+      run: async () => {
+        const r = await runPharmGeocode();
+        pharmStats.refetch();
+        return r;
+      },
     },
   ];
 

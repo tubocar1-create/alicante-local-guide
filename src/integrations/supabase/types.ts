@@ -1852,9 +1852,12 @@ export type Database = {
           city: string | null
           code: string | null
           created_at: string
+          geocoded_at: string | null
           hours: string | null
           id: string
           is_24h: boolean
+          lat: number | null
+          lng: number | null
           name: string
           on_duty: boolean
           phone: string | null
@@ -1865,9 +1868,12 @@ export type Database = {
           city?: string | null
           code?: string | null
           created_at?: string
+          geocoded_at?: string | null
           hours?: string | null
           id?: string
           is_24h?: boolean
+          lat?: number | null
+          lng?: number | null
           name: string
           on_duty?: boolean
           phone?: string | null
@@ -1878,9 +1884,12 @@ export type Database = {
           city?: string | null
           code?: string | null
           created_at?: string
+          geocoded_at?: string | null
           hours?: string | null
           id?: string
           is_24h?: boolean
+          lat?: number | null
+          lng?: number | null
           name?: string
           on_duty?: boolean
           phone?: string | null
