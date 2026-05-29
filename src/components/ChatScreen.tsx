@@ -670,7 +670,21 @@ export function ChatScreen() {
           path: typeof window !== "undefined" ? window.location.pathname : "/",
         },
       });
-      if (res?.content) upsert(res.content);
+      if (res?.content) {
+        upsert(res.content);
+      } else if (
+        DRINKS_RE.test(trimmed) || TYPICAL_RE.test(trimmed) || RICE_FISH_RE.test(trimmed) ||
+        ITALIAN_RE.test(trimmed) || PIZZAS_RE.test(trimmed) || BRUNCH_RE.test(trimmed) ||
+        ASIAN_RE.test(trimmed) || FAST_FOOD_RE.test(trimmed) || BURGERS_RE.test(trimmed) ||
+        MONTADITOS_RE.test(trimmed) || KEBAB_RE.test(trimmed) || FRIED_CHICKEN_RE.test(trimmed) ||
+        MEXICAN_RE.test(trimmed) || VEGAN_RE.test(trimmed) || DESSERTS_RE.test(trimmed) ||
+        CHEAP_RE.test(trimmed) || INTERNATIONAL_RE.test(trimmed)
+      ) {
+        // El agente no devolvió texto, pero el prompt coincide con una
+        // categoría con Dashboard inline propio. Insertamos una burbuja
+        // vacía para que <AssistantContent> renderice la tabla de la categoría.
+        upsert("");
+      }
       if (res?.navigate) {
         try { navigate({ to: res.navigate as string }); } catch { /* noop */ }
       }
@@ -680,6 +694,7 @@ export function ChatScreen() {
       setLoading(false);
     }
   }
+
 
   const isWelcome = messages.length === 1 && !loading;
 
@@ -1417,20 +1432,22 @@ function isDrinksBroadcast(content: string): boolean {
 
 function Bubble({ role, content, userPrompt = "" }: { role: "user" | "assistant"; content: string; userPrompt?: string }) {
   const isUser = role === "user";
-  const promptHasDrinks = !isUser && DRINKS_RE.test(userPrompt);
-  const promptHasAsian = !isUser && ASIAN_RE.test(userPrompt);
-  const promptHasTypical = !isUser && TYPICAL_RE.test(userPrompt);
-  const promptHasRiceFish = !isUser && RICE_FISH_RE.test(userPrompt);
-  const promptHasItalian = !isUser && ITALIAN_RE.test(userPrompt);
-  const promptHasPizzas = !isUser && PIZZAS_RE.test(userPrompt);
-  const promptHasBrunch = !isUser && BRUNCH_RE.test(userPrompt);
-  if (!isUser && (isAsianBroadcast(content) || isDrinksBroadcast(content) || promptHasDrinks || promptHasAsian || promptHasTypical || promptHasRiceFish || promptHasItalian || promptHasPizzas || promptHasBrunch)) {
+  const promptMatchesCategory = !isUser && (
+    DRINKS_RE.test(userPrompt) || ASIAN_RE.test(userPrompt) || TYPICAL_RE.test(userPrompt) ||
+    RICE_FISH_RE.test(userPrompt) || ITALIAN_RE.test(userPrompt) || PIZZAS_RE.test(userPrompt) ||
+    BRUNCH_RE.test(userPrompt) || FAST_FOOD_RE.test(userPrompt) || BURGERS_RE.test(userPrompt) ||
+    MONTADITOS_RE.test(userPrompt) || KEBAB_RE.test(userPrompt) || FRIED_CHICKEN_RE.test(userPrompt) ||
+    MEXICAN_RE.test(userPrompt) || VEGAN_RE.test(userPrompt) || DESSERTS_RE.test(userPrompt) ||
+    CHEAP_RE.test(userPrompt) || INTERNATIONAL_RE.test(userPrompt)
+  );
+  if (!isUser && (isAsianBroadcast(content) || isDrinksBroadcast(content) || promptMatchesCategory)) {
     return (
       <div className="-mx-4 sm:mx-0">
         <AssistantContent content={content} userPrompt={userPrompt} />
       </div>
     );
   }
+
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
