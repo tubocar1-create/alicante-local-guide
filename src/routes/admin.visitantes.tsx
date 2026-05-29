@@ -31,24 +31,14 @@ function VisitantesPage() {
     staleTime: 60_000,
   });
 
-  const summary = q.data?.summary;
-
   return (
     <div className="space-y-4">
       <header>
         <h1 className="text-2xl font-bold">Visitantes</h1>
         <p className="text-sm text-muted-foreground">
-          Una fila por sesión (gap &gt; 30 min = nueva sesión). Últimos 30 días.
+          Registro completo de visitas. Cada fila es una sesión individual (gap &gt; 30 min = nueva entrada). El contador muestra cuántas veces ha entrado esa identidad. Últimos 30 días. El Dashboard de métricas llegará en otro paso.
         </p>
       </header>
-
-      {summary && (
-        <div className="grid gap-3 sm:grid-cols-3">
-          <SummaryCard title="Hoy" stats={summary.today} />
-          <SummaryCard title="Últimos 7 días" stats={summary.week} />
-          <SummaryCard title="Últimos 30 días" stats={summary.month} />
-        </div>
-      )}
 
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
