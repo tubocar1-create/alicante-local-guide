@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Mic, Keyboard, MapPin, Map as MapIcon, Home, User as UserIcon, QrCode, X, Gift, Ticket, Sparkles, ShieldCheck, CalendarPlus, CalendarCheck, CalendarDays, Sun, Cloud, CloudRain, CloudSnow, CloudLightning, CloudFog, Bell, Heart, Bookmark, ChevronRight, Utensils, Bed, Umbrella, ShoppingBag, Martini, Bus, Plane, Stethoscope, type LucideIcon } from "lucide-react";
+import { Send, Mic, Keyboard, MapPin, Map as MapIcon, Home, User as UserIcon, QrCode, X, Gift, Ticket, Sparkles, ShieldCheck, CalendarPlus, CalendarCheck, CalendarDays, Sun, Cloud, CloudRain, CloudSnow, CloudLightning, CloudFog, Bell, Heart, Bookmark, ChevronRight, Utensils, Bed, Umbrella, ShoppingBag, Martini, Bus, Plane, Plus, type LucideIcon } from "lucide-react";
 import { useWeather } from "@/hooks/useWeather";
 import BookingDialog from "@/components/BookingDialog";
 import { AdBanner } from "@/components/AdBanner";
@@ -39,7 +39,6 @@ import portadaImg from "@/assets/alicante-portada.webp";
 import hoguerasIcon from "@/assets/hogueras-alicante.png";
 import busAlicanteIcon from "@/assets/bus-alicante.png";
 import vuelosAvionIcon from "@/assets/vuelos-avion.png";
-import saludTiritaIcon from "@/assets/salud-tirita.png";
 import comerPaellaIcon from "@/assets/comer-paella.png";
 import ocioClaquetaIcon from "@/assets/ocio-claqueta.png";
 import asistenteIcon from "@/assets/asistente-icon.png";
@@ -68,7 +67,7 @@ const TILE_ICONS: Record<string, LucideIcon> = {
   "Tomar algo": Martini,
   "Transporte multimodal inteligente": Bus,
   "Vuelos": Plane,
-  "Servicios sanitarios": Stethoscope,
+  "Servicios sanitarios": Plus,
   "Ocio": CalendarDays,
 };
 
@@ -1020,7 +1019,9 @@ export function ChatScreen() {
                         ) : t.label === "Vuelos" ? (
                           <img src={vuelosAvionIcon} alt="" className="h-[82%] w-[82%] object-contain" />
                         ) : t.label === "Servicios sanitarios" ? (
-                          <img src={saludTiritaIcon} alt="" className="h-[78%] w-[78%] object-contain" />
+                          <svg viewBox="0 0 24 24" className="h-[70%] w-[70%] object-contain" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2V22M2 12H22" stroke="#00C853" strokeWidth="5" strokeLinecap="round" />
+                          </svg>
                         ) : t.label === "Comer" ? (
                           <img src={comerPaellaIcon} alt="" className="h-[82%] w-[82%] object-contain" />
                         ) : t.label === "Ocio" ? (
