@@ -163,16 +163,42 @@ function RootComponent() {
   // Track de page_view en cada cambio de ruta (telemetría operacional)
   useEffect(() => {
     if (typeof window === "undefined") return;
-    // Evita trackear el panel admin para no contaminar las métricas
     const path = window.location.pathname;
     if (path.startsWith("/admin")) return;
-    // Importación dinámica para no impactar el bundle inicial
     void import("@/lib/operations/trackOperationalEvent").then(
       ({ trackOperationalEvent }) => {
         trackOperationalEvent({ type: "page_view", route: path });
       },
     );
   }, [router.state.location.pathname]);
+
+  // Heartbeat de sesión: registra un evento cada 30s mientras la pestaña
+  // está visible y uno final al cerrarla. Sin esto, las sesiones de un
+  // solo page_view duran 0 segundos porque start_at == end_at.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.location.pathname.startsWith("/admin")) return;
+
+    const ping = (type: "session_heartbeat" | "session_end") => {
+      void import("@/lib/operations/trackOperationalEvent").then(
+        ({ trackOperationalEvent }) => {
+          trackOperationalEvent({ type, route: window.location.pathname });
+        },
+      );
+    };
+
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === "visible") ping("session_heartbeat");
+    }, 30_000);
+
+    const onHide = () => ping("session_end");
+    window.addEventListener("pagehide", onHide);
+
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("pagehide", onHide);
+    };
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
