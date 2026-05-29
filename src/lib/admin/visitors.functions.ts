@@ -85,6 +85,7 @@ export const listVisitors = createServerFn({ method: "POST" })
       os: string | null;
       device: string | null;
       top_paths: Record<string, number>;
+      timestamps: number[];
     };
 
     const map = new Map<string, Agg>();
@@ -107,10 +108,12 @@ export const listVisitors = createServerFn({ method: "POST" })
           os: r.os,
           device: r.device,
           top_paths: {},
+          timestamps: [],
         };
         map.set(key, a);
       }
       a.events += 1;
+      a.timestamps.push(new Date(r.occurred_at).getTime());
       if (r.occurred_at > a.last_seen) a.last_seen = r.occurred_at;
       if (r.occurred_at < a.first_seen) a.first_seen = r.occurred_at;
       if (!a.country && r.country) a.country = r.country;
@@ -140,6 +143,7 @@ export const listVisitors = createServerFn({ method: "POST" })
       const profile = a.user_id ? emails.get(a.user_id) : undefined;
       const topPath =
         Object.entries(a.top_paths).sort((x, y) => y[1] - x[1])[0]?.[0] ?? null;
+      const { sessions, duration_ms } = computeSessionsAndDuration(a.timestamps);
       return {
         id: a.id,
         kind: a.kind,
@@ -157,6 +161,8 @@ export const listVisitors = createServerFn({ method: "POST" })
         device: a.device,
         os: a.os,
         top_path: topPath,
+        visits: sessions,
+        duration_ms,
       };
     });
 
@@ -306,4 +312,31 @@ function estimateSessions(events: RawEvent[]): number {
     last = t;
   }
   return sessions;
+}
+
+// Agrupa timestamps (ms) en sesiones (gap > 30 min) y suma la duración
+// total como la suma de (max-min) de cada sesión. Sesiones de 1 evento
+// aportan 0 ms.
+function computeSessionsAndDuration(timestamps: number[]): {
+  sessions: number;
+  duration_ms: number;
+} {
+  if (timestamps.length === 0) return { sessions: 0, duration_ms: 0 };
+  const asc = timestamps.slice().sort((a, b) => a - b);
+  const GAP = 30 * 60 * 1000;
+  let sessions = 1;
+  let duration = 0;
+  let sessionStart = asc[0];
+  let last = asc[0];
+  for (let i = 1; i < asc.length; i++) {
+    const t = asc[i];
+    if (t - last > GAP) {
+      duration += last - sessionStart;
+      sessions++;
+      sessionStart = t;
+    }
+    last = t;
+  }
+  duration += last - sessionStart;
+  return { sessions, duration_ms: duration };
 }

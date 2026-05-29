@@ -8,6 +8,17 @@ import { Badge } from "@/components/ui/badge";
 import { listVisitors } from "@/lib/admin/visitors.functions";
 import { fmtDateTime } from "@/lib/admin-shared";
 
+function formatDuration(ms: number | null | undefined): string {
+  if (!ms || ms < 1000) return "—";
+  const s = Math.floor(ms / 1000);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${sec}s`;
+  return `${sec}s`;
+}
+
 export const Route = createFileRoute("/admin/visitantes")({
   head: () => ({ meta: [{ title: "Admin · Visitantes" }] }),
   component: VisitantesPage,
@@ -58,12 +69,19 @@ function VisitantesPage() {
                 <th className="px-3 py-2 text-left">Ubicación</th>
                 <th className="px-3 py-2 text-left">Dispositivo</th>
                 <th className="px-3 py-2 text-left">Sección top</th>
+                <th className="px-3 py-2 text-right">Visitas</th>
                 <th className="px-3 py-2 text-right">Eventos</th>
-                <th className="px-3 py-2 text-left">Última visita</th>
+                <th className="px-3 py-2 text-right">Duración</th>
+                <th className="px-3 py-2 text-left">Fecha</th>
+                <th className="px-3 py-2 text-left">Hora</th>
               </tr>
             </thead>
             <tbody>
-              {(q.data?.visitors ?? []).map((v) => (
+              {(q.data?.visitors ?? []).map((v) => {
+                const d = new Date(v.last_seen);
+                const fecha = d.toLocaleDateString("es-ES");
+                const hora = d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+                return (
                 <tr key={v.id} className="border-t hover:bg-muted/30">
                   <td className="px-3 py-2">
                     <Link to="/admin/visitantes/$id" params={{ id: v.id }} className="flex items-center gap-2 hover:underline">
@@ -80,14 +98,20 @@ function VisitantesPage() {
                   </td>
                   <td className="px-3 py-2 text-xs">{v.top_path ?? "—"}</td>
                   <td className="px-3 py-2 text-right">
+                    <Badge variant="outline">{v.visits}</Badge>
+                  </td>
+                  <td className="px-3 py-2 text-right">
                     <Badge variant="secondary">{v.events}</Badge>
                   </td>
-                  <td className="px-3 py-2 text-muted-foreground text-xs">{fmtDateTime(v.last_seen)}</td>
+                  <td className="px-3 py-2 text-right text-xs text-muted-foreground">{formatDuration(v.duration_ms)}</td>
+                  <td className="px-3 py-2 text-muted-foreground text-xs">{fecha}</td>
+                  <td className="px-3 py-2 text-muted-foreground text-xs">{hora}</td>
                 </tr>
-              ))}
+                );
+              })}
               {!q.isLoading && (q.data?.visitors.length ?? 0) === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-3 py-8 text-center text-muted-foreground">
+                  <td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">
                     Sin actividad registrada.
                   </td>
                 </tr>
