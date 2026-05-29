@@ -1027,7 +1027,7 @@ export function ChatScreen() {
                           <img src={saludCruzVerdeIcon} alt="" className="h-[82%] w-[82%] object-contain" />
 
                         ) : t.label === "Comer" ? (
-                          <img src={comerPaellaIcon} alt="" className="h-[82%] w-[82%] object-contain" />
+                          <img src={comerPaellaIcon} alt="" className="h-[98%] w-[98%] object-contain" />
                         ) : t.label === "Ocio" ? (
                           <img src={ocioClaquetaIcon} alt="" className="h-[82%] w-[82%] object-contain" />
                         ) : t.label === "Dormir" ? (
