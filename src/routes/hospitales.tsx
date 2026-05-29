@@ -95,7 +95,7 @@ export const Route = createFileRoute("/hospitales")({
 function HospitalesPage() {
   const [items, setItems] = useState<Hospital[]>([]);
   const [loading, setLoading] = useState(true);
-  const { state: geoState, request: requestGeo } = useUserLocation();
+  const { state: geoState, request: requestGeo } = useUserLocation({ watch: true });
   const userCoords = geoState.status === "ready" ? geoState.coords : null;
 
   useEffect(() => {
