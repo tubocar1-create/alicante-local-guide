@@ -2374,7 +2374,7 @@ function AsianTableInner({ ranked, loading, originLabel, onClose }: {
             <span className="bg-gradient-to-r from-cyan-300 via-white to-violet-300 bg-clip-text text-transparent">
               en Alicante
             </span>
-          </h1>
+          </h2>
           <p className="mt-1 text-xs text-cyan-300/80 md:text-sm">
             Listado completo · ordenados por cercanía a {originLabel}.
           </p>
@@ -2704,7 +2704,7 @@ function DrinksTableInner({ ranked, loading, originLabel, onClose }: {
             <span className="bg-gradient-to-r from-amber-300 via-white to-rose-300 bg-clip-text text-transparent">
               en Alicante
             </span>
-          </h1>
+          </h2>
           <p className="mt-1 text-xs text-amber-200/80 md:text-sm">
             Bares, copas y cervecerías · ordenados por cercanía a {originLabel}.
           </p>
@@ -3769,7 +3769,7 @@ function CategoryTableInner({
             <span className={`bg-gradient-to-r ${theme.titleGradient} bg-clip-text text-transparent`}>
               {theme.title2}
             </span>
-          </h1>
+          </h2>
           <p className={`mt-1 text-xs ${theme.subtitle} md:text-sm`}>
             {theme.subtitleText.replace("Puerta del Mar", originLabel)}
           </p>
