@@ -48,31 +48,30 @@ type RawEvent = {
 
 const SESSION_GAP_MS = 30 * 60 * 1000; // 30 min inactividad → nueva sesión
 
-// ---------- LISTA (UNA FILA POR SESIÓN) ----------
+// ---------- LISTA (UNA FILA POR EVENTO/VISITA, SIN AGRUPAR) ----------
 
 const ListInput = z.object({
-  limit: z.number().int().min(1).max(2000).optional().default(300),
+  limit: z.number().int().min(1).max(5000).optional().default(500),
   search: z.string().max(120).optional().default(""),
 });
 
-type SessionRow = {
-  session_id: string;       // identidad + start
-  identity_id: string;      // "u:..." | "v:..."
+type VisitRow = {
+  event_id: string;
+  identity_id: string;        // "u:..." | "v:..."
   kind: "user" | "visitor";
   label: string;
   email: string | null;
-  visit_index: number;      // 1..total_visits (cronológico)
-  total_visits: number;
-  start_at: string;
-  end_at: string;
-  duration_ms: number;
-  events: number;
+  visit_index: number;        // 1..total_visits cronológico de esa identidad
+  total_visits: number;       // total acumulado de visitas de esa identidad
+  occurred_at: string;
+  gap_ms: number | null;      // ms desde la visita anterior de esa identidad
+  type: string;
+  path: string | null;
   country: string | null;
   city: string | null;
   browser: string | null;
   os: string | null;
   device: string | null;
-  top_path: string | null;
 };
 
 export const listVisitors = createServerFn({ method: "POST" })
@@ -85,54 +84,17 @@ export const listVisitors = createServerFn({ method: "POST" })
     const { data: rows, error } = await supabaseAdmin
       .from("interaction_events")
       .select(
-        "id,type,user_id,visitor_id,occurred_at,country,city,browser,os,device,path,referrer,utm",
+        "id,type,user_id,visitor_id,occurred_at,country,city,browser,os,device,path",
       )
       .gte("occurred_at", since)
       .order("occurred_at", { ascending: true })
       .limit(10000);
     if (error) throw new Error(error.message);
 
-    // Agrupar por identidad
-    type EvLite = {
-      ts: number;
-      occurred_at: string;
-      path: string | null;
-      country: string | null;
-      city: string | null;
-      browser: string | null;
-      os: string | null;
-      device: string | null;
-    };
-    const byIdentity = new Map<string, { kind: "user" | "visitor"; user_id: string | null; visitor_id: string | null; events: EvLite[] }>();
-    (rows ?? []).forEach((r) => {
-      const key = r.user_id ? `u:${r.user_id}` : r.visitor_id ? `v:${r.visitor_id}` : null;
-      if (!key) return;
-      let bucket = byIdentity.get(key);
-      if (!bucket) {
-        bucket = {
-          kind: r.user_id ? "user" : "visitor",
-          user_id: r.user_id,
-          visitor_id: r.visitor_id,
-          events: [],
-        };
-        byIdentity.set(key, bucket);
-      }
-      bucket.events.push({
-        ts: new Date(r.occurred_at).getTime(),
-        occurred_at: r.occurred_at,
-        path: r.path,
-        country: r.country,
-        city: r.city,
-        browser: r.browser,
-        os: r.os,
-        device: r.device,
-      });
-    });
-
-    // Resolver emails/nombres
-    const userIds = Array.from(byIdentity.values())
-      .filter((a) => a.user_id)
-      .map((a) => a.user_id as string);
+    // Resolver perfiles
+    const userIds = Array.from(
+      new Set((rows ?? []).map((r) => r.user_id).filter(Boolean) as string[]),
+    );
     const profileMap = new Map<string, { email: string | null; name: string | null }>();
     if (userIds.length > 0) {
       const { data: profiles } = await supabaseAdmin
@@ -144,120 +106,73 @@ export const listVisitors = createServerFn({ method: "POST" })
       );
     }
 
-    // Partir en sesiones por identidad
-    const sessions: SessionRow[] = [];
-    byIdentity.forEach((bucket, identity_id) => {
-      const evs = bucket.events.slice().sort((a, b) => a.ts - b.ts);
-      const sliced: EvLite[][] = [];
-      let current: EvLite[] = [];
-      let last = 0;
-      for (const e of evs) {
-        if (current.length === 0 || e.ts - last <= SESSION_GAP_MS) {
-          current.push(e);
-        } else {
-          sliced.push(current);
-          current = [e];
-        }
-        last = e.ts;
-      }
-      if (current.length > 0) sliced.push(current);
+    // Contador por identidad
+    const counters = new Map<string, number>();
+    const totals = new Map<string, number>();
+    const lastTs = new Map<string, number>();
 
-      const total = sliced.length;
-      const profile = bucket.user_id ? profileMap.get(bucket.user_id) : undefined;
+    // Calcular totales primero
+    (rows ?? []).forEach((r) => {
+      const key = r.user_id ? `u:${r.user_id}` : r.visitor_id ? `v:${r.visitor_id}` : null;
+      if (!key) return;
+      totals.set(key, (totals.get(key) ?? 0) + 1);
+    });
+
+    const visits: VisitRow[] = [];
+    (rows ?? []).forEach((r) => {
+      const key = r.user_id ? `u:${r.user_id}` : r.visitor_id ? `v:${r.visitor_id}` : null;
+      if (!key) return;
+      const idx = (counters.get(key) ?? 0) + 1;
+      counters.set(key, idx);
+      const ts = new Date(r.occurred_at).getTime();
+      const prev = lastTs.get(key);
+      lastTs.set(key, ts);
+
+      const profile = r.user_id ? profileMap.get(r.user_id) : undefined;
       const label =
         profile?.name ??
         profile?.email ??
-        (bucket.visitor_id ? `Anónimo · ${bucket.visitor_id.slice(0, 8)}` : "Anónimo");
-      const email = profile?.email ?? null;
+        (r.visitor_id ? `Anónimo · ${r.visitor_id.slice(0, 8)}` : "Anónimo");
 
-      sliced.forEach((seg, idx) => {
-        const first = seg[0];
-        const lastEv = seg[seg.length - 1];
-        const pathCounts: Record<string, number> = {};
-        let country: string | null = null;
-        let city: string | null = null;
-        let browser: string | null = null;
-        let os: string | null = null;
-        let device: string | null = null;
-        for (const e of seg) {
-          if (e.path) pathCounts[e.path] = (pathCounts[e.path] ?? 0) + 1;
-          country ??= e.country;
-          city ??= e.city;
-          browser ??= e.browser;
-          os ??= e.os;
-          device ??= e.device;
-        }
-        const top_path =
-          Object.entries(pathCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
-        sessions.push({
-          session_id: `${identity_id}@${first.ts}`,
-          identity_id,
-          kind: bucket.kind,
-          label,
-          email,
-          visit_index: idx + 1,
-          total_visits: total,
-          start_at: first.occurred_at,
-          end_at: lastEv.occurred_at,
-          duration_ms: lastEv.ts - first.ts,
-          events: seg.length,
-          country,
-          city,
-          browser,
-          os,
-          device,
-          top_path,
-        });
+      visits.push({
+        event_id: r.id,
+        identity_id: key,
+        kind: r.user_id ? "user" : "visitor",
+        label,
+        email: profile?.email ?? null,
+        visit_index: idx,
+        total_visits: totals.get(key) ?? idx,
+        occurred_at: r.occurred_at,
+        gap_ms: prev ? ts - prev : null,
+        type: r.type,
+        path: r.path,
+        country: r.country,
+        city: r.city,
+        browser: r.browser,
+        os: r.os,
+        device: r.device,
       });
     });
 
-    // Resumen por día/semana/mes (basado en start_at)
-    const now = Date.now();
-    const dayMs = 86400 * 1000;
-    const startToday = new Date();
-    startToday.setHours(0, 0, 0, 0);
-    const startTodayMs = startToday.getTime();
-    const startWeekMs = startTodayMs - 6 * dayMs; // últimos 7 días
-    const startMonthMs = now - 30 * dayMs;        // últimos 30 días
-
-    function bucketStats(fromMs: number) {
-      const segs = sessions.filter((s) => new Date(s.start_at).getTime() >= fromMs);
-      const idents = new Set(segs.map((s) => s.identity_id));
-      const users = new Set(segs.filter((s) => s.kind === "user").map((s) => s.identity_id));
-      const guests = new Set(segs.filter((s) => s.kind === "visitor").map((s) => s.identity_id));
-      return {
-        sessions: segs.length,
-        unique_identities: idents.size,
-        registered_users: users.size,
-        guests: guests.size,
-      };
-    }
-
-    const summary = {
-      today: bucketStats(startTodayMs),
-      week: bucketStats(startWeekMs),
-      month: bucketStats(startMonthMs),
-    };
-
     const filter = data.search.trim().toLowerCase();
     const filtered = filter
-      ? sessions.filter((s) =>
-          [s.label, s.email, s.country, s.city, s.identity_id]
+      ? visits.filter((s) =>
+          [s.label, s.email, s.country, s.city, s.identity_id, s.path, s.type]
             .filter(Boolean)
             .join(" ")
             .toLowerCase()
             .includes(filter),
         )
-      : sessions;
+      : visits;
 
-    filtered.sort((a, b) => (a.start_at < b.start_at ? 1 : -1));
+    filtered.sort((a, b) => (a.occurred_at < b.occurred_at ? 1 : -1));
 
     return {
-      sessions: filtered.slice(0, data.limit),
+      visits: filtered.slice(0, data.limit),
       total: filtered.length,
-      summary,
     };
   });
+
 
 // ---------- DETALLE ----------
 
