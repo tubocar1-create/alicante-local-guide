@@ -18,12 +18,7 @@ export function LeafletMap({ beaches }: { beaches: Beach[] }) {
   useEffect(() => {
     if (!ref.current) return;
 
-    const fixedCenter: [number, number] = [38.335, -0.47];
     const map = L.map(ref.current, {
-      center: fixedCenter,
-      zoom: 11,
-      minZoom: 11,
-      maxZoom: 11,
       zoomControl: false,
       attributionControl: true,
       dragging: false,
@@ -32,8 +27,13 @@ export function LeafletMap({ beaches }: { beaches: Beach[] }) {
       boxZoom: false,
       keyboard: false,
       touchZoom: false,
-      
+      zoomSnap: 0.25,
     });
+    const bounds = L.latLngBounds(beaches.map((b) => [b.lat, b.lng] as [number, number]));
+    map.fitBounds(bounds, { padding: [28, 28] });
+    const fitZoom = map.getZoom();
+    map.setMinZoom(fitZoom);
+    map.setMaxZoom(fitZoom);
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: "© OpenStreetMap",
