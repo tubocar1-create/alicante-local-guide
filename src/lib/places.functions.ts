@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getGooglePlacesKey } from "@/lib/google-killswitch.server";
+import { fetchGoogle } from "@/lib/observability/google";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export type CachedPlace = {
