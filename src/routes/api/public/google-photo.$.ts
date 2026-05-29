@@ -51,11 +51,14 @@ async function findAnyCachedPhotoForPlace(ref: string, requestedWidth: number) {
   const prefixes = [`places/${placeId}/photos`, `gphotos/places/${placeId}/photos`];
 
   for (const prefix of prefixes) {
-    const { data } = await supabaseAdmin.storage.from(BUCKET).list(prefix, { limit: 50 });
-    const files = data ?? [];
-    for (const width of widths) {
-      const file = files.find((item) => item.name === `w${width}.jpg`);
-      if (file) return `${prefix}/${file.name}`;
+    const { data: photoDirs } = await supabaseAdmin.storage.from(BUCKET).list(prefix, { limit: 50 });
+    for (const photoDir of photoDirs ?? []) {
+      const photoPrefix = `${prefix}/${photoDir.name}`;
+      const { data: files } = await supabaseAdmin.storage.from(BUCKET).list(photoPrefix, { limit: 10 });
+      for (const width of widths) {
+        const file = (files ?? []).find((item) => item.name === `w${width}.jpg`);
+        if (file) return `${photoPrefix}/${file.name}`;
+      }
     }
   }
   return null;
