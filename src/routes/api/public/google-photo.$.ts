@@ -62,8 +62,10 @@ export const Route = createFileRoute("/api/public/google-photo/$")({
         }
 
         // 2. No estaba en Storage → llamar a Google UNA VEZ y cachear para siempre.
-        //    Bypass del kill-switch: el coste está acotado (1 llamada por foto+ancho),
-        //    no es lo que dispara el consumo.
+        //    HONRA el kill-switch: si está OFF, devolvemos 404 sin llamar a Google.
+        if (!(await isGoogleEnabled())) {
+          return new Response("Photo not cached, Google API disabled", { status: 404 });
+        }
         const key = process.env.GOOGLE_PLACES_API_KEY;
         if (!key) return new Response("Photo not cached, no API key", { status: 404 });
 
