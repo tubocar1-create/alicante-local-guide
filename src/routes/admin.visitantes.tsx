@@ -57,7 +57,7 @@ function VisitantesPage() {
             {q.isLoading ? (
               <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Cargando…</span>
             ) : (
-              `${q.data?.sessions.length ?? 0} de ${q.data?.total ?? 0} sesiones`
+              `${q.data?.visits.length ?? 0} de ${q.data?.total ?? 0} visitas`
             )}
           </CardTitle>
         </CardHeader>
@@ -69,20 +69,20 @@ function VisitantesPage() {
                 <th className="px-3 py-2 text-right">Visita</th>
                 <th className="px-3 py-2 text-left">Ubicación</th>
                 <th className="px-3 py-2 text-left">Dispositivo</th>
-                <th className="px-3 py-2 text-left">Sección top</th>
-                <th className="px-3 py-2 text-right">Eventos</th>
-                <th className="px-3 py-2 text-right">Duración</th>
+                <th className="px-3 py-2 text-left">Ruta</th>
+                <th className="px-3 py-2 text-left">Tipo</th>
+                <th className="px-3 py-2 text-right">Desde anterior</th>
                 <th className="px-3 py-2 text-left">Fecha</th>
-                <th className="px-3 py-2 text-left">Entrada</th>
+                <th className="px-3 py-2 text-left">Hora</th>
               </tr>
             </thead>
             <tbody>
-              {(q.data?.sessions ?? []).map((s) => {
-                const d = new Date(s.start_at);
+              {(q.data?.visits ?? []).map((s) => {
+                const d = new Date(s.occurred_at);
                 const fecha = d.toLocaleDateString("es-ES");
-                const hora = d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+                const hora = d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
                 return (
-                  <tr key={s.session_id} className="border-t hover:bg-muted/30">
+                  <tr key={s.event_id} className="border-t hover:bg-muted/30">
                     <td className="px-3 py-2">
                       <Link to="/admin/visitantes/$id" params={{ id: s.identity_id }} className="flex items-center gap-2 hover:underline">
                         {s.kind === "user" ? <User className="h-3.5 w-3.5 text-primary" /> : <UserX className="h-3.5 w-3.5 text-muted-foreground" />}
@@ -99,17 +99,15 @@ function VisitantesPage() {
                     <td className="px-3 py-2 text-muted-foreground text-xs">
                       {[s.browser, s.os, s.device].filter(Boolean).join(" · ") || "—"}
                     </td>
-                    <td className="px-3 py-2 text-xs">{s.top_path ?? "—"}</td>
-                    <td className="px-3 py-2 text-right">
-                      <Badge variant="secondary">{s.events}</Badge>
-                    </td>
-                    <td className="px-3 py-2 text-right text-xs text-muted-foreground">{formatDuration(s.duration_ms)}</td>
+                    <td className="px-3 py-2 text-xs truncate max-w-[220px]">{s.path ?? "—"}</td>
+                    <td className="px-3 py-2 text-xs text-muted-foreground">{s.type}</td>
+                    <td className="px-3 py-2 text-right text-xs text-muted-foreground">{formatGap(s.gap_ms)}</td>
                     <td className="px-3 py-2 text-muted-foreground text-xs">{fecha}</td>
                     <td className="px-3 py-2 text-muted-foreground text-xs">{hora}</td>
                   </tr>
                 );
               })}
-              {!q.isLoading && (q.data?.sessions.length ?? 0) === 0 && (
+              {!q.isLoading && (q.data?.visits.length ?? 0) === 0 && (
                 <tr>
                   <td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">
                     Sin actividad registrada.
