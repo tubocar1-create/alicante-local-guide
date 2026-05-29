@@ -1666,43 +1666,79 @@ export type Database = {
       }
       interaction_events: {
         Row: {
+          browser: string | null
           business_id: string | null
           campaign_id: string | null
+          city: string | null
           conversion_status: string | null
+          country: string | null
+          device: string | null
           id: string
+          ip_trunc: string | null
           lat: number | null
           lng: number | null
           metadata: Json
           occurred_at: string
+          os: string | null
+          path: string | null
+          referrer: string | null
+          region: string | null
           source: string | null
           type: string
+          user_agent: string | null
           user_id: string | null
+          utm: Json | null
+          visitor_id: string | null
         }
         Insert: {
+          browser?: string | null
           business_id?: string | null
           campaign_id?: string | null
+          city?: string | null
           conversion_status?: string | null
+          country?: string | null
+          device?: string | null
           id?: string
+          ip_trunc?: string | null
           lat?: number | null
           lng?: number | null
           metadata?: Json
           occurred_at?: string
+          os?: string | null
+          path?: string | null
+          referrer?: string | null
+          region?: string | null
           source?: string | null
           type: string
+          user_agent?: string | null
           user_id?: string | null
+          utm?: Json | null
+          visitor_id?: string | null
         }
         Update: {
+          browser?: string | null
           business_id?: string | null
           campaign_id?: string | null
+          city?: string | null
           conversion_status?: string | null
+          country?: string | null
+          device?: string | null
           id?: string
+          ip_trunc?: string | null
           lat?: number | null
           lng?: number | null
           metadata?: Json
           occurred_at?: string
+          os?: string | null
+          path?: string | null
+          referrer?: string | null
+          region?: string | null
           source?: string | null
           type?: string
+          user_agent?: string | null
           user_id?: string | null
+          utm?: Json | null
+          visitor_id?: string | null
         }
         Relationships: [
           {

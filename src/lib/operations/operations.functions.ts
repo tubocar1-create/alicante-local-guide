@@ -2,21 +2,29 @@
  * Centro de Control Operativo — server functions
  *
  * Toda la telemetría operacional (NO IA) vive aquí.
- * - logOperationalEvent: inserta en `interaction_events` con el admin client
- *   (permite tracking anónimo sin necesidad de sesión).
+ * - logOperationalEvent: inserta en `interaction_events` con el admin client.
+ *   Captura IP truncada, país, ciudad, user-agent, referrer y UTM.
  * - listOperationalEvents / getOperationalEvent: lecturas para el dashboard.
  * - saveOperationalReview / listOperationalReviews: anotaciones manuales.
  * - getOperationalKpis: tarjetas superiores (hoy vs ayer).
- *
- * Mantener completamente separado de agente IA / aprendizaje del agente.
  */
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-// Nota: el panel admin se protege vía PIN (sessionStorage), no por auth real.
-// Esta es la misma convención que las server fns de admin-ai.functions.ts.
+import { parseUserAgent } from "@/lib/tracking/ua-parser.server";
 
 // ---------- Schemas ----------
+
+const UtmSchema = z
+  .object({
+    source: z.string().max(128).optional(),
+    medium: z.string().max(128).optional(),
+    campaign: z.string().max(128).optional(),
+    term: z.string().max(128).optional(),
+    content: z.string().max(128).optional(),
+  })
+  .optional();
 
 const TrackSchema = z.object({
   type: z.string().min(1).max(64).regex(/^[a-z0-9_]+$/),
@@ -27,6 +35,9 @@ const TrackSchema = z.object({
   user_id: z.string().uuid().optional().nullable(),
   conversion_status: z.string().max(64).optional().nullable(),
   metadata: z.record(z.string(), z.unknown()).optional().default({}),
+  visitor_id: z.string().min(8).max(64).optional().nullable(),
+  referrer: z.string().max(512).optional().nullable(),
+  utm: UtmSchema,
 });
 
 const ListSchema = z.object({
@@ -52,6 +63,60 @@ const ReviewSchema = z.object({
   note: z.string().max(2000).nullable().optional(),
 });
 
+// ---------- Helpers ----------
+
+/** Devuelve la IP truncada a /24 (IPv4) o /48 (IPv6). Nunca la completa. */
+function truncateIp(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const ip = raw.split(",")[0].trim();
+  if (!ip) return null;
+  // IPv4
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)) {
+    const parts = ip.split(".");
+    return `${parts[0]}.${parts[1]}.${parts[2]}.0`;
+  }
+  // IPv6: nos quedamos con los 3 primeros grupos (≈ /48)
+  if (ip.includes(":")) {
+    const parts = ip.split(":");
+    return parts.slice(0, 3).join(":") + "::";
+  }
+  return null;
+}
+
+type CfLike = { city?: unknown; region?: unknown; country?: unknown };
+
+/** Lee país/ciudad/región desde headers de Cloudflare o request.cf. */
+function readGeo(request: Request): { country: string | null; city: string | null; region: string | null } {
+  const h = request.headers;
+  const country =
+    h.get("cf-ipcountry") ??
+    h.get("x-vercel-ip-country") ??
+    null;
+  let city = h.get("cf-ipcity") ?? h.get("x-vercel-ip-city") ?? null;
+  let region = h.get("cf-region") ?? h.get("x-vercel-ip-country-region") ?? null;
+  // Cloudflare Workers exponen request.cf
+  const cf = (request as unknown as { cf?: CfLike }).cf;
+  if (cf) {
+    if (!city && typeof cf.city === "string") city = cf.city;
+    if (!region && typeof cf.region === "string") region = cf.region;
+  }
+  return {
+    country: country ? country.slice(0, 8) : null,
+    city: city ? city.slice(0, 64) : null,
+    region: region ? region.slice(0, 64) : null,
+  };
+}
+
+function readIp(request: Request): string | null {
+  const h = request.headers;
+  return (
+    h.get("cf-connecting-ip") ??
+    h.get("x-real-ip") ??
+    h.get("x-forwarded-for") ??
+    null
+  );
+}
+
 // ---------- Tracking (público, fire-and-forget) ----------
 
 /**
@@ -62,6 +127,19 @@ export const logOperationalEvent = createServerFn({ method: "POST" })
   .inputValidator((input) => TrackSchema.parse(input))
   .handler(async ({ data }) => {
     try {
+      let ipTrunc: string | null = null;
+      let geo = { country: null as string | null, city: null as string | null, region: null as string | null };
+      let ua: string | null = null;
+      try {
+        const req = getRequest();
+        ipTrunc = truncateIp(readIp(req));
+        geo = readGeo(req);
+        ua = req.headers.get("user-agent");
+      } catch {
+        /* fuera de un request — no aplica */
+      }
+      const uaParsed = ua ? parseUserAgent(ua) : { browser: null, os: null, device: null };
+
       await supabaseAdmin.from("interaction_events").insert({
         type: data.type,
         business_id: data.business_id ?? null,
@@ -73,6 +151,18 @@ export const logOperationalEvent = createServerFn({ method: "POST" })
           ...data.metadata,
           route: data.route ?? null,
         } as never,
+        visitor_id: data.visitor_id ?? null,
+        ip_trunc: ipTrunc,
+        country: geo.country,
+        city: geo.city,
+        region: geo.region,
+        user_agent: ua ? ua.slice(0, 512) : null,
+        device: uaParsed.device,
+        browser: uaParsed.browser,
+        os: uaParsed.os,
+        referrer: data.referrer ?? null,
+        utm: data.utm ? (data.utm as never) : null,
+        path: data.route ?? null,
       });
       return { ok: true };
     } catch (e) {
@@ -145,7 +235,6 @@ export const listOperationalEvents = createServerFn({ method: "POST" })
 
     if (data.type) q = q.eq("type", data.type);
     if (data.search) {
-      // búsqueda básica por tipo o source
       q = q.or(`type.ilike.%${data.search}%,source.ilike.%${data.search}%`);
     }
 
