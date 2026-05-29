@@ -1064,9 +1064,9 @@ export function ChatScreen() {
                         ) : t.label === "Vuelos" ? (
                           <img src={vuelosAvionIcon} alt="" className="h-[82%] w-[82%] object-contain" />
                         ) : t.label === "Servicios sanitarios" ? (
-                          <img src={saludTiritaIcon} alt="" className="absolute inset-0 m-auto h-[95%] w-[95%] object-contain" />
+                          <img src={saludTiritaIcon} alt="" className="h-[78%] w-[78%] object-contain" />
                         ) : t.label === "Comer" ? (
-                          <img src={comerPaellaIcon} alt="" className="absolute inset-0 m-auto h-[105%] w-[105%] object-contain" />
+                          <img src={comerPaellaIcon} alt="" className="h-[82%] w-[82%] object-contain" />
                         ) : Icon ? (
                           <Icon className="h-5 w-5 lg:h-7 lg:w-7" strokeWidth={1.9} style={{ color: pastel.fg }} />
                         ) : (
