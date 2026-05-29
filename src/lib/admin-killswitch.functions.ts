@@ -31,6 +31,9 @@ export const setGoogleKillSwitch = createServerFn({ method: "POST" })
   .inputValidator((d: { enabled: boolean }) => d)
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
+    if (data.enabled) {
+      throw new Error("Bloqueo de emergencia activo: Google no se puede reactivar desde el panel.");
+    }
     await supabaseAdmin
       .from("system_flags")
       .upsert(

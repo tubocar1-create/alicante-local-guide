@@ -209,15 +209,15 @@ function KillSwitchCard() {
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-muted-foreground">
-          Cuando está apagado, ningún server function de la app llamará a Google
-          Places, Maps, Geocoding o Directions. Los proxies de fotos devolverán
-          503. La caché perpetua de detalles sigue sirviendo lo ya guardado.
+          Hay un bloqueo de emergencia en código: aunque alguien pulse permitir,
+          las llamadas salientes a Google siguen bloqueadas. Las fotos y datos ya
+          cacheados siguen saliendo de almacenamiento/BD.
         </p>
         <div className="flex gap-2">
           <Button
             variant={enabled ? "default" : "outline"}
             onClick={() => m.mutate(true)}
-            disabled={m.isPending}
+            disabled
           >
             Permitir llamadas
           </Button>
