@@ -1,60 +1,71 @@
+# Tracking de visitantes y vista por usuario en admin
+
 ## Objetivo
+Rastrear actividad de usuarios logueados Y visitantes anónimos (con `visitor_id` persistente), enriquecer cada evento con IP truncada + país + ciudad + UA + referrer + UTM, y exponer una pantalla de admin por usuario/visitante con timeline y preferencias inferidas.
 
-Reducir las llamadas a Google API a su mínima expresión: **una sola vez por dato, y para siempre**. Los refrescos los decide la administración (botón manual o cron muy espaciado, no por visita de usuario).
+## 1. Base de datos (migración)
 
-## Principio
+Ampliar `interaction_events` con columnas nuevas (nullable, no rompe nada existente):
+- `visitor_id text` — UUID anónimo persistente en cookie/localStorage del navegador
+- `ip_trunc text` — IP truncada a /24 (ej. `81.32.45.0`)
+- `country text`, `city text`, `region text`
+- `user_agent text`, `device text` (mobile/desktop/tablet), `browser text`, `os text`
+- `referrer text`
+- `utm jsonb` — `{source, medium, campaign, term, content}`
+- `path text` — ruta normalizada (ya viene en `metadata.route`, pero indexar)
+- Índices: `(visitor_id, occurred_at desc)`, `(user_id, occurred_at desc)`, `(country)`, `(occurred_at desc)`
 
-Hay 2 tipos de llamadas a Google y cada una tiene su tratamiento:
+Política RLS nueva: permitir INSERT anónimo desde el server (vía service role en el endpoint público), así que **no** se cambian las políticas — el endpoint usa `supabaseAdmin`.
 
-1. **Fotos** (Places Photos) → se descargan **una vez** y se guardan como archivo en nuestro Storage. A partir de ahí, las imágenes se sirven desde nuestro propio dominio. Google no se vuelve a llamar **nunca** para esa foto.
-2. **Datos** (searchText, place details, nearby) → se guardan en base de datos **sin caducidad automática**. Solo se refrescan cuando el admin pulsa "Refrescar" o por un cron mensual/bimestral.
+## 2. Endpoint público `/api/public/track`
 
-## Cambios concretos
+Nuevo `src/routes/api/public/track.ts`. Recibe POST con `{type, visitor_id, path, metadata, referrer, utm}`. El servidor:
+- Lee IP de `cf-connecting-ip` o `x-forwarded-for`, la trunca a /24
+- Lee país/ciudad/región de los headers de Cloudflare (`cf-ipcountry`, `request.cf.city`, `request.cf.region`)
+- Parsea UA con un mini-parser propio (no añade dependencias pesadas)
+- Inserta en `interaction_events` con `supabaseAdmin`
+- Valida con Zod, rate-limit suave por `visitor_id` (descarta duplicados <500ms)
 
-### 1. Proxy único de fotos `/api/public/google-photo/$`
-- Generalizar el patrón que ya usa `shop-photo.$.ts`.
-- Acepta cualquier referencia `places/{placeId}/photos/{photoId}`.
-- Flujo: ¿existe en Storage? → redirigir. Si no → 1 llamada a Google, descargar bytes, subir a Storage, redirigir. **Nunca más se vuelve a llamar a Google para esa foto.**
+## 3. Cliente
 
-### 2. Migrar todos los call-sites de fotos al proxy
-Eliminar las llamadas directas a `places.googleapis.com/.../media` en:
-- `hotels.server.ts` → `main_image` deja de ser una URL firmada con la API key; pasa a ser una URL del proxy. (Bonus: ya no se filtra la API key en el HTML).
-- `hotels.functions.ts` → `getHotelPhotos` devuelve URLs del proxy, no llama a Google.
-- `places.functions.ts` → `resolvePhotoUri` y `getPlacePhotos` devuelven URLs del proxy.
-- `health.functions.ts` y `health-google.functions.ts` → idem.
+Nuevo `src/lib/tracking/visitor.ts`:
+- `getVisitorId()` — genera y persiste un UUID en `localStorage` (`vamos_vid`) + cookie (1 año)
+- `captureUTM()` — parsea `?utm_*` al cargar y los persiste en `sessionStorage`
 
-Resultado: **0 llamadas a Google por visita de usuario** una vez que la foto se ha cacheado la primera vez.
+Modificar `src/lib/operations/trackOperationalEvent.ts`:
+- Sustituir la llamada a `logOperationalEvent` (server function actual) por un `fetch('/api/public/track', { keepalive: true })` con `visitor_id`, `referrer`, `utm`, `user_id` (si hay sesión).
+- Mantener firma — los call-sites no cambian.
 
-### 3. Datos (searchText / details / nearby) sin auto-refresco
-- Subir `STALE_MS` de `places_cache` de 60 días a **infinito** (solo refresco manual).
-- `hotels_static`: ya es manual. Quitar cualquier llamada a `syncStaticHotelsImpl` desde rutas públicas o loaders. Solo se invoca desde admin.
-- Confirmar que `playas-map`, `bus-geocode`, `health-google` solo se llaman bajo demanda y cachean lo que devuelven.
+Wiring global: en `__root.tsx` (o un hook en `RootComponent`) hacer un `trackOperationalEvent({type:'page_view'})` en cada cambio de ruta (escucha de `router.subscribe('onResolved')`).
 
-### 4. Panel admin "Refresco de datos Google"
-Nueva sección en `/admin/consumo-google` (o página dedicada `/admin/refresco-google`) con botones para disparar manualmente:
-- Refrescar hoteles (re-ejecuta `syncStaticHotelsImpl`).
-- Refrescar restaurantes por categoría (places_cache).
-- Refrescar fotos de playas.
-- Refrescar lugares de salud.
-Cada botón muestra: última fecha de refresco, nº de registros, llamadas estimadas.
+## 4. Admin: vista por usuario/visitante
 
-### 5. Cron opcional (muy espaciado)
-Dejar preparado pero **desactivado por defecto**: un cron mensual/bimestral que llama a los mismos endpoints de admin. Lo activa el admin si quiere.
+Ampliar `/admin/usuarios` (lista) para incluir también visitantes anónimos (agrupados por `visitor_id` cuando no hay `user_id`). Mostrar:
+- email/nombre o "Anónimo · {visitor_id corto}"
+- país·ciudad de la última visita
+- nº de sesiones, última visita, total de eventos
 
-## Resultado esperado
+Nueva ruta `/admin/usuarios.$id.tsx` (id = user_id UUID o `v:{visitor_id}`):
+- **Cabecera**: identidad, primera/última visita, país·ciudad, navegador, dispositivo
+- **Preferencias inferidas**: top 5 secciones (`/playas`, `/tram`, `/comprar`…), top categorías de comercio, horarios de uso (mañana/tarde/noche)
+- **Timeline**: últimos 100 eventos con ruta, tipo, ts, metadata
+- **Adquisición**: referrer + UTM de la primera visita
 
-| Antes | Después |
-|---|---|
-| Cada visita a `/hotel/:id` → hasta 20 llamadas a Google | 0 llamadas (todo en Storage) |
-| Cada `<img main_image>` de hotel → 1 llamada Google | 0 llamadas (URL del proxy) |
-| Lista de restaurantes → fotos via Google cada vez | 0 llamadas (proxy + Storage) |
-| `places_cache` se refresca solo a los 60 días | Nunca, salvo botón admin |
-| Coste Google previsto | ~0 € en régimen permanente, picos solo al refrescar manualmente |
+Server functions nuevas en `src/lib/admin/visitors.functions.ts` (protegidas con `requireSupabaseAuth` + check de rol admin):
+- `listVisitors({limit, offset, filter})` 
+- `getVisitorTimeline({id})` — devuelve cabecera + agregados + eventos
+
+## 5. Privacidad
+- IP siempre truncada a /24 (nunca se guarda la IP completa)
+- Añadir nota en `/legal/privacidad` mencionando el `visitor_id` y la IP truncada para analítica propia
+- Sin cambios en GA4 (ya estaba)
 
 ## Detalles técnicos
+- Cloudflare Workers expone IP y geo vía headers (`cf-connecting-ip`, `cf-ipcountry`) y `request.cf` en runtime. No requiere servicio externo.
+- UA parsing: función propia ~40 líneas (regex sobre `Mozilla/.../Chrome/...`). No instalamos `ua-parser-js`.
+- El endpoint público nunca devuelve datos del usuario; solo `{ok:true}`.
 
-- El proxy guarda en bucket público `shop-photos` (reutilizar) bajo `places/{placeId}/photos/{photoId}/w{width}.jpg`.
-- Para `hotels_static.main_image`: durante el próximo `syncStaticHotelsImpl`, guardar la **referencia `photo.name`** en `raw`, y construir `main_image` como `/api/public/google-photo/{photo.name}?w=600`. Backfill: una migración SQL que reescribe los `main_image` existentes desde `raw.photos[0].name`.
-- Plan de borrado: no se borra nada. Si una foto cambia en Google, el admin pulsa "Invalidar foto" (botón opcional) que borra el objeto del bucket y la siguiente petición la vuelve a descargar.
-
-¿Confirmas y lo implemento en este orden? (1) proxy genérico, (2) migrar hotels (sangrado nº1), (3) migrar places/health, (4) admin de refresco.
+## Fuera de alcance
+- Heatmaps / session replay (eso es Hotjar/Clarity, otro nivel)
+- Fingerprinting más allá del visitor_id en cookie
+- Export CSV (se puede añadir luego)
