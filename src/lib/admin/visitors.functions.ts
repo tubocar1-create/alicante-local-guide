@@ -313,3 +313,30 @@ function estimateSessions(events: RawEvent[]): number {
   }
   return sessions;
 }
+
+// Agrupa timestamps (ms) en sesiones (gap > 30 min) y suma la duración
+// total como la suma de (max-min) de cada sesión. Sesiones de 1 evento
+// aportan 0 ms.
+function computeSessionsAndDuration(timestamps: number[]): {
+  sessions: number;
+  duration_ms: number;
+} {
+  if (timestamps.length === 0) return { sessions: 0, duration_ms: 0 };
+  const asc = timestamps.slice().sort((a, b) => a - b);
+  const GAP = 30 * 60 * 1000;
+  let sessions = 1;
+  let duration = 0;
+  let sessionStart = asc[0];
+  let last = asc[0];
+  for (let i = 1; i < asc.length; i++) {
+    const t = asc[i];
+    if (t - last > GAP) {
+      duration += last - sessionStart;
+      sessions++;
+      sessionStart = t;
+    }
+    last = t;
+  }
+  duration += last - sessionStart;
+  return { sessions, duration_ms: duration };
+}
