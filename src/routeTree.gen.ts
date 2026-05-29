@@ -115,6 +115,7 @@ import { Route as ApiPublicBusEtaRouteImport } from './routes/api/public/bus-eta
 import { Route as ApiPublicBookingCreateRouteImport } from './routes/api/public/booking-create'
 import { Route as ApiPublicAuthEmailHookRouteImport } from './routes/api/public/auth-email-hook'
 import { Route as ApiPublicAenaFlightsRouteImport } from './routes/api/public/aena-flights'
+import { Route as AdminVisitantesIdRouteImport } from './routes/admin.visitantes.$id'
 import { Route as AdminAiUnknownQueriesRouteImport } from './routes/admin.ai.unknown-queries'
 import { Route as AdminAiSupervisionRouteImport } from './routes/admin.ai.supervision'
 import { Route as AdminAiOperacionRouteImport } from './routes/admin.ai.operacion'
@@ -684,6 +685,11 @@ const ApiPublicAenaFlightsRoute = ApiPublicAenaFlightsRouteImport.update({
   path: '/api/public/aena-flights',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminVisitantesIdRoute = AdminVisitantesIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AdminVisitantesRoute,
+} as any)
 const AdminAiUnknownQueriesRoute = AdminAiUnknownQueriesRouteImport.update({
   id: '/unknown-queries',
   path: '/unknown-queries',
@@ -910,7 +916,7 @@ export interface FileRoutesByFullPath {
   '/admin/system': typeof AdminSystemRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
   '/admin/usuarios-auth': typeof AdminUsuariosAuthRoute
-  '/admin/visitantes': typeof AdminVisitantesRoute
+  '/admin/visitantes': typeof AdminVisitantesRouteWithChildren
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
@@ -962,6 +968,7 @@ export interface FileRoutesByFullPath {
   '/admin/ai/operacion': typeof AdminAiOperacionRoute
   '/admin/ai/supervision': typeof AdminAiSupervisionRoute
   '/admin/ai/unknown-queries': typeof AdminAiUnknownQueriesRoute
+  '/admin/visitantes/$id': typeof AdminVisitantesIdRoute
   '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
   '/api/public/auth-email-hook': typeof ApiPublicAuthEmailHookRoute
   '/api/public/booking-create': typeof ApiPublicBookingCreateRoute
@@ -1049,7 +1056,7 @@ export interface FileRoutesByTo {
   '/admin/system': typeof AdminSystemRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
   '/admin/usuarios-auth': typeof AdminUsuariosAuthRoute
-  '/admin/visitantes': typeof AdminVisitantesRoute
+  '/admin/visitantes': typeof AdminVisitantesRouteWithChildren
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
@@ -1101,6 +1108,7 @@ export interface FileRoutesByTo {
   '/admin/ai/operacion': typeof AdminAiOperacionRoute
   '/admin/ai/supervision': typeof AdminAiSupervisionRoute
   '/admin/ai/unknown-queries': typeof AdminAiUnknownQueriesRoute
+  '/admin/visitantes/$id': typeof AdminVisitantesIdRoute
   '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
   '/api/public/auth-email-hook': typeof ApiPublicAuthEmailHookRoute
   '/api/public/booking-create': typeof ApiPublicBookingCreateRoute
@@ -1192,7 +1200,7 @@ export interface FileRoutesById {
   '/admin/system': typeof AdminSystemRoute
   '/admin/usuarios': typeof AdminUsuariosRoute
   '/admin/usuarios-auth': typeof AdminUsuariosAuthRoute
-  '/admin/visitantes': typeof AdminVisitantesRoute
+  '/admin/visitantes': typeof AdminVisitantesRouteWithChildren
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/reset-password': typeof AuthResetPasswordRoute
@@ -1244,6 +1252,7 @@ export interface FileRoutesById {
   '/admin/ai/operacion': typeof AdminAiOperacionRoute
   '/admin/ai/supervision': typeof AdminAiSupervisionRoute
   '/admin/ai/unknown-queries': typeof AdminAiUnknownQueriesRoute
+  '/admin/visitantes/$id': typeof AdminVisitantesIdRoute
   '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
   '/api/public/auth-email-hook': typeof ApiPublicAuthEmailHookRoute
   '/api/public/booking-create': typeof ApiPublicBookingCreateRoute
@@ -1388,6 +1397,7 @@ export interface FileRouteTypes {
     | '/admin/ai/operacion'
     | '/admin/ai/supervision'
     | '/admin/ai/unknown-queries'
+    | '/admin/visitantes/$id'
     | '/api/public/aena-flights'
     | '/api/public/auth-email-hook'
     | '/api/public/booking-create'
@@ -1527,6 +1537,7 @@ export interface FileRouteTypes {
     | '/admin/ai/operacion'
     | '/admin/ai/supervision'
     | '/admin/ai/unknown-queries'
+    | '/admin/visitantes/$id'
     | '/api/public/aena-flights'
     | '/api/public/auth-email-hook'
     | '/api/public/booking-create'
@@ -1669,6 +1680,7 @@ export interface FileRouteTypes {
     | '/admin/ai/operacion'
     | '/admin/ai/supervision'
     | '/admin/ai/unknown-queries'
+    | '/admin/visitantes/$id'
     | '/api/public/aena-flights'
     | '/api/public/auth-email-hook'
     | '/api/public/booking-create'
@@ -2543,6 +2555,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAenaFlightsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/visitantes/$id': {
+      id: '/admin/visitantes/$id'
+      path: '/$id'
+      fullPath: '/admin/visitantes/$id'
+      preLoaderRoute: typeof AdminVisitantesIdRouteImport
+      parentRoute: typeof AdminVisitantesRoute
+    }
     '/admin/ai/unknown-queries': {
       id: '/admin/ai/unknown-queries'
       path: '/unknown-queries'
@@ -2825,6 +2844,18 @@ const AdminAiRouteChildren: AdminAiRouteChildren = {
 const AdminAiRouteWithChildren =
   AdminAiRoute._addFileChildren(AdminAiRouteChildren)
 
+interface AdminVisitantesRouteChildren {
+  AdminVisitantesIdRoute: typeof AdminVisitantesIdRoute
+}
+
+const AdminVisitantesRouteChildren: AdminVisitantesRouteChildren = {
+  AdminVisitantesIdRoute: AdminVisitantesIdRoute,
+}
+
+const AdminVisitantesRouteWithChildren = AdminVisitantesRoute._addFileChildren(
+  AdminVisitantesRouteChildren,
+)
+
 interface AdminRouteChildren {
   AdminAiRoute: typeof AdminAiRouteWithChildren
   AdminArquitecturaRoute: typeof AdminArquitecturaRoute
@@ -2843,7 +2874,7 @@ interface AdminRouteChildren {
   AdminSystemRoute: typeof AdminSystemRoute
   AdminUsuariosRoute: typeof AdminUsuariosRoute
   AdminUsuariosAuthRoute: typeof AdminUsuariosAuthRoute
-  AdminVisitantesRoute: typeof AdminVisitantesRoute
+  AdminVisitantesRoute: typeof AdminVisitantesRouteWithChildren
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
@@ -2865,7 +2896,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminSystemRoute: AdminSystemRoute,
   AdminUsuariosRoute: AdminUsuariosRoute,
   AdminUsuariosAuthRoute: AdminUsuariosAuthRoute,
-  AdminVisitantesRoute: AdminVisitantesRoute,
+  AdminVisitantesRoute: AdminVisitantesRouteWithChildren,
   AdminIndexRoute: AdminIndexRoute,
 }
 
