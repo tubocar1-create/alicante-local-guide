@@ -109,12 +109,13 @@ export const listVisitors = createServerFn({ method: "POST" })
       occurred_at: string; country: string | null; city: string | null;
       browser: string | null; os: string | null; device: string | null; path: string | null;
       referrer: string | null; utm: Record<string, string> | null;
+      metadata: Record<string, unknown> | null;
     }> = [];
     for (let from = 0; from < MAX_ROWS; from += CHUNK) {
       const { data: chunk, error } = await supabaseAdmin
         .from("interaction_events")
         .select(
-          "id,type,user_id,visitor_id,occurred_at,country,city,browser,os,device,path,referrer,utm",
+          "id,type,user_id,visitor_id,occurred_at,country,city,browser,os,device,path,referrer,utm,metadata",
         )
         .gte("occurred_at", since)
         .order("occurred_at", { ascending: true })
@@ -140,68 +141,95 @@ export const listVisitors = createServerFn({ method: "POST" })
       );
     }
 
-    // Agrupar eventos por identidad → sesiones (gap > 30 min)
-    const byIdentity = new Map<string, typeof rows>();
+    // Identidad de cada evento
+    const identityOfRow = (r: typeof rows[number]) =>
+      r.user_id ? `u:${r.user_id}` : r.visitor_id ? `v:${r.visitor_id}` : null;
+
+    // session_id real (sessionStorage del navegador) o fallback legacy
+    // identidad+día para eventos antiguos sin session_id.
+    const sessionKeyOf = (r: typeof rows[number]): string | null => {
+      const ident = identityOfRow(r);
+      if (!ident) return null;
+      const sid =
+        r.metadata && typeof (r.metadata as Record<string, unknown>).session_id === "string"
+          ? ((r.metadata as Record<string, unknown>).session_id as string)
+          : null;
+      if (sid) return `${ident}#${sid}`;
+      // Legacy fallback: identidad + día UTC
+      const day = r.occurred_at.slice(0, 10);
+      return `${ident}#legacy:${day}`;
+    };
+
+    // Agrupar eventos por sesión
+    const bySession = new Map<string, typeof rows>();
     for (const r of rows) {
-      const key = r.user_id ? `u:${r.user_id}` : r.visitor_id ? `v:${r.visitor_id}` : null;
+      const key = sessionKeyOf(r);
       if (!key) continue;
-      const arr = byIdentity.get(key) ?? [];
+      const arr = bySession.get(key) ?? [];
       arr.push(r);
-      byIdentity.set(key, arr);
+      bySession.set(key, arr);
     }
 
+    // Agrupar sesiones por identidad para calcular visit_index/total_visits
+    const sessionsByIdentity = new Map<string, string[]>();
+    bySession.forEach((evs, key) => {
+      const ident = identityOfRow(evs[0]);
+      if (!ident) return;
+      const arr = sessionsByIdentity.get(ident) ?? [];
+      arr.push(key);
+      sessionsByIdentity.set(ident, arr);
+    });
+    // Ordenar las sesiones de cada identidad por hora de inicio
+    sessionsByIdentity.forEach((keys) => {
+      keys.sort((a, b) => {
+        const ea = bySession.get(a)![0].occurred_at;
+        const eb = bySession.get(b)![0].occurred_at;
+        return ea < eb ? -1 : 1;
+      });
+    });
+
     const visits: VisitRow[] = [];
-    byIdentity.forEach((evs, key) => {
-      const isUser = key.startsWith("u:");
-      const refId = key.slice(2);
+    bySession.forEach((seg, key) => {
+      const ident = identityOfRow(seg[0])!;
+      const isUser = ident.startsWith("u:");
+      const refId = ident.slice(2);
       const profile = isUser ? profileMap.get(refId) : undefined;
       const label =
         profile?.name ??
         profile?.email ??
         (isUser ? `Usuario · ${refId.slice(0, 8)}` : `Anónimo · ${refId.slice(0, 8)}`);
 
-      // segmentar
-      const segs: typeof rows[] = [];
-      let cur: typeof rows = [];
-      let lastTs = 0;
-      for (const e of evs) {
-        const t = new Date(e.occurred_at).getTime();
-        if (cur.length === 0 || t - lastTs <= SESSION_GAP_MS) cur.push(e);
-        else { segs.push(cur); cur = [e]; }
-        lastTs = t;
-      }
-      if (cur.length > 0) segs.push(cur);
+      const start = seg[0];
+      const last = seg[seg.length - 1];
+      const startT = new Date(start.occurred_at).getTime();
+      const endT = new Date(last.occurred_at).getTime();
+      const firstWithGeo = seg.find((e) => e.country || e.city) ?? start;
+      const firstWithUa = seg.find((e) => e.browser || e.os || e.device) ?? start;
+      const firstWithRef = seg.find((e) => e.referrer || (e.utm && Object.keys(e.utm).length > 0)) ?? start;
+      const pages = new Set(seg.map((e) => e.path).filter(Boolean) as string[]).size;
+      const idxList = sessionsByIdentity.get(ident) ?? [key];
+      const visit_index = idxList.indexOf(key) + 1;
+      const total_visits = idxList.length;
 
-      const total = segs.length;
-      segs.forEach((seg, idx) => {
-        const start = seg[0];
-        const last = seg[seg.length - 1];
-        const startT = new Date(start.occurred_at).getTime();
-        const endT = new Date(last.occurred_at).getTime();
-        const firstWithGeo = seg.find((e) => e.country || e.city) ?? start;
-        const firstWithUa = seg.find((e) => e.browser || e.os || e.device) ?? start;
-        const firstWithRef = seg.find((e) => e.referrer || (e.utm && Object.keys(e.utm).length > 0)) ?? start;
-        const pages = new Set(seg.map((e) => e.path).filter(Boolean) as string[]).size;
-        visits.push({
-          session_id: `${key}@${start.occurred_at}`,
-          identity_id: key,
-          kind: isUser ? "user" : "visitor",
-          label,
-          email: profile?.email ?? null,
-          visit_index: idx + 1,
-          total_visits: total,
-          start_at: start.occurred_at,
-          end_at: last.occurred_at,
-          duration_ms: endT - startT,
-          events_count: seg.length,
-          pages_count: pages,
-          country: firstWithGeo.country,
-          city: firstWithGeo.city,
-          browser: firstWithUa.browser,
-          os: firstWithUa.os,
-          device: firstWithUa.device,
-          source: sourceFromRef(firstWithRef.referrer, firstWithRef.utm),
-        });
+      visits.push({
+        session_id: key,
+        identity_id: ident,
+        kind: isUser ? "user" : "visitor",
+        label,
+        email: profile?.email ?? null,
+        visit_index,
+        total_visits,
+        start_at: start.occurred_at,
+        end_at: last.occurred_at,
+        duration_ms: endT - startT,
+        events_count: seg.length,
+        pages_count: pages,
+        country: firstWithGeo.country,
+        city: firstWithGeo.city,
+        browser: firstWithUa.browser,
+        os: firstWithUa.os,
+        device: firstWithUa.device,
+        source: sourceFromRef(firstWithRef.referrer, firstWithRef.utm),
       });
     });
 
