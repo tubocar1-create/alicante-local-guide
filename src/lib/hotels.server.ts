@@ -121,23 +121,29 @@ export async function syncStaticHotelsImpl() {
   const seen = new Map<string, any>();
   for (const center of centers) {
     for (const type of INCLUDED_TYPES) {
-      const res = await fetch(PLACES_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Goog-Api-Key": apiKey,
-          "X-Goog-FieldMask": FIELD_MASK,
-        },
-        body: JSON.stringify({
-          includedTypes: [type],
-          maxResultCount: 20,
-          locationRestriction: {
-            circle: {
-              center: { latitude: center.lat, longitude: center.lng },
-              radius: SUBCELL_RADIUS_M,
-            },
+      const res = await fetchGoogle({
+        provider: "google_places",
+        endpoint: "places:searchNearby",
+        caller: "hotels:syncStaticHotels",
+        url: PLACES_URL,
+        init: {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Goog-Api-Key": apiKey,
+            "X-Goog-FieldMask": FIELD_MASK,
           },
-        }),
+          body: JSON.stringify({
+            includedTypes: [type],
+            maxResultCount: 20,
+            locationRestriction: {
+              circle: {
+                center: { latitude: center.lat, longitude: center.lng },
+                radius: SUBCELL_RADIUS_M,
+              },
+            },
+          }),
+        },
       });
       if (!res.ok) continue;
       const json = (await res.json()) as { places?: any[] };

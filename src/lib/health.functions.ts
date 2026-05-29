@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getGooglePlacesKey } from "@/lib/google-killswitch.server";
+import { fetchGoogle } from "@/lib/observability/google";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -208,19 +209,25 @@ async function fetchGooglePhotosForCenter(
 
   try {
     const textQuery = [name, address, municipality].filter(Boolean).join(", ");
-    const searchRes = await fetch("https://places.googleapis.com/v1/places:searchText", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": apiKey,
-        "X-Goog-FieldMask": "places.id,places.displayName,places.photos",
+    const searchRes = await fetchGoogle({
+      provider: "google_places",
+      endpoint: "places:searchText",
+      caller: "health:findPhotos",
+      url: "https://places.googleapis.com/v1/places:searchText",
+      init: {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": apiKey,
+          "X-Goog-FieldMask": "places.id,places.displayName,places.photos",
+        },
+        body: JSON.stringify({
+          textQuery,
+          languageCode: "es",
+          regionCode: "ES",
+          maxResultCount: 1,
+        }),
       },
-      body: JSON.stringify({
-        textQuery,
-        languageCode: "es",
-        regionCode: "ES",
-        maxResultCount: 1,
-      }),
     });
     if (!searchRes.ok) return { photos: [], placeId: cachedPlaceId };
     const sj = (await searchRes.json()) as {

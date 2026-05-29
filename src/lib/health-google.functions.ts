@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getGooglePlacesKey } from "@/lib/google-killswitch.server";
+import { fetchGoogle } from "@/lib/observability/google";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -68,25 +69,31 @@ async function searchTextNear(
   center: { name?: string; lat: number; lng: number },
   radius = 12000,
 ): Promise<GPlace[]> {
-  const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Goog-Api-Key": apiKey,
-      "X-Goog-FieldMask": FIELD_MASK,
-    },
-    body: JSON.stringify({
-      textQuery: `${textQuery} ${center.name ?? "Alicante"}`,
-      languageCode: "es",
-      regionCode: "ES",
-      maxResultCount: 20,
-      locationBias: {
-        circle: {
-          center: { latitude: center.lat, longitude: center.lng },
-          radius,
-        },
+  const res = await fetchGoogle({
+    provider: "google_places",
+    endpoint: "places:searchText",
+    caller: "health-google:searchTextNear",
+    url: "https://places.googleapis.com/v1/places:searchText",
+    init: {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask": FIELD_MASK,
       },
-    }),
+      body: JSON.stringify({
+        textQuery: `${textQuery} ${center.name ?? "Alicante"}`,
+        languageCode: "es",
+        regionCode: "ES",
+        maxResultCount: 20,
+        locationBias: {
+          circle: {
+            center: { latitude: center.lat, longitude: center.lng },
+            radius,
+          },
+        },
+      }),
+    },
   });
   if (!res.ok) {
     console.error("Google Places error", res.status, await res.text());
