@@ -166,7 +166,7 @@ function FarmaciasPage() {
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const [zoneOpen, setZoneOpen] = useState(false);
   const [zoneSearch, setZoneSearch] = useState("");
-  const { state: geoState, request: requestGeo } = useUserLocation();
+  const { state: geoState, request: requestGeo } = useUserLocation({ watch: true });
   const userCoords = geoState.status === "ready" ? geoState.coords : null;
 
   useEffect(() => {
