@@ -7,8 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { listVisitors } from "@/lib/admin/visitors.functions";
 
-function formatDuration(ms: number | null | undefined): string {
-  if (!ms || ms < 1000) return "<1s";
+function formatGap(ms: number | null | undefined): string {
+  if (ms == null) return "—";
+  if (ms < 1000) return "<1s";
   const s = Math.floor(ms / 1000);
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
