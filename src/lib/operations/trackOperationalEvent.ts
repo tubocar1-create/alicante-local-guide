@@ -12,7 +12,7 @@
  */
 import { supabase } from "@/integrations/supabase/client";
 import { logOperationalEvent } from "./operations.functions";
-import { getVisitorId, getUtm, getReferrer } from "@/lib/tracking/visitor";
+import { getVisitorId, getUtm, getReferrer, getSessionId } from "@/lib/tracking/visitor";
 
 export type OperationalEventType =
   | "listing_opened"
