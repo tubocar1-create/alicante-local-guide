@@ -31,24 +31,14 @@ function VisitantesPage() {
     staleTime: 60_000,
   });
 
-  const summary = q.data?.summary;
-
   return (
     <div className="space-y-4">
       <header>
         <h1 className="text-2xl font-bold">Visitantes</h1>
         <p className="text-sm text-muted-foreground">
-          Una fila por sesión (gap &gt; 30 min = nueva sesión). Últimos 30 días.
+          Registro completo de visitas. Cada fila es una sesión individual (gap &gt; 30 min = nueva entrada). El contador muestra cuántas veces ha entrado esa identidad. Últimos 30 días. El Dashboard de métricas llegará en otro paso.
         </p>
       </header>
-
-      {summary && (
-        <div className="grid gap-3 sm:grid-cols-3">
-          <SummaryCard title="Hoy" stats={summary.today} />
-          <SummaryCard title="Últimos 7 días" stats={summary.week} />
-          <SummaryCard title="Últimos 30 días" stats={summary.month} />
-        </div>
-      )}
 
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -133,27 +123,3 @@ function VisitantesPage() {
   );
 }
 
-function SummaryCard({
-  title,
-  stats,
-}: {
-  title: string;
-  stats: { sessions: number; unique_identities: number; registered_users: number; guests: number };
-}) {
-  return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm text-muted-foreground">{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-1">
-        <div className="text-2xl font-bold">{stats.sessions}</div>
-        <p className="text-xs text-muted-foreground">sesiones totales</p>
-        <div className="flex gap-3 text-xs pt-1">
-          <span><b>{stats.unique_identities}</b> únicos</span>
-          <span className="text-primary"><b>{stats.registered_users}</b> usuarios</span>
-          <span className="text-muted-foreground"><b>{stats.guests}</b> invitados</span>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
