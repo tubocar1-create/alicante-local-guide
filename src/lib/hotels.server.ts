@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getGooglePlacesKey } from "@/lib/google-killswitch.server";
+import { fetchGoogle } from "@/lib/observability/google";
 
 // Centro de búsqueda: Puerta del Mar, Alicante
 const ALICANTE_LAT = 38.3402;
@@ -58,23 +59,29 @@ function photoUrl(name: string | undefined, _apiKey: string) {
 }
 
 async function nearbyPage(apiKey: string) {
-  const res = await fetch(PLACES_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Goog-Api-Key": apiKey,
-      "X-Goog-FieldMask": FIELD_MASK,
-    },
-    body: JSON.stringify({
-      includedTypes: INCLUDED_TYPES,
-      maxResultCount: 20,
-      locationRestriction: {
-        circle: {
-          center: { latitude: ALICANTE_LAT, longitude: ALICANTE_LNG },
-          radius: RADIUS_M,
-        },
+  const res = await fetchGoogle({
+    provider: "google_places",
+    endpoint: "places:searchNearby",
+    caller: "hotels:nearbyPage",
+    url: PLACES_URL,
+    init: {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask": FIELD_MASK,
       },
-    }),
+      body: JSON.stringify({
+        includedTypes: INCLUDED_TYPES,
+        maxResultCount: 20,
+        locationRestriction: {
+          circle: {
+            center: { latitude: ALICANTE_LAT, longitude: ALICANTE_LNG },
+            radius: RADIUS_M,
+          },
+        },
+      }),
+    },
   });
   if (!res.ok) {
     const text = await res.text();

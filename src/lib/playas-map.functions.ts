@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getGooglePlacesKey } from "@/lib/google-killswitch.server";
+import { fetchGoogle } from "@/lib/observability/google";
 import { z } from "zod";
 import { MAP_BEACHES, getBeachBySlug, LOCAL_BEACH_PHOTOS, GOOGLE_PHOTO_SKIP, type MapBeach } from "./playas-map-data";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -40,19 +41,25 @@ async function findPlaceId(beach: MapBeach): Promise<string | null> {
   const key = await getKey();
   if (!key) return null;
   try {
-    const res = await fetch(`${PLACES_BASE}/places:searchText`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": key,
-        "X-Goog-FieldMask": "places.id",
+    const res = await fetchGoogle({
+      provider: "google_places",
+      endpoint: "places:searchText",
+      caller: "playas-map:findPlaceId",
+      url: `${PLACES_BASE}/places:searchText`,
+      init: {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": key,
+          "X-Goog-FieldMask": "places.id",
+        },
+        body: JSON.stringify({
+          textQuery: `${beach.name} Alicante`,
+          locationBias: { circle: { center: { latitude: beach.lat, longitude: beach.lng }, radius: 3000 } },
+          maxResultCount: 1,
+          languageCode: "es",
+        }),
       },
-      body: JSON.stringify({
-        textQuery: `${beach.name} Alicante`,
-        locationBias: { circle: { center: { latitude: beach.lat, longitude: beach.lng }, radius: 3000 } },
-        maxResultCount: 1,
-        languageCode: "es",
-      }),
     });
     if (!res.ok) return null;
     const j: any = await res.json();
@@ -85,11 +92,17 @@ async function getPlaceDetailsLive(placeId: string): Promise<PlaceDetails | null
   const key = await getKey();
   if (!key) return null;
   try {
-    const res = await fetch(`${PLACES_BASE}/places/${encodeURIComponent(placeId)}?languageCode=es`, {
-      headers: {
-        "X-Goog-Api-Key": key,
-        "X-Goog-FieldMask":
-          "id,photos,reviews,rating,userRatingCount,googleMapsUri,formattedAddress",
+    const res = await fetchGoogle({
+      provider: "google_places",
+      endpoint: "places:details",
+      caller: "playas-map:getPlaceDetailsLive",
+      url: `${PLACES_BASE}/places/${encodeURIComponent(placeId)}?languageCode=es`,
+      init: {
+        headers: {
+          "X-Goog-Api-Key": key,
+          "X-Goog-FieldMask":
+            "id,photos,reviews,rating,userRatingCount,googleMapsUri,formattedAddress",
+        },
       },
     });
 
