@@ -6,9 +6,8 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 //
 // Flujo:
 // 1. ¿Existe ya el archivo en Storage? → 302 a su URL pública (0 llamadas Google).
-// 2. Si no → 1 llamada a Google para la photoUri, descargar bytes, subir a Storage,
-//    302 a la URL pública. A partir de aquí, NUNCA se vuelve a llamar a Google
-//    para esa foto.
+// 2. Si no, busca cualquier foto ya guardada para el mismo placeId.
+// 3. Si tampoco existe, devuelve un píxel transparente. No llama a Google.
 //
 // Reutiliza el bucket público "shop-photos" para no proliferar buckets.
 
@@ -76,8 +75,6 @@ export const Route = createFileRoute("/api/public/google-photo/$")({
           Math.max(parseInt(url.searchParams.get("w") || "800", 10) || 800, 80),
           1600,
         );
-
-        const objectPath = sanitizeKey(ref, w);
 
         // 1. ¿Está cacheada? HEAD a la URL pública (no cuenta como llamada a Google).
         //    Esto se hace SIEMPRE, incluso con el kill-switch apagado: las fotos
