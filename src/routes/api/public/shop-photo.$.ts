@@ -79,10 +79,14 @@ export const Route = createFileRoute("/api/public/shop-photo/$")({
         const cached = await redirectIfCached([objectPath, googlePhotoCacheKey(ref, w)]);
         if (cached) return cached;
 
-        return new Response(null, {
-          status: 302,
-          headers: { Location: FALLBACK_PHOTO, "Cache-Control": "public, max-age=3600" },
+        return new Response(TRANSPARENT_PIXEL, {
+          status: 200,
+          headers: {
+            "Content-Type": "image/gif",
+            "Cache-Control": "public, max-age=3600",
+          },
         });
+
       },
     },
   },
