@@ -57,7 +57,7 @@ function CategoryDashboard() {
     queryKey: ["health-providers", categoria],
     queryFn: () => list({ data: { category: categoria } }),
   });
-  const { state: locState, request: requestLocation } = useUserLocation();
+  const { state: locState, request: requestLocation } = useUserLocation({ watch: true });
 
   const origin: Coords =
     locState.status === "ready" ? locState.coords : ALICANTE;
