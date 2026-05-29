@@ -24,6 +24,8 @@ async function assertAdmin(supabase: any, userId: string) {
   if (!data) throw new Error("forbidden");
 }
 
+type Json = string | number | boolean | null | { [k: string]: Json } | Json[];
+
 type RawEvent = {
   id: string;
   type: string;
@@ -41,7 +43,7 @@ type RawEvent = {
   referrer: string | null;
   utm: Record<string, string> | null;
   ip_trunc: string | null;
-  metadata: Record<string, unknown> | null;
+  metadata: Json | null;
 };
 
 // ---------- LISTA ----------
