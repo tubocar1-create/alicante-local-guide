@@ -368,10 +368,20 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
     }
 
     // ───────────────────────────────── SALUD PÚBLICO (health_centers)
+    // Criterio = experiencia visual del usuario.
+    // /hospitales/:id tiene 4 hospitales con fotos HARDCODEADAS (mocks
+    // Unsplash) → cuentan como "con foto visible" aunque la BD esté vacía.
+    // TODO interno: migrar esos mocks a BD más adelante.
     {
+      const HARDCODED_PHOTO_IDS = new Set<string>([
+        "ac5060da-c9b9-4c74-8dc9-4f209cc4f51c",
+        "1e5fb1fa-0aba-457d-b173-578ea7c4cd1e",
+        "64f8f487-da8d-4aa3-9bb8-b67bf25e6c25",
+        "bf0baa51-3395-48c0-80d7-618a821590b1",
+      ]);
       const { data: rows } = await supabaseAdmin
         .from("health_centers")
-        .select("service_type, google_photo_refs");
+        .select("id, service_type, google_photo_refs");
       const counters = new Map<
         string,
         { total: number; withPhoto: number }
@@ -383,7 +393,11 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
         cur.total++;
         const refs = (r as { google_photo_refs: string[] | null })
           .google_photo_refs;
-        if (Array.isArray(refs) && refs.length > 0) cur.withPhoto++;
+        const id = (r as { id: string }).id;
+        const hasVisible =
+          HARDCODED_PHOTO_IDS.has(id) ||
+          (Array.isArray(refs) && refs.length > 0);
+        if (hasVisible) cur.withPhoto++;
         counters.set(st, cur);
       }
       const subs: SubsectorRow[] = Array.from(counters.entries())
@@ -397,8 +411,8 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
         }));
       sectors.push({
         key: "salud-publico",
-        label: "Salud pública (health_centers)",
-        source: "health_centers.google_photo_refs[]",
+        label: "Salud pública (health_centers) · incluye mocks visibles",
+        source: "health_centers.google_photo_refs[] + 4 mocks hardcoded en /hospitales/:id",
         subsectors: subs,
       });
     }
