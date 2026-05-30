@@ -3379,6 +3379,7 @@ export type Database = {
         Args: { p_retention?: string }
         Returns: number
       }
+      purge_daily_cleanup: { Args: never; Returns: Json }
       purge_event_showtimes_past: {
         Args: { p_retention?: string }
         Returns: number
@@ -3388,6 +3389,7 @@ export type Database = {
         Args: { p_retention?: string }
         Returns: number
       }
+      purge_films_orphan: { Args: never; Returns: number }
       purge_hotels_calendar_past: { Args: never; Returns: number }
       purge_interaction_events: {
         Args: { p_retention?: string }
