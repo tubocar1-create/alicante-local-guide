@@ -534,7 +534,7 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
         const id = (r as { id: string }).id;
         const hasVisible =
           HARDCODED_PHOTO_IDS.has(id) ||
-          photoStrings(refs).some((ref) => hasCachedGooglePhoto(ref, storedGooglePhotos));
+          photoStrings(refs).some((ref) => hasVisiblePhoto(ref, storedGooglePhotos));
         if (hasVisible) cur.withPhoto++;
         counters.set(st, cur);
       }
