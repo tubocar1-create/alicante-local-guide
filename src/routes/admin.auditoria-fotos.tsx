@@ -146,26 +146,39 @@ function AuditoriaFotos() {
         </div>
       </header>
 
-      <Card>
+      <Card className="border-primary/40">
         <CardHeader>
-          <CardTitle className="text-base">Total general (todos los sectores)</CardTitle>
+          <CardTitle className="text-base">
+            Total general (suma de todos los sectores y subsectores)
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-3 gap-3">
-            <Big label="Elementos" value={grand.total} />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Big label="Elementos totales" value={grand.total} />
             <Big
-              label="Con foto"
+              label="Fotos que tenemos"
               value={grand.withPhoto}
               tone="good"
               icon={<ImageIcon className="h-4 w-4" />}
             />
             <Big
-              label="Sin foto"
+              label="Fotos que hacen falta"
               value={grand.withoutPhoto}
               tone="bad"
               icon={<ImageOff className="h-4 w-4" />}
             />
           </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Cobertura global:{" "}
+            <strong>
+              {grand.total > 0
+                ? `${Math.round((grand.withPhoto / grand.total) * 100)}%`
+                : "—"}
+            </strong>{" "}
+            · Faltan <strong>{grand.withoutPhoto.toLocaleString("es-ES")}</strong>{" "}
+            fotos sobre <strong>{grand.total.toLocaleString("es-ES")}</strong>{" "}
+            elementos.
+          </p>
         </CardContent>
       </Card>
 
