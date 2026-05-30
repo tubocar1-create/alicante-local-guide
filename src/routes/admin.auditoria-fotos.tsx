@@ -135,7 +135,7 @@ function AuditoriaFotos() {
           marcar = prohibido. Yo (Lovable) no hago ninguna llamada por mi
           cuenta.
         </p>
-        <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
           <span>
             Generado: {new Date(data.generatedAt).toLocaleString("es-ES")}
           </span>
@@ -143,6 +143,19 @@ function AuditoriaFotos() {
             Subsectores autorizados: <strong>{totalAuthorized}</strong> /{" "}
             {allKeys.length}
           </span>
+          <button
+            type="button"
+            onClick={() => q.refetch()}
+            disabled={q.isFetching}
+            className="inline-flex items-center gap-1 rounded-full border border-border bg-background px-3 py-1 text-xs font-medium text-foreground transition hover:bg-muted disabled:opacity-50"
+          >
+            {q.isFetching ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <span>🔄</span>
+            )}
+            Recalcular ahora
+          </button>
         </div>
       </header>
 
