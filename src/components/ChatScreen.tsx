@@ -2128,6 +2128,15 @@ const DESSERTS_RE = /\b(postres?|heladeri?as?|helader[ií]as?|helados?|gelater[i
 const CHEAP_RE = /\b(barato|baratos?|baratit[oa]s?|econ[oó]mic[oa]s?|low cost|menu del d[ií]a|men[uú] del d[ií]a|menu diario|men[uú] diario|comer barato|sin gastar)\b/i;
 const INTERNATIONAL_RE = /\b(internacional|hind[uú]e?s?|hindi|indi[oa]s?|india|libanes[ae]?|libano|árabe|arabe|peruan[oa]s?|peru|latino[as]?|latinoameric[oa]n[oa]s?|venezolan[oa]s?|colombian[oa]s?|argentin[oa]s?|cuban[oa]s?|brasil|tex.?mex|marroqu[ií]|griego|griega|turco de mesa|sorpr[eé]ndeme)\b/i;
 
+function isFoodCategoryPrompt(text: string) {
+  return DRINKS_RE.test(text) || TYPICAL_RE.test(text) || RICE_FISH_RE.test(text) ||
+    ITALIAN_RE.test(text) || PIZZAS_RE.test(text) || BRUNCH_RE.test(text) ||
+    ASIAN_RE.test(text) || FAST_FOOD_RE.test(text) || BURGERS_RE.test(text) ||
+    MONTADITOS_RE.test(text) || KEBAB_RE.test(text) || FRIED_CHICKEN_RE.test(text) ||
+    MEXICAN_RE.test(text) || VEGAN_RE.test(text) || DESSERTS_RE.test(text) ||
+    CHEAP_RE.test(text) || INTERNATIONAL_RE.test(text);
+}
+
 function isAsianCard(c: PlaceCardData): boolean {
   const hay = `${c.cuisine ?? ""} ${c.name ?? ""} ${c.vibe ?? ""}`;
   return ASIAN_RE.test(hay);
