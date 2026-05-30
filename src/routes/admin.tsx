@@ -25,6 +25,7 @@ import {
   Sparkles,
   Cloud,
   Clock,
+  ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -98,6 +99,7 @@ const HERRAMIENTAS = [
   { to: "/admin/botones-ocultos", label: "Botones ocultos", icon: EyeOff },
   { to: "/admin/auditoria", label: "Auditoría pre-lanzamiento", icon: ClipboardCheck },
   { to: "/admin/crones", label: "Crones programados", icon: Clock },
+  { to: "/admin/auditoria-fotos", label: "Auditoría de fotos", icon: ImageIcon },
   { to: "/admin/system", label: "Sistema", icon: Wrench },
 ] as const;
 
