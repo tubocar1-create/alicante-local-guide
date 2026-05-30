@@ -33,7 +33,7 @@ export const getHotel = createServerFn({ method: "GET" })
     const { data: row, error } = await supabaseAdmin
       .from("hotels_static")
       .select(
-        "id, liteapi_hotel_id, name, address, stars, hotel_type, neighborhood, distance_km, main_image, booking_url, lat, lng, amenities, raw, hotels_dynamic(available, current_price, currency, breakfast_included, free_cancellation, rooms_available, room_types, updated_at)",
+        "id, liteapi_hotel_id, name, address, stars, hotel_type, neighborhood, distance_km, main_image, scraped_photos, booking_url, lat, lng, amenities, raw, hotels_dynamic(available, current_price, currency, breakfast_included, free_cancellation, rooms_available, room_types, updated_at)",
       )
       .eq("id", data.id)
       .maybeSingle();
@@ -134,14 +134,14 @@ export const getHotelPhotos = createServerFn({ method: "GET" })
         .eq("id", data.id);
       return {
         photos: [
+          ...scraped,
           ...photos
             .filter((p) => newFilter[p.name] !== "person")
             .map((p) => `/api/public/google-photo/${p.name}?w=1200`),
-          ...scraped,
         ],
       };
     }
 
-    return { photos: [...urls, ...scraped] };
+    return { photos: [...scraped, ...urls] };
 
   });
