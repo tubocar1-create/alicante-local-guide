@@ -329,8 +329,10 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
       const total = rows?.length ?? 0;
       const withPhoto = (rows ?? []).filter(
         (r) =>
-          Array.isArray((r as { photos: string[] | null }).photos) &&
-          ((r as { photos: string[] }).photos.length ?? 0) > 0,
+          hasVisiblePhotoInArray(
+            (r as { photos: unknown }).photos,
+            storedGooglePhotos,
+          ),
       ).length;
       sectors.push({
         key: "cines",
@@ -356,7 +358,11 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
         .eq("active", true);
       const total = rows?.length ?? 0;
       const withPhoto = (rows ?? []).filter(
-        (r) => !!(r as { poster_url: string | null }).poster_url,
+        (r) =>
+          hasVisiblePhoto(
+            (r as { poster_url: string | null }).poster_url,
+            storedGooglePhotos,
+          ),
       ).length;
       sectors.push({
         key: "cartelera",
@@ -388,7 +394,14 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
         const cat = (r as { category: string | null }).category ?? "otro";
         const cur = counters.get(cat) ?? { total: 0, withPhoto: 0 };
         cur.total++;
-        if ((r as { poster_url: string | null }).poster_url) cur.withPhoto++;
+        if (
+          hasVisiblePhoto(
+            (r as { poster_url: string | null }).poster_url,
+            storedGooglePhotos,
+          )
+        ) {
+          cur.withPhoto++;
+        }
         counters.set(cat, cur);
       }
       const subs: SubsectorRow[] = Array.from(counters.entries())
@@ -422,7 +435,14 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
         const k = (r as { kind: string | null }).kind ?? "sin tipo";
         const cur = counters.get(k) ?? { total: 0, withPhoto: 0 };
         cur.total++;
-        if ((r as { cover_url: string | null }).cover_url) cur.withPhoto++;
+        if (
+          hasVisiblePhoto(
+            (r as { cover_url: string | null }).cover_url,
+            storedGooglePhotos,
+          )
+        ) {
+          cur.withPhoto++;
+        }
         counters.set(k, cur);
       }
       const subs: SubsectorRow[] = Array.from(counters.entries())
@@ -455,8 +475,14 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
         const cat = (r as { category: string | null }).category ?? "_none_";
         const cur = counters.get(cat) ?? { total: 0, withPhoto: 0 };
         cur.total++;
-        const photos = (r as { photos: string[] | null }).photos;
-        if (Array.isArray(photos) && photos.length > 0) cur.withPhoto++;
+        if (
+          hasVisiblePhotoInArray(
+            (r as { photos: unknown }).photos,
+            storedGooglePhotos,
+          )
+        ) {
+          cur.withPhoto++;
+        }
         counters.set(cat, cur);
       }
       const subs: SubsectorRow[] = HEALTH_CATEGORIES.filter(
