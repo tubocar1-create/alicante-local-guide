@@ -85,13 +85,15 @@ async function syncOne(b: MapBeach, force: boolean): Promise<{ slug: string; sta
     if (existing) return { slug: b.slug, status: "skip-exists", url: existing.public_url };
   }
 
-  // Prefer local cover if it exists — no Google fetch needed.
-  const local = LOCAL_BEACH_PHOTOS[b.slug] ?? [];
-  if (local.length > 0) {
-    await supabaseAdmin
-      .from("beach_covers")
-      .upsert({ slug: b.slug, storage_path: "", public_url: local[0], attribution: "local" });
-    return { slug: b.slug, status: "local", url: local[0] };
+  // Las fotos locales ya viven en beach_covers (columna photos). Si ya existen, no llamamos a Google.
+  const { data: localRow } = await supabaseAdmin
+    .from("beach_covers")
+    .select("photos, public_url")
+    .eq("slug", b.slug)
+    .maybeSingle();
+  const localPhotos = (localRow?.photos ?? []) as string[];
+  if (localPhotos.length > 0) {
+    return { slug: b.slug, status: "local", url: localRow?.public_url ?? localPhotos[0] };
   }
 
   const placeId = await findPlaceId(b);
