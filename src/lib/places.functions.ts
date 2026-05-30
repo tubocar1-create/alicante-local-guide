@@ -29,6 +29,8 @@ export type CachedPlace = {
 };
 
 const PLACE_PHOTO_BUCKET = "shop-photos";
+const PLACE_LIST_SELECT = "google_place_id,name,cuisine,address,opening_hours_text,lat,lng,price_level,price_range_min,price_range_max,rating,open_now,category,ai_tags";
+const PLACE_DETAIL_SELECT = "google_place_id,name,cuisine,primary_type,types,address,lat,lng,opening_hours_text,opening_hours_json,open_now,price_level,price_range_min,price_range_max,price_currency,rating,user_rating_count,phone,website,category,fetched_at";
 
 function storagePublicUrl(path: string) {
   return supabaseAdmin.storage.from(PLACE_PHOTO_BUCKET).getPublicUrl(path).data.publicUrl;
@@ -618,7 +620,7 @@ async function fetchByCategoryOrTag(category: string) {
   // into both columns, so a paella spot can show up in `rice_fish` and `typical`.
   const { data, error } = await supabaseAdmin
     .from("places")
-    .select("*")
+    .select(PLACE_LIST_SELECT)
     .or(`category.eq.${category},ai_tags.cs.{${category}}`)
     .order("name");
   if (error) throw error;
