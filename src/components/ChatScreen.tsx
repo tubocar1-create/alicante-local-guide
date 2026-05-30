@@ -29,7 +29,6 @@ import {
   getItalianPlaces,
   getBrunchPlaces,
   getPizzasPlaces,
-  resolvePlaceByName,
   getPlacesByTag,
   getInternationalPlaces,
 } from "@/lib/places.functions";
@@ -206,6 +205,7 @@ const GREETING: Msg = {
 
 const CHAT_STATE_KEY = "afp:chat-messages";
 const RESTAURANT_RETURN_KEY = "afp:return-to-gastro";
+const RESTAURANT_PREVIEW_KEY = "afp:restaurant-preview";
 
 function readInitialMessages(): Msg[] {
   if (typeof window === "undefined") return [GREETING];
@@ -231,6 +231,14 @@ function markRestaurantReturn() {
   if (typeof window !== "undefined") {
     window.sessionStorage.setItem(RESTAURANT_RETURN_KEY, "1");
   }
+}
+
+function stashRestaurantPreview(c: PlaceCardData) {
+  if (typeof window === "undefined" || !c.placeId) return;
+  window.sessionStorage.setItem(
+    RESTAURANT_PREVIEW_KEY,
+    JSON.stringify({ ...c, savedAt: Date.now() }),
+  );
 }
 
 export function ChatScreen() {
