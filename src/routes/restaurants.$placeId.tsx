@@ -96,7 +96,7 @@ function RestaurantDashboard() {
   const { placeId } = Route.useParams();
   const loaderData = Route.useLoaderData();
   const place = loaderData.place as Place | null;
-  const photos = loaderData.photos as string[];
+  const [photos, setPhotos] = useState<string[]>(loaderData.photos as string[]);
   const [qrOpen, setQrOpen] = useState(false);
   const [zoomedIdx, setZoomedIdx] = useState<number | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
@@ -105,6 +105,22 @@ function RestaurantDashboard() {
   const [reviewLoading, setReviewLoading] = useState(false);
   const [reviewErr, setReviewErr] = useState<string | null>(null);
   const fetchAiReview = useServerFn(getAiReview);
+  const fetchPhotos = useServerFn(getPlacePhotos);
+
+  useEffect(() => {
+    let cancelled = false;
+    setPhotos([]);
+    fetchPhotos({ data: { placeId, max: 6 } })
+      .then((res) => {
+        if (!cancelled) setPhotos(res.photos ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setPhotos([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchPhotos, placeId]);
 
   async function openReview() {
     setReviewOpen(true);
