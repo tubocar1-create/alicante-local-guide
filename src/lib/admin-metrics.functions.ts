@@ -49,7 +49,7 @@ export const getVamosMetrics = createServerFn({ method: "POST" })
     ] = await Promise.all([
       countOf("businesses", (q) => (q as { eq: (a: string, b: boolean) => unknown }).eq("active", true)),
       countOf("hotels_static"),
-      countOf("places_cache"),
+      countOf("places"),
       countOf("bus_lines"),
       countOf("bus_stops"),
       countOf("films", (q) => (q as { eq: (a: string, b: boolean) => unknown }).eq("active", true)),

@@ -132,7 +132,7 @@ const HALLAZGOS: Hallazgo[] = [
 
   // Contextual
   { id: "CTX-01", area: "Playas", fase: "F3 Enrutamiento", descripcion: "Listado y fichas operativas.", reproduccion: "Decir 'playas' al agente.", correccion: "—", estado: "OK" },
-  { id: "CTX-02", area: "Restaurantes", fase: "F3 Enrutamiento", descripcion: "places_cache responde, ranking por rating.", reproduccion: "'restaurantes cerca'", correccion: "—", estado: "OK" },
+  { id: "CTX-02", area: "Restaurantes", fase: "F3 Enrutamiento", descripcion: "places responde, ranking por rating.", reproduccion: "'restaurantes cerca'", correccion: "—", estado: "OK" },
   { id: "CTX-03", area: "Hoteles", fase: "F3 Enrutamiento", descripcion: "LiteAPI integrada, calendario disponibilidad.", reproduccion: "'hoteles para esta noche'", correccion: "Validar caché y rate-limit en producción.", estado: "Warning" },
   { id: "CTX-04", area: "Cine", fase: "F3 Enrutamiento", descripcion: "Cartelera carga desde tabla films.", reproduccion: "'qué echan en el cine'", correccion: "—", estado: "OK" },
   { id: "CTX-05", area: "Clima", fase: "F3 Enrutamiento", descripcion: "Respuesta de clima por endpoint externo.", reproduccion: "'qué tiempo hace'", correccion: "Confirmar fallback si API externa falla.", estado: "Warning" },
@@ -151,7 +151,7 @@ const HALLAZGOS: Hallazgo[] = [
   // Seguridad
   { id: "SEC-01", area: "RLS en tablas principales", fase: "Seguridad", descripcion: "RLS activo en profiles, bookings, businesses, agente_*.", reproduccion: "Revisión de policies en Supabase.", correccion: "—", estado: "OK" },
   { id: "SEC-02", area: "Panel admin", fase: "Seguridad", descripcion: "Protegido por PIN + sessionStorage. No es auth fuerte.", reproduccion: "Acceder a /admin sin PIN.", correccion: "Migrar a verificación de rol admin (has_role) antes del beta público.", estado: "Critical" },
-  { id: "SEC-03", area: "Exposición de datos públicos", fase: "Seguridad", descripcion: "places_cache, businesses, bus_* son public read (esperado).", reproduccion: "—", correccion: "—", estado: "OK" },
+  { id: "SEC-03", area: "Exposición de datos públicos", fase: "Seguridad", descripcion: "places, businesses, bus_* son public read (esperado).", reproduccion: "—", correccion: "—", estado: "OK" },
   { id: "SEC-04", area: "Edge functions / server fns", fase: "Seguridad", descripcion: "Server functions usan requireSupabaseAuth donde corresponde.", reproduccion: "Revisar lib/*.functions.ts.", correccion: "—", estado: "OK" },
 
   // Endpoints

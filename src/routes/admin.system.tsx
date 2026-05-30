@@ -53,7 +53,7 @@ const TABLES: TableInfo[] = [
   { name: "shop_businesses", domain: "Comprar", purpose: "Comercios de Alicante enriquecidos con Google Places.", rls: "Lectura pública." },
   { name: "shop_zones", domain: "Comprar", purpose: "Zonas de la ciudad para shopping.", rls: "Lectura pública." },
   // Lugares / Restauración / Salud
-  { name: "places_cache", domain: "Lugares", purpose: "Cache de Google Places (restaurantes, etc.).", rls: "Lectura pública." },
+  { name: "places", domain: "Lugares", purpose: "Cache de Google Places (restaurantes, etc.).", rls: "Lectura pública." },
   { name: "businesses", domain: "Negocios", purpose: "Negocios registrados (owner_id).", rls: "Owner gestiona / lectura pública (activos)." },
   { name: "business_users", domain: "Negocios", purpose: "Miembros de un negocio.", rls: "Solo miembros y admin." },
   { name: "services", domain: "Negocios", purpose: "Servicios reservables del negocio.", rls: "Lectura pública (activos)." },
@@ -148,7 +148,7 @@ type ExternalApi = {
 
 const EXTERNAL_APIS: ExternalApi[] = [
   { name: "Lovable AI Gateway", used_for: "Clasificación de intents, FAQs, auto-aprendizaje del agente.", secret: "LOVABLE_API_KEY", surface: "Server functions + /api/public/hooks/agente-learn" },
-  { name: "Google Places (New)", used_for: "Restaurantes, salud, comercios. Cache en places_cache / health_providers / shop_businesses.", secret: "GOOGLE_PLACES_API_KEY", surface: "Server functions" },
+  { name: "Google Places (New)", used_for: "Restaurantes, salud, comercios. Cache en places / health_providers / shop_businesses.", secret: "GOOGLE_PLACES_API_KEY", surface: "Server functions" },
   { name: "Google Maps JS API", used_for: "Mapas embebidos (mapa, playas, hospitales).", secret: "GOOGLE_MAPS_BROWSER_KEY", surface: "Frontend" },
   { name: "Google Maps Server", used_for: "Geocoding / cálculos server-side.", secret: "GOOGLE_MAPS_API_KEY", surface: "Server functions" },
   { name: "LiteAPI", used_for: "Catálogo, precios y disponibilidad de hoteles.", secret: "LITEAPI_KEY", surface: "Hooks de sincronización" },

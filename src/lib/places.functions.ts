@@ -238,12 +238,12 @@ export const getPlacePhotos = createServerFn({ method: "GET" })
     return { placeId: o.placeId, max: Math.min(o.max ?? 4, 8) };
   })
   .handler(async ({ data }) => {
-    // Solo devolvemos referencias ya guardadas en places_cache. El proxy
+    // Solo devolvemos referencias ya guardadas en places. El proxy
     // /api/public/google-photo ya hace HEAD sobre Storage y redirige a la
     // foto cacheada (o sirve un píxel si no existe). NO llamamos a Google
     // desde aquí y NO listamos Storage por cada sitio (eso colapsaba listados).
     const { data: row } = await supabaseAdmin
-      .from("places_cache")
+      .from("places")
       .select("raw")
       .eq("google_place_id", data.placeId)
       .maybeSingle();
@@ -481,7 +481,7 @@ export const discoverNearbyPlaces = createServerFn({ method: "POST" })
     const rows = Array.from(seen.values());
     if (rows.length === 0) return { added: 0 };
     const { error } = await supabaseAdmin
-      .from("places_cache")
+      .from("places")
       .upsert(rows as never, { onConflict: "google_place_id" });
     if (error) {
       console.error(`upsert nearby ${data.category} error`, error);
@@ -545,9 +545,9 @@ async function refreshCuratedCategory(category: string) {
   if (rows.length === 0) return rows;
 
   // Wipe previous rows in this category so removed names don't linger
-  await supabaseAdmin.from("places_cache").delete().eq("category", category);
+  await supabaseAdmin.from("places").delete().eq("category", category);
   const { error } = await supabaseAdmin
-    .from("places_cache")
+    .from("places")
     .upsert(rows as never, { onConflict: "google_place_id" });
   if (error) {
     console.error(`upsert curated ${category} error`, error);
@@ -578,10 +578,10 @@ async function refreshCategoryFromGoogle(category: string) {
   if (rows.length === 0) return rows;
 
   const { error } = await supabaseAdmin
-    .from("places_cache")
+    .from("places")
     .upsert(rows as never, { onConflict: "google_place_id" });
   if (error) {
-    console.error(`upsert places_cache (${category}) error`, error);
+    console.error(`upsert places (${category}) error`, error);
     throw error;
   }
   return rows;
@@ -593,7 +593,7 @@ async function fetchByCategoryOrTag(category: string) {
   // OR its `ai_tags` array contains X. Reclassification writes main categories
   // into both columns, so a paella spot can show up in `rice_fish` and `typical`.
   const { data, error } = await supabaseAdmin
-    .from("places_cache")
+    .from("places")
     .select("*")
     .or(`category.eq.${category},ai_tags.cs.{${category}}`)
     .order("name");
@@ -602,7 +602,7 @@ async function fetchByCategoryOrTag(category: string) {
 }
 
 async function getCategoryPlaces(category: string) {
-  // Lectura SIEMPRE desde nuestra BD (places_cache). NUNCA llamamos a Google
+  // Lectura SIEMPRE desde nuestra BD (places). NUNCA llamamos a Google
   // en la ruta de lectura: el refresco solo ocurre cuando el admin lo lanza
   // explícitamente desde su panel (refresh*Places). Esto garantiza CERO
   // gasto en API de Google al navegar por las tablas de comida.
@@ -672,7 +672,7 @@ export const getPlaceById = createServerFn({ method: "GET" })
   })
   .handler(async ({ data }) => {
     const { data: row, error } = await supabaseAdmin
-      .from("places_cache")
+      .from("places")
       .select("*")
       .eq("google_place_id", data.placeId)
       .maybeSingle();
@@ -722,7 +722,7 @@ export const resolvePlaceByName = createServerFn({ method: "POST" })
 
     // 1) Try cache first — only accept if within distance threshold
     const { data: cached } = await supabaseAdmin
-      .from("places_cache")
+      .from("places")
       .select("google_place_id,name,lat,lng");
     if (cached && cached.length) {
       const exact = cached.filter((r) => norm(r.name as string) === wantedNorm);
@@ -786,13 +786,13 @@ export const resolvePlaceByName = createServerFn({ method: "POST" })
     const row = toRow(pick, "lookup");
     if (row) {
       await supabaseAdmin
-        .from("places_cache")
+        .from("places")
         .upsert(row as never, { onConflict: "google_place_id" });
     }
     return { placeId: pick.id };
   });
 
-// ============= Manual additions to places_cache =============
+// ============= Manual additions to places =============
 
 const VALID_CATEGORIES = new Set([
   "asian",
@@ -933,7 +933,7 @@ export const addPlaceFromGoogle = createServerFn({ method: "POST" })
     if (!row) return { ok: false, reason: "bad_data" as const };
 
     const { error } = await supabaseAdmin
-      .from("places_cache")
+      .from("places")
       .upsert(row as never, { onConflict: "google_place_id" });
     if (error) {
       console.error("addPlaceFromGoogle upsert error", error);
@@ -1016,7 +1016,7 @@ export const addPlaceManual = createServerFn({ method: "POST" })
       raw: { source: "manual" },
     };
     const { error } = await supabaseAdmin
-      .from("places_cache")
+      .from("places")
       .upsert(row as never, { onConflict: "google_place_id" });
     if (error) throw error;
     return { ok: true as const, place: { google_place_id, name: data.name, category: data.category } };
@@ -1030,7 +1030,7 @@ export const listPlacesByCategory = createServerFn({ method: "GET" })
   })
   .handler(async ({ data }) => {
     const { data: rows, error } = await supabaseAdmin
-      .from("places_cache")
+      .from("places")
       .select("google_place_id,name,address,rating,lat,lng,category,fetched_at")
       .eq("category", data.category)
       .order("name");
@@ -1046,7 +1046,7 @@ export const deletePlace = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }) => {
     const { error } = await supabaseAdmin
-      .from("places_cache")
+      .from("places")
       .delete()
       .eq("google_place_id", data.placeId);
     if (error) throw error;
@@ -1054,7 +1054,7 @@ export const deletePlace = createServerFn({ method: "POST" })
   });
 
 // ============= AI-tagged virtual categories =============
-// Reuses places_cache rows (any category) and adds free-form ai_tags assigned
+// Reuses places rows (any category) and adds free-form ai_tags assigned
 // by the Lovable AI gateway. No new Google Places calls are made.
 
 export const VIRTUAL_TAGS = [
@@ -1156,7 +1156,7 @@ async function ensureClassified(limit = 2000): Promise<{ classified: number }> {
     return { classified: 0 };
   }
   const { data: rows, error } = await supabaseAdmin
-    .from("places_cache")
+    .from("places")
     .select("google_place_id,name,cuisine,primary_type,types,price_level,address,category")
     .is("ai_tags", null)
     .limit(limit);
@@ -1172,7 +1172,7 @@ async function ensureClassified(limit = 2000): Promise<{ classified: number }> {
     await Promise.all(
       updates.map((u) =>
         supabaseAdmin
-          .from("places_cache")
+          .from("places")
           .update({ ai_tags: u.tags } as never)
           .eq("google_place_id", u.id),
       ),
@@ -1206,7 +1206,7 @@ export const getPlacesByTag = createServerFn({ method: "GET" })
     }
 
     const { data: rows, error } = await supabaseAdmin
-      .from("places_cache")
+      .from("places")
       .select("*")
       .contains("ai_tags", [data.tag])
       .order("name")
@@ -1218,7 +1218,7 @@ export const getPlacesByTag = createServerFn({ method: "GET" })
 export const getSurprisePlaces = createServerFn({ method: "GET" }).handler(async () => {
   // Random sample of well-rated places across the ENTIRE database.
   const { data: rows, error } = await supabaseAdmin
-    .from("places_cache")
+    .from("places")
     .select("*")
     .gte("rating", 4.2)
     .limit(1000);
@@ -1228,7 +1228,7 @@ export const getSurprisePlaces = createServerFn({ method: "GET" }).handler(async
 });
 
 // ============= AI re-classification of main category =============
-// Walks the entire places_cache and asks Lovable AI to assign the best
+// Walks the entire places and asks Lovable AI to assign the best
 // main category (typical, rice_fish, italian, pizzas, brunch, asian, drinks)
 // based on the place's "ficha" (name, cuisine, primary_type, types, address).
 
@@ -1326,7 +1326,7 @@ export const reclassifyAllCategories = createServerFn({ method: "POST" })
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) throw new Error("LOVABLE_API_KEY missing");
     const { data: rows, error } = await supabaseAdmin
-      .from("places_cache")
+      .from("places")
       .select("google_place_id,name,cuisine,primary_type,types,price_level,address,category,ai_tags")
       .neq("category", "lookup")
       .limit(data.limit);
@@ -1355,7 +1355,7 @@ export const reclassifyAllCategories = createServerFn({ method: "POST" })
         updates.push(
           (async () => {
             await supabaseAdmin
-              .from("places_cache")
+              .from("places")
               .update({ category: primary, ai_tags: newTags } as never)
               .eq("google_place_id", r.google_place_id);
           })(),

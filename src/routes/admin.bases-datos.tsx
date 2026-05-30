@@ -44,7 +44,7 @@ const GROUPS: Group[] = [
   {
     group: "Turismo / contenido",
     tables: [
-      { name: "places_cache", purpose: "Caché de Google Places enriquecida", feeds: "EatNearby, listings, agente" },
+      { name: "places", purpose: "Caché de Google Places enriquecida", feeds: "EatNearby, listings, agente" },
       { name: "cinemas / films", purpose: "Cines y cartelera", feeds: "/ocio/cines, /ocio/cartelera" },
       { name: "hotels_static / hotels_dynamic / hotels_calendar", purpose: "Catálogo hotelero LiteAPI + precios", feeds: "/donde-dormir, /hotel/:id" },
       { name: "pharmacies", purpose: "Farmacias (guardia 24h)", feeds: "/farmacias" },
