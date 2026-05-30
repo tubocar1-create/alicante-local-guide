@@ -4,17 +4,19 @@
 // API externa. El estado de los checkboxes vive en localStorage.
 
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, ImageIcon, ImageOff, Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, ImageIcon, ImageOff, Lock, Sparkles, AlertTriangle } from "lucide-react";
 import {
   getPhotoAudit,
   type SectorBlock,
 } from "@/lib/admin-photo-audit.functions";
+import { backfillAuthorizedPhotos } from "@/lib/admin-photo-backfill.functions";
 
 export const Route = createFileRoute("/admin/auditoria-fotos")({
   head: () => ({ meta: [{ title: "Admin · Auditoría de fotos" }] }),
