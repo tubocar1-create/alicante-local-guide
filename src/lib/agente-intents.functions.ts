@@ -62,7 +62,7 @@ export const loadAgenteRoutingCatalog = createServerFn({ method: "GET" }).handle
         supabaseAdmin.from("pharmacies").select("id", { count: "exact", head: true }),
         supabaseAdmin.from("health_centers").select("id", { count: "exact", head: true }),
         supabaseAdmin.from("health_providers").select("category"),
-        supabaseAdmin.from("places_cache").select("category, cuisine"),
+        supabaseAdmin.from("places").select("category, cuisine"),
       ]);
 
     const dbHealthCategories = new Set(

@@ -2179,7 +2179,7 @@ function useNearbyDiscovery(
 ) {
   // DESACTIVADO: este hook llamaba a Google Places para "descubrir" sitios
   // cercanos al abrir la pantalla. Ahora las tablas se leen 100% desde
-  // nuestra BD (places_cache, 2.300+ sitios). El refresco solo se lanza
+  // nuestra BD (places, 2.300+ sitios). El refresco solo se lanza
   // desde el panel admin y bajo autorización explícita.
 }
 

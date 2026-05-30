@@ -18,7 +18,7 @@ type Integration = {
 
 const INTEGRATIONS: Integration[] = [
   // APIs externas
-  { name: "Google Places", kind: "API", source: "GOOGLE_PLACES_API_KEY", endpoint: "src/lib/places.functions.ts, health-google.functions.ts", alimenta: "places_cache, health_providers, shop_businesses", frecuencia: "Bajo demanda + admin" },
+  { name: "Google Places", kind: "API", source: "GOOGLE_PLACES_API_KEY", endpoint: "src/lib/places.functions.ts, health-google.functions.ts", alimenta: "places, health_providers, shop_businesses", frecuencia: "Bajo demanda + admin" },
   { name: "Google Maps", kind: "API", source: "Conector Google Maps", endpoint: "ExploreMap, LeafletBeachMap, PlaceLocationMap", alimenta: "Renderizado mapas + tracking ID", frecuencia: "Cliente, en cada vista" },
   { name: "LiteAPI (Hoteles)", kind: "API", source: "LITEAPI_KEY", endpoint: "src/lib/hotels-liteapi.server.ts", alimenta: "hotels_static, hotels_dynamic, hotels_calendar", frecuencia: "Cron + bajo demanda" },
   { name: "AENA Flights", kind: "Scraper", source: "Pública", endpoint: "api/public/aena-flights · hooks/aena-sync", alimenta: "aena_flights", frecuencia: "Cron periódico" },
