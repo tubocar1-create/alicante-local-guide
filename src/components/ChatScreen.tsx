@@ -2172,25 +2172,17 @@ function useFoodListOrigin() {
 // Track which (category, coarse-location) combos we've already enriched this session
 const discoveredCategoryZones = new Set<string>();
 function useNearbyDiscovery(
-  category: "asian" | "drinks" | "typical" | "rice_fish" | "italian" | "brunch" | "pizzas",
-  origin: { lat: number; lon: number },
-  isUserLocation: boolean,
-  onDiscovered: () => void,
+  _category: "asian" | "drinks" | "typical" | "rice_fish" | "italian" | "brunch" | "pizzas",
+  _origin: { lat: number; lon: number },
+  _isUserLocation: boolean,
+  _onDiscovered: () => void,
 ) {
-  const discoverFn = useServerFn(discoverNearbyPlaces);
-  useEffect(() => {
-    if (!isUserLocation) return;
-    // Coarse-grain coords to ~250 m to avoid re-querying on every GPS jitter
-    const key = `${category}:${origin.lat.toFixed(3)}:${origin.lon.toFixed(3)}`;
-    if (discoveredCategoryZones.has(key)) return;
-    discoveredCategoryZones.add(key);
-    discoverFn({ data: { lat: origin.lat, lng: origin.lon, category } })
-      .then((res) => {
-        if ((res?.added ?? 0) > 0) onDiscovered();
-      })
-      .catch((e) => console.error(`discoverNearbyPlaces ${category} failed`, e));
-  }, [category, origin.lat, origin.lon, isUserLocation, discoverFn, onDiscovered]);
+  // DESACTIVADO: este hook llamaba a Google Places para "descubrir" sitios
+  // cercanos al abrir la pantalla. Ahora las tablas se leen 100% desde
+  // nuestra BD (places_cache, 2.300+ sitios). El refresco solo se lanza
+  // desde el panel admin y bajo autorización explícita.
 }
+
 
 function asianEmoji(c: PlaceCardData): string {
   const hay = `${c.cuisine ?? ""} ${c.name ?? ""} ${c.vibe ?? ""}`.toLowerCase();

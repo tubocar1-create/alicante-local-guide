@@ -602,27 +602,11 @@ async function fetchByCategoryOrTag(category: string) {
 }
 
 async function getCategoryPlaces(category: string) {
+  // Lectura SIEMPRE desde nuestra BD (places_cache). NUNCA llamamos a Google
+  // en la ruta de lectura: el refresco solo ocurre cuando el admin lo lanza
+  // explícitamente desde su panel (refresh*Places). Esto garantiza CERO
+  // gasto en API de Google al navegar por las tablas de comida.
   const existing = await fetchByCategoryOrTag(category);
-
-  const newest = existing.reduce<number>(
-    (max, r) => Math.max(max, new Date(r.fetched_at as string).getTime()),
-    0,
-  );
-  const isStale = !existing.length || Date.now() - newest > STALE_MS;
-
-  // `international` has no Google query template — only DB-backed.
-  const isRefreshable = category !== "international";
-
-  if (isStale && isRefreshable) {
-    try {
-      await refreshCategoryFromGoogle(category);
-      const fresh = await fetchByCategoryOrTag(category);
-      return { places: fresh, refreshed: true };
-    } catch (e) {
-      console.error(`refresh ${category} failed, returning cached`, e);
-      return { places: existing, refreshed: false };
-    }
-  }
   return { places: existing, refreshed: false };
 }
 
