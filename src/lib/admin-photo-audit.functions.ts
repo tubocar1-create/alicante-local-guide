@@ -98,8 +98,8 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
         .select("id, slug, name")
         .order("name");
       const biz = await fetchAll<{ subsubsector_id: string | null; photos: unknown; logo_url: string | null }>(
-        (from, to) =>
-          supabaseAdmin
+        async (from, to) =>
+          await supabaseAdmin
             .from("shop_businesses")
             .select("subsubsector_id, photos, logo_url")
             .range(from, to),
