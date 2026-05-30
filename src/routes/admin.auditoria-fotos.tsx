@@ -169,6 +169,12 @@ function AuditoriaFotos() {
         </CardContent>
       </Card>
 
+      <BackfillPanel
+        authorizedKeys={Object.entries(auth)
+          .filter(([, v]) => v)
+          .map(([k]) => k)}
+      />
+
       {data.sectors.map((sector) => (
         <SectorCard
           key={sector.key}
