@@ -25,7 +25,7 @@ const RESTAURANT_PREVIEW_KEY = "afp:restaurant-preview";
 
 export const Route = createFileRoute("/restaurants/$placeId")({
   loader: async ({ params }) => ({ placeId: params.placeId }),
-  head: ({ loaderData, params }) => {
+  head: ({ params }) => {
     const title = `Restaurante — Alicante`;
     const desc = `Ficha de restaurante en Alicante: horario, precio, valoración y ubicación.`;
     const url = `https://vamosalicante.com/restaurants/${params.placeId}`;
@@ -67,11 +67,60 @@ export const Route = createFileRoute("/restaurants/$placeId")({
 
 type Place = Awaited<ReturnType<typeof getPlaceById>>["place"];
 
+function readRestaurantPreview(placeId: string): Place | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(RESTAURANT_PREVIEW_KEY);
+    if (!raw) return null;
+    const p = JSON.parse(raw) as {
+      placeId?: string | null;
+      name?: string;
+      cuisine?: string | null;
+      address?: string | null;
+      openingHours?: string | null;
+      lat?: number;
+      lon?: number;
+      priceLevel?: string | null;
+      priceRangeMin?: number | null;
+      priceRangeMax?: number | null;
+      rating?: number | null;
+      openNow?: boolean | null;
+      savedAt?: number;
+    };
+    if (p.placeId !== placeId || (p.savedAt && Date.now() - p.savedAt > 5 * 60_000)) return null;
+    return {
+      google_place_id: placeId,
+      name: p.name ?? "Restaurante",
+      cuisine: p.cuisine ?? null,
+      primary_type: null,
+      types: null,
+      address: p.address ?? null,
+      lat: p.lat ?? null,
+      lng: p.lon ?? null,
+      opening_hours_text: p.openingHours ?? null,
+      opening_hours_json: null,
+      open_now: p.openNow ?? null,
+      price_level: p.priceLevel ?? null,
+      price_range_min: p.priceRangeMin ?? null,
+      price_range_max: p.priceRangeMax ?? null,
+      price_currency: "EUR",
+      rating: p.rating ?? null,
+      user_rating_count: null,
+      phone: null,
+      website: null,
+      category: "restaurant",
+      fetched_at: new Date().toISOString(),
+    } as Place;
+  } catch {
+    return null;
+  }
+}
+
 function RestaurantDashboard() {
   const { placeId } = Route.useParams();
-  const loaderData = Route.useLoaderData();
-  const place = loaderData.place as Place | null;
-  const [photos, setPhotos] = useState<string[]>(loaderData.photos as string[]);
+  const [place, setPlace] = useState<Place | null>(() => readRestaurantPreview(placeId));
+  const [placeLoaded, setPlaceLoaded] = useState(false);
+  const [photos, setPhotos] = useState<string[]>([]);
   const [qrOpen, setQrOpen] = useState(false);
   const [zoomedIdx, setZoomedIdx] = useState<number | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
@@ -79,8 +128,25 @@ function RestaurantDashboard() {
   const [reviewText, setReviewText] = useState<string | null>(null);
   const [reviewLoading, setReviewLoading] = useState(false);
   const [reviewErr, setReviewErr] = useState<string | null>(null);
+  const fetchPlace = useServerFn(getPlaceById);
   const fetchAiReview = useServerFn(getAiReview);
   const fetchPhotos = useServerFn(getPlacePhotos);
+
+  useEffect(() => {
+    let cancelled = false;
+    setPlaceLoaded(false);
+    fetchPlace({ data: { placeId } })
+      .then((res) => {
+        if (!cancelled) setPlace(res.place ?? null);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setPlaceLoaded(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchPlace, placeId]);
 
   useEffect(() => {
     let cancelled = false;
