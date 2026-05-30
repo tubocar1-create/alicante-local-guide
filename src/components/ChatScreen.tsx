@@ -2557,7 +2557,7 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
       .catch((e) => console.error("getAsianPlaces failed", e))
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [fetchAsian]);
+  }, []);
 
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
   const byKey = new Map<string, PlaceCardData>();
@@ -2901,7 +2901,7 @@ export function DrinksTable({ cards, onExit }: { cards: PlaceCardData[]; onExit?
       .catch((e) => console.error("getDrinksPlaces failed", e))
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [fetchDrinks]);
+  }, []);
 
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
   const byKey = new Map<string, PlaceCardData>();
@@ -3991,7 +3991,7 @@ function CategoryTable({
       .catch((e) => console.error(`get ${category} places failed`, e))
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [fetcher, category]);
+  }, [category]);
 
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
   const byKey = new Map<string, PlaceCardData>();
