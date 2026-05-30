@@ -652,6 +652,12 @@ export function ChatScreen() {
     setInput("");
     setLoading(true);
 
+    if (isFoodCategoryPrompt(trimmed)) {
+      setMessages([...next, { role: "assistant", content: "" }]);
+      setLoading(false);
+      return;
+    }
+
     let assistantSoFar = "";
     const upsert = (chunk: string) => {
       assistantSoFar += chunk;
