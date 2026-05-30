@@ -185,11 +185,11 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
         .from("shop_subsubsectors")
         .select("id, slug, name")
         .order("name");
-      const biz = await fetchAll<{ subsubsector_id: string | null; photos: unknown; logo_url: string | null }>(
+      const biz = await fetchAll<{ subsubsector_id: string | null; photos: unknown; logo_url: string | null; status: string | null }>(
         async (from, to) =>
           await supabaseAdmin
             .from("shop_businesses")
-            .select("subsubsector_id, photos, logo_url")
+            .select("subsubsector_id, photos, logo_url, status")
             .range(from, to),
       );
       const counters = new Map<
@@ -197,14 +197,14 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
         { total: number; withPhoto: number }
       >();
       for (const b of biz ?? []) {
+        if ((b as { status: string | null }).status === "duplicate") continue;
         const id = (b as { subsubsector_id: string | null }).subsubsector_id;
         if (!id) continue;
         const cur = counters.get(id) ?? { total: 0, withPhoto: 0 };
         cur.total++;
-        const photos = (b as { photos: unknown }).photos;
         const hasPhoto =
-          (Array.isArray(photos) && photos.length > 0) ||
-          !!(b as { logo_url: string | null }).logo_url;
+          hasVisiblePhotoInArray((b as { photos: unknown }).photos, storedGooglePhotos) ||
+          hasVisiblePhoto((b as { logo_url: string | null }).logo_url, storedGooglePhotos);
         if (hasPhoto) cur.withPhoto++;
         counters.set(id, cur);
       }
@@ -248,7 +248,7 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
         const cur = counters.get(cat) ?? { total: 0, withPhoto: 0 };
         cur.total++;
         const cover = (r as { cover_photo: string | null }).cover_photo;
-        if (cover && cover.trim().length > 0) cur.withPhoto++;
+        if (hasVisiblePhoto(cover, storedGooglePhotos)) cur.withPhoto++;
         counters.set(cat, cur);
       }
       const subs: SubsectorRow[] = RESTAURANT_CATEGORIES.map((cat) => {
@@ -282,9 +282,13 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
 
     // ───────────────────────────────── HOTELES (hotels_static por hotel_type)
     {
-      const { data: rows } = await supabaseAdmin
-        .from("hotels_static")
-        .select("hotel_type, main_image, scraped_photos, raw");
+      const rows = await fetchAll<{ hotel_type: string | null; main_image: string | null; scraped_photos: unknown }>(
+        async (from, to) =>
+          await supabaseAdmin
+            .from("hotels_static")
+            .select("hotel_type, main_image, scraped_photos")
+            .range(from, to),
+      );
       const counters = new Map<
         string,
         { total: number; withPhoto: number }
@@ -293,14 +297,9 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
         const t = (r as { hotel_type: string | null }).hotel_type ?? "sin tipo";
         const cur = counters.get(t) ?? { total: 0, withPhoto: 0 };
         cur.total++;
-        const main = (r as { main_image: string | null }).main_image;
-        const scraped = (r as { scraped_photos: string[] | null })
-          .scraped_photos;
-        const raw = (r as { raw: { photos?: unknown[] } | null }).raw;
-        const rawPhotos =
-          raw && Array.isArray(raw.photos) && raw.photos.length > 0;
         const hasPhoto =
-          !!main || (Array.isArray(scraped) && scraped.length > 0) || rawPhotos;
+          hasVisiblePhoto((r as { main_image: string | null }).main_image, storedGooglePhotos) ||
+          hasVisiblePhotoInArray((r as { scraped_photos: unknown }).scraped_photos, storedGooglePhotos);
         if (hasPhoto) cur.withPhoto++;
         counters.set(t, cur);
       }
@@ -316,7 +315,7 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
       sectors.push({
         key: "hoteles",
         label: "Hoteles (por tipo)",
-        source: "hotels_static.main_image / scraped_photos / raw.photos",
+        source: "hotels_static.main_image / scraped_photos visibles",
         subsectors: subs,
       });
     }
