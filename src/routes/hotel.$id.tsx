@@ -150,13 +150,14 @@ function HotelDetail() {
 
   const fetchPhotos = useServerFn(getHotelPhotos);
   const photosQ = useQuery({
-    queryKey: ["hotel-photos", id],
+    queryKey: ["hotel-photos", id, "scraped-first"],
     staleTime: 24 * 60 * 60 * 1000,
     queryFn: () => fetchPhotos({ data: { id } }),
   });
   const gallery: string[] = useMemo(() => {
     const arr = photosQ.data?.photos ?? [];
     if (arr.length) return arr;
+    if (Array.isArray(h?.scraped_photos) && h.scraped_photos.length) return h.scraped_photos;
     return h?.main_image ? [h.main_image] : [];
   }, [photosQ.data, h?.main_image]);
   const days: Array<{ date: string; available: boolean; price_double: number | null; price_min: number | null; currency: string }> =
