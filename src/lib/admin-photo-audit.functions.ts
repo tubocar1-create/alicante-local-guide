@@ -114,10 +114,14 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
     }
 
     // ───────────────────────────────── RESTAURANTES (places por category)
+    // Criterio = experiencia visual: la tarjeta del listado SOLO muestra
+    // `cover_photo`. `raw.photos` son refs de Google que NO se renderizan
+    // hasta que se descargan a Storage, así que no cuentan como "foto
+    // visible" para el usuario.
     {
       const { data: rows } = await supabaseAdmin
         .from("places")
-        .select("category, cover_photo, scraped_photos, raw");
+        .select("category, cover_photo");
       const counters = new Map<
         string,
         { total: number; withPhoto: number }
@@ -127,14 +131,7 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
         const cur = counters.get(cat) ?? { total: 0, withPhoto: 0 };
         cur.total++;
         const cover = (r as { cover_photo: string | null }).cover_photo;
-        const scraped = (r as { scraped_photos: string[] | null })
-          .scraped_photos;
-        const raw = (r as { raw: { photos?: unknown[] } | null }).raw;
-        const rawPhotos =
-          raw && Array.isArray(raw.photos) && raw.photos.length > 0;
-        const hasPhoto =
-          !!cover || (Array.isArray(scraped) && scraped.length > 0) || rawPhotos;
-        if (hasPhoto) cur.withPhoto++;
+        if (cover && cover.trim().length > 0) cur.withPhoto++;
         counters.set(cat, cur);
       }
       const subs: SubsectorRow[] = RESTAURANT_CATEGORIES.map((cat) => {
@@ -147,7 +144,6 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
           withoutPhoto: c.total - c.withPhoto,
         };
       });
-      // Añadir cualquier categoría extra que aparezca en BD pero no en la lista canónica
       for (const [cat, c] of counters) {
         if (!RESTAURANT_CATEGORIES.some((r) => r.key === cat)) {
           subs.push({
@@ -162,7 +158,7 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
       sectors.push({
         key: "restaurantes",
         label: "Restaurantes (places por categoría)",
-        source: "places.cover_photo / scraped_photos / raw.photos",
+        source: "places.cover_photo (lo que ve el usuario en la tarjeta)",
         subsectors: subs,
       });
     }
