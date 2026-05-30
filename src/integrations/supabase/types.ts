@@ -1620,9 +1620,13 @@ export type Database = {
           main_image: string | null
           name: string
           neighborhood: string | null
+          photo_scrape_at: string | null
+          photo_scrape_status: string | null
           raw: Json | null
+          scraped_photos: string[] | null
           stars: number | null
           updated_at: string
+          website: string | null
         }
         Insert: {
           address?: string | null
@@ -1639,9 +1643,13 @@ export type Database = {
           main_image?: string | null
           name: string
           neighborhood?: string | null
+          photo_scrape_at?: string | null
+          photo_scrape_status?: string | null
           raw?: Json | null
+          scraped_photos?: string[] | null
           stars?: number | null
           updated_at?: string
+          website?: string | null
         }
         Update: {
           address?: string | null
@@ -1658,9 +1666,13 @@ export type Database = {
           main_image?: string | null
           name?: string
           neighborhood?: string | null
+          photo_scrape_at?: string | null
+          photo_scrape_status?: string | null
           raw?: Json | null
+          scraped_photos?: string[] | null
           stars?: number | null
           updated_at?: string
+          website?: string | null
         }
         Relationships: []
       }

@@ -42,7 +42,7 @@ function RefrescoGoogle() {
   });
 
   // helper: llama al endpoint en bucle hasta que remaining = 0
-  async function loopScrape(source: "places" | "shops") {
+  async function loopScrape(source: "places" | "shops" | "hotels") {
     let totalDone = 0;
     let lastRemaining = Infinity;
     let stagnant = 0;
@@ -109,6 +109,12 @@ function RefrescoGoogle() {
       title: "Scrapear fotos de la web (tiendas con web)",
       desc: "Igual que el anterior pero para shop_businesses (Zara, Calzedonia, etc.) que tienen web y aún no tienen fotos guardadas.",
       run: () => loopScrape("shops"),
+    },
+    {
+      key: "scrape-photos-hotels",
+      title: "Scrapear fotos de la web (hoteles)",
+      desc: "Para cada hotel con websiteUri (extraído de Google) y SIN fotos scrapeadas todavía, descarga hasta 8 fotos del sitio oficial (Firecrawl). Se usa como fallback cuando no hay fotos de Google. NO usa Google.",
+      run: () => loopScrape("hotels"),
     },
   ];
 

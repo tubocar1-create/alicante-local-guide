@@ -13,7 +13,7 @@ const MAX_PHOTOS_PER_PLACE = 8;
 const BATCH = 6; // por invocación
 const PER_SITE_TIMEOUT_MS = 20_000;
 
-type Source = "places" | "shops";
+type Source = "places" | "shops" | "hotels";
 
 async function scrapeImages(url: string): Promise<string[]> {
   const apiKey = process.env.FIRECRAWL_API_KEY;
@@ -194,12 +194,58 @@ async function processShops(): Promise<{ done: number; remaining: number }> {
   return { done, remaining: count ?? 0 };
 }
 
+async function processHotels(): Promise<{ done: number; remaining: number }> {
+  const { data: rows, error } = await supabaseAdmin
+    .from("hotels_static")
+    .select("id, website")
+    .not("website", "is", null)
+    .neq("website", "")
+    .is("photo_scrape_status", null)
+    .limit(BATCH);
+  if (error) throw error;
+
+  let done = 0;
+  for (const row of rows ?? []) {
+    let status: "done" | "empty" | "error" = "empty";
+    let photos: string[] = [];
+    try {
+      photos = await scrapeImages(row.website as string);
+      status = photos.length > 0 ? "done" : "empty";
+    } catch (e) {
+      console.error("scrape hotels error", row.id, e);
+      status = "error";
+    }
+    await supabaseAdmin
+      .from("hotels_static")
+      .update({
+        scraped_photos: photos.length > 0 ? photos : null,
+        photo_scrape_status: status,
+        photo_scrape_at: new Date().toISOString(),
+      })
+      .eq("id", row.id);
+    done++;
+  }
+
+  const { count } = await supabaseAdmin
+    .from("hotels_static")
+    .select("id", { count: "exact", head: true })
+    .not("website", "is", null)
+    .neq("website", "")
+    .is("photo_scrape_status", null);
+
+  return { done, remaining: count ?? 0 };
+}
+
 async function handle(request: Request) {
   const url = new URL(request.url);
   const source = (url.searchParams.get("source") || "places") as Source;
   try {
     const result =
-      source === "shops" ? await processShops() : await processPlaces();
+      source === "shops"
+        ? await processShops()
+        : source === "hotels"
+          ? await processHotels()
+          : await processPlaces();
     return Response.json({ ok: true, source, ...result });
   } catch (e) {
     return Response.json(
