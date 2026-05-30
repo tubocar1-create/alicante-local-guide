@@ -238,19 +238,41 @@ export const getPlacePhotos = createServerFn({ method: "GET" })
     return { placeId: o.placeId, max: Math.min(o.max ?? 4, 8) };
   })
   .handler(async ({ data }) => {
-    // Solo devolvemos referencias ya cacheadas. Este endpoint NO hace llamadas
-    // a Google: si no hay refs, no inventa ni repaga datos externos.
+    // Solo devolvemos referencias ya cacheadas en Storage. Este endpoint NO
+    // hace llamadas a Google. Si una referencia no tiene archivo cacheado,
+    // la omitimos: así no devolvemos URLs que terminarían en un píxel
+    // transparente (y el usuario no ve huecos en la galería).
     const { data: row } = await supabaseAdmin
       .from("places_cache")
       .select("raw")
       .eq("google_place_id", data.placeId)
       .maybeSingle();
-    const photos = ((row?.raw as { photos?: Array<{ name: string }> } | null)?.photos ?? []);
+    const photoRefs = ((row?.raw as { photos?: Array<{ name: string }> } | null)?.photos ?? [])
+      .map((p) => p.name)
+      .filter((n) => typeof n === "string" && n.startsWith("places/"));
+
+    if (!photoRefs.length) return { photos: [] as string[] };
+
+    // Indexamos los archivos cacheados de este sitio en Storage (1 sola
+    // llamada por prefijo, no por foto). Buscamos en los dos layouts
+    // históricos: `places/{id}/photos/...` y `gphotos/places/{id}/photos/...`.
+    const cachedPhotoIds = new Set<string>();
+    for (const prefix of [`places/${data.placeId}/photos`, `gphotos/places/${data.placeId}/photos`]) {
+      const { data: dirs } = await supabaseAdmin.storage
+        .from("shop-photos")
+        .list(prefix, { limit: 100 });
+      for (const dir of dirs ?? []) cachedPhotoIds.add(dir.name);
+    }
+
+    const usable = photoRefs.filter((ref) => {
+      const photoId = ref.split("/photos/")[1];
+      return photoId && cachedPhotoIds.has(photoId);
+    });
 
     return {
-      photos: photos
+      photos: usable
         .slice(0, data.max)
-        .map((p) => `/api/public/google-photo/${p.name}?w=1200`),
+        .map((name) => `/api/public/google-photo/${name}?w=1200`),
     };
   });
 
