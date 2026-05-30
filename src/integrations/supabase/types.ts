@@ -1917,6 +1917,7 @@ export type Database = {
           address: string | null
           ai_tags: string[] | null
           category: string
+          cover_photo: string | null
           created_at: string
           cuisine: string | null
           fetched_at: string
@@ -1948,6 +1949,7 @@ export type Database = {
           address?: string | null
           ai_tags?: string[] | null
           category: string
+          cover_photo?: string | null
           created_at?: string
           cuisine?: string | null
           fetched_at?: string
@@ -1979,6 +1981,7 @@ export type Database = {
           address?: string | null
           ai_tags?: string[] | null
           category?: string
+          cover_photo?: string | null
           created_at?: string
           cuisine?: string | null
           fetched_at?: string
