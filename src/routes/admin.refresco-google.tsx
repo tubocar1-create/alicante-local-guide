@@ -42,7 +42,7 @@ function RefrescoGoogle() {
   });
 
   // helper: llama al endpoint en bucle hasta que remaining = 0
-  async function loopScrape(source: "places" | "shops") {
+  async function loopScrape(source: "places" | "shops" | "hotels") {
     let totalDone = 0;
     let lastRemaining = Infinity;
     let stagnant = 0;
