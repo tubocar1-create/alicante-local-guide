@@ -29,7 +29,6 @@ import {
   getItalianPlaces,
   getBrunchPlaces,
   getPizzasPlaces,
-  resolvePlaceByName,
   getPlacesByTag,
   getInternationalPlaces,
 } from "@/lib/places.functions";
@@ -206,6 +205,7 @@ const GREETING: Msg = {
 
 const CHAT_STATE_KEY = "afp:chat-messages";
 const RESTAURANT_RETURN_KEY = "afp:return-to-gastro";
+const RESTAURANT_PREVIEW_KEY = "afp:restaurant-preview";
 
 function readInitialMessages(): Msg[] {
   if (typeof window === "undefined") return [GREETING];
@@ -231,6 +231,14 @@ function markRestaurantReturn() {
   if (typeof window !== "undefined") {
     window.sessionStorage.setItem(RESTAURANT_RETURN_KEY, "1");
   }
+}
+
+function stashRestaurantPreview(c: PlaceCardData) {
+  if (typeof window === "undefined" || !c.placeId) return;
+  window.sessionStorage.setItem(
+    RESTAURANT_PREVIEW_KEY,
+    JSON.stringify({ ...c, savedAt: Date.now() }),
+  );
 }
 
 export function ChatScreen() {
@@ -2263,8 +2271,6 @@ function AsianTableInner({ ranked, loading, originLabel, onClose }: {
   onClose: () => void;
 }) {
   const navigate = useNavigate();
-  const resolvePlace = useServerFn(resolvePlaceByName);
-  const [resolving, setResolving] = useState<string | null>(null);
 
   useEffect(() => {
     if (loading) return;
@@ -2281,30 +2287,9 @@ function AsianTableInner({ ranked, loading, originLabel, onClose }: {
 
   const openDashboard = async (c: PlaceCardData) => {
     if (c.placeId) {
-        markRestaurantReturn();
+      markRestaurantReturn();
+      stashRestaurantPreview(c);
       navigate({ to: "/restaurants/$placeId", params: { placeId: c.placeId } });
-      return;
-    }
-    if (resolving) return;
-    setResolving(c.name);
-    try {
-      const { placeId } = await resolvePlace({
-        data: { name: c.name, lat: c.lat ?? null, lon: c.lon ?? null },
-      });
-      if (placeId) {
-        markRestaurantReturn();
-        navigate({ to: "/restaurants/$placeId", params: { placeId } });
-      } else {
-        const href =
-          c.lat && c.lon
-            ? `https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lon}&travelmode=walking`
-            : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.name + " Alicante")}&travelmode=walking`;
-        window.open(href, "_blank", "noreferrer");
-      }
-    } catch (e) {
-      console.error("resolvePlaceByName failed", e);
-    } finally {
-      setResolving(null);
     }
   };
 
@@ -2463,6 +2448,7 @@ function AsianTableInner({ ranked, loading, originLabel, onClose }: {
                           onClick={(e) => {
                             e.stopPropagation();
                             markRestaurantReturn();
+                            stashRestaurantPreview(c);
                           }}
                           className="block"
                         >
@@ -2475,8 +2461,8 @@ function AsianTableInner({ ranked, loading, originLabel, onClose }: {
                             e.stopPropagation();
                             openDashboard(c);
                           }}
-                          disabled={resolving === c.name}
-                          className="block w-full text-left disabled:opacity-60"
+                          disabled
+                          className="block w-full cursor-not-allowed text-left opacity-60"
                         >
                           {nameNode}
                         </button>
@@ -2630,35 +2616,12 @@ function DrinksTableInner({ ranked, loading, originLabel, onClose }: {
   onClose: () => void;
 }) {
   const navigate = useNavigate();
-  const resolvePlace = useServerFn(resolvePlaceByName);
-  const [resolving, setResolving] = useState<string | null>(null);
 
   const openDashboard = async (c: PlaceCardData) => {
     if (c.placeId) {
       markRestaurantReturn();
+      stashRestaurantPreview(c);
       navigate({ to: "/restaurants/$placeId", params: { placeId: c.placeId } });
-      return;
-    }
-    if (resolving) return;
-    setResolving(c.name);
-    try {
-      const { placeId } = await resolvePlace({
-        data: { name: c.name, lat: c.lat ?? null, lon: c.lon ?? null },
-      });
-      if (placeId) {
-        markRestaurantReturn();
-        navigate({ to: "/restaurants/$placeId", params: { placeId } });
-      } else {
-        const href =
-          c.lat && c.lon
-            ? `https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lon}&travelmode=walking`
-            : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.name + " Alicante")}&travelmode=walking`;
-        window.open(href, "_blank", "noreferrer");
-      }
-    } catch (e) {
-      console.error("resolvePlaceByName failed", e);
-    } finally {
-      setResolving(null);
     }
   };
 
@@ -2809,6 +2772,7 @@ function DrinksTableInner({ ranked, loading, originLabel, onClose }: {
                           onClick={(e) => {
                             e.stopPropagation();
                             markRestaurantReturn();
+                            stashRestaurantPreview(c);
                           }}
                           className="block"
                         >
@@ -2821,8 +2785,8 @@ function DrinksTableInner({ ranked, loading, originLabel, onClose }: {
                             e.stopPropagation();
                             openDashboard(c);
                           }}
-                          disabled={resolving === c.name}
-                          className="block w-full text-left disabled:opacity-60"
+                          disabled
+                          className="block w-full cursor-not-allowed text-left opacity-60"
                         >
                           {nameNode}
                         </button>
@@ -3694,8 +3658,6 @@ function CategoryTableInner({
   originLabel: CategoryTableOriginLabel;
 }) {
   const navigate = useNavigate();
-  const resolvePlace = useServerFn(resolvePlaceByName);
-  const [resolving, setResolving] = useState<string | null>(null);
 
   useEffect(() => {
     if (loading) return;
@@ -3715,29 +3677,8 @@ function CategoryTableInner({
   const openDashboard = async (c: PlaceCardData) => {
     if (c.placeId) {
       markRestaurantReturn();
+      stashRestaurantPreview(c);
       navigate({ to: "/restaurants/$placeId", params: { placeId: c.placeId } });
-      return;
-    }
-    if (resolving) return;
-    setResolving(c.name);
-    try {
-      const { placeId } = await resolvePlace({
-        data: { name: c.name, lat: c.lat ?? null, lon: c.lon ?? null },
-      });
-      if (placeId) {
-        markRestaurantReturn();
-        navigate({ to: "/restaurants/$placeId", params: { placeId } });
-      } else {
-        const href =
-          c.lat && c.lon
-            ? `https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lon}&travelmode=walking`
-            : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.name + " Alicante")}&travelmode=walking`;
-        window.open(href, "_blank", "noreferrer");
-      }
-    } catch (e) {
-      console.error("resolvePlaceByName failed", e);
-    } finally {
-      setResolving(null);
     }
   };
 
@@ -3891,6 +3832,7 @@ function CategoryTableInner({
                           onClick={(e) => {
                             e.stopPropagation();
                             markRestaurantReturn();
+                            stashRestaurantPreview(c);
                           }}
                           className="block"
                         >
@@ -3903,8 +3845,8 @@ function CategoryTableInner({
                             e.stopPropagation();
                             openDashboard(c);
                           }}
-                          disabled={resolving === c.name}
-                          className="block w-full text-left disabled:opacity-60"
+                          disabled
+                          className="block w-full cursor-not-allowed text-left opacity-60"
                         >
                           {nameNode}
                         </button>
