@@ -100,9 +100,9 @@ export const getHotelPhotos = createServerFn({ method: "GET" })
       photo_filter?: Record<string, "ok" | "person">;
     };
     const photos = (raw.photos ?? []).slice(0, 20);
+    const scraped = ((row?.scraped_photos ?? []) as string[]).slice(0, 12);
     if (!photos.length) {
-      const scraped = (row?.scraped_photos ?? []) as string[];
-      return { photos: scraped.slice(0, 12) };
+      return { photos: scraped };
     }
 
     const filter = raw.photo_filter ?? {};
@@ -133,11 +133,15 @@ export const getHotelPhotos = createServerFn({ method: "GET" })
         .update({ raw: { ...raw, photo_filter: newFilter } as never })
         .eq("id", data.id);
       return {
-        photos: photos
-          .filter((p) => newFilter[p.name] !== "person")
-          .map((p) => `/api/public/google-photo/${p.name}?w=1200`),
+        photos: [
+          ...photos
+            .filter((p) => newFilter[p.name] !== "person")
+            .map((p) => `/api/public/google-photo/${p.name}?w=1200`),
+          ...scraped,
+        ],
       };
     }
 
-    return { photos: urls };
+    return { photos: [...urls, ...scraped] };
+
   });
