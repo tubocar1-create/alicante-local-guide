@@ -99,7 +99,9 @@ type Place = Awaited<ReturnType<typeof getPlaceById>>["place"];
 
 function RestaurantDashboard() {
   const { placeId } = Route.useParams();
-  const { place, photos } = Route.useLoaderData();
+  const loaderData = Route.useLoaderData();
+  const place = loaderData.place as Place | null;
+  const photos = loaderData.photos as string[];
   const [qrOpen, setQrOpen] = useState(false);
   const [zoomedIdx, setZoomedIdx] = useState<number | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
