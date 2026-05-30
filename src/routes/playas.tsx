@@ -124,23 +124,23 @@ function PlayasPage() {
                 key={b.slug}
                 to="/playas/$slug"
                 params={{ slug: b.slug }}
-                className="group relative h-[80vh] w-[85vw] max-w-[520px] flex-none snap-center overflow-hidden rounded-3xl bg-slate-200 shadow-xl ring-1 ring-sky-100 lg:h-72 lg:w-auto lg:max-w-none lg:flex-initial lg:snap-align-none"
+                className="group relative aspect-[3/4] w-[78vw] max-w-[420px] flex-none snap-center overflow-hidden rounded-3xl bg-slate-200 shadow-xl ring-1 ring-sky-100 lg:aspect-[4/5] lg:w-auto lg:max-w-none lg:flex-initial lg:snap-align-none"
               >
                 {b.photo ? (
                   <img
                     src={b.photo}
                     alt={b.name}
                     loading="lazy"
-                    className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                    className="absolute inset-0 block h-full w-full object-cover transition duration-500 group-hover:scale-105"
                   />
                 ) : (
-                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-sky-600" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 via-sky-500 to-indigo-600" />
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/15 to-transparent" />
-                <div className="absolute inset-x-0 bottom-0 p-3 text-white">
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-100">Playa</p>
-                  <p className="mt-1 text-sm font-black leading-tight">{b.name}</p>
-                  <p className="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-cyan-100">
+                <div className="absolute inset-x-0 bottom-0 p-4 text-white">
+                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-cyan-100">Playa</p>
+                  <p className="mt-1 text-base font-black leading-tight">{b.name}</p>
+                  <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-cyan-100">
                     Ver ficha
                   </p>
                 </div>
