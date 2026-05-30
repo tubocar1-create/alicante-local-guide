@@ -1224,16 +1224,9 @@ export const getPlacesByTag = createServerFn({ method: "GET" })
     return { tag: o.tag };
   })
   .handler(async ({ data }) => {
-    // Classify ALL pending rows synchronously so the dashboard reflects the entire DB.
-    try {
-      await ensureClassified(2000);
-    } catch (e) {
-      console.error("ensureClassified error", e);
-    }
-
     const { data: rows, error } = await supabaseAdmin
       .from("places")
-      .select("*")
+      .select(PLACE_LIST_SELECT)
       .contains("ai_tags", [data.tag])
       .order("name")
       .limit(1000);
