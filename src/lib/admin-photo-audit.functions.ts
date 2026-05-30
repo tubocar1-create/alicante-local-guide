@@ -534,7 +534,7 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
         const id = (r as { id: string }).id;
         const hasVisible =
           HARDCODED_PHOTO_IDS.has(id) ||
-          (Array.isArray(refs) && refs.length > 0);
+          photoStrings(refs).some((ref) => hasCachedGooglePhoto(ref, storedGooglePhotos));
         if (hasVisible) cur.withPhoto++;
         counters.set(st, cur);
       }
@@ -550,7 +550,7 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
       sectors.push({
         key: "salud-publico",
         label: "Salud pública (health_centers) · incluye mocks visibles",
-        source: "health_centers.google_photo_refs[] + 4 mocks hardcoded en /hospitales/:id",
+        source: "health_centers.google_photo_refs[] cacheadas + 4 mocks hardcoded en /hospitales/:id",
         subsectors: subs,
       });
     }
