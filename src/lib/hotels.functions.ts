@@ -134,14 +134,14 @@ export const getHotelPhotos = createServerFn({ method: "GET" })
         .eq("id", data.id);
       return {
         photos: [
+          ...scraped,
           ...photos
             .filter((p) => newFilter[p.name] !== "person")
             .map((p) => `/api/public/google-photo/${p.name}?w=1200`),
-          ...scraped,
         ],
       };
     }
 
-    return { photos: [...urls, ...scraped] };
+    return { photos: [...scraped, ...urls] };
 
   });
