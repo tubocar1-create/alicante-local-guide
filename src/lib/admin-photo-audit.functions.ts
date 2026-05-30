@@ -7,6 +7,27 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { MAP_BEACHES } from "@/lib/playas-map-data";
 import { HEALTH_CATEGORIES } from "@/lib/health-categories";
 
+// Supabase / PostgREST limita por defecto a 1000 filas por petición. Para
+// auditar tablas grandes (places, shop_businesses…) hay que paginar a mano
+// con .range() hasta agotar el conjunto, o los totales salen truncados.
+async function fetchAll<T>(
+  build: (from: number, to: number) => Promise<{ data: T[] | null; error: unknown }>,
+  pageSize = 1000,
+): Promise<T[]> {
+  const out: T[] = [];
+  let from = 0;
+  for (;;) {
+    const to = from + pageSize - 1;
+    const { data, error } = await build(from, to);
+    if (error) throw error;
+    const rows = data ?? [];
+    out.push(...rows);
+    if (rows.length < pageSize) break;
+    from += pageSize;
+  }
+  return out;
+}
+
 export type SubsectorRow = {
   key: string;
   label: string;
@@ -76,9 +97,13 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
         .from("shop_subsubsectors")
         .select("id, slug, name")
         .order("name");
-      const { data: biz } = await supabaseAdmin
-        .from("shop_businesses")
-        .select("subsubsector_id, photos, logo_url");
+      const biz = await fetchAll<{ subsubsector_id: string | null; photos: unknown; logo_url: string | null }>(
+        async (from, to) =>
+          await supabaseAdmin
+            .from("shop_businesses")
+            .select("subsubsector_id, photos, logo_url")
+            .range(from, to),
+      );
       const counters = new Map<
         string,
         { total: number; withPhoto: number }
@@ -119,9 +144,13 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
     // hasta que se descargan a Storage, así que no cuentan como "foto
     // visible" para el usuario.
     {
-      const { data: rows } = await supabaseAdmin
-        .from("places")
-        .select("category, cover_photo");
+      const rows = await fetchAll<{ category: string | null; cover_photo: string | null }>(
+        async (from, to) =>
+          await supabaseAdmin
+            .from("places")
+            .select("category, cover_photo")
+            .range(from, to),
+      );
       const counters = new Map<
         string,
         { total: number; withPhoto: number }
