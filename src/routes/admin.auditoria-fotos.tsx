@@ -4,17 +4,19 @@
 // API externa. El estado de los checkboxes vive en localStorage.
 
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, ImageIcon, ImageOff, Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Loader2, ImageIcon, ImageOff, Lock, Sparkles, AlertTriangle } from "lucide-react";
 import {
   getPhotoAudit,
   type SectorBlock,
 } from "@/lib/admin-photo-audit.functions";
+import { backfillAuthorizedPhotos } from "@/lib/admin-photo-backfill.functions";
 
 export const Route = createFileRoute("/admin/auditoria-fotos")({
   head: () => ({ meta: [{ title: "Admin · Auditoría de fotos" }] }),
@@ -166,6 +168,12 @@ function AuditoriaFotos() {
           </div>
         </CardContent>
       </Card>
+
+      <BackfillPanel
+        authorizedKeys={Object.entries(auth)
+          .filter(([, v]) => v)
+          .map(([k]) => k)}
+      />
 
       {data.sectors.map((sector) => (
         <SectorCard
@@ -357,5 +365,139 @@ function Big({
         {value.toLocaleString("es-ES")}
       </p>
     </div>
+  );
+}
+
+function BackfillPanel({ authorizedKeys }: { authorizedKeys: string[] }) {
+  const fn = useServerFn(backfillAuthorizedPhotos);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const mut = useMutation({
+    mutationFn: () => fn({ data: { authorizedKeys, max: 2000 } }),
+  });
+  const disabled = authorizedKeys.length === 0 || mut.isPending;
+
+  return (
+    <Card className="border-amber-500/50">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-amber-600" />
+          Recopilar fotos desde Google (instrucción única)
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Llama a Google Places SOLO para los subsectores que tengas marcados
+          arriba. Pide <strong>1 foto por ficha</strong>, la sube al
+          almacenamiento del proyecto (<code>entity-photos</code>) y la guarda
+          en la columna de fotos de la tabla correspondiente. Tope global:{" "}
+          <strong>2000 fotos</strong>.
+        </p>
+        <div className="flex flex-wrap items-center gap-3 text-xs">
+          <Badge variant="outline">
+            Subsectores autorizados: {authorizedKeys.length}
+          </Badge>
+          <Badge variant="outline">Tope: 2000 fotos</Badge>
+          <Badge variant="outline">~3 llamadas Google por foto</Badge>
+        </div>
+        {!confirmOpen ? (
+          <Button
+            onClick={() => setConfirmOpen(true)}
+            disabled={disabled}
+            className="bg-amber-600 hover:bg-amber-700"
+          >
+            <Sparkles className="h-4 w-4 mr-2" />
+            Recopilar fotos autorizadas
+          </Button>
+        ) : (
+          <div className="rounded-md border border-amber-500/50 bg-amber-500/5 p-3 space-y-2">
+            <p className="text-sm font-medium flex items-center gap-1.5">
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+              ¿Confirmas la ejecución?
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Esto generará llamadas de pago a Google Places. Acción única.
+            </p>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => {
+                  setConfirmOpen(false);
+                  mut.mutate();
+                }}
+                disabled={disabled}
+                className="bg-amber-600 hover:bg-amber-700"
+              >
+                {mut.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Ejecutando…
+                  </>
+                ) : (
+                  "Sí, ejecutar ahora"
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setConfirmOpen(false)}
+                disabled={mut.isPending}
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {mut.isPending && (
+          <p className="text-xs text-muted-foreground">
+            Esto puede tardar varios minutos. No cierres la pestaña.
+          </p>
+        )}
+
+        {mut.error && (
+          <p className="text-sm text-destructive">
+            Error: {(mut.error as Error).message}
+          </p>
+        )}
+
+        {mut.data && (
+          <div className="space-y-2">
+            <div className="rounded-md bg-muted/40 p-3 text-sm">
+              <p>
+                Fotos solicitadas a Google:{" "}
+                <strong className="tabular-nums">{mut.data.used}</strong> /{" "}
+                {mut.data.budget}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Finalizado: {mut.data.finishedAt ? new Date(mut.data.finishedAt).toLocaleString("es-ES") : "—"}
+              </p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="text-left text-muted-foreground border-b">
+                    <th className="py-1.5 pr-3 font-medium">Subsector</th>
+                    <th className="py-1.5 pr-3 font-medium text-right">Intentos</th>
+                    <th className="py-1.5 pr-3 font-medium text-right">OK</th>
+                    <th className="py-1.5 pr-3 font-medium text-right">Saltados</th>
+                    <th className="py-1.5 pr-3 font-medium text-right">Errores</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(mut.data.reports ?? []).map((r) => (
+                    <tr key={`${r.sectorKey}-${r.subsectorKey}`} className="border-b last:border-b-0">
+                      <td className="py-1.5 pr-3">{r.label}</td>
+                      <td className="py-1.5 pr-3 text-right tabular-nums">{r.attempted}</td>
+                      <td className="py-1.5 pr-3 text-right tabular-nums text-emerald-700">{r.ok}</td>
+                      <td className="py-1.5 pr-3 text-right tabular-nums">{r.skipped}</td>
+                      <td className="py-1.5 pr-3 text-right tabular-nums text-destructive">
+                        {r.errors.length}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
