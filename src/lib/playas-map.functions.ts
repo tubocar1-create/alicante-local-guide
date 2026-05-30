@@ -169,8 +169,8 @@ export const getMapBeaches = createServerFn({ method: "GET" }).handler(
         const cachedUrl = cacheMap.get(b.slug);
         if (cachedUrl) return { ...b, photo: cachedUrl };
 
-        // Local fallback.
-        const local = LOCAL_BEACH_PHOTOS[b.slug] ?? [];
+        // Local fallback (fotos almacenadas en BD).
+        const local = await loadLocalPhotos(b.slug);
         if (local.length > 0) return { ...b, photo: local[0] };
 
         // Last resort: live Google fetch (cacheada perpetuamente por slug).
