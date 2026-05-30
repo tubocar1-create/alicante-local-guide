@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { getPlaceById, getPlacePhotos } from "@/lib/places.functions";
 import { getAiReview } from "@/lib/ai-review.functions";
 import { Sparkles, X, Loader2 } from "lucide-react";
@@ -21,46 +21,21 @@ import { resolveOpeningStatus } from "@/lib/opening-hours";
 
 const PlaceLocationMap = lazy(() => import("@/components/PlaceLocationMap"));
 import OpeningHoursCard from "@/components/OpeningHoursCard";
+const RESTAURANT_PREVIEW_KEY = "afp:restaurant-preview";
 
 export const Route = createFileRoute("/restaurants/$placeId")({
-  loader: async ({ params }) => {
-    const placeResult = await getPlaceById({ data: { placeId: params.placeId } });
-
-    return {
-      place: placeResult.place,
-      photos: [],
-      name: placeResult.place?.name ?? null,
-      cuisine: placeResult.place?.cuisine ?? null,
-      address: placeResult.place?.address ?? null,
-      rating: placeResult.place?.rating ?? null,
-      ratingCount: placeResult.place?.user_rating_count ?? null,
-    };
-  },
+  loader: async ({ params }) => ({ placeId: params.placeId }),
   head: ({ loaderData, params }) => {
-    const name = loaderData?.name?.trim() || "Restaurante";
-    const cuisine = loaderData?.cuisine?.trim();
-    const title = `${name} — Restaurantes de Alicante`;
-    const desc = cuisine
-      ? `${name} (${cuisine}) en Alicante: horario, valoraciones, fotos y cómo llegar.`
-      : `${name} en Alicante: horario, precio, valoración, fotos y ubicación.`;
+    const title = `Restaurante — Alicante`;
+    const desc = `Ficha de restaurante en Alicante: horario, precio, valoración y ubicación.`;
     const url = `https://vamosalicante.com/restaurants/${params.placeId}`;
     const ld: Record<string, unknown> = {
       "@context": "https://schema.org",
       "@type": "Restaurant",
-      name,
+      name: "Restaurante",
       url,
-      address: loaderData?.address
-        ? { "@type": "PostalAddress", streetAddress: loaderData.address, addressLocality: "Alicante", addressCountry: "ES" }
-        : { "@type": "PostalAddress", addressLocality: "Alicante", addressCountry: "ES" },
+      address: { "@type": "PostalAddress", addressLocality: "Alicante", addressCountry: "ES" },
     };
-    if (cuisine) ld.servesCuisine = cuisine;
-    if (loaderData?.rating && loaderData?.ratingCount) {
-      ld.aggregateRating = {
-        "@type": "AggregateRating",
-        ratingValue: loaderData.rating,
-        reviewCount: loaderData.ratingCount,
-      };
-    }
     return {
       meta: [
         { title: title.slice(0, 60) },
