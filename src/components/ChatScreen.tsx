@@ -2514,8 +2514,7 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
   const [extra, setExtra] = useState<PlaceCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
-  const [reloadKey, setReloadKey] = useState(0);
-  const { locState, origin, originLabel } = useFoodListOrigin();
+  const { origin, originLabel } = useFoodListOrigin();
 
   const fetchAsian = useServerFn(getAsianPlaces);
   useEffect(() => {
@@ -2543,8 +2542,7 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
       .catch((e) => console.error("getAsianPlaces failed", e))
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [fetchAsian, reloadKey]);
-  useNearbyDiscovery("asian", origin, locState.status === "ready", () => setReloadKey((k) => k + 1));
+  }, [fetchAsian]);
 
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
   const byKey = new Map<string, PlaceCardData>();
@@ -2861,8 +2859,7 @@ export function DrinksTable({ cards, onExit }: { cards: PlaceCardData[]; onExit?
   const [extra, setExtra] = useState<PlaceCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
-  const [reloadKey, setReloadKey] = useState(0);
-  const { locState, origin, originLabel } = useFoodListOrigin();
+  const { origin, originLabel } = useFoodListOrigin();
 
   const fetchDrinks = useServerFn(getDrinksPlaces);
   useEffect(() => {
@@ -2889,8 +2886,7 @@ export function DrinksTable({ cards, onExit }: { cards: PlaceCardData[]; onExit?
       .catch((e) => console.error("getDrinksPlaces failed", e))
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [fetchDrinks, reloadKey]);
-  useNearbyDiscovery("drinks", origin, locState.status === "ready", () => setReloadKey((k) => k + 1));
+  }, [fetchDrinks]);
 
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
   const byKey = new Map<string, PlaceCardData>();
