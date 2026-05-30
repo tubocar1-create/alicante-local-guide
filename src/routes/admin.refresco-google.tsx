@@ -76,6 +76,18 @@ function RefrescoGoogle() {
         return r;
       },
     },
+    {
+      key: "scrape-photos-places",
+      title: "Scrapear fotos de la web (restaurantes/bares/cafés)",
+      desc: "Para cada ficha con web oficial guardada y SIN fotos en BD, descarga hasta 8 fotos de su sitio (Firecrawl). Se ejecuta en bucle automático hasta agotar la cola. NO usa Google.",
+      run: () => loopScrape("places"),
+    },
+    {
+      key: "scrape-photos-shops",
+      title: "Scrapear fotos de la web (tiendas con web)",
+      desc: "Igual que el anterior pero para shop_businesses (Zara, Calzedonia, etc.) que tienen web y aún no tienen fotos guardadas.",
+      run: () => loopScrape("shops"),
+    },
   ];
 
   return (
