@@ -28,6 +28,93 @@ async function fetchAll<T>(
   return out;
 }
 
+const GOOGLE_PHOTO_BUCKET = "shop-photos";
+const GOOGLE_REF_RE = /^places\/[^/]+\/photos\//;
+
+function cleanText(value: unknown): string | null {
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
+}
+
+function photoStrings(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      if (typeof item === "string") return cleanText(item);
+      if (item && typeof item === "object") {
+        return cleanText((item as { name?: unknown }).name);
+      }
+      return null;
+    })
+    .filter((item): item is string => !!item);
+}
+
+async function loadStorageObjectNames(bucket: string): Promise<Set<string>> {
+  try {
+    const storageSchema = supabaseAdmin.schema("storage" as never) as unknown as {
+      from: (table: string) => {
+        select: (columns: string) => {
+          eq: (column: string, value: string) => {
+            range: (from: number, to: number) => Promise<{ data: { name: string }[] | null; error: unknown }>;
+          };
+        };
+      };
+    };
+    const rows = await fetchAll<{ name: string }>((from, to) =>
+      storageSchema
+        .from("objects")
+        .select("name")
+        .eq("bucket_id", bucket)
+        .range(from, to),
+    );
+    return new Set(rows.map((row) => row.name));
+  } catch {
+    return new Set();
+  }
+}
+
+function cachedCandidatesForGoogleRef(ref: string) {
+  const safe = ref.replace(/[^a-zA-Z0-9/_-]/g, "_");
+  return [800, 1200, 600, 1600].flatMap((width) => [
+    `gphotos/${safe}/w${width}.jpg`,
+    `${safe}/w${width}.jpg`,
+  ]);
+}
+
+function hasCachedGooglePhoto(ref: string, storageNames: Set<string>) {
+  if (!GOOGLE_REF_RE.test(ref)) return false;
+  if (cachedCandidatesForGoogleRef(ref).some((candidate) => storageNames.has(candidate))) {
+    return true;
+  }
+  const placeId = ref.match(/^places\/([^/]+)\/photos\//)?.[1];
+  if (!placeId) return false;
+  return Array.from(storageNames).some(
+    (name) =>
+      name.startsWith(`places/${placeId}/photos/`) ||
+      name.startsWith(`gphotos/places/${placeId}/photos/`),
+  );
+}
+
+function googleRefFromUrl(url: string) {
+  if (GOOGLE_REF_RE.test(url)) return url;
+  const proxyMatch = url.match(/\/api\/public\/google-photo\/(places\/[^?]+)(?:\?|$)/);
+  return proxyMatch?.[1] ?? null;
+}
+
+function hasVisiblePhoto(value: unknown, storageNames: Set<string>) {
+  const text = cleanText(value);
+  if (!text) return false;
+  if (/^https?:\/\//i.test(text)) return true;
+  if (text.startsWith("/storage/") || text.startsWith("/assets/")) return true;
+  const ref = googleRefFromUrl(text);
+  return ref ? hasCachedGooglePhoto(ref, storageNames) : false;
+}
+
+function hasVisiblePhotoInArray(value: unknown, storageNames: Set<string>) {
+  return photoStrings(value).some((photo) => hasVisiblePhoto(photo, storageNames));
+}
+
 export type SubsectorRow = {
   key: string;
   label: string;
@@ -61,6 +148,7 @@ const RESTAURANT_CATEGORIES: { key: string; label: string }[] = [
 export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
   async (): Promise<PhotoAuditResult> => {
     const sectors: SectorBlock[] = [];
+    const storedGooglePhotos = await loadStorageObjectNames(GOOGLE_PHOTO_BUCKET);
 
     // ───────────────────────────────── PLAYAS (mapa interactivo)
     {
@@ -97,11 +185,11 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
         .from("shop_subsubsectors")
         .select("id, slug, name")
         .order("name");
-      const biz = await fetchAll<{ subsubsector_id: string | null; photos: unknown; logo_url: string | null }>(
+      const biz = await fetchAll<{ subsubsector_id: string | null; photos: unknown; logo_url: string | null; status: string | null }>(
         async (from, to) =>
           await supabaseAdmin
             .from("shop_businesses")
-            .select("subsubsector_id, photos, logo_url")
+            .select("subsubsector_id, photos, logo_url, status")
             .range(from, to),
       );
       const counters = new Map<
@@ -109,14 +197,14 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
         { total: number; withPhoto: number }
       >();
       for (const b of biz ?? []) {
+        if ((b as { status: string | null }).status === "duplicate") continue;
         const id = (b as { subsubsector_id: string | null }).subsubsector_id;
         if (!id) continue;
         const cur = counters.get(id) ?? { total: 0, withPhoto: 0 };
         cur.total++;
-        const photos = (b as { photos: unknown }).photos;
         const hasPhoto =
-          (Array.isArray(photos) && photos.length > 0) ||
-          !!(b as { logo_url: string | null }).logo_url;
+          hasVisiblePhotoInArray((b as { photos: unknown }).photos, storedGooglePhotos) ||
+          hasVisiblePhoto((b as { logo_url: string | null }).logo_url, storedGooglePhotos);
         if (hasPhoto) cur.withPhoto++;
         counters.set(id, cur);
       }
@@ -160,7 +248,7 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
         const cur = counters.get(cat) ?? { total: 0, withPhoto: 0 };
         cur.total++;
         const cover = (r as { cover_photo: string | null }).cover_photo;
-        if (cover && cover.trim().length > 0) cur.withPhoto++;
+        if (hasVisiblePhoto(cover, storedGooglePhotos)) cur.withPhoto++;
         counters.set(cat, cur);
       }
       const subs: SubsectorRow[] = RESTAURANT_CATEGORIES.map((cat) => {
@@ -194,9 +282,13 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
 
     // ───────────────────────────────── HOTELES (hotels_static por hotel_type)
     {
-      const { data: rows } = await supabaseAdmin
-        .from("hotels_static")
-        .select("hotel_type, main_image, scraped_photos, raw");
+      const rows = await fetchAll<{ hotel_type: string | null; main_image: string | null; scraped_photos: unknown }>(
+        async (from, to) =>
+          await supabaseAdmin
+            .from("hotels_static")
+            .select("hotel_type, main_image, scraped_photos")
+            .range(from, to),
+      );
       const counters = new Map<
         string,
         { total: number; withPhoto: number }
@@ -205,14 +297,9 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
         const t = (r as { hotel_type: string | null }).hotel_type ?? "sin tipo";
         const cur = counters.get(t) ?? { total: 0, withPhoto: 0 };
         cur.total++;
-        const main = (r as { main_image: string | null }).main_image;
-        const scraped = (r as { scraped_photos: string[] | null })
-          .scraped_photos;
-        const raw = (r as { raw: { photos?: unknown[] } | null }).raw;
-        const rawPhotos =
-          raw && Array.isArray(raw.photos) && raw.photos.length > 0;
         const hasPhoto =
-          !!main || (Array.isArray(scraped) && scraped.length > 0) || rawPhotos;
+          hasVisiblePhoto((r as { main_image: string | null }).main_image, storedGooglePhotos) ||
+          hasVisiblePhotoInArray((r as { scraped_photos: unknown }).scraped_photos, storedGooglePhotos);
         if (hasPhoto) cur.withPhoto++;
         counters.set(t, cur);
       }
@@ -228,7 +315,7 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
       sectors.push({
         key: "hoteles",
         label: "Hoteles (por tipo)",
-        source: "hotels_static.main_image / scraped_photos / raw.photos",
+        source: "hotels_static.main_image / scraped_photos visibles",
         subsectors: subs,
       });
     }
@@ -242,8 +329,10 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
       const total = rows?.length ?? 0;
       const withPhoto = (rows ?? []).filter(
         (r) =>
-          Array.isArray((r as { photos: string[] | null }).photos) &&
-          ((r as { photos: string[] }).photos.length ?? 0) > 0,
+          hasVisiblePhotoInArray(
+            (r as { photos: unknown }).photos,
+            storedGooglePhotos,
+          ),
       ).length;
       sectors.push({
         key: "cines",
@@ -269,7 +358,11 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
         .eq("active", true);
       const total = rows?.length ?? 0;
       const withPhoto = (rows ?? []).filter(
-        (r) => !!(r as { poster_url: string | null }).poster_url,
+        (r) =>
+          hasVisiblePhoto(
+            (r as { poster_url: string | null }).poster_url,
+            storedGooglePhotos,
+          ),
       ).length;
       sectors.push({
         key: "cartelera",
@@ -301,7 +394,14 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
         const cat = (r as { category: string | null }).category ?? "otro";
         const cur = counters.get(cat) ?? { total: 0, withPhoto: 0 };
         cur.total++;
-        if ((r as { poster_url: string | null }).poster_url) cur.withPhoto++;
+        if (
+          hasVisiblePhoto(
+            (r as { poster_url: string | null }).poster_url,
+            storedGooglePhotos,
+          )
+        ) {
+          cur.withPhoto++;
+        }
         counters.set(cat, cur);
       }
       const subs: SubsectorRow[] = Array.from(counters.entries())
@@ -335,7 +435,14 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
         const k = (r as { kind: string | null }).kind ?? "sin tipo";
         const cur = counters.get(k) ?? { total: 0, withPhoto: 0 };
         cur.total++;
-        if ((r as { cover_url: string | null }).cover_url) cur.withPhoto++;
+        if (
+          hasVisiblePhoto(
+            (r as { cover_url: string | null }).cover_url,
+            storedGooglePhotos,
+          )
+        ) {
+          cur.withPhoto++;
+        }
         counters.set(k, cur);
       }
       const subs: SubsectorRow[] = Array.from(counters.entries())
@@ -368,8 +475,14 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
         const cat = (r as { category: string | null }).category ?? "_none_";
         const cur = counters.get(cat) ?? { total: 0, withPhoto: 0 };
         cur.total++;
-        const photos = (r as { photos: string[] | null }).photos;
-        if (Array.isArray(photos) && photos.length > 0) cur.withPhoto++;
+        if (
+          hasVisiblePhotoInArray(
+            (r as { photos: unknown }).photos,
+            storedGooglePhotos,
+          )
+        ) {
+          cur.withPhoto++;
+        }
         counters.set(cat, cur);
       }
       const subs: SubsectorRow[] = HEALTH_CATEGORIES.filter(
@@ -421,7 +534,7 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
         const id = (r as { id: string }).id;
         const hasVisible =
           HARDCODED_PHOTO_IDS.has(id) ||
-          (Array.isArray(refs) && refs.length > 0);
+          photoStrings(refs).some((ref) => hasVisiblePhoto(ref, storedGooglePhotos));
         if (hasVisible) cur.withPhoto++;
         counters.set(st, cur);
       }
@@ -437,7 +550,7 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
       sectors.push({
         key: "salud-publico",
         label: "Salud pública (health_centers) · incluye mocks visibles",
-        source: "health_centers.google_photo_refs[] + 4 mocks hardcoded en /hospitales/:id",
+        source: "health_centers.google_photo_refs[] cacheadas + 4 mocks hardcoded en /hospitales/:id",
         subsectors: subs,
       });
     }
