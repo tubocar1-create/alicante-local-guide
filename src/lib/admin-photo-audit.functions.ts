@@ -7,6 +7,27 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { MAP_BEACHES } from "@/lib/playas-map-data";
 import { HEALTH_CATEGORIES } from "@/lib/health-categories";
 
+// Supabase / PostgREST limita por defecto a 1000 filas por petición. Para
+// auditar tablas grandes (places, shop_businesses…) hay que paginar a mano
+// con .range() hasta agotar el conjunto, o los totales salen truncados.
+async function fetchAll<T>(
+  build: (from: number, to: number) => Promise<{ data: T[] | null; error: unknown }>,
+  pageSize = 1000,
+): Promise<T[]> {
+  const out: T[] = [];
+  let from = 0;
+  for (;;) {
+    const to = from + pageSize - 1;
+    const { data, error } = await build(from, to);
+    if (error) throw error;
+    const rows = data ?? [];
+    out.push(...rows);
+    if (rows.length < pageSize) break;
+    from += pageSize;
+  }
+  return out;
+}
+
 export type SubsectorRow = {
   key: string;
   label: string;
