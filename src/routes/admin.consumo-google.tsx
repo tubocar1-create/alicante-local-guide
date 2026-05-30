@@ -209,22 +209,20 @@ function KillSwitchCard() {
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-muted-foreground">
-          Hay un bloqueo de emergencia en código: aunque alguien pulse permitir,
-          las llamadas salientes a Google siguen bloqueadas. Las fotos y datos ya
-          cacheados siguen saliendo de almacenamiento/BD.
+          Tú decides. En rojo, ninguna llamada sale a Google. En verde, el servidor vuelve a llamar a Google cuando lo necesite.
         </p>
         <div className="flex gap-2">
           <Button
             variant={enabled ? "default" : "outline"}
             onClick={() => m.mutate(true)}
-            disabled
+            disabled={m.isPending || enabled}
           >
             Permitir llamadas
           </Button>
           <Button
             variant={!enabled ? "destructive" : "outline"}
             onClick={() => m.mutate(false)}
-            disabled={m.isPending}
+            disabled={m.isPending || !enabled}
           >
             🛑 Cortar todas
           </Button>
