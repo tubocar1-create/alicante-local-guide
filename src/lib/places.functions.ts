@@ -238,10 +238,10 @@ export const getPlacePhotos = createServerFn({ method: "GET" })
     return { placeId: o.placeId, max: Math.min(o.max ?? 4, 8) };
   })
   .handler(async ({ data }) => {
-    // Solo devolvemos referencias ya cacheadas en Storage. Este endpoint NO
-    // hace llamadas a Google. Si una referencia no tiene archivo cacheado,
-    // la omitimos: así no devolvemos URLs que terminarían en un píxel
-    // transparente (y el usuario no ve huecos en la galería).
+    // Solo devolvemos referencias ya guardadas en places_cache. El proxy
+    // /api/public/google-photo ya hace HEAD sobre Storage y redirige a la
+    // foto cacheada (o sirve un píxel si no existe). NO llamamos a Google
+    // desde aquí y NO listamos Storage por cada sitio (eso colapsaba listados).
     const { data: row } = await supabaseAdmin
       .from("places_cache")
       .select("raw")
@@ -249,32 +249,14 @@ export const getPlacePhotos = createServerFn({ method: "GET" })
       .maybeSingle();
     const photoRefs = ((row?.raw as { photos?: Array<{ name: string }> } | null)?.photos ?? [])
       .map((p) => p.name)
-      .filter((n) => typeof n === "string" && n.startsWith("places/"));
-
-    if (!photoRefs.length) return { photos: [] as string[] };
-
-    // Indexamos los archivos cacheados de este sitio en Storage (1 sola
-    // llamada por prefijo, no por foto). Buscamos en los dos layouts
-    // históricos: `places/{id}/photos/...` y `gphotos/places/{id}/photos/...`.
-    const cachedPhotoIds = new Set<string>();
-    for (const prefix of [`places/${data.placeId}/photos`, `gphotos/places/${data.placeId}/photos`]) {
-      const { data: dirs } = await supabaseAdmin.storage
-        .from("shop-photos")
-        .list(prefix, { limit: 100 });
-      for (const dir of dirs ?? []) cachedPhotoIds.add(dir.name);
-    }
-
-    const usable = photoRefs.filter((ref) => {
-      const photoId = ref.split("/photos/")[1];
-      return photoId && cachedPhotoIds.has(photoId);
-    });
+      .filter((n) => typeof n === "string" && n.startsWith("places/"))
+      .slice(0, data.max);
 
     return {
-      photos: usable
-        .slice(0, data.max)
-        .map((name) => `/api/public/google-photo/${name}?w=1200`),
+      photos: photoRefs.map((name) => `/api/public/google-photo/${name}?w=1200`),
     };
   });
+
 
 // Curated lists: for categories where Google's text search mixes in unrelated
 // venues (e.g. "tasca" returns pubs), we hand-pick well-known restaurants and
