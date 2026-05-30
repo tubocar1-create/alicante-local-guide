@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { LEAFLET_HEAD_LINK } from "@/lib/leaflet-head";
 import { useServerFn } from "@tanstack/react-start";
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 import { getPlaceById, getPlacePhotos } from "@/lib/places.functions";
 import { getAiReview } from "@/lib/ai-review.functions";
 import { Sparkles, X, Loader2 } from "lucide-react";
@@ -25,18 +25,20 @@ import OpeningHoursCard from "@/components/OpeningHoursCard";
 
 export const Route = createFileRoute("/restaurants/$placeId")({
   loader: async ({ params }) => {
-    try {
-      const r = await getPlaceById({ data: { placeId: params.placeId } });
-      return {
-        name: r.place?.name ?? null,
-        cuisine: r.place?.cuisine ?? null,
-        address: r.place?.address ?? null,
-        rating: r.place?.rating ?? null,
-        ratingCount: r.place?.user_rating_count ?? null,
-      };
-    } catch {
-      return { name: null, cuisine: null, address: null, rating: null, ratingCount: null };
-    }
+    const [placeResult, photoResult] = await Promise.all([
+      getPlaceById({ data: { placeId: params.placeId } }),
+      getPlacePhotos({ data: { placeId: params.placeId, max: 10 } }).catch(() => ({ photos: [] })),
+    ]);
+
+    return {
+      place: placeResult.place,
+      photos: photoResult.photos,
+      name: placeResult.place?.name ?? null,
+      cuisine: placeResult.place?.cuisine ?? null,
+      address: placeResult.place?.address ?? null,
+      rating: placeResult.place?.rating ?? null,
+      ratingCount: placeResult.place?.user_rating_count ?? null,
+    };
   },
   head: ({ loaderData, params }) => {
     const name = loaderData?.name?.trim() || "Restaurante";
@@ -79,6 +81,16 @@ export const Route = createFileRoute("/restaurants/$placeId")({
       scripts: [{ type: "application/ld+json", children: JSON.stringify(ld) }],
     };
   },
+  errorComponent: ({ error }) => (
+    <div className="min-h-screen bg-slate-950 p-6 text-sm text-rose-300">
+      No se pudo cargar el restaurante: {error.message}
+    </div>
+  ),
+  notFoundComponent: () => (
+    <div className="min-h-screen bg-slate-950 p-6 text-sm text-slate-300">
+      Restaurante no encontrado.
+    </div>
+  ),
   component: RestaurantDashboard,
 });
 
@@ -87,12 +99,7 @@ type Place = Awaited<ReturnType<typeof getPlaceById>>["place"];
 
 function RestaurantDashboard() {
   const { placeId } = Route.useParams();
-  const fetchPlace = useServerFn(getPlaceById);
-  const fetchPhotos = useServerFn(getPlacePhotos);
-  const [place, setPlace] = useState<Place | null>(null);
-  const [photos, setPhotos] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
+  const { place, photos } = Route.useLoaderData();
   const [qrOpen, setQrOpen] = useState(false);
   const [zoomedIdx, setZoomedIdx] = useState<number | null>(null);
   const [bookingOpen, setBookingOpen] = useState(false);
@@ -136,32 +143,6 @@ function RestaurantDashboard() {
         : (place?.open_now ?? null);
   const heroClosesAt = heroOpeningStatus?.status === "open" ? heroOpeningStatus.closesAt : null;
 
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setPhotos([]);
-    fetchPlace({ data: { placeId } })
-      .then((r) => {
-        if (!cancelled) setPlace(r.place);
-      })
-      .catch((e) => {
-        if (!cancelled) setErr(String(e?.message ?? e));
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    fetchPhotos({ data: { placeId, max: 10 } })
-      .then((r) => {
-        if (!cancelled) setPhotos(r.photos);
-      })
-      .catch(() => {
-        /* photos optional */
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [fetchPlace, fetchPhotos, placeId]);
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100">
       <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-white/10 bg-slate-950/80 px-4 py-3 backdrop-blur">
@@ -173,14 +154,12 @@ function RestaurantDashboard() {
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <h1 className="truncate text-base font-semibold">
-          {place?.name ?? (loading ? "Cargando…" : "Restaurante")}
+          {place?.name ?? "Restaurante"}
         </h1>
       </header>
 
       <main className="w-full px-4 py-5">
-        {loading && <p className="text-sm text-slate-400">Cargando información…</p>}
-        {err && <p className="text-sm text-rose-400">Error: {err}</p>}
-        {!loading && !place && !err && (
+        {!place && (
           <p className="text-sm text-slate-400">No se encontró este restaurante en la base.</p>
         )}
 
