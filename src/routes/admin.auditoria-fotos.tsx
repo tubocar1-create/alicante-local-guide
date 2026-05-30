@@ -4,7 +4,7 @@
 // API externa. El estado de los checkboxes vive en localStorage.
 
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -383,9 +383,13 @@ function Big({
 
 function BackfillPanel({ authorizedKeys }: { authorizedKeys: string[] }) {
   const fn = useServerFn(backfillAuthorizedPhotos);
+  const queryClient = useQueryClient();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const mut = useMutation({
     mutationFn: () => fn({ data: { authorizedKeys, max: 2000 } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["photo-audit"] });
+    },
   });
   const disabled = authorizedKeys.length === 0 || mut.isPending;
 
@@ -412,9 +416,12 @@ function BackfillPanel({ authorizedKeys }: { authorizedKeys: string[] }) {
           <Badge variant="outline">Tope: 2000 fotos</Badge>
           <Badge variant="outline">~3 llamadas Google por foto</Badge>
         </div>
-        {!confirmOpen ? (
+        {!confirmOpen && !mut.isPending ? (
           <Button
-            onClick={() => setConfirmOpen(true)}
+            onClick={() => {
+              mut.reset();
+              setConfirmOpen(true);
+            }}
             disabled={disabled}
             className="bg-amber-600 hover:bg-amber-700"
           >
@@ -433,7 +440,6 @@ function BackfillPanel({ authorizedKeys }: { authorizedKeys: string[] }) {
             <div className="flex gap-2">
               <Button
                 onClick={() => {
-                  setConfirmOpen(false);
                   mut.mutate();
                 }}
                 disabled={disabled}
@@ -467,6 +473,12 @@ function BackfillPanel({ authorizedKeys }: { authorizedKeys: string[] }) {
         {mut.error && (
           <p className="text-sm text-destructive">
             Error: {(mut.error as Error).message}
+          </p>
+        )}
+
+        {mut.data?.ok === false && (
+          <p className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+            Error: {mut.data.error}
           </p>
         )}
 
