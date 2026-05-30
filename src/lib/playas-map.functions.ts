@@ -2,8 +2,18 @@ import { createServerFn } from "@tanstack/react-start";
 import { getGooglePlacesKey } from "@/lib/google-killswitch.server";
 import { fetchGoogle } from "@/lib/observability/google";
 import { z } from "zod";
-import { MAP_BEACHES, getBeachBySlug, LOCAL_BEACH_PHOTOS, GOOGLE_PHOTO_SKIP, type MapBeach } from "./playas-map-data";
+import { MAP_BEACHES, getBeachBySlug, GOOGLE_PHOTO_SKIP, type MapBeach } from "./playas-map-data";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+// Lee las fotos locales (subidas por nosotros) desde la BD para un slug.
+async function loadLocalPhotos(slug: string): Promise<string[]> {
+  const { data } = await supabaseAdmin
+    .from("beach_covers")
+    .select("photos")
+    .eq("slug", slug)
+    .maybeSingle();
+  return (data?.photos ?? []) as string[];
+}
 
 const PLACES_BASE = "https://places.googleapis.com/v1";
 
