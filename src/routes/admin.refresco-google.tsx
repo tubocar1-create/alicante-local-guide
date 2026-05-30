@@ -41,9 +41,6 @@ function RefrescoGoogle() {
     staleTime: 30_000,
   });
 
-  const actions: Action[] = [
-    ...[] as Action[],
-  ];
   // helper: llama al endpoint en bucle hasta que remaining = 0
   async function loopScrape(source: "places" | "shops") {
     let totalDone = 0;
@@ -65,8 +62,8 @@ function RefrescoGoogle() {
     }
     return { totalDone, remaining: lastRemaining };
   }
-  // dummy original actions array reset below
-  actions.length = 0;
+
+  const actions: Action[] = [
     {
       key: "hotels",
       title: "Hoteles (Places)",
