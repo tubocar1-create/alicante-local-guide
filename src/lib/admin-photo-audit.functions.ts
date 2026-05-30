@@ -28,6 +28,93 @@ async function fetchAll<T>(
   return out;
 }
 
+const GOOGLE_PHOTO_BUCKET = "shop-photos";
+const GOOGLE_REF_RE = /^places\/[^/]+\/photos\//;
+
+function cleanText(value: unknown): string | null {
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
+}
+
+function photoStrings(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      if (typeof item === "string") return cleanText(item);
+      if (item && typeof item === "object") {
+        return cleanText((item as { name?: unknown }).name);
+      }
+      return null;
+    })
+    .filter((item): item is string => !!item);
+}
+
+async function loadStorageObjectNames(bucket: string): Promise<Set<string>> {
+  try {
+    const storageSchema = supabaseAdmin.schema("storage" as never) as unknown as {
+      from: (table: string) => {
+        select: (columns: string) => {
+          eq: (column: string, value: string) => {
+            range: (from: number, to: number) => Promise<{ data: { name: string }[] | null; error: unknown }>;
+          };
+        };
+      };
+    };
+    const rows = await fetchAll<{ name: string }>((from, to) =>
+      storageSchema
+        .from("objects")
+        .select("name")
+        .eq("bucket_id", bucket)
+        .range(from, to),
+    );
+    return new Set(rows.map((row) => row.name));
+  } catch {
+    return new Set();
+  }
+}
+
+function cachedCandidatesForGoogleRef(ref: string) {
+  const safe = ref.replace(/[^a-zA-Z0-9/_-]/g, "_");
+  return [800, 1200, 600, 1600].flatMap((width) => [
+    `gphotos/${safe}/w${width}.jpg`,
+    `${safe}/w${width}.jpg`,
+  ]);
+}
+
+function hasCachedGooglePhoto(ref: string, storageNames: Set<string>) {
+  if (!GOOGLE_REF_RE.test(ref)) return false;
+  if (cachedCandidatesForGoogleRef(ref).some((candidate) => storageNames.has(candidate))) {
+    return true;
+  }
+  const placeId = ref.match(/^places\/([^/]+)\/photos\//)?.[1];
+  if (!placeId) return false;
+  return Array.from(storageNames).some(
+    (name) =>
+      name.startsWith(`places/${placeId}/photos/`) ||
+      name.startsWith(`gphotos/places/${placeId}/photos/`),
+  );
+}
+
+function googleRefFromUrl(url: string) {
+  if (GOOGLE_REF_RE.test(url)) return url;
+  const proxyMatch = url.match(/\/api\/public\/google-photo\/(places\/[^?]+)(?:\?|$)/);
+  return proxyMatch?.[1] ?? null;
+}
+
+function hasVisiblePhoto(value: unknown, storageNames: Set<string>) {
+  const text = cleanText(value);
+  if (!text) return false;
+  if (/^https?:\/\//i.test(text)) return true;
+  if (text.startsWith("/storage/") || text.startsWith("/assets/")) return true;
+  const ref = googleRefFromUrl(text);
+  return ref ? hasCachedGooglePhoto(ref, storageNames) : false;
+}
+
+function hasVisiblePhotoInArray(value: unknown, storageNames: Set<string>) {
+  return photoStrings(value).some((photo) => hasVisiblePhoto(photo, storageNames));
+}
+
 export type SubsectorRow = {
   key: string;
   label: string;
@@ -61,6 +148,7 @@ const RESTAURANT_CATEGORIES: { key: string; label: string }[] = [
 export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
   async (): Promise<PhotoAuditResult> => {
     const sectors: SectorBlock[] = [];
+    const storedGooglePhotos = await loadStorageObjectNames(GOOGLE_PHOTO_BUCKET);
 
     // ───────────────────────────────── PLAYAS (mapa interactivo)
     {
