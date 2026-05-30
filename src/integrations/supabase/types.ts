@@ -1897,7 +1897,7 @@ export type Database = {
         }
         Relationships: []
       }
-      places_cache: {
+      places: {
         Row: {
           address: string | null
           ai_tags: string[] | null

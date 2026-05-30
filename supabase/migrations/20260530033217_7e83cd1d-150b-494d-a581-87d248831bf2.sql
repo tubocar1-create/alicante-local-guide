@@ -1,0 +1,1 @@
+ALTER TABLE public.places_cache RENAME TO places;
