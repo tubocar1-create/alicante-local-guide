@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { getPlaceById, getPlacePhotos } from "@/lib/places.functions";
 import { getAiReview } from "@/lib/ai-review.functions";
 import { Sparkles, X, Loader2 } from "lucide-react";
@@ -10,7 +10,6 @@ import {
   Phone,
   Globe,
   Star,
-  Clock,
   Euro,
   MessageSquare,
   CalendarCheck,
@@ -119,7 +118,6 @@ function readRestaurantPreview(placeId: string): Place | null {
 function RestaurantDashboard() {
   const { placeId } = Route.useParams();
   const [place, setPlace] = useState<Place | null>(() => readRestaurantPreview(placeId));
-  const [placeLoaded, setPlaceLoaded] = useState(false);
   const [photos, setPhotos] = useState<string[]>([]);
   const [qrOpen, setQrOpen] = useState(false);
   const [zoomedIdx, setZoomedIdx] = useState<number | null>(null);
@@ -134,15 +132,11 @@ function RestaurantDashboard() {
 
   useEffect(() => {
     let cancelled = false;
-    setPlaceLoaded(false);
     fetchPlace({ data: { placeId } })
       .then((res) => {
         if (!cancelled) setPlace(res.place ?? null);
       })
       .catch(() => {})
-      .finally(() => {
-        if (!cancelled) setPlaceLoaded(true);
-      });
     return () => {
       cancelled = true;
     };
