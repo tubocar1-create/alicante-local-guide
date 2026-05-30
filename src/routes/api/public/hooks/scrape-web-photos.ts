@@ -13,7 +13,7 @@ const MAX_PHOTOS_PER_PLACE = 8;
 const BATCH = 6; // por invocación
 const PER_SITE_TIMEOUT_MS = 20_000;
 
-type Source = "places" | "shops";
+type Source = "places" | "shops" | "hotels";
 
 async function scrapeImages(url: string): Promise<string[]> {
   const apiKey = process.env.FIRECRAWL_API_KEY;
