@@ -240,7 +240,7 @@ export const getBeachQuick = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<BeachQuick | null> => {
     const beach = getBeachBySlug(data.slug);
     if (!beach) return null;
-    const local = LOCAL_BEACH_PHOTOS[beach.slug] ?? [];
+    const local = await loadLocalPhotos(beach.slug);
     if (local.length > 0) {
       return { beach, cover: local[0] };
     }
