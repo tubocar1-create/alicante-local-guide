@@ -8,11 +8,8 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 let cached: { value: boolean; at: number } | null = null;
 const TTL_MS = 30_000;
-const GOOGLE_API_HARD_DISABLED = true;
 
 export async function isGoogleEnabled(): Promise<boolean> {
-  if (GOOGLE_API_HARD_DISABLED) return false;
-
   const now = Date.now();
   if (cached && now - cached.at < TTL_MS) return cached.value;
   try {
