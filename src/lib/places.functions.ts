@@ -699,7 +699,7 @@ export const getPlaceById = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const { data: row, error } = await supabaseAdmin
       .from("places")
-      .select("*")
+      .select(PLACE_DETAIL_SELECT)
       .eq("google_place_id", data.placeId)
       .maybeSingle();
     if (error) throw error;
