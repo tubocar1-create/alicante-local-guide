@@ -30,7 +30,6 @@ import {
   getBrunchPlaces,
   getPizzasPlaces,
   resolvePlaceByName,
-  discoverNearbyPlaces,
   getPlacesByTag,
   getInternationalPlaces,
 } from "@/lib/places.functions";
@@ -2168,21 +2167,6 @@ function useFoodListOrigin() {
       | "Puerta del Mar",
   };
 }
-
-// Track which (category, coarse-location) combos we've already enriched this session
-const discoveredCategoryZones = new Set<string>();
-function useNearbyDiscovery(
-  _category: "asian" | "drinks" | "typical" | "rice_fish" | "italian" | "brunch" | "pizzas",
-  _origin: { lat: number; lon: number },
-  _isUserLocation: boolean,
-  _onDiscovered: () => void,
-) {
-  // DESACTIVADO: este hook llamaba a Google Places para "descubrir" sitios
-  // cercanos al abrir la pantalla. Ahora las tablas se leen 100% desde
-  // nuestra BD (places, 2.300+ sitios). El refresco solo se lanza
-  // desde el panel admin y bajo autorización explícita.
-}
-
 
 function asianEmoji(c: PlaceCardData): string {
   const hay = `${c.cuisine ?? ""} ${c.name ?? ""} ${c.vibe ?? ""}`.toLowerCase();
