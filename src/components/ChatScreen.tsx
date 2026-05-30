@@ -1512,6 +1512,7 @@ type PlaceCardData = {
   priceRangeMax?: number | null;
   rating?: number | null;
   openNow?: boolean | null;
+  coverPhoto?: string | null;
 };
 
 type BusLegData = {
