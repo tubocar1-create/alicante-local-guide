@@ -2539,6 +2539,7 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
           priceRangeMax: p.price_range_max,
           rating: p.rating,
           openNow: p.open_now,
+          coverPhoto: (p as { cover_photo?: string | null }).cover_photo ?? null,
         }));
         extraRef.current = mapped;
         setExtra(mapped);
