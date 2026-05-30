@@ -614,15 +614,27 @@ async function refreshCategoryFromGoogle(category: string) {
 }
 
 
+// Bounding box ~10km alrededor del centro de Alicante. La UI ya descarta
+// cualquier sitio a más de 10km, así que filtramos en el servidor para no
+// enviar cientos de filas (drinks ~1080, typical ~522) que el cliente
+// descartaría — esto desbloquea el hilo principal y evita que la tabla
+// "se congele" al abrir Comida típica / Tomar algo.
+const ALC_BBOX = { latMin: 38.25, latMax: 38.45, lngMin: -0.60, lngMax: -0.36 };
+const CATEGORY_LIMIT = 250;
+
 async function fetchByCategoryOrTag(category: string) {
   // Multi-classification: a place matches if its primary `category` equals X
   // OR its `ai_tags` array contains X. Reclassification writes main categories
-  // into both columns, so a paella spot can show up in `rice_fish` and `typical`.
+  // into both columns, so a paella spot can show up en `rice_fish` y `typical`.
   const { data, error } = await supabaseAdmin
     .from("places")
     .select(PLACE_LIST_SELECT)
     .or(`category.eq.${category},ai_tags.cs.{${category}}`)
-    .order("name");
+    .gte("lat", ALC_BBOX.latMin)
+    .lte("lat", ALC_BBOX.latMax)
+    .gte("lng", ALC_BBOX.lngMin)
+    .lte("lng", ALC_BBOX.lngMax)
+    .limit(CATEGORY_LIMIT);
   if (error) throw error;
   return data ?? [];
 }
