@@ -251,7 +251,7 @@ export const getPlacePhotos = createServerFn({ method: "GET" })
     // se abre sin esperar a comprobaciones inútiles por cada imagen.
     const { data: row } = await supabaseAdmin
       .from("places")
-      .select("raw")
+      .select("raw, scraped_photos")
       .eq("google_place_id", data.placeId)
       .maybeSingle();
     const photoRefs = ((row?.raw as { photos?: Array<{ name: string }> } | null)?.photos ?? [])
@@ -275,6 +275,16 @@ export const getPlacePhotos = createServerFn({ method: "GET" })
           .map((width) => (files ?? []).find((item) => item.name === `w${width}.jpg`))
           .find(Boolean);
         if (file) urls.push(storagePublicUrl(`${photoPrefix}/${file.name}`));
+      }
+    }
+
+    // Fallback: si no hay fotos cacheadas en Storage, usamos las que sacamos
+    // por scraping de la web oficial (rellenadas desde el panel admin).
+    if (urls.length === 0) {
+      const scraped = (row?.scraped_photos ?? []) as string[];
+      for (const u of scraped) {
+        if (urls.length >= data.max) break;
+        if (typeof u === "string" && /^https?:\/\//i.test(u)) urls.push(u);
       }
     }
 

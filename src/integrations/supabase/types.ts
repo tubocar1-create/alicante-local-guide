@@ -1914,6 +1914,8 @@ export type Database = {
           opening_hours_json: Json | null
           opening_hours_text: string | null
           phone: string | null
+          photo_scrape_at: string | null
+          photo_scrape_status: string | null
           price_currency: string | null
           price_level: string | null
           price_range_max: number | null
@@ -1921,6 +1923,7 @@ export type Database = {
           primary_type: string | null
           rating: number | null
           raw: Json | null
+          scraped_photos: string[] | null
           types: string[] | null
           updated_at: string
           user_rating_count: number | null
@@ -1942,6 +1945,8 @@ export type Database = {
           opening_hours_json?: Json | null
           opening_hours_text?: string | null
           phone?: string | null
+          photo_scrape_at?: string | null
+          photo_scrape_status?: string | null
           price_currency?: string | null
           price_level?: string | null
           price_range_max?: number | null
@@ -1949,6 +1954,7 @@ export type Database = {
           primary_type?: string | null
           rating?: number | null
           raw?: Json | null
+          scraped_photos?: string[] | null
           types?: string[] | null
           updated_at?: string
           user_rating_count?: number | null
@@ -1970,6 +1976,8 @@ export type Database = {
           opening_hours_json?: Json | null
           opening_hours_text?: string | null
           phone?: string | null
+          photo_scrape_at?: string | null
+          photo_scrape_status?: string | null
           price_currency?: string | null
           price_level?: string | null
           price_range_max?: number | null
@@ -1977,6 +1985,7 @@ export type Database = {
           primary_type?: string | null
           rating?: number | null
           raw?: Json | null
+          scraped_photos?: string[] | null
           types?: string[] | null
           updated_at?: string
           user_rating_count?: number | null
@@ -2251,6 +2260,8 @@ export type Database = {
           notes: string | null
           opening_hours: Json | null
           phone: string | null
+          photo_scrape_at: string | null
+          photo_scrape_status: string | null
           photos: Json | null
           postal_code: string | null
           price_level: number | null
@@ -2279,6 +2290,8 @@ export type Database = {
           notes?: string | null
           opening_hours?: Json | null
           phone?: string | null
+          photo_scrape_at?: string | null
+          photo_scrape_status?: string | null
           photos?: Json | null
           postal_code?: string | null
           price_level?: number | null
@@ -2307,6 +2320,8 @@ export type Database = {
           notes?: string | null
           opening_hours?: Json | null
           phone?: string | null
+          photo_scrape_at?: string | null
+          photo_scrape_status?: string | null
           photos?: Json | null
           postal_code?: string | null
           price_level?: number | null

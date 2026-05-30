@@ -144,6 +144,7 @@ import { Route as ApiPublicShopPhotoSplatRouteImport } from './routes/api/public
 import { Route as ApiPublicHooksTramSyncRouteImport } from './routes/api/public/hooks/tram-sync'
 import { Route as ApiPublicHooksSyncHotelsStaticRouteImport } from './routes/api/public/hooks/sync-hotels-static'
 import { Route as ApiPublicHooksSyncBeachCoversRouteImport } from './routes/api/public/hooks/sync-beach-covers'
+import { Route as ApiPublicHooksScrapeWebPhotosRouteImport } from './routes/api/public/hooks/scrape-web-photos'
 import { Route as ApiPublicHooksRefreshHotelsDynamicRouteImport } from './routes/api/public/hooks/refresh-hotels-dynamic'
 import { Route as ApiPublicHooksEventosSyncRouteImport } from './routes/api/public/hooks/eventos-sync'
 import { Route as ApiPublicHooksCinemasSyncRouteImport } from './routes/api/public/hooks/cinemas-sync'
@@ -834,6 +835,12 @@ const ApiPublicHooksSyncBeachCoversRoute =
     path: '/api/public/hooks/sync-beach-covers',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksScrapeWebPhotosRoute =
+  ApiPublicHooksScrapeWebPhotosRouteImport.update({
+    id: '/api/public/hooks/scrape-web-photos',
+    path: '/api/public/hooks/scrape-web-photos',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksRefreshHotelsDynamicRoute =
   ApiPublicHooksRefreshHotelsDynamicRouteImport.update({
     id: '/api/public/hooks/refresh-hotels-dynamic',
@@ -999,6 +1006,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
   '/api/public/hooks/eventos-sync': typeof ApiPublicHooksEventosSyncRoute
   '/api/public/hooks/refresh-hotels-dynamic': typeof ApiPublicHooksRefreshHotelsDynamicRoute
+  '/api/public/hooks/scrape-web-photos': typeof ApiPublicHooksScrapeWebPhotosRoute
   '/api/public/hooks/sync-beach-covers': typeof ApiPublicHooksSyncBeachCoversRoute
   '/api/public/hooks/sync-hotels-static': typeof ApiPublicHooksSyncHotelsStaticRoute
   '/api/public/hooks/tram-sync': typeof ApiPublicHooksTramSyncRoute
@@ -1139,6 +1147,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
   '/api/public/hooks/eventos-sync': typeof ApiPublicHooksEventosSyncRoute
   '/api/public/hooks/refresh-hotels-dynamic': typeof ApiPublicHooksRefreshHotelsDynamicRoute
+  '/api/public/hooks/scrape-web-photos': typeof ApiPublicHooksScrapeWebPhotosRoute
   '/api/public/hooks/sync-beach-covers': typeof ApiPublicHooksSyncBeachCoversRoute
   '/api/public/hooks/sync-hotels-static': typeof ApiPublicHooksSyncHotelsStaticRoute
   '/api/public/hooks/tram-sync': typeof ApiPublicHooksTramSyncRoute
@@ -1283,6 +1292,7 @@ export interface FileRoutesById {
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
   '/api/public/hooks/eventos-sync': typeof ApiPublicHooksEventosSyncRoute
   '/api/public/hooks/refresh-hotels-dynamic': typeof ApiPublicHooksRefreshHotelsDynamicRoute
+  '/api/public/hooks/scrape-web-photos': typeof ApiPublicHooksScrapeWebPhotosRoute
   '/api/public/hooks/sync-beach-covers': typeof ApiPublicHooksSyncBeachCoversRoute
   '/api/public/hooks/sync-hotels-static': typeof ApiPublicHooksSyncHotelsStaticRoute
   '/api/public/hooks/tram-sync': typeof ApiPublicHooksTramSyncRoute
@@ -1428,6 +1438,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/cinemas-sync'
     | '/api/public/hooks/eventos-sync'
     | '/api/public/hooks/refresh-hotels-dynamic'
+    | '/api/public/hooks/scrape-web-photos'
     | '/api/public/hooks/sync-beach-covers'
     | '/api/public/hooks/sync-hotels-static'
     | '/api/public/hooks/tram-sync'
@@ -1568,6 +1579,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/cinemas-sync'
     | '/api/public/hooks/eventos-sync'
     | '/api/public/hooks/refresh-hotels-dynamic'
+    | '/api/public/hooks/scrape-web-photos'
     | '/api/public/hooks/sync-beach-covers'
     | '/api/public/hooks/sync-hotels-static'
     | '/api/public/hooks/tram-sync'
@@ -1711,6 +1723,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/cinemas-sync'
     | '/api/public/hooks/eventos-sync'
     | '/api/public/hooks/refresh-hotels-dynamic'
+    | '/api/public/hooks/scrape-web-photos'
     | '/api/public/hooks/sync-beach-covers'
     | '/api/public/hooks/sync-hotels-static'
     | '/api/public/hooks/tram-sync'
@@ -1796,6 +1809,7 @@ export interface RootRouteChildren {
   ApiPublicHooksCinemasSyncRoute: typeof ApiPublicHooksCinemasSyncRoute
   ApiPublicHooksEventosSyncRoute: typeof ApiPublicHooksEventosSyncRoute
   ApiPublicHooksRefreshHotelsDynamicRoute: typeof ApiPublicHooksRefreshHotelsDynamicRoute
+  ApiPublicHooksScrapeWebPhotosRoute: typeof ApiPublicHooksScrapeWebPhotosRoute
   ApiPublicHooksSyncBeachCoversRoute: typeof ApiPublicHooksSyncBeachCoversRoute
   ApiPublicHooksSyncHotelsStaticRoute: typeof ApiPublicHooksSyncHotelsStaticRoute
   ApiPublicHooksTramSyncRoute: typeof ApiPublicHooksTramSyncRoute
@@ -2758,6 +2772,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksSyncBeachCoversRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/scrape-web-photos': {
+      id: '/api/public/hooks/scrape-web-photos'
+      path: '/api/public/hooks/scrape-web-photos'
+      fullPath: '/api/public/hooks/scrape-web-photos'
+      preLoaderRoute: typeof ApiPublicHooksScrapeWebPhotosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/refresh-hotels-dynamic': {
       id: '/api/public/hooks/refresh-hotels-dynamic'
       path: '/api/public/hooks/refresh-hotels-dynamic'
@@ -3103,6 +3124,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksEventosSyncRoute: ApiPublicHooksEventosSyncRoute,
   ApiPublicHooksRefreshHotelsDynamicRoute:
     ApiPublicHooksRefreshHotelsDynamicRoute,
+  ApiPublicHooksScrapeWebPhotosRoute: ApiPublicHooksScrapeWebPhotosRoute,
   ApiPublicHooksSyncBeachCoversRoute: ApiPublicHooksSyncBeachCoversRoute,
   ApiPublicHooksSyncHotelsStaticRoute: ApiPublicHooksSyncHotelsStaticRoute,
   ApiPublicHooksTramSyncRoute: ApiPublicHooksTramSyncRoute,
@@ -3120,13 +3142,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -41,6 +41,28 @@ function RefrescoGoogle() {
     staleTime: 30_000,
   });
 
+  // helper: llama al endpoint en bucle hasta que remaining = 0
+  async function loopScrape(source: "places" | "shops") {
+    let totalDone = 0;
+    let lastRemaining = Infinity;
+    let stagnant = 0;
+    for (let i = 0; i < 500; i++) {
+      const res = await fetch(`/api/public/hooks/scrape-web-photos?source=${source}`, { method: "POST" });
+      const j = (await res.json().catch(() => ({}))) as { ok?: boolean; done?: number; remaining?: number; error?: string };
+      if (!res.ok || j?.ok === false) throw new Error(j?.error || `HTTP ${res.status}`);
+      totalDone += j.done ?? 0;
+      if ((j.remaining ?? 0) <= 0) return { totalDone, remaining: 0, batches: i + 1 };
+      if ((j.remaining ?? 0) >= lastRemaining) {
+        stagnant++;
+        if (stagnant >= 3) return { totalDone, remaining: j.remaining, stoppedReason: "no avanza" };
+      } else {
+        stagnant = 0;
+      }
+      lastRemaining = j.remaining ?? 0;
+    }
+    return { totalDone, remaining: lastRemaining };
+  }
+
   const actions: Action[] = [
     {
       key: "hotels",
@@ -75,6 +97,18 @@ function RefrescoGoogle() {
         pharmStats.refetch();
         return r;
       },
+    },
+    {
+      key: "scrape-photos-places",
+      title: "Scrapear fotos de la web (restaurantes/bares/cafés)",
+      desc: "Para cada ficha con web oficial guardada y SIN fotos en BD, descarga hasta 8 fotos de su sitio (Firecrawl). Se ejecuta en bucle automático hasta agotar la cola. NO usa Google.",
+      run: () => loopScrape("places"),
+    },
+    {
+      key: "scrape-photos-shops",
+      title: "Scrapear fotos de la web (tiendas con web)",
+      desc: "Igual que el anterior pero para shop_businesses (Zara, Calzedonia, etc.) que tienen web y aún no tienen fotos guardadas.",
+      run: () => loopScrape("shops"),
     },
   ];
 
