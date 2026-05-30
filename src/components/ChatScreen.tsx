@@ -1637,6 +1637,7 @@ function PlaceCard({ data }: { data: PlaceCardData }) {
   const reviewsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${data.name} Alicante`)}`;
   const override = findPlaceOverride(data.name);
   const theme = THEME_STYLES[data.theme ?? "sun"] ?? THEME_STYLES.sun;
+  const heroImage = override?.image ?? data.coverPhoto ?? null;
   const synthListing: Listing = {
     id: `chat-${data.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 60)}`,
     name: data.name,
@@ -1649,12 +1650,13 @@ function PlaceCard({ data }: { data: PlaceCardData }) {
   };
   return (
     <div className={`my-1.5 w-full max-w-[240px] overflow-hidden rounded-xl border ${theme.ring} ${theme.bg} shadow-soft backdrop-blur`}>
-      {override?.image && (
+      {heroImage && (
         <img
-          src={override.image}
+          src={heroImage}
           alt={data.name}
           loading="lazy"
           className="h-20 w-full object-cover"
+          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
         />
       )}
       <div className="px-2.5 py-2">
