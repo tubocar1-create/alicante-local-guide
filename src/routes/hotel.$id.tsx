@@ -93,10 +93,12 @@ const ROOM_LABELS_CLIENT: Record<string, string> = {
 
 function HotelDetail() {
   const { id } = Route.useParams();
+  const initialHotelData = Route.useLoaderData();
   const fetchHotel = useServerFn(getHotel);
   const { data, isLoading } = useQuery({
     queryKey: ["hotel", id],
     queryFn: () => fetchHotel({ data: { id } }),
+    initialData: initialHotelData,
   });
   const h: any = data?.hotel;
   const d = h && (Array.isArray(h.hotels_dynamic) ? h.hotels_dynamic[0] : h.hotels_dynamic);
@@ -159,7 +161,7 @@ function HotelDetail() {
     if (arr.length) return arr;
     if (Array.isArray(h?.scraped_photos) && h.scraped_photos.length) return h.scraped_photos;
     return h?.main_image ? [h.main_image] : [];
-  }, [photosQ.data, h?.main_image]);
+  }, [photosQ.data, h?.scraped_photos, h?.main_image]);
   const days: Array<{ date: string; available: boolean; price_double: number | null; price_min: number | null; currency: string }> =
     calendar.data?.days ?? [];
   const daysByDate = useMemo(() => {
