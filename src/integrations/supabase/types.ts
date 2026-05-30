@@ -610,6 +610,7 @@ export type Database = {
         Row: {
           attribution: string | null
           created_at: string
+          photos: string[]
           public_url: string
           slug: string
           storage_path: string
@@ -618,6 +619,7 @@ export type Database = {
         Insert: {
           attribution?: string | null
           created_at?: string
+          photos?: string[]
           public_url: string
           slug: string
           storage_path: string
@@ -626,6 +628,7 @@ export type Database = {
         Update: {
           attribution?: string | null
           created_at?: string
+          photos?: string[]
           public_url?: string
           slug?: string
           storage_path?: string

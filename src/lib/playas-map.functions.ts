@@ -2,8 +2,18 @@ import { createServerFn } from "@tanstack/react-start";
 import { getGooglePlacesKey } from "@/lib/google-killswitch.server";
 import { fetchGoogle } from "@/lib/observability/google";
 import { z } from "zod";
-import { MAP_BEACHES, getBeachBySlug, LOCAL_BEACH_PHOTOS, GOOGLE_PHOTO_SKIP, type MapBeach } from "./playas-map-data";
+import { MAP_BEACHES, getBeachBySlug, GOOGLE_PHOTO_SKIP, type MapBeach } from "./playas-map-data";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+// Lee las fotos locales (subidas por nosotros) desde la BD para un slug.
+async function loadLocalPhotos(slug: string): Promise<string[]> {
+  const { data } = await supabaseAdmin
+    .from("beach_covers")
+    .select("photos")
+    .eq("slug", slug)
+    .maybeSingle();
+  return (data?.photos ?? []) as string[];
+}
 
 const PLACES_BASE = "https://places.googleapis.com/v1";
 
@@ -159,8 +169,8 @@ export const getMapBeaches = createServerFn({ method: "GET" }).handler(
         const cachedUrl = cacheMap.get(b.slug);
         if (cachedUrl) return { ...b, photo: cachedUrl };
 
-        // Local fallback.
-        const local = LOCAL_BEACH_PHOTOS[b.slug] ?? [];
+        // Local fallback (fotos almacenadas en BD).
+        const local = await loadLocalPhotos(b.slug);
         if (local.length > 0) return { ...b, photo: local[0] };
 
         // Last resort: live Google fetch (cacheada perpetuamente por slug).
@@ -230,7 +240,7 @@ export const getBeachQuick = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<BeachQuick | null> => {
     const beach = getBeachBySlug(data.slug);
     if (!beach) return null;
-    const local = LOCAL_BEACH_PHOTOS[beach.slug] ?? [];
+    const local = await loadLocalPhotos(beach.slug);
     if (local.length > 0) {
       return { beach, cover: local[0] };
     }
@@ -260,20 +270,19 @@ export const getBeachExtras = createServerFn({ method: "POST" })
     let userRatingCount: number | undefined;
     let googleMapsUri: string | undefined;
     let formattedAddress: string | undefined;
+    const local = await loadLocalPhotos(beach.slug);
     if (details) {
       reviews = details.reviews;
       rating = details.rating;
       userRatingCount = details.userRatingCount;
       googleMapsUri = details.googleMapsUri;
       formattedAddress = details.formattedAddress;
-      const local = LOCAL_BEACH_PHOTOS[beach.slug] ?? [];
       const skip = GOOGLE_PHOTO_SKIP[beach.slug] ?? 0;
       const maxGoogle = Math.max(0, 20 - local.length);
       const photoNames = details.photoNames.slice(skip, skip + maxGoogle);
       const uris = await Promise.all(photoNames.map((n: string) => photoMediaUri(n, 1600)));
       photos = uris.filter((u): u is string => !!u);
     }
-    const local = LOCAL_BEACH_PHOTOS[beach.slug] ?? [];
     const merged = [...local, ...photos.filter((p) => !local.includes(p))];
     return { photos: merged, review, reviews, rating, userRatingCount, googleMapsUri, formattedAddress };
   });

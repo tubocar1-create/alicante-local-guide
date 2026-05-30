@@ -173,23 +173,8 @@ export function getBeachBySlug(slug: string): MapBeach | undefined {
   return MAP_BEACHES.find((b) => b.slug === slug);
 }
 
-// Fotos locales subidas por el usuario, mostradas antes que las de Google.
-export const LOCAL_BEACH_PHOTOS: Record<string, string[]> = {
-  "postiguet": ["/playas/postiguet1.jpg", "/playas/postiguet2.jpg", "/playas/postiguet5.jpg"],
-  "arenales-del-sol": ["/playas/photo1.jpg", "/playas/photo2.jpg"],
-  "muchavista": [],
-  
-  "san-juan": ["/playas/sanjuan6.jpg"],
-  "cala-cantalar": [
-    "/playas/photo3.jpg",
-    "/playas/photo4.jpg",
-    "/playas/photo5.jpg",
-    "/playas/photo6.jpg",
-    "/playas/photo7.jpg",
-    "/playas/photo8.jpg",
-    "/playas/photo9.jpg",
-  ],
-};
+// Las fotos locales ahora viven en la tabla `beach_covers` (columna `photos`).
+// Se conservan aquí solo a modo de referencia histórica.
 
 // Skip the first N Google-sourced photos for a beach (when those photos
 // are mislabeled in Google and have been re-attributed locally).
