@@ -92,7 +92,7 @@ export const getHotelPhotos = createServerFn({ method: "GET" })
     // la primera vez y la sirve para siempre desde nuestro dominio.
     const { data: row } = await supabaseAdmin
       .from("hotels_static")
-      .select("raw")
+      .select("raw, scraped_photos")
       .eq("id", data.id)
       .maybeSingle();
     const raw = (row?.raw ?? {}) as {
@@ -100,7 +100,10 @@ export const getHotelPhotos = createServerFn({ method: "GET" })
       photo_filter?: Record<string, "ok" | "person">;
     };
     const photos = (raw.photos ?? []).slice(0, 20);
-    if (!photos.length) return { photos: [] as string[] };
+    if (!photos.length) {
+      const scraped = (row?.scraped_photos ?? []) as string[];
+      return { photos: scraped.slice(0, 12) };
+    }
 
     const filter = raw.photo_filter ?? {};
     const urls = photos
