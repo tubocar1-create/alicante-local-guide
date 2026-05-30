@@ -97,9 +97,13 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
         .from("shop_subsubsectors")
         .select("id, slug, name")
         .order("name");
-      const { data: biz } = await supabaseAdmin
-        .from("shop_businesses")
-        .select("subsubsector_id, photos, logo_url");
+      const biz = await fetchAll<{ subsubsector_id: string | null; photos: unknown; logo_url: string | null }>(
+        (from, to) =>
+          supabaseAdmin
+            .from("shop_businesses")
+            .select("subsubsector_id, photos, logo_url")
+            .range(from, to),
+      );
       const counters = new Map<
         string,
         { total: number; withPhoto: number }
