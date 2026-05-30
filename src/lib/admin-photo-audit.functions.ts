@@ -144,9 +144,13 @@ export const getPhotoAudit = createServerFn({ method: "GET" }).handler(
     // hasta que se descargan a Storage, así que no cuentan como "foto
     // visible" para el usuario.
     {
-      const { data: rows } = await supabaseAdmin
-        .from("places")
-        .select("category, cover_photo");
+      const rows = await fetchAll<{ category: string | null; cover_photo: string | null }>(
+        async (from, to) =>
+          await supabaseAdmin
+            .from("places")
+            .select("category, cover_photo")
+            .range(from, to),
+      );
       const counters = new Map<
         string,
         { total: number; withPhoto: number }
