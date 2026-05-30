@@ -1,11 +1,11 @@
 // Auditoría de fotos: tabla con totales por subsector y casillas
-// de autorización por sector para llamar a Google API.
+// de autorización POR SUBSECTOR para llamar a Google API.
 // La página es SOLO informativa + checkboxes. NO llama a ninguna
 // API externa. El estado de los checkboxes vive en localStorage.
 
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -21,40 +21,58 @@ export const Route = createFileRoute("/admin/auditoria-fotos")({
   component: AuditoriaFotos,
 });
 
-const STORAGE_KEY = "admin.google-auth.sectors.v1";
+// v2 = autorización por subsector (clave = `${sector}::${subsector}`)
+const STORAGE_KEY = "admin.google-auth.subsectors.v2";
 
-function useSectorAuth(sectorKeys: string[]) {
+function useSubsectorAuth(allKeys: string[]) {
   const [auth, setAuth] = useState<Record<string, boolean>>({});
+  const keysSig = allKeys.join("|");
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       const parsed = raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
-      // Sembrar las claves que falten en false
       const next: Record<string, boolean> = {};
-      for (const k of sectorKeys) next[k] = !!parsed[k];
+      for (const k of allKeys) next[k] = !!parsed[k];
       setAuth(next);
     } catch {
       const next: Record<string, boolean> = {};
-      for (const k of sectorKeys) next[k] = false;
+      for (const k of allKeys) next[k] = false;
       setAuth(next);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sectorKeys.join("|")]);
+  }, [keysSig]);
+
+  const persist = (next: Record<string, boolean>) => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      /* ignore */
+    }
+  };
 
   const toggle = (key: string, value: boolean) => {
     setAuth((cur) => {
       const next = { ...cur, [key]: value };
-      try {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      } catch {
-        /* ignore */
-      }
+      persist(next);
       return next;
     });
   };
-  return { auth, toggle };
+
+  const setMany = (keys: string[], value: boolean) => {
+    setAuth((cur) => {
+      const next = { ...cur };
+      for (const k of keys) next[k] = value;
+      persist(next);
+      return next;
+    });
+  };
+
+  return { auth, toggle, setMany };
 }
+
+const subKey = (sectorKey: string, subKeyValue: string) =>
+  `${sectorKey}::${subKeyValue}`;
 
 function AuditoriaFotos() {
   const fetchFn = useServerFn(getPhotoAudit);
@@ -64,8 +82,16 @@ function AuditoriaFotos() {
     staleTime: 60_000,
   });
 
-  const sectorKeys = q.data?.sectors.map((s) => s.key) ?? [];
-  const { auth, toggle } = useSectorAuth(sectorKeys);
+  const allKeys = useMemo(() => {
+    if (!q.data) return [];
+    const out: string[] = [];
+    for (const s of q.data.sectors) {
+      for (const r of s.subsectors) out.push(subKey(s.key, r.key));
+    }
+    return out;
+  }, [q.data]);
+
+  const { auth, toggle, setMany } = useSubsectorAuth(allKeys);
 
   if (q.isLoading) {
     return (
@@ -82,7 +108,6 @@ function AuditoriaFotos() {
   }
   const data = q.data!;
 
-  // Totales globales
   const grand = data.sectors.reduce(
     (acc, s) => {
       for (const r of s.subsectors) {
@@ -95,24 +120,30 @@ function AuditoriaFotos() {
     { total: 0, withPhoto: 0, withoutPhoto: 0 },
   );
 
+  const totalAuthorized = Object.values(auth).filter(Boolean).length;
+
   return (
     <div className="space-y-6">
       <header className="space-y-2">
         <h1 className="text-2xl font-bold">📸 Auditoría de fotos por subsector</h1>
         <p className="text-sm text-muted-foreground">
           Recuento de cuántos elementos tienen una foto visible y cuántos no, en
-          cada subsector del proyecto. Las casillas de la derecha autorizan, por
-          sector, a llamar a la API de Google. Si la casilla está sin marcar, no
-          se debe lanzar ninguna llamada a Google para ese sector.
+          cada subsector del proyecto. Cada fila lleva su propia casilla:
+          marcada = autorizas a llamar a Google API para ESE subsector. Sin
+          marcar = prohibido. Yo (Lovable) no hago ninguna llamada por mi
+          cuenta.
         </p>
         <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
           <span>
             Generado: {new Date(data.generatedAt).toLocaleString("es-ES")}
           </span>
+          <span>
+            Subsectores autorizados: <strong>{totalAuthorized}</strong> /{" "}
+            {allKeys.length}
+          </span>
         </div>
       </header>
 
-      {/* Totales globales */}
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Total general (todos los sectores)</CardTitle>
@@ -140,8 +171,14 @@ function AuditoriaFotos() {
         <SectorCard
           key={sector.key}
           sector={sector}
-          authorized={!!auth[sector.key]}
-          onToggle={(v) => toggle(sector.key, v)}
+          auth={auth}
+          onToggle={(subKeyValue, v) => toggle(subKey(sector.key, subKeyValue), v)}
+          onToggleAll={(v) =>
+            setMany(
+              sector.subsectors.map((r) => subKey(sector.key, r.key)),
+              v,
+            )
+          }
         />
       ))}
     </div>
@@ -150,12 +187,14 @@ function AuditoriaFotos() {
 
 function SectorCard({
   sector,
-  authorized,
+  auth,
   onToggle,
+  onToggleAll,
 }: {
   sector: SectorBlock;
-  authorized: boolean;
-  onToggle: (v: boolean) => void;
+  auth: Record<string, boolean>;
+  onToggle: (subKeyValue: string, v: boolean) => void;
+  onToggleAll: (v: boolean) => void;
 }) {
   const totals = sector.subsectors.reduce(
     (acc, r) => {
@@ -167,8 +206,14 @@ function SectorCard({
     { total: 0, withPhoto: 0, withoutPhoto: 0 },
   );
 
+  const authedCount = sector.subsectors.filter(
+    (r) => !!auth[subKey(sector.key, r.key)],
+  ).length;
+  const allAuth = authedCount > 0 && authedCount === sector.subsectors.length;
+  const anyAuth = authedCount > 0;
+
   return (
-    <Card className={authorized ? "border-emerald-500/50" : ""}>
+    <Card className={anyAuth ? "border-emerald-500/50" : ""}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="space-y-1">
@@ -177,32 +222,28 @@ function SectorCard({
               {sector.source}
             </p>
           </div>
-          <label className="flex items-center gap-2 text-xs cursor-pointer select-none border rounded-md px-2.5 py-2 hover:bg-muted">
-            <Checkbox
-              checked={authorized}
-              onCheckedChange={(v) => onToggle(v === true)}
-              id={`auth-${sector.key}`}
-            />
-            <span className="flex items-center gap-1">
-              {authorized ? (
-                <>
-                  <Badge className="bg-emerald-600">AUTORIZADO</Badge>
-                  <span className="text-muted-foreground">Google API permitido</span>
-                </>
-              ) : (
-                <>
-                  <Lock className="h-3 w-3" />
-                  <span>Sin autorización Google API</span>
-                </>
-              )}
-            </span>
-          </label>
+          <div className="flex items-center gap-2">
+            {anyAuth && (
+              <Badge className="bg-emerald-600">
+                {authedCount}/{sector.subsectors.length} autorizados
+              </Badge>
+            )}
+            <button
+              type="button"
+              onClick={() => onToggleAll(!allAuth)}
+              className="text-xs border rounded-md px-2.5 py-1.5 hover:bg-muted"
+              disabled={sector.subsectors.length === 0}
+            >
+              {allAuth ? "Desmarcar todo" : "Marcar todo"}
+            </button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-xs text-muted-foreground border-b">
+              <th className="py-1.5 pr-2 font-medium w-10">Auth.</th>
               <th className="py-1.5 pr-3 font-medium">Subsector</th>
               <th className="py-1.5 pr-3 font-medium text-right">Total</th>
               <th className="py-1.5 pr-3 font-medium text-right">Con foto</th>
@@ -214,7 +255,7 @@ function SectorCard({
             {sector.subsectors.length === 0 && (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className="py-3 text-xs text-muted-foreground italic"
                 >
                   Sin subsectores poblados.
@@ -223,9 +264,34 @@ function SectorCard({
             )}
             {sector.subsectors.map((r) => {
               const pct = r.total > 0 ? Math.round((r.withPhoto / r.total) * 100) : 0;
+              const k = subKey(sector.key, r.key);
+              const checked = !!auth[k];
               return (
-                <tr key={r.key} className="border-b last:border-b-0">
-                  <td className="py-1.5 pr-3">{r.label}</td>
+                <tr
+                  key={r.key}
+                  className={`border-b last:border-b-0 ${checked ? "bg-emerald-500/5" : ""}`}
+                >
+                  <td className="py-1.5 pr-2">
+                    <label className="flex items-center justify-center cursor-pointer">
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(v) => onToggle(r.key, v === true)}
+                        aria-label={`Autorizar Google API para ${r.label}`}
+                      />
+                    </label>
+                  </td>
+                  <td className="py-1.5 pr-3">
+                    <span className="flex items-center gap-1.5">
+                      {checked ? (
+                        <Badge className="bg-emerald-600 h-4 px-1 text-[10px]">
+                          OK
+                        </Badge>
+                      ) : (
+                        <Lock className="h-3 w-3 text-muted-foreground" />
+                      )}
+                      {r.label}
+                    </span>
+                  </td>
                   <td className="py-1.5 pr-3 text-right tabular-nums">{r.total}</td>
                   <td className="py-1.5 pr-3 text-right tabular-nums text-emerald-700">
                     {r.withPhoto}
@@ -242,6 +308,7 @@ function SectorCard({
           </tbody>
           <tfoot>
             <tr className="border-t-2 font-semibold bg-muted/30">
+              <td className="py-2 pr-2"></td>
               <td className="py-2 pr-3">Total {sector.label}</td>
               <td className="py-2 pr-3 text-right tabular-nums">{totals.total}</td>
               <td className="py-2 pr-3 text-right tabular-nums text-emerald-700">
