@@ -28,6 +28,12 @@ export type CachedPlace = {
   raw?: unknown;
 };
 
+const PLACE_PHOTO_BUCKET = "shop-photos";
+
+function storagePublicUrl(path: string) {
+  return supabaseAdmin.storage.from(PLACE_PHOTO_BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
 const ALC_CENTER = { lat: 38.3452, lng: -0.481 };
 const ASIAN_QUERIES = [
   "japanese restaurant",
@@ -238,10 +244,9 @@ export const getPlacePhotos = createServerFn({ method: "GET" })
     return { placeId: o.placeId, max: Math.min(o.max ?? 4, 8) };
   })
   .handler(async ({ data }) => {
-    // Solo devolvemos referencias ya guardadas en places. El proxy
-    // /api/public/google-photo ya hace HEAD sobre Storage y redirige a la
-    // foto cacheada (o sirve un píxel si no existe). NO llamamos a Google
-    // desde aquí y NO listamos Storage por cada sitio (eso colapsaba listados).
+    // Solo devolvemos fotos que YA existen en nuestro Storage. Si la foto no
+    // está descargada, NO pasamos por el proxy y NO llamamos a Google: la ficha
+    // se abre sin esperar a comprobaciones inútiles por cada imagen.
     const { data: row } = await supabaseAdmin
       .from("places")
       .select("raw")
@@ -252,8 +257,27 @@ export const getPlacePhotos = createServerFn({ method: "GET" })
       .filter((n) => typeof n === "string" && n.startsWith("places/"))
       .slice(0, data.max);
 
+    const urls: string[] = [];
+    const wanted = new Set(photoRefs.map((ref) => ref.split("/photos/")[1]?.split("/")[0]).filter(Boolean));
+    const widths = [1200, 800, 600, 1600];
+
+    for (const prefix of [`gphotos/places/${data.placeId}/photos`, `places/${data.placeId}/photos`]) {
+      if (urls.length >= data.max) break;
+      const { data: photoDirs } = await supabaseAdmin.storage.from(PLACE_PHOTO_BUCKET).list(prefix, { limit: 50 });
+      for (const photoDir of photoDirs ?? []) {
+        if (urls.length >= data.max) break;
+        if (wanted.size > 0 && !wanted.has(photoDir.name)) continue;
+        const photoPrefix = `${prefix}/${photoDir.name}`;
+        const { data: files } = await supabaseAdmin.storage.from(PLACE_PHOTO_BUCKET).list(photoPrefix, { limit: 10 });
+        const file = widths
+          .map((width) => (files ?? []).find((item) => item.name === `w${width}.jpg`))
+          .find(Boolean);
+        if (file) urls.push(storagePublicUrl(`${photoPrefix}/${file.name}`));
+      }
+    }
+
     return {
-      photos: photoRefs.map((name) => `/api/public/google-photo/${name}?w=1200`),
+      photos: urls,
     };
   });
 

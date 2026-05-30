@@ -30,7 +30,6 @@ import {
   getBrunchPlaces,
   getPizzasPlaces,
   resolvePlaceByName,
-  discoverNearbyPlaces,
   getPlacesByTag,
   getInternationalPlaces,
 } from "@/lib/places.functions";
@@ -2169,21 +2168,6 @@ function useFoodListOrigin() {
   };
 }
 
-// Track which (category, coarse-location) combos we've already enriched this session
-const discoveredCategoryZones = new Set<string>();
-function useNearbyDiscovery(
-  _category: "asian" | "drinks" | "typical" | "rice_fish" | "italian" | "brunch" | "pizzas",
-  _origin: { lat: number; lon: number },
-  _isUserLocation: boolean,
-  _onDiscovered: () => void,
-) {
-  // DESACTIVADO: este hook llamaba a Google Places para "descubrir" sitios
-  // cercanos al abrir la pantalla. Ahora las tablas se leen 100% desde
-  // nuestra BD (places, 2.300+ sitios). El refresco solo se lanza
-  // desde el panel admin y bajo autorización explícita.
-}
-
-
 function asianEmoji(c: PlaceCardData): string {
   const hay = `${c.cuisine ?? ""} ${c.name ?? ""} ${c.vibe ?? ""}`.toLowerCase();
   if (/ramen|noodle/.test(hay)) return "🍜";
@@ -2530,8 +2514,7 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
   const [extra, setExtra] = useState<PlaceCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
-  const [reloadKey, setReloadKey] = useState(0);
-  const { locState, origin, originLabel } = useFoodListOrigin();
+  const { origin, originLabel } = useFoodListOrigin();
 
   const fetchAsian = useServerFn(getAsianPlaces);
   useEffect(() => {
@@ -2559,8 +2542,7 @@ function AsianTable({ cards }: { cards: PlaceCardData[] }) {
       .catch((e) => console.error("getAsianPlaces failed", e))
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [fetchAsian, reloadKey]);
-  useNearbyDiscovery("asian", origin, locState.status === "ready", () => setReloadKey((k) => k + 1));
+  }, [fetchAsian]);
 
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
   const byKey = new Map<string, PlaceCardData>();
@@ -2877,8 +2859,7 @@ export function DrinksTable({ cards, onExit }: { cards: PlaceCardData[]; onExit?
   const [extra, setExtra] = useState<PlaceCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
-  const [reloadKey, setReloadKey] = useState(0);
-  const { locState, origin, originLabel } = useFoodListOrigin();
+  const { origin, originLabel } = useFoodListOrigin();
 
   const fetchDrinks = useServerFn(getDrinksPlaces);
   useEffect(() => {
@@ -2905,8 +2886,7 @@ export function DrinksTable({ cards, onExit }: { cards: PlaceCardData[]; onExit?
       .catch((e) => console.error("getDrinksPlaces failed", e))
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [fetchDrinks, reloadKey]);
-  useNearbyDiscovery("drinks", origin, locState.status === "ready", () => setReloadKey((k) => k + 1));
+  }, [fetchDrinks]);
 
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
   const byKey = new Map<string, PlaceCardData>();
@@ -3957,8 +3937,6 @@ function CategoryTableInner({
   );
 }
 
-const DISCOVERABLE = new Set(["typical", "rice_fish", "italian", "brunch", "pizzas", "asian", "drinks"]);
-
 function CategoryTable({
   cards,
   category,
@@ -3971,9 +3949,8 @@ function CategoryTable({
   const [extra, setExtra] = useState<PlaceCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(true);
-  const [reloadKey, setReloadKey] = useState(0);
   const theme = CATEGORY_THEMES[category];
-  const { locState, origin, originLabel } = useFoodListOrigin();
+  const { origin, originLabel } = useFoodListOrigin();
 
   useEffect(() => {
     let cancelled = false;
@@ -3999,18 +3976,7 @@ function CategoryTable({
       .catch((e) => console.error(`get ${category} places failed`, e))
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [fetcher, category, reloadKey]);
-  // Only the 7 google-backed categories trigger nearby discovery; virtual AI
-  // tag-based categories reuse what's already in the cache.
-  const discoverableCategory = DISCOVERABLE.has(category)
-    ? (category as "typical" | "rice_fish" | "italian" | "brunch" | "pizzas" | "asian" | "drinks")
-    : null;
-  useNearbyDiscovery(
-    discoverableCategory ?? "typical",
-    origin,
-    discoverableCategory != null && locState.status === "ready",
-    () => setReloadKey((k) => k + 1),
-  );
+  }, [fetcher, category]);
 
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
   const byKey = new Map<string, PlaceCardData>();
