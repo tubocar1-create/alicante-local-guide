@@ -353,80 +353,90 @@ function RawAdifTable({ rows }: { rows: Array<Record<string, any>> }) {
     return <p className="text-sm text-slate-500 py-3">Sin datos.</p>;
   }
 
-  // Unión de todas las claves presentes en los registros, preservando un orden estable
-  const PRIORITY = [
-    "direction",
-    "trafficType",
-    "hora",
-    "horaEstado",
-    "tren",
-    "trenDatosOp",
-    "estacion",
-    "via",
-    "markupColor",
-    "observation",
-  ];
-  const seen = new Set<string>();
-  const cols: string[] = [];
-  for (const k of PRIORITY) {
-    if (rows.some((r) => k in r)) {
-      cols.push(k);
-      seen.add(k);
-    }
-  }
-  for (const r of rows) {
-    for (const k of Object.keys(r)) {
-      if (!seen.has(k)) {
-        cols.push(k);
-        seen.add(k);
-      }
-    }
-  }
+  const stripHtml = (s: any) =>
+    typeof s === "string" ? s.replace(/<[^>]+>/g, "").trim() : "";
 
-  const fmt = (v: any): string => {
-    if (v === null || v === undefined) return "";
-    if (typeof v === "string") return v.replace(/<[^>]+>/g, "").trim();
-    if (typeof v === "object") return JSON.stringify(v);
-    return String(v);
+  const serviceBadge = (r: Record<string, any>) => {
+    const tren = stripHtml(r.tren).toUpperCase();
+    const op = stripHtml(r.trenDatosOp).toUpperCase();
+    const tt = (r.trafficType || "").toLowerCase();
+    const mC = tren.match(/^C\d+/);
+    if (tt === "cercanias" || mC) return { code: mC ? mC[0] : "C", label: "CERCANÍAS", cls: "text-rose-600" };
+    if (op.includes("OUIGO") || tren.includes("OUIGO")) return { code: tren, label: "OUIGO", cls: "text-pink-500" };
+    if (op.includes("IRYO") || tren.includes("IRYO")) return { code: tren, label: "IRYO", cls: "text-red-500" };
+    if (op.includes("AVLO") || tren.includes("AVLO")) return { code: tren, label: "AVLO", cls: "text-violet-500" };
+    if (op.includes("AVE") || tren.includes("AVE")) return { code: tren, label: "AVE", cls: "text-violet-600" };
+    if (op.includes("ALVIA")) return { code: tren, label: "ALVIA", cls: "text-violet-600" };
+    if (op.includes("INTERCITY")) return { code: tren, label: "INTERCITY", cls: "text-blue-600" };
+    if (op.includes("MD") || op.includes("MEDIA")) return { code: tren, label: "MD", cls: "text-slate-700" };
+    return { code: tren, label: op || "MD", cls: "text-slate-700" };
   };
 
+  const statusLabel = (mc: string) => {
+    if (mc === "suppressed") return { txt: "Cancelado", cls: "text-rose-600" };
+    if (mc === "audited") return { txt: "Modificado", cls: "text-amber-600" };
+    if (mc === "delayed") return { txt: "Con retraso", cls: "text-amber-600" };
+    return { txt: "En hora", cls: "text-emerald-600" };
+  };
+
+  const dirLabel = (d: string) => (d === "SALIDA" ? "Salida" : "Llegada");
+
   return (
-    <div className="overflow-x-auto -mx-3 px-3 border border-slate-200 rounded-md">
-      <table className="text-[11px] border-collapse whitespace-nowrap">
-        <thead className="bg-slate-50 sticky top-0">
-          <tr className="text-left text-[10px] uppercase tracking-wider text-slate-600 border-b border-slate-200">
-            {cols.map((c) => (
-              <th key={c} className="px-2 py-2 font-semibold border-r border-slate-200 last:border-r-0">
-                {c}
-              </th>
-            ))}
+    <div className="overflow-x-auto -mx-3 px-3">
+      <table className="min-w-[920px] w-full text-xs border-collapse">
+        <thead>
+          <tr className="text-left text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 bg-slate-50">
+            <th className="px-2 py-2 font-semibold">Hora</th>
+            <th className="px-2 py-2 font-semibold">Destino / Origen</th>
+            <th className="px-2 py-2 font-semibold">Observación</th>
+            <th className="px-2 py-2 font-semibold">Tren</th>
+            <th className="px-2 py-2 font-semibold">Servicio</th>
+            <th className="px-2 py-2 font-semibold">Operador</th>
+            <th className="px-2 py-2 font-semibold">Sentido</th>
+            <th className="px-2 py-2 font-semibold text-center">Vía</th>
+            <th className="px-2 py-2 font-semibold">Estado</th>
           </tr>
         </thead>
-        <tbody>
-          {rows.map((r, i) => (
-            <tr
-              key={i}
-              className="border-b border-slate-100 hover:bg-slate-50 align-top"
-            >
-              {cols.map((c) => {
-                const val = fmt(r[c]);
-                return (
-                  <td
-                    key={c}
-                    className="px-2 py-1.5 border-r border-slate-100 last:border-r-0 text-slate-800 font-mono"
-                    title={val}
-                  >
-                    {val || <span className="text-slate-300">—</span>}
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
+        <tbody className="divide-y divide-slate-100">
+          {rows.map((r, i) => {
+            const estacion = stripHtml(r.estacion);
+            const hora = (r.hora || "").trim();
+            const horaEst = (r.horaEstado || "").trim();
+            const obs = (r.observation || "").trim() || "Directo";
+            const op = stripHtml(r.trenDatosOp);
+            const via = (r.via || "").trim();
+            const sb = serviceBadge(r);
+            const st = statusLabel(r.markupColor);
+            const cancelled = r.markupColor === "suppressed";
+            const delayed = horaEst && horaEst !== hora;
+
+            return (
+              <tr key={i} className="align-top hover:bg-slate-50">
+                <td className="px-2 py-3 tabular-nums leading-tight whitespace-nowrap">
+                  <div className={`text-sm font-bold ${cancelled ? "line-through text-slate-400" : "text-slate-900"}`}>
+                    {hora || "—"}
+                  </div>
+                  {delayed && (
+                    <div className="text-[11px] font-semibold text-amber-600">{horaEst}</div>
+                  )}
+                </td>
+                <td className="px-2 py-3 font-semibold text-slate-900">{estacion || "—"}</td>
+                <td className="px-2 py-3 text-slate-500 max-w-[240px] truncate" title={obs}>{obs}</td>
+                <td className="px-2 py-3 font-medium text-slate-900 tabular-nums whitespace-nowrap">{sb.code || "—"}</td>
+                <td className={`px-2 py-3 font-bold tracking-wide whitespace-nowrap ${sb.cls}`}>{sb.label}</td>
+                <td className="px-2 py-3 text-slate-600 whitespace-nowrap">{op || "—"}</td>
+                <td className="px-2 py-3 text-slate-600 whitespace-nowrap">{dirLabel(r.direction)}</td>
+                <td className="px-2 py-3 text-center font-bold text-slate-700 tabular-nums">{via || "—"}</td>
+                <td className={`px-2 py-3 font-semibold whitespace-nowrap ${st.cls}`}>{st.txt}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
   );
 }
+
 
 
 
