@@ -404,9 +404,11 @@ function BusDashboardPage() {
             direction={1}
             stops={stopsByDir[1]}
             etas={etas}
+            nightEtaByCode={isNightLine ? nightEtaByCode : null}
             color={lineColor}
             inService={inService}
             transferLines={(c) => {
+              if (isNightLine) return [];
               const others = transfersByStop.get(c);
               if (!others) return [];
               return topTransfers.filter((t) => others.has(t.code));
@@ -420,9 +422,11 @@ function BusDashboardPage() {
             direction={2}
             stops={stopsByDir[2]}
             etas={etas}
+            nightEtaByCode={isNightLine ? nightEtaByCode : null}
             color={lineColor}
             inService={inService}
             transferLines={(c) => {
+              if (isNightLine) return [];
               const others = transfersByStop.get(c);
               if (!others) return [];
               return topTransfers.filter((t) => others.has(t.code));
@@ -435,7 +439,7 @@ function BusDashboardPage() {
         </div>
 
         {/* LEYENDA */}
-        {topTransfers.length > 0 && (
+        {!isNightLine && topTransfers.length > 0 && (
           <div className="mt-3 flex flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-3">
             <span className="font-sans text-[13px] not-italic text-white/70">Leyenda</span>
             {topTransfers.map((t) => (
@@ -450,6 +454,7 @@ function BusDashboardPage() {
             ))}
           </div>
         )}
+
 
 
 
