@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Train, ArrowLeft, ArrowRight } from "lucide-react";
+import { Train, ArrowLeft, ArrowRight, Radio, CalendarRange } from "lucide-react";
 
 export const Route = createFileRoute("/trenes")({
   head: () => ({
