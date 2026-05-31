@@ -42,7 +42,8 @@ function ParadaFavoritaPage() {
   const router = useRouter();
   const search = Route.useSearch();
   const { data: graph } = useBusGraph();
-  const [stop, setStop] = useState<FavoriteStop>(DEFAULT_FAVORITE_STOP);
+  const [stop, setStop] = useState<FavoriteStop>(() => loadFavoriteStop());
+  const [searchLookupDone, setSearchLookupDone] = useState(!search.stop);
   const [, setTick] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -54,6 +55,11 @@ function ParadaFavoritaPage() {
 
   const serviceWindows = useBusServiceWindows();
   const lineDepartures = useBusLineDepartures();
+  const searchMatchesCurrent = Boolean(search.stop) &&
+    stop.stopId === search.stop &&
+    (!search.line || stop.line.toUpperCase() === search.line.toUpperCase());
+  const searchTargetPending = Boolean(search.stop) && !searchMatchesCurrent && !searchLookupDone;
+  const searchTargetMissing = Boolean(search.stop) && !searchMatchesCurrent && searchLookupDone;
   // Para líneas nocturnas: el cuadro Vectalia se identifica por el ORIGEN
   // del trayecto del usuario (primer stop de la dirección cuyo último stop
   // es stop.destination). Lo calculamos abajo en `originTerminalName`.
@@ -131,16 +137,19 @@ function ParadaFavoritaPage() {
 
 
   useEffect(() => {
-    setStop(loadFavoriteStop());
     const id = window.setInterval(() => setTick((t) => t + 1), 30_000);
     return () => window.clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    setSearchLookupDone(!search.stop || searchMatchesCurrent);
+  }, [search.stop, search.line, searchMatchesCurrent]);
 
   // Una sola petición a Vectalia: trae todos los ETAs disponibles.
   // Para líneas nocturnas no consultamos Vectalia (sin cobertura live) y
   // usamos estimados horarios desde el terminal de origen.
   useEffect(() => {
-    if (outOfService || isNightLine) {
+    if (searchTargetPending || outOfService || isNightLine) {
       setLiveAll([]);
       setLiveLoading(false);
       return;
@@ -175,7 +184,7 @@ function ParadaFavoritaPage() {
       cancelled = true;
       window.clearInterval(id);
     };
-  }, [stop.stopId, stop.line, outOfService, isNightLine]);
+  }, [stop.stopId, stop.line, outOfService, isNightLine, searchTargetPending]);
 
   const elapsedMin = Math.floor((Date.now() - liveUpdatedAt) / 60_000);
   const liveMinutes = liveAll.length > 0 ? Math.max(0, liveAll[0] - elapsedMin) : null;
