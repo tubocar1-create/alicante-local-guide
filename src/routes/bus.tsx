@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   X,
   Clock,
@@ -15,7 +15,7 @@ import {
   MapPinned,
 } from "lucide-react";
 import { useBusGraph } from "@/hooks/useBusGraph";
-import { classifyLine } from "@/components/BusKnownPicker";
+import { BusKnownPicker, classifyLine, type BusStopPick } from "@/components/BusKnownPicker";
 
 export const Route = createFileRoute("/bus")({
   head: () => ({
@@ -44,17 +44,21 @@ export const Route = createFileRoute("/bus")({
 function BusRouteShell() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const navigate = useNavigate();
-  useEffect(() => {
-    if (pathname !== "/bus" || typeof window === "undefined") return;
-    try {
-      sessionStorage.setItem("agent:open-bus-picker", "1");
-    } catch {
-      /* noop */
-    }
-    navigate({ to: "/", replace: true });
-  }, [navigate, pathname]);
+
   if (pathname !== "/bus") return <Outlet />;
-  return null;
+
+  return (
+    <BusKnownPicker
+      onClose={() => navigate({ to: "/" })}
+      onUnknown={() => navigate({ to: "/transporte" })}
+      onSelected={(pick: BusStopPick) => {
+        navigate({
+          to: "/transporte/parada-favorita",
+          search: { stop: pick.stopCode, line: pick.line },
+        });
+      }}
+    />
+  );
 }
 
 // Líneas reales se obtienen desde la base de datos vía useBusGraph().
