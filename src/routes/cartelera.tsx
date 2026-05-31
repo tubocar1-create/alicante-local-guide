@@ -347,49 +347,56 @@ function Kpi({
   );
 }
 
-function AlertRow({ t }: { t: CarteleraTrain }) {
-  const label =
-    t.status === "RETRASO"
-      ? "RETRASO"
-      : t.status === "CANCELADO"
-      ? "CANCELADO"
-      : t.status === "CAMBIO"
-      ? "CAMBIO VÍA"
-      : "INCIDENCIA";
-  const tone =
-    t.status === "RETRASO"
-      ? "bg-rose-50 text-rose-600 border-rose-200"
-      : t.status === "CAMBIO"
-      ? "bg-amber-50 text-amber-700 border-amber-200"
-      : "bg-rose-50 text-rose-700 border-rose-200";
-  const right =
-    t.status === "RETRASO"
-      ? `+${t.delayMin} min`
-      : t.status === "CAMBIO"
-      ? `Vía → ${t.platform || "?"}`
-      : "Incidencia";
-  const rightTone =
-    t.status === "RETRASO"
-      ? "text-rose-600"
-      : t.status === "CAMBIO"
-      ? "text-amber-700"
-      : "text-rose-600";
+function RawAdifTable({ rows }: { rows: Array<Record<string, any>> }) {
+  const columns = useMemo(() => {
+    const set = new Set<string>();
+    for (const r of rows) for (const k of Object.keys(r)) set.add(k);
+    // Stable order: direction & trafficType first, then alphabetical
+    const rest = [...set].filter((k) => k !== "direction" && k !== "trafficType").sort();
+    return ["direction", "trafficType", ...rest];
+  }, [rows]);
+
+  if (rows.length === 0) {
+    return <p className="text-sm text-slate-500 py-3">Sin datos crudos.</p>;
+  }
+
   return (
-    <li className="py-2 grid grid-cols-[88px_90px_1fr_auto_14px] gap-2 items-center text-xs">
-      <span className={`text-[10px] font-bold px-2 py-1 rounded border text-center ${tone}`}>
-        {label}
-      </span>
-      <span className="font-semibold text-slate-800 truncate">
-        {t.operator.replace(/^Renfe\s*/i, "")} {t.trainNumber}
-      </span>
-      <span className="text-slate-600 truncate">
-        {t.direction === "SALIDA"
-          ? `Alicante → ${t.destination}`
-          : `${t.origin} → Alicante`}
-      </span>
-      <span className={`font-semibold ${rightTone}`}>{right}</span>
-      <ChevronRight className="h-3 w-3 text-slate-300" />
-    </li>
+    <div className="overflow-x-auto -mx-3 px-3">
+      <table className="min-w-full text-[11px] border-collapse">
+        <thead>
+          <tr className="text-left text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">
+            {columns.map((c) => (
+              <th key={c} className="px-2 py-1.5 font-semibold whitespace-nowrap">
+                {c}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={i} className="border-b border-slate-100 align-top hover:bg-slate-50">
+              {columns.map((c) => {
+                const v = r[c];
+                const str =
+                  v == null
+                    ? ""
+                    : typeof v === "object"
+                    ? JSON.stringify(v)
+                    : String(v);
+                return (
+                  <td
+                    key={c}
+                    className="px-2 py-1.5 whitespace-nowrap max-w-[260px] overflow-hidden text-ellipsis font-mono text-slate-700"
+                    title={str}
+                    dangerouslySetInnerHTML={{ __html: str }}
+                  />
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
