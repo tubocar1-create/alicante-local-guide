@@ -44,17 +44,21 @@ export const Route = createFileRoute("/bus")({
 function BusRouteShell() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const navigate = useNavigate();
-  useEffect(() => {
-    if (pathname !== "/bus" || typeof window === "undefined") return;
-    try {
-      sessionStorage.setItem("agent:open-bus-picker", "1");
-    } catch {
-      /* noop */
-    }
-    navigate({ to: "/", replace: true });
-  }, [navigate, pathname]);
+
   if (pathname !== "/bus") return <Outlet />;
-  return null;
+
+  return (
+    <BusKnownPicker
+      onClose={() => navigate({ to: "/" })}
+      onUnknown={() => navigate({ to: "/transporte" })}
+      onSelected={(pick) => {
+        navigate({
+          to: "/transporte/parada-favorita",
+          search: { stop: pick.stopCode, line: pick.line },
+        });
+      }}
+    />
+  );
 }
 
 // Líneas reales se obtienen desde la base de datos vía useBusGraph().
