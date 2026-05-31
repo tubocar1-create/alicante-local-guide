@@ -185,44 +185,59 @@ function TrainRoutePage() {
             )}
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            <a
-              href="https://www.renfe.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#7b1f9a] px-3 py-2 text-[11px] font-semibold text-white transition hover:opacity-90"
-            >
-              Renfe
-              <ExternalLink className="h-3 w-3 opacity-70" />
-            </a>
-            <a
-              href="https://www.ouigo.com/es"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#ec4899] px-3 py-2 text-[11px] font-semibold text-white transition hover:opacity-90"
-            >
-              OUIGO
-              <ExternalLink className="h-3 w-3 opacity-70" />
-            </a>
-            <a
-              href="https://iryo.eu"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#ef4444] px-3 py-2 text-[11px] font-semibold text-white transition hover:opacity-90"
-            >
-              iryo
-              <ExternalLink className="h-3 w-3 opacity-70" />
-            </a>
-            <a
-              href="https://www.trenes.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#3b82f6] px-3 py-2 text-[11px] font-semibold text-white transition hover:opacity-90"
-            >
-              trenes.com
-              <ExternalLink className="h-3 w-3 opacity-70" />
-            </a>
-          </div>
+          {(() => {
+            const operator = data?.operator;
+            const showRenfe = operator === "RENFE" || operator === "AVLO";
+            const showOuigo = operator === "OUIGO";
+            const showIryo  = operator === "IRYO";
+            return (
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                {showRenfe && (
+                  <a
+                    href="https://www.renfe.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#7b1f9a] px-3 py-2 text-[11px] font-semibold text-white transition hover:opacity-90"
+                  >
+                    Renfe
+                    <ExternalLink className="h-3 w-3 opacity-70" />
+                  </a>
+                )}
+                {showOuigo && (
+                  <a
+                    href="https://www.ouigo.com/es"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#ec4899] px-3 py-2 text-[11px] font-semibold text-white transition hover:opacity-90"
+                  >
+                    OUIGO
+                    <ExternalLink className="h-3 w-3 opacity-70" />
+                  </a>
+                )}
+                {showIryo && (
+                  <a
+                    href="https://iryo.eu"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#ef4444] px-3 py-2 text-[11px] font-semibold text-white transition hover:opacity-90"
+                  >
+                    iryo
+                    <ExternalLink className="h-3 w-3 opacity-70" />
+                  </a>
+                )}
+                <a
+                  href="https://www.trenes.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#3b82f6] px-3 py-2 text-[11px] font-semibold text-white transition hover:opacity-90"
+                >
+                  trenes.com
+                  <ExternalLink className="h-3 w-3 opacity-70" />
+                </a>
+              </div>
+            );
+          })()}
+
 
         </div>
       </div>
