@@ -81,6 +81,7 @@ function ParadaFavoritaPage() {
       byDir.get(r.direction)!.push(r);
     }
     let offsetMin = 0;
+    let originTerminal = "";
     let found = false;
     for (const [, rows] of byDir) {
       const sorted = [...rows].sort((a, b) => a.seq - b.seq);
@@ -91,6 +92,7 @@ function ParadaFavoritaPage() {
       const codes = sorted.map((r) => String(r.stop_code ?? ""));
       const cum = cumulativeMinutes(codes, coords);
       offsetMin = cum[idx] ?? 0;
+      originTerminal = sorted[0]?.stop_name ?? "";
       found = true;
       break;
     }
@@ -100,6 +102,9 @@ function ParadaFavoritaPage() {
       stop.line,
       destinationTerminalName,
       offsetMin,
+      new Date(),
+      4,
+      originTerminal,
     );
   }, [isNightLine, outOfService, graph, serviceWindows, stop, destinationTerminalName]);
 
