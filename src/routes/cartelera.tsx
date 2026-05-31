@@ -220,8 +220,8 @@ function Board() {
               </span>
             }
           />
-          <ul className="divide-y divide-slate-100">
-            {alertas.slice(0, 4).map((t, i) => (
+          <ul className="divide-y divide-slate-100 max-h-[200px] overflow-y-auto">
+            {alertas.map((t, i) => (
               <AlertRow key={i} t={t} />
             ))}
           </ul>
