@@ -520,7 +520,7 @@ function DirectionColumn({
   color: string;
   inService: boolean;
   transferLines: (stopCode: string) => { code: string; color: string }[];
-  onPickStop: (stopCode: string, stopName: string) => void;
+  onPickStop: (stopCode: string, stopName: string, destination: string) => void;
   nearestList: { code: string; distance: number }[];
   geoStatus: "idle" | "loading" | "ok" | "unavailable";
 }) {
@@ -650,7 +650,7 @@ function DirectionColumn({
 
               <button
                 type="button"
-                onClick={() => onPickStop(s.code, s.name)}
+                onClick={() => onPickStop(s.code, s.name, stops[stops.length - 1]?.name ?? "")}
                 className="flex w-full items-start gap-2 rounded-md text-left transition hover:bg-white/5 active:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
                 aria-label={`Ver tiempo real de ${s.name}`}
               >
