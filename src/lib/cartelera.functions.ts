@@ -197,15 +197,36 @@ export const getCartelera = createServerFn({ method: "GET" }).handler(
       };
     }
     if (!_inflight) {
-      _inflight = fetchCartelera()
-        .then((data) => {
-          _cache = { at: Date.now(), v: CACHE_VERSION, data };
-          return data;
-        })
-
-        .finally(() => {
-          _inflight = null;
-        });
+      _inflight = (async () => {
+        // Reintenta el fetch completo si salidas o llegadas vienen vacías
+        let last: CarteleraResponse | null = null;
+        for (let attempt = 0; attempt < 3; attempt++) {
+          try {
+            const data = await fetchCartelera();
+            last = data;
+            if (data.salidas.length > 0 && data.llegadas.length > 0) break;
+            console.warn("[cartelera] respuesta incompleta, reintentando", {
+              attempt,
+              salidas: data.salidas.length,
+              llegadas: data.llegadas.length,
+            });
+          } catch (e) {
+            console.error("[cartelera] error fetch", attempt, e);
+          }
+          await new Promise((r) => setTimeout(r, 600 + attempt * 600));
+        }
+        if (!last) throw new Error("ADIF: sin respuesta tras reintentos");
+        // Sólo cacheamos si ambas direcciones tienen datos; si no, cache corto
+        const fullyValid = last.salidas.length > 0 && last.llegadas.length > 0;
+        _cache = {
+          at: fullyValid ? Date.now() : Date.now() - (CACHE_TTL_MS - 30_000),
+          v: CACHE_VERSION,
+          data: last,
+        };
+        return last;
+      })().finally(() => {
+        _inflight = null;
+      });
     }
     const data = await _inflight;
     const at = _cache?.at ?? Date.now();
