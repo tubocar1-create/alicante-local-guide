@@ -354,7 +354,22 @@ function Kpi({
   );
 }
 
-function RawAdifTable({ rows }: { rows: Array<Record<string, any>> }) {
+function HeaderClock() {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const hh = now.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  return (
+    <div className="flex items-center gap-1.5 rounded-md bg-slate-900 px-2 py-1 text-[11px] font-bold tabular-nums text-white">
+      <Clock className="h-3 w-3" />
+      {hh}
+    </div>
+  );
+}
+
+function RawAdifTable({ rows, kind }: { rows: Array<Record<string, any>>; kind: "SALIDA" | "LLEGADA" }) {
   if (rows.length === 0) {
     return <p className="text-sm text-slate-500 py-3">Sin datos.</p>;
   }
@@ -385,25 +400,24 @@ function RawAdifTable({ rows }: { rows: Array<Record<string, any>> }) {
     return { txt: "En hora", cls: "text-emerald-600" };
   };
 
-  const dirLabel = (d: string) => (d === "SALIDA" ? "Salida" : "Llegada");
+  const destLabel = kind === "SALIDA" ? "Destino" : "Origen";
 
   return (
     <div className="overflow-x-auto -mx-3 px-3">
-      <table className="min-w-[920px] w-full text-xs border-collapse">
+      <table className="min-w-[860px] w-full text-xs border-collapse">
         <thead>
-          <tr className="text-left text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 bg-slate-50">
+          <tr className="text-left text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 bg-slate-100">
             <th className="px-2 py-2 font-semibold">Hora</th>
-            <th className="px-2 py-2 font-semibold">Destino / Origen</th>
-            <th className="px-2 py-2 font-semibold">Observación</th>
+            <th className="px-2 py-2 font-semibold">Estado</th>
+            <th className="px-2 py-2 font-semibold">{destLabel}</th>
             <th className="px-2 py-2 font-semibold">Tren</th>
             <th className="px-2 py-2 font-semibold">Servicio</th>
             <th className="px-2 py-2 font-semibold">Operador</th>
-            <th className="px-2 py-2 font-semibold">Sentido</th>
             <th className="px-2 py-2 font-semibold text-center">Vía</th>
-            <th className="px-2 py-2 font-semibold">Estado</th>
+            <th className="px-2 py-2 font-semibold">Observación</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100">
+        <tbody>
           {rows.map((r, i) => {
             const estacion = stripHtml(r.estacion);
             const hora = (r.hora || "").trim();
@@ -415,9 +429,10 @@ function RawAdifTable({ rows }: { rows: Array<Record<string, any>> }) {
             const st = statusLabel(r.markupColor);
             const cancelled = r.markupColor === "suppressed";
             const delayed = horaEst && horaEst !== hora;
+            const zebra = i % 2 === 0 ? "bg-white" : "bg-slate-50";
 
             return (
-              <tr key={i} className="align-top hover:bg-slate-50">
+              <tr key={i} className={`align-top hover:bg-sky-50/60 ${zebra}`}>
                 <td className="px-2 py-3 tabular-nums leading-tight whitespace-nowrap">
                   <div className={`text-sm font-bold ${cancelled ? "line-through text-slate-400" : "text-slate-900"}`}>
                     {hora || "—"}
@@ -426,14 +441,13 @@ function RawAdifTable({ rows }: { rows: Array<Record<string, any>> }) {
                     <div className="text-[11px] font-semibold text-amber-600">{horaEst}</div>
                   )}
                 </td>
+                <td className={`px-2 py-3 font-semibold whitespace-nowrap ${st.cls}`}>{st.txt}</td>
                 <td className="px-2 py-3 font-semibold text-slate-900">{estacion || "—"}</td>
-                <td className="px-2 py-3 text-slate-500 max-w-[240px] truncate" title={obs}>{obs}</td>
                 <td className="px-2 py-3 font-medium text-slate-900 tabular-nums whitespace-nowrap">{sb.code || "—"}</td>
                 <td className={`px-2 py-3 font-bold tracking-wide whitespace-nowrap ${sb.cls}`}>{sb.label}</td>
                 <td className="px-2 py-3 text-slate-600 whitespace-nowrap">{op || "—"}</td>
-                <td className="px-2 py-3 text-slate-600 whitespace-nowrap">{dirLabel(r.direction)}</td>
                 <td className="px-2 py-3 text-center font-bold text-slate-700 tabular-nums">{via || "—"}</td>
-                <td className={`px-2 py-3 font-semibold whitespace-nowrap ${st.cls}`}>{st.txt}</td>
+                <td className="px-2 py-3 text-slate-500 max-w-[260px] truncate" title={obs}>{obs}</td>
               </tr>
             );
           })}
