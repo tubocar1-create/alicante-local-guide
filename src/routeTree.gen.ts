@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as WelcomeRouteImport } from './routes/welcome'
 import { Route as VuelosRouteImport } from './routes/vuelos'
 import { Route as VocesRouteImport } from './routes/voces'
+import { Route as TrenesRouteImport } from './routes/trenes'
 import { Route as TransporteRouteImport } from './routes/transporte'
 import { Route as TramRouteImport } from './routes/tram'
 import { Route as ThreadsRouteImport } from './routes/threads'
@@ -40,6 +41,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as BusinessIndexRouteImport } from './routes/business.index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as VuelosIataRouteImport } from './routes/vuelos_.$iata'
+import { Route as TrenesCodeRouteImport } from './routes/trenes_.$code'
 import { Route as TransporteParadaFavoritaRouteImport } from './routes/transporte_.parada-favorita'
 import { Route as TramMapaRouteImport } from './routes/tram.mapa'
 import { Route as TramFavoritosRouteImport } from './routes/tram.favoritos'
@@ -94,6 +96,7 @@ import { Route as AdminAuditoriaRouteImport } from './routes/admin.auditoria'
 import { Route as AdminArquitecturaRouteImport } from './routes/admin.arquitectura'
 import { Route as AdminAiRouteImport } from './routes/admin.ai'
 import { Route as AdminAiIndexRouteImport } from './routes/admin.ai.index'
+import { Route as TrenesViajeIdRouteImport } from './routes/trenes_.viaje.$id'
 import { Route as TramParadaStopIdRouteImport } from './routes/tram.parada.$stopId'
 import { Route as TramLineaLineIdRouteImport } from './routes/tram.linea.$lineId'
 import { Route as SaludCategoriaIdRouteImport } from './routes/salud_.$categoria.$id'
@@ -168,6 +171,11 @@ const VuelosRoute = VuelosRouteImport.update({
 const VocesRoute = VocesRouteImport.update({
   id: '/voces',
   path: '/voces',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrenesRoute = TrenesRouteImport.update({
+  id: '/trenes',
+  path: '/trenes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TransporteRoute = TransporteRouteImport.update({
@@ -308,6 +316,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
 const VuelosIataRoute = VuelosIataRouteImport.update({
   id: '/vuelos_/$iata',
   path: '/vuelos/$iata',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrenesCodeRoute = TrenesCodeRouteImport.update({
+  id: '/trenes_/$code',
+  path: '/trenes/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TransporteParadaFavoritaRoute =
@@ -580,6 +593,11 @@ const AdminAiIndexRoute = AdminAiIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminAiRoute,
+} as any)
+const TrenesViajeIdRoute = TrenesViajeIdRouteImport.update({
+  id: '/trenes_/viaje/$id',
+  path: '/trenes/viaje/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const TramParadaStopIdRoute = TramParadaStopIdRouteImport.update({
   id: '/parada/$stopId',
@@ -922,6 +940,7 @@ export interface FileRoutesByFullPath {
   '/threads': typeof ThreadsRouteWithChildren
   '/tram': typeof TramRouteWithChildren
   '/transporte': typeof TransporteRoute
+  '/trenes': typeof TrenesRoute
   '/voces': typeof VocesRoute
   '/vuelos': typeof VuelosRoute
   '/welcome': typeof WelcomeRoute
@@ -978,6 +997,7 @@ export interface FileRoutesByFullPath {
   '/tram/favoritos': typeof TramFavoritosRoute
   '/tram/mapa': typeof TramMapaRoute
   '/transporte/parada-favorita': typeof TransporteParadaFavoritaRoute
+  '/trenes/$code': typeof TrenesCodeRoute
   '/vuelos/$iata': typeof VuelosIataRoute
   '/admin/': typeof AdminIndexRoute
   '/business/': typeof BusinessIndexRoute
@@ -1020,6 +1040,7 @@ export interface FileRoutesByFullPath {
   '/salud/$categoria/$id': typeof SaludCategoriaIdRoute
   '/tram/linea/$lineId': typeof TramLineaLineIdRoute
   '/tram/parada/$stopId': typeof TramParadaStopIdRoute
+  '/trenes/viaje/$id': typeof TrenesViajeIdRoute
   '/admin/ai/': typeof AdminAiIndexRoute
   '/api/public/google-photo/$': typeof ApiPublicGooglePhotoSplatRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
@@ -1067,6 +1088,7 @@ export interface FileRoutesByTo {
   '/threads': typeof ThreadsRouteWithChildren
   '/tram': typeof TramRouteWithChildren
   '/transporte': typeof TransporteRoute
+  '/trenes': typeof TrenesRoute
   '/voces': typeof VocesRoute
   '/vuelos': typeof VuelosRoute
   '/welcome': typeof WelcomeRoute
@@ -1122,6 +1144,7 @@ export interface FileRoutesByTo {
   '/tram/favoritos': typeof TramFavoritosRoute
   '/tram/mapa': typeof TramMapaRoute
   '/transporte/parada-favorita': typeof TransporteParadaFavoritaRoute
+  '/trenes/$code': typeof TrenesCodeRoute
   '/vuelos/$iata': typeof VuelosIataRoute
   '/admin': typeof AdminIndexRoute
   '/business': typeof BusinessIndexRoute
@@ -1164,6 +1187,7 @@ export interface FileRoutesByTo {
   '/salud/$categoria/$id': typeof SaludCategoriaIdRoute
   '/tram/linea/$lineId': typeof TramLineaLineIdRoute
   '/tram/parada/$stopId': typeof TramParadaStopIdRoute
+  '/trenes/viaje/$id': typeof TrenesViajeIdRoute
   '/admin/ai': typeof AdminAiIndexRoute
   '/api/public/google-photo/$': typeof ApiPublicGooglePhotoSplatRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
@@ -1214,6 +1238,7 @@ export interface FileRoutesById {
   '/threads': typeof ThreadsRouteWithChildren
   '/tram': typeof TramRouteWithChildren
   '/transporte': typeof TransporteRoute
+  '/trenes': typeof TrenesRoute
   '/voces': typeof VocesRoute
   '/vuelos': typeof VuelosRoute
   '/welcome': typeof WelcomeRoute
@@ -1270,6 +1295,7 @@ export interface FileRoutesById {
   '/tram/favoritos': typeof TramFavoritosRoute
   '/tram/mapa': typeof TramMapaRoute
   '/transporte_/parada-favorita': typeof TransporteParadaFavoritaRoute
+  '/trenes_/$code': typeof TrenesCodeRoute
   '/vuelos_/$iata': typeof VuelosIataRoute
   '/admin/': typeof AdminIndexRoute
   '/business/': typeof BusinessIndexRoute
@@ -1312,6 +1338,7 @@ export interface FileRoutesById {
   '/salud_/$categoria/$id': typeof SaludCategoriaIdRoute
   '/tram/linea/$lineId': typeof TramLineaLineIdRoute
   '/tram/parada/$stopId': typeof TramParadaStopIdRoute
+  '/trenes_/viaje/$id': typeof TrenesViajeIdRoute
   '/admin/ai/': typeof AdminAiIndexRoute
   '/api/public/google-photo/$': typeof ApiPublicGooglePhotoSplatRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
@@ -1363,6 +1390,7 @@ export interface FileRouteTypes {
     | '/threads'
     | '/tram'
     | '/transporte'
+    | '/trenes'
     | '/voces'
     | '/vuelos'
     | '/welcome'
@@ -1419,6 +1447,7 @@ export interface FileRouteTypes {
     | '/tram/favoritos'
     | '/tram/mapa'
     | '/transporte/parada-favorita'
+    | '/trenes/$code'
     | '/vuelos/$iata'
     | '/admin/'
     | '/business/'
@@ -1461,6 +1490,7 @@ export interface FileRouteTypes {
     | '/salud/$categoria/$id'
     | '/tram/linea/$lineId'
     | '/tram/parada/$stopId'
+    | '/trenes/viaje/$id'
     | '/admin/ai/'
     | '/api/public/google-photo/$'
     | '/api/public/hooks/aena-sync'
@@ -1508,6 +1538,7 @@ export interface FileRouteTypes {
     | '/threads'
     | '/tram'
     | '/transporte'
+    | '/trenes'
     | '/voces'
     | '/vuelos'
     | '/welcome'
@@ -1563,6 +1594,7 @@ export interface FileRouteTypes {
     | '/tram/favoritos'
     | '/tram/mapa'
     | '/transporte/parada-favorita'
+    | '/trenes/$code'
     | '/vuelos/$iata'
     | '/admin'
     | '/business'
@@ -1605,6 +1637,7 @@ export interface FileRouteTypes {
     | '/salud/$categoria/$id'
     | '/tram/linea/$lineId'
     | '/tram/parada/$stopId'
+    | '/trenes/viaje/$id'
     | '/admin/ai'
     | '/api/public/google-photo/$'
     | '/api/public/hooks/aena-sync'
@@ -1654,6 +1687,7 @@ export interface FileRouteTypes {
     | '/threads'
     | '/tram'
     | '/transporte'
+    | '/trenes'
     | '/voces'
     | '/vuelos'
     | '/welcome'
@@ -1710,6 +1744,7 @@ export interface FileRouteTypes {
     | '/tram/favoritos'
     | '/tram/mapa'
     | '/transporte_/parada-favorita'
+    | '/trenes_/$code'
     | '/vuelos_/$iata'
     | '/admin/'
     | '/business/'
@@ -1752,6 +1787,7 @@ export interface FileRouteTypes {
     | '/salud_/$categoria/$id'
     | '/tram/linea/$lineId'
     | '/tram/parada/$stopId'
+    | '/trenes_/viaje/$id'
     | '/admin/ai/'
     | '/api/public/google-photo/$'
     | '/api/public/hooks/aena-sync'
@@ -1802,6 +1838,7 @@ export interface RootRouteChildren {
   ThreadsRoute: typeof ThreadsRouteWithChildren
   TramRoute: typeof TramRouteWithChildren
   TransporteRoute: typeof TransporteRoute
+  TrenesRoute: typeof TrenesRoute
   VocesRoute: typeof VocesRoute
   VuelosRoute: typeof VuelosRoute
   WelcomeRoute: typeof WelcomeRoute
@@ -1822,6 +1859,7 @@ export interface RootRouteChildren {
   OcioTeatrosRoute: typeof OcioTeatrosRoute
   SaludCategoriaRoute: typeof SaludCategoriaRouteWithChildren
   TransporteParadaFavoritaRoute: typeof TransporteParadaFavoritaRoute
+  TrenesCodeRoute: typeof TrenesCodeRoute
   VuelosIataRoute: typeof VuelosIataRoute
   ApiPublicAenaFlightsRoute: typeof ApiPublicAenaFlightsRoute
   ApiPublicAuthEmailHookRoute: typeof ApiPublicAuthEmailHookRoute
@@ -1840,6 +1878,7 @@ export interface RootRouteChildren {
   OcioEventosAgendaRoute: typeof OcioEventosAgendaRoute
   OcioEventosCarteleraRoute: typeof OcioEventosCarteleraRoute
   OcioPeliculaIdRoute: typeof OcioPeliculaIdRoute
+  TrenesViajeIdRoute: typeof TrenesViajeIdRoute
   ApiPublicGooglePhotoSplatRoute: typeof ApiPublicGooglePhotoSplatRoute
   ApiPublicHooksAenaSyncRoute: typeof ApiPublicHooksAenaSyncRoute
   ApiPublicHooksAgenteLearnRoute: typeof ApiPublicHooksAgenteLearnRoute
@@ -1884,6 +1923,13 @@ declare module '@tanstack/react-router' {
       path: '/voces'
       fullPath: '/voces'
       preLoaderRoute: typeof VocesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trenes': {
+      id: '/trenes'
+      path: '/trenes'
+      fullPath: '/trenes'
+      preLoaderRoute: typeof TrenesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/transporte': {
@@ -2080,6 +2126,13 @@ declare module '@tanstack/react-router' {
       path: '/vuelos/$iata'
       fullPath: '/vuelos/$iata'
       preLoaderRoute: typeof VuelosIataRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trenes_/$code': {
+      id: '/trenes_/$code'
+      path: '/trenes/$code'
+      fullPath: '/trenes/$code'
+      preLoaderRoute: typeof TrenesCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/transporte_/parada-favorita': {
@@ -2459,6 +2512,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/ai/'
       preLoaderRoute: typeof AdminAiIndexRouteImport
       parentRoute: typeof AdminAiRoute
+    }
+    '/trenes_/viaje/$id': {
+      id: '/trenes_/viaje/$id'
+      path: '/trenes/viaje/$id'
+      fullPath: '/trenes/viaje/$id'
+      preLoaderRoute: typeof TrenesViajeIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/tram/parada/$stopId': {
       id: '/tram/parada/$stopId'
@@ -3142,6 +3202,7 @@ const rootRouteChildren: RootRouteChildren = {
   ThreadsRoute: ThreadsRouteWithChildren,
   TramRoute: TramRouteWithChildren,
   TransporteRoute: TransporteRoute,
+  TrenesRoute: TrenesRoute,
   VocesRoute: VocesRoute,
   VuelosRoute: VuelosRoute,
   WelcomeRoute: WelcomeRoute,
@@ -3162,6 +3223,7 @@ const rootRouteChildren: RootRouteChildren = {
   OcioTeatrosRoute: OcioTeatrosRoute,
   SaludCategoriaRoute: SaludCategoriaRouteWithChildren,
   TransporteParadaFavoritaRoute: TransporteParadaFavoritaRoute,
+  TrenesCodeRoute: TrenesCodeRoute,
   VuelosIataRoute: VuelosIataRoute,
   ApiPublicAenaFlightsRoute: ApiPublicAenaFlightsRoute,
   ApiPublicAuthEmailHookRoute: ApiPublicAuthEmailHookRoute,
@@ -3180,6 +3242,7 @@ const rootRouteChildren: RootRouteChildren = {
   OcioEventosAgendaRoute: OcioEventosAgendaRoute,
   OcioEventosCarteleraRoute: OcioEventosCarteleraRoute,
   OcioPeliculaIdRoute: OcioPeliculaIdRoute,
+  TrenesViajeIdRoute: TrenesViajeIdRoute,
   ApiPublicGooglePhotoSplatRoute: ApiPublicGooglePhotoSplatRoute,
   ApiPublicHooksAenaSyncRoute: ApiPublicHooksAenaSyncRoute,
   ApiPublicHooksAgenteLearnRoute: ApiPublicHooksAgenteLearnRoute,

@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Bus, Train, Star, X, ArrowRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Bus, Train, TrainFront, Star, X, ArrowRight } from "lucide-react";
 import { SedanCar } from "@/components/icons/SedanCar";
 
 export const Route = createFileRoute("/transporte")({
@@ -60,6 +61,28 @@ const SECTORS: Sector[] = [
 ];
 
 function TransporteHub() {
+  // Tile de "Tren" oculto en producción; visible con ?dev=1 mientras integramos GTFS.
+  const [showTrenes, setShowTrenes] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setShowTrenes(new URLSearchParams(window.location.search).get("dev") === "1");
+  }, []);
+
+  const sectors: Sector[] = showTrenes
+    ? [
+        ...SECTORS.slice(0, 2),
+        {
+          to: "/trenes",
+          label: "Tren (AVE · OUIGO · IRYO)",
+          description: "Larga distancia desde Alicante-Terminal",
+          accent: "#f0abfc",
+          accent2: "#c026d3",
+          Icon: TrainFront,
+        },
+        ...SECTORS.slice(2),
+      ]
+    : SECTORS;
+
   return (
     <div
       className="fixed inset-0 z-[60] lg:relative lg:inset-auto lg:z-auto lg:min-h-[60vh] overflow-y-auto text-white"
@@ -72,6 +95,8 @@ function TransporteHub() {
         <div className="absolute -top-40 left-1/2 h-[28rem] w-[28rem] -translate-x-1/2 rounded-full bg-sky-400/[0.10] blur-3xl" />
         <div className="absolute bottom-0 right-0 h-[24rem] w-[24rem] rounded-full bg-indigo-400/[0.10] blur-3xl" />
       </div>
+
+
 
       <main className="relative mx-auto max-w-3xl space-y-4 px-4 pb-24 pt-5">
         <header className="mb-1 flex items-center justify-between">
@@ -115,7 +140,7 @@ function TransporteHub() {
           </p>
         </div>
 
-        {SECTORS.map((s) => (
+        {sectors.map((s) => (
           <Link
             key={s.to}
             to={s.to}
