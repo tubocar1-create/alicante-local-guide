@@ -131,10 +131,10 @@ function Board() {
   const filteredSalidas = useMemo(() => {
     let list = data.salidas;
     if (filter !== "TODAS") list = list.filter((t) => detectOperator(t) === filter);
-    return list.slice(0, 8);
+    return list;
   }, [data.salidas, filter]);
 
-  const llegadas = data.llegadas.slice(0, 4);
+  const llegadas = data.llegadas;
 
   const updatedAgo = Math.max(
     0,
@@ -220,8 +220,8 @@ function Board() {
               </span>
             }
           />
-          <ul className="divide-y divide-slate-100">
-            {alertas.slice(0, 4).map((t, i) => (
+          <ul className="divide-y divide-slate-100 max-h-[200px] overflow-y-auto">
+            {alertas.map((t, i) => (
               <AlertRow key={i} t={t} />
             ))}
           </ul>
@@ -254,22 +254,26 @@ function Board() {
         </div>
 
         {/* Table */}
-        <div className="text-[10px] uppercase tracking-wider text-slate-400 grid grid-cols-[60px_1fr_90px_36px_70px_14px] gap-2 px-1 py-1 border-b border-slate-100">
-          <span>Hora</span>
-          <span>Destino</span>
-          <span>Tren/Op.</span>
-          <span className="text-center">Vía</span>
-          <span>Estado</span>
-          <span />
+        <div className="overflow-x-auto -mx-3 px-3">
+          <div className="min-w-[520px]">
+            <div className="text-[10px] uppercase tracking-wider text-slate-400 grid grid-cols-[60px_1fr_90px_36px_70px_14px] gap-2 px-1 py-1 border-b border-slate-100">
+              <span>Hora</span>
+              <span>Destino</span>
+              <span>Tren/Op.</span>
+              <span className="text-center">Vía</span>
+              <span>Estado</span>
+              <span />
+            </div>
+            {filteredSalidas.length === 0 && (
+              <p className="text-sm text-slate-500 py-4 text-center">Sin trenes.</p>
+            )}
+            <ul className="max-h-[360px] overflow-y-auto">
+              {filteredSalidas.map((t, i) => (
+                <TrainRow key={i} t={t} kind="SALIDA" />
+              ))}
+            </ul>
+          </div>
         </div>
-        {filteredSalidas.length === 0 && (
-          <p className="text-sm text-slate-500 py-4 text-center">Sin trenes.</p>
-        )}
-        <ul>
-          {filteredSalidas.map((t, i) => (
-            <TrainRow key={i} t={t} kind="SALIDA" />
-          ))}
-        </ul>
       </Card>
 
       {/* Próximas llegadas + Incidencias */}
@@ -283,7 +287,7 @@ function Board() {
           {llegadas.length === 0 ? (
             <p className="text-sm text-slate-500 py-3">Sin datos.</p>
           ) : (
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-slate-100 max-h-[280px] overflow-y-auto">
               {llegadas.map((t, i) => (
                 <LlegadaRow key={i} t={t} />
               ))}
@@ -300,10 +304,9 @@ function Board() {
           {alertas.filter((t) => t.observation).length === 0 ? (
             <p className="text-sm text-slate-500 py-3">Sin incidencias publicadas.</p>
           ) : (
-            <ul className="space-y-2.5">
+            <ul className="space-y-2.5 max-h-[280px] overflow-y-auto">
               {alertas
                 .filter((t) => t.observation)
-                .slice(0, 3)
                 .map((t, i) => (
                   <li key={i} className="text-xs">
                     <div className="font-medium text-slate-800 line-clamp-1">
