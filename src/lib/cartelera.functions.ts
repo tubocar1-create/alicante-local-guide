@@ -103,7 +103,7 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
     const auth = mAuth[1];
     const URL_RES = `${BASE}?p_p_id=servicios_estacion_ServiciosEstacionPortlet&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=%2FconsultarHorario&p_p_cacheability=cacheLevelPage&assetEntryId=3068526&p_p_auth=${auth}`;
 
-    async function call(searchType: string, trafficType: string, numPage = 0) {
+    async function callOnce(searchType: string, trafficType: string, numPage = 0) {
       const body = new URLSearchParams({
         _servicios_estacion_ServiciosEstacionPortlet_searchType: searchType,
         _servicios_estacion_ServiciosEstacionPortlet_trafficType: trafficType,
@@ -129,6 +129,20 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
       } catch {
         return { horarios: [] };
       }
+    }
+
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+    // Reintenta una llamada hasta que devuelva horarios o se agoten los intentos
+    async function call(searchType: string, trafficType: string, numPage = 0, retries = 3) {
+      for (let i = 0; i <= retries; i++) {
+        const j = await callOnce(searchType, trafficType, numPage);
+        if (j && Array.isArray(j.horarios) && j.horarios.length > 0) return j;
+        // Solo reintentamos la página 0 (las páginas posteriores sí pueden venir vacías legítimamente)
+        if (numPage > 0) return j;
+        if (i < retries) await sleep(400 + i * 400);
+      }
+      return { horarios: [] };
     }
 
     const ops: Array<[string, string, "SALIDA" | "LLEGADA"]> = [
@@ -183,15 +197,36 @@ export const getCartelera = createServerFn({ method: "GET" }).handler(
       };
     }
     if (!_inflight) {
-      _inflight = fetchCartelera()
-        .then((data) => {
-          _cache = { at: Date.now(), v: CACHE_VERSION, data };
-          return data;
-        })
-
-        .finally(() => {
-          _inflight = null;
-        });
+      _inflight = (async () => {
+        // Reintenta el fetch completo si salidas o llegadas vienen vacías
+        let last: CarteleraResponse | null = null;
+        for (let attempt = 0; attempt < 3; attempt++) {
+          try {
+            const data = await fetchCartelera();
+            last = data;
+            if (data.salidas.length > 0 && data.llegadas.length > 0) break;
+            console.warn("[cartelera] respuesta incompleta, reintentando", {
+              attempt,
+              salidas: data.salidas.length,
+              llegadas: data.llegadas.length,
+            });
+          } catch (e) {
+            console.error("[cartelera] error fetch", attempt, e);
+          }
+          await new Promise((r) => setTimeout(r, 600 + attempt * 600));
+        }
+        if (!last) throw new Error("ADIF: sin respuesta tras reintentos");
+        // Sólo cacheamos si ambas direcciones tienen datos; si no, cache corto
+        const fullyValid = last.salidas.length > 0 && last.llegadas.length > 0;
+        _cache = {
+          at: fullyValid ? Date.now() : Date.now() - (CACHE_TTL_MS - 30_000),
+          v: CACHE_VERSION,
+          data: last,
+        };
+        return last;
+      })().finally(() => {
+        _inflight = null;
+      });
     }
     const data = await _inflight;
     const at = _cache?.at ?? Date.now();
