@@ -142,8 +142,9 @@ function TransporteHub() {
                   }}
                 >
                   <s.Icon
-                    className="h-8 w-8 transition-transform duration-500 group-hover:scale-110"
-                    style={{ color: s.accent }}
+                    className="h-9 w-9 transition-transform duration-500 group-hover:scale-110"
+                    strokeWidth={2.4}
+                    style={{ color: "#ffffff" }}
                   />
                 </div>
               </div>
