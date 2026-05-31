@@ -583,6 +583,7 @@ function DirectionColumn({
   direction,
   stops,
   etas,
+  nightEtaByCode,
   color,
   inService,
   transferLines,
@@ -594,6 +595,7 @@ function DirectionColumn({
   direction: 1 | 2;
   stops: StopRow[];
   etas: Record<string, number[]>;
+  nightEtaByCode: Map<string, { min: number; time: string }> | null;
   color: string;
   inService: boolean;
   transferLines: (stopCode: string) => { code: string; color: string }[];
