@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { ArrowLeft, CalendarDays, Train } from "lucide-react";
 import { STATIONS } from "./trenes";
 import { getStationSchedule, type StationTrip } from "@/lib/trenes/snapshot-client";
+
 
 type SearchParams = { dir?: "S" | "L" };
 
