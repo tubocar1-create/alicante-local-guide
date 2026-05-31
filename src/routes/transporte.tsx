@@ -68,6 +68,7 @@ const SECTORS: Sector[] = [
   },
 ];
 
+function TransporteHub() {
   return (
     <div
       className="fixed inset-0 z-[60] lg:relative lg:inset-auto lg:z-auto lg:min-h-[60vh] overflow-y-auto text-white"
