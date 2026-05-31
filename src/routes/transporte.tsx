@@ -55,7 +55,7 @@ const SECTORS: Sector[] = [
     description: "Comparador de alquiler en el aeropuerto",
     accent: "#818cf8",
     accent2: "#6366f1",
-    Icon: Car,
+    Icon: SedanCar,
   },
 ];
 
