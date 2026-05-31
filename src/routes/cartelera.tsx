@@ -266,51 +266,22 @@ function Board() {
         </div>
       </Card>
 
-      {/* Próximas llegadas + Incidencias */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <Card>
-          <CardHeader
-            icon={<Download className="h-4 w-4 text-emerald-500" />}
-            title="Próximas llegadas"
-            right={<span className="text-[11px] text-sky-600">Ver todas</span>}
-          />
-          {llegadas.length === 0 ? (
-            <p className="text-sm text-slate-500 py-3">Sin datos.</p>
-          ) : (
-            <ul className="divide-y divide-slate-100">
-              {llegadas.map((t, i) => (
-                <LlegadaRow key={i} t={t} />
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        <Card>
-          <CardHeader
-            icon={<AlertTriangle className="h-4 w-4 text-amber-500" />}
-            title="Incidencias / Obras"
-            right={<span className="text-[11px] text-sky-600">Ver todas</span>}
-          />
-          {alertas.filter((t) => t.observation).length === 0 ? (
-            <p className="text-sm text-slate-500 py-3">Sin incidencias publicadas.</p>
-          ) : (
-            <ul className="space-y-2.5">
-              {alertas
-                .filter((t) => t.observation)
-                .map((t, i) => (
-                  <li key={i} className="text-xs">
-                    <div className="font-medium text-slate-800 line-clamp-1">
-                      {t.observation}
-                    </div>
-                    <div className="text-[11px] text-slate-500">
-                      {t.operator} {t.trainNumber}
-                    </div>
-                  </li>
-                ))}
-            </ul>
-          )}
-        </Card>
-      </div>
+      {/* Próximas llegadas */}
+      <Card>
+        <CardHeader
+          icon={<Download className="h-4 w-4 text-emerald-500" />}
+          title="Próximas llegadas"
+        />
+        {llegadas.length === 0 ? (
+          <p className="text-sm text-slate-500 py-3">Sin datos.</p>
+        ) : (
+          <ul className="divide-y divide-slate-100">
+            {llegadas.map((t, i) => (
+              <LlegadaRow key={i} t={t} />
+            ))}
+          </ul>
+        )}
+      </Card>
 
       <p className="text-center text-[10px] text-slate-400 pt-2">
         Los horarios son estimados y pueden cambiar. Consulta antes de viajar.
