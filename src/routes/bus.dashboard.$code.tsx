@@ -9,6 +9,9 @@ import {
   useBusLineDepartures,
   getServiceStatus,
   getNightLineEstimates,
+  dayTypeOf,
+  matchesDayType,
+  toMinHM,
 } from "@/hooks/useBusServiceWindow";
 import { cumulativeMinutes, NIGHT_URBAN_KMH } from "@/lib/bus-eta";
 import busAlicanteImg from "@/assets/bus-alicante.png";
@@ -233,37 +236,59 @@ function BusDashboardPage() {
     return st.isNightLine;
   }, [serviceRows, code, clock]);
 
-  // Para líneas nocturnas: hora estimada de llegada por parada usando la próxima
-  // salida oficial de Vectalia desde el terminal de origen + recorrido estimado
-  // (velocidad media de madrugada). No llamamos al endpoint de tiempo real.
+  // Para líneas nocturnas: hora estimada de llegada por parada.
+  //
+  // Lógica unificada (3N / 13N / 22N): siempre hay como mínimo un bus rodando
+  // entre salidas. Construimos TODAS las salidas candidatas desde el origen
+  // (hoy + madrugada anterior) y, para cada parada, elegimos la que produce
+  // la llegada más temprana que aún no ha pasado. Así un bus ya rodando
+  // (salió antes pero todavía no ha alcanzado la parada) gana frente a la
+  // próxima salida programada del origen.
   const nightEtaByDir = useMemo(() => {
     const out: Record<1 | 2, Map<string, { min: number; time: string }>> = {
       1: new Map(),
       2: new Map(),
     };
     if (!isNightLine || !serviceRows || !departures) return out;
+
+    const nowMin = clock.getHours() * 60 + clock.getMinutes();
+    const todayType = dayTypeOf(clock);
+    const yesterdayType = dayTypeOf(new Date(clock.getTime() - 24 * 60 * 60_000));
+
     for (const dir of [1, 2] as const) {
       const stops = stopsByDir[dir];
       if (stops.length === 0) continue;
       const originName = stops[0].name;
-      const est = getNightLineEstimates(
-        serviceRows,
-        departures,
-        code,
-        originName,
-        0,
-        clock,
-        1,
+
+      const sw = serviceRows.find(
+        (r) =>
+          r.line_code === code &&
+          r.terminal_name === originName &&
+          (matchesDayType(r.day_type, todayType) ||
+            matchesDayType(r.day_type, yesterdayType)),
       );
-      if (!est || est.upcoming.length === 0) continue;
-      const next = est.upcoming[0];
-      const [dh, dm] = next.departureTime.split(":").map(Number);
-      const depAbsMin = dh * 60 + dm;
-      const nowMin = clock.getHours() * 60 + clock.getMinutes();
-      let depDelta = depAbsMin - nowMin;
-      if (depDelta < -12 * 60) depDelta += 24 * 60;
-      if (depDelta > 12 * 60) depDelta -= 24 * 60;
-      const depTimelineMin = nowMin + depDelta;
+      if (!sw) continue;
+
+      // Salidas de hoy (timeline = dep) + salidas de ayer madrugada (dep < 12h,
+      // timeline = dep, ya ocurrieron pero pueden estar rodando) +
+      // salidas de ayer tarde-noche (dep >= 18h, timeline = dep - 1440).
+      const depTimelines: number[] = [];
+      for (const d of departures) {
+        if (d.line_code !== code || d.direction !== sw.direction) continue;
+        const depMin = toMinHM(d.departure_time);
+        if (matchesDayType(d.day_type, todayType)) {
+          depTimelines.push(depMin);
+        }
+        if (matchesDayType(d.day_type, yesterdayType)) {
+          if (depMin >= 18 * 60) depTimelines.push(depMin - 24 * 60);
+        }
+      }
+      if (depTimelines.length === 0) continue;
+      depTimelines.sort((a, b) => a - b);
+
+      // Próxima salida del origen (para sincronizar el terminal de destino).
+      const nextOriginDeparture =
+        depTimelines.find((d) => d - nowMin >= -1) ?? depTimelines[depTimelines.length - 1];
 
       const syncedDestinationArrival = (destinationName: string): number | null => {
         const destinationDepartures = getNightLineEstimates(
@@ -276,18 +301,43 @@ function BusDashboardPage() {
           8,
         );
         const nextDeparture = destinationDepartures?.upcoming
-          .map((u) => nextTimelineMinuteAfter(minutesFromHHMM(u.departureTime), depTimelineMin))
-          .filter((m) => m >= depTimelineMin)
+          .map((u) =>
+            nextTimelineMinuteAfter(minutesFromHHMM(u.departureTime), nextOriginDeparture),
+          )
+          .filter((m) => m >= nextOriginDeparture)
           .sort((a, b) => a - b)[0];
         return typeof nextDeparture === "number" ? nextDeparture - TERMINAL_LAYOVER_MIN : null;
       };
 
       const codes = stops.map((s) => s.code);
       const cum = cumulativeMinutes(codes, stopCoords, { speedKmh: NIGHT_URBAN_KMH });
+      const BOARDING_BUFFER_MIN = 5;
+
       for (let i = 0; i < stops.length; i++) {
         const offset = cum[i] ?? 0;
-        const terminalArrival = i === stops.length - 1 ? syncedDestinationArrival(stops[i].name) : null;
-        const arrTimeline = terminalArrival ?? depTimelineMin + offset;
+        const isOrigin = i === 0;
+        const isDestTerminal = i === stops.length - 1;
+
+        let arrTimeline: number | null = null;
+
+        if (isDestTerminal) {
+          arrTimeline = syncedDestinationArrival(stops[i].name);
+        }
+
+        if (arrTimeline == null) {
+          // Buscar la salida candidata más temprana cuya llegada a esta parada
+          // aún esté en el futuro. Esto prioriza buses ya rodando.
+          let best: number | null = null;
+          for (const dep of depTimelines) {
+            const adj = isOrigin ? dep - BOARDING_BUFFER_MIN : dep + offset;
+            if (adj - nowMin < -1) continue; // ya pasó por aquí
+            if (best == null || adj < best) best = adj;
+          }
+          arrTimeline = best;
+        }
+
+        if (arrTimeline == null) continue;
+
         const arrDelta = arrTimeline - nowMin;
         const arrAbs = ((arrTimeline % 1440) + 1440) % 1440;
         const hh = String(Math.floor(arrAbs / 60)).padStart(2, "0");
@@ -297,7 +347,6 @@ function BusDashboardPage() {
           time: `${hh}:${mm}`,
         });
       }
-
     }
 
     return out;
