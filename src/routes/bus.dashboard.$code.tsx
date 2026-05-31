@@ -422,7 +422,7 @@ function BusDashboardPage() {
             direction={2}
             stops={stopsByDir[2]}
             etas={etas}
-            nightEtaByCode={isNightLine ? nightEtaByCode : null}
+            nightEtaByCode={isNightLine ? nightEtaByDir[2] : null}
             color={lineColor}
             inService={inService}
             transferLines={(c) => {
