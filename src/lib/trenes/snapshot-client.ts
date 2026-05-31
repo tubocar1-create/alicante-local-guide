@@ -208,8 +208,15 @@ export async function getStationSchedule(
     }
   }
 
+  // Dedupe en render: Renfe publica el mismo tren físico varias veces
+  // (varios trip_id con el mismo número, mismo horario y misma ruta, distintos
+  // service_id solapados). La clave canónica es: fecha + número + salida + llegada.
+  // Si dos filas comparten esa clave, son el mismo tren — nos quedamos con una.
   const dedup = new Map<string, StationTrip>();
-  for (const t of out) dedup.set(t.id, t);
+  for (const t of out) {
+    const key = `${t.date}|${t.number}|${t.departure}|${t.arrival}|${t.origin}|${t.destination}`;
+    if (!dedup.has(key)) dedup.set(key, t);
+  }
   const list = [...dedup.values()].sort((a, b) =>
     a.date === b.date ? a.departure.localeCompare(b.departure) : a.date.localeCompare(b.date),
   );
