@@ -289,7 +289,7 @@ function TrenesIndex() {
                 {/* Llegadas */}
                 <div className="rounded-2xl border border-cyan-500/25 bg-cyan-950/20 p-3">
                   <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-cyan-300/90">
-                    Llegadas · hacia Alicante
+                    Llegadas · hacia ALC
                   </p>
                   <div className="grid grid-rows-3 gap-2">
                     {[
