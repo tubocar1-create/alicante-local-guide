@@ -8,7 +8,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 const NAP_URLS = [
   { id: "renfe-ld", url: "https://nap.transportes.gob.es/api/Fichero/download/1098" },
 ];
-const DAYS_AHEAD = 30;
+const DAYS_AHEAD = 10;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
