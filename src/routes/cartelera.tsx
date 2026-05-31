@@ -147,8 +147,8 @@ function Board() {
           <ArrowLeft className="h-3.5 w-3.5" />
           Trenes
         </Link>
-        <HeaderClock />
       </header>
+
 
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100">
@@ -204,7 +204,8 @@ function Board() {
       <Card>
         <CardHeader
           icon={<Download className="h-4 w-4 text-sky-500 rotate-180" />}
-          title={`Salidas (${data.raw.filter((r) => r.direction === "SALIDA").length})`}
+          title={`Salidas programadas para hoy (${data.raw.filter((r) => r.direction === "SALIDA").length})`}
+          right={<HeaderClock />}
         />
         <RawAdifTable rows={data.raw.filter((r) => r.direction === "SALIDA")} kind="SALIDA" />
       </Card>
@@ -213,10 +214,12 @@ function Board() {
       <Card>
         <CardHeader
           icon={<Download className="h-4 w-4 text-emerald-500" />}
-          title={`Llegadas (${data.raw.filter((r) => r.direction !== "SALIDA").length})`}
+          title={`Llegadas programadas para hoy (${data.raw.filter((r) => r.direction !== "SALIDA").length})`}
+          right={<HeaderClock />}
         />
         <RawAdifTable rows={data.raw.filter((r) => r.direction !== "SALIDA")} kind="LLEGADA" />
       </Card>
+
 
 
       {/* Próximas salidas */}
@@ -403,10 +406,11 @@ function RawAdifTable({ rows, kind }: { rows: Array<Record<string, any>>; kind: 
   const destLabel = kind === "SALIDA" ? "Destino" : "Origen";
 
   return (
-    <div className="overflow-x-auto -mx-3 px-3">
+    <div className="overflow-x-auto overflow-y-auto -mx-3 px-3 max-h-[336px]">
       <table className="min-w-[860px] w-full text-xs border-collapse">
-        <thead>
-          <tr className="text-left text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200 bg-slate-100">
+        <thead className="sticky top-0 z-10">
+          <tr className="text-left text-[10px] uppercase tracking-wider text-slate-600 border-b border-slate-300 bg-slate-200">
+
             <th className="px-2 py-2 font-semibold">Hora</th>
             <th className="px-2 py-2 font-semibold">Estado</th>
             <th className="px-2 py-2 font-semibold">{destLabel}</th>
@@ -429,7 +433,7 @@ function RawAdifTable({ rows, kind }: { rows: Array<Record<string, any>>; kind: 
             const st = statusLabel(r.markupColor);
             const cancelled = r.markupColor === "suppressed";
             const delayed = horaEst && horaEst !== hora;
-            const zebra = i % 2 === 0 ? "bg-white" : "bg-slate-50";
+            const zebra = i % 2 === 0 ? "bg-white" : "bg-slate-100";
 
             return (
               <tr key={i} className={`align-top hover:bg-sky-50/60 ${zebra}`}>
