@@ -221,7 +221,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
                     title: "#DC2626",
                     btnFrom: "#EF4444",
                     btnTo: "#B91C1C",
-                    icon: "🏙️",
+                    Icon: Building2,
                   }
                 : cat === "extraurban"
                   ? {
@@ -231,7 +231,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
                       title: "#2563EB",
                       btnFrom: "#3B82F6",
                       btnTo: "#1E40AF",
-                      icon: "🛣️",
+                      Icon: TreePine,
                     }
                   : {
                       cardBg: "#F5F3FF",
@@ -240,47 +240,48 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
                       title: "#7C3AED",
                       btnFrom: "#8B5CF6",
                       btnTo: "#5B21B6",
-                      icon: "🌙",
+                      Icon: MoonStar,
                     };
+            const IconCmp = palette.Icon;
             return (
               <div
                 key={cat}
-                className="rounded-2xl border p-4"
+                className="rounded-2xl border p-2.5"
                 style={{ backgroundColor: palette.cardBg, borderColor: palette.cardBorder }}
               >
-                <div className="mb-3 flex items-center gap-3">
+                <div className="mb-2 flex items-center gap-2.5">
                   <span
-                    className="inline-flex h-12 w-12 items-center justify-center rounded-full text-2xl text-white shadow-sm"
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white shadow-sm"
                     style={{ backgroundColor: palette.iconBg }}
                     aria-hidden
                   >
-                    {palette.icon}
+                    <IconCmp className="h-5 w-5" strokeWidth={2.4} />
                   </span>
                   <div className="min-w-0">
                     <div
-                      className="font-sans text-xl font-extrabold leading-tight not-italic"
+                      className="font-sans text-base font-extrabold leading-tight not-italic"
                       style={{ color: palette.title }}
                     >
                       {label}
                     </div>
-                    <div className="font-sans text-sm not-italic text-slate-600">
+                    <div className="font-sans text-[11px] not-italic text-slate-600">
                       {sublabel}
                     </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-2.5">
+                <div className="grid grid-cols-4 gap-1.5">
                   {lines.map((l) => (
                     <a
                       key={l.code}
                       href={`/bus/dashboard/${encodeURIComponent(l.code)}`}
                       title={l.name}
-                      className="flex h-16 items-center justify-center gap-1 font-sans text-xl font-extrabold not-italic text-white no-underline shadow-md transition active:scale-95"
+                      className="flex h-11 items-center justify-center gap-0.5 font-sans text-[15px] font-extrabold not-italic text-white no-underline shadow-sm transition active:scale-95"
                       style={{
                         background: `linear-gradient(160deg, ${palette.btnFrom} 0%, ${palette.btnTo} 100%)`,
-                        borderRadius: 16,
+                        borderRadius: 10,
                       }}
                     >
-                      {cat === "night" && <span aria-hidden className="text-base">🌙</span>}
+                      {cat === "night" && <MoonStar className="h-3 w-3" aria-hidden />}
                       <span>{l.code}</span>
                     </a>
                   ))}
