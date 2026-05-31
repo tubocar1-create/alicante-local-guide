@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Bus, ChevronRight, Clock, Info, MapPin, Plane, RefreshCcw, Search, Star } from "lucide-react";
 import {
-  DEFAULT_FAVORITE_STOP,
   FavoriteStop,
   computeNextArrival,
   computeUpcomingArrivals,
@@ -59,7 +58,6 @@ function ParadaFavoritaPage() {
     stop.stopId === search.stop &&
     (!search.line || stop.line.toUpperCase() === search.line.toUpperCase());
   const searchTargetPending = Boolean(search.stop) && !searchMatchesCurrent && !searchLookupDone;
-  const searchTargetMissing = Boolean(search.stop) && !searchMatchesCurrent && searchLookupDone;
   // Para líneas nocturnas: el cuadro Vectalia se identifica por el ORIGEN
   // del trayecto del usuario (primer stop de la dirección cuyo último stop
   // es stop.destination). Lo calculamos abajo en `originTerminalName`.
