@@ -200,13 +200,22 @@ function Board() {
         />
       </div>
 
-      {/* Tabla CRUDA ADIF — todos los campos */}
+      {/* Salidas ADIF */}
       <Card>
         <CardHeader
-          icon={<Train className="h-4 w-4 text-slate-500" />}
-          title={`Datos crudos ADIF (${data.raw.length})`}
+          icon={<Download className="h-4 w-4 text-sky-500 rotate-180" />}
+          title={`Salidas (${data.raw.filter((r) => r.direction === "SALIDA").length})`}
         />
-        <RawAdifTable rows={data.raw} />
+        <RawAdifTable rows={data.raw.filter((r) => r.direction === "SALIDA")} kind="SALIDA" />
+      </Card>
+
+      {/* Llegadas ADIF */}
+      <Card>
+        <CardHeader
+          icon={<Download className="h-4 w-4 text-emerald-500" />}
+          title={`Llegadas (${data.raw.filter((r) => r.direction !== "SALIDA").length})`}
+        />
+        <RawAdifTable rows={data.raw.filter((r) => r.direction !== "SALIDA")} kind="LLEGADA" />
       </Card>
 
 
