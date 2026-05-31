@@ -21,18 +21,22 @@ type Cache = ServiceWindowRow[];
 type DepCache = DepartureRow[];
 
 let cache: Cache | null = null;
+let cacheAt = 0;
 let inflight: Promise<Cache> | null = null;
 let depCache: DepCache | null = null;
+let depCacheAt = 0;
 let depInflight: Promise<DepCache> | null = null;
+const CACHE_TTL_MS = 60_000;
 
 async function load(): Promise<Cache> {
-  if (cache) return cache;
+  if (cache && Date.now() - cacheAt < CACHE_TTL_MS) return cache;
   if (inflight) return inflight;
   inflight = (async () => {
     const { data } = await supabase
       .from("bus_line_service_windows")
       .select("line_code,direction,terminal_name,day_type,first_departure,last_departure");
     cache = (data ?? []) as Cache;
+    cacheAt = Date.now();
     return cache;
   })();
   const r = await inflight;
@@ -41,13 +45,14 @@ async function load(): Promise<Cache> {
 }
 
 async function loadDepartures(): Promise<DepCache> {
-  if (depCache) return depCache;
+  if (depCache && Date.now() - depCacheAt < CACHE_TTL_MS) return depCache;
   if (depInflight) return depInflight;
   depInflight = (async () => {
     const { data } = await supabase
       .from("bus_line_departures")
       .select("line_code,direction,day_type,departure_time");
     depCache = (data ?? []) as DepCache;
+    depCacheAt = Date.now();
     return depCache;
   })();
   const r = await depInflight;
@@ -58,7 +63,6 @@ async function loadDepartures(): Promise<DepCache> {
 export function useBusServiceWindows() {
   const [rows, setRows] = useState<Cache | null>(cache);
   useEffect(() => {
-    if (cache) return;
     load().then(setRows);
   }, []);
   return rows;
@@ -67,7 +71,6 @@ export function useBusServiceWindows() {
 export function useBusLineDepartures() {
   const [rows, setRows] = useState<DepCache | null>(depCache);
   useEffect(() => {
-    if (depCache) return;
     loadDepartures().then(setRows);
   }, []);
   return rows;
