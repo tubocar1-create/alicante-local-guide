@@ -107,7 +107,7 @@ function ParadaFavoritaPage() {
       const idx = sorted.findIndex((r) => String(r.stop_code) === stop.stopId);
       if (idx < 0) continue;
       const codes = sorted.map((r) => String(r.stop_code ?? ""));
-      const cum = cumulativeMinutes(codes, coords);
+      const cum = cumulativeMinutes(codes, coords, { speedKmh: NIGHT_URBAN_KMH });
       offsetMin = cum[idx] ?? 0;
       found = true;
       break;
