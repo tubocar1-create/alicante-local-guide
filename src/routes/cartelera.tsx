@@ -92,6 +92,16 @@ function Board() {
   const { data } = useSuspenseQuery(carteleraOpts(() => fetchFn({}) as Promise<CarteleraResponse>));
   const [filter, setFilter] = useState<string>("TODAS");
 
+  const todayLabel = useMemo(() => {
+    const d = new Date();
+    return d.toLocaleDateString("es-ES", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  }, []);
+
   const all = useMemo(() => [...data.salidas, ...data.llegadas], [data]);
 
   // KPI counts
@@ -204,7 +214,7 @@ function Board() {
       <Card>
         <CardHeader
           icon={<Download className="h-4 w-4 text-sky-500 rotate-180" />}
-          title={`Salidas programadas para hoy (${data.raw.filter((r) => r.direction === "SALIDA").length})`}
+          title={`Salidas programadas para ${todayLabel} (${data.raw.filter((r) => r.direction === "SALIDA").length})`}
           right={<HeaderClock />}
         />
         <RawAdifTable rows={data.raw.filter((r) => r.direction === "SALIDA")} kind="SALIDA" />
@@ -214,7 +224,7 @@ function Board() {
       <Card>
         <CardHeader
           icon={<Download className="h-4 w-4 text-emerald-500" />}
-          title={`Llegadas programadas para hoy (${data.raw.filter((r) => r.direction !== "SALIDA").length})`}
+          title={`Llegadas programadas para ${todayLabel} (${data.raw.filter((r) => r.direction !== "SALIDA").length})`}
           right={<HeaderClock />}
         />
         <RawAdifTable rows={data.raw.filter((r) => r.direction !== "SALIDA")} kind="LLEGADA" />
