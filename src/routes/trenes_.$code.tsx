@@ -48,6 +48,29 @@ function fmtDate(iso: string) {
   return `${WEEKDAYS[d.getUTCDay()]} ${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`;
 }
 
+// "YYYY-MM-DD|HH:MM" en Europe/Madrid — clave estable por minuto.
+function madridNowKey(): string {
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Madrid",
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", hour12: false,
+  });
+  const p = fmt.formatToParts(new Date());
+  const g = (t: string) => p.find((x) => x.type === t)?.value ?? "";
+  let hh = g("hour"); if (hh === "24") hh = "00";
+  return `${g("year")}-${g("month")}-${g("day")}|${hh}:${g("minute")}`;
+}
+
+function filterFresh(list: StationTrip[], nowKey: string): StationTrip[] {
+  const [nowDate, nowTime] = nowKey.split("|");
+  return list.filter((t) => {
+    if (t.date < nowDate) return false;
+    if (t.date === nowDate && t.departure < nowTime) return false;
+    return true;
+  });
+}
+
+
 function TrenSchedule() {
   const { code } = Route.useParams();
   const { dir = "S" } = Route.useSearch();
