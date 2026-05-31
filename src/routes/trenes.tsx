@@ -125,6 +125,17 @@ const OPERATOR_COLORS: Record<string, string> = {
   IRYO:  "#dc2626",
 };
 
+// Tintes sutiles por corredor — diferenciación ligera sin romper la estética.
+const CORRIDOR_TINTS: Record<CorridorId, { section: string; list: string; border: string }> = {
+  MAD:  { section: "bg-fuchsia-500/[0.06]", list: "bg-fuchsia-950/20",  border: "border-fuchsia-500/15" },
+  MEDN: { section: "bg-cyan-500/[0.06]",    list: "bg-cyan-950/20",     border: "border-cyan-500/15" },
+  NOR:  { section: "bg-indigo-500/[0.06]",  list: "bg-indigo-950/20",   border: "border-indigo-500/15" },
+  MUR:  { section: "bg-amber-500/[0.05]",   list: "bg-amber-950/15",    border: "border-amber-500/15" },
+  CTG:  { section: "bg-emerald-500/[0.05]", list: "bg-emerald-950/15",  border: "border-emerald-500/15" },
+  LOR:  { section: "bg-rose-500/[0.05]",    list: "bg-rose-950/15",     border: "border-rose-500/15" },
+  UNI:  { section: "bg-sky-500/[0.05]",     list: "bg-sky-950/15",      border: "border-sky-500/15" },
+};
+
 
 function TrenesIndex() {
   const [direction, setDirection] = useState<"S" | "L">("S");
