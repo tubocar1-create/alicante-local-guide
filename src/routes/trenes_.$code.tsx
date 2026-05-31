@@ -65,11 +65,12 @@ function madridNowKey(): string {
   return madridKeyFromInstant(new Date());
 }
 
-function filterFresh(list: StationTrip[], nowKey: string): StationTrip[] {
+function filterFresh(list: StationTrip[], nowKey: string, direction: "S" | "L"): StationTrip[] {
   const [nowDate, nowTime] = nowKey.split("|");
   return list.filter((t) => {
+    const cutoffTime = direction === "S" ? t.departure : t.arrival;
     if (t.date < nowDate) return false;
-    if (t.date === nowDate && t.departure <= nowTime) return false;
+    if (t.date === nowDate && cutoffTime <= nowTime) return false;
     return true;
   });
 }
@@ -82,7 +83,7 @@ function TrenSchedule() {
   
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["trenes", "unfiltered-v2", code, dir],
+    queryKey: ["trenes", "unfiltered-v3", code, dir],
     queryFn: () => getStationSchedule(code, dir),
     enabled: !!st,
     staleTime: 5 * 60 * 1000,
@@ -114,7 +115,7 @@ function TrenSchedule() {
     generatedKey && rawFirstDate === generatedDate && nowDate > generatedDate && nowTime >= generatedTime
       ? `${generatedDate}|${nowTime}`
       : nowKey;
-  const trips = filterFresh(allTrips, effectiveNowKey);
+  const trips = filterFresh(allTrips, effectiveNowKey, dir);
   const firstDate = trips[0]?.date;
   const lastDate = trips[trips.length - 1]?.date;
 
