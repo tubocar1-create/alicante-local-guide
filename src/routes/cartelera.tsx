@@ -178,37 +178,6 @@ function Board() {
         </div>
       </div>
 
-      {/* KPI cards */}
-      <div className="grid grid-cols-4 gap-2">
-        <Kpi
-          icon={<CheckCircle2 className="h-4 w-4 text-emerald-500" />}
-          value={counts.enHora}
-          label="En hora"
-          accent="text-emerald-600"
-          extra={`${counts.pctEnHora}%`}
-        />
-        <Kpi
-          icon={<Clock className="h-4 w-4 text-amber-500" />}
-          value={counts.retraso}
-          label="Con retraso"
-          accent="text-amber-600"
-          extra={`${counts.pctRetraso}%`}
-        />
-        <Kpi
-          icon={<AlertCircle className="h-4 w-4 text-rose-500" />}
-          value={counts.incidencia}
-          label="Incidencia"
-          accent="text-rose-600"
-          extra={`${counts.pctIncidencia}%`}
-        />
-        <Kpi
-          icon={<Train className="h-4 w-4 text-slate-500" />}
-          value={counts.total}
-          label="Trenes hoy"
-          accent="text-slate-700"
-          extra={`${operatorsCount} ops`}
-        />
-      </div>
 
       {/* Salidas ADIF */}
       <Card>
