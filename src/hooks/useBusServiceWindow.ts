@@ -46,6 +46,15 @@ export function dayTypeOf(d: Date): "laborable" | "sabado" | "domingo" {
   return "laborable";
 }
 
+// En Vectalia algunos cuadros usan "domingo" y otros "festivo" para el
+// mismo día. Tratamos ambos como equivalentes al matchear filas de horario.
+export function matchesDayType(rowDay: string, current: string): boolean {
+  if (rowDay === current) return true;
+  if (current === "domingo" && rowDay === "festivo") return true;
+  if (current === "festivo" && rowDay === "domingo") return true;
+  return false;
+}
+
 export function toMinHM(hms: string): number {
   const [h, m] = hms.split(":").map(Number);
   return h * 60 + m;
