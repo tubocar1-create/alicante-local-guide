@@ -1,6 +1,5 @@
 // Sync diario GTFS Renfe → snapshot slim de trenes que tocan Alicante-Terminal.
-// Vive en Edge Function (Deno) por límite de memoria del Worker de TanStack.
-// Disparado por pg_cron 1x/día.
+// Edge Function (Deno). Parser streaming para stop_times.txt (el fichero pesado).
 
 import { unzipSync, strFromU8 } from "https://esm.sh/fflate@0.8.2";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -18,7 +17,6 @@ const corsHeaders = {
 type Stop = { stop_id: string; stop_name: string };
 type Trip = { trip_id: string; route_id: string; service_id: string; trip_short_name?: string };
 type Route = { route_id: string; route_short_name?: string; route_long_name?: string };
-type StopTime = { trip_id: string; arrival_time: string; departure_time: string; stop_id: string; stop_sequence: string };
 type Cal = {
   service_id: string;
   monday: string; tuesday: string; wednesday: string; thursday: string;
@@ -27,6 +25,7 @@ type Cal = {
 };
 type CalDate = { service_id: string; date: string; exception_type: string };
 
+// Parser CSV pequeño (para ficheros chicos: stops, routes, trips, calendar*).
 function parseCsv<T = Record<string, string>>(text: string): T[] {
   const lines = text.split(/\r?\n/);
   if (!lines.length) return [];
@@ -40,9 +39,8 @@ function parseCsv<T = Record<string, string>>(text: string): T[] {
     for (let i = 0; i < l.length; i++) {
       const c = l[i];
       if (q) {
-        if (c === '"') {
-          if (l[i + 1] === '"') { cur += '"'; i++; } else q = false;
-        } else cur += c;
+        if (c === '"') { if (l[i + 1] === '"') { cur += '"'; i++; } else q = false; }
+        else cur += c;
       } else {
         if (c === '"') q = true;
         else if (c === ",") { cols.push(cur); cur = ""; }
@@ -55,6 +53,43 @@ function parseCsv<T = Record<string, string>>(text: string): T[] {
     out.push(o as T);
   }
   return out;
+}
+
+// Iterador línea a línea sobre Uint8Array (UTF-8). No materializa el string entero.
+function splitCsvLine(l: string): string[] {
+  const cols: string[] = [];
+  let cur = "", q = false;
+  for (let i = 0; i < l.length; i++) {
+    const c = l[i];
+    if (q) {
+      if (c === '"') { if (l[i + 1] === '"') { cur += '"'; i++; } else q = false; }
+      else cur += c;
+    } else {
+      if (c === '"') q = true;
+      else if (c === ",") { cols.push(cur); cur = ""; }
+      else cur += c;
+    }
+  }
+  cols.push(cur);
+  return cols;
+}
+
+function* iterateLines(bytes: Uint8Array): Generator<string> {
+  const decoder = new TextDecoder("utf-8");
+  let start = 0;
+  for (let i = 0; i < bytes.length; i++) {
+    if (bytes[i] === 10) { // \n
+      let end = i;
+      if (end > start && bytes[end - 1] === 13) end--; // strip \r
+      if (end > start) yield decoder.decode(bytes.subarray(start, end));
+      start = i + 1;
+    }
+  }
+  if (start < bytes.length) {
+    let end = bytes.length;
+    if (bytes[end - 1] === 13) end--;
+    if (end > start) yield decoder.decode(bytes.subarray(start, end));
+  }
 }
 
 const DOW = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"] as const;
@@ -92,43 +127,88 @@ async function buildSnapshot() {
     if (!res.ok) { console.error(`[trenes-sync] HTTP ${res.status} ${src.id}`); continue; }
     const buf = new Uint8Array(await res.arrayBuffer());
     console.log(`[trenes-sync] ${src.id}: ${(buf.byteLength / 1024 / 1024).toFixed(2)} MB`);
+
+    // Descomprimir todo el zip a memoria (cada fichero como Uint8Array).
     const zip = unzipSync(buf);
-    const get = (n: string) => (zip[n] ? strFromU8(zip[n]) : "");
 
-    const stops = parseCsv<Stop>(get("stops.txt"));
-    const routes = parseCsv<Route>(get("routes.txt"));
-    const trips = parseCsv<Trip>(get("trips.txt"));
-    const stopTimes = parseCsv<StopTime>(get("stop_times.txt"));
-    const calendar = parseCsv<Cal>(get("calendar.txt"));
-    const calDates = parseCsv<CalDate>(get("calendar_dates.txt"));
-    console.log(`[trenes-sync] ${src.id}: stops=${stops.length} trips=${trips.length} stop_times=${stopTimes.length}`);
+    // Parsear ficheros pequeños como strings completos.
+    const stops = parseCsv<Stop>(zip["stops.txt"] ? strFromU8(zip["stops.txt"]) : "");
+    const routes = parseCsv<Route>(zip["routes.txt"] ? strFromU8(zip["routes.txt"]) : "");
+    const trips = parseCsv<Trip>(zip["trips.txt"] ? strFromU8(zip["trips.txt"]) : "");
+    const calendar = parseCsv<Cal>(zip["calendar.txt"] ? strFromU8(zip["calendar.txt"]) : "");
+    const calDates = parseCsv<CalDate>(zip["calendar_dates.txt"] ? strFromU8(zip["calendar_dates.txt"]) : "");
+    console.log(`[trenes-sync] ${src.id}: stops=${stops.length} trips=${trips.length} routes=${routes.length}`);
 
+    // Localizar Alicante-Terminal
     const norm = (s: string) => (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     const terminal = stops.find(
       (s) => /terminal/i.test(s.stop_name) && (norm(s.stop_name).includes("alicante") || norm(s.stop_name).includes("alacant"))
     );
     if (!terminal) { console.warn(`[trenes-sync] ${src.id}: sin Alicante-Terminal`); continue; }
     const terminalId = terminal.stop_id;
+    console.log(`[trenes-sync] terminal stop_id = ${terminalId}`);
 
-    // Primera pasada: detectar trips que tocan terminal
+    const stopTimesBytes = zip["stop_times.txt"];
+    if (!stopTimesBytes) { console.warn(`[trenes-sync] sin stop_times.txt`); continue; }
+
+    // PASADA 1 (streaming): trip_ids que tocan Alicante-Terminal.
+    let headerCols: string[] = [];
+    let idxTrip = -1, idxStop = -1;
     const tripsTouchTerminal = new Set<string>();
-    for (const st of stopTimes) {
-      if (st.stop_id === terminalId) tripsTouchTerminal.add(st.trip_id);
+    let lineCount = 0;
+    for (const line of iterateLines(stopTimesBytes)) {
+      if (!headerCols.length) {
+        headerCols = line.replace(/^\uFEFF/, "").split(",").map((h) => h.trim());
+        idxTrip = headerCols.indexOf("trip_id");
+        idxStop = headerCols.indexOf("stop_id");
+        if (idxTrip < 0 || idxStop < 0) throw new Error("stop_times.txt sin trip_id/stop_id");
+        continue;
+      }
+      lineCount++;
+      // Fast path: si la línea no contiene terminalId como substring, ni la parseamos.
+      if (!line.includes(terminalId)) continue;
+      const cols = splitCsvLine(line);
+      if (cols[idxStop] === terminalId) tripsTouchTerminal.add(cols[idxTrip]);
     }
+    console.log(`[trenes-sync] pasada 1: ${lineCount} líneas, trips terminal = ${tripsTouchTerminal.size}`);
 
-    // Agrupar stop_times solo de trips relevantes
-    const timesByTrip = new Map<string, StopTime[]>();
-    for (const st of stopTimes) {
-      if (!tripsTouchTerminal.has(st.trip_id)) continue;
-      let arr = timesByTrip.get(st.trip_id);
-      if (!arr) { arr = []; timesByTrip.set(st.trip_id, arr); }
-      arr.push(st);
+    // PASADA 2 (streaming): recoger filas slim de trips relevantes.
+    const idxArr = headerCols.indexOf("arrival_time");
+    const idxDep = headerCols.indexOf("departure_time");
+    const idxSeq = headerCols.indexOf("stop_sequence");
+    const timesByTrip = new Map<string, Array<{ id: string; seq: number; arr: string; dep: string }>>();
+    let headerDone = false;
+    for (const line of iterateLines(stopTimesBytes)) {
+      if (!headerDone) { headerDone = true; continue; }
+      // Skip rápido si trip_id no aparece en la línea.
+      // (los trip_ids son largos y específicos: substring check evita el parse)
+      let belongs = false;
+      for (const tid of tripsTouchTerminal) {
+        if (line.includes(tid)) { belongs = true; break; }
+      }
+      if (!belongs && tripsTouchTerminal.size > 50) {
+        // Si el set es grande, mejor parsear directamente que iterar substring.
+        const cols = splitCsvLine(line);
+        if (!tripsTouchTerminal.has(cols[idxTrip])) continue;
+        let arr = timesByTrip.get(cols[idxTrip]);
+        if (!arr) { arr = []; timesByTrip.set(cols[idxTrip], arr); }
+        arr.push({ id: cols[idxStop], seq: Number(cols[idxSeq]), arr: cols[idxArr], dep: cols[idxDep] });
+        continue;
+      }
+      if (!belongs) continue;
+      const cols = splitCsvLine(line);
+      if (!tripsTouchTerminal.has(cols[idxTrip])) continue;
+      let arr = timesByTrip.get(cols[idxTrip]);
+      if (!arr) { arr = []; timesByTrip.set(cols[idxTrip], arr); }
+      arr.push({ id: cols[idxStop], seq: Number(cols[idxSeq]), arr: cols[idxArr], dep: cols[idxDep] });
     }
-    for (const arr of timesByTrip.values()) {
-      arr.sort((a, b) => Number(a.stop_sequence) - Number(b.stop_sequence));
-    }
-    console.log(`[trenes-sync] ${src.id}: trips Alicante = ${timesByTrip.size}`);
+    for (const arr of timesByTrip.values()) arr.sort((a, b) => a.seq - b.seq);
+    console.log(`[trenes-sync] pasada 2: trips con stop_times = ${timesByTrip.size}`);
 
+    // Liberar zip.
+    (zip as any)["stop_times.txt"] = undefined;
+
+    // Calendarios + clasificación
     const tripById = new Map(trips.map((t) => [t.trip_id, t]));
     const routeById = new Map(routes.map((r) => [r.route_id, r]));
     const calById = new Map(calendar.map((c) => [c.service_id, c]));
@@ -146,10 +226,7 @@ async function buildSnapshot() {
         runs = (cal as any)[DOW[date.getUTCDay()]] === "1";
       }
       const exc = calDatesBy.get(service_id)?.find((c) => c.date === ymdStr);
-      if (exc) {
-        if (exc.exception_type === "1") runs = true;
-        else if (exc.exception_type === "2") runs = false;
-      }
+      if (exc) { if (exc.exception_type === "1") runs = true; else if (exc.exception_type === "2") runs = false; }
       return runs;
     };
 
@@ -158,25 +235,20 @@ async function buildSnapshot() {
     for (let d = 0; d < DAYS_AHEAD; d++) {
       const x = new Date(today); x.setUTCDate(x.getUTCDate() + d); dates.push(x);
     }
-
     const stopNameById = new Map(stops.map((s) => [s.stop_id, s.stop_name]));
 
     for (const [trip_id, sts] of timesByTrip) {
       const trip = tripById.get(trip_id);
       if (!trip) continue;
-      const route = routeById.get(trip.route_id);
-      const cls = classify(route);
+      const cls = classify(routeById.get(trip.route_id));
       const activeDates: string[] = [];
       for (const d of dates) if (serviceRunsOn(trip.service_id, d)) activeDates.push(isoDate(d));
       if (!activeDates.length) continue;
 
-      const slimStops = sts.map((s) => ({
-        id: s.stop_id, seq: Number(s.stop_sequence), arr: s.arrival_time, dep: s.departure_time,
-      }));
       for (const s of sts) {
-        if (!allStops[s.stop_id]) {
-          const name = stopNameById.get(s.stop_id);
-          if (name) allStops[s.stop_id] = name;
+        if (!allStops[s.id]) {
+          const name = stopNameById.get(s.id);
+          if (name) allStops[s.id] = name;
         }
       }
 
@@ -186,7 +258,7 @@ async function buildSnapshot() {
         product: cls.product,
         number: trip.trip_short_name || trip_id,
         dates: activeDates,
-        stops: slimStops,
+        stops: sts,
         terminalId,
       });
     }
