@@ -204,7 +204,8 @@ function Board() {
       <Card>
         <CardHeader
           icon={<Download className="h-4 w-4 text-sky-500 rotate-180" />}
-          title={`Salidas (${data.raw.filter((r) => r.direction === "SALIDA").length})`}
+          title={`Salidas programadas para hoy (${data.raw.filter((r) => r.direction === "SALIDA").length})`}
+          right={<HeaderClock />}
         />
         <RawAdifTable rows={data.raw.filter((r) => r.direction === "SALIDA")} kind="SALIDA" />
       </Card>
@@ -213,10 +214,12 @@ function Board() {
       <Card>
         <CardHeader
           icon={<Download className="h-4 w-4 text-emerald-500" />}
-          title={`Llegadas (${data.raw.filter((r) => r.direction !== "SALIDA").length})`}
+          title={`Llegadas programadas para hoy (${data.raw.filter((r) => r.direction !== "SALIDA").length})`}
+          right={<HeaderClock />}
         />
         <RawAdifTable rows={data.raw.filter((r) => r.direction !== "SALIDA")} kind="LLEGADA" />
       </Card>
+
 
 
       {/* Próximas salidas */}
