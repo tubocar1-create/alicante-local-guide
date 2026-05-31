@@ -256,14 +256,14 @@ function TrenesIndex() {
 
             {/* Accesos rápidos a destinos populares */}
             <div className="space-y-3 pt-2">
-              <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">
+              <p className="text-center text-[11px] uppercase tracking-[0.25em] text-slate-400">
                 Destinos populares
               </p>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="mx-auto grid max-w-lg grid-cols-2 gap-3">
                 {/* Salidas */}
                 <div className="rounded-2xl border border-fuchsia-500/25 bg-fuchsia-950/20 p-3">
-                  <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-fuchsia-300/90">
+                  <p className="mb-2 text-center text-[10px] font-bold uppercase tracking-wider text-fuchsia-300/90">
                     Salidas · desde Alicante
                   </p>
                   <div className="grid grid-rows-3 gap-2">
@@ -277,7 +277,7 @@ function TrenesIndex() {
                         to="/trenes/$code"
                         params={{ code: d.code }}
                         search={{ dir: "S" as const }}
-                        className="flex h-12 items-center justify-between rounded-xl border border-fuchsia-500/30 bg-slate-900/60 px-3 text-xs font-semibold text-slate-100 transition hover:border-fuchsia-400/70 hover:bg-fuchsia-500/15"
+                        className="flex h-12 items-center justify-center gap-2 rounded-xl border border-fuchsia-500/30 bg-slate-900/60 px-3 text-xs font-semibold text-slate-100 transition hover:border-fuchsia-400/70 hover:bg-fuchsia-500/15"
                       >
                         <span>ALC → {d.label}</span>
                         <ArrowRight className="h-3 w-3 text-fuchsia-300" />
@@ -288,7 +288,7 @@ function TrenesIndex() {
 
                 {/* Llegadas */}
                 <div className="rounded-2xl border border-cyan-500/25 bg-cyan-950/20 p-3">
-                  <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-cyan-300/90">
+                  <p className="mb-2 text-center text-[10px] font-bold uppercase tracking-wider text-cyan-300/90">
                     Llegadas · hacia ALC
                   </p>
                   <div className="grid grid-rows-3 gap-2">
@@ -302,7 +302,7 @@ function TrenesIndex() {
                         to="/trenes/$code"
                         params={{ code: d.code }}
                         search={{ dir: "L" as const }}
-                        className="flex h-12 items-center justify-between rounded-xl border border-cyan-500/30 bg-slate-900/60 px-3 text-xs font-semibold text-slate-100 transition hover:border-cyan-400/70 hover:bg-cyan-500/15"
+                        className="flex h-12 items-center justify-center gap-2 rounded-xl border border-cyan-500/30 bg-slate-900/60 px-3 text-xs font-semibold text-slate-100 transition hover:border-cyan-400/70 hover:bg-cyan-500/15"
                       >
                         <span>{d.label} → ALC</span>
                         <ArrowRight className="h-3 w-3 text-cyan-300" />
