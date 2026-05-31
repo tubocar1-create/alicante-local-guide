@@ -240,12 +240,29 @@ export function getNightLineEstimates(
   const dayType = dayTypeOf(now);
   // Buscar la ventana cuyo terminal de salida coincide con el origen del
   // recorrido del usuario (primera parada de su sentido en bus_line_stops).
-  const todayRows = rows.filter(
+  let todayRows = rows.filter(
     (r) =>
       r.line_code === lineCode &&
       r.day_type === dayType &&
       r.terminal_name === originTerminalName,
   );
+  // Si hoy no hay ventana pero estamos en la madrugada, podemos estar en la
+  // cola del turno nocturno que arrancó AYER (p.ej. domingo 02:00 pertenece
+  // al turno "sabado" 23:30→06:30). Reutilizamos la ventana de ayer.
+  if (todayRows.length === 0) {
+    const yDay = dayTypeOf(new Date(now.getTime() - 24 * 60 * 60_000));
+    const yRows = rows.filter(
+      (r) =>
+        r.line_code === lineCode &&
+        r.day_type === yDay &&
+        r.terminal_name === originTerminalName &&
+        toMinHM(r.last_departure) < toMinHM(r.first_departure),
+    );
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    if (yRows.length > 0 && nowMin <= toMinHM(yRows[0].last_departure)) {
+      todayRows = yRows;
+    }
+  }
   if (todayRows.length === 0) return null;
   const sw = todayRows[0];
   const firstMin = toMinHM(sw.first_departure);
