@@ -125,6 +125,17 @@ const OPERATOR_COLORS: Record<string, string> = {
   IRYO:  "#dc2626",
 };
 
+// Tintes sutiles por corredor — diferenciación ligera sin romper la estética.
+const CORRIDOR_TINTS: Record<CorridorId, { section: string; list: string; border: string }> = {
+  MAD:  { section: "bg-fuchsia-500/[0.06]", list: "bg-fuchsia-950/20",  border: "border-fuchsia-500/15" },
+  MEDN: { section: "bg-cyan-500/[0.06]",    list: "bg-cyan-950/20",     border: "border-cyan-500/15" },
+  NOR:  { section: "bg-indigo-500/[0.06]",  list: "bg-indigo-950/20",   border: "border-indigo-500/15" },
+  MUR:  { section: "bg-amber-500/[0.05]",   list: "bg-amber-950/15",    border: "border-amber-500/15" },
+  CTG:  { section: "bg-emerald-500/[0.05]", list: "bg-emerald-950/15",  border: "border-emerald-500/15" },
+  LOR:  { section: "bg-rose-500/[0.05]",    list: "bg-rose-950/15",     border: "border-rose-500/15" },
+  UNI:  { section: "bg-sky-500/[0.05]",     list: "bg-sky-950/15",      border: "border-sky-500/15" },
+};
+
 
 function TrenesIndex() {
   const [direction, setDirection] = useState<"S" | "L">("S");
@@ -240,10 +251,11 @@ function TrenesIndex() {
             const stations = direction === "L" ? [...base].reverse() : base;
             if (q && stations.length === 0) return null;
 
+            const tint = CORRIDOR_TINTS[corr.id];
             return (
               <section
                 key={corr.id}
-                className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/40"
+                className={`overflow-hidden rounded-2xl border ${tint.border} ${tint.section}`}
               >
                 <div className="flex w-full items-center gap-3 px-3 py-3 text-left">
                   <span className="text-xl leading-none">{corr.icon}</span>
@@ -251,12 +263,12 @@ function TrenesIndex() {
                     <div className="truncate text-sm font-semibold text-white">{corridorLabel(corr.name)}</div>
                     <div className="truncate text-[11px] text-slate-400">{corr.product}</div>
                   </div>
-                  <span className="rounded-full border border-slate-700 px-2 py-0.5 text-[10px] text-slate-400">
+                  <span className="rounded-full border border-slate-700/70 px-2 py-0.5 text-[10px] text-slate-400">
                     {STATIONS.filter((s) => s.corridor === corr.id).length}
                   </span>
                 </div>
 
-                <ul className="border-t border-slate-800 bg-slate-950/40 p-1.5">
+                <ul className={`border-t ${tint.border} ${tint.list} p-1.5`}>
                   {stations.map((s) => (
                     <li key={s.code}>
                       <Link
