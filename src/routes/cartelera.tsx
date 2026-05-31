@@ -90,7 +90,7 @@ const OPERATOR_COLOR: Record<string, string> = {
 
 function Board() {
   const fetchFn = useServerFn(getCartelera);
-  const { data } = useSuspenseQuery(carteleraOpts(() => fetchFn({})));
+  const { data } = useSuspenseQuery(carteleraOpts(() => fetchFn({}) as Promise<CarteleraResponse>));
   const [filter, setFilter] = useState<string>("TODAS");
 
   const all = useMemo(() => [...data.salidas, ...data.llegadas], [data]);
