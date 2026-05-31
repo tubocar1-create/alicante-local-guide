@@ -287,7 +287,7 @@ function Board() {
           {llegadas.length === 0 ? (
             <p className="text-sm text-slate-500 py-3">Sin datos.</p>
           ) : (
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-slate-100 max-h-[280px] overflow-y-auto">
               {llegadas.map((t, i) => (
                 <LlegadaRow key={i} t={t} />
               ))}
