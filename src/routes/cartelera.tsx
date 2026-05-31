@@ -180,9 +180,9 @@ function Board() {
 
 
       {/* Salidas ADIF */}
-      <Card className="flex-1 flex flex-col min-h-0 overflow-hidden border-sky-200 bg-sky-50/30">
+      <Card className="flex-1 flex flex-col min-h-0 overflow-hidden border-sky-300 bg-sky-100">
         <CardHeader
-          icon={<Download className="h-4 w-4 text-sky-500 rotate-180" />}
+          icon={<Download className="h-4 w-4 text-sky-600 rotate-180" />}
           title={`Salidas programadas para ${todayLabel} (${data.raw.filter((r) => r.direction === "SALIDA").length})`}
           right={<HeaderClock />}
         />
@@ -190,9 +190,9 @@ function Board() {
       </Card>
 
       {/* Llegadas ADIF */}
-      <Card className="flex-1 flex flex-col min-h-0 overflow-hidden border-emerald-200 bg-emerald-50/30">
+      <Card className="flex-1 flex flex-col min-h-0 overflow-hidden border-amber-300 bg-amber-100">
         <CardHeader
-          icon={<Download className="h-4 w-4 text-emerald-500" />}
+          icon={<Download className="h-4 w-4 text-amber-600" />}
           title={`Llegadas programadas para ${todayLabel} (${data.raw.filter((r) => r.direction !== "SALIDA").length})`}
           right={<HeaderClock />}
         />
@@ -323,7 +323,7 @@ function RawAdifTable({ rows, kind }: { rows: Array<Record<string, any>>; kind: 
     <div className="overflow-x-auto overflow-y-auto -mx-3 px-3 flex-1 min-h-0">
       <table className="min-w-[860px] w-full text-xs border-collapse">
         <thead className="sticky top-0 z-10">
-          <tr className="text-left text-[10px] uppercase tracking-wider text-slate-600 border-b border-slate-300 bg-slate-200">
+          <tr className={`text-left text-[10px] uppercase tracking-wider text-slate-700 border-b ${kind === "SALIDA" ? "border-sky-400 bg-sky-200" : "border-amber-400 bg-amber-200"}`}>
 
             <th className="px-2 py-2 font-semibold">Hora</th>
             <th className="px-2 py-2 font-semibold">Estado</th>
@@ -347,25 +347,32 @@ function RawAdifTable({ rows, kind }: { rows: Array<Record<string, any>>; kind: 
             const st = statusLabel(r.markupColor);
             const cancelled = r.markupColor === "suppressed";
             const delayed = horaEst && horaEst !== hora;
-            const zebra = i % 2 === 0 ? "bg-white" : "bg-slate-100";
+            const zebra =
+              kind === "SALIDA"
+                ? i % 2 === 0
+                  ? "bg-sky-50"
+                  : "bg-sky-100"
+                : i % 2 === 0
+                  ? "bg-amber-50"
+                  : "bg-amber-100";
 
             return (
-              <tr key={i} className={`align-top hover:bg-sky-50/60 ${zebra}`}>
-                <td className="px-2 py-3 tabular-nums leading-tight whitespace-nowrap">
+              <tr key={i} className={`align-top ${zebra}`}>
+                <td className="px-2 py-1.5 tabular-nums leading-tight whitespace-nowrap">
                   <div className={`text-sm font-bold ${cancelled ? "line-through text-slate-400" : "text-slate-900"}`}>
                     {hora || "—"}
                   </div>
                   {delayed && (
-                    <div className="text-[11px] font-semibold text-amber-600">{horaEst}</div>
+                    <div className="text-[11px] font-semibold text-amber-700">{horaEst}</div>
                   )}
                 </td>
-                <td className={`px-2 py-3 font-semibold whitespace-nowrap ${st.cls}`}>{st.txt}</td>
-                <td className="px-2 py-3 font-semibold text-slate-900">{estacion || "—"}</td>
-                <td className="px-2 py-3 font-medium text-slate-900 tabular-nums whitespace-nowrap">{sb.code || "—"}</td>
-                <td className={`px-2 py-3 font-bold tracking-wide whitespace-nowrap ${sb.cls}`}>{sb.label}</td>
-                <td className="px-2 py-3 text-slate-600 whitespace-nowrap">{op || "—"}</td>
-                <td className="px-2 py-3 text-center font-bold text-slate-700 tabular-nums">{via || "—"}</td>
-                <td className="px-2 py-3 text-slate-500 max-w-[260px] truncate" title={obs}>{obs}</td>
+                <td className={`px-2 py-1.5 font-semibold whitespace-nowrap ${st.cls}`}>{st.txt}</td>
+                <td className="px-2 py-1.5 font-semibold text-slate-900">{estacion || "—"}</td>
+                <td className="px-2 py-1.5 font-medium text-slate-900 tabular-nums whitespace-nowrap">{sb.code || "—"}</td>
+                <td className={`px-2 py-1.5 font-bold tracking-wide whitespace-nowrap ${sb.cls}`}>{sb.label}</td>
+                <td className="px-2 py-1.5 text-slate-600 whitespace-nowrap">{op || "—"}</td>
+                <td className="px-2 py-1.5 text-center font-bold text-slate-700 tabular-nums">{via || "—"}</td>
+                <td className="px-2 py-1.5 text-slate-600 max-w-[260px] truncate" title={obs}>{obs}</td>
               </tr>
             );
           })}
