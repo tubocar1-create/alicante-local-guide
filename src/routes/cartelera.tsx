@@ -353,75 +353,81 @@ function RawAdifTable({ rows }: { rows: Array<Record<string, any>> }) {
     return <p className="text-sm text-slate-500 py-3">Sin datos.</p>;
   }
 
-  const stripHtml = (s: any) =>
-    typeof s === "string" ? s.replace(/<[^>]+>/g, "").trim() : "";
-
-  const serviceBadge = (r: Record<string, any>) => {
-    const tren = stripHtml(r.tren).toUpperCase();
-    const op = stripHtml(r.trenDatosOp).toUpperCase();
-    const tt = (r.trafficType || "").toLowerCase();
-
-    // Cercanías: C1, C3...
-    const mC = tren.match(/^C\d+/);
-    if (tt === "cercanias" || mC) {
-      return { code: mC ? mC[0] : "C", label: "CERCANÍAS", cls: "text-rose-600" };
+  // Unión de todas las claves presentes en los registros, preservando un orden estable
+  const PRIORITY = [
+    "direction",
+    "trafficType",
+    "hora",
+    "horaEstado",
+    "tren",
+    "trenDatosOp",
+    "estacion",
+    "via",
+    "markupColor",
+    "observation",
+  ];
+  const seen = new Set<string>();
+  const cols: string[] = [];
+  for (const k of PRIORITY) {
+    if (rows.some((r) => k in r)) {
+      cols.push(k);
+      seen.add(k);
     }
-    if (op.includes("OUIGO") || tren.includes("OUIGO")) return { code: tren, label: "OUIGO", cls: "text-pink-500" };
-    if (op.includes("IRYO") || tren.includes("IRYO")) return { code: tren, label: "IRYO", cls: "text-red-500" };
-    if (op.includes("AVLO") || tren.includes("AVLO")) return { code: tren, label: "AVLO", cls: "text-violet-500" };
-    if (op.includes("AVE") || tren.includes("AVE")) return { code: tren, label: "AVE", cls: "text-violet-600" };
-    if (op.includes("ALVIA")) return { code: tren, label: "ALVIA", cls: "text-violet-600" };
-    if (op.includes("INTERCITY")) return { code: tren, label: "INTERCITY", cls: "text-blue-600" };
-    if (op.includes("MD") || op.includes("MEDIA")) return { code: tren, label: "MD", cls: "text-slate-700" };
-    return { code: tren, label: op || "MD", cls: "text-slate-700" };
+  }
+  for (const r of rows) {
+    for (const k of Object.keys(r)) {
+      if (!seen.has(k)) {
+        cols.push(k);
+        seen.add(k);
+      }
+    }
+  }
+
+  const fmt = (v: any): string => {
+    if (v === null || v === undefined) return "";
+    if (typeof v === "string") return v.replace(/<[^>]+>/g, "").trim();
+    if (typeof v === "object") return JSON.stringify(v);
+    return String(v);
   };
 
   return (
-    <ul className="divide-y divide-slate-100">
-      {rows.map((r, i) => {
-        const estacion = stripHtml(r.estacion);
-        const hora = (r.hora || "").trim();
-        const horaEst = (r.horaEstado || "").trim();
-        const obs = (r.observation || "").trim() || "Directo";
-        const sb = serviceBadge(r);
-        const cancelled = r.markupColor === "suppressed";
-        const delayed = horaEst && horaEst !== hora;
-
-        return (
-          <li
-            key={i}
-            className="grid grid-cols-[64px_1fr_auto] gap-3 items-center py-3"
-          >
-            <div className="tabular-nums leading-tight">
-              <div className={`text-base font-bold ${cancelled ? "line-through text-slate-400" : "text-slate-900"}`}>
-                {hora || "—"}
-              </div>
-              {delayed && (
-                <div className="text-[11px] font-semibold text-amber-600">
-                  {horaEst}
-                </div>
-              )}
-            </div>
-            <div className="min-w-0">
-              <div className="text-[15px] font-semibold text-slate-900 truncate">
-                {estacion || "—"}
-              </div>
-              <div className="text-xs text-slate-500 truncate">{obs}</div>
-            </div>
-            <div className="text-right leading-tight">
-              <div className="text-[15px] font-medium text-slate-900 tabular-nums">
-                {sb.code || "—"}
-              </div>
-              <div className={`text-xs font-bold tracking-wide ${sb.cls}`}>
-                {sb.label}
-              </div>
-            </div>
-          </li>
-        );
-      })}
-    </ul>
+    <div className="overflow-x-auto -mx-3 px-3 border border-slate-200 rounded-md">
+      <table className="text-[11px] border-collapse whitespace-nowrap">
+        <thead className="bg-slate-50 sticky top-0">
+          <tr className="text-left text-[10px] uppercase tracking-wider text-slate-600 border-b border-slate-200">
+            {cols.map((c) => (
+              <th key={c} className="px-2 py-2 font-semibold border-r border-slate-200 last:border-r-0">
+                {c}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr
+              key={i}
+              className="border-b border-slate-100 hover:bg-slate-50 align-top"
+            >
+              {cols.map((c) => {
+                const val = fmt(r[c]);
+                return (
+                  <td
+                    key={c}
+                    className="px-2 py-1.5 border-r border-slate-100 last:border-r-0 text-slate-800 font-mono"
+                    title={val}
+                  >
+                    {val || <span className="text-slate-300">—</span>}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
+
 
 
 function TrainRow({ t, kind }: { t: CarteleraTrain; kind: "SALIDA" | "LLEGADA" }) {
