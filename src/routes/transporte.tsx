@@ -29,7 +29,7 @@ type Sector = {
   description: string;
   accent: string;
   accent2: string;
-  Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+  Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties; strokeWidth?: number }>;
 };
 
 const SECTORS: Sector[] = [
