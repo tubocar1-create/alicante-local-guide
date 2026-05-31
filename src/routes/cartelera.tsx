@@ -208,25 +208,15 @@ function Board() {
         />
       </div>
 
-      {/* Alertas activas */}
-      {alertas.length > 0 && (
-        <Card>
-          <CardHeader
-            icon={<Bell className="h-4 w-4 text-rose-500" />}
-            title="Alertas activas"
-            right={
-              <span className="text-[11px] text-sky-600">
-                Ver todas ({alertas.length})
-              </span>
-            }
-          />
-          <ul className="divide-y divide-slate-100">
-            {alertas.map((t, i) => (
-              <AlertRow key={i} t={t} />
-            ))}
-          </ul>
-        </Card>
-      )}
+      {/* Tabla CRUDA ADIF — todos los campos */}
+      <Card>
+        <CardHeader
+          icon={<Train className="h-4 w-4 text-slate-500" />}
+          title={`Datos crudos ADIF (${data.raw.length})`}
+        />
+        <RawAdifTable rows={data.raw} />
+      </Card>
+
 
       {/* Próximas salidas */}
       <Card>
