@@ -105,22 +105,6 @@ function loadSnapshot(): Promise<Snapshot | null> {
   return snapshotCache;
 }
 
-// Hoy en zona Europe/Madrid → YYYY-MM-DD y HH:MM (para filtrar caducados).
-function todayMadrid(): { date: string; time: string } {
-  const fmt = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Europe/Madrid",
-    year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", hour12: false,
-  });
-  const parts = fmt.formatToParts(new Date());
-  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
-  const date = `${get("year")}-${get("month")}-${get("day")}`;
-  let hh = get("hour");
-  if (hh === "24") hh = "00"; // en-CA puede devolver 24 a medianoche
-  const time = `${hh}:${get("minute")}`;
-  return { date, time };
-}
-
 function hhmm(t: string): string {
   if (!t) return "";
   const [h, m] = t.split(":");
@@ -235,20 +219,14 @@ export async function getStationSchedule(
     }
   }
 
-  // Filtra salidas caducadas: fecha < hoy, o (fecha == hoy && hora < ahora).
-  const { date: nowDate, time: nowTime } = todayMadrid();
-  const fresh = out.filter((t) => {
-    if (t.date < nowDate) return false;
-    if (t.date === nowDate && t.departure < nowTime) return false;
-    return true;
-  });
-
-  // Dedupe en render: Renfe publica el mismo tren físico varias veces
+  // No filtramos por hora aquí: la limpieza por minuto se hace en el render,
+  // así una caché de React Query nunca puede esconder trenes de hoy por error.
+  // Dedupe: Renfe publica el mismo tren físico varias veces
   // (varios trip_id con el mismo número, mismo horario y misma ruta, distintos
   // service_id solapados). La clave canónica es: fecha + número + salida + llegada.
   // Si dos filas comparten esa clave, son el mismo tren — nos quedamos con una.
   const dedup = new Map<string, StationTrip>();
-  for (const t of fresh) {
+  for (const t of out) {
     const key = `${t.date}|${t.number}|${t.departure}|${t.arrival}|${t.origin}|${t.destination}`;
     if (!dedup.has(key)) dedup.set(key, t);
   }
