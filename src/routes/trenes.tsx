@@ -48,19 +48,18 @@ export type TrainStation = {
 };
 
 export const CORRIDORS: Corridor[] = [
-  { id: "MAD",  icon: "🚄", name: "Corredor Madrid",            product: "Alta Velocidad · AVE · AVLO · OUIGO · IRYO", operators: ["RENFE", "OUIGO", "IRYO"] },
-  { id: "MEDN", icon: "🚄", name: "Corredor Mediterráneo Norte", product: "Euromed · Intercity · AVE",                  operators: ["RENFE"] },
-  { id: "NOR",  icon: "🚄", name: "Corredor Norte",              product: "AVE · Alvia",                                 operators: ["RENFE"] },
-  { id: "MUR",  icon: "🚆", name: "Corredor Murcia",             product: "Cercanías C1",                                operators: ["RENFE"] },
-  { id: "CTG",  icon: "🚆", name: "Corredor Cartagena",          product: "Media Distancia",                             operators: ["RENFE"] },
-  { id: "LOR",  icon: "🚆", name: "Corredor Lorca",              product: "Media Distancia",                             operators: ["RENFE"] },
-  { id: "UNI",  icon: "🚆", name: "Corredor Universidad",        product: "Cercanías C3",                                operators: ["RENFE"] },
+  { id: "MAD",  icon: "🚄", name: "Destino Madrid Chamartín",     product: "Alta Velocidad · AVE · AVLO · OUIGO · IRYO", operators: ["RENFE", "OUIGO", "IRYO"] },
+  { id: "MEDN", icon: "🚄", name: "Destino Barcelona Sants",      product: "Euromed · Intercity · AVE",                  operators: ["RENFE"] },
+  { id: "NOR",  icon: "🚄", name: "Destino Norte",                 product: "AVE · Alvia · Galicia · Asturias",            operators: ["RENFE"] },
+  { id: "MUR",  icon: "🚆", name: "Destino Murcia del Carmen",    product: "Cercanías C1",                                operators: ["RENFE"] },
+  { id: "CTG",  icon: "🚆", name: "Destino Cartagena",            product: "Media Distancia",                             operators: ["RENFE"] },
+  { id: "LOR",  icon: "🚆", name: "Destino Lorca Sutullena",      product: "Media Distancia",                             operators: ["RENFE"] },
+  { id: "UNI",  icon: "🚆", name: "Destino Sant Vicent Centre",   product: "Cercanías C3",                                operators: ["RENFE"] },
 ];
 
 export const STATIONS: TrainStation[] = [
-  // ===== 🚄 Madrid · Alta Velocidad =====
+  // ===== 🚄 Destino Madrid Chamartín · Alta Velocidad =====
   { code: "MAD-CHA",  city: "Madrid",      station: "Chamartín — Clara Campoamor",          corridor: "MAD",  operators: ["RENFE"] },
-  { code: "MAD-ATO",  city: "Madrid",      station: "Puerta de Atocha — Almudena Grandes",  corridor: "MAD",  operators: ["RENFE", "OUIGO", "IRYO"] },
   { code: "MAD-CUE",  city: "Cuenca",      station: "Fernando Zóbel",                       corridor: "MAD",  operators: ["RENFE", "OUIGO", "IRYO"] },
   { code: "MAD-ALB",  city: "Albacete",    station: "Los Llanos",                           corridor: "MAD",  operators: ["RENFE", "OUIGO", "IRYO"] },
   { code: "MAD-VLL",  city: "Villena",     station: "Villena AV",                           corridor: "MAD",  operators: ["RENFE"] },
