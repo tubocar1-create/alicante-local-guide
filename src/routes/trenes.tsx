@@ -125,19 +125,6 @@ const OPERATOR_COLORS: Record<string, string> = {
   IRYO:  "#dc2626",
 };
 
-// Estaciones terminales/cabecera por corredor (destacadas)
-const TERMINUS_CODES = new Set<string>([
-  "MAD-CHA", "MED-BCN", "MUR-MUR", "CTG-CTG", "LOR-LOR", "UNI-SVI",
-  // Norte: múltiples cabeceras
-  "NOR-COR", "NOR-VIG", "NOR-GIJ", "NOR-OVI", "NOR-OUR", "NOR-LEO",
-]);
-
-// Ciudades importantes (destacadas en negrita)
-const MAJOR_CITIES = new Set<string>([
-  "Madrid", "Barcelona", "Valencia", "Murcia", "Lorca", "Cartagena",
-  "Zaragoza", "Valladolid", "León", "A Coruña", "Vigo", "Oviedo",
-  "Gijón", "Albacete", "Alicante",
-]);
 
 function TrenesIndex() {
   const [direction, setDirection] = useState<"S" | "L">("S");
@@ -268,37 +255,19 @@ function TrenesIndex() {
                 </div>
 
                 <ul className="border-t border-slate-800 bg-slate-950/40 p-1.5">
-                  {stations.map((s) => {
-                    const isTerminus = TERMINUS_CODES.has(s.code);
-                    const isMajor = MAJOR_CITIES.has(s.city);
-                    return (
+                  {stations.map((s) => (
                     <li key={s.code}>
                       <Link
                         to="/trenes/$code"
                         params={{ code: s.code }}
                         search={{ dir: direction }}
-                        className={`group flex items-center gap-2 rounded-lg border px-2.5 py-1.5 transition ${
-                          isTerminus
-                            ? "border-fuchsia-500/40 bg-fuchsia-500/[0.07] hover:border-fuchsia-400/70 hover:bg-fuchsia-500/[0.12]"
-                            : "border-slate-800/70 bg-slate-950/40 hover:border-fuchsia-500/40 hover:bg-fuchsia-500/5"
-                        }`}
+                        className="group flex items-center gap-2 rounded-lg border border-slate-800/70 bg-slate-950/40 px-2.5 py-1.5 transition hover:border-fuchsia-500/40 hover:bg-fuchsia-500/5"
                       >
-                        {isTerminus && (
-                          <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-fuchsia-400 shadow-[0_0_8px_rgba(232,121,249,0.8)]" />
-                        )}
                         <div className="min-w-0 flex-1">
-                          <span
-                            className={`truncate ${
-                              isTerminus
-                                ? "text-[13px] font-bold bg-gradient-to-r from-fuchsia-200 via-white to-violet-200 bg-clip-text text-transparent"
-                                : isMajor
-                                ? "text-[13px] font-bold text-white"
-                                : "text-[12px] font-medium text-slate-200"
-                            }`}
-                          >
+                          <span className="truncate text-[12px] font-medium text-slate-200">
                             {s.station}
                           </span>
-                          <span className={`ml-1.5 text-[10px] ${isMajor ? "text-fuchsia-300/80" : "text-slate-500"}`}>
+                          <span className="ml-1.5 text-[10px] text-slate-500">
                             · {s.city}
                           </span>
                         </div>
@@ -319,8 +288,7 @@ function TrenesIndex() {
                         <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-500 transition group-hover:translate-x-0.5 group-hover:text-fuchsia-300" />
                       </Link>
                     </li>
-                    );
-                  })}
+                  ))}
                 </ul>
               </section>
             );
