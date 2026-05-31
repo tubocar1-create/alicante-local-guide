@@ -433,7 +433,7 @@ function RawAdifTable({ rows, kind }: { rows: Array<Record<string, any>>; kind: 
             const st = statusLabel(r.markupColor);
             const cancelled = r.markupColor === "suppressed";
             const delayed = horaEst && horaEst !== hora;
-            const zebra = i % 2 === 0 ? "bg-white" : "bg-slate-50";
+            const zebra = i % 2 === 0 ? "bg-white" : "bg-slate-100";
 
             return (
               <tr key={i} className={`align-top hover:bg-sky-50/60 ${zebra}`}>
