@@ -17,11 +17,18 @@ export type CarteleraTrain = {
   observation: string;
 };
 
+export type CarteleraRaw = {
+  direction: "SALIDA" | "LLEGADA";
+  trafficType: string;
+  [k: string]: any;
+};
+
 export type CarteleraResponse = {
   generatedAt: string;
   station: string;
   salidas: CarteleraTrain[];
   llegadas: CarteleraTrain[];
+  raw: CarteleraRaw[];
 };
 
 function parseMin(a: string, b: string): number {
