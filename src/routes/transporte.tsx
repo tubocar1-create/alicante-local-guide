@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Bus, Train, Car, Star, X, ArrowRight } from "lucide-react";
+import { Bus, Train, Star, X, ArrowRight } from "lucide-react";
+import { SedanCar } from "@/components/icons/SedanCar";
 
 export const Route = createFileRoute("/transporte")({
   head: () => ({
@@ -28,7 +29,7 @@ type Sector = {
   description: string;
   accent: string;
   accent2: string;
-  Icon: typeof Bus;
+  Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
 };
 
 const SECTORS: Sector[] = [
@@ -54,7 +55,7 @@ const SECTORS: Sector[] = [
     description: "Comparador de alquiler en el aeropuerto",
     accent: "#818cf8",
     accent2: "#6366f1",
-    Icon: Car,
+    Icon: SedanCar,
   },
 ];
 
