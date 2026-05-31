@@ -96,7 +96,7 @@ export function getServiceStatus(
   rows: ServiceWindowRow[] | null,
   lineCode: string | undefined,
   now: Date = new Date(),
-  originTerminalName?: string,
+  destinationTerminalName?: string,
 ): ServiceStatus {
   const empty: ServiceStatus = {
     outOfService: false,
@@ -112,10 +112,11 @@ export function getServiceStatus(
   const allLineRows = rows.filter((r) => r.line_code === lineCode);
   if (allLineRows.length === 0) return empty;
 
-  // Si conocemos el terminal de origen del recorrido del usuario, filtramos
-  // por esa dirección para no mezclar horarios de ambos sentidos.
-  const dirRows = originTerminalName
-    ? allLineRows.filter((r) => r.terminal_name === originTerminalName)
+  // `terminal_name` en bus_line_service_windows = terminal DESTINO de esa
+  // dirección. Filtramos por el destino del recorrido del usuario para no
+  // mezclar horarios de ambos sentidos.
+  const dirRows = destinationTerminalName
+    ? allLineRows.filter((r) => r.terminal_name === destinationTerminalName)
     : allLineRows;
   const effectiveRows = dirRows.length > 0 ? dirRows : allLineRows;
 
@@ -231,20 +232,20 @@ export type NightEstimate = {
 export function getNightLineEstimates(
   rows: ServiceWindowRow[] | null,
   lineCode: string,
-  originTerminalName: string,
+  destinationTerminalName: string,
   offsetMinutes: number,
   now: Date = new Date(),
   count = 4,
 ): NightEstimate | null {
   if (!rows) return null;
   const dayType = dayTypeOf(now);
-  // Buscar la ventana cuyo terminal de salida coincide con el origen del
-  // recorrido del usuario (primera parada de su sentido en bus_line_stops).
+  // `terminal_name` en la tabla = terminal DESTINO de esa dirección.
+  // Buscamos la ventana cuyo destino coincide con el destino del usuario.
   let todayRows = rows.filter(
     (r) =>
       r.line_code === lineCode &&
       r.day_type === dayType &&
-      r.terminal_name === originTerminalName,
+      r.terminal_name === destinationTerminalName,
   );
   // Si hoy no hay ventana pero estamos en la madrugada, podemos estar en la
   // cola del turno nocturno que arrancó AYER (p.ej. domingo 02:00 pertenece
@@ -255,7 +256,7 @@ export function getNightLineEstimates(
       (r) =>
         r.line_code === lineCode &&
         r.day_type === yDay &&
-        r.terminal_name === originTerminalName &&
+        r.terminal_name === destinationTerminalName &&
         toMinHM(r.last_departure) < toMinHM(r.first_departure),
     );
     const nowMin = now.getHours() * 60 + now.getMinutes();
