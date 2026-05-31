@@ -52,10 +52,9 @@ function TrenSchedule() {
   const st = STATIONS.find((s) => s.code === code);
   const [visible, setVisible] = useState(20);
 
-  const fetchSchedule = useServerFn(getStationSchedule);
   const { data, isLoading, error } = useQuery({
     queryKey: ["trenes", code, dir],
-    queryFn: () => fetchSchedule({ data: { stationCode: code, direction: dir } }),
+    queryFn: () => getStationSchedule(code, dir),
     enabled: !!st,
     staleTime: 5 * 60 * 1000,
   });
