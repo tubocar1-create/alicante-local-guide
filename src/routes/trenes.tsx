@@ -138,6 +138,7 @@ const CORRIDOR_TINTS: Record<CorridorId, { section: string; list: string; border
 
 
 function TrenesIndex() {
+  const [mode, setMode] = useState<"menu" | "programa">("menu");
   const [direction, setDirection] = useState<"S" | "L">("S");
   const [query, setQuery] = useState("");
 
