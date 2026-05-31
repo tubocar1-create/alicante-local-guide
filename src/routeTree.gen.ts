@@ -98,6 +98,7 @@ import { Route as AdminArquitecturaRouteImport } from './routes/admin.arquitectu
 import { Route as AdminAiRouteImport } from './routes/admin.ai'
 import { Route as AdminAiIndexRouteImport } from './routes/admin.ai.index'
 import { Route as TrenesViajeIdRouteImport } from './routes/trenes_.viaje.$id'
+import { Route as TrenesRutaNumRouteImport } from './routes/trenes_.ruta.$num'
 import { Route as TramParadaStopIdRouteImport } from './routes/tram.parada.$stopId'
 import { Route as TramLineaLineIdRouteImport } from './routes/tram.linea.$lineId'
 import { Route as SaludCategoriaIdRouteImport } from './routes/salud_.$categoria.$id'
@@ -607,6 +608,11 @@ const TrenesViajeIdRoute = TrenesViajeIdRouteImport.update({
   path: '/trenes/viaje/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TrenesRutaNumRoute = TrenesRutaNumRouteImport.update({
+  id: '/trenes_/ruta/$num',
+  path: '/trenes/ruta/$num',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TramParadaStopIdRoute = TramParadaStopIdRouteImport.update({
   id: '/parada/$stopId',
   path: '/parada/$stopId',
@@ -1061,6 +1067,7 @@ export interface FileRoutesByFullPath {
   '/salud/$categoria/$id': typeof SaludCategoriaIdRoute
   '/tram/linea/$lineId': typeof TramLineaLineIdRoute
   '/tram/parada/$stopId': typeof TramParadaStopIdRoute
+  '/trenes/ruta/$num': typeof TrenesRutaNumRoute
   '/trenes/viaje/$id': typeof TrenesViajeIdRoute
   '/admin/ai/': typeof AdminAiIndexRoute
   '/api/public/google-photo/$': typeof ApiPublicGooglePhotoSplatRoute
@@ -1211,6 +1218,7 @@ export interface FileRoutesByTo {
   '/salud/$categoria/$id': typeof SaludCategoriaIdRoute
   '/tram/linea/$lineId': typeof TramLineaLineIdRoute
   '/tram/parada/$stopId': typeof TramParadaStopIdRoute
+  '/trenes/ruta/$num': typeof TrenesRutaNumRoute
   '/trenes/viaje/$id': typeof TrenesViajeIdRoute
   '/admin/ai': typeof AdminAiIndexRoute
   '/api/public/google-photo/$': typeof ApiPublicGooglePhotoSplatRoute
@@ -1365,6 +1373,7 @@ export interface FileRoutesById {
   '/salud_/$categoria/$id': typeof SaludCategoriaIdRoute
   '/tram/linea/$lineId': typeof TramLineaLineIdRoute
   '/tram/parada/$stopId': typeof TramParadaStopIdRoute
+  '/trenes_/ruta/$num': typeof TrenesRutaNumRoute
   '/trenes_/viaje/$id': typeof TrenesViajeIdRoute
   '/admin/ai/': typeof AdminAiIndexRoute
   '/api/public/google-photo/$': typeof ApiPublicGooglePhotoSplatRoute
@@ -1520,6 +1529,7 @@ export interface FileRouteTypes {
     | '/salud/$categoria/$id'
     | '/tram/linea/$lineId'
     | '/tram/parada/$stopId'
+    | '/trenes/ruta/$num'
     | '/trenes/viaje/$id'
     | '/admin/ai/'
     | '/api/public/google-photo/$'
@@ -1670,6 +1680,7 @@ export interface FileRouteTypes {
     | '/salud/$categoria/$id'
     | '/tram/linea/$lineId'
     | '/tram/parada/$stopId'
+    | '/trenes/ruta/$num'
     | '/trenes/viaje/$id'
     | '/admin/ai'
     | '/api/public/google-photo/$'
@@ -1823,6 +1834,7 @@ export interface FileRouteTypes {
     | '/salud_/$categoria/$id'
     | '/tram/linea/$lineId'
     | '/tram/parada/$stopId'
+    | '/trenes_/ruta/$num'
     | '/trenes_/viaje/$id'
     | '/admin/ai/'
     | '/api/public/google-photo/$'
@@ -1917,6 +1929,7 @@ export interface RootRouteChildren {
   OcioEventosAgendaRoute: typeof OcioEventosAgendaRoute
   OcioEventosCarteleraRoute: typeof OcioEventosCarteleraRoute
   OcioPeliculaIdRoute: typeof OcioPeliculaIdRoute
+  TrenesRutaNumRoute: typeof TrenesRutaNumRoute
   TrenesViajeIdRoute: typeof TrenesViajeIdRoute
   ApiPublicGooglePhotoSplatRoute: typeof ApiPublicGooglePhotoSplatRoute
   ApiPublicHooksAenaSyncRoute: typeof ApiPublicHooksAenaSyncRoute
@@ -2566,6 +2579,13 @@ declare module '@tanstack/react-router' {
       path: '/trenes/viaje/$id'
       fullPath: '/trenes/viaje/$id'
       preLoaderRoute: typeof TrenesViajeIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trenes_/ruta/$num': {
+      id: '/trenes_/ruta/$num'
+      path: '/trenes/ruta/$num'
+      fullPath: '/trenes/ruta/$num'
+      preLoaderRoute: typeof TrenesRutaNumRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tram/parada/$stopId': {
@@ -3305,6 +3325,7 @@ const rootRouteChildren: RootRouteChildren = {
   OcioEventosAgendaRoute: OcioEventosAgendaRoute,
   OcioEventosCarteleraRoute: OcioEventosCarteleraRoute,
   OcioPeliculaIdRoute: OcioPeliculaIdRoute,
+  TrenesRutaNumRoute: TrenesRutaNumRoute,
   TrenesViajeIdRoute: TrenesViajeIdRoute,
   ApiPublicGooglePhotoSplatRoute: ApiPublicGooglePhotoSplatRoute,
   ApiPublicHooksAenaSyncRoute: ApiPublicHooksAenaSyncRoute,

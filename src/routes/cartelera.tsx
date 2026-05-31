@@ -326,9 +326,21 @@ function RawAdifTable({ rows, kind }: { rows: Array<Record<string, any>>; kind: 
             const cancelled = r.markupColor === "suppressed";
             const delayed = horaEst && horaEst !== hora;
             const zebra = i % 2 === 0 ? "bg-slate-100" : "bg-slate-200";
+            const trainNum = stripHtml(r.tren).trim();
+            const today = new Intl.DateTimeFormat("en-CA", {
+              timeZone: "Europe/Madrid",
+              year: "numeric", month: "2-digit", day: "2-digit",
+            }).format(new Date());
 
             return (
-              <tr key={i} className={`align-top ${zebra}`}>
+              <tr
+                key={i}
+                className={`align-top transition ${zebra} ${trainNum ? "cursor-pointer hover:bg-slate-300/70" : ""}`}
+                onClick={() => {
+                  if (!trainNum) return;
+                  window.location.href = `/trenes/ruta/${encodeURIComponent(trainNum)}?date=${today}&dir=${kind === "SALIDA" ? "S" : "L"}`;
+                }}
+              >
                 <td className="px-2 py-1.5 tabular-nums leading-tight whitespace-nowrap">
                   <div className={`text-sm font-bold ${cancelled ? "line-through text-slate-400" : "text-slate-900"}`}>
                     {hora || "—"}
@@ -339,7 +351,7 @@ function RawAdifTable({ rows, kind }: { rows: Array<Record<string, any>>; kind: 
                 </td>
                 <td className={`px-2 py-1.5 font-semibold whitespace-nowrap ${st.cls}`}>{st.txt}</td>
                 <td className="px-2 py-1.5 font-semibold text-slate-900">{estacion || "—"}</td>
-                <td className="px-2 py-1.5 font-medium text-slate-900 tabular-nums whitespace-nowrap">{sb.code || "—"}</td>
+                <td className="px-2 py-1.5 font-medium text-slate-900 tabular-nums whitespace-nowrap underline decoration-dotted">{sb.code || "—"}</td>
                 <td className={`px-2 py-1.5 font-bold tracking-wide whitespace-nowrap ${sb.cls}`}>{sb.label}</td>
                 <td className="px-2 py-1.5 text-slate-600 whitespace-nowrap">{op || "—"}</td>
                 <td className="px-2 py-1.5 text-center font-bold text-slate-700 tabular-nums">{via || "—"}</td>
