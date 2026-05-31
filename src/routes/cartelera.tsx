@@ -134,7 +134,7 @@ function Board() {
     return list;
   }, [data.salidas, filter]);
 
-  const llegadas = data.llegadas.slice(0, 4);
+  const llegadas = data.llegadas;
 
   const updatedAgo = Math.max(
     0,
