@@ -208,7 +208,6 @@ function BusDashboardPage() {
       2: new Map(),
     };
     if (!isNightLine || !serviceRows || !departures) return out;
-    const BOARDING_BUFFER_MIN = 5;
     for (const dir of [1, 2] as const) {
       const stops = stopsByDir[dir];
       if (stops.length === 0) continue;
@@ -233,15 +232,10 @@ function BusDashboardPage() {
 
       const codes = stops.map((s) => s.code);
       const cum = cumulativeMinutes(codes, stopCoords, { speedKmh: NIGHT_URBAN_KMH });
-      const lastIdx = stops.length - 1;
       for (let i = 0; i < stops.length; i++) {
-        const isDestTerminal = i === lastIdx;
         const offset = cum[i] ?? 0;
-        // El origen mantiene la hora oficial de salida fijada por Vectalia (sin buffer).
-        // Solo aplicamos buffer de embarque al terminal de destino.
-        const buf = isDestTerminal ? BOARDING_BUFFER_MIN : 0;
-        const arrDelta = depDelta + offset - buf;
-        const arrAbs = (((depAbsMin + offset - buf) % 1440) + 1440) % 1440;
+        const arrDelta = depDelta + offset;
+        const arrAbs = (((depAbsMin + offset) % 1440) + 1440) % 1440;
         const hh = String(Math.floor(arrAbs / 60)).padStart(2, "0");
         const mm = String(Math.round(arrAbs % 60)).padStart(2, "0");
         out[dir].set(stops[i].code, {
@@ -251,6 +245,7 @@ function BusDashboardPage() {
       }
 
     }
+
     return out;
   }, [isNightLine, serviceRows, departures, code, stopsByDir, stopCoords, clock]);
 
