@@ -125,19 +125,6 @@ const OPERATOR_COLORS: Record<string, string> = {
   IRYO:  "#dc2626",
 };
 
-// Estaciones terminales/cabecera por corredor (destacadas)
-const TERMINUS_CODES = new Set<string>([
-  "MAD-CHA", "MED-BCN", "MUR-MUR", "CTG-CTG", "LOR-LOR", "UNI-SVI",
-  // Norte: múltiples cabeceras
-  "NOR-COR", "NOR-VIG", "NOR-GIJ", "NOR-OVI", "NOR-OUR", "NOR-LEO",
-]);
-
-// Ciudades importantes (destacadas en negrita)
-const MAJOR_CITIES = new Set<string>([
-  "Madrid", "Barcelona", "Valencia", "Murcia", "Lorca", "Cartagena",
-  "Zaragoza", "Valladolid", "León", "A Coruña", "Vigo", "Oviedo",
-  "Gijón", "Albacete", "Alicante",
-]);
 
 function TrenesIndex() {
   const [direction, setDirection] = useState<"S" | "L">("S");
