@@ -220,7 +220,7 @@ function Board() {
               </span>
             }
           />
-          <ul className="divide-y divide-slate-100 max-h-[200px] overflow-y-auto">
+          <ul className="divide-y divide-slate-100">
             {alertas.map((t, i) => (
               <AlertRow key={i} t={t} />
             ))}
@@ -267,7 +267,7 @@ function Board() {
             {filteredSalidas.length === 0 && (
               <p className="text-sm text-slate-500 py-4 text-center">Sin trenes.</p>
             )}
-            <ul className="max-h-[360px] overflow-y-auto">
+            <ul>
               {filteredSalidas.map((t, i) => (
                 <TrainRow key={i} t={t} kind="SALIDA" />
               ))}
@@ -287,7 +287,7 @@ function Board() {
           {llegadas.length === 0 ? (
             <p className="text-sm text-slate-500 py-3">Sin datos.</p>
           ) : (
-            <ul className="divide-y divide-slate-100 max-h-[280px] overflow-y-auto">
+            <ul className="divide-y divide-slate-100">
               {llegadas.map((t, i) => (
                 <LlegadaRow key={i} t={t} />
               ))}
@@ -304,7 +304,7 @@ function Board() {
           {alertas.filter((t) => t.observation).length === 0 ? (
             <p className="text-sm text-slate-500 py-3">Sin incidencias publicadas.</p>
           ) : (
-            <ul className="space-y-2.5 max-h-[280px] overflow-y-auto">
+            <ul className="space-y-2.5">
               {alertas
                 .filter((t) => t.observation)
                 .map((t, i) => (
