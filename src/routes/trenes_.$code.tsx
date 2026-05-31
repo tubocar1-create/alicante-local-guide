@@ -49,16 +49,20 @@ function fmtDate(iso: string) {
 }
 
 // "YYYY-MM-DD|HH:MM" en Europe/Madrid — clave estable por minuto.
-function madridNowKey(): string {
+function madridKeyFromInstant(value: Date | string): string {
   const fmt = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Madrid",
     year: "numeric", month: "2-digit", day: "2-digit",
     hour: "2-digit", minute: "2-digit", hour12: false,
   });
-  const p = fmt.formatToParts(new Date());
+  const p = fmt.formatToParts(new Date(value));
   const g = (t: string) => p.find((x) => x.type === t)?.value ?? "";
   let hh = g("hour"); if (hh === "24") hh = "00";
   return `${g("year")}-${g("month")}-${g("day")}|${hh}:${g("minute")}`;
+}
+
+function madridNowKey(): string {
+  return madridKeyFromInstant(new Date());
 }
 
 function filterFresh(list: StationTrip[], nowKey: string): StationTrip[] {
@@ -102,7 +106,15 @@ function TrenSchedule() {
   }, []);
 
   const allTrips: StationTrip[] = data?.trips ?? [];
-  const trips = filterFresh(allTrips, nowKey);
+  const generatedKey = data?.generatedAt ? madridKeyFromInstant(data.generatedAt) : null;
+  const [nowDate, nowTime] = nowKey.split("|");
+  const [generatedDate, generatedTime] = generatedKey?.split("|") ?? [];
+  const rawFirstDate = allTrips[0]?.date;
+  const effectiveNowKey =
+    generatedKey && rawFirstDate === generatedDate && nowDate > generatedDate && nowTime >= generatedTime
+      ? `${generatedDate}|${nowTime}`
+      : nowKey;
+  const trips = filterFresh(allTrips, effectiveNowKey);
   const firstDate = trips[0]?.date;
   const lastDate = trips[trips.length - 1]?.date;
 
