@@ -96,7 +96,7 @@ export function getServiceStatus(
   rows: ServiceWindowRow[] | null,
   lineCode: string | undefined,
   now: Date = new Date(),
-  originTerminalName?: string,
+  destinationTerminalName?: string,
 ): ServiceStatus {
   const empty: ServiceStatus = {
     outOfService: false,
@@ -112,10 +112,11 @@ export function getServiceStatus(
   const allLineRows = rows.filter((r) => r.line_code === lineCode);
   if (allLineRows.length === 0) return empty;
 
-  // Si conocemos el terminal de origen del recorrido del usuario, filtramos
-  // por esa dirección para no mezclar horarios de ambos sentidos.
-  const dirRows = originTerminalName
-    ? allLineRows.filter((r) => r.terminal_name === originTerminalName)
+  // `terminal_name` en bus_line_service_windows = terminal DESTINO de esa
+  // dirección. Filtramos por el destino del recorrido del usuario para no
+  // mezclar horarios de ambos sentidos.
+  const dirRows = destinationTerminalName
+    ? allLineRows.filter((r) => r.terminal_name === destinationTerminalName)
     : allLineRows;
   const effectiveRows = dirRows.length > 0 ? dirRows : allLineRows;
 
