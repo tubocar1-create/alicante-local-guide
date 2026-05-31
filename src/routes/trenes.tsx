@@ -23,6 +23,8 @@ export const Route = createFileRoute("/trenes")({
 
 // ---------- Catálogo provisional (se rellenará con GTFS) ----------
 // Códigos de estación tipo "TRN-XXX" para no chocar con IATA de aeropuertos.
+export type TrainCategory = "CER" | "MD" | "LD";
+
 export type TrainStation = {
   code: string;       // identificador interno
   city: string;
@@ -30,22 +32,55 @@ export type TrainStation = {
   country: string;    // ISO2
   countryName: string;
   operators: string[]; // RENFE | OUIGO | IRYO
+  category: TrainCategory; // CER=Cercanías, MD=Media distancia, LD=Larga distancia (AVE/AVLO/Alvia)
 };
 
 export const STATIONS: TrainStation[] = [
-  { code: "MAD-ATO", city: "Madrid", station: "Puerta de Atocha — Almudena Grandes", country: "ES", countryName: "España", operators: ["RENFE", "OUIGO", "IRYO"] },
-  { code: "MAD-CHA", city: "Madrid", station: "Chamartín — Clara Campoamor", country: "ES", countryName: "España", operators: ["RENFE"] },
-  { code: "BCN-SAN", city: "Barcelona", station: "Sants", country: "ES", countryName: "España", operators: ["RENFE"] },
-  { code: "VLC-JOA", city: "Valencia", station: "Joaquín Sorolla", country: "ES", countryName: "España", operators: ["RENFE"] },
-  { code: "MUR-CAR", city: "Murcia", station: "Murcia del Carmen", country: "ES", countryName: "España", operators: ["RENFE"] },
-  { code: "ZAZ-DEL", city: "Zaragoza", station: "Delicias", country: "ES", countryName: "España", operators: ["RENFE"] },
-  { code: "SEV-SJ",  city: "Sevilla", station: "Santa Justa", country: "ES", countryName: "España", operators: ["RENFE"] },
-  { code: "COR-CEN", city: "Córdoba", station: "Central", country: "ES", countryName: "España", operators: ["RENFE"] },
-  { code: "ALB-LH",  city: "Albacete", station: "Los Llanos", country: "ES", countryName: "España", operators: ["RENFE"] },
-  { code: "CR-CR",   city: "Ciudad Real", station: "Ciudad Real", country: "ES", countryName: "España", operators: ["RENFE"] },
-  { code: "CUE-FCS", city: "Cuenca", station: "Fernando Zóbel", country: "ES", countryName: "España", operators: ["RENFE"] },
-  { code: "ELC-CAR", city: "Elche", station: "Carrús", country: "ES", countryName: "España", operators: ["RENFE"] },
+  // ===== Cercanías (línea C-1 Alicante–Murcia) =====
+  { code: "CER-SVI", city: "San Vicente del Raspeig", station: "San Vicente del Raspeig", country: "ES", countryName: "España", operators: ["RENFE"], category: "CER" },
+  { code: "CER-UNI", city: "San Vicente del Raspeig", station: "Universidad de Alicante", country: "ES", countryName: "España", operators: ["RENFE"], category: "CER" },
+  { code: "CER-SGA", city: "Alicante", station: "San Gabriel", country: "ES", countryName: "España", operators: ["RENFE"], category: "CER" },
+  { code: "CER-TOR", city: "Elche", station: "Torrellano", country: "ES", countryName: "España", operators: ["RENFE"], category: "CER" },
+  { code: "CER-AER", city: "Elche", station: "Aeropuerto-Parque Empresarial", country: "ES", countryName: "España", operators: ["RENFE"], category: "CER" },
+  { code: "CER-EPA", city: "Elche", station: "Elche-Parque", country: "ES", countryName: "España", operators: ["RENFE"], category: "CER" },
+  { code: "CER-ECA", city: "Elche", station: "Elche-Carrús", country: "ES", countryName: "España", operators: ["RENFE"], category: "CER" },
+  { code: "CER-CRE", city: "Crevillente", station: "Crevillente", country: "ES", countryName: "España", operators: ["RENFE"], category: "CER" },
+  { code: "CER-ALB", city: "Albatera", station: "Albatera-Catral", country: "ES", countryName: "España", operators: ["RENFE"], category: "CER" },
+  { code: "CER-CAL", city: "Callosa de Segura", station: "Callosa de Segura", country: "ES", countryName: "España", operators: ["RENFE"], category: "CER" },
+  { code: "CER-ORI", city: "Orihuela", station: "Orihuela-Miguel Hernández", country: "ES", countryName: "España", operators: ["RENFE"], category: "CER" },
+  { code: "CER-BEN", city: "Beniel", station: "Beniel", country: "ES", countryName: "España", operators: ["RENFE"], category: "CER" },
+  { code: "CER-MUR", city: "Murcia", station: "Murcia del Carmen", country: "ES", countryName: "España", operators: ["RENFE"], category: "CER" },
+
+  // ===== Media Distancia =====
+  { code: "MD-VLC",  city: "Valencia", station: "Nord", country: "ES", countryName: "España", operators: ["RENFE"], category: "MD" },
+  { code: "MD-XAT",  city: "Xàtiva", station: "Xàtiva", country: "ES", countryName: "España", operators: ["RENFE"], category: "MD" },
+  { code: "MD-ALC",  city: "Alcoy", station: "Alcoy", country: "ES", countryName: "España", operators: ["RENFE"], category: "MD" },
+  { code: "MD-VLL",  city: "Villena", station: "Villena", country: "ES", countryName: "España", operators: ["RENFE"], category: "MD" },
+  { code: "MD-CTG",  city: "Cartagena", station: "Cartagena", country: "ES", countryName: "España", operators: ["RENFE"], category: "MD" },
+  { code: "MD-LOR",  city: "Lorca", station: "Lorca-Sutullena", country: "ES", countryName: "España", operators: ["RENFE"], category: "MD" },
+  { code: "MD-AGU",  city: "Águilas", station: "Águilas", country: "ES", countryName: "España", operators: ["RENFE"], category: "MD" },
+
+  // ===== Larga Distancia (AVE / AVLO / Alvia / OUIGO / IRYO) =====
+  { code: "LD-MADA", city: "Madrid", station: "Puerta de Atocha — Almudena Grandes", country: "ES", countryName: "España", operators: ["RENFE", "OUIGO", "IRYO"], category: "LD" },
+  { code: "LD-MADC", city: "Madrid", station: "Chamartín — Clara Campoamor", country: "ES", countryName: "España", operators: ["RENFE"], category: "LD" },
+  { code: "LD-BCN",  city: "Barcelona", station: "Sants", country: "ES", countryName: "España", operators: ["RENFE"], category: "LD" },
+  { code: "LD-VLCJ", city: "Valencia", station: "Joaquín Sorolla", country: "ES", countryName: "España", operators: ["RENFE"], category: "LD" },
+  { code: "LD-ZAZ",  city: "Zaragoza", station: "Delicias", country: "ES", countryName: "España", operators: ["RENFE"], category: "LD" },
+  { code: "LD-SEV",  city: "Sevilla", station: "Santa Justa", country: "ES", countryName: "España", operators: ["RENFE", "IRYO"], category: "LD" },
+  { code: "LD-COR",  city: "Córdoba", station: "Central", country: "ES", countryName: "España", operators: ["RENFE", "IRYO"], category: "LD" },
+  { code: "LD-MAL",  city: "Málaga", station: "María Zambrano", country: "ES", countryName: "España", operators: ["RENFE", "IRYO"], category: "LD" },
+  { code: "LD-ALBA", city: "Albacete", station: "Los Llanos", country: "ES", countryName: "España", operators: ["RENFE", "OUIGO", "IRYO"], category: "LD" },
+  { code: "LD-CR",   city: "Ciudad Real", station: "Ciudad Real", country: "ES", countryName: "España", operators: ["RENFE"], category: "LD" },
+  { code: "LD-CUE",  city: "Cuenca", station: "Fernando Zóbel", country: "ES", countryName: "España", operators: ["RENFE", "OUIGO", "IRYO"], category: "LD" },
+  { code: "LD-TAR",  city: "Tarragona", station: "Camp de Tarragona", country: "ES", countryName: "España", operators: ["RENFE"], category: "LD" },
+  { code: "LD-LLE",  city: "Lleida", station: "Pirineus", country: "ES", countryName: "España", operators: ["RENFE"], category: "LD" },
 ];
+
+const CATEGORY_LABEL: Record<TrainCategory, string> = {
+  CER: "Cercanías",
+  MD: "Media Distancia",
+  LD: "Larga Distancia",
+};
 
 const OPERATOR_COLORS: Record<string, string> = {
   RENFE: "#7e22ce",
