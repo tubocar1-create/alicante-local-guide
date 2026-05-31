@@ -147,10 +147,7 @@ function Board() {
           <ArrowLeft className="h-3.5 w-3.5" />
           Trenes
         </Link>
-        <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
-          <span className="h-2 w-2 rounded-full bg-amber-400" />
-          22°C Soleado
-        </div>
+        <HeaderClock />
       </header>
 
       <div className="flex items-center gap-3">
