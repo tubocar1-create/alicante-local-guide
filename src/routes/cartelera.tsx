@@ -52,8 +52,9 @@ const carteleraOpts = (fn: () => Promise<CarteleraResponse>) =>
   queryOptions({
     queryKey: ["cartelera", "alicante-terminal", "v2"],
     queryFn: fn,
-    staleTime: 30_000,
-    refetchInterval: 60_000,
+    staleTime: 5 * 60_000,
+    refetchInterval: 5 * 60_000,
+
   });
 
 // ---------- Operator detection ----------
