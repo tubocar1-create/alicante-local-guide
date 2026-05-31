@@ -153,7 +153,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
     <div
       className={
         embedded
-          ? "flex min-h-[calc(100dvh-3.5rem)] w-full flex-col bg-black p-3 text-white"
+          ? "flex min-h-[calc(100dvh-3.5rem)] w-full flex-col bg-white p-3 text-foreground"
           : [
               "rounded-2xl border border-border bg-black p-2.5 shadow-soft",
               isExpanded
@@ -176,7 +176,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
               <ArrowLeft className="h-5 w-5" />
             </button>
           )}
-          <h3 className="font-sans text-base font-bold not-italic tracking-tight text-white">
+          <h3 className={`font-sans text-base font-bold not-italic tracking-tight ${embedded ? "text-foreground" : "text-white"}`}>
             {step === "line" && "Elige tu línea"}
             {step === "direction" && `Línea ${line?.code} · ¿Hacia dónde?`}
             {step === "stop" && `Línea ${line?.code} · ¿Qué parada?`}
@@ -193,10 +193,10 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
 
 
       {step === "line" && (
-        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain pr-1">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pr-1">
           {loading && <p className="text-sm text-muted-foreground">Cargando líneas…</p>}
 
-          {(["urban", "extraurban", "night"] as const).map((cat, idx) => {
+          {(["urban", "extraurban", "night"] as const).map((cat) => {
             const lines = (data?.lines ?? [])
               .filter((l) => classifyLine(l.code) === cat)
               .slice()
@@ -205,48 +205,85 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
               );
             if (lines.length === 0) return null;
             const label =
-              cat === "urban" ? "URBANAS" : cat === "extraurban" ? "INTERURBANAS" : "NOCTURNAS";
+              cat === "urban" ? "Urbanas" : cat === "extraurban" ? "Interurbanas" : "Nocturnas";
             const sublabel =
               cat === "urban"
                 ? "Dentro de la ciudad"
                 : cat === "extraurban"
                   ? "Fuera de Alicante"
                   : "Servicio nocturno";
-            const catColor =
-              cat === "urban" ? "#EF4444" : cat === "extraurban" ? "#3B82F6" : "#3B82F6";
-            const gradientEnd =
-              cat === "urban" ? "#B91C1C" : "#1E3A8A";
+            const palette =
+              cat === "urban"
+                ? {
+                    cardBg: "#FEF2F2",
+                    cardBorder: "#FCA5A5",
+                    iconBg: "#DC2626",
+                    title: "#DC2626",
+                    btnFrom: "#EF4444",
+                    btnTo: "#B91C1C",
+                    icon: "🏙️",
+                  }
+                : cat === "extraurban"
+                  ? {
+                      cardBg: "#EFF6FF",
+                      cardBorder: "#93C5FD",
+                      iconBg: "#2563EB",
+                      title: "#2563EB",
+                      btnFrom: "#3B82F6",
+                      btnTo: "#1E40AF",
+                      icon: "🛣️",
+                    }
+                  : {
+                      cardBg: "#F5F3FF",
+                      cardBorder: "#C4B5FD",
+                      iconBg: "#7C3AED",
+                      title: "#7C3AED",
+                      btnFrom: "#8B5CF6",
+                      btnTo: "#5B21B6",
+                      icon: "🌙",
+                    };
             return (
-              <div key={cat} className={idx > 0 ? "border-t border-border/60 pt-4" : ""}>
-                <div className="mb-3 flex items-center gap-2">
+              <div
+                key={cat}
+                className="rounded-2xl border p-4"
+                style={{ backgroundColor: palette.cardBg, borderColor: palette.cardBorder }}
+              >
+                <div className="mb-3 flex items-center gap-3">
                   <span
-                    className="inline-block h-2.5 w-2.5 rounded-full"
-                    style={{ backgroundColor: catColor }}
-                  />
-                  <span className="font-sans text-[12px] font-extrabold uppercase not-italic tracking-wider text-white">
-                    {label}
+                    className="inline-flex h-12 w-12 items-center justify-center rounded-full text-2xl text-white shadow-sm"
+                    style={{ backgroundColor: palette.iconBg }}
+                    aria-hidden
+                  >
+                    {palette.icon}
                   </span>
-                  <span className="font-sans text-[13px] not-italic text-white/60">· {sublabel}</span>
+                  <div className="min-w-0">
+                    <div
+                      className="font-sans text-xl font-extrabold leading-tight not-italic"
+                      style={{ color: palette.title }}
+                    >
+                      {label}
+                    </div>
+                    <div className="font-sans text-sm not-italic text-slate-600">
+                      {sublabel}
+                    </div>
+                  </div>
                 </div>
-                <div className="grid grid-cols-6 gap-2">
-                  {lines.map((l) => {
-                    return (
-                      <a
-                        key={l.code}
-                        href={`/bus/dashboard/${encodeURIComponent(l.code)}`}
-                        title={l.name}
-                        className="flex aspect-square items-center justify-center gap-0.5 font-sans text-[15px] font-extrabold not-italic no-underline shadow-sm transition active:scale-95"
-                        style={{
-                          color: "#fff",
-                          background: `linear-gradient(160deg, ${catColor} 0%, ${gradientEnd} 100%)`,
-                          borderRadius: 14,
-                        }}
-                      >
-                        {cat === "night" && <span aria-hidden>🌙</span>}
-                        <span>{l.code}</span>
-                      </a>
-                    );
-                  })}
+                <div className="grid grid-cols-3 gap-2.5">
+                  {lines.map((l) => (
+                    <a
+                      key={l.code}
+                      href={`/bus/dashboard/${encodeURIComponent(l.code)}`}
+                      title={l.name}
+                      className="flex h-16 items-center justify-center gap-1 font-sans text-xl font-extrabold not-italic text-white no-underline shadow-md transition active:scale-95"
+                      style={{
+                        background: `linear-gradient(160deg, ${palette.btnFrom} 0%, ${palette.btnTo} 100%)`,
+                        borderRadius: 16,
+                      }}
+                    >
+                      {cat === "night" && <span aria-hidden className="text-base">🌙</span>}
+                      <span>{l.code}</span>
+                    </a>
+                  ))}
                 </div>
               </div>
             );
