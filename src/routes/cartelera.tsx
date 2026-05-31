@@ -147,8 +147,8 @@ function Board() {
           <ArrowLeft className="h-3.5 w-3.5" />
           Trenes
         </Link>
-        <HeaderClock />
       </header>
+
 
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100">
