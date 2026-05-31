@@ -29,7 +29,7 @@ type Sector = {
   description: string;
   accent: string;
   accent2: string;
-  Icon: typeof Bus;
+  Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
 };
 
 const SECTORS: Sector[] = [
