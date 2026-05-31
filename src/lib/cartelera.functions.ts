@@ -135,6 +135,7 @@ export const getCartelera = createServerFn({ method: "GET" }).handler(
 
     const salidas: CarteleraTrain[] = [];
     const llegadas: CarteleraTrain[] = [];
+    const raw: CarteleraRaw[] = [];
     for (const [s, t, dir] of ops) {
       for (let p = 0; p < 3; p++) {
         const j = await call(s, t, p);
@@ -142,6 +143,7 @@ export const getCartelera = createServerFn({ method: "GET" }).handler(
         for (const it of j.horarios) {
           const n = norm(it, dir, t);
           (dir === "SALIDA" ? salidas : llegadas).push(n);
+          raw.push({ ...it, direction: dir, trafficType: t });
         }
         if (j.horarios.length < 10) break;
       }
@@ -161,6 +163,7 @@ export const getCartelera = createServerFn({ method: "GET" }).handler(
       station: "Alicante Terminal",
       salidas: dedup(salidas),
       llegadas: dedup(llegadas),
+      raw,
     };
   },
 );
