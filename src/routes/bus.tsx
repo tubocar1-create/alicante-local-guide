@@ -51,7 +51,7 @@ function BusRouteShell() {
     <BusKnownPicker
       onClose={() => navigate({ to: "/" })}
       onUnknown={() => navigate({ to: "/transporte" })}
-      onSelected={(pick) => {
+      onSelected={(pick: BusStopPick) => {
         navigate({
           to: "/transporte/parada-favorita",
           search: { stop: pick.stopCode, line: pick.line },
