@@ -65,7 +65,13 @@ function norm(item: any, dir: "SALIDA" | "LLEGADA", tt: string): CarteleraTrain 
 export const getCartelera = createServerFn({ method: "GET" }).handler(
   async (): Promise<CarteleraResponse> => {
     const r1 = await fetch(BASE, {
-      headers: { "User-Agent": "Mozilla/5.0", Accept: "text/html" },
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+        Accept:
+          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
+      },
     });
     const setCookies = (r1.headers as any).getSetCookie
       ? (r1.headers as any).getSetCookie()
@@ -73,7 +79,15 @@ export const getCartelera = createServerFn({ method: "GET" }).handler(
     const cookieHeader = (setCookies as string[]).map((c) => c.split(";")[0]).join("; ");
     const html = await r1.text();
     const mAuth = html.match(/p_p_auth=([A-Za-z0-9]+)/);
-    if (!mAuth) throw new Error("ADIF: no p_p_auth");
+    if (!mAuth) {
+      console.error("[cartelera] ADIF no p_p_auth", {
+        status: r1.status,
+        url: r1.url,
+        len: html.length,
+        snippet: html.slice(0, 300),
+      });
+      throw new Error("ADIF: no p_p_auth");
+    }
     const auth = mAuth[1];
     const URL_RES = `${BASE}?p_p_id=servicios_estacion_ServiciosEstacionPortlet&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=%2FconsultarHorario&p_p_cacheability=cacheLevelPage&assetEntryId=3068526&p_p_auth=${auth}`;
 
