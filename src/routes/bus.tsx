@@ -15,7 +15,7 @@ import {
   MapPinned,
 } from "lucide-react";
 import { useBusGraph } from "@/hooks/useBusGraph";
-import { classifyLine } from "@/components/BusKnownPicker";
+import { BusKnownPicker, classifyLine, type BusStopPick } from "@/components/BusKnownPicker";
 
 export const Route = createFileRoute("/bus")({
   head: () => ({
