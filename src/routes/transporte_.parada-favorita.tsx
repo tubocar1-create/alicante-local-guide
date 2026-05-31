@@ -203,8 +203,10 @@ function ParadaFavoritaPage() {
       // Vectalia. En paradas intermedias mostramos la hora estimada de
       // llegada, calculada por distancia desde el origen.
       const atOrigin = nightEstimate.atOrigin;
+      // En el origen, el "tiempo de espera" es hasta la SALIDA oficial
+      // (la llegada se estima 5 min antes para carga de pasajeros).
       return nightEstimate.upcoming.map((u) => ({
-        minutes: u.minutes,
+        minutes: atOrigin ? u.minutes + 5 : u.minutes,
         arrivalTime: atOrigin ? u.departureTime : u.arrivalTime,
         live: false,
       }));
