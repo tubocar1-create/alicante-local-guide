@@ -128,7 +128,6 @@ const OPERATOR_COLORS: Record<string, string> = {
 function TrenesIndex() {
   const [direction, setDirection] = useState<"S" | "L">("S");
   const [query, setQuery] = useState("");
-  const [openCorridor, setOpenCorridor] = useState<CorridorId | null>("MAD");
 
   const q = query.trim().toLowerCase();
   const matches = (s: TrainStation) =>
@@ -136,6 +135,11 @@ function TrenesIndex() {
     s.city.toLowerCase().includes(q) ||
     s.station.toLowerCase().includes(q) ||
     s.code.toLowerCase().includes(q);
+
+  const corridorLabel = (name: string) => {
+    if (direction === "S") return name.replace("Destino", "Hacia");
+    return name.replace("Destino", "Desde");
+  };
 
   return (
     <div
@@ -232,72 +236,57 @@ function TrenesIndex() {
           {CORRIDORS.map((corr) => {
             const stations = STATIONS.filter((s) => s.corridor === corr.id && matches(s));
             if (q && stations.length === 0) return null;
-            const isOpen = q ? true : openCorridor === corr.id;
 
             return (
               <section
                 key={corr.id}
                 className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/40"
               >
-                <button
-                  type="button"
-                  onClick={() => setOpenCorridor(isOpen && !q ? null : corr.id)}
-                  className="flex w-full items-center gap-3 px-3 py-3 text-left transition hover:bg-fuchsia-500/5"
-                >
+                <div className="flex w-full items-center gap-3 px-3 py-3 text-left">
                   <span className="text-xl leading-none">{corr.icon}</span>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-semibold text-white">{corr.name}</div>
+                    <div className="truncate text-sm font-semibold text-white">{corridorLabel(corr.name)}</div>
                     <div className="truncate text-[11px] text-slate-400">{corr.product}</div>
                   </div>
                   <span className="rounded-full border border-slate-700 px-2 py-0.5 text-[10px] text-slate-400">
                     {STATIONS.filter((s) => s.corridor === corr.id).length}
                   </span>
-                  <ArrowRight
-                    className={`h-4 w-4 shrink-0 text-slate-500 transition ${isOpen ? "rotate-90 text-fuchsia-300" : ""}`}
-                  />
-                </button>
+                </div>
 
-                {isOpen && (
-                  <ul className="space-y-1 border-t border-slate-800 bg-slate-950/40 p-2">
-                    {stations.map((s, i) => (
-                      <li key={s.code}>
-                        <Link
-                          to="/trenes/$code"
-                          params={{ code: s.code }}
-                          search={{ dir: direction }}
-                          className="group flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/40 px-3 py-2.5 transition hover:border-fuchsia-500/40 hover:bg-fuchsia-500/5"
-                        >
-                          <span className="w-5 shrink-0 text-right font-mono text-[11px] text-slate-500">
-                            {i + 1}
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-baseline gap-2">
-                              <span className="truncate text-sm font-semibold text-white">{s.station}</span>
-                            </div>
-                            <div className="truncate text-[11px] text-slate-400">
-                              {s.city} · <span className="font-mono uppercase tracking-wider text-slate-500">{s.code}</span>
-                            </div>
+                <ul className="space-y-1 border-t border-slate-800 bg-slate-950/40 p-2">
+                  {stations.map((s) => (
+                    <li key={s.code}>
+                      <Link
+                        to="/trenes/$code"
+                        params={{ code: s.code }}
+                        search={{ dir: direction }}
+                        className="group flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/40 px-3 py-2.5 transition hover:border-fuchsia-500/40 hover:bg-fuchsia-500/5"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-baseline gap-2">
+                            <span className="truncate text-sm font-semibold text-white">{s.station}</span>
                           </div>
-                          <div className="flex shrink-0 items-center gap-1">
-                            {s.operators.map((op) => (
-                              <span
-                                key={op}
-                                className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider"
-                                style={{
-                                  background: (OPERATOR_COLORS[op] ?? "#64748b") + "22",
-                                  color: OPERATOR_COLORS[op] ?? "#94a3b8",
-                                }}
-                              >
-                                {op}
-                              </span>
-                            ))}
-                          </div>
-                          <ArrowRight className="h-4 w-4 shrink-0 text-slate-500 transition group-hover:translate-x-0.5 group-hover:text-fuchsia-300" />
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                          <div className="truncate text-[11px] text-slate-400">{s.city}</div>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1">
+                          {s.operators.map((op) => (
+                            <span
+                              key={op}
+                              className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider"
+                              style={{
+                                background: (OPERATOR_COLORS[op] ?? "#64748b") + "22",
+                                color: OPERATOR_COLORS[op] ?? "#94a3b8",
+                              }}
+                            >
+                              {op}
+                            </span>
+                          ))}
+                        </div>
+                        <ArrowRight className="h-4 w-4 shrink-0 text-slate-500 transition group-hover:translate-x-0.5 group-hover:text-fuchsia-300" />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
               </section>
             );
           })}
