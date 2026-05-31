@@ -236,7 +236,8 @@ function TrenesIndex() {
         {/* Corredores */}
         <div className="space-y-2">
           {CORRIDORS.map((corr) => {
-            const stations = STATIONS.filter((s) => s.corridor === corr.id && matches(s));
+            const base = STATIONS.filter((s) => s.corridor === corr.id && matches(s));
+            const stations = direction === "L" ? [...base].reverse() : base;
             if (q && stations.length === 0) return null;
 
             return (
