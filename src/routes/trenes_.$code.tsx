@@ -32,11 +32,12 @@ export const Route = createFileRoute("/trenes_/$code")({
 });
 
 const OPERATOR_COLORS: Record<string, string> = {
-  RENFE: "#a855f7",
-  AVLO:  "#7c3aed",
-  OUIGO: "#ec4899",
-  IRYO:  "#ef4444",
+  RENFE: "#5cbdb9", // Ocean Deep teal
+  AVLO:  "#2d8a9e", // Ocean Deep cyan
+  OUIGO: "#ec4899", // brand pink
+  IRYO:  "#ef4444", // brand red
 };
+
 
 const WEEKDAYS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
