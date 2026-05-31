@@ -175,7 +175,7 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
 export const getCartelera = createServerFn({ method: "GET" }).handler(
   async (): Promise<CarteleraResponse & { cachedAt: string; nextRefreshAt: string }> => {
     const now = Date.now();
-    if (_cache && now - _cache.at < CACHE_TTL_MS) {
+    if (_cache && _cache.v === CACHE_VERSION && now - _cache.at < CACHE_TTL_MS) {
       return {
         ...(_cache.data as any),
         cachedAt: new Date(_cache.at).toISOString(),
@@ -185,9 +185,10 @@ export const getCartelera = createServerFn({ method: "GET" }).handler(
     if (!_inflight) {
       _inflight = fetchCartelera()
         .then((data) => {
-          _cache = { at: Date.now(), data };
+          _cache = { at: Date.now(), v: CACHE_VERSION, data };
           return data;
         })
+
         .finally(() => {
           _inflight = null;
         });
