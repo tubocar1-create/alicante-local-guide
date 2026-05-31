@@ -140,7 +140,7 @@ function TransporteHub() {
           </p>
         </div>
 
-        {SECTORS.map((s) => (
+        {sectors.map((s) => (
           <Link
             key={s.to}
             to={s.to}
