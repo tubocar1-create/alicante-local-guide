@@ -92,6 +92,16 @@ function Board() {
   const { data } = useSuspenseQuery(carteleraOpts(() => fetchFn({}) as Promise<CarteleraResponse>));
   const [filter, setFilter] = useState<string>("TODAS");
 
+  const todayLabel = useMemo(() => {
+    const d = new Date();
+    return d.toLocaleDateString("es-ES", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  }, []);
+
   const all = useMemo(() => [...data.salidas, ...data.llegadas], [data]);
 
   // KPI counts
