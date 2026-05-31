@@ -2770,6 +2770,36 @@ export type Database = {
         }
         Relationships: []
       }
+      train_schedule_snapshot: {
+        Row: {
+          date_end: string
+          date_start: string
+          generated_at: string
+          id: string
+          payload: Json
+          source: string
+          trips_count: number
+        }
+        Insert: {
+          date_end: string
+          date_start: string
+          generated_at?: string
+          id: string
+          payload: Json
+          source?: string
+          trips_count?: number
+        }
+        Update: {
+          date_end?: string
+          date_start?: string
+          generated_at?: string
+          id?: string
+          payload?: Json
+          source?: string
+          trips_count?: number
+        }
+        Relationships: []
+      }
       tram_agencies: {
         Row: {
           agency_email: string | null
