@@ -277,7 +277,7 @@ function TrenesIndex() {
                         to="/trenes/$code"
                         params={{ code: d.code }}
                         search={{ dir: "S" as const }}
-                        className="flex h-full items-center justify-between rounded-xl border border-fuchsia-500/30 bg-slate-900/60 px-3 py-2.5 text-xs font-semibold text-slate-100 transition hover:border-fuchsia-400/70 hover:bg-fuchsia-500/15"
+                        className="flex h-12 items-center justify-between rounded-xl border border-fuchsia-500/30 bg-slate-900/60 px-3 text-xs font-semibold text-slate-100 transition hover:border-fuchsia-400/70 hover:bg-fuchsia-500/15"
                       >
                         <span>ALC → {d.label}</span>
                         <ArrowRight className="h-3 w-3 text-fuchsia-300" />
@@ -302,7 +302,7 @@ function TrenesIndex() {
                         to="/trenes/$code"
                         params={{ code: d.code }}
                         search={{ dir: "L" as const }}
-                        className="flex h-full items-center justify-between rounded-xl border border-cyan-500/30 bg-slate-900/60 px-3 py-2.5 text-xs font-semibold text-slate-100 transition hover:border-cyan-400/70 hover:bg-cyan-500/15"
+                        className="flex h-12 items-center justify-between rounded-xl border border-cyan-500/30 bg-slate-900/60 px-3 text-xs font-semibold text-slate-100 transition hover:border-cyan-400/70 hover:bg-cyan-500/15"
                       >
                         <span>{d.label} → ALC</span>
                         <ArrowRight className="h-3 w-3 text-cyan-300" />
