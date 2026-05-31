@@ -168,11 +168,12 @@ function TrenSchedule() {
                           <div className="flex items-center gap-2.5">
                             {/* Operador */}
                             <span
-                              className="shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide"
+                              className="shrink-0 w-14 text-center rounded px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide"
                               style={{ background: opColor + "1f", color: opColor }}
                             >
                               {t.product}
                             </span>
+
 
                             {/* Salida */}
                             <div className="flex flex-col items-start">
