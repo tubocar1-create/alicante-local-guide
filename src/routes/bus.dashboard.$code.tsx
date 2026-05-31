@@ -51,6 +51,40 @@ type StopRow = {
 };
 
 const LINE_PALETTE = ["#EF4444", "#3B82F6", "#22C55E", "#A855F7", "#F59E0B"];
+const TERMINAL_LAYOVER_MIN = 5;
+
+function normalizeStopLabel(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function collapseConsecutiveDuplicateStops(stops: StopRow[]): StopRow[] {
+  const collapsed: StopRow[] = [];
+  for (const stop of stops) {
+    const prev = collapsed[collapsed.length - 1];
+    if (prev && normalizeStopLabel(prev.name) === normalizeStopLabel(stop.name)) {
+      collapsed[collapsed.length - 1] = stop;
+    } else {
+      collapsed.push(stop);
+    }
+  }
+  return collapsed;
+}
+
+function minutesFromHHMM(value: string): number {
+  const [h, m] = value.split(":").map(Number);
+  return h * 60 + m;
+}
+
+function nextTimelineMinuteAfter(dayMinute: number, referenceMinute: number): number {
+  let value = dayMinute;
+  while (value < referenceMinute) value += 24 * 60;
+  return value;
+}
 
 function formatHHMM(d: Date): string {
   const hh = String(d.getHours()).padStart(2, "0");
@@ -111,8 +145,8 @@ function BusDashboardPage() {
         });
       }
     }
-    out[1].sort((a, b) => a.seq - b.seq);
-    out[2].sort((a, b) => a.seq - b.seq);
+    out[1] = collapseConsecutiveDuplicateStops(out[1].sort((a, b) => a.seq - b.seq));
+    out[2] = collapseConsecutiveDuplicateStops(out[2].sort((a, b) => a.seq - b.seq));
     return out;
   }, [data, code]);
 
@@ -229,13 +263,33 @@ function BusDashboardPage() {
       let depDelta = depAbsMin - nowMin;
       if (depDelta < -12 * 60) depDelta += 24 * 60;
       if (depDelta > 12 * 60) depDelta -= 24 * 60;
+      const depTimelineMin = nowMin + depDelta;
+
+      const syncedDestinationArrival = (destinationName: string): number | null => {
+        const destinationDepartures = getNightLineEstimates(
+          serviceRows,
+          departures,
+          code,
+          destinationName,
+          0,
+          clock,
+          8,
+        );
+        const nextDeparture = destinationDepartures?.upcoming
+          .map((u) => nextTimelineMinuteAfter(minutesFromHHMM(u.departureTime), depTimelineMin))
+          .filter((m) => m >= depTimelineMin)
+          .sort((a, b) => a - b)[0];
+        return typeof nextDeparture === "number" ? nextDeparture - TERMINAL_LAYOVER_MIN : null;
+      };
 
       const codes = stops.map((s) => s.code);
       const cum = cumulativeMinutes(codes, stopCoords, { speedKmh: NIGHT_URBAN_KMH });
       for (let i = 0; i < stops.length; i++) {
         const offset = cum[i] ?? 0;
-        const arrDelta = depDelta + offset;
-        const arrAbs = (((depAbsMin + offset) % 1440) + 1440) % 1440;
+        const terminalArrival = i === stops.length - 1 ? syncedDestinationArrival(stops[i].name) : null;
+        const arrTimeline = terminalArrival ?? depTimelineMin + offset;
+        const arrDelta = arrTimeline - nowMin;
+        const arrAbs = ((arrTimeline % 1440) + 1440) % 1440;
         const hh = String(Math.floor(arrAbs / 60)).padStart(2, "0");
         const mm = String(Math.round(arrAbs % 60)).padStart(2, "0");
         out[dir].set(stops[i].code, {
