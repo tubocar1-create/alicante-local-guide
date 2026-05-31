@@ -65,7 +65,7 @@ function filterFresh(list: StationTrip[], nowKey: string): StationTrip[] {
   const [nowDate, nowTime] = nowKey.split("|");
   return list.filter((t) => {
     if (t.date < nowDate) return false;
-    if (t.date === nowDate && t.departure < nowTime) return false;
+    if (t.date === nowDate && t.departure <= nowTime) return false;
     return true;
   });
 }
