@@ -147,7 +147,7 @@ function Board() {
   );
 
   return (
-    <div className="mx-auto max-w-3xl px-3 pb-10 pt-4 space-y-3">
+    <div className="mx-auto max-w-3xl px-3 pb-4 pt-4 flex flex-col gap-3 h-[calc(100dvh-120px)]">
       {/* Header */}
       <header className="flex items-center justify-between">
         <Link
@@ -180,7 +180,7 @@ function Board() {
 
 
       {/* Salidas ADIF */}
-      <Card>
+      <Card className="flex-1 flex flex-col min-h-0 overflow-hidden border-sky-200 bg-sky-50/30">
         <CardHeader
           icon={<Download className="h-4 w-4 text-sky-500 rotate-180" />}
           title={`Salidas programadas para ${todayLabel} (${data.raw.filter((r) => r.direction === "SALIDA").length})`}
@@ -190,7 +190,7 @@ function Board() {
       </Card>
 
       {/* Llegadas ADIF */}
-      <Card>
+      <Card className="flex-1 flex flex-col min-h-0 overflow-hidden border-emerald-200 bg-emerald-50/30">
         <CardHeader
           icon={<Download className="h-4 w-4 text-emerald-500" />}
           title={`Llegadas programadas para ${todayLabel} (${data.raw.filter((r) => r.direction !== "SALIDA").length})`}
@@ -210,9 +210,9 @@ function Board() {
 
 // ---------- Subcomponents ----------
 
-function Card({ children }: { children: React.ReactNode }) {
+function Card({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+    <section className={`rounded-xl border border-slate-200 bg-white p-3 shadow-sm ${className || ""}`}>
       {children}
     </section>
   );
@@ -320,7 +320,7 @@ function RawAdifTable({ rows, kind }: { rows: Array<Record<string, any>>; kind: 
   const destLabel = kind === "SALIDA" ? "Destino" : "Origen";
 
   return (
-    <div className="overflow-x-auto overflow-y-auto -mx-3 px-3 max-h-[336px]">
+    <div className="overflow-x-auto overflow-y-auto -mx-3 px-3 flex-1 min-h-0">
       <table className="min-w-[860px] w-full text-xs border-collapse">
         <thead className="sticky top-0 z-10">
           <tr className="text-left text-[10px] uppercase tracking-wider text-slate-600 border-b border-slate-300 bg-slate-200">
