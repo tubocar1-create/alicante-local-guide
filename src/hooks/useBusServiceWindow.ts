@@ -128,6 +128,31 @@ export function getServiceStatus(
 
   if (todayRows.length === 0) {
     if (isNight) {
+      // Un turno nocturno arranca el día anterior (p.ej. "sabado" 23:30
+      // → 06:30 cubre la madrugada del domingo). Si la madrugada actual
+      // está dentro de la ventana de ayer, seguimos EN servicio.
+      const yesterday = new Date(now.getTime() - 24 * 60 * 60_000);
+      const yDay = dayTypeOf(yesterday);
+      const yRows = effectiveRows.filter((r) => r.day_type === yDay);
+      const nowMinNow = now.getHours() * 60 + now.getMinutes();
+      const yNightRows = yRows.filter(
+        (r) => toMin(r.last_departure) < toMin(r.first_departure),
+      );
+      if (yNightRows.length > 0) {
+        const yLastMin = Math.max(...yNightRows.map((r) => toMin(r.last_departure)));
+        const yFirstMin = Math.min(...yNightRows.map((r) => toMin(r.first_departure)));
+        if (nowMinNow <= yLastMin) {
+          return {
+            outOfService: false,
+            firstDeparture: fmtHM(yFirstMin),
+            lastDeparture: null,
+            reopensAt: null,
+            reopensDayLabel: null,
+            isNightLine: true,
+            hasData: true,
+          };
+        }
+      }
       const nxt = nextServiceDay(allLineRows, lineCode, now);
       if (nxt) {
         const nxtRows = effectiveRows.filter((r) => r.day_type === nxt.dayType);
