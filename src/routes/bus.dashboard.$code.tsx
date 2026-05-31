@@ -3,6 +3,7 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ArrowDown, ArrowUp, Bus, ChevronDown, Radio, RefreshCw, Loader2, MapPin } from "lucide-react";
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { classifyLine } from "@/components/BusKnownPicker";
+import { saveFavoriteStop } from "@/components/FavoriteStopWidget";
 import busAlicanteImg from "@/assets/bus-alicante.png";
 import type { LineStopPoint } from "@/components/BusLineLiveMap";
 
@@ -79,7 +80,8 @@ function BusDashboardPage() {
   }, []);
 
 
-  const handlePickStop = (stopCode: string, _stopName: string) => {
+  const handlePickStop = (stopCode: string, stopName: string, destination: string) => {
+    saveFavoriteStop({ stopId: stopCode, stopName, line: code, destination });
     navigate({
       to: "/transporte/parada-favorita",
       search: { stop: stopCode, line: code },
@@ -243,6 +245,17 @@ function BusDashboardPage() {
 
   const inService =
     Object.values(etas).some((arr) => arr && arr.length > 0) || loadingEtas;
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[100dvh] items-center justify-center bg-black px-6 text-center text-white">
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-5">
+          <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-white/70" />
+          <p className="font-sans text-sm font-bold not-italic text-white">Cargando paradas…</p>
+        </div>
+      </div>
+    );
+  }
 
 
   return (
