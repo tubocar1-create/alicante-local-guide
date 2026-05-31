@@ -267,7 +267,7 @@ function Board() {
             {filteredSalidas.length === 0 && (
               <p className="text-sm text-slate-500 py-4 text-center">Sin trenes.</p>
             )}
-            <ul className="max-h-[360px] overflow-y-auto">
+            <ul>
               {filteredSalidas.map((t, i) => (
                 <TrainRow key={i} t={t} kind="SALIDA" />
               ))}
