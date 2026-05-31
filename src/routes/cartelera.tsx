@@ -38,7 +38,7 @@ export const Route = createFileRoute("/cartelera")({
 
 function CarteleraPage() {
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
+    <div className="h-[100dvh] overflow-y-auto overscroll-contain bg-slate-50 text-slate-900">
       <Suspense fallback={<Loading />}>
         <Board />
       </Suspense>
