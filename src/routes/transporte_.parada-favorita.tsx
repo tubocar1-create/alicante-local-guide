@@ -53,23 +53,10 @@ function ParadaFavoritaPage() {
   const [liveUpdatedAt, setLiveUpdatedAt] = useState<number>(Date.now());
 
   const serviceWindows = useBusServiceWindows();
-  // Terminal de origen del recorrido del usuario (primera parada en su sentido).
-  const originTerminalName = useMemo(() => {
-    if (!graph) return undefined;
-    const lineRows = graph.stops.filter((r) => r.line_code === stop.line);
-    const byDir = new Map<number, typeof lineRows>();
-    for (const r of lineRows) {
-      if (!byDir.has(r.direction)) byDir.set(r.direction, []);
-      byDir.get(r.direction)!.push(r);
-    }
-    for (const [, rows] of byDir) {
-      const sorted = [...rows].sort((a, b) => a.seq - b.seq);
-      const terminal = sorted[sorted.length - 1]?.stop_name;
-      if (terminal === stop.destination) return sorted[0]?.stop_name;
-    }
-    return undefined;
-  }, [graph, stop]);
-  const serviceStatus = getServiceStatus(serviceWindows, stop.line, new Date(), originTerminalName);
+  // El destino del recorrido del usuario; coincide con `terminal_name` en
+  // bus_line_service_windows (que almacena el terminal de DESTINO).
+  const destinationTerminalName = stop.destination;
+  const serviceStatus = getServiceStatus(serviceWindows, stop.line, new Date(), destinationTerminalName);
   const outOfService = serviceStatus.outOfService;
   const reopensDayLabel = serviceStatus.reopensDayLabel;
   const reopensAt = serviceStatus.reopensAt ?? "07:00";
@@ -94,7 +81,6 @@ function ParadaFavoritaPage() {
       byDir.get(r.direction)!.push(r);
     }
     let offsetMin = 0;
-    let originName = "";
     let found = false;
     for (const [, rows] of byDir) {
       const sorted = [...rows].sort((a, b) => a.seq - b.seq);
@@ -105,7 +91,6 @@ function ParadaFavoritaPage() {
       const codes = sorted.map((r) => String(r.stop_code ?? ""));
       const cum = cumulativeMinutes(codes, coords);
       offsetMin = cum[idx] ?? 0;
-      originName = sorted[0]?.stop_name ?? "";
       found = true;
       break;
     }
@@ -113,10 +98,10 @@ function ParadaFavoritaPage() {
     return getNightLineEstimates(
       serviceWindows,
       stop.line,
-      originName,
+      destinationTerminalName,
       offsetMin,
     );
-  }, [isNightLine, outOfService, graph, serviceWindows, stop]);
+  }, [isNightLine, outOfService, graph, serviceWindows, stop, destinationTerminalName]);
 
   useEffect(() => {
     setStop(loadFavoriteStop());
