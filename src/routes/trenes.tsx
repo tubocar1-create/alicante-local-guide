@@ -138,8 +138,9 @@ function TrenesIndex() {
     s.code.toLowerCase().includes(q);
 
   const corridorLabel = (name: string) => {
-    if (direction === "S") return name.replace("Destino", "Hacia");
-    return name.replace("Destino", "Desde");
+    const target = name.replace(/^Destino\s+/, "");
+    if (direction === "S") return `Desde Alicante hacia ${target}`;
+    return `Desde ${target} hacia Alicante`;
   };
 
   return (
