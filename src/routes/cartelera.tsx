@@ -180,7 +180,7 @@ function Board() {
 
 
       {/* Salidas ADIF */}
-      <Card>
+      <Card className="flex-1 flex flex-col min-h-0 overflow-hidden border-sky-200 bg-sky-50/30">
         <CardHeader
           icon={<Download className="h-4 w-4 text-sky-500 rotate-180" />}
           title={`Salidas programadas para ${todayLabel} (${data.raw.filter((r) => r.direction === "SALIDA").length})`}
@@ -190,7 +190,7 @@ function Board() {
       </Card>
 
       {/* Llegadas ADIF */}
-      <Card>
+      <Card className="flex-1 flex flex-col min-h-0 overflow-hidden border-emerald-200 bg-emerald-50/30">
         <CardHeader
           icon={<Download className="h-4 w-4 text-emerald-500" />}
           title={`Llegadas programadas para ${todayLabel} (${data.raw.filter((r) => r.direction !== "SALIDA").length})`}
