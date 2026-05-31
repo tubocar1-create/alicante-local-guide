@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Bus, ChevronRight, Clock, Info, MapPin, Plane, RefreshCcw, Search, Star } from "lucide-react";
 import {
-  DEFAULT_FAVORITE_STOP,
   FavoriteStop,
   computeNextArrival,
   computeUpcomingArrivals,
@@ -42,7 +41,8 @@ function ParadaFavoritaPage() {
   const router = useRouter();
   const search = Route.useSearch();
   const { data: graph } = useBusGraph();
-  const [stop, setStop] = useState<FavoriteStop>(DEFAULT_FAVORITE_STOP);
+  const [stop, setStop] = useState<FavoriteStop>(() => loadFavoriteStop());
+  const [searchLookupDone, setSearchLookupDone] = useState(!search.stop);
   const [, setTick] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -54,6 +54,10 @@ function ParadaFavoritaPage() {
 
   const serviceWindows = useBusServiceWindows();
   const lineDepartures = useBusLineDepartures();
+  const searchMatchesCurrent = Boolean(search.stop) &&
+    stop.stopId === search.stop &&
+    (!search.line || stop.line.toUpperCase() === search.line.toUpperCase());
+  const searchTargetPending = Boolean(search.stop) && !searchMatchesCurrent && !searchLookupDone;
   // Para líneas nocturnas: el cuadro Vectalia se identifica por el ORIGEN
   // del trayecto del usuario (primer stop de la dirección cuyo último stop
   // es stop.destination). Lo calculamos abajo en `originTerminalName`.
@@ -131,16 +135,19 @@ function ParadaFavoritaPage() {
 
 
   useEffect(() => {
-    setStop(loadFavoriteStop());
     const id = window.setInterval(() => setTick((t) => t + 1), 30_000);
     return () => window.clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    setSearchLookupDone(!search.stop || searchMatchesCurrent);
+  }, [search.stop, search.line, searchMatchesCurrent]);
 
   // Una sola petición a Vectalia: trae todos los ETAs disponibles.
   // Para líneas nocturnas no consultamos Vectalia (sin cobertura live) y
   // usamos estimados horarios desde el terminal de origen.
   useEffect(() => {
-    if (outOfService || isNightLine) {
+    if (searchTargetPending || outOfService || isNightLine) {
       setLiveAll([]);
       setLiveLoading(false);
       return;
@@ -175,7 +182,7 @@ function ParadaFavoritaPage() {
       cancelled = true;
       window.clearInterval(id);
     };
-  }, [stop.stopId, stop.line, outOfService, isNightLine]);
+  }, [stop.stopId, stop.line, outOfService, isNightLine, searchTargetPending]);
 
   const elapsedMin = Math.floor((Date.now() - liveUpdatedAt) / 60_000);
   const liveMinutes = liveAll.length > 0 ? Math.max(0, liveAll[0] - elapsedMin) : null;
@@ -294,7 +301,11 @@ function ParadaFavoritaPage() {
 
   // Apply ?stop & ?line search params once options are ready
   useEffect(() => {
-    if (!search.stop) return;
+    if (!search.stop) {
+      setSearchLookupDone(true);
+      return;
+    }
+    if (!graph) return;
     const match = options.find(
       (o) =>
         o.stopId === search.stop &&
@@ -304,7 +315,8 @@ function ParadaFavoritaPage() {
       saveFavoriteStop(match);
       setStop(match);
     }
-  }, [search.stop, search.line, options]);
+    setSearchLookupDone(true);
+  }, [search.stop, search.line, options, graph]);
 
   const filtered = useMemo(() => {
     const q = normalize(query);
@@ -333,6 +345,18 @@ function ParadaFavoritaPage() {
     setStop(s);
     setSearchOpen(false);
     setQuery("");
+  }
+
+  if (searchTargetPending) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#fdf7ee] px-6 text-center">
+        <div className="rounded-3xl bg-white px-6 py-5 shadow-[0_8px_24px_-12px_rgba(60,40,10,0.25)] ring-1 ring-stone-200">
+          <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-stone-200 border-t-[#0d3b8a]" />
+          <p className="text-sm font-extrabold text-stone-900">Cargando tu parada…</p>
+          <p className="mt-1 text-xs text-stone-500">Preparando horarios y próximas llegadas.</p>
+        </div>
+      </div>
+    );
   }
 
 
