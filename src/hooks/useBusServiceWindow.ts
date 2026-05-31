@@ -364,15 +364,20 @@ export function getNightLineEstimates(
   }
 
   arrivalsAbs.sort((a, b) => a.arr - b.arr);
+  // En paradas terminales (origen de la dirección, también destino del sentido
+  // opuesto), Vectalia marca la HORA DE SALIDA oficial. Estimamos que el bus
+  // llega 5 min antes para dar tiempo de carga de pasajeros.
+  const BOARDING_BUFFER_MIN = 5;
   const upcoming: NightEstimate["upcoming"] = [];
   for (const { dep, arr } of arrivalsAbs) {
-    const minsAway = arr - nowMin;
+    const arrAdj = atOrigin ? arr - BOARDING_BUFFER_MIN : arr;
+    const minsAway = arrAdj - nowMin;
     if (minsAway < -1) continue;
     upcoming.push({
       minutes: Math.max(0, minsAway),
-      arrivalTime: fmtHMMin(arr),
+      arrivalTime: fmtHMMin(((arrAdj % 1440) + 1440) % 1440),
       departureTime: fmtHMMin(dep),
-      estimated: !atOrigin,
+      estimated: true,
     });
     if (upcoming.length >= count) break;
   }

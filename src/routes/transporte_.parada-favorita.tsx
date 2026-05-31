@@ -192,9 +192,12 @@ function ParadaFavoritaPage() {
   // usamos los estimados horarios; en el resto, live Vectalia + relleno.
   const upcoming = (() => {
     if (nightEstimate) {
+      // Para líneas nocturnas mostramos la HORA OFICIAL DE SALIDA del cuadro
+      // Vectalia (es lo relevante en cabeceras); el minutaje sigue siendo el
+      // tiempo hasta la llegada estimada (5 min antes de la salida en origen).
       return nightEstimate.upcoming.map((u) => ({
         minutes: u.minutes,
-        arrivalTime: u.arrivalTime,
+        arrivalTime: u.departureTime,
         live: false,
       }));
     }
