@@ -242,15 +242,19 @@ function HotelDetail() {
           <>
             <div className="overflow-hidden rounded-2xl border border-amber-100/[0.08] bg-[rgba(20,10,4,0.7)] backdrop-blur-xl">
               {gallery.length > 0 ? (
-                <div className="flex h-[60vh] max-h-[640px] min-h-[320px] snap-x snap-mandatory gap-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div className="flex h-[60vh] max-h-[640px] min-h-[320px] snap-x snap-mandatory gap-1 overflow-x-auto bg-black/40 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {gallery.map((src, i) => (
-                    <img
+                    <div
                       key={i}
-                      src={src}
-                      alt={`${h.name} foto ${i + 1}`}
-                      loading={i === 0 ? "eager" : "lazy"}
-                      className="h-full w-full flex-none snap-start object-cover"
-                    />
+                      className="flex h-full w-full flex-none snap-start items-center justify-center bg-black/60"
+                    >
+                      <img
+                        src={src}
+                        alt={`${h.name} foto ${i + 1}`}
+                        loading={i === 0 ? "eager" : "lazy"}
+                        className="h-full w-full object-contain"
+                      />
+                    </div>
                   ))}
                 </div>
               ) : (
