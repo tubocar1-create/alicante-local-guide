@@ -42,13 +42,16 @@ export function estimateLegMinutes(
 }
 
 // Cumulative minutes from the first stop along an ordered list of codes.
-// Uses haversine + urban speed when coords are present; otherwise a flat
-// per-stop fallback. Always returns an array of length codes.length, with
-// index 0 = 0 minutes.
+// `opts.speedKmh` lets callers override the default urban speed — de
+// madrugada el tráfico es prácticamente nulo y la velocidad media sube.
 export function cumulativeMinutes(
   codes: string[],
   coords: Map<string, { lat: number; lng: number }>,
+  opts?: { speedKmh?: number; dwellMin?: number; fallbackMinPerStop?: number },
 ): number[] {
+  const speed = opts?.speedKmh ?? URBAN_KMH;
+  const dwell = opts?.dwellMin ?? DWELL_MIN_PER_STOP;
+  const fb = opts?.fallbackMinPerStop ?? FALLBACK_MIN_PER_STOP;
   const out: number[] = [0];
   let acc = 0;
   for (let i = 1; i < codes.length; i++) {
@@ -56,15 +59,18 @@ export function cumulativeMinutes(
     const b = coords.get(codes[i]);
     let seg: number;
     if (a && b) {
-      seg = (haversineKm(a, b) / URBAN_KMH) * 60 + DWELL_MIN_PER_STOP;
+      seg = (haversineKm(a, b) / speed) * 60 + dwell;
     } else {
-      seg = FALLBACK_MIN_PER_STOP;
+      seg = fb;
     }
     acc += seg;
     out.push(acc);
   }
   return out;
 }
+
+// Velocidad media estimada para servicios nocturnos (madrugada, sin tráfico).
+export const NIGHT_URBAN_KMH = 28;
 
 export function formatMinutes(mins: number): string {
   if (mins < 60) return `${mins} min`;
