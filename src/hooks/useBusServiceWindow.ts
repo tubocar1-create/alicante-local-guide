@@ -4,16 +4,26 @@ import { supabase } from "@/integrations/supabase/client";
 export type ServiceWindowRow = {
   line_code: string;
   direction: number;
-  terminal_name: string;
+  terminal_name: string; // ORIGEN del trayecto de esa dirección
   day_type: string; // laborable | sabado | domingo | festivo
   first_departure: string; // HH:MM:SS
   last_departure: string; // HH:MM:SS
 };
 
+export type DepartureRow = {
+  line_code: string;
+  direction: number;
+  day_type: string;
+  departure_time: string; // HH:MM:SS
+};
+
 type Cache = ServiceWindowRow[];
+type DepCache = DepartureRow[];
 
 let cache: Cache | null = null;
 let inflight: Promise<Cache> | null = null;
+let depCache: DepCache | null = null;
+let depInflight: Promise<DepCache> | null = null;
 
 async function load(): Promise<Cache> {
   if (cache) return cache;
@@ -30,11 +40,35 @@ async function load(): Promise<Cache> {
   return r;
 }
 
+async function loadDepartures(): Promise<DepCache> {
+  if (depCache) return depCache;
+  if (depInflight) return depInflight;
+  depInflight = (async () => {
+    const { data } = await supabase
+      .from("bus_line_departures")
+      .select("line_code,direction,day_type,departure_time");
+    depCache = (data ?? []) as DepCache;
+    return depCache;
+  })();
+  const r = await depInflight;
+  depInflight = null;
+  return r;
+}
+
 export function useBusServiceWindows() {
   const [rows, setRows] = useState<Cache | null>(cache);
   useEffect(() => {
     if (cache) return;
     load().then(setRows);
+  }, []);
+  return rows;
+}
+
+export function useBusLineDepartures() {
+  const [rows, setRows] = useState<DepCache | null>(depCache);
+  useEffect(() => {
+    if (depCache) return;
+    loadDepartures().then(setRows);
   }, []);
   return rows;
 }
