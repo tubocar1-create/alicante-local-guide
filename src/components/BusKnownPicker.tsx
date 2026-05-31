@@ -224,7 +224,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
                   <span className="font-sans text-[12px] font-extrabold uppercase not-italic tracking-wider text-white">
                     {label}
                   </span>
-                  <span className="font-sans text-[11px] not-italic text-white/60">· {sublabel}</span>
+                  <span className="font-sans text-[13px] not-italic text-white/60">· {sublabel}</span>
                 </div>
                 <div className="grid grid-cols-6 gap-2">
                   {lines.map((l) => {
