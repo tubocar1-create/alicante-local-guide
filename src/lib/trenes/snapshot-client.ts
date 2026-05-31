@@ -235,12 +235,20 @@ export async function getStationSchedule(
     }
   }
 
+  // Filtra salidas caducadas: fecha < hoy, o (fecha == hoy && hora < ahora).
+  const { date: nowDate, time: nowTime } = todayMadrid();
+  const fresh = out.filter((t) => {
+    if (t.date < nowDate) return false;
+    if (t.date === nowDate && t.departure < nowTime) return false;
+    return true;
+  });
+
   // Dedupe en render: Renfe publica el mismo tren físico varias veces
   // (varios trip_id con el mismo número, mismo horario y misma ruta, distintos
   // service_id solapados). La clave canónica es: fecha + número + salida + llegada.
   // Si dos filas comparten esa clave, son el mismo tren — nos quedamos con una.
   const dedup = new Map<string, StationTrip>();
-  for (const t of out) {
+  for (const t of fresh) {
     const key = `${t.date}|${t.number}|${t.departure}|${t.arrival}|${t.origin}|${t.destination}`;
     if (!dedup.has(key)) dedup.set(key, t);
   }
