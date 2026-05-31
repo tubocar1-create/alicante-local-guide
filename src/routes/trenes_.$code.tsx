@@ -1,7 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { ArrowLeft, CalendarDays, Train } from "lucide-react";
 import { STATIONS } from "./trenes";
+import { getStationSchedule, type StationTrip } from "@/lib/trenes/trenes.functions";
 
 type SearchParams = { dir?: "S" | "L" };
 
@@ -31,6 +34,7 @@ export const Route = createFileRoute("/trenes_/$code")({
 
 const OPERATOR_COLORS: Record<string, string> = {
   RENFE: "#a855f7",
+  AVLO:  "#7c3aed",
   OUIGO: "#ec4899",
   IRYO:  "#ef4444",
 };
@@ -38,84 +42,9 @@ const OPERATOR_COLORS: Record<string, string> = {
 const WEEKDAYS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
-// ---------- Generador de horarios placeholder ----------
-// Cuando se conecte GTFS, esta función se sustituye por la lectura real.
-type TrainTrip = {
-  id: string;
-  date: Date;
-  operator: "RENFE" | "OUIGO" | "IRYO";
-  product: string;     // AVE, AVLO, OUIGO, IRYO, Intercity…
-  trainNumber: string;
-  departure: string;   // HH:MM
-  arrival: string;     // HH:MM
-  durationLabel: string;
-  origin: string;
-  destination: string;
-};
-
-function generatePlaceholderTrips(stationCode: string, dir: "S" | "L"): TrainTrip[] {
-  const st = STATIONS.find((s) => s.code === stationCode);
-  if (!st) return [];
-
-  const baseSlots: Array<{ op: "RENFE" | "OUIGO" | "IRYO"; product: string; prefix: string; dep: string; durMin: number }> = [];
-  if (st.operators.includes("RENFE")) {
-    baseSlots.push(
-      { op: "RENFE", product: "AVE",       prefix: "057", dep: "07:35", durMin: 140 },
-      { op: "RENFE", product: "Intercity", prefix: "014", dep: "10:55", durMin: 245 },
-      { op: "RENFE", product: "AVE",       prefix: "057", dep: "16:25", durMin: 135 },
-      { op: "RENFE", product: "AVLO",      prefix: "061", dep: "19:10", durMin: 138 },
-    );
-  }
-  if (st.operators.includes("OUIGO")) {
-    baseSlots.push(
-      { op: "OUIGO", product: "OUIGO", prefix: "OG", dep: "07:51", durMin: 145 },
-      { op: "OUIGO", product: "OUIGO", prefix: "OG", dep: "18:00", durMin: 145 },
-      { op: "OUIGO", product: "OUIGO", prefix: "OG", dep: "20:58", durMin: 145 },
-    );
-  }
-  if (st.operators.includes("IRYO")) {
-    baseSlots.push(
-      { op: "IRYO", product: "IRYO", prefix: "IR", dep: "08:40", durMin: 142 },
-      { op: "IRYO", product: "IRYO", prefix: "IR", dep: "17:30", durMin: 142 },
-    );
-  }
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const trips: TrainTrip[] = [];
-  for (let day = 0; day < 30; day++) {
-    const d = new Date(today);
-    d.setDate(d.getDate() + day);
-    baseSlots.forEach((slot, idx) => {
-      // Variación leve: domingos menos servicios
-      if (d.getDay() === 0 && idx % 2 === 1) return;
-      const [h, m] = slot.dep.split(":").map(Number);
-      const arrMin = h * 60 + m + slot.durMin;
-      const ah = Math.floor((arrMin % 1440) / 60);
-      const am = arrMin % 60;
-      const arrival = `${String(ah).padStart(2, "0")}:${String(am).padStart(2, "0")}`;
-      const dh = Math.floor(slot.durMin / 60);
-      const dm = slot.durMin % 60;
-      trips.push({
-        id: `${slot.op}-${slot.prefix}${1000 + idx * 7}-${d.toISOString().slice(0, 10)}`,
-        date: d,
-        operator: slot.op,
-        product: slot.product,
-        trainNumber: `${slot.prefix}${1000 + idx * 7 + (day % 5)}`,
-        departure: dir === "S" ? slot.dep : arrival,
-        arrival: dir === "S" ? arrival : slot.dep,
-        durationLabel: `${dh}h ${String(dm).padStart(2, "0")}m`,
-        origin: dir === "S" ? "ALC" : st.code,
-        destination: dir === "S" ? st.code : "ALC",
-      });
-    });
-  }
-  trips.sort((a, b) => a.date.getTime() - b.date.getTime() || a.departure.localeCompare(b.departure));
-  return trips;
-}
-
-function fmtDate(d: Date) {
-  return `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
+function fmtDate(iso: string) {
+  const d = new Date(iso + "T12:00:00Z");
+  return `${WEEKDAYS[d.getUTCDay()]} ${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`;
 }
 
 function TrenSchedule() {
@@ -124,7 +53,13 @@ function TrenSchedule() {
   const st = STATIONS.find((s) => s.code === code);
   const [visible, setVisible] = useState(20);
 
-  const trips = useMemo(() => generatePlaceholderTrips(code, dir), [code, dir]);
+  const fetchSchedule = useServerFn(getStationSchedule);
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["trenes", code, dir],
+    queryFn: () => fetchSchedule({ data: { stationCode: code, direction: dir } }),
+    enabled: !!st,
+    staleTime: 5 * 60 * 1000,
+  });
 
   if (!st) {
     return (
@@ -136,6 +71,7 @@ function TrenSchedule() {
     );
   }
 
+  const trips: StationTrip[] = data?.trips ?? [];
   const firstDate = trips[0]?.date;
   const lastDate = trips[trips.length - 1]?.date;
 
@@ -153,7 +89,7 @@ function TrenSchedule() {
         <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-fuchsia-300">
           <CalendarDays className="h-3 w-3" />
           Próximos 30 días{firstDate && lastDate
-            ? ` (${firstDate.getDate()} ${MONTHS[firstDate.getMonth()]} – ${lastDate.getDate()} ${MONTHS[lastDate.getMonth()]})`
+            ? ` (${fmtDate(firstDate)} – ${fmtDate(lastDate)})`
             : ""}
         </p>
       </div>
@@ -165,50 +101,71 @@ function TrenSchedule() {
           </span>
           <div>
             <h2 className="text-sm font-semibold text-white">Trenes disponibles</h2>
-            <p className="text-[10px] text-slate-500">Ordenados por fecha y hora · {trips.length} servicios</p>
+            <p className="text-[10px] text-slate-500">
+              {isLoading
+                ? "Cargando horarios…"
+                : `Ordenados por fecha y hora · ${trips.length} servicios`}
+            </p>
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-xl border border-slate-800">
-          <div className="grid grid-cols-[auto_auto_auto_auto_auto_auto_auto] gap-x-2 border-b border-slate-800 bg-slate-950/60 px-2 py-1.5 text-[9px] uppercase tracking-wider text-slate-500">
-            <span>Fecha</span>
-            <span>Operador</span>
-            <span>Tren</span>
-            <span>Ruta</span>
-            <span>Salida</span>
-            <span>Llegada</span>
-            <span>Duración</span>
+        {error && (
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-[11px] text-red-300">
+            No se pudieron cargar los horarios. {(error as Error).message}
           </div>
-          <div className="divide-y divide-slate-800/60">
-            {trips.slice(0, visible).map((t) => (
-              <Link
-                key={t.id}
-                to="/trenes/viaje/$id"
-                params={{ id: t.id }}
-                search={{ dir }}
-                className="grid cursor-pointer grid-cols-[auto_auto_auto_auto_auto_auto_auto] items-center gap-x-2 px-2 py-1.5 text-[11px] transition hover:bg-fuchsia-500/10"
-              >
-                <span className="text-slate-300">{fmtDate(t.date)}</span>
-                <span
-                  className="rounded px-1.5 py-0.5 text-[10px] font-bold"
-                  style={{
-                    background: (OPERATOR_COLORS[t.operator] ?? "#64748b") + "22",
-                    color: OPERATOR_COLORS[t.operator] ?? "#94a3b8",
-                  }}
+        )}
+
+        {!isLoading && !error && trips.length === 0 && (
+          <div className="rounded-xl border border-slate-700 bg-slate-950/40 p-4 text-center text-[11px] text-slate-400">
+            Sin servicios para esta estación en los próximos 30 días.
+            <br />
+            <span className="text-slate-500">
+              {data?.generatedAt
+                ? `Snapshot del ${new Date(data.generatedAt).toLocaleDateString("es-ES")}`
+                : "Snapshot GTFS aún no generado."}
+            </span>
+          </div>
+        )}
+
+        {trips.length > 0 && (
+          <div className="overflow-hidden rounded-xl border border-slate-800">
+            <div className="grid grid-cols-[auto_auto_auto_auto_auto_auto_auto] gap-x-2 border-b border-slate-800 bg-slate-950/60 px-2 py-1.5 text-[9px] uppercase tracking-wider text-slate-500">
+              <span>Fecha</span>
+              <span>Operador</span>
+              <span>Tren</span>
+              <span>Ruta</span>
+              <span>Salida</span>
+              <span>Llegada</span>
+              <span>Duración</span>
+            </div>
+            <div className="divide-y divide-slate-800/60">
+              {trips.slice(0, visible).map((t) => (
+                <div
+                  key={t.id}
+                  className="grid grid-cols-[auto_auto_auto_auto_auto_auto_auto] items-center gap-x-2 px-2 py-1.5 text-[11px]"
                 >
-                  {t.product}
-                </span>
-                <span className="font-mono text-[10px] text-slate-300">{t.trainNumber}</span>
-                <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] font-bold text-fuchsia-300">
-                  {t.origin} → {t.destination}
-                </span>
-                <span className="font-mono text-slate-200">{t.departure}</span>
-                <span className="font-mono text-slate-400">{t.arrival}</span>
-                <span className="font-mono text-slate-400">{t.durationLabel}</span>
-              </Link>
-            ))}
+                  <span className="text-slate-300">{fmtDate(t.date)}</span>
+                  <span
+                    className="rounded px-1.5 py-0.5 text-[10px] font-bold"
+                    style={{
+                      background: (OPERATOR_COLORS[t.operator] ?? "#64748b") + "22",
+                      color: OPERATOR_COLORS[t.operator] ?? "#94a3b8",
+                    }}
+                  >
+                    {t.product}
+                  </span>
+                  <span className="font-mono text-[10px] text-slate-300">{t.number}</span>
+                  <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] font-bold text-fuchsia-300">
+                    {t.origin} → {t.destination}
+                  </span>
+                  <span className="font-mono text-slate-200">{t.departure}</span>
+                  <span className="font-mono text-slate-400">{t.arrival}</span>
+                  <span className="font-mono text-slate-400">{t.durationLabel}</span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {trips.length > visible && (
           <button
@@ -221,7 +178,10 @@ function TrenSchedule() {
         )}
 
         <p className="mt-2 text-center text-[10px] text-slate-500">
-          * Horarios provisionales. Se rellenarán con GTFS oficial de Renfe, OUIGO e IRYO.
+          GTFS oficial Renfe + reglas fijas OUIGO / IRYO.
+          {data?.generatedAt && (
+            <> · Snapshot del {new Date(data.generatedAt).toLocaleDateString("es-ES")}</>
+          )}
         </p>
       </section>
     </Shell>

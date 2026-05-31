@@ -146,6 +146,7 @@ import { Route as ApiPublicTramLineStopsRouteImport } from './routes/api/public/
 import { Route as ApiPublicTramDeparturesRouteImport } from './routes/api/public/tram/departures'
 import { Route as ApiPublicTramBusConnectionsRouteImport } from './routes/api/public/tram/bus-connections'
 import { Route as ApiPublicShopPhotoSplatRouteImport } from './routes/api/public/shop-photo.$'
+import { Route as ApiPublicHooksTrenesSyncRouteImport } from './routes/api/public/hooks/trenes-sync'
 import { Route as ApiPublicHooksTramSyncRouteImport } from './routes/api/public/hooks/tram-sync'
 import { Route as ApiPublicHooksSyncHotelsStaticRouteImport } from './routes/api/public/hooks/sync-hotels-static'
 import { Route as ApiPublicHooksSyncBeachCoversRouteImport } from './routes/api/public/hooks/sync-beach-covers'
@@ -849,6 +850,12 @@ const ApiPublicShopPhotoSplatRoute = ApiPublicShopPhotoSplatRouteImport.update({
   path: '/api/public/shop-photo/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksTrenesSyncRoute =
+  ApiPublicHooksTrenesSyncRouteImport.update({
+    id: '/api/public/hooks/trenes-sync',
+    path: '/api/public/hooks/trenes-sync',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksTramSyncRoute = ApiPublicHooksTramSyncRouteImport.update({
   id: '/api/public/hooks/tram-sync',
   path: '/api/public/hooks/tram-sync',
@@ -1053,6 +1060,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/sync-beach-covers': typeof ApiPublicHooksSyncBeachCoversRoute
   '/api/public/hooks/sync-hotels-static': typeof ApiPublicHooksSyncHotelsStaticRoute
   '/api/public/hooks/tram-sync': typeof ApiPublicHooksTramSyncRoute
+  '/api/public/hooks/trenes-sync': typeof ApiPublicHooksTrenesSyncRoute
   '/api/public/shop-photo/$': typeof ApiPublicShopPhotoSplatRoute
   '/api/public/tram/bus-connections': typeof ApiPublicTramBusConnectionsRoute
   '/api/public/tram/departures': typeof ApiPublicTramDeparturesRoute
@@ -1200,6 +1208,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/sync-beach-covers': typeof ApiPublicHooksSyncBeachCoversRoute
   '/api/public/hooks/sync-hotels-static': typeof ApiPublicHooksSyncHotelsStaticRoute
   '/api/public/hooks/tram-sync': typeof ApiPublicHooksTramSyncRoute
+  '/api/public/hooks/trenes-sync': typeof ApiPublicHooksTrenesSyncRoute
   '/api/public/shop-photo/$': typeof ApiPublicShopPhotoSplatRoute
   '/api/public/tram/bus-connections': typeof ApiPublicTramBusConnectionsRoute
   '/api/public/tram/departures': typeof ApiPublicTramDeparturesRoute
@@ -1351,6 +1360,7 @@ export interface FileRoutesById {
   '/api/public/hooks/sync-beach-covers': typeof ApiPublicHooksSyncBeachCoversRoute
   '/api/public/hooks/sync-hotels-static': typeof ApiPublicHooksSyncHotelsStaticRoute
   '/api/public/hooks/tram-sync': typeof ApiPublicHooksTramSyncRoute
+  '/api/public/hooks/trenes-sync': typeof ApiPublicHooksTrenesSyncRoute
   '/api/public/shop-photo/$': typeof ApiPublicShopPhotoSplatRoute
   '/api/public/tram/bus-connections': typeof ApiPublicTramBusConnectionsRoute
   '/api/public/tram/departures': typeof ApiPublicTramDeparturesRoute
@@ -1503,6 +1513,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/sync-beach-covers'
     | '/api/public/hooks/sync-hotels-static'
     | '/api/public/hooks/tram-sync'
+    | '/api/public/hooks/trenes-sync'
     | '/api/public/shop-photo/$'
     | '/api/public/tram/bus-connections'
     | '/api/public/tram/departures'
@@ -1650,6 +1661,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/sync-beach-covers'
     | '/api/public/hooks/sync-hotels-static'
     | '/api/public/hooks/tram-sync'
+    | '/api/public/hooks/trenes-sync'
     | '/api/public/shop-photo/$'
     | '/api/public/tram/bus-connections'
     | '/api/public/tram/departures'
@@ -1800,6 +1812,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/sync-beach-covers'
     | '/api/public/hooks/sync-hotels-static'
     | '/api/public/hooks/tram-sync'
+    | '/api/public/hooks/trenes-sync'
     | '/api/public/shop-photo/$'
     | '/api/public/tram/bus-connections'
     | '/api/public/tram/departures'
@@ -1890,6 +1903,7 @@ export interface RootRouteChildren {
   ApiPublicHooksSyncBeachCoversRoute: typeof ApiPublicHooksSyncBeachCoversRoute
   ApiPublicHooksSyncHotelsStaticRoute: typeof ApiPublicHooksSyncHotelsStaticRoute
   ApiPublicHooksTramSyncRoute: typeof ApiPublicHooksTramSyncRoute
+  ApiPublicHooksTrenesSyncRoute: typeof ApiPublicHooksTrenesSyncRoute
   ApiPublicShopPhotoSplatRoute: typeof ApiPublicShopPhotoSplatRoute
   ApiPublicTramBusConnectionsRoute: typeof ApiPublicTramBusConnectionsRoute
   ApiPublicTramDeparturesRoute: typeof ApiPublicTramDeparturesRoute
@@ -2863,6 +2877,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicShopPhotoSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/trenes-sync': {
+      id: '/api/public/hooks/trenes-sync'
+      path: '/api/public/hooks/trenes-sync'
+      fullPath: '/api/public/hooks/trenes-sync'
+      preLoaderRoute: typeof ApiPublicHooksTrenesSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/tram-sync': {
       id: '/api/public/hooks/tram-sync'
       path: '/api/public/hooks/tram-sync'
@@ -3255,6 +3276,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksSyncBeachCoversRoute: ApiPublicHooksSyncBeachCoversRoute,
   ApiPublicHooksSyncHotelsStaticRoute: ApiPublicHooksSyncHotelsStaticRoute,
   ApiPublicHooksTramSyncRoute: ApiPublicHooksTramSyncRoute,
+  ApiPublicHooksTrenesSyncRoute: ApiPublicHooksTrenesSyncRoute,
   ApiPublicShopPhotoSplatRoute: ApiPublicShopPhotoSplatRoute,
   ApiPublicTramBusConnectionsRoute: ApiPublicTramBusConnectionsRoute,
   ApiPublicTramDeparturesRoute: ApiPublicTramDeparturesRoute,
@@ -3269,13 +3291,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
