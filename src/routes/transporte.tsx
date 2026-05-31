@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Bus, Train, Car, Star, X, ArrowRight } from "lucide-react";
+import { Bus, Train, Star, X, ArrowRight } from "lucide-react";
+import { SedanCar } from "@/components/icons/SedanCar";
 
 export const Route = createFileRoute("/transporte")({
   head: () => ({
