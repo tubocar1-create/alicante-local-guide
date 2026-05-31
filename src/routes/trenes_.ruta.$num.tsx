@@ -185,7 +185,16 @@ function TrainRoutePage() {
             )}
           </div>
 
-          <div className="mt-4 grid grid-cols-3 gap-2">
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <a
+              href="https://www.renfe.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#7b1f9a] px-3 py-2 text-[11px] font-semibold text-white transition hover:opacity-90"
+            >
+              Renfe
+              <ExternalLink className="h-3 w-3 opacity-70" />
+            </a>
             <a
               href="https://www.ouigo.com/es"
               target="_blank"
@@ -213,27 +222,8 @@ function TrainRoutePage() {
               trenes.com
               <ExternalLink className="h-3 w-3 opacity-70" />
             </a>
-            <a
-              href={opInfo.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="col-span-2 inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-[11px] font-semibold text-slate-900 transition hover:opacity-90"
-              style={{ background: opInfo.color }}
-            >
-              <Train className="h-3.5 w-3.5" />
-              {opInfo.name}
-              <ExternalLink className="h-3 w-3 opacity-70" />
-            </a>
-            <a
-              href={`https://www.google.com/search?q=${encodeURIComponent(`${opInfo.name} ${num} ${data?.fromName ?? "Alicante"} ${data?.toName ?? ""} billete`)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-sky-600 px-3 py-2 text-[11px] font-semibold text-white transition hover:bg-sky-500"
-            >
-              Buscar billete
-              <ExternalLink className="h-3 w-3 opacity-70" />
-            </a>
           </div>
+
         </div>
       </div>
     </div>
