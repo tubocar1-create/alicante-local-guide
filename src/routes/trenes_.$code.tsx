@@ -78,7 +78,7 @@ function TrenSchedule() {
   
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["trenes", code, dir],
+    queryKey: ["trenes", "unfiltered-v2", code, dir],
     queryFn: () => getStationSchedule(code, dir),
     enabled: !!st,
     staleTime: 5 * 60 * 1000,
