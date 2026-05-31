@@ -216,6 +216,13 @@ function TrenSchedule() {
                               #{t.number}
                             </span>
                           </div>
+
+                          {/* Fecha pequeña centro inferior */}
+                          <div className="mt-1.5 flex justify-center">
+                            <span className="text-[9px] text-slate-600">
+                              {t.date}
+                            </span>
+                          </div>
                         </div>
                       );
                     })}
