@@ -17,6 +17,8 @@ type Props = {
   onSelected: (pick: BusStopPick) => void;
   /** Si se pasa, el picker arranca preseleccionado con esta línea, saltando "ask" y "line". */
   initialLineCode?: string | null;
+  /** Cuando es true, se renderiza como página (no como modal flotante). */
+  embedded?: boolean;
 };
 
 // Categorías de líneas en Alicante:
