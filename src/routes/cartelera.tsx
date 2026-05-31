@@ -325,14 +325,7 @@ function RawAdifTable({ rows, kind }: { rows: Array<Record<string, any>>; kind: 
             const st = statusLabel(r.markupColor);
             const cancelled = r.markupColor === "suppressed";
             const delayed = horaEst && horaEst !== hora;
-            const zebra =
-              kind === "SALIDA"
-                ? i % 2 === 0
-                  ? "bg-sky-50"
-                  : "bg-sky-100"
-                : i % 2 === 0
-                  ? "bg-amber-50"
-                  : "bg-amber-100";
+            const zebra = i % 2 === 0 ? "bg-slate-100" : "bg-slate-200";
 
             return (
               <tr key={i} className={`align-top ${zebra}`}>
