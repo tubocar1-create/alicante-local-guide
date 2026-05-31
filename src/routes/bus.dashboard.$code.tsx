@@ -676,15 +676,19 @@ function DirectionColumn({
         )}
         {stops.map((s, i) => {
           const arr = etas[s.code] ?? [];
-          const eta1 = arr[0];
+          const liveEta = arr[0];
+          const nightEta = nightEtaByCode?.get(s.code) ?? null;
+          const eta1 = nightEta ? nightEta.min : liveEta;
           const hasEta = typeof eta1 === "number";
           const isOrigin = i === 0;
           const isDest = i === stops.length - 1;
           const transfers = transferLines(s.code);
           const transferColor = transfers[0]?.color ?? null;
-          const etaTime = hasEta
-            ? formatHHMM(new Date(now.getTime() + eta1 * 60_000))
-            : null;
+          const etaTime = nightEta
+            ? nightEta.time
+            : typeof liveEta === "number"
+              ? formatHHMM(new Date(now.getTime() + liveEta * 60_000))
+              : null;
 
           const isNearest = nearestCodes.has(s.code);
           const isPrimaryNearest = nearest?.code === s.code;
