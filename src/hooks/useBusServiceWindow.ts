@@ -375,11 +375,15 @@ export function getNightLineEstimates(
   // opuesto), Vectalia marca la HORA DE SALIDA oficial. Estimamos que el bus
   // llega 5 min antes para dar tiempo de carga de pasajeros.
   const BOARDING_BUFFER_MIN = 5;
+  // Solo mostramos salidas del turno nocturno actualmente en curso o que
+  // está a punto de comenzar; descartamos las del siguiente turno (>6h).
+  const MAX_LOOKAHEAD_MIN = 6 * 60;
   const upcoming: NightEstimate["upcoming"] = [];
   for (const { dep, arr } of arrivalsAbs) {
     const arrAdj = atOrigin ? arr - BOARDING_BUFFER_MIN : arr;
     const minsAway = arrAdj - nowMin;
     if (minsAway < -1) continue;
+    if (minsAway > MAX_LOOKAHEAD_MIN) continue;
     upcoming.push({
       minutes: Math.max(0, minsAway),
       arrivalTime: fmtHMMin(((arrAdj % 1440) + 1440) % 1440),
