@@ -191,36 +191,36 @@ function TrenesIndex() {
           </p>
         </div>
 
-        {/* Toggle Salidas / Llegadas */}
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <div className="grid grid-cols-2 gap-1 rounded-xl border border-slate-700 bg-slate-900/60 p-0.5 text-[11px]">
-            <button
-              type="button"
-              onClick={() => setDirection("S")}
-              className={`rounded-lg px-3 py-1.5 font-semibold uppercase tracking-wider transition ${
-                direction === "S"
-                  ? "bg-fuchsia-500/20 text-fuchsia-200"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              Salidas
-            </button>
-            <button
-              type="button"
-              onClick={() => setDirection("L")}
-              className={`rounded-lg px-3 py-1.5 font-semibold uppercase tracking-wider transition ${
-                direction === "L"
-                  ? "bg-fuchsia-500/20 text-fuchsia-200"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              Llegadas
-            </button>
-          </div>
-          <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-slate-500">
-            <ArrowLeftRight className="h-3 w-3" />
-            {direction === "S" ? "ALC → destino" : "origen → ALC"}
-          </span>
+        {/* Toggle Salidas / Llegadas — grande y claro */}
+        <div className="mb-4 grid grid-cols-2 gap-2 rounded-2xl border-2 border-slate-700 bg-slate-900/60 p-1.5">
+          <button
+            type="button"
+            onClick={() => setDirection("S")}
+            className={`flex flex-col items-center justify-center gap-0.5 rounded-xl px-3 py-3 font-bold uppercase tracking-wider transition ${
+              direction === "S"
+                ? "bg-gradient-to-br from-fuchsia-500/30 to-violet-500/20 text-fuchsia-100 shadow-lg shadow-fuchsia-500/20 ring-1 ring-fuchsia-400/40"
+                : "text-slate-400 hover:bg-slate-800/40 hover:text-slate-200"
+            }`}
+          >
+            <span className="text-base md:text-lg">Salidas</span>
+            <span className="text-[10px] font-medium normal-case tracking-normal opacity-80">
+              ALC → destino
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setDirection("L")}
+            className={`flex flex-col items-center justify-center gap-0.5 rounded-xl px-3 py-3 font-bold uppercase tracking-wider transition ${
+              direction === "L"
+                ? "bg-gradient-to-br from-fuchsia-500/30 to-violet-500/20 text-fuchsia-100 shadow-lg shadow-fuchsia-500/20 ring-1 ring-fuchsia-400/40"
+                : "text-slate-400 hover:bg-slate-800/40 hover:text-slate-200"
+            }`}
+          >
+            <span className="text-base md:text-lg">Llegadas</span>
+            <span className="text-[10px] font-medium normal-case tracking-normal opacity-80">
+              origen → ALC
+            </span>
+          </button>
         </div>
 
         {/* Buscador */}
