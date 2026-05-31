@@ -151,8 +151,10 @@ import { Route as ApiPublicHooksSyncHotelsStaticRouteImport } from './routes/api
 import { Route as ApiPublicHooksSyncBeachCoversRouteImport } from './routes/api/public/hooks/sync-beach-covers'
 import { Route as ApiPublicHooksScrapeWebPhotosDryRouteImport } from './routes/api/public/hooks/scrape-web-photos-dry'
 import { Route as ApiPublicHooksScrapeWebPhotosRouteImport } from './routes/api/public/hooks/scrape-web-photos'
+import { Route as ApiPublicHooksRefreshRenfeSnapshotRouteImport } from './routes/api/public/hooks/refresh-renfe-snapshot'
 import { Route as ApiPublicHooksRefreshHotelsDynamicRouteImport } from './routes/api/public/hooks/refresh-hotels-dynamic'
 import { Route as ApiPublicHooksEventosSyncRouteImport } from './routes/api/public/hooks/eventos-sync'
+import { Route as ApiPublicHooksCleanupTrainSnapshotsRouteImport } from './routes/api/public/hooks/cleanup-train-snapshots'
 import { Route as ApiPublicHooksCinemasSyncRouteImport } from './routes/api/public/hooks/cinemas-sync'
 import { Route as ApiPublicHooksAgenteLearnRouteImport } from './routes/api/public/hooks/agente-learn'
 import { Route as ApiPublicHooksAenaSyncRouteImport } from './routes/api/public/hooks/aena-sync'
@@ -878,6 +880,12 @@ const ApiPublicHooksScrapeWebPhotosRoute =
     path: '/api/public/hooks/scrape-web-photos',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksRefreshRenfeSnapshotRoute =
+  ApiPublicHooksRefreshRenfeSnapshotRouteImport.update({
+    id: '/api/public/hooks/refresh-renfe-snapshot',
+    path: '/api/public/hooks/refresh-renfe-snapshot',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksRefreshHotelsDynamicRoute =
   ApiPublicHooksRefreshHotelsDynamicRouteImport.update({
     id: '/api/public/hooks/refresh-hotels-dynamic',
@@ -888,6 +896,12 @@ const ApiPublicHooksEventosSyncRoute =
   ApiPublicHooksEventosSyncRouteImport.update({
     id: '/api/public/hooks/eventos-sync',
     path: '/api/public/hooks/eventos-sync',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksCleanupTrainSnapshotsRoute =
+  ApiPublicHooksCleanupTrainSnapshotsRouteImport.update({
+    id: '/api/public/hooks/cleanup-train-snapshots',
+    path: '/api/public/hooks/cleanup-train-snapshots',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicHooksCinemasSyncRoute =
@@ -1046,8 +1060,10 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
   '/api/public/hooks/agente-learn': typeof ApiPublicHooksAgenteLearnRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
+  '/api/public/hooks/cleanup-train-snapshots': typeof ApiPublicHooksCleanupTrainSnapshotsRoute
   '/api/public/hooks/eventos-sync': typeof ApiPublicHooksEventosSyncRoute
   '/api/public/hooks/refresh-hotels-dynamic': typeof ApiPublicHooksRefreshHotelsDynamicRoute
+  '/api/public/hooks/refresh-renfe-snapshot': typeof ApiPublicHooksRefreshRenfeSnapshotRoute
   '/api/public/hooks/scrape-web-photos': typeof ApiPublicHooksScrapeWebPhotosRoute
   '/api/public/hooks/scrape-web-photos-dry': typeof ApiPublicHooksScrapeWebPhotosDryRoute
   '/api/public/hooks/sync-beach-covers': typeof ApiPublicHooksSyncBeachCoversRoute
@@ -1193,8 +1209,10 @@ export interface FileRoutesByTo {
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
   '/api/public/hooks/agente-learn': typeof ApiPublicHooksAgenteLearnRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
+  '/api/public/hooks/cleanup-train-snapshots': typeof ApiPublicHooksCleanupTrainSnapshotsRoute
   '/api/public/hooks/eventos-sync': typeof ApiPublicHooksEventosSyncRoute
   '/api/public/hooks/refresh-hotels-dynamic': typeof ApiPublicHooksRefreshHotelsDynamicRoute
+  '/api/public/hooks/refresh-renfe-snapshot': typeof ApiPublicHooksRefreshRenfeSnapshotRoute
   '/api/public/hooks/scrape-web-photos': typeof ApiPublicHooksScrapeWebPhotosRoute
   '/api/public/hooks/scrape-web-photos-dry': typeof ApiPublicHooksScrapeWebPhotosDryRoute
   '/api/public/hooks/sync-beach-covers': typeof ApiPublicHooksSyncBeachCoversRoute
@@ -1344,8 +1362,10 @@ export interface FileRoutesById {
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
   '/api/public/hooks/agente-learn': typeof ApiPublicHooksAgenteLearnRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
+  '/api/public/hooks/cleanup-train-snapshots': typeof ApiPublicHooksCleanupTrainSnapshotsRoute
   '/api/public/hooks/eventos-sync': typeof ApiPublicHooksEventosSyncRoute
   '/api/public/hooks/refresh-hotels-dynamic': typeof ApiPublicHooksRefreshHotelsDynamicRoute
+  '/api/public/hooks/refresh-renfe-snapshot': typeof ApiPublicHooksRefreshRenfeSnapshotRoute
   '/api/public/hooks/scrape-web-photos': typeof ApiPublicHooksScrapeWebPhotosRoute
   '/api/public/hooks/scrape-web-photos-dry': typeof ApiPublicHooksScrapeWebPhotosDryRoute
   '/api/public/hooks/sync-beach-covers': typeof ApiPublicHooksSyncBeachCoversRoute
@@ -1496,8 +1516,10 @@ export interface FileRouteTypes {
     | '/api/public/hooks/aena-sync'
     | '/api/public/hooks/agente-learn'
     | '/api/public/hooks/cinemas-sync'
+    | '/api/public/hooks/cleanup-train-snapshots'
     | '/api/public/hooks/eventos-sync'
     | '/api/public/hooks/refresh-hotels-dynamic'
+    | '/api/public/hooks/refresh-renfe-snapshot'
     | '/api/public/hooks/scrape-web-photos'
     | '/api/public/hooks/scrape-web-photos-dry'
     | '/api/public/hooks/sync-beach-covers'
@@ -1643,8 +1665,10 @@ export interface FileRouteTypes {
     | '/api/public/hooks/aena-sync'
     | '/api/public/hooks/agente-learn'
     | '/api/public/hooks/cinemas-sync'
+    | '/api/public/hooks/cleanup-train-snapshots'
     | '/api/public/hooks/eventos-sync'
     | '/api/public/hooks/refresh-hotels-dynamic'
+    | '/api/public/hooks/refresh-renfe-snapshot'
     | '/api/public/hooks/scrape-web-photos'
     | '/api/public/hooks/scrape-web-photos-dry'
     | '/api/public/hooks/sync-beach-covers'
@@ -1793,8 +1817,10 @@ export interface FileRouteTypes {
     | '/api/public/hooks/aena-sync'
     | '/api/public/hooks/agente-learn'
     | '/api/public/hooks/cinemas-sync'
+    | '/api/public/hooks/cleanup-train-snapshots'
     | '/api/public/hooks/eventos-sync'
     | '/api/public/hooks/refresh-hotels-dynamic'
+    | '/api/public/hooks/refresh-renfe-snapshot'
     | '/api/public/hooks/scrape-web-photos'
     | '/api/public/hooks/scrape-web-photos-dry'
     | '/api/public/hooks/sync-beach-covers'
@@ -1883,8 +1909,10 @@ export interface RootRouteChildren {
   ApiPublicHooksAenaSyncRoute: typeof ApiPublicHooksAenaSyncRoute
   ApiPublicHooksAgenteLearnRoute: typeof ApiPublicHooksAgenteLearnRoute
   ApiPublicHooksCinemasSyncRoute: typeof ApiPublicHooksCinemasSyncRoute
+  ApiPublicHooksCleanupTrainSnapshotsRoute: typeof ApiPublicHooksCleanupTrainSnapshotsRoute
   ApiPublicHooksEventosSyncRoute: typeof ApiPublicHooksEventosSyncRoute
   ApiPublicHooksRefreshHotelsDynamicRoute: typeof ApiPublicHooksRefreshHotelsDynamicRoute
+  ApiPublicHooksRefreshRenfeSnapshotRoute: typeof ApiPublicHooksRefreshRenfeSnapshotRoute
   ApiPublicHooksScrapeWebPhotosRoute: typeof ApiPublicHooksScrapeWebPhotosRoute
   ApiPublicHooksScrapeWebPhotosDryRoute: typeof ApiPublicHooksScrapeWebPhotosDryRoute
   ApiPublicHooksSyncBeachCoversRoute: typeof ApiPublicHooksSyncBeachCoversRoute
@@ -2898,6 +2926,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksScrapeWebPhotosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/refresh-renfe-snapshot': {
+      id: '/api/public/hooks/refresh-renfe-snapshot'
+      path: '/api/public/hooks/refresh-renfe-snapshot'
+      fullPath: '/api/public/hooks/refresh-renfe-snapshot'
+      preLoaderRoute: typeof ApiPublicHooksRefreshRenfeSnapshotRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/refresh-hotels-dynamic': {
       id: '/api/public/hooks/refresh-hotels-dynamic'
       path: '/api/public/hooks/refresh-hotels-dynamic'
@@ -2910,6 +2945,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/hooks/eventos-sync'
       fullPath: '/api/public/hooks/eventos-sync'
       preLoaderRoute: typeof ApiPublicHooksEventosSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/cleanup-train-snapshots': {
+      id: '/api/public/hooks/cleanup-train-snapshots'
+      path: '/api/public/hooks/cleanup-train-snapshots'
+      fullPath: '/api/public/hooks/cleanup-train-snapshots'
+      preLoaderRoute: typeof ApiPublicHooksCleanupTrainSnapshotsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/cinemas-sync': {
@@ -3247,9 +3289,13 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksAenaSyncRoute: ApiPublicHooksAenaSyncRoute,
   ApiPublicHooksAgenteLearnRoute: ApiPublicHooksAgenteLearnRoute,
   ApiPublicHooksCinemasSyncRoute: ApiPublicHooksCinemasSyncRoute,
+  ApiPublicHooksCleanupTrainSnapshotsRoute:
+    ApiPublicHooksCleanupTrainSnapshotsRoute,
   ApiPublicHooksEventosSyncRoute: ApiPublicHooksEventosSyncRoute,
   ApiPublicHooksRefreshHotelsDynamicRoute:
     ApiPublicHooksRefreshHotelsDynamicRoute,
+  ApiPublicHooksRefreshRenfeSnapshotRoute:
+    ApiPublicHooksRefreshRenfeSnapshotRoute,
   ApiPublicHooksScrapeWebPhotosRoute: ApiPublicHooksScrapeWebPhotosRoute,
   ApiPublicHooksScrapeWebPhotosDryRoute: ApiPublicHooksScrapeWebPhotosDryRoute,
   ApiPublicHooksSyncBeachCoversRoute: ApiPublicHooksSyncBeachCoversRoute,
