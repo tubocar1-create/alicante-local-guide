@@ -89,7 +89,7 @@ function nextServiceDay(
   for (let i = 1; i <= 7; i++) {
     const d = new Date(from.getTime() + i * 24 * 60 * 60_000);
     const dt = dayTypeOf(d);
-    if (rows.some((r) => r.line_code === lineCode && r.day_type === dt)) {
+    if (rows.some((r) => r.line_code === lineCode && matchesDayType(r.day_type, dt))) {
       return { dayType: dt, date: d };
     }
   }
@@ -134,7 +134,7 @@ export function getServiceStatus(
   );
 
   const dayType = dayTypeOf(now);
-  const todayRows = effectiveRows.filter((r) => r.day_type === dayType);
+  const todayRows = effectiveRows.filter((r) => matchesDayType(r.day_type, dayType));
 
   if (todayRows.length === 0) {
     if (isNight) {
@@ -143,7 +143,7 @@ export function getServiceStatus(
       // está dentro de la ventana de ayer, seguimos EN servicio.
       const yesterday = new Date(now.getTime() - 24 * 60 * 60_000);
       const yDay = dayTypeOf(yesterday);
-      const yRows = effectiveRows.filter((r) => r.day_type === yDay);
+      const yRows = effectiveRows.filter((r) => matchesDayType(r.day_type, yDay));
       const nowMinNow = now.getHours() * 60 + now.getMinutes();
       const yNightRows = yRows.filter(
         (r) => toMin(r.last_departure) < toMin(r.first_departure),
@@ -165,7 +165,7 @@ export function getServiceStatus(
       }
       const nxt = nextServiceDay(allLineRows, lineCode, now);
       if (nxt) {
-        const nxtRows = effectiveRows.filter((r) => r.day_type === nxt.dayType);
+        const nxtRows = effectiveRows.filter((r) => matchesDayType(r.day_type, nxt.dayType));
         if (nxtRows.length > 0) {
           const firstMin = Math.min(...nxtRows.map((r) => toMin(r.first_departure)));
           // Un servicio nocturno con day_type "sabado"/"festivo" que arranca
@@ -208,7 +208,7 @@ export function getServiceStatus(
     outOfService = true;
     const tomorrow = new Date(now.getTime() + 24 * 60 * 60_000);
     const tDay = dayTypeOf(tomorrow);
-    const tRows = effectiveRows.filter((r) => r.day_type === tDay);
+    const tRows = effectiveRows.filter((r) => matchesDayType(r.day_type, tDay));
     reopensMin = tRows.length
       ? Math.min(...tRows.map((r) => toMin(r.first_departure)))
       : firstMin;
@@ -245,6 +245,7 @@ export function getNightLineEstimates(
   offsetMinutes: number,
   now: Date = new Date(),
   count = 4,
+  originTerminalName?: string,
 ): NightEstimate | null {
   if (!rows) return null;
   const dayType = dayTypeOf(now);
@@ -253,7 +254,7 @@ export function getNightLineEstimates(
   let todayRows = rows.filter(
     (r) =>
       r.line_code === lineCode &&
-      r.day_type === dayType &&
+      matchesDayType(r.day_type, dayType) &&
       r.terminal_name === destinationTerminalName,
   );
   // Si hoy no hay ventana pero estamos en la madrugada, podemos estar en la
@@ -264,7 +265,7 @@ export function getNightLineEstimates(
     const yRows = rows.filter(
       (r) =>
         r.line_code === lineCode &&
-        r.day_type === yDay &&
+        matchesDayType(r.day_type, yDay) &&
         r.terminal_name === destinationTerminalName &&
         toMinHM(r.last_departure) < toMinHM(r.first_departure),
     );
@@ -302,5 +303,8 @@ export function getNightLineEstimates(
     if (upcoming.length >= count) break;
   }
   if (upcoming.length === 0) return null;
-  return { upcoming, originTerminal: sw.terminal_name, tripMinutes: offset };
+  // `originTerminal` se usa SOLO para etiquetar la UI ("salidas desde X").
+  // Lo pasa el llamador a partir del primer stop de la ruta del usuario;
+  // si no se proporciona, usamos el destino como fallback informativo.
+  return { upcoming, originTerminal: originTerminalName ?? sw.terminal_name, tripMinutes: offset };
 }
