@@ -260,7 +260,7 @@ function TrenesIndex() {
                 Destinos populares
               </p>
 
-              <div className="grid gap-3 md:grid-cols-2">
+              <div className="grid grid-cols-2 gap-3">
                 {/* Salidas */}
                 <div className="rounded-2xl border border-fuchsia-500/25 bg-fuchsia-950/20 p-3">
                   <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-fuchsia-300/90">
