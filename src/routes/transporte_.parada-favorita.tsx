@@ -203,8 +203,10 @@ function ParadaFavoritaPage() {
       // Vectalia. En paradas intermedias mostramos la hora estimada de
       // llegada, calculada por distancia desde el origen.
       const atOrigin = nightEstimate.atOrigin;
+      // En el origen, el "tiempo de espera" es hasta la SALIDA oficial
+      // (la llegada se estima 5 min antes para carga de pasajeros).
       return nightEstimate.upcoming.map((u) => ({
-        minutes: u.minutes,
+        minutes: atOrigin ? u.minutes + 5 : u.minutes,
         arrivalTime: atOrigin ? u.departureTime : u.arrivalTime,
         live: false,
       }));
@@ -535,7 +537,7 @@ function ParadaFavoritaPage() {
       {/* Upcoming buses */}
       <section className="mx-3 mt-2 rounded-3xl bg-white p-3 shadow-[0_8px_24px_-12px_rgba(60,40,10,0.25)]">
         <h3 className="mb-1 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-stone-500">
-          <span>Próximos buses</span>
+          <span>Próximas salidas</span>
           {!outOfService && hasLiveData && (
             <span className="inline-flex items-center gap-1 normal-case text-emerald-700">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
