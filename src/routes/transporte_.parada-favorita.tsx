@@ -534,19 +534,19 @@ function ParadaFavoritaPage() {
             <span className="font-extrabold text-stone-800">
               {outOfService
                 ? `fuera de servicio · reanuda ${reopensLabel}`
-                : nightEstimate
-                  ? nightEstimate.atOrigin
-                    ? `horario Vectalia · salidas desde ${nightEstimate.originTerminal}`
-                    : `horario Vectalia + recorrido estimado desde ${nightEstimate.originTerminal}`
+                : displayEstimate
+                  ? displayEstimate.atOrigin
+                    ? `horario Vectalia · salidas desde ${displayEstimate.originTerminal}`
+                    : `horario Vectalia + recorrido estimado desde ${displayEstimate.originTerminal}`
                   : hasLiveData
                     ? "tiempo real (Vectalia)"
                     : "estimación · sin paso en vivo"}
             </span>
           </div>
         </div>
-        {nightEstimate && !nightEstimate.atOrigin && (
+        {displayEstimate && !displayEstimate.atOrigin && (
           <p className="mt-1 text-[10px] leading-snug text-stone-500">
-            ⓘ La hora de salida es la oficial de Vectalia desde {nightEstimate.originTerminal}; la llegada a tu parada se estima a partir del recorrido.
+            ⓘ La hora de salida es la oficial de Vectalia desde {displayEstimate.originTerminal}; la llegada a tu parada se estima a partir del recorrido.
           </p>
         )}
       </section>
