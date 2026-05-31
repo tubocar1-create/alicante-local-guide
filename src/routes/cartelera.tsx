@@ -301,7 +301,7 @@ function RawAdifTable({ rows, kind }: { rows: Array<Record<string, any>>; kind: 
     <div className="overflow-x-auto overflow-y-auto -mx-3 px-3 flex-1 min-h-0">
       <table className="min-w-[860px] w-full text-xs border-collapse">
         <thead className="sticky top-0 z-10">
-          <tr className={`text-left text-[10px] uppercase tracking-wider text-slate-700 border-b ${kind === "SALIDA" ? "border-sky-400 bg-sky-200" : "border-amber-400 bg-amber-200"}`}>
+          <tr className="text-left text-[10px] uppercase tracking-wider text-slate-700 border-b border-slate-400 bg-slate-300">
 
             <th className="px-2 py-2 font-semibold">Hora</th>
             <th className="px-2 py-2 font-semibold">Estado</th>
@@ -325,14 +325,7 @@ function RawAdifTable({ rows, kind }: { rows: Array<Record<string, any>>; kind: 
             const st = statusLabel(r.markupColor);
             const cancelled = r.markupColor === "suppressed";
             const delayed = horaEst && horaEst !== hora;
-            const zebra =
-              kind === "SALIDA"
-                ? i % 2 === 0
-                  ? "bg-sky-50"
-                  : "bg-sky-100"
-                : i % 2 === 0
-                  ? "bg-amber-50"
-                  : "bg-amber-100";
+            const zebra = i % 2 === 0 ? "bg-slate-100" : "bg-slate-200";
 
             return (
               <tr key={i} className={`align-top ${zebra}`}>

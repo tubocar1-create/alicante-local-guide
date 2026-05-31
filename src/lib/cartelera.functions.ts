@@ -177,6 +177,13 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
       return [...m.values()].sort((a, b) => a.estimated.localeCompare(b.estimated));
     };
 
+    // Orden cronológico del raw por hora (con fallback a horaEstado)
+    const timeKey = (r: any) => {
+      const h = (r.hora || r.horaEstado || "").trim();
+      return h || "99:99";
+    };
+    raw.sort((a, b) => timeKey(a).localeCompare(timeKey(b)));
+
     return {
       generatedAt: new Date().toISOString(),
       station: "Alicante Terminal",
