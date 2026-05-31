@@ -71,9 +71,18 @@ function TrenSchedule() {
     );
   }
 
-  const trips: StationTrip[] = data?.trips ?? [];
+  // Tick cada 30s para que el filtro por minutos descarte trenes ya partidos sin recargar.
+  const [nowKey, setNowKey] = useState(() => madridNowKey());
+  useEffect(() => {
+    const id = setInterval(() => setNowKey(madridNowKey()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const allTrips: StationTrip[] = data?.trips ?? [];
+  const trips = filterFresh(allTrips, nowKey);
   const firstDate = trips[0]?.date;
   const lastDate = trips[trips.length - 1]?.date;
+
 
   return (
     <Shell>
