@@ -10,7 +10,7 @@ import {
   saveFavoriteStop,
 } from "@/components/FavoriteStopWidget";
 import { useBusGraph } from "@/hooks/useBusGraph";
-import { useBusServiceWindows, getServiceStatus, getNightLineEstimates } from "@/hooks/useBusServiceWindow";
+import { useBusServiceWindows, useBusLineDepartures, getServiceStatus, getNightLineEstimates } from "@/hooks/useBusServiceWindow";
 import { cumulativeMinutes } from "@/lib/bus-eta";
 
 export const Route = createFileRoute("/transporte_/parada-favorita")({
@@ -53,10 +53,28 @@ function ParadaFavoritaPage() {
   const [liveUpdatedAt, setLiveUpdatedAt] = useState<number>(Date.now());
 
   const serviceWindows = useBusServiceWindows();
-  // El destino del recorrido del usuario; coincide con `terminal_name` en
-  // bus_line_service_windows (que almacena el terminal de DESTINO).
-  const destinationTerminalName = stop.destination;
-  const serviceStatus = getServiceStatus(serviceWindows, stop.line, new Date(), destinationTerminalName);
+  const lineDepartures = useBusLineDepartures();
+  // Para líneas nocturnas: el cuadro Vectalia se identifica por el ORIGEN
+  // del trayecto del usuario (primer stop de la dirección cuyo último stop
+  // es stop.destination). Lo calculamos abajo en `originTerminalName`.
+  const originTerminalName = useMemo(() => {
+    if (!graph) return "";
+    const lineRows = graph.stops.filter((r) => r.line_code === stop.line);
+    const byDir = new Map<number, typeof lineRows>();
+    for (const r of lineRows) {
+      if (!byDir.has(r.direction)) byDir.set(r.direction, []);
+      byDir.get(r.direction)!.push(r);
+    }
+    for (const [, rows] of byDir) {
+      const sorted = [...rows].sort((a, b) => a.seq - b.seq);
+      if (sorted[sorted.length - 1]?.stop_name === stop.destination) {
+        return sorted[0]?.stop_name ?? "";
+      }
+    }
+    return "";
+  }, [graph, stop.line, stop.destination]);
+
+  const serviceStatus = getServiceStatus(serviceWindows, stop.line, new Date(), originTerminalName);
   const outOfService = serviceStatus.outOfService;
   const reopensDayLabel = serviceStatus.reopensDayLabel;
   const reopensAt = serviceStatus.reopensAt ?? "07:00";
@@ -64,11 +82,12 @@ function ParadaFavoritaPage() {
   const lastDeparture = serviceStatus.lastDeparture;
   const isNightLine = serviceStatus.isNightLine;
 
-  // Para líneas nocturnas en servicio: estimar llegadas a partir de la salida
-  // horaria desde el terminal de origen (Vectalia no provee live para N).
-  // El offset hasta la parada se calcula por distancia recorrida real.
+  // Para líneas nocturnas: leemos horas reales de bus_line_departures.
+  // Si la parada del usuario es el ORIGEN del trayecto, hora_llegada =
+  // hora_salida programada por Vectalia (sin offset). Si es intermedia/
+  // destino, sumamos el tiempo de recorrido estimado por distancia.
   const nightEstimate = useMemo(() => {
-    if (!isNightLine || outOfService || !graph) return null;
+    if (!isNightLine || outOfService || !graph || !originTerminalName) return null;
     const lineRows = graph.stops.filter((r) => r.line_code === stop.line);
     if (lineRows.length === 0) return null;
     const coords = new Map<string, { lat: number; lng: number }>();
@@ -81,32 +100,29 @@ function ParadaFavoritaPage() {
       byDir.get(r.direction)!.push(r);
     }
     let offsetMin = 0;
-    let originTerminal = "";
     let found = false;
     for (const [, rows] of byDir) {
       const sorted = [...rows].sort((a, b) => a.seq - b.seq);
-      const terminal = sorted[sorted.length - 1]?.stop_name;
-      if (terminal !== stop.destination) continue;
+      if (sorted[sorted.length - 1]?.stop_name !== stop.destination) continue;
       const idx = sorted.findIndex((r) => String(r.stop_code) === stop.stopId);
       if (idx < 0) continue;
       const codes = sorted.map((r) => String(r.stop_code ?? ""));
       const cum = cumulativeMinutes(codes, coords);
       offsetMin = cum[idx] ?? 0;
-      originTerminal = sorted[0]?.stop_name ?? "";
       found = true;
       break;
     }
     if (!found) return null;
     return getNightLineEstimates(
       serviceWindows,
+      lineDepartures,
       stop.line,
-      destinationTerminalName,
+      originTerminalName,
       offsetMin,
       new Date(),
       4,
-      originTerminal,
     );
-  }, [isNightLine, outOfService, graph, serviceWindows, stop, destinationTerminalName]);
+  }, [isNightLine, outOfService, graph, serviceWindows, lineDepartures, stop, originTerminalName]);
 
   useEffect(() => {
     setStop(loadFavoriteStop());
@@ -465,16 +481,18 @@ function ParadaFavoritaPage() {
               {outOfService
                 ? `fuera de servicio · reanuda ${reopensLabel}`
                 : nightEstimate
-                  ? `estimado nocturno · salidas cada hora desde ${nightEstimate.originTerminal}`
+                  ? nightEstimate.atOrigin
+                    ? `horario Vectalia · salidas desde ${nightEstimate.originTerminal}`
+                    : `horario Vectalia + recorrido estimado desde ${nightEstimate.originTerminal}`
                   : hasLiveData
                     ? "tiempo real (Vectalia)"
                     : "estimación · sin paso en vivo"}
             </span>
           </div>
         </div>
-        {nightEstimate && (
+        {nightEstimate && !nightEstimate.atOrigin && (
           <p className="mt-1 text-[10px] leading-snug text-stone-500">
-            ⓘ Horarios <strong>estimados</strong>, no en tiempo real. Calculados a partir de la salida horaria desde {nightEstimate.originTerminal}.
+            ⓘ La hora de salida es la oficial de Vectalia desde {nightEstimate.originTerminal}; la llegada a tu parada se estima a partir del recorrido.
           </p>
         )}
       </section>
