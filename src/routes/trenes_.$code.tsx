@@ -32,11 +32,12 @@ export const Route = createFileRoute("/trenes_/$code")({
 });
 
 const OPERATOR_COLORS: Record<string, string> = {
-  RENFE: "#a855f7",
-  AVLO:  "#7c3aed",
-  OUIGO: "#ec4899",
-  IRYO:  "#ef4444",
+  RENFE: "#5cbdb9", // Ocean Deep teal
+  AVLO:  "#2d8a9e", // Ocean Deep cyan
+  OUIGO: "#ec4899", // brand pink
+  IRYO:  "#ef4444", // brand red
 };
+
 
 const WEEKDAYS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
@@ -125,45 +126,106 @@ function TrenSchedule() {
           </div>
         )}
 
-        {trips.length > 0 && (
-          <div className="overflow-hidden rounded-xl border border-slate-800">
-            <div className="grid grid-cols-[auto_auto_auto_auto_auto_auto_auto] gap-x-2 border-b border-slate-800 bg-slate-950/60 px-2 py-1.5 text-[9px] uppercase tracking-wider text-slate-500">
-              <span>Fecha</span>
-              <span>Operador</span>
-              <span>Tren</span>
-              <span>Ruta</span>
-              <span>Salida</span>
-              <span>Llegada</span>
-              <span>Duración</span>
-            </div>
-            <div className="divide-y divide-slate-800/60">
-              {trips.slice(0, visible).map((t) => (
-                <div
-                  key={t.id}
-                  className="grid grid-cols-[auto_auto_auto_auto_auto_auto_auto] items-center gap-x-2 px-2 py-1.5 text-[11px]"
-                >
-                  <span className="text-slate-300">{fmtDate(t.date)}</span>
-                  <span
-                    className="rounded px-1.5 py-0.5 text-[10px] font-bold"
-                    style={{
-                      background: (OPERATOR_COLORS[t.operator] ?? "#64748b") + "22",
-                      color: OPERATOR_COLORS[t.operator] ?? "#94a3b8",
-                    }}
+        {trips.length > 0 && (() => {
+          const shown = trips.slice(0, visible);
+          // Group by date
+          const groups: Array<{ date: string; items: StationTrip[] }> = [];
+          for (const t of shown) {
+            const last = groups[groups.length - 1];
+            if (last && last.date === t.date) last.items.push(t);
+            else groups.push({ date: t.date, items: [t] });
+          }
+          return (
+            <div className="space-y-5">
+              {groups.map((g) => (
+                <div key={g.date}>
+                  {/* Sticky day header */}
+                  <div
+                    className="sticky top-0 z-10 -mx-3 mb-2 flex items-end justify-between border-b border-cyan-500/20 bg-slate-950/90 px-3 py-2 backdrop-blur md:-mx-0 md:px-0"
                   >
-                    {t.product}
-                  </span>
-                  <span className="font-mono text-[10px] text-slate-300">{t.number}</span>
-                  <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] font-bold text-fuchsia-300">
-                    {t.origin} → {t.destination}
-                  </span>
-                  <span className="font-mono text-slate-200">{t.departure}</span>
-                  <span className="font-mono text-slate-400">{t.arrival}</span>
-                  <span className="font-mono text-slate-400">{t.durationLabel}</span>
+                    <div>
+                      <p className="text-[9px] font-bold uppercase tracking-[0.22em] text-cyan-400/70">
+                        {dir === "S" ? "Salidas" : "Llegadas"}
+                      </p>
+                      <h3 className="font-mono text-sm font-bold text-slate-100">
+                        {fmtDate(g.date)}
+                      </h3>
+                    </div>
+                    <span className="font-mono text-[10px] text-slate-500">
+                      {g.items.length} {g.items.length === 1 ? "tren" : "trenes"}
+                    </span>
+                  </div>
+
+                  {/* Cards */}
+                  <div className="space-y-1.5">
+                    {g.items.map((t) => {
+                      const opColor = OPERATOR_COLORS[t.operator] ?? "#5cbdb9";
+                      return (
+                        <div
+                          key={t.id}
+                          className="group relative rounded-xl border border-slate-800 bg-slate-900/40 px-3 py-2.5 transition hover:border-cyan-500/40 hover:bg-slate-900/70"
+                        >
+                          <div className="flex items-center gap-3">
+                            {/* Salida */}
+                            <div className="flex flex-col items-start">
+                              <p className="font-mono text-xl font-bold tabular-nums leading-none text-slate-100">
+                                {t.departure}
+                              </p>
+                              <p className="mt-1 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                                {t.origin}
+                              </p>
+                            </div>
+
+                            {/* Línea tiempo */}
+                            <div className="flex flex-1 flex-col items-center">
+                              <span className="font-mono text-[10px] text-cyan-400/80">
+                                {t.durationLabel}
+                              </span>
+                              <div className="relative my-1 h-px w-full bg-gradient-to-r from-slate-700 via-cyan-500/30 to-slate-700">
+                                <span className="absolute -top-[3px] left-0 h-1.5 w-1.5 rounded-full border border-slate-700 bg-slate-900" />
+                                <span className="absolute -top-[3px] right-0 h-1.5 w-1.5 rounded-full bg-cyan-400" />
+                              </div>
+                              <span className="text-[9px] uppercase tracking-wider text-slate-600">
+                                Directo
+                              </span>
+                            </div>
+
+                            {/* Llegada */}
+                            <div className="flex flex-col items-end">
+                              <p className="font-mono text-xl font-bold tabular-nums leading-none text-slate-100">
+                                {t.arrival}
+                              </p>
+                              <p className="mt-1 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                                {t.destination}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Meta */}
+                          <div className="mt-2 flex items-center justify-between border-t border-slate-800/70 pt-2">
+                            <span
+                              className="rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+                              style={{
+                                background: opColor + "1f",
+                                color: opColor,
+                              }}
+                            >
+                              {t.product}
+                            </span>
+                            <span className="font-mono text-[10px] text-slate-500">
+                              #{t.number}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          );
+        })()}
+
 
         {trips.length > visible && (
           <button
