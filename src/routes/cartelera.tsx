@@ -147,9 +147,9 @@ function Board() {
   );
 
   return (
-    <div className="mx-auto max-w-3xl px-3 pb-4 pt-4 flex flex-col gap-3 h-[calc(100dvh-120px)]">
+    <div className="mx-auto max-w-3xl px-3 pb-2 pt-2 flex flex-col gap-2 h-[100dvh]">
       {/* Header */}
-      <header className="flex items-center justify-between">
+      <header className="flex items-center justify-between shrink-0">
         <Link
           to="/trenes"
           className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900"
@@ -157,27 +157,11 @@ function Board() {
           <ArrowLeft className="h-3.5 w-3.5" />
           Trenes
         </Link>
-      </header>
-
-
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100">
-          <Train className="h-5 w-5 text-orange-600" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <h1 className="text-lg font-bold leading-tight text-slate-900">
-            Alicante Terminal
-          </h1>
-          <p className="text-[11px] text-slate-500">
-            Información en tiempo real · ADIF
-          </p>
-        </div>
         <div className="text-right text-[10px] text-slate-500">
           Actualizado hace {updatedAgo}s
           <RefreshCw className="inline h-3 w-3 ml-1" />
         </div>
-      </div>
-
+      </header>
 
       {/* Salidas ADIF */}
       <Card className="flex-1 flex flex-col min-h-0 overflow-hidden border-sky-300 bg-sky-100">
@@ -198,12 +182,6 @@ function Board() {
         />
         <RawAdifTable rows={data.raw.filter((r) => r.direction !== "SALIDA")} kind="LLEGADA" />
       </Card>
-
-
-
-      <p className="text-center text-[10px] text-slate-400 pt-2">
-        Los horarios son estimados y pueden cambiar. Consulta antes de viajar.
-      </p>
     </div>
   );
 }
