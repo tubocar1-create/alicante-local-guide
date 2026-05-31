@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { ArrowLeft, CalendarDays, Train } from "lucide-react";
 import { STATIONS } from "./trenes";
 import { getStationSchedule, type StationTrip } from "@/lib/trenes/snapshot-client";
+
 
 type SearchParams = { dir?: "S" | "L" };
 
@@ -46,6 +48,29 @@ function fmtDate(iso: string) {
   return `${WEEKDAYS[d.getUTCDay()]} ${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`;
 }
 
+// "YYYY-MM-DD|HH:MM" en Europe/Madrid — clave estable por minuto.
+function madridNowKey(): string {
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Madrid",
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", hour12: false,
+  });
+  const p = fmt.formatToParts(new Date());
+  const g = (t: string) => p.find((x) => x.type === t)?.value ?? "";
+  let hh = g("hour"); if (hh === "24") hh = "00";
+  return `${g("year")}-${g("month")}-${g("day")}|${hh}:${g("minute")}`;
+}
+
+function filterFresh(list: StationTrip[], nowKey: string): StationTrip[] {
+  const [nowDate, nowTime] = nowKey.split("|");
+  return list.filter((t) => {
+    if (t.date < nowDate) return false;
+    if (t.date === nowDate && t.departure < nowTime) return false;
+    return true;
+  });
+}
+
+
 function TrenSchedule() {
   const { code } = Route.useParams();
   const { dir = "S" } = Route.useSearch();
@@ -69,9 +94,18 @@ function TrenSchedule() {
     );
   }
 
-  const trips: StationTrip[] = data?.trips ?? [];
+  // Tick cada 30s para que el filtro por minutos descarte trenes ya partidos sin recargar.
+  const [nowKey, setNowKey] = useState(() => madridNowKey());
+  useEffect(() => {
+    const id = setInterval(() => setNowKey(madridNowKey()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const allTrips: StationTrip[] = data?.trips ?? [];
+  const trips = filterFresh(allTrips, nowKey);
   const firstDate = trips[0]?.date;
   const lastDate = trips[trips.length - 1]?.date;
+
 
   return (
     <Shell>
