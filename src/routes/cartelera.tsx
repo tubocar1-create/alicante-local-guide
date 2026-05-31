@@ -304,10 +304,9 @@ function Board() {
           {alertas.filter((t) => t.observation).length === 0 ? (
             <p className="text-sm text-slate-500 py-3">Sin incidencias publicadas.</p>
           ) : (
-            <ul className="space-y-2.5">
+            <ul className="space-y-2.5 max-h-[280px] overflow-y-auto">
               {alertas
                 .filter((t) => t.observation)
-                .slice(0, 3)
                 .map((t, i) => (
                   <li key={i} className="text-xs">
                     <div className="font-medium text-slate-800 line-clamp-1">
