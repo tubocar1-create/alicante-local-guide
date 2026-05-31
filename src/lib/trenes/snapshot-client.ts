@@ -7,6 +7,7 @@ import {
   addMinutes,
   fmtDuration,
 } from "./fixed-schedules";
+import { supabase } from "@/integrations/supabase/client";
 
 export type StationTrip = {
   id: string;
@@ -87,11 +88,37 @@ const STATION_NAME_MATCHERS: Record<string, RegExp[]> = {
 let snapshotCache: Promise<Snapshot | null> | null = null;
 function loadSnapshot(): Promise<Snapshot | null> {
   if (!snapshotCache) {
-    snapshotCache = fetch("/data/alicante_snapshot.json", { cache: "force-cache" })
-      .then((r) => (r.ok ? (r.json() as Promise<Snapshot>) : null))
-      .catch(() => null);
+    snapshotCache = (async () => {
+      const { data, error } = await supabase
+        .from("train_schedule_snapshot")
+        .select("payload, generated_at")
+        .order("generated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error || !data) return null;
+      const snap = data.payload as Snapshot;
+      // Garantiza generatedAt aunque el payload sea antiguo
+      if (!snap.generatedAt) snap.generatedAt = data.generated_at as string;
+      return snap;
+    })();
   }
   return snapshotCache;
+}
+
+// Hoy en zona Europe/Madrid → YYYY-MM-DD y HH:MM (para filtrar caducados).
+function todayMadrid(): { date: string; time: string } {
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Madrid",
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", hour12: false,
+  });
+  const parts = fmt.formatToParts(new Date());
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  const date = `${get("year")}-${get("month")}-${get("day")}`;
+  let hh = get("hour");
+  if (hh === "24") hh = "00"; // en-CA puede devolver 24 a medianoche
+  const time = `${hh}:${get("minute")}`;
+  return { date, time };
 }
 
 function hhmm(t: string): string {
