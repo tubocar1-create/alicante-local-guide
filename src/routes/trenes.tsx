@@ -125,6 +125,20 @@ const OPERATOR_COLORS: Record<string, string> = {
   IRYO:  "#dc2626",
 };
 
+// Estaciones terminales/cabecera por corredor (destacadas)
+const TERMINUS_CODES = new Set<string>([
+  "MAD-CHA", "MED-BCN", "MUR-MUR", "CTG-CTG", "LOR-LOR", "UNI-SVI",
+  // Norte: múltiples cabeceras
+  "NOR-COR", "NOR-VIG", "NOR-GIJ", "NOR-OVI", "NOR-OUR", "NOR-LEO",
+]);
+
+// Ciudades importantes (destacadas en negrita)
+const MAJOR_CITIES = new Set<string>([
+  "Madrid", "Barcelona", "Valencia", "Murcia", "Lorca", "Cartagena",
+  "Zaragoza", "Valladolid", "León", "A Coruña", "Vigo", "Oviedo",
+  "Gijón", "Albacete", "Alicante",
+]);
+
 function TrenesIndex() {
   const [direction, setDirection] = useState<"S" | "L">("S");
   const [query, setQuery] = useState("");
@@ -253,26 +267,46 @@ function TrenesIndex() {
                   </span>
                 </div>
 
-                <ul className="space-y-1 border-t border-slate-800 bg-slate-950/40 p-2">
-                  {stations.map((s) => (
+                <ul className="border-t border-slate-800 bg-slate-950/40 p-1.5">
+                  {stations.map((s) => {
+                    const isTerminus = TERMINUS_CODES.has(s.code);
+                    const isMajor = MAJOR_CITIES.has(s.city);
+                    return (
                     <li key={s.code}>
                       <Link
                         to="/trenes/$code"
                         params={{ code: s.code }}
                         search={{ dir: direction }}
-                        className="group flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/40 px-3 py-2.5 transition hover:border-fuchsia-500/40 hover:bg-fuchsia-500/5"
+                        className={`group flex items-center gap-2 rounded-lg border px-2.5 py-1.5 transition ${
+                          isTerminus
+                            ? "border-fuchsia-500/40 bg-fuchsia-500/[0.07] hover:border-fuchsia-400/70 hover:bg-fuchsia-500/[0.12]"
+                            : "border-slate-800/70 bg-slate-950/40 hover:border-fuchsia-500/40 hover:bg-fuchsia-500/5"
+                        }`}
                       >
+                        {isTerminus && (
+                          <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-fuchsia-400 shadow-[0_0_8px_rgba(232,121,249,0.8)]" />
+                        )}
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-baseline gap-2">
-                            <span className="truncate text-sm font-semibold text-white">{s.station}</span>
-                          </div>
-                          <div className="truncate text-[11px] text-slate-400">{s.city}</div>
+                          <span
+                            className={`truncate ${
+                              isTerminus
+                                ? "text-[13px] font-bold bg-gradient-to-r from-fuchsia-200 via-white to-violet-200 bg-clip-text text-transparent"
+                                : isMajor
+                                ? "text-[13px] font-bold text-white"
+                                : "text-[12px] font-medium text-slate-200"
+                            }`}
+                          >
+                            {s.station}
+                          </span>
+                          <span className={`ml-1.5 text-[10px] ${isMajor ? "text-fuchsia-300/80" : "text-slate-500"}`}>
+                            · {s.city}
+                          </span>
                         </div>
                         <div className="flex shrink-0 items-center gap-1">
                           {s.operators.map((op) => (
                             <span
                               key={op}
-                              className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider"
+                              className="rounded px-1 py-0.5 text-[9px] font-bold uppercase tracking-wider"
                               style={{
                                 background: (OPERATOR_COLORS[op] ?? "#64748b") + "22",
                                 color: OPERATOR_COLORS[op] ?? "#94a3b8",
@@ -282,10 +316,11 @@ function TrenesIndex() {
                             </span>
                           ))}
                         </div>
-                        <ArrowRight className="h-4 w-4 shrink-0 text-slate-500 transition group-hover:translate-x-0.5 group-hover:text-fuchsia-300" />
+                        <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-500 transition group-hover:translate-x-0.5 group-hover:text-fuchsia-300" />
                       </Link>
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
               </section>
             );
