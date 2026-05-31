@@ -69,8 +69,11 @@ function norm(item: any, dir: "SALIDA" | "LLEGADA", tt: string): CarteleraTrain 
   };
 }
 
-export const getCartelera = createServerFn({ method: "GET" }).handler(
-  async (): Promise<CarteleraResponse> => {
+const CACHE_TTL_MS = 5 * 60 * 1000;
+let _cache: { at: number; data: CarteleraResponse } | null = null;
+let _inflight: Promise<CarteleraResponse> | null = null;
+
+async function fetchCartelera(): Promise<CarteleraResponse> {
     const r1 = await fetch(BASE, {
       headers: {
         "User-Agent":
@@ -165,5 +168,35 @@ export const getCartelera = createServerFn({ method: "GET" }).handler(
       llegadas: dedup(llegadas),
       raw,
     };
+  }
+
+export const getCartelera = createServerFn({ method: "GET" }).handler(
+  async (): Promise<CarteleraResponse & { cachedAt: string; nextRefreshAt: string }> => {
+    const now = Date.now();
+    if (_cache && now - _cache.at < CACHE_TTL_MS) {
+      return {
+        ...(_cache.data as any),
+        cachedAt: new Date(_cache.at).toISOString(),
+        nextRefreshAt: new Date(_cache.at + CACHE_TTL_MS).toISOString(),
+      };
+    }
+    if (!_inflight) {
+      _inflight = fetchCartelera()
+        .then((data) => {
+          _cache = { at: Date.now(), data };
+          return data;
+        })
+        .finally(() => {
+          _inflight = null;
+        });
+    }
+    const data = await _inflight;
+    const at = _cache?.at ?? Date.now();
+    return {
+      ...(data as any),
+      cachedAt: new Date(at).toISOString(),
+      nextRefreshAt: new Date(at + CACHE_TTL_MS).toISOString(),
+    };
   },
 );
+
