@@ -40,7 +40,7 @@ const CATEGORY_COLOR: Record<"night" | "extraurban" | "urban", string> = {
 };
 
 
-export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode }: Props) {
+export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode, embedded }: Props) {
   const { data, loading } = useBusGraph();
   const { state: locState, request: requestLocation } = useUserLocation();
   const [step, setStep] = useState<"line" | "direction" | "stop">(
