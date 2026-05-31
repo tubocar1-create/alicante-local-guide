@@ -4,6 +4,13 @@ import { ArrowLeft, ArrowDown, ArrowUp, Bus, ChevronDown, Radio, RefreshCw, Load
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { classifyLine } from "@/components/BusKnownPicker";
 import { saveFavoriteStop } from "@/components/FavoriteStopWidget";
+import {
+  useBusServiceWindows,
+  useBusLineDepartures,
+  getServiceStatus,
+  getNightLineEstimates,
+} from "@/hooks/useBusServiceWindow";
+import { cumulativeMinutes, NIGHT_URBAN_KMH } from "@/lib/bus-eta";
 import busAlicanteImg from "@/assets/bus-alicante.png";
 import type { LineStopPoint } from "@/components/BusLineLiveMap";
 
@@ -183,13 +190,76 @@ function BusDashboardPage() {
     return out;
   }, [stopsByDir, stopCoords]);
 
+  // Detección de línea nocturna y estimaciones por parada (sin tiempo real).
+  const serviceRows = useBusServiceWindows();
+  const departures = useBusLineDepartures();
+
+  const isNightLine = useMemo(() => {
+    const st = getServiceStatus(serviceRows, code, clock);
+    return st.isNightLine;
+  }, [serviceRows, code, clock]);
+
+  // Para líneas nocturnas: hora estimada de llegada por parada usando la próxima
+  // salida oficial de Vectalia desde el terminal de origen + recorrido estimado
+  // (velocidad media de madrugada). No llamamos al endpoint de tiempo real.
+  const nightEtaByCode = useMemo(() => {
+    const map = new Map<string, { min: number; time: string }>();
+    if (!isNightLine || !serviceRows || !departures) return map;
+    const BOARDING_BUFFER_MIN = 5;
+    for (const dir of [1, 2] as const) {
+      const stops = stopsByDir[dir];
+      if (stops.length === 0) continue;
+      const originName = stops[0].name;
+      // Próxima salida desde el origen (sin offset). Devuelve atOrigin con
+      // el -5 min de buffer ya aplicado a `arrivalTime`; pero necesitamos la
+      // hora de salida oficial para sumar el recorrido a paradas intermedias.
+      const est = getNightLineEstimates(
+        serviceRows,
+        departures,
+        code,
+        originName,
+        0,
+        clock,
+        1,
+      );
+      if (!est || est.upcoming.length === 0) continue;
+      const next = est.upcoming[0];
+      // departureTime = HH:MM oficial desde el origen.
+      const [dh, dm] = next.departureTime.split(":").map(Number);
+      const depAbsMin = dh * 60 + dm;
+      const nowMin = clock.getHours() * 60 + clock.getMinutes();
+      // Ajuste si la salida es madrugada y ya pasó medianoche (o viceversa).
+      let depDelta = depAbsMin - nowMin;
+      if (depDelta < -12 * 60) depDelta += 24 * 60;
+      if (depDelta > 12 * 60) depDelta -= 24 * 60;
+
+      const codes = stops.map((s) => s.code);
+      const cum = cumulativeMinutes(codes, stopCoords, { speedKmh: NIGHT_URBAN_KMH });
+      const lastIdx = stops.length - 1;
+      for (let i = 0; i < stops.length; i++) {
+        const isTerminal = i === 0 || i === lastIdx;
+        const offset = cum[i] ?? 0;
+        const arrDelta = depDelta + offset - (isTerminal ? BOARDING_BUFFER_MIN : 0);
+        const arrAbs = (((depAbsMin + offset - (isTerminal ? BOARDING_BUFFER_MIN : 0)) % 1440) + 1440) % 1440;
+        const hh = String(Math.floor(arrAbs / 60)).padStart(2, "0");
+        const mm = String(Math.round(arrAbs % 60)).padStart(2, "0");
+        map.set(stops[i].code, {
+          min: Math.max(0, Math.round(arrDelta)),
+          time: `${hh}:${mm}`,
+        });
+      }
+    }
+    return map;
+  }, [isNightLine, serviceRows, departures, code, stopsByDir, stopCoords, clock]);
+
   // Realtime: por cada parada del recorrido (ambas direcciones), pedir su ETA.
-  // Guardamos hasta 2 próximos tiempos por parada (índice 0 y 1).
+  // Saltamos en líneas nocturnas — usamos estimación por horario oficial.
   const [etas, setEtas] = useState<Record<string, number[]>>({});
   const [loadingEtas, setLoadingEtas] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isNightLine) return;
     const allStops = [...stopsByDir[1], ...stopsByDir[2]];
     if (allStops.length === 0) return;
     let cancelled = false;
@@ -235,7 +305,7 @@ function BusDashboardPage() {
       if (timer) clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [code, stopsByDir[1].length, stopsByDir[2].length]);
+  }, [code, isNightLine, stopsByDir[1].length, stopsByDir[2].length]);
 
 
   const lineCategory = classifyLine(code);
@@ -243,8 +313,10 @@ function BusDashboardPage() {
   const catGradientEnd = lineCategory === "urban" ? "#B91C1C" : "#1E3A8A";
   const lineColor = line?.color || catColor;
 
-  const inService =
-    Object.values(etas).some((arr) => arr && arr.length > 0) || loadingEtas;
+  const inService = isNightLine
+    ? nightEtaByCode.size > 0
+    : Object.values(etas).some((arr) => arr && arr.length > 0) || loadingEtas;
+
 
   if (loading) {
     return (
@@ -332,9 +404,11 @@ function BusDashboardPage() {
             direction={1}
             stops={stopsByDir[1]}
             etas={etas}
+            nightEtaByCode={isNightLine ? nightEtaByCode : null}
             color={lineColor}
             inService={inService}
             transferLines={(c) => {
+              if (isNightLine) return [];
               const others = transfersByStop.get(c);
               if (!others) return [];
               return topTransfers.filter((t) => others.has(t.code));
@@ -348,9 +422,11 @@ function BusDashboardPage() {
             direction={2}
             stops={stopsByDir[2]}
             etas={etas}
+            nightEtaByCode={isNightLine ? nightEtaByCode : null}
             color={lineColor}
             inService={inService}
             transferLines={(c) => {
+              if (isNightLine) return [];
               const others = transfersByStop.get(c);
               if (!others) return [];
               return topTransfers.filter((t) => others.has(t.code));
@@ -363,7 +439,7 @@ function BusDashboardPage() {
         </div>
 
         {/* LEYENDA */}
-        {topTransfers.length > 0 && (
+        {!isNightLine && topTransfers.length > 0 && (
           <div className="mt-3 flex flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-3">
             <span className="font-sans text-[13px] not-italic text-white/70">Leyenda</span>
             {topTransfers.map((t) => (
@@ -378,6 +454,7 @@ function BusDashboardPage() {
             ))}
           </div>
         )}
+
 
 
 
@@ -506,6 +583,7 @@ function DirectionColumn({
   direction,
   stops,
   etas,
+  nightEtaByCode,
   color,
   inService,
   transferLines,
@@ -517,6 +595,7 @@ function DirectionColumn({
   direction: 1 | 2;
   stops: StopRow[];
   etas: Record<string, number[]>;
+  nightEtaByCode: Map<string, { min: number; time: string }> | null;
   color: string;
   inService: boolean;
   transferLines: (stopCode: string) => { code: string; color: string }[];
@@ -597,15 +676,19 @@ function DirectionColumn({
         )}
         {stops.map((s, i) => {
           const arr = etas[s.code] ?? [];
-          const eta1 = arr[0];
+          const liveEta = arr[0];
+          const nightEta = nightEtaByCode?.get(s.code) ?? null;
+          const eta1 = nightEta ? nightEta.min : liveEta;
           const hasEta = typeof eta1 === "number";
           const isOrigin = i === 0;
           const isDest = i === stops.length - 1;
           const transfers = transferLines(s.code);
           const transferColor = transfers[0]?.color ?? null;
-          const etaTime = hasEta
-            ? formatHHMM(new Date(now.getTime() + eta1 * 60_000))
-            : null;
+          const etaTime = nightEta
+            ? nightEta.time
+            : typeof liveEta === "number"
+              ? formatHHMM(new Date(now.getTime() + liveEta * 60_000))
+              : null;
 
           const isNearest = nearestCodes.has(s.code);
           const isPrimaryNearest = nearest?.code === s.code;
