@@ -300,8 +300,9 @@ export function getNightLineEstimates(
         r.terminal_name === originTerminalName,
     );
     if (!sw) return [];
-    const isNight = toMinHM(sw.last_departure) < toMinHM(sw.first_departure);
-    if (!isNight) return [];
+    // Nota: no exigimos last<first aquí. La dirección de madrugada de una línea
+    // nocturna (ej. 00:00→06:00) es técnicamente "no cruza medianoche" pero
+    // sigue siendo el turno nocturno; el caller ya garantizó isNightLine.
     return departures
       .filter(
         (d) =>
