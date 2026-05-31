@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Train, ArrowLeft, ArrowRight } from "lucide-react";
+import { Train, ArrowLeft, ArrowRight, Radio, CalendarRange } from "lucide-react";
 
 export const Route = createFileRoute("/trenes")({
   head: () => ({
@@ -138,6 +138,7 @@ const CORRIDOR_TINTS: Record<CorridorId, { section: string; list: string; border
 
 
 function TrenesIndex() {
+  const [mode, setMode] = useState<"menu" | "programa">("menu");
   const [direction, setDirection] = useState<"S" | "L">("S");
   const [query, setQuery] = useState("");
 
@@ -201,6 +202,70 @@ function TrenesIndex() {
             Corredores ferroviarios desde Alicante-Terminal. Renfe, OUIGO e IRYO bajo demanda.
           </p>
         </div>
+
+        {mode === "menu" && (
+          <div className="space-y-3">
+            <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">
+              ¿Qué quieres consultar?
+            </p>
+            <Link
+              to="/cartelera"
+              className="group block overflow-hidden rounded-2xl border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-500/15 via-slate-900/60 to-slate-950/60 p-4 transition hover:border-emerald-400/70 hover:from-emerald-500/25"
+            >
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 ring-1 ring-emerald-400/40">
+                  <Radio className="h-5 w-5 text-emerald-300" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-base font-bold text-white md:text-lg">
+                      Cartelera de trenes de hoy
+                    </h2>
+                    <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-300">
+                      En vivo
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-slate-300">
+                    Próximas salidas y llegadas en Alicante-Terminal con incidencias en tiempo real (ADIF).
+                  </p>
+                </div>
+                <ArrowRight className="h-4 w-4 shrink-0 text-emerald-300 transition group-hover:translate-x-0.5" />
+              </div>
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => setMode("programa")}
+              className="group block w-full overflow-hidden rounded-2xl border-2 border-fuchsia-500/40 bg-gradient-to-br from-fuchsia-500/15 via-slate-900/60 to-slate-950/60 p-4 text-left transition hover:border-fuchsia-400/70 hover:from-fuchsia-500/25"
+            >
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-fuchsia-500/20 ring-1 ring-fuchsia-400/40">
+                  <CalendarRange className="h-5 w-5 text-fuchsia-300" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-base font-bold text-white md:text-lg">
+                    Programa de trenes
+                  </h2>
+                  <p className="mt-1 text-xs text-slate-300">
+                    Horarios y frecuencias <span className="text-fuchsia-200">desde</span> Alicante <span className="text-fuchsia-200">hasta</span> tu destino (o al revés).
+                  </p>
+                </div>
+                <ArrowRight className="h-4 w-4 shrink-0 text-fuchsia-300 transition group-hover:translate-x-0.5" />
+              </div>
+            </button>
+          </div>
+        )}
+
+        {mode === "programa" && (
+        <>
+        <button
+          type="button"
+          onClick={() => setMode("menu")}
+          className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1 text-[11px] text-slate-300 transition hover:border-fuchsia-500/50 hover:text-fuchsia-300"
+        >
+          <ArrowLeft className="h-3 w-3" />
+          Cambiar modo
+        </button>
 
         {/* Toggle Salidas / Llegadas — grande y claro */}
         <div className="mb-4 grid grid-cols-2 gap-2 rounded-2xl border-2 border-slate-700 bg-slate-900/60 p-1.5">
@@ -313,6 +378,8 @@ function TrenesIndex() {
           <Train className="h-3 w-3" />
           Esqueleto preparado — los horarios se cargarán bajo demanda con GTFS oficial.
         </p>
+        </>
+        )}
       </div>
     </div>
   );
