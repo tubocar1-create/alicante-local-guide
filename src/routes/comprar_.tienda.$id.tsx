@@ -97,7 +97,9 @@ function TiendaDetail() {
     return <div className="p-6 text-sm">Tienda no encontrada.</div>;
   }
 
-  const heroSrc = biz.photo_ref ? `/api/public/shop-photo/${biz.photo_ref}?w=1200` : null;
+  const shopPhotoUrl = (ref: string, w: number) =>
+    /^https?:\/\//i.test(ref) ? ref : `/api/public/shop-photo/${ref}?w=${w}`;
+  const heroSrc = biz.photo_ref ? shopPhotoUrl(biz.photo_ref, 1200) : null;
   const gallery = biz.photos_refs.slice(1, 5);
   const mapsUrl = biz.google_place_id
     ? `https://www.google.com/maps/place/?q=place_id:${biz.google_place_id}`
@@ -249,7 +251,7 @@ function TiendaDetail() {
               {gallery.map((p) => (
                 <img
                   key={p}
-                  src={`/api/public/shop-photo/${p}?w=600`}
+                  src={shopPhotoUrl(p, 600)}
                   alt={biz.name}
                   loading="lazy"
                   className="aspect-square w-full rounded-xl object-cover"
