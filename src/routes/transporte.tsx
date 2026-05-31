@@ -126,7 +126,7 @@ function TransporteHub() {
           </p>
         </div>
 
-        {sectors.map((s) => (
+        {SECTORS.map((s: Sector) => (
           <Link
             key={s.to}
             to={s.to}
