@@ -190,13 +190,76 @@ function BusDashboardPage() {
     return out;
   }, [stopsByDir, stopCoords]);
 
+  // Detección de línea nocturna y estimaciones por parada (sin tiempo real).
+  const serviceRows = useBusServiceWindows();
+  const departures = useBusLineDepartures();
+
+  const isNightLine = useMemo(() => {
+    const st = getServiceStatus(serviceRows, code, clock);
+    return st.isNightLine;
+  }, [serviceRows, code, clock]);
+
+  // Para líneas nocturnas: hora estimada de llegada por parada usando la próxima
+  // salida oficial de Vectalia desde el terminal de origen + recorrido estimado
+  // (velocidad media de madrugada). No llamamos al endpoint de tiempo real.
+  const nightEtaByCode = useMemo(() => {
+    const map = new Map<string, { min: number; time: string }>();
+    if (!isNightLine || !serviceRows || !departures) return map;
+    const BOARDING_BUFFER_MIN = 5;
+    for (const dir of [1, 2] as const) {
+      const stops = stopsByDir[dir];
+      if (stops.length === 0) continue;
+      const originName = stops[0].name;
+      // Próxima salida desde el origen (sin offset). Devuelve atOrigin con
+      // el -5 min de buffer ya aplicado a `arrivalTime`; pero necesitamos la
+      // hora de salida oficial para sumar el recorrido a paradas intermedias.
+      const est = getNightLineEstimates(
+        serviceRows,
+        departures,
+        code,
+        originName,
+        0,
+        clock,
+        1,
+      );
+      if (!est || est.upcoming.length === 0) continue;
+      const next = est.upcoming[0];
+      // departureTime = HH:MM oficial desde el origen.
+      const [dh, dm] = next.departureTime.split(":").map(Number);
+      const depAbsMin = dh * 60 + dm;
+      const nowMin = clock.getHours() * 60 + clock.getMinutes();
+      // Ajuste si la salida es madrugada y ya pasó medianoche (o viceversa).
+      let depDelta = depAbsMin - nowMin;
+      if (depDelta < -12 * 60) depDelta += 24 * 60;
+      if (depDelta > 12 * 60) depDelta -= 24 * 60;
+
+      const codes = stops.map((s) => s.code);
+      const cum = cumulativeMinutes(codes, stopCoords, { speedKmh: NIGHT_URBAN_KMH });
+      const lastIdx = stops.length - 1;
+      for (let i = 0; i < stops.length; i++) {
+        const isTerminal = i === 0 || i === lastIdx;
+        const offset = cum[i] ?? 0;
+        const arrDelta = depDelta + offset - (isTerminal ? BOARDING_BUFFER_MIN : 0);
+        const arrAbs = (((depAbsMin + offset - (isTerminal ? BOARDING_BUFFER_MIN : 0)) % 1440) + 1440) % 1440;
+        const hh = String(Math.floor(arrAbs / 60)).padStart(2, "0");
+        const mm = String(Math.round(arrAbs % 60)).padStart(2, "0");
+        map.set(stops[i].code, {
+          min: Math.max(0, Math.round(arrDelta)),
+          time: `${hh}:${mm}`,
+        });
+      }
+    }
+    return map;
+  }, [isNightLine, serviceRows, departures, code, stopsByDir, stopCoords, clock]);
+
   // Realtime: por cada parada del recorrido (ambas direcciones), pedir su ETA.
-  // Guardamos hasta 2 próximos tiempos por parada (índice 0 y 1).
+  // Saltamos en líneas nocturnas — usamos estimación por horario oficial.
   const [etas, setEtas] = useState<Record<string, number[]>>({});
   const [loadingEtas, setLoadingEtas] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isNightLine) return;
     const allStops = [...stopsByDir[1], ...stopsByDir[2]];
     if (allStops.length === 0) return;
     let cancelled = false;
@@ -242,7 +305,7 @@ function BusDashboardPage() {
       if (timer) clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [code, stopsByDir[1].length, stopsByDir[2].length]);
+  }, [code, isNightLine, stopsByDir[1].length, stopsByDir[2].length]);
 
 
   const lineCategory = classifyLine(code);
@@ -250,8 +313,10 @@ function BusDashboardPage() {
   const catGradientEnd = lineCategory === "urban" ? "#B91C1C" : "#1E3A8A";
   const lineColor = line?.color || catColor;
 
-  const inService =
-    Object.values(etas).some((arr) => arr && arr.length > 0) || loadingEtas;
+  const inService = isNightLine
+    ? nightEtaByCode.size > 0
+    : Object.values(etas).some((arr) => arr && arr.length > 0) || loadingEtas;
+
 
   if (loading) {
     return (
