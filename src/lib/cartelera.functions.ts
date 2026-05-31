@@ -70,8 +70,10 @@ function norm(item: any, dir: "SALIDA" | "LLEGADA", tt: string): CarteleraTrain 
 }
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
-let _cache: { at: number; data: CarteleraResponse } | null = null;
+const CACHE_VERSION = 3;
+let _cache: { at: number; v: number; data: CarteleraResponse } | null = null;
 let _inflight: Promise<CarteleraResponse> | null = null;
+
 
 async function fetchCartelera(): Promise<CarteleraResponse> {
     const r1 = await fetch(BASE, {
