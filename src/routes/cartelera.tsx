@@ -121,10 +121,6 @@ function Board() {
     return set.size;
   }, [all]);
 
-  const alertas = useMemo(
-    () => all.filter((t) => t.status !== "EN_HORA" || t.observation),
-    [all],
-  );
 
   const filteredSalidas = useMemo(() => {
     let list = data.salidas;
