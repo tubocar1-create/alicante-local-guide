@@ -349,6 +349,18 @@ function ParadaFavoritaPage() {
     setQuery("");
   }
 
+  if (searchTargetPending) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#fdf7ee] px-6 text-center">
+        <div className="rounded-3xl bg-white px-6 py-5 shadow-[0_8px_24px_-12px_rgba(60,40,10,0.25)] ring-1 ring-stone-200">
+          <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-4 border-stone-200 border-t-[#0d3b8a]" />
+          <p className="text-sm font-extrabold text-stone-900">Cargando tu parada…</p>
+          <p className="mt-1 text-xs text-stone-500">Preparando horarios y próximas llegadas.</p>
+        </div>
+      </div>
+    );
+  }
+
 
   return (
     <div className="min-h-screen bg-[#fdf7ee] pb-6">
