@@ -207,9 +207,12 @@ function TrenSchedule() {
                     {g.items.map((t) => {
                       const opColor = OPERATOR_COLORS[t.operator] ?? "#5cbdb9";
                       return (
-                        <div
+                        <Link
                           key={t.id}
-                          className="group relative rounded-lg border border-slate-800 bg-slate-900/40 px-2.5 py-1.5 transition hover:border-cyan-500/40 hover:bg-slate-900/70"
+                          to="/trenes/ruta/$num"
+                          params={{ num: t.number }}
+                          search={{ date: t.date, dir }}
+                          className="group relative block rounded-lg border border-slate-800 bg-slate-900/40 px-2.5 py-1.5 transition hover:border-cyan-500/40 hover:bg-slate-900/70"
                         >
                           <div className="flex items-center gap-2.5">
                             {/* Operador */}
@@ -255,7 +258,7 @@ function TrenSchedule() {
                               </p>
                             </div>
                           </div>
-                        </div>
+                        </Link>
                       );
                     })}
                   </div>
