@@ -356,85 +356,73 @@ function RawAdifTable({ rows }: { rows: Array<Record<string, any>> }) {
   const stripHtml = (s: any) =>
     typeof s === "string" ? s.replace(/<[^>]+>/g, "").trim() : "";
 
-  const statusLabel = (mc: string) => {
-    if (mc === "suppressed") return { txt: "Cancelado", cls: "bg-rose-50 text-rose-700 border-rose-200" };
-    if (mc === "audited") return { txt: "Modificado", cls: "bg-amber-50 text-amber-700 border-amber-200" };
-    if (mc === "delayed") return { txt: "Con retraso", cls: "bg-amber-50 text-amber-700 border-amber-200" };
-    return { txt: "En hora", cls: "bg-emerald-50 text-emerald-700 border-emerald-200" };
+  const serviceBadge = (r: Record<string, any>) => {
+    const tren = stripHtml(r.tren).toUpperCase();
+    const op = stripHtml(r.trenDatosOp).toUpperCase();
+    const tt = (r.trafficType || "").toLowerCase();
+
+    // Cercanías: C1, C3...
+    const mC = tren.match(/^C\d+/);
+    if (tt === "cercanias" || mC) {
+      return { code: mC ? mC[0] : "C", label: "CERCANÍAS", cls: "text-rose-600" };
+    }
+    if (op.includes("OUIGO") || tren.includes("OUIGO")) return { code: tren, label: "OUIGO", cls: "text-pink-500" };
+    if (op.includes("IRYO") || tren.includes("IRYO")) return { code: tren, label: "IRYO", cls: "text-red-500" };
+    if (op.includes("AVLO") || tren.includes("AVLO")) return { code: tren, label: "AVLO", cls: "text-violet-500" };
+    if (op.includes("AVE") || tren.includes("AVE")) return { code: tren, label: "AVE", cls: "text-violet-600" };
+    if (op.includes("ALVIA")) return { code: tren, label: "ALVIA", cls: "text-violet-600" };
+    if (op.includes("INTERCITY")) return { code: tren, label: "INTERCITY", cls: "text-blue-600" };
+    if (op.includes("MD") || op.includes("MEDIA")) return { code: tren, label: "MD", cls: "text-slate-700" };
+    return { code: tren, label: op || "MD", cls: "text-slate-700" };
   };
 
-  const trafficLabel = (t: string) =>
-    t === "cercanias" ? "Cercanías" : t === "avldmd" ? "AV / LD / MD" : t;
-
-  const dirLabel = (d: string) => (d === "SALIDA" ? "Salida" : "Llegada");
-
   return (
-    <div className="overflow-x-auto -mx-3 px-3">
-      <table className="min-w-[760px] w-full text-xs border-collapse">
-        <thead>
-          <tr className="text-left text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">
-            <th className="px-2 py-2 font-semibold">Sentido</th>
-            <th className="px-2 py-2 font-semibold">Servicio</th>
-            <th className="px-2 py-2 font-semibold">Tren</th>
-            <th className="px-2 py-2 font-semibold">Operador</th>
-            <th className="px-2 py-2 font-semibold">Origen / Destino</th>
-            <th className="px-2 py-2 font-semibold">Hora</th>
-            <th className="px-2 py-2 font-semibold">Estimada</th>
-            <th className="px-2 py-2 font-semibold text-center">Vía</th>
-            <th className="px-2 py-2 font-semibold">Estado</th>
-            <th className="px-2 py-2 font-semibold">Observación</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r, i) => {
-            const tren = stripHtml(r.tren);
-            const op = stripHtml(r.trenDatosOp);
-            const estacion = stripHtml(r.estacion);
-            const hora = (r.hora || "").trim();
-            const horaEst = (r.horaEstado || "").trim();
-            const via = (r.via || "").trim();
-            const obs = (r.observation || "").trim();
-            const st = statusLabel(r.markupColor);
-            const isSalida = r.direction === "SALIDA";
+    <ul className="divide-y divide-slate-100">
+      {rows.map((r, i) => {
+        const estacion = stripHtml(r.estacion);
+        const hora = (r.hora || "").trim();
+        const horaEst = (r.horaEstado || "").trim();
+        const obs = (r.observation || "").trim() || "Directo";
+        const sb = serviceBadge(r);
+        const cancelled = r.markupColor === "suppressed";
+        const delayed = horaEst && horaEst !== hora;
 
-            return (
-              <tr key={i} className="border-b border-slate-100 align-top hover:bg-slate-50">
-                <td className="px-2 py-2 font-medium text-slate-700">{dirLabel(r.direction)}</td>
-                <td className="px-2 py-2 text-slate-600">{trafficLabel(r.trafficType)}</td>
-                <td className="px-2 py-2 font-semibold text-slate-900 tabular-nums">{tren || "—"}</td>
-                <td className="px-2 py-2 text-slate-700">{op || "—"}</td>
-                <td className="px-2 py-2 text-slate-800">
-                  {isSalida ? (
-                    <>Alicante-Terminal <span className="text-slate-400">→</span> <span className="font-medium">{estacion || "—"}</span></>
-                  ) : (
-                    <><span className="font-medium">{estacion || "—"}</span> <span className="text-slate-400">→</span> Alicante-Terminal</>
-                  )}
-                </td>
-                <td className="px-2 py-2 font-bold text-slate-900 tabular-nums">{hora || "—"}</td>
-                <td className="px-2 py-2 tabular-nums">
-                  {horaEst && horaEst !== hora ? (
-                    <span className="font-semibold text-amber-600">{horaEst}</span>
-                  ) : (
-                    <span className="text-slate-400">{horaEst || "—"}</span>
-                  )}
-                </td>
-                <td className="px-2 py-2 text-center font-bold text-slate-700 tabular-nums">{via || "—"}</td>
-                <td className="px-2 py-2">
-                  <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded border ${st.cls}`}>
-                    {st.txt}
-                  </span>
-                </td>
-                <td className="px-2 py-2 text-slate-600 max-w-[280px]">
-                  {obs ? <span title={obs}>{obs}</span> : <span className="text-slate-300">—</span>}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+        return (
+          <li
+            key={i}
+            className="grid grid-cols-[64px_1fr_auto] gap-3 items-center py-3"
+          >
+            <div className="tabular-nums leading-tight">
+              <div className={`text-base font-bold ${cancelled ? "line-through text-slate-400" : "text-slate-900"}`}>
+                {hora || "—"}
+              </div>
+              {delayed && (
+                <div className="text-[11px] font-semibold text-amber-600">
+                  {horaEst}
+                </div>
+              )}
+            </div>
+            <div className="min-w-0">
+              <div className="text-[15px] font-semibold text-slate-900 truncate">
+                {estacion || "—"}
+              </div>
+              <div className="text-xs text-slate-500 truncate">{obs}</div>
+            </div>
+            <div className="text-right leading-tight">
+              <div className="text-[15px] font-medium text-slate-900 tabular-nums">
+                {sb.code || "—"}
+              </div>
+              <div className={`text-xs font-bold tracking-wide ${sb.cls}`}>
+                {sb.label}
+              </div>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
+
 
 function TrainRow({ t, kind }: { t: CarteleraTrain; kind: "SALIDA" | "LLEGADA" }) {
   const opKey = detectOperator(t);
