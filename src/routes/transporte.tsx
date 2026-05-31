@@ -51,6 +51,14 @@ const SECTORS: Sector[] = [
     Icon: Train,
   },
   {
+    to: "/trenes",
+    label: "Tren (AVE · OUIGO · IRYO)",
+    description: "Larga distancia desde Alicante-Terminal",
+    accent: "#f0abfc",
+    accent2: "#c026d3",
+    Icon: TrainFront,
+  },
+  {
     to: "/rent-a-car",
     label: "Rent a car",
     description: "Comparador de alquiler en el aeropuerto",
@@ -59,29 +67,6 @@ const SECTORS: Sector[] = [
     Icon: SedanCar,
   },
 ];
-
-function TransporteHub() {
-  // Tile de "Tren" oculto en producción; visible con ?dev=1 mientras integramos GTFS.
-  const [showTrenes, setShowTrenes] = useState(false);
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    setShowTrenes(new URLSearchParams(window.location.search).get("dev") === "1");
-  }, []);
-
-  const sectors: Sector[] = showTrenes
-    ? [
-        ...SECTORS.slice(0, 2),
-        {
-          to: "/trenes",
-          label: "Tren (AVE · OUIGO · IRYO)",
-          description: "Larga distancia desde Alicante-Terminal",
-          accent: "#f0abfc",
-          accent2: "#c026d3",
-          Icon: TrainFront,
-        },
-        ...SECTORS.slice(2),
-      ]
-    : SECTORS;
 
   return (
     <div
