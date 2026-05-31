@@ -4,6 +4,13 @@ import { ArrowLeft, ArrowDown, ArrowUp, Bus, ChevronDown, Radio, RefreshCw, Load
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { classifyLine } from "@/components/BusKnownPicker";
 import { saveFavoriteStop } from "@/components/FavoriteStopWidget";
+import {
+  useBusServiceWindows,
+  useBusLineDepartures,
+  getServiceStatus,
+  getNightLineEstimates,
+} from "@/hooks/useBusServiceWindow";
+import { cumulativeMinutes, NIGHT_URBAN_KMH } from "@/lib/bus-eta";
 import busAlicanteImg from "@/assets/bus-alicante.png";
 import type { LineStopPoint } from "@/components/BusLineLiveMap";
 
