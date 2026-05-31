@@ -348,52 +348,87 @@ function Kpi({
 }
 
 function RawAdifTable({ rows }: { rows: Array<Record<string, any>> }) {
-  const columns = useMemo(() => {
-    const set = new Set<string>();
-    for (const r of rows) for (const k of Object.keys(r)) set.add(k);
-    // Stable order: direction & trafficType first, then alphabetical
-    const rest = [...set].filter((k) => k !== "direction" && k !== "trafficType").sort();
-    return ["direction", "trafficType", ...rest];
-  }, [rows]);
-
   if (rows.length === 0) {
-    return <p className="text-sm text-slate-500 py-3">Sin datos crudos.</p>;
+    return <p className="text-sm text-slate-500 py-3">Sin datos.</p>;
   }
+
+  const stripHtml = (s: any) =>
+    typeof s === "string" ? s.replace(/<[^>]+>/g, "").trim() : "";
+
+  const statusLabel = (mc: string) => {
+    if (mc === "suppressed") return { txt: "Cancelado", cls: "bg-rose-50 text-rose-700 border-rose-200" };
+    if (mc === "audited") return { txt: "Modificado", cls: "bg-amber-50 text-amber-700 border-amber-200" };
+    if (mc === "delayed") return { txt: "Con retraso", cls: "bg-amber-50 text-amber-700 border-amber-200" };
+    return { txt: "En hora", cls: "bg-emerald-50 text-emerald-700 border-emerald-200" };
+  };
+
+  const trafficLabel = (t: string) =>
+    t === "cercanias" ? "Cercanías" : t === "avldmd" ? "AV / LD / MD" : t;
+
+  const dirLabel = (d: string) => (d === "SALIDA" ? "Salida" : "Llegada");
 
   return (
     <div className="overflow-x-auto -mx-3 px-3">
-      <table className="min-w-full text-[11px] border-collapse">
+      <table className="min-w-[760px] w-full text-xs border-collapse">
         <thead>
           <tr className="text-left text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">
-            {columns.map((c) => (
-              <th key={c} className="px-2 py-1.5 font-semibold whitespace-nowrap">
-                {c}
-              </th>
-            ))}
+            <th className="px-2 py-2 font-semibold">Sentido</th>
+            <th className="px-2 py-2 font-semibold">Servicio</th>
+            <th className="px-2 py-2 font-semibold">Tren</th>
+            <th className="px-2 py-2 font-semibold">Operador</th>
+            <th className="px-2 py-2 font-semibold">Origen / Destino</th>
+            <th className="px-2 py-2 font-semibold">Hora</th>
+            <th className="px-2 py-2 font-semibold">Estimada</th>
+            <th className="px-2 py-2 font-semibold text-center">Vía</th>
+            <th className="px-2 py-2 font-semibold">Estado</th>
+            <th className="px-2 py-2 font-semibold">Observación</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map((r, i) => (
-            <tr key={i} className="border-b border-slate-100 align-top hover:bg-slate-50">
-              {columns.map((c) => {
-                const v = r[c];
-                const str =
-                  v == null
-                    ? ""
-                    : typeof v === "object"
-                    ? JSON.stringify(v)
-                    : String(v);
-                return (
-                  <td
-                    key={c}
-                    className="px-2 py-1.5 whitespace-nowrap max-w-[260px] overflow-hidden text-ellipsis font-mono text-slate-700"
-                    title={str}
-                    dangerouslySetInnerHTML={{ __html: str }}
-                  />
-                );
-              })}
-            </tr>
-          ))}
+          {rows.map((r, i) => {
+            const tren = stripHtml(r.tren);
+            const op = stripHtml(r.trenDatosOp);
+            const estacion = stripHtml(r.estacion);
+            const hora = (r.hora || "").trim();
+            const horaEst = (r.horaEstado || "").trim();
+            const via = (r.via || "").trim();
+            const obs = (r.observation || "").trim();
+            const st = statusLabel(r.markupColor);
+            const isSalida = r.direction === "SALIDA";
+
+            return (
+              <tr key={i} className="border-b border-slate-100 align-top hover:bg-slate-50">
+                <td className="px-2 py-2 font-medium text-slate-700">{dirLabel(r.direction)}</td>
+                <td className="px-2 py-2 text-slate-600">{trafficLabel(r.trafficType)}</td>
+                <td className="px-2 py-2 font-semibold text-slate-900 tabular-nums">{tren || "—"}</td>
+                <td className="px-2 py-2 text-slate-700">{op || "—"}</td>
+                <td className="px-2 py-2 text-slate-800">
+                  {isSalida ? (
+                    <>Alicante-Terminal <span className="text-slate-400">→</span> <span className="font-medium">{estacion || "—"}</span></>
+                  ) : (
+                    <><span className="font-medium">{estacion || "—"}</span> <span className="text-slate-400">→</span> Alicante-Terminal</>
+                  )}
+                </td>
+                <td className="px-2 py-2 font-bold text-slate-900 tabular-nums">{hora || "—"}</td>
+                <td className="px-2 py-2 tabular-nums">
+                  {horaEst && horaEst !== hora ? (
+                    <span className="font-semibold text-amber-600">{horaEst}</span>
+                  ) : (
+                    <span className="text-slate-400">{horaEst || "—"}</span>
+                  )}
+                </td>
+                <td className="px-2 py-2 text-center font-bold text-slate-700 tabular-nums">{via || "—"}</td>
+                <td className="px-2 py-2">
+                  <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded border ${st.cls}`}>
+                    {st.txt}
+                  </span>
+                </td>
+                <td className="px-2 py-2 text-slate-600 max-w-[280px]">
+                  {obs ? <span title={obs}>{obs}</span> : <span className="text-slate-300">—</span>}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
