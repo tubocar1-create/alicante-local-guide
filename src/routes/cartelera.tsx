@@ -210,9 +210,9 @@ function Board() {
 
 // ---------- Subcomponents ----------
 
-function Card({ children }: { children: React.ReactNode }) {
+function Card({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+    <section className={`rounded-xl border border-slate-200 bg-white p-3 shadow-sm ${className || ""}`}>
       {children}
     </section>
   );
