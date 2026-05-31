@@ -59,12 +59,12 @@ export const CORRIDORS: Corridor[] = [
 
 export const STATIONS: TrainStation[] = [
   // ===== 🚄 Destino Madrid Chamartín · Alta Velocidad =====
-  { code: "MAD-CHA",  city: "Madrid",      station: "Chamartín — Clara Campoamor",          corridor: "MAD",  operators: ["RENFE"] },
-  { code: "MAD-CUE",  city: "Cuenca",      station: "Fernando Zóbel",                       corridor: "MAD",  operators: ["RENFE", "OUIGO", "IRYO"] },
-  { code: "MAD-ALB",  city: "Albacete",    station: "Los Llanos",                           corridor: "MAD",  operators: ["RENFE", "OUIGO", "IRYO"] },
   { code: "MAD-VLL",  city: "Villena",     station: "Villena AV",                           corridor: "MAD",  operators: ["RENFE"] },
+  { code: "MAD-ALB",  city: "Albacete",    station: "Los Llanos",                           corridor: "MAD",  operators: ["RENFE", "OUIGO", "IRYO"] },
+  { code: "MAD-CUE",  city: "Cuenca",      station: "Fernando Zóbel",                       corridor: "MAD",  operators: ["RENFE", "OUIGO", "IRYO"] },
   { code: "MAD-CR",   city: "Ciudad Real", station: "Ciudad Real",                          corridor: "MAD",  operators: ["RENFE"] },
   { code: "MAD-PTL",  city: "Puertollano", station: "Puertollano",                          corridor: "MAD",  operators: ["RENFE"] },
+  { code: "MAD-CHA",  city: "Madrid",      station: "Chamartín — Clara Campoamor",          corridor: "MAD",  operators: ["RENFE"] },
 
   // ===== 🚄 Mediterráneo Norte =====
   { code: "MED-VLCJ", city: "Valencia",   station: "Joaquín Sorolla",  corridor: "MEDN", operators: ["RENFE"] },
