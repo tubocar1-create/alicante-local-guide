@@ -50,7 +50,7 @@ function TrenSchedule() {
   const { code } = Route.useParams();
   const { dir = "S" } = Route.useSearch();
   const st = STATIONS.find((s) => s.code === code);
-  const [visible, setVisible] = useState(20);
+  
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["trenes", code, dir],
