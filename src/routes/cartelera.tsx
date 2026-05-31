@@ -50,7 +50,7 @@ function Loading() {
   return <div className="p-6 text-sm text-slate-500">Cargando ADIF…</div>;
 }
 
-const carteleraOpts = (fn: () => Promise<any>) =>
+const carteleraOpts = (fn: () => Promise<CarteleraResponse>) =>
   queryOptions({
     queryKey: ["cartelera", "alicante-terminal", "v2"],
     queryFn: fn,
