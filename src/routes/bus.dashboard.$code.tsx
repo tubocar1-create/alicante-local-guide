@@ -314,7 +314,7 @@ function BusDashboardPage() {
   const lineColor = line?.color || catColor;
 
   const inService = isNightLine
-    ? nightEtaByCode.size > 0
+    ? nightEtaByDir[1].size > 0 || nightEtaByDir[2].size > 0
     : Object.values(etas).some((arr) => arr && arr.length > 0) || loadingEtas;
 
 
