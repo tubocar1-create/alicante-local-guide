@@ -210,9 +210,9 @@ function TrenesIndex() {
             </p>
             <Link
               to="/cartelera"
-              className="group block overflow-hidden rounded-2xl border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-500/15 via-slate-900/60 to-slate-950/60 p-4 transition hover:border-emerald-400/70 hover:from-emerald-500/25"
+              className="group flex min-h-[150px] flex-col overflow-hidden rounded-2xl border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-500/15 via-slate-900/60 to-slate-950/60 p-4 transition hover:border-emerald-400/70 hover:from-emerald-500/25"
             >
-              <div className="flex items-start gap-3">
+              <div className="flex flex-1 items-start gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 ring-1 ring-emerald-400/40">
                   <Radio className="h-5 w-5 text-emerald-300" />
                 </div>
@@ -236,9 +236,9 @@ function TrenesIndex() {
             <button
               type="button"
               onClick={() => setMode("programa")}
-              className="group block w-full overflow-hidden rounded-2xl border-2 border-fuchsia-500/40 bg-gradient-to-br from-fuchsia-500/15 via-slate-900/60 to-slate-950/60 p-4 text-left transition hover:border-fuchsia-400/70 hover:from-fuchsia-500/25"
+              className="group flex min-h-[150px] w-full flex-col overflow-hidden rounded-2xl border-2 border-fuchsia-500/40 bg-gradient-to-br from-fuchsia-500/15 via-slate-900/60 to-slate-950/60 p-4 text-left transition hover:border-fuchsia-400/70 hover:from-fuchsia-500/25"
             >
-              <div className="flex items-start gap-3">
+              <div className="flex flex-1 items-start gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-fuchsia-500/20 ring-1 ring-fuchsia-400/40">
                   <CalendarRange className="h-5 w-5 text-fuchsia-300" />
                 </div>
@@ -253,6 +253,59 @@ function TrenesIndex() {
                 <ArrowRight className="h-4 w-4 shrink-0 text-fuchsia-300 transition group-hover:translate-x-0.5" />
               </div>
             </button>
+
+            {/* Accesos rápidos a destinos populares */}
+            <div className="space-y-2 pt-2">
+              <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">
+                Destinos populares
+              </p>
+
+              <div className="rounded-2xl border border-fuchsia-500/25 bg-fuchsia-950/20 p-3">
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-fuchsia-300/90">
+                  Salidas · desde Alicante
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { code: "MAD-CHA", label: "Madrid" },
+                    { code: "MED-VLCJ", label: "Valencia" },
+                    { code: "MED-BCN", label: "Barcelona" },
+                  ].map((d) => (
+                    <Link
+                      key={`S-${d.code}`}
+                      to="/trenes/$code"
+                      params={{ code: d.code }}
+                      search={{ dir: "S" as const }}
+                      className="rounded-xl border border-fuchsia-500/30 bg-slate-900/60 px-2 py-2 text-center text-xs font-semibold text-slate-100 transition hover:border-fuchsia-400/70 hover:bg-fuchsia-500/15"
+                    >
+                      ALC → {d.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-cyan-500/25 bg-cyan-950/20 p-3">
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-cyan-300/90">
+                  Llegadas · hacia Alicante
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { code: "MAD-CHA", label: "Madrid" },
+                    { code: "MED-VLCJ", label: "Valencia" },
+                    { code: "MED-BCN", label: "Barcelona" },
+                  ].map((d) => (
+                    <Link
+                      key={`L-${d.code}`}
+                      to="/trenes/$code"
+                      params={{ code: d.code }}
+                      search={{ dir: "L" as const }}
+                      className="rounded-xl border border-cyan-500/30 bg-slate-900/60 px-2 py-2 text-center text-xs font-semibold text-slate-100 transition hover:border-cyan-400/70 hover:bg-cyan-500/15"
+                    >
+                      {d.label} → ALC
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
