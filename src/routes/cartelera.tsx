@@ -147,7 +147,7 @@ function Board() {
   );
 
   return (
-    <div className="mx-auto max-w-3xl px-3 pb-10 pt-4 space-y-3">
+    <div className="mx-auto max-w-3xl px-3 pb-4 pt-4 flex flex-col gap-3 h-[calc(100dvh-120px)]">
       {/* Header */}
       <header className="flex items-center justify-between">
         <Link
