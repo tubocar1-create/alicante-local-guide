@@ -185,12 +185,39 @@ function TrainRoutePage() {
             )}
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-2">
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            <a
+              href="https://www.ouigo.com/es"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#ec4899] px-3 py-2 text-[11px] font-semibold text-white transition hover:opacity-90"
+            >
+              OUIGO
+              <ExternalLink className="h-3 w-3 opacity-70" />
+            </a>
+            <a
+              href="https://iryo.eu"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#ef4444] px-3 py-2 text-[11px] font-semibold text-white transition hover:opacity-90"
+            >
+              iryo
+              <ExternalLink className="h-3 w-3 opacity-70" />
+            </a>
+            <a
+              href="https://www.trenes.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#3b82f6] px-3 py-2 text-[11px] font-semibold text-white transition hover:opacity-90"
+            >
+              trenes.com
+              <ExternalLink className="h-3 w-3 opacity-70" />
+            </a>
             <a
               href={opInfo.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-slate-900 transition hover:opacity-90"
+              className="col-span-2 inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-[11px] font-semibold text-slate-900 transition hover:opacity-90"
               style={{ background: opInfo.color }}
             >
               <Train className="h-3.5 w-3.5" />
@@ -201,7 +228,7 @@ function TrainRoutePage() {
               href={`https://www.google.com/search?q=${encodeURIComponent(`${opInfo.name} ${num} ${data?.fromName ?? "Alicante"} ${data?.toName ?? ""} billete`)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-sky-600 px-3 py-2 text-[12px] font-semibold text-white transition hover:bg-sky-500"
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-sky-600 px-3 py-2 text-[11px] font-semibold text-white transition hover:bg-sky-500"
             >
               Buscar billete
               <ExternalLink className="h-3 w-3 opacity-70" />
