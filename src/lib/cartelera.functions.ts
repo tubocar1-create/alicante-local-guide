@@ -70,8 +70,10 @@ function norm(item: any, dir: "SALIDA" | "LLEGADA", tt: string): CarteleraTrain 
 }
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
-let _cache: { at: number; data: CarteleraResponse } | null = null;
+const CACHE_VERSION = 3;
+let _cache: { at: number; v: number; data: CarteleraResponse } | null = null;
 let _inflight: Promise<CarteleraResponse> | null = null;
+
 
 async function fetchCartelera(): Promise<CarteleraResponse> {
     const r1 = await fetch(BASE, {
@@ -173,7 +175,7 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
 export const getCartelera = createServerFn({ method: "GET" }).handler(
   async (): Promise<CarteleraResponse & { cachedAt: string; nextRefreshAt: string }> => {
     const now = Date.now();
-    if (_cache && now - _cache.at < CACHE_TTL_MS) {
+    if (_cache && _cache.v === CACHE_VERSION && now - _cache.at < CACHE_TTL_MS) {
       return {
         ...(_cache.data as any),
         cachedAt: new Date(_cache.at).toISOString(),
@@ -183,9 +185,10 @@ export const getCartelera = createServerFn({ method: "GET" }).handler(
     if (!_inflight) {
       _inflight = fetchCartelera()
         .then((data) => {
-          _cache = { at: Date.now(), data };
+          _cache = { at: Date.now(), v: CACHE_VERSION, data };
           return data;
         })
+
         .finally(() => {
           _inflight = null;
         });
