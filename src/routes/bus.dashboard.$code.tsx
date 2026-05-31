@@ -9,6 +9,9 @@ import {
   useBusLineDepartures,
   getServiceStatus,
   getNightLineEstimates,
+  dayTypeOf,
+  matchesDayType,
+  toMinHM,
 } from "@/hooks/useBusServiceWindow";
 import { cumulativeMinutes, NIGHT_URBAN_KMH } from "@/lib/bus-eta";
 import busAlicanteImg from "@/assets/bus-alicante.png";
