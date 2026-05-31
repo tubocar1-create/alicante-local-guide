@@ -251,10 +251,11 @@ function TrenesIndex() {
             const stations = direction === "L" ? [...base].reverse() : base;
             if (q && stations.length === 0) return null;
 
+            const tint = CORRIDOR_TINTS[corr.id];
             return (
               <section
                 key={corr.id}
-                className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/40"
+                className={`overflow-hidden rounded-2xl border ${tint.border} ${tint.section}`}
               >
                 <div className="flex w-full items-center gap-3 px-3 py-3 text-left">
                   <span className="text-xl leading-none">{corr.icon}</span>
@@ -262,12 +263,12 @@ function TrenesIndex() {
                     <div className="truncate text-sm font-semibold text-white">{corridorLabel(corr.name)}</div>
                     <div className="truncate text-[11px] text-slate-400">{corr.product}</div>
                   </div>
-                  <span className="rounded-full border border-slate-700 px-2 py-0.5 text-[10px] text-slate-400">
+                  <span className="rounded-full border border-slate-700/70 px-2 py-0.5 text-[10px] text-slate-400">
                     {STATIONS.filter((s) => s.corridor === corr.id).length}
                   </span>
                 </div>
 
-                <ul className="border-t border-slate-800 bg-slate-950/40 p-1.5">
+                <ul className={`border-t ${tint.border} ${tint.list} p-1.5`}>
                   {stations.map((s) => (
                     <li key={s.code}>
                       <Link
