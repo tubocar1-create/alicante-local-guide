@@ -151,14 +151,16 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
 
   return (
     <div
-      className={[
-        "rounded-2xl border border-border bg-black p-2.5 shadow-soft",
+      className={
         embedded
-          ? "flex w-full flex-col"
-          : isExpanded
-            ? "fixed bottom-[5.75rem] left-1/2 top-[4.75rem] z-50 flex w-[calc(100vw-1.5rem)] max-w-2xl -translate-x-1/2 flex-col"
-            : "mt-2",
-      ].join(" ")}
+          ? "flex min-h-[calc(100dvh-3.5rem)] w-full flex-col bg-black p-3 text-white"
+          : [
+              "rounded-2xl border border-border bg-black p-2.5 shadow-soft",
+              isExpanded
+                ? "fixed bottom-[5.75rem] left-1/2 top-[4.75rem] z-50 flex w-[calc(100vw-1.5rem)] max-w-2xl -translate-x-1/2 flex-col"
+                : "mt-2",
+            ].join(" ")
+      }
     >
       <div className="mb-3 flex shrink-0 items-center justify-between">
         <div className="flex items-center gap-2">

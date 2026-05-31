@@ -60,7 +60,7 @@ function BusRouteShell() {
         </button>
         <h1 className="text-sm font-semibold tracking-tight">🚍 Bus urbano</h1>
       </header>
-      <div className="mx-auto w-full p-3">
+      <div className="w-full">
         <BusKnownPicker
           embedded
           onClose={() => navigate({ to: "/transporte" })}
