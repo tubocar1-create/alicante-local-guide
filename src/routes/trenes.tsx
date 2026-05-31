@@ -378,6 +378,8 @@ function TrenesIndex() {
           <Train className="h-3 w-3" />
           Esqueleto preparado — los horarios se cargarán bajo demanda con GTFS oficial.
         </p>
+        </>
+        )}
       </div>
     </div>
   );
