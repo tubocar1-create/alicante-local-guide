@@ -50,7 +50,7 @@ export type TrainStation = {
 export const CORRIDORS: Corridor[] = [
   { id: "MAD",  icon: "🚄", name: "Destino Madrid Chamartín",     product: "Alta Velocidad · AVE · AVLO · OUIGO · IRYO", operators: ["RENFE", "OUIGO", "IRYO"] },
   { id: "MEDN", icon: "🚄", name: "Destino Barcelona Sants",      product: "Euromed · Intercity · AVE",                  operators: ["RENFE"] },
-  { id: "NOR",  icon: "🚄", name: "Destino Norte",                 product: "AVE · Alvia · Galicia · Asturias",            operators: ["RENFE"] },
+  { id: "NOR",  icon: "🚄", name: "Destino Norte de España",       product: "AVE · Alvia · Galicia · Asturias",            operators: ["RENFE"] },
   { id: "MUR",  icon: "🚆", name: "Destino Murcia del Carmen",    product: "Cercanías C1",                                operators: ["RENFE"] },
   { id: "CTG",  icon: "🚆", name: "Destino Cartagena",            product: "Media Distancia",                             operators: ["RENFE"] },
   { id: "LOR",  icon: "🚆", name: "Destino Lorca Sutullena",      product: "Media Distancia",                             operators: ["RENFE"] },
