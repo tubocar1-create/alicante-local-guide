@@ -131,7 +131,7 @@ function Board() {
   const filteredSalidas = useMemo(() => {
     let list = data.salidas;
     if (filter !== "TODAS") list = list.filter((t) => detectOperator(t) === filter);
-    return list.slice(0, 8);
+    return list;
   }, [data.salidas, filter]);
 
   const llegadas = data.llegadas.slice(0, 4);
