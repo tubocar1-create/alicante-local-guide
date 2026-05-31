@@ -254,22 +254,26 @@ function Board() {
         </div>
 
         {/* Table */}
-        <div className="text-[10px] uppercase tracking-wider text-slate-400 grid grid-cols-[60px_1fr_90px_36px_70px_14px] gap-2 px-1 py-1 border-b border-slate-100">
-          <span>Hora</span>
-          <span>Destino</span>
-          <span>Tren/Op.</span>
-          <span className="text-center">Vía</span>
-          <span>Estado</span>
-          <span />
+        <div className="overflow-x-auto -mx-3 px-3">
+          <div className="min-w-[520px]">
+            <div className="text-[10px] uppercase tracking-wider text-slate-400 grid grid-cols-[60px_1fr_90px_36px_70px_14px] gap-2 px-1 py-1 border-b border-slate-100">
+              <span>Hora</span>
+              <span>Destino</span>
+              <span>Tren/Op.</span>
+              <span className="text-center">Vía</span>
+              <span>Estado</span>
+              <span />
+            </div>
+            {filteredSalidas.length === 0 && (
+              <p className="text-sm text-slate-500 py-4 text-center">Sin trenes.</p>
+            )}
+            <ul className="max-h-[360px] overflow-y-auto">
+              {filteredSalidas.map((t, i) => (
+                <TrainRow key={i} t={t} kind="SALIDA" />
+              ))}
+            </ul>
+          </div>
         </div>
-        {filteredSalidas.length === 0 && (
-          <p className="text-sm text-slate-500 py-4 text-center">Sin trenes.</p>
-        )}
-        <ul>
-          {filteredSalidas.map((t, i) => (
-            <TrainRow key={i} t={t} kind="SALIDA" />
-          ))}
-        </ul>
       </Card>
 
       {/* Próximas llegadas + Incidencias */}
