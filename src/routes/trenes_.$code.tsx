@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
 import { ArrowLeft, CalendarDays, Train } from "lucide-react";
 import { STATIONS } from "./trenes";
 import { getStationSchedule, type StationTrip } from "@/lib/trenes/snapshot-client";
@@ -51,7 +50,7 @@ function TrenSchedule() {
   const { code } = Route.useParams();
   const { dir = "S" } = Route.useSearch();
   const st = STATIONS.find((s) => s.code === code);
-  const [visible, setVisible] = useState(20);
+  
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["trenes", code, dir],
@@ -127,7 +126,7 @@ function TrenSchedule() {
         )}
 
         {trips.length > 0 && (() => {
-          const shown = trips.slice(0, visible);
+          const shown = trips;
           // Group by date
           const groups: Array<{ date: string; items: StationTrip[] }> = [];
           for (const t of shown) {
@@ -221,15 +220,6 @@ function TrenSchedule() {
         })()}
 
 
-        {trips.length > visible && (
-          <button
-            type="button"
-            onClick={() => setVisible((n) => n + 20)}
-            className="mt-2 w-full rounded-lg border border-fuchsia-400/30 bg-fuchsia-400/5 px-2 py-1.5 text-[11px] font-semibold uppercase tracking-[0.15em] text-fuchsia-300 transition hover:bg-fuchsia-400/10"
-          >
-            Ver más ({Math.min(20, trips.length - visible)})
-          </button>
-        )}
 
         <p className="mt-2 text-center text-[10px] text-slate-500">
           GTFS oficial Renfe + reglas fijas OUIGO / IRYO.
