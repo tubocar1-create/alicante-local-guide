@@ -404,7 +404,7 @@ function BusDashboardPage() {
             direction={1}
             stops={stopsByDir[1]}
             etas={etas}
-            nightEtaByCode={isNightLine ? nightEtaByCode : null}
+            nightEtaByCode={isNightLine ? nightEtaByDir[1] : null}
             color={lineColor}
             inService={inService}
             transferLines={(c) => {
