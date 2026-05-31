@@ -166,9 +166,12 @@ export function getServiceStatus(
     : allLineRows;
   const effectiveRows = dirRows.length > 0 ? dirRows : allLineRows;
 
-  const isNight = effectiveRows.some(
-    (r) => toMin(r.last_departure) < toMin(r.first_departure),
-  );
+  // Una línea es nocturna si CUALQUIER dirección cruza medianoche
+  // (last < first) o si su nombre lleva sufijo N. La detección por dirección
+  // sola falla cuando el sentido del usuario es la madrugada (ej. 00:00→06:00).
+  const isNight =
+    /N$/i.test(lineCode) ||
+    allLineRows.some((r) => toMin(r.last_departure) < toMin(r.first_departure));
 
   const dayType = dayTypeOf(now);
   const todayRows = effectiveRows.filter((r) => matchesDayType(r.day_type, dayType));
@@ -297,8 +300,9 @@ export function getNightLineEstimates(
         r.terminal_name === originTerminalName,
     );
     if (!sw) return [];
-    const isNight = toMinHM(sw.last_departure) < toMinHM(sw.first_departure);
-    if (!isNight) return [];
+    // Nota: no exigimos last<first aquí. La dirección de madrugada de una línea
+    // nocturna (ej. 00:00→06:00) es técnicamente "no cruza medianoche" pero
+    // sigue siendo el turno nocturno; el caller ya garantizó isNightLine.
     return departures
       .filter(
         (d) =>
