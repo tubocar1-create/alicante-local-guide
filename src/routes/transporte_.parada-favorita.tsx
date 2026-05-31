@@ -11,7 +11,7 @@ import {
 } from "@/components/FavoriteStopWidget";
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { useBusServiceWindows, useBusLineDepartures, getServiceStatus, getNightLineEstimates, toMinHM, fmtHMMin } from "@/hooks/useBusServiceWindow";
-import { cumulativeMinutes } from "@/lib/bus-eta";
+import { cumulativeMinutes, NIGHT_URBAN_KMH } from "@/lib/bus-eta";
 
 export const Route = createFileRoute("/transporte_/parada-favorita")({
   validateSearch: (s: Record<string, unknown>) => ({
