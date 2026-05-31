@@ -9,78 +9,116 @@ export const Route = createFileRoute("/trenes")({
       {
         name: "description",
         content:
-          "Destinos y orígenes en tren desde Alicante-Terminal. Horarios reales de Renfe, OUIGO e IRYO bajo demanda.",
+          "Corredores ferroviarios desde Alicante-Terminal. Horarios reales de Renfe, OUIGO e IRYO bajo demanda.",
       },
       { property: "og:title", content: "Trenes desde Alicante" },
       {
         property: "og:description",
-        content: "Mapa de destinos y orígenes en tren desde Alicante.",
+        content: "Corredores y estaciones en tren desde Alicante.",
       },
     ],
   }),
   component: TrenesIndex,
 });
 
-// ---------- Catálogo provisional (se rellenará con GTFS) ----------
-// Códigos de estación tipo "TRN-XXX" para no chocar con IATA de aeropuertos.
-export type TrainCategory = "CER" | "MD" | "LD";
+// ---------- Corredores desde Alicante-Terminal ----------
+export type CorridorId =
+  | "MAD"   // Madrid · Alta Velocidad
+  | "MEDN"  // Mediterráneo Norte
+  | "NOR"   // Norte (AVE/Alvia hacia Zaragoza/Galicia/Asturias)
+  | "MUR"   // Cercanías C1 (Alicante–Murcia)
+  | "CTG"   // Media Distancia hacia Cartagena
+  | "LOR"   // Media Distancia hacia Lorca
+  | "UNI";  // Cercanías C3 (Universidad)
+
+export type Corridor = {
+  id: CorridorId;
+  icon: string;       // emoji
+  name: string;       // título visible
+  product: string;    // subtítulo (productos)
+  operators: string[];
+};
 
 export type TrainStation = {
-  code: string;       // identificador interno
+  code: string;
   city: string;
-  station: string;    // nombre de la estación
-  country: string;    // ISO2
-  countryName: string;
-  operators: string[]; // RENFE | OUIGO | IRYO
-  category: TrainCategory; // CER=Cercanías, MD=Media distancia, LD=Larga distancia (AVE/AVLO/Alvia)
+  station: string;
+  corridor: CorridorId;
+  operators: string[];
 };
 
-export const STATIONS: TrainStation[] = [
-  // ===== Cercanías (línea C-1 Alicante–Murcia) =====
-  { code: "CER-SVI", city: "San Vicente del Raspeig", station: "San Vicente del Raspeig", country: "ES", countryName: "España", operators: ["RENFE"], category: "CER" },
-  { code: "CER-UNI", city: "San Vicente del Raspeig", station: "Universidad de Alicante", country: "ES", countryName: "España", operators: ["RENFE"], category: "CER" },
-  { code: "CER-SGA", city: "Alicante", station: "San Gabriel", country: "ES", countryName: "España", operators: ["RENFE"], category: "CER" },
-  { code: "CER-TOR", city: "Elche", station: "Torrellano", country: "ES", countryName: "España", operators: ["RENFE"], category: "CER" },
-  { code: "CER-AER", city: "Elche", station: "Aeropuerto-Parque Empresarial", country: "ES", countryName: "España", operators: ["RENFE"], category: "CER" },
-  { code: "CER-EPA", city: "Elche", station: "Elche-Parque", country: "ES", countryName: "España", operators: ["RENFE"], category: "CER" },
-  { code: "CER-ECA", city: "Elche", station: "Elche-Carrús", country: "ES", countryName: "España", operators: ["RENFE"], category: "CER" },
-  { code: "CER-CRE", city: "Crevillente", station: "Crevillente", country: "ES", countryName: "España", operators: ["RENFE"], category: "CER" },
-  { code: "CER-ALB", city: "Albatera", station: "Albatera-Catral", country: "ES", countryName: "España", operators: ["RENFE"], category: "CER" },
-  { code: "CER-CAL", city: "Callosa de Segura", station: "Callosa de Segura", country: "ES", countryName: "España", operators: ["RENFE"], category: "CER" },
-  { code: "CER-ORI", city: "Orihuela", station: "Orihuela-Miguel Hernández", country: "ES", countryName: "España", operators: ["RENFE"], category: "CER" },
-  { code: "CER-BEN", city: "Beniel", station: "Beniel", country: "ES", countryName: "España", operators: ["RENFE"], category: "CER" },
-  { code: "CER-MUR", city: "Murcia", station: "Murcia del Carmen", country: "ES", countryName: "España", operators: ["RENFE"], category: "CER" },
-
-  // ===== Media Distancia =====
-  { code: "MD-VLC",  city: "Valencia", station: "Nord", country: "ES", countryName: "España", operators: ["RENFE"], category: "MD" },
-  { code: "MD-XAT",  city: "Xàtiva", station: "Xàtiva", country: "ES", countryName: "España", operators: ["RENFE"], category: "MD" },
-  { code: "MD-ALC",  city: "Alcoy", station: "Alcoy", country: "ES", countryName: "España", operators: ["RENFE"], category: "MD" },
-  { code: "MD-VLL",  city: "Villena", station: "Villena", country: "ES", countryName: "España", operators: ["RENFE"], category: "MD" },
-  { code: "MD-CTG",  city: "Cartagena", station: "Cartagena", country: "ES", countryName: "España", operators: ["RENFE"], category: "MD" },
-  { code: "MD-LOR",  city: "Lorca", station: "Lorca-Sutullena", country: "ES", countryName: "España", operators: ["RENFE"], category: "MD" },
-  { code: "MD-AGU",  city: "Águilas", station: "Águilas", country: "ES", countryName: "España", operators: ["RENFE"], category: "MD" },
-
-  // ===== Larga Distancia (AVE / AVLO / Alvia / OUIGO / IRYO) =====
-  { code: "LD-MADA", city: "Madrid", station: "Puerta de Atocha — Almudena Grandes", country: "ES", countryName: "España", operators: ["RENFE", "OUIGO", "IRYO"], category: "LD" },
-  { code: "LD-MADC", city: "Madrid", station: "Chamartín — Clara Campoamor", country: "ES", countryName: "España", operators: ["RENFE"], category: "LD" },
-  { code: "LD-BCN",  city: "Barcelona", station: "Sants", country: "ES", countryName: "España", operators: ["RENFE"], category: "LD" },
-  { code: "LD-VLCJ", city: "Valencia", station: "Joaquín Sorolla", country: "ES", countryName: "España", operators: ["RENFE"], category: "LD" },
-  { code: "LD-ZAZ",  city: "Zaragoza", station: "Delicias", country: "ES", countryName: "España", operators: ["RENFE"], category: "LD" },
-  { code: "LD-SEV",  city: "Sevilla", station: "Santa Justa", country: "ES", countryName: "España", operators: ["RENFE", "IRYO"], category: "LD" },
-  { code: "LD-COR",  city: "Córdoba", station: "Central", country: "ES", countryName: "España", operators: ["RENFE", "IRYO"], category: "LD" },
-  { code: "LD-MAL",  city: "Málaga", station: "María Zambrano", country: "ES", countryName: "España", operators: ["RENFE", "IRYO"], category: "LD" },
-  { code: "LD-ALBA", city: "Albacete", station: "Los Llanos", country: "ES", countryName: "España", operators: ["RENFE", "OUIGO", "IRYO"], category: "LD" },
-  { code: "LD-CR",   city: "Ciudad Real", station: "Ciudad Real", country: "ES", countryName: "España", operators: ["RENFE"], category: "LD" },
-  { code: "LD-CUE",  city: "Cuenca", station: "Fernando Zóbel", country: "ES", countryName: "España", operators: ["RENFE", "OUIGO", "IRYO"], category: "LD" },
-  { code: "LD-TAR",  city: "Tarragona", station: "Camp de Tarragona", country: "ES", countryName: "España", operators: ["RENFE"], category: "LD" },
-  { code: "LD-LLE",  city: "Lleida", station: "Pirineus", country: "ES", countryName: "España", operators: ["RENFE"], category: "LD" },
+export const CORRIDORS: Corridor[] = [
+  { id: "MAD",  icon: "🚄", name: "Corredor Madrid",            product: "Alta Velocidad · AVE · AVLO · OUIGO · IRYO", operators: ["RENFE", "OUIGO", "IRYO"] },
+  { id: "MEDN", icon: "🚄", name: "Corredor Mediterráneo Norte", product: "Euromed · Intercity · AVE",                  operators: ["RENFE"] },
+  { id: "NOR",  icon: "🚄", name: "Corredor Norte",              product: "AVE · Alvia",                                 operators: ["RENFE"] },
+  { id: "MUR",  icon: "🚆", name: "Corredor Murcia",             product: "Cercanías C1",                                operators: ["RENFE"] },
+  { id: "CTG",  icon: "🚆", name: "Corredor Cartagena",          product: "Media Distancia",                             operators: ["RENFE"] },
+  { id: "LOR",  icon: "🚆", name: "Corredor Lorca",              product: "Media Distancia",                             operators: ["RENFE"] },
+  { id: "UNI",  icon: "🚆", name: "Corredor Universidad",        product: "Cercanías C3",                                operators: ["RENFE"] },
 ];
 
-const CATEGORY_LABEL: Record<TrainCategory, string> = {
-  CER: "Cercanías",
-  MD: "Media Distancia",
-  LD: "Larga Distancia",
-};
+export const STATIONS: TrainStation[] = [
+  // ===== 🚄 Madrid · Alta Velocidad =====
+  { code: "MAD-CHA",  city: "Madrid",      station: "Chamartín — Clara Campoamor",          corridor: "MAD",  operators: ["RENFE"] },
+  { code: "MAD-ATO",  city: "Madrid",      station: "Puerta de Atocha — Almudena Grandes",  corridor: "MAD",  operators: ["RENFE", "OUIGO", "IRYO"] },
+  { code: "MAD-CUE",  city: "Cuenca",      station: "Fernando Zóbel",                       corridor: "MAD",  operators: ["RENFE", "OUIGO", "IRYO"] },
+  { code: "MAD-ALB",  city: "Albacete",    station: "Los Llanos",                           corridor: "MAD",  operators: ["RENFE", "OUIGO", "IRYO"] },
+  { code: "MAD-VLL",  city: "Villena",     station: "Villena AV",                           corridor: "MAD",  operators: ["RENFE"] },
+  { code: "MAD-CR",   city: "Ciudad Real", station: "Ciudad Real",                          corridor: "MAD",  operators: ["RENFE"] },
+  { code: "MAD-PTL",  city: "Puertollano", station: "Puertollano",                          corridor: "MAD",  operators: ["RENFE"] },
+
+  // ===== 🚄 Mediterráneo Norte =====
+  { code: "MED-VLCJ", city: "Valencia",   station: "Joaquín Sorolla",  corridor: "MEDN", operators: ["RENFE"] },
+  { code: "MED-VLCN", city: "Valencia",   station: "Nord",             corridor: "MEDN", operators: ["RENFE"] },
+  { code: "MED-XAT",  city: "Xàtiva",     station: "Xàtiva",           corridor: "MEDN", operators: ["RENFE"] },
+  { code: "MED-CAS",  city: "Castelló",   station: "Castelló",         corridor: "MEDN", operators: ["RENFE"] },
+  { code: "MED-TARC", city: "Tarragona",  station: "Camp de Tarragona", corridor: "MEDN", operators: ["RENFE"] },
+  { code: "MED-TAR",  city: "Tarragona",  station: "Tarragona",        corridor: "MEDN", operators: ["RENFE"] },
+  { code: "MED-BCN",  city: "Barcelona",  station: "Sants",            corridor: "MEDN", operators: ["RENFE"] },
+
+  // ===== 🚄 Norte =====
+  { code: "NOR-ZAZ",  city: "Zaragoza",    station: "Delicias",          corridor: "NOR", operators: ["RENFE"] },
+  { code: "NOR-SEG",  city: "Segovia",     station: "Guiomar",           corridor: "NOR", operators: ["RENFE"] },
+  { code: "NOR-VAD",  city: "Valladolid",  station: "Campo Grande",      corridor: "NOR", operators: ["RENFE"] },
+  { code: "NOR-PAL",  city: "Palencia",    station: "Palencia",          corridor: "NOR", operators: ["RENFE"] },
+  { code: "NOR-BUR",  city: "Burgos",      station: "Rosa Manzano",      corridor: "NOR", operators: ["RENFE"] },
+  { code: "NOR-LEO",  city: "León",        station: "León",              corridor: "NOR", operators: ["RENFE"] },
+  { code: "NOR-OUR",  city: "Ourense",     station: "Ourense",           corridor: "NOR", operators: ["RENFE"] },
+  { code: "NOR-COR",  city: "A Coruña",    station: "A Coruña",          corridor: "NOR", operators: ["RENFE"] },
+  { code: "NOR-VIG",  city: "Vigo",        station: "Urzáiz",            corridor: "NOR", operators: ["RENFE"] },
+  { code: "NOR-OVI",  city: "Oviedo",      station: "Oviedo",            corridor: "NOR", operators: ["RENFE"] },
+  { code: "NOR-GIJ",  city: "Gijón",       station: "Gijón",             corridor: "NOR", operators: ["RENFE"] },
+
+  // ===== 🚆 Corredor Murcia — Cercanías C1 =====
+  { code: "MUR-SGA",  city: "Alicante",            station: "Sant Gabriel",                 corridor: "MUR", operators: ["RENFE"] },
+  { code: "MUR-TOR",  city: "Elx",                 station: "Torrellano",                   corridor: "MUR", operators: ["RENFE"] },
+  { code: "MUR-EPA",  city: "Elx",                 station: "Elx Parc",                     corridor: "MUR", operators: ["RENFE"] },
+  { code: "MUR-ECA",  city: "Elx",                 station: "Elx Carrús",                   corridor: "MUR", operators: ["RENFE"] },
+  { code: "MUR-CRE",  city: "Crevillent",          station: "Crevillent",                   corridor: "MUR", operators: ["RENFE"] },
+  { code: "MUR-ALB",  city: "Albatera",            station: "Albatera-Catral",              corridor: "MUR", operators: ["RENFE"] },
+  { code: "MUR-CAL",  city: "Callosa de Segura",   station: "Callosa de Segura-Cox",        corridor: "MUR", operators: ["RENFE"] },
+  { code: "MUR-ORI",  city: "Orihuela",            station: "Orihuela Miguel Hernández",    corridor: "MUR", operators: ["RENFE"] },
+  { code: "MUR-BEN",  city: "Beniel",              station: "Beniel",                       corridor: "MUR", operators: ["RENFE"] },
+  { code: "MUR-MUR",  city: "Murcia",              station: "Murcia del Carmen",            corridor: "MUR", operators: ["RENFE"] },
+
+  // ===== 🚆 Corredor Cartagena — Media Distancia =====
+  { code: "CTG-MUR",  city: "Murcia",       station: "Murcia del Carmen",       corridor: "CTG", operators: ["RENFE"] },
+  { code: "CTG-BAL",  city: "Balsicas",     station: "Balsicas-Mar Menor",      corridor: "CTG", operators: ["RENFE"] },
+  { code: "CTG-TPA",  city: "Torre-Pacheco", station: "Torre-Pacheco",          corridor: "CTG", operators: ["RENFE"] },
+  { code: "CTG-CTG",  city: "Cartagena",    station: "Cartagena",               corridor: "CTG", operators: ["RENFE"] },
+
+  // ===== 🚆 Corredor Lorca — Media Distancia =====
+  { code: "LOR-MUR",  city: "Murcia",          station: "Murcia del Carmen",         corridor: "LOR", operators: ["RENFE"] },
+  { code: "LOR-ALC",  city: "Alcantarilla",    station: "Alcantarilla-Los Romanos",  corridor: "LOR", operators: ["RENFE"] },
+  { code: "LOR-LIB",  city: "Librilla",        station: "Librilla",                  corridor: "LOR", operators: ["RENFE"] },
+  { code: "LOR-ALH",  city: "Alhama de Murcia", station: "Alhama de Murcia",         corridor: "LOR", operators: ["RENFE"] },
+  { code: "LOR-TOT",  city: "Totana",          station: "Totana",                    corridor: "LOR", operators: ["RENFE"] },
+  { code: "LOR-LOR",  city: "Lorca",           station: "Lorca Sutullena",           corridor: "LOR", operators: ["RENFE"] },
+
+  // ===== 🚆 Corredor Universidad — Cercanías C3 =====
+  { code: "UNI-UNI",  city: "San Vicente del Raspeig", station: "Universidad de Alicante", corridor: "UNI", operators: ["RENFE"] },
+  { code: "UNI-SVI",  city: "San Vicente del Raspeig", station: "Sant Vicent Centre",      corridor: "UNI", operators: ["RENFE"] },
+];
 
 const OPERATOR_COLORS: Record<string, string> = {
   RENFE: "#7e22ce",
@@ -88,25 +126,17 @@ const OPERATOR_COLORS: Record<string, string> = {
   IRYO:  "#dc2626",
 };
 
-function flagEmoji(cc: string) {
-  return String.fromCodePoint(
-    ...cc.toUpperCase().split("").map((c) => 0x1f1e6 + c.charCodeAt(0) - 65),
-  );
-}
-
 function TrenesIndex() {
-  const [direction, setDirection] = useState<"S" | "L">("S"); // S=salidas (desde Alicante), L=llegadas (hacia Alicante)
+  const [direction, setDirection] = useState<"S" | "L">("S");
   const [query, setQuery] = useState("");
+  const [openCorridor, setOpenCorridor] = useState<CorridorId | null>("MAD");
 
-  const filtered = STATIONS.filter((s) => {
-    const q = query.trim().toLowerCase();
-    if (!q) return true;
-    return (
-      s.city.toLowerCase().includes(q) ||
-      s.station.toLowerCase().includes(q) ||
-      s.code.toLowerCase().includes(q)
-    );
-  });
+  const q = query.trim().toLowerCase();
+  const matches = (s: TrainStation) =>
+    !q ||
+    s.city.toLowerCase().includes(q) ||
+    s.station.toLowerCase().includes(q) ||
+    s.code.toLowerCase().includes(q);
 
   return (
     <div
@@ -152,7 +182,7 @@ function TrenesIndex() {
             </span>
           </h1>
           <p className="mt-1 text-xs text-white/70 md:text-sm">
-            Renfe, OUIGO e IRYO desde la estación de Alicante-Terminal. Datos GTFS oficiales bajo demanda.
+            Corredores ferroviarios desde Alicante-Terminal. Renfe, OUIGO e IRYO bajo demanda.
           </p>
         </div>
 
@@ -198,57 +228,80 @@ function TrenesIndex() {
           />
         </div>
 
-        {/* Lista */}
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-2">
-          <div className="mb-1 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-500">
-            {filtered.length} {direction === "S" ? "destinos" : "orígenes"} · Clic para ver horarios
-          </div>
-          <ul className="space-y-1">
-            {filtered.map((s, i) => (
-              <li key={s.code}>
-                <Link
-                  to="/trenes/$code"
-                  params={{ code: s.code }}
-                  search={{ dir: direction }}
-                  className="group flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/40 px-3 py-2.5 transition hover:border-fuchsia-500/40 hover:bg-fuchsia-500/5"
+        {/* Corredores */}
+        <div className="space-y-2">
+          {CORRIDORS.map((corr) => {
+            const stations = STATIONS.filter((s) => s.corridor === corr.id && matches(s));
+            if (q && stations.length === 0) return null;
+            const isOpen = q ? true : openCorridor === corr.id;
+
+            return (
+              <section
+                key={corr.id}
+                className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/40"
+              >
+                <button
+                  type="button"
+                  onClick={() => setOpenCorridor(isOpen && !q ? null : corr.id)}
+                  className="flex w-full items-center gap-3 px-3 py-3 text-left transition hover:bg-fuchsia-500/5"
                 >
-                  <span className="w-6 shrink-0 text-right font-mono text-[11px] text-slate-500">
-                    {i + 1}
-                  </span>
-                  <span className="text-lg leading-none">{flagEmoji(s.country)}</span>
+                  <span className="text-xl leading-none">{corr.icon}</span>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-baseline gap-2">
-                      <span className="truncate text-sm font-semibold text-white">{s.city}</span>
-                      <span className="font-mono text-[10px] uppercase tracking-wider text-slate-500">
-                        {s.code}
-                      </span>
-                    </div>
-                    <div className="truncate text-[11px] text-slate-400">{s.station}</div>
+                    <div className="truncate text-sm font-semibold text-white">{corr.name}</div>
+                    <div className="truncate text-[11px] text-slate-400">{corr.product}</div>
                   </div>
-                  <div className="flex shrink-0 items-center gap-1">
-                    {s.operators.map((op) => (
-                      <span
-                        key={op}
-                        className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider"
-                        style={{
-                          background: (OPERATOR_COLORS[op] ?? "#64748b") + "22",
-                          color: OPERATOR_COLORS[op] ?? "#94a3b8",
-                        }}
-                      >
-                        {op}
-                      </span>
+                  <span className="rounded-full border border-slate-700 px-2 py-0.5 text-[10px] text-slate-400">
+                    {STATIONS.filter((s) => s.corridor === corr.id).length}
+                  </span>
+                  <ArrowRight
+                    className={`h-4 w-4 shrink-0 text-slate-500 transition ${isOpen ? "rotate-90 text-fuchsia-300" : ""}`}
+                  />
+                </button>
+
+                {isOpen && (
+                  <ul className="space-y-1 border-t border-slate-800 bg-slate-950/40 p-2">
+                    {stations.map((s, i) => (
+                      <li key={s.code}>
+                        <Link
+                          to="/trenes/$code"
+                          params={{ code: s.code }}
+                          search={{ dir: direction }}
+                          className="group flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950/40 px-3 py-2.5 transition hover:border-fuchsia-500/40 hover:bg-fuchsia-500/5"
+                        >
+                          <span className="w-5 shrink-0 text-right font-mono text-[11px] text-slate-500">
+                            {i + 1}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-baseline gap-2">
+                              <span className="truncate text-sm font-semibold text-white">{s.station}</span>
+                            </div>
+                            <div className="truncate text-[11px] text-slate-400">
+                              {s.city} · <span className="font-mono uppercase tracking-wider text-slate-500">{s.code}</span>
+                            </div>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-1">
+                            {s.operators.map((op) => (
+                              <span
+                                key={op}
+                                className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider"
+                                style={{
+                                  background: (OPERATOR_COLORS[op] ?? "#64748b") + "22",
+                                  color: OPERATOR_COLORS[op] ?? "#94a3b8",
+                                }}
+                              >
+                                {op}
+                              </span>
+                            ))}
+                          </div>
+                          <ArrowRight className="h-4 w-4 shrink-0 text-slate-500 transition group-hover:translate-x-0.5 group-hover:text-fuchsia-300" />
+                        </Link>
+                      </li>
                     ))}
-                  </div>
-                  <ArrowRight className="h-4 w-4 shrink-0 text-slate-500 transition group-hover:translate-x-0.5 group-hover:text-fuchsia-300" />
-                </Link>
-              </li>
-            ))}
-            {filtered.length === 0 && (
-              <li className="px-3 py-6 text-center text-xs text-slate-500">
-                Sin resultados.
-              </li>
-            )}
-          </ul>
+                  </ul>
+                )}
+              </section>
+            );
+          })}
         </div>
 
         <p className="mt-4 flex items-center justify-center gap-1.5 text-[10px] text-slate-600">
