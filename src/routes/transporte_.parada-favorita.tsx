@@ -303,7 +303,11 @@ function ParadaFavoritaPage() {
 
   // Apply ?stop & ?line search params once options are ready
   useEffect(() => {
-    if (!search.stop) return;
+    if (!search.stop) {
+      setSearchLookupDone(true);
+      return;
+    }
+    if (!graph) return;
     const match = options.find(
       (o) =>
         o.stopId === search.stop &&
@@ -313,7 +317,8 @@ function ParadaFavoritaPage() {
       saveFavoriteStop(match);
       setStop(match);
     }
-  }, [search.stop, search.line, options]);
+    setSearchLookupDone(true);
+  }, [search.stop, search.line, options, graph]);
 
   const filtered = useMemo(() => {
     const q = normalize(query);
