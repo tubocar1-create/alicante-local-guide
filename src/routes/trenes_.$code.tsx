@@ -157,76 +157,62 @@ function TrenSchedule() {
                   </div>
 
                   {/* Cards */}
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     {g.items.map((t) => {
                       const opColor = OPERATOR_COLORS[t.operator] ?? "#5cbdb9";
                       return (
                         <div
                           key={t.id}
-                          className="group relative rounded-xl border border-slate-800 bg-slate-900/40 px-3 py-2.5 transition hover:border-cyan-500/40 hover:bg-slate-900/70"
+                          className="group relative rounded-lg border border-slate-800 bg-slate-900/40 px-2.5 py-1.5 transition hover:border-cyan-500/40 hover:bg-slate-900/70"
                         >
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2.5">
+                            {/* Operador */}
+                            <span
+                              className="shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide"
+                              style={{ background: opColor + "1f", color: opColor }}
+                            >
+                              {t.product}
+                            </span>
+
                             {/* Salida */}
                             <div className="flex flex-col items-start">
-                              <p className="font-mono text-xl font-bold tabular-nums leading-none text-slate-100">
+                              <p className="font-mono text-base font-bold tabular-nums leading-none text-slate-100">
                                 {t.departure}
                               </p>
-                              <p className="mt-1 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                              <p className="mt-0.5 text-[8px] font-bold uppercase tracking-wider text-slate-500">
                                 {t.origin}
                               </p>
                             </div>
 
                             {/* Línea tiempo */}
-                            <div className="flex flex-1 flex-col items-center">
-                              <span className="font-mono text-[10px] text-cyan-400/80">
+                            <div className="flex flex-1 flex-col items-center min-w-0">
+                              <span className="font-mono text-[9px] text-cyan-400/80 leading-none">
                                 {t.durationLabel}
                               </span>
-                              <div className="relative my-1 h-px w-full bg-gradient-to-r from-slate-700 via-cyan-500/30 to-slate-700">
-                                <span className="absolute -top-[3px] left-0 h-1.5 w-1.5 rounded-full border border-slate-700 bg-slate-900" />
-                                <span className="absolute -top-[3px] right-0 h-1.5 w-1.5 rounded-full bg-cyan-400" />
+                              <div className="relative my-0.5 h-px w-full bg-gradient-to-r from-slate-700 via-cyan-500/30 to-slate-700">
+                                <span className="absolute -top-[2px] left-0 h-1 w-1 rounded-full border border-slate-700 bg-slate-900" />
+                                <span className="absolute -top-[2px] right-0 h-1 w-1 rounded-full bg-cyan-400" />
                               </div>
-                              <span className="text-[9px] uppercase tracking-wider text-slate-600">
-                                Directo
+                              <span className="text-[8px] text-slate-600 leading-none">
+                                {t.date}
                               </span>
                             </div>
 
                             {/* Llegada */}
                             <div className="flex flex-col items-end">
-                              <p className="font-mono text-xl font-bold tabular-nums leading-none text-slate-100">
+                              <p className="font-mono text-base font-bold tabular-nums leading-none text-slate-100">
                                 {t.arrival}
                               </p>
-                              <p className="mt-1 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                              <p className="mt-0.5 text-[8px] font-bold uppercase tracking-wider text-slate-500">
                                 {t.destination}
                               </p>
                             </div>
-                          </div>
-
-                          {/* Meta */}
-                          <div className="mt-2 flex items-center justify-between border-t border-slate-800/70 pt-2">
-                            <span
-                              className="rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide"
-                              style={{
-                                background: opColor + "1f",
-                                color: opColor,
-                              }}
-                            >
-                              {t.product}
-                            </span>
-                            <span className="font-mono text-[10px] text-slate-500">
-                              #{t.number}
-                            </span>
-                          </div>
-
-                          {/* Fecha pequeña centro inferior */}
-                          <div className="mt-1.5 flex justify-center">
-                            <span className="text-[9px] text-slate-600">
-                              {t.date}
-                            </span>
                           </div>
                         </div>
                       );
                     })}
                   </div>
+
                 </div>
               ))}
             </div>
