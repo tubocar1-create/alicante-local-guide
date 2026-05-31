@@ -103,7 +103,7 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
     const auth = mAuth[1];
     const URL_RES = `${BASE}?p_p_id=servicios_estacion_ServiciosEstacionPortlet&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=%2FconsultarHorario&p_p_cacheability=cacheLevelPage&assetEntryId=3068526&p_p_auth=${auth}`;
 
-    async function call(searchType: string, trafficType: string, numPage = 0) {
+    async function callOnce(searchType: string, trafficType: string, numPage = 0) {
       const body = new URLSearchParams({
         _servicios_estacion_ServiciosEstacionPortlet_searchType: searchType,
         _servicios_estacion_ServiciosEstacionPortlet_trafficType: trafficType,
@@ -129,6 +129,20 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
       } catch {
         return { horarios: [] };
       }
+    }
+
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+    // Reintenta una llamada hasta que devuelva horarios o se agoten los intentos
+    async function call(searchType: string, trafficType: string, numPage = 0, retries = 3) {
+      for (let i = 0; i <= retries; i++) {
+        const j = await callOnce(searchType, trafficType, numPage);
+        if (j && Array.isArray(j.horarios) && j.horarios.length > 0) return j;
+        // Solo reintentamos la página 0 (las páginas posteriores sí pueden venir vacías legítimamente)
+        if (numPage > 0) return j;
+        if (i < retries) await sleep(400 + i * 400);
+      }
+      return { horarios: [] };
     }
 
     const ops: Array<[string, string, "SALIDA" | "LLEGADA"]> = [
