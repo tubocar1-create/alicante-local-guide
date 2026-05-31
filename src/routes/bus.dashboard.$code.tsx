@@ -202,17 +202,17 @@ function BusDashboardPage() {
   // Para líneas nocturnas: hora estimada de llegada por parada usando la próxima
   // salida oficial de Vectalia desde el terminal de origen + recorrido estimado
   // (velocidad media de madrugada). No llamamos al endpoint de tiempo real.
-  const nightEtaByCode = useMemo(() => {
-    const map = new Map<string, { min: number; time: string }>();
-    if (!isNightLine || !serviceRows || !departures) return map;
+  const nightEtaByDir = useMemo(() => {
+    const out: Record<1 | 2, Map<string, { min: number; time: string }>> = {
+      1: new Map(),
+      2: new Map(),
+    };
+    if (!isNightLine || !serviceRows || !departures) return out;
     const BOARDING_BUFFER_MIN = 5;
     for (const dir of [1, 2] as const) {
       const stops = stopsByDir[dir];
       if (stops.length === 0) continue;
       const originName = stops[0].name;
-      // Próxima salida desde el origen (sin offset). Devuelve atOrigin con
-      // el -5 min de buffer ya aplicado a `arrivalTime`; pero necesitamos la
-      // hora de salida oficial para sumar el recorrido a paradas intermedias.
       const est = getNightLineEstimates(
         serviceRows,
         departures,
@@ -224,11 +224,9 @@ function BusDashboardPage() {
       );
       if (!est || est.upcoming.length === 0) continue;
       const next = est.upcoming[0];
-      // departureTime = HH:MM oficial desde el origen.
       const [dh, dm] = next.departureTime.split(":").map(Number);
       const depAbsMin = dh * 60 + dm;
       const nowMin = clock.getHours() * 60 + clock.getMinutes();
-      // Ajuste si la salida es madrugada y ya pasó medianoche (o viceversa).
       let depDelta = depAbsMin - nowMin;
       if (depDelta < -12 * 60) depDelta += 24 * 60;
       if (depDelta > 12 * 60) depDelta -= 24 * 60;
@@ -239,18 +237,20 @@ function BusDashboardPage() {
       for (let i = 0; i < stops.length; i++) {
         const isTerminal = i === 0 || i === lastIdx;
         const offset = cum[i] ?? 0;
-        const arrDelta = depDelta + offset - (isTerminal ? BOARDING_BUFFER_MIN : 0);
-        const arrAbs = (((depAbsMin + offset - (isTerminal ? BOARDING_BUFFER_MIN : 0)) % 1440) + 1440) % 1440;
+        const buf = isTerminal ? BOARDING_BUFFER_MIN : 0;
+        const arrDelta = depDelta + offset - buf;
+        const arrAbs = (((depAbsMin + offset - buf) % 1440) + 1440) % 1440;
         const hh = String(Math.floor(arrAbs / 60)).padStart(2, "0");
         const mm = String(Math.round(arrAbs % 60)).padStart(2, "0");
-        map.set(stops[i].code, {
+        out[dir].set(stops[i].code, {
           min: Math.max(0, Math.round(arrDelta)),
           time: `${hh}:${mm}`,
         });
       }
     }
-    return map;
+    return out;
   }, [isNightLine, serviceRows, departures, code, stopsByDir, stopCoords, clock]);
+
 
   // Realtime: por cada parada del recorrido (ambas direcciones), pedir su ETA.
   // Saltamos en líneas nocturnas — usamos estimación por horario oficial.
