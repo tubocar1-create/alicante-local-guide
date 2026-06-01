@@ -34,20 +34,27 @@ Deno.serve(async (req) => {
 
   try {
     const padded = line ? toVectaliaLineCode(line) : "";
-    const r = await fetch(
-      `${VECTALIA_RT_URL}?p=${encodeURIComponent(stop)}&l=${encodeURIComponent(padded)}`,
-      {
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
-          Referer: "https://qr.vectalia.es/Alicante/mapa.aspx",
-          "X-Requested-With": "XMLHttpRequest",
-          Accept: "*/*",
-        },
+    const target = `${VECTALIA_RT_URL}?p=${encodeURIComponent(stop)}&l=${encodeURIComponent(padded)}`;
+    const sbKey = Deno.env.get("SCRAPINGBEE_API_KEY");
+    let fetchUrl = target;
+    if (sbKey) {
+      const sb = new URL("https://app.scrapingbee.com/api/v1/");
+      sb.searchParams.set("api_key", sbKey);
+      sb.searchParams.set("url", target);
+      sb.searchParams.set("render_js", "false");
+      fetchUrl = sb.toString();
+    }
+    const r = await fetch(fetchUrl, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+        Referer: "https://qr.vectalia.es/Alicante/mapa.aspx",
+        "X-Requested-With": "XMLHttpRequest",
+        Accept: "*/*",
       },
-    );
+    });
     const raw = r.ok ? await r.text() : "";
-    return new Response(JSON.stringify({ raw, status: r.status }), {
+    return new Response(JSON.stringify({ raw, status: r.status, via: sbKey ? "scrapingbee" : "direct" }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });

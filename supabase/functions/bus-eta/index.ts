@@ -36,6 +36,16 @@ const browserHeaders = {
   Accept: "*/*",
 };
 
+async function sbFetch(target: string, init?: RequestInit): Promise<Response> {
+  const key = Deno.env.get("SCRAPINGBEE_API_KEY");
+  if (!key) return fetch(target, init);
+  const sb = new URL("https://app.scrapingbee.com/api/v1/");
+  sb.searchParams.set("api_key", key);
+  sb.searchParams.set("url", target);
+  sb.searchParams.set("render_js", "false");
+  return fetch(sb.toString(), { headers: { Accept: "*/*" } });
+}
+
 function parseEtas(raw: string, requestedLine: string): number[] {
   const wanted = normalizeLine(requestedLine);
   const mins: number[] = [];
@@ -49,7 +59,7 @@ function parseEtas(raw: string, requestedLine: string): number[] {
 
 async function fetchFromDataEndpoint(stopCode: string, lineCode: string): Promise<number[]> {
   try {
-    const r = await fetch(
+    const r = await sbFetch(
       `${VECTALIA_DATA_URL}?p=${encodeURIComponent(stopCode)}`,
       { headers: { ...browserHeaders, Referer: `${VECTALIA_PAGE_URL}?p=${encodeURIComponent(stopCode)}` } },
     );
@@ -66,7 +76,7 @@ async function fetchFromDataEndpoint(stopCode: string, lineCode: string): Promis
 async function fetchFromRequestEndpoint(stopCode: string, lineCode: string): Promise<number[]> {
   try {
     const vectaliaLine = toVectaliaLineCode(lineCode);
-    const r = await fetch(
+    const r = await sbFetch(
       `${VECTALIA_RT_URL}?p=${encodeURIComponent(stopCode)}&l=${encodeURIComponent(vectaliaLine)}`,
       { headers: browserHeaders },
     );
@@ -81,7 +91,7 @@ async function fetchFromRequestEndpoint(stopCode: string, lineCode: string): Pro
 
 async function fetchFromStopPage(stopCode: string, lineCode: string): Promise<number[]> {
   try {
-    const r = await fetch(
+    const r = await sbFetch(
       `${VECTALIA_PAGE_URL}?p=${encodeURIComponent(stopCode)}`,
       { headers: browserHeaders },
     );
