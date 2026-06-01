@@ -838,19 +838,23 @@ function DirectionColumn({
           const hasRealtimeResult = Object.prototype.hasOwnProperty.call(etas, s.code);
           const arr = etas[s.code] ?? [];
           const liveEta = arr[0];
-          const nightEta = nightEtaByCode?.get(s.code) ?? null;
-          const eta1 = nightEta ? nightEta.min : liveEta;
+          const scheduleEta = nightEtaByCode?.get(s.code) ?? null;
+          // Día: prefer live; fallback a horario. Noche (no realtime): solo horario.
+          const eta1 = realtimeEnabled
+            ? (typeof liveEta === "number" ? liveEta : scheduleEta?.min)
+            : scheduleEta?.min;
           const hasEta = typeof eta1 === "number";
-          const isLoadingEta = realtimeEnabled && loadingEtaStops.has(s.code);
+          const isLoadingEta = realtimeEnabled && loadingEtaStops.has(s.code) && !hasEta;
           const isOrigin = i === 0;
           const isDest = i === stops.length - 1;
           const transfers = transferLines(s.code);
           const transferColor = transfers[0]?.color ?? null;
-          const etaTime = nightEta
-            ? nightEta.time
-            : typeof liveEta === "number"
-              ? formatHHMM(new Date(now.getTime() + liveEta * 60_000))
-              : null;
+          const etaTime = realtimeEnabled
+            ? (typeof liveEta === "number"
+                ? formatHHMM(new Date(now.getTime() + liveEta * 60_000))
+                : scheduleEta?.time ?? null)
+            : scheduleEta?.time ?? null;
+          const nightEta = scheduleEta; // back-compat para el resto del render
 
           const isNearest = nearestCodes.has(s.code);
           const isPrimaryNearest = nearest?.code === s.code;
