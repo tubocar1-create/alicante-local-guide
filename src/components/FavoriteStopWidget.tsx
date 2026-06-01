@@ -100,13 +100,18 @@ export function computeUpcomingArrivals(
 
 export function FavoriteStopWidget() {
   const [stop, setStop] = useState<FavoriteStop>(DEFAULT_FAVORITE_STOP);
+  const [show, setShow] = useState<boolean>(true);
   const [liveMin, setLiveMin] = useState<number | null>(null);
   const [, setTick] = useState(0);
   const { data: graph } = useBusGraph();
 
   useEffect(() => {
     setStop(loadFavoriteStop());
-    const onChange = () => setStop(loadFavoriteStop());
+    setShow(loadShowOnHome());
+    const onChange = () => {
+      setStop(loadFavoriteStop());
+      setShow(loadShowOnHome());
+    };
     window.addEventListener("vamos:favorite-stop-changed", onChange);
     const id = window.setInterval(() => setTick((t) => t + 1), 30_000);
     return () => {
