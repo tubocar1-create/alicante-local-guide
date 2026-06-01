@@ -889,9 +889,9 @@ function DirectionColumn({
               {!isDest && (
                 <ChevronDown
                   aria-hidden
-                  className="pointer-events-none absolute -bottom-2 left-[18px] z-20 h-3 w-3"
+                  className="pointer-events-none absolute -bottom-3 left-[14px] z-20 h-6 w-6"
                   strokeWidth={3}
-                  style={{ color: direction === 1 ? "#9ca3af" : "#4b5563" }}
+                  style={{ color: direction === 1 ? "#000" : "#fff" }}
                 />
               )}
 
