@@ -1,7 +1,7 @@
 // Devuelve el texto crudo de Vectalia para un stop (y línea opcional).
 // Lo usa el server fn getStopRealtime para parsear con coordenadas.
 
-const VECTALIA_RT_URL = "https://movilidad.vectalia.es/Alicante/lib/request.aspx";
+const VECTALIA_RT_URL = "https://movilidad.vectalia.es/QR/Alicante/lib/request.aspx";
 const VECTALIA_LINE_CODES: Record<string, string> = {
   "14": "084",
 };
@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
         headers: {
           "User-Agent":
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
-          Referer: "https://movilidad.vectalia.es/Alicante/mapa.aspx",
+          Referer: "https://movilidad.vectalia.es/QR/Alicante/mapa.aspx",
           "X-Requested-With": "XMLHttpRequest",
           Accept: "*/*",
         },
