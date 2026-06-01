@@ -53,6 +53,7 @@ async function fetchFromDataEndpoint(stopCode: string, lineCode: string): Promis
       `${VECTALIA_DATA_URL}?p=${encodeURIComponent(stopCode)}`,
       { headers: { ...browserHeaders, Referer: `${VECTALIA_PAGE_URL}?p=${encodeURIComponent(stopCode)}` } },
     );
+    console.log("[bus-eta] datos.aspx status", r.status, "stop", stopCode);
     if (!r.ok) return [];
     const data = await r.json().catch(() => null) as { tiempos?: string } | null;
     return parseEtas(data?.tiempos ?? "", lineCode);
