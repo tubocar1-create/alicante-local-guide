@@ -459,9 +459,9 @@ function BusDashboardPage() {
 
         {/* Etiqueta de paradas cercanas */}
         {geoStatus === "ok" && (nearestByDir[1].length > 0 || nearestByDir[2].length > 0) && (
-          <div className="mt-3 flex items-center gap-2 rounded-xl border border-emerald-400/40 bg-emerald-400/10 px-3 py-2">
-            <MapPin className="h-4 w-4 text-emerald-300" />
-            <span className="font-sans text-[11px] font-bold not-italic uppercase tracking-wide text-emerald-200">
+          <div className="mt-3 flex items-center gap-2 rounded-xl border border-[#C9922A]/40 bg-[#C9922A]/10 px-3 py-2">
+            <MapPin className="h-4 w-4 text-[#C9922A]" />
+            <span className="font-sans text-[11px] font-bold not-italic uppercase tracking-wide text-[#C9922A]">
               Paradas más cercanas a tu ubicación
             </span>
           </div>
@@ -598,7 +598,7 @@ function HeaderEtas({
             {label}
           </span>
           {geoStatus === "ok" && nearest ? (
-            <span className="flex items-center gap-0.5 text-[10px] text-emerald-400">
+            <span className="flex items-center gap-0.5 text-[10px] text-[#C9922A]">
               <MapPin className="h-3 w-3" />
               {nearest.distance < 1000
                 ? `${Math.round(nearest.distance)} m`
@@ -803,7 +803,7 @@ function DirectionColumn({
           className={[
             "inline-block h-2.5 w-2.5 rounded-full",
             inService
-              ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]"
+              ? "bg-[#C9922A] shadow-[0_0_6px_rgba(201,146,42,0.8)]"
               : "bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.7)]",
           ].join(" ")}
         />
@@ -817,12 +817,12 @@ function DirectionColumn({
       )}
 
       {/* Parada más cercana */}
-      <div className="mb-2 flex items-center gap-1 rounded-md border border-emerald-400/30 bg-emerald-400/10 px-2 py-1">
-        <MapPin className="h-3 w-3 text-emerald-300" />
-        <span className="font-sans text-[9px] font-semibold not-italic uppercase tracking-wide text-emerald-200/80">
+      <div className="mb-2 flex items-center gap-1 rounded-md border border-[#C9922A]/30 bg-[#C9922A]/10 px-2 py-1">
+        <MapPin className="h-3 w-3 text-[#C9922A]" />
+        <span className="font-sans text-[9px] font-semibold not-italic uppercase tracking-wide text-[#C9922A]/80">
           Más cercana
         </span>
-        <span className="ml-auto font-sans text-[10px] font-bold not-italic tabular-nums text-emerald-100">
+        <span className="ml-auto font-sans text-[10px] font-bold not-italic tabular-nums text-[#C9922A]">
           {geoStatus === "unavailable"
             ? "n/d"
             : nearest
@@ -877,10 +877,10 @@ function DirectionColumn({
               style={{
                 borderBottom: "1px solid rgba(255,255,255,0.06)",
                 boxShadow: isNearest
-                  ? "0 0 0 2px rgba(52,211,153,0.9), 0 0 14px rgba(52,211,153,0.45)"
+                  ? "0 0 0 2px rgba(201,146,42,0.9), 0 0 14px rgba(201,146,42,0.45)"
                   : "0 1px 0 rgba(0,0,0,0.4)",
                 background: isNearest
-                  ? "linear-gradient(90deg, rgba(52,211,153,0.28) 0%, rgba(52,211,153,0.10) 70%, transparent 100%)"
+                  ? "linear-gradient(90deg, rgba(201,146,42,0.28) 0%, rgba(201,146,42,0.10) 70%, transparent 100%)"
                   : transferColor
                     ? `linear-gradient(90deg, ${transferColor}26 0%, ${transferColor}10 60%, transparent 100%)`
                     : undefined,
@@ -976,7 +976,7 @@ function DirectionColumn({
                       {s.name}
                     </span>
                     {isNearest && nearestDistance != null && (
-                      <span className="inline-flex shrink-0 items-center gap-0.5 rounded bg-emerald-400 px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-black">
+                      <span className="inline-flex shrink-0 items-center gap-0.5 rounded bg-[#C9922A] px-1.5 py-0.5 font-sans text-[9px] font-bold not-italic uppercase tracking-wide text-black">
                         <MapPin className="h-2.5 w-2.5" />
                         {Math.round(nearestDistance)} m
                       </span>
