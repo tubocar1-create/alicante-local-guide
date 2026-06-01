@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { busStaticGraph } from "@/data/bus-static";
 import type { RouteStop } from "@/lib/bus-routing";
 
@@ -13,8 +12,5 @@ type Cache = {
 let cache: Cache | null = busStaticGraph as Cache;
 
 export function useBusGraph() {
-  const [data, setData] = useState(cache);
-  const [loading, setLoading] = useState(!cache);
-
-  return { data, loading };
+  return { data: cache, loading: false };
 }
