@@ -70,6 +70,7 @@ async function fetchFromRequestEndpoint(stopCode: string, lineCode: string): Pro
       `${VECTALIA_RT_URL}?p=${encodeURIComponent(stopCode)}&l=${encodeURIComponent(vectaliaLine)}`,
       { headers: browserHeaders },
     );
+    console.log("[bus-eta] request.aspx status", r.status, "stop", stopCode);
     if (!r.ok) return [];
     return parseEtas(await r.text(), lineCode);
   } catch (e) {
