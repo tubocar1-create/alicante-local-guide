@@ -817,12 +817,12 @@ function DirectionColumn({
       )}
 
       {/* Parada más cercana */}
-      <div className="mb-2 flex items-center gap-1 rounded-md border border-emerald-400/30 bg-emerald-400/10 px-2 py-1">
-        <MapPin className="h-3 w-3 text-emerald-300" />
-        <span className="font-sans text-[9px] font-semibold not-italic uppercase tracking-wide text-emerald-200/80">
+      <div className="mb-2 flex items-center gap-1 rounded-md border border-[#C9922A]/30 bg-[#C9922A]/10 px-2 py-1">
+        <MapPin className="h-3 w-3 text-[#C9922A]" />
+        <span className="font-sans text-[9px] font-semibold not-italic uppercase tracking-wide text-[#C9922A]/80">
           Más cercana
         </span>
-        <span className="ml-auto font-sans text-[10px] font-bold not-italic tabular-nums text-emerald-100">
+        <span className="ml-auto font-sans text-[10px] font-bold not-italic tabular-nums text-[#C9922A]">
           {geoStatus === "unavailable"
             ? "n/d"
             : nearest
