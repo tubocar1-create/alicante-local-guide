@@ -264,7 +264,24 @@ function HeaderClock() {
   );
 }
 
+function useNowHHMM() {
+  const fmt = () =>
+    new Intl.DateTimeFormat("es-ES", {
+      timeZone: "Europe/Madrid",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(new Date());
+  const [hhmm, setHhmm] = useState(fmt);
+  useEffect(() => {
+    const id = setInterval(() => setHhmm(fmt()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+  return hhmm;
+}
+
 function RawAdifTable({ rows, kind }: { rows: Array<Record<string, any>>; kind: "SALIDA" | "LLEGADA" }) {
+  const nowHHMM = useNowHHMM();
   if (rows.length === 0) {
     return <p className="text-sm text-slate-500 py-3">Sin datos.</p>;
   }
@@ -295,6 +312,25 @@ function RawAdifTable({ rows, kind }: { rows: Array<Record<string, any>>; kind: 
     return { txt: "En hora", cls: "text-emerald-600" };
   };
 
+  // Operador efectivo: ADIF deja vacío trenDatosOp en cercanías → mostramos Renfe
+  const effectiveOperator = (r: Record<string, any>, sbLabel: string) => {
+    const raw = stripHtml(r.trenDatosOp);
+    if (raw) return raw;
+    if (sbLabel === "CERCANÍAS") return "Renfe";
+    return "—";
+  };
+
+  // ¿Ya salió pero ADIF aún no lo ha retirado? Solo salidas en hora.
+  const isDeparted = (r: Record<string, any>) => {
+    if (kind !== "SALIDA") return false;
+    if (r.markupColor === "suppressed") return false;
+    const hora = (r.hora || "").trim();
+    const horaEst = (r.horaEstado || "").trim();
+    if (!hora) return false;
+    if (horaEst && horaEst !== hora) return false;
+    return hora < nowHHMM;
+  };
+
   const destLabel = kind === "SALIDA" ? "Destino" : "Origen";
 
   return (
@@ -319,12 +355,13 @@ function RawAdifTable({ rows, kind }: { rows: Array<Record<string, any>>; kind: 
             const hora = (r.hora || "").trim();
             const horaEst = (r.horaEstado || "").trim();
             const obs = (r.observation || "").trim() || "Directo";
-            const op = stripHtml(r.trenDatosOp);
             const via = (r.via || "").trim();
             const sb = serviceBadge(r);
             const st = statusLabel(r.markupColor);
             const cancelled = r.markupColor === "suppressed";
             const delayed = horaEst && horaEst !== hora;
+            const departed = isDeparted(r);
+            const op = effectiveOperator(r, sb.label);
             const zebra = i % 2 === 0 ? "bg-slate-100" : "bg-slate-200";
             const trainNum = stripHtml(r.tren).trim();
             const today = new Intl.DateTimeFormat("en-CA", {
@@ -332,30 +369,43 @@ function RawAdifTable({ rows, kind }: { rows: Array<Record<string, any>>; kind: 
               year: "numeric", month: "2-digit", day: "2-digit",
             }).format(new Date());
 
+            const rowMuted = departed ? "opacity-50" : "";
+            const strike = cancelled || departed ? "line-through" : "";
+            const timeColor = cancelled
+              ? "text-slate-400"
+              : departed
+              ? "text-slate-500"
+              : "text-slate-900";
+
             return (
               <tr
                 key={i}
-                className={`align-top transition ${zebra} ${trainNum ? "cursor-pointer hover:bg-slate-300/70" : ""}`}
+                className={`align-top transition ${zebra} ${rowMuted} ${trainNum ? "cursor-pointer hover:bg-slate-300/70" : ""}`}
                 onClick={() => {
                   if (!trainNum) return;
                   window.location.href = `/trenes/ruta/${encodeURIComponent(trainNum)}?date=${today}&dir=${kind === "SALIDA" ? "S" : "L"}`;
                 }}
               >
                 <td className="px-2 py-1.5 tabular-nums leading-tight whitespace-nowrap">
-                  <div className={`text-sm font-bold ${cancelled ? "line-through text-slate-400" : "text-slate-900"}`}>
+                  <div className={`text-sm font-bold ${strike} ${timeColor}`}>
                     {hora || "—"}
                   </div>
                   {delayed && (
                     <div className="text-[11px] font-semibold text-amber-700">{horaEst}</div>
                   )}
+                  {departed && !delayed && !cancelled && (
+                    <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-500 no-underline">
+                      Salido
+                    </div>
+                  )}
                 </td>
-                <td className={`px-2 py-1.5 font-semibold whitespace-nowrap ${st.cls}`}>{st.txt}</td>
-                <td className="px-2 py-1.5 font-semibold text-slate-900">{estacion || "—"}</td>
-                <td className="px-2 py-1.5 font-medium text-slate-900 tabular-nums whitespace-nowrap underline decoration-dotted">{sb.code || "—"}</td>
-                <td className={`px-2 py-1.5 font-bold tracking-wide whitespace-nowrap ${sb.cls}`}>{sb.label}</td>
-                <td className="px-2 py-1.5 text-slate-600 whitespace-nowrap">{op || "—"}</td>
-                <td className="px-2 py-1.5 text-center font-bold text-slate-700 tabular-nums">{via || "—"}</td>
-                <td className="px-2 py-1.5 text-slate-600 max-w-[260px] truncate" title={obs}>{obs}</td>
+                <td className={`px-2 py-1.5 font-semibold whitespace-nowrap ${st.cls} ${strike}`}>{st.txt}</td>
+                <td className={`px-2 py-1.5 font-semibold text-slate-900 ${strike}`}>{estacion || "—"}</td>
+                <td className={`px-2 py-1.5 font-medium text-slate-900 tabular-nums whitespace-nowrap underline decoration-dotted ${strike}`}>{sb.code || "—"}</td>
+                <td className={`px-2 py-1.5 font-bold tracking-wide whitespace-nowrap ${sb.cls} ${strike}`}>{sb.label}</td>
+                <td className={`px-2 py-1.5 text-slate-600 whitespace-nowrap ${strike}`}>{op}</td>
+                <td className={`px-2 py-1.5 text-center font-bold text-slate-700 tabular-nums ${strike}`}>{via || "—"}</td>
+                <td className={`px-2 py-1.5 text-slate-600 max-w-[260px] truncate ${strike}`} title={obs}>{obs}</td>
               </tr>
             );
           })}
