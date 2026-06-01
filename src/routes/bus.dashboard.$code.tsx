@@ -389,7 +389,7 @@ function BusDashboardPage() {
       ...stopsByDir[1].slice(0, 7).map((s) => s.code),
       ...stopsByDir[2].slice(0, 7).map((s) => s.code),
     ];
-    return [...new Set(codes)].slice(0, 16);
+    return [...new Set(codes)].slice(0, 12);
   }, [nearestByDir, stopsByDir]);
 
   useEffect(() => {
@@ -397,9 +397,7 @@ function BusDashboardPage() {
     let cancelled = false;
     setLoadingEtaStops((prev) => {
       const next = new Set(prev);
-      for (const stopCode of initialRealtimeStopCodes) {
-        if (!Object.prototype.hasOwnProperty.call(etas, stopCode)) next.add(stopCode);
-      }
+      for (const stopCode of initialRealtimeStopCodes) next.add(stopCode);
       return next;
     });
 
@@ -424,7 +422,7 @@ function BusDashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [code, etas, initialRealtimeStopCodes, isNightLine]);
+  }, [code, initialRealtimeStopCodes, isNightLine]);
 
 
   const lineCategory = classifyLine(code);
