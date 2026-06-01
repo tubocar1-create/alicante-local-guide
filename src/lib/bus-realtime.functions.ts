@@ -136,7 +136,7 @@ async function fetchStopViaScrapingBee(stopCode: string): Promise<StopArrival[]>
   sb.searchParams.set("api_key", key);
   sb.searchParams.set("url", target);
   sb.searchParams.set("render_js", "false");
-  const r = await fetch(sb.toString(), { headers: { Accept: "application/json, text/plain, */*" } });
+  const r = await fetchWithTimeout(sb.toString(), { headers: { Accept: "application/json, text/plain, */*" } }, 5_500);
   if (!r.ok) return [];
   const text = await r.text();
   try {
@@ -147,28 +147,28 @@ async function fetchStopViaScrapingBee(stopCode: string): Promise<StopArrival[]>
   }
 }
 
-export const getStopRealtime = createServerFn({ method: "POST" })
-  .inputValidator((data: { stopCode: string; lines?: string[] }) => {
-    const code = String(data?.stopCode ?? "").trim();
-    if (!/^\d{3,5}$/.test(code)) throw new Error("invalid stopCode");
-    return { stopCode: code };
-  })
-  .handler(async ({ data }) => {
+async function fetchStopCached(stopCode: string): Promise<StopArrival[]> {
+  const cached = realtimeCache.get(stopCode);
+  if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) return cached.arrivals;
+
+  const pending = realtimeInflight.get(stopCode);
+  if (pending) return pending;
+
+  const promise = (async () => {
     let arrivals: StopArrival[] = [];
     try {
-      arrivals = await fetchStopFromSubus(data.stopCode);
+      arrivals = await fetchStopFromSubus(stopCode);
     } catch {
       arrivals = [];
     }
     if (arrivals.length === 0) {
       try {
-        arrivals = await fetchStopViaScrapingBee(data.stopCode);
+        arrivals = await fetchStopViaScrapingBee(stopCode);
       } catch {
         arrivals = [];
       }
     }
 
-    // dedup + orden
     const seen = new Set<string>();
     const unique = arrivals.filter((a) => {
       const k = `${a.line}|${a.etaMin}|${a.destination}`;
@@ -177,6 +177,41 @@ export const getStopRealtime = createServerFn({ method: "POST" })
       return true;
     });
     unique.sort((a, b) => a.etaMin - b.etaMin);
+    realtimeCache.set(stopCode, { arrivals: unique, fetchedAt: Date.now() });
+    return unique;
+  })().finally(() => {
+    realtimeInflight.delete(stopCode);
+  });
 
-    return { arrivals: unique, fetchedAt: new Date().toISOString() };
+  realtimeInflight.set(stopCode, promise);
+  return promise;
+}
+
+export const getStopRealtime = createServerFn({ method: "POST" })
+  .inputValidator((data: { stopCode: string; lines?: string[] }) => {
+    const code = String(data?.stopCode ?? "").trim();
+    if (!/^\d{3,5}$/.test(code)) throw new Error("invalid stopCode");
+    return { stopCode: code };
+  })
+  .handler(async ({ data }) => {
+    const arrivals = await fetchStopCached(data.stopCode);
+    return { arrivals, fetchedAt: new Date().toISOString() };
+  });
+
+export const getStopsRealtimeBatch = createServerFn({ method: "POST" })
+  .inputValidator((data: { stopCodes: string[]; line?: string }) => {
+    const stopCodes = [...new Set((data?.stopCodes ?? []).map((c) => String(c).trim()))]
+      .filter((code) => /^\d{3,5}$/.test(code))
+      .slice(0, 12);
+    return { stopCodes, line: data?.line ? normalizeLine(String(data.line)) : undefined };
+  })
+  .handler(async ({ data }) => {
+    const entries = await Promise.all(
+      data.stopCodes.map(async (stopCode) => {
+        const arrivals = await fetchStopCached(stopCode);
+        const filtered = data.line ? arrivals.filter((a) => normalizeLine(a.line) === data.line) : arrivals;
+        return [stopCode, filtered.map((a) => a.etaMin).sort((a, b) => a - b).slice(0, 1)] as const;
+      }),
+    );
+    return { stops: Object.fromEntries(entries), fetchedAt: new Date().toISOString() };
   });
