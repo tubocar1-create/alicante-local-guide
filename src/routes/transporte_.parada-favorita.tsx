@@ -452,6 +452,13 @@ function ParadaFavoritaPage() {
                   ¡Llegando!
                 </div>
               </div>
+            ) : minutes == null ? (
+              <div className="mt-2 flex w-full flex-col items-center rounded-2xl bg-stone-100 px-2 py-3 text-center ring-1 ring-stone-300">
+                <span className="text-3xl font-black tabular-nums text-stone-500">n/d</span>
+                <span className="mt-1 text-[9px] font-semibold text-stone-500">
+                  Sin paso en vivo
+                </span>
+              </div>
             ) : (
               <div
                 key={minutes}
