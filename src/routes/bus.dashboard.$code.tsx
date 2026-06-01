@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ArrowDown, ArrowUp, Bus, ChevronDown, Radio, RefreshCw, Loader2, MapPin } from "lucide-react";
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { classifyLine } from "@/components/BusKnownPicker";
@@ -14,6 +14,7 @@ import {
   toMinHM,
 } from "@/hooks/useBusServiceWindow";
 import { cumulativeMinutes, NIGHT_URBAN_KMH } from "@/lib/bus-eta";
+import { getClientStopRealtime } from "@/lib/bus-realtime-client";
 import busAlicanteImg from "@/assets/bus-alicante.png";
 import type { LineStopPoint } from "@/components/BusLineLiveMap";
 
@@ -353,60 +354,28 @@ function BusDashboardPage() {
   }, [isNightLine, serviceRows, departures, code, stopsByDir, stopCoords, clock]);
 
 
-  // Realtime: por cada parada del recorrido (ambas direcciones), pedir su ETA.
+  // Realtime progresivo: cada parada pide ETA solo cuando entra en viewport.
   // Saltamos en líneas nocturnas — usamos estimación por horario oficial.
   const [etas, setEtas] = useState<Record<string, number[]>>({});
-  const [loadingEtas, setLoadingEtas] = useState(false);
-  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
+  const [loadingEtaStops, setLoadingEtaStops] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
-    if (isNightLine) return;
-    const allStops = [...stopsByDir[1], ...stopsByDir[2]];
-    if (allStops.length === 0) return;
-    let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | null = null;
+    setEtas({});
+    setLoadingEtaStops(new Set());
+  }, [code]);
 
-    const fetchStop = async (stopCode: string): Promise<number[]> => {
-      try {
-        const r = await fetch(
-          `/api/public/bus-eta?stop=${encodeURIComponent(stopCode)}&line=${encodeURIComponent(code)}`,
-          { cache: "no-store" },
-        );
-        if (!r.ok) return [];
-        const j = (await r.json()) as { all?: number[] };
-        return Array.isArray(j.all) ? j.all.slice(0, 1) : [];
-      } catch {
-        return [];
-      }
-    };
+  const handleEtaLoading = useCallback((stopCode: string, loading: boolean) => {
+    setLoadingEtaStops((prev) => {
+      const next = new Set(prev);
+      if (loading) next.add(stopCode);
+      else next.delete(stopCode);
+      return next;
+    });
+  }, []);
 
-    const tick = async () => {
-      setLoadingEtas(true);
-      const codes = Array.from(new Set(allStops.map((s) => s.code)));
-      const CHUNK = 6;
-      for (let i = 0; i < codes.length; i += CHUNK) {
-        if (cancelled) break;
-        const slice = codes.slice(i, i + CHUNK);
-        const results = await Promise.all(slice.map(fetchStop));
-        const next: Record<string, number[]> = {};
-        results.forEach((arr, idx) => {
-          next[slice[idx]] = arr;
-        });
-        if (!cancelled) setEtas((prev) => ({ ...prev, ...next }));
-      }
-      if (!cancelled) {
-        setUpdatedAt(new Date().toISOString());
-        setLoadingEtas(false);
-        timer = setTimeout(tick, 15_000);
-      }
-    };
-    tick();
-    return () => {
-      cancelled = true;
-      if (timer) clearTimeout(timer);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [code, isNightLine, stopsByDir[1].length, stopsByDir[2].length]);
+  const handleStopEta = useCallback((stopCode: string, all: number[]) => {
+    setEtas((prev) => ({ ...prev, [stopCode]: all.slice(0, 1) }));
+  }, []);
 
 
   const lineCategory = classifyLine(code);
@@ -416,7 +385,7 @@ function BusDashboardPage() {
 
   const inService = isNightLine
     ? nightEtaByDir[1].size > 0 || nightEtaByDir[2].size > 0
-    : Object.values(etas).some((arr) => arr && arr.length > 0) || loadingEtas;
+    : Object.values(etas).some((arr) => arr && arr.length > 0) || loadingEtaStops.size > 0;
 
 
   if (loading) {
@@ -505,6 +474,11 @@ function BusDashboardPage() {
             direction={1}
             stops={stopsByDir[1]}
             etas={etas}
+            lineCode={code}
+            realtimeEnabled={!isNightLine}
+            loadingEtaStops={loadingEtaStops}
+            onEtaLoading={handleEtaLoading}
+            onStopEta={handleStopEta}
             nightEtaByCode={isNightLine ? nightEtaByDir[1] : null}
             color={lineColor}
             inService={inService}
@@ -523,6 +497,11 @@ function BusDashboardPage() {
             direction={2}
             stops={stopsByDir[2]}
             etas={etas}
+            lineCode={code}
+            realtimeEnabled={!isNightLine}
+            loadingEtaStops={loadingEtaStops}
+            onEtaLoading={handleEtaLoading}
+            onStopEta={handleStopEta}
             nightEtaByCode={isNightLine ? nightEtaByDir[2] : null}
             color={lineColor}
             inService={inService}
