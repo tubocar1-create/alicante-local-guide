@@ -7,8 +7,8 @@ import { z } from "zod";
 // Sin proxy, sin ScrapingBee. Devuelve status, headers, cookies y body
 // completo de cada paso para inspección.
 
-const CONSULTA_URL = "https://movilidad.vectalia.es/QR/Alicante/consulta.aspx";
-const DATOS_URL = "https://movilidad.vectalia.es/QR/Alicante/datos.aspx";
+const CONSULTA_URL = "http://www.subus.es/QR/Alicante/consulta.aspx";
+const DATOS_URL = "http://www.subus.es/QR/Alicante/datos.aspx";
 
 const UA =
   "Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36";
