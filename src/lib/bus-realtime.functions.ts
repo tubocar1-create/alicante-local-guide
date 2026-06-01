@@ -17,7 +17,7 @@ const UA =
   "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36";
 
 const TIEMPOS_RE =
-  /Linea\s+(\d+[A-Za-z]?)\s+([^:]+?)\s*:\s*(\d+)\s*min\.?\s*:\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/gi;
+  /Linea\s+(\d+[A-Za-z]?)\s+([^:]+?)\s*:\s*(\d+)\s*min\.?\s*:\s*\d+\s*:\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/gi;
 
 function extractCookies(res: Response): string {
   // Cloudflare Workers: getSetCookie() devuelve array
