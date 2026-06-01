@@ -87,15 +87,16 @@ export async function getClientStopRealtime({
 }): Promise<StopRealtimeResult> {
   const normalizedStopId = stopId.trim();
   const cached = readCachedStopRealtime(normalizedStopId, line);
-  if (cached) return cached;
+  if (cached) return selectStopRealtime(cached, index, minMin);
   if (line) {
     await queueBatchStop(normalizedStopId, line);
-    return readCachedStopRealtime(normalizedStopId, line) ?? {
+    const batched = readCachedStopRealtime(normalizedStopId, line) ?? {
       arrivals: [],
       all: [],
       etaMin: null,
       fetchedAt: Date.now(),
     };
+    return selectStopRealtime(batched, index, minMin);
   }
   const base = await fetchStop(stopId.trim());
   const wanted = line ? normalizeLine(line) : null;
@@ -107,6 +108,14 @@ export async function getClientStopRealtime({
     all,
     etaMin: filtered[Math.min(index, Math.max(0, filtered.length - 1))] ?? null,
     fetchedAt: base.fetchedAt,
+  };
+}
+
+function selectStopRealtime(base: StopRealtimeResult, index: number, minMin: number | null): StopRealtimeResult {
+  const filtered = typeof minMin === "number" ? base.all.filter((m) => m >= minMin) : base.all;
+  return {
+    ...base,
+    etaMin: filtered[Math.min(index, Math.max(0, filtered.length - 1))] ?? null,
   };
 }
 
