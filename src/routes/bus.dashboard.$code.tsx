@@ -658,6 +658,75 @@ function LineChip({
   );
 }
 
+function VisibleStopRealtime({
+  stopCode,
+  lineCode,
+  onLoading,
+  onEta,
+}: {
+  stopCode: string;
+  lineCode: string;
+  onLoading: (stopCode: string, loading: boolean) => void;
+  onEta: (stopCode: string, all: number[]) => void;
+}) {
+  const sentinelRef = useRef<HTMLSpanElement | null>(null);
+
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node || typeof IntersectionObserver === "undefined") return;
+    let visible = false;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let controller: AbortController | null = null;
+
+    const clearTimer = () => {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    };
+
+    const load = async () => {
+      if (cancelled || !visible || document.visibilityState !== "visible") return;
+      controller?.abort();
+      controller = new AbortController();
+      onLoading(stopCode, true);
+      try {
+        const r = await getClientStopRealtime({ stopId: stopCode, line: lineCode, signal: controller.signal });
+        if (!cancelled) onEta(stopCode, r.all);
+      } finally {
+        if (!cancelled) onLoading(stopCode, false);
+        clearTimer();
+        if (!cancelled && visible) timer = setTimeout(load, 20_000);
+      }
+    };
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        visible = Boolean(entry?.isIntersecting);
+        if (visible) void load();
+        else {
+          clearTimer();
+          controller?.abort();
+          onLoading(stopCode, false);
+        }
+      },
+      { root: null, rootMargin: "180px 0px", threshold: 0.01 },
+    );
+    observer.observe(node);
+
+    return () => {
+      cancelled = true;
+      clearTimer();
+      controller?.abort();
+      observer.disconnect();
+      onLoading(stopCode, false);
+    };
+  }, [lineCode, onEta, onLoading, stopCode]);
+
+  return <span ref={sentinelRef} className="absolute inset-x-0 -top-20 h-px" aria-hidden />;
+}
+
 function DirectionColumn({
   label,
   direction,
