@@ -557,7 +557,7 @@ function ParadaFavoritaPage() {
                 <span className="rounded-md bg-[#0d3b8a] px-1.5 py-0.5 text-[10px] font-extrabold text-white">
                   {stop.line}
                 </span>
-                <span className="truncate text-xs text-stone-800">{stop.destination}</span>
+                <span className="truncate text-xs text-stone-800">dirección {stop.destination}</span>
                 <span className={`text-xs font-extrabold tabular-nums ${u.live ? "text-emerald-700" : "text-stone-400"}`}>
                   {u.minutes}{" "}
                   <span className="text-[9px] font-semibold text-stone-500">
