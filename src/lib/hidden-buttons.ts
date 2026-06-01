@@ -42,13 +42,6 @@ export const HIDDEN_BUTTONS: HiddenButton[] = [
     reason: "Pendiente de integración con datos en vivo (ALSA, Vectalia).",
   },
   {
-    id: "transporte-tren",
-    label: "Tren",
-    location: "Transporte multimodal inteligente · submenú",
-    file: "src/components/ChatScreen.tsx",
-    reason: "Pendiente de integración con horarios Renfe/Cercanías.",
-  },
-  {
     id: "transporte-taxis",
     label: "Taxis, Uber, Cabify",
     location: "Transporte multimodal inteligente · submenú",
