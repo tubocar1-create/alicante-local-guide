@@ -36,6 +36,16 @@ const browserHeaders = {
   Accept: "*/*",
 };
 
+async function sbFetch(target: string, init?: RequestInit): Promise<Response> {
+  const key = Deno.env.get("SCRAPINGBEE_API_KEY");
+  if (!key) return fetch(target, init);
+  const sb = new URL("https://app.scrapingbee.com/api/v1/");
+  sb.searchParams.set("api_key", key);
+  sb.searchParams.set("url", target);
+  sb.searchParams.set("render_js", "false");
+  return fetch(sb.toString(), { headers: { Accept: "*/*" } });
+}
+
 function parseEtas(raw: string, requestedLine: string): number[] {
   const wanted = normalizeLine(requestedLine);
   const mins: number[] = [];
