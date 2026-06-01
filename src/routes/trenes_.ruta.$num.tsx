@@ -187,7 +187,9 @@ function TrainRoutePage() {
 
           {(() => {
             const operator = data?.operator;
-            const showRenfe = operator === "RENFE" || operator === "AVLO";
+            // Renfe opera AVE, Larga/Media Distancia, AVLO y Cercanías. Lo mostramos por defecto
+            // cuando no hay datos o cuando no es claramente OUIGO/IRYO.
+            const showRenfe = !operator || operator === "RENFE" || operator === "AVLO";
             const showOuigo = operator === "OUIGO";
             const showIryo  = operator === "IRYO";
             return (
