@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState, lazy, Suspense } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Bus, Clock, RefreshCw, ExternalLink } from "lucide-react";
 import {
   Sheet,
@@ -10,7 +9,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getStopRealtime, type StopArrival } from "@/lib/bus-realtime.functions";
+import { getClientStopRealtime, type StopArrival } from "@/lib/bus-realtime-client";
 import { liveStopUrl } from "@/lib/bus";
 import { ArrivalAlarm } from "@/components/ArrivalAlarm";
 
@@ -37,7 +36,6 @@ export function StopRealtimeSheet({
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
-  const fetchRealtime = useServerFn(getStopRealtime);
   const [arrivals, setArrivals] = useState<StopArrival[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +46,7 @@ export function StopRealtimeSheet({
     let cancelled = false;
     let pollTimer: ReturnType<typeof setTimeout> | null = null;
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    let controller: AbortController | null = null;
 
     const clearRetry = () => {
       if (retryTimer) {
@@ -60,13 +59,15 @@ export function StopRealtimeSheet({
       if (cancelled) return;
       setLoading(true);
       setError(null);
+      controller?.abort();
+      controller = new AbortController();
       try {
-        const r = await fetchRealtime({
-          data: { stopCode: stop.code, lines: stop.lines ?? [] },
-        });
+        const r = await getClientStopRealtime({ stopId: stop.code, signal: controller.signal });
         if (cancelled) return;
-        if (r.arrivals && r.arrivals.length > 0) {
-          setArrivals(r.arrivals);
+        const wanted = new Set((stop.lines ?? []).map((l) => l.toUpperCase()));
+        const next = wanted.size > 0 ? r.arrivals.filter((a) => wanted.has(a.line.toUpperCase())) : r.arrivals;
+        if (next.length > 0) {
+          setArrivals(next);
           setFetchedAt(r.fetchedAt);
           clearRetry();
           if (!cancelled) pollTimer = setTimeout(attempt, POLL_MS);
@@ -87,10 +88,11 @@ export function StopRealtimeSheet({
     attempt();
     return () => {
       cancelled = true;
+      controller?.abort();
       if (pollTimer) clearTimeout(pollTimer);
       clearRetry();
     };
-  }, [open, stop, fetchRealtime]);
+  }, [open, stop]);
 
   // reset when stop changes
   useEffect(() => {
@@ -188,11 +190,10 @@ export function StopRealtimeSheet({
                 onClick={() => {
                   if (!stop) return;
                   setLoading(true);
-                  fetchRealtime({
-                    data: { stopCode: stop.code, lines: stop.lines ?? [] },
-                  })
+                  getClientStopRealtime({ stopId: stop.code })
                     .then((r) => {
-                      setArrivals(r.arrivals);
+                      const wanted = new Set((stop.lines ?? []).map((l) => l.toUpperCase()));
+                      setArrivals(wanted.size > 0 ? r.arrivals.filter((a) => wanted.has(a.line.toUpperCase())) : r.arrivals);
                       setFetchedAt(r.fetchedAt);
                       setError(null);
                     })
