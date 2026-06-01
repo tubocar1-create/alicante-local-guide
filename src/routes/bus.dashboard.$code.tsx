@@ -459,9 +459,9 @@ function BusDashboardPage() {
 
         {/* Etiqueta de paradas cercanas */}
         {geoStatus === "ok" && (nearestByDir[1].length > 0 || nearestByDir[2].length > 0) && (
-          <div className="mt-3 flex items-center gap-2 rounded-xl border border-emerald-400/40 bg-emerald-400/10 px-3 py-2">
-            <MapPin className="h-4 w-4 text-emerald-300" />
-            <span className="font-sans text-[11px] font-bold not-italic uppercase tracking-wide text-emerald-200">
+          <div className="mt-3 flex items-center gap-2 rounded-xl border border-[#C9922A]/40 bg-[#C9922A]/10 px-3 py-2">
+            <MapPin className="h-4 w-4 text-[#C9922A]" />
+            <span className="font-sans text-[11px] font-bold not-italic uppercase tracking-wide text-[#C9922A]">
               Paradas más cercanas a tu ubicación
             </span>
           </div>
