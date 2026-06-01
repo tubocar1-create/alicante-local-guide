@@ -120,6 +120,37 @@ export function readCachedStopRealtime(stopId: string, line?: string): StopRealt
   return { arrivals, all, etaMin: all[0] ?? null, fetchedAt: cached.fetchedAt };
 }
 
+function queueBatchStop(stopId: string, line: string): Promise<void> {
+  const key = normalizeLine(line);
+  return new Promise((resolve) => {
+    let queue = batchQueues.get(key);
+    if (!queue) {
+      queue = { ids: new Set(), waiters: new Map(), timer: null };
+      batchQueues.set(key, queue);
+    }
+    queue.ids.add(stopId);
+    const waiters = queue.waiters.get(stopId) ?? [];
+    waiters.push(resolve);
+    queue.waiters.set(stopId, waiters);
+
+    if (!queue.timer) {
+      queue.timer = setTimeout(async () => {
+        const active = batchQueues.get(key);
+        if (!active) return;
+        batchQueues.delete(key);
+        const ids = [...active.ids];
+        try {
+          await getClientStopsRealtimeBatch({ stopIds: ids, line: key });
+        } finally {
+          for (const callbacks of active.waiters.values()) {
+            for (const done of callbacks) done();
+          }
+        }
+      }, 40);
+    }
+  });
+}
+
 export async function getClientStopsRealtimeBatch({
   stopIds,
   line,
