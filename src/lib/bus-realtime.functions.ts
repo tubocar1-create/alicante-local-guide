@@ -17,7 +17,7 @@ const UA =
   "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36";
 
 const TIEMPOS_RE =
-  /Linea\s+(\d+[A-Za-z]?)\s+([^:]+?)\s*:\s*(\d+)\s*min\.?\s*:\s*\d+\s*:\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/gi;
+  /Linea\s+(\d+[A-Za-z]?)\s+([^:]+?)\s*:\s*(\d+)\s*min\.?\s*:\s*(?:(?!-?\d+(?:\.\d+)?\s*,)[^:;]+\s*:\s*)?(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/gi;
 
 function extractCookies(res: Response): string {
   // Cloudflare Workers: getSetCookie() devuelve array
@@ -85,6 +85,25 @@ async function fetchStopFromSubus(stopCode: string): Promise<StopArrival[]> {
   return parseTiempos(tiempos);
 }
 
+async function fetchStopViaScrapingBee(stopCode: string): Promise<StopArrival[]> {
+  const key = process.env.SCRAPINGBEE_API_KEY;
+  if (!key) return [];
+  const target = `https://movilidad.vectalia.es/QR/Alicante/datos.aspx?p=${encodeURIComponent(stopCode)}`;
+  const sb = new URL("https://app.scrapingbee.com/api/v1/");
+  sb.searchParams.set("api_key", key);
+  sb.searchParams.set("url", target);
+  sb.searchParams.set("render_js", "false");
+  const r = await fetch(sb.toString(), { headers: { Accept: "application/json, text/plain, */*" } });
+  if (!r.ok) return [];
+  const text = await r.text();
+  try {
+    const json = JSON.parse(text) as { tiempos?: string };
+    return parseTiempos(json.tiempos ?? "");
+  } catch {
+    return parseTiempos(text);
+  }
+}
+
 export const getStopRealtime = createServerFn({ method: "POST" })
   .inputValidator((data: { stopCode: string; lines?: string[] }) => {
     const code = String(data?.stopCode ?? "").trim();
@@ -97,6 +116,13 @@ export const getStopRealtime = createServerFn({ method: "POST" })
       arrivals = await fetchStopFromSubus(data.stopCode);
     } catch {
       arrivals = [];
+    }
+    if (arrivals.length === 0) {
+      try {
+        arrivals = await fetchStopViaScrapingBee(data.stopCode);
+      } catch {
+        arrivals = [];
+      }
     }
 
     // dedup + orden
