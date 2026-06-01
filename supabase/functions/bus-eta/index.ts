@@ -85,6 +85,7 @@ async function fetchFromStopPage(stopCode: string, lineCode: string): Promise<nu
       `${VECTALIA_PAGE_URL}?p=${encodeURIComponent(stopCode)}`,
       { headers: browserHeaders },
     );
+    console.log("[bus-eta] consulta.aspx status", r.status, "stop", stopCode);
     if (!r.ok) return [];
     const html = await r.text();
     // Extraer el bloque `var text = "...";`
