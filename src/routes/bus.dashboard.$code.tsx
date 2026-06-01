@@ -14,7 +14,7 @@ import {
   toMinHM,
 } from "@/hooks/useBusServiceWindow";
 import { cumulativeMinutes, NIGHT_URBAN_KMH } from "@/lib/bus-eta";
-import { getClientStopRealtime } from "@/lib/bus-realtime-client";
+import { getClientStopRealtime, getClientStopsRealtimeBatch } from "@/lib/bus-realtime-client";
 import busAlicanteImg from "@/assets/bus-alicante.png";
 import type { LineStopPoint } from "@/components/BusLineLiveMap";
 
@@ -381,6 +381,50 @@ function BusDashboardPage() {
   const handleStopEta = useCallback((stopCode: string, all: number[]) => {
     setEtas((prev) => ({ ...prev, [stopCode]: all.slice(0, 1) }));
   }, []);
+
+  const initialRealtimeStopCodes = useMemo(() => {
+    const codes = [
+      ...nearestByDir[1].map((n) => n.code),
+      ...nearestByDir[2].map((n) => n.code),
+      ...stopsByDir[1].slice(0, 7).map((s) => s.code),
+      ...stopsByDir[2].slice(0, 7).map((s) => s.code),
+    ];
+    return [...new Set(codes)].slice(0, 16);
+  }, [nearestByDir, stopsByDir]);
+
+  useEffect(() => {
+    if (isNightLine || initialRealtimeStopCodes.length === 0) return;
+    let cancelled = false;
+    setLoadingEtaStops((prev) => {
+      const next = new Set(prev);
+      for (const stopCode of initialRealtimeStopCodes) {
+        if (!Object.prototype.hasOwnProperty.call(etas, stopCode)) next.add(stopCode);
+      }
+      return next;
+    });
+
+    getClientStopsRealtimeBatch({ stopIds: initialRealtimeStopCodes, line: code })
+      .then((batch) => {
+        if (cancelled) return;
+        setEtas((prev) => {
+          const next = { ...prev };
+          for (const [stopCode, all] of Object.entries(batch)) next[stopCode] = all.slice(0, 1);
+          return next;
+        });
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setLoadingEtaStops((prev) => {
+          const next = new Set(prev);
+          for (const stopCode of initialRealtimeStopCodes) next.delete(stopCode);
+          return next;
+        });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [code, etas, initialRealtimeStopCodes, isNightLine]);
 
 
   const lineCategory = classifyLine(code);
