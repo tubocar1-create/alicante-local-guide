@@ -536,6 +536,13 @@ function ParadaFavoritaPage() {
               El servicio se reanuda {reopensDayLabel ? `el ${reopensLabel}` : `a las ${reopensAt}`}.{lastDeparture ? ` El último bus parte de la parada extrema a las ${lastDeparture}.` : ""}
             </span>
           </div>
+        ) : upcoming.length === 0 ? (
+          <div className="flex flex-col items-center gap-1 py-4 text-center">
+            <span className="text-sm font-extrabold text-stone-700">n/d</span>
+            <span className="text-[11px] text-stone-500">
+              {liveLoading ? "Consultando paso en vivo…" : "No hay paso en vivo disponible para esta parada ahora mismo."}
+            </span>
+          </div>
         ) : (
           <ul className="divide-y divide-stone-100">
             {upcoming.map((u, i) => (
