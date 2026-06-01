@@ -15,7 +15,7 @@ import { LiveEta } from "@/components/LiveEta";
 import { BusKnownPicker, type BusStopPick } from "@/components/BusKnownPicker";
 import { FlightPicker } from "@/components/FlightPicker";
 import { TramInline } from "@/components/TramInline";
-import { WebViewTestButton } from "@/components/WebViewTestButton";
+
 import { useAppAuth } from "@/hooks/useAppAuth";
 import { findPlaceOverride } from "@/data/places";
 import { resolveOpeningStatus, getTodayClosingTime, getTodayOpeningTime } from "@/lib/opening-hours";
@@ -1241,7 +1241,7 @@ export function ChatScreen() {
           </div>
         )}
       </div>
-      <WebViewTestButton />
+      
       {referralName && (
         <ReferralDialog
           placeId={referralName}
