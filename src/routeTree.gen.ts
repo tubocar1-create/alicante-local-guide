@@ -36,6 +36,7 @@ import { Route as ComprarRouteImport } from './routes/comprar'
 import { Route as ClimaRouteImport } from './routes/clima'
 import { Route as CarteleraRouteImport } from './routes/cartelera'
 import { Route as BusinessRouteImport } from './routes/business'
+import { Route as BusWebviewTestRouteImport } from './routes/bus-webview-test'
 import { Route as BusCorsTestRouteImport } from './routes/bus-cors-test'
 import { Route as BusRouteImport } from './routes/bus'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -120,6 +121,7 @@ import { Route as ApiPublicQrValidateRouteImport } from './routes/api/public/qr-
 import { Route as ApiPublicQrIssueRouteImport } from './routes/api/public/qr-issue'
 import { Route as ApiPublicContactRouteImport } from './routes/api/public/contact'
 import { Route as ApiPublicBusEtaRouteImport } from './routes/api/public/bus-eta'
+import { Route as ApiPublicBusDatosRouteImport } from './routes/api/public/bus-datos'
 import { Route as ApiPublicBookingCreateRouteImport } from './routes/api/public/booking-create'
 import { Route as ApiPublicAuthEmailHookRouteImport } from './routes/api/public/auth-email-hook'
 import { Route as ApiPublicAenaFlightsRouteImport } from './routes/api/public/aena-flights'
@@ -296,6 +298,11 @@ const CarteleraRoute = CarteleraRouteImport.update({
 const BusinessRoute = BusinessRouteImport.update({
   id: '/business',
   path: '/business',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BusWebviewTestRoute = BusWebviewTestRouteImport.update({
+  id: '/bus-webview-test',
+  path: '/bus-webview-test',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BusCorsTestRoute = BusCorsTestRouteImport.update({
@@ -722,6 +729,11 @@ const ApiPublicBusEtaRoute = ApiPublicBusEtaRouteImport.update({
   path: '/api/public/bus-eta',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicBusDatosRoute = ApiPublicBusDatosRouteImport.update({
+  id: '/api/public/bus-datos',
+  path: '/api/public/bus-datos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicBookingCreateRoute = ApiPublicBookingCreateRouteImport.update({
   id: '/api/public/booking-create',
   path: '/api/public/booking-create',
@@ -951,6 +963,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/bus': typeof BusRouteWithChildren
   '/bus-cors-test': typeof BusCorsTestRoute
+  '/bus-webview-test': typeof BusWebviewTestRoute
   '/business': typeof BusinessRouteWithChildren
   '/cartelera': typeof CarteleraRoute
   '/clima': typeof ClimaRoute
@@ -1054,6 +1067,7 @@ export interface FileRoutesByFullPath {
   '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
   '/api/public/auth-email-hook': typeof ApiPublicAuthEmailHookRoute
   '/api/public/booking-create': typeof ApiPublicBookingCreateRoute
+  '/api/public/bus-datos': typeof ApiPublicBusDatosRoute
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/qr-issue': typeof ApiPublicQrIssueRoute
@@ -1105,6 +1119,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bus': typeof BusRouteWithChildren
   '/bus-cors-test': typeof BusCorsTestRoute
+  '/bus-webview-test': typeof BusWebviewTestRoute
   '/cartelera': typeof CarteleraRoute
   '/clima': typeof ClimaRoute
   '/comprar': typeof ComprarRoute
@@ -1206,6 +1221,7 @@ export interface FileRoutesByTo {
   '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
   '/api/public/auth-email-hook': typeof ApiPublicAuthEmailHookRoute
   '/api/public/booking-create': typeof ApiPublicBookingCreateRoute
+  '/api/public/bus-datos': typeof ApiPublicBusDatosRoute
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/qr-issue': typeof ApiPublicQrIssueRoute
@@ -1259,6 +1275,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/bus': typeof BusRouteWithChildren
   '/bus-cors-test': typeof BusCorsTestRoute
+  '/bus-webview-test': typeof BusWebviewTestRoute
   '/business': typeof BusinessRouteWithChildren
   '/cartelera': typeof CarteleraRoute
   '/clima': typeof ClimaRoute
@@ -1362,6 +1379,7 @@ export interface FileRoutesById {
   '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
   '/api/public/auth-email-hook': typeof ApiPublicAuthEmailHookRoute
   '/api/public/booking-create': typeof ApiPublicBookingCreateRoute
+  '/api/public/bus-datos': typeof ApiPublicBusDatosRoute
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
   '/api/public/contact': typeof ApiPublicContactRoute
   '/api/public/qr-issue': typeof ApiPublicQrIssueRoute
@@ -1416,6 +1434,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/bus'
     | '/bus-cors-test'
+    | '/bus-webview-test'
     | '/business'
     | '/cartelera'
     | '/clima'
@@ -1519,6 +1538,7 @@ export interface FileRouteTypes {
     | '/api/public/aena-flights'
     | '/api/public/auth-email-hook'
     | '/api/public/booking-create'
+    | '/api/public/bus-datos'
     | '/api/public/bus-eta'
     | '/api/public/contact'
     | '/api/public/qr-issue'
@@ -1570,6 +1590,7 @@ export interface FileRouteTypes {
     | '/'
     | '/bus'
     | '/bus-cors-test'
+    | '/bus-webview-test'
     | '/cartelera'
     | '/clima'
     | '/comprar'
@@ -1671,6 +1692,7 @@ export interface FileRouteTypes {
     | '/api/public/aena-flights'
     | '/api/public/auth-email-hook'
     | '/api/public/booking-create'
+    | '/api/public/bus-datos'
     | '/api/public/bus-eta'
     | '/api/public/contact'
     | '/api/public/qr-issue'
@@ -1723,6 +1745,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/bus'
     | '/bus-cors-test'
+    | '/bus-webview-test'
     | '/business'
     | '/cartelera'
     | '/clima'
@@ -1826,6 +1849,7 @@ export interface FileRouteTypes {
     | '/api/public/aena-flights'
     | '/api/public/auth-email-hook'
     | '/api/public/booking-create'
+    | '/api/public/bus-datos'
     | '/api/public/bus-eta'
     | '/api/public/contact'
     | '/api/public/qr-issue'
@@ -1879,6 +1903,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   BusRoute: typeof BusRouteWithChildren
   BusCorsTestRoute: typeof BusCorsTestRoute
+  BusWebviewTestRoute: typeof BusWebviewTestRoute
   BusinessRoute: typeof BusinessRouteWithChildren
   CarteleraRoute: typeof CarteleraRoute
   ClimaRoute: typeof ClimaRoute
@@ -1928,6 +1953,7 @@ export interface RootRouteChildren {
   ApiPublicAenaFlightsRoute: typeof ApiPublicAenaFlightsRoute
   ApiPublicAuthEmailHookRoute: typeof ApiPublicAuthEmailHookRoute
   ApiPublicBookingCreateRoute: typeof ApiPublicBookingCreateRoute
+  ApiPublicBusDatosRoute: typeof ApiPublicBusDatosRoute
   ApiPublicBusEtaRoute: typeof ApiPublicBusEtaRoute
   ApiPublicContactRoute: typeof ApiPublicContactRoute
   ApiPublicQrIssueRoute: typeof ApiPublicQrIssueRoute
@@ -2158,6 +2184,13 @@ declare module '@tanstack/react-router' {
       path: '/business'
       fullPath: '/business'
       preLoaderRoute: typeof BusinessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bus-webview-test': {
+      id: '/bus-webview-test'
+      path: '/bus-webview-test'
+      fullPath: '/bus-webview-test'
+      preLoaderRoute: typeof BusWebviewTestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bus-cors-test': {
@@ -2748,6 +2781,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBusEtaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/bus-datos': {
+      id: '/api/public/bus-datos'
+      path: '/api/public/bus-datos'
+      fullPath: '/api/public/bus-datos'
+      preLoaderRoute: typeof ApiPublicBusDatosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/booking-create': {
       id: '/api/public/booking-create'
       path: '/api/public/booking-create'
@@ -3283,6 +3323,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   BusRoute: BusRouteWithChildren,
   BusCorsTestRoute: BusCorsTestRoute,
+  BusWebviewTestRoute: BusWebviewTestRoute,
   BusinessRoute: BusinessRouteWithChildren,
   CarteleraRoute: CarteleraRoute,
   ClimaRoute: ClimaRoute,
@@ -3332,6 +3373,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicAenaFlightsRoute: ApiPublicAenaFlightsRoute,
   ApiPublicAuthEmailHookRoute: ApiPublicAuthEmailHookRoute,
   ApiPublicBookingCreateRoute: ApiPublicBookingCreateRoute,
+  ApiPublicBusDatosRoute: ApiPublicBusDatosRoute,
   ApiPublicBusEtaRoute: ApiPublicBusEtaRoute,
   ApiPublicContactRoute: ApiPublicContactRoute,
   ApiPublicQrIssueRoute: ApiPublicQrIssueRoute,
@@ -3378,13 +3420,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
