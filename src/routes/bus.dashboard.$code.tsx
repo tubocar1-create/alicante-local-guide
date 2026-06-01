@@ -473,7 +473,7 @@ function BusDashboardPage() {
 
 
         {/* COLUMNAS IDA / VUELTA */}
-        <div className="mt-4 grid grid-cols-2 divide-x divide-white/10 overflow-hidden rounded-2xl border border-white/10 p-2" style={{ background: "linear-gradient(to right, rgba(229,231,235,0.55) 0%, rgba(229,231,235,0.55) 50%, rgba(55,65,81,0.65) 50%, rgba(55,65,81,0.65) 100%)" }}>
+        <div className="mt-4 grid grid-cols-2 divide-x divide-white/10 overflow-hidden rounded-2xl border border-white/10 p-2" style={{ background: "linear-gradient(to right, rgba(191,219,254,0.60) 0%, rgba(191,219,254,0.60) 50%, rgba(30,58,138,0.65) 50%, rgba(30,58,138,0.65) 100%)" }}>
           <DirectionColumn
             label="IDA"
             direction={1}
@@ -784,12 +784,12 @@ function DirectionColumn({
     <div className="px-1">
       <div className="mb-2 flex items-center justify-between gap-2 pt-1">
         <div className="flex items-center gap-1 pl-14">
-          <ArrowDown style={{ color }} strokeWidth={4} className="h-7 w-7" />
+          <ArrowDown style={{ color: "#000" }} strokeWidth={4} className="h-7 w-7" />
 
 
           <span
             className="font-sans text-base font-extrabold not-italic"
-            style={{ color }}
+            style={{ color: "#000" }}
           >
             {label}
           </span>
