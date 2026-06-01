@@ -27,7 +27,7 @@ export const DEFAULT_FAVORITE_STOP: FavoriteStop = {
 };
 
 const STORAGE_KEY = "vamos:favorite-stop";
-const SHOW_ON_HOME_KEY = "vamos:favorite-stop-show-on-home";
+const SHOW_ON_HOME_KEY = "vamos:favorite-stop-show-on-home-v2";
 
 export function loadFavoriteStop(): FavoriteStop {
   if (typeof window === "undefined") return DEFAULT_FAVORITE_STOP;
