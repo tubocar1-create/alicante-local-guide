@@ -321,7 +321,7 @@ function BusDashboardPage() {
 
         let arrTimeline: number | null = null;
 
-        if (isDestTerminal) {
+        if (isDestTerminal && isNightLine) {
           arrTimeline = syncedDestinationArrival(stops[i].name);
         }
 
