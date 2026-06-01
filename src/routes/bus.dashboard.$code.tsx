@@ -598,7 +598,7 @@ function HeaderEtas({
             {label}
           </span>
           {geoStatus === "ok" && nearest ? (
-            <span className="flex items-center gap-0.5 text-[10px] text-emerald-400">
+            <span className="flex items-center gap-0.5 text-[10px] text-[#C9922A]">
               <MapPin className="h-3 w-3" />
               {nearest.distance < 1000
                 ? `${Math.round(nearest.distance)} m`
