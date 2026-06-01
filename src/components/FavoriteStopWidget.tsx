@@ -158,6 +158,8 @@ export function FavoriteStopWidget() {
     ? `${String(arrivalDate.getHours()).padStart(2, "0")}:${String(arrivalDate.getMinutes()).padStart(2, "0")}`
     : "n/d";
 
+  if (!show) return null;
+
   return (
     <Link
       to="/transporte/parada-favorita"
