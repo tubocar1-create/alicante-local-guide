@@ -26,10 +26,33 @@ let inflight: Promise<Cache> | null = null;
 let depCache: DepCache | null = null;
 let depCacheAt = 0;
 let depInflight: Promise<DepCache> | null = null;
-const CACHE_TTL_MS = 60_000;
+const SERVICE_WINDOWS_STORAGE_KEY = "busServiceWindowsCache:v1";
+const DEPARTURES_STORAGE_KEY = "busLineDeparturesCache:v1";
+
+function readPersistent<T>(key: string): T | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writePersistent<T>(key: string, data: T) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(key, JSON.stringify(data));
+  } catch {
+    // ignore quota errors
+  }
+}
+
+if (!cache) cache = readPersistent<Cache>(SERVICE_WINDOWS_STORAGE_KEY);
+if (!depCache) depCache = readPersistent<DepCache>(DEPARTURES_STORAGE_KEY);
 
 async function load(): Promise<Cache> {
-  if (cache && Date.now() - cacheAt < CACHE_TTL_MS) return cache;
+  if (cache) return cache;
   if (inflight) return inflight;
   inflight = (async () => {
     const { data } = await supabase
@@ -37,6 +60,7 @@ async function load(): Promise<Cache> {
       .select("line_code,direction,terminal_name,day_type,first_departure,last_departure");
     cache = (data ?? []) as Cache;
     cacheAt = Date.now();
+    writePersistent(SERVICE_WINDOWS_STORAGE_KEY, cache);
     return cache;
   })();
   const r = await inflight;
@@ -45,7 +69,7 @@ async function load(): Promise<Cache> {
 }
 
 async function loadDepartures(): Promise<DepCache> {
-  if (depCache && Date.now() - depCacheAt < CACHE_TTL_MS) return depCache;
+  if (depCache) return depCache;
   if (depInflight) return depInflight;
   depInflight = (async () => {
     const { data } = await supabase
@@ -53,6 +77,7 @@ async function loadDepartures(): Promise<DepCache> {
       .select("line_code,direction,day_type,departure_time");
     depCache = (data ?? []) as DepCache;
     depCacheAt = Date.now();
+    writePersistent(DEPARTURES_STORAGE_KEY, depCache);
     return depCache;
   })();
   const r = await depInflight;
