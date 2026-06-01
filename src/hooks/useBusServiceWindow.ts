@@ -21,10 +21,8 @@ type Cache = ServiceWindowRow[];
 type DepCache = DepartureRow[];
 
 let cache: Cache | null = null;
-let cacheAt = 0;
 let inflight: Promise<Cache> | null = null;
 let depCache: DepCache | null = null;
-let depCacheAt = 0;
 let depInflight: Promise<DepCache> | null = null;
 const SERVICE_WINDOWS_STORAGE_KEY = "busServiceWindowsCache:v1";
 const DEPARTURES_STORAGE_KEY = "busLineDeparturesCache:v1";
@@ -59,7 +57,6 @@ async function load(): Promise<Cache> {
       .from("bus_line_service_windows")
       .select("line_code,direction,terminal_name,day_type,first_departure,last_departure");
     cache = (data ?? []) as Cache;
-    cacheAt = Date.now();
     writePersistent(SERVICE_WINDOWS_STORAGE_KEY, cache);
     return cache;
   })();
@@ -76,7 +73,6 @@ async function loadDepartures(): Promise<DepCache> {
       .from("bus_line_departures")
       .select("line_code,direction,day_type,departure_time");
     depCache = (data ?? []) as DepCache;
-    depCacheAt = Date.now();
     writePersistent(DEPARTURES_STORAGE_KEY, depCache);
     return depCache;
   })();
