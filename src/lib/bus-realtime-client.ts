@@ -167,6 +167,6 @@ export async function getClientStopsRealtimeBatch({
     stopIds.map((id) => {
       const cached = readCachedStopRealtime(id, line);
       return [id, cached?.all.slice(0, 1) ?? []];
-    });
+    }),
   );
 }
