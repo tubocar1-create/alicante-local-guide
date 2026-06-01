@@ -791,7 +791,7 @@ function DirectionColumn({
           />
           <span
             className="font-sans text-base font-extrabold not-italic"
-            style={{ color: "#000" }}
+            style={{ color: direction === 1 ? "#000" : "#fff" }}
           >
             {label}
           </span>
