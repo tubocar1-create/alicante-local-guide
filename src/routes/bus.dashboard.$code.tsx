@@ -783,10 +783,12 @@ function DirectionColumn({
   return (
     <div className="px-1">
       <div className="mb-2 flex items-center justify-between gap-2 pt-1">
-        <div className="flex items-center gap-1 pl-14">
-          <ArrowDown style={{ color: direction === 1 ? "#000" : "#fff" }} strokeWidth={4} className="h-9 w-9" />
-
-
+        <div className="relative flex items-center gap-1 pl-14">
+          <ArrowDown
+            style={{ color: direction === 1 ? "#000" : "#fff", left: "26px", transform: "translateX(-50%)" }}
+            strokeWidth={4}
+            className="absolute top-1/2 -translate-y-1/2 h-12 w-12"
+          />
           <span
             className="font-sans text-base font-extrabold not-italic"
             style={{ color: "#000" }}
