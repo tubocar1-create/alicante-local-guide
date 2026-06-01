@@ -59,7 +59,7 @@ function parseEtas(raw: string, requestedLine: string): number[] {
 
 async function fetchFromDataEndpoint(stopCode: string, lineCode: string): Promise<number[]> {
   try {
-    const r = await fetch(
+    const r = await sbFetch(
       `${VECTALIA_DATA_URL}?p=${encodeURIComponent(stopCode)}`,
       { headers: { ...browserHeaders, Referer: `${VECTALIA_PAGE_URL}?p=${encodeURIComponent(stopCode)}` } },
     );
@@ -76,7 +76,7 @@ async function fetchFromDataEndpoint(stopCode: string, lineCode: string): Promis
 async function fetchFromRequestEndpoint(stopCode: string, lineCode: string): Promise<number[]> {
   try {
     const vectaliaLine = toVectaliaLineCode(lineCode);
-    const r = await fetch(
+    const r = await sbFetch(
       `${VECTALIA_RT_URL}?p=${encodeURIComponent(stopCode)}&l=${encodeURIComponent(vectaliaLine)}`,
       { headers: browserHeaders },
     );
@@ -91,7 +91,7 @@ async function fetchFromRequestEndpoint(stopCode: string, lineCode: string): Pro
 
 async function fetchFromStopPage(stopCode: string, lineCode: string): Promise<number[]> {
   try {
-    const r = await fetch(
+    const r = await sbFetch(
       `${VECTALIA_PAGE_URL}?p=${encodeURIComponent(stopCode)}`,
       { headers: browserHeaders },
     );
