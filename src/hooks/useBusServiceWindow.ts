@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { busStaticLineDepartures, busStaticServiceWindows } from "@/data/bus-static";
 
 export type ServiceWindowRow = {
   line_code: string;
@@ -20,9 +21,9 @@ export type DepartureRow = {
 type Cache = ServiceWindowRow[];
 type DepCache = DepartureRow[];
 
-let cache: Cache | null = null;
+let cache: Cache | null = busStaticServiceWindows as Cache;
 let inflight: Promise<Cache> | null = null;
-let depCache: DepCache | null = null;
+let depCache: DepCache | null = busStaticLineDepartures as DepCache;
 let depInflight: Promise<DepCache> | null = null;
 const SERVICE_WINDOWS_STORAGE_KEY = "busServiceWindowsCache:v1";
 const DEPARTURES_STORAGE_KEY = "busLineDeparturesCache:v1";

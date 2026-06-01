@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { busStaticGraph } from "@/data/bus-static";
 import type { RouteStop } from "@/lib/bus-routing";
 
 export type LineRow = { code: string; name: string; color: string | null };
@@ -12,7 +13,7 @@ type Cache = {
 
 const STORAGE_KEY = "busGraphCache:v1";
 
-let cache: Cache | null = null;
+let cache: Cache | null = busStaticGraph as Cache;
 let inflight: Promise<Cache> | null = null;
 
 function readPersistent(): Cache | null {
