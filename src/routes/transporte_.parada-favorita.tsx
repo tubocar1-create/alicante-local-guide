@@ -599,7 +599,7 @@ function ParadaFavoritaPage() {
         <button
           role="switch"
           aria-checked={showOnHome}
-          onClick={() => setShowOnHome((v) => !v)}
+          onClick={() => setShowOnHome((v) => { const next = !v; saveShowOnHome(next); return next; })}
           className={`relative h-6 w-11 rounded-full transition ${
             showOnHome ? "bg-[#0d3b8a]" : "bg-stone-300"
           }`}
