@@ -3,10 +3,10 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Bus, ChevronRight, Clock, Info, MapPin, Plane, RefreshCcw, Search, Star } from "lucide-react";
 import {
   FavoriteStop,
-  computeNextArrival,
-  computeUpcomingArrivals,
   loadFavoriteStop,
+  loadShowOnHome,
   saveFavoriteStop,
+  saveShowOnHome,
 } from "@/components/FavoriteStopWidget";
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { useBusServiceWindows, useBusLineDepartures, getServiceStatus, getNightLineEstimates } from "@/hooks/useBusServiceWindow";
