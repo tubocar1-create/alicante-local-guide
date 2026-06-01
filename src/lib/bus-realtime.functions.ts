@@ -18,6 +18,27 @@ const UA =
 
 const TIEMPOS_RE =
   /Linea\s+(\d+[A-Za-z]?)\s+([^:]+?)\s*:\s*(\d+)\s*min\.?\s*:\s*(?:(?!-?\d+(?:\.\d+)?\s*,)[^:;]+\s*:\s*)?(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/gi;
+const CACHE_TTL_MS = 20_000;
+const FETCH_TIMEOUT_MS = 4_500;
+
+const realtimeCache = new Map<string, { arrivals: StopArrival[]; fetchedAt: number }>();
+const realtimeInflight = new Map<string, Promise<StopArrival[]>>();
+
+function normalizeLine(code: string): string {
+  const m = code.trim().toUpperCase().match(/^(\d+)([A-Z]?)$/);
+  if (!m) return code.trim().toUpperCase();
+  return String(parseInt(m[1], 10)) + m[2];
+}
+
+async function fetchWithTimeout(url: string, init: RequestInit = {}, timeoutMs = FETCH_TIMEOUT_MS): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
 
 function extractCookies(res: Response): string {
   // Cloudflare Workers: getSetCookie() devuelve array
@@ -43,9 +64,32 @@ function parseTiempos(raw: string): StopArrival[] {
 }
 
 async function fetchStopFromSubus(stopCode: string): Promise<StopArrival[]> {
+  const datosUrl = `${BASE}/datos.aspx?p=${encodeURIComponent(stopCode)}`;
+  const direct = await fetchWithTimeout(datosUrl, {
+    redirect: "follow",
+    headers: {
+      "User-Agent": UA,
+      Accept: "application/json, text/plain, */*",
+      "Accept-Language": "es-ES,es;q=0.9",
+      "X-Requested-With": "XMLHttpRequest",
+      "X-Vectalia-App": "qr-alicante",
+    },
+  }).catch(() => null);
+  if (direct?.ok) {
+    const text = await direct.text();
+    try {
+      const json = JSON.parse(text) as { tiempos?: string };
+      const arrivals = parseTiempos(json.tiempos ?? "");
+      if (arrivals.length > 0) return arrivals;
+    } catch {
+      const arrivals = parseTiempos(text);
+      if (arrivals.length > 0) return arrivals;
+    }
+  }
+
   // Paso 1: consulta.aspx → cookies de sesión
   const consultaUrl = `${BASE}/consulta.aspx?p=${encodeURIComponent(stopCode)}`;
-  const r1 = await fetch(consultaUrl, {
+  const r1 = await fetchWithTimeout(consultaUrl, {
     redirect: "follow",
     headers: {
       "User-Agent": UA,
@@ -58,8 +102,7 @@ async function fetchStopFromSubus(stopCode: string): Promise<StopArrival[]> {
   await r1.arrayBuffer().catch(() => null);
 
   // Paso 2: datos.aspx → JSON con tiempos
-  const datosUrl = `${BASE}/datos.aspx?p=${encodeURIComponent(stopCode)}`;
-  const r2 = await fetch(datosUrl, {
+  const r2 = await fetchWithTimeout(datosUrl, {
     redirect: "follow",
     headers: {
       "User-Agent": UA,
