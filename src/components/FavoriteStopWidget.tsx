@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useBusGraph } from "@/hooks/useBusGraph";
+import { getClientStopRealtime } from "@/lib/bus-realtime-client";
 
 // Servicio urbano: el último bus parte de la parada extrema a las 22:30 y
 // cada línea abre a una hora particular por la mañana. Como cota segura
@@ -105,18 +106,17 @@ export function FavoriteStopWidget() {
   // si no, devuelve null y mostramos n/d. No imponemos lógica de horario.
   useEffect(() => {
     let cancelled = false;
+    let controller: AbortController | null = null;
     async function fetchLive() {
+      controller?.abort();
+      controller = new AbortController();
       try {
-        const r = await fetch(
-          `/api/public/bus-eta?stop=${encodeURIComponent(stop.stopId)}&line=${encodeURIComponent(stop.line)}&_=${Date.now()}`,
-          { cache: "no-store" },
-        );
-        if (!r.ok) {
-          if (!cancelled) setLiveMin(null);
-          return;
-        }
-        const j = (await r.json()) as { etaMin: number | null };
-        if (!cancelled) setLiveMin(typeof j.etaMin === "number" ? j.etaMin : null);
+        const r = await getClientStopRealtime({
+          stopId: stop.stopId,
+          line: stop.line,
+          signal: controller.signal,
+        });
+        if (!cancelled) setLiveMin(typeof r.etaMin === "number" ? r.etaMin : null);
       } catch {
         if (!cancelled) setLiveMin(null);
       }
@@ -125,6 +125,7 @@ export function FavoriteStopWidget() {
     const id = window.setInterval(fetchLive, 30_000);
     return () => {
       cancelled = true;
+      controller?.abort();
       window.clearInterval(id);
     };
   }, [stop.stopId, stop.line]);

@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ArrowDown, ArrowUp, Bus, ChevronDown, Radio, RefreshCw, Loader2, MapPin } from "lucide-react";
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { classifyLine } from "@/components/BusKnownPicker";
@@ -14,6 +14,7 @@ import {
   toMinHM,
 } from "@/hooks/useBusServiceWindow";
 import { cumulativeMinutes, NIGHT_URBAN_KMH } from "@/lib/bus-eta";
+import { getClientStopRealtime } from "@/lib/bus-realtime-client";
 import busAlicanteImg from "@/assets/bus-alicante.png";
 import type { LineStopPoint } from "@/components/BusLineLiveMap";
 
@@ -353,60 +354,28 @@ function BusDashboardPage() {
   }, [isNightLine, serviceRows, departures, code, stopsByDir, stopCoords, clock]);
 
 
-  // Realtime: por cada parada del recorrido (ambas direcciones), pedir su ETA.
+  // Realtime progresivo: cada parada pide ETA solo cuando entra en viewport.
   // Saltamos en líneas nocturnas — usamos estimación por horario oficial.
   const [etas, setEtas] = useState<Record<string, number[]>>({});
-  const [loadingEtas, setLoadingEtas] = useState(false);
-  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
+  const [loadingEtaStops, setLoadingEtaStops] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
-    if (isNightLine) return;
-    const allStops = [...stopsByDir[1], ...stopsByDir[2]];
-    if (allStops.length === 0) return;
-    let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | null = null;
+    setEtas({});
+    setLoadingEtaStops(new Set());
+  }, [code]);
 
-    const fetchStop = async (stopCode: string): Promise<number[]> => {
-      try {
-        const r = await fetch(
-          `/api/public/bus-eta?stop=${encodeURIComponent(stopCode)}&line=${encodeURIComponent(code)}`,
-          { cache: "no-store" },
-        );
-        if (!r.ok) return [];
-        const j = (await r.json()) as { all?: number[] };
-        return Array.isArray(j.all) ? j.all.slice(0, 1) : [];
-      } catch {
-        return [];
-      }
-    };
+  const handleEtaLoading = useCallback((stopCode: string, loading: boolean) => {
+    setLoadingEtaStops((prev) => {
+      const next = new Set(prev);
+      if (loading) next.add(stopCode);
+      else next.delete(stopCode);
+      return next;
+    });
+  }, []);
 
-    const tick = async () => {
-      setLoadingEtas(true);
-      const codes = Array.from(new Set(allStops.map((s) => s.code)));
-      const CHUNK = 6;
-      for (let i = 0; i < codes.length; i += CHUNK) {
-        if (cancelled) break;
-        const slice = codes.slice(i, i + CHUNK);
-        const results = await Promise.all(slice.map(fetchStop));
-        const next: Record<string, number[]> = {};
-        results.forEach((arr, idx) => {
-          next[slice[idx]] = arr;
-        });
-        if (!cancelled) setEtas((prev) => ({ ...prev, ...next }));
-      }
-      if (!cancelled) {
-        setUpdatedAt(new Date().toISOString());
-        setLoadingEtas(false);
-        timer = setTimeout(tick, 15_000);
-      }
-    };
-    tick();
-    return () => {
-      cancelled = true;
-      if (timer) clearTimeout(timer);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [code, isNightLine, stopsByDir[1].length, stopsByDir[2].length]);
+  const handleStopEta = useCallback((stopCode: string, all: number[]) => {
+    setEtas((prev) => ({ ...prev, [stopCode]: all.slice(0, 1) }));
+  }, []);
 
 
   const lineCategory = classifyLine(code);
@@ -416,7 +385,7 @@ function BusDashboardPage() {
 
   const inService = isNightLine
     ? nightEtaByDir[1].size > 0 || nightEtaByDir[2].size > 0
-    : Object.values(etas).some((arr) => arr && arr.length > 0) || loadingEtas;
+    : Object.values(etas).some((arr) => arr && arr.length > 0) || loadingEtaStops.size > 0;
 
 
   if (loading) {
@@ -505,6 +474,11 @@ function BusDashboardPage() {
             direction={1}
             stops={stopsByDir[1]}
             etas={etas}
+            lineCode={code}
+            realtimeEnabled={!isNightLine}
+            loadingEtaStops={loadingEtaStops}
+            onEtaLoading={handleEtaLoading}
+            onStopEta={handleStopEta}
             nightEtaByCode={isNightLine ? nightEtaByDir[1] : null}
             color={lineColor}
             inService={inService}
@@ -523,6 +497,11 @@ function BusDashboardPage() {
             direction={2}
             stops={stopsByDir[2]}
             etas={etas}
+            lineCode={code}
+            realtimeEnabled={!isNightLine}
+            loadingEtaStops={loadingEtaStops}
+            onEtaLoading={handleEtaLoading}
+            onStopEta={handleStopEta}
             nightEtaByCode={isNightLine ? nightEtaByDir[2] : null}
             color={lineColor}
             inService={inService}
@@ -679,11 +658,85 @@ function LineChip({
   );
 }
 
+function VisibleStopRealtime({
+  stopCode,
+  lineCode,
+  onLoading,
+  onEta,
+}: {
+  stopCode: string;
+  lineCode: string;
+  onLoading: (stopCode: string, loading: boolean) => void;
+  onEta: (stopCode: string, all: number[]) => void;
+}) {
+  const sentinelRef = useRef<HTMLSpanElement | null>(null);
+
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node || typeof IntersectionObserver === "undefined") return;
+    let visible = false;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let controller: AbortController | null = null;
+
+    const clearTimer = () => {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    };
+
+    const load = async () => {
+      if (cancelled || !visible || document.visibilityState !== "visible") return;
+      controller?.abort();
+      controller = new AbortController();
+      onLoading(stopCode, true);
+      try {
+        const r = await getClientStopRealtime({ stopId: stopCode, line: lineCode, signal: controller.signal });
+        if (!cancelled) onEta(stopCode, r.all);
+      } finally {
+        if (!cancelled) onLoading(stopCode, false);
+        clearTimer();
+        if (!cancelled && visible) timer = setTimeout(load, 20_000);
+      }
+    };
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        visible = Boolean(entry?.isIntersecting);
+        if (visible) void load();
+        else {
+          clearTimer();
+          controller?.abort();
+          onLoading(stopCode, false);
+        }
+      },
+      { root: null, rootMargin: "180px 0px", threshold: 0.01 },
+    );
+    observer.observe(node);
+
+    return () => {
+      cancelled = true;
+      clearTimer();
+      controller?.abort();
+      observer.disconnect();
+      onLoading(stopCode, false);
+    };
+  }, [lineCode, onEta, onLoading, stopCode]);
+
+  return <span ref={sentinelRef} className="absolute inset-x-0 -top-20 h-px" aria-hidden />;
+}
+
 function DirectionColumn({
   label,
   direction,
   stops,
   etas,
+  lineCode,
+  realtimeEnabled,
+  loadingEtaStops,
+  onEtaLoading,
+  onStopEta,
   nightEtaByCode,
   color,
   inService,
@@ -696,6 +749,11 @@ function DirectionColumn({
   direction: 1 | 2;
   stops: StopRow[];
   etas: Record<string, number[]>;
+  lineCode: string;
+  realtimeEnabled: boolean;
+  loadingEtaStops: Set<string>;
+  onEtaLoading: (stopCode: string, loading: boolean) => void;
+  onStopEta: (stopCode: string, all: number[]) => void;
   nightEtaByCode: Map<string, { min: number; time: string }> | null;
   color: string;
   inService: boolean;
@@ -776,11 +834,13 @@ function DirectionColumn({
           />
         )}
         {stops.map((s, i) => {
+          const hasRealtimeResult = Object.prototype.hasOwnProperty.call(etas, s.code);
           const arr = etas[s.code] ?? [];
           const liveEta = arr[0];
           const nightEta = nightEtaByCode?.get(s.code) ?? null;
           const eta1 = nightEta ? nightEta.min : liveEta;
           const hasEta = typeof eta1 === "number";
+          const isLoadingEta = realtimeEnabled && loadingEtaStops.has(s.code);
           const isOrigin = i === 0;
           const isDest = i === stops.length - 1;
           const transfers = transferLines(s.code);
@@ -832,6 +892,15 @@ function DirectionColumn({
                 )}
               </div>
 
+              {realtimeEnabled && (
+                <VisibleStopRealtime
+                  stopCode={s.code}
+                  lineCode={lineCode}
+                  onLoading={onEtaLoading}
+                  onEta={onStopEta}
+                />
+              )}
+
               <button
                 type="button"
                 onClick={() => onPickStop(s.code, s.name, stops[stops.length - 1]?.name ?? "")}
@@ -853,7 +922,9 @@ function DirectionColumn({
                           : undefined
                     }
                   >
-                    {hasEta && eta1 === 0 ? (
+                    {isLoadingEta ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : hasEta && eta1 === 0 ? (
                       <img
                         src={busAlicanteImg}
                         alt="Bus"
@@ -862,9 +933,11 @@ function DirectionColumn({
                     ) : (
                       <>
                         <span className="font-sans text-[12px] font-extrabold not-italic tabular-nums">
-                          {hasEta ? eta1 : "—"}
+                          {hasEta ? eta1 : hasRealtimeResult ? "n/d" : "—"}
                         </span>
-                        <span className="font-sans text-[8px] font-bold not-italic">min</span>
+                        <span className="font-sans text-[8px] font-bold not-italic">
+                          {hasEta ? "min" : ""}
+                        </span>
                       </>
                     )}
                   </div>
@@ -878,7 +951,7 @@ function DirectionColumn({
 
                   <div className="flex items-baseline gap-1.5">
                     <span className="font-sans text-[11px] font-semibold not-italic tabular-nums text-white/90">
-                      {etaTime ?? "--:--"}
+                      {etaTime ?? (hasRealtimeResult ? "n/d" : "--:--")}
                     </span>
                     <span className="font-sans text-[9px] font-medium not-italic uppercase tracking-wide text-white/50">
                       estimado

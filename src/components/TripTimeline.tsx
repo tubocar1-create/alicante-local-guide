@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import { ArrowDown, Bus, Clock, Loader2, AlertTriangle, CheckCircle2, Repeat } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getStopRealtime, type StopArrival } from "@/lib/bus-realtime.functions";
+import { getClientStopRealtime, type StopArrival } from "@/lib/bus-realtime-client";
 import type { Trip } from "@/lib/bus-routing";
 import { estimateLegMinutes, formatMinutes } from "@/lib/bus-eta";
 
@@ -32,8 +31,6 @@ export function TripTimeline({
   selected: boolean;
   onSelect: () => void;
 }) {
-  const fetchRealtime = useServerFn(getStopRealtime);
-
   // Per-leg estimates
   const legMins = useMemo(() => trip.legs.map((l) => estimateLegMinutes(l, coords)), [trip, coords]);
   const totalMin = legMins.reduce((a, b) => a + b, 0);
@@ -71,7 +68,7 @@ export function TripTimeline({
       const attempt = async () => {
         if (cancelled) return;
         try {
-          const r = await fetchRealtime({ data: { stopCode, lines: [lineCode] } });
+          const r = await getClientStopRealtime({ stopId: stopCode, line: lineCode });
           if (cancelled) return;
           if (r.arrivals && r.arrivals.length > 0) {
             onArrivals(r.arrivals);
@@ -126,7 +123,7 @@ export function TripTimeline({
       retryTimers.forEach((t) => clearTimeout(t));
       retryTimers.clear();
     };
-  }, [selected, trip, fetchRealtime]);
+  }, [selected, trip]);
 
   const firstLine = trip.legs[0].lineCode;
   const nextOrigin = useMemo(() => {

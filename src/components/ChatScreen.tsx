@@ -48,6 +48,7 @@ import asistenteIcon from "@/assets/asistente-icon.png";
 import { VamosWord } from "@/components/VamosWord";
 import { hablar, speakGreetingFromUserGesture } from "@/components/AgenteVamos";
 import { FavoriteStopWidget } from "@/components/FavoriteStopWidget";
+import { getClientStopRealtime } from "@/lib/bus-realtime-client";
 
 const TILE_SUBTITLES: Record<string, string> = {
   "Comer": "Restaurantes y tapas",
@@ -1928,16 +1929,16 @@ function BigLiveEta({ line, stop }: { line: string; stop: string }) {
   useEffect(() => {
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
+    let controller: AbortController | null = null;
     const tick = async () => {
+      controller?.abort();
+      controller = new AbortController();
       setLoading(true);
       try {
-        const r = await fetch(`/api/public/bus-eta?stop=${stop}&line=${line}`, { cache: "no-store" });
-        if (r.ok) {
-          const j = await r.json();
-          if (!cancelled) {
-            setEta(typeof j.etaMin === "number" ? j.etaMin : null);
-            setUpdatedAt(Date.now());
-          }
+        const r = await getClientStopRealtime({ stopId: stop, line, signal: controller.signal });
+        if (!cancelled) {
+          setEta(typeof r.etaMin === "number" ? r.etaMin : null);
+          setUpdatedAt(r.fetchedAt);
         }
       } catch { /* noop */ }
       finally {
@@ -1946,7 +1947,7 @@ function BigLiveEta({ line, stop }: { line: string; stop: string }) {
       }
     };
     tick();
-    return () => { cancelled = true; if (timer) clearTimeout(timer); };
+    return () => { cancelled = true; controller?.abort(); if (timer) clearTimeout(timer); };
   }, [line, stop]);
 
   const arrival = eta != null ? new Date(updatedAt + Math.max(0, eta) * 60_000) : null;

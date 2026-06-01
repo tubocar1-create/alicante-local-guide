@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import type { StopArrival } from "@/lib/bus-realtime.functions";
+import type { StopArrival } from "@/lib/bus-realtime-client";
 
 type Alarm = { line: string | "any"; minutes: number };
 
