@@ -547,8 +547,8 @@ function BusDashboardPage() {
           <p className="mt-4 text-center text-sm text-white/60">Cargando paradas…</p>
         )}
       </div>
-      <StopRealtimeSheet stop={pickedStop} open={sheetOpen} onOpenChange={setSheetOpen} />
     </div>
+
   );
 
 }
