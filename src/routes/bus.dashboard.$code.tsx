@@ -837,8 +837,8 @@ function DirectionColumn({
         {stops.length > 1 && (
           <span
             aria-hidden
-            className="absolute left-6 top-3 bottom-3 w-[2px] rounded-full"
-            style={{ background: direction === 1 ? "#9ca3af" : "#4b5563" }}
+            className="absolute left-6 top-3 bottom-3 w-[3px] rounded-full"
+            style={{ background: "#000" }}
           />
         )}
         {stops.map((s, i) => {
