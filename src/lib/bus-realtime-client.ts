@@ -13,7 +13,7 @@ export type StopRealtimeResult = {
   fetchedAt: number;
 };
 
-const STOP_PAGE_URL = "https://movilidad.vectalia.es/QR/Alicante/consulta.aspx";
+const STOP_PAGE_URL = "https://qr.vectalia.es/Alicante/consulta.aspx";
 const CACHE_TTL_MS = 20_000;
 const MAX_CONCURRENT = 3;
 const REQUEST_DELAY_MS = 200;
