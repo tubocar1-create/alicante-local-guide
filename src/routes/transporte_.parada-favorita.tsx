@@ -11,6 +11,7 @@ import {
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { useBusServiceWindows, useBusLineDepartures, getServiceStatus, getNightLineEstimates } from "@/hooks/useBusServiceWindow";
 import { cumulativeMinutes, NIGHT_URBAN_KMH } from "@/lib/bus-eta";
+import { getClientStopRealtime } from "@/lib/bus-realtime-client";
 
 export const Route = createFileRoute("/transporte_/parada-favorita")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -153,22 +154,17 @@ function ParadaFavoritaPage() {
       return;
     }
     let cancelled = false;
+    let controller: AbortController | null = null;
     const fetchAll = async () => {
+      controller?.abort();
+      controller = new AbortController();
       setLiveLoading(true);
       try {
-        const params = new URLSearchParams({ stop: stop.stopId, line: stop.line });
-        const r = await fetch(`/api/public/bus-eta?${params.toString()}`, { cache: "no-store" });
-        if (!r.ok) {
-          if (!cancelled) setLiveAll([]);
-          return;
-        }
-        const j = await r.json();
-        const all: number[] = Array.isArray(j?.all)
-          ? j.all.filter((n: unknown) => typeof n === "number")
-          : [];
+        const r = await getClientStopRealtime({ stopId: stop.stopId, line: stop.line, signal: controller.signal });
+        const all = r.all.filter((n) => typeof n === "number");
         if (!cancelled) {
           setLiveAll(all);
-          setLiveUpdatedAt(Date.now());
+          setLiveUpdatedAt(r.fetchedAt);
         }
       } catch {
         if (!cancelled) setLiveAll([]);
@@ -180,6 +176,7 @@ function ParadaFavoritaPage() {
     const id = window.setInterval(fetchAll, 30_000);
     return () => {
       cancelled = true;
+      controller?.abort();
       window.clearInterval(id);
     };
   }, [stop.stopId, stop.line, outOfService, isNightLine, searchTargetPending]);
