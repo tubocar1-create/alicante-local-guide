@@ -473,7 +473,7 @@ function BusDashboardPage() {
 
 
         {/* COLUMNAS IDA / VUELTA */}
-        <div className="mt-4 grid grid-cols-2 divide-x divide-white/10 rounded-2xl border border-white/10 bg-white/[0.02] p-2">
+        <div className="mt-4 grid grid-cols-2 divide-x divide-white/10 overflow-hidden rounded-2xl border border-white/10 p-2" style={{ background: "linear-gradient(to right, rgba(156,163,175,0.18) 0%, rgba(156,163,175,0.18) 50%, rgba(75,85,99,0.28) 50%, rgba(75,85,99,0.28) 100%)" }}>
           <DirectionColumn
             label="IDA"
             direction={1}
