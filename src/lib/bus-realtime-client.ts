@@ -114,42 +114,59 @@ export async function getClientStopsRealtimeBatch({
   stopIds: string[];
   line: string;
 }): Promise<Record<string, number[]>> {
-  const ids = [...new Set(stopIds.map((id) => id.trim()).filter(Boolean))].filter((id) => {
+  const ids = [...new Set(stopIds.map((id) => id.trim()).filter(Boolean))];
+  const missingIds = ids.filter((id) => {
     const valid = cache.get(id);
-    return !valid || Date.now() - valid.fetchedAt >= CACHE_TTL_MS;
+    return (!valid || Date.now() - valid.fetchedAt >= CACHE_TTL_MS) && !inFlight.has(id);
   });
 
-  if (ids.length === 0) {
-    return Object.fromEntries(
-      stopIds.map((id) => {
-        const cached = readCachedStopRealtime(id, line);
-        return [id, cached?.all.slice(0, 1) ?? []];
-      }),
-    );
+  if (missingIds.length > 0) {
+    const batchPromise = getStopsRealtimeBatch({ data: { stopCodes: missingIds, line } })
+      .then((res) => {
+        const fetchedAt = Date.now();
+        for (const stopId of missingIds) {
+          const arrivalsRaw = res.stops?.[stopId] ?? [];
+          const arrivals: StopArrival[] = arrivalsRaw.map((a) => ({
+            line: normalizeLine(a.line),
+            destination: a.destination,
+            etaMin: a.etaMin,
+            lat: a.lat,
+            lng: a.lng,
+          }));
+          cache.set(stopId, {
+            arrivals,
+            all: arrivals.map((a) => a.etaMin).sort((a, b) => a - b),
+            etaMin: arrivals[0]?.etaMin ?? null,
+            fetchedAt,
+          });
+        }
+      })
+      .catch(() => {
+        const fetchedAt = Date.now();
+        for (const stopId of missingIds) {
+          cache.set(stopId, { arrivals: [], all: [], etaMin: null, fetchedAt });
+        }
+      })
+      .finally(() => {
+        for (const stopId of missingIds) inFlight.delete(stopId);
+      });
+
+    for (const stopId of missingIds) {
+      inFlight.set(stopId, batchPromise.then(() => cache.get(stopId) ?? {
+        arrivals: [],
+        all: [],
+        etaMin: null,
+        fetchedAt: Date.now(),
+      }));
+    }
   }
 
-  const res = await getStopsRealtimeBatch({ data: { stopCodes: ids, line } });
-  const fetchedAt = Date.now();
-  for (const [stopId, arrivalsRaw] of Object.entries(res.stops ?? {})) {
-    const arrivals: StopArrival[] = (arrivalsRaw ?? []).map((a) => ({
-      line: normalizeLine(a.line),
-      destination: a.destination,
-      etaMin: a.etaMin,
-      lat: a.lat,
-      lng: a.lng,
-    }));
-    cache.set(stopId, {
-      arrivals,
-      all: arrivals.map((a) => a.etaMin).sort((a, b) => a - b),
-      etaMin: arrivals[0]?.etaMin ?? null,
-      fetchedAt,
-    });
-  }
+  await Promise.all(ids.map((id) => inFlight.get(id) ?? Promise.resolve(cache.get(id) ?? null)));
 
   return Object.fromEntries(
     stopIds.map((id) => {
       const cached = readCachedStopRealtime(id, line);
       return [id, cached?.all.slice(0, 1) ?? []];
-    }),
+    });
   );
 }
