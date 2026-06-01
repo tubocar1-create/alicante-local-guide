@@ -3,10 +3,10 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight, Bus, ChevronRight, Clock, Info, MapPin, Plane, RefreshCcw, Search, Star } from "lucide-react";
 import {
   FavoriteStop,
-  computeNextArrival,
-  computeUpcomingArrivals,
   loadFavoriteStop,
+  loadShowOnHome,
   saveFavoriteStop,
+  saveShowOnHome,
 } from "@/components/FavoriteStopWidget";
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { useBusServiceWindows, useBusLineDepartures, getServiceStatus, getNightLineEstimates } from "@/hooks/useBusServiceWindow";
@@ -47,7 +47,7 @@ function ParadaFavoritaPage() {
   const [, setTick] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [showOnHome, setShowOnHome] = useState(true);
+  const [showOnHome, setShowOnHome] = useState<boolean>(() => loadShowOnHome());
   // Real-time ETAs en minutos (lista completa devuelta por Vectalia).
   const [liveAll, setLiveAll] = useState<number[]>([]);
   const [liveLoading, setLiveLoading] = useState(false);
@@ -183,66 +183,43 @@ function ParadaFavoritaPage() {
 
   const elapsedMin = Math.floor((Date.now() - liveUpdatedAt) / 60_000);
   const liveMinutes = liveAll.length > 0 ? Math.max(0, liveAll[0] - elapsedMin) : null;
-  const fallback = computeNextArrival(stop);
-  // Si hay estimado nocturno, lo usamos como fuente principal.
+  // Fuentes válidas: nocturno (horario Vectalia) o tiempo real Vectalia.
+  // Si no hay ninguna, mostramos n/d — NO inventamos estimación diurna.
   const nightFirst = nightEstimate?.upcoming[0];
-  const minutes = nightFirst ? nightFirst.minutes : (liveMinutes ?? fallback.minutes);
-  const arrivalDate = new Date(Date.now() + minutes * 60_000);
-  const arrivalTime = nightFirst
+  const minutes: number | null = nightFirst
+    ? nightFirst.minutes
+    : (liveMinutes ?? null);
+  const arrivalTime: string = nightFirst
     ? nightFirst.arrivalTime
-    : `${String(arrivalDate.getHours()).padStart(2, "0")}:${String(arrivalDate.getMinutes()).padStart(2, "0")}`;
-  const fallbackUpcoming = computeUpcomingArrivals(stop, 4);
-  // Construye las 4 próximas llegadas. Para líneas nocturnas en servicio
-  // usamos los estimados horarios; en el resto, live Vectalia + relleno.
+    : minutes != null
+      ? (() => {
+          const d = new Date(Date.now() + minutes * 60_000);
+          return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+        })()
+      : "n/d";
+  // Próximas llegadas: nocturno → horario oficial; diurno → solo live Vectalia.
   const upcoming = (() => {
     if (nightEstimate) {
-      // En el ORIGEN del trayecto mostramos la hora oficial de salida de
-      // Vectalia. En paradas intermedias mostramos la hora estimada de
-      // llegada, calculada por distancia desde el origen.
       const atOrigin = nightEstimate.atOrigin;
-      // En el origen, el "tiempo de espera" es hasta la SALIDA oficial
-      // (la llegada se estima 5 min antes para carga de pasajeros).
       return nightEstimate.upcoming.map((u) => ({
         minutes: atOrigin ? u.minutes + 5 : u.minutes,
         arrivalTime: atOrigin ? u.departureTime : u.arrivalTime,
         live: false,
       }));
     }
-    const out: Array<{ minutes: number; arrivalTime: string; live: boolean }> = [];
     const liveAdjusted = liveAll.map((m) => Math.max(0, m - elapsedMin)).sort((a, b) => a - b);
-    for (const m of liveAdjusted.slice(0, 4)) {
+    return liveAdjusted.slice(0, 4).map((m) => {
       const d = new Date(Date.now() + m * 60_000);
-      out.push({
+      return {
         minutes: m,
         arrivalTime: `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`,
         live: true,
-      });
-    }
-    // Frecuencia inferida a partir de los ETAs live; por defecto 15 min.
-    let freq = 15;
-    if (liveAdjusted.length >= 2) {
-      const diffs: number[] = [];
-      for (let i = 1; i < liveAdjusted.length; i++) diffs.push(liveAdjusted[i] - liveAdjusted[i - 1]);
-      diffs.sort((a, b) => a - b);
-      const med = diffs[Math.floor(diffs.length / 2)];
-      if (med >= 5 && med <= 60) freq = med;
-    }
-    const lastMin = out.length > 0 ? out[out.length - 1].minutes : null;
-    let idx = 0;
-    while (out.length < 4) {
-      const base = lastMin != null ? lastMin + freq * (idx + 1) : fallbackUpcoming[idx].minutes;
-      const d = new Date(Date.now() + base * 60_000);
-      out.push({
-        minutes: base,
-        arrivalTime: `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`,
-        live: false,
-      });
-      idx++;
-    }
-    return out;
+      };
+    });
   })();
-  const isArriving = minutes <= 1 && !nightEstimate; // los estimados no parpadean
+  const isArriving = minutes != null && minutes <= 1 && !nightEstimate;
   const hasLiveData = liveAll.length > 0 && !isNightLine;
+  const hasAnyData = nightFirst != null || liveMinutes != null;
 
 
 
@@ -384,36 +361,6 @@ function ParadaFavoritaPage() {
         </button>
       </header>
 
-      {/* PRUEBA: tu teléfono cargando directamente la página de Vectalia.
-          Esto NO es fetch() (que CORS bloquea) — es una navegación normal del navegador,
-          igual que si abrieras la URL en una pestaña nueva. */}
-      <section className="mx-3 mb-3 rounded-3xl bg-white p-3 shadow-[0_8px_24px_-12px_rgba(60,40,10,0.25)] ring-1 ring-stone-200">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <div>
-            <div className="text-[9px] font-extrabold uppercase tracking-wider text-emerald-700">
-              Prueba directa · tu teléfono → Vectalia
-            </div>
-            <div className="text-[10px] text-stone-500">
-              Parada {stop.stopId} · sin proxy, sin backend
-            </div>
-          </div>
-          <a
-            href={`https://qr.vectalia.es/Alicante/consulta.aspx?p=${encodeURIComponent(stop.stopId)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-full bg-[#0d3b8a] px-3 py-1.5 text-[10px] font-bold text-white active:scale-95"
-          >
-            Abrir
-          </a>
-        </div>
-        <iframe
-          key={stop.stopId}
-          src={`https://qr.vectalia.es/Alicante/consulta.aspx?p=${encodeURIComponent(stop.stopId)}`}
-          title={`Vectalia parada ${stop.stopId}`}
-          className="h-[320px] w-full rounded-2xl border border-stone-200 bg-white"
-          loading="lazy"
-        />
-      </section>
 
       {/* Live block */}
       <section className="mx-3 rounded-3xl bg-white p-3 shadow-[0_8px_24px_-12px_rgba(60,40,10,0.25)]">
@@ -505,6 +452,13 @@ function ParadaFavoritaPage() {
                   ¡Llegando!
                 </div>
               </div>
+            ) : minutes == null ? (
+              <div className="mt-2 flex w-full flex-col items-center rounded-2xl bg-stone-100 px-2 py-3 text-center ring-1 ring-stone-300">
+                <span className="text-3xl font-black tabular-nums text-stone-500">n/d</span>
+                <span className="mt-1 text-[9px] font-semibold text-stone-500">
+                  Sin paso en vivo
+                </span>
+              </div>
             ) : (
               <div
                 key={minutes}
@@ -550,7 +504,9 @@ function ParadaFavoritaPage() {
                     : `horario Vectalia + recorrido estimado desde ${nightEstimate.originTerminal}`
                   : hasLiveData
                     ? "tiempo real (Vectalia)"
-                    : "estimación · sin paso en vivo"}
+                    : liveLoading
+                      ? "consultando…"
+                      : "sin paso en vivo (n/d)"}
             </span>
           </div>
         </div>
@@ -578,6 +534,13 @@ function ParadaFavoritaPage() {
             <span className="text-sm font-extrabold text-stone-700">Fuera de servicio</span>
             <span className="text-[11px] text-stone-500">
               El servicio se reanuda {reopensDayLabel ? `el ${reopensLabel}` : `a las ${reopensAt}`}.{lastDeparture ? ` El último bus parte de la parada extrema a las ${lastDeparture}.` : ""}
+            </span>
+          </div>
+        ) : upcoming.length === 0 ? (
+          <div className="flex flex-col items-center gap-1 py-4 text-center">
+            <span className="text-sm font-extrabold text-stone-700">n/d</span>
+            <span className="text-[11px] text-stone-500">
+              {liveLoading ? "Consultando paso en vivo…" : "No hay paso en vivo disponible para esta parada ahora mismo."}
             </span>
           </div>
         ) : (
@@ -636,7 +599,7 @@ function ParadaFavoritaPage() {
         <button
           role="switch"
           aria-checked={showOnHome}
-          onClick={() => setShowOnHome((v) => !v)}
+          onClick={() => setShowOnHome((v) => { const next = !v; saveShowOnHome(next); return next; })}
           className={`relative h-6 w-11 rounded-full transition ${
             showOnHome ? "bg-[#0d3b8a]" : "bg-stone-300"
           }`}
