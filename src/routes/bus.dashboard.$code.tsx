@@ -3,7 +3,7 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { ArrowLeft, ArrowDown, ArrowUp, Bus, ChevronDown, Radio, RefreshCw, Loader2, MapPin } from "lucide-react";
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { classifyLine } from "@/components/BusKnownPicker";
-import { saveFavoriteStop } from "@/components/FavoriteStopWidget";
+
 import {
   useBusServiceWindows,
   useBusLineDepartures,
@@ -17,10 +17,12 @@ import { cumulativeMinutes, NIGHT_URBAN_KMH } from "@/lib/bus-eta";
 import { getClientStopRealtime } from "@/lib/bus-realtime-client";
 import busAlicanteImg from "@/assets/bus-alicante.png";
 import type { LineStopPoint } from "@/components/BusLineLiveMap";
+import { StopRealtimeSheet, type StopRealtimeContext } from "@/components/StopRealtimeSheet";
 
 const BusLineLiveMap = lazy(() =>
   import("@/components/BusLineLiveMap").then((m) => ({ default: m.BusLineLiveMap })),
 );
+
 
 function haversineMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
   const R = 6371000;
@@ -125,13 +127,21 @@ function BusDashboardPage() {
   }, []);
 
 
-  const handlePickStop = (stopCode: string, stopName: string, destination: string) => {
-    saveFavoriteStop({ stopId: stopCode, stopName, line: code, destination });
-    navigate({
-      to: "/transporte/parada-favorita",
-      search: { stop: stopCode, line: code },
+  const [pickedStop, setPickedStop] = useState<StopRealtimeContext | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  const handlePickStop = (stopCode: string, stopName: string, _destination: string) => {
+    const c = stopCoords.get(stopCode);
+    setPickedStop({
+      code: stopCode,
+      name: stopName,
+      lines: [code],
+      lat: c?.lat ?? null,
+      lng: c?.lng ?? null,
     });
+    setSheetOpen(true);
   };
+
 
 
   const line = data?.lines.find((l) => l.code === code);
@@ -543,8 +553,10 @@ function BusDashboardPage() {
           <p className="mt-4 text-center text-sm text-white/60">Cargando paradas…</p>
         )}
       </div>
+      <StopRealtimeSheet stop={pickedStop} open={sheetOpen} onOpenChange={setSheetOpen} />
     </div>
   );
+
 }
 
 function HeaderEtas({
