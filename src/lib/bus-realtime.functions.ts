@@ -19,7 +19,7 @@ const UA =
 const TIEMPOS_RE =
   /Linea\s+(\d+[A-Za-z]?)\s+([^:]+?)\s*:\s*(\d+)\s*min\.?\s*:\s*(?:(?!-?\d+(?:\.\d+)?\s*,)[^:;]+\s*:\s*)?(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/gi;
 const CACHE_TTL_MS = 20_000;
-const FETCH_TIMEOUT_MS = 4_500;
+const FETCH_TIMEOUT_MS = 1_200;
 
 const realtimeCache = new Map<string, { arrivals: StopArrival[]; fetchedAt: number }>();
 const realtimeInflight = new Map<string, Promise<StopArrival[]>>();
