@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getClientStopRealtime } from "@/lib/bus-realtime-client";
 
 interface Props {
   line: string;
@@ -42,20 +43,23 @@ export function LiveEta({
   useEffect(() => {
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
+    let controller: AbortController | null = null;
 
     const tick = async () => {
+      controller?.abort();
+      controller = new AbortController();
       setLoading(true);
       try {
-        const params = new URLSearchParams({ stop, line });
-        if (index > 0) params.set("index", String(index));
-        if (typeof minMin === "number" && minMin > 0) params.set("min", String(minMin));
-        const r = await fetch(`/api/public/bus-eta?${params.toString()}`, { cache: "no-store" });
-        if (r.ok) {
-          const j = await r.json();
-          if (!cancelled) {
-            setEta(typeof j.etaMin === "number" ? j.etaMin : null);
-            setUpdatedAt(Date.now());
-          }
+        const r = await getClientStopRealtime({
+          stopId: stop,
+          line,
+          index,
+          minMin,
+          signal: controller.signal,
+        });
+        if (!cancelled) {
+          setEta(typeof r.etaMin === "number" ? r.etaMin : null);
+          setUpdatedAt(r.fetchedAt);
         }
       } catch {
         /* noop */
@@ -68,6 +72,7 @@ export function LiveEta({
     timer = setTimeout(tick, initialMin == null ? 500 : intervalMs);
     return () => {
       cancelled = true;
+      controller?.abort();
       if (timer) clearTimeout(timer);
     };
   }, [line, stop, intervalMs, initialMin, index, minMin]);
