@@ -721,3 +721,57 @@ function ParadaFavoritaPage() {
     </div>
   );
 }
+
+function TestCallVectalia({ stopId }: { stopId: string }) {
+  const [status, setStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
+  const [info, setInfo] = useState<string>("");
+  const url = `https://qr.vectalia.es/Alicante/consulta.aspx?p=${stopId}`;
+
+  const handleCall = async () => {
+    setStatus("loading");
+    setInfo("Llamando desde tu teléfono…");
+    const t0 = performance.now();
+    try {
+      const res = await fetch(url, { method: "GET", mode: "cors", cache: "no-store" });
+      const ms = Math.round(performance.now() - t0);
+      const text = await res.text();
+      setStatus("ok");
+      setInfo(`OK ${res.status} · ${ms}ms · ${text.length} bytes`);
+    } catch (e: unknown) {
+      const ms = Math.round(performance.now() - t0);
+      const msg = e instanceof Error ? e.message : String(e);
+      setStatus("error");
+      setInfo(`ERROR (${ms}ms): ${msg}`);
+    }
+  };
+
+  return (
+    <section className="mx-3 mt-2 rounded-3xl bg-white p-3 shadow-[0_8px_24px_-12px_rgba(60,40,10,0.25)] ring-1 ring-dashed ring-amber-300">
+      <h3 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-amber-700">
+        Test · llamada desde tu teléfono
+      </h3>
+      <p className="mb-2 break-all text-[10px] text-stone-500">{url}</p>
+      <button
+        onClick={handleCall}
+        disabled={status === "loading"}
+        className="w-full rounded-xl bg-[#0d3b8a] px-3 py-2 text-sm font-extrabold text-white shadow-md active:scale-[0.98] disabled:opacity-60"
+      >
+        {status === "loading" ? "Llamando…" : "Llamar a Vectalia"}
+      </button>
+      {status !== "idle" && (
+        <div
+          className={`mt-2 rounded-lg px-2 py-1.5 text-[11px] font-semibold ${
+            status === "ok"
+              ? "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200"
+              : status === "error"
+                ? "bg-red-50 text-red-800 ring-1 ring-red-200"
+                : "bg-stone-50 text-stone-700 ring-1 ring-stone-200"
+          }`}
+        >
+          {info}
+        </div>
+      )}
+    </section>
+  );
+}
+
