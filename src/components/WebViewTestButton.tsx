@@ -11,7 +11,7 @@ export function WebViewTestButton() {
   const [loaded, setLoaded] = useState<boolean | null>(null);
   const [nonce, setNonce] = useState(0);
 
-  const src = `https://movilidad.vectalia.es/QR/Alicante/consulta.aspx?p=${encodeURIComponent(stop)}`;
+  const src = `http://www.subus.es/QR/Alicante/consulta.aspx?p=${encodeURIComponent(stop)}`;
 
   return (
     <>
@@ -72,7 +72,7 @@ export function WebViewTestButton() {
             onError={() => setLoaded(false)}
           />
           <div className="border-t border-border px-3 py-2 text-[11px] text-muted-foreground">
-            Si el panel aparece en blanco, Vectalia está bloqueando el embed
+            Si el panel aparece en blanco, SUBUS está bloqueando el embed
             (X-Frame-Options / CSP). En ese caso el WebView web no puede leer la URL.
           </div>
         </div>
