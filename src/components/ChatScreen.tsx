@@ -1241,6 +1241,7 @@ export function ChatScreen() {
           </div>
         )}
       </div>
+      <WebViewTestButton />
       {referralName && (
         <ReferralDialog
           placeId={referralName}
