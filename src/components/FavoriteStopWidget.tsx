@@ -27,6 +27,7 @@ export const DEFAULT_FAVORITE_STOP: FavoriteStop = {
 };
 
 const STORAGE_KEY = "vamos:favorite-stop";
+const SHOW_ON_HOME_KEY = "vamos:favorite-stop-show-on-home";
 
 export function loadFavoriteStop(): FavoriteStop {
   if (typeof window === "undefined") return DEFAULT_FAVORITE_STOP;
@@ -44,6 +45,18 @@ export function loadFavoriteStop(): FavoriteStop {
 export function saveFavoriteStop(stop: FavoriteStop) {
   if (typeof window === "undefined") return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(stop));
+  window.dispatchEvent(new Event("vamos:favorite-stop-changed"));
+}
+
+export function loadShowOnHome(): boolean {
+  if (typeof window === "undefined") return true;
+  const v = localStorage.getItem(SHOW_ON_HOME_KEY);
+  return v == null ? true : v === "1";
+}
+
+export function saveShowOnHome(enabled: boolean) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(SHOW_ON_HOME_KEY, enabled ? "1" : "0");
   window.dispatchEvent(new Event("vamos:favorite-stop-changed"));
 }
 
