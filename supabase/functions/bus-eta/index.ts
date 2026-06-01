@@ -2,9 +2,9 @@
 // 1) Intenta datos.aspx, que es el endpoint JSON usado por la página QR actual.
 // 2) Si no hay datos, cae a request.aspx y después al scrapeo legacy.
 
-const VECTALIA_RT_URL = "https://qr.vectalia.es/Alicante/lib/request.aspx";
-const VECTALIA_DATA_URL = "https://qr.vectalia.es/Alicante/datos.aspx";
-const VECTALIA_PAGE_URL = "https://qr.vectalia.es/Alicante/consulta.aspx";
+const VECTALIA_RT_URL = "https://movilidad.vectalia.es/QR/Alicante/lib/request.aspx";
+const VECTALIA_DATA_URL = "https://movilidad.vectalia.es/QR/Alicante/datos.aspx";
+const VECTALIA_PAGE_URL = "https://movilidad.vectalia.es/QR/Alicante/consulta.aspx";
 const ARRIVAL_RE = /Linea\s+(\d{1,3}[A-Za-z]?)\s+([^:]+?)\s*:\s*(\d+)\s*min/gi;
 const VECTALIA_LINE_CODES: Record<string, string> = {
   "14": "084",
