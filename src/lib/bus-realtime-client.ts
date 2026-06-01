@@ -174,11 +174,14 @@ export async function getClientStopsRealtimeBatch({
   });
 
   if (missingIds.length > 0) {
-    const batchPromise = getStopsRealtimeBatch({ data: { stopCodes: missingIds, line } })
+    const chunks: string[][] = [];
+    for (let i = 0; i < missingIds.length; i += 12) chunks.push(missingIds.slice(i, i + 12));
+
+    const batchPromise = Promise.all(chunks.map((chunk) => getStopsRealtimeBatch({ data: { stopCodes: chunk, line } })))
       .then((res) => {
         const fetchedAt = Date.now();
         for (const stopId of missingIds) {
-          const arrivalsRaw = res.stops?.[stopId] ?? [];
+          const arrivalsRaw = res.flatMap((batch) => batch.stops?.[stopId] ?? []);
           const arrivals: StopArrival[] = arrivalsRaw.map((a) => ({
             line: normalizeLine(a.line),
             destination: a.destination,
