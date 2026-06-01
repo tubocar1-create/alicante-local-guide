@@ -19,6 +19,7 @@ const CACHE_TTL_MS = 20_000;
 
 const cache = new Map<string, StopRealtimeResult>();
 const inFlight = new Map<string, Promise<StopRealtimeResult>>();
+const batchQueues = new Map<string, { ids: Set<string>; waiters: Map<string, (() => void)[]>; timer: ReturnType<typeof setTimeout> | null }>();
 
 function normalizeLine(code: string): string {
   const m = code.trim().toUpperCase().match(/^(\d+)([A-Z]?)$/);
@@ -84,6 +85,18 @@ export async function getClientStopRealtime({
   minMin?: number | null;
   signal?: AbortSignal;
 }): Promise<StopRealtimeResult> {
+  const normalizedStopId = stopId.trim();
+  const cached = readCachedStopRealtime(normalizedStopId, line);
+  if (cached) return cached;
+  if (line) {
+    await queueBatchStop(normalizedStopId, line);
+    return readCachedStopRealtime(normalizedStopId, line) ?? {
+      arrivals: [],
+      all: [],
+      etaMin: null,
+      fetchedAt: Date.now(),
+    };
+  }
   const base = await fetchStop(stopId.trim());
   const wanted = line ? normalizeLine(line) : null;
   const arrivals = wanted ? base.arrivals.filter((a) => normalizeLine(a.line) === wanted) : base.arrivals;
