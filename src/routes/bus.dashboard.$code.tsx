@@ -127,20 +127,14 @@ function BusDashboardPage() {
   }, []);
 
 
-  const [pickedStop, setPickedStop] = useState<StopRealtimeContext | null>(null);
-  const [sheetOpen, setSheetOpen] = useState(false);
-
-  const handlePickStop = (stopCode: string, stopName: string, _destination: string) => {
-    const c = stopCoords.get(stopCode);
-    setPickedStop({
-      code: stopCode,
-      name: stopName,
-      lines: [code],
-      lat: c?.lat ?? null,
-      lng: c?.lng ?? null,
+  const handlePickStop = (stopCode: string, stopName: string, destination: string) => {
+    saveFavoriteStop({ stopId: stopCode, stopName, line: code, destination });
+    navigate({
+      to: "/transporte/parada-favorita",
+      search: { stop: stopCode, line: code },
     });
-    setSheetOpen(true);
   };
+
 
 
 
