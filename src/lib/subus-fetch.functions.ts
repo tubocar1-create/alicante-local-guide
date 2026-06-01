@@ -17,6 +17,14 @@ const COMMON_HEADERS: Record<string, string> = {
   Referer: "https://movilidad.vectalia.es/QR/Alicante/consulta.aspx",
 };
 
+export type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [k: string]: JsonValue };
+
 export type SubusRequestResult = {
   type: string;
   ok: boolean;
@@ -26,7 +34,7 @@ export type SubusRequestResult = {
   finalUrl?: string;
   bodyLength?: number;
   bodyPreview?: string;
-  json?: unknown;
+  json?: JsonValue;
   error?: string;
 };
 
@@ -35,7 +43,7 @@ async function fetchOne(type: string, target: string): Promise<SubusRequestResul
   try {
     const r = await fetch(target, { headers: COMMON_HEADERS, redirect: "follow" });
     const text = await r.text();
-    let json: unknown = null;
+    let json: JsonValue | undefined;
     try {
       json = JSON.parse(text);
     } catch {
