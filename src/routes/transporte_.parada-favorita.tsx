@@ -47,7 +47,7 @@ function ParadaFavoritaPage() {
   const [, setTick] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [showOnHome, setShowOnHome] = useState(true);
+  const [showOnHome, setShowOnHome] = useState<boolean>(() => loadShowOnHome());
   // Real-time ETAs en minutos (lista completa devuelta por Vectalia).
   const [liveAll, setLiveAll] = useState<number[]>([]);
   const [liveLoading, setLiveLoading] = useState(false);
