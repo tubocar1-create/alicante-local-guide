@@ -503,7 +503,7 @@ function BusDashboardPage() {
             loadingEtaStops={loadingEtaStops}
             onEtaLoading={handleEtaLoading}
             onStopEta={handleStopEta}
-            nightEtaByCode={isNightLine ? nightEtaByDir[2] : null}
+            nightEtaByCode={scheduleEtaByDir[2]}
             color={lineColor}
             inService={inService}
             transferLines={(c) => {
