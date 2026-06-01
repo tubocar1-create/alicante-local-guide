@@ -183,66 +183,43 @@ function ParadaFavoritaPage() {
 
   const elapsedMin = Math.floor((Date.now() - liveUpdatedAt) / 60_000);
   const liveMinutes = liveAll.length > 0 ? Math.max(0, liveAll[0] - elapsedMin) : null;
-  const fallback = computeNextArrival(stop);
-  // Si hay estimado nocturno, lo usamos como fuente principal.
+  // Fuentes válidas: nocturno (horario Vectalia) o tiempo real Vectalia.
+  // Si no hay ninguna, mostramos n/d — NO inventamos estimación diurna.
   const nightFirst = nightEstimate?.upcoming[0];
-  const minutes = nightFirst ? nightFirst.minutes : (liveMinutes ?? fallback.minutes);
-  const arrivalDate = new Date(Date.now() + minutes * 60_000);
-  const arrivalTime = nightFirst
+  const minutes: number | null = nightFirst
+    ? nightFirst.minutes
+    : (liveMinutes ?? null);
+  const arrivalTime: string = nightFirst
     ? nightFirst.arrivalTime
-    : `${String(arrivalDate.getHours()).padStart(2, "0")}:${String(arrivalDate.getMinutes()).padStart(2, "0")}`;
-  const fallbackUpcoming = computeUpcomingArrivals(stop, 4);
-  // Construye las 4 próximas llegadas. Para líneas nocturnas en servicio
-  // usamos los estimados horarios; en el resto, live Vectalia + relleno.
+    : minutes != null
+      ? (() => {
+          const d = new Date(Date.now() + minutes * 60_000);
+          return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+        })()
+      : "n/d";
+  // Próximas llegadas: nocturno → horario oficial; diurno → solo live Vectalia.
   const upcoming = (() => {
     if (nightEstimate) {
-      // En el ORIGEN del trayecto mostramos la hora oficial de salida de
-      // Vectalia. En paradas intermedias mostramos la hora estimada de
-      // llegada, calculada por distancia desde el origen.
       const atOrigin = nightEstimate.atOrigin;
-      // En el origen, el "tiempo de espera" es hasta la SALIDA oficial
-      // (la llegada se estima 5 min antes para carga de pasajeros).
       return nightEstimate.upcoming.map((u) => ({
         minutes: atOrigin ? u.minutes + 5 : u.minutes,
         arrivalTime: atOrigin ? u.departureTime : u.arrivalTime,
         live: false,
       }));
     }
-    const out: Array<{ minutes: number; arrivalTime: string; live: boolean }> = [];
     const liveAdjusted = liveAll.map((m) => Math.max(0, m - elapsedMin)).sort((a, b) => a - b);
-    for (const m of liveAdjusted.slice(0, 4)) {
+    return liveAdjusted.slice(0, 4).map((m) => {
       const d = new Date(Date.now() + m * 60_000);
-      out.push({
+      return {
         minutes: m,
         arrivalTime: `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`,
         live: true,
-      });
-    }
-    // Frecuencia inferida a partir de los ETAs live; por defecto 15 min.
-    let freq = 15;
-    if (liveAdjusted.length >= 2) {
-      const diffs: number[] = [];
-      for (let i = 1; i < liveAdjusted.length; i++) diffs.push(liveAdjusted[i] - liveAdjusted[i - 1]);
-      diffs.sort((a, b) => a - b);
-      const med = diffs[Math.floor(diffs.length / 2)];
-      if (med >= 5 && med <= 60) freq = med;
-    }
-    const lastMin = out.length > 0 ? out[out.length - 1].minutes : null;
-    let idx = 0;
-    while (out.length < 4) {
-      const base = lastMin != null ? lastMin + freq * (idx + 1) : fallbackUpcoming[idx].minutes;
-      const d = new Date(Date.now() + base * 60_000);
-      out.push({
-        minutes: base,
-        arrivalTime: `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`,
-        live: false,
-      });
-      idx++;
-    }
-    return out;
+      };
+    });
   })();
-  const isArriving = minutes <= 1 && !nightEstimate; // los estimados no parpadean
+  const isArriving = minutes != null && minutes <= 1 && !nightEstimate;
   const hasLiveData = liveAll.length > 0 && !isNightLine;
+  const hasAnyData = nightFirst != null || liveMinutes != null;
 
 
 
