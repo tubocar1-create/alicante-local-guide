@@ -722,21 +722,51 @@ function ParadaFavoritaPage() {
   );
 }
 
+type Arrival = { line: string; destination: string; etaMin: number };
+
+function parseVectaliaArrivals(html: string): Arrival[] {
+  const re = /Linea\s+(\d{1,3}[A-Za-z]?)\s+([^:]+?)\s*:\s*(\d+)\s*min/gi;
+  const out: Arrival[] = [];
+  for (const m of html.matchAll(re)) {
+    const eta = parseInt(m[3], 10);
+    if (!Number.isFinite(eta)) continue;
+    out.push({
+      line: m[1].toUpperCase(),
+      destination: m[2].replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim(),
+      etaMin: eta,
+    });
+  }
+  return out.sort((a, b) => a.etaMin - b.etaMin);
+}
+
 function TestCallVectalia({ stopId }: { stopId: string }) {
   const [status, setStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [info, setInfo] = useState<string>("");
-  const url = `https://qr.vectalia.es/Alicante/consulta.aspx?p=${stopId}`;
+  const [arrivals, setArrivals] = useState<Arrival[]>([]);
+  const target = `https://qr.vectalia.es/Alicante/consulta.aspx?p=${stopId}`;
+  // Proxy CORS externo (fuera de vamosalicante.com). El navegador del
+  // usuario llama al proxy, el proxy llama a Vectalia y devuelve el HTML
+  // con los headers CORS correctos. Sin tocar nuestro backend.
+  const proxied = `https://corsproxy.io/?url=${encodeURIComponent(target)}`;
 
   const handleCall = async () => {
     setStatus("loading");
-    setInfo("Llamando desde tu teléfono…");
+    setInfo("Consultando Vectalia vía proxy externo…");
+    setArrivals([]);
     const t0 = performance.now();
     try {
-      const res = await fetch(url, { method: "GET", mode: "cors", cache: "no-store" });
+      const res = await fetch(proxied, { method: "GET", cache: "no-store" });
       const ms = Math.round(performance.now() - t0);
       const text = await res.text();
-      setStatus("ok");
-      setInfo(`OK ${res.status} · ${ms}ms · ${text.length} bytes`);
+      const parsed = parseVectaliaArrivals(text);
+      setArrivals(parsed);
+      if (parsed.length === 0) {
+        setStatus("ok");
+        setInfo(`OK ${res.status} · ${ms}ms · sin llegadas (fuera de servicio o respuesta vacía)`);
+      } else {
+        setStatus("ok");
+        setInfo(`OK ${res.status} · ${ms}ms · ${parsed.length} llegadas`);
+      }
     } catch (e: unknown) {
       const ms = Math.round(performance.now() - t0);
       const msg = e instanceof Error ? e.message : String(e);
@@ -748,15 +778,15 @@ function TestCallVectalia({ stopId }: { stopId: string }) {
   return (
     <section className="mx-3 mt-2 rounded-3xl bg-white p-3 shadow-[0_8px_24px_-12px_rgba(60,40,10,0.25)] ring-1 ring-dashed ring-amber-300">
       <h3 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-amber-700">
-        Test · llamada desde tu teléfono
+        Test · consulta externa (proxy CORS)
       </h3>
-      <p className="mb-2 break-all text-[10px] text-stone-500">{url}</p>
+      <p className="mb-2 break-all text-[10px] text-stone-500">{target}</p>
       <button
         onClick={handleCall}
         disabled={status === "loading"}
         className="w-full rounded-xl bg-[#0d3b8a] px-3 py-2 text-sm font-extrabold text-white shadow-md active:scale-[0.98] disabled:opacity-60"
       >
-        {status === "loading" ? "Llamando…" : "Llamar a Vectalia"}
+        {status === "loading" ? "Consultando…" : "Consultar tiempo real"}
       </button>
       {status !== "idle" && (
         <div
@@ -770,6 +800,25 @@ function TestCallVectalia({ stopId }: { stopId: string }) {
         >
           {info}
         </div>
+      )}
+      {arrivals.length > 0 && (
+        <ul className="mt-2 divide-y divide-stone-100 rounded-lg ring-1 ring-stone-200">
+          {arrivals.slice(0, 6).map((a, i) => (
+            <li key={i} className="flex items-center justify-between px-2 py-1.5">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="rounded-md bg-[#0d3b8a] px-1.5 py-0.5 text-[10px] font-extrabold text-white">
+                  {a.line}
+                </span>
+                <span className="truncate text-[11px] font-semibold text-stone-700">
+                  {a.destination}
+                </span>
+              </div>
+              <span className="text-[12px] font-extrabold tabular-nums text-emerald-700">
+                {a.etaMin} min
+              </span>
+            </li>
+          ))}
+        </ul>
       )}
     </section>
   );
