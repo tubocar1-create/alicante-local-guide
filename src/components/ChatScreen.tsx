@@ -183,7 +183,7 @@ const SUGGESTIONS: Suggestion[] = [
       { label: "🚌 Buses urbanos", href: "/bus" },
       { label: "🚍 Buses larga distancia", previewOnly: true, prompt: "¿Cómo me muevo en bus de larga distancia desde Alicante? Líneas, compañías (ALSA, Vectalia…), estación de autobuses y destinos principales (Elche, Benidorm, Murcia, Valencia, pueblos del interior)." },
       { label: "🚊 Tram Alicante", action: "tram-inline" },
-      { label: "🚆 Tren", previewOnly: true, prompt: "¿Cómo me muevo en tren por Alicante y alrededores? Horarios, estaciones de Cercanías y Renfe." },
+      { label: "🚆 Tren", href: "/trenes" },
       { label: "🚗 Rent a car", href: "/rent-a-car" },
       { label: "🚕 Taxis, Uber, Cabify", previewOnly: true, prompt: "¿Cómo pido un taxi, Uber o Cabify en Alicante? Paradas de taxi, apps disponibles, tarifas aproximadas y zonas de cobertura." },
     ],
