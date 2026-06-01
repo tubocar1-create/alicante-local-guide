@@ -854,7 +854,7 @@ function DirectionColumn({
                 ? formatHHMM(new Date(now.getTime() + liveEta * 60_000))
                 : scheduleEta?.time ?? null)
             : scheduleEta?.time ?? null;
-          const nightEta = scheduleEta; // back-compat para el resto del render
+          
 
           const isNearest = nearestCodes.has(s.code);
           const isPrimaryNearest = nearest?.code === s.code;
