@@ -210,7 +210,7 @@ export const getStopsRealtimeBatch = createServerFn({ method: "POST" })
       data.stopCodes.map(async (stopCode) => {
         const arrivals = await fetchStopCached(stopCode);
         const filtered = data.line ? arrivals.filter((a) => normalizeLine(a.line) === data.line) : arrivals;
-        return [stopCode, filtered.map((a) => a.etaMin).sort((a, b) => a - b).slice(0, 1)] as const;
+        return [stopCode, filtered] as const;
       }),
     );
     return { stops: Object.fromEntries(entries), fetchedAt: new Date().toISOString() };
