@@ -250,7 +250,7 @@ function BusDashboardPage() {
       1: new Map(),
       2: new Map(),
     };
-    if (!isNightLine || !serviceRows || !departures) return out;
+    if (!serviceRows || !departures) return out;
 
     const nowMin = clock.getHours() * 60 + clock.getMinutes();
     const todayType = dayTypeOf(clock);
