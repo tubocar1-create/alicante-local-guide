@@ -352,6 +352,7 @@ function BusDashboardPage() {
 
     return out;
   }, [isNightLine, serviceRows, departures, code, stopsByDir, stopCoords, clock]);
+  const scheduleEtaByDir = nightEtaByDir;
 
 
   // Realtime progresivo: cada parada pide ETA solo cuando entra en viewport.
