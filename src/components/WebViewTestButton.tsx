@@ -23,9 +23,10 @@ export function WebViewTestButton() {
         }}
         aria-label="Test WebView"
         title="Test WebView (debug)"
-        className="fixed bottom-24 right-3 z-40 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card/90 text-muted-foreground shadow-md backdrop-blur transition hover:bg-muted active:scale-95"
+        className="fixed left-3 top-[calc(env(safe-area-inset-top)+8px)] z-[60] flex items-center gap-1.5 rounded-full border-2 border-orange-500 bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white shadow-lg active:scale-95"
       >
-        <Bug className="h-4 w-4" />
+        <Bug className="h-3.5 w-3.5" />
+        WebView test
       </button>
 
       {open && (
