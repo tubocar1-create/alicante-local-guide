@@ -250,7 +250,7 @@ function BusDashboardPage() {
       1: new Map(),
       2: new Map(),
     };
-    if (!isNightLine || !serviceRows || !departures) return out;
+    if (!serviceRows || !departures) return out;
 
     const nowMin = clock.getHours() * 60 + clock.getMinutes();
     const todayType = dayTypeOf(clock);
@@ -321,7 +321,7 @@ function BusDashboardPage() {
 
         let arrTimeline: number | null = null;
 
-        if (isDestTerminal) {
+        if (isDestTerminal && isNightLine) {
           arrTimeline = syncedDestinationArrival(stops[i].name);
         }
 
@@ -352,6 +352,7 @@ function BusDashboardPage() {
 
     return out;
   }, [isNightLine, serviceRows, departures, code, stopsByDir, stopCoords, clock]);
+  const scheduleEtaByDir = nightEtaByDir;
 
 
   // Realtime progresivo: cada parada pide ETA solo cuando entra en viewport.
@@ -479,7 +480,7 @@ function BusDashboardPage() {
             loadingEtaStops={loadingEtaStops}
             onEtaLoading={handleEtaLoading}
             onStopEta={handleStopEta}
-            nightEtaByCode={isNightLine ? nightEtaByDir[1] : null}
+            nightEtaByCode={scheduleEtaByDir[1]}
             color={lineColor}
             inService={inService}
             transferLines={(c) => {
@@ -502,7 +503,7 @@ function BusDashboardPage() {
             loadingEtaStops={loadingEtaStops}
             onEtaLoading={handleEtaLoading}
             onStopEta={handleStopEta}
-            nightEtaByCode={isNightLine ? nightEtaByDir[2] : null}
+            nightEtaByCode={scheduleEtaByDir[2]}
             color={lineColor}
             inService={inService}
             transferLines={(c) => {
@@ -837,19 +838,23 @@ function DirectionColumn({
           const hasRealtimeResult = Object.prototype.hasOwnProperty.call(etas, s.code);
           const arr = etas[s.code] ?? [];
           const liveEta = arr[0];
-          const nightEta = nightEtaByCode?.get(s.code) ?? null;
-          const eta1 = nightEta ? nightEta.min : liveEta;
+          const scheduleEta = nightEtaByCode?.get(s.code) ?? null;
+          // Día: prefer live; fallback a horario. Noche (no realtime): solo horario.
+          const eta1 = realtimeEnabled
+            ? (typeof liveEta === "number" ? liveEta : scheduleEta?.min)
+            : scheduleEta?.min;
           const hasEta = typeof eta1 === "number";
-          const isLoadingEta = realtimeEnabled && loadingEtaStops.has(s.code);
+          const isLoadingEta = realtimeEnabled && loadingEtaStops.has(s.code) && !hasEta;
           const isOrigin = i === 0;
           const isDest = i === stops.length - 1;
           const transfers = transferLines(s.code);
           const transferColor = transfers[0]?.color ?? null;
-          const etaTime = nightEta
-            ? nightEta.time
-            : typeof liveEta === "number"
-              ? formatHHMM(new Date(now.getTime() + liveEta * 60_000))
-              : null;
+          const etaTime = realtimeEnabled
+            ? (typeof liveEta === "number"
+                ? formatHHMM(new Date(now.getTime() + liveEta * 60_000))
+                : scheduleEta?.time ?? null)
+            : scheduleEta?.time ?? null;
+          
 
           const isNearest = nearestCodes.has(s.code);
           const isPrimaryNearest = nearest?.code === s.code;
