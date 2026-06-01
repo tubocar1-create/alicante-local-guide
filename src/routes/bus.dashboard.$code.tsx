@@ -784,7 +784,7 @@ function DirectionColumn({
     <div className="px-1">
       <div className="mb-2 flex items-center justify-between gap-2 pt-1">
         <div className="flex items-center gap-1 pl-14">
-          <ArrowDown style={{ color: "#000" }} strokeWidth={4} className="h-7 w-7" />
+          <ArrowDown style={{ color: direction === 1 ? "#000" : "#fff" }} strokeWidth={4} className="h-9 w-9" />
 
 
           <span
@@ -837,8 +837,8 @@ function DirectionColumn({
         {stops.length > 1 && (
           <span
             aria-hidden
-            className="absolute left-6 top-3 bottom-3 w-[3px] rounded-full"
-            style={{ background: "#000" }}
+            className="absolute left-6 top-3 bottom-3 w-[4px] rounded-full"
+            style={{ background: direction === 1 ? "#000" : "#fff" }}
           />
         )}
         {stops.map((s, i) => {
