@@ -384,6 +384,37 @@ function ParadaFavoritaPage() {
         </button>
       </header>
 
+      {/* PRUEBA: tu teléfono cargando directamente la página de Vectalia.
+          Esto NO es fetch() (que CORS bloquea) — es una navegación normal del navegador,
+          igual que si abrieras la URL en una pestaña nueva. */}
+      <section className="mx-3 mb-3 rounded-3xl bg-white p-3 shadow-[0_8px_24px_-12px_rgba(60,40,10,0.25)] ring-1 ring-stone-200">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <div>
+            <div className="text-[9px] font-extrabold uppercase tracking-wider text-emerald-700">
+              Prueba directa · tu teléfono → Vectalia
+            </div>
+            <div className="text-[10px] text-stone-500">
+              Parada {stop.stopId} · sin proxy, sin backend
+            </div>
+          </div>
+          <a
+            href={`https://qr.vectalia.es/Alicante/consulta.aspx?p=${encodeURIComponent(stop.stopId)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-full bg-[#0d3b8a] px-3 py-1.5 text-[10px] font-bold text-white active:scale-95"
+          >
+            Abrir
+          </a>
+        </div>
+        <iframe
+          key={stop.stopId}
+          src={`https://qr.vectalia.es/Alicante/consulta.aspx?p=${encodeURIComponent(stop.stopId)}`}
+          title={`Vectalia parada ${stop.stopId}`}
+          className="h-[320px] w-full rounded-2xl border border-stone-200 bg-white"
+          loading="lazy"
+        />
+      </section>
+
       {/* Live block */}
       <section className="mx-3 rounded-3xl bg-white p-3 shadow-[0_8px_24px_-12px_rgba(60,40,10,0.25)]">
         <div className="grid grid-cols-[minmax(0,1fr)_128px] gap-2">
