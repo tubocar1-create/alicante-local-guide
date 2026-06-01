@@ -84,7 +84,7 @@ export async function getClientStopRealtime({
   minMin?: number | null;
   signal?: AbortSignal;
 }): Promise<StopRealtimeResult> {
-  const base = await fetchStop(stopId.trim(), signal);
+  const base = await fetchStop(stopId.trim());
   const wanted = line ? normalizeLine(line) : null;
   const arrivals = wanted ? base.arrivals.filter((a) => normalizeLine(a.line) === wanted) : base.arrivals;
   const all = arrivals.map((a) => a.etaMin).sort((a, b) => a - b);
