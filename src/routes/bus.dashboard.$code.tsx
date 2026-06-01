@@ -877,10 +877,10 @@ function DirectionColumn({
               style={{
                 borderBottom: "1px solid rgba(255,255,255,0.06)",
                 boxShadow: isNearest
-                  ? "0 0 0 2px rgba(52,211,153,0.9), 0 0 14px rgba(52,211,153,0.45)"
+                  ? "0 0 0 2px rgba(201,146,42,0.9), 0 0 14px rgba(201,146,42,0.45)"
                   : "0 1px 0 rgba(0,0,0,0.4)",
                 background: isNearest
-                  ? "linear-gradient(90deg, rgba(52,211,153,0.28) 0%, rgba(52,211,153,0.10) 70%, transparent 100%)"
+                  ? "linear-gradient(90deg, rgba(201,146,42,0.28) 0%, rgba(201,146,42,0.10) 70%, transparent 100%)"
                   : transferColor
                     ? `linear-gradient(90deg, ${transferColor}26 0%, ${transferColor}10 60%, transparent 100%)`
                     : undefined,
