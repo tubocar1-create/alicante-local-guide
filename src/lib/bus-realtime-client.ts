@@ -19,6 +19,7 @@ const CACHE_TTL_MS = 20_000;
 
 const cache = new Map<string, StopRealtimeResult>();
 const inFlight = new Map<string, Promise<StopRealtimeResult>>();
+const batchQueues = new Map<string, { ids: Set<string>; waiters: Map<string, (() => void)[]>; timer: ReturnType<typeof setTimeout> | null }>();
 
 function normalizeLine(code: string): string {
   const m = code.trim().toUpperCase().match(/^(\d+)([A-Z]?)$/);
@@ -84,6 +85,19 @@ export async function getClientStopRealtime({
   minMin?: number | null;
   signal?: AbortSignal;
 }): Promise<StopRealtimeResult> {
+  const normalizedStopId = stopId.trim();
+  const cached = readCachedStopRealtime(normalizedStopId, line);
+  if (cached) return selectStopRealtime(cached, index, minMin);
+  if (line) {
+    await queueBatchStop(normalizedStopId, line);
+    const batched = readCachedStopRealtime(normalizedStopId, line) ?? {
+      arrivals: [],
+      all: [],
+      etaMin: null,
+      fetchedAt: Date.now(),
+    };
+    return selectStopRealtime(batched, index, minMin);
+  }
   const base = await fetchStop(stopId.trim());
   const wanted = line ? normalizeLine(line) : null;
   const arrivals = wanted ? base.arrivals.filter((a) => normalizeLine(a.line) === wanted) : base.arrivals;
@@ -97,6 +111,14 @@ export async function getClientStopRealtime({
   };
 }
 
+function selectStopRealtime(base: StopRealtimeResult, index: number, minMin: number | null): StopRealtimeResult {
+  const filtered = typeof minMin === "number" ? base.all.filter((m) => m >= minMin) : base.all;
+  return {
+    ...base,
+    etaMin: filtered[Math.min(index, Math.max(0, filtered.length - 1))] ?? null,
+  };
+}
+
 export function readCachedStopRealtime(stopId: string, line?: string): StopRealtimeResult | null {
   const cached = cache.get(stopId.trim());
   if (!cached || Date.now() - cached.fetchedAt >= CACHE_TTL_MS) return null;
@@ -105,6 +127,37 @@ export function readCachedStopRealtime(stopId: string, line?: string): StopRealt
   const arrivals = cached.arrivals.filter((a) => normalizeLine(a.line) === wanted);
   const all = arrivals.map((a) => a.etaMin).sort((a, b) => a - b);
   return { arrivals, all, etaMin: all[0] ?? null, fetchedAt: cached.fetchedAt };
+}
+
+function queueBatchStop(stopId: string, line: string): Promise<void> {
+  const key = normalizeLine(line);
+  return new Promise((resolve) => {
+    let queue = batchQueues.get(key);
+    if (!queue) {
+      queue = { ids: new Set(), waiters: new Map(), timer: null };
+      batchQueues.set(key, queue);
+    }
+    queue.ids.add(stopId);
+    const waiters = queue.waiters.get(stopId) ?? [];
+    waiters.push(resolve);
+    queue.waiters.set(stopId, waiters);
+
+    if (!queue.timer) {
+      queue.timer = setTimeout(async () => {
+        const active = batchQueues.get(key);
+        if (!active) return;
+        batchQueues.delete(key);
+        const ids = [...active.ids];
+        try {
+          await getClientStopsRealtimeBatch({ stopIds: ids, line: key });
+        } finally {
+          for (const callbacks of active.waiters.values()) {
+            for (const done of callbacks) done();
+          }
+        }
+      }, 40);
+    }
+  });
 }
 
 export async function getClientStopsRealtimeBatch({
@@ -121,11 +174,14 @@ export async function getClientStopsRealtimeBatch({
   });
 
   if (missingIds.length > 0) {
-    const batchPromise = getStopsRealtimeBatch({ data: { stopCodes: missingIds, line } })
+    const chunks: string[][] = [];
+    for (let i = 0; i < missingIds.length; i += 12) chunks.push(missingIds.slice(i, i + 12));
+
+    const batchPromise = Promise.all(chunks.map((chunk) => getStopsRealtimeBatch({ data: { stopCodes: chunk, line } })))
       .then((res) => {
         const fetchedAt = Date.now();
         for (const stopId of missingIds) {
-          const arrivalsRaw = res.stops?.[stopId] ?? [];
+          const arrivalsRaw = res.flatMap((batch) => batch.stops?.[stopId] ?? []);
           const arrivals: StopArrival[] = arrivalsRaw.map((a) => ({
             line: normalizeLine(a.line),
             destination: a.destination,

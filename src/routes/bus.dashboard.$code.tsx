@@ -386,11 +386,9 @@ function BusDashboardPage() {
     const codes = [
       ...nearestByDir[1].map((n) => n.code),
       ...nearestByDir[2].map((n) => n.code),
-      ...stopsByDir[1].slice(0, 7).map((s) => s.code),
-      ...stopsByDir[2].slice(0, 7).map((s) => s.code),
     ];
-    return [...new Set(codes)].slice(0, 12);
-  }, [nearestByDir, stopsByDir]);
+    return [...new Set(codes)].slice(0, 2);
+  }, [nearestByDir]);
 
   useEffect(() => {
     if (isNightLine || initialRealtimeStopCodes.length === 0) return;

@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { busStaticLineDepartures, busStaticServiceWindows } from "@/data/bus-static";
 
 export type ServiceWindowRow = {
   line_code: string;
@@ -20,60 +19,15 @@ export type DepartureRow = {
 type Cache = ServiceWindowRow[];
 type DepCache = DepartureRow[];
 
-let cache: Cache | null = null;
-let cacheAt = 0;
-let inflight: Promise<Cache> | null = null;
-let depCache: DepCache | null = null;
-let depCacheAt = 0;
-let depInflight: Promise<DepCache> | null = null;
-const CACHE_TTL_MS = 60_000;
-
-async function load(): Promise<Cache> {
-  if (cache && Date.now() - cacheAt < CACHE_TTL_MS) return cache;
-  if (inflight) return inflight;
-  inflight = (async () => {
-    const { data } = await supabase
-      .from("bus_line_service_windows")
-      .select("line_code,direction,terminal_name,day_type,first_departure,last_departure");
-    cache = (data ?? []) as Cache;
-    cacheAt = Date.now();
-    return cache;
-  })();
-  const r = await inflight;
-  inflight = null;
-  return r;
-}
-
-async function loadDepartures(): Promise<DepCache> {
-  if (depCache && Date.now() - depCacheAt < CACHE_TTL_MS) return depCache;
-  if (depInflight) return depInflight;
-  depInflight = (async () => {
-    const { data } = await supabase
-      .from("bus_line_departures")
-      .select("line_code,direction,day_type,departure_time");
-    depCache = (data ?? []) as DepCache;
-    depCacheAt = Date.now();
-    return depCache;
-  })();
-  const r = await depInflight;
-  depInflight = null;
-  return r;
-}
+let cache: Cache | null = busStaticServiceWindows as Cache;
+let depCache: DepCache | null = busStaticLineDepartures as DepCache;
 
 export function useBusServiceWindows() {
-  const [rows, setRows] = useState<Cache | null>(cache);
-  useEffect(() => {
-    load().then(setRows);
-  }, []);
-  return rows;
+  return cache;
 }
 
 export function useBusLineDepartures() {
-  const [rows, setRows] = useState<DepCache | null>(depCache);
-  useEffect(() => {
-    loadDepartures().then(setRows);
-  }, []);
-  return rows;
+  return depCache;
 }
 
 export function dayTypeOf(d: Date): "laborable" | "sabado" | "domingo" {
