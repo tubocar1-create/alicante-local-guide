@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { busStaticLineDepartures, busStaticServiceWindows } from "@/data/bus-static";
 
 export type ServiceWindowRow = {
@@ -22,80 +20,14 @@ type Cache = ServiceWindowRow[];
 type DepCache = DepartureRow[];
 
 let cache: Cache | null = busStaticServiceWindows as Cache;
-let inflight: Promise<Cache> | null = null;
 let depCache: DepCache | null = busStaticLineDepartures as DepCache;
-let depInflight: Promise<DepCache> | null = null;
-const SERVICE_WINDOWS_STORAGE_KEY = "busServiceWindowsCache:v1";
-const DEPARTURES_STORAGE_KEY = "busLineDeparturesCache:v1";
-
-function readPersistent<T>(key: string): T | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : null;
-  } catch {
-    return null;
-  }
-}
-
-function writePersistent<T>(key: string, data: T) {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(key, JSON.stringify(data));
-  } catch {
-    // ignore quota errors
-  }
-}
-
-if (!cache) cache = readPersistent<Cache>(SERVICE_WINDOWS_STORAGE_KEY);
-if (!depCache) depCache = readPersistent<DepCache>(DEPARTURES_STORAGE_KEY);
-
-async function load(): Promise<Cache> {
-  if (cache) return cache;
-  if (inflight) return inflight;
-  inflight = (async () => {
-    const { data } = await supabase
-      .from("bus_line_service_windows")
-      .select("line_code,direction,terminal_name,day_type,first_departure,last_departure");
-    cache = (data ?? []) as Cache;
-    writePersistent(SERVICE_WINDOWS_STORAGE_KEY, cache);
-    return cache;
-  })();
-  const r = await inflight;
-  inflight = null;
-  return r;
-}
-
-async function loadDepartures(): Promise<DepCache> {
-  if (depCache) return depCache;
-  if (depInflight) return depInflight;
-  depInflight = (async () => {
-    const { data } = await supabase
-      .from("bus_line_departures")
-      .select("line_code,direction,day_type,departure_time");
-    depCache = (data ?? []) as DepCache;
-    writePersistent(DEPARTURES_STORAGE_KEY, depCache);
-    return depCache;
-  })();
-  const r = await depInflight;
-  depInflight = null;
-  return r;
-}
 
 export function useBusServiceWindows() {
-  const [rows, setRows] = useState<Cache | null>(cache);
-  useEffect(() => {
-    load().then(setRows);
-  }, []);
-  return rows;
+  return cache;
 }
 
 export function useBusLineDepartures() {
-  const [rows, setRows] = useState<DepCache | null>(depCache);
-  useEffect(() => {
-    loadDepartures().then(setRows);
-  }, []);
-  return rows;
+  return depCache;
 }
 
 export function dayTypeOf(d: Date): "laborable" | "sabado" | "domingo" {
