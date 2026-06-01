@@ -2,9 +2,9 @@
 // 1) Intenta datos.aspx, que es el endpoint JSON usado por la página QR actual.
 // 2) Si no hay datos, cae a request.aspx y después al scrapeo legacy.
 
-const VECTALIA_RT_URL = "https://qr.vectalia.es/Alicante/lib/request.aspx";
-const VECTALIA_DATA_URL = "https://qr.vectalia.es/Alicante/datos.aspx";
-const VECTALIA_PAGE_URL = "https://qr.vectalia.es/Alicante/consulta.aspx";
+const VECTALIA_RT_URL = "https://movilidad.vectalia.es/QR/Alicante/lib/request.aspx";
+const VECTALIA_DATA_URL = "https://movilidad.vectalia.es/QR/Alicante/datos.aspx";
+const VECTALIA_PAGE_URL = "https://movilidad.vectalia.es/QR/Alicante/consulta.aspx";
 const ARRIVAL_RE = /Linea\s+(\d{1,3}[A-Za-z]?)\s+([^:]+?)\s*:\s*(\d+)\s*min/gi;
 const VECTALIA_LINE_CODES: Record<string, string> = {
   "14": "084",
@@ -31,7 +31,7 @@ const corsHeaders = {
 const browserHeaders = {
   "User-Agent":
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
-  Referer: "https://qr.vectalia.es/Alicante/mapa.aspx",
+  Referer: "https://movilidad.vectalia.es/QR/Alicante/mapa.aspx",
   "X-Requested-With": "XMLHttpRequest",
   Accept: "*/*",
 };
@@ -53,6 +53,7 @@ async function fetchFromDataEndpoint(stopCode: string, lineCode: string): Promis
       `${VECTALIA_DATA_URL}?p=${encodeURIComponent(stopCode)}`,
       { headers: { ...browserHeaders, Referer: `${VECTALIA_PAGE_URL}?p=${encodeURIComponent(stopCode)}` } },
     );
+    console.log("[bus-eta] datos.aspx status", r.status, "stop", stopCode);
     if (!r.ok) return [];
     const data = await r.json().catch(() => null) as { tiempos?: string } | null;
     return parseEtas(data?.tiempos ?? "", lineCode);
@@ -69,6 +70,7 @@ async function fetchFromRequestEndpoint(stopCode: string, lineCode: string): Pro
       `${VECTALIA_RT_URL}?p=${encodeURIComponent(stopCode)}&l=${encodeURIComponent(vectaliaLine)}`,
       { headers: browserHeaders },
     );
+    console.log("[bus-eta] request.aspx status", r.status, "stop", stopCode);
     if (!r.ok) return [];
     return parseEtas(await r.text(), lineCode);
   } catch (e) {
@@ -83,6 +85,7 @@ async function fetchFromStopPage(stopCode: string, lineCode: string): Promise<nu
       `${VECTALIA_PAGE_URL}?p=${encodeURIComponent(stopCode)}`,
       { headers: browserHeaders },
     );
+    console.log("[bus-eta] consulta.aspx status", r.status, "stop", stopCode);
     if (!r.ok) return [];
     const html = await r.text();
     // Extraer el bloque `var text = "...";`
