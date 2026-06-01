@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Bug, X, Loader2 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
-import { subusInspect } from "@/lib/subus-fetch.functions";
+import { subusInspect, type SubusInspectResult } from "@/lib/subus-fetch.functions";
 
 // Panel de debug: ejecuta un fetch server-side a consulta.aspx y
 // datos.aspx (sin iframe, sin scrapingbee) y muestra los bodies
 // interceptados en pantalla. Equivalente web al "WebView oculto +
 // inject JS" de React Native.
 
-type InspectResult = Awaited<ReturnType<typeof subusInspect>>;
+type InspectResult = SubusInspectResult;
 
 export function WebViewTestButton() {
   const [open, setOpen] = useState(false);
