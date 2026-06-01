@@ -39,7 +39,7 @@ export function StopRealtimeSheet({
   const [arrivals, setArrivals] = useState<StopArrival[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fetchedAt, setFetchedAt] = useState<string | null>(null);
+  const [fetchedAt, setFetchedAt] = useState<number | null>(null);
 
   useEffect(() => {
     if (!open || !stop) return;

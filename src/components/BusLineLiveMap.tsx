@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { MapContainer, TileLayer, Marker, CircleMarker, Polyline, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { useServerFn } from "@tanstack/react-start";
-import { getStopRealtime } from "@/lib/bus-realtime.functions";
+import { getClientStopRealtime } from "@/lib/bus-realtime-client";
 
 export type LineStopPoint = {
   code: string;
@@ -51,8 +50,6 @@ export function BusLineLiveMap({
   stops: LineStopPoint[];
   user: { lat: number; lng: number } | null;
 }) {
-  const fetchRealtime = useServerFn(getStopRealtime);
-
   const ida = useMemo(
     () => stops.filter((s) => s.direction === 1).sort((a, b) => a.seq - b.seq),
     [stops],
@@ -87,7 +84,7 @@ export function BusLineLiveMap({
       setLoading(true);
       const results = await Promise.allSettled(
         sampledStops.map((stopCode) =>
-          fetchRealtime({ data: { stopCode, lines: [lineCode] } }),
+          getClientStopRealtime({ stopId: stopCode, line: lineCode }),
         ),
       );
       if (cancelled) return;
@@ -119,7 +116,7 @@ export function BusLineLiveMap({
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [fetchRealtime, lineCode, sampledStops]);
+  }, [lineCode, sampledStops]);
 
   const center = useMemo<[number, number]>(() => {
     if (user) return [user.lat, user.lng];
