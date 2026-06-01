@@ -64,6 +64,24 @@ async function fetchViaEdge(stop: string, line: string): Promise<string> {
   }
 }
 
+async function fetchViaScrapingBee(stop: string, line: string): Promise<string> {
+  const key = process.env.SCRAPINGBEE_API_KEY;
+  if (!key) return "";
+  try {
+    const lineParam = line ? toVectaliaLineCode(line) : "";
+    const target = `${VECTALIA_URL}?p=${encodeURIComponent(stop)}&l=${encodeURIComponent(lineParam)}`;
+    const sb = new URL("https://app.scrapingbee.com/api/v1/");
+    sb.searchParams.set("api_key", key);
+    sb.searchParams.set("url", target);
+    sb.searchParams.set("render_js", "false");
+    const res = await fetch(sb.toString(), { headers: { Accept: "*/*" } });
+    if (!res.ok) return "";
+    return await res.text();
+  } catch {
+    return "";
+  }
+}
+
 async function fetchDirect(stop: string, line: string): Promise<string> {
   try {
     const lineParam = line ? toVectaliaLineCode(line) : "";
@@ -87,6 +105,8 @@ async function fetchDirect(stop: string, line: string): Promise<string> {
 }
 
 async function fetchOne(stop: string, line: string): Promise<string> {
+  const viaSB = await fetchViaScrapingBee(stop, line);
+  if (viaSB) return viaSB;
   const viaEdge = await fetchViaEdge(stop, line);
   if (viaEdge) return viaEdge;
   return fetchDirect(stop, line);
