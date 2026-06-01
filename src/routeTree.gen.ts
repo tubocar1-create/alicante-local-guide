@@ -36,6 +36,7 @@ import { Route as ComprarRouteImport } from './routes/comprar'
 import { Route as ClimaRouteImport } from './routes/clima'
 import { Route as CarteleraRouteImport } from './routes/cartelera'
 import { Route as BusinessRouteImport } from './routes/business'
+import { Route as BusCorsTestRouteImport } from './routes/bus-cors-test'
 import { Route as BusRouteImport } from './routes/bus'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -295,6 +296,11 @@ const CarteleraRoute = CarteleraRouteImport.update({
 const BusinessRoute = BusinessRouteImport.update({
   id: '/business',
   path: '/business',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BusCorsTestRoute = BusCorsTestRouteImport.update({
+  id: '/bus-cors-test',
+  path: '/bus-cors-test',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BusRoute = BusRouteImport.update({
@@ -944,6 +950,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/bus': typeof BusRouteWithChildren
+  '/bus-cors-test': typeof BusCorsTestRoute
   '/business': typeof BusinessRouteWithChildren
   '/cartelera': typeof CarteleraRoute
   '/clima': typeof ClimaRoute
@@ -1097,6 +1104,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bus': typeof BusRouteWithChildren
+  '/bus-cors-test': typeof BusCorsTestRoute
   '/cartelera': typeof CarteleraRoute
   '/clima': typeof ClimaRoute
   '/comprar': typeof ComprarRoute
@@ -1250,6 +1258,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/bus': typeof BusRouteWithChildren
+  '/bus-cors-test': typeof BusCorsTestRoute
   '/business': typeof BusinessRouteWithChildren
   '/cartelera': typeof CarteleraRoute
   '/clima': typeof ClimaRoute
@@ -1406,6 +1415,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/bus'
+    | '/bus-cors-test'
     | '/business'
     | '/cartelera'
     | '/clima'
@@ -1559,6 +1569,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/bus'
+    | '/bus-cors-test'
     | '/cartelera'
     | '/clima'
     | '/comprar'
@@ -1711,6 +1722,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/bus'
+    | '/bus-cors-test'
     | '/business'
     | '/cartelera'
     | '/clima'
@@ -1866,6 +1878,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   BusRoute: typeof BusRouteWithChildren
+  BusCorsTestRoute: typeof BusCorsTestRoute
   BusinessRoute: typeof BusinessRouteWithChildren
   CarteleraRoute: typeof CarteleraRoute
   ClimaRoute: typeof ClimaRoute
@@ -2145,6 +2158,13 @@ declare module '@tanstack/react-router' {
       path: '/business'
       fullPath: '/business'
       preLoaderRoute: typeof BusinessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bus-cors-test': {
+      id: '/bus-cors-test'
+      path: '/bus-cors-test'
+      fullPath: '/bus-cors-test'
+      preLoaderRoute: typeof BusCorsTestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bus': {
@@ -3262,6 +3282,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   BusRoute: BusRouteWithChildren,
+  BusCorsTestRoute: BusCorsTestRoute,
   BusinessRoute: BusinessRouteWithChildren,
   CarteleraRoute: CarteleraRoute,
   ClimaRoute: ClimaRoute,
@@ -3357,13 +3378,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
