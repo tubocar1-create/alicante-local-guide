@@ -234,6 +234,24 @@ function TrainRoutePage() {
                   trenes.com
                   <ExternalLink className="h-3 w-3 opacity-70" />
                 </a>
+                <a
+                  href="https://www.omio.es/trenes"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#f43f5e] px-3 py-2 text-[11px] font-semibold text-white transition hover:opacity-90"
+                >
+                  Omio
+                  <ExternalLink className="h-3 w-3 opacity-70" />
+                </a>
+                <a
+                  href="https://www.thetrainline.com/es"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#16a34a] px-3 py-2 text-[11px] font-semibold text-white transition hover:opacity-90"
+                >
+                  Trainline
+                  <ExternalLink className="h-3 w-3 opacity-70" />
+                </a>
               </div>
             );
           })()}
