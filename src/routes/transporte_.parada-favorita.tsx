@@ -504,7 +504,9 @@ function ParadaFavoritaPage() {
                     : `horario Vectalia + recorrido estimado desde ${nightEstimate.originTerminal}`
                   : hasLiveData
                     ? "tiempo real (Vectalia)"
-                    : "estimación · sin paso en vivo"}
+                    : liveLoading
+                      ? "consultando…"
+                      : "sin paso en vivo (n/d)"}
             </span>
           </div>
         </div>
