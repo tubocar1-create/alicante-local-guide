@@ -20,10 +20,10 @@ export type FavoriteStop = {
 };
 
 export const DEFAULT_FAVORITE_STOP: FavoriteStop = {
-  stopId: "3101",
-  stopName: "Luceros",
-  line: "C6",
-  destination: "Aeropuerto",
+  stopId: "5110",
+  stopName: "Jornet Navarro",
+  line: "12",
+  destination: "Puerta del Mar",
 };
 
 const STORAGE_KEY = "vamos:favorite-stop";
