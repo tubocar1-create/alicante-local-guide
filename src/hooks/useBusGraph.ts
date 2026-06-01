@@ -80,14 +80,19 @@ export function useBusGraph() {
   const [loading, setLoading] = useState(!cache);
 
   useEffect(() => {
-    // Always refresh in background to pick up updates, but UI uses cache immediately
+    // Las paradas son estáticas: si existen en memoria/localStorage, no volvemos
+    // a pedirlas en cada entrada. Esto elimina la espera inicial recurrente.
+    if (cache) {
+      setData(cache);
+      setLoading(false);
+      return;
+    }
+
     let cancelled = false;
     (async () => {
       try {
-        const fresh = await fetchFresh();
+        const fresh = await load();
         if (cancelled) return;
-        cache = fresh;
-        writePersistent(fresh);
         setData(fresh);
       } catch {
         // ignore, keep cached data
