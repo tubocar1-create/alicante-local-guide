@@ -187,6 +187,19 @@ async function fetchStopCached(stopCode: string): Promise<StopArrival[]> {
   return promise;
 }
 
+async function mapWithConcurrency<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const results: R[] = [];
+  let index = 0;
+  async function worker() {
+    while (index < items.length) {
+      const current = index++;
+      results[current] = await fn(items[current]);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
+}
+
 export const getStopRealtime = createServerFn({ method: "POST" })
   .inputValidator((data: { stopCode: string; lines?: string[] }) => {
     const code = String(data?.stopCode ?? "").trim();
@@ -206,12 +219,14 @@ export const getStopsRealtimeBatch = createServerFn({ method: "POST" })
     return { stopCodes, line: data?.line ? normalizeLine(String(data.line)) : undefined };
   })
   .handler(async ({ data }) => {
-    const entries = await Promise.all(
-      data.stopCodes.map(async (stopCode) => {
+    const entries = await mapWithConcurrency(
+      data.stopCodes,
+      4,
+      async (stopCode) => {
         const arrivals = await fetchStopCached(stopCode);
         const filtered = data.line ? arrivals.filter((a) => normalizeLine(a.line) === data.line) : arrivals;
         return [stopCode, filtered] as const;
-      }),
+      },
     );
     return { stops: Object.fromEntries(entries), fetchedAt: new Date().toISOString() };
   });
