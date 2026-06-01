@@ -22,7 +22,7 @@ export function WebViewTestButton() {
     setLoading(true);
     setError(null);
     try {
-      const res = await inspect({ data: { stop } });
+      const res = (await inspect({ data: { stop } })) as InspectResult;
       setHistory((h) => [res, ...h].slice(0, 10));
     } catch (e) {
       setError(String(e));
