@@ -832,12 +832,13 @@ function DirectionColumn({
       </div>
 
 
+      {(() => { /* color del rail vertical: IDA gris claro, VUELTA gris oscuro */ return null; })()}
       <ol className="relative" style={{ display: "flex", flexDirection: "column", gap: "6mm" }}>
         {stops.length > 1 && (
           <span
             aria-hidden
             className="absolute left-6 top-3 bottom-3 w-[2px] rounded-full"
-            style={{ background: color }}
+            style={{ background: direction === 1 ? "#9ca3af" : "#4b5563" }}
           />
         )}
         {stops.map((s, i) => {
@@ -888,7 +889,7 @@ function DirectionColumn({
                   aria-hidden
                   className="pointer-events-none absolute -bottom-2 left-[18px] z-20 h-3 w-3"
                   strokeWidth={3}
-                  style={{ color }}
+                  style={{ color: direction === 1 ? "#9ca3af" : "#4b5563" }}
                 />
               )}
 
