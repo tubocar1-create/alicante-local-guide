@@ -1,52 +1,130 @@
+# Fase 3 — Motor predictivo profesional de flotas virtuales
 
-## Fase 2 — Persistencia y reconciliación
+Refactor del motor `bus-engine` + capa de persistencia para que la flota virtual respete horarios oficiales como verdad base, calcule fleet_size real, ancle buses a terminales, valide consistencia, degrade confianza y entre en SAFE MODE cuando los datos fallen. El mapa pasa a ser puramente lector.
 
-### Premisa del usuario
-En **preview** (donde Akamai no bloquea) tenemos tiempos REALES.
-En **HTTPS publicado** sólo tenemos el motor.
-Usaremos el preview como "sensor de campo" que envía observaciones al backend para reconciliar la flota virtual.
+## 1. Schema (migración única)
 
-### 1. Tabla auxiliar `bus_fleet_observations`
-Migración nueva con: `id`, `line_code`, `direction`, `stop_code`, `observed_eta_min`, `observed_at`, `source` (`preview_real`, `snapshot_manual`), `client_id` (anon), `meta jsonb`. RLS: read público, insert anónimo (rate-limited por client_id en server), admin manage. Sirve de log de campo y de fuente para WMWA en `bus_segment_stats`.
+Ampliar `virtual_buses` con anclaje + telemetría:
+- `departure_time time` — hora oficial de salida
+- `origin_terminal text` — "Puerta del Mar" | "Plaza Juan Pablo II"
+- `service_slot text` — `07-09`, `09-12`, `12-15`, `15-18`, `18-22`, `22-06`
+- `anchored_to_departure boolean default true`
+- `phase_error_sec integer default 0`
+- `reliability numeric default 0.5`
+- `last_observation_sec integer` — segundos desde última observación real
+- `speed_kmh numeric`
+- `safe_mode boolean default false`
 
-### 2. ServerFn `tickVirtualFleet({ line })`
-- Construye `LineFleetPlan` + `generateActiveFleet` (lo que ya tenemos).
-- UPSERT en `virtual_buses` por `(line_code, direction, trip_key, service_date)` donde `trip_key = headway_slot = "BUS01"…"BUSNN"`.
-- Marca `is_active=false` los buses de la línea que no estén en la flota actual (cambio de ventana horaria).
-- Guarda `position_lat/lng`, `current_segment_idx`, `segment_progress`, `state`, `confidence`, `last_tick_at`, `meta` (con `cycleMin`, `headwayMin`).
-- Idempotente: lo puede llamar cron / mapa / dashboard sin acumular filas.
+Nueva tabla `bus_engine_health`:
+- `line_code text PK`, `last_tick_at`, `last_tick_sec int`, `engine_alive bool`,
+  `prediction_quality text` (`high`|`medium`|`low`|`safe`), `active_buses int`,
+  `fleet_size_expected int`, `avg_confidence numeric`, `safe_mode bool`,
+  `learning_active bool`, `meta jsonb`.
+- GRANT public SELECT, admin manage; RLS pública lectura.
 
-### 3. ServerFn `getActiveFleet({ line })`
-SELECT plano sobre `virtual_buses` filtrado por línea y `is_active=true`. Devuelve la forma que ya consume el mapa.
+Nueva tabla `bus_segment_stats_slot` (estadísticas por slot horario):
+- `line_code, direction, from_stop, to_stop, day_type, service_slot,
+  avg_minutes, samples, confidence, updated_at`.
+- GRANT idem.
 
-### 4. ServerFn `reportRealtimeObservation({ line, direction, stopCode, etaMin, source })`
-- Inserta en `bus_fleet_observations`.
-- Aplica reconciliación ligera:
-  - Localiza el bus virtual cuyo trayecto futuro contenga esa parada antes y más cercano al `etaMin` observado.
-  - Calcula `delta = etaMin_observado − etaMin_virtual`.
-  - Si `|delta| > 1 min` y `|delta| ≤ 10 min`: ajusta `meta.phase_correction` del bus (desplaza fase en el ciclo) y bump `confidence` hacia arriba.
-  - Si `|delta| > 10 min`: descartar (probable outlier o cambio de turno) y registrar solo log.
-- Rate-limit: 1 inserción cada 10 s por `(client_id, line, stopCode)`.
+## 2. Módulos nuevos en `src/lib/bus-engine/`
 
-### 5. Wiring en preview (HTTP only)
-En `bus.dashboard.$code.tsx` y `FavoriteStopWidget`, cuando `usePredict === false` (preview) y llega un ETA real desde `getClientStopsRealtimeBatch`, disparar `reportRealtimeObservation` con `source="preview_real"`. Throttle a 30 s por parada+línea.
+### `slots.ts`
+- `getServiceSlot(at)` → uno de los 6 slots.
+- `getActiveHeadway(plan, slot)` y `getCycleTime(plan, slot)` usando `bus_headway_stats` + `bus_cycle_stats`.
 
-### 6. Mapa con flota persistida
-`BusLineLiveMap`:
-- En **HTTPS** (`usePredict===true`): hace `tickVirtualFleet` cada 10 s, lee `getActiveFleet` cada 3 s para refrescar marcadores. Posición intermedia se interpola en cliente entre ticks.
-- En **preview**: sigue el camino actual (cliente predice sobre la marcha) — no se duplica esfuerzo.
+### `fleet-sizer.ts`
+- `computeFleetSize(cycleMin, headwayMin)` → `ceil(cycle/headway)` con tope `+1`.
+- `enumerateAnchoredDepartures(plan, slot, now)` → lista de `{departureTime, terminal, direction, slotKey}` derivada de `bus_line_departures` (verdad oficial). Solo entran al motor salidas oficiales o snapshots confirmados.
 
-### 7. fleet.ts: usar `meta.phase_correction`
-`generateActiveFleet` lee, por slot, una corrección de fase persistida (si existe) desde una caché ligera (la pasaremos al construir el plan o la leeremos del registro `virtual_buses` previo). Mantenemos pura la función actual y añadimos una variante `generateActiveFleetWithCorrections(plan, corrections, at)`.
+### `fleet-validator.ts`
+- `validateFleetConsistency(fleet, plan)`:
+  - elimina duplicados (mismo `trip_key`/dirección/salida),
+  - calcula `spacing_sec` entre buses consecutivos,
+  - aplica `min_spacing = headway*0.45`, `max_spacing = headway*2.2`,
+  - marca conflictos: degrada confianza, fusiona pares casi-idénticos, descarta el más débil cuando overlap.
+  - filtra velocidades fuera de `[6,42] km/h`.
+  - cap final a `fleet_size + 1`.
 
-### Detalles técnicos
-- `trip_key` estable = nombre del slot (`BUS01`…). `service_date` = fecha local Madrid.
-- `tickVirtualFleet` y `reportRealtimeObservation` no requieren auth (rate-limit por IP/`client_id`).
-- Todo HTTPS-only se mantiene desde el cliente (no se llama tick en preview, no se reconcilia desde HTTPS porque ahí no hay reales).
+### `confidence.ts` (extender)
+- `scoreBus(bus, ctx)` combinando:
+  - positivo: observación <5min, spacing válido, velocidad razonable, phase_error<60s.
+  - negativo: drift>180s, sin snapshot >15min, spacing inválido.
+- Degradación temporal: `0–5m=alta`, `5–15m=media`, `15–30m=baja`, `>30m=safe`.
 
-### Fuera del alcance (queda para Fase 3)
-- Cron pg_cron de tick periódico (lo dejamos manual desde el cliente para no gastar).
-- UI admin de calidad/varianza/derivación.
-- Detección de bunching y gap visualizada en UI.
+### `safe-mode.ts`
+- `shouldEnterSafeMode(fleet, health)` si `avg_confidence<0.35` o `last_snapshot_age>30min` o `validator descartó >40%`.
+- En SAFE MODE: generar buses SOLO desde `bus_line_departures` interpolando linealmente sobre la geometría con velocidad media histórica. Sin corrección agresiva. Marcar `safe_mode=true` en cada bus y en `bus_engine_health.prediction_quality='safe'`.
 
-¿OK con este alcance o ajustamos antes de migrar?
+### `eta-propagation.ts`
+- Reemplaza interpolación lineal por:
+  `eta = base_from_position(bus, stop) + Σ segment_speed_slot + Σ dwell_slot + traffic_factor + phase_correction`.
+- `segment_speed_slot` viene de `bus_segment_stats_slot` (fallback a `bus_segment_stats`).
+
+### Refactor de `fleet.ts`
+- `buildLineFleetPlan` usa slot activo + cycle_time + headway por slot.
+- `generateActiveFleet` ahora:
+  1. enumera salidas oficiales del slot,
+  2. para cada salida calcula `elapsed = now - departure_time`,
+  3. posiciona bus en ciclo (IDA→regulación→VUELTA),
+  4. aplica `phase_correction` por slot del bus,
+  5. ejecuta `validateFleetConsistency`,
+  6. ejecuta `scoreBus` y `shouldEnterSafeMode`.
+- `deriveStopEtas` usa `eta-propagation`.
+
+## 3. Server functions (`src/lib/bus-fleet.functions.ts`)
+
+- `tickVirtualFleet({line})` (ya existe) — refactor:
+  - llama al nuevo flujo (slot-aware, validador, safe-mode),
+  - persiste campos nuevos (`departure_time`, `origin_terminal`, `service_slot`,
+    `phase_error_sec`, `reliability`, `speed_kmh`, `safe_mode`),
+  - UPSERT en `bus_engine_health` (alive, quality, fleet_size_expected vs real, avg_confidence).
+- `tickAllLines()` nuevo — itera líneas activas para tick masivo.
+- `getEngineHealth({line?})` nuevo.
+- `reportRealtimeObservation` (existe) — ampliar para actualizar `bus_segment_stats_slot` (WMWA, peso 0.6 live, 1.0 snapshot manual) y `last_observation_sec`.
+
+## 4. Tick autónomo server-side
+
+Nueva route `src/routes/api/public/hooks/bus-fleet-tick.ts`:
+- POST verificada con `BUS_FLEET_TICK_SECRET`,
+- llama `tickAllLines()`,
+- pensada para pg_cron / scheduler externo cada 20s (en la práctica cada minuto vía cron Lovable, suficiente para empezar — el frontend sigue pidiendo `tickVirtualFleet` por línea cuando se abre).
+
+## 5. Mapa = solo lectura
+
+`BusLineLiveMap.tsx`:
+- Eliminar la lógica que dispara `tickVirtualFleet` desde cliente (mantener fallback de cortesía si `last_tick_sec>60`).
+- Solo `getActiveFleet` cada 3s + interpolación visual suave client-side (lerp entre dos snapshots consecutivos).
+- Badge "estimación histórica" cuando algún bus tiene `safe_mode=true`.
+
+## 6. Dashboard
+
+`bus.dashboard.$code.tsx`:
+- Sigue reportando observaciones (preview real).
+- Mostrar `prediction_quality` y `active_buses / fleet_size_expected` del health.
+- Si SAFE MODE → badge ámbar "Datos históricos".
+
+## 7. Reglas duras (en código, no negociables)
+
+- Sin salida oficial ni snapshot ⇒ **no se crea bus**.
+- `fleet.length ≤ fleet_size + 1`.
+- Velocidad fuera de `[6,42] km/h` ⇒ bus degradado o descartado.
+- Spacing fuera de rango ⇒ resolver, no ocultar.
+- Mapa nunca calcula posiciones absolutas; solo interpola entre dos lecturas.
+
+## Notas técnicas
+
+- HTTPS-only se mantiene: el tick server-side corre en producción; en preview el cliente puede seguir disparando ticks bajo demanda para iterar.
+- Aprendizaje continuo: cada observación real alimenta `bus_segment_stats_slot` + `phase_correction` con WMWA (α≈0.3).
+- Todo el código nuevo es puro TS bajo `src/lib/bus-engine/`, sin dependencias nuevas.
+- Migración única con GRANTs explícitos para las dos tablas nuevas.
+
+## Entregables por orden
+
+1. Migración (schema + tablas nuevas + GRANTs + RLS).
+2. Módulos `slots.ts`, `fleet-sizer.ts`, `fleet-validator.ts`, `safe-mode.ts`, `eta-propagation.ts`.
+3. Refactor `fleet.ts` + `confidence.ts`.
+4. Refactor `bus-fleet.functions.ts` + nuevo endpoint cron.
+5. Mapa y dashboard como consumidores puros.
+
+¿Apruebas el plan o ajustamos algo antes de migrar?
