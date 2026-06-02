@@ -16,6 +16,9 @@ import {
 import { cumulativeMinutes, NIGHT_URBAN_KMH } from "@/lib/bus-eta";
 import { getClientStopRealtime, getClientStopsRealtimeBatch } from "@/lib/bus-realtime-client";
 import busAlicanteImg from "@/assets/bus-alicante.png";
+import { useBusEngine } from "@/hooks/useBusEngine";
+import { predictLineState } from "@/lib/bus-engine/predict";
+
 
 
 
@@ -405,6 +408,76 @@ function BusDashboardPage() {
     };
   }, [code, initialRealtimeStopCodes, isNightLine]);
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // Motor predictivo: en la versión HTTPS pública (vamosalicante.com /
+  // alicante-local-guide.lovable.app) los endpoints en vivo del Ayuntamiento
+  // están bloqueados por Akamai. En esa situación sustituimos los ETAs por
+  // los que predice nuestro motor y mostramos el bus desplazándose entre
+  // paradas. En el preview (`id-preview--*.lovable.app`) NO activamos esto
+  // porque el bus real / QR-bus carga correctamente.
+  const usePredict = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    const h = window.location.hostname;
+    if (/^id-preview--/.test(h)) return false;
+    if (h === "localhost" || h === "127.0.0.1") return false;
+    return true;
+  }, []);
+
+  const { data: engine } = useBusEngine();
+
+  const [predictedBusesByDir, setPredictedBusesByDir] = useState<
+    Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]>
+  >({ 1: [], 2: [] });
+
+  useEffect(() => {
+    if (!usePredict || !engine || isNightLine) return;
+    let cancelled = false;
+    const tick = () => {
+      if (cancelled) return;
+      const state = predictLineState(engine, code, new Date());
+
+      // 1) ETAs por parada: mejor (menor) etaMin por stopCode.
+      const best: Record<string, number> = {};
+      for (const e of state.stops) {
+        if (e.etaMin < 0) continue;
+        const prev = best[e.stopCode];
+        if (prev == null || e.etaMin < prev) best[e.stopCode] = e.etaMin;
+      }
+      setEtas((prev) => {
+        const next: Record<string, number[]> = { ...prev };
+        for (const dir of [1, 2] as const) {
+          for (const s of stopsByDir[dir]) {
+            const v = best[s.code];
+            if (typeof v === "number") next[s.code] = [v];
+          }
+        }
+        return next;
+      });
+
+      // 2) Buses activos por dirección con segmentIndex/progress para overlay.
+      const byDir: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]> = {
+        1: [],
+        2: [],
+      };
+      for (const b of state.buses) {
+        if (b.status !== "moving") continue;
+        byDir[b.direction].push({
+          busId: b.busId,
+          segmentIndex: b.segmentIndex,
+          segmentProgress: b.segmentProgress,
+        });
+      }
+      setPredictedBusesByDir(byDir);
+    };
+    tick();
+    const id = setInterval(tick, 400);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [usePredict, engine, code, isNightLine, stopsByDir]);
+
+
 
   const lineCategory = classifyLine(code);
   const catColor = lineCategory === "urban" ? "#EF4444" : "#3B82F6";
@@ -517,7 +590,9 @@ function BusDashboardPage() {
             onPickStop={handlePickStop}
             nearestList={nearestByDir[1]}
             geoStatus={geoStatus}
+            predictedBuses={predictedBusesByDir[1]}
           />
+
           <DirectionColumn
             label="VUELTA"
             direction={2}
@@ -540,8 +615,9 @@ function BusDashboardPage() {
             onPickStop={handlePickStop}
             nearestList={nearestByDir[2]}
             geoStatus={geoStatus}
-
+            predictedBuses={predictedBusesByDir[2]}
           />
+
         </div>
 
         {/* LEYENDA */}
@@ -772,6 +848,7 @@ function DirectionColumn({
   onPickStop,
   nearestList,
   geoStatus,
+  predictedBuses,
 }: {
   label: string;
   direction: 1 | 2;
@@ -789,6 +866,7 @@ function DirectionColumn({
   onPickStop: (stopCode: string, stopName: string, destination: string) => void;
   nearestList: { code: string; distance: number }[];
   geoStatus: "idle" | "loading" | "ok" | "unavailable";
+  predictedBuses?: { busId: string; segmentIndex: number; segmentProgress: number }[];
 }) {
 
   const now = new Date();
@@ -799,6 +877,36 @@ function DirectionColumn({
     for (const n of nearestList) m.set(n.code, n.distance);
     return m;
   }, [nearestList]);
+
+  // Refs por parada para poder calcular posiciones Y del bus overlay.
+  const stopRefs = useRef<(HTMLLIElement | null)[]>([]);
+  const olRef = useRef<HTMLOListElement | null>(null);
+  const [busPositions, setBusPositions] = useState<{ busId: string; top: number }[]>([]);
+
+  useEffect(() => {
+    if (!predictedBuses || predictedBuses.length === 0) {
+      setBusPositions([]);
+      return;
+    }
+    const ol = olRef.current;
+    if (!ol) return;
+    const olTop = ol.getBoundingClientRect().top;
+    const positions: { busId: string; top: number }[] = [];
+    for (const b of predictedBuses) {
+      const a = stopRefs.current[b.segmentIndex];
+      const c = stopRefs.current[b.segmentIndex + 1];
+      if (!a || !c) continue;
+      const aRect = a.getBoundingClientRect();
+      const cRect = c.getBoundingClientRect();
+      // Centro vertical del badge (badge tiene h-9 = 36px, está cerca del top de cada <li>).
+      const aY = aRect.top - olTop + 18;
+      const cY = cRect.top - olTop + 18;
+      const y = aY + (cY - aY) * b.segmentProgress;
+      positions.push({ busId: b.busId, top: y });
+    }
+    setBusPositions(positions);
+  }, [predictedBuses, stops]);
+
 
 
   return (
@@ -856,7 +964,7 @@ function DirectionColumn({
 
 
       {(() => { /* color del rail vertical: IDA gris claro, VUELTA gris oscuro */ return null; })()}
-      <ol className="relative" style={{ display: "flex", flexDirection: "column", gap: "6mm" }}>
+      <ol ref={olRef} className="relative" style={{ display: "flex", flexDirection: "column", gap: "6mm" }}>
         {stops.length > 1 && (
           <span
             aria-hidden
@@ -864,6 +972,22 @@ function DirectionColumn({
             style={{ background: direction === 1 ? "#000" : "#fff" }}
           />
         )}
+        {/* Overlay: buses predichos deslizándose entre paradas */}
+        {busPositions.map((bp) => (
+          <img
+            key={bp.busId}
+            src={busAlicanteImg}
+            alt=""
+            aria-hidden
+            className="pointer-events-none absolute z-30 h-8 w-8 -translate-x-1/2 -translate-y-1/2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]"
+            style={{
+              left: "24px",
+              top: `${bp.top}px`,
+              transition: "top 400ms linear",
+            }}
+          />
+        ))}
+
         {stops.map((s, i) => {
           const hasRealtimeResult = Object.prototype.hasOwnProperty.call(etas, s.code);
           const arr = etas[s.code] ?? [];
@@ -893,8 +1017,9 @@ function DirectionColumn({
           return (
             <li
               key={`${s.code}-${i}`}
-              
+              ref={(el) => { stopRefs.current[i] = el; }}
               className="relative flex flex-col gap-1 rounded-md pb-2"
+
               style={{
                 borderBottom: "1px solid rgba(255,255,255,0.06)",
                 boxShadow: isNearest
