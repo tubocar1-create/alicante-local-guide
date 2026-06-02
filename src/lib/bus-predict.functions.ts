@@ -6,7 +6,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export type BusEngineSnapshot = {
-  stops: Array<{ line_code: string; direction: number; seq: number; stop_code: string; stop_name: string }>;
+  stops: Array<{ line_code: string; direction: number; seq: number; stop_code: string | null; stop_name: string }>;
   stopsMeta: Array<{ code: string; name: string | null; lat: number | null; lng: number | null }>;
   segmentStats: Array<{
     line_code: string;
