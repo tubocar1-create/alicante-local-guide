@@ -39,6 +39,14 @@ import {
   getLineProfile,
   type FleetWindow,
 } from "./line-profiles";
+import { classifyDepartureWindow } from "./active-window";
+import { validateTemporalConsistency } from "./temporal-consistency";
+
+// Aprendizaje SOLO puede ajustar la fase del bus en ±MAX_PHASE_CORRECTION_MIN.
+// Nunca puede inventar un bus ni reposicionarlo libremente.
+const MAX_PHASE_CORRECTION_MIN = 1.5; // ±90 s
+
+
 
 
 export type OrderedStop = LineStop & { lat: number | null; lng: number | null };
