@@ -165,9 +165,15 @@ export function StopRealtimeSheet({
             </span>
           </SheetTitle>
           <SheetDescription className="flex items-center justify-between text-xs">
-            <span>
+            <span className="flex items-center gap-2">
               {fetchedAt ? `Actualizado ${new Date(fetchedAt).toLocaleTimeString("es-ES")}` : "Cargando…"}
-              {loading && <Loader2 className="ml-2 inline h-3 w-3 animate-spin" />}
+              {loading && <Loader2 className="inline h-3 w-3 animate-spin" />}
+              {source === "live" && (
+                <Badge variant="default" className="h-4 px-1.5 text-[10px]">tiempo real</Badge>
+              )}
+              {source === "estimated" && (
+                <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">estimado</Badge>
+              )}
             </span>
             {stop && (
               <a
