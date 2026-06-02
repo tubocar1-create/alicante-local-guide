@@ -4,6 +4,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useBusEngine } from "@/hooks/useBusEngine";
 import { predictLineState } from "@/lib/bus-engine/predict";
+import busAlicanteImg from "@/assets/bus-alicante.png";
 
 export type LineStopPoint = {
   code: string;
@@ -23,15 +24,18 @@ type RenderedBus = {
   confidence: number;
 };
 
-function busIcon(line: string, color: string, confidence: number) {
-  const opacity = Math.max(0.55, Math.min(1, confidence));
+function busIcon(line: string, confidence: number) {
+  const opacity = Math.max(0.6, Math.min(1, confidence));
+  // Autobusito rojo de Alicante (mismo asset usado en las paradas) montado
+  // sobre un disco blanco para destacarlo sobre cualquier tile del mapa.
   return L.divIcon({
     className: "",
-    html: `<div style="background:${color};color:white;min-width:30px;height:24px;padding:0 6px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;box-shadow:0 2px 8px rgba(0,0,0,.45);border:2px solid white;opacity:${opacity}">🚌${line}</div>`,
-    iconSize: [44, 24],
-    iconAnchor: [22, 12],
+    html: `<div style="position:relative;width:40px;height:40px;border-radius:9999px;background:white;border:2px solid #b91c1c;box-shadow:0 3px 10px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;opacity:${opacity}"><img src="${busAlicanteImg}" alt="" style="width:30px;height:30px;object-fit:contain;pointer-events:none"/><span style="position:absolute;right:-4px;bottom:-4px;background:#b91c1c;color:white;font:800 10px/1 system-ui,sans-serif;padding:2px 5px;border-radius:6px;border:1.5px solid white">${line}</span></div>`,
+    iconSize: [40, 40],
+    iconAnchor: [20, 20],
   });
 }
+
 
 const userIcon = L.divIcon({
   className: "",
