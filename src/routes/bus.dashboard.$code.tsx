@@ -964,7 +964,7 @@ function DirectionColumn({
 
 
       {(() => { /* color del rail vertical: IDA gris claro, VUELTA gris oscuro */ return null; })()}
-      <ol className="relative" style={{ display: "flex", flexDirection: "column", gap: "6mm" }}>
+      <ol ref={olRef} className="relative" style={{ display: "flex", flexDirection: "column", gap: "6mm" }}>
         {stops.length > 1 && (
           <span
             aria-hidden
@@ -972,6 +972,22 @@ function DirectionColumn({
             style={{ background: direction === 1 ? "#000" : "#fff" }}
           />
         )}
+        {/* Overlay: buses predichos deslizándose entre paradas */}
+        {busPositions.map((bp) => (
+          <img
+            key={bp.busId}
+            src={busAlicanteImg}
+            alt=""
+            aria-hidden
+            className="pointer-events-none absolute z-30 h-8 w-8 -translate-x-1/2 -translate-y-1/2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]"
+            style={{
+              left: "24px",
+              top: `${bp.top}px`,
+              transition: "top 400ms linear",
+            }}
+          />
+        ))}
+
         {stops.map((s, i) => {
           const hasRealtimeResult = Object.prototype.hasOwnProperty.call(etas, s.code);
           const arr = etas[s.code] ?? [];
