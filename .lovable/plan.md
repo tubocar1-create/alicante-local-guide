@@ -1,109 +1,101 @@
-# Motor Inteligente de Predicción Operacional — Buses Vectalia Alicante
 
-## Objetivo
+# Refactor del motor predictivo: de ETAs interpoladas a buses virtuales persistentes
 
-Reemplazar la dependencia de realtime (bloqueado por Akamai) por un **motor predictivo autónomo** que estima posición de buses y ETAs usando horarios oficiales + geometría + aprendizaje estadístico + snapshots manuales del operador.
+## Diagnóstico del estado actual
 
-## Arquitectura en 4 capas
+Hoy el motor (`src/lib/bus-engine/`) calcula tiempos por segmento y los suma desde la próxima salida programada para producir ETAs por parada. Los "buses" que se ven son derivados visuales de esas ETAs. Esto produce los síntomas que describes: espaciado matemático, sin regulación terminal, sin bunching, sin flota inferida.
+
+## Nuevo modelo (resumen)
+
+La entidad raíz pasa a ser **`VirtualBus`** persistente con estado, posición sobre la polilínea y trip activo. Las ETAs se **derivan** del estado de cada bus, nunca al revés.
 
 ```text
-CAPA 1  Horarios oficiales Vectalia (estáticos, ya en bus-static)
-   │
-CAPA 2  Modelo estadístico histórico (segmentos, ciclos, descansos)
-   │
-CAPA 3  Motor predictivo (buses virtuales, posición, ETA)
-   │
-CAPA 4  Recalibración por snapshots manuales (EWMA α≈0.2)
+snapshots + horarios + geometría + stats
+        │
+        ▼
+   FLOTA INFERIDA (N buses activos para esta ventana)
+        │
+        ▼
+   SIMULACIÓN CONTINUA (tick → mover/dwell/regular)
+        │
+        ▼
+   ETAs DERIVADAS POR PARADA  +  POSICIONES PARA EL MAPA
 ```
 
-Sin workers de scraping, sin polling, sin Akamai. Todo se calcula on-demand en el cliente o en serverFn ligera leyendo de Supabase.
+## Alcance de esta entrega (Fase 1)
 
-## Modelo de datos (nuevo)
+Para mantener el cambio revisable, esta entrega ataca el núcleo:
 
-Tablas en Supabase (migración):
+1. **Tabla `virtual_buses`** (persistencia + identidad continua) y `bus_segment_stats` extendida con ventana horaria.
+2. **Nuevo módulo `src/lib/bus-engine/fleet/`** con:
+   - `cycle.ts` — `cycle_time = outbound + inbound + regulación`.
+   - `fleet-inference.ts` — `active_buses = round(cycle_time / headway)` por ventana horaria.
+   - `simulation.ts` — tick que mueve buses, aplica dwell y detecta regulación terminal.
+   - `derive-etas.ts` — produce las ETAs por parada a partir del estado de la flota (no al revés).
+   - `reconcile.ts` — al recibir snapshot, asigna observación al bus virtual más probable y corrige velocidad/headway.
+3. **ServerFn `tickVirtualFleet({ line })`** que avanza la simulación y persiste el estado. Se invoca on-demand desde el dashboard y desde el widget.
+4. **Dashboard (`bus.dashboard.$code.tsx`)** y **`FavoriteStopWidget`**: consumen `deriveEtasFromFleet()` en lugar del cálculo lineal actual. En HTTPS sigue siendo el único origen; en preview se mantiene la lectura real (regla actual intacta).
+5. **`BusLineLiveMap`**: los marcadores leen `virtual_buses` (posición, dirección, estado, confianza) en vez de interpolar entre paradas.
 
-1. **`bus_line_geometry`** — polyline y orden de paradas por línea+sentido
-   - `line`, `direction` (IDA/VUELTA), `polyline` (array [lat,lng]), `stops_ordered` (array codes), `total_distance_m`
-2. **`bus_segment_stats`** — aprendizaje por segmento parada→parada
-   - `from_stop`, `to_stop`, `line`, `distance_m`, `avg_minutes`, `rush_minutes`, `night_minutes`, `weekday_minutes`, `holiday_minutes`, `samples`, `confidence`, `updated_at`
-3. **`bus_cycle_stats`** — duración ciclo por línea
-   - `line`, `cycle_avg`, `cycle_morning`, `cycle_afternoon`, `cycle_night`, `terminal_wait_avg`, `terminal_wait_min`, `terminal_wait_max`, `samples`
-4. **`bus_schedules`** — salidas programadas (seed manual desde Vectalia PDFs)
-   - `line`, `direction`, `departure_time` (HH:MM), `day_type` (weekday/saturday/sunday/holiday), `from_terminal`
-5. **`bus_snapshots`** — snapshots manuales del operador
-   - `id`, `timestamp`, `line`, `stop_id`, `eta_clock`, `direction`, `observed_by`, `notes`
-6. **`bus_predictions_log`** — para medir deriva (opcional, fase 2)
+## Fuera de alcance (fases siguientes, separadas)
 
-GRANTs: `authenticated` SELECT en todas; INSERT en `bus_snapshots` solo admin via RLS con `has_role`.
-
-## Módulos de código
-
-### `src/lib/bus-engine/` (nuevo, pure TS, sin red)
-
-- `geometry.ts` — haversine, distancia sobre polyline, snap-to-line, progreso 0..1
-- `segments.ts` — lookup `bus_segment_stats`, fallback a velocidad urbana (16 km/h diurno, 28 km/h nocturno)
-- `cycle.ts` — duración ciclo, descanso terminal aprendido
-- `schedule.ts` — generador de **buses virtuales** desde `bus_schedules` para una ventana [-cycleDuration, now]
-- `position.ts` — para cada bus virtual: tiempo transcurrido desde salida → distancia recorrida → punto en polyline + segmento actual + progreso
-- `eta.ts` — `ETA = scheduled + learnedDelay + segmentCorrection + timeProfile + trafficProfile`
-- `confidence.ts` — score 0..1 a partir de samples, antigüedad, varianza
-- `learning.ts` — EWMA `T_new = 0.2·observed + 0.8·hist`, detector hora pico
-- `peak-detector.ts` — clasifica timestamp en morning_peak / midday / afternoon_peak / night / weekend / holiday
-- `index.ts` — `predictLineState(line, now)` devuelve el JSON output del brief
-
-### ServerFns (`src/lib/bus-predict.functions.ts`)
-
-- `predictLine({ line, at? })` → `{ line, timestamp, buses[], stops[] }`
-- `predictStop({ stopCode, at? })` → lista ETAs por línea
-- `submitSnapshot({ line, stopId, etaClock, direction })` — admin only, dispara `learning.applySnapshot()` que actualiza `bus_segment_stats` y `bus_cycle_stats` vía EWMA
-- `getLineGeometry({ line })` — sirve polyline + stops_ordered (cacheable, staleTime alto)
-
-### UI
-
-- **`FavoriteStopWidget`** — reemplazar fetch realtime por `predictStop()`. Mantener diseño. Mostrar `etaMinutes`, badge confidence opcional. Botón externo `target="_blank"` a `qr.vectalia.es/Alicante/mapa.aspx?...` se mantiene.
-- **`BusLineLiveMap`** — consumir `predictLine()`. Renderizar marcadores de buses virtuales sobre polyline con interpolación suave (rAF, lerp entre dos ticks de predicción cada 15s). Flecha de dirección.
-- **`StopRealtimeSheet`** — usar `predictStop()`.
-- **Nueva ruta `/admin/bus-snapshots`** — formulario para operador: línea, parada, hora observada → `submitSnapshot`. Lista últimos 50 snapshots con impacto en estadísticas.
-
-### Eliminar/desactivar
-
-- Llamadas a `bus-realtime.functions.ts` / `bus-eta` (mantener archivos por ahora, marcar deprecated en comentario). No tocar `liveStopUrl` (sigue siendo el deep-link externo).
-- Edge functions `bus-eta` y `bus-eta-raw`: dejar pero marcadas como no usadas.
-
-## Seed inicial
-
-Sin snapshots históricos reales, arrancamos con:
-- `bus_segment_stats`: `avg_minutes = distance_m / (16 km/h)` + dwell 15s, `samples = 0`, `confidence = 0.3` (baseline puro).
-- `bus_cycle_stats`: suma de segmentos ida+vuelta + 5 min descanso terminal por defecto.
-- `bus_schedules`: poblar manualmente para línea 12 como piloto (resto se añade después).
-
-A medida que el operador introduce snapshots, EWMA acerca los valores a la realidad y `confidence` sube con `samples`.
-
-## Fases de entrega
-
-1. **Migración SQL** + seed mínimo línea 12 (geometría + horarios + segmentos baseline).
-2. **`src/lib/bus-engine/`** + serverFns predictivas con tests unitarios mentales sobre línea 12.
-3. **Migrar `FavoriteStopWidget`** al motor predictivo. Verificar en preview.
-4. **Migrar `BusLineLiveMap`** con interpolación rAF.
-5. **Panel `/admin/bus-snapshots`** para recalibración.
-6. **Confidence en UI** + log opcional de deriva.
+- Detección automática de incorporación/desincorporación de buses (fase 2).
+- Bunching/gap detection visible en UI (fase 2).
+- Panel admin de calidad por línea con confianza, varianza y deriva (fase 3).
+- Aprendizaje bayesiano completo con peak_factor por ventana (fase 2 — ahora WMWA simple ya existente).
 
 ## Detalles técnicos clave
 
-- **Buses virtuales**: para cada `departure_time` ∈ [now - cycleDuration, now], crear bus con `elapsed = now - departure`. Si `elapsed > cycleDuration`, status `finished`. Si en terminal, `terminal_wait`.
-- **Posición sobre polyline**: acumular `segment.avg_minutes` ajustado por perfil horario hasta consumir `elapsed`; el sobrante define progreso dentro del segmento actual → interpolación lineal sobre los puntos de polyline correspondientes a ese segmento.
-- **Perfil horario** (`timeProfileCorrection`): factor multiplicador sobre `avg_minutes` según `peak-detector` (ej. morning_peak ×1.25).
-- **Snapshot manual**: `observed_segment_time = etaClock_observado - last_known_passage` → EWMA contra `avg_minutes` del segmento correspondiente. También recalibra `cycle_stats` si es snapshot en terminal.
-- **Confidence**: `min(1, samples/30) × exp(-ageDays/14) × (1 - normalizedStdDev)`.
-- **Sin IA generativa, sin embeddings**. Matemática pura.
+- **Identidad persistente**: `virtual_buses` se actualiza por `UPDATE`, no se borra y recrea por consulta. `bus_id = line|direction|trip_id|service_date`.
+- **Estados**: `moving | dwell_stop | terminal_regulation | layover | out_of_service`. El bus que llega a terminal pasa a `terminal_regulation` durante `terminal_wait_avg`, luego arranca el siguiente trip — no desaparece.
+- **Tick**: idempotente por `now`. Calcula `Δt = now - last_tick`, avanza `distance_from_origin` según velocidad del segmento ajustada por ventana horaria, gestiona dwell y regulación.
+- **Inferencia de flota**: por ventana horaria (`early_morning`, `morning_peak`, `midday`, `afternoon_peak`, `evening`, `night`), calcula `headway` desde `bus_schedules` y produce `active_buses = round(cycle_time / headway)`. Buses sobrantes pasan a `out_of_service`.
+- **Reconciliación con snapshot**: dado `(stop, eta_observada)`, busca el bus virtual cuyo ETA derivado esté más cerca; aplica WMWA al segmento correspondiente y reajusta su `distance_from_origin`. Si ningún bus encaja dentro de tolerancia, crea uno nuevo (incorporación) o marca outlier.
+- **Confianza por bus**: `f(snapshot_age, sample_count, variance, gap_desde_última_observación)`. Se propaga a las ETAs derivadas.
+- **HTTPS-only para la simulación**: se mantiene la regla actual. En preview, los componentes siguen leyendo realtime real sin pasar por el motor.
+- **Mapa**: marcadores leen `virtual_buses.position` (interpolada en cliente cada rAF entre ticks de 5–10s), con flecha de dirección y badge de confianza.
 
-## Lo que NO se toca
+## Lo que no se toca (regla de oro)
 
-- Estructura de rutas existentes (regla de oro). El widget sigue siendo el widget; el mapa sigue siendo el mapa.
-- Diseño visual de `FavoriteStopWidget`.
-- Deep link externo `liveStopUrl` → `qr.vectalia.es`.
-- Categoría/agente: el motor solo refleja resultados, no cambia navegación.
+- Estructura de rutas y navegación del agente.
+- Diseño del widget y del dashboard (solo cambia el origen de los números).
+- Deep link `qr.vectalia.es` se mantiene como botón externo.
+- En preview seguimos con tiempos reales sin tocar.
 
-## Alcance de esta entrega
+## Migración SQL prevista
 
-Si apruebas, implemento **fases 1–3** en este turno (migración + engine + widget favorito funcionando con predicción). Fases 4–6 (mapa con rAF, panel admin snapshots, confidence en UI) en turnos siguientes para mantener cambios revisables.
+```sql
+CREATE TABLE public.virtual_buses (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  line_code text NOT NULL,
+  direction smallint NOT NULL,
+  trip_key text NOT NULL,
+  service_date date NOT NULL,
+  current_segment_idx int,
+  segment_progress numeric,
+  distance_from_origin_m numeric,
+  speed_kmh numeric,
+  state text NOT NULL,
+  source text NOT NULL,
+  headway_slot text,
+  confidence numeric,
+  last_tick_at timestamptz,
+  last_observation_at timestamptz,
+  estimated_terminal_arrival timestamptz,
+  is_active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (line_code, direction, trip_key, service_date)
+);
+-- + GRANTs y RLS (SELECT auth+anon, INSERT/UPDATE solo service_role vía serverFn)
+
+ALTER TABLE public.bus_segment_stats
+  ADD COLUMN IF NOT EXISTS time_window text,
+  ADD COLUMN IF NOT EXISTS peak_factor numeric;
+```
+
+## Entrega propuesta
+
+Si apruebas, en este turno hago **Fase 1 completa**: migración SQL + módulos `fleet/` + serverFn de tick + reemplazo del origen de datos en dashboard, widget favorito y mapa. Fases 2 y 3 (detección automática de flota, bunching, panel admin de calidad) en turnos siguientes.
+
+¿Apruebas Fase 1 tal cual o quieres ajustar el alcance (ej. dejar el mapa para fase 2)?

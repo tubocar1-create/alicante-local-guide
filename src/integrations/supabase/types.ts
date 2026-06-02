@@ -1054,8 +1054,10 @@ export type Database = {
           last_snapshot_at: string | null
           line_code: string
           night_minutes: number | null
+          peak_factor: number | null
           rush_minutes: number | null
           samples: number
+          time_window: string | null
           to_stop: string
           updated_at: string
           variance: number
@@ -1073,8 +1075,10 @@ export type Database = {
           last_snapshot_at?: string | null
           line_code: string
           night_minutes?: number | null
+          peak_factor?: number | null
           rush_minutes?: number | null
           samples?: number
+          time_window?: string | null
           to_stop: string
           updated_at?: string
           variance?: number
@@ -1092,8 +1096,10 @@ export type Database = {
           last_snapshot_at?: string | null
           line_code?: string
           night_minutes?: number | null
+          peak_factor?: number | null
           rush_minutes?: number | null
           samples?: number
+          time_window?: string | null
           to_stop?: string
           updated_at?: string
           variance?: number
@@ -3737,6 +3743,84 @@ export type Database = {
           slug?: string
           updated_at?: string
           website?: string | null
+        }
+        Relationships: []
+      }
+      virtual_buses: {
+        Row: {
+          confidence: number
+          created_at: string
+          current_segment_idx: number | null
+          direction: number
+          distance_from_origin_m: number | null
+          estimated_cycle_completion: string | null
+          estimated_terminal_arrival: string | null
+          headway_slot: string | null
+          id: string
+          is_active: boolean
+          last_observation_at: string | null
+          last_tick_at: string | null
+          line_code: string
+          meta: Json
+          position_lat: number | null
+          position_lng: number | null
+          segment_progress: number | null
+          service_date: string
+          source: string
+          speed_kmh: number | null
+          state: string
+          trip_key: string
+          updated_at: string
+        }
+        Insert: {
+          confidence?: number
+          created_at?: string
+          current_segment_idx?: number | null
+          direction: number
+          distance_from_origin_m?: number | null
+          estimated_cycle_completion?: string | null
+          estimated_terminal_arrival?: string | null
+          headway_slot?: string | null
+          id?: string
+          is_active?: boolean
+          last_observation_at?: string | null
+          last_tick_at?: string | null
+          line_code: string
+          meta?: Json
+          position_lat?: number | null
+          position_lng?: number | null
+          segment_progress?: number | null
+          service_date: string
+          source?: string
+          speed_kmh?: number | null
+          state?: string
+          trip_key: string
+          updated_at?: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          current_segment_idx?: number | null
+          direction?: number
+          distance_from_origin_m?: number | null
+          estimated_cycle_completion?: string | null
+          estimated_terminal_arrival?: string | null
+          headway_slot?: string | null
+          id?: string
+          is_active?: boolean
+          last_observation_at?: string | null
+          last_tick_at?: string | null
+          line_code?: string
+          meta?: Json
+          position_lat?: number | null
+          position_lng?: number | null
+          segment_progress?: number | null
+          service_date?: string
+          source?: string
+          speed_kmh?: number | null
+          state?: string
+          trip_key?: string
+          updated_at?: string
         }
         Relationships: []
       }
