@@ -43,7 +43,7 @@ function parseArrivalText(raw: string): Map<string, { destination: string; minut
 }
 
 export async function fetchStopFromQR(stopCode: string, signal?: AbortSignal): Promise<StopQrResult | null> {
-  const url = `${SUBUS_CONSULTA_URL}?p=${encodeURIComponent(stopCode)}`;
+  const url = `${PROXY_URL}?stop=${encodeURIComponent(stopCode)}`;
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   const linked = () => controller.abort();
@@ -56,8 +56,9 @@ export async function fetchStopFromQR(stopCode: string, signal?: AbortSignal): P
       cache: "no-store",
     });
     if (!res.ok) return null;
-    const text = await res.text();
-    return { byLine: parseArrivalText(text), fetchedAt: Date.now() };
+    const json = (await res.json()) as { raw?: string; ok?: boolean };
+    if (!json.ok || typeof json.raw !== "string") return null;
+    return { byLine: parseArrivalText(json.raw), fetchedAt: Date.now() };
   } catch {
     return null;
   } finally {
