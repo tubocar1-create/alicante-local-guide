@@ -849,6 +849,39 @@ export type Database = {
         }
         Relationships: []
       }
+      bus_snapshots: {
+        Row: {
+          buses_count: number
+          captured_at: string
+          id: string
+          line: string
+          notes: string | null
+          raw_markers: Json
+          source_url: string | null
+          stop_code: string
+        }
+        Insert: {
+          buses_count?: number
+          captured_at?: string
+          id?: string
+          line: string
+          notes?: string | null
+          raw_markers?: Json
+          source_url?: string | null
+          stop_code: string
+        }
+        Update: {
+          buses_count?: number
+          captured_at?: string
+          id?: string
+          line?: string
+          notes?: string | null
+          raw_markers?: Json
+          source_url?: string | null
+          stop_code?: string
+        }
+        Relationships: []
+      }
       bus_stops: {
         Row: {
           code: string
