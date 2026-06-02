@@ -164,48 +164,14 @@ export async function getClientStopsRealtimeBatch({
   });
 
   if (missingIds.length > 0) {
-    const chunks: string[][] = [];
-    for (let i = 0; i < missingIds.length; i += 12) chunks.push(missingIds.slice(i, i + 12));
-
-    const batchPromise = Promise.all(chunks.map((chunk) => getStopsRealtimeBatch({ data: { stopCodes: chunk, line } })))
-      .then((res) => {
-        const fetchedAt = Date.now();
-        for (const stopId of missingIds) {
-          const arrivalsRaw = res.flatMap((batch) => batch.stops?.[stopId] ?? []);
-          const arrivals: StopArrival[] = arrivalsRaw.map((a) => ({
-            line: normalizeLine(a.line),
-            destination: a.destination,
-            etaMin: a.etaMin,
-            lat: a.lat,
-            lng: a.lng,
-          }));
-          cache.set(stopId, {
-            arrivals,
-            all: arrivals.map((a) => a.etaMin).sort((a, b) => a - b),
-            etaMin: arrivals[0]?.etaMin ?? null,
-            fetchedAt,
-          });
-        }
-      })
-      .catch(() => {
-        const fetchedAt = Date.now();
-        for (const stopId of missingIds) {
-          cache.set(stopId, { arrivals: [], all: [], etaMin: null, fetchedAt });
-        }
-      })
-      .finally(() => {
-        for (const stopId of missingIds) inFlight.delete(stopId);
-      });
-
+    // Lectura directa del QR desde el navegador para cada parada. Sin scraping
+    // ni server. `fetchStop` ya hace dedup, cache TTL e ingesta a BBDD.
     for (const stopId of missingIds) {
-      inFlight.set(stopId, batchPromise.then(() => cache.get(stopId) ?? {
-        arrivals: [],
-        all: [],
-        etaMin: null,
-        fetchedAt: Date.now(),
-      }));
+      inFlight.set(stopId, fetchStop(stopId));
     }
   }
+  // line se mantiene como parámetro para filtrar el resultado abajo.
+  void line;
 
   await Promise.all(ids.map((id) => inFlight.get(id) ?? Promise.resolve(cache.get(id) ?? null)));
 
