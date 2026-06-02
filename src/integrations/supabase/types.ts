@@ -963,6 +963,72 @@ export type Database = {
         }
         Relationships: []
       }
+      bus_line_fleet_activations: {
+        Row: {
+          activation_score: number
+          active_bus_count: number
+          avg_delay_min: number | null
+          base_bus_count: number
+          congestion_index: number | null
+          cycle_time_min: number | null
+          day_type: string
+          headway_min: number | null
+          id: string
+          line_code: string
+          max_bus_count: number
+          meta: Json
+          observed_at: string
+          service_date: string
+          service_slot: string
+          spacing_error: number | null
+          target_bus_count: number
+          trigger: string
+          weekday: number
+        }
+        Insert: {
+          activation_score?: number
+          active_bus_count: number
+          avg_delay_min?: number | null
+          base_bus_count: number
+          congestion_index?: number | null
+          cycle_time_min?: number | null
+          day_type: string
+          headway_min?: number | null
+          id?: string
+          line_code: string
+          max_bus_count: number
+          meta?: Json
+          observed_at?: string
+          service_date: string
+          service_slot: string
+          spacing_error?: number | null
+          target_bus_count: number
+          trigger?: string
+          weekday: number
+        }
+        Update: {
+          activation_score?: number
+          active_bus_count?: number
+          avg_delay_min?: number | null
+          base_bus_count?: number
+          congestion_index?: number | null
+          cycle_time_min?: number | null
+          day_type?: string
+          headway_min?: number | null
+          id?: string
+          line_code?: string
+          max_bus_count?: number
+          meta?: Json
+          observed_at?: string
+          service_date?: string
+          service_slot?: string
+          spacing_error?: number | null
+          target_bus_count?: number
+          trigger?: string
+          weekday?: number
+        }
+        Relationships: []
+      }
       bus_line_service_windows: {
         Row: {
           created_at: string

@@ -34,6 +34,11 @@ import {
   shouldEnterSafeMode,
   type PredictionQuality,
 } from "./safe-mode";
+import {
+  applyProfileFleetTarget,
+  getLineProfile,
+  type FleetWindow,
+} from "./line-profiles";
 
 
 export type OrderedStop = LineStop & { lat: number | null; lng: number | null };
@@ -54,8 +59,13 @@ export type LineFleetPlan = {
   cycleMin: number;
   terminalRegulationMin: number;
   headwayMin: number;
-  activeBusCount: number;        // = fleetSizeExpected (compatibilidad)
-  fleetSizeExpected: number;     // ceil(cycle/headway)
+  activeBusCount: number;        // = fleetSizeExpected tras perfil (compatibilidad)
+  fleetSizeExpected: number;     // tras aplicar perfil operacional (cap/floor)
+  fleetSizeInferred: number;     // valor crudo (ceil cycle/headway)
+  fleetSizeMin: number;          // tope inferior del perfil (base diurna)
+  fleetSizeMax: number;          // tope superior del perfil
+  fleetWindow: FleetWindow | "no_profile";
+  fleetReason: string;
   dayType: ReturnType<typeof dayType>;
   serviceSlot: ServiceSlot;
   officialDeparturesMin: number[]; // salidas oficiales IDA dentro del slot activo
@@ -143,6 +153,7 @@ export function buildLineFleetPlan(
   data: BusEngineData,
   lineCode: string,
   at: Date = new Date(),
+  opts?: { activationScore?: number },
 ): LineFleetPlan {
   const ida = buildDirectionPlan(data, lineCode, 1, at);
   const vuelta = buildDirectionPlan(data, lineCode, 2, at);
@@ -164,12 +175,23 @@ export function buildLineFleetPlan(
   const fallbackHeadway = dt === "laborable" ? 15 : 20;
   const headwayMin = inferHeadwayMin(idaDeps, now, fallbackHeadway);
 
-  const fleetSizeExpected = computeFleetSize(cycleMin, headwayMin);
+  const fleetSizeInferred = computeFleetSize(cycleMin, headwayMin);
   const serviceSlot = getServiceSlot(at);
 
-  // Salidas oficiales IDA en la ventana operacional inmediata (slot actual ±
-  // un cycleMin). Si están vacías, generateActiveFleet hará fallback a slots
-  // sintéticos uniformes.
+  // Perfil operacional (línea 12, etc.): tiene PRIORIDAD sobre el cálculo
+  // matemático. Define base diurna, máximos, ventana nocturna y último servicio.
+  const profileResult = applyProfileFleetTarget({
+    lineCode,
+    inferred: fleetSizeInferred,
+    activationScore: opts?.activationScore ?? 0,
+    at,
+  });
+  const profile = getLineProfile(lineCode);
+  const fleetSizeExpected = profile ? profileResult.target : fleetSizeInferred;
+  const fleetSizeMin = profile ? profileResult.min : 0;
+  const fleetSizeMax = profile ? profileResult.max : fleetSizeInferred + 1;
+
+  // Salidas oficiales IDA en la ventana operacional inmediata.
   const officialDeparturesMin = idaDeps
     .filter((d) => d >= now - cycleMin - 5 && d <= now + cycleMin)
     .sort((a, b) => a - b);
@@ -186,6 +208,11 @@ export function buildLineFleetPlan(
     headwayMin,
     activeBusCount: fleetSizeExpected,
     fleetSizeExpected,
+    fleetSizeInferred,
+    fleetSizeMin,
+    fleetSizeMax,
+    fleetWindow: profileResult.window,
+    fleetReason: profileResult.reason,
     dayType: dt,
     serviceSlot,
     officialDeparturesMin,
@@ -300,12 +327,16 @@ export function generateActiveFleet(
   lastObservationAgeSec: number | null = null,
 ): { fleet: VirtualBus[]; validatorReport: ValidatorReport } {
   if (plan.cycleMin <= 0) return { fleet: [], validatorReport: emptyReport() };
+  // PERFIL OPERACIONAL: si una línea está fuera de servicio (perfil dice
+  // target=0), no generamos NADA aunque haya salidas oficiales en el horario.
+  if (plan.fleetSizeExpected === 0 && plan.fleetWindow !== "no_profile") {
+    return { fleet: [], validatorReport: emptyReport() };
+  }
   const now = nowMinutes(at);
   let raw: VirtualBus[] = [];
 
   const hasOfficial = plan.officialDeparturesMin.length > 0;
   if (hasOfficial) {
-    // Para cada salida en [now-cycleMin, now], generamos un bus anclado.
     const recent = plan.officialDeparturesMin.filter(
       (d) => d <= now + 0.5 && d >= now - plan.cycleMin - 0.5,
     );
@@ -350,7 +381,20 @@ export function generateActiveFleet(
     speeds,
   });
 
-  return { fleet, validatorReport: report };
+  // CAP DURO por perfil operacional. Si el perfil define un máximo, jamás
+  // entregamos más buses que ese número. Si define un mínimo y vamos cortos,
+  // sólo añadimos buses sintéticos cuando NO hay anclaje oficial; con anclaje
+  // oficial respetamos la realidad (no inventamos buses sin salida válida).
+  let capped = fleet;
+  if (plan.fleetWindow !== "no_profile" && plan.fleetSizeMax > 0) {
+    if (capped.length > plan.fleetSizeMax) {
+      capped = [...capped]
+        .sort((a, b) => b.confidence - a.confidence)
+        .slice(0, plan.fleetSizeMax);
+    }
+  }
+
+  return { fleet: capped, validatorReport: report };
 }
 
 function makeBus(

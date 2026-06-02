@@ -19,6 +19,8 @@ import {
 } from "@/lib/bus-engine/fleet";
 import { getServiceSlot } from "@/lib/bus-engine/slots";
 import { classifyPredictionQuality, shouldEnterSafeMode } from "@/lib/bus-engine/safe-mode";
+import { extraBusActivationScore } from "@/lib/bus-engine/extra-bus-activation";
+import { getLineProfile } from "@/lib/bus-engine/line-profiles";
 
 function todayMadrid(): string {
   const fmt = new Intl.DateTimeFormat("en-CA", {
@@ -62,13 +64,56 @@ async function lastObservationAgeSec(lineCode: string): Promise<number | null> {
 // ------------------------------------------------------------------
 // 1. tickVirtualFleet — UPSERT flota actual + health
 // ------------------------------------------------------------------
+async function historicalActivationPattern(
+  lineCode: string,
+  dayType: string,
+  serviceSlot: string,
+): Promise<number> {
+  const profile = getLineProfile(lineCode);
+  if (!profile) return 0;
+  const { data } = await supabaseAdmin
+    .from("bus_line_fleet_activations")
+    .select("active_bus_count, base_bus_count")
+    .eq("line_code", lineCode)
+    .eq("day_type", dayType)
+    .eq("service_slot", serviceSlot)
+    .order("observed_at", { ascending: false })
+    .limit(200);
+  if (!data || data.length === 0) return 0;
+  const aboveBase = data.filter((r) => (r.active_bus_count ?? 0) > (r.base_bus_count ?? 0)).length;
+  return aboveBase / data.length;
+}
+
 async function tickLineInternal(lineCode: string) {
   const snap = await getBusEngineSnapshot();
   const engine = fromSnapshot(snap);
   const corrections = await loadPhaseCorrections(lineCode);
   const lastObsSec = await lastObservationAgeSec(lineCode);
   const at = new Date();
-  const plan = buildLineFleetPlan(engine, lineCode, at);
+
+  // Plan inicial (sin score) para conocer slot/dayType y poder calcular
+  // patrón histórico + score real, y luego reconstruir el plan ya con score.
+  const draftPlan = buildLineFleetPlan(engine, lineCode, at);
+  const historical = await historicalActivationPattern(
+    lineCode,
+    draftPlan.dayType,
+    draftPlan.serviceSlot,
+  );
+  const avgDelayMin =
+    corrections.size > 0
+      ? Array.from(corrections.values()).reduce((a, b) => a + Math.abs(b), 0) / corrections.size
+      : 0;
+  // Tomamos un baseline de cycle: si el plan tiene fleetSizeInferred y el
+  // perfil define base, una desviación al alza es señal de saturación.
+  const activationScore = extraBusActivationScore({
+    avgDelayMin,
+    spacingErrorRatio: 0,
+    cycleTimeGrowth: 1,
+    congestionIndex: 0,
+    historicalSlotPattern: historical,
+  });
+
+  const plan = buildLineFleetPlan(engine, lineCode, at, { activationScore });
   const { fleet, validatorReport } = generateActiveFleet(plan, at, corrections, lastObsSec);
 
   const serviceDate = todayMadrid();
@@ -181,12 +226,46 @@ async function tickLineInternal(lineCode: string) {
     { onConflict: "line_code" },
   );
 
+  // Log de activación: alimenta el aprendizaje de patrones (línea 12 etc.).
+  // Sólo si la línea tiene perfil operacional y está en ventana de servicio.
+  const profile = getLineProfile(lineCode);
+  if (profile && plan.fleetWindow !== "before_service" && plan.fleetWindow !== "after_last_service") {
+    await supabaseAdmin.from("bus_line_fleet_activations").insert({
+      line_code: lineCode,
+      service_date: serviceDate,
+      weekday: at.getDay(),
+      day_type: plan.dayType,
+      service_slot: plan.serviceSlot,
+      active_bus_count: fleet.length,
+      target_bus_count: plan.fleetSizeExpected,
+      base_bus_count: profile.baseBuses,
+      max_bus_count: profile.maxBuses,
+      activation_score: activationScore,
+      avg_delay_min: avgDelayMin,
+      spacing_error: validatorReport.removedRatio,
+      cycle_time_min: plan.cycleMin,
+      headway_min: plan.headwayMin,
+      congestion_index: null,
+      trigger: "tick",
+      meta: {
+        fleet_window: plan.fleetWindow,
+        fleet_reason: plan.fleetReason,
+        fleet_inferred: plan.fleetSizeInferred,
+        historical_pattern: historical,
+      },
+    });
+  }
+
   return {
     line: lineCode,
     activeBusCount: fleet.length,
     fleetSizeExpected: plan.fleetSizeExpected,
+    fleetSizeInferred: plan.fleetSizeInferred,
+    fleetWindow: plan.fleetWindow,
+    fleetReason: plan.fleetReason,
     headwayMin: plan.headwayMin,
     cycleMin: plan.cycleMin,
+    activationScore,
     safeMode,
     predictionQuality,
     avgConfidence,
