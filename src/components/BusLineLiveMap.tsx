@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, TileLayer, Marker, CircleMarker, Polyline, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { getClientStopRealtime } from "@/lib/bus-realtime-client";
+import { useBusEngine } from "@/hooks/useBusEngine";
+import { predictLineState } from "@/lib/bus-engine/predict";
+import type { VirtualBus } from "@/lib/bus-engine/types";
 
 export type LineStopPoint = {
   code: string;
@@ -13,18 +15,20 @@ export type LineStopPoint = {
   lng: number;
 };
 
-type BusMarker = {
+type RenderedBus = {
   key: string;
   lat: number;
   lng: number;
   destination: string;
-  etaMin: number;
+  direction: 1 | 2;
+  confidence: number;
 };
 
-function busIcon(line: string, color: string) {
+function busIcon(line: string, color: string, confidence: number) {
+  const opacity = Math.max(0.55, Math.min(1, confidence));
   return L.divIcon({
     className: "",
-    html: `<div style="background:${color};color:white;min-width:30px;height:24px;padding:0 6px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;box-shadow:0 2px 8px rgba(0,0,0,.45);border:2px solid white">🚌${line}</div>`,
+    html: `<div style="background:${color};color:white;min-width:30px;height:24px;padding:0 6px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;box-shadow:0 2px 8px rgba(0,0,0,.45);border:2px solid white;opacity:${opacity}">🚌${line}</div>`,
     iconSize: [44, 24],
     iconAnchor: [22, 12],
   });
@@ -38,6 +42,11 @@ const userIcon = L.divIcon({
 });
 
 const ALC: [number, number] = [38.3452, -0.481];
+const TICK_MS = 15_000;
+
+function lerpNum(a: number, b: number, t: number): number {
+  return a + (b - a) * t;
+}
 
 export function BusLineLiveMap({
   lineCode,
@@ -50,6 +59,8 @@ export function BusLineLiveMap({
   stops: LineStopPoint[];
   user: { lat: number; lng: number } | null;
 }) {
+  const { data: engine } = useBusEngine();
+
   const ida = useMemo(
     () => stops.filter((s) => s.direction === 1).sort((a, b) => a.seq - b.seq),
     [stops],
@@ -59,64 +70,84 @@ export function BusLineLiveMap({
     [stops],
   );
 
-  // Sample evenly along the line to get bus positions without hammering the proxy.
-  const sampledStops = useMemo(() => {
-    const out: string[] = [];
-    const pickEvery = (list: LineStopPoint[], n: number) => {
-      if (list.length === 0) return;
-      const step = Math.max(1, Math.floor(list.length / n));
-      for (let i = 0; i < list.length; i += step) out.push(list[i].code);
-    };
-    pickEvery(ida, 5);
-    pickEvery(vuelta, 5);
-    return Array.from(new Set(out));
-  }, [ida, vuelta]);
+  // Mantener prev/curr de cada bus para interpolación rAF entre ticks.
+  const prevRef = useRef<Map<string, { lat: number; lng: number }>>(new Map());
+  const currRef = useRef<Map<string, { lat: number; lng: number; destination: string; direction: 1 | 2; confidence: number }>>(new Map());
+  const tickAtRef = useRef<number>(Date.now());
+  const [, setFrame] = useState(0);
 
-  const [buses, setBuses] = useState<BusMarker[]>([]);
-  const [loading, setLoading] = useState(false);
-
+  // Tick predictivo cada TICK_MS
   useEffect(() => {
-    if (sampledStops.length === 0) return;
+    if (!engine) return;
     let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | null = null;
 
-    const tick = async () => {
-      setLoading(true);
-      const results = await Promise.allSettled(
-        sampledStops.map((stopCode) =>
-          getClientStopRealtime({ stopId: stopCode, line: lineCode }),
-        ),
-      );
-      if (cancelled) return;
-      const map = new Map<string, BusMarker>();
-      for (const r of results) {
-        if (r.status !== "fulfilled") continue;
-        for (const a of r.value.arrivals) {
-          if (a.line !== lineCode) continue;
-          if (a.lat == null || a.lng == null) continue;
-          const key = `${a.lat.toFixed(5)}|${a.lng.toFixed(5)}|${a.destination}`;
-          const existing = map.get(key);
-          if (!existing || a.etaMin < existing.etaMin) {
-            map.set(key, {
-              key,
-              lat: a.lat,
-              lng: a.lng,
-              destination: a.destination,
-              etaMin: a.etaMin,
-            });
-          }
-        }
+    const recompute = () => {
+      const state = predictLineState(engine, lineCode, new Date());
+      const next = new Map<string, { lat: number; lng: number; destination: string; direction: 1 | 2; confidence: number }>();
+      const orderedByDir: Record<1 | 2, LineStopPoint[]> = { 1: ida, 2: vuelta };
+      for (const b of state.buses) {
+        if (b.status !== "moving") continue;
+        if (!b.position) continue;
+        const ordered = orderedByDir[b.direction];
+        const dest = ordered[ordered.length - 1]?.name ?? "";
+        next.set(b.busId, {
+          lat: b.position.lat,
+          lng: b.position.lng,
+          destination: dest,
+          direction: b.direction,
+          confidence: b.confidence,
+        });
       }
-      setBuses(Array.from(map.values()));
-      setLoading(false);
-      timer = setTimeout(tick, 30_000);
+      // prev = curr antes de pisar
+      const newPrev = new Map<string, { lat: number; lng: number }>();
+      for (const [id, c] of next) {
+        const prevCurr = currRef.current.get(id);
+        newPrev.set(id, prevCurr ? { lat: prevCurr.lat, lng: prevCurr.lng } : { lat: c.lat, lng: c.lng });
+      }
+      prevRef.current = newPrev;
+      currRef.current = next;
+      tickAtRef.current = Date.now();
+      setFrame((f) => f + 1);
     };
-    tick();
+
+    recompute();
+    const id = setInterval(recompute, TICK_MS);
     return () => {
       cancelled = true;
-      if (timer) clearTimeout(timer);
+      clearInterval(id);
+      void cancelled;
     };
-  }, [lineCode, sampledStops]);
+  }, [engine, lineCode, ida, vuelta]);
+
+  // rAF para interpolación visual
+  useEffect(() => {
+    let raf = 0;
+    const loop = () => {
+      setFrame((f) => (f + 1) % 1_000_000);
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const renderedBuses: RenderedBus[] = useMemo(() => {
+    const now = Date.now();
+    const t = Math.min(1, (now - tickAtRef.current) / TICK_MS);
+    const out: RenderedBus[] = [];
+    for (const [id, c] of currRef.current) {
+      const p = prevRef.current.get(id) ?? { lat: c.lat, lng: c.lng };
+      out.push({
+        key: id,
+        lat: lerpNum(p.lat, c.lat, t),
+        lng: lerpNum(p.lng, c.lng, t),
+        destination: c.destination,
+        direction: c.direction,
+        confidence: c.confidence,
+      });
+    }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [/* re-render via setFrame */]);
 
   const center = useMemo<[number, number]>(() => {
     if (user) return [user.lat, user.lng];
@@ -125,35 +156,18 @@ export function BusLineLiveMap({
     return ALC;
   }, [user, ida, vuelta]);
 
-  const idaPath = useMemo<[number, number][]>(
-    () => ida.map((s) => [s.lat, s.lng]),
-    [ida],
-  );
-  const vueltaPath = useMemo<[number, number][]>(
-    () => vuelta.map((s) => [s.lat, s.lng]),
-    [vuelta],
-  );
+  const idaPath = useMemo<[number, number][]>(() => ida.map((s) => [s.lat, s.lng]), [ida]);
+  const vueltaPath = useMemo<[number, number][]>(() => vuelta.map((s) => [s.lat, s.lng]), [vuelta]);
 
   return (
     <div className="relative h-[280px] w-full overflow-hidden rounded-2xl border border-white/10">
-      <MapContainer
-        center={center}
-        zoom={13}
-        scrollWheelZoom
-        style={{ height: "100%", width: "100%" }}
-      >
-        <TileLayer
-          attribution='&copy; OpenStreetMap'
-          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+      <MapContainer center={center} zoom={13} scrollWheelZoom style={{ height: "100%", width: "100%" }}>
+        <TileLayer attribution='&copy; OpenStreetMap' url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" />
         {idaPath.length > 1 && (
           <Polyline positions={idaPath} pathOptions={{ color, weight: 4, opacity: 0.85 }} />
         )}
         {vueltaPath.length > 1 && (
-          <Polyline
-            positions={vueltaPath}
-            pathOptions={{ color, weight: 4, opacity: 0.55, dashArray: "6 6" }}
-          />
+          <Polyline positions={vueltaPath} pathOptions={{ color, weight: 4, opacity: 0.55, dashArray: "6 6" }} />
         )}
         {stops.map((s) => (
           <CircleMarker
@@ -170,20 +184,20 @@ export function BusLineLiveMap({
           </CircleMarker>
         ))}
         {user && <Marker position={[user.lat, user.lng]} icon={userIcon} />}
-        {buses.map((b) => (
-          <Marker key={b.key} position={[b.lat, b.lng]} icon={busIcon(lineCode, color)}>
+        {renderedBuses.map((b) => (
+          <Marker key={b.key} position={[b.lat, b.lng]} icon={busIcon(lineCode, color, b.confidence)}>
             <Popup>
               <strong>Línea {lineCode}</strong>
               <br />
               <span>→ {b.destination}</span>
               <br />
-              <span>{b.etaMin} min</span>
+              <span>{b.direction === 1 ? "Ida" : "Vuelta"} · estimado</span>
             </Popup>
           </Marker>
         ))}
       </MapContainer>
       <div className="pointer-events-none absolute left-2 top-2 rounded-full bg-black/70 px-2 py-0.5 text-[10px] font-semibold text-white">
-        {loading ? "Actualizando…" : `${buses.length} bus${buses.length === 1 ? "" : "es"} en vivo`}
+        {renderedBuses.length} bus{renderedBuses.length === 1 ? "" : "es"} estimado{renderedBuses.length === 1 ? "" : "s"}
       </div>
     </div>
   );
