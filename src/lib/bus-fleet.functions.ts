@@ -156,7 +156,7 @@ export const getActiveFleet = createServerFn({ method: "GET" })
         lat: r.position_lat,
         lng: r.position_lng,
         lastTickAt: r.last_tick_at,
-        meta: r.meta as Record<string, unknown>,
+        meta: (r.meta ?? {}) as Record<string, string | number | boolean | null>,
       })),
     };
   });
