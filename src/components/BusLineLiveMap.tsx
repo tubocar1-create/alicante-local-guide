@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MapContainer, TileLayer, Marker, CircleMarker, Polyline, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -41,11 +41,10 @@ const userIcon = L.divIcon({
 });
 
 const ALC: [number, number] = [38.3452, -0.481];
-const TICK_MS = 15_000;
-
-function lerpNum(a: number, b: number, t: number): number {
-  return a + (b - a) * t;
-}
+// El motor ya interpola posición linealmente dentro del segmento actual
+// usando el reloj real. Recalculando ~3 Hz el bus se desliza fluido sobre
+// la polilínea sin necesidad de animación rAF separada.
+const TICK_MS = 333;
 
 export function BusLineLiveMap({
   lineCode,
@@ -69,27 +68,21 @@ export function BusLineLiveMap({
     [stops],
   );
 
-  // Mantener prev/curr de cada bus para interpolación rAF entre ticks.
-  const prevRef = useRef<Map<string, { lat: number; lng: number }>>(new Map());
-  const currRef = useRef<Map<string, { lat: number; lng: number; destination: string; direction: 1 | 2; confidence: number }>>(new Map());
-  const tickAtRef = useRef<number>(Date.now());
-  const [, setFrame] = useState(0);
+  const [renderedBuses, setRenderedBuses] = useState<RenderedBus[]>([]);
 
-  // Tick predictivo cada TICK_MS
   useEffect(() => {
     if (!engine) return;
-    let cancelled = false;
+    const orderedByDir: Record<1 | 2, LineStopPoint[]> = { 1: ida, 2: vuelta };
 
     const recompute = () => {
       const state = predictLineState(engine, lineCode, new Date());
-      const next = new Map<string, { lat: number; lng: number; destination: string; direction: 1 | 2; confidence: number }>();
-      const orderedByDir: Record<1 | 2, LineStopPoint[]> = { 1: ida, 2: vuelta };
+      const next: RenderedBus[] = [];
       for (const b of state.buses) {
-        if (b.status !== "moving") continue;
-        if (!b.position) continue;
+        if (b.status !== "moving" || !b.position) continue;
         const ordered = orderedByDir[b.direction];
         const dest = ordered[ordered.length - 1]?.name ?? "";
-        next.set(b.busId, {
+        next.push({
+          key: b.busId,
           lat: b.position.lat,
           lng: b.position.lng,
           destination: dest,
@@ -97,55 +90,13 @@ export function BusLineLiveMap({
           confidence: b.confidence,
         });
       }
-      // prev = curr antes de pisar
-      const newPrev = new Map<string, { lat: number; lng: number }>();
-      for (const [id, c] of next) {
-        const prevCurr = currRef.current.get(id);
-        newPrev.set(id, prevCurr ? { lat: prevCurr.lat, lng: prevCurr.lng } : { lat: c.lat, lng: c.lng });
-      }
-      prevRef.current = newPrev;
-      currRef.current = next;
-      tickAtRef.current = Date.now();
-      setFrame((f) => f + 1);
+      setRenderedBuses(next);
     };
 
     recompute();
     const id = setInterval(recompute, TICK_MS);
-    return () => {
-      cancelled = true;
-      clearInterval(id);
-      void cancelled;
-    };
+    return () => clearInterval(id);
   }, [engine, lineCode, ida, vuelta]);
-
-  // rAF para interpolación visual
-  useEffect(() => {
-    let raf = 0;
-    const loop = () => {
-      setFrame((f) => (f + 1) % 1_000_000);
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
-  }, []);
-
-  // Recalculado en CADA frame (rAF dispara setFrame): interpolación lineal
-  // entre prev y curr durante TICK_MS. NO usar useMemo aquí — congelaría
-  // el resultado y el bus quedaría estático.
-  const now = Date.now();
-  const t = Math.min(1, (now - tickAtRef.current) / TICK_MS);
-  const renderedBuses: RenderedBus[] = [];
-  for (const [id, c] of currRef.current) {
-    const p = prevRef.current.get(id) ?? { lat: c.lat, lng: c.lng };
-    renderedBuses.push({
-      key: id,
-      lat: lerpNum(p.lat, c.lat, t),
-      lng: lerpNum(p.lng, c.lng, t),
-      destination: c.destination,
-      direction: c.direction,
-      confidence: c.confidence,
-    });
-  }
 
   const center = useMemo<[number, number]>(() => {
     if (user) return [user.lat, user.lng];
