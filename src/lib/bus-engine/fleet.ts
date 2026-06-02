@@ -34,6 +34,11 @@ import {
   shouldEnterSafeMode,
   type PredictionQuality,
 } from "./safe-mode";
+import {
+  applyProfileFleetTarget,
+  getLineProfile,
+  type FleetWindow,
+} from "./line-profiles";
 
 
 export type OrderedStop = LineStop & { lat: number | null; lng: number | null };
