@@ -77,6 +77,7 @@ export type LineFleetPlan = {
   dayType: ReturnType<typeof dayType>;
   serviceSlot: ServiceSlot;
   officialDeparturesMin: number[]; // salidas oficiales IDA dentro del slot activo
+  officialDeparturesByDirection: Record<Direction, number[]>;
   terminalIda: string | null;
   terminalVuelta: string | null;
 };
@@ -180,6 +181,13 @@ export function buildLineFleetPlan(
     departures: data.departures,
     windows: data.serviceWindows,
   }).map((d) => d.departureMin);
+  const vueltaDeps = getDeparturesForLine({
+    lineCode,
+    direction: 2,
+    dayType: dt,
+    departures: data.departures,
+    windows: data.serviceWindows,
+  }).map((d) => d.departureMin);
   const fallbackHeadway = dt === "laborable" ? 15 : 20;
   const headwayMin = inferHeadwayMin(idaDeps, now, fallbackHeadway);
 
@@ -199,10 +207,16 @@ export function buildLineFleetPlan(
   const fleetSizeMin = profile ? profileResult.min : 0;
   const fleetSizeMax = profile ? profileResult.max : fleetSizeInferred + 1;
 
-  // Salidas oficiales IDA en la ventana operacional inmediata.
+  // Salidas oficiales por terminal en la ventana operacional inmediata.
   const officialDeparturesMin = idaDeps
     .filter((d) => d >= now - cycleMin - 5 && d <= now + cycleMin)
     .sort((a, b) => a - b);
+  const officialDeparturesByDirection: Record<Direction, number[]> = {
+    1: officialDeparturesMin,
+    2: vueltaDeps
+      .filter((d) => d >= now - cycleMin - 5 && d <= now + cycleMin)
+      .sort((a, b) => a - b),
+  };
 
   const terminalIda = ida?.stops[0]?.stopName ?? null;
   const terminalVuelta = vuelta?.stops[0]?.stopName ?? null;
@@ -224,6 +238,7 @@ export function buildLineFleetPlan(
     dayType: dt,
     serviceSlot,
     officialDeparturesMin,
+    officialDeparturesByDirection,
     terminalIda,
     terminalVuelta,
   };
