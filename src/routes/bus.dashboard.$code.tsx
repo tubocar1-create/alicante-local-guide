@@ -344,191 +344,52 @@ function BusDashboardPage() {
   const scheduleEtaByDir = nightEtaByDir;
 
 
-  // Detección HTTPS producción: usamos motor predictivo en lugar de live ETAs
-  // (Akamai bloquea las llamadas reales). En preview/local mantenemos el bus QR.
-  const usePredict = useMemo(() => {
-    if (typeof window === "undefined") return false;
-    const h = window.location.hostname;
-    // Preview/dev hosts donde Akamai NO bloquea fetch directo desde el browser:
-    // mantenemos los ETAs reales (Subus) en lugar del motor predictivo.
-    if (/^id-preview--/.test(h)) return false;
-    if (/\.lovableproject\.com$/.test(h)) return false;
-    if (/\blovable\.app$/.test(h) && /-dev\./.test(h)) return false;
-    if (h === "localhost" || h === "127.0.0.1") return false;
-    return true;
-  }, []);
-
-  // Realtime progresivo: cada parada pide ETA solo cuando entra en viewport.
-  // Saltamos en líneas nocturnas — usamos estimación por horario oficial.
-  // Saltamos también en HTTPS prod — usamos el motor predictivo.
-  const [etas, setEtas] = useState<Record<string, number[]>>({});
-  const [loadingEtaStops, setLoadingEtaStops] = useState<Set<string>>(() => new Set());
-
-  useEffect(() => {
-    setEtas({});
-    setLoadingEtaStops(new Set());
-  }, [code]);
-
-  const handleEtaLoading = useCallback((stopCode: string, loading: boolean) => {
-    setLoadingEtaStops((prev) => {
-      const next = new Set(prev);
-      if (loading) next.add(stopCode);
-      else next.delete(stopCode);
-      return next;
-    });
-  }, []);
-
-  // Reconciliación: en preview (donde Akamai NO bloquea) usamos los ETAs
-  // reales como "sensor de campo" para corregir la flota virtual. Throttle
-  // 30 s por (parada+línea) para no saturar.
-  const obsThrottle = useRef<Map<string, number>>(new Map());
-  const reportObservation = useCallback(
-    (stopCode: string, etaMin: number) => {
-      if (usePredict || isNightLine) return;
-      if (!Number.isFinite(etaMin) || etaMin < 0 || etaMin > 180) return;
-      const stop1 = stopsByDir[1].find((s) => s.code === stopCode);
-      const stop2 = stopsByDir[2].find((s) => s.code === stopCode);
-      const direction: 1 | 2 | null = stop1 ? 1 : stop2 ? 2 : null;
-      if (!direction) return;
-      const key = `${code}|${stopCode}`;
-      const last = obsThrottle.current.get(key) ?? 0;
-      const now = Date.now();
-      if (now - last < 30_000) return;
-      obsThrottle.current.set(key, now);
-      let clientId: string | undefined;
-      try {
-        const k = "bus_obs_client";
-        clientId = sessionStorage.getItem(k) ?? undefined;
-        if (!clientId) {
-          clientId = Math.random().toString(36).slice(2, 12);
-          sessionStorage.setItem(k, clientId);
-        }
-      } catch {
-        clientId = undefined;
-      }
-      reportRealtimeObservation({
-        data: { line: code, direction, stopCode, etaMin, source: "preview_real", clientId },
-      }).catch(() => undefined);
-    },
-    [code, usePredict, isNightLine, stopsByDir],
+  // === Realtime ===
+  // Fuente única: snapshot server-side Vectalia (useLineRealtime), cacheado 5 min.
+  // Visualmente decrementamos los ETAs cada segundo según ageSec del snapshot,
+  // y la query refetchea cada 60 s (sólo da datos frescos cuando expira el TTL).
+  const { data: realtime, isLoading: realtimeLoading } = useLineRealtime(
+    isNightLine ? null : code,
   );
 
-  const handleStopEta = useCallback(
-    (stopCode: string, all: number[]) => {
-      setEtas((prev) => ({ ...prev, [stopCode]: all.slice(0, 1) }));
-      if (all.length > 0) reportObservation(stopCode, all[0]);
-    },
-    [reportObservation],
-  );
+  const etas = useMemo<Record<string, number[]>>(() => {
+    if (!realtime) return {};
+    const out: Record<string, number[]> = {};
+    const nowMs = clock.getTime();
+    for (const s of realtime.stops) {
+      if (!s.etaMinutes || s.etaMinutes.length === 0) continue;
+      const capturedMs = Date.parse(s.capturedAt);
+      const elapsedMin = Number.isFinite(capturedMs)
+        ? Math.max(0, (nowMs - capturedMs) / 60_000)
+        : 0;
+      const decremented = s.etaMinutes
+        .map((m) => Math.max(0, Math.round(m - elapsedMin)))
+        .slice(0, 1);
+      out[s.stopCode] = decremented;
+    }
+    return out;
+  }, [realtime, clock]);
 
-  const initialRealtimeStopCodes = useMemo(() => {
-    const codes = [
-      ...nearestByDir[1].map((n) => n.code),
-      ...nearestByDir[2].map((n) => n.code),
-    ];
-    return [...new Set(codes)].slice(0, 2);
-  }, [nearestByDir]);
+  // Mientras carga el primer snapshot, marcamos todas las paradas como "cargando"
+  // para no mostrar "n/d" durante el arranque.
+  const loadingEtaStops = useMemo<Set<string>>(() => {
+    if (isNightLine) return new Set();
+    if (realtime) return new Set();
+    if (realtimeLoading) {
+      return new Set([...stopsByDir[1], ...stopsByDir[2]].map((s) => s.code));
+    }
+    return new Set();
+  }, [isNightLine, realtime, realtimeLoading, stopsByDir]);
 
-  useEffect(() => {
-    if (usePredict || isNightLine || initialRealtimeStopCodes.length === 0) return;
-    let cancelled = false;
-    setLoadingEtaStops((prev) => {
-      const next = new Set(prev);
-      for (const stopCode of initialRealtimeStopCodes) next.add(stopCode);
-      return next;
-    });
+  // No-ops para conservar las props del componente hijo.
+  const handleEtaLoading = useCallback((_stopCode: string, _loading: boolean) => {}, []);
+  const handleStopEta = useCallback((_stopCode: string, _all: number[]) => {}, []);
+  const predictedBusesByDir: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]> = {
+    1: [],
+    2: [],
+  };
 
-    getClientStopsRealtimeBatch({ stopIds: initialRealtimeStopCodes, line: code })
-      .then((batch) => {
-        if (cancelled) return;
-        setEtas((prev) => {
-          const next = { ...prev };
-          for (const [stopCode, all] of Object.entries(batch)) next[stopCode] = all.slice(0, 1);
-          return next;
-        });
-        for (const [stopCode, all] of Object.entries(batch)) {
-          if (all.length > 0) reportObservation(stopCode, all[0]);
-        }
-      })
-      .finally(() => {
-        if (cancelled) return;
-        setLoadingEtaStops((prev) => {
-          const next = new Set(prev);
-          for (const stopCode of initialRealtimeStopCodes) next.delete(stopCode);
-          return next;
-        });
-      });
 
-    return () => {
-      cancelled = true;
-    };
-  }, [code, initialRealtimeStopCodes, isNightLine, usePredict, reportObservation]);
-
-  // Motor predictivo: ver definición de `usePredict` arriba.
-  const { data: engine } = useBusEngine();
-
-  const [predictedBusesByDir, setPredictedBusesByDir] = useState<
-    Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]>
-  >({ 1: [], 2: [] });
-
-  // Mientras el snapshot del motor no haya cargado, marcamos todas las paradas
-  // como "cargando" para evitar mostrar "n/d" durante el arranque en HTTPS.
-  useEffect(() => {
-    if (!usePredict || isNightLine) return;
-    if (engine) return;
-    const allCodes = [...stopsByDir[1], ...stopsByDir[2]].map((s) => s.code);
-    setLoadingEtaStops(new Set(allCodes));
-  }, [usePredict, engine, isNightLine, stopsByDir]);
-
-  useEffect(() => {
-    if (!usePredict || !engine || isNightLine) return;
-    let cancelled = false;
-    const tick = () => {
-      if (cancelled) return;
-      const state = predictLineState(engine, code, new Date());
-
-      // 1) ETAs por parada y sentido: nunca mezclar IDA/VUELTA aunque compartan stopCode.
-      const bestByDir: Record<1 | 2, Record<string, number>> = { 1: {}, 2: {} };
-      for (const e of state.stops) {
-        if (e.etaMin < 0) continue;
-        const dir = e.direction === 2 ? 2 : 1;
-        const prev = bestByDir[dir][e.stopCode];
-        if (prev == null || e.etaMin < prev) bestByDir[dir][e.stopCode] = e.etaMin;
-      }
-      setEtas((prev) => {
-        const next: Record<string, number[]> = { ...prev };
-        for (const dir of [1, 2] as const) {
-          for (const s of stopsByDir[dir]) {
-            const v = bestByDir[dir][s.code];
-            if (typeof v === "number") next[s.code] = [v];
-          }
-        }
-        return next;
-      });
-
-      // 2) Buses activos por dirección con segmentIndex/progress para overlay.
-      const byDir: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]> = {
-        1: [],
-        2: [],
-      };
-      for (const b of state.buses) {
-        if (b.status !== "moving") continue;
-        byDir[b.direction].push({
-          busId: b.busId,
-          segmentIndex: b.segmentIndex,
-          segmentProgress: b.segmentProgress,
-        });
-      }
-      setPredictedBusesByDir(byDir);
-      setLoadingEtaStops(new Set());
-    };
-    tick();
-    const id = setInterval(tick, 400);
-    return () => {
-      cancelled = true;
-      clearInterval(id);
-    };
-  }, [usePredict, engine, code, isNightLine, stopsByDir]);
 
 
 
