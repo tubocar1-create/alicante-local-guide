@@ -505,7 +505,7 @@ function BusDashboardPage() {
             nearestList={nearestByDir[1]}
             geoStatus={geoStatus}
             predictedBuses={predictedBusesByDir[1]}
-            disableLiveFetch={usePredict}
+            disableLiveFetch={true}
           />
 
           <DirectionColumn
@@ -531,7 +531,7 @@ function BusDashboardPage() {
             nearestList={nearestByDir[2]}
             geoStatus={geoStatus}
             predictedBuses={predictedBusesByDir[2]}
-            disableLiveFetch={usePredict}
+            disableLiveFetch={true}
           />
 
         </div>
