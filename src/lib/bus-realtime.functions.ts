@@ -182,6 +182,18 @@ export const getStopRealtime = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }) => {
     const arrivals = await fetchStopCached(data.stopCode);
+    // Aprendizaje fire-and-forget: cada hit de subus afina el motor predictivo.
+    if (arrivals.length > 0) {
+      const { ingestSubusObservations } = await import("@/lib/bus-learning.server");
+      ingestSubusObservations(
+        arrivals.map((a) => ({
+          lineCode: a.line,
+          stopCode: data.stopCode,
+          etaMinutes: a.etaMin,
+          destination: a.destination,
+        })),
+      );
+    }
     return { arrivals, fetchedAt: new Date().toISOString() };
   });
 
