@@ -293,7 +293,7 @@ export function deriveStopEtas(
   const out: StopEta[] = [];
 
   for (const bus of fleet) {
-    if (bus.status === "out_of_service" || bus.status === "inactive") continue;
+    if (bus.status === "finished" || bus.status === "inactive") continue;
     // Reconstruimos su offset dentro del ciclo.
     const offset = bus.elapsedMin;
     // Recorremos paradas futuras dentro de los próximos 90 min.
