@@ -4,7 +4,6 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useBusEngine } from "@/hooks/useBusEngine";
 import { predictLineState } from "@/lib/bus-engine/predict";
-import type { VirtualBus } from "@/lib/bus-engine/types";
 
 export type LineStopPoint = {
   code: string;
