@@ -198,7 +198,7 @@ export function predictLineState(
   // Métricas agregadas para el dashboard / mapa.
   const activeBuses = buses.filter((b) => b.status === "moving" || b.status === "terminal_wait");
   const activeBusCount = activeBuses.length;
-  const cycle = data.cycleStats.get(lineCode);
+  // cycle ya está declarado arriba; reutilizamos.
   const averageCycleMinutes = cycle ? Number(cycle.cycleAvgMin) : 0;
   const avgBusConfidence = activeBuses.length
     ? activeBuses.reduce((acc, b) => acc + b.confidence, 0) / activeBuses.length
