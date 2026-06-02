@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ArrowDown, ArrowUp, Bus, ChevronDown, Radio, RefreshCw, Loader2, MapPin } from "lucide-react";
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { classifyLine } from "@/components/BusKnownPicker";
@@ -16,12 +16,7 @@ import {
 import { cumulativeMinutes, NIGHT_URBAN_KMH } from "@/lib/bus-eta";
 import { getClientStopRealtime, getClientStopsRealtimeBatch } from "@/lib/bus-realtime-client";
 import busAlicanteImg from "@/assets/bus-alicante.png";
-import type { LineStopPoint } from "@/components/BusLineLiveMap";
 
-
-const BusLineLiveMap = lazy(() =>
-  import("@/components/BusLineLiveMap").then((m) => ({ default: m.BusLineLiveMap })),
-);
 
 
 function haversineMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
@@ -219,18 +214,6 @@ function BusDashboardPage() {
   }, [userPos, stopsByDir, stopCoords]);
 
 
-  // Puntos georreferenciados de la línea para el mapa en vivo
-  const lineStopPoints = useMemo<LineStopPoint[]>(() => {
-    const out: LineStopPoint[] = [];
-    for (const dir of [1, 2] as const) {
-      for (const s of stopsByDir[dir]) {
-        const c = stopCoords.get(s.code);
-        if (!c) continue;
-        out.push({ code: s.code, name: s.name, direction: dir, seq: s.seq, lat: c.lat, lng: c.lng });
-      }
-    }
-    return out;
-  }, [stopsByDir, stopCoords]);
 
   // Detección de línea nocturna y estimaciones por parada (sin tiempo real).
   const serviceRows = useBusServiceWindows();
@@ -509,43 +492,6 @@ function BusDashboardPage() {
 
 
 
-        {/* MAPA EN VIVO con buses estimados */}
-        {(() => {
-          const linePoints: LineStopPoint[] = [];
-          for (const dir of [1, 2] as const) {
-            for (const s of stopsByDir[dir]) {
-              const c = stopCoords.get(s.code);
-              if (!c) continue;
-              linePoints.push({
-                code: s.code,
-                name: s.name,
-                direction: dir,
-                seq: s.seq,
-                lat: c.lat,
-                lng: c.lng,
-              });
-            }
-          }
-          if (linePoints.length < 2) return null;
-          return (
-            <div className="mt-4">
-              <Suspense
-                fallback={
-                  <div className="flex h-[280px] w-full items-center justify-center rounded-2xl border border-white/10 bg-white/5">
-                    <Loader2 className="h-5 w-5 animate-spin text-white/60" />
-                  </div>
-                }
-              >
-                <BusLineLiveMap
-                  lineCode={code}
-                  color={lineColor}
-                  stops={linePoints}
-                  user={userPos}
-                />
-              </Suspense>
-            </div>
-          );
-        })()}
 
         {/* COLUMNAS IDA / VUELTA */}
         <div className="mt-4 grid grid-cols-2 divide-x divide-white/10 overflow-hidden rounded-2xl border border-white/10 p-2" style={{ background: "linear-gradient(to right, rgba(191,219,254,0.60) 0%, rgba(191,219,254,0.60) 50%, rgba(30,58,138,0.65) 50%, rgba(30,58,138,0.65) 100%)" }}>
