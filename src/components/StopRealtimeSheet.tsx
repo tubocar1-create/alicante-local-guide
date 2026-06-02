@@ -164,26 +164,13 @@ export function StopRealtimeSheet({
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => {
-                  if (!stop) return;
-                  setLoading(true);
-                  getClientStopRealtime({ stopId: stop.code })
-                    .then((r) => {
-                      const wanted = new Set((stop.lines ?? []).map((l) => l.toUpperCase()));
-                      setArrivals(wanted.size > 0 ? r.arrivals.filter((a) => wanted.has(a.line.toUpperCase())) : r.arrivals);
-                      setFetchedAt(r.fetchedAt);
-                      setError(null);
-                    })
-                    .catch((e) =>
-                      setError(e instanceof Error ? e.message : "Error"),
-                    )
-                    .finally(() => setLoading(false));
-                }}
+                onClick={() => setTick((t) => t + 1)}
                 disabled={loading}
               >
                 <RefreshCw className={`mr-1 h-3 w-3 ${loading ? "animate-spin" : ""}`} />
                 Refrescar
               </Button>
+
             </div>
 
             {error && (
