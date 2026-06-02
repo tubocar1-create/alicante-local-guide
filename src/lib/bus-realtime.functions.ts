@@ -59,71 +59,25 @@ async function fetchWithTimeout(url: string, init: RequestInit = {}): Promise<Re
   }
 }
 
-function extractCookies(res: Response): string {
-  const anyHeaders = res.headers as unknown as { getSetCookie?: () => string[] };
-  const list = anyHeaders.getSetCookie?.() ?? [];
-  return list.map((c) => c.split(";")[0]).filter(Boolean).join("; ");
-}
-
 // Devuelve todas las líneas detectadas en la parada: { lineCode -> minutos[] }
-async function fetchAllLinesForStop(stop: string): Promise<Map<string, number[]>> {
+async function fetchAllLinesForStop(stop: string): Promise<Map<string, number[]> | null> {
   const result = new Map<string, number[]>();
-  const datosUrl = `${BASE}/datos.aspx?p=${encodeURIComponent(stop)}`;
   const consultaUrl = `${BASE}/consulta.aspx?p=${encodeURIComponent(stop)}`;
 
   let raw = "";
   try {
-    const direct = await fetchWithTimeout(datosUrl, {
+    const page = await fetchWithTimeout(consultaUrl, {
       redirect: "follow",
       headers: {
         "User-Agent": UA,
-        Accept: "application/json, text/plain, */*",
-        "X-Requested-With": "XMLHttpRequest",
+        Accept: "text/html,application/xhtml+xml",
+        "Accept-Language": "es-ES,es;q=0.9",
       },
     });
-    if (direct.ok) {
-      const text = await direct.text();
-      try {
-        const j = JSON.parse(text) as { tiempos?: string };
-        raw = j.tiempos ?? text;
-      } catch {
-        raw = text;
-      }
-    }
+    if (!page.ok) return null;
+    raw = await page.text();
   } catch {
-    // pasa al flujo con sesión
-  }
-
-  if (!raw) {
-    try {
-      const page = await fetchWithTimeout(consultaUrl, {
-        redirect: "follow",
-        headers: { "User-Agent": UA, Accept: "text/html,application/xhtml+xml" },
-      });
-      const cookie = extractCookies(page);
-      await page.arrayBuffer().catch(() => null);
-      const data = await fetchWithTimeout(datosUrl, {
-        redirect: "follow",
-        headers: {
-          "User-Agent": UA,
-          Accept: "application/json, text/plain, */*",
-          Referer: consultaUrl,
-          "X-Requested-With": "XMLHttpRequest",
-          ...(cookie ? { Cookie: cookie } : {}),
-        },
-      });
-      if (data.ok) {
-        const text = await data.text();
-        try {
-          const j = JSON.parse(text) as { tiempos?: string };
-          raw = j.tiempos ?? text;
-        } catch {
-          raw = text;
-        }
-      }
-    } catch {
-      return result;
-    }
+    return null;
   }
 
   if (!raw) return result;
