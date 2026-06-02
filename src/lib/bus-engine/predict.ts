@@ -195,12 +195,26 @@ export function predictLineState(
     void cycleMin; // reservado para fase 4
   }
 
-  // Indexar mejor ETA por (stopCode, line)
+  // Métricas agregadas para el dashboard / mapa.
+  const activeBuses = buses.filter((b) => b.status === "moving" || b.status === "terminal_wait");
+  const activeBusCount = activeBuses.length;
+  const cycle = data.cycleStats.get(lineCode);
+  const averageCycleMinutes = cycle ? Number(cycle.cycleAvgMin) : 0;
+  const avgBusConfidence = activeBuses.length
+    ? activeBuses.reduce((acc, b) => acc + b.confidence, 0) / activeBuses.length
+    : 0.4;
+  const cycleConfidence = cycle ? Number(cycle.confidence) : 0.3;
+  const confidence = Math.max(0, Math.min(1, avgBusConfidence * 0.7 + cycleConfidence * 0.3));
+
   return {
     line: lineCode,
     timestamp: at.toISOString(),
     buses,
     stops: stopEtas.sort((a, b) => a.etaMin - b.etaMin),
+    activeBusCount,
+    averageCycleMinutes,
+    confidence,
+    realtimeAgeSeconds: null,
   };
 }
 
