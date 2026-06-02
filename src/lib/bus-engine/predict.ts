@@ -120,9 +120,10 @@ export function predictLineState(
       windows: data.serviceWindows,
     });
 
-    // Considerar salidas en ventana [now - totalMin - 5, now + 1] para mover buses activos.
+    // Ventana: incluye buses ya en ruta (minDep) y próximas salidas hasta +60 min,
+    // para que cada parada tenga ETA aunque ningún bus esté actualmente en circulación.
     const minDep = now - totalMin - 5;
-    const maxDep = now + 1;
+    const maxDep = now + 60;
     const active = departures.filter((d) => d.departureMin >= minDep && d.departureMin <= maxDep);
 
     for (const dep of active) {
