@@ -1191,6 +1191,36 @@ export type Database = {
         }
         Relationships: []
       }
+      bus_realtime_snapshots: {
+        Row: {
+          captured_at: string
+          direction: number | null
+          eta_minutes: number[]
+          id: string
+          line_code: string
+          source: string | null
+          stop_code: string
+        }
+        Insert: {
+          captured_at?: string
+          direction?: number | null
+          eta_minutes?: number[]
+          id?: string
+          line_code: string
+          source?: string | null
+          stop_code: string
+        }
+        Update: {
+          captured_at?: string
+          direction?: number | null
+          eta_minutes?: number[]
+          id?: string
+          line_code?: string
+          source?: string | null
+          stop_code?: string
+        }
+        Relationships: []
+      }
       bus_segment_stats: {
         Row: {
           avg_minutes: number

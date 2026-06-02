@@ -1,14 +1,17 @@
-// API pública del motor predictivo.
+// API pública legacy del "motor predictivo".
 //
-// IMPORTANTE: a partir de la fase 1 del rediseño, el motor es BUS-FIRST.
-// Toda la lógica viva está en `fleet.ts`. Este archivo se mantiene como
-// fachada para no romper los imports existentes en componentes y server fns.
+// REFACTOR (regla nueva): NO se inventan buses ni se simulan trayectos.
+// Vectalia es la única fuente operativa. Estas funciones quedan como
+// stubs vacíos para no romper imports históricos: los consumidores deben
+// migrar a `useLineRealtime` / `getLineRealtimeState` / `getStopRealtimeState`.
+//
+// Cualquier llamada a las funciones de abajo devuelve estado vacío en lugar
+// de generar flota sintética, ciclos recursivos o ETAs imaginarias.
 
 import type { BusEngineData, Direction, StopEta, VirtualBus } from "./types";
-import { predictLineFromFleet, predictStopFromFleet } from "./fleet";
 
 export function predictLineState(
-  data: BusEngineData,
+  _data: BusEngineData,
   lineCode: string,
   at: Date = new Date(),
 ): {
@@ -21,24 +24,22 @@ export function predictLineState(
   confidence: number;
   realtimeAgeSeconds: number | null;
 } {
-  const res = predictLineFromFleet(data, lineCode, at);
-  // Mantenemos la forma legacy (sin headwayMinutes) para no romper consumidores.
   return {
-    line: res.line,
-    timestamp: res.timestamp,
-    buses: res.buses,
-    stops: res.stops,
-    activeBusCount: res.activeBusCount,
-    averageCycleMinutes: res.averageCycleMinutes,
-    confidence: res.confidence,
-    realtimeAgeSeconds: res.realtimeAgeSeconds,
+    line: lineCode,
+    timestamp: at.toISOString(),
+    buses: [],
+    stops: [],
+    activeBusCount: 0,
+    averageCycleMinutes: 0,
+    confidence: 0,
+    realtimeAgeSeconds: null,
   };
 }
 
 export function predictStopArrivals(
-  data: BusEngineData,
-  stopCode: string,
-  at: Date = new Date(),
+  _data: BusEngineData,
+  _stopCode: string,
+  _at: Date = new Date(),
 ): Array<{
   line: string;
   direction: Direction;
@@ -47,5 +48,5 @@ export function predictStopArrivals(
   confidence: number;
   destination: string;
 }> {
-  return predictStopFromFleet(data, stopCode, at);
+  return [];
 }
