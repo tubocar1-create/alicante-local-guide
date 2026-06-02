@@ -4,6 +4,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useBusEngine } from "@/hooks/useBusEngine";
 import { predictLineState } from "@/lib/bus-engine/predict";
+import { getActiveFleet, tickVirtualFleet } from "@/lib/bus-fleet.functions";
 import busAlicanteImg from "@/assets/bus-alicante.png";
 
 export type LineStopPoint = {
