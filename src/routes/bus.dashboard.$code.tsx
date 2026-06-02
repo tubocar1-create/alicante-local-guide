@@ -388,7 +388,7 @@ function BusDashboardPage() {
   }, [nearestByDir]);
 
   useEffect(() => {
-    if (isNightLine || initialRealtimeStopCodes.length === 0) return;
+    if (usePredict || isNightLine || initialRealtimeStopCodes.length === 0) return;
     let cancelled = false;
     setLoadingEtaStops((prev) => {
       const next = new Set(prev);
