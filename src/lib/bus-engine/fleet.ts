@@ -544,9 +544,9 @@ export function deriveStopEtas(
   for (const bus of fleet) {
     if (bus.status === "finished" || bus.status === "inactive") continue;
     // Reconstruimos su offset dentro del ciclo.
-    const offset = bus.elapsedMin;
+    const offset = bus.tripElapsedMin ?? bus.elapsedMin;
     // Recorremos paradas futuras dentro de los próximos 90 min.
-    addStopsFromOffset(plan, offset, bus.busId, now, bus.confidence, out, 90);
+    addStopsFromOffset(plan, offset, bus.busId, now, bus.confidence, out, 90, bus.tripDirection ?? 1);
   }
 
   // Por parada+linea+dirección quedarnos con las próximas 3 ETAs (orden ascendente).
@@ -572,12 +572,30 @@ function addStopsFromOffset(
   confidence: number,
   out: StopEta[],
   horizonMin: number,
+  cycleStartDirection: Direction = 1,
+): void {
+  if (cycleStartDirection === 2) {
+    addStopsFromDirectionalOffset(plan, startOffset, busId, now, confidence, out, horizonMin, 2);
+    return;
+  }
+  addStopsFromDirectionalOffset(plan, startOffset, busId, now, confidence, out, horizonMin, 1);
+}
+
+function addStopsFromDirectionalOffset(
+  plan: LineFleetPlan,
+  startOffset: number,
+  busId: string,
+  now: number,
+  confidence: number,
+  out: StopEta[],
+  horizonMin: number,
+  cycleStartDirection: Direction,
 ): void {
   const reg = plan.terminalRegulationMin;
-  const ida = plan.dirIda;
-  const vuelta = plan.dirVuelta;
-  const idaTotal = ida?.totalMin ?? 0;
-  const vueltaTotal = vuelta?.totalMin ?? 0;
+  const first = cycleStartDirection === 1 ? plan.dirIda : plan.dirVuelta;
+  const second = cycleStartDirection === 1 ? plan.dirVuelta : plan.dirIda;
+  const firstTotal = first?.totalMin ?? 0;
+  const secondTotal = second?.totalMin ?? 0;
 
   // Recorremos el ciclo dos veces como mucho para cubrir 90 min.
   let tInCycle = startOffset;
@@ -585,59 +603,59 @@ function addStopsFromOffset(
 
   const loops = 3;
   for (let loop = 0; loop < loops; loop++) {
-    // Fase IDA
-    if (ida && tInCycle < idaTotal) {
+    // Fase primer sentido desde su salida oficial.
+    if (first && tInCycle < firstTotal) {
       // Encontrar próxima parada
       const elapsed = tInCycle;
       let idx = 0;
-      while (idx < ida.segMinutes.length && ida.cumTimes[idx + 1] <= elapsed) idx++;
-      for (let i = idx + 1; i < ida.stops.length; i++) {
-        const arriveOffset = ida.cumTimes[i] - elapsed;
+      while (idx < first.segMinutes.length && first.cumTimes[idx + 1] <= elapsed) idx++;
+      for (let i = idx + 1; i < first.stops.length; i++) {
+        const arriveOffset = first.cumTimes[i] - elapsed;
         const etaMin = absT + arriveOffset;
         if (etaMin > horizonMin) return;
         out.push({
           lineCode: plan.lineCode,
-          direction: 1,
+          direction: first.direction,
           busId,
-          stopCode: ida.stops[i].stopCode,
-          stopSeq: ida.stops[i].seq,
+          stopCode: first.stops[i].stopCode,
+          stopSeq: first.stops[i].seq,
           etaMin: Math.max(0, Math.round(etaMin)),
           etaClock: formatClock(now + etaMin),
           confidence,
         });
       }
-      absT += idaTotal - elapsed;
-      tInCycle = idaTotal;
+      absT += firstTotal - elapsed;
+      tInCycle = firstTotal;
     }
-    // Fase regulación terminal IDA
-    if (tInCycle < idaTotal + reg) {
-      absT += idaTotal + reg - tInCycle;
-      tInCycle = idaTotal + reg;
+    // Regulación terminal.
+    if (tInCycle < firstTotal + reg) {
+      absT += firstTotal + reg - tInCycle;
+      tInCycle = firstTotal + reg;
     }
-    // Fase VUELTA
-    if (vuelta && tInCycle < idaTotal + reg + vueltaTotal) {
-      const elapsed = tInCycle - idaTotal - reg;
+    // Fase sentido contrario.
+    if (second && tInCycle < firstTotal + reg + secondTotal) {
+      const elapsed = tInCycle - firstTotal - reg;
       let idx = 0;
-      while (idx < vuelta.segMinutes.length && vuelta.cumTimes[idx + 1] <= elapsed) idx++;
-      for (let i = idx + 1; i < vuelta.stops.length; i++) {
-        const arriveOffset = vuelta.cumTimes[i] - elapsed;
+      while (idx < second.segMinutes.length && second.cumTimes[idx + 1] <= elapsed) idx++;
+      for (let i = idx + 1; i < second.stops.length; i++) {
+        const arriveOffset = second.cumTimes[i] - elapsed;
         const etaMin = absT + arriveOffset;
         if (etaMin > horizonMin) return;
         out.push({
           lineCode: plan.lineCode,
-          direction: 2,
+          direction: second.direction,
           busId,
-          stopCode: vuelta.stops[i].stopCode,
-          stopSeq: vuelta.stops[i].seq,
+          stopCode: second.stops[i].stopCode,
+          stopSeq: second.stops[i].seq,
           etaMin: Math.max(0, Math.round(etaMin)),
           etaClock: formatClock(now + etaMin),
           confidence,
         });
       }
-      absT += idaTotal + reg + vueltaTotal - tInCycle;
-      tInCycle = idaTotal + reg + vueltaTotal;
+      absT += firstTotal + reg + secondTotal - tInCycle;
+      tInCycle = firstTotal + reg + secondTotal;
     }
-    // Fase regulación terminal VUELTA → reinicio de ciclo
+    // Regulación en base de origen → reinicio de ciclo.
     absT += plan.cycleMin - tInCycle;
     tInCycle = 0;
     if (absT > horizonMin) return;
