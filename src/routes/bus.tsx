@@ -167,7 +167,7 @@ function BusUrbanoPage() {
     }
     setError(null);
     window.open(
-      `http://www.subus.es/QR/Alicante/consulta.aspx?p=${stopCode.trim()}`,
+      `https://qr.vectalia.es/Alicante/consulta.aspx?p=${stopCode.trim()}`,
       "_blank",
     );
   }
