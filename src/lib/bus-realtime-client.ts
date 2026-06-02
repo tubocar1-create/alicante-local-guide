@@ -202,6 +202,37 @@ export async function getClientStopsRealtimeBatch({
   line: string;
 }): Promise<Record<string, number[]>> {
   const ids = [...new Set(stopIds.map((id) => id.trim()).filter(Boolean))];
+
+  // Intercept estimated mode: rellenamos caché con horarios oficiales para
+  // las líneas soportadas; las nocturnas / excluidas se cachean vacías para
+  // no tocar el endpoint realtime.
+  if (isEstimatedMode()) {
+    if (isEstimatedSupported(line)) {
+      const fetchedAt = Date.now();
+      await Promise.all(
+        ids.map(async (stopId) => {
+          const arrivals = await getEstimatedStopArrivals({ stopCode: stopId, line });
+          cache.set(stopId, {
+            arrivals,
+            all: arrivals.map((a) => a.etaMin).sort((a, b) => a - b),
+            etaMin: arrivals[0]?.etaMin ?? null,
+            fetchedAt,
+          });
+        }),
+      );
+      return Object.fromEntries(
+        stopIds.map((id) => {
+          const c = readCachedStopRealtime(id, line);
+          return [id, c?.all.slice(0, 1) ?? []];
+        }),
+      );
+    }
+    const fetchedAt = Date.now();
+    for (const stopId of ids) cache.set(stopId, { arrivals: [], all: [], etaMin: null, fetchedAt });
+    return Object.fromEntries(stopIds.map((id) => [id, []]));
+  }
+
+
   const missingIds = ids.filter((id) => {
     const valid = cache.get(id);
     return (!valid || Date.now() - valid.fetchedAt >= CACHE_TTL_MS) && !inFlight.has(id);
