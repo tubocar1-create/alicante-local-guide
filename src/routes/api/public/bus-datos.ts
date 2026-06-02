@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 // Captura datos.aspx (JSON oficial con tiempos + coords + avisos)
 // usando solo el flujo directo de SUBUS: consulta.aspx → cookies → datos.aspx.
 
-const BASE = "http://www.subus.es/QR/Alicante";
+const BASE = "https://qr.vectalia.es/Alicante";
 const UA =
   "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36";
 
