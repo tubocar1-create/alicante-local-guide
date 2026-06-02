@@ -153,6 +153,7 @@ export function buildLineFleetPlan(
   data: BusEngineData,
   lineCode: string,
   at: Date = new Date(),
+  opts?: { activationScore?: number },
 ): LineFleetPlan {
   const ida = buildDirectionPlan(data, lineCode, 1, at);
   const vuelta = buildDirectionPlan(data, lineCode, 2, at);
@@ -174,12 +175,23 @@ export function buildLineFleetPlan(
   const fallbackHeadway = dt === "laborable" ? 15 : 20;
   const headwayMin = inferHeadwayMin(idaDeps, now, fallbackHeadway);
 
-  const fleetSizeExpected = computeFleetSize(cycleMin, headwayMin);
+  const fleetSizeInferred = computeFleetSize(cycleMin, headwayMin);
   const serviceSlot = getServiceSlot(at);
 
-  // Salidas oficiales IDA en la ventana operacional inmediata (slot actual ±
-  // un cycleMin). Si están vacías, generateActiveFleet hará fallback a slots
-  // sintéticos uniformes.
+  // Perfil operacional (línea 12, etc.): tiene PRIORIDAD sobre el cálculo
+  // matemático. Define base diurna, máximos, ventana nocturna y último servicio.
+  const profileResult = applyProfileFleetTarget({
+    lineCode,
+    inferred: fleetSizeInferred,
+    activationScore: opts?.activationScore ?? 0,
+    at,
+  });
+  const profile = getLineProfile(lineCode);
+  const fleetSizeExpected = profile ? profileResult.target : fleetSizeInferred;
+  const fleetSizeMin = profile ? profileResult.min : 0;
+  const fleetSizeMax = profile ? profileResult.max : fleetSizeInferred + 1;
+
+  // Salidas oficiales IDA en la ventana operacional inmediata.
   const officialDeparturesMin = idaDeps
     .filter((d) => d >= now - cycleMin - 5 && d <= now + cycleMin)
     .sort((a, b) => a - b);
@@ -196,6 +208,11 @@ export function buildLineFleetPlan(
     headwayMin,
     activeBusCount: fleetSizeExpected,
     fleetSizeExpected,
+    fleetSizeInferred,
+    fleetSizeMin,
+    fleetSizeMax,
+    fleetWindow: profileResult.window,
+    fleetReason: profileResult.reason,
     dayType: dt,
     serviceSlot,
     officialDeparturesMin,
