@@ -1,4 +1,4 @@
-// Devuelve el JSON crudo de SUBUS para un stop usando consulta.aspx → datos.aspx.
+// Devuelve el HTML crudo de la página oficial SUBUS consulta.aspx para un stop.
 
 const BASE = "http://www.subus.es/QR/Alicante";
 const UA =
@@ -33,7 +33,6 @@ Deno.serve(async (req) => {
 
   try {
     const consultaUrl = `${BASE}/consulta.aspx?p=${encodeURIComponent(stop)}`;
-    const target = `${BASE}/datos.aspx?p=${encodeURIComponent(stop)}`;
     const page = await fetch(consultaUrl, {
       redirect: "follow",
       headers: {
@@ -43,22 +42,8 @@ Deno.serve(async (req) => {
       },
     });
     const cookie = extractCookies(page);
-    await page.arrayBuffer().catch(() => null);
-
-    const r = await fetch(target, {
-      redirect: "follow",
-      headers: {
-        "User-Agent": UA,
-        Referer: consultaUrl,
-        "X-Requested-With": "XMLHttpRequest",
-        "X-Vectalia-App": "qr-alicante",
-        Accept: "application/json, text/plain, */*",
-        "Accept-Language": "es-ES,es;q=0.9",
-        ...(cookie ? { Cookie: cookie } : {}),
-      },
-    });
-    const raw = r.ok ? await r.text() : "";
-    return new Response(JSON.stringify({ raw, status: r.status, sessionStatus: page.status, via: "subus-direct" }), {
+    const raw = page.ok ? await page.text() : "";
+    return new Response(JSON.stringify({ raw, status: page.status, sessionStatus: page.status, cookieSeen: Boolean(cookie), via: "subus-consulta" }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
