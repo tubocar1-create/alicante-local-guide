@@ -33,7 +33,7 @@ export type RealtimeLineState = {
 
 // ---------- Fetch a Vectalia (igual lógica que /api/public/bus-eta) ----------
 
-const BASE = "https://qr.vectalia.es/Alicante";
+const BASE = "http://www.subus.es/QR/Alicante";
 const UA =
   "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36";
 const ARRIVAL_RE = /Linea\s+(\d{1,3}[A-Za-z]?)\s+([^:]+?)\s*:\s*(\d+)\s*min/gi;
