@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-// Captura datos.aspx (JSON oficial con tiempos + coords + avisos)
-// usando solo el flujo directo de SUBUS: consulta.aspx → cookies → datos.aspx.
+// Debug de la página oficial SUBUS. La fuente correcta es consulta.aspx.
 
 const BASE = "http://www.subus.es/QR/Alicante";
 const UA =
@@ -26,7 +25,6 @@ export const Route = createFileRoute("/api/public/bus-datos")({
           });
         }
         const consultaUrl = `${BASE}/consulta.aspx?p=${encodeURIComponent(stop)}`;
-        const datosUrl = `${BASE}/datos.aspx?p=${encodeURIComponent(stop)}`;
         const t0 = Date.now();
         try {
           const page = await fetch(consultaUrl, {
@@ -38,36 +36,17 @@ export const Route = createFileRoute("/api/public/bus-datos")({
             },
           });
           const cookie = extractCookies(page);
-          await page.arrayBuffer().catch(() => null);
-
-          const r = await fetch(datosUrl, {
-            redirect: "follow",
-            headers: {
-              "User-Agent": UA,
-              Accept: "application/json, text/plain, */*",
-              "Accept-Language": "es-ES,es;q=0.9",
-              Referer: consultaUrl,
-              "X-Requested-With": "XMLHttpRequest",
-              "X-Vectalia-App": "qr-alicante",
-              ...(cookie ? { Cookie: cookie } : {}),
-            },
-          });
-          const text = await r.text();
-          let parsed: unknown = null;
-          try {
-            parsed = JSON.parse(text);
-          } catch {
-            /* not json */
-          }
+          const text = await page.text();
           return new Response(
             JSON.stringify({
-              ok: r.ok,
-              status: r.status,
+              ok: page.ok,
+              status: page.status,
               ms: Date.now() - t0,
-              target: datosUrl,
+              target: consultaUrl,
               sessionStatus: page.status,
+              cookieSeen: Boolean(cookie),
               raw: text,
-              json: parsed,
+              json: null,
             }),
             {
               status: 200,
@@ -76,7 +55,7 @@ export const Route = createFileRoute("/api/public/bus-datos")({
           );
         } catch (e) {
           return new Response(
-            JSON.stringify({ error: String(e), ms: Date.now() - t0, target: datosUrl }),
+            JSON.stringify({ error: String(e), ms: Date.now() - t0, target: consultaUrl }),
             { status: 200, headers: { "Content-Type": "application/json" } },
           );
         }
