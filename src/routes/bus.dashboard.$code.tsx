@@ -18,6 +18,7 @@ import { getClientStopRealtime, getClientStopsRealtimeBatch } from "@/lib/bus-re
 import busAlicanteImg from "@/assets/bus-alicante.png";
 import { useBusEngine } from "@/hooks/useBusEngine";
 import { predictLineState } from "@/lib/bus-engine/predict";
+import { reportRealtimeObservation } from "@/lib/bus-fleet.functions";
 
 
 
