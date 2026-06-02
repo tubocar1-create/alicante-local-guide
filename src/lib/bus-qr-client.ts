@@ -1,8 +1,8 @@
 // Lectura DIRECTA del QR oficial de SUBUS desde el navegador.
 // La fuente correcta es la página de parada:
 // http://www.subus.es/QR/Alicante/consulta.aspx?p=<stop>
-// NO usamos scraping externo (ScrapingBee/Firecrawl). NO usamos como fuente
-// directa qr.vectalia.es/datos.aspx.
+// NO usamos scraping externo (ScrapingBee/Firecrawl). NO usamos `datos.aspx`
+// como fuente directa.
 
 const SUBUS_CONSULTA_URL = "http://www.subus.es/QR/Alicante/consulta.aspx";
 const ARRIVAL_RE = /Linea\s+(\d{1,3}[A-Za-z]?)\s+([^:]+?)\s*:\s*(\d+)\s*min/gi;
