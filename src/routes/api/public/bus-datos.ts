@@ -1,9 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-// Captura datos.aspx (JSON oficial de Vectalia con tiempos + coords + avisos)
-// vía ScrapingBee. Endpoint de prueba para inspección.
+// Captura datos.aspx (JSON oficial con tiempos + coords + avisos)
+// usando solo el flujo directo de SUBUS: consulta.aspx → cookies → datos.aspx.
 
-const DATOS_URL = "https://movilidad.vectalia.es/QR/Alicante/datos.aspx";
+const BASE = "http://www.subus.es/QR/Alicante";
+const UA =
+  "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36";
+
+function extractCookies(res: Response): string {
+  const anyHeaders = res.headers as unknown as { getSetCookie?: () => string[] };
+  const list = anyHeaders.getSetCookie?.() ?? [];
+  return list.map((c) => c.split(";")[0]).filter(Boolean).join("; ");
+}
 
 export const Route = createFileRoute("/api/public/bus-datos")({
   server: {
@@ -17,21 +25,33 @@ export const Route = createFileRoute("/api/public/bus-datos")({
             headers: { "Content-Type": "application/json" },
           });
         }
-        const key = process.env.SCRAPINGBEE_API_KEY;
-        if (!key) {
-          return new Response(JSON.stringify({ error: "no scrapingbee key" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" },
-          });
-        }
-        const target = `${DATOS_URL}?p=${encodeURIComponent(stop)}`;
-        const sb = new URL("https://app.scrapingbee.com/api/v1/");
-        sb.searchParams.set("api_key", key);
-        sb.searchParams.set("url", target);
-        sb.searchParams.set("render_js", "false");
+        const consultaUrl = `${BASE}/consulta.aspx?p=${encodeURIComponent(stop)}`;
+        const datosUrl = `${BASE}/datos.aspx?p=${encodeURIComponent(stop)}`;
         const t0 = Date.now();
         try {
-          const r = await fetch(sb.toString(), { headers: { Accept: "*/*" } });
+          const page = await fetch(consultaUrl, {
+            redirect: "follow",
+            headers: {
+              "User-Agent": UA,
+              Accept: "text/html,application/xhtml+xml",
+              "Accept-Language": "es-ES,es;q=0.9",
+            },
+          });
+          const cookie = extractCookies(page);
+          await page.arrayBuffer().catch(() => null);
+
+          const r = await fetch(datosUrl, {
+            redirect: "follow",
+            headers: {
+              "User-Agent": UA,
+              Accept: "application/json, text/plain, */*",
+              "Accept-Language": "es-ES,es;q=0.9",
+              Referer: consultaUrl,
+              "X-Requested-With": "XMLHttpRequest",
+              "X-Vectalia-App": "qr-alicante",
+              ...(cookie ? { Cookie: cookie } : {}),
+            },
+          });
           const text = await r.text();
           let parsed: unknown = null;
           try {
@@ -44,7 +64,8 @@ export const Route = createFileRoute("/api/public/bus-datos")({
               ok: r.ok,
               status: r.status,
               ms: Date.now() - t0,
-              target,
+              target: datosUrl,
+              sessionStatus: page.status,
               raw: text,
               json: parsed,
             }),
@@ -55,7 +76,7 @@ export const Route = createFileRoute("/api/public/bus-datos")({
           );
         } catch (e) {
           return new Response(
-            JSON.stringify({ error: String(e), ms: Date.now() - t0, target }),
+            JSON.stringify({ error: String(e), ms: Date.now() - t0, target: datosUrl }),
             { status: 200, headers: { "Content-Type": "application/json" } },
           );
         }
