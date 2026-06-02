@@ -467,6 +467,7 @@ function makeBus(
   loc: ReturnType<typeof locateBusInCycle>,
   speedKmh: number | null,
   anchored: boolean,
+  tripDirection: Direction,
 ): VirtualBus {
   return {
     busId: `${plan.lineCode}_${slotKey}`,
@@ -474,6 +475,8 @@ function makeBus(
     direction: loc.direction,
     status: loc.state,
     departureMin,
+    tripDirection,
+    tripElapsedMin: elapsedMin,
     elapsedMin,
     segmentIndex: loc.segmentIndex,
     segmentProgress: loc.segmentProgress,
@@ -481,7 +484,7 @@ function makeBus(
     delayMin: correction,
     confidence: Math.max(0.35, loc.segmentConfidence * 0.85),
     anchoredDeparture: anchored,
-    originTerminal: loc.direction === 1 ? plan.terminalIda : plan.terminalVuelta,
+    originTerminal: tripDirection === 1 ? plan.terminalIda : plan.terminalVuelta,
     serviceSlot: plan.serviceSlot,
     phaseErrorSec: Math.round(correction * 60),
     reliability: Math.max(0.3, Math.min(0.95, loc.segmentConfidence)),
