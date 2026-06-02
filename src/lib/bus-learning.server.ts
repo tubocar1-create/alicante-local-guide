@@ -48,7 +48,7 @@ async function applyOne(obs: Observation): Promise<void> {
 
   let segmentFrom: string | null = null;
   let segmentTo: string | null = null;
-  let impact: Record<string, unknown> = {};
+  let impact: Record<string, string | number> = {};
 
   if (idx > 0 && ordered) {
     segmentFrom = ordered[idx - 1].stop_code as string;
