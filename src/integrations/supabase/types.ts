@@ -798,6 +798,51 @@ export type Database = {
         }
         Relationships: []
       }
+      bus_engine_health: {
+        Row: {
+          active_buses: number
+          avg_confidence: number
+          engine_alive: boolean
+          fleet_size_expected: number
+          last_tick_at: string
+          last_tick_sec: number
+          learning_active: boolean
+          line_code: string
+          meta: Json
+          prediction_quality: string
+          safe_mode: boolean
+          updated_at: string
+        }
+        Insert: {
+          active_buses?: number
+          avg_confidence?: number
+          engine_alive?: boolean
+          fleet_size_expected?: number
+          last_tick_at?: string
+          last_tick_sec?: number
+          learning_active?: boolean
+          line_code: string
+          meta?: Json
+          prediction_quality?: string
+          safe_mode?: boolean
+          updated_at?: string
+        }
+        Update: {
+          active_buses?: number
+          avg_confidence?: number
+          engine_alive?: boolean
+          fleet_size_expected?: number
+          last_tick_at?: string
+          last_tick_sec?: number
+          learning_active?: boolean
+          line_code?: string
+          meta?: Json
+          prediction_quality?: string
+          safe_mode?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bus_fleet_observations: {
         Row: {
           client_id: string | null
@@ -1143,6 +1188,51 @@ export type Database = {
           updated_at?: string
           variance?: number
           weekend_minutes?: number | null
+        }
+        Relationships: []
+      }
+      bus_segment_stats_slot: {
+        Row: {
+          avg_minutes: number
+          confidence: number
+          created_at: string
+          day_type: string
+          direction: number
+          from_stop: string
+          id: string
+          line_code: string
+          samples: number
+          service_slot: string
+          to_stop: string
+          updated_at: string
+        }
+        Insert: {
+          avg_minutes?: number
+          confidence?: number
+          created_at?: string
+          day_type?: string
+          direction: number
+          from_stop: string
+          id?: string
+          line_code: string
+          samples?: number
+          service_slot: string
+          to_stop: string
+          updated_at?: string
+        }
+        Update: {
+          avg_minutes?: number
+          confidence?: number
+          created_at?: string
+          day_type?: string
+          direction?: number
+          from_stop?: string
+          id?: string
+          line_code?: string
+          samples?: number
+          service_slot?: string
+          to_stop?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -3787,9 +3877,11 @@ export type Database = {
       }
       virtual_buses: {
         Row: {
+          anchored_to_departure: boolean
           confidence: number
           created_at: string
           current_segment_idx: number | null
+          departure_time: string | null
           direction: number
           distance_from_origin_m: number | null
           estimated_cycle_completion: string | null
@@ -3798,13 +3890,19 @@ export type Database = {
           id: string
           is_active: boolean
           last_observation_at: string | null
+          last_observation_sec: number | null
           last_tick_at: string | null
           line_code: string
           meta: Json
+          origin_terminal: string | null
+          phase_error_sec: number
           position_lat: number | null
           position_lng: number | null
+          reliability: number
+          safe_mode: boolean
           segment_progress: number | null
           service_date: string
+          service_slot: string | null
           source: string
           speed_kmh: number | null
           state: string
@@ -3812,9 +3910,11 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          anchored_to_departure?: boolean
           confidence?: number
           created_at?: string
           current_segment_idx?: number | null
+          departure_time?: string | null
           direction: number
           distance_from_origin_m?: number | null
           estimated_cycle_completion?: string | null
@@ -3823,13 +3923,19 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_observation_at?: string | null
+          last_observation_sec?: number | null
           last_tick_at?: string | null
           line_code: string
           meta?: Json
+          origin_terminal?: string | null
+          phase_error_sec?: number
           position_lat?: number | null
           position_lng?: number | null
+          reliability?: number
+          safe_mode?: boolean
           segment_progress?: number | null
           service_date: string
+          service_slot?: string | null
           source?: string
           speed_kmh?: number | null
           state?: string
@@ -3837,9 +3943,11 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          anchored_to_departure?: boolean
           confidence?: number
           created_at?: string
           current_segment_idx?: number | null
+          departure_time?: string | null
           direction?: number
           distance_from_origin_m?: number | null
           estimated_cycle_completion?: string | null
@@ -3848,13 +3956,19 @@ export type Database = {
           id?: string
           is_active?: boolean
           last_observation_at?: string | null
+          last_observation_sec?: number | null
           last_tick_at?: string | null
           line_code?: string
           meta?: Json
+          origin_terminal?: string | null
+          phase_error_sec?: number
           position_lat?: number | null
           position_lng?: number | null
+          reliability?: number
+          safe_mode?: boolean
           segment_progress?: number | null
           service_date?: string
+          service_slot?: string | null
           source?: string
           speed_kmh?: number | null
           state?: string

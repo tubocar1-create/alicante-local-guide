@@ -78,12 +78,22 @@ export type VirtualBus = {
   status: "moving" | "terminal_wait" | "finished" | "inactive";
   departureMin: number;
   elapsedMin: number;
-  segmentIndex: number; // 0..stops.length-2
-  segmentProgress: number; // 0..1
+  segmentIndex: number;
+  segmentProgress: number;
   position: LatLng | null;
   delayMin: number;
   confidence: number;
+  // Telemetría (fase 3): anclaje + seguridad
+  anchoredDeparture?: boolean;
+  originTerminal?: string | null;
+  serviceSlot?: string;
+  phaseErrorSec?: number;
+  reliability?: number;
+  speedKmh?: number | null;
+  lastObservationSec?: number | null;
+  safeMode?: boolean;
 };
+
 
 export type StopEta = {
   lineCode: string;
