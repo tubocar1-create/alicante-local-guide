@@ -623,15 +623,36 @@ export function predictLineFromFleet(
   realtimeAgeSeconds: number | null;
 } {
   const plan = buildLineFleetPlan(data, lineCode, at);
-  const { fleet } = generateActiveFleet(plan, at);
+  const { fleet: fleetRaw } = generateActiveFleet(plan, at);
 
-  const etas = deriveStopEtas(plan, fleet, at);
+  const etasRaw = deriveStopEtas(plan, fleetRaw, at);
+
+  // FASE 3: validación temporal POST-ETA (monotonicidad, orígenes múltiples).
+  const tc = validateTemporalConsistency({
+    fleet: fleetRaw,
+    etas: etasRaw,
+    cycleMin: plan.cycleMin,
+  });
+  let fleet = tc.fleet;
+  let etas = tc.etas;
+
   const avgConf =
     fleet.length > 0
       ? fleet.reduce((acc, b) => acc + b.confidence, 0) / fleet.length
       : 0.4;
   const cycleConf = data.cycleStats.get(lineCode)?.confidence ?? 0.3;
   const confidence = Math.max(0, Math.min(1, avgConf * 0.7 + Number(cycleConf) * 0.3));
+
+  // FASE 9: failsafe. Si la calidad es baja, ocultamos buses dudosos.
+  // Mejor "menos información" que "información absurda".
+  if (confidence < 0.5) {
+    const keepIds = new Set(fleet.filter((b) => b.confidence >= 0.6).map((b) => b.busId));
+    if (keepIds.size > 0) {
+      fleet = fleet.filter((b) => keepIds.has(b.busId));
+      etas = etas.filter((e) => !e.busId || keepIds.has(e.busId));
+    }
+  }
+
   return {
     line: lineCode,
     timestamp: at.toISOString(),
@@ -644,6 +665,7 @@ export function predictLineFromFleet(
     realtimeAgeSeconds: null,
   };
 }
+
 
 // Resuelve ETAs en una parada concreta (todas las líneas que pasan por ella).
 export function predictStopFromFleet(
