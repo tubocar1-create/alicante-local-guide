@@ -16,6 +16,7 @@ import { Route as TrenesRouteImport } from './routes/trenes'
 import { Route as TransporteRouteImport } from './routes/transporte'
 import { Route as TramRouteImport } from './routes/tram'
 import { Route as ThreadsRouteImport } from './routes/threads'
+import { Route as TestRealtimeRouteImport } from './routes/test-realtime'
 import { Route as StayRouteImport } from './routes/stay'
 import { Route as SistemaSanitarioRouteImport } from './routes/sistema-sanitario'
 import { Route as SaludRouteImport } from './routes/salud'
@@ -90,7 +91,6 @@ import { Route as AdminIntegracionesRouteImport } from './routes/admin.integraci
 import { Route as AdminCronesRouteImport } from './routes/admin.crones'
 import { Route as AdminConsumoIaRouteImport } from './routes/admin.consumo-ia'
 import { Route as AdminConsumoGoogleRouteImport } from './routes/admin.consumo-google'
-import { Route as AdminBusSnapshotsRouteImport } from './routes/admin.bus-snapshots'
 import { Route as AdminBotonesOcultosRouteImport } from './routes/admin.botones-ocultos'
 import { Route as AdminBasesDatosRouteImport } from './routes/admin.bases-datos'
 import { Route as AdminAuditoriaFotosRouteImport } from './routes/admin.auditoria-fotos'
@@ -197,6 +197,11 @@ const TramRoute = TramRouteImport.update({
 const ThreadsRoute = ThreadsRouteImport.update({
   id: '/threads',
   path: '/threads',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TestRealtimeRoute = TestRealtimeRouteImport.update({
+  id: '/test-realtime',
+  path: '/test-realtime',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StayRoute = StayRouteImport.update({
@@ -568,11 +573,6 @@ const AdminConsumoIaRoute = AdminConsumoIaRouteImport.update({
 const AdminConsumoGoogleRoute = AdminConsumoGoogleRouteImport.update({
   id: '/consumo-google',
   path: '/consumo-google',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminBusSnapshotsRoute = AdminBusSnapshotsRouteImport.update({
-  id: '/bus-snapshots',
-  path: '/bus-snapshots',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminBotonesOcultosRoute = AdminBotonesOcultosRouteImport.update({
@@ -976,6 +976,7 @@ export interface FileRoutesByFullPath {
   '/salud': typeof SaludRoute
   '/sistema-sanitario': typeof SistemaSanitarioRoute
   '/stay': typeof StayRoute
+  '/test-realtime': typeof TestRealtimeRoute
   '/threads': typeof ThreadsRouteWithChildren
   '/tram': typeof TramRouteWithChildren
   '/transporte': typeof TransporteRoute
@@ -989,7 +990,6 @@ export interface FileRoutesByFullPath {
   '/admin/auditoria-fotos': typeof AdminAuditoriaFotosRoute
   '/admin/bases-datos': typeof AdminBasesDatosRoute
   '/admin/botones-ocultos': typeof AdminBotonesOcultosRoute
-  '/admin/bus-snapshots': typeof AdminBusSnapshotsRoute
   '/admin/consumo-google': typeof AdminConsumoGoogleRoute
   '/admin/consumo-ia': typeof AdminConsumoIaRoute
   '/admin/crones': typeof AdminCronesRoute
@@ -1130,6 +1130,7 @@ export interface FileRoutesByTo {
   '/salud': typeof SaludRoute
   '/sistema-sanitario': typeof SistemaSanitarioRoute
   '/stay': typeof StayRoute
+  '/test-realtime': typeof TestRealtimeRoute
   '/threads': typeof ThreadsRouteWithChildren
   '/tram': typeof TramRouteWithChildren
   '/transporte': typeof TransporteRoute
@@ -1142,7 +1143,6 @@ export interface FileRoutesByTo {
   '/admin/auditoria-fotos': typeof AdminAuditoriaFotosRoute
   '/admin/bases-datos': typeof AdminBasesDatosRoute
   '/admin/botones-ocultos': typeof AdminBotonesOcultosRoute
-  '/admin/bus-snapshots': typeof AdminBusSnapshotsRoute
   '/admin/consumo-google': typeof AdminConsumoGoogleRoute
   '/admin/consumo-ia': typeof AdminConsumoIaRoute
   '/admin/crones': typeof AdminCronesRoute
@@ -1286,6 +1286,7 @@ export interface FileRoutesById {
   '/salud': typeof SaludRoute
   '/sistema-sanitario': typeof SistemaSanitarioRoute
   '/stay': typeof StayRoute
+  '/test-realtime': typeof TestRealtimeRoute
   '/threads': typeof ThreadsRouteWithChildren
   '/tram': typeof TramRouteWithChildren
   '/transporte': typeof TransporteRoute
@@ -1299,7 +1300,6 @@ export interface FileRoutesById {
   '/admin/auditoria-fotos': typeof AdminAuditoriaFotosRoute
   '/admin/bases-datos': typeof AdminBasesDatosRoute
   '/admin/botones-ocultos': typeof AdminBotonesOcultosRoute
-  '/admin/bus-snapshots': typeof AdminBusSnapshotsRoute
   '/admin/consumo-google': typeof AdminConsumoGoogleRoute
   '/admin/consumo-ia': typeof AdminConsumoIaRoute
   '/admin/crones': typeof AdminCronesRoute
@@ -1444,6 +1444,7 @@ export interface FileRouteTypes {
     | '/salud'
     | '/sistema-sanitario'
     | '/stay'
+    | '/test-realtime'
     | '/threads'
     | '/tram'
     | '/transporte'
@@ -1457,7 +1458,6 @@ export interface FileRouteTypes {
     | '/admin/auditoria-fotos'
     | '/admin/bases-datos'
     | '/admin/botones-ocultos'
-    | '/admin/bus-snapshots'
     | '/admin/consumo-google'
     | '/admin/consumo-ia'
     | '/admin/crones'
@@ -1598,6 +1598,7 @@ export interface FileRouteTypes {
     | '/salud'
     | '/sistema-sanitario'
     | '/stay'
+    | '/test-realtime'
     | '/threads'
     | '/tram'
     | '/transporte'
@@ -1610,7 +1611,6 @@ export interface FileRouteTypes {
     | '/admin/auditoria-fotos'
     | '/admin/bases-datos'
     | '/admin/botones-ocultos'
-    | '/admin/bus-snapshots'
     | '/admin/consumo-google'
     | '/admin/consumo-ia'
     | '/admin/crones'
@@ -1753,6 +1753,7 @@ export interface FileRouteTypes {
     | '/salud'
     | '/sistema-sanitario'
     | '/stay'
+    | '/test-realtime'
     | '/threads'
     | '/tram'
     | '/transporte'
@@ -1766,7 +1767,6 @@ export interface FileRouteTypes {
     | '/admin/auditoria-fotos'
     | '/admin/bases-datos'
     | '/admin/botones-ocultos'
-    | '/admin/bus-snapshots'
     | '/admin/consumo-google'
     | '/admin/consumo-ia'
     | '/admin/crones'
@@ -1910,6 +1910,7 @@ export interface RootRouteChildren {
   SaludRoute: typeof SaludRoute
   SistemaSanitarioRoute: typeof SistemaSanitarioRoute
   StayRoute: typeof StayRoute
+  TestRealtimeRoute: typeof TestRealtimeRoute
   ThreadsRoute: typeof ThreadsRouteWithChildren
   TramRoute: typeof TramRouteWithChildren
   TransporteRoute: typeof TransporteRoute
@@ -2030,6 +2031,13 @@ declare module '@tanstack/react-router' {
       path: '/threads'
       fullPath: '/threads'
       preLoaderRoute: typeof ThreadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/test-realtime': {
+      id: '/test-realtime'
+      path: '/test-realtime'
+      fullPath: '/test-realtime'
+      preLoaderRoute: typeof TestRealtimeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stay': {
@@ -2548,13 +2556,6 @@ declare module '@tanstack/react-router' {
       path: '/consumo-google'
       fullPath: '/admin/consumo-google'
       preLoaderRoute: typeof AdminConsumoGoogleRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/bus-snapshots': {
-      id: '/admin/bus-snapshots'
-      path: '/bus-snapshots'
-      fullPath: '/admin/bus-snapshots'
-      preLoaderRoute: typeof AdminBusSnapshotsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/botones-ocultos': {
@@ -3124,7 +3125,6 @@ interface AdminRouteChildren {
   AdminAuditoriaFotosRoute: typeof AdminAuditoriaFotosRoute
   AdminBasesDatosRoute: typeof AdminBasesDatosRoute
   AdminBotonesOcultosRoute: typeof AdminBotonesOcultosRoute
-  AdminBusSnapshotsRoute: typeof AdminBusSnapshotsRoute
   AdminConsumoGoogleRoute: typeof AdminConsumoGoogleRoute
   AdminConsumoIaRoute: typeof AdminConsumoIaRoute
   AdminCronesRoute: typeof AdminCronesRoute
@@ -3149,7 +3149,6 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAuditoriaFotosRoute: AdminAuditoriaFotosRoute,
   AdminBasesDatosRoute: AdminBasesDatosRoute,
   AdminBotonesOcultosRoute: AdminBotonesOcultosRoute,
-  AdminBusSnapshotsRoute: AdminBusSnapshotsRoute,
   AdminConsumoGoogleRoute: AdminConsumoGoogleRoute,
   AdminConsumoIaRoute: AdminConsumoIaRoute,
   AdminCronesRoute: AdminCronesRoute,
@@ -3323,6 +3322,7 @@ const rootRouteChildren: RootRouteChildren = {
   SaludRoute: SaludRoute,
   SistemaSanitarioRoute: SistemaSanitarioRoute,
   StayRoute: StayRoute,
+  TestRealtimeRoute: TestRealtimeRoute,
   ThreadsRoute: ThreadsRouteWithChildren,
   TramRoute: TramRouteWithChildren,
   TransporteRoute: TransporteRoute,
@@ -3399,13 +3399,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

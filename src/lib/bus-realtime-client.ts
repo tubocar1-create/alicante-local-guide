@@ -1,11 +1,4 @@
 import { getStopRealtime, getStopsRealtimeBatch } from "@/lib/bus-realtime.functions";
-import { isEstimatedMode } from "@/lib/transport-mode";
-import {
-  getEstimatedStopArrivals,
-  isEstimatedSupported,
-  isNightLine as isNightLineCode,
-} from "@/lib/bus-eta-estimated";
-
 
 export type StopArrival = {
   line: string;
@@ -93,33 +86,6 @@ export async function getClientStopRealtime({
   signal?: AbortSignal;
 }): Promise<StopRealtimeResult> {
   const normalizedStopId = stopId.trim();
-
-  // ──────────────── Modo ETA estimado (Fase 4) ────────────────
-  // Si está activo el flag y la línea es soportada, devolvemos llegadas
-  // calculadas desde horarios oficiales sin tocar red. Las nocturnas y las
-  // excluidas (24/27/28) caen aquí también: respondemos vacío para no llamar
-  // al endpoint realtime bloqueado por Akamai. Las nocturnas ya pintan ETA
-  // por su propia lógica en los dashboards (no pasan por aquí en la práctica).
-  if (isEstimatedMode()) {
-    if (line && isEstimatedSupported(line)) {
-      const arrivals = await getEstimatedStopArrivals({ stopCode: normalizedStopId, line });
-      const all = arrivals.map((a) => a.etaMin).sort((a, b) => a - b);
-      const filtered = typeof minMin === "number" ? all.filter((m) => m >= minMin) : all;
-      const result: StopRealtimeResult = {
-        arrivals,
-        all,
-        etaMin: filtered[Math.min(index, Math.max(0, filtered.length - 1))] ?? null,
-        fetchedAt: Date.now(),
-      };
-      cache.set(normalizedStopId, result);
-      return result;
-    }
-    if (line && (isNightLineCode(line) || !isEstimatedSupported(line))) {
-      return { arrivals: [], all: [], etaMin: null, fetchedAt: Date.now() };
-    }
-  }
-
-
   const cached = readCachedStopRealtime(normalizedStopId, line);
   if (cached) return selectStopRealtime(cached, index, minMin);
   if (line) {
@@ -202,37 +168,6 @@ export async function getClientStopsRealtimeBatch({
   line: string;
 }): Promise<Record<string, number[]>> {
   const ids = [...new Set(stopIds.map((id) => id.trim()).filter(Boolean))];
-
-  // Intercept estimated mode: rellenamos caché con horarios oficiales para
-  // las líneas soportadas; las nocturnas / excluidas se cachean vacías para
-  // no tocar el endpoint realtime.
-  if (isEstimatedMode()) {
-    if (isEstimatedSupported(line)) {
-      const fetchedAt = Date.now();
-      await Promise.all(
-        ids.map(async (stopId) => {
-          const arrivals = await getEstimatedStopArrivals({ stopCode: stopId, line });
-          cache.set(stopId, {
-            arrivals,
-            all: arrivals.map((a) => a.etaMin).sort((a, b) => a - b),
-            etaMin: arrivals[0]?.etaMin ?? null,
-            fetchedAt,
-          });
-        }),
-      );
-      return Object.fromEntries(
-        stopIds.map((id) => {
-          const c = readCachedStopRealtime(id, line);
-          return [id, c?.all.slice(0, 1) ?? []];
-        }),
-      );
-    }
-    const fetchedAt = Date.now();
-    for (const stopId of ids) cache.set(stopId, { arrivals: [], all: [], etaMin: null, fetchedAt });
-    return Object.fromEntries(stopIds.map((id) => [id, []]));
-  }
-
-
   const missingIds = ids.filter((id) => {
     const valid = cache.get(id);
     return (!valid || Date.now() - valid.fetchedAt >= CACHE_TTL_MS) && !inFlight.has(id);
