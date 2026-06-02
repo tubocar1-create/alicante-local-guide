@@ -12,8 +12,16 @@
 //   (cumulativeMinutes + service window) en `useBusServiceWindow` y los
 //   dashboards. NO se debe interceptar.
 
-import type { StopArrival } from "@/lib/bus-realtime-client";
 import { busStaticGraph } from "@/data/bus-static";
+
+export type StopArrival = {
+  line: string;
+  destination: string;
+  etaMin: number;
+  lat: number | null;
+  lng: number | null;
+};
+
 
 const EXCLUDED_LINES = new Set(["24", "27", "28"]);
 
