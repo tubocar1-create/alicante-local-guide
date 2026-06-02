@@ -138,11 +138,12 @@ async function tickLineInternal(lineCode: string) {
     activeKeys.add(`${bus.direction}::${slotKey}`);
     const existingCorr = corrections.get(slotKey) ?? 0;
 
-    // departure_time: si slotKey es HHMM (4 dígitos), úsalo como hora.
+    // departure_time: si slotKey es HHMM o DIR-HHMM, conserva la hora oficial.
     let departureTime: string | null = null;
-    if (/^\d{4}$/.test(slotKey)) {
-      const hh = slotKey.slice(0, 2);
-      const mm = slotKey.slice(2, 4);
+    const timeKey = slotKey.match(/^(?:[12]-)?(\d{4})$/)?.[1];
+    if (timeKey) {
+      const hh = timeKey.slice(0, 2);
+      const mm = timeKey.slice(2, 4);
       departureTime = `${hh}:${mm}:00`;
     }
 

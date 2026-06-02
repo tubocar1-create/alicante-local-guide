@@ -489,18 +489,19 @@ function BusDashboardPage() {
       if (cancelled) return;
       const state = predictLineState(engine, code, new Date());
 
-      // 1) ETAs por parada: mejor (menor) etaMin por stopCode.
-      const best: Record<string, number> = {};
+      // 1) ETAs por parada y sentido: nunca mezclar IDA/VUELTA aunque compartan stopCode.
+      const bestByDir: Record<1 | 2, Record<string, number>> = { 1: {}, 2: {} };
       for (const e of state.stops) {
         if (e.etaMin < 0) continue;
-        const prev = best[e.stopCode];
-        if (prev == null || e.etaMin < prev) best[e.stopCode] = e.etaMin;
+        const dir = e.direction === 2 ? 2 : 1;
+        const prev = bestByDir[dir][e.stopCode];
+        if (prev == null || e.etaMin < prev) bestByDir[dir][e.stopCode] = e.etaMin;
       }
       setEtas((prev) => {
         const next: Record<string, number[]> = { ...prev };
         for (const dir of [1, 2] as const) {
           for (const s of stopsByDir[dir]) {
-            const v = best[s.code];
+            const v = bestByDir[dir][s.code];
             if (typeof v === "number") next[s.code] = [v];
           }
         }

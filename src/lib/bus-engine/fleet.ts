@@ -77,8 +77,18 @@ export type LineFleetPlan = {
   dayType: ReturnType<typeof dayType>;
   serviceSlot: ServiceSlot;
   officialDeparturesMin: number[]; // salidas oficiales IDA dentro del slot activo
+  officialDeparturesByDirection: Record<Direction, number[]>;
   terminalIda: string | null;
   terminalVuelta: string | null;
+};
+
+type CycleLocation = {
+  direction: Direction;
+  state: VirtualBus["status"];
+  segmentIndex: number;
+  segmentProgress: number;
+  position: LatLng | null;
+  segmentConfidence: number;
 };
 
 
@@ -180,6 +190,13 @@ export function buildLineFleetPlan(
     departures: data.departures,
     windows: data.serviceWindows,
   }).map((d) => d.departureMin);
+  const vueltaDeps = getDeparturesForLine({
+    lineCode,
+    direction: 2,
+    dayType: dt,
+    departures: data.departures,
+    windows: data.serviceWindows,
+  }).map((d) => d.departureMin);
   const fallbackHeadway = dt === "laborable" ? 15 : 20;
   const headwayMin = inferHeadwayMin(idaDeps, now, fallbackHeadway);
 
@@ -199,10 +216,16 @@ export function buildLineFleetPlan(
   const fleetSizeMin = profile ? profileResult.min : 0;
   const fleetSizeMax = profile ? profileResult.max : fleetSizeInferred + 1;
 
-  // Salidas oficiales IDA en la ventana operacional inmediata.
+  // Salidas oficiales por terminal en la ventana operacional inmediata.
   const officialDeparturesMin = idaDeps
     .filter((d) => d >= now - cycleMin - 5 && d <= now + cycleMin)
     .sort((a, b) => a - b);
+  const officialDeparturesByDirection: Record<Direction, number[]> = {
+    1: officialDeparturesMin,
+    2: vueltaDeps
+      .filter((d) => d >= now - cycleMin - 5 && d <= now + cycleMin)
+      .sort((a, b) => a - b),
+  };
 
   const terminalIda = ida?.stops[0]?.stopName ?? null;
   const terminalVuelta = vuelta?.stops[0]?.stopName ?? null;
@@ -224,6 +247,7 @@ export function buildLineFleetPlan(
     dayType: dt,
     serviceSlot,
     officialDeparturesMin,
+    officialDeparturesByDirection,
     terminalIda,
     terminalVuelta,
   };
@@ -239,32 +263,39 @@ export function buildLineFleetPlan(
 function locateBusInCycle(
   plan: LineFleetPlan,
   cycleOffset: number,
-): {
-  direction: Direction;
-  state: VirtualBus["status"];
-  segmentIndex: number;
-  segmentProgress: number;
-  position: LatLng | null;
-  segmentConfidence: number;
-} {
-  const reg = plan.terminalRegulationMin;
-  const idaTotal = plan.dirIda?.totalMin ?? 0;
-  const vueltaTotal = plan.dirVuelta?.totalMin ?? 0;
-  let t = ((cycleOffset % plan.cycleMin) + plan.cycleMin) % plan.cycleMin;
-
-  // Fase IDA moving
-  if (plan.dirIda && t < idaTotal) {
-    return locateInDirection(plan.dirIda, t);
+  cycleStartDirection: Direction = 1,
+): CycleLocation {
+  if (cycleStartDirection === 2) {
+    return locateBusInDirectionCycle(plan, cycleOffset, 2);
   }
-  t -= idaTotal;
+  return locateBusInDirectionCycle(plan, cycleOffset, 1);
+}
 
-  // Fase regulación terminal IDA
+function locateBusInDirectionCycle(
+  plan: LineFleetPlan,
+  cycleOffset: number,
+  cycleStartDirection: Direction,
+): CycleLocation {
+  const reg = plan.terminalRegulationMin;
+  let t = ((cycleOffset % plan.cycleMin) + plan.cycleMin) % plan.cycleMin;
+  const firstPlan = cycleStartDirection === 1 ? plan.dirIda : plan.dirVuelta;
+  const secondPlan = cycleStartDirection === 1 ? plan.dirVuelta : plan.dirIda;
+  const firstTotal = firstPlan?.totalMin ?? 0;
+  const secondTotal = secondPlan?.totalMin ?? 0;
+
+  // Fase primer sentido desde su base oficial.
+  if (firstPlan && t < firstTotal) {
+    return locateInDirection(firstPlan, t);
+  }
+  t -= firstTotal;
+
+  // Regulación en terminal opuesta antes de volver.
   if (t < reg) {
-    const last = plan.dirIda?.stops[plan.dirIda.stops.length - 1];
+    const last = firstPlan?.stops[firstPlan.stops.length - 1];
     return {
-      direction: 1,
+      direction: cycleStartDirection,
       state: "terminal_wait",
-      segmentIndex: plan.dirIda ? plan.dirIda.stops.length - 1 : 0,
+      segmentIndex: firstPlan ? firstPlan.stops.length - 1 : 0,
       segmentProgress: 0,
       position: last && last.lat != null && last.lng != null ? { lat: last.lat, lng: last.lng } : null,
       segmentConfidence: 0.6,
@@ -272,19 +303,19 @@ function locateBusInCycle(
   }
   t -= reg;
 
-  // Fase VUELTA moving
-  if (plan.dirVuelta && t < vueltaTotal) {
-    return locateInDirection(plan.dirVuelta, t);
+  // Fase sentido contrario.
+  if (secondPlan && t < secondTotal) {
+    return locateInDirection(secondPlan, t);
   }
-  t -= vueltaTotal;
+  t -= secondTotal;
 
-  // Fase regulación terminal VUELTA
-  const last = plan.dirVuelta?.stops[plan.dirVuelta.stops.length - 1]
-    ?? plan.dirIda?.stops[0];
+  // Regulación en base de origen antes de cerrar ciclo.
+  const last = secondPlan?.stops[secondPlan.stops.length - 1]
+    ?? firstPlan?.stops[0];
   return {
-    direction: 2,
+    direction: cycleStartDirection === 1 ? 2 : 1,
     state: "terminal_wait",
-    segmentIndex: plan.dirVuelta ? plan.dirVuelta.stops.length - 1 : 0,
+    segmentIndex: secondPlan ? secondPlan.stops.length - 1 : 0,
     segmentProgress: 0,
     position: last && last.lat != null && last.lng != null ? { lat: last.lat, lng: last.lng } : null,
     segmentConfidence: 0.6,
@@ -343,32 +374,36 @@ export function generateActiveFleet(
   const now = nowMinutes(at);
   let raw: VirtualBus[] = [];
 
-  const hasOfficial = plan.officialDeparturesMin.length > 0;
+  const hasOfficial =
+    plan.officialDeparturesByDirection[1].length > 0 ||
+    plan.officialDeparturesByDirection[2].length > 0;
   if (hasOfficial) {
     // FASE 1: filtro de Active Service Window.
     // Solo entran salidas cuyo ciclo NO esté cerrado y que no sean
     // futuras lejanas. El cierre de ciclo es duro: no reutilizamos.
-    const eligible = plan.officialDeparturesMin.filter((d) => {
-      const w = classifyDepartureWindow({
-        departureMin: d,
-        nowMin: now,
-        cycleMin: plan.cycleMin,
+    for (const dir of [1, 2] as Direction[]) {
+      const eligible = plan.officialDeparturesByDirection[dir].filter((d) => {
+        const w = classifyDepartureWindow({
+          departureMin: d,
+          nowMin: now,
+          cycleMin: plan.cycleMin,
+        });
+        return w === "active" || w === "imminent";
       });
-      return w === "active" || w === "imminent";
-    });
-    for (const dep of eligible) {
-      const slotKey = minutesToHHMM(dep);
-      // FASE 8: aprendizaje SOLO ajusta fase en ±90 s. Nunca mueve buses libremente.
-      const rawCorrection = phaseCorrections?.get(slotKey) ?? 0;
-      const correction = Math.max(
-        -MAX_PHASE_CORRECTION_MIN,
-        Math.min(MAX_PHASE_CORRECTION_MIN, rawCorrection),
-      );
-      const elapsed = now - dep + correction;
-      const offset = ((elapsed % plan.cycleMin) + plan.cycleMin) % plan.cycleMin;
-      const loc = locateBusInCycle(plan, offset);
-      const speed = estimateSpeedKmh(plan, loc);
-      raw.push(makeBus(plan, slotKey, dep, offset, correction, loc, speed, true));
+      for (const dep of eligible) {
+        const slotKey = `${dir}-${minutesToHHMM(dep)}`;
+        // FASE 8: aprendizaje SOLO ajusta fase en ±90 s. Nunca mueve buses libremente.
+        const rawCorrection = phaseCorrections?.get(slotKey) ?? phaseCorrections?.get(minutesToHHMM(dep)) ?? 0;
+        const correction = Math.max(
+          -MAX_PHASE_CORRECTION_MIN,
+          Math.min(MAX_PHASE_CORRECTION_MIN, rawCorrection),
+        );
+        const elapsed = now - dep + correction;
+        const offset = ((elapsed % plan.cycleMin) + plan.cycleMin) % plan.cycleMin;
+        const loc = locateBusInCycle(plan, offset, dir);
+        const speed = estimateSpeedKmh(plan, loc);
+        raw.push(makeBus(plan, slotKey, dep, offset, correction, loc, speed, true, dir));
+      }
     }
   } else {
     // Fallback sintético (solo si NO hay salidas oficiales para esta línea/slot).
@@ -386,7 +421,7 @@ export function generateActiveFleet(
         const offset = ((rawOffset % plan.cycleMin) + plan.cycleMin) % plan.cycleMin;
         const loc = locateBusInCycle(plan, offset);
         const speed = estimateSpeedKmh(plan, loc);
-        raw.push(makeBus(plan, slotKey, now - offset, offset, correction, loc, speed, false));
+        raw.push(makeBus(plan, slotKey, now - offset, offset, correction, loc, speed, false, 1));
       }
     }
   }
@@ -415,7 +450,7 @@ export function generateActiveFleet(
   if (plan.fleetWindow !== "no_profile" && plan.fleetSizeMax > 0) {
     if (capped.length > plan.fleetSizeMax) {
       capped = [...capped]
-        .sort((a, b) => b.confidence - a.confidence)
+        .sort((a, b) => b.confidence - a.confidence || a.elapsedMin - b.elapsedMin)
         .slice(0, plan.fleetSizeMax);
     }
   }
@@ -432,6 +467,7 @@ function makeBus(
   loc: ReturnType<typeof locateBusInCycle>,
   speedKmh: number | null,
   anchored: boolean,
+  tripDirection: Direction,
 ): VirtualBus {
   return {
     busId: `${plan.lineCode}_${slotKey}`,
@@ -439,6 +475,8 @@ function makeBus(
     direction: loc.direction,
     status: loc.state,
     departureMin,
+    tripDirection,
+    tripElapsedMin: elapsedMin,
     elapsedMin,
     segmentIndex: loc.segmentIndex,
     segmentProgress: loc.segmentProgress,
@@ -446,7 +484,7 @@ function makeBus(
     delayMin: correction,
     confidence: Math.max(0.35, loc.segmentConfidence * 0.85),
     anchoredDeparture: anchored,
-    originTerminal: loc.direction === 1 ? plan.terminalIda : plan.terminalVuelta,
+    originTerminal: tripDirection === 1 ? plan.terminalIda : plan.terminalVuelta,
     serviceSlot: plan.serviceSlot,
     phaseErrorSec: Math.round(correction * 60),
     reliability: Math.max(0.3, Math.min(0.95, loc.segmentConfidence)),
@@ -506,9 +544,9 @@ export function deriveStopEtas(
   for (const bus of fleet) {
     if (bus.status === "finished" || bus.status === "inactive") continue;
     // Reconstruimos su offset dentro del ciclo.
-    const offset = bus.elapsedMin;
+    const offset = bus.tripElapsedMin ?? bus.elapsedMin;
     // Recorremos paradas futuras dentro de los próximos 90 min.
-    addStopsFromOffset(plan, offset, bus.busId, now, bus.confidence, out, 90);
+    addStopsFromOffset(plan, offset, bus.busId, now, bus.confidence, out, 90, bus.tripDirection ?? 1);
   }
 
   // Por parada+linea+dirección quedarnos con las próximas 3 ETAs (orden ascendente).
@@ -534,12 +572,30 @@ function addStopsFromOffset(
   confidence: number,
   out: StopEta[],
   horizonMin: number,
+  cycleStartDirection: Direction = 1,
+): void {
+  if (cycleStartDirection === 2) {
+    addStopsFromDirectionalOffset(plan, startOffset, busId, now, confidence, out, horizonMin, 2);
+    return;
+  }
+  addStopsFromDirectionalOffset(plan, startOffset, busId, now, confidence, out, horizonMin, 1);
+}
+
+function addStopsFromDirectionalOffset(
+  plan: LineFleetPlan,
+  startOffset: number,
+  busId: string,
+  now: number,
+  confidence: number,
+  out: StopEta[],
+  horizonMin: number,
+  cycleStartDirection: Direction,
 ): void {
   const reg = plan.terminalRegulationMin;
-  const ida = plan.dirIda;
-  const vuelta = plan.dirVuelta;
-  const idaTotal = ida?.totalMin ?? 0;
-  const vueltaTotal = vuelta?.totalMin ?? 0;
+  const first = cycleStartDirection === 1 ? plan.dirIda : plan.dirVuelta;
+  const second = cycleStartDirection === 1 ? plan.dirVuelta : plan.dirIda;
+  const firstTotal = first?.totalMin ?? 0;
+  const secondTotal = second?.totalMin ?? 0;
 
   // Recorremos el ciclo dos veces como mucho para cubrir 90 min.
   let tInCycle = startOffset;
@@ -547,59 +603,59 @@ function addStopsFromOffset(
 
   const loops = 3;
   for (let loop = 0; loop < loops; loop++) {
-    // Fase IDA
-    if (ida && tInCycle < idaTotal) {
+    // Fase primer sentido desde su salida oficial.
+    if (first && tInCycle < firstTotal) {
       // Encontrar próxima parada
       const elapsed = tInCycle;
       let idx = 0;
-      while (idx < ida.segMinutes.length && ida.cumTimes[idx + 1] <= elapsed) idx++;
-      for (let i = idx + 1; i < ida.stops.length; i++) {
-        const arriveOffset = ida.cumTimes[i] - elapsed;
+      while (idx < first.segMinutes.length && first.cumTimes[idx + 1] <= elapsed) idx++;
+      for (let i = idx + 1; i < first.stops.length; i++) {
+        const arriveOffset = first.cumTimes[i] - elapsed;
         const etaMin = absT + arriveOffset;
         if (etaMin > horizonMin) return;
         out.push({
           lineCode: plan.lineCode,
-          direction: 1,
+          direction: first.direction,
           busId,
-          stopCode: ida.stops[i].stopCode,
-          stopSeq: ida.stops[i].seq,
+          stopCode: first.stops[i].stopCode,
+          stopSeq: first.stops[i].seq,
           etaMin: Math.max(0, Math.round(etaMin)),
           etaClock: formatClock(now + etaMin),
           confidence,
         });
       }
-      absT += idaTotal - elapsed;
-      tInCycle = idaTotal;
+      absT += firstTotal - elapsed;
+      tInCycle = firstTotal;
     }
-    // Fase regulación terminal IDA
-    if (tInCycle < idaTotal + reg) {
-      absT += idaTotal + reg - tInCycle;
-      tInCycle = idaTotal + reg;
+    // Regulación terminal.
+    if (tInCycle < firstTotal + reg) {
+      absT += firstTotal + reg - tInCycle;
+      tInCycle = firstTotal + reg;
     }
-    // Fase VUELTA
-    if (vuelta && tInCycle < idaTotal + reg + vueltaTotal) {
-      const elapsed = tInCycle - idaTotal - reg;
+    // Fase sentido contrario.
+    if (second && tInCycle < firstTotal + reg + secondTotal) {
+      const elapsed = tInCycle - firstTotal - reg;
       let idx = 0;
-      while (idx < vuelta.segMinutes.length && vuelta.cumTimes[idx + 1] <= elapsed) idx++;
-      for (let i = idx + 1; i < vuelta.stops.length; i++) {
-        const arriveOffset = vuelta.cumTimes[i] - elapsed;
+      while (idx < second.segMinutes.length && second.cumTimes[idx + 1] <= elapsed) idx++;
+      for (let i = idx + 1; i < second.stops.length; i++) {
+        const arriveOffset = second.cumTimes[i] - elapsed;
         const etaMin = absT + arriveOffset;
         if (etaMin > horizonMin) return;
         out.push({
           lineCode: plan.lineCode,
-          direction: 2,
+          direction: second.direction,
           busId,
-          stopCode: vuelta.stops[i].stopCode,
-          stopSeq: vuelta.stops[i].seq,
+          stopCode: second.stops[i].stopCode,
+          stopSeq: second.stops[i].seq,
           etaMin: Math.max(0, Math.round(etaMin)),
           etaClock: formatClock(now + etaMin),
           confidence,
         });
       }
-      absT += idaTotal + reg + vueltaTotal - tInCycle;
-      tInCycle = idaTotal + reg + vueltaTotal;
+      absT += firstTotal + reg + secondTotal - tInCycle;
+      tInCycle = firstTotal + reg + secondTotal;
     }
-    // Fase regulación terminal VUELTA → reinicio de ciclo
+    // Regulación en base de origen → reinicio de ciclo.
     absT += plan.cycleMin - tInCycle;
     tInCycle = 0;
     if (absT > horizonMin) return;

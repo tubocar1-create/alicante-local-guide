@@ -77,6 +77,8 @@ export type VirtualBus = {
   direction: Direction;
   status: "moving" | "terminal_wait" | "finished" | "inactive";
   departureMin: number;
+  tripDirection?: Direction;
+  tripElapsedMin?: number;
   elapsedMin: number;
   segmentIndex: number;
   segmentProgress: number;
