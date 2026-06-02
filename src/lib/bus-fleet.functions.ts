@@ -19,6 +19,8 @@ import {
 } from "@/lib/bus-engine/fleet";
 import { getServiceSlot } from "@/lib/bus-engine/slots";
 import { classifyPredictionQuality, shouldEnterSafeMode } from "@/lib/bus-engine/safe-mode";
+import { extraBusActivationScore } from "@/lib/bus-engine/extra-bus-activation";
+import { getLineProfile } from "@/lib/bus-engine/line-profiles";
 
 function todayMadrid(): string {
   const fmt = new Intl.DateTimeFormat("en-CA", {
