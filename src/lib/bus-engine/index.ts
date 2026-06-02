@@ -6,3 +6,7 @@ export * from "./segments";
 export * from "./confidence";
 export * from "./predict";
 export * from "./fleet";
+export * from "./slots";
+export * from "./fleet-sizer";
+export * from "./fleet-validator";
+export * from "./safe-mode";
