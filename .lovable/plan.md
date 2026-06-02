@@ -1,101 +1,52 @@
 
-# Refactor del motor predictivo: de ETAs interpoladas a buses virtuales persistentes
+## Fase 2 — Persistencia y reconciliación
 
-## Diagnóstico del estado actual
+### Premisa del usuario
+En **preview** (donde Akamai no bloquea) tenemos tiempos REALES.
+En **HTTPS publicado** sólo tenemos el motor.
+Usaremos el preview como "sensor de campo" que envía observaciones al backend para reconciliar la flota virtual.
 
-Hoy el motor (`src/lib/bus-engine/`) calcula tiempos por segmento y los suma desde la próxima salida programada para producir ETAs por parada. Los "buses" que se ven son derivados visuales de esas ETAs. Esto produce los síntomas que describes: espaciado matemático, sin regulación terminal, sin bunching, sin flota inferida.
+### 1. Tabla auxiliar `bus_fleet_observations`
+Migración nueva con: `id`, `line_code`, `direction`, `stop_code`, `observed_eta_min`, `observed_at`, `source` (`preview_real`, `snapshot_manual`), `client_id` (anon), `meta jsonb`. RLS: read público, insert anónimo (rate-limited por client_id en server), admin manage. Sirve de log de campo y de fuente para WMWA en `bus_segment_stats`.
 
-## Nuevo modelo (resumen)
+### 2. ServerFn `tickVirtualFleet({ line })`
+- Construye `LineFleetPlan` + `generateActiveFleet` (lo que ya tenemos).
+- UPSERT en `virtual_buses` por `(line_code, direction, trip_key, service_date)` donde `trip_key = headway_slot = "BUS01"…"BUSNN"`.
+- Marca `is_active=false` los buses de la línea que no estén en la flota actual (cambio de ventana horaria).
+- Guarda `position_lat/lng`, `current_segment_idx`, `segment_progress`, `state`, `confidence`, `last_tick_at`, `meta` (con `cycleMin`, `headwayMin`).
+- Idempotente: lo puede llamar cron / mapa / dashboard sin acumular filas.
 
-La entidad raíz pasa a ser **`VirtualBus`** persistente con estado, posición sobre la polilínea y trip activo. Las ETAs se **derivan** del estado de cada bus, nunca al revés.
+### 3. ServerFn `getActiveFleet({ line })`
+SELECT plano sobre `virtual_buses` filtrado por línea y `is_active=true`. Devuelve la forma que ya consume el mapa.
 
-```text
-snapshots + horarios + geometría + stats
-        │
-        ▼
-   FLOTA INFERIDA (N buses activos para esta ventana)
-        │
-        ▼
-   SIMULACIÓN CONTINUA (tick → mover/dwell/regular)
-        │
-        ▼
-   ETAs DERIVADAS POR PARADA  +  POSICIONES PARA EL MAPA
-```
+### 4. ServerFn `reportRealtimeObservation({ line, direction, stopCode, etaMin, source })`
+- Inserta en `bus_fleet_observations`.
+- Aplica reconciliación ligera:
+  - Localiza el bus virtual cuyo trayecto futuro contenga esa parada antes y más cercano al `etaMin` observado.
+  - Calcula `delta = etaMin_observado − etaMin_virtual`.
+  - Si `|delta| > 1 min` y `|delta| ≤ 10 min`: ajusta `meta.phase_correction` del bus (desplaza fase en el ciclo) y bump `confidence` hacia arriba.
+  - Si `|delta| > 10 min`: descartar (probable outlier o cambio de turno) y registrar solo log.
+- Rate-limit: 1 inserción cada 10 s por `(client_id, line, stopCode)`.
 
-## Alcance de esta entrega (Fase 1)
+### 5. Wiring en preview (HTTP only)
+En `bus.dashboard.$code.tsx` y `FavoriteStopWidget`, cuando `usePredict === false` (preview) y llega un ETA real desde `getClientStopsRealtimeBatch`, disparar `reportRealtimeObservation` con `source="preview_real"`. Throttle a 30 s por parada+línea.
 
-Para mantener el cambio revisable, esta entrega ataca el núcleo:
+### 6. Mapa con flota persistida
+`BusLineLiveMap`:
+- En **HTTPS** (`usePredict===true`): hace `tickVirtualFleet` cada 10 s, lee `getActiveFleet` cada 3 s para refrescar marcadores. Posición intermedia se interpola en cliente entre ticks.
+- En **preview**: sigue el camino actual (cliente predice sobre la marcha) — no se duplica esfuerzo.
 
-1. **Tabla `virtual_buses`** (persistencia + identidad continua) y `bus_segment_stats` extendida con ventana horaria.
-2. **Nuevo módulo `src/lib/bus-engine/fleet/`** con:
-   - `cycle.ts` — `cycle_time = outbound + inbound + regulación`.
-   - `fleet-inference.ts` — `active_buses = round(cycle_time / headway)` por ventana horaria.
-   - `simulation.ts` — tick que mueve buses, aplica dwell y detecta regulación terminal.
-   - `derive-etas.ts` — produce las ETAs por parada a partir del estado de la flota (no al revés).
-   - `reconcile.ts` — al recibir snapshot, asigna observación al bus virtual más probable y corrige velocidad/headway.
-3. **ServerFn `tickVirtualFleet({ line })`** que avanza la simulación y persiste el estado. Se invoca on-demand desde el dashboard y desde el widget.
-4. **Dashboard (`bus.dashboard.$code.tsx`)** y **`FavoriteStopWidget`**: consumen `deriveEtasFromFleet()` en lugar del cálculo lineal actual. En HTTPS sigue siendo el único origen; en preview se mantiene la lectura real (regla actual intacta).
-5. **`BusLineLiveMap`**: los marcadores leen `virtual_buses` (posición, dirección, estado, confianza) en vez de interpolar entre paradas.
+### 7. fleet.ts: usar `meta.phase_correction`
+`generateActiveFleet` lee, por slot, una corrección de fase persistida (si existe) desde una caché ligera (la pasaremos al construir el plan o la leeremos del registro `virtual_buses` previo). Mantenemos pura la función actual y añadimos una variante `generateActiveFleetWithCorrections(plan, corrections, at)`.
 
-## Fuera de alcance (fases siguientes, separadas)
+### Detalles técnicos
+- `trip_key` estable = nombre del slot (`BUS01`…). `service_date` = fecha local Madrid.
+- `tickVirtualFleet` y `reportRealtimeObservation` no requieren auth (rate-limit por IP/`client_id`).
+- Todo HTTPS-only se mantiene desde el cliente (no se llama tick en preview, no se reconcilia desde HTTPS porque ahí no hay reales).
 
-- Detección automática de incorporación/desincorporación de buses (fase 2).
-- Bunching/gap detection visible en UI (fase 2).
-- Panel admin de calidad por línea con confianza, varianza y deriva (fase 3).
-- Aprendizaje bayesiano completo con peak_factor por ventana (fase 2 — ahora WMWA simple ya existente).
+### Fuera del alcance (queda para Fase 3)
+- Cron pg_cron de tick periódico (lo dejamos manual desde el cliente para no gastar).
+- UI admin de calidad/varianza/derivación.
+- Detección de bunching y gap visualizada en UI.
 
-## Detalles técnicos clave
-
-- **Identidad persistente**: `virtual_buses` se actualiza por `UPDATE`, no se borra y recrea por consulta. `bus_id = line|direction|trip_id|service_date`.
-- **Estados**: `moving | dwell_stop | terminal_regulation | layover | out_of_service`. El bus que llega a terminal pasa a `terminal_regulation` durante `terminal_wait_avg`, luego arranca el siguiente trip — no desaparece.
-- **Tick**: idempotente por `now`. Calcula `Δt = now - last_tick`, avanza `distance_from_origin` según velocidad del segmento ajustada por ventana horaria, gestiona dwell y regulación.
-- **Inferencia de flota**: por ventana horaria (`early_morning`, `morning_peak`, `midday`, `afternoon_peak`, `evening`, `night`), calcula `headway` desde `bus_schedules` y produce `active_buses = round(cycle_time / headway)`. Buses sobrantes pasan a `out_of_service`.
-- **Reconciliación con snapshot**: dado `(stop, eta_observada)`, busca el bus virtual cuyo ETA derivado esté más cerca; aplica WMWA al segmento correspondiente y reajusta su `distance_from_origin`. Si ningún bus encaja dentro de tolerancia, crea uno nuevo (incorporación) o marca outlier.
-- **Confianza por bus**: `f(snapshot_age, sample_count, variance, gap_desde_última_observación)`. Se propaga a las ETAs derivadas.
-- **HTTPS-only para la simulación**: se mantiene la regla actual. En preview, los componentes siguen leyendo realtime real sin pasar por el motor.
-- **Mapa**: marcadores leen `virtual_buses.position` (interpolada en cliente cada rAF entre ticks de 5–10s), con flecha de dirección y badge de confianza.
-
-## Lo que no se toca (regla de oro)
-
-- Estructura de rutas y navegación del agente.
-- Diseño del widget y del dashboard (solo cambia el origen de los números).
-- Deep link `qr.vectalia.es` se mantiene como botón externo.
-- En preview seguimos con tiempos reales sin tocar.
-
-## Migración SQL prevista
-
-```sql
-CREATE TABLE public.virtual_buses (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  line_code text NOT NULL,
-  direction smallint NOT NULL,
-  trip_key text NOT NULL,
-  service_date date NOT NULL,
-  current_segment_idx int,
-  segment_progress numeric,
-  distance_from_origin_m numeric,
-  speed_kmh numeric,
-  state text NOT NULL,
-  source text NOT NULL,
-  headway_slot text,
-  confidence numeric,
-  last_tick_at timestamptz,
-  last_observation_at timestamptz,
-  estimated_terminal_arrival timestamptz,
-  is_active boolean NOT NULL DEFAULT true,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (line_code, direction, trip_key, service_date)
-);
--- + GRANTs y RLS (SELECT auth+anon, INSERT/UPDATE solo service_role vía serverFn)
-
-ALTER TABLE public.bus_segment_stats
-  ADD COLUMN IF NOT EXISTS time_window text,
-  ADD COLUMN IF NOT EXISTS peak_factor numeric;
-```
-
-## Entrega propuesta
-
-Si apruebas, en este turno hago **Fase 1 completa**: migración SQL + módulos `fleet/` + serverFn de tick + reemplazo del origen de datos en dashboard, widget favorito y mapa. Fases 2 y 3 (detección automática de flota, bunching, panel admin de calidad) en turnos siguientes.
-
-¿Apruebas Fase 1 tal cual o quieres ajustar el alcance (ej. dejar el mapa para fase 2)?
+¿OK con este alcance o ajustamos antes de migrar?
