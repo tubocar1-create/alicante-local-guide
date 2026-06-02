@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useBusGraph } from "@/hooks/useBusGraph";
-import { getClientStopRealtime } from "@/lib/bus-realtime-client";
+import { useBusEngine } from "@/hooks/useBusEngine";
+import { predictStopArrivals } from "@/lib/bus-engine/predict";
 
 // Servicio urbano: el último bus parte de la parada extrema a las 22:30 y
 // cada línea abre a una hora particular por la mañana. Como cota segura
