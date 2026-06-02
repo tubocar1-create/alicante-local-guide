@@ -408,6 +408,76 @@ function BusDashboardPage() {
     };
   }, [code, initialRealtimeStopCodes, isNightLine]);
 
+  // ─────────────────────────────────────────────────────────────────────────
+  // Motor predictivo: en la versión HTTPS pública (vamosalicante.com /
+  // alicante-local-guide.lovable.app) los endpoints en vivo del Ayuntamiento
+  // están bloqueados por Akamai. En esa situación sustituimos los ETAs por
+  // los que predice nuestro motor y mostramos el bus desplazándose entre
+  // paradas. En el preview (`id-preview--*.lovable.app`) NO activamos esto
+  // porque el bus real / QR-bus carga correctamente.
+  const usePredict = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    const h = window.location.hostname;
+    if (/^id-preview--/.test(h)) return false;
+    if (h === "localhost" || h === "127.0.0.1") return false;
+    return true;
+  }, []);
+
+  const { data: engine } = useBusEngine();
+
+  const [predictedBusesByDir, setPredictedBusesByDir] = useState<
+    Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]>
+  >({ 1: [], 2: [] });
+
+  useEffect(() => {
+    if (!usePredict || !engine || isNightLine) return;
+    let cancelled = false;
+    const tick = () => {
+      if (cancelled) return;
+      const state = predictLineState(engine, code, new Date());
+
+      // 1) ETAs por parada: mejor (menor) etaMin por stopCode.
+      const best: Record<string, number> = {};
+      for (const e of state.stops) {
+        if (e.etaMin < 0) continue;
+        const prev = best[e.stopCode];
+        if (prev == null || e.etaMin < prev) best[e.stopCode] = e.etaMin;
+      }
+      setEtas((prev) => {
+        const next: Record<string, number[]> = { ...prev };
+        for (const dir of [1, 2] as const) {
+          for (const s of stopsByDir[dir]) {
+            const v = best[s.code];
+            if (typeof v === "number") next[s.code] = [v];
+          }
+        }
+        return next;
+      });
+
+      // 2) Buses activos por dirección con segmentIndex/progress para overlay.
+      const byDir: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]> = {
+        1: [],
+        2: [],
+      };
+      for (const b of state.buses) {
+        if (b.status !== "moving") continue;
+        byDir[b.direction].push({
+          busId: b.busId,
+          segmentIndex: b.segmentIndex,
+          segmentProgress: b.segmentProgress,
+        });
+      }
+      setPredictedBusesByDir(byDir);
+    };
+    tick();
+    const id = setInterval(tick, 400);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [usePredict, engine, code, isNightLine, stopsByDir]);
+
+
 
   const lineCategory = classifyLine(code);
   const catColor = lineCategory === "urban" ? "#EF4444" : "#3B82F6";
