@@ -417,7 +417,7 @@ function BusDashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [code, initialRealtimeStopCodes, isNightLine]);
+  }, [code, initialRealtimeStopCodes, isNightLine, usePredict]);
 
   // Motor predictivo: ver definición de `usePredict` arriba.
   const { data: engine } = useBusEngine();
