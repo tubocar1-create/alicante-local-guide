@@ -614,6 +614,7 @@ function BusDashboardPage() {
             nearestList={nearestByDir[2]}
             geoStatus={geoStatus}
             predictedBuses={predictedBusesByDir[2]}
+            disableLiveFetch={usePredict}
           />
 
         </div>
