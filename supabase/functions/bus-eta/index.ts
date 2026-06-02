@@ -1,7 +1,7 @@
 // Tiempo real oficial de SUBUS/Vectalia Alicante, sin proxy externo.
 // La fuente correcta es la página de parada consulta.aspx?p=N.
 
-const BASE = "https://qr.vectalia.es/Alicante";
+const BASE = "http://www.subus.es/QR/Alicante";
 const ARRIVAL_RE = /Linea\s+(\d{1,3}[A-Za-z]?)\s+([^:]+?)\s*:\s*(\d+)\s*min/gi;
 const FETCH_TIMEOUT_MS = 4_500;
 

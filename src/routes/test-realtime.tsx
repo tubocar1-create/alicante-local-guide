@@ -5,7 +5,7 @@ export const Route = createFileRoute("/test-realtime")({
   component: TestRealtimePage,
 });
 
-const TARGET_URL = "https://qr.vectalia.es/Alicante/consulta.aspx?p=5110";
+const TARGET_URL = "http://www.subus.es/QR/Alicante/consulta.aspx?p=5110";
 
 type Result = {
   ok: boolean;

@@ -1,6 +1,6 @@
 // Devuelve el JSON crudo de SUBUS para un stop usando consulta.aspx → datos.aspx.
 
-const BASE = "https://qr.vectalia.es/Alicante";
+const BASE = "http://www.subus.es/QR/Alicante";
 const UA =
   "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36";
 
