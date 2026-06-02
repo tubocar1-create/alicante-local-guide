@@ -90,6 +90,7 @@ import { Route as AdminIntegracionesRouteImport } from './routes/admin.integraci
 import { Route as AdminCronesRouteImport } from './routes/admin.crones'
 import { Route as AdminConsumoIaRouteImport } from './routes/admin.consumo-ia'
 import { Route as AdminConsumoGoogleRouteImport } from './routes/admin.consumo-google'
+import { Route as AdminBusSnapshotsRouteImport } from './routes/admin.bus-snapshots'
 import { Route as AdminBotonesOcultosRouteImport } from './routes/admin.botones-ocultos'
 import { Route as AdminBasesDatosRouteImport } from './routes/admin.bases-datos'
 import { Route as AdminAuditoriaFotosRouteImport } from './routes/admin.auditoria-fotos'
@@ -569,6 +570,11 @@ const AdminConsumoGoogleRoute = AdminConsumoGoogleRouteImport.update({
   path: '/consumo-google',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminBusSnapshotsRoute = AdminBusSnapshotsRouteImport.update({
+  id: '/bus-snapshots',
+  path: '/bus-snapshots',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminBotonesOcultosRoute = AdminBotonesOcultosRouteImport.update({
   id: '/botones-ocultos',
   path: '/botones-ocultos',
@@ -983,6 +989,7 @@ export interface FileRoutesByFullPath {
   '/admin/auditoria-fotos': typeof AdminAuditoriaFotosRoute
   '/admin/bases-datos': typeof AdminBasesDatosRoute
   '/admin/botones-ocultos': typeof AdminBotonesOcultosRoute
+  '/admin/bus-snapshots': typeof AdminBusSnapshotsRoute
   '/admin/consumo-google': typeof AdminConsumoGoogleRoute
   '/admin/consumo-ia': typeof AdminConsumoIaRoute
   '/admin/crones': typeof AdminCronesRoute
@@ -1135,6 +1142,7 @@ export interface FileRoutesByTo {
   '/admin/auditoria-fotos': typeof AdminAuditoriaFotosRoute
   '/admin/bases-datos': typeof AdminBasesDatosRoute
   '/admin/botones-ocultos': typeof AdminBotonesOcultosRoute
+  '/admin/bus-snapshots': typeof AdminBusSnapshotsRoute
   '/admin/consumo-google': typeof AdminConsumoGoogleRoute
   '/admin/consumo-ia': typeof AdminConsumoIaRoute
   '/admin/crones': typeof AdminCronesRoute
@@ -1291,6 +1299,7 @@ export interface FileRoutesById {
   '/admin/auditoria-fotos': typeof AdminAuditoriaFotosRoute
   '/admin/bases-datos': typeof AdminBasesDatosRoute
   '/admin/botones-ocultos': typeof AdminBotonesOcultosRoute
+  '/admin/bus-snapshots': typeof AdminBusSnapshotsRoute
   '/admin/consumo-google': typeof AdminConsumoGoogleRoute
   '/admin/consumo-ia': typeof AdminConsumoIaRoute
   '/admin/crones': typeof AdminCronesRoute
@@ -1448,6 +1457,7 @@ export interface FileRouteTypes {
     | '/admin/auditoria-fotos'
     | '/admin/bases-datos'
     | '/admin/botones-ocultos'
+    | '/admin/bus-snapshots'
     | '/admin/consumo-google'
     | '/admin/consumo-ia'
     | '/admin/crones'
@@ -1600,6 +1610,7 @@ export interface FileRouteTypes {
     | '/admin/auditoria-fotos'
     | '/admin/bases-datos'
     | '/admin/botones-ocultos'
+    | '/admin/bus-snapshots'
     | '/admin/consumo-google'
     | '/admin/consumo-ia'
     | '/admin/crones'
@@ -1755,6 +1766,7 @@ export interface FileRouteTypes {
     | '/admin/auditoria-fotos'
     | '/admin/bases-datos'
     | '/admin/botones-ocultos'
+    | '/admin/bus-snapshots'
     | '/admin/consumo-google'
     | '/admin/consumo-ia'
     | '/admin/crones'
@@ -2538,6 +2550,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminConsumoGoogleRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/bus-snapshots': {
+      id: '/admin/bus-snapshots'
+      path: '/bus-snapshots'
+      fullPath: '/admin/bus-snapshots'
+      preLoaderRoute: typeof AdminBusSnapshotsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/botones-ocultos': {
       id: '/admin/botones-ocultos'
       path: '/botones-ocultos'
@@ -3105,6 +3124,7 @@ interface AdminRouteChildren {
   AdminAuditoriaFotosRoute: typeof AdminAuditoriaFotosRoute
   AdminBasesDatosRoute: typeof AdminBasesDatosRoute
   AdminBotonesOcultosRoute: typeof AdminBotonesOcultosRoute
+  AdminBusSnapshotsRoute: typeof AdminBusSnapshotsRoute
   AdminConsumoGoogleRoute: typeof AdminConsumoGoogleRoute
   AdminConsumoIaRoute: typeof AdminConsumoIaRoute
   AdminCronesRoute: typeof AdminCronesRoute
@@ -3129,6 +3149,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAuditoriaFotosRoute: AdminAuditoriaFotosRoute,
   AdminBasesDatosRoute: AdminBasesDatosRoute,
   AdminBotonesOcultosRoute: AdminBotonesOcultosRoute,
+  AdminBusSnapshotsRoute: AdminBusSnapshotsRoute,
   AdminConsumoGoogleRoute: AdminConsumoGoogleRoute,
   AdminConsumoIaRoute: AdminConsumoIaRoute,
   AdminCronesRoute: AdminCronesRoute,
