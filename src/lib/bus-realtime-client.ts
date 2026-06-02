@@ -27,9 +27,9 @@ function normalizeLine(code: string): string {
   return String(parseInt(m[1], 10)) + m[2];
 }
 
-// El navegador no puede hacer fetch directo a qr.vectalia.es (CORS + 403
-// anti-bot). Delegamos en la server function `getStopRealtime`, que llama
-// a Vectalia desde el servidor con User-Agent real y caché compartida.
+// El navegador no puede hacer fetch directo al QR oficial (CORS/redirecciones).
+// Delegamos en la server function `getStopRealtime`, que llama a SUBUS directo
+// desde el servidor con User-Agent real y caché compartida.
 async function fetchStop(stopId: string): Promise<StopRealtimeResult> {
   const valid = cache.get(stopId);
   if (valid && Date.now() - valid.fetchedAt < CACHE_TTL_MS) return valid;

@@ -1,18 +1,9 @@
-// Proxy a tiempo real de Vectalia (Alicante).
-// 1) Intenta datos.aspx, que es el endpoint JSON usado por la página QR actual.
-// 2) Si no hay datos, cae a request.aspx y después al scrapeo legacy.
+// Tiempo real oficial de SUBUS/Vectalia Alicante, sin proxy externo.
+// Flujo: consulta.aspx?p=N para sesión/cookies y datos.aspx?p=N para JSON.
 
-const VECTALIA_RT_URL = "https://movilidad.vectalia.es/QR/Alicante/lib/request.aspx";
-const VECTALIA_DATA_URL = "https://movilidad.vectalia.es/QR/Alicante/datos.aspx";
-const VECTALIA_PAGE_URL = "https://movilidad.vectalia.es/QR/Alicante/consulta.aspx";
+const BASE = "http://www.subus.es/QR/Alicante";
 const ARRIVAL_RE = /Linea\s+(\d{1,3}[A-Za-z]?)\s+([^:]+?)\s*:\s*(\d+)\s*min/gi;
-const VECTALIA_LINE_CODES: Record<string, string> = {
-  "14": "084",
-};
-
-function toVectaliaLineCode(lineCode: string): string {
-  return VECTALIA_LINE_CODES[lineCode] ?? lineCode.padStart(3, "0");
-}
+const FETCH_TIMEOUT_MS = 4_500;
 
 function normalizeLine(code: string): string {
   // "008" -> "8", "24" -> "24", "23N" -> "23N"
@@ -30,20 +21,26 @@ const corsHeaders = {
 
 const browserHeaders = {
   "User-Agent":
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
-  Referer: "https://movilidad.vectalia.es/QR/Alicante/mapa.aspx",
+    "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36",
   "X-Requested-With": "XMLHttpRequest",
-  Accept: "*/*",
+  "X-Vectalia-App": "qr-alicante",
+  "Accept-Language": "es-ES,es;q=0.9",
+  Accept: "application/json, text/plain, */*",
 };
 
-async function sbFetch(target: string, init?: RequestInit): Promise<Response> {
-  const key = Deno.env.get("SCRAPINGBEE_API_KEY");
-  if (!key) return fetch(target, init);
-  const sb = new URL("https://app.scrapingbee.com/api/v1/");
-  sb.searchParams.set("api_key", key);
-  sb.searchParams.set("url", target);
-  sb.searchParams.set("render_js", "false");
-  return fetch(sb.toString(), { headers: { Accept: "*/*" } });
+async function fetchWithTimeout(url: string, init: RequestInit = {}, timeoutMs = FETCH_TIMEOUT_MS): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function extractCookies(res: Response): string {
+  const list = res.headers.getSetCookie?.() ?? [];
+  return list.map((c) => c.split(";")[0]).filter(Boolean).join("; ");
 }
 
 function parseEtas(raw: string, requestedLine: string): number[] {
@@ -57,58 +54,49 @@ function parseEtas(raw: string, requestedLine: string): number[] {
   return mins.sort((a, b) => a - b);
 }
 
-async function fetchFromDataEndpoint(stopCode: string, lineCode: string): Promise<number[]> {
+async function fetchFromSubus(stopCode: string, lineCode: string): Promise<{ etas: number[]; source: string }> {
   try {
-    const r = await sbFetch(
-      `${VECTALIA_DATA_URL}?p=${encodeURIComponent(stopCode)}`,
-      { headers: { ...browserHeaders, Referer: `${VECTALIA_PAGE_URL}?p=${encodeURIComponent(stopCode)}` } },
-    );
-    console.log("[bus-eta] datos.aspx status", r.status, "stop", stopCode);
-    if (!r.ok) return [];
-    const data = await r.json().catch(() => null) as { tiempos?: string } | null;
-    return parseEtas(data?.tiempos ?? "", lineCode);
-  } catch (e) {
-    console.error("[bus-eta] datos.aspx failed", e);
-    return [];
-  }
-}
+    const consultaUrl = `${BASE}/consulta.aspx?p=${encodeURIComponent(stopCode)}`;
+    const datosUrl = `${BASE}/datos.aspx?p=${encodeURIComponent(stopCode)}`;
 
-async function fetchFromRequestEndpoint(stopCode: string, lineCode: string): Promise<number[]> {
-  try {
-    const vectaliaLine = toVectaliaLineCode(lineCode);
-    const r = await sbFetch(
-      `${VECTALIA_RT_URL}?p=${encodeURIComponent(stopCode)}&l=${encodeURIComponent(vectaliaLine)}`,
-      { headers: browserHeaders },
-    );
-    console.log("[bus-eta] request.aspx status", r.status, "stop", stopCode);
-    if (!r.ok) return [];
-    return parseEtas(await r.text(), lineCode);
-  } catch (e) {
-    console.error("[bus-eta] request.aspx failed", e);
-    return [];
-  }
-}
+    const direct = await fetchWithTimeout(datosUrl, {
+      redirect: "follow",
+      headers: browserHeaders,
+    }).catch(() => null);
+    if (direct?.ok) {
+      const text = await direct.text();
+      const data = await Promise.resolve().then(() => JSON.parse(text) as { tiempos?: string }).catch(() => null);
+      const etas = parseEtas(data?.tiempos ?? text, lineCode);
+      if (etas.length > 0) return { etas, source: "subus-datos-direct" };
+    }
 
-async function fetchFromStopPage(stopCode: string, lineCode: string): Promise<number[]> {
-  try {
-    const r = await sbFetch(
-      `${VECTALIA_PAGE_URL}?p=${encodeURIComponent(stopCode)}`,
-      { headers: browserHeaders },
-    );
-    console.log("[bus-eta] consulta.aspx status", r.status, "stop", stopCode);
-    if (!r.ok) return [];
-    const html = await r.text();
-    // Extraer el bloque `var text = "...";`
-    const idx = html.indexOf('var text = "');
-    if (idx === -1) return [];
-    // El bloque concatena strings con `+`; extraemos hasta el ';' final.
-    const tail = html.slice(idx);
-    const end = tail.indexOf('";\n\t\t\tvar textavisos');
-    const block = end > 0 ? tail.slice(0, end + 1) : tail.slice(0, 5000);
-    return parseEtas(block, lineCode);
+    const page = await fetchWithTimeout(consultaUrl, {
+      redirect: "follow",
+      headers: {
+        "User-Agent": browserHeaders["User-Agent"],
+        Accept: "text/html,application/xhtml+xml",
+        "Accept-Language": browserHeaders["Accept-Language"],
+      },
+    });
+    const cookie = extractCookies(page);
+    await page.arrayBuffer().catch(() => null);
+
+    const r = await fetchWithTimeout(datosUrl, {
+      redirect: "follow",
+      headers: {
+        ...browserHeaders,
+        Referer: consultaUrl,
+        ...(cookie ? { Cookie: cookie } : {}),
+      },
+    });
+    console.log("[bus-eta] subus datos.aspx status", r.status, "stop", stopCode);
+    if (!r.ok) return { etas: [], source: `subus-http-${r.status}` };
+    const text = await r.text();
+    const data = await Promise.resolve().then(() => JSON.parse(text) as { tiempos?: string }).catch(() => null);
+    return { etas: parseEtas(data?.tiempos ?? text, lineCode), source: "subus-datos-session" };
   } catch (e) {
-    console.error("[bus-eta] consulta.aspx failed", e);
-    return [];
+    console.error("[bus-eta] subus direct failed", e);
+    return { etas: [], source: "subus-error" };
   }
 }
 
@@ -131,16 +119,7 @@ Deno.serve(async (req) => {
     });
   }
 
-  let etas = await fetchFromDataEndpoint(stop, line);
-  let source = "data";
-  if (etas.length === 0) {
-    etas = await fetchFromRequestEndpoint(stop, line);
-    source = "request";
-  }
-  if (etas.length === 0) {
-    etas = await fetchFromStopPage(stop, line);
-    source = "page";
-  }
+  const { etas, source } = await fetchFromSubus(stop, line);
 
   let etaMin: number | null = null;
   if (etas.length > 0) {

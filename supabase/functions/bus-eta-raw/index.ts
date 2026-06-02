@@ -1,13 +1,12 @@
-// Devuelve el texto crudo de Vectalia para un stop (y línea opcional).
-// Lo usa el server fn getStopRealtime para parsear con coordenadas.
+// Devuelve el JSON crudo de SUBUS para un stop usando consulta.aspx → datos.aspx.
 
-const VECTALIA_RT_URL = "https://qr.vectalia.es/Alicante/lib/request.aspx";
-const VECTALIA_LINE_CODES: Record<string, string> = {
-  "14": "084",
-};
+const BASE = "http://www.subus.es/QR/Alicante";
+const UA =
+  "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36";
 
-function toVectaliaLineCode(lineCode: string): string {
-  return VECTALIA_LINE_CODES[lineCode] ?? lineCode.padStart(3, "0");
+function extractCookies(res: Response): string {
+  const list = res.headers.getSetCookie?.() ?? [];
+  return list.map((c) => c.split(";")[0]).filter(Boolean).join("; ");
 }
 
 const corsHeaders = {
@@ -33,28 +32,33 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const padded = line ? toVectaliaLineCode(line) : "";
-    const target = `${VECTALIA_RT_URL}?p=${encodeURIComponent(stop)}&l=${encodeURIComponent(padded)}`;
-    const sbKey = Deno.env.get("SCRAPINGBEE_API_KEY");
-    let fetchUrl = target;
-    if (sbKey) {
-      const sb = new URL("https://app.scrapingbee.com/api/v1/");
-      sb.searchParams.set("api_key", sbKey);
-      sb.searchParams.set("url", target);
-      sb.searchParams.set("render_js", "false");
-      fetchUrl = sb.toString();
-    }
-    const r = await fetch(fetchUrl, {
+    const consultaUrl = `${BASE}/consulta.aspx?p=${encodeURIComponent(stop)}`;
+    const target = `${BASE}/datos.aspx?p=${encodeURIComponent(stop)}`;
+    const page = await fetch(consultaUrl, {
+      redirect: "follow",
       headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
-        Referer: "https://qr.vectalia.es/Alicante/mapa.aspx",
+        "User-Agent": UA,
+        Accept: "text/html,application/xhtml+xml",
+        "Accept-Language": "es-ES,es;q=0.9",
+      },
+    });
+    const cookie = extractCookies(page);
+    await page.arrayBuffer().catch(() => null);
+
+    const r = await fetch(target, {
+      redirect: "follow",
+      headers: {
+        "User-Agent": UA,
+        Referer: consultaUrl,
         "X-Requested-With": "XMLHttpRequest",
-        Accept: "*/*",
+        "X-Vectalia-App": "qr-alicante",
+        Accept: "application/json, text/plain, */*",
+        "Accept-Language": "es-ES,es;q=0.9",
+        ...(cookie ? { Cookie: cookie } : {}),
       },
     });
     const raw = r.ok ? await r.text() : "";
-    return new Response(JSON.stringify({ raw, status: r.status, via: sbKey ? "scrapingbee" : "direct" }), {
+    return new Response(JSON.stringify({ raw, status: r.status, sessionStatus: page.status, via: "subus-direct" }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });

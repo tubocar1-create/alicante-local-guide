@@ -128,25 +128,6 @@ async function fetchStopFromSubus(stopCode: string): Promise<StopArrival[]> {
   return parseTiempos(tiempos);
 }
 
-async function fetchStopViaScrapingBee(stopCode: string): Promise<StopArrival[]> {
-  const key = process.env.SCRAPINGBEE_API_KEY;
-  if (!key) return [];
-  const target = `https://movilidad.vectalia.es/QR/Alicante/datos.aspx?p=${encodeURIComponent(stopCode)}`;
-  const sb = new URL("https://app.scrapingbee.com/api/v1/");
-  sb.searchParams.set("api_key", key);
-  sb.searchParams.set("url", target);
-  sb.searchParams.set("render_js", "false");
-  const r = await fetchWithTimeout(sb.toString(), { headers: { Accept: "application/json, text/plain, */*" } }, 5_500);
-  if (!r.ok) return [];
-  const text = await r.text();
-  try {
-    const json = JSON.parse(text) as { tiempos?: string };
-    return parseTiempos(json.tiempos ?? "");
-  } catch {
-    return parseTiempos(text);
-  }
-}
-
 async function fetchStopCached(stopCode: string): Promise<StopArrival[]> {
   const cached = realtimeCache.get(stopCode);
   if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) return cached.arrivals;
@@ -160,13 +141,6 @@ async function fetchStopCached(stopCode: string): Promise<StopArrival[]> {
       arrivals = await fetchStopFromSubus(stopCode);
     } catch {
       arrivals = [];
-    }
-    if (arrivals.length === 0) {
-      try {
-        arrivals = await fetchStopViaScrapingBee(stopCode);
-      } catch {
-        arrivals = [];
-      }
     }
 
     const seen = new Set<string>();
