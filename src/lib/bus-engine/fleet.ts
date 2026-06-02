@@ -25,6 +25,16 @@ import { haversineMeters, lerp, type LatLng } from "./geometry";
 import { segmentKey, segmentMinutes } from "./segments";
 import { formatClock, getDeparturesForLine, nowMinutes } from "./schedule";
 import { dayType, detectProfile } from "./peak-detector";
+import { getServiceSlot, type ServiceSlot } from "./slots";
+import { computeFleetSize, fleetSizeCap } from "./fleet-sizer";
+import { validateFleetConsistency, type ValidatorReport } from "./fleet-validator";
+import {
+  classifyPredictionQuality,
+  degradeConfidenceByAge,
+  shouldEnterSafeMode,
+  type PredictionQuality,
+} from "./safe-mode";
+
 
 export type OrderedStop = LineStop & { lat: number | null; lng: number | null };
 
