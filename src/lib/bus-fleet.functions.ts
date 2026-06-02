@@ -213,7 +213,7 @@ export const reportRealtimeObservation = createServerFn({ method: "POST" })
     if (Math.abs(delta) > 10) return { applied: false, reason: "outlier", delta };
 
     // El bus virtual se llama `${line}_${slot}`; extraemos slot.
-    const slotKey = best.busId.split("_").pop();
+    const slotKey = best.busId?.split("_").pop();
     if (!slotKey) return { applied: false, reason: "no_slot" };
 
     // delta>0 → bus virtual va ADELANTADO al real → atrasamos fase (correction negativa)
