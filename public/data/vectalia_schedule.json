@@ -343,114 +343,20 @@
           "code": "3900",
           "name": "SAN GABRIEL-PLAZA BOTELLA"
         }
-      ],
-      [
-        {
-          "code": "5412",
-          "name": "."
-        },
-        {
-          "code": "54112",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "5232",
-          "name": "."
-        },
-        {
-          "code": "0254",
-          "name": "."
-        },
-        {
-          "code": "9765",
-          "name": "."
-        },
-        {
-          "code": "9766",
-          "name": "."
-        },
-        {
-          "code": "2022",
-          "name": "."
-        },
-        {
-          "code": "9191",
-          "name": "."
-        },
-        {
-          "code": "9844",
-          "name": "."
-        },
-        {
-          "code": "841",
-          "name": "."
-        },
-        {
-          "code": "5201",
-          "name": "."
-        },
-        {
-          "code": "993",
-          "name": "."
-        },
-        {
-          "code": "0614",
-          "name": "."
-        },
-        {
-          "code": "6183",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "7595",
-          "name": "."
-        },
-        {
-          "code": "0197",
-          "name": "."
-        },
-        {
-          "code": "0441",
-          "name": "."
-        },
-        {
-          "code": "1383",
-          "name": "."
-        },
-        {
-          "code": "0951",
-          "name": "."
-        },
-        {
-          "code": "8952",
-          "name": "."
-        },
-        {
-          "code": "2464",
-          "name": "."
-        },
-        {
-          "code": "616",
-          "name": "."
-        }
       ]
     ],
     "routeStopCount": [
       47,
-      37,
-      24
+      37
     ],
-    "sampleTimes": [],
-    "timeCount": 0,
-    "frequencyMin": null
+    "schedule": {
+      "firstDeparture": "05:57",
+      "lastDeparture": "22:30",
+      "uniqueDepartures": 294,
+      "avgGapMin": 3,
+      "medianGapMin": 3
+    },
+    "rawTimeCount": 672
   },
   {
     "code": "02",
@@ -704,114 +610,20 @@
           "code": "4000",
           "name": "LA FLORIDA-ASTURIAS"
         }
-      ],
-      [
-        {
-          "code": "5412",
-          "name": "."
-        },
-        {
-          "code": "54112",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "5232",
-          "name": "."
-        },
-        {
-          "code": "0254",
-          "name": "."
-        },
-        {
-          "code": "9765",
-          "name": "."
-        },
-        {
-          "code": "9766",
-          "name": "."
-        },
-        {
-          "code": "2022",
-          "name": "."
-        },
-        {
-          "code": "9191",
-          "name": "."
-        },
-        {
-          "code": "9844",
-          "name": "."
-        },
-        {
-          "code": "841",
-          "name": "."
-        },
-        {
-          "code": "5201",
-          "name": "."
-        },
-        {
-          "code": "993",
-          "name": "."
-        },
-        {
-          "code": "0614",
-          "name": "."
-        },
-        {
-          "code": "6183",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "7595",
-          "name": "."
-        },
-        {
-          "code": "0197",
-          "name": "."
-        },
-        {
-          "code": "0441",
-          "name": "."
-        },
-        {
-          "code": "1383",
-          "name": "."
-        },
-        {
-          "code": "0951",
-          "name": "."
-        },
-        {
-          "code": "8952",
-          "name": "."
-        },
-        {
-          "code": "2464",
-          "name": "."
-        },
-        {
-          "code": "616",
-          "name": "."
-        }
       ]
     ],
     "routeStopCount": [
       29,
-      32,
-      24
+      32
     ],
-    "sampleTimes": [],
-    "timeCount": 0,
-    "frequencyMin": null
+    "schedule": {
+      "firstDeparture": "06:15",
+      "lastDeparture": "22:30",
+      "uniqueDepartures": 299,
+      "avgGapMin": 3,
+      "medianGapMin": 2
+    },
+    "rawTimeCount": 744
   },
   {
     "code": "03",
@@ -1029,114 +841,20 @@
           "code": "4100",
           "name": "CIUDAD DE ASÍS"
         }
-      ],
-      [
-        {
-          "code": "5412",
-          "name": "."
-        },
-        {
-          "code": "54112",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "5232",
-          "name": "."
-        },
-        {
-          "code": "0254",
-          "name": "."
-        },
-        {
-          "code": "9765",
-          "name": "."
-        },
-        {
-          "code": "9766",
-          "name": "."
-        },
-        {
-          "code": "2022",
-          "name": "."
-        },
-        {
-          "code": "9191",
-          "name": "."
-        },
-        {
-          "code": "9844",
-          "name": "."
-        },
-        {
-          "code": "841",
-          "name": "."
-        },
-        {
-          "code": "5201",
-          "name": "."
-        },
-        {
-          "code": "993",
-          "name": "."
-        },
-        {
-          "code": "0614",
-          "name": "."
-        },
-        {
-          "code": "6183",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "7595",
-          "name": "."
-        },
-        {
-          "code": "0197",
-          "name": "."
-        },
-        {
-          "code": "0441",
-          "name": "."
-        },
-        {
-          "code": "1383",
-          "name": "."
-        },
-        {
-          "code": "0951",
-          "name": "."
-        },
-        {
-          "code": "8952",
-          "name": "."
-        },
-        {
-          "code": "2464",
-          "name": "."
-        },
-        {
-          "code": "616",
-          "name": "."
-        }
       ]
     ],
     "routeStopCount": [
       25,
-      27,
-      24
+      27
     ],
-    "sampleTimes": [],
-    "timeCount": 0,
-    "frequencyMin": null
+    "schedule": {
+      "firstDeparture": "06:00",
+      "lastDeparture": "22:30",
+      "uniqueDepartures": 405,
+      "avgGapMin": 2,
+      "medianGapMin": 2
+    },
+    "rawTimeCount": 1060
   },
   {
     "code": "04",
@@ -1502,114 +1220,20 @@
           "code": "4200",
           "name": "CEMENTERIO"
         }
-      ],
-      [
-        {
-          "code": "5412",
-          "name": "."
-        },
-        {
-          "code": "54112",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "5232",
-          "name": "."
-        },
-        {
-          "code": "0254",
-          "name": "."
-        },
-        {
-          "code": "9765",
-          "name": "."
-        },
-        {
-          "code": "9766",
-          "name": "."
-        },
-        {
-          "code": "2022",
-          "name": "."
-        },
-        {
-          "code": "9191",
-          "name": "."
-        },
-        {
-          "code": "9844",
-          "name": "."
-        },
-        {
-          "code": "841",
-          "name": "."
-        },
-        {
-          "code": "5201",
-          "name": "."
-        },
-        {
-          "code": "993",
-          "name": "."
-        },
-        {
-          "code": "0614",
-          "name": "."
-        },
-        {
-          "code": "6183",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "7595",
-          "name": "."
-        },
-        {
-          "code": "0197",
-          "name": "."
-        },
-        {
-          "code": "0441",
-          "name": "."
-        },
-        {
-          "code": "1383",
-          "name": "."
-        },
-        {
-          "code": "0951",
-          "name": "."
-        },
-        {
-          "code": "8952",
-          "name": "."
-        },
-        {
-          "code": "2464",
-          "name": "."
-        },
-        {
-          "code": "616",
-          "name": "."
-        }
       ]
     ],
     "routeStopCount": [
       47,
-      42,
-      24
+      42
     ],
-    "sampleTimes": [],
-    "timeCount": 0,
-    "frequencyMin": null
+    "schedule": {
+      "firstDeparture": "06:00",
+      "lastDeparture": "22:30",
+      "uniqueDepartures": 256,
+      "avgGapMin": 4,
+      "medianGapMin": 3
+    },
+    "rawTimeCount": 644
   },
   {
     "code": "05",
@@ -1815,114 +1439,20 @@
           "code": "4600",
           "name": "RAMBLA-SAN JOSÉ"
         }
-      ],
-      [
-        {
-          "code": "5412",
-          "name": "."
-        },
-        {
-          "code": "54112",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "5232",
-          "name": "."
-        },
-        {
-          "code": "0254",
-          "name": "."
-        },
-        {
-          "code": "9765",
-          "name": "."
-        },
-        {
-          "code": "9766",
-          "name": "."
-        },
-        {
-          "code": "2022",
-          "name": "."
-        },
-        {
-          "code": "9191",
-          "name": "."
-        },
-        {
-          "code": "9844",
-          "name": "."
-        },
-        {
-          "code": "841",
-          "name": "."
-        },
-        {
-          "code": "5201",
-          "name": "."
-        },
-        {
-          "code": "993",
-          "name": "."
-        },
-        {
-          "code": "0614",
-          "name": "."
-        },
-        {
-          "code": "6183",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "7595",
-          "name": "."
-        },
-        {
-          "code": "0197",
-          "name": "."
-        },
-        {
-          "code": "0441",
-          "name": "."
-        },
-        {
-          "code": "1383",
-          "name": "."
-        },
-        {
-          "code": "0951",
-          "name": "."
-        },
-        {
-          "code": "8952",
-          "name": "."
-        },
-        {
-          "code": "2464",
-          "name": "."
-        },
-        {
-          "code": "616",
-          "name": "."
-        }
       ]
     ],
     "routeStopCount": [
       21,
-      28,
-      24
+      28
     ],
-    "sampleTimes": [],
-    "timeCount": 0,
-    "frequencyMin": null
+    "schedule": {
+      "firstDeparture": "06:55",
+      "lastDeparture": "22:30",
+      "uniqueDepartures": 236,
+      "avgGapMin": 4,
+      "medianGapMin": 3
+    },
+    "rawTimeCount": 542
   },
   {
     "code": "06",
@@ -2132,114 +1662,20 @@
           "code": "4450",
           "name": "ESTACIÓN DE AUTOBUSES"
         }
-      ],
-      [
-        {
-          "code": "5412",
-          "name": "."
-        },
-        {
-          "code": "54112",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "5232",
-          "name": "."
-        },
-        {
-          "code": "0254",
-          "name": "."
-        },
-        {
-          "code": "9765",
-          "name": "."
-        },
-        {
-          "code": "9766",
-          "name": "."
-        },
-        {
-          "code": "2022",
-          "name": "."
-        },
-        {
-          "code": "9191",
-          "name": "."
-        },
-        {
-          "code": "9844",
-          "name": "."
-        },
-        {
-          "code": "841",
-          "name": "."
-        },
-        {
-          "code": "5201",
-          "name": "."
-        },
-        {
-          "code": "993",
-          "name": "."
-        },
-        {
-          "code": "0614",
-          "name": "."
-        },
-        {
-          "code": "6183",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "7595",
-          "name": "."
-        },
-        {
-          "code": "0197",
-          "name": "."
-        },
-        {
-          "code": "0441",
-          "name": "."
-        },
-        {
-          "code": "1383",
-          "name": "."
-        },
-        {
-          "code": "0951",
-          "name": "."
-        },
-        {
-          "code": "8952",
-          "name": "."
-        },
-        {
-          "code": "2464",
-          "name": "."
-        },
-        {
-          "code": "616",
-          "name": "."
-        }
       ]
     ],
     "routeStopCount": [
       23,
-      27,
-      24
+      27
     ],
-    "sampleTimes": [],
-    "timeCount": 0,
-    "frequencyMin": null
+    "schedule": {
+      "firstDeparture": "06:00",
+      "lastDeparture": "22:30",
+      "uniqueDepartures": 274,
+      "avgGapMin": 4,
+      "medianGapMin": 3
+    },
+    "rawTimeCount": 700
   },
   {
     "code": "07",
@@ -2483,115 +1919,21 @@
           "code": "4760",
           "name": "ESTACIÓN-Ó. ESPLÁ"
         }
-      ],
-      [
-        {
-          "code": "5412",
-          "name": "."
-        },
-        {
-          "code": "54112",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "5232",
-          "name": "."
-        },
-        {
-          "code": "0254",
-          "name": "."
-        },
-        {
-          "code": "9765",
-          "name": "."
-        },
-        {
-          "code": "9766",
-          "name": "."
-        },
-        {
-          "code": "2022",
-          "name": "."
-        },
-        {
-          "code": "9191",
-          "name": "."
-        },
-        {
-          "code": "9844",
-          "name": "."
-        },
-        {
-          "code": "841",
-          "name": "."
-        },
-        {
-          "code": "5201",
-          "name": "."
-        },
-        {
-          "code": "993",
-          "name": "."
-        },
-        {
-          "code": "0614",
-          "name": "."
-        },
-        {
-          "code": "6183",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "7595",
-          "name": "."
-        },
-        {
-          "code": "0197",
-          "name": "."
-        },
-        {
-          "code": "0441",
-          "name": "."
-        },
-        {
-          "code": "1383",
-          "name": "."
-        },
-        {
-          "code": "0951",
-          "name": "."
-        },
-        {
-          "code": "8952",
-          "name": "."
-        },
-        {
-          "code": "2464",
-          "name": "."
-        },
-        {
-          "code": "616",
-          "name": "."
-        }
       ]
     ],
     "routeStopCount": [
       18,
       24,
-      16,
-      24
+      16
     ],
-    "sampleTimes": [],
-    "timeCount": 0,
-    "frequencyMin": null
+    "schedule": {
+      "firstDeparture": "06:20",
+      "lastDeparture": "22:00",
+      "uniqueDepartures": 46,
+      "avgGapMin": 21,
+      "medianGapMin": 20
+    },
+    "rawTimeCount": 152
   },
   {
     "code": "08A",
@@ -2729,114 +2071,20 @@
           "code": "2688",
           "name": "RAMBLA-PORTAL DE ELCHE"
         }
-      ],
-      [
-        {
-          "code": "5412",
-          "name": "."
-        },
-        {
-          "code": "54112",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "5232",
-          "name": "."
-        },
-        {
-          "code": "0254",
-          "name": "."
-        },
-        {
-          "code": "9765",
-          "name": "."
-        },
-        {
-          "code": "9766",
-          "name": "."
-        },
-        {
-          "code": "2022",
-          "name": "."
-        },
-        {
-          "code": "9191",
-          "name": "."
-        },
-        {
-          "code": "9844",
-          "name": "."
-        },
-        {
-          "code": "841",
-          "name": "."
-        },
-        {
-          "code": "5201",
-          "name": "."
-        },
-        {
-          "code": "993",
-          "name": "."
-        },
-        {
-          "code": "0614",
-          "name": "."
-        },
-        {
-          "code": "6183",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "7595",
-          "name": "."
-        },
-        {
-          "code": "0197",
-          "name": "."
-        },
-        {
-          "code": "0441",
-          "name": "."
-        },
-        {
-          "code": "1383",
-          "name": "."
-        },
-        {
-          "code": "0951",
-          "name": "."
-        },
-        {
-          "code": "8952",
-          "name": "."
-        },
-        {
-          "code": "2464",
-          "name": "."
-        },
-        {
-          "code": "616",
-          "name": "."
-        }
       ]
     ],
     "routeStopCount": [
       15,
-      17,
-      24
+      17
     ],
-    "sampleTimes": [],
-    "timeCount": 0,
-    "frequencyMin": null
+    "schedule": {
+      "firstDeparture": "06:00",
+      "lastDeparture": "22:30",
+      "uniqueDepartures": 289,
+      "avgGapMin": 3,
+      "medianGapMin": 2
+    },
+    "rawTimeCount": 766
   },
   {
     "code": "09",
@@ -3082,114 +2330,20 @@
           "code": "4760",
           "name": "ESTACIÓN-Ó. ESPLÁ"
         }
-      ],
-      [
-        {
-          "code": "5412",
-          "name": "."
-        },
-        {
-          "code": "54112",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "5232",
-          "name": "."
-        },
-        {
-          "code": "0254",
-          "name": "."
-        },
-        {
-          "code": "9765",
-          "name": "."
-        },
-        {
-          "code": "9766",
-          "name": "."
-        },
-        {
-          "code": "2022",
-          "name": "."
-        },
-        {
-          "code": "9191",
-          "name": "."
-        },
-        {
-          "code": "9844",
-          "name": "."
-        },
-        {
-          "code": "841",
-          "name": "."
-        },
-        {
-          "code": "5201",
-          "name": "."
-        },
-        {
-          "code": "993",
-          "name": "."
-        },
-        {
-          "code": "0614",
-          "name": "."
-        },
-        {
-          "code": "6183",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "7595",
-          "name": "."
-        },
-        {
-          "code": "0197",
-          "name": "."
-        },
-        {
-          "code": "0441",
-          "name": "."
-        },
-        {
-          "code": "1383",
-          "name": "."
-        },
-        {
-          "code": "0951",
-          "name": "."
-        },
-        {
-          "code": "8952",
-          "name": "."
-        },
-        {
-          "code": "2464",
-          "name": "."
-        },
-        {
-          "code": "616",
-          "name": "."
-        }
       ]
     ],
     "routeStopCount": [
       29,
-      30,
-      24
+      30
     ],
-    "sampleTimes": [],
-    "timeCount": 0,
-    "frequencyMin": null
+    "schedule": {
+      "firstDeparture": "06:30",
+      "lastDeparture": "22:30",
+      "uniqueDepartures": 174,
+      "avgGapMin": 6,
+      "medianGapMin": 3
+    },
+    "rawTimeCount": 444
   },
   {
     "code": "12",
@@ -3363,114 +2517,20 @@
           "code": "4359",
           "name": "PUERTA DEL MAR"
         }
-      ],
-      [
-        {
-          "code": "5412",
-          "name": "."
-        },
-        {
-          "code": "54112",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "5232",
-          "name": "."
-        },
-        {
-          "code": "0254",
-          "name": "."
-        },
-        {
-          "code": "9765",
-          "name": "."
-        },
-        {
-          "code": "9766",
-          "name": "."
-        },
-        {
-          "code": "2022",
-          "name": "."
-        },
-        {
-          "code": "9191",
-          "name": "."
-        },
-        {
-          "code": "9844",
-          "name": "."
-        },
-        {
-          "code": "841",
-          "name": "."
-        },
-        {
-          "code": "5201",
-          "name": "."
-        },
-        {
-          "code": "993",
-          "name": "."
-        },
-        {
-          "code": "0614",
-          "name": "."
-        },
-        {
-          "code": "6183",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "7595",
-          "name": "."
-        },
-        {
-          "code": "0197",
-          "name": "."
-        },
-        {
-          "code": "0441",
-          "name": "."
-        },
-        {
-          "code": "1383",
-          "name": "."
-        },
-        {
-          "code": "0951",
-          "name": "."
-        },
-        {
-          "code": "8952",
-          "name": "."
-        },
-        {
-          "code": "2464",
-          "name": "."
-        },
-        {
-          "code": "616",
-          "name": "."
-        }
       ]
     ],
     "routeStopCount": [
       22,
-      19,
-      24
+      19
     ],
-    "sampleTimes": [],
-    "timeCount": 0,
-    "frequencyMin": null
+    "schedule": {
+      "firstDeparture": "07:00",
+      "lastDeparture": "22:30",
+      "uniqueDepartures": 200,
+      "avgGapMin": 5,
+      "medianGapMin": 3
+    },
+    "rawTimeCount": 542
   },
   {
     "code": "13",
@@ -3660,114 +2720,20 @@
           "code": "2688",
           "name": "RAMBLA-PORTAL DE ELCHE"
         }
-      ],
-      [
-        {
-          "code": "5412",
-          "name": "."
-        },
-        {
-          "code": "54112",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "5232",
-          "name": "."
-        },
-        {
-          "code": "0254",
-          "name": "."
-        },
-        {
-          "code": "9765",
-          "name": "."
-        },
-        {
-          "code": "9766",
-          "name": "."
-        },
-        {
-          "code": "2022",
-          "name": "."
-        },
-        {
-          "code": "9191",
-          "name": "."
-        },
-        {
-          "code": "9844",
-          "name": "."
-        },
-        {
-          "code": "841",
-          "name": "."
-        },
-        {
-          "code": "5201",
-          "name": "."
-        },
-        {
-          "code": "993",
-          "name": "."
-        },
-        {
-          "code": "0614",
-          "name": "."
-        },
-        {
-          "code": "6183",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "7595",
-          "name": "."
-        },
-        {
-          "code": "0197",
-          "name": "."
-        },
-        {
-          "code": "0441",
-          "name": "."
-        },
-        {
-          "code": "1383",
-          "name": "."
-        },
-        {
-          "code": "0951",
-          "name": "."
-        },
-        {
-          "code": "8952",
-          "name": "."
-        },
-        {
-          "code": "2464",
-          "name": "."
-        },
-        {
-          "code": "616",
-          "name": "."
-        }
       ]
     ],
     "routeStopCount": [
       24,
-      21,
-      24
+      21
     ],
-    "sampleTimes": [],
-    "timeCount": 0,
-    "frequencyMin": null
+    "schedule": {
+      "firstDeparture": "06:00",
+      "lastDeparture": "22:30",
+      "uniqueDepartures": 196,
+      "avgGapMin": 5,
+      "medianGapMin": 4
+    },
+    "rawTimeCount": 550
   },
   {
     "code": "14",
@@ -3945,114 +2911,20 @@
           "code": "3166",
           "name": "GRAN VIA SUR"
         }
-      ],
-      [
-        {
-          "code": "5412",
-          "name": "."
-        },
-        {
-          "code": "54112",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "5232",
-          "name": "."
-        },
-        {
-          "code": "0254",
-          "name": "."
-        },
-        {
-          "code": "9765",
-          "name": "."
-        },
-        {
-          "code": "9766",
-          "name": "."
-        },
-        {
-          "code": "2022",
-          "name": "."
-        },
-        {
-          "code": "9191",
-          "name": "."
-        },
-        {
-          "code": "9844",
-          "name": "."
-        },
-        {
-          "code": "841",
-          "name": "."
-        },
-        {
-          "code": "5201",
-          "name": "."
-        },
-        {
-          "code": "993",
-          "name": "."
-        },
-        {
-          "code": "0614",
-          "name": "."
-        },
-        {
-          "code": "6183",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "7595",
-          "name": "."
-        },
-        {
-          "code": "0197",
-          "name": "."
-        },
-        {
-          "code": "0441",
-          "name": "."
-        },
-        {
-          "code": "1383",
-          "name": "."
-        },
-        {
-          "code": "0951",
-          "name": "."
-        },
-        {
-          "code": "8952",
-          "name": "."
-        },
-        {
-          "code": "2464",
-          "name": "."
-        },
-        {
-          "code": "616",
-          "name": "."
-        }
       ]
     ],
     "routeStopCount": [
       21,
-      21,
-      24
+      21
     ],
-    "sampleTimes": [],
-    "timeCount": 0,
-    "frequencyMin": null
+    "schedule": {
+      "firstDeparture": "07:00",
+      "lastDeparture": "22:30",
+      "uniqueDepartures": 135,
+      "avgGapMin": 7,
+      "medianGapMin": 7
+    },
+    "rawTimeCount": 442
   },
   {
     "code": "22",
@@ -4318,114 +3190,20 @@
           "code": "2964",
           "name": "ESTACIÓN-Ó. ESPLÁ"
         }
-      ],
-      [
-        {
-          "code": "5412",
-          "name": "."
-        },
-        {
-          "code": "54112",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "5232",
-          "name": "."
-        },
-        {
-          "code": "0254",
-          "name": "."
-        },
-        {
-          "code": "9765",
-          "name": "."
-        },
-        {
-          "code": "9766",
-          "name": "."
-        },
-        {
-          "code": "2022",
-          "name": "."
-        },
-        {
-          "code": "9191",
-          "name": "."
-        },
-        {
-          "code": "9844",
-          "name": "."
-        },
-        {
-          "code": "841",
-          "name": "."
-        },
-        {
-          "code": "5201",
-          "name": "."
-        },
-        {
-          "code": "993",
-          "name": "."
-        },
-        {
-          "code": "0614",
-          "name": "."
-        },
-        {
-          "code": "6183",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "7595",
-          "name": "."
-        },
-        {
-          "code": "0197",
-          "name": "."
-        },
-        {
-          "code": "0441",
-          "name": "."
-        },
-        {
-          "code": "1383",
-          "name": "."
-        },
-        {
-          "code": "0951",
-          "name": "."
-        },
-        {
-          "code": "8952",
-          "name": "."
-        },
-        {
-          "code": "2464",
-          "name": "."
-        },
-        {
-          "code": "616",
-          "name": "."
-        }
       ]
     ],
     "routeStopCount": [
       34,
-      30,
-      24
+      30
     ],
-    "sampleTimes": [],
-    "timeCount": 0,
-    "frequencyMin": null
+    "schedule": {
+      "firstDeparture": "06:30",
+      "lastDeparture": "22:30",
+      "uniqueDepartures": 248,
+      "avgGapMin": 4,
+      "medianGapMin": 3
+    },
+    "rawTimeCount": 606
   },
   {
     "code": "24",
@@ -4571,114 +3349,20 @@
           "code": "4450",
           "name": "ESTACIÓN DE AUTOBUSES"
         }
-      ],
-      [
-        {
-          "code": "5412",
-          "name": "."
-        },
-        {
-          "code": "54112",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "5232",
-          "name": "."
-        },
-        {
-          "code": "0254",
-          "name": "."
-        },
-        {
-          "code": "9765",
-          "name": "."
-        },
-        {
-          "code": "9766",
-          "name": "."
-        },
-        {
-          "code": "2022",
-          "name": "."
-        },
-        {
-          "code": "9191",
-          "name": "."
-        },
-        {
-          "code": "9844",
-          "name": "."
-        },
-        {
-          "code": "841",
-          "name": "."
-        },
-        {
-          "code": "5201",
-          "name": "."
-        },
-        {
-          "code": "993",
-          "name": "."
-        },
-        {
-          "code": "0614",
-          "name": "."
-        },
-        {
-          "code": "6183",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "7595",
-          "name": "."
-        },
-        {
-          "code": "0197",
-          "name": "."
-        },
-        {
-          "code": "0441",
-          "name": "."
-        },
-        {
-          "code": "1383",
-          "name": "."
-        },
-        {
-          "code": "0951",
-          "name": "."
-        },
-        {
-          "code": "8952",
-          "name": "."
-        },
-        {
-          "code": "2464",
-          "name": "."
-        },
-        {
-          "code": "616",
-          "name": "."
-        }
       ]
     ],
     "routeStopCount": [
       17,
-      17,
-      24
+      17
     ],
-    "sampleTimes": [],
-    "timeCount": 0,
-    "frequencyMin": null
+    "schedule": {
+      "firstDeparture": "06:00",
+      "lastDeparture": "22:30",
+      "uniqueDepartures": 5,
+      "avgGapMin": 248,
+      "medianGapMin": 30
+    },
+    "rawTimeCount": 48
   },
   {
     "code": "27",
@@ -5180,104 +3864,6 @@
           "code": "3101",
           "name": "LUCEROS"
         }
-      ],
-      [
-        {
-          "code": "5412",
-          "name": "."
-        },
-        {
-          "code": "54112",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "5232",
-          "name": "."
-        },
-        {
-          "code": "0254",
-          "name": "."
-        },
-        {
-          "code": "9765",
-          "name": "."
-        },
-        {
-          "code": "9766",
-          "name": "."
-        },
-        {
-          "code": "2022",
-          "name": "."
-        },
-        {
-          "code": "9191",
-          "name": "."
-        },
-        {
-          "code": "9844",
-          "name": "."
-        },
-        {
-          "code": "841",
-          "name": "."
-        },
-        {
-          "code": "5201",
-          "name": "."
-        },
-        {
-          "code": "993",
-          "name": "."
-        },
-        {
-          "code": "0614",
-          "name": "."
-        },
-        {
-          "code": "6183",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "7595",
-          "name": "."
-        },
-        {
-          "code": "0197",
-          "name": "."
-        },
-        {
-          "code": "0441",
-          "name": "."
-        },
-        {
-          "code": "1383",
-          "name": "."
-        },
-        {
-          "code": "0951",
-          "name": "."
-        },
-        {
-          "code": "8952",
-          "name": "."
-        },
-        {
-          "code": "2464",
-          "name": "."
-        },
-        {
-          "code": "616",
-          "name": "."
-        }
       ]
     ],
     "routeStopCount": [
@@ -5286,12 +3872,16 @@
       23,
       20,
       25,
-      20,
-      24
+      20
     ],
-    "sampleTimes": [],
-    "timeCount": 0,
-    "frequencyMin": null
+    "schedule": {
+      "firstDeparture": "06:15",
+      "lastDeparture": "22:05",
+      "uniqueDepartures": 51,
+      "avgGapMin": 19,
+      "medianGapMin": 20
+    },
+    "rawTimeCount": 176
   },
   {
     "code": "28",
@@ -5427,113 +4017,19 @@
           "code": "2976",
           "name": "LA CADENA"
         }
-      ],
-      [
-        {
-          "code": "5412",
-          "name": "."
-        },
-        {
-          "code": "54112",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "5232",
-          "name": "."
-        },
-        {
-          "code": "0254",
-          "name": "."
-        },
-        {
-          "code": "9765",
-          "name": "."
-        },
-        {
-          "code": "9766",
-          "name": "."
-        },
-        {
-          "code": "2022",
-          "name": "."
-        },
-        {
-          "code": "9191",
-          "name": "."
-        },
-        {
-          "code": "9844",
-          "name": "."
-        },
-        {
-          "code": "841",
-          "name": "."
-        },
-        {
-          "code": "5201",
-          "name": "."
-        },
-        {
-          "code": "993",
-          "name": "."
-        },
-        {
-          "code": "0614",
-          "name": "."
-        },
-        {
-          "code": "6183",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "7595",
-          "name": "."
-        },
-        {
-          "code": "0197",
-          "name": "."
-        },
-        {
-          "code": "0441",
-          "name": "."
-        },
-        {
-          "code": "1383",
-          "name": "."
-        },
-        {
-          "code": "0951",
-          "name": "."
-        },
-        {
-          "code": "8952",
-          "name": "."
-        },
-        {
-          "code": "2464",
-          "name": "."
-        },
-        {
-          "code": "616",
-          "name": "."
-        }
       ]
     ],
     "routeStopCount": [
-      32,
-      24
+      32
     ],
-    "sampleTimes": [],
-    "timeCount": 0,
-    "frequencyMin": null
+    "schedule": {
+      "firstDeparture": "06:40",
+      "lastDeparture": "22:30",
+      "uniqueDepartures": 56,
+      "avgGapMin": 17,
+      "medianGapMin": 20
+    },
+    "rawTimeCount": 166
   },
   {
     "code": "39",
@@ -5611,114 +4107,20 @@
           "code": "2999",
           "name": "RAMBLA-SAN FERNANDO"
         }
-      ],
-      [
-        {
-          "code": "5412",
-          "name": "."
-        },
-        {
-          "code": "54112",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "5232",
-          "name": "."
-        },
-        {
-          "code": "0254",
-          "name": "."
-        },
-        {
-          "code": "9765",
-          "name": "."
-        },
-        {
-          "code": "9766",
-          "name": "."
-        },
-        {
-          "code": "2022",
-          "name": "."
-        },
-        {
-          "code": "9191",
-          "name": "."
-        },
-        {
-          "code": "9844",
-          "name": "."
-        },
-        {
-          "code": "841",
-          "name": "."
-        },
-        {
-          "code": "5201",
-          "name": "."
-        },
-        {
-          "code": "993",
-          "name": "."
-        },
-        {
-          "code": "0614",
-          "name": "."
-        },
-        {
-          "code": "6183",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "7595",
-          "name": "."
-        },
-        {
-          "code": "0197",
-          "name": "."
-        },
-        {
-          "code": "0441",
-          "name": "."
-        },
-        {
-          "code": "1383",
-          "name": "."
-        },
-        {
-          "code": "0951",
-          "name": "."
-        },
-        {
-          "code": "8952",
-          "name": "."
-        },
-        {
-          "code": "2464",
-          "name": "."
-        },
-        {
-          "code": "616",
-          "name": "."
-        }
       ]
     ],
     "routeStopCount": [
       8,
-      9,
-      24
+      9
     ],
-    "sampleTimes": [],
-    "timeCount": 0,
-    "frequencyMin": null
+    "schedule": {
+      "firstDeparture": "07:50",
+      "lastDeparture": "20:30",
+      "uniqueDepartures": 29,
+      "avgGapMin": 27,
+      "medianGapMin": 15
+    },
+    "rawTimeCount": 58
   },
   {
     "code": "03N",
@@ -5876,114 +4278,20 @@
           "code": "4300",
           "name": "PUERTA DEL MAR"
         }
-      ],
-      [
-        {
-          "code": "5412",
-          "name": "."
-        },
-        {
-          "code": "54112",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "5232",
-          "name": "."
-        },
-        {
-          "code": "0254",
-          "name": "."
-        },
-        {
-          "code": "9765",
-          "name": "."
-        },
-        {
-          "code": "9766",
-          "name": "."
-        },
-        {
-          "code": "2022",
-          "name": "."
-        },
-        {
-          "code": "9191",
-          "name": "."
-        },
-        {
-          "code": "9844",
-          "name": "."
-        },
-        {
-          "code": "841",
-          "name": "."
-        },
-        {
-          "code": "5201",
-          "name": "."
-        },
-        {
-          "code": "993",
-          "name": "."
-        },
-        {
-          "code": "0614",
-          "name": "."
-        },
-        {
-          "code": "6183",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "7595",
-          "name": "."
-        },
-        {
-          "code": "0197",
-          "name": "."
-        },
-        {
-          "code": "0441",
-          "name": "."
-        },
-        {
-          "code": "1383",
-          "name": "."
-        },
-        {
-          "code": "0951",
-          "name": "."
-        },
-        {
-          "code": "8952",
-          "name": "."
-        },
-        {
-          "code": "2464",
-          "name": "."
-        },
-        {
-          "code": "616",
-          "name": "."
-        }
       ]
     ],
     "routeStopCount": [
       18,
-      19,
-      24
+      19
     ],
-    "sampleTimes": [],
-    "timeCount": 0,
-    "frequencyMin": null
+    "schedule": {
+      "firstDeparture": "00:00",
+      "lastDeparture": "23:30",
+      "uniqueDepartures": 15,
+      "avgGapMin": 101,
+      "medianGapMin": 30
+    },
+    "rawTimeCount": 30
   },
   {
     "code": "13N",
@@ -6157,114 +4465,20 @@
           "code": "4300",
           "name": "PUERTA DEL MAR"
         }
-      ],
-      [
-        {
-          "code": "5412",
-          "name": "."
-        },
-        {
-          "code": "54112",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "5232",
-          "name": "."
-        },
-        {
-          "code": "0254",
-          "name": "."
-        },
-        {
-          "code": "9765",
-          "name": "."
-        },
-        {
-          "code": "9766",
-          "name": "."
-        },
-        {
-          "code": "2022",
-          "name": "."
-        },
-        {
-          "code": "9191",
-          "name": "."
-        },
-        {
-          "code": "9844",
-          "name": "."
-        },
-        {
-          "code": "841",
-          "name": "."
-        },
-        {
-          "code": "5201",
-          "name": "."
-        },
-        {
-          "code": "993",
-          "name": "."
-        },
-        {
-          "code": "0614",
-          "name": "."
-        },
-        {
-          "code": "6183",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "7595",
-          "name": "."
-        },
-        {
-          "code": "0197",
-          "name": "."
-        },
-        {
-          "code": "0441",
-          "name": "."
-        },
-        {
-          "code": "1383",
-          "name": "."
-        },
-        {
-          "code": "0951",
-          "name": "."
-        },
-        {
-          "code": "8952",
-          "name": "."
-        },
-        {
-          "code": "2464",
-          "name": "."
-        },
-        {
-          "code": "616",
-          "name": "."
-        }
       ]
     ],
     "routeStopCount": [
       22,
-      19,
-      24
+      19
     ],
-    "sampleTimes": [],
-    "timeCount": 0,
-    "frequencyMin": null
+    "schedule": {
+      "firstDeparture": "00:00",
+      "lastDeparture": "23:30",
+      "uniqueDepartures": 15,
+      "avgGapMin": 101,
+      "medianGapMin": 30
+    },
+    "rawTimeCount": 30
   },
   {
     "code": "22N",
@@ -6494,113 +4708,19 @@
           "code": "4009",
           "name": "PUERTA DEL MAR"
         }
-      ],
-      [
-        {
-          "code": "5412",
-          "name": "."
-        },
-        {
-          "code": "54112",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "5232",
-          "name": "."
-        },
-        {
-          "code": "0254",
-          "name": "."
-        },
-        {
-          "code": "9765",
-          "name": "."
-        },
-        {
-          "code": "9766",
-          "name": "."
-        },
-        {
-          "code": "2022",
-          "name": "."
-        },
-        {
-          "code": "9191",
-          "name": "."
-        },
-        {
-          "code": "9844",
-          "name": "."
-        },
-        {
-          "code": "841",
-          "name": "."
-        },
-        {
-          "code": "5201",
-          "name": "."
-        },
-        {
-          "code": "993",
-          "name": "."
-        },
-        {
-          "code": "0614",
-          "name": "."
-        },
-        {
-          "code": "6183",
-          "name": "."
-        },
-        {
-          "code": "200",
-          "name": "."
-        },
-        {
-          "code": "7595",
-          "name": "."
-        },
-        {
-          "code": "0197",
-          "name": "."
-        },
-        {
-          "code": "0441",
-          "name": "."
-        },
-        {
-          "code": "1383",
-          "name": "."
-        },
-        {
-          "code": "0951",
-          "name": "."
-        },
-        {
-          "code": "8952",
-          "name": "."
-        },
-        {
-          "code": "2464",
-          "name": "."
-        },
-        {
-          "code": "616",
-          "name": "."
-        }
       ]
     ],
     "routeStopCount": [
       28,
-      27,
-      24
+      27
     ],
-    "sampleTimes": [],
-    "timeCount": 0,
-    "frequencyMin": null
+    "schedule": {
+      "firstDeparture": "00:05",
+      "lastDeparture": "23:30",
+      "uniqueDepartures": 13,
+      "avgGapMin": 117,
+      "medianGapMin": 35
+    },
+    "rawTimeCount": 26
   }
 ]
