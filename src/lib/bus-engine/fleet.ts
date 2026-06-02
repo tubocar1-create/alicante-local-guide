@@ -662,7 +662,10 @@ function addStopsFromDirectionalOffset(
   }
 }
 
-// Snapshot conveniente para mapa/dashboard: devuelve flota + ETAs derivadas + métricas.
+// Snapshot conveniente para mapa/dashboard: usa el SIMULADOR DEL CARRUSEL.
+// Reemplaza al motor antiguo (generateActiveFleet + deriveStopEtas + validators).
+// El carrusel respeta por construcción: horarios oficiales, espera obligatoria
+// en terminales, ramp-up matinal y no-adelanto entre buses.
 export function predictLineFromFleet(
   data: BusEngineData,
   lineCode: string,
@@ -679,45 +682,150 @@ export function predictLineFromFleet(
   realtimeAgeSeconds: number | null;
 } {
   const plan = buildLineFleetPlan(data, lineCode, at);
-  const { fleet: fleetRaw } = generateActiveFleet(plan, at);
+  const now = nowMinutes(at);
 
-  const etasRaw = deriveStopEtas(plan, fleetRaw, at);
+  const sim = simulateCarousel(plan, now, 120);
 
-  // FASE 3: validación temporal POST-ETA (monotonicidad, orígenes múltiples).
-  const tc = validateTemporalConsistency({
-    fleet: fleetRaw,
-    etas: etasRaw,
-    cycleMin: plan.cycleMin,
-  });
-  let fleet = tc.fleet;
-  let etas = tc.etas;
+  const buses: VirtualBus[] = [];
+  const etas: StopEta[] = [];
+  const cycleConf = Number(data.cycleStats.get(lineCode)?.confidence ?? 0.4);
+  const baseConf = Math.max(0.5, Math.min(0.9, cycleConf * 0.6 + 0.4));
 
-  const avgConf =
-    fleet.length > 0
-      ? fleet.reduce((acc, b) => acc + b.confidence, 0) / fleet.length
-      : 0.4;
-  const cycleConf = data.cycleStats.get(lineCode)?.confidence ?? 0.3;
-  const confidence = Math.max(0, Math.min(1, avgConf * 0.7 + Number(cycleConf) * 0.3));
+  for (const b of sim.buses) {
+    const current = b.trips.find(
+      (t) => t.departureMin <= now && t.arrivalMin > now,
+    );
+    const upcoming = b.trips.filter((t) => t.departureMin > now);
+    const future = current ? [current, ...upcoming] : upcoming;
+    if (future.length === 0) continue;
 
-  // FASE 9: failsafe. Si la calidad es baja, ocultamos buses dudosos.
-  // Mejor "menos información" que "información absurda".
-  if (confidence < 0.5) {
-    const keepIds = new Set(fleet.filter((b) => b.confidence >= 0.6).map((b) => b.busId));
-    if (keepIds.size > 0) {
-      fleet = fleet.filter((b) => keepIds.has(b.busId));
-      etas = etas.filter((e) => !e.busId || keepIds.has(e.busId));
+    let status: VirtualBus["status"];
+    let direction: Direction;
+    let segmentIndex = 0;
+    let segmentProgress = 0;
+    let position: LatLng | null = null;
+    let originTerminal: string | null = null;
+    let departureMin: number;
+    let elapsedMin: number;
+
+    if (current) {
+      status = "moving";
+      direction = current.direction;
+      departureMin = current.departureMin;
+      elapsedMin = now - current.departureMin;
+      const dirPlan = direction === 1 ? plan.dirIda : plan.dirVuelta;
+      originTerminal = direction === 1 ? plan.terminalIda : plan.terminalVuelta;
+      if (dirPlan) {
+        let idx = 0;
+        while (
+          idx < dirPlan.segMinutes.length &&
+          dirPlan.cumTimes[idx + 1] <= elapsedMin
+        ) {
+          idx++;
+        }
+        const segEl = elapsedMin - dirPlan.cumTimes[idx];
+        const segMin = dirPlan.segMinutes[idx] ?? 0;
+        const prog = segMin > 0 ? Math.min(1, Math.max(0, segEl / segMin)) : 0;
+        segmentIndex = idx;
+        segmentProgress = prog;
+        const a = dirPlan.stops[idx];
+        const c = dirPlan.stops[idx + 1];
+        if (a?.lat != null && a.lng != null && c?.lat != null && c.lng != null) {
+          position = lerp(
+            { lat: a.lat, lng: a.lng },
+            { lat: c.lat, lng: c.lng },
+            prog,
+          );
+        } else if (a?.lat != null && a.lng != null) {
+          position = { lat: a.lat, lng: a.lng };
+        }
+      }
+    } else {
+      const next = upcoming[0];
+      status = "terminal_wait";
+      direction = next.direction;
+      departureMin = next.departureMin;
+      elapsedMin = now - next.departureMin;
+      const dirPlan = direction === 1 ? plan.dirIda : plan.dirVuelta;
+      originTerminal = direction === 1 ? plan.terminalIda : plan.terminalVuelta;
+      const a = dirPlan?.stops[0];
+      if (a?.lat != null && a.lng != null) {
+        position = { lat: a.lat, lng: a.lng };
+      }
+    }
+
+    buses.push({
+      busId: b.busId,
+      lineCode,
+      direction,
+      status,
+      departureMin,
+      tripDirection: direction,
+      tripElapsedMin: elapsedMin,
+      elapsedMin,
+      segmentIndex,
+      segmentProgress,
+      position,
+      delayMin: 0,
+      confidence: baseConf,
+      anchoredDeparture: true,
+      originTerminal,
+      serviceSlot: plan.serviceSlot,
+      phaseErrorSec: 0,
+      reliability: baseConf,
+      speedKmh: status === "moving" ? 18 : 0,
+      lastObservationSec: null,
+      safeMode: false,
+    });
+
+    for (const trip of future) {
+      const dirPlan = trip.direction === 1 ? plan.dirIda : plan.dirVuelta;
+      if (!dirPlan) continue;
+      const startIdx = trip === current ? segmentIndex + 1 : 0;
+      for (let i = startIdx; i < dirPlan.stops.length; i++) {
+        const arriveAbs = trip.departureMin + dirPlan.cumTimes[i];
+        const etaMin = arriveAbs - now;
+        if (etaMin < 0) continue;
+        if (etaMin > 90) break;
+        etas.push({
+          lineCode,
+          direction: trip.direction,
+          busId: b.busId,
+          stopCode: dirPlan.stops[i].stopCode,
+          stopSeq: dirPlan.stops[i].seq,
+          etaMin: Math.round(etaMin),
+          etaClock: formatClock(now + etaMin),
+          confidence: baseConf,
+        });
+      }
     }
   }
+
+  // Dedupe por (línea, dirección, parada): nos quedamos con las 3 próximas ETAs.
+  const byKey = new Map<string, StopEta[]>();
+  for (const e of etas) {
+    const k = `${e.lineCode}|${e.direction}|${e.stopCode}`;
+    if (!byKey.has(k)) byKey.set(k, []);
+    byKey.get(k)!.push(e);
+  }
+  const dedupedEtas: StopEta[] = [];
+  for (const arr of byKey.values()) {
+    arr.sort((a, b) => a.etaMin - b.etaMin);
+    for (let i = 0; i < Math.min(3, arr.length); i++) dedupedEtas.push(arr[i]);
+  }
+  dedupedEtas.sort((a, b) => a.etaMin - b.etaMin);
 
   return {
     line: lineCode,
     timestamp: at.toISOString(),
-    buses: fleet,
-    stops: etas,
-    activeBusCount: fleet.filter((b) => b.status === "moving" || b.status === "terminal_wait").length,
+    buses,
+    stops: dedupedEtas,
+    activeBusCount: buses.filter(
+      (b) => b.status === "moving" || b.status === "terminal_wait",
+    ).length,
     averageCycleMinutes: plan.cycleMin,
     headwayMinutes: plan.headwayMin,
-    confidence,
+    confidence: baseConf,
     realtimeAgeSeconds: null,
   };
 }
