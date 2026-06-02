@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-// Tiempo real oficial de SUBUS/Vectalia Alicante, sin proxy externo.
-// La fuente correcta es la página de parada consulta.aspx?p=N.
+// Tiempo real oficial QR: datos.aspx?p=N devuelve JSON con todas las llegadas.
+// En servidor se entra por ScrapingBee porque el origen bloquea IPs de datacenter.
 
 const BASE = "http://www.subus.es/QR/Alicante";
+const QR_DATA_URL = "https://qr.vectalia.es/Alicante/datos.aspx";
+const SCRAPINGBEE_URL = "https://app.scrapingbee.com/api/v1/";
 const UA =
   "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36";
 const ARRIVAL_RE = /Linea\s+(\d{1,3}[A-Za-z]?)\s+([^:]+?)\s*:\s*(\d+)\s*min/gi;
@@ -26,9 +28,16 @@ async function fetchWithTimeout(url: string, init: RequestInit = {}, timeoutMs =
 }
 
 function parseEtas(raw: string, requestedLine: string): number[] {
+  let text = raw;
+  try {
+    const json = JSON.parse(raw) as { tiempos?: unknown };
+    if (typeof json.tiempos === "string") text = json.tiempos;
+  } catch {
+    // HTML/text fallback.
+  }
   const wanted = normalizeLine(requestedLine);
   const out: number[] = [];
-  for (const m of raw.matchAll(ARRIVAL_RE)) {
+  for (const m of text.matchAll(ARRIVAL_RE)) {
     if (normalizeLine(m[1]) !== wanted) continue;
     const min = parseInt(m[3], 10);
     if (Number.isFinite(min)) out.push(min);
@@ -36,7 +45,28 @@ function parseEtas(raw: string, requestedLine: string): number[] {
   return out.sort((a, b) => a - b);
 }
 
+async function fetchViaScrapingBee(targetUrl: string): Promise<string | null> {
+  const apiKey = process.env.SCRAPINGBEE_API_KEY;
+  if (!apiKey) return null;
+  const url = new URL(SCRAPINGBEE_URL);
+  url.searchParams.set("api_key", apiKey);
+  url.searchParams.set("url", targetUrl);
+  url.searchParams.set("render_js", "false");
+  url.searchParams.set("block_resources", "true");
+  try {
+    const res = await fetchWithTimeout(url.toString(), { redirect: "follow" });
+    if (!res.ok) return null;
+    return await res.text();
+  } catch {
+    return null;
+  }
+}
+
 async function fromSubus(stop: string, line: string): Promise<{ etas: number[]; source: string }> {
+  const datosUrl = `${QR_DATA_URL}?p=${encodeURIComponent(stop)}`;
+  const proxied = await fetchViaScrapingBee(datosUrl);
+  if (proxied) return { etas: parseEtas(proxied, line), source: "scrapingbee-qr-datos" };
+
   const consultaUrl = `${BASE}/consulta.aspx?p=${encodeURIComponent(stop)}`;
 
   const page = await fetchWithTimeout(consultaUrl, {
