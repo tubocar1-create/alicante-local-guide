@@ -35,9 +35,20 @@
     "url": "https://alicante.vectalia.es/linea/linea-07-avda-oscar-espla-el-rebolledo"
   },
   {
+    "code": "08A",
+    "name": "Rambla-virgen Del Remedio",
+    "url": "https://alicante.vectalia.es/linea/linea-08a-explanada-virgen-del-remedio"
+  },
+  {
     "code": "09",
     "name": "óscar Esplá-playa San Juan",
     "url": "https://alicante.vectalia.es/linea/linea-09-avda-oscar-espla-playa-san-juan-avda-de-las-naciones"
+  },
+  {
+    "code": "12",
+    "name": "Puerta Del Mar-san Blas-juan Pablo II",
+    "url": "https://alicante.vectalia.es/linea/linea-12plaza-de-los-luceros-santo-domingo-san-blas-pau-i",
+    "aliasVectalia": "12P"
   },
   {
     "code": "13",
@@ -78,11 +89,6 @@
     "code": "03N",
     "name": "Puerta Del Mar-plaza de la Luna",
     "url": "https://alicante.vectalia.es/linea/03n-urbanova-puerta-del-mar"
-  },
-  {
-    "code": "08A",
-    "name": "Rambla-virgen Del Remedio",
-    "url": "https://alicante.vectalia.es/linea/linea-08a-explanada-virgen-del-remedio"
   },
   {
     "code": "13N",
