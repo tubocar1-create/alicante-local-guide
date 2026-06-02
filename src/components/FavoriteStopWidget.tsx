@@ -103,7 +103,8 @@ export function computeUpcomingArrivals(
 export function FavoriteStopWidget() {
   const [stop, setStop] = useState<FavoriteStop>(DEFAULT_FAVORITE_STOP);
   const [show, setShow] = useState<boolean>(true);
-  const [tick, setTick] = useState(0);
+  const [liveMin, setLiveMin] = useState<number | null>(null);
+  const [liveSource, setLiveSource] = useState<"realtime" | "engine" | null>(null);
   const { data: graph } = useBusGraph();
   const { data: engine } = useBusEngine();
 
@@ -115,22 +116,56 @@ export function FavoriteStopWidget() {
       setShow(loadShowOnHome());
     };
     window.addEventListener("vamos:favorite-stop-changed", onChange);
-    const id = window.setInterval(() => setTick((t) => t + 1), 30_000);
     return () => {
       window.removeEventListener("vamos:favorite-stop-changed", onChange);
-      window.clearInterval(id);
     };
   }, []);
 
-  // ETA predictivo: motor matemático local sobre snapshot del servidor.
-  // No depende de realtime ni de Vectalia/Akamai.
-  const liveMin = useMemo<number | null>(() => {
-    void tick;
-    if (!engine) return null;
-    const arrivals = predictStopArrivals(engine, stop.stopId);
-    const forLine = arrivals.filter((a) => a.line === stop.line);
-    return forLine[0]?.etaMin ?? null;
-  }, [engine, stop.stopId, stop.line, tick]);
+  // Primario: subus.es (mismo origen que /transporte/parada-favorita).
+  // Fallback: motor predictivo si subus tarda o devuelve vacío.
+  useEffect(() => {
+    let cancelled = false;
+    let controller: AbortController | null = null;
+    const run = async () => {
+      controller?.abort();
+      controller = new AbortController();
+      try {
+        const r = await getClientStopRealtime({
+          stopId: stop.stopId,
+          line: stop.line,
+          signal: controller.signal,
+        });
+        if (cancelled) return;
+        const elapsedMin = Math.floor((Date.now() - r.fetchedAt) / 60_000);
+        const first = r.all[0];
+        if (typeof first === "number") {
+          setLiveMin(Math.max(0, first - elapsedMin));
+          setLiveSource("realtime");
+          return;
+        }
+      } catch {
+        // ignore, fall through to engine
+      }
+      if (cancelled) return;
+      if (engine) {
+        const arrivals = predictStopArrivals(engine, stop.stopId);
+        const forLine = arrivals.filter((a) => a.line === stop.line);
+        setLiveMin(forLine[0]?.etaMin ?? null);
+        setLiveSource(forLine[0] ? "engine" : null);
+      } else {
+        setLiveMin(null);
+        setLiveSource(null);
+      }
+    };
+    run();
+    const id = window.setInterval(run, 30_000);
+    return () => {
+      cancelled = true;
+      controller?.abort();
+      window.clearInterval(id);
+    };
+  }, [stop.stopId, stop.line, engine]);
+
 
   const lineColor =
     graph?.lines.find((l) => l.code === stop.line)?.color || "#0d3b8a";
