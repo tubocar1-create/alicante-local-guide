@@ -129,24 +129,23 @@ export function BusLineLiveMap({
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  const renderedBuses: RenderedBus[] = useMemo(() => {
-    const now = Date.now();
-    const t = Math.min(1, (now - tickAtRef.current) / TICK_MS);
-    const out: RenderedBus[] = [];
-    for (const [id, c] of currRef.current) {
-      const p = prevRef.current.get(id) ?? { lat: c.lat, lng: c.lng };
-      out.push({
-        key: id,
-        lat: lerpNum(p.lat, c.lat, t),
-        lng: lerpNum(p.lng, c.lng, t),
-        destination: c.destination,
-        direction: c.direction,
-        confidence: c.confidence,
-      });
-    }
-    return out;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [/* re-render via setFrame */]);
+  // Recalculado en CADA frame (rAF dispara setFrame): interpolación lineal
+  // entre prev y curr durante TICK_MS. NO usar useMemo aquí — congelaría
+  // el resultado y el bus quedaría estático.
+  const now = Date.now();
+  const t = Math.min(1, (now - tickAtRef.current) / TICK_MS);
+  const renderedBuses: RenderedBus[] = [];
+  for (const [id, c] of currRef.current) {
+    const p = prevRef.current.get(id) ?? { lat: c.lat, lng: c.lng };
+    renderedBuses.push({
+      key: id,
+      lat: lerpNum(p.lat, c.lat, t),
+      lng: lerpNum(p.lng, c.lng, t),
+      destination: c.destination,
+      direction: c.direction,
+      confidence: c.confidence,
+    });
+  }
 
   const center = useMemo<[number, number]>(() => {
     if (user) return [user.lat, user.lng];
