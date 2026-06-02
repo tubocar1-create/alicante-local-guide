@@ -16,6 +16,7 @@ import { Route as TrenesRouteImport } from './routes/trenes'
 import { Route as TransporteRouteImport } from './routes/transporte'
 import { Route as TramRouteImport } from './routes/tram'
 import { Route as ThreadsRouteImport } from './routes/threads'
+import { Route as TestRealtimeRouteImport } from './routes/test-realtime'
 import { Route as StayRouteImport } from './routes/stay'
 import { Route as SistemaSanitarioRouteImport } from './routes/sistema-sanitario'
 import { Route as SaludRouteImport } from './routes/salud'
@@ -196,6 +197,11 @@ const TramRoute = TramRouteImport.update({
 const ThreadsRoute = ThreadsRouteImport.update({
   id: '/threads',
   path: '/threads',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TestRealtimeRoute = TestRealtimeRouteImport.update({
+  id: '/test-realtime',
+  path: '/test-realtime',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StayRoute = StayRouteImport.update({
@@ -970,6 +976,7 @@ export interface FileRoutesByFullPath {
   '/salud': typeof SaludRoute
   '/sistema-sanitario': typeof SistemaSanitarioRoute
   '/stay': typeof StayRoute
+  '/test-realtime': typeof TestRealtimeRoute
   '/threads': typeof ThreadsRouteWithChildren
   '/tram': typeof TramRouteWithChildren
   '/transporte': typeof TransporteRoute
@@ -1123,6 +1130,7 @@ export interface FileRoutesByTo {
   '/salud': typeof SaludRoute
   '/sistema-sanitario': typeof SistemaSanitarioRoute
   '/stay': typeof StayRoute
+  '/test-realtime': typeof TestRealtimeRoute
   '/threads': typeof ThreadsRouteWithChildren
   '/tram': typeof TramRouteWithChildren
   '/transporte': typeof TransporteRoute
@@ -1278,6 +1286,7 @@ export interface FileRoutesById {
   '/salud': typeof SaludRoute
   '/sistema-sanitario': typeof SistemaSanitarioRoute
   '/stay': typeof StayRoute
+  '/test-realtime': typeof TestRealtimeRoute
   '/threads': typeof ThreadsRouteWithChildren
   '/tram': typeof TramRouteWithChildren
   '/transporte': typeof TransporteRoute
@@ -1435,6 +1444,7 @@ export interface FileRouteTypes {
     | '/salud'
     | '/sistema-sanitario'
     | '/stay'
+    | '/test-realtime'
     | '/threads'
     | '/tram'
     | '/transporte'
@@ -1588,6 +1598,7 @@ export interface FileRouteTypes {
     | '/salud'
     | '/sistema-sanitario'
     | '/stay'
+    | '/test-realtime'
     | '/threads'
     | '/tram'
     | '/transporte'
@@ -1742,6 +1753,7 @@ export interface FileRouteTypes {
     | '/salud'
     | '/sistema-sanitario'
     | '/stay'
+    | '/test-realtime'
     | '/threads'
     | '/tram'
     | '/transporte'
@@ -1898,6 +1910,7 @@ export interface RootRouteChildren {
   SaludRoute: typeof SaludRoute
   SistemaSanitarioRoute: typeof SistemaSanitarioRoute
   StayRoute: typeof StayRoute
+  TestRealtimeRoute: typeof TestRealtimeRoute
   ThreadsRoute: typeof ThreadsRouteWithChildren
   TramRoute: typeof TramRouteWithChildren
   TransporteRoute: typeof TransporteRoute
@@ -2018,6 +2031,13 @@ declare module '@tanstack/react-router' {
       path: '/threads'
       fullPath: '/threads'
       preLoaderRoute: typeof ThreadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/test-realtime': {
+      id: '/test-realtime'
+      path: '/test-realtime'
+      fullPath: '/test-realtime'
+      preLoaderRoute: typeof TestRealtimeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stay': {
@@ -3302,6 +3322,7 @@ const rootRouteChildren: RootRouteChildren = {
   SaludRoute: SaludRoute,
   SistemaSanitarioRoute: SistemaSanitarioRoute,
   StayRoute: StayRoute,
+  TestRealtimeRoute: TestRealtimeRoute,
   ThreadsRoute: ThreadsRouteWithChildren,
   TramRoute: TramRouteWithChildren,
   TransporteRoute: TransporteRoute,
