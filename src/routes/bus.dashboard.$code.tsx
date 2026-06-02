@@ -345,8 +345,19 @@ function BusDashboardPage() {
   const scheduleEtaByDir = nightEtaByDir;
 
 
+  // Detección HTTPS producción: usamos motor predictivo en lugar de live ETAs
+  // (Akamai bloquea las llamadas reales). En preview/local mantenemos el bus QR.
+  const usePredict = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    const h = window.location.hostname;
+    if (/^id-preview--/.test(h)) return false;
+    if (h === "localhost" || h === "127.0.0.1") return false;
+    return true;
+  }, []);
+
   // Realtime progresivo: cada parada pide ETA solo cuando entra en viewport.
   // Saltamos en líneas nocturnas — usamos estimación por horario oficial.
+  // Saltamos también en HTTPS prod — usamos el motor predictivo.
   const [etas, setEtas] = useState<Record<string, number[]>>({});
   const [loadingEtaStops, setLoadingEtaStops] = useState<Set<string>>(() => new Set());
 
@@ -377,7 +388,7 @@ function BusDashboardPage() {
   }, [nearestByDir]);
 
   useEffect(() => {
-    if (isNightLine || initialRealtimeStopCodes.length === 0) return;
+    if (usePredict || isNightLine || initialRealtimeStopCodes.length === 0) return;
     let cancelled = false;
     setLoadingEtaStops((prev) => {
       const next = new Set(prev);
@@ -406,23 +417,9 @@ function BusDashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [code, initialRealtimeStopCodes, isNightLine]);
+  }, [code, initialRealtimeStopCodes, isNightLine, usePredict]);
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Motor predictivo: en la versión HTTPS pública (vamosalicante.com /
-  // alicante-local-guide.lovable.app) los endpoints en vivo del Ayuntamiento
-  // están bloqueados por Akamai. En esa situación sustituimos los ETAs por
-  // los que predice nuestro motor y mostramos el bus desplazándose entre
-  // paradas. En el preview (`id-preview--*.lovable.app`) NO activamos esto
-  // porque el bus real / QR-bus carga correctamente.
-  const usePredict = useMemo(() => {
-    if (typeof window === "undefined") return false;
-    const h = window.location.hostname;
-    if (/^id-preview--/.test(h)) return false;
-    if (h === "localhost" || h === "127.0.0.1") return false;
-    return true;
-  }, []);
-
+  // Motor predictivo: ver definición de `usePredict` arriba.
   const { data: engine } = useBusEngine();
 
   const [predictedBusesByDir, setPredictedBusesByDir] = useState<
@@ -591,6 +588,7 @@ function BusDashboardPage() {
             nearestList={nearestByDir[1]}
             geoStatus={geoStatus}
             predictedBuses={predictedBusesByDir[1]}
+            disableLiveFetch={usePredict}
           />
 
           <DirectionColumn
@@ -616,6 +614,7 @@ function BusDashboardPage() {
             nearestList={nearestByDir[2]}
             geoStatus={geoStatus}
             predictedBuses={predictedBusesByDir[2]}
+            disableLiveFetch={usePredict}
           />
 
         </div>
@@ -849,6 +848,7 @@ function DirectionColumn({
   nearestList,
   geoStatus,
   predictedBuses,
+  disableLiveFetch,
 }: {
   label: string;
   direction: 1 | 2;
@@ -867,6 +867,7 @@ function DirectionColumn({
   nearestList: { code: string; distance: number }[];
   geoStatus: "idle" | "loading" | "ok" | "unavailable";
   predictedBuses?: { busId: string; segmentIndex: number; segmentProgress: number }[];
+  disableLiveFetch?: boolean;
 }) {
 
   const now = new Date();
@@ -1052,7 +1053,7 @@ function DirectionColumn({
                 )}
               </div>
 
-              {realtimeEnabled && (
+              {realtimeEnabled && !disableLiveFetch && (
                 <VisibleStopRealtime
                   stopCode={s.code}
                   lineCode={lineCode}
