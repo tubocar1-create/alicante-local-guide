@@ -509,43 +509,6 @@ function BusDashboardPage() {
 
 
 
-        {/* MAPA EN VIVO con buses estimados */}
-        {(() => {
-          const linePoints: LineStopPoint[] = [];
-          for (const dir of [1, 2] as const) {
-            for (const s of stopsByDir[dir]) {
-              const c = stopCoords.get(s.code);
-              if (!c) continue;
-              linePoints.push({
-                code: s.code,
-                name: s.name,
-                direction: dir,
-                seq: s.seq,
-                lat: c.lat,
-                lng: c.lng,
-              });
-            }
-          }
-          if (linePoints.length < 2) return null;
-          return (
-            <div className="mt-4">
-              <Suspense
-                fallback={
-                  <div className="flex h-[280px] w-full items-center justify-center rounded-2xl border border-white/10 bg-white/5">
-                    <Loader2 className="h-5 w-5 animate-spin text-white/60" />
-                  </div>
-                }
-              >
-                <BusLineLiveMap
-                  lineCode={code}
-                  color={lineColor}
-                  stops={linePoints}
-                  user={userPos}
-                />
-              </Suspense>
-            </div>
-          );
-        })()}
 
         {/* COLUMNAS IDA / VUELTA */}
         <div className="mt-4 grid grid-cols-2 divide-x divide-white/10 overflow-hidden rounded-2xl border border-white/10 p-2" style={{ background: "linear-gradient(to right, rgba(191,219,254,0.60) 0%, rgba(191,219,254,0.60) 50%, rgba(30,58,138,0.65) 50%, rgba(30,58,138,0.65) 100%)" }}>
