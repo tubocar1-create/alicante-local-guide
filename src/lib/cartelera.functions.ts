@@ -70,7 +70,7 @@ function norm(item: any, dir: "SALIDA" | "LLEGADA", tt: string): CarteleraTrain 
 }
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
-const CACHE_VERSION = 3;
+const CACHE_VERSION = 4;
 let _cache: { at: number; v: number; data: CarteleraResponse } | null = null;
 let _inflight: Promise<CarteleraResponse> | null = null;
 
@@ -101,7 +101,9 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
       throw new Error("ADIF: no p_p_auth");
     }
     const auth = mAuth[1];
-    const URL_RES = `${BASE}?p_p_id=servicios_estacion_ServiciosEstacionPortlet&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=%2FconsultarHorario&p_p_cacheability=cacheLevelPage&assetEntryId=3068526&p_p_auth=${auth}`;
+    // OJO: NO incluir assetEntryId — si va en el query, ADIF responde {"error":true}
+    // para todas las consultas. Confirmado en producción 02/06/2026.
+    const URL_RES = `${BASE}?p_p_id=servicios_estacion_ServiciosEstacionPortlet&p_p_lifecycle=2&p_p_state=normal&p_p_mode=view&p_p_resource_id=%2FconsultarHorario&p_p_cacheability=cacheLevelPage&p_p_auth=${auth}`;
 
     async function callOnce(searchType: string, trafficType: string, numPage = 0) {
       const body = new URLSearchParams({
