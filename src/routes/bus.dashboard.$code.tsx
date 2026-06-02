@@ -376,9 +376,48 @@ function BusDashboardPage() {
     });
   }, []);
 
-  const handleStopEta = useCallback((stopCode: string, all: number[]) => {
-    setEtas((prev) => ({ ...prev, [stopCode]: all.slice(0, 1) }));
-  }, []);
+  // Reconciliación: en preview (donde Akamai NO bloquea) usamos los ETAs
+  // reales como "sensor de campo" para corregir la flota virtual. Throttle
+  // 30 s por (parada+línea) para no saturar.
+  const obsThrottle = useRef<Map<string, number>>(new Map());
+  const reportObservation = useCallback(
+    (stopCode: string, etaMin: number) => {
+      if (usePredict || isNightLine) return;
+      if (!Number.isFinite(etaMin) || etaMin < 0 || etaMin > 180) return;
+      const stop1 = stopsByDir[1].find((s) => s.code === stopCode);
+      const stop2 = stopsByDir[2].find((s) => s.code === stopCode);
+      const direction: 1 | 2 | null = stop1 ? 1 : stop2 ? 2 : null;
+      if (!direction) return;
+      const key = `${code}|${stopCode}`;
+      const last = obsThrottle.current.get(key) ?? 0;
+      const now = Date.now();
+      if (now - last < 30_000) return;
+      obsThrottle.current.set(key, now);
+      let clientId: string | undefined;
+      try {
+        const k = "bus_obs_client";
+        clientId = sessionStorage.getItem(k) ?? undefined;
+        if (!clientId) {
+          clientId = Math.random().toString(36).slice(2, 12);
+          sessionStorage.setItem(k, clientId);
+        }
+      } catch {
+        clientId = undefined;
+      }
+      reportRealtimeObservation({
+        data: { line: code, direction, stopCode, etaMin, source: "preview_real", clientId },
+      }).catch(() => undefined);
+    },
+    [code, usePredict, isNightLine, stopsByDir],
+  );
+
+  const handleStopEta = useCallback(
+    (stopCode: string, all: number[]) => {
+      setEtas((prev) => ({ ...prev, [stopCode]: all.slice(0, 1) }));
+      if (all.length > 0) reportObservation(stopCode, all[0]);
+    },
+    [reportObservation],
+  );
 
   const initialRealtimeStopCodes = useMemo(() => {
     const codes = [
