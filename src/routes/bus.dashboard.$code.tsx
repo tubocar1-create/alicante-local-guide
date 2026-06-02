@@ -444,6 +444,9 @@ function BusDashboardPage() {
           for (const [stopCode, all] of Object.entries(batch)) next[stopCode] = all.slice(0, 1);
           return next;
         });
+        for (const [stopCode, all] of Object.entries(batch)) {
+          if (all.length > 0) reportObservation(stopCode, all[0]);
+        }
       })
       .finally(() => {
         if (cancelled) return;
