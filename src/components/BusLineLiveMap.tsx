@@ -138,7 +138,7 @@ export function BusLineLiveMap({
         ))}
         {user && <Marker position={[user.lat, user.lng]} icon={userIcon} />}
         {renderedBuses.map((b) => (
-          <Marker key={b.key} position={[b.lat, b.lng]} icon={busIcon(lineCode, color, b.confidence)}>
+          <Marker key={b.key} position={[b.lat, b.lng]} icon={busIcon(lineCode, b.confidence)}>
             <Popup>
               <strong>Línea {lineCode}</strong>
               <br />
