@@ -345,8 +345,19 @@ function BusDashboardPage() {
   const scheduleEtaByDir = nightEtaByDir;
 
 
+  // Detección HTTPS producción: usamos motor predictivo en lugar de live ETAs
+  // (Akamai bloquea las llamadas reales). En preview/local mantenemos el bus QR.
+  const usePredict = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    const h = window.location.hostname;
+    if (/^id-preview--/.test(h)) return false;
+    if (h === "localhost" || h === "127.0.0.1") return false;
+    return true;
+  }, []);
+
   // Realtime progresivo: cada parada pide ETA solo cuando entra en viewport.
   // Saltamos en líneas nocturnas — usamos estimación por horario oficial.
+  // Saltamos también en HTTPS prod — usamos el motor predictivo.
   const [etas, setEtas] = useState<Record<string, number[]>>({});
   const [loadingEtaStops, setLoadingEtaStops] = useState<Set<string>>(() => new Set());
 
