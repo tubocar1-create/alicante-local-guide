@@ -164,8 +164,18 @@ export function buildLineFleetPlan(
   const fallbackHeadway = dt === "laborable" ? 15 : 20;
   const headwayMin = inferHeadwayMin(idaDeps, now, fallbackHeadway);
 
-  const activeBusCount =
-    cycleMin > 0 && headwayMin > 0 ? Math.max(1, Math.round(cycleMin / headwayMin)) : 0;
+  const fleetSizeExpected = computeFleetSize(cycleMin, headwayMin);
+  const serviceSlot = getServiceSlot(at);
+
+  // Salidas oficiales IDA en la ventana operacional inmediata (slot actual ±
+  // un cycleMin). Si están vacías, generateActiveFleet hará fallback a slots
+  // sintéticos uniformes.
+  const officialDeparturesMin = idaDeps
+    .filter((d) => d >= now - cycleMin - 5 && d <= now + cycleMin)
+    .sort((a, b) => a - b);
+
+  const terminalIda = ida?.stops[0]?.stopName ?? null;
+  const terminalVuelta = vuelta?.stops[0]?.stopName ?? null;
 
   return {
     lineCode,
@@ -174,10 +184,16 @@ export function buildLineFleetPlan(
     cycleMin,
     terminalRegulationMin,
     headwayMin,
-    activeBusCount,
+    activeBusCount: fleetSizeExpected,
+    fleetSizeExpected,
     dayType: dt,
+    serviceSlot,
+    officialDeparturesMin,
+    terminalIda,
+    terminalVuelta,
   };
 }
+
 
 // Dado un offset dentro del ciclo (0..cycleMin), determina dónde está el bus.
 // El ciclo se descompone como:
