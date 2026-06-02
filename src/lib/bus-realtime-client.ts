@@ -1,4 +1,5 @@
-import { getStopRealtime, getStopsRealtimeBatch } from "@/lib/bus-realtime.functions";
+import { fetchStopFromQR, normalizeLine } from "@/lib/bus-qr-client";
+import { ingestStopSnapshots } from "@/lib/bus-realtime.functions";
 
 export type StopArrival = {
   line: string;
@@ -21,52 +22,41 @@ const cache = new Map<string, StopRealtimeResult>();
 const inFlight = new Map<string, Promise<StopRealtimeResult>>();
 const batchQueues = new Map<string, { ids: Set<string>; waiters: Map<string, (() => void)[]>; timer: ReturnType<typeof setTimeout> | null }>();
 
-function normalizeLine(code: string): string {
-  const m = code.trim().toUpperCase().match(/^(\d+)([A-Z]?)$/);
-  if (!m) return code.trim().toUpperCase();
-  return String(parseInt(m[1], 10)) + m[2];
-}
-
-// El navegador no puede hacer fetch directo al QR oficial (CORS/redirecciones).
-// Delegamos en la server function `getStopRealtime`, que llama a SUBUS directo
-// desde el servidor con User-Agent real y caché compartida.
+// Lee QR directo desde el navegador (sin scraping, sin server). El servidor solo
+// recibe el snapshot ya parseado para cachearlo en BBDD (fire-and-forget).
 async function fetchStop(stopId: string): Promise<StopRealtimeResult> {
   const valid = cache.get(stopId);
   if (valid && Date.now() - valid.fetchedAt < CACHE_TTL_MS) return valid;
   const pending = inFlight.get(stopId);
   if (pending) return pending;
 
-  const promise = getStopRealtime({ data: { stopCode: stopId } })
-    .then((res) => {
-      const arrivals: StopArrival[] = (res.arrivals ?? []).map((a) => ({
-        line: normalizeLine(a.line),
-        destination: a.destination,
-        etaMin: a.etaMin,
-        lat: a.lat,
-        lng: a.lng,
-      }));
-      const result: StopRealtimeResult = {
-        arrivals,
-        all: arrivals.map((a) => a.etaMin).sort((a, b) => a - b),
-        etaMin: arrivals[0]?.etaMin ?? null,
-        fetchedAt: Date.now(),
-      };
-      cache.set(stopId, result);
-      return result;
-    })
-    .catch(() => {
-      const empty: StopRealtimeResult = {
-        arrivals: [],
-        all: [],
-        etaMin: null,
-        fetchedAt: Date.now(),
-      };
-      cache.set(stopId, empty);
-      return empty;
-    })
-    .finally(() => {
-      inFlight.delete(stopId);
-    });
+  const promise = (async (): Promise<StopRealtimeResult> => {
+    const qr = await fetchStopFromQR(stopId);
+    const arrivals: StopArrival[] = [];
+    const snaps: Array<{ stopCode: string; lineCode: string; etaMinutes: number[] }> = [];
+    if (qr) {
+      for (const [lc, info] of qr.byLine.entries()) {
+        snaps.push({ stopCode: stopId, lineCode: lc, etaMinutes: info.minutes });
+        for (const m of info.minutes) {
+          arrivals.push({ line: lc, destination: info.destination, etaMin: m, lat: null, lng: null });
+        }
+      }
+      arrivals.sort((a, b) => a.etaMin - b.etaMin);
+    }
+    const result: StopRealtimeResult = {
+      arrivals,
+      all: arrivals.map((a) => a.etaMin),
+      etaMin: arrivals[0]?.etaMin ?? null,
+      fetchedAt: Date.now(),
+    };
+    cache.set(stopId, result);
+    if (snaps.length > 0) {
+      ingestStopSnapshots({ data: { snapshots: snaps } }).catch(() => {});
+    }
+    return result;
+  })().finally(() => {
+    inFlight.delete(stopId);
+  });
 
   inFlight.set(stopId, promise);
   return promise;
