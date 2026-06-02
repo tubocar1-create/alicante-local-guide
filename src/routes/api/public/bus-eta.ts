@@ -58,8 +58,8 @@ async function fromSubus(stop: string, line: string): Promise<{ etas: number[]; 
   }).catch(() => null);
   if (direct?.ok) {
     const text = await direct.text();
-    const data = JSON.parse(text) as { tiempos?: string };
-    const etas = parseEtas(data.tiempos ?? text, line);
+    const data = await Promise.resolve().then(() => JSON.parse(text) as { tiempos?: string }).catch(() => null);
+    const etas = parseEtas(data?.tiempos ?? text, line);
     if (etas.length > 0) return { etas, source: "subus-datos-direct" };
   }
 
