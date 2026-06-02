@@ -100,6 +100,7 @@ const HERRAMIENTAS = [
   { to: "/admin/auditoria", label: "Auditoría pre-lanzamiento", icon: ClipboardCheck },
   { to: "/admin/crones", label: "Crones programados", icon: Clock },
   { to: "/admin/auditoria-fotos", label: "Auditoría de fotos", icon: ImageIcon },
+  { to: "/admin/bus-snapshots", label: "Snapshots buses (preview)", icon: Activity },
   { to: "/admin/system", label: "Sistema", icon: Wrench },
 ] as const;
 
