@@ -1,12 +1,12 @@
-// Lectura DIRECTA del QR oficial de SUBUS desde el navegador.
-// La fuente correcta es la página de parada:
-// http://www.subus.es/QR/Alicante/consulta.aspx?p=<stop>
-// NO usamos scraping externo (ScrapingBee/Firecrawl). NO usamos `datos.aspx`
-// como fuente directa.
+// Lectura del QR oficial de SUBUS a través de NUESTRO servidor (no del navegador).
+// El navegador no puede leer http://www.subus.es desde un origen https
+// (mixed content + CORS), así que proxyamos por nuestra ruta server:
+//   GET /api/public/bus-datos?stop=<p>  → { raw: <html consulta.aspx> }
+// NO usamos scraping externo (ScrapingBee/Firecrawl). NO usamos `datos.aspx`.
 
-const SUBUS_CONSULTA_URL = "http://www.subus.es/QR/Alicante/consulta.aspx";
+const PROXY_URL = "/api/public/bus-datos";
 const ARRIVAL_RE = /Linea\s+(\d{1,3}[A-Za-z]?)\s+([^:]+?)\s*:\s*(\d+)\s*min/gi;
-const FETCH_TIMEOUT_MS = 6_000;
+const FETCH_TIMEOUT_MS = 8_000;
 
 export function normalizeLine(code: string): string {
   const m = code.trim().toUpperCase().match(/^(\d+)([A-Z]?)$/);
@@ -43,7 +43,7 @@ function parseArrivalText(raw: string): Map<string, { destination: string; minut
 }
 
 export async function fetchStopFromQR(stopCode: string, signal?: AbortSignal): Promise<StopQrResult | null> {
-  const url = `${SUBUS_CONSULTA_URL}?p=${encodeURIComponent(stopCode)}`;
+  const url = `${PROXY_URL}?stop=${encodeURIComponent(stopCode)}`;
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   const linked = () => controller.abort();
@@ -56,8 +56,9 @@ export async function fetchStopFromQR(stopCode: string, signal?: AbortSignal): P
       cache: "no-store",
     });
     if (!res.ok) return null;
-    const text = await res.text();
-    return { byLine: parseArrivalText(text), fetchedAt: Date.now() };
+    const json = (await res.json()) as { raw?: string; ok?: boolean };
+    if (!json.ok || typeof json.raw !== "string") return null;
+    return { byLine: parseArrivalText(json.raw), fetchedAt: Date.now() };
   } catch {
     return null;
   } finally {
