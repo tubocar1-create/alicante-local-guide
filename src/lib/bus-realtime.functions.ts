@@ -31,9 +31,11 @@ export type RealtimeLineState = {
   stops: RealtimeStopEta[];
 };
 
-// ---------- Fetch a Vectalia (igual lógica que /api/public/bus-eta) ----------
+// ---------- Fetch QR oficial (ScrapingBee -> datos.aspx) ----------
 
 const BASE = "http://www.subus.es/QR/Alicante";
+const QR_DATA_URL = "https://qr.vectalia.es/Alicante/datos.aspx";
+const SCRAPINGBEE_URL = "https://app.scrapingbee.com/api/v1/";
 const UA =
   "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36";
 const ARRIVAL_RE = /Linea\s+(\d{1,3}[A-Za-z]?)\s+([^:]+?)\s*:\s*(\d+)\s*min/gi;
@@ -59,9 +61,51 @@ async function fetchWithTimeout(url: string, init: RequestInit = {}): Promise<Re
   }
 }
 
+async function fetchViaScrapingBee(targetUrl: string): Promise<string | null> {
+  const apiKey = process.env.SCRAPINGBEE_API_KEY;
+  if (!apiKey) return null;
+  const url = new URL(SCRAPINGBEE_URL);
+  url.searchParams.set("api_key", apiKey);
+  url.searchParams.set("url", targetUrl);
+  url.searchParams.set("render_js", "false");
+  url.searchParams.set("block_resources", "true");
+  try {
+    const res = await fetchWithTimeout(url.toString(), { redirect: "follow" });
+    if (!res.ok) return null;
+    return await res.text();
+  } catch {
+    return null;
+  }
+}
+
+function parseArrivalText(raw: string): Map<string, number[]> {
+  let text = raw;
+  try {
+    const json = JSON.parse(raw) as { tiempos?: unknown };
+    if (typeof json.tiempos === "string") text = json.tiempos;
+  } catch {
+    // HTML/text fallback: keep raw as-is.
+  }
+
+  const result = new Map<string, number[]>();
+  for (const m of text.matchAll(ARRIVAL_RE)) {
+    const lineKey = normalizeLine(m[1]);
+    const mins = parseInt(m[3], 10);
+    if (!Number.isFinite(mins)) continue;
+    const arr = result.get(lineKey) ?? [];
+    arr.push(mins);
+    result.set(lineKey, arr);
+  }
+  for (const arr of result.values()) arr.sort((a, b) => a - b);
+  return result;
+}
+
 // Devuelve todas las líneas detectadas en la parada: { lineCode -> minutos[] }
 async function fetchAllLinesForStop(stop: string): Promise<Map<string, number[]> | null> {
-  const result = new Map<string, number[]>();
+  const datosUrl = `${QR_DATA_URL}?p=${encodeURIComponent(stop)}`;
+  const proxied = await fetchViaScrapingBee(datosUrl);
+  if (proxied) return parseArrivalText(proxied);
+
   const consultaUrl = `${BASE}/consulta.aspx?p=${encodeURIComponent(stop)}`;
 
   let raw = "";
@@ -80,17 +124,8 @@ async function fetchAllLinesForStop(stop: string): Promise<Map<string, number[]>
     return null;
   }
 
-  if (!raw) return result;
-  for (const m of raw.matchAll(ARRIVAL_RE)) {
-    const lineKey = normalizeLine(m[1]);
-    const mins = parseInt(m[3], 10);
-    if (!Number.isFinite(mins)) continue;
-    const arr = result.get(lineKey) ?? [];
-    arr.push(mins);
-    result.set(lineKey, arr);
-  }
-  for (const arr of result.values()) arr.sort((a, b) => a - b);
-  return result;
+  if (!raw) return new Map<string, number[]>();
+  return parseArrivalText(raw);
 }
 
 // ---------- Cache helpers ----------
