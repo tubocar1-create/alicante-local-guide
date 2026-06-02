@@ -52,7 +52,6 @@ export async function fetchStopFromQR(stopCode: string, signal?: AbortSignal): P
     const res = await fetch(url, {
       method: "GET",
       signal: controller.signal,
-      credentials: "omit",
       cache: "no-store",
     });
     if (!res.ok) return null;
