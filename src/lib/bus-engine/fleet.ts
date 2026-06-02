@@ -379,32 +379,67 @@ export function generateActiveFleet(
     plan.officialDeparturesByDirection[1].length > 0 ||
     plan.officialDeparturesByDirection[2].length > 0;
   if (hasOfficial) {
-    // FASE 1: filtro de Active Service Window.
-    // Solo entran salidas cuyo ciclo NO esté cerrado y que no sean
-    // futuras lejanas. El cierre de ciclo es duro: no reutilizamos.
-    for (const dir of [1, 2] as Direction[]) {
-      const eligible = plan.officialDeparturesByDirection[dir].filter((d) => {
-        const w = classifyDepartureWindow({
-          departureMin: d,
-          nowMin: now,
-          cycleMin: plan.cycleMin,
-        });
-        return w === "active" || w === "imminent";
-      });
-      for (const dep of eligible) {
-        const slotKey = `${dir}-${minutesToHHMM(dep)}`;
-        // FASE 8: aprendizaje SOLO ajusta fase en ±90 s. Nunca mueve buses libremente.
-        const rawCorrection = phaseCorrections?.get(slotKey) ?? phaseCorrections?.get(minutesToHHMM(dep)) ?? 0;
-        const correction = Math.max(
-          -MAX_PHASE_CORRECTION_MIN,
-          Math.min(MAX_PHASE_CORRECTION_MIN, rawCorrection),
-        );
+    // NORMAS DEL CARRUSEL impuestas al motor:
+    //   - Una línea = N actores girando en círculo (N = fleetSizeExpected).
+    //   - Cada salida oficial la toma el bus más veterano esperando en ESA
+    //     terminal; si no hay ninguno y la flota aún no llegó a N, nace un
+    //     bus nuevo (ramp-up matinal).
+    //   - Al llegar a terminal, el bus espera obligatoriamente a la siguiente
+    //     salida oficial de esa terminal.
+    //   - Nadie adelanta. Jamás hay más de N buses en circulación.
+    //
+    // `simulateCarousel` produce esa asignación. Tomamos su trip ACTUAL
+    // (el que cubre `now`) o el próximo viaje (espera en terminal) y lo
+    // convertimos en VirtualBus usando el posicionador del motor.
+    const sim = simulateCarousel(plan, now, plan.cycleMin);
+    for (const b of sim.buses) {
+      const currentTrip = b.trips.find(
+        (t) => t.departureMin <= now && t.arrivalMin > now,
+      );
+      const nextTrip = b.trips.find((t) => t.departureMin > now);
+      const trip = currentTrip ?? nextTrip;
+      if (!trip) continue;
+
+      const dep = trip.departureMin;
+      const dir = trip.direction;
+      const slotKey = `${dir}-${minutesToHHMM(dep)}`;
+      const rawCorrection =
+        phaseCorrections?.get(slotKey) ??
+        phaseCorrections?.get(minutesToHHMM(dep)) ??
+        0;
+      const correction = Math.max(
+        -MAX_PHASE_CORRECTION_MIN,
+        Math.min(MAX_PHASE_CORRECTION_MIN, rawCorrection),
+      );
+
+      let loc: ReturnType<typeof locateBusInCycle>;
+      let offset: number;
+      if (currentTrip) {
+        // Bus en ruta: offset = tiempo en su trip directional.
         const elapsed = now - dep + correction;
-        const offset = ((elapsed % plan.cycleMin) + plan.cycleMin) % plan.cycleMin;
-        const loc = locateBusInCycle(plan, offset, dir);
-        const speed = estimateSpeedKmh(plan, loc);
-        raw.push(makeBus(plan, slotKey, dep, offset, correction, loc, speed, true, dir));
+        offset = ((elapsed % plan.cycleMin) + plan.cycleMin) % plan.cycleMin;
+        loc = locateBusInCycle(plan, offset, dir);
+      } else {
+        // Bus esperando en terminal de origen del próximo trip.
+        offset = 0;
+        const dirPlan = dir === 1 ? plan.dirIda : plan.dirVuelta;
+        const a = dirPlan?.stops[0];
+        loc = {
+          direction: dir,
+          state: "terminal_wait",
+          segmentIndex: 0,
+          segmentProgress: 0,
+          position:
+            a && a.lat != null && a.lng != null
+              ? { lat: a.lat, lng: a.lng }
+              : null,
+          segmentConfidence: 0.7,
+        };
       }
+      const speed = estimateSpeedKmh(plan, loc);
+      raw.push(
+        makeBus(plan, b.busId, dep, offset, correction, loc, speed, true, dir),
+      );
     }
   } else {
     // Fallback sintético (solo si NO hay salidas oficiales para esta línea/slot).
@@ -426,6 +461,7 @@ export function generateActiveFleet(
       }
     }
   }
+
 
 
   // Degradación por edad de observación.
