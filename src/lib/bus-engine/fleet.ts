@@ -327,12 +327,16 @@ export function generateActiveFleet(
   lastObservationAgeSec: number | null = null,
 ): { fleet: VirtualBus[]; validatorReport: ValidatorReport } {
   if (plan.cycleMin <= 0) return { fleet: [], validatorReport: emptyReport() };
+  // PERFIL OPERACIONAL: si una línea está fuera de servicio (perfil dice
+  // target=0), no generamos NADA aunque haya salidas oficiales en el horario.
+  if (plan.fleetSizeExpected === 0 && plan.fleetWindow !== "no_profile") {
+    return { fleet: [], validatorReport: emptyReport() };
+  }
   const now = nowMinutes(at);
   let raw: VirtualBus[] = [];
 
   const hasOfficial = plan.officialDeparturesMin.length > 0;
   if (hasOfficial) {
-    // Para cada salida en [now-cycleMin, now], generamos un bus anclado.
     const recent = plan.officialDeparturesMin.filter(
       (d) => d <= now + 0.5 && d >= now - plan.cycleMin - 0.5,
     );
@@ -377,7 +381,20 @@ export function generateActiveFleet(
     speeds,
   });
 
-  return { fleet, validatorReport: report };
+  // CAP DURO por perfil operacional. Si el perfil define un máximo, jamás
+  // entregamos más buses que ese número. Si define un mínimo y vamos cortos,
+  // sólo añadimos buses sintéticos cuando NO hay anclaje oficial; con anclaje
+  // oficial respetamos la realidad (no inventamos buses sin salida válida).
+  let capped = fleet;
+  if (plan.fleetWindow !== "no_profile" && plan.fleetSizeMax > 0) {
+    if (capped.length > plan.fleetSizeMax) {
+      capped = [...capped]
+        .sort((a, b) => b.confidence - a.confidence)
+        .slice(0, plan.fleetSizeMax);
+    }
+  }
+
+  return { fleet: capped, validatorReport: report };
 }
 
 function makeBus(
