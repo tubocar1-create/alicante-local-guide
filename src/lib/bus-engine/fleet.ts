@@ -553,7 +553,8 @@ export function predictLineFromFleet(
   realtimeAgeSeconds: number | null;
 } {
   const plan = buildLineFleetPlan(data, lineCode, at);
-  const fleet = generateActiveFleet(plan, at);
+  const { fleet } = generateActiveFleet(plan, at);
+
   const etas = deriveStopEtas(plan, fleet, at);
   const avgConf =
     fleet.length > 0
