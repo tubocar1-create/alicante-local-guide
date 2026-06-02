@@ -1,4 +1,11 @@
 import { getStopRealtime, getStopsRealtimeBatch } from "@/lib/bus-realtime.functions";
+import { isEstimatedMode } from "@/lib/transport-mode";
+import {
+  getEstimatedStopArrivals,
+  isEstimatedSupported,
+  isNightLine as isNightLineCode,
+} from "@/lib/bus-eta-estimated";
+
 
 export type StopArrival = {
   line: string;
