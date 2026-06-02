@@ -59,8 +59,13 @@ export type LineFleetPlan = {
   cycleMin: number;
   terminalRegulationMin: number;
   headwayMin: number;
-  activeBusCount: number;        // = fleetSizeExpected (compatibilidad)
-  fleetSizeExpected: number;     // ceil(cycle/headway)
+  activeBusCount: number;        // = fleetSizeExpected tras perfil (compatibilidad)
+  fleetSizeExpected: number;     // tras aplicar perfil operacional (cap/floor)
+  fleetSizeInferred: number;     // valor crudo (ceil cycle/headway)
+  fleetSizeMin: number;          // tope inferior del perfil (base diurna)
+  fleetSizeMax: number;          // tope superior del perfil
+  fleetWindow: FleetWindow | "no_profile";
+  fleetReason: string;
   dayType: ReturnType<typeof dayType>;
   serviceSlot: ServiceSlot;
   officialDeparturesMin: number[]; // salidas oficiales IDA dentro del slot activo
