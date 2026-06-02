@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ArrowDown, ArrowUp, Bus, ChevronDown, Radio, RefreshCw, Loader2, MapPin } from "lucide-react";
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { classifyLine } from "@/components/BusKnownPicker";
@@ -16,12 +16,7 @@ import {
 import { cumulativeMinutes, NIGHT_URBAN_KMH } from "@/lib/bus-eta";
 import { getClientStopRealtime, getClientStopsRealtimeBatch } from "@/lib/bus-realtime-client";
 import busAlicanteImg from "@/assets/bus-alicante.png";
-import type { LineStopPoint } from "@/components/BusLineLiveMap";
 
-
-const BusLineLiveMap = lazy(() =>
-  import("@/components/BusLineLiveMap").then((m) => ({ default: m.BusLineLiveMap })),
-);
 
 
 function haversineMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
