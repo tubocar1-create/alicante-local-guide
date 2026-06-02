@@ -1,113 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-// Tiempo real oficial QR: datos.aspx?p=N devuelve JSON con todas las llegadas.
-// En servidor se entra por ScrapingBee porque el origen bloquea IPs de datacenter.
-
-const BASE = "http://www.subus.es/QR/Alicante";
-const QR_DATA_URL = "https://qr.vectalia.es/Alicante/datos.aspx";
-const SCRAPINGBEE_URL = "https://app.scrapingbee.com/api/v1/";
-const FIRECRAWL_SCRAPE_URL = "https://api.firecrawl.dev/v2/scrape";
-const UA =
-  "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36";
-const ARRIVAL_RE = /Linea\s+(\d{1,3}[A-Za-z]?)\s+([^:]+?)\s*:\s*(\d+)\s*min/gi;
-const FETCH_TIMEOUT_MS = 4_500;
+// Tiempo real oficial QR: el NAVEGADOR es quien lee Vectalia directamente
+// (https://qr.vectalia.es/Alicante/datos.aspx?p=N) e ingesta el resultado en
+// la tabla `bus_realtime_snapshots`. Este endpoint público devuelve lo que haya
+// cacheado en BBDD. NO scrapea, NO usa ScrapingBee/Firecrawl, NO toca consulta.aspx.
 
 function normalizeLine(code: string): string {
   const m = code.trim().toUpperCase().match(/^(\d+)([A-Z]?)$/);
   if (!m) return code.trim().toUpperCase();
   return String(parseInt(m[1], 10)) + m[2];
-}
-
-async function fetchWithTimeout(url: string, init: RequestInit = {}, timeoutMs = FETCH_TIMEOUT_MS): Promise<Response> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await fetch(url, { ...init, signal: controller.signal });
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-function parseEtas(raw: string, requestedLine: string): number[] {
-  let text = raw;
-  try {
-    const json = JSON.parse(raw) as { tiempos?: unknown };
-    if (typeof json.tiempos === "string") text = json.tiempos;
-  } catch {
-    // HTML/text fallback.
-  }
-  const wanted = normalizeLine(requestedLine);
-  const out: number[] = [];
-  for (const m of text.matchAll(ARRIVAL_RE)) {
-    if (normalizeLine(m[1]) !== wanted) continue;
-    const min = parseInt(m[3], 10);
-    if (Number.isFinite(min)) out.push(min);
-  }
-  return out.sort((a, b) => a - b);
-}
-
-async function fetchViaScrapingBee(targetUrl: string): Promise<string | null> {
-  const apiKey = process.env.SCRAPINGBEE_API_KEY;
-  if (!apiKey) return null;
-  const url = new URL(SCRAPINGBEE_URL);
-  url.searchParams.set("api_key", apiKey);
-  url.searchParams.set("url", targetUrl);
-  url.searchParams.set("render_js", "false");
-  url.searchParams.set("block_resources", "true");
-  try {
-    const res = await fetchWithTimeout(url.toString(), { redirect: "follow" });
-    if (!res.ok) return null;
-    return await res.text();
-  } catch {
-    return null;
-  }
-}
-
-async function fetchViaFirecrawl(targetUrl: string): Promise<string | null> {
-  const apiKey = process.env.FIRECRAWL_API_KEY;
-  if (!apiKey) return null;
-  try {
-    const res = await fetchWithTimeout(FIRECRAWL_SCRAPE_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        url: targetUrl,
-        formats: ["rawHtml"],
-        onlyMainContent: false,
-        waitFor: 0,
-      }),
-    });
-    if (!res.ok) return null;
-    const payload = (await res.json()) as { data?: { rawHtml?: unknown; html?: unknown; markdown?: unknown } };
-    const raw = payload.data?.rawHtml ?? payload.data?.html ?? payload.data?.markdown;
-    return typeof raw === "string" ? raw : null;
-  } catch {
-    return null;
-  }
-}
-
-async function fromSubus(stop: string, line: string): Promise<{ etas: number[]; source: string }> {
-  const datosUrl = `${QR_DATA_URL}?p=${encodeURIComponent(stop)}`;
-  const proxied = await fetchViaScrapingBee(datosUrl);
-  if (proxied) return { etas: parseEtas(proxied, line), source: "scrapingbee-qr-datos" };
-  const crawled = await fetchViaFirecrawl(datosUrl);
-  if (crawled) return { etas: parseEtas(crawled, line), source: "firecrawl-qr-datos" };
-
-  const consultaUrl = `${BASE}/consulta.aspx?p=${encodeURIComponent(stop)}`;
-
-  const page = await fetchWithTimeout(consultaUrl, {
-    redirect: "follow",
-    headers: {
-      "User-Agent": UA,
-      Accept: "text/html,application/xhtml+xml",
-      "Accept-Language": "es-ES,es;q=0.9",
-    },
-  });
-  if (!page.ok) return { etas: [], source: `subus-consulta-http-${page.status}` };
-  return { etas: parseEtas(await page.text(), line), source: "subus-consulta-page" };
 }
 
 export const Route = createFileRoute("/api/public/bus-eta")({
@@ -129,12 +31,21 @@ export const Route = createFileRoute("/api/public/bus-eta")({
           });
         }
 
-        const { etas, source } = await fromSubus(stop, line);
+        const wanted = normalizeLine(line);
+        const { data, error } = await supabaseAdmin
+          .from("bus_realtime_snapshots")
+          .select("eta_minutes,captured_at")
+          .eq("stop_code", stop)
+          .eq("line_code", wanted)
+          .maybeSingle();
+
+        const etas = error || !data ? [] : (data.eta_minutes ?? []).slice().sort((a: number, b: number) => a - b);
+        const capturedAt = data?.captured_at ?? null;
 
         let etaMin: number | null = null;
         if (etas.length > 0) {
           if (minThreshold != null && Number.isFinite(minThreshold)) {
-            const next = etas.find((m) => m >= minThreshold);
+            const next = etas.find((m: number) => m >= minThreshold);
             etaMin = next ?? etas[etas.length - 1];
           } else {
             etaMin = etas[Math.min(index, etas.length - 1)];
@@ -142,7 +53,7 @@ export const Route = createFileRoute("/api/public/bus-eta")({
         }
 
         return new Response(
-          JSON.stringify({ etaMin, all: etas, source, fetchedAt: Date.now() }),
+          JSON.stringify({ etaMin, all: etas, source: "snapshot-cache", capturedAt, fetchedAt: Date.now() }),
           {
             status: 200,
             headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
