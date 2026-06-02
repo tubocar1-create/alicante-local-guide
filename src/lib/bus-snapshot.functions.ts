@@ -83,7 +83,7 @@ export const captureLineSnapshot = createServerFn({ method: "POST" })
         line: data.line,
         stop_code: data.stopCode,
         buses_count: buses,
-        raw_markers: markers as unknown as object,
+        raw_markers: markers as never,
         source_url: url,
         notes: data.notes ?? null,
       })
