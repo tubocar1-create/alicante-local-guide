@@ -590,7 +590,9 @@ function BusDashboardPage() {
             onPickStop={handlePickStop}
             nearestList={nearestByDir[1]}
             geoStatus={geoStatus}
+            predictedBuses={predictedBusesByDir[1]}
           />
+
           <DirectionColumn
             label="VUELTA"
             direction={2}
