@@ -32,21 +32,29 @@ export function validateTemporalConsistency(opts: {
   const discard = new Set<string>();
 
   // 1. ETA monotonicity por bus.
+  //    deriveStopEtas emite el mismo stopCode varias veces (una por loop de
+  //    ciclo) y mezcla IDA + VUELTA en el mismo array. Para validar:
+  //      - agrupamos por (busId, direction)
+  //      - nos quedamos con la ETA mínima por stopSeq (la próxima ocurrencia)
+  //      - ordenamos por etaMin (siempre monótono) y validamos solo el salto
+  //        máximo hacia adelante. El "backstep" es imposible tras este orden.
   const byBus = new Map<string, StopEta[]>();
   for (const e of opts.etas) {
     if (!e.busId) continue;
-    if (!byBus.has(e.busId)) byBus.set(e.busId, []);
-    byBus.get(e.busId)!.push(e);
+    const key = `${e.busId}|${e.direction}`;
+    if (!byBus.has(key)) byBus.set(key, []);
+    byBus.get(key)!.push(e);
   }
-  for (const [busId, arr] of byBus) {
-    arr.sort((a, b) => a.stopSeq - b.stopSeq);
-    for (let i = 1; i < arr.length; i++) {
-      const gap = arr[i].etaMin - arr[i - 1].etaMin;
-      if (gap < -MAX_BACKSTEP_MIN) {
-        discard.add(busId);
-        reasons[busId] = `eta_retroceso(${gap.toFixed(1)}m)`;
-        break;
-      }
+  for (const [key, arr] of byBus) {
+    const busId = key.split("|")[0];
+    const minBySeq = new Map<number, StopEta>();
+    for (const e of arr) {
+      const cur = minBySeq.get(e.stopSeq);
+      if (!cur || e.etaMin < cur.etaMin) minBySeq.set(e.stopSeq, e);
+    }
+    const ordered = [...minBySeq.values()].sort((a, b) => a.etaMin - b.etaMin);
+    for (let i = 1; i < ordered.length; i++) {
+      const gap = ordered[i].etaMin - ordered[i - 1].etaMin;
       if (gap > MAX_FORWARD_JUMP_MIN) {
         discard.add(busId);
         reasons[busId] = `eta_salto(${gap.toFixed(1)}m)`;
