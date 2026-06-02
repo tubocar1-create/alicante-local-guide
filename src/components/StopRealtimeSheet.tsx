@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { StopArrival } from "@/lib/bus-realtime-client";
+import { getStopRealtime } from "@/lib/bus-realtime.functions";
 import { liveStopUrl } from "@/lib/bus";
 import { ArrivalAlarm } from "@/components/ArrivalAlarm";
 import { useBusEngine } from "@/hooks/useBusEngine";
@@ -28,6 +29,24 @@ export type StopRealtimeContext = {
 };
 
 const TICK_MS = 30_000;
+const SUBUS_TIMEOUT_MS = 2_500;
+type Source = "live" | "estimated" | "none";
+
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error("timeout")), ms);
+    p.then(
+      (v) => {
+        clearTimeout(t);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(t);
+        reject(e);
+      },
+    );
+  });
+}
 
 export function StopRealtimeSheet({
   stop,
@@ -38,33 +57,73 @@ export function StopRealtimeSheet({
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
-  const { data: engine, loading: engineLoading } = useBusEngine();
+  const { data: engine } = useBusEngine();
   const [arrivals, setArrivals] = useState<StopArrival[]>([]);
   const [fetchedAt, setFetchedAt] = useState<number | null>(null);
+  const [source, setSource] = useState<Source>("none");
+  const [loading, setLoading] = useState(false);
   const [tick, setTick] = useState(0);
 
-  // Recalcular ETAs localmente cada TICK_MS sin tocar la red.
   useEffect(() => {
-    if (!open || !stop || !engine) return;
-    const compute = () => {
+    if (!open || !stop) return;
+    let cancelled = false;
+
+    const computeFallback = (): StopArrival[] => {
+      if (!engine) return [];
       const wanted = new Set((stop.lines ?? []).map((l) => l.toUpperCase()));
       const raw = predictStopArrivals(engine, stop.code, new Date());
       const filtered = wanted.size > 0
         ? raw.filter((r) => wanted.has(r.line.toUpperCase()))
         : raw;
-      const mapped: StopArrival[] = filtered.slice(0, 12).map((r) => ({
+      return filtered.slice(0, 12).map((r) => ({
         line: r.line,
         destination: r.destination,
         etaMin: r.etaMin,
         lat: null,
         lng: null,
       }));
-      setArrivals(mapped);
-      setFetchedAt(Date.now());
     };
-    compute();
-    const id = setInterval(compute, TICK_MS);
-    return () => clearInterval(id);
+
+    const run = async () => {
+      setLoading(true);
+      try {
+        const res = await withTimeout(
+          getStopRealtime({ data: { stopCode: stop.code } }),
+          SUBUS_TIMEOUT_MS,
+        );
+        if (cancelled) return;
+        const wanted = new Set((stop.lines ?? []).map((l) => l.toUpperCase()));
+        const live = (res.arrivals ?? [])
+          .filter((a) => wanted.size === 0 || wanted.has(a.line.toUpperCase()))
+          .slice(0, 12);
+        if (live.length > 0) {
+          setArrivals(live);
+          setSource("live");
+          setFetchedAt(Date.now());
+          return;
+        }
+        // Subus respondió vacío → fallback
+        const fb = computeFallback();
+        setArrivals(fb);
+        setSource(fb.length > 0 ? "estimated" : "none");
+        setFetchedAt(Date.now());
+      } catch {
+        if (cancelled) return;
+        const fb = computeFallback();
+        setArrivals(fb);
+        setSource(fb.length > 0 ? "estimated" : "none");
+        setFetchedAt(Date.now());
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    run();
+    const id = setInterval(run, TICK_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
   }, [open, stop, engine, tick]);
 
   // reset when closed
@@ -72,10 +131,10 @@ export function StopRealtimeSheet({
     if (!open) {
       setArrivals([]);
       setFetchedAt(null);
+      setSource("none");
     }
   }, [open]);
 
-  const loading = engineLoading;
   const error: string | null = null;
 
   const buses = useMemo(
@@ -106,9 +165,15 @@ export function StopRealtimeSheet({
             </span>
           </SheetTitle>
           <SheetDescription className="flex items-center justify-between text-xs">
-            <span>
+            <span className="flex items-center gap-2">
               {fetchedAt ? `Actualizado ${new Date(fetchedAt).toLocaleTimeString("es-ES")}` : "Cargando…"}
-              {loading && <Loader2 className="ml-2 inline h-3 w-3 animate-spin" />}
+              {loading && <Loader2 className="inline h-3 w-3 animate-spin" />}
+              {source === "live" && (
+                <Badge variant="default" className="h-4 px-1.5 text-[10px]">tiempo real</Badge>
+              )}
+              {source === "estimated" && (
+                <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">estimado</Badge>
+              )}
             </span>
             {stop && (
               <a
