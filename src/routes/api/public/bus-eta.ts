@@ -6,6 +6,7 @@ import { createFileRoute } from "@tanstack/react-router";
 const BASE = "http://www.subus.es/QR/Alicante";
 const QR_DATA_URL = "https://qr.vectalia.es/Alicante/datos.aspx";
 const SCRAPINGBEE_URL = "https://app.scrapingbee.com/api/v1/";
+const FIRECRAWL_SCRAPE_URL = "https://api.firecrawl.dev/v2/scrape";
 const UA =
   "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36";
 const ARRIVAL_RE = /Linea\s+(\d{1,3}[A-Za-z]?)\s+([^:]+?)\s*:\s*(\d+)\s*min/gi;
@@ -62,10 +63,38 @@ async function fetchViaScrapingBee(targetUrl: string): Promise<string | null> {
   }
 }
 
+async function fetchViaFirecrawl(targetUrl: string): Promise<string | null> {
+  const apiKey = process.env.FIRECRAWL_API_KEY;
+  if (!apiKey) return null;
+  try {
+    const res = await fetchWithTimeout(FIRECRAWL_SCRAPE_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        url: targetUrl,
+        formats: ["rawHtml"],
+        onlyMainContent: false,
+        waitFor: 0,
+      }),
+    });
+    if (!res.ok) return null;
+    const payload = (await res.json()) as { data?: { rawHtml?: unknown; html?: unknown; markdown?: unknown } };
+    const raw = payload.data?.rawHtml ?? payload.data?.html ?? payload.data?.markdown;
+    return typeof raw === "string" ? raw : null;
+  } catch {
+    return null;
+  }
+}
+
 async function fromSubus(stop: string, line: string): Promise<{ etas: number[]; source: string }> {
   const datosUrl = `${QR_DATA_URL}?p=${encodeURIComponent(stop)}`;
   const proxied = await fetchViaScrapingBee(datosUrl);
   if (proxied) return { etas: parseEtas(proxied, line), source: "scrapingbee-qr-datos" };
+  const crawled = await fetchViaFirecrawl(datosUrl);
+  if (crawled) return { etas: parseEtas(crawled, line), source: "firecrawl-qr-datos" };
 
   const consultaUrl = `${BASE}/consulta.aspx?p=${encodeURIComponent(stop)}`;
 
