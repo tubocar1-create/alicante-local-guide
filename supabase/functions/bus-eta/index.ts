@@ -1,18 +1,9 @@
-// Proxy a tiempo real de Vectalia (Alicante).
-// 1) Intenta datos.aspx, que es el endpoint JSON usado por la página QR actual.
-// 2) Si no hay datos, cae a request.aspx y después al scrapeo legacy.
+// Tiempo real oficial de SUBUS/Vectalia Alicante, sin proxy externo.
+// Flujo: consulta.aspx?p=N para sesión/cookies y datos.aspx?p=N para JSON.
 
-const VECTALIA_RT_URL = "https://movilidad.vectalia.es/QR/Alicante/lib/request.aspx";
-const VECTALIA_DATA_URL = "https://movilidad.vectalia.es/QR/Alicante/datos.aspx";
-const VECTALIA_PAGE_URL = "https://movilidad.vectalia.es/QR/Alicante/consulta.aspx";
+const BASE = "http://www.subus.es/QR/Alicante";
 const ARRIVAL_RE = /Linea\s+(\d{1,3}[A-Za-z]?)\s+([^:]+?)\s*:\s*(\d+)\s*min/gi;
-const VECTALIA_LINE_CODES: Record<string, string> = {
-  "14": "084",
-};
-
-function toVectaliaLineCode(lineCode: string): string {
-  return VECTALIA_LINE_CODES[lineCode] ?? lineCode.padStart(3, "0");
-}
+const FETCH_TIMEOUT_MS = 4_500;
 
 function normalizeLine(code: string): string {
   // "008" -> "8", "24" -> "24", "23N" -> "23N"
@@ -30,20 +21,26 @@ const corsHeaders = {
 
 const browserHeaders = {
   "User-Agent":
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
-  Referer: "https://movilidad.vectalia.es/QR/Alicante/mapa.aspx",
+    "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36",
   "X-Requested-With": "XMLHttpRequest",
-  Accept: "*/*",
+  "X-Vectalia-App": "qr-alicante",
+  "Accept-Language": "es-ES,es;q=0.9",
+  Accept: "application/json, text/plain, */*",
 };
 
-async function sbFetch(target: string, init?: RequestInit): Promise<Response> {
-  const key = Deno.env.get("SCRAPINGBEE_API_KEY");
-  if (!key) return fetch(target, init);
-  const sb = new URL("https://app.scrapingbee.com/api/v1/");
-  sb.searchParams.set("api_key", key);
-  sb.searchParams.set("url", target);
-  sb.searchParams.set("render_js", "false");
-  return fetch(sb.toString(), { headers: { Accept: "*/*" } });
+async function fetchWithTimeout(url: string, init: RequestInit = {}, timeoutMs = FETCH_TIMEOUT_MS): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function extractCookies(res: Response): string {
+  const list = res.headers.getSetCookie?.() ?? [];
+  return list.map((c) => c.split(";")[0]).filter(Boolean).join("; ");
 }
 
 function parseEtas(raw: string, requestedLine: string): number[] {
