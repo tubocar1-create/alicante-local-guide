@@ -1,0 +1,4726 @@
+[
+  {
+    "code": "01",
+    "name": "San Gabriel-ciudad Elegida",
+    "url": "https://alicante.vectalia.es/linea/linea-01-san-gabriel-ciudad-elegida",
+    "routes": [
+      [
+        {
+          "code": "3900",
+          "name": "SAN GABRIEL-PLAZA BOTELLA"
+        },
+        {
+          "code": "3901",
+          "name": "VERGEL"
+        },
+        {
+          "code": "3902",
+          "name": "ESCOLANO-PEGO"
+        },
+        {
+          "code": "3903",
+          "name": "ESCOLANO-LOS CINCUENTA"
+        },
+        {
+          "code": "3904",
+          "name": "DÍAZ DE MENDOZA"
+        },
+        {
+          "code": "3905",
+          "name": "LA CIGÜEÑA"
+        },
+        {
+          "code": "3906",
+          "name": "SEMPERE-BLUME"
+        },
+        {
+          "code": "3500",
+          "name": "SEMPERE-PASTOR"
+        },
+        {
+          "code": "3907",
+          "name": "SEMPERE-LA ERA"
+        },
+        {
+          "code": "3908",
+          "name": "C.P. EL PALMERAL"
+        },
+        {
+          "code": "3909",
+          "name": "ECUADOR"
+        },
+        {
+          "code": "3910",
+          "name": "PERÚ"
+        },
+        {
+          "code": "3961",
+          "name": "MÉXICO-ROTONDA"
+        },
+        {
+          "code": "3122",
+          "name": "MÉXICO-CAJA AHORROS"
+        },
+        {
+          "code": "3123",
+          "name": "IES CAVANILLES"
+        },
+        {
+          "code": "3911",
+          "name": "CFPA BABEL"
+        },
+        {
+          "code": "3124",
+          "name": "SOLER-JUZGADOS"
+        },
+        {
+          "code": "3912",
+          "name": "C.P. BENALÚA"
+        },
+        {
+          "code": "3126",
+          "name": "Ó. ESPLÁ-SEMPERE"
+        },
+        {
+          "code": "4446",
+          "name": "CAPUCHINOS"
+        },
+        {
+          "code": "3127",
+          "name": "ALEMANIA"
+        },
+        {
+          "code": "4445",
+          "name": "MUNTANYETA-SOTO"
+        },
+        {
+          "code": "4046",
+          "name": "LUCEROS-SOTO"
+        },
+        {
+          "code": "3129",
+          "name": "MERCADO-EL SABIO"
+        },
+        {
+          "code": "2902",
+          "name": "MERCADO-SAN VICENTE"
+        },
+        {
+          "code": "4111",
+          "name": "PLAZA DE TOROS"
+        },
+        {
+          "code": "3916",
+          "name": "JIJONA-AUDITORIO"
+        },
+        {
+          "code": "3001",
+          "name": "JIJONA-ADORATRICES"
+        },
+        {
+          "code": "3917",
+          "name": "ALONSO-DEVESA"
+        },
+        {
+          "code": "3003",
+          "name": "HOSPITAL-ALONSO"
+        },
+        {
+          "code": "3004",
+          "name": "ALONSO-ALCOLEJA"
+        },
+        {
+          "code": "3005",
+          "name": "MAESTRE ALONSO (TRAM)"
+        },
+        {
+          "code": "3006",
+          "name": "C.P. VIRGEN DEL REMEDIO"
+        },
+        {
+          "code": "3918",
+          "name": "PLAZA ORÁN"
+        },
+        {
+          "code": "3919",
+          "name": "C. SOCIAL VIRGEN DEL CARMEN"
+        },
+        {
+          "code": "3960",
+          "name": "EJÉRCITOS ESPAÑOLES"
+        },
+        {
+          "code": "4410",
+          "name": "C.P. EL TOSSALET"
+        },
+        {
+          "code": "3921",
+          "name": "CARRATALÁ-TOSSALET"
+        },
+        {
+          "code": "3975",
+          "name": "CARRATALÁ-ELS POBLETS"
+        },
+        {
+          "code": "3976",
+          "name": "LOS MONTESINOS"
+        },
+        {
+          "code": "3923",
+          "name": "PINTOR AMORÓS"
+        },
+        {
+          "code": "3924",
+          "name": "PINTOR CAMACHO"
+        },
+        {
+          "code": "3926",
+          "name": "CIUDAD ELEGIDA"
+        },
+        {
+          "code": "3927",
+          "name": "C.P. SAN AGUSTÍN"
+        },
+        {
+          "code": "3928",
+          "name": "PINTOR CAMACHO"
+        },
+        {
+          "code": "3929",
+          "name": "PINTOR AMORÓS"
+        },
+        {
+          "code": "3930",
+          "name": "CARRATALÁ-ELS POBLETS"
+        }
+      ],
+      [
+        {
+          "code": "3930",
+          "name": "CARRATALÁ-ELS POBLETS"
+        },
+        {
+          "code": "3931",
+          "name": "CARRATALÁ-TOSSALET"
+        },
+        {
+          "code": "3932",
+          "name": "C.P. EL TOSSALET"
+        },
+        {
+          "code": "3933",
+          "name": "SIERRA DE PANDOLS"
+        },
+        {
+          "code": "3934",
+          "name": "STA. CRUZ-BANYERES"
+        },
+        {
+          "code": "3957",
+          "name": "C. SOCIAL VIRGEN DEL CARMEN"
+        },
+        {
+          "code": "4428",
+          "name": "C. DEPORTIVO V. DEL CARMEN"
+        },
+        {
+          "code": "4429",
+          "name": "ESPARTERO"
+        },
+        {
+          "code": "3038",
+          "name": "HOSPITAL-ALONSO"
+        },
+        {
+          "code": "3039",
+          "name": "ALONSO-DEVESA"
+        },
+        {
+          "code": "3040",
+          "name": "JIJONA-ADORATRICES"
+        },
+        {
+          "code": "6210",
+          "name": "JIJONA-SANIDAD"
+        },
+        {
+          "code": "2946",
+          "name": "MERCADO-CALDERÓN"
+        },
+        {
+          "code": "3937",
+          "name": "MERCADO-EL SABIO"
+        },
+        {
+          "code": "3938",
+          "name": "LUCEROS"
+        },
+        {
+          "code": "3939",
+          "name": "MUNTANYETA-SOTO"
+        },
+        {
+          "code": "3940",
+          "name": "PLAZA SÉNECA"
+        },
+        {
+          "code": "3941",
+          "name": "CASANOVA-CHURRUCA"
+        },
+        {
+          "code": "3103",
+          "name": "SOLER-POLICÍA"
+        },
+        {
+          "code": "3942",
+          "name": "C.P. BENALÚA"
+        },
+        {
+          "code": "3943",
+          "name": "SOLER-ALBEROLA"
+        },
+        {
+          "code": "3104",
+          "name": "SOLER-JUZGADOS"
+        },
+        {
+          "code": "3944",
+          "name": "CFPA BABEL"
+        },
+        {
+          "code": "3105",
+          "name": "IES CAVANILLES"
+        },
+        {
+          "code": "3945",
+          "name": "MÉXICO-CAJA AHORROS"
+        },
+        {
+          "code": "3502",
+          "name": "IES BAHÍA DE BABEL"
+        },
+        {
+          "code": "3528",
+          "name": "POLIDEPORTIVO SAMARANCH"
+        },
+        {
+          "code": "3949",
+          "name": "C.P. EL PALMERAL"
+        },
+        {
+          "code": "3950",
+          "name": "SEMPERE-LA ERA"
+        },
+        {
+          "code": "3525",
+          "name": "SEMPERE-PASTOR"
+        },
+        {
+          "code": "3951",
+          "name": "SEMPERE-BLUME"
+        },
+        {
+          "code": "3952",
+          "name": "LA CIGÜEÑA"
+        },
+        {
+          "code": "3953",
+          "name": "URB. EL PALMERAL"
+        },
+        {
+          "code": "3954",
+          "name": "VICTORIA KENT"
+        },
+        {
+          "code": "3955",
+          "name": "DÍAZ DE MENDOZA"
+        },
+        {
+          "code": "3956",
+          "name": "PEDREGUER"
+        },
+        {
+          "code": "3900",
+          "name": "SAN GABRIEL-PLAZA BOTELLA"
+        }
+      ]
+    ],
+    "routeStopCount": [
+      47,
+      37
+    ],
+    "schedule": {
+      "firstDeparture": "05:57",
+      "lastDeparture": "22:30",
+      "uniqueDepartures": 294,
+      "avgGapMin": 3,
+      "medianGapMin": 3
+    },
+    "rawTimeCount": 672
+  },
+  {
+    "code": "02",
+    "name": "la Florida-sagrada Familia",
+    "url": "https://alicante.vectalia.es/linea/linea-02-la-florida-sagrada-familia",
+    "routes": [
+      [
+        {
+          "code": "4000",
+          "name": "LA FLORIDA-ASTURIAS"
+        },
+        {
+          "code": "4001",
+          "name": "ANA NAVARRO"
+        },
+        {
+          "code": "4002",
+          "name": "BETIS FLORIDA"
+        },
+        {
+          "code": "4003",
+          "name": "FLOR"
+        },
+        {
+          "code": "4004",
+          "name": "IES FIGUERAS-CARBONELL"
+        },
+        {
+          "code": "4005",
+          "name": "C.P. FLORIDA-CARBONELL"
+        },
+        {
+          "code": "3123",
+          "name": "IES CAVANILLES"
+        },
+        {
+          "code": "3911",
+          "name": "CFPA BABEL"
+        },
+        {
+          "code": "3124",
+          "name": "SOLER-JUZGADOS"
+        },
+        {
+          "code": "3912",
+          "name": "C.P. BENALÚA"
+        },
+        {
+          "code": "3126",
+          "name": "Ó. ESPLÁ-SEMPERE"
+        },
+        {
+          "code": "4446",
+          "name": "CAPUCHINOS"
+        },
+        {
+          "code": "3127",
+          "name": "ALEMANIA"
+        },
+        {
+          "code": "2603",
+          "name": "MUNTANYETA-SOTO"
+        },
+        {
+          "code": "3915",
+          "name": "TEATRO"
+        },
+        {
+          "code": "2606",
+          "name": "RAMBLA-PORTAL DE ELCHE"
+        },
+        {
+          "code": "4009",
+          "name": "PUERTA DEL MAR"
+        },
+        {
+          "code": "2608",
+          "name": "POSTIGUET-PASARELA"
+        },
+        {
+          "code": "4065",
+          "name": "CANÓNIGO PENALVA"
+        },
+        {
+          "code": "4010",
+          "name": "CELIA VALLS"
+        },
+        {
+          "code": "4036",
+          "name": "J. TURINA"
+        },
+        {
+          "code": "4012",
+          "name": "PLAZA ESTELLA"
+        },
+        {
+          "code": "4013",
+          "name": "ING. CANALES"
+        },
+        {
+          "code": "3566",
+          "name": "C.A. MONTEMAR"
+        },
+        {
+          "code": "4014",
+          "name": "RÍO SERPÍS"
+        },
+        {
+          "code": "4015",
+          "name": "ALBIÑANA"
+        },
+        {
+          "code": "4016",
+          "name": "CISNEROS-SAN MATEO"
+        },
+        {
+          "code": "4017",
+          "name": "CISNEROS-CÁNOVAS"
+        },
+        {
+          "code": "4018",
+          "name": "SAGRADA FAMILIA"
+        }
+      ],
+      [
+        {
+          "code": "4018",
+          "name": "SAGRADA FAMILIA"
+        },
+        {
+          "code": "4019",
+          "name": "E. MONSONÍS"
+        },
+        {
+          "code": "4020",
+          "name": "LUIS TORREGROSA"
+        },
+        {
+          "code": "4021",
+          "name": "PÉREZ CÁSCALES"
+        },
+        {
+          "code": "4022",
+          "name": "G. MENGUAL"
+        },
+        {
+          "code": "4023",
+          "name": "HOSPITAL PROVINCIAL"
+        },
+        {
+          "code": "4024",
+          "name": "MARQ-GÓMEZ ULLA"
+        },
+        {
+          "code": "2507",
+          "name": "MARQ-CASTILLO (TRAM)"
+        },
+        {
+          "code": "4025",
+          "name": "CANÓNIGO PENALVA"
+        },
+        {
+          "code": "4027",
+          "name": "RAVAL ROIG"
+        },
+        {
+          "code": "2685",
+          "name": "POSTIGUET-PASARELA"
+        },
+        {
+          "code": "4359",
+          "name": "PUERTA DEL MAR"
+        },
+        {
+          "code": "4082",
+          "name": "R. ALTAMIRA"
+        },
+        {
+          "code": "2682",
+          "name": "RAMBLA-SAN CRISTÓBAL"
+        },
+        {
+          "code": "3937",
+          "name": "MERCADO-EL SABIO"
+        },
+        {
+          "code": "3938",
+          "name": "LUCEROS"
+        },
+        {
+          "code": "3939",
+          "name": "MUNTANYETA-SOTO"
+        },
+        {
+          "code": "3940",
+          "name": "PLAZA SÉNECA"
+        },
+        {
+          "code": "3941",
+          "name": "CASANOVA-CHURRUCA"
+        },
+        {
+          "code": "3103",
+          "name": "SOLER-POLICÍA"
+        },
+        {
+          "code": "3942",
+          "name": "C.P. BENALÚA"
+        },
+        {
+          "code": "3943",
+          "name": "SOLER-ALBEROLA"
+        },
+        {
+          "code": "3104",
+          "name": "SOLER-JUZGADOS"
+        },
+        {
+          "code": "3944",
+          "name": "CFPA BABEL"
+        },
+        {
+          "code": "3105",
+          "name": "IES CAVANILLES"
+        },
+        {
+          "code": "4028",
+          "name": "C.P. FLORIDA-CARBONELL"
+        },
+        {
+          "code": "4029",
+          "name": "IES FIGUERAS-CARBONELL"
+        },
+        {
+          "code": "4030",
+          "name": "FLOR"
+        },
+        {
+          "code": "4031",
+          "name": "BETIS FLORIDA"
+        },
+        {
+          "code": "4032",
+          "name": "RÉGULO"
+        },
+        {
+          "code": "4033",
+          "name": "LA VIÑA-COMAS SOLÁ"
+        },
+        {
+          "code": "4000",
+          "name": "LA FLORIDA-ASTURIAS"
+        }
+      ]
+    ],
+    "routeStopCount": [
+      29,
+      32
+    ],
+    "schedule": {
+      "firstDeparture": "06:15",
+      "lastDeparture": "22:30",
+      "uniqueDepartures": 299,
+      "avgGapMin": 3,
+      "medianGapMin": 2
+    },
+    "rawTimeCount": 744
+  },
+  {
+    "code": "03",
+    "name": "Ciudad de Asís-colonia Requena",
+    "url": "https://alicante.vectalia.es/linea/linea-03-ciudad-de-asis-colonia-requena",
+    "routes": [
+      [
+        {
+          "code": "4100",
+          "name": "CIUDAD DE ASÍS"
+        },
+        {
+          "code": "4101",
+          "name": "CEFEO-ANTARES"
+        },
+        {
+          "code": "4102",
+          "name": "CEFEO-NIÑOLES"
+        },
+        {
+          "code": "4103",
+          "name": "ORIHUELA-ALBERGUE"
+        },
+        {
+          "code": "4104",
+          "name": "ORIHUELA-LA LIRA"
+        },
+        {
+          "code": "4105",
+          "name": "ORIHUELA-GRAN VÍA"
+        },
+        {
+          "code": "3504",
+          "name": "ANTIGUO ASILO"
+        },
+        {
+          "code": "4106",
+          "name": "MERCADO DE BENALÚA"
+        },
+        {
+          "code": "4107",
+          "name": "ESTACIÓN-AGUILERA"
+        },
+        {
+          "code": "4108",
+          "name": "ESTACIÓN-MAISONNAVE"
+        },
+        {
+          "code": "4109",
+          "name": "MAISONNAVE-PORTUGAL"
+        },
+        {
+          "code": "2603",
+          "name": "MUNTANYETA-SOTO"
+        },
+        {
+          "code": "3915",
+          "name": "TEATRO"
+        },
+        {
+          "code": "2902",
+          "name": "MERCADO-SAN VICENTE"
+        },
+        {
+          "code": "4111",
+          "name": "PLAZA DE TOROS"
+        },
+        {
+          "code": "3916",
+          "name": "JIJONA-AUDITORIO"
+        },
+        {
+          "code": "3001",
+          "name": "JIJONA-ADORATRICES"
+        },
+        {
+          "code": "3917",
+          "name": "ALONSO-DEVESA"
+        },
+        {
+          "code": "3003",
+          "name": "HOSPITAL-ALONSO"
+        },
+        {
+          "code": "3004",
+          "name": "ALONSO-ALCOLEJA"
+        },
+        {
+          "code": "3005",
+          "name": "MAESTRE ALONSO (TRAM)"
+        },
+        {
+          "code": "3045",
+          "name": "C.P. VIRGEN DEL REMEDIO"
+        },
+        {
+          "code": "4145",
+          "name": "GASTÓN CASTELLÓ (TRAM)"
+        },
+        {
+          "code": "4112",
+          "name": "PARQUE REQUENA"
+        },
+        {
+          "code": "4113",
+          "name": "COLONIA REQUENA - ESMERALDA"
+        }
+      ],
+      [
+        {
+          "code": "4113",
+          "name": "COLONIA REQUENA - ESMERALDA"
+        },
+        {
+          "code": "3034",
+          "name": "GASTÓN CASTELLÓ (TRAM)"
+        },
+        {
+          "code": "3035",
+          "name": "C.P. VIRGEN DEL REMEDIO"
+        },
+        {
+          "code": "3036",
+          "name": "MAESTRE ALONSO (TRAM)"
+        },
+        {
+          "code": "3046",
+          "name": "ALONSO-GRAN VÍA"
+        },
+        {
+          "code": "3038",
+          "name": "HOSPITAL-ALONSO"
+        },
+        {
+          "code": "3039",
+          "name": "ALONSO-DEVESA"
+        },
+        {
+          "code": "3040",
+          "name": "JIJONA-ADORATRICES"
+        },
+        {
+          "code": "6210",
+          "name": "JIJONA-SANIDAD"
+        },
+        {
+          "code": "4115",
+          "name": "CALDERÓN-LA LONJA"
+        },
+        {
+          "code": "4116",
+          "name": "MERCADO-EL SABIO"
+        },
+        {
+          "code": "4264",
+          "name": "LUCEROS-SOTO"
+        },
+        {
+          "code": "4117",
+          "name": "MAISONNAVE-CALVO SOTELO"
+        },
+        {
+          "code": "4118",
+          "name": "ESTACIÓN-MAISONNAVE"
+        },
+        {
+          "code": "4119",
+          "name": "ESTACIÓN-AGUILERA"
+        },
+        {
+          "code": "4120",
+          "name": "MERCADO DE BENALÚA"
+        },
+        {
+          "code": "3521",
+          "name": "ANTIGUO ASILO"
+        },
+        {
+          "code": "4121",
+          "name": "ORIHUELA-GRAN VÍA"
+        },
+        {
+          "code": "4122",
+          "name": "ORIHUELA-LA LIRA"
+        },
+        {
+          "code": "4123",
+          "name": "ORIHUELA-ALBERGUE"
+        },
+        {
+          "code": "4124",
+          "name": "ORIHUELA-NIÑOLES"
+        },
+        {
+          "code": "4125",
+          "name": "DE LA SERNA"
+        },
+        {
+          "code": "4133",
+          "name": "ÁGUILA"
+        },
+        {
+          "code": "4128",
+          "name": "XIMÉNEZ-LANGUCHA"
+        },
+        {
+          "code": "4129",
+          "name": "XIMÉNEZ-HÉRCULES"
+        },
+        {
+          "code": "4130",
+          "name": "XIMÉNEZ-CRUZ DEL SUR"
+        },
+        {
+          "code": "4100",
+          "name": "CIUDAD DE ASÍS"
+        }
+      ]
+    ],
+    "routeStopCount": [
+      25,
+      27
+    ],
+    "schedule": {
+      "firstDeparture": "06:00",
+      "lastDeparture": "22:30",
+      "uniqueDepartures": 405,
+      "avgGapMin": 2,
+      "medianGapMin": 2
+    },
+    "rawTimeCount": 1060
+  },
+  {
+    "code": "04",
+    "name": "Cementerio-tómbola",
+    "url": "https://alicante.vectalia.es/linea/linea-04-cementerio-barrio-tombola",
+    "routes": [
+      [
+        {
+          "code": "4200",
+          "name": "CEMENTERIO"
+        },
+        {
+          "code": "4201",
+          "name": "MINA"
+        },
+        {
+          "code": "4202",
+          "name": "CHAPA"
+        },
+        {
+          "code": "4197",
+          "name": "LA LUNA-TANATORIO"
+        },
+        {
+          "code": "4205",
+          "name": "OCAÑA-JÚCAR"
+        },
+        {
+          "code": "6121",
+          "name": "RÍO MUNI"
+        },
+        {
+          "code": "6122",
+          "name": "PUERTA DE ALICANTE"
+        },
+        {
+          "code": "6123",
+          "name": "DE LA VEGA"
+        },
+        {
+          "code": "4002",
+          "name": "BETIS FLORIDA"
+        },
+        {
+          "code": "4208",
+          "name": "IES FIGUERAS-CHÁVARRI"
+        },
+        {
+          "code": "4209",
+          "name": "C. SALUD BABEL"
+        },
+        {
+          "code": "3136",
+          "name": "MERCADO DE BABEL"
+        },
+        {
+          "code": "3504",
+          "name": "ANTIGUO ASILO"
+        },
+        {
+          "code": "4106",
+          "name": "MERCADO DE BENALÚA"
+        },
+        {
+          "code": "4107",
+          "name": "ESTACIÓN-AGUILERA"
+        },
+        {
+          "code": "6100",
+          "name": "ESTACIÓN-SALAMANCA"
+        },
+        {
+          "code": "4301",
+          "name": "ESTACIÓN-CORREOS"
+        },
+        {
+          "code": "6098",
+          "name": "PÉREZ GALDÓS-TUCUMÁN"
+        },
+        {
+          "code": "6101",
+          "name": "PÉREZ GALDÓS-MARVÁ"
+        },
+        {
+          "code": "6102",
+          "name": "PLAZA TORDERA"
+        },
+        {
+          "code": "6099",
+          "name": "REPRESENTANTES"
+        },
+        {
+          "code": "3920",
+          "name": "PLAZA DE TOROS"
+        },
+        {
+          "code": "3916",
+          "name": "JIJONA-AUDITORIO"
+        },
+        {
+          "code": "3001",
+          "name": "JIJONA-ADORATRICES"
+        },
+        {
+          "code": "4215",
+          "name": "PLAZA AMÉRICA"
+        },
+        {
+          "code": "4216",
+          "name": "HOSPITAL-PINTOR BAEZA"
+        },
+        {
+          "code": "5012",
+          "name": "GRAN VÍA-BENISAUDET"
+        },
+        {
+          "code": "4280",
+          "name": "GRAN VÍA-NOVELDA"
+        },
+        {
+          "code": "4218",
+          "name": "GRAN VÍA-TEULADA"
+        },
+        {
+          "code": "4294",
+          "name": "LA NUCÍA-TEULADA"
+        },
+        {
+          "code": "4220",
+          "name": "PARQUE SAN AGUSTÍN"
+        },
+        {
+          "code": "4281",
+          "name": "LA NUCÍA-LEGAZPI"
+        },
+        {
+          "code": "4360",
+          "name": "CARMELITAS"
+        },
+        {
+          "code": "6144",
+          "name": "P. HORADADA"
+        },
+        {
+          "code": "6143",
+          "name": "J. VERDAGUER"
+        },
+        {
+          "code": "6142",
+          "name": "CINCO SOLES"
+        },
+        {
+          "code": "4223",
+          "name": "RUÍZ DE ALARCÓN"
+        },
+        {
+          "code": "4224",
+          "name": "FONDO DE PIQUERES"
+        },
+        {
+          "code": "4225",
+          "name": "C.P. EUSEBIO SEMPERE"
+        },
+        {
+          "code": "4226",
+          "name": "DIVINA PASTORA"
+        },
+        {
+          "code": "4655",
+          "name": "CÁDIZ-NOVELDA"
+        },
+        {
+          "code": "2937",
+          "name": "NOVELDA-PENÀGUILA"
+        },
+        {
+          "code": "2938",
+          "name": "NOVELDA-JARALES"
+        },
+        {
+          "code": "4287",
+          "name": "VÍA PARQUE-NOVELDA"
+        },
+        {
+          "code": "4229",
+          "name": "C. SOCIAL TÓMBOLA"
+        },
+        {
+          "code": "4228",
+          "name": "V. DEL PUIG-IGLESIA"
+        },
+        {
+          "code": "4232",
+          "name": "TÓMBOLA-V. DEL PUIG"
+        }
+      ],
+      [
+        {
+          "code": "4232",
+          "name": "TÓMBOLA-V. DEL PUIG"
+        },
+        {
+          "code": "4233",
+          "name": "NÚÑEZ DE BALBOA"
+        },
+        {
+          "code": "4234",
+          "name": "DIVINA PASTORA"
+        },
+        {
+          "code": "4235",
+          "name": "CÁDIZ-I. SEVILLA"
+        },
+        {
+          "code": "4236",
+          "name": "C.P. EUSEBIO SEMPERE"
+        },
+        {
+          "code": "4237",
+          "name": "FONDO DE PIQUERES"
+        },
+        {
+          "code": "4239",
+          "name": "RECASENS-PETANCA"
+        },
+        {
+          "code": "4240",
+          "name": "CINCO SOLES"
+        },
+        {
+          "code": "4241",
+          "name": "LA PÉRGOLA"
+        },
+        {
+          "code": "4282",
+          "name": "VÍA PARQUE-CONFRIDES"
+        },
+        {
+          "code": "4283",
+          "name": "VÍA PARQUE-TUBERÍA"
+        },
+        {
+          "code": "3514",
+          "name": "TEULADA-CONFRIDES"
+        },
+        {
+          "code": "3515",
+          "name": "TEULADA-LINARES"
+        },
+        {
+          "code": "4265",
+          "name": "GRAN VÍA-TEULADA"
+        },
+        {
+          "code": "4284",
+          "name": "GRAN VÍA-NOVELDA"
+        },
+        {
+          "code": "4285",
+          "name": "A. GUIXOT"
+        },
+        {
+          "code": "4248",
+          "name": "HOSPITAL-PINTOR BAEZA"
+        },
+        {
+          "code": "4249",
+          "name": "PLAZA AMÉRICA"
+        },
+        {
+          "code": "4250",
+          "name": "AMÉRICA-SEGARRA"
+        },
+        {
+          "code": "3040",
+          "name": "JIJONA-ADORATRICES"
+        },
+        {
+          "code": "6200",
+          "name": "REPRESENTANTES"
+        },
+        {
+          "code": "6201",
+          "name": "PLAZA TORDERA"
+        },
+        {
+          "code": "6202",
+          "name": "PÉREZ GALDÓS-MARVÁ"
+        },
+        {
+          "code": "6203",
+          "name": "PÉREZ GALDÓS-TUCUMÁN"
+        },
+        {
+          "code": "4325",
+          "name": "ESTACIÓN-CORREOS"
+        },
+        {
+          "code": "4526",
+          "name": "ESTACIÓN-AGUILERA"
+        },
+        {
+          "code": "4120",
+          "name": "MERCADO DE BENALÚA"
+        },
+        {
+          "code": "3521",
+          "name": "ANTIGUO ASILO"
+        },
+        {
+          "code": "3135",
+          "name": "MERCADO DE BABEL"
+        },
+        {
+          "code": "4268",
+          "name": "C. SALUD BABEL"
+        },
+        {
+          "code": "4269",
+          "name": "IES FIGUERAS-AZORÍN"
+        },
+        {
+          "code": "4031",
+          "name": "BETIS FLORIDA"
+        },
+        {
+          "code": "6118",
+          "name": "PUERTA DE ALICANTE"
+        },
+        {
+          "code": "6127",
+          "name": "HERNÁNDEZ MATA-LLIBER"
+        },
+        {
+          "code": "6126",
+          "name": "RÍO MUNI"
+        },
+        {
+          "code": "4260",
+          "name": "OCAÑA-JÚCAR"
+        },
+        {
+          "code": "4198",
+          "name": "LA LUNA-TANATORIO"
+        },
+        {
+          "code": "4203",
+          "name": "TURIA"
+        },
+        {
+          "code": "4277",
+          "name": "M. DE REAL"
+        },
+        {
+          "code": "4299",
+          "name": "SAMARITANA"
+        },
+        {
+          "code": "4298",
+          "name": "NUEVO CEMENTERIO"
+        },
+        {
+          "code": "4200",
+          "name": "CEMENTERIO"
+        }
+      ]
+    ],
+    "routeStopCount": [
+      47,
+      42
+    ],
+    "schedule": {
+      "firstDeparture": "06:00",
+      "lastDeparture": "22:30",
+      "uniqueDepartures": 256,
+      "avgGapMin": 4,
+      "medianGapMin": 3
+    },
+    "rawTimeCount": 644
+  },
+  {
+    "code": "05",
+    "name": "Rambla-san Agustín",
+    "url": "https://alicante.vectalia.es/linea/linea-05-rambla-san-agustin",
+    "routes": [
+      [
+        {
+          "code": "4600",
+          "name": "RAMBLA-SAN JOSÉ"
+        },
+        {
+          "code": "3937",
+          "name": "MERCADO-EL SABIO"
+        },
+        {
+          "code": "4264",
+          "name": "LUCEROS-SOTO"
+        },
+        {
+          "code": "4117",
+          "name": "MAISONNAVE-CALVO SOTELO"
+        },
+        {
+          "code": "4118",
+          "name": "ESTACIÓN-MAISONNAVE"
+        },
+        {
+          "code": "4301",
+          "name": "ESTACIÓN-CORREOS"
+        },
+        {
+          "code": "4302",
+          "name": "SALAMANCA-PÉREZ GALDÓS"
+        },
+        {
+          "code": "4303",
+          "name": "CONDES DE SOTO AMENO"
+        },
+        {
+          "code": "4358",
+          "name": "RICO-IGLESIA"
+        },
+        {
+          "code": "4308",
+          "name": "RAYUELA"
+        },
+        {
+          "code": "4309",
+          "name": "SAN ESTEBAN"
+        },
+        {
+          "code": "4310",
+          "name": "C.P. SAN FERNANDO"
+        },
+        {
+          "code": "4311",
+          "name": "RICO-HONDÓN"
+        },
+        {
+          "code": "4312",
+          "name": "HOGUERA SAN BLAS"
+        },
+        {
+          "code": "4340",
+          "name": "MERCADILLO-MIRRA"
+        },
+        {
+          "code": "3517",
+          "name": "COLEGIO ALTOZANO"
+        },
+        {
+          "code": "4329",
+          "name": "FERNÁNDEZ-FOGUERES"
+        },
+        {
+          "code": "4330",
+          "name": "FERNÁNDEZ-MOROS Y CRISTIANOS"
+        },
+        {
+          "code": "4331",
+          "name": "CIUDAD DE MATANZAS"
+        },
+        {
+          "code": "4242",
+          "name": "LA NUCÍA-LEGAZPI"
+        },
+        {
+          "code": "4346",
+          "name": "SAN AGUSTÍN"
+        }
+      ],
+      [
+        {
+          "code": "4346",
+          "name": "SAN AGUSTÍN"
+        },
+        {
+          "code": "4281",
+          "name": "LA NUCÍA-LEGAZPI"
+        },
+        {
+          "code": "4333",
+          "name": "CIUDAD DE MATANZAS"
+        },
+        {
+          "code": "4334",
+          "name": "FERNÁNDEZ-MOROS Y CRISTIANOS"
+        },
+        {
+          "code": "4339",
+          "name": "FERNÁNDEZ-FOGUERES"
+        },
+        {
+          "code": "4337",
+          "name": "MARISTAS"
+        },
+        {
+          "code": "3508",
+          "name": "COLEGIO ALTOZANO"
+        },
+        {
+          "code": "4354",
+          "name": "MERCADILLO-MIRRA"
+        },
+        {
+          "code": "4313",
+          "name": "HOGUERA SAN BLAS"
+        },
+        {
+          "code": "4314",
+          "name": "C.P. SAN FERNANDO"
+        },
+        {
+          "code": "4315",
+          "name": "SAN ESTEBAN"
+        },
+        {
+          "code": "4316",
+          "name": "RAYUELA"
+        },
+        {
+          "code": "4317",
+          "name": "URB. SANTO DOMINGO"
+        },
+        {
+          "code": "4318",
+          "name": "C. SALUD SAN BLAS"
+        },
+        {
+          "code": "4319",
+          "name": "LA COLMENA"
+        },
+        {
+          "code": "4320",
+          "name": "C.P. SOROLLA"
+        },
+        {
+          "code": "4321",
+          "name": "SAN JUAN BAUTISTA"
+        },
+        {
+          "code": "4322",
+          "name": "GISBERT-STA. LEONOR"
+        },
+        {
+          "code": "4323",
+          "name": "BELLUGA"
+        },
+        {
+          "code": "4325",
+          "name": "ESTACIÓN-CORREOS"
+        },
+        {
+          "code": "4108",
+          "name": "ESTACIÓN-MAISONNAVE"
+        },
+        {
+          "code": "4109",
+          "name": "MAISONNAVE-PORTUGAL"
+        },
+        {
+          "code": "4445",
+          "name": "MUNTANYETA-SOTO"
+        },
+        {
+          "code": "4046",
+          "name": "LUCEROS-SOTO"
+        },
+        {
+          "code": "2604",
+          "name": "MERCADO-EL SABIO"
+        },
+        {
+          "code": "4499",
+          "name": "LÓPEZ TORREGROSA"
+        },
+        {
+          "code": "2606",
+          "name": "RAMBLA-PORTAL DE ELCHE"
+        },
+        {
+          "code": "4600",
+          "name": "RAMBLA-SAN JOSÉ"
+        }
+      ]
+    ],
+    "routeStopCount": [
+      21,
+      28
+    ],
+    "schedule": {
+      "firstDeparture": "06:55",
+      "lastDeparture": "22:30",
+      "uniqueDepartures": 236,
+      "avgGapMin": 4,
+      "medianGapMin": 3
+    },
+    "rawTimeCount": 542
+  },
+  {
+    "code": "06",
+    "name": "Estación Autobuses-juan Xxiii (2º S)",
+    "url": "https://alicante.vectalia.es/linea/linea-06-estacion-de-autobuses-juan-xxiii-2o-sector",
+    "routes": [
+      [
+        {
+          "code": "4450",
+          "name": "ESTACIÓN DE AUTOBUSES"
+        },
+        {
+          "code": "3126",
+          "name": "Ó. ESPLÁ-SEMPERE"
+        },
+        {
+          "code": "4214",
+          "name": "ESTACIÓN-AVENIDA"
+        },
+        {
+          "code": "4273",
+          "name": "DIPUTACIÓN"
+        },
+        {
+          "code": "3128",
+          "name": "LUCEROS"
+        },
+        {
+          "code": "3129",
+          "name": "MERCADO-EL SABIO"
+        },
+        {
+          "code": "4400",
+          "name": "MERCADO-SAN VICENTE"
+        },
+        {
+          "code": "4401",
+          "name": "MISERICORDIA"
+        },
+        {
+          "code": "4402",
+          "name": "CIGARRERAS"
+        },
+        {
+          "code": "4403",
+          "name": "PÍO XII"
+        },
+        {
+          "code": "3585",
+          "name": "PADRE ESPLÁ-VIDAL"
+        },
+        {
+          "code": "3552",
+          "name": "PLAZA MANILA"
+        },
+        {
+          "code": "4405",
+          "name": "POLIDEPORTIVO CAROLINAS"
+        },
+        {
+          "code": "4406",
+          "name": "GARBINET (TRAM)"
+        },
+        {
+          "code": "4407",
+          "name": "CANO-GRAN VÍA"
+        },
+        {
+          "code": "4408",
+          "name": "CANO-VÍA PARQUE"
+        },
+        {
+          "code": "4409",
+          "name": "CANO-IES GRAN VÍA"
+        },
+        {
+          "code": "4410",
+          "name": "C.P. EL TOSSALET"
+        },
+        {
+          "code": "4411",
+          "name": "EDIFICIO GARBINET"
+        },
+        {
+          "code": "4412",
+          "name": "C. SALUD JUAN XXIII"
+        },
+        {
+          "code": "4413",
+          "name": "MELILLA-BENIGEMBLA"
+        },
+        {
+          "code": "4414",
+          "name": "MELILLA-BENIFATO"
+        },
+        {
+          "code": "4415",
+          "name": "JUAN XXIII-BAS MINGOT"
+        }
+      ],
+      [
+        {
+          "code": "4415",
+          "name": "JUAN XXIII-BAS MINGOT"
+        },
+        {
+          "code": "4416",
+          "name": "BAS MINGOT-PLAZA"
+        },
+        {
+          "code": "4417",
+          "name": "C. SOCIAL JUAN XXIII"
+        },
+        {
+          "code": "4422",
+          "name": "LAS LOMAS"
+        },
+        {
+          "code": "4423",
+          "name": "C. SOCIAL JUAN XXIII"
+        },
+        {
+          "code": "4424",
+          "name": "BAS MINGOT-GRANADOS"
+        },
+        {
+          "code": "4425",
+          "name": "C. SALUD JUAN XXIII"
+        },
+        {
+          "code": "4426",
+          "name": "EDIFICIO GARBINET"
+        },
+        {
+          "code": "3932",
+          "name": "C.P. EL TOSSALET"
+        },
+        {
+          "code": "4427",
+          "name": "SIERRA DE CAVALLS"
+        },
+        {
+          "code": "4428",
+          "name": "C. DEPORTIVO V. DEL CARMEN"
+        },
+        {
+          "code": "4429",
+          "name": "ESPARTERO"
+        },
+        {
+          "code": "4430",
+          "name": "C.P. ARNICHES"
+        },
+        {
+          "code": "4431",
+          "name": "GARBINET (TRAM)"
+        },
+        {
+          "code": "4432",
+          "name": "SAN MATEO-LÉRIDA"
+        },
+        {
+          "code": "4433",
+          "name": "SAN MATEO-FOGUERER"
+        },
+        {
+          "code": "4434",
+          "name": "MERCADO DE CAROLINAS"
+        },
+        {
+          "code": "4435",
+          "name": "PÍO XII"
+        },
+        {
+          "code": "4436",
+          "name": "PALMERETES"
+        },
+        {
+          "code": "4437",
+          "name": "MISERICORDIA"
+        },
+        {
+          "code": "4438",
+          "name": "CALDERÓN-PL. ESPAÑA"
+        },
+        {
+          "code": "2946",
+          "name": "MERCADO-CALDERÓN"
+        },
+        {
+          "code": "4116",
+          "name": "MERCADO-EL SABIO"
+        },
+        {
+          "code": "2947",
+          "name": "LUCEROS-EL SABIO"
+        },
+        {
+          "code": "2601",
+          "name": "ESTACIÓN-SALAMANCA"
+        },
+        {
+          "code": "3676",
+          "name": "Ó. ESPLÁ-SEMPERE"
+        },
+        {
+          "code": "4450",
+          "name": "ESTACIÓN DE AUTOBUSES"
+        }
+      ]
+    ],
+    "routeStopCount": [
+      23,
+      27
+    ],
+    "schedule": {
+      "firstDeparture": "06:00",
+      "lastDeparture": "22:30",
+      "uniqueDepartures": 274,
+      "avgGapMin": 4,
+      "medianGapMin": 3
+    },
+    "rawTimeCount": 700
+  },
+  {
+    "code": "07",
+    "name": "linea-07-avda-oscar-espla-el-rebolledo",
+    "url": "https://alicante.vectalia.es/linea/linea-07-avda-oscar-espla-el-rebolledo",
+    "routes": [
+      [
+        {
+          "code": "4760",
+          "name": "ESTACIÓN-Ó. ESPLÁ"
+        },
+        {
+          "code": "4119",
+          "name": "ESTACIÓN-AGUILERA"
+        },
+        {
+          "code": "4120",
+          "name": "MERCADO DE BENALÚA"
+        },
+        {
+          "code": "3523",
+          "name": "AGUILERA-LOS DOSCIENTOS"
+        },
+        {
+          "code": "4121",
+          "name": "ORIHUELA-GRAN VÍA"
+        },
+        {
+          "code": "4122",
+          "name": "ORIHUELA-LA LIRA"
+        },
+        {
+          "code": "4123",
+          "name": "ORIHUELA-ALBERGUE"
+        },
+        {
+          "code": "4124",
+          "name": "ORIHUELA-NIÑOLES"
+        },
+        {
+          "code": "4259",
+          "name": "PERICOCO"
+        },
+        {
+          "code": "4260",
+          "name": "OCAÑA-JÚCAR"
+        },
+        {
+          "code": "4502",
+          "name": "PLA DE L'ESPARTAL"
+        },
+        {
+          "code": "4503",
+          "name": "MERCALICANTE"
+        },
+        {
+          "code": "4504",
+          "name": "CARRETERA DE BACAROT"
+        },
+        {
+          "code": "4520",
+          "name": "PLA VALLONGA-BONANZA"
+        },
+        {
+          "code": "4508",
+          "name": "CENTRO PENITENCIARIO"
+        },
+        {
+          "code": "4513",
+          "name": "LO XEPERUT"
+        },
+        {
+          "code": "3222",
+          "name": "PASEO MAYOR II - ENLACE AUTOVÍA"
+        },
+        {
+          "code": "3223",
+          "name": "PASEO MAYOR II - ESTACIÓN DE SERVICIO"
+        }
+      ],
+      [
+        {
+          "code": "4760",
+          "name": "ESTACIÓN-Ó. ESPLÁ"
+        },
+        {
+          "code": "4119",
+          "name": "ESTACIÓN-AGUILERA"
+        },
+        {
+          "code": "4120",
+          "name": "MERCADO DE BENALÚA"
+        },
+        {
+          "code": "3523",
+          "name": "AGUILERA-LOS DOSCIENTOS"
+        },
+        {
+          "code": "4121",
+          "name": "ORIHUELA-GRAN VÍA"
+        },
+        {
+          "code": "4122",
+          "name": "ORIHUELA-LA LIRA"
+        },
+        {
+          "code": "4123",
+          "name": "ORIHUELA-ALBERGUE"
+        },
+        {
+          "code": "4124",
+          "name": "ORIHUELA-NIÑOLES"
+        },
+        {
+          "code": "4259",
+          "name": "PERICOCO"
+        },
+        {
+          "code": "4260",
+          "name": "OCAÑA-JÚCAR"
+        },
+        {
+          "code": "4502",
+          "name": "PLA DE L'ESPARTAL"
+        },
+        {
+          "code": "4503",
+          "name": "MERCALICANTE"
+        },
+        {
+          "code": "4504",
+          "name": "CARRETERA DE BACAROT"
+        },
+        {
+          "code": "4505",
+          "name": "PLA VALLONGA-ITV"
+        },
+        {
+          "code": "4506",
+          "name": "PLA VALLONGA-ALISIOS"
+        },
+        {
+          "code": "4507",
+          "name": "PLA VALLONGA-TRUENO"
+        },
+        {
+          "code": "4508",
+          "name": "CENTRO PENITENCIARIO"
+        },
+        {
+          "code": "4509",
+          "name": "ATALAYAS-PESETA"
+        },
+        {
+          "code": "4510",
+          "name": "ATALAYAS-EURO P"
+        },
+        {
+          "code": "94511",
+          "name": "ATALAYAS-EURO P"
+        },
+        {
+          "code": "14512",
+          "name": "ATALAYAS-LIBRA"
+        },
+        {
+          "code": "4513",
+          "name": "LO XEPERUT"
+        },
+        {
+          "code": "3222",
+          "name": "PASEO MAYOR II - ENLACE AUTOVÍA"
+        },
+        {
+          "code": "3223",
+          "name": "PASEO MAYOR II - ESTACIÓN DE SERVICIO"
+        }
+      ],
+      [
+        {
+          "code": "73229",
+          "name": "PASEO MAYOR III - ESTACIÓN DE SERVICIO"
+        },
+        {
+          "code": "3230",
+          "name": "PASEO MAYOR IV - ENLACE AUTOVÍA"
+        },
+        {
+          "code": "6165",
+          "name": "PLA VALLONGA-MISTRAL"
+        },
+        {
+          "code": "4521",
+          "name": "CENTRO PENITENCIARIO"
+        },
+        {
+          "code": "4522",
+          "name": "CARRETERA DE BACAROT"
+        },
+        {
+          "code": "4523",
+          "name": "MERCALICANTE"
+        },
+        {
+          "code": "4524",
+          "name": "PLA DE L'ESPARTAL"
+        },
+        {
+          "code": "4205",
+          "name": "OCAÑA-JÚCAR"
+        },
+        {
+          "code": "4206",
+          "name": "PERICOCO"
+        },
+        {
+          "code": "4103",
+          "name": "ORIHUELA-ALBERGUE"
+        },
+        {
+          "code": "4104",
+          "name": "ORIHUELA-LA LIRA"
+        },
+        {
+          "code": "4105",
+          "name": "ORIHUELA-GRAN VÍA"
+        },
+        {
+          "code": "4213",
+          "name": "AGUILERA-JUZGADOS"
+        },
+        {
+          "code": "4106",
+          "name": "MERCADO DE BENALÚA"
+        },
+        {
+          "code": "4107",
+          "name": "ESTACIÓN-AGUILERA"
+        },
+        {
+          "code": "4760",
+          "name": "ESTACIÓN-Ó. ESPLÁ"
+        }
+      ]
+    ],
+    "routeStopCount": [
+      18,
+      24,
+      16
+    ],
+    "schedule": {
+      "firstDeparture": "06:20",
+      "lastDeparture": "22:00",
+      "uniqueDepartures": 46,
+      "avgGapMin": 21,
+      "medianGapMin": 20
+    },
+    "rawTimeCount": 152
+  },
+  {
+    "code": "08A",
+    "name": "Rambla-virgen Del Remedio",
+    "url": "https://alicante.vectalia.es/linea/linea-08a-explanada-virgen-del-remedio",
+    "routes": [
+      [
+        {
+          "code": "2688",
+          "name": "RAMBLA-PORTAL DE ELCHE"
+        },
+        {
+          "code": "3400",
+          "name": "MERCADO-SAN VICENTE"
+        },
+        {
+          "code": "3047",
+          "name": "PANTEÓN DE QUIJANO"
+        },
+        {
+          "code": "2904",
+          "name": "ALCOY-AUDITORIO"
+        },
+        {
+          "code": "2905",
+          "name": "ALCOY-PARQUE DUVAL"
+        },
+        {
+          "code": "2906",
+          "name": "CONDE LUMIARES"
+        },
+        {
+          "code": "2907",
+          "name": "NOVELDA-GRAN VÍA"
+        },
+        {
+          "code": "2908",
+          "name": "NOVELDA-GASOLINERA"
+        },
+        {
+          "code": "2909",
+          "name": "NOVELDA-IGLESIA"
+        },
+        {
+          "code": "2910",
+          "name": "NOVELDA-JARALES"
+        },
+        {
+          "code": "2911",
+          "name": "NOVELDA-PENÀGUILA"
+        },
+        {
+          "code": "2912",
+          "name": "NOVELDA-BERNÁCER"
+        },
+        {
+          "code": "2979",
+          "name": "CLOT"
+        },
+        {
+          "code": "3581",
+          "name": "C.P. LUCENTUM"
+        },
+        {
+          "code": "2980",
+          "name": "VIRGEN DEL REMEDIO-PÉREZ MIRETE"
+        }
+      ],
+      [
+        {
+          "code": "2980",
+          "name": "VIRGEN DEL REMEDIO-PÉREZ MIRETE"
+        },
+        {
+          "code": "3555",
+          "name": "C.P. LUCENTUM"
+        },
+        {
+          "code": "3557",
+          "name": "C. SALUD CIUDAD JARDÍN"
+        },
+        {
+          "code": "4652",
+          "name": "CIUDAD JARDÍN (TRAM)"
+        },
+        {
+          "code": "2936",
+          "name": "NOVELDA-BERNÁCER"
+        },
+        {
+          "code": "2937",
+          "name": "NOVELDA-PENÀGUILA"
+        },
+        {
+          "code": "2938",
+          "name": "NOVELDA-JARALES"
+        },
+        {
+          "code": "2939",
+          "name": "NOVELDA-IGLESIA"
+        },
+        {
+          "code": "2940",
+          "name": "NOVELDA-GASOLINERA"
+        },
+        {
+          "code": "2941",
+          "name": "NOVELDA-GRAN VÍA"
+        },
+        {
+          "code": "2942",
+          "name": "CONDE LUMIARES"
+        },
+        {
+          "code": "2943",
+          "name": "ALCOY-PARQUE DUVAL"
+        },
+        {
+          "code": "2944",
+          "name": "ALCOY-AUDITORIO"
+        },
+        {
+          "code": "4438",
+          "name": "CALDERÓN-PL. ESPAÑA"
+        },
+        {
+          "code": "2946",
+          "name": "MERCADO-CALDERÓN"
+        },
+        {
+          "code": "4499",
+          "name": "LÓPEZ TORREGROSA"
+        },
+        {
+          "code": "2688",
+          "name": "RAMBLA-PORTAL DE ELCHE"
+        }
+      ]
+    ],
+    "routeStopCount": [
+      15,
+      17
+    ],
+    "schedule": {
+      "firstDeparture": "06:00",
+      "lastDeparture": "22:30",
+      "uniqueDepartures": 289,
+      "avgGapMin": 3,
+      "medianGapMin": 2
+    },
+    "rawTimeCount": 766
+  },
+  {
+    "code": "09",
+    "name": "óscar Esplá-playa San Juan",
+    "url": "https://alicante.vectalia.es/linea/linea-09-avda-oscar-espla-playa-san-juan-avda-de-las-naciones",
+    "routes": [
+      [
+        {
+          "code": "4760",
+          "name": "ESTACIÓN-Ó. ESPLÁ"
+        },
+        {
+          "code": "4214",
+          "name": "ESTACIÓN-AVENIDA"
+        },
+        {
+          "code": "4273",
+          "name": "DIPUTACIÓN"
+        },
+        {
+          "code": "3128",
+          "name": "LUCEROS"
+        },
+        {
+          "code": "3129",
+          "name": "MERCADO-EL SABIO"
+        },
+        {
+          "code": "4400",
+          "name": "MERCADO-SAN VICENTE"
+        },
+        {
+          "code": "3920",
+          "name": "PLAZA DE TOROS"
+        },
+        {
+          "code": "3916",
+          "name": "JIJONA-AUDITORIO"
+        },
+        {
+          "code": "3001",
+          "name": "JIJONA-ADORATRICES"
+        },
+        {
+          "code": "3564",
+          "name": "C.P. MANJÓN-CERVANTES"
+        },
+        {
+          "code": "6166",
+          "name": "PÍO XII"
+        },
+        {
+          "code": "3585",
+          "name": "PADRE ESPLÁ-VIDAL"
+        },
+        {
+          "code": "3566",
+          "name": "C.A. MONTEMAR"
+        },
+        {
+          "code": "4700",
+          "name": "LA OLIVERA"
+        },
+        {
+          "code": "3567",
+          "name": "BULEVAR DEL PLA (TRAM)"
+        },
+        {
+          "code": "4810",
+          "name": "BARRIO OBRERO"
+        },
+        {
+          "code": "4903",
+          "name": "XAVIER SOLER"
+        },
+        {
+          "code": "2510",
+          "name": "DÉNIA-JESUITAS"
+        },
+        {
+          "code": "2598",
+          "name": "DÉNIA-LAS BRISAS"
+        },
+        {
+          "code": "4703",
+          "name": "ALBUFERETA-EL GRECO"
+        },
+        {
+          "code": "4704",
+          "name": "ALBUFERETA-SERRA GROSSA"
+        },
+        {
+          "code": "4705",
+          "name": "LA ISLETA (TRAM)"
+        },
+        {
+          "code": "2612",
+          "name": "PLAYA ALBUFERETA"
+        },
+        {
+          "code": "4755",
+          "name": "IGLESIA DE SANTIAGO"
+        },
+        {
+          "code": "4743",
+          "name": "JUAN MATOS"
+        },
+        {
+          "code": "4751",
+          "name": "V. RAMOS-ANSALDO"
+        },
+        {
+          "code": "4711",
+          "name": "V. RAMOS-PASTOR"
+        },
+        {
+          "code": "4752",
+          "name": "V. RAMOS-RIGUAL"
+        },
+        {
+          "code": "4762",
+          "name": "NACIONES-HOLANDA (TRAM)"
+        }
+      ],
+      [
+        {
+          "code": "4762",
+          "name": "NACIONES-HOLANDA (TRAM)"
+        },
+        {
+          "code": "4758",
+          "name": "V. RAMOS-RIGUAL"
+        },
+        {
+          "code": "4727",
+          "name": "V. RAMOS-PASTOR"
+        },
+        {
+          "code": "4728",
+          "name": "SERGIO CARDELL (TRAM)"
+        },
+        {
+          "code": "4729",
+          "name": "MIRIAM BLASCO (TRAM)"
+        },
+        {
+          "code": "4730",
+          "name": "TORRE SARRIÓ"
+        },
+        {
+          "code": "4731",
+          "name": "OLIMPO"
+        },
+        {
+          "code": "4749",
+          "name": "RÓMULO"
+        },
+        {
+          "code": "4734",
+          "name": "C.P. LA ALBUFERETA"
+        },
+        {
+          "code": "2725",
+          "name": "NASA"
+        },
+        {
+          "code": "2723",
+          "name": "IGLESIA DE SANTIAGO"
+        },
+        {
+          "code": "2674",
+          "name": "PLAYA ALBUFERETA"
+        },
+        {
+          "code": "2675",
+          "name": "LA ISLETA (TRAM)"
+        },
+        {
+          "code": "4735",
+          "name": "ALBUFERETA-SERRA GROSSA"
+        },
+        {
+          "code": "4736",
+          "name": "ALBUFERETA-EL GRECO"
+        },
+        {
+          "code": "2571",
+          "name": "DÉNIA-CLÍNICA VISTAHERMOSA"
+        },
+        {
+          "code": "4761",
+          "name": "IES EL PLA"
+        },
+        {
+          "code": "4811",
+          "name": "BARRIO OBRERO"
+        },
+        {
+          "code": "3550",
+          "name": "BULEVAR DEL PLA (TRAM)"
+        },
+        {
+          "code": "4738",
+          "name": "LA OLIVERA"
+        },
+        {
+          "code": "3551",
+          "name": "C.A. MONTEMAR"
+        },
+        {
+          "code": "3552",
+          "name": "PLAZA MANILA"
+        },
+        {
+          "code": "3553",
+          "name": "EL PINOSO"
+        },
+        {
+          "code": "3040",
+          "name": "JIJONA-ADORATRICES"
+        },
+        {
+          "code": "6210",
+          "name": "JIJONA-SANIDAD"
+        },
+        {
+          "code": "2946",
+          "name": "MERCADO-CALDERÓN"
+        },
+        {
+          "code": "4116",
+          "name": "MERCADO-EL SABIO"
+        },
+        {
+          "code": "2947",
+          "name": "LUCEROS-EL SABIO"
+        },
+        {
+          "code": "2900",
+          "name": "ESTACIÓN-AVENIDA"
+        },
+        {
+          "code": "4760",
+          "name": "ESTACIÓN-Ó. ESPLÁ"
+        }
+      ]
+    ],
+    "routeStopCount": [
+      29,
+      30
+    ],
+    "schedule": {
+      "firstDeparture": "06:30",
+      "lastDeparture": "22:30",
+      "uniqueDepartures": 174,
+      "avgGapMin": 6,
+      "medianGapMin": 3
+    },
+    "rawTimeCount": 444
+  },
+  {
+    "code": "12",
+    "name": "Puerta Del Mar-san Blas-juan Pablo II",
+    "url": "https://alicante.vectalia.es/linea/linea-12plaza-de-los-luceros-santo-domingo-san-blas-pau-i",
+    "routes": [
+      [
+        {
+          "code": "4359",
+          "name": "PUERTA DEL MAR"
+        },
+        {
+          "code": "4082",
+          "name": "R. ALTAMIRA"
+        },
+        {
+          "code": "2682",
+          "name": "RAMBLA-SAN CRISTÓBAL"
+        },
+        {
+          "code": "3937",
+          "name": "MERCADO-EL SABIO"
+        },
+        {
+          "code": "2947",
+          "name": "LUCEROS-EL SABIO"
+        },
+        {
+          "code": "4264",
+          "name": "LUCEROS-SOTO"
+        },
+        {
+          "code": "4117",
+          "name": "MAISONNAVE-CALVO SOTELO"
+        },
+        {
+          "code": "4118",
+          "name": "ESTACIÓN-MAISONNAVE"
+        },
+        {
+          "code": "4301",
+          "name": "ESTACIÓN-CORREOS"
+        },
+        {
+          "code": "4302",
+          "name": "SALAMANCA-PÉREZ GALDÓS"
+        },
+        {
+          "code": "4303",
+          "name": "CONDES DE SOTO AMENO"
+        },
+        {
+          "code": "4304",
+          "name": "C.P. SOROLLA"
+        },
+        {
+          "code": "4305",
+          "name": "LA COLMENA"
+        },
+        {
+          "code": "4306",
+          "name": "C. SALUD SAN BLAS"
+        },
+        {
+          "code": "5101",
+          "name": "LAS FRANCISCANAS"
+        },
+        {
+          "code": "5125",
+          "name": "Paso a Nivel"
+        },
+        {
+          "code": "5102",
+          "name": "GUTIÉRREZ MELLADO"
+        },
+        {
+          "code": "5103",
+          "name": "PUENTE ROJO"
+        },
+        {
+          "code": "5104",
+          "name": "M. ALBEROLA"
+        },
+        {
+          "code": "5105",
+          "name": "FELICÍSIMO RUÍZ"
+        },
+        {
+          "code": "5109",
+          "name": "LUIS RIVERA"
+        },
+        {
+          "code": "4332",
+          "name": "PLAZA JUAN PABLO II"
+        }
+      ],
+      [
+        {
+          "code": "4332",
+          "name": "PLAZA JUAN PABLO II"
+        },
+        {
+          "code": "5118",
+          "name": "CRUZ ROJA"
+        },
+        {
+          "code": "5110",
+          "name": "JORNET NAVARRO"
+        },
+        {
+          "code": "5111",
+          "name": "RICARDO FERRÉ"
+        },
+        {
+          "code": "5112",
+          "name": "PUENTE ROJO"
+        },
+        {
+          "code": "5119",
+          "name": "GUTIÉRREZ MELLADO"
+        },
+        {
+          "code": "5124",
+          "name": "PASO A NIVEL"
+        },
+        {
+          "code": "5114",
+          "name": "LAS FRANCISCANAS"
+        },
+        {
+          "code": "4318",
+          "name": "C. SALUD SAN BLAS"
+        },
+        {
+          "code": "4363",
+          "name": "GISBERT-ALCALÁ"
+        },
+        {
+          "code": "4322",
+          "name": "GISBERT-STA. LEONOR"
+        },
+        {
+          "code": "4323",
+          "name": "BELLUGA"
+        },
+        {
+          "code": "4325",
+          "name": "ESTACIÓN-CORREOS"
+        },
+        {
+          "code": "4108",
+          "name": "ESTACIÓN-MAISONNAVE"
+        },
+        {
+          "code": "4109",
+          "name": "MAISONNAVE-PORTUGAL"
+        },
+        {
+          "code": "4445",
+          "name": "MUNTANYETA-SOTO"
+        },
+        {
+          "code": "3915",
+          "name": "TEATRO"
+        },
+        {
+          "code": "2606",
+          "name": "RAMBLA-PORTAL DE ELCHE"
+        },
+        {
+          "code": "4359",
+          "name": "PUERTA DEL MAR"
+        }
+      ]
+    ],
+    "routeStopCount": [
+      22,
+      19
+    ],
+    "schedule": {
+      "firstDeparture": "07:00",
+      "lastDeparture": "22:30",
+      "uniqueDepartures": 200,
+      "avgGapMin": 5,
+      "medianGapMin": 3
+    },
+    "rawTimeCount": 542
+  },
+  {
+    "code": "13",
+    "name": "Rambla-villafranqueza",
+    "url": "https://alicante.vectalia.es/linea/linea-13-explanada-virgen-del-remedio-villafranqueza",
+    "routes": [
+      [
+        {
+          "code": "2688",
+          "name": "RAMBLA-PORTAL DE ELCHE"
+        },
+        {
+          "code": "3400",
+          "name": "MERCADO-SAN VICENTE"
+        },
+        {
+          "code": "3920",
+          "name": "PLAZA DE TOROS"
+        },
+        {
+          "code": "3916",
+          "name": "JIJONA-AUDITORIO"
+        },
+        {
+          "code": "3001",
+          "name": "JIJONA-ADORATRICES"
+        },
+        {
+          "code": "4215",
+          "name": "PLAZA AMÉRICA"
+        },
+        {
+          "code": "4216",
+          "name": "HOSPITAL-PINTOR BAEZA"
+        },
+        {
+          "code": "4630",
+          "name": "POLICÍA LOCAL BENISAUDET"
+        },
+        {
+          "code": "4908",
+          "name": "UNICEF"
+        },
+        {
+          "code": "4603",
+          "name": "PARQUE LO MORANT"
+        },
+        {
+          "code": "4604",
+          "name": "C.P. LO MORANT"
+        },
+        {
+          "code": "4606",
+          "name": "LUGO"
+        },
+        {
+          "code": "4607",
+          "name": "PABLO NERUDA"
+        },
+        {
+          "code": "4621",
+          "name": "C.P. LA PAZ"
+        },
+        {
+          "code": "3562",
+          "name": "PL. ARGEL-VALLE-INCLÁN"
+        },
+        {
+          "code": "3563",
+          "name": "VALLE-INCLÁN-IGLESIA"
+        },
+        {
+          "code": "3561",
+          "name": "ÁVILA"
+        },
+        {
+          "code": "3008",
+          "name": "CASTELLÓ-ESMERALDA"
+        },
+        {
+          "code": "3009",
+          "name": "INTERCITY"
+        },
+        {
+          "code": "3010",
+          "name": "VILLA MARÍA"
+        },
+        {
+          "code": "3011",
+          "name": "LAS PARRAS"
+        },
+        {
+          "code": "3012",
+          "name": "LOS POSTIGOS"
+        },
+        {
+          "code": "3048",
+          "name": "POLIDEPORTIVO VILLAFRANQUEZA"
+        },
+        {
+          "code": "3013",
+          "name": "VILLAFRANQUEZA-IGLESIA"
+        }
+      ],
+      [
+        {
+          "code": "3013",
+          "name": "VILLAFRANQUEZA-IGLESIA"
+        },
+        {
+          "code": "3030",
+          "name": "LAS PARRAS"
+        },
+        {
+          "code": "3031",
+          "name": "VILLA MARÍA"
+        },
+        {
+          "code": "3032",
+          "name": "INTERCITY"
+        },
+        {
+          "code": "3033",
+          "name": "CASTELLÓ-ESMERALDA"
+        },
+        {
+          "code": "3554",
+          "name": "GASCUÑANA"
+        },
+        {
+          "code": "3556",
+          "name": "PL. ARGEL-BERNÁCER"
+        },
+        {
+          "code": "3581",
+          "name": "C.P. LUCENTUM"
+        },
+        {
+          "code": "3582",
+          "name": "C.P. LA PAZ"
+        },
+        {
+          "code": "4906",
+          "name": "C.P. LO MORANT"
+        },
+        {
+          "code": "4602",
+          "name": "PLAZA MEDITERRÁNEO"
+        },
+        {
+          "code": "4909",
+          "name": "UNICEF"
+        },
+        {
+          "code": "4910",
+          "name": "GRAN VÍA-BENISAUDET"
+        },
+        {
+          "code": "4248",
+          "name": "HOSPITAL-PINTOR BAEZA"
+        },
+        {
+          "code": "4249",
+          "name": "PLAZA AMÉRICA"
+        },
+        {
+          "code": "4250",
+          "name": "AMÉRICA-SEGARRA"
+        },
+        {
+          "code": "3040",
+          "name": "JIJONA-ADORATRICES"
+        },
+        {
+          "code": "4438",
+          "name": "CALDERÓN-PL. ESPAÑA"
+        },
+        {
+          "code": "2946",
+          "name": "MERCADO-CALDERÓN"
+        },
+        {
+          "code": "4499",
+          "name": "LÓPEZ TORREGROSA"
+        },
+        {
+          "code": "2688",
+          "name": "RAMBLA-PORTAL DE ELCHE"
+        }
+      ]
+    ],
+    "routeStopCount": [
+      24,
+      21
+    ],
+    "schedule": {
+      "firstDeparture": "06:00",
+      "lastDeparture": "22:30",
+      "uniqueDepartures": 196,
+      "avgGapMin": 5,
+      "medianGapMin": 4
+    },
+    "rawTimeCount": 550
+  },
+  {
+    "code": "14",
+    "name": "Gran Vía Sur-denia (jesuitas)",
+    "url": "https://alicante.vectalia.es/linea/linea14-plaza-la-vina-denida-jesuitas",
+    "routes": [
+      [
+        {
+          "code": "3166",
+          "name": "GRAN VIA SUR"
+        },
+        {
+          "code": "3167",
+          "name": "Rosa Chacel"
+        },
+        {
+          "code": "3122",
+          "name": "MÉXICO-CAJA AHORROS"
+        },
+        {
+          "code": "3168",
+          "name": "C. Salud Babel"
+        },
+        {
+          "code": "3506",
+          "name": "LA VIÑA-ORIÓN"
+        },
+        {
+          "code": "3169",
+          "name": "Hispania"
+        },
+        {
+          "code": "3170",
+          "name": "Princesa Mercedes"
+        },
+        {
+          "code": "5114",
+          "name": "LAS FRANCISCANAS"
+        },
+        {
+          "code": "3171",
+          "name": "Recaredo de los Ríos"
+        },
+        {
+          "code": "3507",
+          "name": "ISLA DE CORFÚ"
+        },
+        {
+          "code": "3508",
+          "name": "COLEGIO ALTOZANO"
+        },
+        {
+          "code": "3526",
+          "name": "MERCADILLO-GRAN VÍA"
+        },
+        {
+          "code": "4265",
+          "name": "GRAN VÍA-TEULADA"
+        },
+        {
+          "code": "4284",
+          "name": "GRAN VÍA-NOVELDA"
+        },
+        {
+          "code": "5013",
+          "name": "GRAN VÍA-BENISAUDET"
+        },
+        {
+          "code": "5014",
+          "name": "HOSPITAL-GRAN VÍA"
+        },
+        {
+          "code": "4816",
+          "name": "SIDI-IFNI"
+        },
+        {
+          "code": "4805",
+          "name": "COCHERAS"
+        },
+        {
+          "code": "4902",
+          "name": "C.C. GRAN VÍA"
+        },
+        {
+          "code": "4903",
+          "name": "XAVIER SOLER"
+        },
+        {
+          "code": "2510",
+          "name": "DÉNIA-JESUITAS"
+        }
+      ],
+      [
+        {
+          "code": "2510",
+          "name": "DÉNIA-JESUITAS"
+        },
+        {
+          "code": "4904",
+          "name": "XAVIER SOLER"
+        },
+        {
+          "code": "4803",
+          "name": "C.C. GRAN VÍA"
+        },
+        {
+          "code": "4804",
+          "name": "COCHERAS"
+        },
+        {
+          "code": "4815",
+          "name": "SIDI-IFNI"
+        },
+        {
+          "code": "5012",
+          "name": "GRAN VÍA-BENISAUDET"
+        },
+        {
+          "code": "4280",
+          "name": "GRAN VÍA-NOVELDA"
+        },
+        {
+          "code": "4218",
+          "name": "GRAN VÍA-TEULADA"
+        },
+        {
+          "code": "3516",
+          "name": "MERCADILLO-GRAN VÍA"
+        },
+        {
+          "code": "3517",
+          "name": "COLEGIO ALTOZANO"
+        },
+        {
+          "code": "3518",
+          "name": "ISLA DE CORFÚ"
+        },
+        {
+          "code": "3172",
+          "name": "A. Ceballos"
+        },
+        {
+          "code": "5119",
+          "name": "GUTIÉRREZ MELLADO"
+        },
+        {
+          "code": "5124",
+          "name": "PASO A NIVEL"
+        },
+        {
+          "code": "3173",
+          "name": "PRINCESA MERCEDES"
+        },
+        {
+          "code": "4255",
+          "name": "BOTÁNICO"
+        },
+        {
+          "code": "3147",
+          "name": "LA VIÑA-ORIÓN"
+        },
+        {
+          "code": "4256",
+          "name": "ORIÓN-VICENTE CHAVARRI"
+        },
+        {
+          "code": "3945",
+          "name": "MÉXICO-CAJA AHORROS"
+        },
+        {
+          "code": "3174",
+          "name": "ROSA CHACEL"
+        },
+        {
+          "code": "3166",
+          "name": "GRAN VIA SUR"
+        }
+      ]
+    ],
+    "routeStopCount": [
+      21,
+      21
+    ],
+    "schedule": {
+      "firstDeparture": "07:00",
+      "lastDeparture": "22:30",
+      "uniqueDepartures": 135,
+      "avgGapMin": 7,
+      "medianGapMin": 7
+    },
+    "rawTimeCount": 442
+  },
+  {
+    "code": "22",
+    "name": "Av. óscar Esplá-playa San Juan",
+    "url": "https://alicante.vectalia.es/linea/22-alicante-cabo-de-la-huerta-playa-san-juan-3",
+    "routes": [
+      [
+        {
+          "code": "2964",
+          "name": "ESTACIÓN-Ó. ESPLÁ"
+        },
+        {
+          "code": "2602",
+          "name": "ESTACIÓN-MAISONNAVE"
+        },
+        {
+          "code": "2501",
+          "name": "MAISONNAVE-PORTUGAL"
+        },
+        {
+          "code": "2603",
+          "name": "MUNTANYETA-SOTO"
+        },
+        {
+          "code": "3915",
+          "name": "TEATRO"
+        },
+        {
+          "code": "2606",
+          "name": "RAMBLA-PORTAL DE ELCHE"
+        },
+        {
+          "code": "4009",
+          "name": "PUERTA DEL MAR"
+        },
+        {
+          "code": "2608",
+          "name": "POSTIGUET-PASARELA"
+        },
+        {
+          "code": "2609",
+          "name": "LA MARINA (TRAM)"
+        },
+        {
+          "code": "2610",
+          "name": "FINCA ADOC"
+        },
+        {
+          "code": "2611",
+          "name": "LA ISLETA (TRAM)"
+        },
+        {
+          "code": "2612",
+          "name": "PLAYA ALBUFERETA"
+        },
+        {
+          "code": "2700",
+          "name": "IGLESIA DE SANTIAGO"
+        },
+        {
+          "code": "2727",
+          "name": "ADOLFO SUÁREZ"
+        },
+        {
+          "code": "2701",
+          "name": "ALMADRABA"
+        },
+        {
+          "code": "2702",
+          "name": "IES CAP DE L'HORTA"
+        },
+        {
+          "code": "2703",
+          "name": "VENECIA"
+        },
+        {
+          "code": "2704",
+          "name": "PALANGRE-LAS REDES"
+        },
+        {
+          "code": "2705",
+          "name": "PALANGRE-TRIDENTE"
+        },
+        {
+          "code": "2706",
+          "name": "PARQUE DEL CABO"
+        },
+        {
+          "code": "2707",
+          "name": "C.C. AZAHARA"
+        },
+        {
+          "code": "2708",
+          "name": "C.P. VORAMAR"
+        },
+        {
+          "code": "2724",
+          "name": "CAMINO DEL FARO"
+        },
+        {
+          "code": "2755",
+          "name": "C.P. El Faro"
+        },
+        {
+          "code": "2711",
+          "name": "LA DORADA"
+        },
+        {
+          "code": "3602",
+          "name": "PLAYA HUERTAS"
+        },
+        {
+          "code": "2621",
+          "name": "AV. BENIDORM (TRAM)"
+        },
+        {
+          "code": "2622",
+          "name": "FONTANA"
+        },
+        {
+          "code": "2624",
+          "name": "LONDRES (TRAM)"
+        },
+        {
+          "code": "2625",
+          "name": "CASTILLA"
+        },
+        {
+          "code": "2712",
+          "name": "PLAZA LA CORUÑA"
+        },
+        {
+          "code": "2733",
+          "name": "MILÁN"
+        },
+        {
+          "code": "2734",
+          "name": "COSTA BLANCA (TRAM)"
+        },
+        {
+          "code": "6161",
+          "name": "GARBERÍ-R. SOLER"
+        }
+      ],
+      [
+        {
+          "code": "4716",
+          "name": "LA MARJAL"
+        },
+        {
+          "code": "2729",
+          "name": "IES PLAYA DE SAN JUAN"
+        },
+        {
+          "code": "2663",
+          "name": "CASTILLA"
+        },
+        {
+          "code": "2664",
+          "name": "LONDRES (TRAM)"
+        },
+        {
+          "code": "2666",
+          "name": "FONTANA"
+        },
+        {
+          "code": "2731",
+          "name": "AV. BENIDORM (TRAM)"
+        },
+        {
+          "code": "2713",
+          "name": "PLAYA HUERTAS"
+        },
+        {
+          "code": "2714",
+          "name": "CAMINO DEL FARO"
+        },
+        {
+          "code": "2715",
+          "name": "C.P. VORAMAR"
+        },
+        {
+          "code": "2716",
+          "name": "C.C. AZAHARA"
+        },
+        {
+          "code": "2717",
+          "name": "PARQUE DEL CABO"
+        },
+        {
+          "code": "2718",
+          "name": "PALANGRE-TRIDENTE"
+        },
+        {
+          "code": "2719",
+          "name": "PALANGRE-LAS REDES"
+        },
+        {
+          "code": "2720",
+          "name": "VENECIA"
+        },
+        {
+          "code": "2721",
+          "name": "IES CAP DE L'HORTA"
+        },
+        {
+          "code": "2722",
+          "name": "ALMADRABA"
+        },
+        {
+          "code": "2726",
+          "name": "ADOLFO SUÁREZ"
+        },
+        {
+          "code": "2723",
+          "name": "IGLESIA DE SANTIAGO"
+        },
+        {
+          "code": "2674",
+          "name": "PLAYA ALBUFERETA"
+        },
+        {
+          "code": "2675",
+          "name": "LA ISLETA (TRAM)"
+        },
+        {
+          "code": "2676",
+          "name": "VISTAMAR"
+        },
+        {
+          "code": "2677",
+          "name": "FINCA ADOC"
+        },
+        {
+          "code": "2678",
+          "name": "LA MARINA (TRAM)"
+        },
+        {
+          "code": "4359",
+          "name": "PUERTA DEL MAR"
+        },
+        {
+          "code": "4082",
+          "name": "R. ALTAMIRA"
+        },
+        {
+          "code": "2682",
+          "name": "RAMBLA-SAN CRISTÓBAL"
+        },
+        {
+          "code": "3100",
+          "name": "MERCADO-EL SABIO"
+        },
+        {
+          "code": "2947",
+          "name": "LUCEROS-EL SABIO"
+        },
+        {
+          "code": "4501",
+          "name": "MAISONNAVE-CALVO SOTELO"
+        },
+        {
+          "code": "2964",
+          "name": "ESTACIÓN-Ó. ESPLÁ"
+        }
+      ]
+    ],
+    "routeStopCount": [
+      34,
+      30
+    ],
+    "schedule": {
+      "firstDeparture": "06:30",
+      "lastDeparture": "22:30",
+      "uniqueDepartures": 248,
+      "avgGapMin": 4,
+      "medianGapMin": 3
+    },
+    "rawTimeCount": 606
+  },
+  {
+    "code": "24",
+    "name": "Línea 24 autobús Alicante - San Vicente del Raspeig",
+    "url": "https://alicante.vectalia.es/linea/linea-24-alicantee-autobuses-universidad-de-alicante-san-vicente-del-raspeig",
+    "routes": [
+      [
+        {
+          "code": "4450",
+          "name": "ESTACIÓN DE AUTOBUSES"
+        },
+        {
+          "code": "3132",
+          "name": "Ó. ESPLÁ-SEMPERE"
+        },
+        {
+          "code": "2965",
+          "name": "PORTUGAL"
+        },
+        {
+          "code": "2856",
+          "name": "LUCEROS-SOTO"
+        },
+        {
+          "code": "2503",
+          "name": "LUCEROS-EL SABIO"
+        },
+        {
+          "code": "2902",
+          "name": "MERCADO-SAN VICENTE"
+        },
+        {
+          "code": "2903",
+          "name": "PANTEÓN DE QUIJANO"
+        },
+        {
+          "code": "2904",
+          "name": "ALCOY-AUDITORIO"
+        },
+        {
+          "code": "2905",
+          "name": "ALCOY-PARQUE DUVAL"
+        },
+        {
+          "code": "2906",
+          "name": "CONDE LUMIARES"
+        },
+        {
+          "code": "2907",
+          "name": "NOVELDA-GRAN VÍA"
+        },
+        {
+          "code": "2908",
+          "name": "NOVELDA-GASOLINERA"
+        },
+        {
+          "code": "2909",
+          "name": "NOVELDA-IGLESIA"
+        },
+        {
+          "code": "2910",
+          "name": "NOVELDA-JARALES"
+        },
+        {
+          "code": "2911",
+          "name": "NOVELDA-PENÀGUILA"
+        },
+        {
+          "code": "2912",
+          "name": "NOVELDA-BERNÁCER"
+        },
+        {
+          "code": "137",
+          "name": "HOSPITAL SAN VICENTE"
+        }
+      ],
+      [
+        {
+          "code": "2935",
+          "name": "NOVELDA-BOLULLA"
+        },
+        {
+          "code": "2936",
+          "name": "NOVELDA-BERNÁCER"
+        },
+        {
+          "code": "2937",
+          "name": "NOVELDA-PENÀGUILA"
+        },
+        {
+          "code": "2938",
+          "name": "NOVELDA-JARALES"
+        },
+        {
+          "code": "2939",
+          "name": "NOVELDA-IGLESIA"
+        },
+        {
+          "code": "2940",
+          "name": "NOVELDA-GASOLINERA"
+        },
+        {
+          "code": "2941",
+          "name": "NOVELDA-GRAN VÍA"
+        },
+        {
+          "code": "2942",
+          "name": "CONDE LUMIARES"
+        },
+        {
+          "code": "2943",
+          "name": "ALCOY-PARQUE DUVAL"
+        },
+        {
+          "code": "2944",
+          "name": "ALCOY-AUDITORIO"
+        },
+        {
+          "code": "2945",
+          "name": "PLAZA DE ESPAÑA"
+        },
+        {
+          "code": "2946",
+          "name": "MERCADO-CALDERÓN"
+        },
+        {
+          "code": "2947",
+          "name": "LUCEROS-EL SABIO"
+        },
+        {
+          "code": "3939",
+          "name": "MUNTANYETA-SOTO"
+        },
+        {
+          "code": "4525",
+          "name": "ESTACIÓN-Ó. ESPLÁ"
+        },
+        {
+          "code": "3676",
+          "name": "Ó. ESPLÁ-SEMPERE"
+        },
+        {
+          "code": "4450",
+          "name": "ESTACIÓN DE AUTOBUSES"
+        }
+      ]
+    ],
+    "routeStopCount": [
+      17,
+      17
+    ],
+    "schedule": {
+      "firstDeparture": "06:00",
+      "lastDeparture": "22:30",
+      "uniqueDepartures": 5,
+      "avgGapMin": 248,
+      "medianGapMin": 30
+    },
+    "rawTimeCount": 48
+  },
+  {
+    "code": "27",
+    "name": "Alicante (luceros)-urbanova",
+    "url": "https://alicante.vectalia.es/linea/27-alicante-urbanova",
+    "routes": [
+      [
+        {
+          "code": "3101",
+          "name": "LUCEROS"
+        },
+        {
+          "code": "4117",
+          "name": "MAISONNAVE-CALVO SOTELO"
+        },
+        {
+          "code": "4118",
+          "name": "ESTACIÓN-MAISONNAVE"
+        },
+        {
+          "code": "3102",
+          "name": "Ó. ESPLÁ-FOGLIETTI"
+        },
+        {
+          "code": "3103",
+          "name": "SOLER-POLICÍA"
+        },
+        {
+          "code": "3104",
+          "name": "SOLER-JUZGADOS"
+        },
+        {
+          "code": "3105",
+          "name": "IES CAVANILLES"
+        },
+        {
+          "code": "3945",
+          "name": "MÉXICO-CAJA AHORROS"
+        },
+        {
+          "code": "3131",
+          "name": "PARQUE DEL MAR"
+        },
+        {
+          "code": "3108",
+          "name": "SAN GABRIEL-CERCANÍAS"
+        },
+        {
+          "code": "3109",
+          "name": "PARQUE EL PALMERAL"
+        },
+        {
+          "code": "3110",
+          "name": "EUIPO-ELCHE"
+        },
+        {
+          "code": "3112",
+          "name": "AGUA AMARGA"
+        },
+        {
+          "code": "3154",
+          "name": "DESALADORA"
+        },
+        {
+          "code": "3113",
+          "name": "URBANOVA-PARKING"
+        },
+        {
+          "code": "3137",
+          "name": "URBANOVA-BERTOMEU"
+        },
+        {
+          "code": "3138",
+          "name": "URBANOVA-LATORRE"
+        },
+        {
+          "code": "3115",
+          "name": "URBANOVA-CASASEMPERE"
+        }
+      ],
+      [
+        {
+          "code": "3115",
+          "name": "URBANOVA-CASASEMPERE"
+        },
+        {
+          "code": "3116",
+          "name": "URBANOVA-LATORRE"
+        },
+        {
+          "code": "3117",
+          "name": "URBANOVA-ROCH"
+        },
+        {
+          "code": "3118",
+          "name": "URBANOVA-PARKING"
+        },
+        {
+          "code": "3156",
+          "name": "DESALADORA"
+        },
+        {
+          "code": "3119",
+          "name": "AGUA AMARGA"
+        },
+        {
+          "code": "3120",
+          "name": "EUIPO-ELCHE"
+        },
+        {
+          "code": "3121",
+          "name": "SAN GABRIEL-CERCANÍAS"
+        },
+        {
+          "code": "3122",
+          "name": "MÉXICO-CAJA AHORROS"
+        },
+        {
+          "code": "3123",
+          "name": "IES CAVANILLES"
+        },
+        {
+          "code": "3124",
+          "name": "SOLER-JUZGADOS"
+        },
+        {
+          "code": "3132",
+          "name": "Ó. ESPLÁ-SEMPERE"
+        },
+        {
+          "code": "2602",
+          "name": "ESTACIÓN-MAISONNAVE"
+        },
+        {
+          "code": "4445",
+          "name": "MUNTANYETA-SOTO"
+        },
+        {
+          "code": "3101",
+          "name": "LUCEROS"
+        }
+      ],
+      [
+        {
+          "code": "3101",
+          "name": "LUCEROS"
+        },
+        {
+          "code": "4117",
+          "name": "MAISONNAVE-CALVO SOTELO"
+        },
+        {
+          "code": "4118",
+          "name": "ESTACIÓN-MAISONNAVE"
+        },
+        {
+          "code": "3102",
+          "name": "Ó. ESPLÁ-FOGLIETTI"
+        },
+        {
+          "code": "3103",
+          "name": "SOLER-POLICÍA"
+        },
+        {
+          "code": "3104",
+          "name": "SOLER-JUZGADOS"
+        },
+        {
+          "code": "3105",
+          "name": "IES CAVANILLES"
+        },
+        {
+          "code": "3945",
+          "name": "MÉXICO-CAJA AHORROS"
+        },
+        {
+          "code": "3131",
+          "name": "PARQUE DEL MAR"
+        },
+        {
+          "code": "3108",
+          "name": "SAN GABRIEL-CERCANÍAS"
+        },
+        {
+          "code": "3109",
+          "name": "PARQUE EL PALMERAL"
+        },
+        {
+          "code": "3110",
+          "name": "EUIPO-ELCHE"
+        },
+        {
+          "code": "3112",
+          "name": "AGUA AMARGA"
+        },
+        {
+          "code": "3146",
+          "name": "ELCHE-ORBA"
+        },
+        {
+          "code": "3651",
+          "name": "ELCHE-ANTELLA"
+        },
+        {
+          "code": "3652",
+          "name": "ELCHE-BENIJÓFAR"
+        },
+        {
+          "code": "3665",
+          "name": "MORENO-CINE"
+        },
+        {
+          "code": "3141",
+          "name": "MORENO-ELCHE"
+        },
+        {
+          "code": "3154",
+          "name": "DESALADORA"
+        },
+        {
+          "code": "3113",
+          "name": "URBANOVA-PARKING"
+        },
+        {
+          "code": "3137",
+          "name": "URBANOVA-BERTOMEU"
+        },
+        {
+          "code": "3138",
+          "name": "URBANOVA-LATORRE"
+        },
+        {
+          "code": "3115",
+          "name": "URBANOVA-CASASEMPERE"
+        }
+      ],
+      [
+        {
+          "code": "3115",
+          "name": "URBANOVA-CASASEMPERE"
+        },
+        {
+          "code": "3116",
+          "name": "URBANOVA-LATORRE"
+        },
+        {
+          "code": "3117",
+          "name": "URBANOVA-ROCH"
+        },
+        {
+          "code": "3118",
+          "name": "URBANOVA-PARKING"
+        },
+        {
+          "code": "3156",
+          "name": "DESALADORA"
+        },
+        {
+          "code": "3146",
+          "name": "ELCHE-ORBA"
+        },
+        {
+          "code": "3651",
+          "name": "ELCHE-ANTELLA"
+        },
+        {
+          "code": "3652",
+          "name": "ELCHE-BENIJÓFAR"
+        },
+        {
+          "code": "3665",
+          "name": "MORENO-CINE"
+        },
+        {
+          "code": "3141",
+          "name": "MORENO-ELCHE"
+        },
+        {
+          "code": "3119",
+          "name": "AGUA AMARGA"
+        },
+        {
+          "code": "3120",
+          "name": "EUIPO-ELCHE"
+        },
+        {
+          "code": "3121",
+          "name": "SAN GABRIEL-CERCANÍAS"
+        },
+        {
+          "code": "3122",
+          "name": "MÉXICO-CAJA AHORROS"
+        },
+        {
+          "code": "3123",
+          "name": "IES CAVANILLES"
+        },
+        {
+          "code": "3124",
+          "name": "SOLER-JUZGADOS"
+        },
+        {
+          "code": "3132",
+          "name": "Ó. ESPLÁ-SEMPERE"
+        },
+        {
+          "code": "2602",
+          "name": "ESTACIÓN-MAISONNAVE"
+        },
+        {
+          "code": "4445",
+          "name": "MUNTANYETA-SOTO"
+        },
+        {
+          "code": "3101",
+          "name": "LUCEROS"
+        }
+      ],
+      [
+        {
+          "code": "3101",
+          "name": "LUCEROS"
+        },
+        {
+          "code": "4117",
+          "name": "MAISONNAVE-CALVO SOTELO"
+        },
+        {
+          "code": "4118",
+          "name": "ESTACIÓN-MAISONNAVE"
+        },
+        {
+          "code": "3102",
+          "name": "Ó. ESPLÁ-FOGLIETTI"
+        },
+        {
+          "code": "3103",
+          "name": "SOLER-POLICÍA"
+        },
+        {
+          "code": "3104",
+          "name": "SOLER-JUZGADOS"
+        },
+        {
+          "code": "3105",
+          "name": "IES CAVANILLES"
+        },
+        {
+          "code": "3945",
+          "name": "MÉXICO-CAJA AHORROS"
+        },
+        {
+          "code": "3131",
+          "name": "PARQUE DEL MAR"
+        },
+        {
+          "code": "3108",
+          "name": "SAN GABRIEL-CERCANÍAS"
+        },
+        {
+          "code": "3109",
+          "name": "PARQUE EL PALMERAL"
+        },
+        {
+          "code": "3110",
+          "name": "EUIPO-ELCHE"
+        },
+        {
+          "code": "3111",
+          "name": "EUIPO"
+        },
+        {
+          "code": "3139",
+          "name": "CIUDAD DE LA LUZ"
+        },
+        {
+          "code": "3145",
+          "name": "TORMOS"
+        },
+        {
+          "code": "3146",
+          "name": "ELCHE-ORBA"
+        },
+        {
+          "code": "3651",
+          "name": "ELCHE-ANTELLA"
+        },
+        {
+          "code": "3652",
+          "name": "ELCHE-BENIJÓFAR"
+        },
+        {
+          "code": "3665",
+          "name": "MORENO-CINE"
+        },
+        {
+          "code": "3141",
+          "name": "MORENO-ELCHE"
+        },
+        {
+          "code": "3154",
+          "name": "DESALADORA"
+        },
+        {
+          "code": "3113",
+          "name": "URBANOVA-PARKING"
+        },
+        {
+          "code": "3137",
+          "name": "URBANOVA-BERTOMEU"
+        },
+        {
+          "code": "3138",
+          "name": "URBANOVA-LATORRE"
+        },
+        {
+          "code": "3115",
+          "name": "URBANOVA-CASASEMPERE"
+        }
+      ],
+      [
+        {
+          "code": "3115",
+          "name": "URBANOVA-CASASEMPERE"
+        },
+        {
+          "code": "3116",
+          "name": "URBANOVA-LATORRE"
+        },
+        {
+          "code": "3117",
+          "name": "URBANOVA-ROCH"
+        },
+        {
+          "code": "3118",
+          "name": "URBANOVA-PARKING"
+        },
+        {
+          "code": "3156",
+          "name": "DESALADORA"
+        },
+        {
+          "code": "3146",
+          "name": "ELCHE-ORBA"
+        },
+        {
+          "code": "3651",
+          "name": "ELCHE-ANTELLA"
+        },
+        {
+          "code": "3652",
+          "name": "ELCHE-BENIJÓFAR"
+        },
+        {
+          "code": "3665",
+          "name": "MORENO-CINE"
+        },
+        {
+          "code": "3144",
+          "name": "CIUDAD DE LA LUZ"
+        },
+        {
+          "code": "3130",
+          "name": "EUIPO"
+        },
+        {
+          "code": "3120",
+          "name": "EUIPO-ELCHE"
+        },
+        {
+          "code": "3121",
+          "name": "SAN GABRIEL-CERCANÍAS"
+        },
+        {
+          "code": "3122",
+          "name": "MÉXICO-CAJA AHORROS"
+        },
+        {
+          "code": "3123",
+          "name": "IES CAVANILLES"
+        },
+        {
+          "code": "3124",
+          "name": "SOLER-JUZGADOS"
+        },
+        {
+          "code": "3132",
+          "name": "Ó. ESPLÁ-SEMPERE"
+        },
+        {
+          "code": "2602",
+          "name": "ESTACIÓN-MAISONNAVE"
+        },
+        {
+          "code": "4445",
+          "name": "MUNTANYETA-SOTO"
+        },
+        {
+          "code": "3101",
+          "name": "LUCEROS"
+        }
+      ]
+    ],
+    "routeStopCount": [
+      18,
+      15,
+      23,
+      20,
+      25,
+      20
+    ],
+    "schedule": {
+      "firstDeparture": "06:15",
+      "lastDeparture": "22:05",
+      "uniqueDepartures": 51,
+      "avgGapMin": 19,
+      "medianGapMin": 20
+    },
+    "rawTimeCount": 176
+  },
+  {
+    "code": "28",
+    "name": "H.san Juan-camino Del Faro",
+    "url": "https://alicante.vectalia.es/linea/linea28-h-san-juan-camino-del-faro",
+    "routes": [
+      [
+        {
+          "code": "2843",
+          "name": "HOSPITAL SANT JOAN"
+        },
+        {
+          "code": "2957",
+          "name": "PARQUE H. Y J. FRANCÉS"
+        },
+        {
+          "code": "2958",
+          "name": "TORRE PLÁCIDA"
+        },
+        {
+          "code": "2959",
+          "name": "CAMPO DE GOLF (TRAM)"
+        },
+        {
+          "code": "6162",
+          "name": "LA MARJAL"
+        },
+        {
+          "code": "4717",
+          "name": "CONDOMINA (TRAM)"
+        },
+        {
+          "code": "4718",
+          "name": "PARQUE DE BOMBEROS"
+        },
+        {
+          "code": "4731",
+          "name": "OLIMPO"
+        },
+        {
+          "code": "4749",
+          "name": "RÓMULO"
+        },
+        {
+          "code": "4734",
+          "name": "C.P. LA ALBUFERETA"
+        },
+        {
+          "code": "2725",
+          "name": "NASA"
+        },
+        {
+          "code": "2727",
+          "name": "ADOLFO SUÁREZ"
+        },
+        {
+          "code": "2701",
+          "name": "ALMADRABA"
+        },
+        {
+          "code": "2702",
+          "name": "IES CAP DE L'HORTA"
+        },
+        {
+          "code": "3600",
+          "name": "LA CALITA"
+        },
+        {
+          "code": "3608",
+          "name": "PARQUE DEL CABO"
+        },
+        {
+          "code": "2707",
+          "name": "C.C. AZAHARA"
+        },
+        {
+          "code": "2708",
+          "name": "C.P. VORAMAR"
+        },
+        {
+          "code": "2724",
+          "name": "CAMINO DEL FARO"
+        },
+        {
+          "code": "2709",
+          "name": "C.P. EL FARO"
+        },
+        {
+          "code": "2710",
+          "name": "CABO DE LAS HUERTAS-EL FARO"
+        },
+        {
+          "code": "2711",
+          "name": "LA DORADA"
+        },
+        {
+          "code": "2713",
+          "name": "PLAYA HUERTAS"
+        },
+        {
+          "code": "2714",
+          "name": "CAMINO DEL FARO"
+        },
+        {
+          "code": "6156",
+          "name": "IES RADIO EXTERIOR"
+        },
+        {
+          "code": "4759",
+          "name": "NACIONES-HOLANDA (TRAM)"
+        },
+        {
+          "code": "6163",
+          "name": "PAÍSES ESCANDINAVOS (TRAM)"
+        },
+        {
+          "code": "6164",
+          "name": "LA MARJAL"
+        },
+        {
+          "code": "2952",
+          "name": "CAMPO DE GOLF (TRAM)"
+        },
+        {
+          "code": "2953",
+          "name": "TORRE PLÁCIDA"
+        },
+        {
+          "code": "2954",
+          "name": "PARQUE H. Y J. FRANCÉS"
+        },
+        {
+          "code": "2976",
+          "name": "LA CADENA"
+        }
+      ]
+    ],
+    "routeStopCount": [
+      32
+    ],
+    "schedule": {
+      "firstDeparture": "06:40",
+      "lastDeparture": "22:30",
+      "uniqueDepartures": 56,
+      "avgGapMin": 17,
+      "medianGapMin": 20
+    },
+    "rawTimeCount": 166
+  },
+  {
+    "code": "39",
+    "name": "Rambla-centro Tecnificación",
+    "url": "https://alicante.vectalia.es/linea/39-explanada-centro-de-tecnificacion",
+    "routes": [
+      [
+        {
+          "code": "2999",
+          "name": "RAMBLA-SAN FERNANDO"
+        },
+        {
+          "code": "2682",
+          "name": "RAMBLA-SAN CRISTÓBAL"
+        },
+        {
+          "code": "3100",
+          "name": "MERCADO-EL SABIO"
+        },
+        {
+          "code": "3700",
+          "name": "BELANDO"
+        },
+        {
+          "code": "03702",
+          "name": "M. BARBIERI"
+        },
+        {
+          "code": "3709",
+          "name": "CONSERVATORIO"
+        },
+        {
+          "code": "3703",
+          "name": "CIUDAD DEPORTIVA"
+        },
+        {
+          "code": "3704",
+          "name": "CENTRO DE TECNIFICACIÓN"
+        }
+      ],
+      [
+        {
+          "code": "3704",
+          "name": "CENTRO DE TECNIFICACIÓN"
+        },
+        {
+          "code": "3705",
+          "name": "CAMINO DE RONDA"
+        },
+        {
+          "code": "3706",
+          "name": "CONSERVATORIO"
+        },
+        {
+          "code": "3710",
+          "name": "MARQUÉS DE MOLINS"
+        },
+        {
+          "code": "3707",
+          "name": "M. GAZTAMBIDE"
+        },
+        {
+          "code": "3708",
+          "name": "P. IGLESIAS"
+        },
+        {
+          "code": "2604",
+          "name": "MERCADO-EL SABIO"
+        },
+        {
+          "code": "4499",
+          "name": "LÓPEZ TORREGROSA"
+        },
+        {
+          "code": "2999",
+          "name": "RAMBLA-SAN FERNANDO"
+        }
+      ]
+    ],
+    "routeStopCount": [
+      8,
+      9
+    ],
+    "schedule": {
+      "firstDeparture": "07:50",
+      "lastDeparture": "20:30",
+      "uniqueDepartures": 29,
+      "avgGapMin": 27,
+      "medianGapMin": 15
+    },
+    "rawTimeCount": 58
+  },
+  {
+    "code": "03N",
+    "name": "Puerta Del Mar-plaza de la Luna",
+    "url": "https://alicante.vectalia.es/linea/03n-urbanova-puerta-del-mar",
+    "routes": [
+      [
+        {
+          "code": "4300",
+          "name": "PUERTA DEL MAR"
+        },
+        {
+          "code": "4600",
+          "name": "RAMBLA-SAN JOSÉ"
+        },
+        {
+          "code": "4116",
+          "name": "MERCADO-EL SABIO"
+        },
+        {
+          "code": "4264",
+          "name": "LUCEROS-SOTO"
+        },
+        {
+          "code": "4117",
+          "name": "MAISONNAVE-CALVO SOTELO"
+        },
+        {
+          "code": "4118",
+          "name": "ESTACIÓN-MAISONNAVE"
+        },
+        {
+          "code": "4119",
+          "name": "ESTACIÓN-AGUILERA"
+        },
+        {
+          "code": "4120",
+          "name": "MERCADO DE BENALÚA"
+        },
+        {
+          "code": "3523",
+          "name": "AGUILERA-LOS DOSCIENTOS"
+        },
+        {
+          "code": "3521",
+          "name": "ANTIGUO ASILO"
+        },
+        {
+          "code": "4121",
+          "name": "ORIHUELA-GRAN VÍA"
+        },
+        {
+          "code": "4122",
+          "name": "ORIHUELA-LA LIRA"
+        },
+        {
+          "code": "4123",
+          "name": "ORIHUELA-ALBERGUE"
+        },
+        {
+          "code": "4124",
+          "name": "ORIHUELA-NIÑOLES"
+        },
+        {
+          "code": "3529",
+          "name": "ORIHUELA-LAFORA"
+        },
+        {
+          "code": "4259",
+          "name": "PERICOCO"
+        },
+        {
+          "code": "4260",
+          "name": "OCAÑA-JÚCAR"
+        },
+        {
+          "code": "4197",
+          "name": "LA LUNA-TANATORIO"
+        }
+      ],
+      [
+        {
+          "code": "4197",
+          "name": "LA LUNA-TANATORIO"
+        },
+        {
+          "code": "4205",
+          "name": "OCAÑA-JÚCAR"
+        },
+        {
+          "code": "4206",
+          "name": "PERICOCO"
+        },
+        {
+          "code": "3530",
+          "name": "ORIHUELA-LAFORA"
+        },
+        {
+          "code": "4103",
+          "name": "ORIHUELA-ALBERGUE"
+        },
+        {
+          "code": "4104",
+          "name": "ORIHUELA-LA LIRA"
+        },
+        {
+          "code": "4105",
+          "name": "ORIHUELA-GRAN VÍA"
+        },
+        {
+          "code": "3504",
+          "name": "ANTIGUO ASILO"
+        },
+        {
+          "code": "3524",
+          "name": "AGUILERA-LOS DOSCIENTOS"
+        },
+        {
+          "code": "4106",
+          "name": "MERCADO DE BENALÚA"
+        },
+        {
+          "code": "4107",
+          "name": "ESTACIÓN-AGUILERA"
+        },
+        {
+          "code": "4108",
+          "name": "ESTACIÓN-MAISONNAVE"
+        },
+        {
+          "code": "4109",
+          "name": "MAISONNAVE-PORTUGAL"
+        },
+        {
+          "code": "2603",
+          "name": "MUNTANYETA-SOTO"
+        },
+        {
+          "code": "4046",
+          "name": "LUCEROS-SOTO"
+        },
+        {
+          "code": "2503",
+          "name": "LUCEROS-EL SABIO"
+        },
+        {
+          "code": "2604",
+          "name": "MERCADO-EL SABIO"
+        },
+        {
+          "code": "2606",
+          "name": "RAMBLA-PORTAL DE ELCHE"
+        },
+        {
+          "code": "4300",
+          "name": "PUERTA DEL MAR"
+        }
+      ]
+    ],
+    "routeStopCount": [
+      18,
+      19
+    ],
+    "schedule": {
+      "firstDeparture": "00:00",
+      "lastDeparture": "23:30",
+      "uniqueDepartures": 15,
+      "avgGapMin": 101,
+      "medianGapMin": 30
+    },
+    "rawTimeCount": 30
+  },
+  {
+    "code": "13N",
+    "name": "Villafranqueza-plaza Del Mar",
+    "url": "https://alicante.vectalia.es/linea/13n-plaza-de-espana-virgen-del-remedio-villafranqueza",
+    "routes": [
+      [
+        {
+          "code": "4300",
+          "name": "PUERTA DEL MAR"
+        },
+        {
+          "code": "4600",
+          "name": "RAMBLA-SAN JOSÉ"
+        },
+        {
+          "code": "3400",
+          "name": "MERCADO-SAN VICENTE"
+        },
+        {
+          "code": "3920",
+          "name": "PLAZA DE TOROS"
+        },
+        {
+          "code": "3916",
+          "name": "JIJONA-AUDITORIO"
+        },
+        {
+          "code": "3001",
+          "name": "JIJONA-ADORATRICES"
+        },
+        {
+          "code": "2986",
+          "name": "JIJONA-SEGARRA"
+        },
+        {
+          "code": "3917",
+          "name": "ALONSO-DEVESA"
+        },
+        {
+          "code": "2982",
+          "name": "ALONSO-AAIÚN"
+        },
+        {
+          "code": "3003",
+          "name": "HOSPITAL-ALONSO"
+        },
+        {
+          "code": "3004",
+          "name": "ALONSO-ALCOLEJA"
+        },
+        {
+          "code": "3005",
+          "name": "MAESTRE ALONSO (TRAM)"
+        },
+        {
+          "code": "2984",
+          "name": "CASTELLÓ-DÁMASO ALONSO"
+        },
+        {
+          "code": "3045",
+          "name": "C.P. VIRGEN DEL REMEDIO"
+        },
+        {
+          "code": "3134",
+          "name": "CASTELLÓ-JASPE"
+        },
+        {
+          "code": "3008",
+          "name": "CASTELLÓ-ESMERALDA"
+        },
+        {
+          "code": "3009",
+          "name": "INTERCITY"
+        },
+        {
+          "code": "3010",
+          "name": "VILLA MARÍA"
+        },
+        {
+          "code": "3011",
+          "name": "LAS PARRAS"
+        },
+        {
+          "code": "3012",
+          "name": "LOS POSTIGOS"
+        },
+        {
+          "code": "3048",
+          "name": "POLIDEPORTIVO VILLAFRANQUEZA"
+        },
+        {
+          "code": "3013",
+          "name": "VILLAFRANQUEZA-IGLESIA"
+        }
+      ],
+      [
+        {
+          "code": "3013",
+          "name": "VILLAFRANQUEZA-IGLESIA"
+        },
+        {
+          "code": "3030",
+          "name": "LAS PARRAS"
+        },
+        {
+          "code": "3031",
+          "name": "VILLA MARÍA"
+        },
+        {
+          "code": "3032",
+          "name": "INTERCITY"
+        },
+        {
+          "code": "3033",
+          "name": "CASTELLÓ-ESMERALDA"
+        },
+        {
+          "code": "3034",
+          "name": "GASTÓN CASTELLÓ (TRAM)"
+        },
+        {
+          "code": "3035",
+          "name": "C.P. VIRGEN DEL REMEDIO"
+        },
+        {
+          "code": "3036",
+          "name": "MAESTRE ALONSO (TRAM)"
+        },
+        {
+          "code": "3046",
+          "name": "ALONSO-GRAN VÍA"
+        },
+        {
+          "code": "3038",
+          "name": "HOSPITAL-ALONSO"
+        },
+        {
+          "code": "2983",
+          "name": "ALONSO-AAIÚN"
+        },
+        {
+          "code": "3039",
+          "name": "ALONSO-DEVESA"
+        },
+        {
+          "code": "2985",
+          "name": "JIJONA-SEGARRA"
+        },
+        {
+          "code": "3040",
+          "name": "JIJONA-ADORATRICES"
+        },
+        {
+          "code": "6210",
+          "name": "JIJONA-SANIDAD"
+        },
+        {
+          "code": "4115",
+          "name": "CALDERÓN-LA LONJA"
+        },
+        {
+          "code": "4499",
+          "name": "LÓPEZ TORREGROSA"
+        },
+        {
+          "code": "2606",
+          "name": "RAMBLA-PORTAL DE ELCHE"
+        },
+        {
+          "code": "4300",
+          "name": "PUERTA DEL MAR"
+        }
+      ]
+    ],
+    "routeStopCount": [
+      22,
+      19
+    ],
+    "schedule": {
+      "firstDeparture": "00:00",
+      "lastDeparture": "23:30",
+      "uniqueDepartures": 15,
+      "avgGapMin": 101,
+      "medianGapMin": 30
+    },
+    "rawTimeCount": 30
+  },
+  {
+    "code": "22N",
+    "name": "Puerta Del Mar-playa San Juan",
+    "url": "https://alicante.vectalia.es/linea/22n-alicante-plaza-puerta-del-mar-cabo-de-las-huertas-playa-san-juan",
+    "routes": [
+      [
+        {
+          "code": "4009",
+          "name": "PUERTA DEL MAR"
+        },
+        {
+          "code": "2610",
+          "name": "FINCA ADOC"
+        },
+        {
+          "code": "2611",
+          "name": "LA ISLETA (TRAM)"
+        },
+        {
+          "code": "2612",
+          "name": "PLAYA ALBUFERETA"
+        },
+        {
+          "code": "2700",
+          "name": "IGLESIA DE SANTIAGO"
+        },
+        {
+          "code": "2727",
+          "name": "ADOLFO SUÁREZ"
+        },
+        {
+          "code": "2701",
+          "name": "ALMADRABA"
+        },
+        {
+          "code": "2702",
+          "name": "IES CAP DE L'HORTA"
+        },
+        {
+          "code": "2703",
+          "name": "VENECIA"
+        },
+        {
+          "code": "2704",
+          "name": "PALANGRE-LAS REDES"
+        },
+        {
+          "code": "2705",
+          "name": "PALANGRE-TRIDENTE"
+        },
+        {
+          "code": "2706",
+          "name": "PARQUE DEL CABO"
+        },
+        {
+          "code": "2707",
+          "name": "C.C. AZAHARA"
+        },
+        {
+          "code": "2708",
+          "name": "C.P. VORAMAR"
+        },
+        {
+          "code": "2724",
+          "name": "CAMINO DEL FARO"
+        },
+        {
+          "code": "2709",
+          "name": "C.P. EL FARO"
+        },
+        {
+          "code": "2710",
+          "name": "CABO DE LAS HUERTAS-EL FARO"
+        },
+        {
+          "code": "2711",
+          "name": "LA DORADA"
+        },
+        {
+          "code": "3602",
+          "name": "PLAYA HUERTAS"
+        },
+        {
+          "code": "2751",
+          "name": "ARMAJAL"
+        },
+        {
+          "code": "2621",
+          "name": "AV. BENIDORM (TRAM)"
+        },
+        {
+          "code": "2622",
+          "name": "FONTANA"
+        },
+        {
+          "code": "2624",
+          "name": "LONDRES (TRAM)"
+        },
+        {
+          "code": "2625",
+          "name": "CASTILLA"
+        },
+        {
+          "code": "2712",
+          "name": "PLAZA LA CORUÑA"
+        },
+        {
+          "code": "2733",
+          "name": "MILÁN"
+        },
+        {
+          "code": "2734",
+          "name": "COSTA BLANCA (TRAM)"
+        },
+        {
+          "code": "6161",
+          "name": "GARBERÍ-R. SOLER"
+        }
+      ],
+      [
+        {
+          "code": "4716",
+          "name": "LA MARJAL"
+        },
+        {
+          "code": "2729",
+          "name": "IES PLAYA DE SAN JUAN"
+        },
+        {
+          "code": "2753",
+          "name": "PLAZA LA CORUÑA"
+        },
+        {
+          "code": "2663",
+          "name": "CASTILLA"
+        },
+        {
+          "code": "2664",
+          "name": "LONDRES (TRAM)"
+        },
+        {
+          "code": "2666",
+          "name": "FONTANA"
+        },
+        {
+          "code": "2731",
+          "name": "AV. BENIDORM (TRAM)"
+        },
+        {
+          "code": "2713",
+          "name": "PLAYA HUERTAS"
+        },
+        {
+          "code": "2714",
+          "name": "CAMINO DEL FARO"
+        },
+        {
+          "code": "2715",
+          "name": "C.P. VORAMAR"
+        },
+        {
+          "code": "2716",
+          "name": "C.C. AZAHARA"
+        },
+        {
+          "code": "2717",
+          "name": "PARQUE DEL CABO"
+        },
+        {
+          "code": "2718",
+          "name": "PALANGRE-TRIDENTE"
+        },
+        {
+          "code": "2719",
+          "name": "PALANGRE-LAS REDES"
+        },
+        {
+          "code": "2720",
+          "name": "VENECIA"
+        },
+        {
+          "code": "2721",
+          "name": "IES CAP DE L'HORTA"
+        },
+        {
+          "code": "2722",
+          "name": "ALMADRABA"
+        },
+        {
+          "code": "2726",
+          "name": "ADOLFO SUÁREZ"
+        },
+        {
+          "code": "2723",
+          "name": "IGLESIA DE SANTIAGO"
+        },
+        {
+          "code": "2674",
+          "name": "PLAYA ALBUFERETA"
+        },
+        {
+          "code": "2675",
+          "name": "LA ISLETA (TRAM)"
+        },
+        {
+          "code": "2676",
+          "name": "VISTAMAR"
+        },
+        {
+          "code": "2677",
+          "name": "FINCA ADOC"
+        },
+        {
+          "code": "2678",
+          "name": "LA MARINA (TRAM)"
+        },
+        {
+          "code": "2685",
+          "name": "POSTIGUET-PASARELA"
+        },
+        {
+          "code": "4359",
+          "name": "PUERTA DEL MAR"
+        },
+        {
+          "code": "4009",
+          "name": "PUERTA DEL MAR"
+        }
+      ]
+    ],
+    "routeStopCount": [
+      28,
+      27
+    ],
+    "schedule": {
+      "firstDeparture": "00:05",
+      "lastDeparture": "23:30",
+      "uniqueDepartures": 13,
+      "avgGapMin": 117,
+      "medianGapMin": 35
+    },
+    "rawTimeCount": 26
+  }
+]
