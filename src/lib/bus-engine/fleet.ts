@@ -249,9 +249,13 @@ function locateInDirection(plan: DirectionPlan, elapsed: number) {
 
 // Genera la flota inferida y la posiciona AHORA.
 // Cada bus tiene identidad estable: bus_id = `${line}_${slot}` donde slot ∈ [0, N).
+// `phaseCorrections` (opcional): Map<slotKey, minutos> a sumar al offset del slot;
+// se rellena con los `meta.phase_correction` persistidos en `virtual_buses` y
+// permite que las observaciones reales del preview corrijan la posición.
 export function generateActiveFleet(
   plan: LineFleetPlan,
   at: Date = new Date(),
+  phaseCorrections?: Map<string, number>,
 ): VirtualBus[] {
   const N = plan.activeBusCount;
   if (N <= 0 || plan.cycleMin <= 0) return [];
@@ -260,22 +264,23 @@ export function generateActiveFleet(
   const slotSpacing = plan.cycleMin / N;
 
   for (let slot = 0; slot < N; slot++) {
-    // El "anclaje" del slot 0 lo elegimos para que un bus aparezca cerca del inicio de IDA "ahora".
-    // Offset dentro del ciclo: distribuimos uniformemente.
-    const offset = ((now - slot * slotSpacing) % plan.cycleMin + plan.cycleMin) % plan.cycleMin;
+    const slotKey = `BUS${String(slot + 1).padStart(2, "0")}`;
+    const correction = phaseCorrections?.get(slotKey) ?? 0;
+    const rawOffset = now - slot * slotSpacing + correction;
+    const offset = ((rawOffset % plan.cycleMin) + plan.cycleMin) % plan.cycleMin;
     const loc = locateBusInCycle(plan, offset);
-    const busId = `${plan.lineCode}_BUS${String(slot + 1).padStart(2, "0")}`;
+    const busId = `${plan.lineCode}_${slotKey}`;
     buses.push({
       busId,
       lineCode: plan.lineCode,
       direction: loc.direction,
       status: loc.state,
-      departureMin: now - offset, // arranque virtual del trip actual
+      departureMin: now - offset,
       elapsedMin: offset,
       segmentIndex: loc.segmentIndex,
       segmentProgress: loc.segmentProgress,
       position: loc.position,
-      delayMin: 0,
+      delayMin: correction,
       confidence: Math.max(0.35, loc.segmentConfidence * 0.85),
     });
   }
