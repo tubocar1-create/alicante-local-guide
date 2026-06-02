@@ -82,6 +82,8 @@ export function BusLineLiveMap({
     if (typeof window === "undefined") return false;
     const h = window.location.hostname;
     if (/^id-preview--/.test(h)) return false;
+    if (/\.lovableproject\.com$/.test(h)) return false;
+    if (/\blovable\.app$/.test(h) && /-dev\./.test(h)) return false;
     if (h === "localhost" || h === "127.0.0.1") return false;
     return true;
   }, []);
