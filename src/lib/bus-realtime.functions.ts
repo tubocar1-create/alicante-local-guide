@@ -212,6 +212,7 @@ export const getLineRealtimeState = createServerFn({ method: "GET" })
     if (stopsToFetch.length > 0) {
       await mapLimit(stopsToFetch, 6, async (stopCode) => {
         const byLine = await fetchAllLinesForStop(stopCode);
+        if (!byLine) return;
         // Guarda TODAS las líneas vistas en esta parada (para reusar en otras consultas)
         for (const [lc, mins] of byLine.entries()) {
           newSnapshots.push({
@@ -305,8 +306,10 @@ export const getStopRealtimeState = createServerFn({ method: "GET" })
       if (stale) {
         const byLine = await fetchAllLinesForStop(stopCode);
         const toUpsert: Array<{ stop_code: string; line_code: string; direction: number | null; eta_minutes: number[] }> = [];
-        for (const [lc, mins] of byLine.entries()) {
-          toUpsert.push({ stop_code: stopCode, line_code: lc, direction: null, eta_minutes: mins });
+        if (byLine) {
+          for (const [lc, mins] of byLine.entries()) {
+            toUpsert.push({ stop_code: stopCode, line_code: lc, direction: null, eta_minutes: mins });
+          }
         }
         await upsertSnapshots(toUpsert);
       }
@@ -360,8 +363,10 @@ async function buildArrivalsForStop(
   if (anyStale) {
     const byLine = await fetchAllLinesForStop(stopCode);
     const toUpsert: Array<{ stop_code: string; line_code: string; direction: number | null; eta_minutes: number[] }> = [];
-    for (const [lc, mins] of byLine.entries()) {
-      toUpsert.push({ stop_code: stopCode, line_code: lc, direction: null, eta_minutes: mins });
+    if (byLine) {
+      for (const [lc, mins] of byLine.entries()) {
+        toUpsert.push({ stop_code: stopCode, line_code: lc, direction: null, eta_minutes: mins });
+      }
     }
     await upsertSnapshots(toUpsert);
     const re = await readSnapshotsForStops([stopCode]);
