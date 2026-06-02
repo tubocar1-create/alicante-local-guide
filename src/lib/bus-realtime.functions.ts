@@ -204,7 +204,7 @@ export const getLineRealtimeState = createServerFn({ method: "GET" })
     for (const code of uniqueStopCodes) {
       const rows = cached.get(code) ?? [];
       const ours = rows.find((r) => r.line_code === lineCode);
-      if (!ours || !isFresh(ours.captured_at, now)) stopsToFetch.push(code);
+      if (!ours || !isFresh(ours.captured_at, now) || (ours.eta_minutes ?? []).length === 0) stopsToFetch.push(code);
     }
 
     // 3) Fetch Vectalia para paradas obsoletas (concurrencia limitada)
@@ -301,7 +301,7 @@ export const getStopRealtimeState = createServerFn({ method: "GET" })
 
       const cached = await readSnapshotsForStops([stopCode]);
       const rows = cached.get(stopCode) ?? [];
-      const stale = rows.length === 0 || rows.some((r) => !isFresh(r.captured_at, now));
+      const stale = rows.length === 0 || rows.some((r) => !isFresh(r.captured_at, now) || (r.eta_minutes ?? []).length === 0);
 
       if (stale) {
         const byLine = await fetchAllLinesForStop(stopCode);
@@ -359,7 +359,7 @@ async function buildArrivalsForStop(
   const now = Date.now();
   const cached = await readSnapshotsForStops([stopCode]);
   let rows = cached.get(stopCode) ?? [];
-  const anyStale = rows.length === 0 || rows.some((r) => !isFresh(r.captured_at, now));
+  const anyStale = rows.length === 0 || rows.some((r) => !isFresh(r.captured_at, now) || (r.eta_minutes ?? []).length === 0);
   if (anyStale) {
     const byLine = await fetchAllLinesForStop(stopCode);
     const toUpsert: Array<{ stop_code: string; line_code: string; direction: number | null; eta_minutes: number[] }> = [];
