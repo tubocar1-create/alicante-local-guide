@@ -26,13 +26,15 @@ function normalizeDirSmallint(n: number): Direction {
 }
 
 export function fromSnapshot(snap: BusEngineSnapshot): BusEngineData {
-  const stops: LineStop[] = snap.stops.map((s) => ({
-    lineCode: s.line_code,
-    direction: asDirection(s.direction),
-    seq: s.seq,
-    stopCode: s.stop_code,
-    stopName: s.stop_name,
-  }));
+  const stops: LineStop[] = snap.stops
+    .filter((s): s is typeof s & { stop_code: string } => s.stop_code != null)
+    .map((s) => ({
+      lineCode: s.line_code,
+      direction: asDirection(s.direction),
+      seq: s.seq,
+      stopCode: s.stop_code,
+      stopName: s.stop_name,
+    }));
 
   const stopsMeta = new Map<string, StopMeta>();
   for (const m of snap.stopsMeta) {
