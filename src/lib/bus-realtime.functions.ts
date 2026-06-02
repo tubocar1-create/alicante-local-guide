@@ -1,7 +1,7 @@
 // Server functions para snapshot realtime de Vectalia.
-// Filosofía (post-refactor): el NAVEGADOR es quien lee Vectalia directamente
-// vía https://qr.vectalia.es/Alicante/datos.aspx?p=<stop> (CORS abierto, sin
-// Akamai). El servidor NO scrapea NADA — solo:
+// Filosofía (post-refactor): el NAVEGADOR es quien abre la página oficial
+// SUBUS http://www.subus.es/QR/Alicante/consulta.aspx?p=<stop>.
+// El servidor NO scrapea NADA — solo:
 //   1) sirve metadatos de paradas desde la BBDD
 //   2) acepta snapshots ingestados desde el cliente y los persiste
 //   3) reconstruye estado de línea/parada leyendo SOLO los snapshots cacheados

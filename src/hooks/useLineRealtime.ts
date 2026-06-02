@@ -1,4 +1,4 @@
-// Hook realtime de línea: el NAVEGADOR lee Vectalia (QR datos.aspx) directamente
+// Hook realtime de línea: el NAVEGADOR lee la página oficial SUBUS consulta.aspx
 // para cada parada de la línea, en paralelo (con concurrencia limitada).
 // Después de cada lectura, ingestamos los snapshots en BBDD para que otros
 // consumidores (mapa, dashboard) los reutilicen sin volver a pedir al QR.

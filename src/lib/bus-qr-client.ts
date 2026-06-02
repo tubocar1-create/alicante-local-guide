@@ -1,11 +1,10 @@
-// Lectura DIRECTA del QR oficial de Vectalia desde el navegador.
-// El endpoint https://qr.vectalia.es/Alicante/datos.aspx?p=<stop> sirve
-// JSON con la propiedad `tiempos` (texto plano con "Linea X DEST: N min").
-// El navegador puede llamarlo sin CORS (lo hemos confirmado en el preview).
-// NO usamos scraping externo (ScrapingBee/Firecrawl). NO usamos el endpoint
-// consulta.aspx (lo bloquea Akamai). Esta es la única vía de lectura.
+// Lectura DIRECTA del QR oficial de SUBUS desde el navegador.
+// La fuente correcta es la página de parada:
+// http://www.subus.es/QR/Alicante/consulta.aspx?p=<stop>
+// NO usamos scraping externo (ScrapingBee/Firecrawl). NO usamos `datos.aspx`
+// como fuente directa.
 
-const QR_DATA_URL = "https://qr.vectalia.es/Alicante/datos.aspx";
+const SUBUS_CONSULTA_URL = "http://www.subus.es/QR/Alicante/consulta.aspx";
 const ARRIVAL_RE = /Linea\s+(\d{1,3}[A-Za-z]?)\s+([^:]+?)\s*:\s*(\d+)\s*min/gi;
 const FETCH_TIMEOUT_MS = 6_000;
 
@@ -44,7 +43,7 @@ function parseArrivalText(raw: string): Map<string, { destination: string; minut
 }
 
 export async function fetchStopFromQR(stopCode: string, signal?: AbortSignal): Promise<StopQrResult | null> {
-  const url = `${QR_DATA_URL}?p=${encodeURIComponent(stopCode)}`;
+  const url = `${SUBUS_CONSULTA_URL}?p=${encodeURIComponent(stopCode)}`;
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   const linked = () => controller.abort();
