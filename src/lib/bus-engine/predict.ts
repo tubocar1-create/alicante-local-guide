@@ -82,7 +82,16 @@ export function predictLineState(
   data: BusEngineData,
   lineCode: string,
   at: Date = new Date(),
-): { line: string; timestamp: string; buses: VirtualBus[]; stops: StopEta[] } {
+): {
+  line: string;
+  timestamp: string;
+  buses: VirtualBus[];
+  stops: StopEta[];
+  activeBusCount: number;
+  averageCycleMinutes: number;
+  confidence: number;
+  realtimeAgeSeconds: number | null;
+} {
   const now = nowMinutes(at);
   const dt = dayType(at);
   const cycle = data.cycleStats.get(lineCode);
