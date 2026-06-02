@@ -15,11 +15,6 @@
     "url": "https://alicante.vectalia.es/linea/linea-03-ciudad-de-asis-colonia-requena"
   },
   {
-    "code": "03N",
-    "name": "Puerta Del Mar-plaza de la Luna",
-    "url": "https://alicante.vectalia.es/linea/03n-urbanova-puerta-del-mar"
-  },
-  {
     "code": "04",
     "name": "Cementerio-tómbola",
     "url": "https://alicante.vectalia.es/linea/linea-04-cementerio-barrio-tombola"
@@ -50,14 +45,15 @@
     "url": "https://alicante.vectalia.es/linea/linea-09-avda-oscar-espla-playa-san-juan-avda-de-las-naciones"
   },
   {
+    "code": "12",
+    "name": "Puerta Del Mar-san Blas-juan Pablo II",
+    "url": "https://alicante.vectalia.es/linea/linea-12plaza-de-los-luceros-santo-domingo-san-blas-pau-i",
+    "aliasVectalia": "12P"
+  },
+  {
     "code": "13",
     "name": "Rambla-villafranqueza",
     "url": "https://alicante.vectalia.es/linea/linea-13-explanada-virgen-del-remedio-villafranqueza"
-  },
-  {
-    "code": "13N",
-    "name": "Villafranqueza-plaza Del Mar",
-    "url": "https://alicante.vectalia.es/linea/13n-plaza-de-espana-virgen-del-remedio-villafranqueza"
   },
   {
     "code": "14",
@@ -68,11 +64,6 @@
     "code": "22",
     "name": "Av. óscar Esplá-playa San Juan",
     "url": "https://alicante.vectalia.es/linea/22-alicante-cabo-de-la-huerta-playa-san-juan-3"
-  },
-  {
-    "code": "22N",
-    "name": "Puerta Del Mar-playa San Juan",
-    "url": "https://alicante.vectalia.es/linea/22n-alicante-plaza-puerta-del-mar-cabo-de-las-huertas-playa-san-juan"
   },
   {
     "code": "24",
@@ -93,5 +84,20 @@
     "code": "39",
     "name": "Rambla-centro Tecnificación",
     "url": "https://alicante.vectalia.es/linea/39-explanada-centro-de-tecnificacion"
+  },
+  {
+    "code": "03N",
+    "name": "Puerta Del Mar-plaza de la Luna",
+    "url": "https://alicante.vectalia.es/linea/03n-urbanova-puerta-del-mar"
+  },
+  {
+    "code": "13N",
+    "name": "Villafranqueza-plaza Del Mar",
+    "url": "https://alicante.vectalia.es/linea/13n-plaza-de-espana-virgen-del-remedio-villafranqueza"
+  },
+  {
+    "code": "22N",
+    "name": "Puerta Del Mar-playa San Juan",
+    "url": "https://alicante.vectalia.es/linea/22n-alicante-plaza-puerta-del-mar-cabo-de-las-huertas-playa-san-juan"
   }
 ]
