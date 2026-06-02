@@ -345,12 +345,25 @@ export function generateActiveFleet(
 
   const hasOfficial = plan.officialDeparturesMin.length > 0;
   if (hasOfficial) {
-    const recent = plan.officialDeparturesMin.filter(
-      (d) => d <= now + 0.5 && d >= now - plan.cycleMin - 0.5,
-    );
-    for (const dep of recent) {
+    // FASE 1: filtro de Active Service Window.
+    // Solo entran salidas cuyo ciclo NO esté cerrado y que no sean
+    // futuras lejanas. El cierre de ciclo es duro: no reutilizamos.
+    const eligible = plan.officialDeparturesMin.filter((d) => {
+      const w = classifyDepartureWindow({
+        departureMin: d,
+        nowMin: now,
+        cycleMin: plan.cycleMin,
+      });
+      return w === "active" || w === "imminent";
+    });
+    for (const dep of eligible) {
       const slotKey = minutesToHHMM(dep);
-      const correction = phaseCorrections?.get(slotKey) ?? 0;
+      // FASE 8: aprendizaje SOLO ajusta fase en ±90 s. Nunca mueve buses libremente.
+      const rawCorrection = phaseCorrections?.get(slotKey) ?? 0;
+      const correction = Math.max(
+        -MAX_PHASE_CORRECTION_MIN,
+        Math.min(MAX_PHASE_CORRECTION_MIN, rawCorrection),
+      );
       const elapsed = now - dep + correction;
       const offset = ((elapsed % plan.cycleMin) + plan.cycleMin) % plan.cycleMin;
       const loc = locateBusInCycle(plan, offset);
@@ -358,13 +371,17 @@ export function generateActiveFleet(
       raw.push(makeBus(plan, slotKey, dep, offset, correction, loc, speed, true));
     }
   } else {
-    // Fallback sintético.
+    // Fallback sintético (solo si NO hay salidas oficiales para esta línea/slot).
     const N = plan.fleetSizeExpected;
     if (N > 0) {
       const slotSpacing = plan.cycleMin / N;
       for (let slot = 0; slot < N; slot++) {
         const slotKey = `BUS${String(slot + 1).padStart(2, "0")}`;
-        const correction = phaseCorrections?.get(slotKey) ?? 0;
+        const rawCorrection = phaseCorrections?.get(slotKey) ?? 0;
+        const correction = Math.max(
+          -MAX_PHASE_CORRECTION_MIN,
+          Math.min(MAX_PHASE_CORRECTION_MIN, rawCorrection),
+        );
         const rawOffset = now - slot * slotSpacing + correction;
         const offset = ((rawOffset % plan.cycleMin) + plan.cycleMin) % plan.cycleMin;
         const loc = locateBusInCycle(plan, offset);
@@ -373,6 +390,7 @@ export function generateActiveFleet(
       }
     }
   }
+
 
   // Degradación por edad de observación.
   for (const b of raw) {
