@@ -226,12 +226,46 @@ async function tickLineInternal(lineCode: string) {
     { onConflict: "line_code" },
   );
 
+  // Log de activación: alimenta el aprendizaje de patrones (línea 12 etc.).
+  // Sólo si la línea tiene perfil operacional y está en ventana de servicio.
+  const profile = getLineProfile(lineCode);
+  if (profile && plan.fleetWindow !== "before_service" && plan.fleetWindow !== "after_last_service") {
+    await supabaseAdmin.from("bus_line_fleet_activations").insert({
+      line_code: lineCode,
+      service_date: serviceDate,
+      weekday: at.getDay(),
+      day_type: plan.dayType,
+      service_slot: plan.serviceSlot,
+      active_bus_count: fleet.length,
+      target_bus_count: plan.fleetSizeExpected,
+      base_bus_count: profile.baseBuses,
+      max_bus_count: profile.maxBuses,
+      activation_score: activationScore,
+      avg_delay_min: avgDelayMin,
+      spacing_error: validatorReport.removedRatio,
+      cycle_time_min: plan.cycleMin,
+      headway_min: plan.headwayMin,
+      congestion_index: null,
+      trigger: "tick",
+      meta: {
+        fleet_window: plan.fleetWindow,
+        fleet_reason: plan.fleetReason,
+        fleet_inferred: plan.fleetSizeInferred,
+        historical_pattern: historical,
+      },
+    });
+  }
+
   return {
     line: lineCode,
     activeBusCount: fleet.length,
     fleetSizeExpected: plan.fleetSizeExpected,
+    fleetSizeInferred: plan.fleetSizeInferred,
+    fleetWindow: plan.fleetWindow,
+    fleetReason: plan.fleetReason,
     headwayMin: plan.headwayMin,
     cycleMin: plan.cycleMin,
+    activationScore,
     safeMode,
     predictionQuality,
     avgConfidence,
