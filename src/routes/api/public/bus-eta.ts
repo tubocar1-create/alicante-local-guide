@@ -1,23 +1,34 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-// Proxy a tiempo real de Vectalia vía ScrapingBee (la IP de Cloudflare Workers
-// está bloqueada por Vectalia). Devuelve la próxima ETA en minutos para una
-// línea concreta de una parada.
+// Tiempo real oficial de SUBUS/Vectalia Alicante, sin proxy externo.
+// Flujo restaurado: consulta.aspx?p=N para sesión/cookies y datos.aspx?p=N para JSON.
 
-const VECTALIA_DATA_URL = "https://movilidad.vectalia.es/QR/Alicante/datos.aspx";
-const VECTALIA_REQUEST_URL = "https://movilidad.vectalia.es/QR/Alicante/lib/request.aspx";
-const VECTALIA_PAGE_URL = "https://movilidad.vectalia.es/QR/Alicante/consulta.aspx";
+const BASE = "http://www.subus.es/QR/Alicante";
+const UA =
+  "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36";
 const ARRIVAL_RE = /Linea\s+(\d{1,3}[A-Za-z]?)\s+([^:]+?)\s*:\s*(\d+)\s*min/gi;
-const VECTALIA_LINE_CODES: Record<string, string> = { "14": "084" };
-
-function toVectaliaLineCode(line: string): string {
-  return VECTALIA_LINE_CODES[line] ?? line.padStart(3, "0");
-}
+const FETCH_TIMEOUT_MS = 4_500;
 
 function normalizeLine(code: string): string {
   const m = code.trim().toUpperCase().match(/^(\d+)([A-Z]?)$/);
   if (!m) return code.trim().toUpperCase();
   return String(parseInt(m[1], 10)) + m[2];
+}
+
+async function fetchWithTimeout(url: string, init: RequestInit = {}, timeoutMs = FETCH_TIMEOUT_MS): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function extractCookies(res: Response): string {
+  const anyHeaders = res.headers as unknown as { getSetCookie?: () => string[] };
+  const list = anyHeaders.getSetCookie?.() ?? [];
+  return list.map((c) => c.split(";")[0]).filter(Boolean).join("; ");
 }
 
 function parseEtas(raw: string, requestedLine: string): number[] {
@@ -31,47 +42,58 @@ function parseEtas(raw: string, requestedLine: string): number[] {
   return out.sort((a, b) => a - b);
 }
 
-async function sbFetch(target: string): Promise<Response | null> {
-  const key = process.env.SCRAPINGBEE_API_KEY;
-  if (!key) return null;
-  const sb = new URL("https://app.scrapingbee.com/api/v1/");
-  sb.searchParams.set("api_key", key);
-  sb.searchParams.set("url", target);
-  sb.searchParams.set("render_js", "false");
-  try {
-    const r = await fetch(sb.toString(), { headers: { Accept: "*/*" } });
-    return r;
-  } catch {
-    return null;
+async function fromSubus(stop: string, line: string): Promise<{ etas: number[]; source: string }> {
+  const datosUrl = `${BASE}/datos.aspx?p=${encodeURIComponent(stop)}`;
+  const consultaUrl = `${BASE}/consulta.aspx?p=${encodeURIComponent(stop)}`;
+
+  const direct = await fetchWithTimeout(datosUrl, {
+    redirect: "follow",
+    headers: {
+      "User-Agent": UA,
+      Accept: "application/json, text/plain, */*",
+      "Accept-Language": "es-ES,es;q=0.9",
+      "X-Requested-With": "XMLHttpRequest",
+      "X-Vectalia-App": "qr-alicante",
+    },
+  }).catch(() => null);
+  if (direct?.ok) {
+    const text = await direct.text();
+    const data = JSON.parse(text) as { tiempos?: string };
+    const etas = parseEtas(data.tiempos ?? text, line);
+    if (etas.length > 0) return { etas, source: "subus-datos-direct" };
   }
-}
 
-async function fromDatos(stop: string, line: string): Promise<number[]> {
-  const r = await sbFetch(`${VECTALIA_DATA_URL}?p=${encodeURIComponent(stop)}`);
-  if (!r || !r.ok) return [];
-  const data = (await r.json().catch(() => null)) as { tiempos?: string } | null;
-  return parseEtas(data?.tiempos ?? "", line);
-}
+  const page = await fetchWithTimeout(consultaUrl, {
+    redirect: "follow",
+    headers: {
+      "User-Agent": UA,
+      Accept: "text/html,application/xhtml+xml",
+      "Accept-Language": "es-ES,es;q=0.9",
+    },
+  });
+  const cookie = extractCookies(page);
+  await page.arrayBuffer().catch(() => null);
 
-async function fromRequest(stop: string, line: string): Promise<number[]> {
-  const padded = toVectaliaLineCode(line);
-  const r = await sbFetch(
-    `${VECTALIA_REQUEST_URL}?p=${encodeURIComponent(stop)}&l=${encodeURIComponent(padded)}`,
-  );
-  if (!r || !r.ok) return [];
-  return parseEtas(await r.text(), line);
-}
-
-async function fromPage(stop: string, line: string): Promise<number[]> {
-  const r = await sbFetch(`${VECTALIA_PAGE_URL}?p=${encodeURIComponent(stop)}`);
-  if (!r || !r.ok) return [];
-  const html = await r.text();
-  const idx = html.indexOf('var text = "');
-  if (idx === -1) return [];
-  const tail = html.slice(idx);
-  const end = tail.indexOf('";\n\t\t\tvar textavisos');
-  const block = end > 0 ? tail.slice(0, end + 1) : tail.slice(0, 5000);
-  return parseEtas(block, line);
+  const data = await fetchWithTimeout(datosUrl, {
+    redirect: "follow",
+    headers: {
+      "User-Agent": UA,
+      Accept: "application/json, text/plain, */*",
+      "Accept-Language": "es-ES,es;q=0.9",
+      Referer: consultaUrl,
+      "X-Requested-With": "XMLHttpRequest",
+      "X-Vectalia-App": "qr-alicante",
+      ...(cookie ? { Cookie: cookie } : {}),
+    },
+  });
+  if (!data.ok) return { etas: [], source: `subus-http-${data.status}` };
+  const text = await data.text();
+  try {
+    const json = JSON.parse(text) as { tiempos?: string };
+    return { etas: parseEtas(json.tiempos ?? "", line), source: "subus-datos-session" };
+  } catch {
+    return { etas: parseEtas(text, line), source: "subus-text-session" };
+  }
 }
 
 export const Route = createFileRoute("/api/public/bus-eta")({
@@ -93,16 +115,7 @@ export const Route = createFileRoute("/api/public/bus-eta")({
           });
         }
 
-        let etas = await fromDatos(stop, line);
-        let source = "data";
-        if (etas.length === 0) {
-          etas = await fromRequest(stop, line);
-          source = "request";
-        }
-        if (etas.length === 0) {
-          etas = await fromPage(stop, line);
-          source = "page";
-        }
+        const { etas, source } = await fromSubus(stop, line);
 
         let etaMin: number | null = null;
         if (etas.length > 0) {
