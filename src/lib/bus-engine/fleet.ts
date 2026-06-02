@@ -277,8 +277,6 @@ function locateBusInDirectionCycle(
   cycleStartDirection: Direction,
 ): CycleLocation {
   const reg = plan.terminalRegulationMin;
-  const idaTotal = plan.dirIda?.totalMin ?? 0;
-  const vueltaTotal = plan.dirVuelta?.totalMin ?? 0;
   let t = ((cycleOffset % plan.cycleMin) + plan.cycleMin) % plan.cycleMin;
   const firstPlan = cycleStartDirection === 1 ? plan.dirIda : plan.dirVuelta;
   const secondPlan = cycleStartDirection === 1 ? plan.dirVuelta : plan.dirIda;
