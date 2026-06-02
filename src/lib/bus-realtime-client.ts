@@ -93,6 +93,33 @@ export async function getClientStopRealtime({
   signal?: AbortSignal;
 }): Promise<StopRealtimeResult> {
   const normalizedStopId = stopId.trim();
+
+  // ──────────────── Modo ETA estimado (Fase 4) ────────────────
+  // Si está activo el flag y la línea es soportada, devolvemos llegadas
+  // calculadas desde horarios oficiales sin tocar red. Las nocturnas y las
+  // excluidas (24/27/28) caen aquí también: respondemos vacío para no llamar
+  // al endpoint realtime bloqueado por Akamai. Las nocturnas ya pintan ETA
+  // por su propia lógica en los dashboards (no pasan por aquí en la práctica).
+  if (isEstimatedMode()) {
+    if (line && isEstimatedSupported(line)) {
+      const arrivals = await getEstimatedStopArrivals({ stopCode: normalizedStopId, line });
+      const all = arrivals.map((a) => a.etaMin).sort((a, b) => a - b);
+      const filtered = typeof minMin === "number" ? all.filter((m) => m >= minMin) : all;
+      const result: StopRealtimeResult = {
+        arrivals,
+        all,
+        etaMin: filtered[Math.min(index, Math.max(0, filtered.length - 1))] ?? null,
+        fetchedAt: Date.now(),
+      };
+      cache.set(normalizedStopId, result);
+      return result;
+    }
+    if (line && (isNightLineCode(line) || !isEstimatedSupported(line))) {
+      return { arrivals: [], all: [], etaMin: null, fetchedAt: Date.now() };
+    }
+  }
+
+
   const cached = readCachedStopRealtime(normalizedStopId, line);
   if (cached) return selectStopRealtime(cached, index, minMin);
   if (line) {
