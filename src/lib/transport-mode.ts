@@ -11,7 +11,7 @@
  */
 export type TransportMode = "estimated" | "realtime";
 
-export const transportMode: TransportMode = "estimated";
+export const transportMode = "estimated" as TransportMode;
 
 export const isRealtimeMode = () => transportMode === "realtime";
 export const isEstimatedMode = () => transportMode === "estimated";
