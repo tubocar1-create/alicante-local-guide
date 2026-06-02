@@ -426,6 +426,15 @@ function BusDashboardPage() {
     Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]>
   >({ 1: [], 2: [] });
 
+  // Mientras el snapshot del motor no haya cargado, marcamos todas las paradas
+  // como "cargando" para evitar mostrar "n/d" durante el arranque en HTTPS.
+  useEffect(() => {
+    if (!usePredict || isNightLine) return;
+    if (engine) return;
+    const allCodes = [...stopsByDir[1], ...stopsByDir[2]].map((s) => s.code);
+    setLoadingEtaStops(new Set(allCodes));
+  }, [usePredict, engine, isNightLine, stopsByDir]);
+
   useEffect(() => {
     if (!usePredict || !engine || isNightLine) return;
     let cancelled = false;
