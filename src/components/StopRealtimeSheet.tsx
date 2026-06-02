@@ -9,9 +9,11 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getClientStopRealtime, type StopArrival } from "@/lib/bus-realtime-client";
+import type { StopArrival } from "@/lib/bus-realtime-client";
 import { liveStopUrl } from "@/lib/bus";
 import { ArrivalAlarm } from "@/components/ArrivalAlarm";
+import { useBusEngine } from "@/hooks/useBusEngine";
+import { predictStopArrivals } from "@/lib/bus-engine/predict";
 
 const RealtimeMiniMap = lazy(() =>
   import("./RealtimeMiniMap").then((m) => ({ default: m.RealtimeMiniMap })),
@@ -25,7 +27,7 @@ export type StopRealtimeContext = {
   lng: number | null;
 };
 
-const POLL_MS = 15_000;
+const TICK_MS = 30_000;
 
 export function StopRealtimeSheet({
   stop,
@@ -36,72 +38,45 @@ export function StopRealtimeSheet({
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
+  const { data: engine, loading: engineLoading } = useBusEngine();
   const [arrivals, setArrivals] = useState<StopArrival[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [fetchedAt, setFetchedAt] = useState<number | null>(null);
+  const [tick, setTick] = useState(0);
 
+  // Recalcular ETAs localmente cada TICK_MS sin tocar la red.
   useEffect(() => {
-    if (!open || !stop) return;
-    let cancelled = false;
-    let pollTimer: ReturnType<typeof setTimeout> | null = null;
-    let retryTimer: ReturnType<typeof setTimeout> | null = null;
-    let controller: AbortController | null = null;
-
-    const clearRetry = () => {
-      if (retryTimer) {
-        clearTimeout(retryTimer);
-        retryTimer = null;
-      }
+    if (!open || !stop || !engine) return;
+    const compute = () => {
+      const wanted = new Set((stop.lines ?? []).map((l) => l.toUpperCase()));
+      const raw = predictStopArrivals(engine, stop.code, new Date());
+      const filtered = wanted.size > 0
+        ? raw.filter((r) => wanted.has(r.line.toUpperCase()))
+        : raw;
+      const mapped: StopArrival[] = filtered.slice(0, 12).map((r) => ({
+        line: r.line,
+        destination: r.destination,
+        etaMin: r.etaMin,
+        lat: null,
+        lng: null,
+      }));
+      setArrivals(mapped);
+      setFetchedAt(Date.now());
     };
+    compute();
+    const id = setInterval(compute, TICK_MS);
+    return () => clearInterval(id);
+  }, [open, stop, engine, tick]);
 
-    const attempt = async () => {
-      if (cancelled) return;
-      setLoading(true);
-      setError(null);
-      controller?.abort();
-      controller = new AbortController();
-      try {
-        const r = await getClientStopRealtime({ stopId: stop.code, signal: controller.signal });
-        if (cancelled) return;
-        const wanted = new Set((stop.lines ?? []).map((l) => l.toUpperCase()));
-        const next = wanted.size > 0 ? r.arrivals.filter((a) => wanted.has(a.line.toUpperCase())) : r.arrivals;
-        if (next.length > 0) {
-          setArrivals(next);
-          setFetchedAt(r.fetchedAt);
-          clearRetry();
-          if (!cancelled) pollTimer = setTimeout(attempt, POLL_MS);
-          return;
-        }
-        // Sin datos: reintento en 5s solo para esta parada.
-        if (!cancelled) retryTimer = setTimeout(attempt, 5_000);
-      } catch (e) {
-        if (!cancelled) {
-          setError(e instanceof Error ? e.message : "Error");
-          retryTimer = setTimeout(attempt, 5_000);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    attempt();
-    return () => {
-      cancelled = true;
-      controller?.abort();
-      if (pollTimer) clearTimeout(pollTimer);
-      clearRetry();
-    };
-  }, [open, stop]);
-
-  // reset when stop changes
+  // reset when closed
   useEffect(() => {
     if (!open) {
       setArrivals([]);
-      setError(null);
       setFetchedAt(null);
     }
   }, [open]);
+
+  const loading = engineLoading;
+  const error: string | null = null;
 
   const buses = useMemo(
     () =>
@@ -116,6 +91,8 @@ export function StopRealtimeSheet({
         })),
     [arrivals],
   );
+
+
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
