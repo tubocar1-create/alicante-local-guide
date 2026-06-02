@@ -474,6 +474,7 @@ function BusDashboardPage() {
         });
       }
       setPredictedBusesByDir(byDir);
+      setLoadingEtaStops(new Set());
     };
     tick();
     const id = setInterval(tick, 400);
