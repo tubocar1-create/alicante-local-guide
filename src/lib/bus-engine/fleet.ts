@@ -280,44 +280,148 @@ function locateInDirection(plan: DirectionPlan, elapsed: number) {
 }
 
 // Genera la flota inferida y la posiciona AHORA.
-// Cada bus tiene identidad estable: bus_id = `${line}_${slot}` donde slot ∈ [0, N).
-// `phaseCorrections` (opcional): Map<slotKey, minutos> a sumar al offset del slot;
-// se rellena con los `meta.phase_correction` persistidos en `virtual_buses` y
-// permite que las observaciones reales del preview corrijan la posición.
+//
+// Estrategia (fase 3):
+//   1. Si tenemos salidas oficiales en el slot activo, anclamos cada bus a la
+//      salida más reciente cuyo `elapsed ≤ cycleMin`. Cada bus mantiene su
+//      identidad por `departureMin` (slotKey = HHMM).
+//   2. Si no hay salidas oficiales, fallback al esquema antiguo de slots
+//      sintéticos uniformes (BUS01..N).
+//   3. Aplicamos `phaseCorrections` (Map<slotKey, minutos>) procedentes de
+//      observaciones reales.
+//   4. Validamos consistencia (dedupe, spacing, velocidad, cap).
+//
+// El campo `lastObservationSec` se pasa por separado para degradar confianza
+// uniformemente por edad.
 export function generateActiveFleet(
   plan: LineFleetPlan,
   at: Date = new Date(),
   phaseCorrections?: Map<string, number>,
-): VirtualBus[] {
-  const N = plan.activeBusCount;
-  if (N <= 0 || plan.cycleMin <= 0) return [];
-  const buses: VirtualBus[] = [];
+  lastObservationAgeSec: number | null = null,
+): { fleet: VirtualBus[]; validatorReport: ValidatorReport } {
+  if (plan.cycleMin <= 0) return { fleet: [], validatorReport: emptyReport() };
   const now = nowMinutes(at);
-  const slotSpacing = plan.cycleMin / N;
+  let raw: VirtualBus[] = [];
 
-  for (let slot = 0; slot < N; slot++) {
-    const slotKey = `BUS${String(slot + 1).padStart(2, "0")}`;
-    const correction = phaseCorrections?.get(slotKey) ?? 0;
-    const rawOffset = now - slot * slotSpacing + correction;
-    const offset = ((rawOffset % plan.cycleMin) + plan.cycleMin) % plan.cycleMin;
-    const loc = locateBusInCycle(plan, offset);
-    const busId = `${plan.lineCode}_${slotKey}`;
-    buses.push({
-      busId,
-      lineCode: plan.lineCode,
-      direction: loc.direction,
-      status: loc.state,
-      departureMin: now - offset,
-      elapsedMin: offset,
-      segmentIndex: loc.segmentIndex,
-      segmentProgress: loc.segmentProgress,
-      position: loc.position,
-      delayMin: correction,
-      confidence: Math.max(0.35, loc.segmentConfidence * 0.85),
-    });
+  const hasOfficial = plan.officialDeparturesMin.length > 0;
+  if (hasOfficial) {
+    // Para cada salida en [now-cycleMin, now], generamos un bus anclado.
+    const recent = plan.officialDeparturesMin.filter(
+      (d) => d <= now + 0.5 && d >= now - plan.cycleMin - 0.5,
+    );
+    for (const dep of recent) {
+      const slotKey = minutesToHHMM(dep);
+      const correction = phaseCorrections?.get(slotKey) ?? 0;
+      const elapsed = now - dep + correction;
+      const offset = ((elapsed % plan.cycleMin) + plan.cycleMin) % plan.cycleMin;
+      const loc = locateBusInCycle(plan, offset);
+      const speed = estimateSpeedKmh(plan, loc);
+      raw.push(makeBus(plan, slotKey, dep, offset, correction, loc, speed, true));
+    }
+  } else {
+    // Fallback sintético.
+    const N = plan.fleetSizeExpected;
+    if (N > 0) {
+      const slotSpacing = plan.cycleMin / N;
+      for (let slot = 0; slot < N; slot++) {
+        const slotKey = `BUS${String(slot + 1).padStart(2, "0")}`;
+        const correction = phaseCorrections?.get(slotKey) ?? 0;
+        const rawOffset = now - slot * slotSpacing + correction;
+        const offset = ((rawOffset % plan.cycleMin) + plan.cycleMin) % plan.cycleMin;
+        const loc = locateBusInCycle(plan, offset);
+        const speed = estimateSpeedKmh(plan, loc);
+        raw.push(makeBus(plan, slotKey, now - offset, offset, correction, loc, speed, false));
+      }
+    }
   }
-  return buses;
+
+  // Degradación por edad de observación.
+  for (const b of raw) {
+    b.confidence = degradeConfidenceByAge(b.confidence, lastObservationAgeSec);
+    b.lastObservationSec = lastObservationAgeSec;
+  }
+
+  // Validación de consistencia.
+  const speeds = new Map(raw.map((b) => [b.busId, b.speedKmh ?? 0]));
+  const { fleet, report } = validateFleetConsistency({
+    fleet: raw,
+    cycleMin: plan.cycleMin,
+    headwayMin: plan.headwayMin,
+    speeds,
+  });
+
+  return { fleet, validatorReport: report };
 }
+
+function makeBus(
+  plan: LineFleetPlan,
+  slotKey: string,
+  departureMin: number,
+  elapsedMin: number,
+  correction: number,
+  loc: ReturnType<typeof locateBusInCycle>,
+  speedKmh: number | null,
+  anchored: boolean,
+): VirtualBus {
+  return {
+    busId: `${plan.lineCode}_${slotKey}`,
+    lineCode: plan.lineCode,
+    direction: loc.direction,
+    status: loc.state,
+    departureMin,
+    elapsedMin,
+    segmentIndex: loc.segmentIndex,
+    segmentProgress: loc.segmentProgress,
+    position: loc.position,
+    delayMin: correction,
+    confidence: Math.max(0.35, loc.segmentConfidence * 0.85),
+    anchoredDeparture: anchored,
+    originTerminal: loc.direction === 1 ? plan.terminalIda : plan.terminalVuelta,
+    serviceSlot: plan.serviceSlot,
+    phaseErrorSec: Math.round(correction * 60),
+    reliability: Math.max(0.3, Math.min(0.95, loc.segmentConfidence)),
+    speedKmh,
+    lastObservationSec: null,
+    safeMode: false,
+  };
+}
+
+function minutesToHHMM(min: number): string {
+  const n = ((Math.round(min) % 1440) + 1440) % 1440;
+  const h = Math.floor(n / 60);
+  const m = n % 60;
+  return `${String(h).padStart(2, "0")}${String(m).padStart(2, "0")}`;
+}
+
+function estimateSpeedKmh(
+  plan: LineFleetPlan,
+  loc: ReturnType<typeof locateBusInCycle>,
+): number | null {
+  if (loc.state !== "moving") return 0;
+  const dir = loc.direction === 1 ? plan.dirIda : plan.dirVuelta;
+  if (!dir) return null;
+  const i = loc.segmentIndex;
+  const a = dir.stops[i];
+  const b = dir.stops[i + 1];
+  if (!a || !b || a.lat == null || a.lng == null || b.lat == null || b.lng == null) return null;
+  const distKm = haversineMeters({ lat: a.lat, lng: a.lng }, { lat: b.lat, lng: b.lng }) / 1000;
+  const min = dir.segMinutes[i];
+  if (!min || min <= 0) return null;
+  return Math.max(0, Math.min(60, (distKm / min) * 60));
+}
+
+function emptyReport(): ValidatorReport {
+  return {
+    inputCount: 0,
+    outputCount: 0,
+    removedDuplicates: 0,
+    removedBadSpacing: 0,
+    removedBadSpeed: 0,
+    removedCap: 0,
+    removedRatio: 0,
+  };
+}
+
 
 // Deriva ETAs por parada desde la flota: para cada parada futura en la trayectoria
 // del bus, calcula el tiempo hasta alcanzarla siguiendo el ciclo.
