@@ -64,13 +64,56 @@ async function lastObservationAgeSec(lineCode: string): Promise<number | null> {
 // ------------------------------------------------------------------
 // 1. tickVirtualFleet — UPSERT flota actual + health
 // ------------------------------------------------------------------
+async function historicalActivationPattern(
+  lineCode: string,
+  dayType: string,
+  serviceSlot: string,
+): Promise<number> {
+  const profile = getLineProfile(lineCode);
+  if (!profile) return 0;
+  const { data } = await supabaseAdmin
+    .from("bus_line_fleet_activations")
+    .select("active_bus_count, base_bus_count")
+    .eq("line_code", lineCode)
+    .eq("day_type", dayType)
+    .eq("service_slot", serviceSlot)
+    .order("observed_at", { ascending: false })
+    .limit(200);
+  if (!data || data.length === 0) return 0;
+  const aboveBase = data.filter((r) => (r.active_bus_count ?? 0) > (r.base_bus_count ?? 0)).length;
+  return aboveBase / data.length;
+}
+
 async function tickLineInternal(lineCode: string) {
   const snap = await getBusEngineSnapshot();
   const engine = fromSnapshot(snap);
   const corrections = await loadPhaseCorrections(lineCode);
   const lastObsSec = await lastObservationAgeSec(lineCode);
   const at = new Date();
-  const plan = buildLineFleetPlan(engine, lineCode, at);
+
+  // Plan inicial (sin score) para conocer slot/dayType y poder calcular
+  // patrón histórico + score real, y luego reconstruir el plan ya con score.
+  const draftPlan = buildLineFleetPlan(engine, lineCode, at);
+  const historical = await historicalActivationPattern(
+    lineCode,
+    draftPlan.dayType,
+    draftPlan.serviceSlot,
+  );
+  const avgDelayMin =
+    corrections.size > 0
+      ? Array.from(corrections.values()).reduce((a, b) => a + Math.abs(b), 0) / corrections.size
+      : 0;
+  // Tomamos un baseline de cycle: si el plan tiene fleetSizeInferred y el
+  // perfil define base, una desviación al alza es señal de saturación.
+  const activationScore = extraBusActivationScore({
+    avgDelayMin,
+    spacingErrorRatio: 0,
+    cycleTimeGrowth: 1,
+    congestionIndex: 0,
+    historicalSlotPattern: historical,
+  });
+
+  const plan = buildLineFleetPlan(engine, lineCode, at, { activationScore });
   const { fleet, validatorReport } = generateActiveFleet(plan, at, corrections, lastObsSec);
 
   const serviceDate = todayMadrid();
