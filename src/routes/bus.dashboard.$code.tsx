@@ -1049,7 +1049,7 @@ function DirectionColumn({
                 )}
               </div>
 
-              {realtimeEnabled && (
+              {realtimeEnabled && !disableLiveFetch && (
                 <VisibleStopRealtime
                   stopCode={s.code}
                   lineCode={lineCode}
