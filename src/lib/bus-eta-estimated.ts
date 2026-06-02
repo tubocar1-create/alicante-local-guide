@@ -167,5 +167,9 @@ export async function getEstimatedStopArrivals({
     if (arrivals.length >= 5) break;
   }
 
+  if (typeof window !== "undefined" && (window as unknown as { __busEtaDebug?: boolean }).__busEtaDebug) {
+    console.log("[bus-eta-estimated]", { lineKey, stopCode, seq, firstMin, lastMin, gap, travelMin, nowMin, arrivals: arrivals.length });
+  }
   return arrivals;
 }
+
