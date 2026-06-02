@@ -702,6 +702,60 @@ export type Database = {
           },
         ]
       }
+      bus_cycle_stats: {
+        Row: {
+          confidence: number
+          created_at: string
+          cycle_afternoon_min: number | null
+          cycle_avg_min: number
+          cycle_midday_min: number | null
+          cycle_morning_min: number | null
+          cycle_night_min: number | null
+          cycle_weekend_min: number | null
+          id: string
+          line_code: string
+          samples: number
+          terminal_wait_avg_min: number
+          terminal_wait_max_min: number
+          terminal_wait_min_min: number
+          updated_at: string
+        }
+        Insert: {
+          confidence?: number
+          created_at?: string
+          cycle_afternoon_min?: number | null
+          cycle_avg_min?: number
+          cycle_midday_min?: number | null
+          cycle_morning_min?: number | null
+          cycle_night_min?: number | null
+          cycle_weekend_min?: number | null
+          id?: string
+          line_code: string
+          samples?: number
+          terminal_wait_avg_min?: number
+          terminal_wait_max_min?: number
+          terminal_wait_min_min?: number
+          updated_at?: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          cycle_afternoon_min?: number | null
+          cycle_avg_min?: number
+          cycle_midday_min?: number | null
+          cycle_morning_min?: number | null
+          cycle_night_min?: number | null
+          cycle_weekend_min?: number | null
+          id?: string
+          line_code?: string
+          samples?: number
+          terminal_wait_avg_min?: number
+          terminal_wait_max_min?: number
+          terminal_wait_min_min?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bus_line_departures: {
         Row: {
           created_at: string
@@ -846,6 +900,111 @@ export type Database = {
           name?: string
           operator?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      bus_operator_snapshots: {
+        Row: {
+          applied: boolean
+          applied_at: string | null
+          created_at: string
+          direction: number | null
+          eta_clock: string | null
+          eta_minutes: number | null
+          id: string
+          impact: Json
+          line_code: string
+          notes: string | null
+          observed_at: string
+          observed_by: string | null
+          stop_code: string
+        }
+        Insert: {
+          applied?: boolean
+          applied_at?: string | null
+          created_at?: string
+          direction?: number | null
+          eta_clock?: string | null
+          eta_minutes?: number | null
+          id?: string
+          impact?: Json
+          line_code: string
+          notes?: string | null
+          observed_at?: string
+          observed_by?: string | null
+          stop_code: string
+        }
+        Update: {
+          applied?: boolean
+          applied_at?: string | null
+          created_at?: string
+          direction?: number | null
+          eta_clock?: string | null
+          eta_minutes?: number | null
+          id?: string
+          impact?: Json
+          line_code?: string
+          notes?: string | null
+          observed_at?: string
+          observed_by?: string | null
+          stop_code?: string
+        }
+        Relationships: []
+      }
+      bus_segment_stats: {
+        Row: {
+          avg_minutes: number
+          confidence: number
+          created_at: string
+          direction: number
+          distance_m: number | null
+          from_stop: string
+          holiday_minutes: number | null
+          id: string
+          line_code: string
+          night_minutes: number | null
+          rush_minutes: number | null
+          samples: number
+          to_stop: string
+          updated_at: string
+          variance: number
+          weekend_minutes: number | null
+        }
+        Insert: {
+          avg_minutes?: number
+          confidence?: number
+          created_at?: string
+          direction: number
+          distance_m?: number | null
+          from_stop: string
+          holiday_minutes?: number | null
+          id?: string
+          line_code: string
+          night_minutes?: number | null
+          rush_minutes?: number | null
+          samples?: number
+          to_stop: string
+          updated_at?: string
+          variance?: number
+          weekend_minutes?: number | null
+        }
+        Update: {
+          avg_minutes?: number
+          confidence?: number
+          created_at?: string
+          direction?: number
+          distance_m?: number | null
+          from_stop?: string
+          holiday_minutes?: number | null
+          id?: string
+          line_code?: string
+          night_minutes?: number | null
+          rush_minutes?: number | null
+          samples?: number
+          to_stop?: string
+          updated_at?: string
+          variance?: number
+          weekend_minutes?: number | null
         }
         Relationships: []
       }

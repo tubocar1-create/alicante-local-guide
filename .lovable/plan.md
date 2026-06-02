@@ -1,71 +1,109 @@
-# Tracking de visitantes y vista por usuario en admin
+# Motor Inteligente de Predicción Operacional — Buses Vectalia Alicante
 
 ## Objetivo
-Rastrear actividad de usuarios logueados Y visitantes anónimos (con `visitor_id` persistente), enriquecer cada evento con IP truncada + país + ciudad + UA + referrer + UTM, y exponer una pantalla de admin por usuario/visitante con timeline y preferencias inferidas.
 
-## 1. Base de datos (migración)
+Reemplazar la dependencia de realtime (bloqueado por Akamai) por un **motor predictivo autónomo** que estima posición de buses y ETAs usando horarios oficiales + geometría + aprendizaje estadístico + snapshots manuales del operador.
 
-Ampliar `interaction_events` con columnas nuevas (nullable, no rompe nada existente):
-- `visitor_id text` — UUID anónimo persistente en cookie/localStorage del navegador
-- `ip_trunc text` — IP truncada a /24 (ej. `81.32.45.0`)
-- `country text`, `city text`, `region text`
-- `user_agent text`, `device text` (mobile/desktop/tablet), `browser text`, `os text`
-- `referrer text`
-- `utm jsonb` — `{source, medium, campaign, term, content}`
-- `path text` — ruta normalizada (ya viene en `metadata.route`, pero indexar)
-- Índices: `(visitor_id, occurred_at desc)`, `(user_id, occurred_at desc)`, `(country)`, `(occurred_at desc)`
+## Arquitectura en 4 capas
 
-Política RLS nueva: permitir INSERT anónimo desde el server (vía service role en el endpoint público), así que **no** se cambian las políticas — el endpoint usa `supabaseAdmin`.
+```text
+CAPA 1  Horarios oficiales Vectalia (estáticos, ya en bus-static)
+   │
+CAPA 2  Modelo estadístico histórico (segmentos, ciclos, descansos)
+   │
+CAPA 3  Motor predictivo (buses virtuales, posición, ETA)
+   │
+CAPA 4  Recalibración por snapshots manuales (EWMA α≈0.2)
+```
 
-## 2. Endpoint público `/api/public/track`
+Sin workers de scraping, sin polling, sin Akamai. Todo se calcula on-demand en el cliente o en serverFn ligera leyendo de Supabase.
 
-Nuevo `src/routes/api/public/track.ts`. Recibe POST con `{type, visitor_id, path, metadata, referrer, utm}`. El servidor:
-- Lee IP de `cf-connecting-ip` o `x-forwarded-for`, la trunca a /24
-- Lee país/ciudad/región de los headers de Cloudflare (`cf-ipcountry`, `request.cf.city`, `request.cf.region`)
-- Parsea UA con un mini-parser propio (no añade dependencias pesadas)
-- Inserta en `interaction_events` con `supabaseAdmin`
-- Valida con Zod, rate-limit suave por `visitor_id` (descarta duplicados <500ms)
+## Modelo de datos (nuevo)
 
-## 3. Cliente
+Tablas en Supabase (migración):
 
-Nuevo `src/lib/tracking/visitor.ts`:
-- `getVisitorId()` — genera y persiste un UUID en `localStorage` (`vamos_vid`) + cookie (1 año)
-- `captureUTM()` — parsea `?utm_*` al cargar y los persiste en `sessionStorage`
+1. **`bus_line_geometry`** — polyline y orden de paradas por línea+sentido
+   - `line`, `direction` (IDA/VUELTA), `polyline` (array [lat,lng]), `stops_ordered` (array codes), `total_distance_m`
+2. **`bus_segment_stats`** — aprendizaje por segmento parada→parada
+   - `from_stop`, `to_stop`, `line`, `distance_m`, `avg_minutes`, `rush_minutes`, `night_minutes`, `weekday_minutes`, `holiday_minutes`, `samples`, `confidence`, `updated_at`
+3. **`bus_cycle_stats`** — duración ciclo por línea
+   - `line`, `cycle_avg`, `cycle_morning`, `cycle_afternoon`, `cycle_night`, `terminal_wait_avg`, `terminal_wait_min`, `terminal_wait_max`, `samples`
+4. **`bus_schedules`** — salidas programadas (seed manual desde Vectalia PDFs)
+   - `line`, `direction`, `departure_time` (HH:MM), `day_type` (weekday/saturday/sunday/holiday), `from_terminal`
+5. **`bus_snapshots`** — snapshots manuales del operador
+   - `id`, `timestamp`, `line`, `stop_id`, `eta_clock`, `direction`, `observed_by`, `notes`
+6. **`bus_predictions_log`** — para medir deriva (opcional, fase 2)
 
-Modificar `src/lib/operations/trackOperationalEvent.ts`:
-- Sustituir la llamada a `logOperationalEvent` (server function actual) por un `fetch('/api/public/track', { keepalive: true })` con `visitor_id`, `referrer`, `utm`, `user_id` (si hay sesión).
-- Mantener firma — los call-sites no cambian.
+GRANTs: `authenticated` SELECT en todas; INSERT en `bus_snapshots` solo admin via RLS con `has_role`.
 
-Wiring global: en `__root.tsx` (o un hook en `RootComponent`) hacer un `trackOperationalEvent({type:'page_view'})` en cada cambio de ruta (escucha de `router.subscribe('onResolved')`).
+## Módulos de código
 
-## 4. Admin: vista por usuario/visitante
+### `src/lib/bus-engine/` (nuevo, pure TS, sin red)
 
-Ampliar `/admin/usuarios` (lista) para incluir también visitantes anónimos (agrupados por `visitor_id` cuando no hay `user_id`). Mostrar:
-- email/nombre o "Anónimo · {visitor_id corto}"
-- país·ciudad de la última visita
-- nº de sesiones, última visita, total de eventos
+- `geometry.ts` — haversine, distancia sobre polyline, snap-to-line, progreso 0..1
+- `segments.ts` — lookup `bus_segment_stats`, fallback a velocidad urbana (16 km/h diurno, 28 km/h nocturno)
+- `cycle.ts` — duración ciclo, descanso terminal aprendido
+- `schedule.ts` — generador de **buses virtuales** desde `bus_schedules` para una ventana [-cycleDuration, now]
+- `position.ts` — para cada bus virtual: tiempo transcurrido desde salida → distancia recorrida → punto en polyline + segmento actual + progreso
+- `eta.ts` — `ETA = scheduled + learnedDelay + segmentCorrection + timeProfile + trafficProfile`
+- `confidence.ts` — score 0..1 a partir de samples, antigüedad, varianza
+- `learning.ts` — EWMA `T_new = 0.2·observed + 0.8·hist`, detector hora pico
+- `peak-detector.ts` — clasifica timestamp en morning_peak / midday / afternoon_peak / night / weekend / holiday
+- `index.ts` — `predictLineState(line, now)` devuelve el JSON output del brief
 
-Nueva ruta `/admin/usuarios.$id.tsx` (id = user_id UUID o `v:{visitor_id}`):
-- **Cabecera**: identidad, primera/última visita, país·ciudad, navegador, dispositivo
-- **Preferencias inferidas**: top 5 secciones (`/playas`, `/tram`, `/comprar`…), top categorías de comercio, horarios de uso (mañana/tarde/noche)
-- **Timeline**: últimos 100 eventos con ruta, tipo, ts, metadata
-- **Adquisición**: referrer + UTM de la primera visita
+### ServerFns (`src/lib/bus-predict.functions.ts`)
 
-Server functions nuevas en `src/lib/admin/visitors.functions.ts` (protegidas con `requireSupabaseAuth` + check de rol admin):
-- `listVisitors({limit, offset, filter})` 
-- `getVisitorTimeline({id})` — devuelve cabecera + agregados + eventos
+- `predictLine({ line, at? })` → `{ line, timestamp, buses[], stops[] }`
+- `predictStop({ stopCode, at? })` → lista ETAs por línea
+- `submitSnapshot({ line, stopId, etaClock, direction })` — admin only, dispara `learning.applySnapshot()` que actualiza `bus_segment_stats` y `bus_cycle_stats` vía EWMA
+- `getLineGeometry({ line })` — sirve polyline + stops_ordered (cacheable, staleTime alto)
 
-## 5. Privacidad
-- IP siempre truncada a /24 (nunca se guarda la IP completa)
-- Añadir nota en `/legal/privacidad` mencionando el `visitor_id` y la IP truncada para analítica propia
-- Sin cambios en GA4 (ya estaba)
+### UI
 
-## Detalles técnicos
-- Cloudflare Workers expone IP y geo vía headers (`cf-connecting-ip`, `cf-ipcountry`) y `request.cf` en runtime. No requiere servicio externo.
-- UA parsing: función propia ~40 líneas (regex sobre `Mozilla/.../Chrome/...`). No instalamos `ua-parser-js`.
-- El endpoint público nunca devuelve datos del usuario; solo `{ok:true}`.
+- **`FavoriteStopWidget`** — reemplazar fetch realtime por `predictStop()`. Mantener diseño. Mostrar `etaMinutes`, badge confidence opcional. Botón externo `target="_blank"` a `qr.vectalia.es/Alicante/mapa.aspx?...` se mantiene.
+- **`BusLineLiveMap`** — consumir `predictLine()`. Renderizar marcadores de buses virtuales sobre polyline con interpolación suave (rAF, lerp entre dos ticks de predicción cada 15s). Flecha de dirección.
+- **`StopRealtimeSheet`** — usar `predictStop()`.
+- **Nueva ruta `/admin/bus-snapshots`** — formulario para operador: línea, parada, hora observada → `submitSnapshot`. Lista últimos 50 snapshots con impacto en estadísticas.
 
-## Fuera de alcance
-- Heatmaps / session replay (eso es Hotjar/Clarity, otro nivel)
-- Fingerprinting más allá del visitor_id en cookie
-- Export CSV (se puede añadir luego)
+### Eliminar/desactivar
+
+- Llamadas a `bus-realtime.functions.ts` / `bus-eta` (mantener archivos por ahora, marcar deprecated en comentario). No tocar `liveStopUrl` (sigue siendo el deep-link externo).
+- Edge functions `bus-eta` y `bus-eta-raw`: dejar pero marcadas como no usadas.
+
+## Seed inicial
+
+Sin snapshots históricos reales, arrancamos con:
+- `bus_segment_stats`: `avg_minutes = distance_m / (16 km/h)` + dwell 15s, `samples = 0`, `confidence = 0.3` (baseline puro).
+- `bus_cycle_stats`: suma de segmentos ida+vuelta + 5 min descanso terminal por defecto.
+- `bus_schedules`: poblar manualmente para línea 12 como piloto (resto se añade después).
+
+A medida que el operador introduce snapshots, EWMA acerca los valores a la realidad y `confidence` sube con `samples`.
+
+## Fases de entrega
+
+1. **Migración SQL** + seed mínimo línea 12 (geometría + horarios + segmentos baseline).
+2. **`src/lib/bus-engine/`** + serverFns predictivas con tests unitarios mentales sobre línea 12.
+3. **Migrar `FavoriteStopWidget`** al motor predictivo. Verificar en preview.
+4. **Migrar `BusLineLiveMap`** con interpolación rAF.
+5. **Panel `/admin/bus-snapshots`** para recalibración.
+6. **Confidence en UI** + log opcional de deriva.
+
+## Detalles técnicos clave
+
+- **Buses virtuales**: para cada `departure_time` ∈ [now - cycleDuration, now], crear bus con `elapsed = now - departure`. Si `elapsed > cycleDuration`, status `finished`. Si en terminal, `terminal_wait`.
+- **Posición sobre polyline**: acumular `segment.avg_minutes` ajustado por perfil horario hasta consumir `elapsed`; el sobrante define progreso dentro del segmento actual → interpolación lineal sobre los puntos de polyline correspondientes a ese segmento.
+- **Perfil horario** (`timeProfileCorrection`): factor multiplicador sobre `avg_minutes` según `peak-detector` (ej. morning_peak ×1.25).
+- **Snapshot manual**: `observed_segment_time = etaClock_observado - last_known_passage` → EWMA contra `avg_minutes` del segmento correspondiente. También recalibra `cycle_stats` si es snapshot en terminal.
+- **Confidence**: `min(1, samples/30) × exp(-ageDays/14) × (1 - normalizedStdDev)`.
+- **Sin IA generativa, sin embeddings**. Matemática pura.
+
+## Lo que NO se toca
+
+- Estructura de rutas existentes (regla de oro). El widget sigue siendo el widget; el mapa sigue siendo el mapa.
+- Diseño visual de `FavoriteStopWidget`.
+- Deep link externo `liveStopUrl` → `qr.vectalia.es`.
+- Categoría/agente: el motor solo refleja resultados, no cambia navegación.
+
+## Alcance de esta entrega
+
+Si apruebas, implemento **fases 1–3** en este turno (migración + engine + widget favorito funcionando con predicción). Fases 4–6 (mapa con rAF, panel admin snapshots, confidence en UI) en turnos siguientes para mantener cambios revisables.

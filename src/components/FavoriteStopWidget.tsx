@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useBusGraph } from "@/hooks/useBusGraph";
-import { getClientStopRealtime } from "@/lib/bus-realtime-client";
+import { useBusEngine } from "@/hooks/useBusEngine";
+import { predictStopArrivals } from "@/lib/bus-engine/predict";
 
 // Servicio urbano: el último bus parte de la parada extrema a las 22:30 y
 // cada línea abre a una hora particular por la mañana. Como cota segura
@@ -101,9 +102,9 @@ export function computeUpcomingArrivals(
 export function FavoriteStopWidget() {
   const [stop, setStop] = useState<FavoriteStop>(DEFAULT_FAVORITE_STOP);
   const [show, setShow] = useState<boolean>(true);
-  const [liveMin, setLiveMin] = useState<number | null>(null);
-  const [, setTick] = useState(0);
+  const [tick, setTick] = useState(0);
   const { data: graph } = useBusGraph();
+  const { data: engine } = useBusEngine();
 
   useEffect(() => {
     setStop(loadFavoriteStop());
@@ -120,33 +121,15 @@ export function FavoriteStopWidget() {
     };
   }, []);
 
-  // Siempre consultamos a Vectalia. Si hay servicio, devuelve ETA;
-  // si no, devuelve null y mostramos n/d. No imponemos lógica de horario.
-  useEffect(() => {
-    let cancelled = false;
-    let controller: AbortController | null = null;
-    async function fetchLive() {
-      controller?.abort();
-      controller = new AbortController();
-      try {
-        const r = await getClientStopRealtime({
-          stopId: stop.stopId,
-          line: stop.line,
-          signal: controller.signal,
-        });
-        if (!cancelled) setLiveMin(typeof r.etaMin === "number" ? r.etaMin : null);
-      } catch {
-        if (!cancelled) setLiveMin(null);
-      }
-    }
-    fetchLive();
-    const id = window.setInterval(fetchLive, 30_000);
-    return () => {
-      cancelled = true;
-      controller?.abort();
-      window.clearInterval(id);
-    };
-  }, [stop.stopId, stop.line]);
+  // ETA predictivo: motor matemático local sobre snapshot del servidor.
+  // No depende de realtime ni de Vectalia/Akamai.
+  const liveMin = useMemo<number | null>(() => {
+    void tick;
+    if (!engine) return null;
+    const arrivals = predictStopArrivals(engine, stop.stopId);
+    const forLine = arrivals.filter((a) => a.line === stop.line);
+    return forLine[0]?.etaMin ?? null;
+  }, [engine, stop.stopId, stop.line, tick]);
 
   const lineColor =
     graph?.lines.find((l) => l.code === stop.line)?.color || "#0d3b8a";
