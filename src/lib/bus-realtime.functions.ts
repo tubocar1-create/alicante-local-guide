@@ -243,7 +243,9 @@ export const getLineRealtimeState = createServerFn({ method: "GET" })
       .in("stop_code", uniqueStopCodes);
 
     const bySnap = new Map<string, SnapRow>();
-    for (const r of (freshRows ?? []) as SnapRow[]) bySnap.set(r.stop_code, r);
+    for (const r of (freshRows ?? []) as SnapRow[]) {
+      if ((r.eta_minutes ?? []).length > 0) bySnap.set(r.stop_code, r);
+    }
 
     // 5) Compone resultado por parada+dirección
     const result: RealtimeStopEta[] = [];
