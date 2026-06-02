@@ -55,7 +55,14 @@ export const recordBusSnapshot = createServerFn({ method: "POST" })
 
     let segmentFrom: string | null = null;
     let segmentTo: string | null = null;
-    let updatedSegmentStats: Record<string, unknown> | null = null;
+    type SegImpact = {
+      fromStop: string;
+      toStop: string;
+      avgMinutes: number;
+      samples: number;
+      confidence: number;
+    };
+    let updatedSegmentStats: SegImpact | null = null;
 
     // 3) WMA sobre el segmento que termina en esta parada (si existe)
     if (idx > 0 && data.observedEtaMinutes != null) {
