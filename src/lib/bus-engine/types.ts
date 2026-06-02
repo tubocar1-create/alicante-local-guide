@@ -89,7 +89,10 @@ export type StopEta = {
   lineCode: string;
   direction: Direction;
   busId: string | null;
+  stopCode: string;
+  stopSeq: number;
   etaMin: number;
   etaClock: string;
   confidence: number;
 };
+
