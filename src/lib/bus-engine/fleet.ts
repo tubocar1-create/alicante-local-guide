@@ -254,6 +254,7 @@ export function buildLineFleetPlan(
 function locateBusInCycle(
   plan: LineFleetPlan,
   cycleOffset: number,
+  cycleStartDirection: Direction = 1,
 ): {
   direction: Direction;
   state: VirtualBus["status"];
@@ -262,24 +263,39 @@ function locateBusInCycle(
   position: LatLng | null;
   segmentConfidence: number;
 } {
+  if (cycleStartDirection === 2) {
+    return locateBusInDirectionCycle(plan, cycleOffset, 2);
+  }
+  return locateBusInDirectionCycle(plan, cycleOffset, 1);
+}
+
+function locateBusInDirectionCycle(
+  plan: LineFleetPlan,
+  cycleOffset: number,
+  cycleStartDirection: Direction,
+): ReturnType<typeof locateBusInCycle> {
   const reg = plan.terminalRegulationMin;
   const idaTotal = plan.dirIda?.totalMin ?? 0;
   const vueltaTotal = plan.dirVuelta?.totalMin ?? 0;
   let t = ((cycleOffset % plan.cycleMin) + plan.cycleMin) % plan.cycleMin;
+  const firstPlan = cycleStartDirection === 1 ? plan.dirIda : plan.dirVuelta;
+  const secondPlan = cycleStartDirection === 1 ? plan.dirVuelta : plan.dirIda;
+  const firstTotal = firstPlan?.totalMin ?? 0;
+  const secondTotal = secondPlan?.totalMin ?? 0;
 
-  // Fase IDA moving
-  if (plan.dirIda && t < idaTotal) {
-    return locateInDirection(plan.dirIda, t);
+  // Fase primer sentido desde su base oficial.
+  if (firstPlan && t < firstTotal) {
+    return locateInDirection(firstPlan, t);
   }
-  t -= idaTotal;
+  t -= firstTotal;
 
-  // Fase regulación terminal IDA
+  // Regulación en terminal opuesta antes de volver.
   if (t < reg) {
-    const last = plan.dirIda?.stops[plan.dirIda.stops.length - 1];
+    const last = firstPlan?.stops[firstPlan.stops.length - 1];
     return {
-      direction: 1,
+      direction: cycleStartDirection,
       state: "terminal_wait",
-      segmentIndex: plan.dirIda ? plan.dirIda.stops.length - 1 : 0,
+      segmentIndex: firstPlan ? firstPlan.stops.length - 1 : 0,
       segmentProgress: 0,
       position: last && last.lat != null && last.lng != null ? { lat: last.lat, lng: last.lng } : null,
       segmentConfidence: 0.6,
@@ -287,19 +303,19 @@ function locateBusInCycle(
   }
   t -= reg;
 
-  // Fase VUELTA moving
-  if (plan.dirVuelta && t < vueltaTotal) {
-    return locateInDirection(plan.dirVuelta, t);
+  // Fase sentido contrario.
+  if (secondPlan && t < secondTotal) {
+    return locateInDirection(secondPlan, t);
   }
-  t -= vueltaTotal;
+  t -= secondTotal;
 
-  // Fase regulación terminal VUELTA
-  const last = plan.dirVuelta?.stops[plan.dirVuelta.stops.length - 1]
-    ?? plan.dirIda?.stops[0];
+  // Regulación en base de origen antes de cerrar ciclo.
+  const last = secondPlan?.stops[secondPlan.stops.length - 1]
+    ?? firstPlan?.stops[0];
   return {
-    direction: 2,
+    direction: cycleStartDirection === 1 ? 2 : 1,
     state: "terminal_wait",
-    segmentIndex: plan.dirVuelta ? plan.dirVuelta.stops.length - 1 : 0,
+    segmentIndex: secondPlan ? secondPlan.stops.length - 1 : 0,
     segmentProgress: 0,
     position: last && last.lat != null && last.lng != null ? { lat: last.lat, lng: last.lng } : null,
     segmentConfidence: 0.6,
