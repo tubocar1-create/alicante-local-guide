@@ -374,32 +374,36 @@ export function generateActiveFleet(
   const now = nowMinutes(at);
   let raw: VirtualBus[] = [];
 
-  const hasOfficial = plan.officialDeparturesMin.length > 0;
+  const hasOfficial =
+    plan.officialDeparturesByDirection[1].length > 0 ||
+    plan.officialDeparturesByDirection[2].length > 0;
   if (hasOfficial) {
     // FASE 1: filtro de Active Service Window.
     // Solo entran salidas cuyo ciclo NO esté cerrado y que no sean
     // futuras lejanas. El cierre de ciclo es duro: no reutilizamos.
-    const eligible = plan.officialDeparturesMin.filter((d) => {
-      const w = classifyDepartureWindow({
-        departureMin: d,
-        nowMin: now,
-        cycleMin: plan.cycleMin,
+    for (const dir of [1, 2] as Direction[]) {
+      const eligible = plan.officialDeparturesByDirection[dir].filter((d) => {
+        const w = classifyDepartureWindow({
+          departureMin: d,
+          nowMin: now,
+          cycleMin: plan.cycleMin,
+        });
+        return w === "active" || w === "imminent";
       });
-      return w === "active" || w === "imminent";
-    });
-    for (const dep of eligible) {
-      const slotKey = minutesToHHMM(dep);
-      // FASE 8: aprendizaje SOLO ajusta fase en ±90 s. Nunca mueve buses libremente.
-      const rawCorrection = phaseCorrections?.get(slotKey) ?? 0;
-      const correction = Math.max(
-        -MAX_PHASE_CORRECTION_MIN,
-        Math.min(MAX_PHASE_CORRECTION_MIN, rawCorrection),
-      );
-      const elapsed = now - dep + correction;
-      const offset = ((elapsed % plan.cycleMin) + plan.cycleMin) % plan.cycleMin;
-      const loc = locateBusInCycle(plan, offset);
-      const speed = estimateSpeedKmh(plan, loc);
-      raw.push(makeBus(plan, slotKey, dep, offset, correction, loc, speed, true));
+      for (const dep of eligible) {
+        const slotKey = `${dir}-${minutesToHHMM(dep)}`;
+        // FASE 8: aprendizaje SOLO ajusta fase en ±90 s. Nunca mueve buses libremente.
+        const rawCorrection = phaseCorrections?.get(slotKey) ?? phaseCorrections?.get(minutesToHHMM(dep)) ?? 0;
+        const correction = Math.max(
+          -MAX_PHASE_CORRECTION_MIN,
+          Math.min(MAX_PHASE_CORRECTION_MIN, rawCorrection),
+        );
+        const elapsed = now - dep + correction;
+        const offset = ((elapsed % plan.cycleMin) + plan.cycleMin) % plan.cycleMin;
+        const loc = locateBusInCycle(plan, offset, dir);
+        const speed = estimateSpeedKmh(plan, loc);
+        raw.push(makeBus(plan, slotKey, dep, offset, correction, loc, speed, true, dir));
+      }
     }
   } else {
     // Fallback sintético (solo si NO hay salidas oficiales para esta línea/slot).
@@ -417,7 +421,7 @@ export function generateActiveFleet(
         const offset = ((rawOffset % plan.cycleMin) + plan.cycleMin) % plan.cycleMin;
         const loc = locateBusInCycle(plan, offset);
         const speed = estimateSpeedKmh(plan, loc);
-        raw.push(makeBus(plan, slotKey, now - offset, offset, correction, loc, speed, false));
+        raw.push(makeBus(plan, slotKey, now - offset, offset, correction, loc, speed, false, 1));
       }
     }
   }
@@ -446,7 +450,7 @@ export function generateActiveFleet(
   if (plan.fleetWindow !== "no_profile" && plan.fleetSizeMax > 0) {
     if (capped.length > plan.fleetSizeMax) {
       capped = [...capped]
-        .sort((a, b) => b.confidence - a.confidence)
+        .sort((a, b) => b.confidence - a.confidence || a.elapsedMin - b.elapsedMin)
         .slice(0, plan.fleetSizeMax);
     }
   }
