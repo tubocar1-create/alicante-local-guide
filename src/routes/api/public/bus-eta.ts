@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 // Tiempo real oficial de SUBUS/Vectalia Alicante, sin proxy externo.
-// Flujo restaurado: consulta.aspx?p=N para sesión/cookies y datos.aspx?p=N para JSON.
+// La fuente correcta es la página de parada consulta.aspx?p=N.
 
 const BASE = "http://www.subus.es/QR/Alicante";
 const UA =
@@ -25,12 +25,6 @@ async function fetchWithTimeout(url: string, init: RequestInit = {}, timeoutMs =
   }
 }
 
-function extractCookies(res: Response): string {
-  const anyHeaders = res.headers as unknown as { getSetCookie?: () => string[] };
-  const list = anyHeaders.getSetCookie?.() ?? [];
-  return list.map((c) => c.split(";")[0]).filter(Boolean).join("; ");
-}
-
 function parseEtas(raw: string, requestedLine: string): number[] {
   const wanted = normalizeLine(requestedLine);
   const out: number[] = [];
@@ -43,25 +37,7 @@ function parseEtas(raw: string, requestedLine: string): number[] {
 }
 
 async function fromSubus(stop: string, line: string): Promise<{ etas: number[]; source: string }> {
-  const datosUrl = `${BASE}/datos.aspx?p=${encodeURIComponent(stop)}`;
   const consultaUrl = `${BASE}/consulta.aspx?p=${encodeURIComponent(stop)}`;
-
-  const direct = await fetchWithTimeout(datosUrl, {
-    redirect: "follow",
-    headers: {
-      "User-Agent": UA,
-      Accept: "application/json, text/plain, */*",
-      "Accept-Language": "es-ES,es;q=0.9",
-      "X-Requested-With": "XMLHttpRequest",
-      "X-Vectalia-App": "qr-alicante",
-    },
-  }).catch(() => null);
-  if (direct?.ok) {
-    const text = await direct.text();
-    const data = await Promise.resolve().then(() => JSON.parse(text) as { tiempos?: string }).catch(() => null);
-    const etas = parseEtas(data?.tiempos ?? text, line);
-    if (etas.length > 0) return { etas, source: "subus-datos-direct" };
-  }
 
   const page = await fetchWithTimeout(consultaUrl, {
     redirect: "follow",
@@ -71,29 +47,8 @@ async function fromSubus(stop: string, line: string): Promise<{ etas: number[]; 
       "Accept-Language": "es-ES,es;q=0.9",
     },
   });
-  const cookie = extractCookies(page);
-  await page.arrayBuffer().catch(() => null);
-
-  const data = await fetchWithTimeout(datosUrl, {
-    redirect: "follow",
-    headers: {
-      "User-Agent": UA,
-      Accept: "application/json, text/plain, */*",
-      "Accept-Language": "es-ES,es;q=0.9",
-      Referer: consultaUrl,
-      "X-Requested-With": "XMLHttpRequest",
-      "X-Vectalia-App": "qr-alicante",
-      ...(cookie ? { Cookie: cookie } : {}),
-    },
-  });
-  if (!data.ok) return { etas: [], source: `subus-http-${data.status}` };
-  const text = await data.text();
-  try {
-    const json = JSON.parse(text) as { tiempos?: string };
-    return { etas: parseEtas(json.tiempos ?? "", line), source: "subus-datos-session" };
-  } catch {
-    return { etas: parseEtas(text, line), source: "subus-text-session" };
-  }
+  if (!page.ok) return { etas: [], source: `subus-consulta-http-${page.status}` };
+  return { etas: parseEtas(await page.text(), line), source: "subus-consulta-page" };
 }
 
 export const Route = createFileRoute("/api/public/bus-eta")({

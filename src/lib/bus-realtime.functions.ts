@@ -59,71 +59,25 @@ async function fetchWithTimeout(url: string, init: RequestInit = {}): Promise<Re
   }
 }
 
-function extractCookies(res: Response): string {
-  const anyHeaders = res.headers as unknown as { getSetCookie?: () => string[] };
-  const list = anyHeaders.getSetCookie?.() ?? [];
-  return list.map((c) => c.split(";")[0]).filter(Boolean).join("; ");
-}
-
 // Devuelve todas las líneas detectadas en la parada: { lineCode -> minutos[] }
-async function fetchAllLinesForStop(stop: string): Promise<Map<string, number[]>> {
+async function fetchAllLinesForStop(stop: string): Promise<Map<string, number[]> | null> {
   const result = new Map<string, number[]>();
-  const datosUrl = `${BASE}/datos.aspx?p=${encodeURIComponent(stop)}`;
   const consultaUrl = `${BASE}/consulta.aspx?p=${encodeURIComponent(stop)}`;
 
   let raw = "";
   try {
-    const direct = await fetchWithTimeout(datosUrl, {
+    const page = await fetchWithTimeout(consultaUrl, {
       redirect: "follow",
       headers: {
         "User-Agent": UA,
-        Accept: "application/json, text/plain, */*",
-        "X-Requested-With": "XMLHttpRequest",
+        Accept: "text/html,application/xhtml+xml",
+        "Accept-Language": "es-ES,es;q=0.9",
       },
     });
-    if (direct.ok) {
-      const text = await direct.text();
-      try {
-        const j = JSON.parse(text) as { tiempos?: string };
-        raw = j.tiempos ?? text;
-      } catch {
-        raw = text;
-      }
-    }
+    if (!page.ok) return null;
+    raw = await page.text();
   } catch {
-    // pasa al flujo con sesión
-  }
-
-  if (!raw) {
-    try {
-      const page = await fetchWithTimeout(consultaUrl, {
-        redirect: "follow",
-        headers: { "User-Agent": UA, Accept: "text/html,application/xhtml+xml" },
-      });
-      const cookie = extractCookies(page);
-      await page.arrayBuffer().catch(() => null);
-      const data = await fetchWithTimeout(datosUrl, {
-        redirect: "follow",
-        headers: {
-          "User-Agent": UA,
-          Accept: "application/json, text/plain, */*",
-          Referer: consultaUrl,
-          "X-Requested-With": "XMLHttpRequest",
-          ...(cookie ? { Cookie: cookie } : {}),
-        },
-      });
-      if (data.ok) {
-        const text = await data.text();
-        try {
-          const j = JSON.parse(text) as { tiempos?: string };
-          raw = j.tiempos ?? text;
-        } catch {
-          raw = text;
-        }
-      }
-    } catch {
-      return result;
-    }
+    return null;
   }
 
   if (!raw) return result;
@@ -250,7 +204,7 @@ export const getLineRealtimeState = createServerFn({ method: "GET" })
     for (const code of uniqueStopCodes) {
       const rows = cached.get(code) ?? [];
       const ours = rows.find((r) => r.line_code === lineCode);
-      if (!ours || !isFresh(ours.captured_at, now)) stopsToFetch.push(code);
+      if (!ours || !isFresh(ours.captured_at, now) || (ours.eta_minutes ?? []).length === 0) stopsToFetch.push(code);
     }
 
     // 3) Fetch Vectalia para paradas obsoletas (concurrencia limitada)
@@ -258,6 +212,7 @@ export const getLineRealtimeState = createServerFn({ method: "GET" })
     if (stopsToFetch.length > 0) {
       await mapLimit(stopsToFetch, 6, async (stopCode) => {
         const byLine = await fetchAllLinesForStop(stopCode);
+        if (!byLine) return;
         // Guarda TODAS las líneas vistas en esta parada (para reusar en otras consultas)
         for (const [lc, mins] of byLine.entries()) {
           newSnapshots.push({
@@ -288,7 +243,9 @@ export const getLineRealtimeState = createServerFn({ method: "GET" })
       .in("stop_code", uniqueStopCodes);
 
     const bySnap = new Map<string, SnapRow>();
-    for (const r of (freshRows ?? []) as SnapRow[]) bySnap.set(r.stop_code, r);
+    for (const r of (freshRows ?? []) as SnapRow[]) {
+      if ((r.eta_minutes ?? []).length > 0) bySnap.set(r.stop_code, r);
+    }
 
     // 5) Compone resultado por parada+dirección
     const result: RealtimeStopEta[] = [];
@@ -346,13 +303,15 @@ export const getStopRealtimeState = createServerFn({ method: "GET" })
 
       const cached = await readSnapshotsForStops([stopCode]);
       const rows = cached.get(stopCode) ?? [];
-      const stale = rows.length === 0 || rows.some((r) => !isFresh(r.captured_at, now));
+      const stale = rows.length === 0 || rows.some((r) => !isFresh(r.captured_at, now) || (r.eta_minutes ?? []).length === 0);
 
       if (stale) {
         const byLine = await fetchAllLinesForStop(stopCode);
         const toUpsert: Array<{ stop_code: string; line_code: string; direction: number | null; eta_minutes: number[] }> = [];
-        for (const [lc, mins] of byLine.entries()) {
-          toUpsert.push({ stop_code: stopCode, line_code: lc, direction: null, eta_minutes: mins });
+        if (byLine) {
+          for (const [lc, mins] of byLine.entries()) {
+            toUpsert.push({ stop_code: stopCode, line_code: lc, direction: null, eta_minutes: mins });
+          }
         }
         await upsertSnapshots(toUpsert);
       }
@@ -402,12 +361,14 @@ async function buildArrivalsForStop(
   const now = Date.now();
   const cached = await readSnapshotsForStops([stopCode]);
   let rows = cached.get(stopCode) ?? [];
-  const anyStale = rows.length === 0 || rows.some((r) => !isFresh(r.captured_at, now));
+  const anyStale = rows.length === 0 || rows.some((r) => !isFresh(r.captured_at, now) || (r.eta_minutes ?? []).length === 0);
   if (anyStale) {
     const byLine = await fetchAllLinesForStop(stopCode);
     const toUpsert: Array<{ stop_code: string; line_code: string; direction: number | null; eta_minutes: number[] }> = [];
-    for (const [lc, mins] of byLine.entries()) {
-      toUpsert.push({ stop_code: stopCode, line_code: lc, direction: null, eta_minutes: mins });
+    if (byLine) {
+      for (const [lc, mins] of byLine.entries()) {
+        toUpsert.push({ stop_code: stopCode, line_code: lc, direction: null, eta_minutes: mins });
+      }
     }
     await upsertSnapshots(toUpsert);
     const re = await readSnapshotsForStops([stopCode]);

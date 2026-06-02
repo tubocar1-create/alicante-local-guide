@@ -1,5 +1,5 @@
 // Tiempo real oficial de SUBUS/Vectalia Alicante, sin proxy externo.
-// Flujo: consulta.aspx?p=N para sesión/cookies y datos.aspx?p=N para JSON.
+// La fuente correcta es la página de parada consulta.aspx?p=N.
 
 const BASE = "http://www.subus.es/QR/Alicante";
 const ARRIVAL_RE = /Linea\s+(\d{1,3}[A-Za-z]?)\s+([^:]+?)\s*:\s*(\d+)\s*min/gi;
@@ -22,10 +22,8 @@ const corsHeaders = {
 const browserHeaders = {
   "User-Agent":
     "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36",
-  "X-Requested-With": "XMLHttpRequest",
-  "X-Vectalia-App": "qr-alicante",
   "Accept-Language": "es-ES,es;q=0.9",
-  Accept: "application/json, text/plain, */*",
+  Accept: "text/html,application/xhtml+xml",
 };
 
 async function fetchWithTimeout(url: string, init: RequestInit = {}, timeoutMs = FETCH_TIMEOUT_MS): Promise<Response> {
@@ -36,11 +34,6 @@ async function fetchWithTimeout(url: string, init: RequestInit = {}, timeoutMs =
   } finally {
     clearTimeout(timeout);
   }
-}
-
-function extractCookies(res: Response): string {
-  const list = res.headers.getSetCookie?.() ?? [];
-  return list.map((c) => c.split(";")[0]).filter(Boolean).join("; ");
 }
 
 function parseEtas(raw: string, requestedLine: string): number[] {
@@ -57,43 +50,13 @@ function parseEtas(raw: string, requestedLine: string): number[] {
 async function fetchFromSubus(stopCode: string, lineCode: string): Promise<{ etas: number[]; source: string }> {
   try {
     const consultaUrl = `${BASE}/consulta.aspx?p=${encodeURIComponent(stopCode)}`;
-    const datosUrl = `${BASE}/datos.aspx?p=${encodeURIComponent(stopCode)}`;
-
-    const direct = await fetchWithTimeout(datosUrl, {
-      redirect: "follow",
-      headers: browserHeaders,
-    }).catch(() => null);
-    if (direct?.ok) {
-      const text = await direct.text();
-      const data = await Promise.resolve().then(() => JSON.parse(text) as { tiempos?: string }).catch(() => null);
-      const etas = parseEtas(data?.tiempos ?? text, lineCode);
-      if (etas.length > 0) return { etas, source: "subus-datos-direct" };
-    }
 
     const page = await fetchWithTimeout(consultaUrl, {
       redirect: "follow",
-      headers: {
-        "User-Agent": browserHeaders["User-Agent"],
-        Accept: "text/html,application/xhtml+xml",
-        "Accept-Language": browserHeaders["Accept-Language"],
-      },
+      headers: browserHeaders,
     });
-    const cookie = extractCookies(page);
-    await page.arrayBuffer().catch(() => null);
-
-    const r = await fetchWithTimeout(datosUrl, {
-      redirect: "follow",
-      headers: {
-        ...browserHeaders,
-        Referer: consultaUrl,
-        ...(cookie ? { Cookie: cookie } : {}),
-      },
-    });
-    console.log("[bus-eta] subus datos.aspx status", r.status, "stop", stopCode);
-    if (!r.ok) return { etas: [], source: `subus-http-${r.status}` };
-    const text = await r.text();
-    const data = await Promise.resolve().then(() => JSON.parse(text) as { tiempos?: string }).catch(() => null);
-    return { etas: parseEtas(data?.tiempos ?? text, lineCode), source: "subus-datos-session" };
+    if (!page.ok) return { etas: [], source: `subus-consulta-http-${page.status}` };
+    return { etas: parseEtas(await page.text(), lineCode), source: "subus-consulta-page" };
   } catch (e) {
     console.error("[bus-eta] subus direct failed", e);
     return { etas: [], source: "subus-error" };
