@@ -184,10 +184,13 @@ export function predictLineState(
             lineCode,
             direction,
             busId,
+            stopCode: stops[i].stopCode,
+            stopSeq: stops[i].seq,
             etaMin: Math.round(etaMin),
             etaClock: formatClock(arrivalAbsMin),
             confidence: busConf,
           });
+
         }
       }
     }
