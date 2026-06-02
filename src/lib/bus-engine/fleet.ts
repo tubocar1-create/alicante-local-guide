@@ -51,12 +51,18 @@ export type LineFleetPlan = {
   lineCode: string;
   dirIda: DirectionPlan | null;
   dirVuelta: DirectionPlan | null;
-  cycleMin: number;              // duración ciclo completo (ida + regulación + vuelta + regulación)
-  terminalRegulationMin: number; // tiempo de regulación en cada terminal
-  headwayMin: number;            // headway efectivo según ventana horaria / horarios
-  activeBusCount: number;        // flota inferida
+  cycleMin: number;
+  terminalRegulationMin: number;
+  headwayMin: number;
+  activeBusCount: number;        // = fleetSizeExpected (compatibilidad)
+  fleetSizeExpected: number;     // ceil(cycle/headway)
   dayType: ReturnType<typeof dayType>;
+  serviceSlot: ServiceSlot;
+  officialDeparturesMin: number[]; // salidas oficiales IDA dentro del slot activo
+  terminalIda: string | null;
+  terminalVuelta: string | null;
 };
+
 
 function orderedStops(
   data: BusEngineData,
