@@ -848,6 +848,7 @@ function DirectionColumn({
   onPickStop,
   nearestList,
   geoStatus,
+  predictedBuses,
 }: {
   label: string;
   direction: 1 | 2;
@@ -865,6 +866,7 @@ function DirectionColumn({
   onPickStop: (stopCode: string, stopName: string, destination: string) => void;
   nearestList: { code: string; distance: number }[];
   geoStatus: "idle" | "loading" | "ok" | "unavailable";
+  predictedBuses?: { busId: string; segmentIndex: number; segmentProgress: number }[];
 }) {
 
   const now = new Date();
@@ -875,6 +877,36 @@ function DirectionColumn({
     for (const n of nearestList) m.set(n.code, n.distance);
     return m;
   }, [nearestList]);
+
+  // Refs por parada para poder calcular posiciones Y del bus overlay.
+  const stopRefs = useRef<(HTMLLIElement | null)[]>([]);
+  const olRef = useRef<HTMLOListElement | null>(null);
+  const [busPositions, setBusPositions] = useState<{ busId: string; top: number }[]>([]);
+
+  useEffect(() => {
+    if (!predictedBuses || predictedBuses.length === 0) {
+      setBusPositions([]);
+      return;
+    }
+    const ol = olRef.current;
+    if (!ol) return;
+    const olTop = ol.getBoundingClientRect().top;
+    const positions: { busId: string; top: number }[] = [];
+    for (const b of predictedBuses) {
+      const a = stopRefs.current[b.segmentIndex];
+      const c = stopRefs.current[b.segmentIndex + 1];
+      if (!a || !c) continue;
+      const aRect = a.getBoundingClientRect();
+      const cRect = c.getBoundingClientRect();
+      // Centro vertical del badge (badge tiene h-9 = 36px, está cerca del top de cada <li>).
+      const aY = aRect.top - olTop + 18;
+      const cY = cRect.top - olTop + 18;
+      const y = aY + (cY - aY) * b.segmentProgress;
+      positions.push({ busId: b.busId, top: y });
+    }
+    setBusPositions(positions);
+  }, [predictedBuses, stops]);
+
 
 
   return (
