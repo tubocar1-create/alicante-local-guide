@@ -713,6 +713,7 @@ export type Database = {
           cycle_night_min: number | null
           cycle_weekend_min: number | null
           id: string
+          last_snapshot_at: string | null
           line_code: string
           samples: number
           terminal_wait_avg_min: number
@@ -730,6 +731,7 @@ export type Database = {
           cycle_night_min?: number | null
           cycle_weekend_min?: number | null
           id?: string
+          last_snapshot_at?: string | null
           line_code: string
           samples?: number
           terminal_wait_avg_min?: number
@@ -747,11 +749,99 @@ export type Database = {
           cycle_night_min?: number | null
           cycle_weekend_min?: number | null
           id?: string
+          last_snapshot_at?: string | null
           line_code?: string
           samples?: number
           terminal_wait_avg_min?: number
           terminal_wait_max_min?: number
           terminal_wait_min_min?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bus_dwell_stats: {
+        Row: {
+          confidence: number
+          created_at: string
+          direction: number
+          dwell_avg_sec: number
+          hour_bucket: number | null
+          id: string
+          line_code: string
+          samples: number
+          stop_code: string
+          updated_at: string
+        }
+        Insert: {
+          confidence?: number
+          created_at?: string
+          direction: number
+          dwell_avg_sec?: number
+          hour_bucket?: number | null
+          id?: string
+          line_code: string
+          samples?: number
+          stop_code: string
+          updated_at?: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          direction?: number
+          dwell_avg_sec?: number
+          hour_bucket?: number | null
+          id?: string
+          line_code?: string
+          samples?: number
+          stop_code?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bus_headway_stats: {
+        Row: {
+          active_bus_count: number
+          confidence: number
+          created_at: string
+          day_type: string
+          direction: number
+          headway_avg_min: number
+          headway_max: number | null
+          headway_min: number | null
+          hour_bucket: number
+          id: string
+          line_code: string
+          samples: number
+          updated_at: string
+        }
+        Insert: {
+          active_bus_count?: number
+          confidence?: number
+          created_at?: string
+          day_type?: string
+          direction: number
+          headway_avg_min?: number
+          headway_max?: number | null
+          headway_min?: number | null
+          hour_bucket: number
+          id?: string
+          line_code: string
+          samples?: number
+          updated_at?: string
+        }
+        Update: {
+          active_bus_count?: number
+          confidence?: number
+          created_at?: string
+          day_type?: string
+          direction?: number
+          headway_avg_min?: number
+          headway_max?: number | null
+          headway_min?: number | null
+          hour_bucket?: number
+          id?: string
+          line_code?: string
+          samples?: number
           updated_at?: string
         }
         Relationships: []
@@ -961,6 +1051,7 @@ export type Database = {
           from_stop: string
           holiday_minutes: number | null
           id: string
+          last_snapshot_at: string | null
           line_code: string
           night_minutes: number | null
           rush_minutes: number | null
@@ -979,6 +1070,7 @@ export type Database = {
           from_stop: string
           holiday_minutes?: number | null
           id?: string
+          last_snapshot_at?: string | null
           line_code: string
           night_minutes?: number | null
           rush_minutes?: number | null
@@ -997,6 +1089,7 @@ export type Database = {
           from_stop?: string
           holiday_minutes?: number | null
           id?: string
+          last_snapshot_at?: string | null
           line_code?: string
           night_minutes?: number | null
           rush_minutes?: number | null
@@ -1007,6 +1100,86 @@ export type Database = {
           weekend_minutes?: number | null
         }
         Relationships: []
+      }
+      bus_snapshot_events: {
+        Row: {
+          confidence: number
+          created_at: string
+          delta_minutes: number | null
+          direction: number | null
+          id: string
+          impact: Json
+          inferred_bus_id: string | null
+          inferred_departure_min: number | null
+          inferred_trip_id: string | null
+          line_code: string
+          observed_at: string
+          observed_clock_time: string | null
+          observed_eta_minutes: number | null
+          predicted_eta_minutes: number | null
+          processed: boolean
+          processed_at: string | null
+          segment_from_stop: string | null
+          segment_to_stop: string | null
+          snapshot_source: string
+          source_snapshot_id: string | null
+          stop_code: string
+        }
+        Insert: {
+          confidence?: number
+          created_at?: string
+          delta_minutes?: number | null
+          direction?: number | null
+          id?: string
+          impact?: Json
+          inferred_bus_id?: string | null
+          inferred_departure_min?: number | null
+          inferred_trip_id?: string | null
+          line_code: string
+          observed_at?: string
+          observed_clock_time?: string | null
+          observed_eta_minutes?: number | null
+          predicted_eta_minutes?: number | null
+          processed?: boolean
+          processed_at?: string | null
+          segment_from_stop?: string | null
+          segment_to_stop?: string | null
+          snapshot_source?: string
+          source_snapshot_id?: string | null
+          stop_code: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          delta_minutes?: number | null
+          direction?: number | null
+          id?: string
+          impact?: Json
+          inferred_bus_id?: string | null
+          inferred_departure_min?: number | null
+          inferred_trip_id?: string | null
+          line_code?: string
+          observed_at?: string
+          observed_clock_time?: string | null
+          observed_eta_minutes?: number | null
+          predicted_eta_minutes?: number | null
+          processed?: boolean
+          processed_at?: string | null
+          segment_from_stop?: string | null
+          segment_to_stop?: string | null
+          snapshot_source?: string
+          source_snapshot_id?: string | null
+          stop_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bus_snapshot_events_source_snapshot_id_fkey"
+            columns: ["source_snapshot_id"]
+            isOneToOne: false
+            referencedRelation: "bus_operator_snapshots"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       bus_snapshots: {
         Row: {
@@ -1067,6 +1240,51 @@ export type Database = {
           lines?: string[] | null
           lng?: number | null
           name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bus_terminal_rest_stats: {
+        Row: {
+          confidence: number
+          created_at: string
+          direction: number
+          hour_bucket: number | null
+          id: string
+          line_code: string
+          rest_avg_min: number
+          rest_max_min: number
+          rest_min_min: number
+          samples: number
+          terminal_stop_code: string
+          updated_at: string
+        }
+        Insert: {
+          confidence?: number
+          created_at?: string
+          direction: number
+          hour_bucket?: number | null
+          id?: string
+          line_code: string
+          rest_avg_min?: number
+          rest_max_min?: number
+          rest_min_min?: number
+          samples?: number
+          terminal_stop_code: string
+          updated_at?: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          direction?: number
+          hour_bucket?: number | null
+          id?: string
+          line_code?: string
+          rest_avg_min?: number
+          rest_max_min?: number
+          rest_min_min?: number
+          samples?: number
+          terminal_stop_code?: string
           updated_at?: string
         }
         Relationships: []
