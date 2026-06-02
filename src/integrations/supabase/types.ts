@@ -798,6 +798,45 @@ export type Database = {
         }
         Relationships: []
       }
+      bus_fleet_observations: {
+        Row: {
+          client_id: string | null
+          created_at: string
+          direction: number
+          id: string
+          line_code: string
+          meta: Json
+          observed_at: string
+          observed_eta_min: number
+          source: string
+          stop_code: string
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string
+          direction: number
+          id?: string
+          line_code: string
+          meta?: Json
+          observed_at?: string
+          observed_eta_min: number
+          source?: string
+          stop_code: string
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string
+          direction?: number
+          id?: string
+          line_code?: string
+          meta?: Json
+          observed_at?: string
+          observed_eta_min?: number
+          source?: string
+          stop_code?: string
+        }
+        Relationships: []
+      }
       bus_headway_stats: {
         Row: {
           active_bus_count: number
@@ -3900,6 +3939,10 @@ export type Database = {
         Returns: number
       }
       purge_agente_unknown_query_actions: {
+        Args: { p_retention?: string }
+        Returns: number
+      }
+      purge_bus_fleet_observations: {
         Args: { p_retention?: string }
         Returns: number
       }
