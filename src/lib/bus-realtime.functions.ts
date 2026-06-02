@@ -214,5 +214,18 @@ export const getStopsRealtimeBatch = createServerFn({ method: "POST" })
         return [stopCode, filtered] as const;
       },
     );
+    // Aprendizaje fire-and-forget con todas las observaciones del batch.
+    const allObservations = entries.flatMap(([stopCode, arrivals]) =>
+      arrivals.map((a) => ({
+        lineCode: a.line,
+        stopCode,
+        etaMinutes: a.etaMin,
+        destination: a.destination,
+      })),
+    );
+    if (allObservations.length > 0) {
+      const { ingestSubusObservations } = await import("@/lib/bus-learning.server");
+      ingestSubusObservations(allObservations);
+    }
     return { stops: Object.fromEntries(entries), fetchedAt: new Date().toISOString() };
   });
