@@ -419,21 +419,7 @@ function BusDashboardPage() {
     };
   }, [code, initialRealtimeStopCodes, isNightLine]);
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Motor predictivo: en la versión HTTPS pública (vamosalicante.com /
-  // alicante-local-guide.lovable.app) los endpoints en vivo del Ayuntamiento
-  // están bloqueados por Akamai. En esa situación sustituimos los ETAs por
-  // los que predice nuestro motor y mostramos el bus desplazándose entre
-  // paradas. En el preview (`id-preview--*.lovable.app`) NO activamos esto
-  // porque el bus real / QR-bus carga correctamente.
-  const usePredict = useMemo(() => {
-    if (typeof window === "undefined") return false;
-    const h = window.location.hostname;
-    if (/^id-preview--/.test(h)) return false;
-    if (h === "localhost" || h === "127.0.0.1") return false;
-    return true;
-  }, []);
-
+  // Motor predictivo: ver definición de `usePredict` arriba.
   const { data: engine } = useBusEngine();
 
   const [predictedBusesByDir, setPredictedBusesByDir] = useState<
