@@ -1017,8 +1017,9 @@ function DirectionColumn({
           return (
             <li
               key={`${s.code}-${i}`}
-              
+              ref={(el) => { stopRefs.current[i] = el; }}
               className="relative flex flex-col gap-1 rounded-md pb-2"
+
               style={{
                 borderBottom: "1px solid rgba(255,255,255,0.06)",
                 boxShadow: isNearest
