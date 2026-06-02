@@ -382,3 +382,96 @@ export const getStopRealtimeState = createServerFn({ method: "GET" })
       };
     },
   );
+
+// ---------- Compat shims (legacy callers) ----------
+// Mantienen la forma antigua para no romper bus-realtime-client.ts y
+// StopRealtimeSheet. Internamente usan el mismo fetch+cache que arriba.
+
+type LegacyArrival = {
+  line: string;
+  destination: string;
+  etaMin: number;
+  lat: number | null;
+  lng: number | null;
+};
+
+async function buildArrivalsForStop(
+  stopCode: string,
+  filterLine?: string | null,
+): Promise<LegacyArrival[]> {
+  const now = Date.now();
+  const cached = await readSnapshotsForStops([stopCode]);
+  let rows = cached.get(stopCode) ?? [];
+  const anyStale = rows.length === 0 || rows.some((r) => !isFresh(r.captured_at, now));
+  if (anyStale) {
+    const byLine = await fetchAllLinesForStop(stopCode);
+    const toUpsert: Array<{ stop_code: string; line_code: string; direction: number | null; eta_minutes: number[] }> = [];
+    for (const [lc, mins] of byLine.entries()) {
+      toUpsert.push({ stop_code: stopCode, line_code: lc, direction: null, eta_minutes: mins });
+    }
+    await upsertSnapshots(toUpsert);
+    const re = await readSnapshotsForStops([stopCode]);
+    rows = re.get(stopCode) ?? [];
+  }
+
+  const wanted = filterLine ? normalizeLine(filterLine) : null;
+  const lineCodes = rows.map((r) => r.line_code);
+  // Destinos por línea: último stop_name por dirección
+  const { data: destStops } = lineCodes.length
+    ? await supabaseAdmin
+        .from("bus_line_stops")
+        .select("line_code,direction,seq,stop_name")
+        .in("line_code", lineCodes)
+    : { data: [] as Array<{ line_code: string; direction: number; seq: number; stop_name: string }> };
+  const destByLineDir = new Map<string, string>();
+  if (destStops) {
+    const grouped = new Map<string, { seq: number; name: string }>();
+    for (const s of destStops) {
+      const k = `${s.line_code}|${s.direction}`;
+      const prev = grouped.get(k);
+      if (!prev || s.seq > prev.seq) grouped.set(k, { seq: s.seq, name: s.stop_name });
+    }
+    for (const [k, v] of grouped.entries()) destByLineDir.set(k, v.name);
+  }
+
+  const out: LegacyArrival[] = [];
+  for (const r of rows) {
+    if (wanted && normalizeLine(r.line_code) !== wanted) continue;
+    const destA = destByLineDir.get(`${r.line_code}|1`) ?? "";
+    const destB = destByLineDir.get(`${r.line_code}|2`) ?? "";
+    const destination = destA || destB || "";
+    for (const m of r.eta_minutes ?? []) {
+      out.push({ line: r.line_code, destination, etaMin: m, lat: null, lng: null });
+    }
+  }
+  out.sort((a, b) => a.etaMin - b.etaMin);
+  return out;
+}
+
+export const getStopRealtime = createServerFn({ method: "GET" })
+  .inputValidator((input: { stopCode: string }) =>
+    z.object({ stopCode: z.string().min(1).max(16).regex(/^[0-9A-Za-z]+$/) }).parse(input),
+  )
+  .handler(async ({ data }): Promise<{ arrivals: LegacyArrival[]; fetchedAt: number }> => {
+    const arrivals = await buildArrivalsForStop(data.stopCode);
+    return { arrivals, fetchedAt: Date.now() };
+  });
+
+export const getStopsRealtimeBatch = createServerFn({ method: "POST" })
+  .inputValidator((input: { stopCodes: string[]; line?: string }) =>
+    z
+      .object({
+        stopCodes: z.array(z.string().min(1).max(16).regex(/^[0-9A-Za-z]+$/)).min(1).max(20),
+        line: z.string().min(1).max(8).regex(/^[0-9A-Za-z]+$/).optional(),
+      })
+      .parse(input),
+  )
+  .handler(
+    async ({ data }): Promise<{ stops: Record<string, LegacyArrival[]>; fetchedAt: number }> => {
+      const stops: Record<string, LegacyArrival[]> = {};
+      await mapLimit(data.stopCodes, 6, async (code) => {
+        stops[code] = await buildArrivalsForStop(code, data.line ?? null);
+      });
+      return { stops, fetchedAt: Date.now() };
+    },
+  );
