@@ -193,9 +193,14 @@ export function FavoriteStopWidget() {
           >
             Bus línea ({stop.line})
           </span>
-          {hasLive && (
+          {hasLive && liveSource === "realtime" && (
             <span className="text-[7px] font-bold uppercase tracking-wider text-emerald-700 leading-none">
               ● live
+            </span>
+          )}
+          {hasLive && liveSource === "engine" && (
+            <span className="text-[7px] font-bold uppercase tracking-wider text-amber-700 leading-none">
+              ~ est
             </span>
           )}
         </div>
