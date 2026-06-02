@@ -82,6 +82,15 @@ export type LineFleetPlan = {
   terminalVuelta: string | null;
 };
 
+type CycleLocation = {
+  direction: Direction;
+  state: VirtualBus["status"];
+  segmentIndex: number;
+  segmentProgress: number;
+  position: LatLng | null;
+  segmentConfidence: number;
+};
+
 
 function orderedStops(
   data: BusEngineData,
@@ -255,14 +264,7 @@ function locateBusInCycle(
   plan: LineFleetPlan,
   cycleOffset: number,
   cycleStartDirection: Direction = 1,
-): {
-  direction: Direction;
-  state: VirtualBus["status"];
-  segmentIndex: number;
-  segmentProgress: number;
-  position: LatLng | null;
-  segmentConfidence: number;
-} {
+): CycleLocation {
   if (cycleStartDirection === 2) {
     return locateBusInDirectionCycle(plan, cycleOffset, 2);
   }
@@ -273,7 +275,7 @@ function locateBusInDirectionCycle(
   plan: LineFleetPlan,
   cycleOffset: number,
   cycleStartDirection: Direction,
-): ReturnType<typeof locateBusInCycle> {
+): CycleLocation {
   const reg = plan.terminalRegulationMin;
   const idaTotal = plan.dirIda?.totalMin ?? 0;
   const vueltaTotal = plan.dirVuelta?.totalMin ?? 0;
