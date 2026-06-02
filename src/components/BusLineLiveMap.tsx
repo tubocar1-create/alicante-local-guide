@@ -75,9 +75,59 @@ export function BusLineLiveMap({
 
   const [renderedBuses, setRenderedBuses] = useState<RenderedBus[]>([]);
 
+  // En HTTPS prod (Akamai bloquea ETAs reales) leemos la flota persistida en
+  // `virtual_buses` y disparamos un `tickVirtualFleet` periódico para
+  // refrescarla. En preview seguimos calculando en cliente sobre la marcha.
+  const usePersistedFleet = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    const h = window.location.hostname;
+    if (/^id-preview--/.test(h)) return false;
+    if (h === "localhost" || h === "127.0.0.1") return false;
+    return true;
+  }, []);
+
   useEffect(() => {
     if (!engine) return;
     const orderedByDir: Record<1 | 2, LineStopPoint[]> = { 1: ida, 2: vuelta };
+
+    if (usePersistedFleet) {
+      let cancelled = false;
+      const refresh = async () => {
+        try {
+          const res = await getActiveFleet({ data: { line: lineCode } });
+          if (cancelled) return;
+          const next: RenderedBus[] = [];
+          for (const b of res.buses) {
+            if (b.state !== "moving" || b.lat == null || b.lng == null) continue;
+            const ordered = orderedByDir[b.direction];
+            next.push({
+              key: `${lineCode}_${b.tripKey}`,
+              lat: b.lat,
+              lng: b.lng,
+              destination: ordered[ordered.length - 1]?.name ?? "",
+              direction: b.direction,
+              confidence: b.confidence,
+            });
+          }
+          setRenderedBuses(next);
+        } catch {
+          /* silenciar; la próxima iteración reintenta */
+        }
+      };
+      const tick = () => {
+        tickVirtualFleet({ data: { line: lineCode } })
+          .then(refresh)
+          .catch(() => undefined);
+      };
+      tick();
+      const tickId = setInterval(tick, 10_000);
+      const refreshId = setInterval(refresh, 3_000);
+      return () => {
+        cancelled = true;
+        clearInterval(tickId);
+        clearInterval(refreshId);
+      };
+    }
 
     const recompute = () => {
       const state = predictLineState(engine, lineCode, new Date());
@@ -101,7 +151,7 @@ export function BusLineLiveMap({
     recompute();
     const id = setInterval(recompute, TICK_MS);
     return () => clearInterval(id);
-  }, [engine, lineCode, ida, vuelta]);
+  }, [engine, lineCode, ida, vuelta, usePersistedFleet]);
 
   const center = useMemo<[number, number]>(() => {
     if (user) return [user.lat, user.lng];
