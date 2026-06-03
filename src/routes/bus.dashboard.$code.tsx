@@ -398,7 +398,7 @@ function BusDashboardPage() {
     const alignedEngine = alignEngineScheduleDirections(engine, code, stopsByDir);
     const plan = buildLineFleetPlan(alignedEngine, code, clock);
     const { fleet } = generateActiveFleet(plan, clock);
-    const activeFleet = fleet.filter((bus) => bus.departureMin <= nowMin + 0.001 && bus.status === "moving");
+    const activeFleet = fleet.filter((bus) => bus.departureMin <= nowMin + 0.001);
 
     for (const bus of activeFleet) {
       const stops = stopsByDir[bus.direction];
