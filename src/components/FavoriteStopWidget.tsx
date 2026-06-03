@@ -152,9 +152,7 @@ export function computeUpcomingArrivals(
 export function FavoriteStopWidget() {
   const [stop, setStop] = useState<FavoriteStop>(DEFAULT_FAVORITE_STOP);
   const [show, setShow] = useState<boolean>(true);
-  const [liveMin, setLiveMin] = useState<number | null>(null);
-  const [liveSource, setLiveSource] = useState<"realtime" | "engine" | null>(null);
-  const [, setTick] = useState(0);
+  const [tick, setTick] = useState(0);
   const { data: graph } = useBusGraph();
   const { data: engine } = useBusEngine();
 
@@ -180,26 +178,24 @@ export function FavoriteStopWidget() {
   // Si hay snapshot real (Vectalia) vigente para ESTA parada+línea, prevalece.
   // Si no, caemos al motor de predicción local. Nunca llamamos a Firecrawl
   // desde el home (cada llamada cuesta 1 crédito y se gestiona en /transporte/parada-favorita).
-  useEffect(() => {
+  const { liveMin, liveSource } = useMemo<{
+    liveMin: number | null;
+    liveSource: "realtime" | "engine" | null;
+  }>(() => {
     const snap = loadFavoriteStopLiveSnapshot();
     const live = liveSnapshotRemaining(snap, stop.stopId, stop.line);
-    if (live) {
-      setLiveMin(live.etaMin);
-      setLiveSource("realtime");
-      return;
-    }
+    if (live) return { liveMin: live.etaMin, liveSource: "realtime" };
     if (engine) {
       const arrivals = predictStopArrivals(engine, stop.stopId);
       const forLine = arrivals.filter((a) => a.line === stop.line);
-      setLiveMin(forLine[0]?.etaMin ?? null);
-      setLiveSource(forLine[0] ? "engine" : null);
-    } else {
-      setLiveMin(null);
-      setLiveSource(null);
+      return {
+        liveMin: forLine[0]?.etaMin ?? null,
+        liveSource: forLine[0] ? "engine" : null,
+      };
     }
-    // El tick (cada 30s + evento "vamos:favorite-stop-live") fuerza re-ejecución.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  });
+    return { liveMin: null, liveSource: null };
+  }, [stop.stopId, stop.line, engine, tick]);
+
 
 
   const lineColor =
