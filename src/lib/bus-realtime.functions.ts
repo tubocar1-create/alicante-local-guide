@@ -302,108 +302,32 @@ export const getLineLive = createServerFn({ method: "GET" })
       liveByStop.set(sc, await liveFetchStopByLine(sc));
     });
 
-    // Persistir snapshots para cache de respaldo
-    const snapsToPersist: Array<{
-      stop_code: string;
-      line_code: string;
-      direction: null;
-      eta_minutes: number[];
-      captured_at: string;
-      source: string;
-    }> = [];
-    for (const [sc, byLine] of liveByStop.entries()) {
-      if (!byLine) continue;
-      for (const [lc, mins] of byLine.entries()) {
-        snapsToPersist.push({
-          stop_code: sc,
-          line_code: lc,
-          direction: null,
-          eta_minutes: mins,
-          captured_at: fetchedAt,
-          source: "subus-worker",
-        });
-      }
-    }
-    if (snapsToPersist.length > 0) {
-      void supabaseAdmin
-        .from("bus_realtime_snapshots")
-        .upsert(snapsToPersist, { onConflict: "stop_code,line_code" })
-        .then(() => undefined);
-    }
-
-    // Fallback: si una parada no respondió, lee snapshot cache
-    const missing = uniqueStopCodes.filter((c) => !liveByStop.get(c));
-    const cachedByStop = new Map<string, SnapRow>();
-    if (missing.length > 0) {
-      const { data: cachedRows } = await supabaseAdmin
-        .from("bus_realtime_snapshots")
-        .select("stop_code,line_code,direction,eta_minutes,captured_at")
-        .eq("line_code", lineCode)
-        .in("stop_code", missing);
-      for (const r of (cachedRows ?? []) as SnapRow[]) cachedByStop.set(r.stop_code, r);
-    }
-
-    const now = Date.now();
-    let oldestCapturedMs: number | null = null;
+    // 100% worker → http://www.subus.es/QR/Alicante/consulta.aspx?p=<parada>.
+    // Sin caché, sin snapshot en BBDD, sin fallback. Si una parada no responde,
+    // su lista de ETAs queda vacía y punto.
     const result: RealtimeStopEta[] = stops.map((s) => {
       const live = liveByStop.get(s.stop_code);
-      const mins = live?.get(lineCode);
-      if (live && mins !== undefined) {
-        return {
-          stopCode: s.stop_code,
-          stopName: s.stop_name,
-          direction: (s.direction === 2 ? 2 : 1) as 1 | 2,
-          seq: s.seq,
-          etaMinutes: mins,
-          capturedAt: fetchedAt,
-          ageSec: 0,
-          stale: false,
-          frozen: false,
-        };
-      }
-      if (live) {
-        // Llamada OK pero esta línea no aparece → no hay buses ahora
-        return {
-          stopCode: s.stop_code,
-          stopName: s.stop_name,
-          direction: (s.direction === 2 ? 2 : 1) as 1 | 2,
-          seq: s.seq,
-          etaMinutes: [],
-          capturedAt: fetchedAt,
-          ageSec: 0,
-          stale: false,
-          frozen: false,
-        };
-      }
-      // Fallback al snapshot cache
-      const snap = cachedByStop.get(s.stop_code);
-      const capturedAtIso = snap?.captured_at ?? fetchedAt;
-      const capturedMs = Date.parse(capturedAtIso);
-      if (snap && (oldestCapturedMs == null || capturedMs < oldestCapturedMs)) {
-        oldestCapturedMs = capturedMs;
-      }
-      const ageMs = now - capturedMs;
+      const mins = live?.get(lineCode) ?? [];
       return {
         stopCode: s.stop_code,
         stopName: s.stop_name,
         direction: (s.direction === 2 ? 2 : 1) as 1 | 2,
         seq: s.seq,
-        etaMinutes: snap?.eta_minutes ?? [],
-        capturedAt: capturedAtIso,
-        ageSec: snap ? Math.max(0, Math.round(ageMs / 1000)) : 0,
-        stale: snap ? ageMs > STALE_MS : true,
-        frozen: snap ? ageMs > FROZEN_MS : true,
+        etaMinutes: mins,
+        capturedAt: fetchedAt,
+        ageSec: 0,
+        stale: false,
+        frozen: false,
       };
     });
 
-    const liveOk = result.some((r) => r.ageSec === 0 && !r.stale);
     return {
       lineCode,
       fetchedAt,
-      capturedAt: liveOk ? fetchedAt : oldestCapturedMs ? new Date(oldestCapturedMs).toISOString() : null,
-      ageSec: liveOk ? 0 : oldestCapturedMs ? Math.max(0, Math.round((now - oldestCapturedMs) / 1000)) : null,
-      stale: !liveOk,
-      frozen: !liveOk && (oldestCapturedMs == null || now - oldestCapturedMs > FROZEN_MS),
+      capturedAt: fetchedAt,
+      ageSec: 0,
+      stale: false,
+      frozen: false,
       stops: result,
     };
   });
