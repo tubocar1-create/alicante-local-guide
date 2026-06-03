@@ -37,6 +37,108 @@ function busColor(t: string | null): string {
   }
 }
 
+type StopKind = "origen" | "recogida" | "intermedia" | "destino";
+type ItinStop = { time: string; name: string; city: string; kind: StopKind };
+
+function hhmm(t: string): string {
+  return t.length >= 5 ? t.slice(0, 5) : t;
+}
+function toMin(t: string): number {
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + m;
+}
+
+function buildItinerary(item: {
+  direction: "S" | "L";
+  departure_time: string;
+  arrival_time: string;
+  origin_station: string;
+  destination_station: string;
+  observations: string[];
+}): ItinStop[] {
+  const dep = hhmm(item.departure_time);
+  const arr = hhmm(item.arrival_time);
+  const isIda = item.direction === "S";
+
+  const stops: ItinStop[] = [];
+  stops.push({
+    time: dep,
+    name: item.origin_station,
+    city: isIda ? "Alicante" : "Benidorm",
+    kind: "origen",
+  });
+
+  for (const obs of item.observations) {
+    if (/Última parada/i.test(obs)) continue;
+
+    const renfe = obs.match(/Para en (.+?) a las (\d{1,2}:\d{2})/i);
+    if (renfe) {
+      stops.push({
+        time: renfe[2],
+        name: renfe[1].trim(),
+        city: "Alicante",
+        kind: isIda ? "recogida" : "intermedia",
+      });
+      continue;
+    }
+
+    const colonIdx = obs.indexOf(":");
+    if (colonIdx < 0) continue;
+    // Mantenemos los HH:MM que vienen después: cortamos sólo el primer ":" si va seguido de letra/espacio
+    const headOk = /^[^:]+:\s/.test(obs);
+    if (!headOk) continue;
+    const tail = obs.slice(colonIdx + 1);
+    for (const chunk of tail.split("·")) {
+      const m = chunk.trim().match(/^(.+?)\s+(\d{1,2}:\d{2})$/);
+      if (!m) continue;
+      stops.push({
+        time: m[2],
+        name: m[1].trim(),
+        city: "Benidorm",
+        kind: isIda ? "intermedia" : "recogida",
+      });
+    }
+  }
+
+  stops.push({
+    time: arr,
+    name: item.destination_station,
+    city: isIda ? "Benidorm" : "Alicante",
+    kind: "destino",
+  });
+
+  const seen = new Set<string>();
+  const out: ItinStop[] = [];
+  for (const s of stops) {
+    const k = `${s.time}|${s.name.toLowerCase()}`;
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(s);
+  }
+
+  const depMin = toMin(dep);
+  out.sort((a, b) => {
+    if (a.kind === "origen") return -1;
+    if (b.kind === "origen") return 1;
+    if (a.kind === "destino") return 1;
+    if (b.kind === "destino") return -1;
+    const da = (toMin(a.time) - depMin + 24 * 60) % (24 * 60);
+    const db = (toMin(b.time) - depMin + 24 * 60) % (24 * 60);
+    return da - db;
+  });
+
+  return out;
+}
+
+function kindMeta(k: StopKind): { label: string; color: string } {
+  switch (k) {
+    case "origen":     return { label: "Origen",   color: "#34d399" };
+    case "recogida":   return { label: "Recogida", color: "#38bdf8" };
+    case "intermedia": return { label: "Parada",   color: "#94a3b8" };
+    case "destino":    return { label: "Destino",  color: "#f472b6" };
+  }
+}
+
 function BusDetail() {
   const { id } = Route.useParams();
   const numId = Number(id);
