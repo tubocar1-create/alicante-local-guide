@@ -127,8 +127,22 @@ function buildItinerary(item: {
     return da - db;
   });
 
+  // Fusionar origen con la primera recogida si comparten hora y ciudad
+  // (p. ej. "Benidorm" + "Estación de Autobuses 14:30" → un único Origen con el nombre específico)
+  if (out.length >= 2 && out[0].kind === "origen" && out[1].time === out[0].time && out[1].city === out[0].city) {
+    out[0] = { ...out[0], name: out[1].name };
+    out.splice(1, 1);
+  }
+  // Lo mismo para el destino al final
+  const last = out.length - 1;
+  if (last >= 1 && out[last].kind === "destino" && out[last - 1].time === out[last].time && out[last - 1].city === out[last].city) {
+    out[last] = { ...out[last], name: out[last - 1].name };
+    out.splice(last - 1, 1);
+  }
+
   return out;
 }
+
 
 function kindMeta(k: StopKind): { label: string; color: string } {
   switch (k) {
