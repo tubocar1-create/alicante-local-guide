@@ -227,7 +227,7 @@ function ParadaFavoritaPage() {
   })();
   const isArriving = minutes != null && minutes <= 1 && !nightEstimate;
   const hasLiveData = snapshot != null && !experienceEnded && !isNightLine;
-  const hasAnyData = nightFirst != null || (snapshot != null && !experienceEnded);
+  void (nightFirst != null || (snapshot != null && !experienceEnded));
 
 
 
