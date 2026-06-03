@@ -144,9 +144,12 @@ function ParadaFavoritaPage() {
 
 
   useEffect(() => {
-    const id = window.setInterval(() => setTick((t) => t + 1), 30_000);
+    // Tick rápido (1s) mientras hay snapshot activo para que el contador
+    // decrezca de forma visible; si no hay snapshot, basta con 30s.
+    const fast = snapshot != null && !experienceEnded;
+    const id = window.setInterval(() => setTick((t) => t + 1), fast ? 1000 : 30_000);
     return () => window.clearInterval(id);
-  }, []);
+  }, [snapshot, experienceEnded]);
 
   useEffect(() => {
     setSearchLookupDone(!search.stop || searchMatchesCurrent);
