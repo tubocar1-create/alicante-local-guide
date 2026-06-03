@@ -145,11 +145,10 @@ function BusOriginPage() {
                 </h2>
                 <div className="space-y-2">
                   {items.map((r) => (
-                    <Link
+                    <button
                       key={r.id}
-                      to="/buses/$code"
-                      params={{ code }}
-                      className="group flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900/60 px-4 py-3 transition hover:border-amber-500/40 hover:bg-slate-900"
+                      type="button"
+                      className="group flex w-full items-center justify-between rounded-2xl border border-slate-800 bg-slate-900/60 px-4 py-3 text-left transition hover:border-amber-500/40 hover:bg-slate-900"
                     >
                       <div className="flex items-center gap-3">
                         <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-300">
@@ -167,8 +166,9 @@ function BusOriginPage() {
                         </div>
                       </div>
                       <ArrowRight className="h-4 w-4 text-slate-500 transition group-hover:translate-x-0.5 group-hover:text-amber-300" />
-                    </Link>
+                    </button>
                   ))}
+
                 </div>
               </section>
             ))}
