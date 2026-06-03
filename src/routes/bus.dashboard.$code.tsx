@@ -17,6 +17,10 @@ import { cumulativeMinutes, NIGHT_URBAN_KMH } from "@/lib/bus-eta";
 import { getClientStopRealtime } from "@/lib/bus-realtime-client";
 import busAlicanteImg from "@/assets/bus-alicante.png";
 import { useLineRealtime, isPreviewHost } from "@/hooks/useLineRealtime";
+import { useBusEngine } from "@/hooks/useBusEngine";
+
+// Velocidad estándar del bus virtual: 110 segundos entre paradas consecutivas.
+const VIRTUAL_BUS_SEC_PER_STOP = 110;
 
 
 
@@ -220,6 +224,8 @@ function BusDashboardPage() {
   // Detección de línea nocturna y estimaciones por parada (sin tiempo real).
   const serviceRows = useBusServiceWindows();
   const departures = useBusLineDepartures();
+  // Snapshot completo del motor (incluye departures de TODAS las líneas).
+  const { data: engine } = useBusEngine();
 
   const isNightLine = useMemo(() => {
     const st = getServiceStatus(serviceRows, code, clock);
@@ -341,7 +347,76 @@ function BusDashboardPage() {
 
     return out;
   }, [isNightLine, serviceRows, departures, code, stopsByDir, stopCoords, clock]);
-  const scheduleEtaByDir = nightEtaByDir;
+
+  // === Estimación por BUS VIRTUAL (líneas diurnas) ===
+  // Para cada sentido genera UN bus virtual que sale del origen en la próxima
+  // salida programada (bus_line_departures) y rueda a VIRTUAL_BUS_SEC_PER_STOP
+  // segundos por parada. ETA por parada = (salida - ahora) + i * paso.
+  // Si una salida ya pasó la parada (ETA < 0), prueba la siguiente salida.
+  const virtualEtaByDir = useMemo(() => {
+    const out: Record<1 | 2, Map<string, { min: number; time: string }>> = {
+      1: new Map(),
+      2: new Map(),
+    };
+    if (!engine || isNightLine) return out;
+
+    const nowMin = clock.getHours() * 60 + clock.getMinutes();
+    const todayType = dayTypeOf(clock);
+    const yDayType = dayTypeOf(new Date(clock.getTime() - 24 * 60 * 60_000));
+    const stepMin = VIRTUAL_BUS_SEC_PER_STOP / 60;
+
+    const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
+
+    for (const dir of [1, 2] as const) {
+      const stops = stopsByDir[dir];
+      if (stops.length === 0) continue;
+
+      // Determinar la dirección normalizada del engine que corresponde a este
+      // sentido visual, casando el terminal de origen con serviceWindows.
+      const originNorm = norm(stops[0].name);
+      const swMatch = engine.serviceWindows.find((w) => {
+        if (w.lineCode !== code || !w.terminalName) return false;
+        const a = norm(w.terminalName);
+        return a && (originNorm.includes(a) || a.includes(originNorm));
+      });
+      if (!swMatch) continue;
+      const engineDir = swMatch.direction;
+
+      const depTimelines: number[] = [];
+      for (const d of engine.departures) {
+        if (d.lineCode !== code || d.direction !== engineDir) continue;
+        const depMin = d.departureMin;
+        if (matchesDayType(d.dayType, todayType)) depTimelines.push(depMin);
+        if (matchesDayType(d.dayType, yDayType) && depMin >= 18 * 60) {
+          depTimelines.push(depMin - 24 * 60);
+        }
+      }
+      if (depTimelines.length === 0) continue;
+      depTimelines.sort((a, b) => a - b);
+
+
+      for (let i = 0; i < stops.length; i++) {
+        const offset = i * stepMin;
+        // Próxima llegada de cualquier salida candidata que aún no haya pasado.
+        let bestArr: number | null = null;
+        for (const dep of depTimelines) {
+          const arr = dep + offset;
+          if (arr - nowMin < -1) continue;
+          if (bestArr == null || arr < bestArr) bestArr = arr;
+        }
+        if (bestArr == null) continue;
+
+        const delta = Math.max(0, Math.round(bestArr - nowMin));
+        const abs = ((bestArr % 1440) + 1440) % 1440;
+        const hh = String(Math.floor(abs / 60)).padStart(2, "0");
+        const mm = String(Math.round(abs % 60)).padStart(2, "0");
+        out[dir].set(stops[i].code, { min: delta, time: `${hh}:${mm}` });
+      }
+    }
+    return out;
+  }, [engine, isNightLine, code, stopsByDir, clock]);
+
+  const scheduleEtaByDir = isNightLine ? nightEtaByDir : virtualEtaByDir;
 
 
   // === Realtime ===

@@ -42,6 +42,7 @@ export type BusEngineSnapshot = {
     day_type: string;
     first_departure: string;
     last_departure: string;
+    terminal_name: string | null;
   }>;
   fetchedAt: string;
 };
@@ -60,7 +61,7 @@ export const getBusEngineSnapshot = createServerFn({ method: "GET" }).handler(
       supabaseAdmin.from("bus_line_departures").select("line_code,direction,departure_time,day_type"),
       supabaseAdmin
         .from("bus_line_service_windows")
-        .select("line_code,direction,day_type,first_departure,last_departure"),
+        .select("line_code,direction,day_type,first_departure,last_departure,terminal_name"),
     ]);
 
     return {
