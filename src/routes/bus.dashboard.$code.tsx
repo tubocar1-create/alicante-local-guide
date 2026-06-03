@@ -795,7 +795,7 @@ function BusDashboardPage() {
             stops={stopsByDir[2]}
             etas={etas}
             lineCode={code}
-            realtimeEnabled={!isNightLine}
+            realtimeEnabled={false}
             loadingEtaStops={loadingEtaStops}
             onEtaLoading={handleEtaLoading}
             onStopEta={handleStopEta}
