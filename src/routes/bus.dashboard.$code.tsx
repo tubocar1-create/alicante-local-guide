@@ -476,9 +476,8 @@ function BusDashboardPage() {
   // Fuente única: snapshot server-side SUBUS (useLineRealtime), cacheado 5 min.
   // Visualmente decrementamos los ETAs cada segundo según ageSec del snapshot,
   // y la query refetchea cada 60 s (sólo da datos frescos cuando expira el TTL).
-  const { data: realtime, isLoading: realtimeLoading } = useLineRealtime(
-    isNightLine ? null : code,
-  );
+  // SUBUS deshabilitado temporalmente: vamos sólo con buses virtuales (horario).
+  const { data: realtime, isLoading: realtimeLoading } = useLineRealtime(null);
 
   // Preview NUNCA se toca: ahí ignoramos cualquier lógica de "congelado/n.d.".
   const inPreview = isPreviewHost();
@@ -770,7 +769,7 @@ function BusDashboardPage() {
             stops={stopsByDir[1]}
             etas={etas}
             lineCode={code}
-            realtimeEnabled={!isNightLine}
+            realtimeEnabled={false}
             loadingEtaStops={loadingEtaStops}
             onEtaLoading={handleEtaLoading}
             onStopEta={handleStopEta}
@@ -796,7 +795,7 @@ function BusDashboardPage() {
             stops={stopsByDir[2]}
             etas={etas}
             lineCode={code}
-            realtimeEnabled={!isNightLine}
+            realtimeEnabled={false}
             loadingEtaStops={loadingEtaStops}
             onEtaLoading={handleEtaLoading}
             onStopEta={handleStopEta}
