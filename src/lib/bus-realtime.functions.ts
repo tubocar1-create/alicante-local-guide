@@ -205,7 +205,7 @@ const LIVE_TIMEOUT_MS = 8_000;
 const LIVE_CONCURRENCY = 8;
 const LIVE_ARRIVAL_RE = /Linea\s+(\d{1,3}[A-Za-z]?)\s+([^:]+?)\s*:\s*(\d+)\s*min/gi;
 
-async function liveFetchStop(stopCode: string): Promise<number[] | null> {
+async function liveFetchStopBody(stopCode: string): Promise<string | null> {
   const consultaUrl = `${LIVE_BASE}/consulta.aspx?p=${encodeURIComponent(stopCode)}`;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), LIVE_TIMEOUT_MS);
@@ -240,14 +240,13 @@ async function liveFetchStop(stopCode: string): Promise<number[] | null> {
     });
     if (!datos.ok) return null;
     const txt = await datos.text();
-    let body = txt;
     try {
       const j = JSON.parse(txt) as { tiempos?: unknown };
-      if (typeof j.tiempos === "string") body = j.tiempos;
+      if (typeof j.tiempos === "string") return j.tiempos;
     } catch {
       // texto plano
     }
-    return [body] as unknown as number[]; // placeholder; replaced below
+    return txt;
   } catch {
     return null;
   } finally {
@@ -258,10 +257,8 @@ async function liveFetchStop(stopCode: string): Promise<number[] | null> {
 async function liveFetchStopByLine(
   stopCode: string,
 ): Promise<Map<string, number[]> | null> {
-  // Adaptación: liveFetchStop devuelve [body]; parseamos aquí por línea.
-  const raw = await liveFetchStop(stopCode);
-  if (!raw) return null;
-  const body = raw[0] as unknown as string;
+  const body = await liveFetchStopBody(stopCode);
+  if (body == null) return null;
   const map = new Map<string, number[]>();
   for (const m of body.matchAll(LIVE_ARRIVAL_RE)) {
     const line = normalizeLine(m[1]);
@@ -274,6 +271,7 @@ async function liveFetchStopByLine(
   for (const arr of map.values()) arr.sort((a, b) => a - b);
   return map;
 }
+
 
 async function liveMapLimit<T, R>(
   items: T[],
