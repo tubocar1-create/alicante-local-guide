@@ -396,48 +396,124 @@ function BusDashboardPage() {
   // No-ops para conservar las props del componente hijo.
   const handleEtaLoading = useCallback((_stopCode: string, _loading: boolean) => {}, []);
   const handleStopEta = useCallback((_stopCode: string, _all: number[]) => {}, []);
-  // Bus dinámico: derivamos posiciones aproximadas a partir de los ETAs
-  // ya decrementados. Para cada sentido, un bus está "aproximándose" a la
-  // parada i si eta(i) es un mínimo local (menor que eta(i+1), y eta(i-1)
-  // ausente o mayor). El bus se dibuja sobre el segmento (i-1, i) con
-  // progreso 1 - eta_i/TYPICAL_SEG_MIN. TYPICAL_SEG_MIN ≈ 2 min entre paradas
-  // urbanas: con eta=0 está sobre la parada, con eta≥2 acaba de salir de la
-  // anterior. Cuando llega el siguiente snapshot (bridge cada 60 s en prod,
-  // 30 s en preview) las posiciones se recalibran automáticamente.
-  const predictedBusesByDir = useMemo<
-    Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]>
-  >(() => {
-    const TYPICAL_SEG_MIN = 2;
-    const out: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]> = {
-      1: [],
-      2: [],
-    };
-    for (const dir of [1, 2] as const) {
-      const list = stopsByDir[dir];
-      const vals: (number | null)[] = list.map((s) => {
-        const arr = etas[s.code];
-        return arr && arr.length > 0 ? arr[0] : null;
-      });
-      for (let i = 0; i < list.length; i++) {
-        const v = vals[i];
-        if (v == null) continue;
-        const prev = i > 0 ? vals[i - 1] : null;
-        const next = i < list.length - 1 ? vals[i + 1] : null;
-        const isLocalMin =
-          (prev == null || prev > v) && (next == null || next >= v);
-        if (!isLocalMin) continue;
-        const segmentIndex = i > 0 ? i - 1 : 0;
-        const segmentProgress =
-          i > 0 ? Math.max(0, Math.min(1, 1 - v / TYPICAL_SEG_MIN)) : 0;
-        out[dir].push({
-          busId: `${dir}-${i}-${list[i].code}`,
-          segmentIndex,
-          segmentProgress,
+  // Bus dinámico persistente:
+  //  - Cada bus NACE cuando, en algún snapshot del bridge, el ETA de una
+  //    parada cae ≤ SPAWN_THRESHOLD_MIN (≈ 1 min). Hasta entonces no se
+  //    dibuja, aunque haya mínimos locales lejanos.
+  //  - Una vez nacido, avanza por el reloj a velocidad media (TYPICAL_SEG_MIN
+  //    por segmento). El reloj dispara un tick cada segundo.
+  //  - Cuando llega un nuevo bridge, cada bus existente se recalibra al
+  //    mínimo local más cercano (los ETAs reales mandan); los mínimos sin
+  //    bus asociado solo generan nuevo bus si cumplen el umbral de nacimiento.
+  //  - Al llegar al final del recorrido el bus se retira.
+  const TYPICAL_SEG_MIN = 2;
+  const SPAWN_THRESHOLD_MIN = 1;
+  type DynamicBus = { busId: string; segmentIndex: number; segmentProgress: number };
+  const [predictedBusesByDir, setPredictedBusesByDir] = useState<
+    Record<1 | 2, DynamicBus[]>
+  >({ 1: [], 2: [] });
+  const busSeqRef = useRef(0);
+  const lastSnapshotKeyRef = useRef<string | null>(null);
+
+  // Recalibración / nacimiento al recibir un snapshot nuevo del bridge.
+  useEffect(() => {
+    if (!realtime) return;
+    const snapKey = realtime.capturedAt ?? realtime.fetchedAt ?? null;
+    if (!snapKey || snapKey === lastSnapshotKeyRef.current) return;
+    lastSnapshotKeyRef.current = snapKey;
+
+    setPredictedBusesByDir((prev) => {
+      const next: Record<1 | 2, DynamicBus[]> = { 1: [], 2: [] };
+      for (const dir of [1, 2] as const) {
+        const list = stopsByDir[dir];
+        const vals: (number | null)[] = list.map((s) => {
+          const arr = etas[s.code];
+          return arr && arr.length > 0 ? arr[0] : null;
         });
+        // Mínimos locales = candidatos a posición real de bus.
+        const candidates: { segmentIndex: number; segmentProgress: number; eta: number }[] = [];
+        for (let i = 0; i < list.length; i++) {
+          const v = vals[i];
+          if (v == null) continue;
+          const p = i > 0 ? vals[i - 1] : null;
+          const n = i < list.length - 1 ? vals[i + 1] : null;
+          const isMin = (p == null || p > v) && (n == null || n >= v);
+          if (!isMin) continue;
+          const segmentIndex = i > 0 ? i - 1 : 0;
+          const segmentProgress =
+            i > 0 ? Math.max(0, Math.min(1, 1 - v / TYPICAL_SEG_MIN)) : 0;
+          candidates.push({ segmentIndex, segmentProgress, eta: v });
+        }
+
+        const existing = [...prev[dir]];
+        const usedExisting = new Set<number>();
+        // Emparejar cada candidato con el bus existente más cercano (≤ 3 segmentos).
+        for (const c of candidates) {
+          const cPos = c.segmentIndex + c.segmentProgress;
+          let bestIdx = -1;
+          let bestDist = Infinity;
+          for (let j = 0; j < existing.length; j++) {
+            if (usedExisting.has(j)) continue;
+            const ePos = existing[j].segmentIndex + existing[j].segmentProgress;
+            const d = Math.abs(ePos - cPos);
+            if (d < bestDist) {
+              bestDist = d;
+              bestIdx = j;
+            }
+          }
+          if (bestIdx >= 0 && bestDist <= 3) {
+            usedExisting.add(bestIdx);
+            next[dir].push({
+              busId: existing[bestIdx].busId,
+              segmentIndex: c.segmentIndex,
+              segmentProgress: c.segmentProgress,
+            });
+          } else if (c.eta <= SPAWN_THRESHOLD_MIN) {
+            // Solo nacen buses cuando el ETA está al borde (regla del usuario).
+            busSeqRef.current += 1;
+            next[dir].push({
+              busId: `${dir}-b${busSeqRef.current}`,
+              segmentIndex: c.segmentIndex,
+              segmentProgress: c.segmentProgress,
+            });
+          }
+        }
+        // Conservar buses existentes no emparejados: siguen rodando por reloj.
+        for (let j = 0; j < existing.length; j++) {
+          if (!usedExisting.has(j)) next[dir].push(existing[j]);
+        }
       }
-    }
-    return out;
-  }, [stopsByDir, etas]);
+      return next;
+    });
+  }, [realtime, stopsByDir, etas]);
+
+  // Tick por reloj: avance continuo según velocidad media.
+  useEffect(() => {
+    setPredictedBusesByDir((prev) => {
+      const delta = 1 / (TYPICAL_SEG_MIN * 60); // progreso por segundo
+      const next: Record<1 | 2, DynamicBus[]> = { 1: [], 2: [] };
+      let changed = false;
+      for (const dir of [1, 2] as const) {
+        const stops = stopsByDir[dir];
+        const lastSeg = Math.max(0, stops.length - 2);
+        for (const b of prev[dir]) {
+          let segIdx = b.segmentIndex;
+          let prog = b.segmentProgress + delta;
+          while (prog >= 1 && segIdx < lastSeg) {
+            prog -= 1;
+            segIdx += 1;
+          }
+          if (segIdx >= lastSeg && prog >= 1) {
+            changed = true;
+            continue; // bus llega al final → retirado
+          }
+          if (segIdx !== b.segmentIndex || prog !== b.segmentProgress) changed = true;
+          next[dir].push({ busId: b.busId, segmentIndex: segIdx, segmentProgress: prog });
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [clock, stopsByDir]);
 
 
 
