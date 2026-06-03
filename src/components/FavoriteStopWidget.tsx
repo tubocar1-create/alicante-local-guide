@@ -198,15 +198,6 @@ export function FavoriteStopWidget() {
       setLiveSource(null);
     }
   }, [stop.stopId, stop.line, engine]);
-      const arrivals = predictStopArrivals(engine, stop.stopId);
-      const forLine = arrivals.filter((a) => a.line === stop.line);
-      setLiveMin(forLine[0]?.etaMin ?? null);
-      setLiveSource(forLine[0] ? "engine" : null);
-    } else {
-      setLiveMin(null);
-      setLiveSource(null);
-    }
-  }, [stop.stopId, stop.line, engine]);
 
 
   const lineColor =
