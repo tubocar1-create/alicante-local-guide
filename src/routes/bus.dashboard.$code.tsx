@@ -394,14 +394,26 @@ function BusDashboardPage() {
       if (depTimelines.length === 0) continue;
       depTimelines.sort((a, b) => a - b);
 
+      // === Ciclo de vida de buses virtuales ===
+      // Cada salida programada engendra UN bus virtual que:
+      //  - nace exactamente a su hora de salida desde la parada 0,
+      //  - rueda a stepMin por parada,
+      //  - desaparece cuando llega a la última parada (destino).
+      // Filtramos buses ya extintos (llegaron a destino antes de "ahora").
+      const lastIdx = stops.length - 1;
+      const terminusOffset = lastIdx * stepMin;
+      const aliveOrFuture = depTimelines.filter(
+        (dep) => dep + terminusOffset >= nowMin - 0.0001,
+      );
+      if (aliveOrFuture.length === 0) continue;
 
       for (let i = 0; i < stops.length; i++) {
         const offset = i * stepMin;
-        // Próxima llegada de cualquier salida candidata que aún no haya pasado.
+        // Próximo bus virtual vivo cuya llegada a esta parada aún no ha pasado.
         let bestArr: number | null = null;
-        for (const dep of depTimelines) {
+        for (const dep of aliveOrFuture) {
           const arr = dep + offset;
-          if (arr - nowMin < -1) continue;
+          if (arr < nowMin - 0.0001) continue; // este bus ya pasó esta parada
           if (bestArr == null || arr < bestArr) bestArr = arr;
         }
         if (bestArr == null) continue;
