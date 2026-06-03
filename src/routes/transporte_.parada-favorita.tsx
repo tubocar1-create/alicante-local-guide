@@ -521,6 +521,11 @@ function ParadaFavoritaPage() {
                 <span className="-mt-1 text-sm font-bold uppercase tracking-wider text-stone-600">
                   Min
                 </span>
+                {hasLiveData && liveMmSs && (
+                  <span className="mt-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-extrabold tabular-nums text-emerald-700 ring-1 ring-emerald-200">
+                    ● {liveMmSs}
+                  </span>
+                )}
               </div>
             )}
             {!outOfService && (
