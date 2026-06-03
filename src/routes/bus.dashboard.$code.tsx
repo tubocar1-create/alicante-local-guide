@@ -396,10 +396,48 @@ function BusDashboardPage() {
   // No-ops para conservar las props del componente hijo.
   const handleEtaLoading = useCallback((_stopCode: string, _loading: boolean) => {}, []);
   const handleStopEta = useCallback((_stopCode: string, _all: number[]) => {}, []);
-  const predictedBusesByDir: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]> = {
-    1: [],
-    2: [],
-  };
+  // Bus dinámico: derivamos posiciones aproximadas a partir de los ETAs
+  // ya decrementados. Para cada sentido, un bus está "aproximándose" a la
+  // parada i si eta(i) es un mínimo local (menor que eta(i+1), y eta(i-1)
+  // ausente o mayor). El bus se dibuja sobre el segmento (i-1, i) con
+  // progreso 1 - eta_i/TYPICAL_SEG_MIN. TYPICAL_SEG_MIN ≈ 2 min entre paradas
+  // urbanas: con eta=0 está sobre la parada, con eta≥2 acaba de salir de la
+  // anterior. Cuando llega el siguiente snapshot (bridge cada 60 s en prod,
+  // 30 s en preview) las posiciones se recalibran automáticamente.
+  const predictedBusesByDir = useMemo<
+    Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]>
+  >(() => {
+    const TYPICAL_SEG_MIN = 2;
+    const out: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]> = {
+      1: [],
+      2: [],
+    };
+    for (const dir of [1, 2] as const) {
+      const list = stopsByDir[dir];
+      const vals: (number | null)[] = list.map((s) => {
+        const arr = etas[s.code];
+        return arr && arr.length > 0 ? arr[0] : null;
+      });
+      for (let i = 0; i < list.length; i++) {
+        const v = vals[i];
+        if (v == null) continue;
+        const prev = i > 0 ? vals[i - 1] : null;
+        const next = i < list.length - 1 ? vals[i + 1] : null;
+        const isLocalMin =
+          (prev == null || prev > v) && (next == null || next >= v);
+        if (!isLocalMin) continue;
+        const segmentIndex = i > 0 ? i - 1 : 0;
+        const segmentProgress =
+          i > 0 ? Math.max(0, Math.min(1, 1 - v / TYPICAL_SEG_MIN)) : 0;
+        out[dir].push({
+          busId: `${dir}-${i}-${list[i].code}`,
+          segmentIndex,
+          segmentProgress,
+        });
+      }
+    }
+    return out;
+  }, [stopsByDir, etas]);
 
 
 
