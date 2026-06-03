@@ -569,11 +569,6 @@ function ParadaFavoritaPage() {
                 Modo administrador · llamadas ilimitadas.
               </p>
             )}
-            {isAuthed === false && (
-              <p className="text-center text-[10px] font-semibold text-amber-700">
-                Inicia sesión para consultar el tiempo real (3 llamadas/día).
-              </p>
-            )}
 
             {callError && (
               <div className="flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 ring-1 ring-amber-200">
