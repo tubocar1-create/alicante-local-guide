@@ -173,8 +173,8 @@ export const requestFavoriteStopRealtime = createServerFn({ method: "POST" })
         ok: false,
         reason: "firecrawl_error",
         message: "No se pudo consultar Vectalia en este momento.",
-        remaining: DAILY_LIMIT - used,
-        isAdmin: false,
+        remaining: isAdmin ? Number.POSITIVE_INFINITY : DAILY_LIMIT - used,
+        isAdmin,
         limit: DAILY_LIMIT,
       };
     }
@@ -192,7 +192,7 @@ export const requestFavoriteStopRealtime = createServerFn({ method: "POST" })
       purpose: "favorite_stop",
       stop_id: data.stopId,
       line: wanted,
-      metadata: { etaMin, count: all.length },
+      metadata: { etaMin, count: all.length, isAdmin },
     });
 
     const newUsed = used + 1;
@@ -202,8 +202,9 @@ export const requestFavoriteStopRealtime = createServerFn({ method: "POST" })
       all,
       destination,
       fetchedAt: Date.now(),
-      remaining: Math.max(0, DAILY_LIMIT - newUsed),
-      isAdmin: false,
+      remaining: isAdmin ? Number.POSITIVE_INFINITY : Math.max(0, DAILY_LIMIT - newUsed),
+      isAdmin,
       limit: DAILY_LIMIT,
     };
   });
+
