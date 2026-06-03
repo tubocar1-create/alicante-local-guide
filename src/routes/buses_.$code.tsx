@@ -123,10 +123,28 @@ function BusOriginPage() {
   const { data } = useSuspenseQuery(originQueryOptions(code));
   const { origin, routes } = data;
 
-  const OriginIcon = code === "ALC-APT" ? Plane : Bus;
+  const [direction, setDirection] = useState<"S" | "L">("S");
+  const [query, setQuery] = useState("");
 
+  const OriginIcon = code === "ALC-APT" ? Plane : Bus;
+  const originLabel = origin?.station ?? code;
+  const originShort = origin?.city ?? code;
+
+  const q = query.trim().toLowerCase();
+  const matches = (r: RouteRow) => {
+    if (!q) return true;
+    const city = r.destination?.city?.toLowerCase() ?? "";
+    const station = r.destination?.station?.toLowerCase() ?? "";
+    return (
+      city.includes(q) ||
+      station.includes(q) ||
+      r.destination_code.toLowerCase().includes(q)
+    );
+  };
+
+  const filtered = routes.filter(matches);
   const groups = new Map<string, RouteRow[]>();
-  for (const r of routes) {
+  for (const r of filtered) {
     const key = r.corridor ?? "otros";
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key)!.push(r);
@@ -165,21 +183,63 @@ function BusOriginPage() {
           </div>
         </header>
 
-        <div className="mb-5">
+        <div className="mb-4">
           <p className="text-[10px] uppercase tracking-[0.3em] text-amber-300/90">
             Dashboard de Buses
           </p>
           <h1 className="mt-1 font-display text-2xl font-bold tracking-tight text-white md:text-4xl">
             Buses{" "}
             <span className="bg-gradient-to-r from-amber-300 via-white to-orange-300 bg-clip-text text-transparent">
-              desde {origin?.station ?? code}
+              {direction === "S" ? `desde ${originShort}` : `hacia ${originShort}`}
             </span>
           </h1>
           {origin && (
             <p className="mt-1 text-xs text-white/70 md:text-sm">
-              {origin.city} — corredores larga distancia.
+              {originLabel} — corredores larga distancia.
             </p>
           )}
+        </div>
+
+        {/* Toggle Salidas / Llegadas */}
+        <div className="mb-4 grid grid-cols-2 gap-2 rounded-2xl border-2 border-slate-700 bg-slate-900/60 p-1.5">
+          <button
+            type="button"
+            onClick={() => setDirection("S")}
+            className={`flex flex-col items-center justify-center gap-0.5 rounded-xl px-3 py-3 font-bold uppercase tracking-wider transition ${
+              direction === "S"
+                ? "bg-gradient-to-br from-amber-500/30 to-orange-500/20 text-amber-100 shadow-lg shadow-amber-500/20 ring-1 ring-amber-400/40"
+                : "text-slate-400 hover:bg-slate-800/40 hover:text-slate-200"
+            }`}
+          >
+            <span className="text-base md:text-lg">Salidas</span>
+            <span className="text-[10px] font-medium normal-case tracking-normal opacity-80">
+              {code} → destino
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setDirection("L")}
+            className={`flex flex-col items-center justify-center gap-0.5 rounded-xl px-3 py-3 font-bold uppercase tracking-wider transition ${
+              direction === "L"
+                ? "bg-gradient-to-br from-amber-500/30 to-orange-500/20 text-amber-100 shadow-lg shadow-amber-500/20 ring-1 ring-amber-400/40"
+                : "text-slate-400 hover:bg-slate-800/40 hover:text-slate-200"
+            }`}
+          >
+            <span className="text-base md:text-lg">Llegadas</span>
+            <span className="text-[10px] font-medium normal-case tracking-normal opacity-80">
+              origen → {code}
+            </span>
+          </button>
+        </div>
+
+        {/* Buscador */}
+        <div className="mb-3">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar ciudad o estación…"
+            className="w-full rounded-xl border border-slate-700 bg-slate-900/60 px-3 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-amber-500/50"
+          />
         </div>
 
         {routes.length === 0 ? (
@@ -190,6 +250,11 @@ function BusOriginPage() {
           <div className="space-y-2">
             {Array.from(groups.entries()).map(([corridor, items]) => {
               const meta = CORRIDOR_META[corridor] ?? FALLBACK_META;
+              const target = meta.name.replace(/^Nacionales\s+/, "");
+              const heading =
+                direction === "S"
+                  ? `Desde ${originShort} hacia ${meta.name.toLowerCase().startsWith("nacional") ? "destinos nacionales" : target}`
+                  : `Desde ${meta.name.toLowerCase().startsWith("nacional") ? "destinos nacionales" : target} hacia ${originShort}`;
               return (
                 <section
                   key={corridor}
@@ -199,7 +264,7 @@ function BusOriginPage() {
                     <span className="text-xl leading-none">{meta.icon}</span>
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-semibold text-white">
-                        {meta.name}
+                        {heading}
                       </div>
                       {meta.product && (
                         <div className="truncate text-[11px] text-slate-400">
