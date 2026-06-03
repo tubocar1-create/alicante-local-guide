@@ -205,11 +205,20 @@ export function buildLineFleetPlan(
 
   // Perfil operacional (línea 12, etc.): tiene PRIORIDAD sobre el cálculo
   // matemático. Define base diurna, máximos, ventana nocturna y último servicio.
+  // Ventana de servicio derivada del HORARIO REAL: la primera salida del día
+  // (en cualquier sentido) marca el arranque. El último bus sale a las 22:30
+  // (regla fija). Esto evita aplicar 07:00 a líneas que arrancan antes/después.
+  const allDepsToday = [...idaDeps, ...vueltaDeps];
+  const firstDepMin = allDepsToday.length > 0 ? Math.min(...allDepsToday) : null;
+  const serviceStartHHMM = firstDepMin != null ? minutesToHHMMHelper(firstDepMin) : undefined;
+
   const profileResult = applyProfileFleetTarget({
     lineCode,
     inferred: fleetSizeInferred,
     activationScore: opts?.activationScore ?? 0,
     at,
+    serviceStartHHMM,
+    lastServiceHHMM: "22:30",
   });
   // Siempre usamos el resultado del perfil (con perfil por defecto = 4 buses
   // para líneas sin perfil explícito).
