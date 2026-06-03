@@ -35,13 +35,6 @@ export const HIDDEN_BUTTONS: HiddenButton[] = [
     reason: "Funcionalidad de notificaciones aún no lista para producción.",
   },
   {
-    id: "transporte-buses-larga-distancia",
-    label: "Buses larga distancia",
-    location: "Transporte multimodal inteligente · submenú",
-    file: "src/components/ChatScreen.tsx",
-    reason: "Pendiente de integración con datos en vivo (ALSA, Vectalia).",
-  },
-  {
     id: "transporte-taxis",
     label: "Taxis, Uber, Cabify",
     location: "Transporte multimodal inteligente · submenú",
