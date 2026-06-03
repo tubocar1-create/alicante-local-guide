@@ -13,7 +13,7 @@ import { useBusGraph } from "@/hooks/useBusGraph";
 import { useBusServiceWindows, useBusLineDepartures, getServiceStatus, getNightLineEstimates } from "@/hooks/useBusServiceWindow";
 import { cumulativeMinutes, NIGHT_URBAN_KMH } from "@/lib/bus-eta";
 import { requestFavoriteStopRealtime, type FavoriteStopRealtimeResult } from "@/lib/favorite-stop-firecrawl.functions";
-import { supabase } from "@/integrations/supabase/client";
+import { getVisitorId } from "@/lib/tracking/visitor";
 
 export const Route = createFileRoute("/transporte_/parada-favorita")({
   validateSearch: (s: Record<string, unknown>) => ({
