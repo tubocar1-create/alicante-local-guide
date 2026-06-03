@@ -127,8 +127,19 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
       });
       const text = await r.text();
       try {
-        return JSON.parse(text);
+        const j = JSON.parse(text);
+        if (!j.horarios) {
+          console.warn("[cartelera] ADIF sin horarios", {
+            searchType, trafficType, numPage, status: r.status,
+            snippet: text.slice(0, 200),
+          });
+        }
+        return j;
       } catch {
+        console.warn("[cartelera] ADIF no-JSON", {
+          searchType, trafficType, status: r.status,
+          snippet: text.slice(0, 200),
+        });
         return { horarios: [] };
       }
     }
