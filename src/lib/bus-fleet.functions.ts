@@ -17,6 +17,7 @@ import {
   generateActiveFleet,
   deriveStopEtas,
 } from "@/lib/bus-engine/fleet";
+import type { Direction, VirtualBus } from "@/lib/bus-engine/types";
 import { getServiceSlot } from "@/lib/bus-engine/slots";
 import { classifyPredictionQuality, shouldEnterSafeMode } from "@/lib/bus-engine/safe-mode";
 import { extraBusActivationScore } from "@/lib/bus-engine/extra-bus-activation";
@@ -30,6 +31,16 @@ function todayMadrid(): string {
     day: "2-digit",
   });
   return fmt.format(new Date());
+}
+
+function hhmmssToMinutes(value: string | null | undefined): number {
+  if (!value) return 0;
+  const [h, m, s] = value.split(":").map((n) => Number(n));
+  return (h || 0) * 60 + (m || 0) + (s || 0) / 60;
+}
+
+function tripDirectionFromKey(tripKey: string, fallback: Direction): Direction {
+  return tripKey.startsWith("2-") ? 2 : tripKey.startsWith("1-") ? 1 : fallback;
 }
 
 async function loadPhaseCorrections(lineCode: string): Promise<Map<string, number>> {
@@ -147,7 +158,8 @@ async function tickLineInternal(lineCode: string) {
       departureTime = `${hh}:${mm}:00`;
     }
 
-    await supabaseAdmin.from("virtual_buses").upsert(
+    const deathAt = new Date(at.getTime() + Math.max(0, bus.tripElapsedMin == null ? 0 : ((bus.tripDirection === 2 ? plan.dirVuelta?.totalMin : plan.dirIda?.totalMin) ?? 0) - bus.tripElapsedMin) * 60_000).toISOString();
+    const { error: upsertError } = await supabaseAdmin.from("virtual_buses").upsert(
       {
         line_code: lineCode,
         direction: bus.direction,
@@ -171,6 +183,8 @@ async function tickLineInternal(lineCode: string) {
         reliability: bus.reliability ?? 0.5,
         last_observation_sec: lastObsSec,
         speed_kmh: bus.speedKmh ?? null,
+        estimated_terminal_arrival: deathAt,
+        estimated_cycle_completion: deathAt,
         safe_mode: safeMode,
         meta: {
           phase_correction: existingCorr,
@@ -184,6 +198,7 @@ async function tickLineInternal(lineCode: string) {
       },
       { onConflict: "line_code,direction,trip_key,service_date" },
     );
+    if (upsertError) throw new Error(`virtual_buses upsert failed: ${upsertError.message}`);
   }
 
   // Desactivar buses fuera de la flota actual.
@@ -197,12 +212,13 @@ async function tickLineInternal(lineCode: string) {
       .filter((r) => r.is_active && !activeKeys.has(`${r.direction}::${r.trip_key}`))
       .map((r) => r.id);
     if (toDeactivate.length > 0) {
-      await supabaseAdmin.from("virtual_buses").update({ is_active: false }).in("id", toDeactivate);
+      const { error } = await supabaseAdmin.from("virtual_buses").update({ is_active: false }).in("id", toDeactivate);
+      if (error) throw new Error(`virtual_buses deactivate failed: ${error.message}`);
     }
   }
 
   // UPSERT health.
-  await supabaseAdmin.from("bus_engine_health").upsert(
+  const { error: healthError } = await supabaseAdmin.from("bus_engine_health").upsert(
     {
       line_code: lineCode,
       last_tick_at: nowIso,
@@ -226,12 +242,13 @@ async function tickLineInternal(lineCode: string) {
     },
     { onConflict: "line_code" },
   );
+  if (healthError) throw new Error(`bus_engine_health upsert failed: ${healthError.message}`);
 
   // Log de activación: alimenta el aprendizaje de patrones (línea 12 etc.).
   // Sólo si la línea tiene perfil operacional y está en ventana de servicio.
   const profile = getLineProfile(lineCode);
   if (profile && plan.fleetWindow !== "before_service" && plan.fleetWindow !== "after_last_service") {
-    await supabaseAdmin.from("bus_line_fleet_activations").insert({
+    const { error: activationError } = await supabaseAdmin.from("bus_line_fleet_activations").insert({
       line_code: lineCode,
       service_date: serviceDate,
       weekday: at.getDay(),
@@ -255,6 +272,7 @@ async function tickLineInternal(lineCode: string) {
         historical_pattern: historical,
       },
     });
+    if (activationError) throw new Error(`bus_line_fleet_activations insert failed: ${activationError.message}`);
   }
 
   return {
