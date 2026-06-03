@@ -222,51 +222,24 @@ function BusDetail() {
               </div>
             </div>
 
-            {/* Trayecto principal */}
+            {/* Itinerario completo (incluye origen, paradas y destino) */}
             <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
-              <div className="flex items-stretch gap-3">
-                <div className="flex flex-col items-center pt-1">
-                  <span className="h-2.5 w-2.5 rounded-full border-2 border-sky-400 bg-slate-900" />
-                  <span className="my-1 w-px flex-1 bg-gradient-to-b from-sky-500/40 via-slate-700 to-sky-500/40" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-sky-400" />
-                </div>
-                <div className="flex flex-1 flex-col justify-between gap-3">
-                  <div>
-                    <p className="font-mono text-2xl font-bold tabular-nums leading-none text-slate-100">
-                      {item.departure_time}
-                    </p>
-                    <p className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                      {item.origin_station}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 text-[11px] text-sky-300">
-                    <Clock className="h-3 w-3" />
-                    <span className="font-mono">{durLabel(item.duration_minutes)}</span>
-                    <span
-                      className="ml-2 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide"
-                      style={{ background: color + "1f", color }}
-                    >
-                      {label}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="font-mono text-2xl font-bold tabular-nums leading-none text-slate-100">
-                      {item.arrival_time}
-                    </p>
-                    <p className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                      {item.destination_station}
-                    </p>
-                  </div>
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <h2 className="flex items-center gap-2 text-sm font-semibold text-white">
+                  <MapPin className="h-4 w-4 text-sky-400" />
+                  Itinerario
+                </h2>
+                <div className="flex items-center gap-2 text-[11px] text-sky-300">
+                  <Clock className="h-3 w-3" />
+                  <span className="font-mono">{durLabel(item.duration_minutes)}</span>
+                  <span
+                    className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide"
+                    style={{ background: color + "1f", color }}
+                  >
+                    {label}
+                  </span>
                 </div>
               </div>
-            </div>
-
-            {/* Itinerario completo */}
-            <section className="mt-4">
-              <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-white">
-                <MapPin className="h-4 w-4 text-sky-400" />
-                Itinerario
-              </h2>
               {(() => {
                 const itin = buildItinerary(item);
                 return (
@@ -274,6 +247,7 @@ function BusDetail() {
                     {itin.map((s, i) => {
                       const meta = kindMeta(s.kind);
                       const isLast = i === itin.length - 1;
+                      const emphasize = s.kind === "origen" || s.kind === "destino";
                       return (
                         <li key={`${s.time}-${s.name}-${i}`} className={isLast ? "" : "pb-3"}>
                           <span
@@ -281,7 +255,9 @@ function BusDetail() {
                             style={{ background: meta.color }}
                           />
                           <div className="flex items-baseline gap-2">
-                            <span className="font-mono text-sm font-bold tabular-nums text-slate-100">
+                            <span
+                              className={`font-mono tabular-nums text-slate-100 ${emphasize ? "text-lg font-bold" : "text-sm font-semibold"}`}
+                            >
                               {s.time}
                             </span>
                             <span
@@ -291,7 +267,9 @@ function BusDetail() {
                               {meta.label}
                             </span>
                           </div>
-                          <p className="mt-0.5 text-[12px] leading-snug text-slate-200">
+                          <p
+                            className={`mt-0.5 leading-snug text-slate-200 ${emphasize ? "text-[13px] font-semibold" : "text-[12px]"}`}
+                          >
                             {s.name}
                             <span className="ml-1 text-[10px] uppercase tracking-wider text-slate-500">
                               · {s.city}
@@ -303,14 +281,14 @@ function BusDetail() {
                   </ol>
                 );
               })()}
-            </section>
+              <p className="mt-3 border-t border-slate-800 pt-2 text-[11px] leading-relaxed text-slate-400">
+                <span className="font-semibold text-emerald-300">Origen</span> y{" "}
+                <span className="font-semibold text-pink-300">Destino</span> son las terminales.{" "}
+                <span className="font-semibold text-sky-300">Recogida</span> = parada para subir al bus.
+                Las paradas intermedias permiten bajarse durante el trayecto.
+              </p>
+            </div>
 
-            <p className="mt-3 rounded-xl border border-slate-800 bg-slate-950/40 p-3 text-[11px] leading-relaxed text-slate-400">
-              <span className="font-semibold text-slate-300">Origen / Destino</span> son las terminales
-              del recorrido. <span className="font-semibold text-sky-300">Recogida</span> = parada para
-              subir al bus. <span className="font-semibold text-pink-300">Destino</span> = última parada.
-              Las paradas intermedias permiten bajarse durante el trayecto.
-            </p>
 
 
             <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
