@@ -154,6 +154,7 @@ export function FavoriteStopWidget() {
   const [show, setShow] = useState<boolean>(true);
   const [liveMin, setLiveMin] = useState<number | null>(null);
   const [liveSource, setLiveSource] = useState<"realtime" | "engine" | null>(null);
+  const [, setTick] = useState(0);
   const { data: graph } = useBusGraph();
   const { data: engine } = useBusEngine();
 
@@ -164,17 +165,39 @@ export function FavoriteStopWidget() {
       setStop(loadFavoriteStop());
       setShow(loadShowOnHome());
     };
+    const onLive = () => setTick((t) => t + 1);
     window.addEventListener("vamos:favorite-stop-changed", onChange);
+    window.addEventListener("vamos:favorite-stop-live", onLive);
+    // Recalcular countdown del snapshot cada 30s.
+    const id = window.setInterval(() => setTick((t) => t + 1), 30_000);
     return () => {
       window.removeEventListener("vamos:favorite-stop-changed", onChange);
+      window.removeEventListener("vamos:favorite-stop-live", onLive);
+      window.clearInterval(id);
     };
   }, []);
 
-  // No usamos Vectalia en el home (cada llamada cuesta 1 crédito Firecrawl y
-  // está limitada a 3/día por usuario). Mostramos predicción del motor; el
-  // usuario podrá pedir el tiempo real desde /transporte/parada-favorita.
+  // Si hay snapshot real (Vectalia) vigente para ESTA parada+línea, prevalece.
+  // Si no, caemos al motor de predicción local. Nunca llamamos a Firecrawl
+  // desde el home (cada llamada cuesta 1 crédito y se gestiona en /transporte/parada-favorita).
   useEffect(() => {
+    const snap = loadFavoriteStopLiveSnapshot();
+    const live = liveSnapshotRemaining(snap, stop.stopId, stop.line);
+    if (live) {
+      setLiveMin(live.etaMin);
+      setLiveSource("realtime");
+      return;
+    }
     if (engine) {
+      const arrivals = predictStopArrivals(engine, stop.stopId);
+      const forLine = arrivals.filter((a) => a.line === stop.line);
+      setLiveMin(forLine[0]?.etaMin ?? null);
+      setLiveSource(forLine[0] ? "engine" : null);
+    } else {
+      setLiveMin(null);
+      setLiveSource(null);
+    }
+  }, [stop.stopId, stop.line, engine]);
       const arrivals = predictStopArrivals(engine, stop.stopId);
       const forLine = arrivals.filter((a) => a.line === stop.line);
       setLiveMin(forLine[0]?.etaMin ?? null);
