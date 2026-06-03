@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-// Fuente oficial: SUBUS consulta.aspx. Esa página carga los minutos con su
-// propia llamada interna; aquí replicamos esa secuencia desde NUESTRO servidor.
+// Fuente oficial: QR Vectalia Alicante. Usamos el host HTTPS final; subus.es es
+// un alias HTTP antiguo que provoca redirecciones y bloqueos intermitentes.
 
-const BASE = "http://www.subus.es/QR/Alicante";
+const BASE = "https://qr.vectalia.es/Alicante";
 const UA =
   "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36";
 const TIMEOUT_MS = 8_000;

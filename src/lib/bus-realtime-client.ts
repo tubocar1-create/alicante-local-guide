@@ -22,8 +22,8 @@ const cache = new Map<string, StopRealtimeResult>();
 const inFlight = new Map<string, Promise<StopRealtimeResult>>();
 const batchQueues = new Map<string, { ids: Set<string>; waiters: Map<string, (() => void)[]>; timer: ReturnType<typeof setTimeout> | null }>();
 
-// Lee QR directo desde el navegador (sin scraping, sin server). El servidor solo
-// recibe el snapshot ya parseado para cachearlo en BBDD (fire-and-forget).
+// Lee el QR vía /api/public/bus-datos. El navegador no llama directo a Vectalia;
+// el servidor recibe el snapshot ya parseado para cachearlo en BBDD.
 async function fetchStop(stopId: string): Promise<StopRealtimeResult> {
   const valid = cache.get(stopId);
   if (valid && Date.now() - valid.fetchedAt < CACHE_TTL_MS) return valid;
@@ -164,8 +164,8 @@ export async function getClientStopsRealtimeBatch({
   });
 
   if (missingIds.length > 0) {
-    // Lectura directa del QR desde el navegador para cada parada. Sin scraping
-    // ni server. `fetchStop` ya hace dedup, cache TTL e ingesta a BBDD.
+    // Lectura vía bridge para cada parada. `fetchStop` ya hace dedup, cache TTL
+    // e ingesta a BBDD.
     for (const stopId of missingIds) {
       inFlight.set(stopId, fetchStop(stopId));
     }

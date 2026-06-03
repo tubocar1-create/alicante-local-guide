@@ -1,10 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-// Tiempo real oficial QR: el NAVEGADOR lee la página oficial de SUBUS
-// (http://www.subus.es/QR/Alicante/consulta.aspx?p=N) e ingesta el resultado
-// en la tabla `bus_realtime_snapshots`. Este endpoint público devuelve lo que
-// haya cacheado en BBDD. NO scrapea, NO usa ScrapingBee/Firecrawl.
+// Tiempo real oficial QR: la app lee vía /api/public/bus-datos e ingesta el
+// resultado en `bus_realtime_snapshots`. Este endpoint público devuelve lo que
+// haya cacheado en BBDD. NO llama directo desde el navegador a Vectalia.
 
 function normalizeLine(code: string): string {
   const m = code.trim().toUpperCase().match(/^(\d+)([A-Z]?)$/);

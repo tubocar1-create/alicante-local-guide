@@ -94,7 +94,7 @@ const RECURSOS = [
   },
   {
     label: "Mapa interactivo de paradas",
-    url: "http://www.subus.es/QR/Alicante/mapa.aspx",
+    url: "https://qr.vectalia.es/Alicante/mapa.aspx",
     desc: "Encuentra paradas cercanas con QR",
   },
 ];
@@ -167,7 +167,7 @@ function BusUrbanoPage() {
     }
     setError(null);
     window.open(
-      `http://www.subus.es/QR/Alicante/consulta.aspx?p=${stopCode.trim()}`,
+      `https://qr.vectalia.es/Alicante/consulta.aspx?p=${stopCode.trim()}`,
       "_blank",
     );
   }
