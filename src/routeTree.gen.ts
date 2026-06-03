@@ -37,6 +37,7 @@ import { Route as ComprarRouteImport } from './routes/comprar'
 import { Route as ClimaRouteImport } from './routes/clima'
 import { Route as CarteleraRouteImport } from './routes/cartelera'
 import { Route as BusinessRouteImport } from './routes/business'
+import { Route as BusesRouteImport } from './routes/buses'
 import { Route as BusRouteImport } from './routes/bus'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -304,6 +305,11 @@ const CarteleraRoute = CarteleraRouteImport.update({
 const BusinessRoute = BusinessRouteImport.update({
   id: '/business',
   path: '/business',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BusesRoute = BusesRouteImport.update({
+  id: '/buses',
+  path: '/buses',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BusRoute = BusRouteImport.update({
@@ -969,6 +975,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/bus': typeof BusRouteWithChildren
+  '/buses': typeof BusesRoute
   '/business': typeof BusinessRouteWithChildren
   '/cartelera': typeof CarteleraRoute
   '/clima': typeof ClimaRoute
@@ -1126,6 +1133,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bus': typeof BusRouteWithChildren
+  '/buses': typeof BusesRoute
   '/cartelera': typeof CarteleraRoute
   '/clima': typeof ClimaRoute
   '/comprar': typeof ComprarRoute
@@ -1283,6 +1291,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/bus': typeof BusRouteWithChildren
+  '/buses': typeof BusesRoute
   '/business': typeof BusinessRouteWithChildren
   '/cartelera': typeof CarteleraRoute
   '/clima': typeof ClimaRoute
@@ -1443,6 +1452,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/bus'
+    | '/buses'
     | '/business'
     | '/cartelera'
     | '/clima'
@@ -1600,6 +1610,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/bus'
+    | '/buses'
     | '/cartelera'
     | '/clima'
     | '/comprar'
@@ -1756,6 +1767,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/bus'
+    | '/buses'
     | '/business'
     | '/cartelera'
     | '/clima'
@@ -1915,6 +1927,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   BusRoute: typeof BusRouteWithChildren
+  BusesRoute: typeof BusesRoute
   BusinessRoute: typeof BusinessRouteWithChildren
   CarteleraRoute: typeof CarteleraRoute
   ClimaRoute: typeof ClimaRoute
@@ -2204,6 +2217,13 @@ declare module '@tanstack/react-router' {
       path: '/business'
       fullPath: '/business'
       preLoaderRoute: typeof BusinessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buses': {
+      id: '/buses'
+      path: '/buses'
+      fullPath: '/buses'
+      preLoaderRoute: typeof BusesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bus': {
@@ -3344,6 +3364,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   BusRoute: BusRouteWithChildren,
+  BusesRoute: BusesRoute,
   BusinessRoute: BusinessRouteWithChildren,
   CarteleraRoute: CarteleraRoute,
   ClimaRoute: ClimaRoute,
