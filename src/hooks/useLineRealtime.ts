@@ -31,17 +31,21 @@ const STALE_MS = 5 * 60 * 1000;
 const FROZEN_MS = 10 * 60 * 1000;
 const CONCURRENCY = 6;
 
-function isPreviewHost(): boolean {
+export function isPreviewHost(): boolean {
   if (typeof window === "undefined") return false; // SSR → trátalo como publicado
   const h = window.location.hostname;
   return (
     h === "localhost" ||
     h === "127.0.0.1" ||
+    h === "dev.lovable.build" ||
     h.endsWith(".lovable.build") ||
+    h.endsWith(".lovable.dev") ||
     h.endsWith("-dev.lovable.app") ||
+    h.endsWith(".sandbox.lovable.dev") ||
     h.startsWith("id-preview--")
   );
 }
+
 
 async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
   const out: R[] = new Array(items.length);

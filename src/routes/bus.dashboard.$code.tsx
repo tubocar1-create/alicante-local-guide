@@ -16,7 +16,7 @@ import {
 import { cumulativeMinutes, NIGHT_URBAN_KMH } from "@/lib/bus-eta";
 import { getClientStopRealtime } from "@/lib/bus-realtime-client";
 import busAlicanteImg from "@/assets/bus-alicante.png";
-import { useLineRealtime } from "@/hooks/useLineRealtime";
+import { useLineRealtime, isPreviewHost } from "@/hooks/useLineRealtime";
 
 
 
@@ -352,15 +352,18 @@ function BusDashboardPage() {
     isNightLine ? null : code,
   );
 
+  // Preview NUNCA se toca: ahí ignoramos cualquier lógica de "congelado/n.d.".
+  const inPreview = isPreviewHost();
+
   const etas = useMemo<Record<string, number[]>>(() => {
     if (!realtime) return {};
     const out: Record<string, number[]> = {};
     const nowMs = clock.getTime();
     for (const s of realtime.stops) {
       if (!s.etaMinutes || s.etaMinutes.length === 0) continue;
-      // Si el snapshot de esta parada lleva >10 min sin refrescarse, congelamos:
-      // no inventamos un autobús que probablemente ya pasó. Cae a "n/d".
-      if (s.frozen) continue;
+      // En producción, si una parada lleva >10 min sin refresco, no inventamos
+      // un bus que ya pasó. En preview no se aplica jamás.
+      if (!inPreview && s.frozen) continue;
       const capturedMs = Date.parse(s.capturedAt);
       const elapsedMin = Number.isFinite(capturedMs)
         ? Math.max(0, (nowMs - capturedMs) / 60_000)
@@ -371,7 +374,8 @@ function BusDashboardPage() {
       out[s.stopCode] = decremented;
     }
     return out;
-  }, [realtime, clock]);
+  }, [realtime, clock, inPreview]);
+
 
 
   // Mientras carga el primer snapshot, marcamos todas las paradas como "cargando"
@@ -481,8 +485,10 @@ function BusDashboardPage() {
           </div>
         )}
 
-        {/* Antigüedad de los datos en vivo: badge "n/d" si lleva >5 min sin refresco. */}
-        {!isNightLine && realtime && realtime.ageSec != null && (realtime.stale || realtime.frozen) && (
+        {/* Antigüedad de los datos en vivo: badge "n/d" si lleva >5 min sin refresco.
+            En PREVIEW nunca se muestra: preview es la fuente de la verdad. */}
+        {!inPreview && !isNightLine && realtime && realtime.ageSec != null && (realtime.stale || realtime.frozen) && (
+
           <div className="mt-3 flex items-center gap-2 rounded-xl border border-amber-400/30 bg-amber-400/10 px-3 py-2">
             <span className="font-sans text-[10px] font-black not-italic uppercase tracking-wider text-amber-300">
               n/d
