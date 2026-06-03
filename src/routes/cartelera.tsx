@@ -394,7 +394,7 @@ function RawAdifTable({ rows, kind }: { rows: Array<Record<string, any>>; kind: 
                   )}
                   {departed && !delayed && !cancelled && (
                     <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-500 no-underline">
-                      Salido
+                      {kind === "SALIDA" ? "Salido" : "Llegado"}
                     </div>
                   )}
                 </td>
