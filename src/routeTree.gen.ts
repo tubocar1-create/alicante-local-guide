@@ -115,6 +115,7 @@ import { Route as ComprarTiendaIdRouteImport } from './routes/comprar_.tienda.$i
 import { Route as ComprarSectorSectorRouteImport } from './routes/comprar_.sector.$sector'
 import { Route as ComprarSubsectorSubsubsectorRouteImport } from './routes/comprar_.$subsector_.$subsubsector'
 import { Route as BusinessInboxIdRouteImport } from './routes/business.inbox.$id'
+import { Route as BusesAlsaSlugRouteImport } from './routes/buses_.alsa.$slug'
 import { Route as BusDashboardCodeRouteImport } from './routes/bus.dashboard.$code'
 import { Route as ApiPublicRefreshNewsRouteImport } from './routes/api/public/refresh-news'
 import { Route as ApiPublicRefreshIncidenciasRouteImport } from './routes/api/public/refresh-incidencias'
@@ -164,6 +165,7 @@ import { Route as ApiPublicHooksEventosSyncRouteImport } from './routes/api/publ
 import { Route as ApiPublicHooksCleanupTrainSnapshotsRouteImport } from './routes/api/public/hooks/cleanup-train-snapshots'
 import { Route as ApiPublicHooksCinemasSyncRouteImport } from './routes/api/public/hooks/cinemas-sync'
 import { Route as ApiPublicHooksBusFleetTickRouteImport } from './routes/api/public/hooks/bus-fleet-tick'
+import { Route as ApiPublicHooksAlsaSyncRouteImport } from './routes/api/public/hooks/alsa-sync'
 import { Route as ApiPublicHooksAgenteLearnRouteImport } from './routes/api/public/hooks/agente-learn'
 import { Route as ApiPublicHooksAenaSyncRouteImport } from './routes/api/public/hooks/aena-sync'
 import { Route as ApiPublicGooglePhotoSplatRouteImport } from './routes/api/public/google-photo.$'
@@ -700,6 +702,11 @@ const BusinessInboxIdRoute = BusinessInboxIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => BusinessInboxRoute,
 } as any)
+const BusesAlsaSlugRoute = BusesAlsaSlugRouteImport.update({
+  id: '/buses_/alsa/$slug',
+  path: '/buses/alsa/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BusDashboardCodeRoute = BusDashboardCodeRouteImport.update({
   id: '/dashboard/$code',
   path: '/dashboard/$code',
@@ -959,6 +966,11 @@ const ApiPublicHooksBusFleetTickRoute =
     path: '/api/public/hooks/bus-fleet-tick',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksAlsaSyncRoute = ApiPublicHooksAlsaSyncRouteImport.update({
+  id: '/api/public/hooks/alsa-sync',
+  path: '/api/public/hooks/alsa-sync',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksAgenteLearnRoute =
   ApiPublicHooksAgenteLearnRouteImport.update({
     id: '/api/public/hooks/agente-learn',
@@ -1097,6 +1109,7 @@ export interface FileRoutesByFullPath {
   '/api/public/refresh-incidencias': typeof ApiPublicRefreshIncidenciasRoute
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/dashboard/$code': typeof BusDashboardCodeRoute
+  '/buses/alsa/$slug': typeof BusesAlsaSlugRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
   '/comprar/$subsector/$subsubsector': typeof ComprarSubsectorSubsubsectorRoute
   '/comprar/sector/$sector': typeof ComprarSectorSectorRoute
@@ -1115,6 +1128,7 @@ export interface FileRoutesByFullPath {
   '/api/public/google-photo/$': typeof ApiPublicGooglePhotoSplatRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
   '/api/public/hooks/agente-learn': typeof ApiPublicHooksAgenteLearnRoute
+  '/api/public/hooks/alsa-sync': typeof ApiPublicHooksAlsaSyncRoute
   '/api/public/hooks/bus-fleet-tick': typeof ApiPublicHooksBusFleetTickRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
   '/api/public/hooks/cleanup-train-snapshots': typeof ApiPublicHooksCleanupTrainSnapshotsRoute
@@ -1254,6 +1268,7 @@ export interface FileRoutesByTo {
   '/api/public/refresh-incidencias': typeof ApiPublicRefreshIncidenciasRoute
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/dashboard/$code': typeof BusDashboardCodeRoute
+  '/buses/alsa/$slug': typeof BusesAlsaSlugRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
   '/comprar/$subsector/$subsubsector': typeof ComprarSubsectorSubsubsectorRoute
   '/comprar/sector/$sector': typeof ComprarSectorSectorRoute
@@ -1272,6 +1287,7 @@ export interface FileRoutesByTo {
   '/api/public/google-photo/$': typeof ApiPublicGooglePhotoSplatRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
   '/api/public/hooks/agente-learn': typeof ApiPublicHooksAgenteLearnRoute
+  '/api/public/hooks/alsa-sync': typeof ApiPublicHooksAlsaSyncRoute
   '/api/public/hooks/bus-fleet-tick': typeof ApiPublicHooksBusFleetTickRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
   '/api/public/hooks/cleanup-train-snapshots': typeof ApiPublicHooksCleanupTrainSnapshotsRoute
@@ -1415,6 +1431,7 @@ export interface FileRoutesById {
   '/api/public/refresh-incidencias': typeof ApiPublicRefreshIncidenciasRoute
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/dashboard/$code': typeof BusDashboardCodeRoute
+  '/buses_/alsa/$slug': typeof BusesAlsaSlugRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
   '/comprar_/$subsector_/$subsubsector': typeof ComprarSubsectorSubsubsectorRoute
   '/comprar_/sector/$sector': typeof ComprarSectorSectorRoute
@@ -1433,6 +1450,7 @@ export interface FileRoutesById {
   '/api/public/google-photo/$': typeof ApiPublicGooglePhotoSplatRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
   '/api/public/hooks/agente-learn': typeof ApiPublicHooksAgenteLearnRoute
+  '/api/public/hooks/alsa-sync': typeof ApiPublicHooksAlsaSyncRoute
   '/api/public/hooks/bus-fleet-tick': typeof ApiPublicHooksBusFleetTickRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
   '/api/public/hooks/cleanup-train-snapshots': typeof ApiPublicHooksCleanupTrainSnapshotsRoute
@@ -1577,6 +1595,7 @@ export interface FileRouteTypes {
     | '/api/public/refresh-incidencias'
     | '/api/public/refresh-news'
     | '/bus/dashboard/$code'
+    | '/buses/alsa/$slug'
     | '/business/inbox/$id'
     | '/comprar/$subsector/$subsubsector'
     | '/comprar/sector/$sector'
@@ -1595,6 +1614,7 @@ export interface FileRouteTypes {
     | '/api/public/google-photo/$'
     | '/api/public/hooks/aena-sync'
     | '/api/public/hooks/agente-learn'
+    | '/api/public/hooks/alsa-sync'
     | '/api/public/hooks/bus-fleet-tick'
     | '/api/public/hooks/cinemas-sync'
     | '/api/public/hooks/cleanup-train-snapshots'
@@ -1734,6 +1754,7 @@ export interface FileRouteTypes {
     | '/api/public/refresh-incidencias'
     | '/api/public/refresh-news'
     | '/bus/dashboard/$code'
+    | '/buses/alsa/$slug'
     | '/business/inbox/$id'
     | '/comprar/$subsector/$subsubsector'
     | '/comprar/sector/$sector'
@@ -1752,6 +1773,7 @@ export interface FileRouteTypes {
     | '/api/public/google-photo/$'
     | '/api/public/hooks/aena-sync'
     | '/api/public/hooks/agente-learn'
+    | '/api/public/hooks/alsa-sync'
     | '/api/public/hooks/bus-fleet-tick'
     | '/api/public/hooks/cinemas-sync'
     | '/api/public/hooks/cleanup-train-snapshots'
@@ -1894,6 +1916,7 @@ export interface FileRouteTypes {
     | '/api/public/refresh-incidencias'
     | '/api/public/refresh-news'
     | '/bus/dashboard/$code'
+    | '/buses_/alsa/$slug'
     | '/business/inbox/$id'
     | '/comprar_/$subsector_/$subsubsector'
     | '/comprar_/sector/$sector'
@@ -1912,6 +1935,7 @@ export interface FileRouteTypes {
     | '/api/public/google-photo/$'
     | '/api/public/hooks/aena-sync'
     | '/api/public/hooks/agente-learn'
+    | '/api/public/hooks/alsa-sync'
     | '/api/public/hooks/bus-fleet-tick'
     | '/api/public/hooks/cinemas-sync'
     | '/api/public/hooks/cleanup-train-snapshots'
@@ -1999,6 +2023,7 @@ export interface RootRouteChildren {
   ApiPublicRefreshAlicantePressRoute: typeof ApiPublicRefreshAlicantePressRoute
   ApiPublicRefreshIncidenciasRoute: typeof ApiPublicRefreshIncidenciasRoute
   ApiPublicRefreshNewsRoute: typeof ApiPublicRefreshNewsRoute
+  BusesAlsaSlugRoute: typeof BusesAlsaSlugRoute
   ComprarSubsectorSubsubsectorRoute: typeof ComprarSubsectorSubsubsectorRoute
   ComprarSectorSectorRoute: typeof ComprarSectorSectorRoute
   ComprarTiendaIdRoute: typeof ComprarTiendaIdRoute
@@ -2011,6 +2036,7 @@ export interface RootRouteChildren {
   ApiPublicGooglePhotoSplatRoute: typeof ApiPublicGooglePhotoSplatRoute
   ApiPublicHooksAenaSyncRoute: typeof ApiPublicHooksAenaSyncRoute
   ApiPublicHooksAgenteLearnRoute: typeof ApiPublicHooksAgenteLearnRoute
+  ApiPublicHooksAlsaSyncRoute: typeof ApiPublicHooksAlsaSyncRoute
   ApiPublicHooksBusFleetTickRoute: typeof ApiPublicHooksBusFleetTickRoute
   ApiPublicHooksCinemasSyncRoute: typeof ApiPublicHooksCinemasSyncRoute
   ApiPublicHooksCleanupTrainSnapshotsRoute: typeof ApiPublicHooksCleanupTrainSnapshotsRoute
@@ -2778,6 +2804,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BusinessInboxIdRouteImport
       parentRoute: typeof BusinessInboxRoute
     }
+    '/buses_/alsa/$slug': {
+      id: '/buses_/alsa/$slug'
+      path: '/buses/alsa/$slug'
+      fullPath: '/buses/alsa/$slug'
+      preLoaderRoute: typeof BusesAlsaSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/bus/dashboard/$code': {
       id: '/bus/dashboard/$code'
       path: '/dashboard/$code'
@@ -3121,6 +3154,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksBusFleetTickRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/alsa-sync': {
+      id: '/api/public/hooks/alsa-sync'
+      path: '/api/public/hooks/alsa-sync'
+      fullPath: '/api/public/hooks/alsa-sync'
+      preLoaderRoute: typeof ApiPublicHooksAlsaSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/agente-learn': {
       id: '/api/public/hooks/agente-learn'
       path: '/api/public/hooks/agente-learn'
@@ -3444,6 +3484,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicRefreshAlicantePressRoute: ApiPublicRefreshAlicantePressRoute,
   ApiPublicRefreshIncidenciasRoute: ApiPublicRefreshIncidenciasRoute,
   ApiPublicRefreshNewsRoute: ApiPublicRefreshNewsRoute,
+  BusesAlsaSlugRoute: BusesAlsaSlugRoute,
   ComprarSubsectorSubsubsectorRoute: ComprarSubsectorSubsubsectorRoute,
   ComprarSectorSectorRoute: ComprarSectorSectorRoute,
   ComprarTiendaIdRoute: ComprarTiendaIdRoute,
@@ -3456,6 +3497,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicGooglePhotoSplatRoute: ApiPublicGooglePhotoSplatRoute,
   ApiPublicHooksAenaSyncRoute: ApiPublicHooksAenaSyncRoute,
   ApiPublicHooksAgenteLearnRoute: ApiPublicHooksAgenteLearnRoute,
+  ApiPublicHooksAlsaSyncRoute: ApiPublicHooksAlsaSyncRoute,
   ApiPublicHooksBusFleetTickRoute: ApiPublicHooksBusFleetTickRoute,
   ApiPublicHooksCinemasSyncRoute: ApiPublicHooksCinemasSyncRoute,
   ApiPublicHooksCleanupTrainSnapshotsRoute:
