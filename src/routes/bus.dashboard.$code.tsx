@@ -358,6 +358,9 @@ function BusDashboardPage() {
     const nowMs = clock.getTime();
     for (const s of realtime.stops) {
       if (!s.etaMinutes || s.etaMinutes.length === 0) continue;
+      // Si el snapshot de esta parada lleva >10 min sin refrescarse, congelamos:
+      // no inventamos un autobús que probablemente ya pasó. Cae a "n/d".
+      if (s.frozen) continue;
       const capturedMs = Date.parse(s.capturedAt);
       const elapsedMin = Number.isFinite(capturedMs)
         ? Math.max(0, (nowMs - capturedMs) / 60_000)
@@ -369,6 +372,7 @@ function BusDashboardPage() {
     }
     return out;
   }, [realtime, clock]);
+
 
   // Mientras carga el primer snapshot, marcamos todas las paradas como "cargando"
   // para no mostrar "n/d" durante el arranque.
