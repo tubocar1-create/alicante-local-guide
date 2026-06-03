@@ -17,6 +17,7 @@ import {
   generateActiveFleet,
   deriveStopEtas,
 } from "@/lib/bus-engine/fleet";
+import type { Direction, VirtualBus } from "@/lib/bus-engine/types";
 import { getServiceSlot } from "@/lib/bus-engine/slots";
 import { classifyPredictionQuality, shouldEnterSafeMode } from "@/lib/bus-engine/safe-mode";
 import { extraBusActivationScore } from "@/lib/bus-engine/extra-bus-activation";
@@ -30,6 +31,28 @@ function todayMadrid(): string {
     day: "2-digit",
   });
   return fmt.format(new Date());
+}
+
+function currentMadridMinutes(at: Date): number {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Madrid",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(at);
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0);
+  return get("hour") * 60 + get("minute") + get("second") / 60;
+}
+
+function hhmmssToMinutes(value: string | null | undefined): number {
+  if (!value) return 0;
+  const [h, m, s] = value.split(":").map((n) => Number(n));
+  return (h || 0) * 60 + (m || 0) + (s || 0) / 60;
+}
+
+function tripDirectionFromKey(tripKey: string, fallback: Direction): Direction {
+  return tripKey.startsWith("2-") ? 2 : tripKey.startsWith("1-") ? 1 : fallback;
 }
 
 async function loadPhaseCorrections(lineCode: string): Promise<Map<string, number>> {
@@ -147,7 +170,8 @@ async function tickLineInternal(lineCode: string) {
       departureTime = `${hh}:${mm}:00`;
     }
 
-    await supabaseAdmin.from("virtual_buses").upsert(
+    const deathAt = new Date(at.getTime() + Math.max(0, bus.tripElapsedMin == null ? 0 : ((bus.tripDirection === 2 ? plan.dirVuelta?.totalMin : plan.dirIda?.totalMin) ?? 0) - bus.tripElapsedMin) * 60_000).toISOString();
+    const { error: upsertError } = await supabaseAdmin.from("virtual_buses").upsert(
       {
         line_code: lineCode,
         direction: bus.direction,
@@ -171,6 +195,8 @@ async function tickLineInternal(lineCode: string) {
         reliability: bus.reliability ?? 0.5,
         last_observation_sec: lastObsSec,
         speed_kmh: bus.speedKmh ?? null,
+        estimated_terminal_arrival: deathAt,
+        estimated_cycle_completion: deathAt,
         safe_mode: safeMode,
         meta: {
           phase_correction: existingCorr,
@@ -184,6 +210,7 @@ async function tickLineInternal(lineCode: string) {
       },
       { onConflict: "line_code,direction,trip_key,service_date" },
     );
+    if (upsertError) throw new Error(`virtual_buses upsert failed: ${upsertError.message}`);
   }
 
   // Desactivar buses fuera de la flota actual.
@@ -197,12 +224,13 @@ async function tickLineInternal(lineCode: string) {
       .filter((r) => r.is_active && !activeKeys.has(`${r.direction}::${r.trip_key}`))
       .map((r) => r.id);
     if (toDeactivate.length > 0) {
-      await supabaseAdmin.from("virtual_buses").update({ is_active: false }).in("id", toDeactivate);
+      const { error } = await supabaseAdmin.from("virtual_buses").update({ is_active: false }).in("id", toDeactivate);
+      if (error) throw new Error(`virtual_buses deactivate failed: ${error.message}`);
     }
   }
 
   // UPSERT health.
-  await supabaseAdmin.from("bus_engine_health").upsert(
+  const { error: healthError } = await supabaseAdmin.from("bus_engine_health").upsert(
     {
       line_code: lineCode,
       last_tick_at: nowIso,
@@ -226,12 +254,13 @@ async function tickLineInternal(lineCode: string) {
     },
     { onConflict: "line_code" },
   );
+  if (healthError) throw new Error(`bus_engine_health upsert failed: ${healthError.message}`);
 
   // Log de activación: alimenta el aprendizaje de patrones (línea 12 etc.).
   // Sólo si la línea tiene perfil operacional y está en ventana de servicio.
   const profile = getLineProfile(lineCode);
   if (profile && plan.fleetWindow !== "before_service" && plan.fleetWindow !== "after_last_service") {
-    await supabaseAdmin.from("bus_line_fleet_activations").insert({
+    const { error: activationError } = await supabaseAdmin.from("bus_line_fleet_activations").insert({
       line_code: lineCode,
       service_date: serviceDate,
       weekday: at.getDay(),
@@ -255,6 +284,7 @@ async function tickLineInternal(lineCode: string) {
         historical_pattern: historical,
       },
     });
+    if (activationError) throw new Error(`bus_line_fleet_activations insert failed: ${activationError.message}`);
   }
 
   return {
@@ -335,6 +365,88 @@ export const getActiveFleet = createServerFn({ method: "GET" })
         meta: (r.meta ?? {}) as Record<string, string | number | boolean | null>,
       })),
     };
+  });
+
+export const getVirtualStopArrivals = createServerFn({ method: "GET" })
+  .inputValidator((input) =>
+    z.object({
+      stopCode: z.string().min(1).max(20),
+      line: z.string().min(1).max(20).optional(),
+    }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    const snap = await loadBusEngineSnapshot();
+    const engine = fromSnapshot(snap);
+    const wantedLine = data.line ? data.line.trim().toUpperCase() : null;
+    const linesAtStop = Array.from(new Set(
+      engine.stops
+        .filter((s) => s.stopCode === data.stopCode && (!wantedLine || s.lineCode.toUpperCase() === wantedLine))
+        .map((s) => s.lineCode),
+    ));
+    if (linesAtStop.length === 0) return { arrivals: [], all: [], etaMin: null, fetchedAt: Date.now() };
+
+    const { data: rows, error } = await supabaseAdmin
+      .from("virtual_buses")
+      .select("line_code,direction,trip_key,departure_time,current_segment_idx,segment_progress,state,confidence,position_lat,position_lng,last_tick_at,meta,safe_mode,origin_terminal,service_slot,speed_kmh,phase_error_sec,reliability,anchored_to_departure,is_active")
+      .eq("service_date", todayMadrid())
+      .eq("is_active", true)
+      .in("line_code", linesAtStop);
+    if (error) throw new Error(`virtual_buses read failed: ${error.message}`);
+
+    const now = new Date();
+    const arrivals: Array<{ line: string; direction: Direction; destination: string; etaMin: number; etaClock: string; confidence: number; busId: string; lat: number | null; lng: number | null }> = [];
+    for (const line of linesAtStop) {
+      const plan = buildLineFleetPlan(engine, line, now);
+      const fleet: VirtualBus[] = (rows ?? [])
+        .filter((r) => r.line_code === line)
+        .map((r) => {
+          const meta = (r.meta ?? {}) as Record<string, unknown>;
+          const dir = (Number(r.direction) === 2 ? 2 : 1) as Direction;
+          const tripDirection = tripDirectionFromKey(String(r.trip_key), dir);
+          const lastTickAgeMin = r.last_tick_at ? Math.max(0, (Date.now() - Date.parse(String(r.last_tick_at))) / 60_000) : 0;
+          const elapsedBase = typeof meta.elapsed_min === "number" ? meta.elapsed_min : Math.max(0, currentMadridMinutes(now) - hhmmssToMinutes(r.departure_time as string | null));
+          return {
+            busId: `${line}_${r.trip_key}`,
+            lineCode: line,
+            direction: dir,
+            status: r.state as VirtualBus["status"],
+            departureMin: hhmmssToMinutes(r.departure_time as string | null),
+            tripDirection,
+            tripElapsedMin: elapsedBase + lastTickAgeMin,
+            elapsedMin: elapsedBase + lastTickAgeMin,
+            segmentIndex: Number(r.current_segment_idx ?? 0),
+            segmentProgress: Number(r.segment_progress ?? 0),
+            position: r.position_lat != null && r.position_lng != null ? { lat: Number(r.position_lat), lng: Number(r.position_lng) } : null,
+            delayMin: Number(r.phase_error_sec ?? 0) / 60,
+            confidence: Number(r.confidence ?? 0.3),
+            anchoredDeparture: r.anchored_to_departure ?? true,
+            originTerminal: r.origin_terminal ?? null,
+            serviceSlot: r.service_slot ?? undefined,
+            phaseErrorSec: Number(r.phase_error_sec ?? 0),
+            reliability: Number(r.reliability ?? 0.5),
+            speedKmh: r.speed_kmh == null ? null : Number(r.speed_kmh),
+            safeMode: r.safe_mode ?? false,
+          };
+        });
+      const stopEtas = deriveStopEtas(plan, fleet, now).filter((e) => e.stopCode === data.stopCode);
+      for (const eta of stopEtas) {
+        const destStops = engine.stops.filter((s) => s.lineCode === line && s.direction === eta.direction).sort((a, b) => a.seq - b.seq);
+        const bus = fleet.find((b) => b.busId === eta.busId);
+        arrivals.push({
+          line,
+          direction: eta.direction,
+          destination: destStops[destStops.length - 1]?.stopName ?? "",
+          etaMin: eta.etaMin,
+          etaClock: eta.etaClock,
+          confidence: eta.confidence,
+          busId: eta.busId ?? "",
+          lat: bus?.position?.lat ?? null,
+          lng: bus?.position?.lng ?? null,
+        });
+      }
+    }
+    arrivals.sort((a, b) => a.etaMin - b.etaMin);
+    return { arrivals, all: arrivals.map((a) => a.etaMin), etaMin: arrivals[0]?.etaMin ?? null, fetchedAt: Date.now() };
   });
 
 // ------------------------------------------------------------------

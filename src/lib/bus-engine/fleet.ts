@@ -82,6 +82,18 @@ export type LineFleetPlan = {
   terminalVuelta: string | null;
 };
 
+function currentMadridMinutes(at: Date): number {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Madrid",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(at);
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0);
+  return get("hour") * 60 + get("minute") + get("second") / 60;
+}
+
 type CycleLocation = {
   direction: Direction;
   state: VirtualBus["status"];
@@ -182,7 +194,7 @@ export function buildLineFleetPlan(
   const cycleMin = cycleDurationMin(cycle, fallbackCycle, at);
 
   // Headway desde departures (ida como referencia primaria; si no, vuelta)
-  const now = nowMinutes(at);
+  const now = currentMadridMinutes(at);
   const idaDeps = getDeparturesForLine({
     lineCode,
     direction: 1,
@@ -208,7 +220,10 @@ export function buildLineFleetPlan(
   // Ventana de servicio derivada del HORARIO REAL: la primera salida del día
   // (en cualquier sentido) marca el arranque. El último bus sale a las 22:30
   // (regla fija). Esto evita aplicar 07:00 a líneas que arrancan antes/después.
-  const allDepsToday = [...idaDeps, ...vueltaDeps];
+  const realDepsToday = data.departures
+    .filter((d) => d.lineCode === lineCode && d.dayType === dt)
+    .map((d) => d.departureMin);
+  const allDepsToday = realDepsToday.length > 0 ? realDepsToday : [...idaDeps, ...vueltaDeps];
   const firstDepMin = allDepsToday.length > 0 ? Math.min(...allDepsToday) : null;
   const serviceStartHHMM = firstDepMin != null ? formatClock(firstDepMin) : undefined;
 
@@ -381,7 +396,7 @@ export function generateActiveFleet(
   if (plan.fleetSizeExpected === 0 && plan.fleetWindow !== "no_profile") {
     return { fleet: [], validatorReport: emptyReport() };
   }
-  const now = nowMinutes(at);
+  const now = currentMadridMinutes(at);
   let raw: VirtualBus[] = [];
 
   const hasOfficial =
@@ -418,26 +433,6 @@ export function generateActiveFleet(
         const loc = locateInDirection(dirPlan, elapsed);
         const speed = estimateSpeedKmh(plan, loc);
         raw.push(makeBus(plan, slotKey, dep, elapsed, correction, loc, speed, true, dir));
-      }
-    }
-  } else {
-
-    // Fallback sintético (solo si NO hay salidas oficiales para esta línea/slot).
-    const N = plan.fleetSizeExpected;
-    if (N > 0) {
-      const slotSpacing = plan.cycleMin / N;
-      for (let slot = 0; slot < N; slot++) {
-        const slotKey = `BUS${String(slot + 1).padStart(2, "0")}`;
-        const rawCorrection = phaseCorrections?.get(slotKey) ?? 0;
-        const correction = Math.max(
-          -MAX_PHASE_CORRECTION_MIN,
-          Math.min(MAX_PHASE_CORRECTION_MIN, rawCorrection),
-        );
-        const rawOffset = now - slot * slotSpacing + correction;
-        const offset = ((rawOffset % plan.cycleMin) + plan.cycleMin) % plan.cycleMin;
-        const loc = locateBusInCycle(plan, offset);
-        const speed = estimateSpeedKmh(plan, loc);
-        raw.push(makeBus(plan, slotKey, now - offset, offset, correction, loc, speed, false, 1));
       }
     }
   }
@@ -555,15 +550,12 @@ export function deriveStopEtas(
   fleet: VirtualBus[],
   at: Date = new Date(),
 ): StopEta[] {
-  const now = nowMinutes(at);
+  const now = currentMadridMinutes(at);
   const out: StopEta[] = [];
 
   for (const bus of fleet) {
     if (bus.status === "finished" || bus.status === "inactive") continue;
-    // Reconstruimos su offset dentro del ciclo.
-    const offset = bus.tripElapsedMin ?? bus.elapsedMin;
-    // Recorremos paradas futuras dentro de los próximos 90 min.
-    addStopsFromOffset(plan, offset, bus.busId, now, bus.confidence, out, 90, bus.tripDirection ?? 1);
+    addStopsForActiveTrip(plan, bus, now, out, 90);
   }
 
   // Por parada+linea+dirección quedarnos con las próximas 3 ETAs (orden ascendente).
@@ -579,6 +571,36 @@ export function deriveStopEtas(
     for (let i = 0; i < Math.min(3, arr.length); i++) result.push(arr[i]);
   }
   return result.sort((a, b) => a.etaMin - b.etaMin);
+}
+
+function addStopsForActiveTrip(
+  plan: LineFleetPlan,
+  bus: VirtualBus,
+  now: number,
+  out: StopEta[],
+  horizonMin: number,
+): void {
+  const dir = bus.tripDirection ?? bus.direction;
+  const dirPlan = dir === 1 ? plan.dirIda : plan.dirVuelta;
+  if (!dirPlan) return;
+  const elapsed = bus.tripElapsedMin ?? bus.elapsedMin;
+  if (elapsed < 0 || elapsed >= dirPlan.totalMin) return;
+  let idx = 0;
+  while (idx < dirPlan.segMinutes.length && dirPlan.cumTimes[idx + 1] <= elapsed) idx++;
+  for (let i = idx + 1; i < dirPlan.stops.length; i++) {
+    const etaMin = dirPlan.cumTimes[i] - elapsed;
+    if (etaMin > horizonMin) return;
+    out.push({
+      lineCode: plan.lineCode,
+      direction: dirPlan.direction,
+      busId: bus.busId,
+      stopCode: dirPlan.stops[i].stopCode,
+      stopSeq: dirPlan.stops[i].seq,
+      etaMin: Math.max(0, Math.round(etaMin)),
+      etaClock: formatClock(now + etaMin),
+      confidence: bus.confidence,
+    });
+  }
 }
 
 function addStopsFromOffset(
