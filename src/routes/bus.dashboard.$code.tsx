@@ -395,7 +395,8 @@ function BusDashboardPage() {
     if (!engine || isNightLine) return { etasByDir, busesByDir };
 
     const nowMin = clock.getHours() * 60 + clock.getMinutes() + clock.getSeconds() / 60;
-    const plan = buildLineFleetPlan(engine, code, clock);
+    const alignedEngine = alignEngineScheduleDirections(engine, code, stopsByDir);
+    const plan = buildLineFleetPlan(alignedEngine, code, clock);
     const { fleet } = generateActiveFleet(plan, clock);
     const activeFleet = fleet.filter((bus) => bus.departureMin <= nowMin + 0.001 && bus.status === "moving");
 
