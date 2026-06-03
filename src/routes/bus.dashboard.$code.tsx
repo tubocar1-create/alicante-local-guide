@@ -22,6 +22,15 @@ import { useBusEngine } from "@/hooks/useBusEngine";
 // Velocidad estándar del bus virtual: 110 segundos entre paradas consecutivas.
 const VIRTUAL_BUS_SEC_PER_STOP = 110;
 
+// Máximo de buses virtuales VIVOS por línea (sumando ambos sentidos).
+// Si la flota natural excede este tope, se conservan los N más recientes
+// (los más cercanos a destino "mueren" antes para dejar hueco).
+const MAX_VIRTUAL_BUSES_BY_LINE: Record<string, number> = {
+  "12": 4,
+};
+const DEFAULT_MAX_VIRTUAL_BUSES = 8;
+
+
 
 
 
