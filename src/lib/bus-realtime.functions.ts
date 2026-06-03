@@ -1,5 +1,6 @@
-// Server functions para snapshot realtime de Vectalia.
-// Filosofía: la app lee el tiempo real por el bridge HTTPS del proyecto.
+// Server functions para snapshot realtime de SUBUS Alicante.
+// Filosofía: la app lee el tiempo real desde la URL oficial acordada:
+// http://www.subus.es/QR/Alicante/consulta.aspx?p=<parada>
 // Estos server functions solo:
 //   1) sirve metadatos de paradas desde la BBDD
 //   2) acepta snapshots ingestados desde el cliente y los persiste
@@ -196,9 +197,9 @@ export const getLineRealtimeState = createServerFn({ method: "GET" })
     };
   });
 
-// ---------- Server fn: estado LIVE de línea (worker → Vectalia, sin BBDD) ----------
+// ---------- Server fn: estado LIVE de línea (worker → SUBUS consulta.aspx, sin BBDD) ----------
 
-const LIVE_BASE = "https://qr.vectalia.es/Alicante";
+const LIVE_BASE = "http://www.subus.es/QR/Alicante";
 const LIVE_UA =
   "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36";
 const LIVE_TIMEOUT_MS = 8_000;
@@ -220,26 +221,7 @@ async function liveFetchStopBody(stopCode: string): Promise<string | null> {
       },
     });
     if (!page.ok) return null;
-    const anyHeaders = page.headers as unknown as { getSetCookie?: () => string[] };
-    const cookie =
-      anyHeaders.getSetCookie?.().map((c) => c.split(";")[0]).filter(Boolean).join("; ") ?? "";
-    const finalConsultaUrl = page.url || consultaUrl;
-    const datosUrl = new URL("datos.aspx", finalConsultaUrl);
-    datosUrl.searchParams.set("p", stopCode);
-    const datos = await fetch(datosUrl.toString(), {
-      redirect: "follow",
-      signal: controller.signal,
-      headers: {
-        "User-Agent": LIVE_UA,
-        Accept: "application/json,text/plain,*/*",
-        "Accept-Language": "es-ES,es;q=0.9",
-        Referer: finalConsultaUrl,
-        "X-Vectalia-App": "qr-alicante",
-        ...(cookie ? { Cookie: cookie } : {}),
-      },
-    });
-    if (!datos.ok) return null;
-    const txt = await datos.text();
+    const txt = await page.text();
     try {
       const j = JSON.parse(txt) as { tiempos?: unknown };
       if (typeof j.tiempos === "string") return j.tiempos;

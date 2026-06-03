@@ -1,8 +1,8 @@
 // Hook realtime de línea.
 //
 // Arquitectura simplificada: el navegador hace UNA sola llamada a la server
-// function `getLineLive`. Esa función corre en Cloudworkers, hace en paralelo
-// las N peticiones a qr.vectalia.es por parada, parsea y devuelve el estado
+// function `getLineLive`. Esa función hace en paralelo las N peticiones a
+// http://www.subus.es/QR/Alicante/consulta.aspx por parada, parsea y devuelve el estado
 // completo de la línea con ETAs en vivo. Persiste snapshots a BBDD como
 // respaldo para el caso de que alguna parada falle.
 

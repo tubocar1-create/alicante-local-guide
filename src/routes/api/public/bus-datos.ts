@@ -1,20 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-// Fuente oficial: QR Vectalia Alicante. Usamos el host HTTPS final; subus.es es
-// un alias HTTP antiguo que provoca redirecciones y bloqueos intermitentes.
+// Fuente oficial acordada para buses Alicante: SUBUS consulta.aspx.
 
-const BASE = "https://qr.vectalia.es/Alicante";
+const BASE = "http://www.subus.es/QR/Alicante";
 const UA =
   "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36";
 const TIMEOUT_MS = 8_000;
 
 const jsonHeaders = { "Content-Type": "application/json", "Cache-Control": "no-store" };
-
-function extractCookies(res: Response): string {
-  const anyHeaders = res.headers as unknown as { getSetCookie?: () => string[] };
-  const list = anyHeaders.getSetCookie?.() ?? [];
-  return list.map((c) => c.split(";")[0]).filter(Boolean).join("; ");
-}
 
 async function fetchWithTimeout(url: string, init: RequestInit = {}): Promise<Response> {
   const controller = new AbortController();
@@ -46,39 +39,15 @@ export const Route = createFileRoute("/api/public/bus-datos")({
               "Accept-Language": "es-ES,es;q=0.9",
             },
           });
-          const cookie = extractCookies(page);
           const pageText = await page.text();
           const finalConsultaUrl = page.url || consultaUrl;
-          const datosUrl = new URL("datos.aspx", finalConsultaUrl);
-          datosUrl.searchParams.set("p", stop);
 
           let raw = pageText;
           let json: unknown = null;
-          let datosStatus: number | null = null;
           try {
-            const datos = await fetchWithTimeout(datosUrl.toString(), {
-              redirect: "follow",
-              headers: {
-                "User-Agent": UA,
-                Accept: "application/json,text/plain,*/*",
-                "Accept-Language": "es-ES,es;q=0.9",
-                Referer: finalConsultaUrl,
-                "X-Vectalia-App": "qr-alicante",
-                ...(cookie ? { Cookie: cookie } : {}),
-              },
-            });
-            datosStatus = datos.status;
-            const datosText = await datos.text();
-            if (datos.ok && datosText.trim()) {
-              raw = datosText;
-              try {
-                json = JSON.parse(datosText);
-              } catch {
-                json = null;
-              }
-            }
+            json = JSON.parse(pageText);
           } catch {
-            // Si la llamada interna falla, devolvemos al menos el HTML de consulta.aspx.
+            json = null;
           }
           return new Response(
             JSON.stringify({
@@ -88,8 +57,8 @@ export const Route = createFileRoute("/api/public/bus-datos")({
               target: consultaUrl,
               finalTarget: finalConsultaUrl,
               sessionStatus: page.status,
-              datosStatus,
-              cookieSeen: Boolean(cookie),
+              datosStatus: null,
+              cookieSeen: false,
               raw,
               json,
             }),

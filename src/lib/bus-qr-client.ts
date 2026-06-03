@@ -1,6 +1,5 @@
-// Lectura del QR oficial a través del bridge del proyecto.
-// El navegador nunca debe llamar directo a subus.es/qr.vectalia.es: falla por
-// mixed-content/CORS y duplica tráfico. La fuente única es /api/public/bus-datos.
+// Lectura SUBUS a través del bridge del proyecto.
+// El navegador no llama directo: la fuente única interna es /api/public/bus-datos.
 
 const PROXY_URL = "/api/public/bus-datos";
 const ARRIVAL_RE = /Linea\s+(\d{1,3}[A-Za-z]?)\s+([^:]+?)\s*:\s*(\d+)\s*min/gi;
