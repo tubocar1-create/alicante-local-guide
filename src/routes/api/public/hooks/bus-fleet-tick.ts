@@ -3,7 +3,7 @@
 // Protección: header `x-engine-tick-secret` debe coincidir con BUS_FLEET_TICK_SECRET.
 
 import { createFileRoute } from "@tanstack/react-router";
-import { tickAllLines } from "@/lib/bus-fleet.functions";
+import { tickAllLinesInternal } from "@/lib/bus-fleet.functions";
 
 export const Route = createFileRoute("/api/public/hooks/bus-fleet-tick")({
   server: {
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/api/public/hooks/bus-fleet-tick")({
           return new Response("Unauthorized", { status: 401 });
         }
         try {
-          const result = await tickAllLines();
+          const result = await tickAllLinesInternal();
           return new Response(JSON.stringify({ ok: true, ...result }), {
             status: 200,
             headers: { "Content-Type": "application/json" },
