@@ -115,6 +115,7 @@ import { Route as ComprarTiendaIdRouteImport } from './routes/comprar_.tienda.$i
 import { Route as ComprarSectorSectorRouteImport } from './routes/comprar_.sector.$sector'
 import { Route as ComprarSubsectorSubsubsectorRouteImport } from './routes/comprar_.$subsector_.$subsubsector'
 import { Route as BusinessInboxIdRouteImport } from './routes/business.inbox.$id'
+import { Route as BusesAlsaSlugRouteImport } from './routes/buses_.alsa.$slug'
 import { Route as BusDashboardCodeRouteImport } from './routes/bus.dashboard.$code'
 import { Route as ApiPublicRefreshNewsRouteImport } from './routes/api/public/refresh-news'
 import { Route as ApiPublicRefreshIncidenciasRouteImport } from './routes/api/public/refresh-incidencias'
@@ -701,6 +702,11 @@ const BusinessInboxIdRoute = BusinessInboxIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => BusinessInboxRoute,
 } as any)
+const BusesAlsaSlugRoute = BusesAlsaSlugRouteImport.update({
+  id: '/buses_/alsa/$slug',
+  path: '/buses/alsa/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BusDashboardCodeRoute = BusDashboardCodeRouteImport.update({
   id: '/dashboard/$code',
   path: '/dashboard/$code',
@@ -1103,6 +1109,7 @@ export interface FileRoutesByFullPath {
   '/api/public/refresh-incidencias': typeof ApiPublicRefreshIncidenciasRoute
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/dashboard/$code': typeof BusDashboardCodeRoute
+  '/buses/alsa/$slug': typeof BusesAlsaSlugRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
   '/comprar/$subsector/$subsubsector': typeof ComprarSubsectorSubsubsectorRoute
   '/comprar/sector/$sector': typeof ComprarSectorSectorRoute
@@ -1261,6 +1268,7 @@ export interface FileRoutesByTo {
   '/api/public/refresh-incidencias': typeof ApiPublicRefreshIncidenciasRoute
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/dashboard/$code': typeof BusDashboardCodeRoute
+  '/buses/alsa/$slug': typeof BusesAlsaSlugRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
   '/comprar/$subsector/$subsubsector': typeof ComprarSubsectorSubsubsectorRoute
   '/comprar/sector/$sector': typeof ComprarSectorSectorRoute
@@ -1423,6 +1431,7 @@ export interface FileRoutesById {
   '/api/public/refresh-incidencias': typeof ApiPublicRefreshIncidenciasRoute
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
   '/bus/dashboard/$code': typeof BusDashboardCodeRoute
+  '/buses_/alsa/$slug': typeof BusesAlsaSlugRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
   '/comprar_/$subsector_/$subsubsector': typeof ComprarSubsectorSubsubsectorRoute
   '/comprar_/sector/$sector': typeof ComprarSectorSectorRoute
@@ -1586,6 +1595,7 @@ export interface FileRouteTypes {
     | '/api/public/refresh-incidencias'
     | '/api/public/refresh-news'
     | '/bus/dashboard/$code'
+    | '/buses/alsa/$slug'
     | '/business/inbox/$id'
     | '/comprar/$subsector/$subsubsector'
     | '/comprar/sector/$sector'
@@ -1744,6 +1754,7 @@ export interface FileRouteTypes {
     | '/api/public/refresh-incidencias'
     | '/api/public/refresh-news'
     | '/bus/dashboard/$code'
+    | '/buses/alsa/$slug'
     | '/business/inbox/$id'
     | '/comprar/$subsector/$subsubsector'
     | '/comprar/sector/$sector'
@@ -1905,6 +1916,7 @@ export interface FileRouteTypes {
     | '/api/public/refresh-incidencias'
     | '/api/public/refresh-news'
     | '/bus/dashboard/$code'
+    | '/buses_/alsa/$slug'
     | '/business/inbox/$id'
     | '/comprar_/$subsector_/$subsubsector'
     | '/comprar_/sector/$sector'
@@ -2011,6 +2023,7 @@ export interface RootRouteChildren {
   ApiPublicRefreshAlicantePressRoute: typeof ApiPublicRefreshAlicantePressRoute
   ApiPublicRefreshIncidenciasRoute: typeof ApiPublicRefreshIncidenciasRoute
   ApiPublicRefreshNewsRoute: typeof ApiPublicRefreshNewsRoute
+  BusesAlsaSlugRoute: typeof BusesAlsaSlugRoute
   ComprarSubsectorSubsubsectorRoute: typeof ComprarSubsectorSubsubsectorRoute
   ComprarSectorSectorRoute: typeof ComprarSectorSectorRoute
   ComprarTiendaIdRoute: typeof ComprarTiendaIdRoute
@@ -2791,6 +2804,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BusinessInboxIdRouteImport
       parentRoute: typeof BusinessInboxRoute
     }
+    '/buses_/alsa/$slug': {
+      id: '/buses_/alsa/$slug'
+      path: '/buses/alsa/$slug'
+      fullPath: '/buses/alsa/$slug'
+      preLoaderRoute: typeof BusesAlsaSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/bus/dashboard/$code': {
       id: '/bus/dashboard/$code'
       path: '/dashboard/$code'
@@ -3464,6 +3484,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicRefreshAlicantePressRoute: ApiPublicRefreshAlicantePressRoute,
   ApiPublicRefreshIncidenciasRoute: ApiPublicRefreshIncidenciasRoute,
   ApiPublicRefreshNewsRoute: ApiPublicRefreshNewsRoute,
+  BusesAlsaSlugRoute: BusesAlsaSlugRoute,
   ComprarSubsectorSubsubsectorRoute: ComprarSubsectorSubsubsectorRoute,
   ComprarSectorSectorRoute: ComprarSectorSectorRoute,
   ComprarTiendaIdRoute: ComprarTiendaIdRoute,
