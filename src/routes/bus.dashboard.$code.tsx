@@ -16,7 +16,7 @@ import {
 import { cumulativeMinutes, NIGHT_URBAN_KMH } from "@/lib/bus-eta";
 import { getClientStopRealtime } from "@/lib/bus-realtime-client";
 import busAlicanteImg from "@/assets/bus-alicante.png";
-import { useLineRealtime } from "@/hooks/useLineRealtime";
+import { useLineRealtime, isPreviewHost } from "@/hooks/useLineRealtime";
 
 
 
