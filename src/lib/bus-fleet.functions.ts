@@ -10,7 +10,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { z } from "zod";
-import { getBusEngineSnapshot } from "@/lib/bus-predict.functions";
+import { loadBusEngineSnapshot } from "@/lib/bus-predict.functions";
 import { fromSnapshot } from "@/lib/bus-engine/from-snapshot";
 import {
   buildLineFleetPlan,
@@ -85,7 +85,7 @@ async function historicalActivationPattern(
 }
 
 async function tickLineInternal(lineCode: string) {
-  const snap = await getBusEngineSnapshot();
+  const snap = await loadBusEngineSnapshot();
   const engine = fromSnapshot(snap);
   const corrections = await loadPhaseCorrections(lineCode);
   const lastObsSec = await lastObservationAgeSec(lineCode);
@@ -281,8 +281,7 @@ export const tickVirtualFleet = createServerFn({ method: "POST" })
 // ------------------------------------------------------------------
 // 1b. tickAllLines — tick masivo (para cron)
 // ------------------------------------------------------------------
-export const tickAllLines = createServerFn({ method: "POST" })
-  .handler(async () => {
+export async function tickAllLinesInternal() {
     const { data: lines } = await supabaseAdmin.from("bus_lines").select("code");
     const codes = (lines ?? []).map((l) => l.code as string);
     const results: Array<{ line: string; ok: boolean; error?: string }> = [];
@@ -295,7 +294,10 @@ export const tickAllLines = createServerFn({ method: "POST" })
       }
     }
     return { count: results.length, results };
-  });
+}
+
+export const tickAllLines = createServerFn({ method: "POST" })
+  .handler(async () => tickAllLinesInternal());
 
 // ------------------------------------------------------------------
 // 2. getActiveFleet — SELECT plano
@@ -375,7 +377,7 @@ export const reportRealtimeObservation = createServerFn({ method: "POST" })
       meta: {},
     });
 
-    const snap = await getBusEngineSnapshot();
+    const snap = await loadBusEngineSnapshot();
     const engine = fromSnapshot(snap);
     const corrections = await loadPhaseCorrections(data.line);
     const at = new Date();
