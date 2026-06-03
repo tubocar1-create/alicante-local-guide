@@ -34,17 +34,15 @@ const CONCURRENCY = 6;
 export function isPreviewHost(): boolean {
   if (typeof window === "undefined") return false; // SSR → trátalo como publicado
   const h = window.location.hostname;
-  return (
-    h === "localhost" ||
-    h === "127.0.0.1" ||
-    h === "dev.lovable.build" ||
-    h.endsWith(".lovable.build") ||
-    h.endsWith(".lovable.dev") ||
-    h.endsWith("-dev.lovable.app") ||
-    h.endsWith(".sandbox.lovable.dev") ||
-    h.startsWith("id-preview--")
-  );
+  // Producción real: SOLO los dominios de cliente (vamosalicante.com y el
+  // alicante-local-guide.lovable.app publicado). Todo lo demás es preview.
+  const isProd =
+    h === "vamosalicante.com" ||
+    h === "www.vamosalicante.com" ||
+    h === "alicante-local-guide.lovable.app";
+  return !isProd;
 }
+
 
 
 async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
