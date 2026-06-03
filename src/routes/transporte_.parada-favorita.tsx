@@ -54,7 +54,7 @@ function ParadaFavoritaPage() {
   // Snapshot devuelto por una llamada bajo demanda a Vectalia (vía Firecrawl).
   // No hay polling: el usuario solicita la llamada y aquí guardamos el
   // resultado para mostrar un contador decreciente hasta cero.
-  const [snapshot, setSnapshot] = useState<{ etaMin: number; fetchedAt: number; destination: string | null } | null>(null);
+  const [snapshot, setSnapshot] = useState<{ etaMin: number; all: number[]; fetchedAt: number; destination: string | null } | null>(null);
   const [liveLoading, setLiveLoading] = useState(false);
   const [callError, setCallError] = useState<string | null>(null);
   const [quota, setQuota] = useState<{ remaining: number; isAdmin: boolean; limit: number } | null>(null);
