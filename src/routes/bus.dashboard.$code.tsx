@@ -722,7 +722,7 @@ function BusDashboardPage() {
             onPickStop={handlePickStop}
             nearestList={nearestByDir[1]}
             geoStatus={geoStatus}
-            predictedBuses={predictedBusesByDir[1]}
+            predictedBuses={virtualBusesByDir[1]}
             disableLiveFetch={true}
           />
 
@@ -748,7 +748,7 @@ function BusDashboardPage() {
             onPickStop={handlePickStop}
             nearestList={nearestByDir[2]}
             geoStatus={geoStatus}
-            predictedBuses={predictedBusesByDir[2]}
+            predictedBuses={virtualBusesByDir[2]}
             disableLiveFetch={true}
           />
 
