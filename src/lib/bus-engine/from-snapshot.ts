@@ -93,6 +93,7 @@ export function fromSnapshot(snap: BusEngineSnapshot): BusEngineData {
     dayType: w.day_type,
     firstDepartureMin: parseHHMMtoMin(w.first_departure.slice(0, 5)),
     lastDepartureMin: parseHHMMtoMin(w.last_departure.slice(0, 5)),
+    terminalName: w.terminal_name ?? null,
   }));
 
   return {
