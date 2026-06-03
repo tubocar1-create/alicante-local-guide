@@ -70,9 +70,9 @@ function norm(item: any, dir: "SALIDA" | "LLEGADA", tt: string): CarteleraTrain 
 }
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
-const CACHE_VERSION = 4;
+const CACHE_VERSION = 5;
 let _cache: { at: number; v: number; data: CarteleraResponse } | null = null;
-let _inflight: Promise<CarteleraResponse> | null = null;
+let _inflight: Promise<CarteleraResponse | null> | null = null;
 
 
 async function fetchCartelera(): Promise<CarteleraResponse> {
@@ -116,16 +116,26 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
       const r = await fetch(URL_RES, {
         method: "POST",
         headers: {
-          "User-Agent": "Mozilla/5.0",
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
           "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
           Accept: "application/json, text/javascript, */*; q=0.01",
+          "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
           "X-Requested-With": "XMLHttpRequest",
+          Origin: "https://www.adif.es",
           Referer: BASE,
           Cookie: cookieHeader,
         },
         body,
       });
       const text = await r.text();
+      if (!r.ok) {
+        console.warn("[cartelera] ADIF HTTP", {
+          searchType, trafficType, numPage, status: r.status,
+          snippet: text.slice(0, 200),
+        });
+        throw new Error(`ADIF HTTP ${r.status}`);
+      }
       try {
         const j = JSON.parse(text);
         const n = Array.isArray(j.horarios) ? j.horarios.length : -1;
@@ -136,10 +146,10 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
         return j;
       } catch {
         console.warn("[cartelera] ADIF no-JSON", {
-          searchType, trafficType, status: r.status,
+          searchType, trafficType, numPage, status: r.status,
           snippet: text.slice(0, 200),
         });
-        return { horarios: [] };
+        throw new Error("ADIF no JSON");
       }
     }
 
@@ -147,10 +157,14 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
 
     async function call(searchType: string, trafficType: string, numPage = 0, retries = 1) {
       for (let i = 0; i <= retries; i++) {
-        const j = await callOnce(searchType, trafficType, numPage);
-        if (j && Array.isArray(j.horarios) && j.horarios.length > 0) return j;
-        if (numPage > 0) return j;
-        if (i < retries) await sleep(300);
+        try {
+          const j = await callOnce(searchType, trafficType, numPage);
+          if (j && Array.isArray(j.horarios) && j.horarios.length > 0) return j;
+          if (numPage > 0) return j;
+        } catch (e) {
+          if (i >= retries) throw e;
+        }
+        if (i < retries) await sleep(500);
       }
       return { horarios: [] };
     }
@@ -175,8 +189,20 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
       return out;
     }
 
-    // Las 4 consultas ADIF en paralelo (antes eran secuenciales)
-    const results = await Promise.all(ops.map(([s, t, dir]) => runOp(s, t, dir)));
+    // ADIF bloquea ráfagas simultáneas desde producción; las consultas van seriadas.
+    const results: Array<{ n: CarteleraTrain; r: CarteleraRaw }[]> = [];
+    let failedOps = 0;
+    for (const [s, t, dir] of ops) {
+      try {
+        results.push(await runOp(s, t, dir));
+      } catch (e) {
+        failedOps++;
+        console.warn("[cartelera] ADIF op fallida", { searchType: s, trafficType: t, error: String(e) });
+        results.push([]);
+      }
+      await sleep(200);
+    }
+    if (failedOps === ops.length) throw new Error("ADIF: acceso bloqueado temporalmente");
 
     const salidas: CarteleraTrain[] = [];
     const llegadas: CarteleraTrain[] = [];
@@ -239,7 +265,7 @@ export const getCartelera = createServerFn({ method: "GET" }).handler(
         return last;
       })().finally(() => {
         _inflight = null;
-      }) as Promise<CarteleraResponse>;
+      }) as Promise<CarteleraResponse | null>;
       return _inflight;
     };
 
