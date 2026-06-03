@@ -314,7 +314,7 @@ function BusOriginPage() {
                         <li key={r.id}>
                           {isAlsaMadrid ? (
                             <Link
-                              to="/buses_/alsa/$slug"
+                              to="/buses/alsa/$slug"
                               params={{ slug: "alicante-madrid" }}
                               search={{ dir: direction }}
                               className="group flex w-full items-center gap-2 rounded-lg border border-slate-800/70 bg-slate-950/40 px-2.5 py-1.5 text-left transition hover:border-sky-500/40 hover:bg-sky-500/5"
