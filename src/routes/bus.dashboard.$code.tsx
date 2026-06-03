@@ -411,7 +411,7 @@ function BusDashboardPage() {
         const offset = i * stepMin;
         // Próximo bus virtual vivo cuya llegada a esta parada aún no ha pasado.
         let bestArr: number | null = null;
-        for (const dep of aliveOrFuture) {
+        for (const dep of aliveBuses) {
           const arr = dep + offset;
           if (arr < nowMin - 0.0001) continue; // este bus ya pasó esta parada
           if (bestArr == null || arr < bestArr) bestArr = arr;
