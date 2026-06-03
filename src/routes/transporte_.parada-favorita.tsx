@@ -227,6 +227,10 @@ function ParadaFavoritaPage() {
         })()
       : "n/d";
   // Próximas llegadas: solo nocturno aquí (diurno ya no usamos Vectalia en bucle).
+  // Próximas llegadas:
+  //  - Nocturno: estimadas desde horario Vectalia + recorrido.
+  //  - Diurno con snapshot Vectalia activo: usamos `all` (devuelto en la
+  //    misma llamada) y aplicamos el mismo contador decreciente.
   const upcoming = (() => {
     if (nightEstimate) {
       const atOrigin = nightEstimate.atOrigin;
@@ -235,6 +239,20 @@ function ParadaFavoritaPage() {
         arrivalTime: atOrigin ? u.departureTime : u.arrivalTime,
         live: false,
       }));
+    }
+    if (snapshot && !experienceEnded) {
+      const elapsed = Math.floor((Date.now() - snapshot.fetchedAt) / 60_000);
+      return snapshot.all
+        .map((m) => Math.max(0, m - elapsed))
+        .filter((m, i) => i === 0 || m > 0)
+        .map((m) => {
+          const d = new Date(Date.now() + m * 60_000);
+          return {
+            minutes: m,
+            arrivalTime: `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`,
+            live: true,
+          };
+        });
     }
     return [] as Array<{ minutes: number; arrivalTime: string; live: boolean }>;
   })();
