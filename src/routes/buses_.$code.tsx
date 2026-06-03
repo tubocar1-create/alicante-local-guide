@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRight, Bus, Plane, MapPin } from "lucide-react";
+import { ArrowLeft, ArrowRight, Bus, Plane } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 type Origin = {
@@ -20,9 +20,53 @@ type RouteRow = {
   destination: { city: string; station: string } | null;
 };
 
-const CORRIDOR_LABELS: Record<string, string> = {
-  "nacional-alta-demanda": "Nacionales de alta demanda",
-  "castilla-la-mancha": "Castilla-La Mancha",
+type CorridorMeta = {
+  icon: string;
+  name: string;
+  product: string;
+  tint: { section: string; list: string; border: string };
+};
+
+const CORRIDOR_META: Record<string, CorridorMeta> = {
+  "nacional-alta-demanda": {
+    icon: "🚌",
+    name: "Nacionales de alta demanda",
+    product: "Alsa · Avanza · Socibus",
+    tint: {
+      section: "bg-amber-500/[0.10]",
+      list: "bg-amber-950/30",
+      border: "border-amber-500/25",
+    },
+  },
+  "castilla-la-mancha": {
+    icon: "🚌",
+    name: "Castilla-La Mancha",
+    product: "Líneas regionales",
+    tint: {
+      section: "bg-emerald-500/[0.08]",
+      list: "bg-emerald-950/30",
+      border: "border-emerald-500/20",
+    },
+  },
+};
+
+const FALLBACK_META: CorridorMeta = {
+  icon: "🚌",
+  name: "Otras rutas",
+  product: "",
+  tint: {
+    section: "bg-slate-500/[0.08]",
+    list: "bg-slate-900/40",
+    border: "border-slate-700/40",
+  },
+};
+
+const OPERATOR_COLORS: Record<string, string> = {
+  ALSA: "#f59e0b",
+  AVANZA: "#ec4899",
+  SOCIBUS: "#8b5cf6",
+  MONBUS: "#10b981",
+  ALACITY: "#06b6d4",
 };
 
 const originQueryOptions = (code: string) =>
@@ -80,7 +124,6 @@ function BusOriginPage() {
 
   const OriginIcon = code === "ALC-APT" ? Plane : Bus;
 
-  // Group by corridor
   const groups = new Map<string, RouteRow[]>();
   for (const r of routes) {
     const key = r.corridor ?? "otros";
@@ -110,7 +153,11 @@ function BusOriginPage() {
             Volver
           </Link>
           <div className="flex items-center gap-2">
-            <OriginIcon className="h-4 w-4 text-amber-300" />
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-400" />
+            </span>
+            <OriginIcon className="h-3.5 w-3.5 text-amber-300" />
             <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-amber-300">
               {code}
             </span>
@@ -119,16 +166,18 @@ function BusOriginPage() {
 
         <div className="mb-5">
           <p className="text-[10px] uppercase tracking-[0.3em] text-amber-300/90">
-            Buses larga distancia
+            Dashboard de Buses
           </p>
           <h1 className="mt-1 font-display text-2xl font-bold tracking-tight text-white md:text-4xl">
-            Rutas desde{" "}
+            Buses{" "}
             <span className="bg-gradient-to-r from-amber-300 via-white to-orange-300 bg-clip-text text-transparent">
-              {origin?.station ?? code}
+              desde {origin?.station ?? code}
             </span>
           </h1>
           {origin && (
-            <p className="mt-1 text-xs text-slate-400">{origin.city}</p>
+            <p className="mt-1 text-xs text-white/70 md:text-sm">
+              {origin.city} — corredores larga distancia.
+            </p>
           )}
         </div>
 
@@ -137,41 +186,71 @@ function BusOriginPage() {
             Sin rutas configuradas todavía para <strong className="text-amber-200">{code}</strong>.
           </div>
         ) : (
-          <div className="space-y-5">
-            {Array.from(groups.entries()).map(([corridor, items]) => (
-              <section key={corridor}>
-                <h2 className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-amber-300/80">
-                  {CORRIDOR_LABELS[corridor] ?? corridor}
-                </h2>
-                <div className="space-y-2">
-                  {items.map((r) => (
-                    <button
-                      key={r.id}
-                      type="button"
-                      className="group flex w-full items-center justify-between rounded-2xl border border-slate-800 bg-slate-900/60 px-4 py-3 text-left transition hover:border-amber-500/40 hover:bg-slate-900"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-300">
-                          <MapPin className="h-4 w-4" />
-                        </span>
-                        <div>
-                          <div className="text-sm font-semibold text-white">
-                            {r.destination?.city ?? r.destination_code}
-                          </div>
-                          {r.operators.length > 0 && (
-                            <div className="mt-0.5 text-[10px] uppercase tracking-wider text-slate-400">
-                              {r.operators.join(" · ")}
-                            </div>
-                          )}
-                        </div>
+          <div className="space-y-2">
+            {Array.from(groups.entries()).map(([corridor, items]) => {
+              const meta = CORRIDOR_META[corridor] ?? FALLBACK_META;
+              return (
+                <section
+                  key={corridor}
+                  className={`overflow-hidden rounded-2xl border ${meta.tint.border} ${meta.tint.section}`}
+                >
+                  <div className="flex w-full items-center gap-3 px-3 py-3 text-left">
+                    <span className="text-xl leading-none">{meta.icon}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-semibold text-white">
+                        {meta.name}
                       </div>
-                      <ArrowRight className="h-4 w-4 text-slate-500 transition group-hover:translate-x-0.5 group-hover:text-amber-300" />
-                    </button>
-                  ))}
+                      {meta.product && (
+                        <div className="truncate text-[11px] text-slate-400">
+                          {meta.product}
+                        </div>
+                      )}
+                    </div>
+                    <span className="rounded-full border border-slate-700/70 px-2 py-0.5 text-[10px] text-slate-400">
+                      {items.length}
+                    </span>
+                  </div>
 
-                </div>
-              </section>
-            ))}
+                  <ul className={`border-t ${meta.tint.border} ${meta.tint.list} p-1.5`}>
+                    {items.map((r) => (
+                      <li key={r.id}>
+                        <button
+                          type="button"
+                          className="group flex w-full items-center gap-2 rounded-lg border border-slate-800/70 bg-slate-950/40 px-2.5 py-1.5 text-left transition hover:border-amber-500/40 hover:bg-amber-500/5"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <span className="truncate text-[12px] font-medium text-slate-200">
+                              {r.destination?.station ?? r.destination?.city ?? r.destination_code}
+                            </span>
+                            {r.destination?.city && r.destination.city !== r.destination.station && (
+                              <span className="ml-1.5 text-[10px] text-slate-500">
+                                · {r.destination.city}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex shrink-0 items-center gap-1">
+                            {r.operators.map((op) => {
+                              const key = op.toUpperCase();
+                              const color = OPERATOR_COLORS[key] ?? "#94a3b8";
+                              return (
+                                <span
+                                  key={op}
+                                  className="rounded px-1 py-0.5 text-[9px] font-bold uppercase tracking-wider"
+                                  style={{ background: color + "22", color }}
+                                >
+                                  {op}
+                                </span>
+                              );
+                            })}
+                          </div>
+                          <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-500 transition group-hover:translate-x-0.5 group-hover:text-amber-300" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              );
+            })}
           </div>
         )}
       </div>
