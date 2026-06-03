@@ -355,6 +355,88 @@ export const getActiveFleet = createServerFn({ method: "GET" })
     };
   });
 
+export const getVirtualStopArrivals = createServerFn({ method: "GET" })
+  .inputValidator((input) =>
+    z.object({
+      stopCode: z.string().min(1).max(20),
+      line: z.string().min(1).max(20).optional(),
+    }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    const snap = await loadBusEngineSnapshot();
+    const engine = fromSnapshot(snap);
+    const wantedLine = data.line ? data.line.trim().toUpperCase() : null;
+    const linesAtStop = Array.from(new Set(
+      engine.stops
+        .filter((s) => s.stopCode === data.stopCode && (!wantedLine || s.lineCode.toUpperCase() === wantedLine))
+        .map((s) => s.lineCode),
+    ));
+    if (linesAtStop.length === 0) return { arrivals: [], all: [], etaMin: null, fetchedAt: Date.now() };
+
+    const { data: rows, error } = await supabaseAdmin
+      .from("virtual_buses")
+      .select("line_code,direction,trip_key,departure_time,current_segment_idx,segment_progress,state,confidence,position_lat,position_lng,last_tick_at,meta,safe_mode,origin_terminal,service_slot,speed_kmh,phase_error_sec,reliability,anchored_to_departure,is_active")
+      .eq("service_date", todayMadrid())
+      .eq("is_active", true)
+      .in("line_code", linesAtStop);
+    if (error) throw new Error(`virtual_buses read failed: ${error.message}`);
+
+    const now = new Date();
+    const arrivals: Array<{ line: string; direction: Direction; destination: string; etaMin: number; etaClock: string; confidence: number; busId: string; lat: number | null; lng: number | null }> = [];
+    for (const line of linesAtStop) {
+      const plan = buildLineFleetPlan(engine, line, now);
+      const fleet: VirtualBus[] = (rows ?? [])
+        .filter((r) => r.line_code === line)
+        .map((r) => {
+          const meta = (r.meta ?? {}) as Record<string, unknown>;
+          const dir = (Number(r.direction) === 2 ? 2 : 1) as Direction;
+          const tripDirection = tripDirectionFromKey(String(r.trip_key), dir);
+          const lastTickAgeMin = r.last_tick_at ? Math.max(0, (Date.now() - Date.parse(String(r.last_tick_at))) / 60_000) : 0;
+          const elapsedBase = typeof meta.elapsed_min === "number" ? meta.elapsed_min : Math.max(0, currentMadridMinutes(now) - hhmmssToMinutes(r.departure_time as string | null));
+          return {
+            busId: `${line}_${r.trip_key}`,
+            lineCode: line,
+            direction: dir,
+            status: r.state as VirtualBus["status"],
+            departureMin: hhmmssToMinutes(r.departure_time as string | null),
+            tripDirection,
+            tripElapsedMin: elapsedBase + lastTickAgeMin,
+            elapsedMin: elapsedBase + lastTickAgeMin,
+            segmentIndex: Number(r.current_segment_idx ?? 0),
+            segmentProgress: Number(r.segment_progress ?? 0),
+            position: r.position_lat != null && r.position_lng != null ? { lat: Number(r.position_lat), lng: Number(r.position_lng) } : null,
+            delayMin: Number(r.phase_error_sec ?? 0) / 60,
+            confidence: Number(r.confidence ?? 0.3),
+            anchoredDeparture: r.anchored_to_departure ?? true,
+            originTerminal: r.origin_terminal ?? null,
+            serviceSlot: r.service_slot ?? undefined,
+            phaseErrorSec: Number(r.phase_error_sec ?? 0),
+            reliability: Number(r.reliability ?? 0.5),
+            speedKmh: r.speed_kmh == null ? null : Number(r.speed_kmh),
+            safeMode: r.safe_mode ?? false,
+          };
+        });
+      const stopEtas = deriveStopEtas(plan, fleet, now).filter((e) => e.stopCode === data.stopCode);
+      for (const eta of stopEtas) {
+        const destStops = engine.stops.filter((s) => s.lineCode === line && s.direction === eta.direction).sort((a, b) => a.seq - b.seq);
+        const bus = fleet.find((b) => b.busId === eta.busId);
+        arrivals.push({
+          line,
+          direction: eta.direction,
+          destination: destStops[destStops.length - 1]?.stopName ?? "",
+          etaMin: eta.etaMin,
+          etaClock: eta.etaClock,
+          confidence: eta.confidence,
+          busId: eta.busId ?? "",
+          lat: bus?.position?.lat ?? null,
+          lng: bus?.position?.lng ?? null,
+        });
+      }
+    }
+    arrivals.sort((a, b) => a.etaMin - b.etaMin);
+    return { arrivals, all: arrivals.map((a) => a.etaMin), etaMin: arrivals[0]?.etaMin ?? null, fetchedAt: Date.now() };
+  });
+
 // ------------------------------------------------------------------
 // 2b. getEngineHealth
 // ------------------------------------------------------------------
