@@ -450,20 +450,23 @@ function BusDashboardPage() {
     });
   }, [realtime, stopsByDir, etas]);
 
+  const lastRealtimeRef = useRef<typeof realtime | null>(null);
   useEffect(() => {
     if (!realtime || !firstSpawnDoneRef.current) return;
-    const snapKey = realtime.capturedAt ?? realtime.fetchedAt ?? null;
-    if (!snapKey || snapKey === lastSnapshotKeyRef.current) return;
-    lastSnapshotKeyRef.current = snapKey;
+    if (lastRealtimeRef.current === realtime) return;
+    lastRealtimeRef.current = realtime;
+
+    // Usar los ETAs CRUDOS del bridge (no decrementados por reloj) para recalibrar.
+    const rawByStop: Record<string, number | null> = {};
+    for (const s of realtime.stops) {
+      rawByStop[s.stopCode] = s.etaMinutes && s.etaMinutes.length > 0 ? s.etaMinutes[0] : null;
+    }
 
     setPredictedBusesByDir((prev) => {
       const next: Record<1 | 2, DynamicBus[]> = { 1: [], 2: [] };
       for (const dir of [1, 2] as const) {
         const list = stopsByDir[dir];
-        const vals: (number | null)[] = list.map((s) => {
-          const arr = etas[s.code];
-          return arr && arr.length > 0 ? arr[0] : null;
-        });
+        const vals: (number | null)[] = list.map((s) => rawByStop[s.code] ?? null);
 
         // Bridges posteriores: sólo recalibrar buses existentes a los mínimos locales.
         const candidates: { segmentIndex: number; segmentProgress: number }[] = [];
@@ -512,7 +515,9 @@ function BusDashboardPage() {
       }
       return next;
     });
-  }, [realtime, stopsByDir, etas]);
+  }, [realtime, stopsByDir]);
+
+
 
   // Tick por reloj: avance continuo según velocidad media.
   useEffect(() => {
