@@ -8,7 +8,7 @@
  */
 
 export function liveStopUrl(code: string): string {
-  return `https://qr.vectalia.es/Alicante/consulta.aspx?p=${encodeURIComponent(code)}`;
+  return `http://www.subus.es/QR/Alicante/consulta.aspx?p=${encodeURIComponent(code)}`;
 }
 
 export function isValidStopCode(code: string): boolean {
