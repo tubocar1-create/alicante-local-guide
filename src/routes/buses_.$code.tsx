@@ -166,30 +166,30 @@ function BusOriginPage() {
         <header className="mb-4 flex items-center justify-between">
           <Link
             to="/buses"
-            className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1 text-[11px] text-slate-300 transition hover:border-amber-500/50 hover:text-amber-300"
+            className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1 text-[11px] text-slate-300 transition hover:border-sky-500/50 hover:text-sky-300"
           >
             <ArrowLeft className="h-3 w-3" />
             Volver
           </Link>
           <div className="flex items-center gap-2">
             <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-60" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-400" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-sky-400" />
             </span>
-            <OriginIcon className="h-3.5 w-3.5 text-amber-300" />
-            <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-amber-300">
+            <OriginIcon className="h-3.5 w-3.5 text-sky-300" />
+            <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-sky-300">
               {code}
             </span>
           </div>
         </header>
 
         <div className="mb-4">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-amber-300/90">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-sky-300/90">
             Dashboard de Buses
           </p>
           <h1 className="mt-1 font-display text-2xl font-bold tracking-tight text-white md:text-4xl">
             Buses{" "}
-            <span className="bg-gradient-to-r from-amber-300 via-white to-orange-300 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-sky-300 via-white to-cyan-300 bg-clip-text text-transparent">
               {direction === "S" ? `desde ${originShort}` : `hacia ${originShort}`}
             </span>
           </h1>
@@ -207,7 +207,7 @@ function BusOriginPage() {
             onClick={() => setDirection("S")}
             className={`flex flex-col items-center justify-center gap-0.5 rounded-xl px-3 py-3 font-bold uppercase tracking-wider transition ${
               direction === "S"
-                ? "bg-gradient-to-br from-amber-500/30 to-orange-500/20 text-amber-100 shadow-lg shadow-amber-500/20 ring-1 ring-amber-400/40"
+                ? "bg-gradient-to-br from-sky-500/30 to-cyan-500/20 text-sky-100 shadow-lg shadow-sky-500/20 ring-1 ring-sky-400/40"
                 : "text-slate-400 hover:bg-slate-800/40 hover:text-slate-200"
             }`}
           >
@@ -221,7 +221,7 @@ function BusOriginPage() {
             onClick={() => setDirection("L")}
             className={`flex flex-col items-center justify-center gap-0.5 rounded-xl px-3 py-3 font-bold uppercase tracking-wider transition ${
               direction === "L"
-                ? "bg-gradient-to-br from-amber-500/30 to-orange-500/20 text-amber-100 shadow-lg shadow-amber-500/20 ring-1 ring-amber-400/40"
+                ? "bg-gradient-to-br from-sky-500/30 to-cyan-500/20 text-sky-100 shadow-lg shadow-sky-500/20 ring-1 ring-sky-400/40"
                 : "text-slate-400 hover:bg-slate-800/40 hover:text-slate-200"
             }`}
           >
@@ -238,13 +238,13 @@ function BusOriginPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar ciudad o estación…"
-            className="w-full rounded-xl border border-slate-700 bg-slate-900/60 px-3 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-amber-500/50"
+            className="w-full rounded-xl border border-slate-700 bg-slate-900/60 px-3 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-sky-500/50"
           />
         </div>
 
         {routes.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-amber-500/30 bg-amber-950/20 p-4 text-sm text-slate-300">
-            Sin rutas configuradas todavía para <strong className="text-amber-200">{code}</strong>.
+          <div className="rounded-2xl border border-dashed border-sky-500/30 bg-sky-950/20 p-4 text-sm text-slate-300">
+            Sin rutas configuradas todavía para <strong className="text-sky-200">{code}</strong>.
           </div>
         ) : (
           <div className="space-y-2">
@@ -282,7 +282,7 @@ function BusOriginPage() {
                       <li key={r.id}>
                         <button
                           type="button"
-                          className="group flex w-full items-center gap-2 rounded-lg border border-slate-800/70 bg-slate-950/40 px-2.5 py-1.5 text-left transition hover:border-amber-500/40 hover:bg-amber-500/5"
+                          className="group flex w-full items-center gap-2 rounded-lg border border-slate-800/70 bg-slate-950/40 px-2.5 py-1.5 text-left transition hover:border-sky-500/40 hover:bg-sky-500/5"
                         >
                           <div className="min-w-0 flex-1">
                             <span className="truncate text-[12px] font-medium text-slate-200">
@@ -309,7 +309,7 @@ function BusOriginPage() {
                               );
                             })}
                           </div>
-                          <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-500 transition group-hover:translate-x-0.5 group-hover:text-amber-300" />
+                          <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-500 transition group-hover:translate-x-0.5 group-hover:text-sky-300" />
                         </button>
                       </li>
                     ))}
