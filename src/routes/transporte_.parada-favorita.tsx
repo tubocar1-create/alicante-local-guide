@@ -173,7 +173,10 @@ function ParadaFavoritaPage() {
       setSnapshot({ etaMin: res.etaMin, fetchedAt: res.fetchedAt, destination: res.destination });
       setExperienceEnded(false);
     } catch (e) {
-      setCallError(e instanceof Error ? e.message : "Error al consultar Vectalia.");
+      let msg = "Error al consultar Vectalia.";
+      if (e instanceof Response) msg = `Error ${e.status} al consultar Vectalia.`;
+      else if (e instanceof Error) msg = e.message;
+      setCallError(msg);
     } finally {
       setLiveLoading(false);
     }

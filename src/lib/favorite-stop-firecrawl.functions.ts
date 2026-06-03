@@ -6,6 +6,10 @@ const BASE = "http://www.subus.es/QR/Alicante";
 const FIRECRAWL_URL = "https://api.firecrawl.dev/v2/scrape";
 const DAILY_LIMIT = 3;
 const TIMEOUT_MS = 20_000;
+// Sentinel for "unlimited" (admin). Avoid Infinity — TanStack serverFn
+// serialization (devalue) rejects non-finite numbers and turns the response
+// into a thrown Response on the client.
+const UNLIMITED = 9999;
 
 function normalizeLine(code: string): string {
   const cleaned = code.replace(/^0+/, "") || "0";
@@ -144,7 +148,7 @@ export const requestFavoriteStopRealtime = createServerFn({ method: "POST" })
         ok: false,
         reason: "config",
         message: "Servicio no configurado.",
-        remaining: isAdmin ? Number.POSITIVE_INFINITY : DAILY_LIMIT - used,
+        remaining: isAdmin ? UNLIMITED : DAILY_LIMIT - used,
         isAdmin,
         limit: DAILY_LIMIT,
       };
@@ -162,7 +166,7 @@ export const requestFavoriteStopRealtime = createServerFn({ method: "POST" })
         ok: false,
         reason: "firecrawl_error",
         message: "No se pudo consultar Vectalia en este momento.",
-        remaining: isAdmin ? Number.POSITIVE_INFINITY : DAILY_LIMIT - used,
+        remaining: isAdmin ? UNLIMITED : DAILY_LIMIT - used,
         isAdmin,
         limit: DAILY_LIMIT,
       };
@@ -191,7 +195,7 @@ export const requestFavoriteStopRealtime = createServerFn({ method: "POST" })
       all,
       destination,
       fetchedAt: Date.now(),
-      remaining: isAdmin ? Number.POSITIVE_INFINITY : Math.max(0, DAILY_LIMIT - newUsed),
+      remaining: isAdmin ? UNLIMITED : Math.max(0, DAILY_LIMIT - newUsed),
       isAdmin,
       limit: DAILY_LIMIT,
     };
