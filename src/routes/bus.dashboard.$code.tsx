@@ -18,21 +18,8 @@ import { getClientStopRealtime } from "@/lib/bus-realtime-client";
 import busAlicanteImg from "@/assets/bus-alicante.png";
 import { useLineRealtime, isPreviewHost } from "@/hooks/useLineRealtime";
 import { useBusEngine } from "@/hooks/useBusEngine";
-
-// Velocidad estándar del bus virtual: 110 segundos entre paradas consecutivas.
-const VIRTUAL_BUS_SEC_PER_STOP = 110;
-
-// Máximo de buses virtuales VIVOS por línea (sumando ambos sentidos).
-// Si la flota natural excede este tope, se conservan los N más recientes
-// (los más cercanos a destino "mueren" antes para dejar hueco).
-const MAX_VIRTUAL_BUSES_BY_LINE: Record<string, number> = {
-  "12": 4,
-};
-const DEFAULT_MAX_VIRTUAL_BUSES = 8;
-
-
-
-
+import { buildLineFleetPlan, deriveStopEtas, generateActiveFleet } from "@/lib/bus-engine/fleet";
+import type { BusEngineData, Direction } from "@/lib/bus-engine/types";
 
 function haversineMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
   const R = 6371000;
@@ -89,6 +76,42 @@ function collapseConsecutiveDuplicateStops(stops: StopRow[]): StopRow[] {
     }
   }
   return collapsed;
+}
+
+function alignEngineScheduleDirections(
+  engine: BusEngineData,
+  lineCode: string,
+  stopsByDir: Record<1 | 2, StopRow[]>,
+): BusEngineData {
+  const directionMap = new Map<Direction, Direction>();
+  let changed = false;
+
+  for (const visualDir of [1, 2] as const) {
+    const origin = stopsByDir[visualDir][0]?.name;
+    if (!origin) continue;
+    const originNorm = normalizeStopLabel(origin);
+    const match = engine.serviceWindows.find((w) => {
+      if (w.lineCode !== lineCode || !w.terminalName) return false;
+      const terminalNorm = normalizeStopLabel(w.terminalName);
+      return terminalNorm && (originNorm.includes(terminalNorm) || terminalNorm.includes(originNorm));
+    });
+    if (!match) continue;
+    directionMap.set(match.direction, visualDir);
+    if (match.direction !== visualDir) changed = true;
+  }
+
+  if (!changed) return engine;
+
+  const remap = (dir: Direction) => directionMap.get(dir) ?? dir;
+  return {
+    ...engine,
+    departures: engine.departures.map((d) =>
+      d.lineCode === lineCode ? { ...d, direction: remap(d.direction) } : d,
+    ),
+    serviceWindows: engine.serviceWindows.map((w) =>
+      w.lineCode === lineCode ? { ...w, direction: remap(w.direction) } : w,
+    ),
+  };
 }
 
 function minutesFromHHMM(value: string): number {
@@ -357,118 +380,53 @@ function BusDashboardPage() {
     return out;
   }, [isNightLine, serviceRows, departures, code, stopsByDir, stopCoords, clock]);
 
-  // === Estimación por BUS VIRTUAL (líneas diurnas) ===
-  // Para cada sentido genera UN bus virtual que sale del origen en la próxima
-  // salida programada (bus_line_departures) y rueda a VIRTUAL_BUS_SEC_PER_STOP
-  // segundos por parada. ETA por parada = (salida - ahora) + i * paso.
-  // Si una salida ya pasó la parada (ETA < 0), prueba la siguiente salida.
-  const virtualEtaByDir = useMemo(() => {
-    const out: Record<1 | 2, Map<string, { min: number; time: string }>> = {
+  // === Estimación por BUSES VIRTUALES VIVOS (líneas diurnas) ===
+  // Se usa la misma flota virtual anclada a salidas oficiales que mueve los
+  // iconos: sólo buses ya nacidos, en ruta, y con ETA derivado de su posición.
+  const virtualFleetView = useMemo(() => {
+    const etasByDir: Record<1 | 2, Map<string, { min: number; time: string }>> = {
       1: new Map(),
       2: new Map(),
     };
-    if (!engine || isNightLine) return out;
-
-    const nowMin = clock.getHours() * 60 + clock.getMinutes();
-    const todayType = dayTypeOf(clock);
-    const yDayType = dayTypeOf(new Date(clock.getTime() - 24 * 60 * 60_000));
-    const stepMin = VIRTUAL_BUS_SEC_PER_STOP / 60;
-    const maxAlive = MAX_VIRTUAL_BUSES_BY_LINE[code] ?? DEFAULT_MAX_VIRTUAL_BUSES;
-
-    const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
-
-    // Primero recolectamos las salidas vivas de AMBOS sentidos para aplicar
-    // el tope global de la línea antes de calcular ETAs por parada.
-    const perDir: Record<1 | 2, { stops: typeof stopsByDir[1]; alive: number[] } | null> = {
-      1: null,
-      2: null,
+    const busesByDir: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]> = {
+      1: [],
+      2: [],
     };
+    if (!engine || isNightLine) return { etasByDir, busesByDir };
 
+    const nowMin = clock.getHours() * 60 + clock.getMinutes() + clock.getSeconds() / 60;
+    const alignedEngine = alignEngineScheduleDirections(engine, code, stopsByDir);
+    const plan = buildLineFleetPlan(alignedEngine, code, clock);
+    const { fleet } = generateActiveFleet(plan, clock);
+    const activeFleet = fleet.filter((bus) => bus.departureMin <= nowMin + 0.001 && bus.status === "moving");
 
-
-    for (const dir of [1, 2] as const) {
-      const stops = stopsByDir[dir];
-      if (stops.length === 0) continue;
-
-      // Determinar la dirección normalizada del engine que corresponde a este
-      // sentido visual, casando el terminal de origen con serviceWindows.
-      const originNorm = norm(stops[0].name);
-      const swMatch = engine.serviceWindows.find((w) => {
-        if (w.lineCode !== code || !w.terminalName) return false;
-        const a = norm(w.terminalName);
-        return a && (originNorm.includes(a) || a.includes(originNorm));
-      });
-      if (!swMatch) continue;
-      const engineDir = swMatch.direction;
-
-      const depTimelines: number[] = [];
-      for (const d of engine.departures) {
-        if (d.lineCode !== code || d.direction !== engineDir) continue;
-        const depMin = d.departureMin;
-        if (matchesDayType(d.dayType, todayType)) depTimelines.push(depMin);
-        if (matchesDayType(d.dayType, yDayType) && depMin >= 18 * 60) {
-          depTimelines.push(depMin - 24 * 60);
-        }
+    for (const bus of activeFleet) {
+      const stops = stopsByDir[bus.direction];
+      if (stops.length > 1 && bus.segmentIndex < stops.length - 1) {
+        busesByDir[bus.direction].push({
+          busId: bus.busId,
+          segmentIndex: Math.max(0, bus.segmentIndex),
+          segmentProgress: Math.max(0, Math.min(1, bus.segmentProgress)),
+        });
       }
-      if (depTimelines.length === 0) continue;
-      depTimelines.sort((a, b) => a - b);
-
-      // === Ciclo de vida de buses virtuales ===
-      // Un bus virtual EXISTE únicamente entre su hora de salida (nace en la
-      // parada 0) y su llegada a la última parada (muere/desaparece).
-      const lastIdx = stops.length - 1;
-      const terminusOffset = lastIdx * stepMin;
-      const aliveBuses = depTimelines.filter(
-        (dep) => dep <= nowMin + 0.0001 && dep + terminusOffset >= nowMin - 0.0001,
-      );
-      if (aliveBuses.length === 0) continue;
-
-      perDir[dir] = { stops, alive: aliveBuses };
-    }
-
-    // Tope global por línea: conservamos los N buses VIVOS más recientes
-    // (mayor `dep`). Los más antiguos —los más cerca de destino— se eliminan
-    // primero del dashboard, como si hubieran terminado su servicio antes.
-    const allAlive: Array<{ dir: 1 | 2; dep: number }> = [];
-    for (const dir of [1, 2] as const) {
-      const entry = perDir[dir];
-      if (!entry) continue;
-      for (const dep of entry.alive) allAlive.push({ dir, dep });
-    }
-    allAlive.sort((a, b) => b.dep - a.dep);
-    const kept = new Set(
-      allAlive.slice(0, maxAlive).map((b) => `${b.dir}:${b.dep}`),
-    );
-
-    for (const dir of [1, 2] as const) {
-      const entry = perDir[dir];
-      if (!entry) continue;
-      const aliveBuses = entry.alive.filter((dep) => kept.has(`${dir}:${dep}`));
-      if (aliveBuses.length === 0) continue;
-      const stops = entry.stops;
-
-      for (let i = 0; i < stops.length; i++) {
-        const offset = i * stepMin;
-        // Próximo bus virtual vivo cuya llegada a esta parada aún no ha pasado.
-        let bestArr: number | null = null;
-        for (const dep of aliveBuses) {
-          const arr = dep + offset;
-          if (arr < nowMin - 0.0001) continue; // este bus ya pasó esta parada
-          if (bestArr == null || arr < bestArr) bestArr = arr;
-        }
-        if (bestArr == null) continue;
-
-        const delta = Math.max(0, Math.round(bestArr - nowMin));
-        const abs = ((bestArr % 1440) + 1440) % 1440;
-        const hh = String(Math.floor(abs / 60)).padStart(2, "0");
-        const mm = String(Math.round(abs % 60)).padStart(2, "0");
-        out[dir].set(stops[i].code, { min: delta, time: `${hh}:${mm}` });
+      if (bus.segmentProgress <= 0.05) {
+        const currentStop = stops[bus.segmentIndex];
+        if (currentStop) etasByDir[bus.direction].set(currentStop.code, { min: 0, time: formatHHMM(clock) });
       }
     }
-    return out;
+
+    for (const eta of deriveStopEtas(plan, activeFleet, clock)) {
+      const prev = etasByDir[eta.direction].get(eta.stopCode);
+      if (!prev || eta.etaMin < prev.min) {
+        etasByDir[eta.direction].set(eta.stopCode, { min: eta.etaMin, time: eta.etaClock });
+      }
+    }
+    return { etasByDir, busesByDir };
 
   }, [engine, isNightLine, code, stopsByDir, clock]);
 
+  const virtualEtaByDir = virtualFleetView.etasByDir;
+  const virtualBusesByDir = virtualFleetView.busesByDir;
   const scheduleEtaByDir = isNightLine ? nightEtaByDir : virtualEtaByDir;
 
 
@@ -514,160 +472,6 @@ function BusDashboardPage() {
   // No-ops para conservar las props del componente hijo.
   const handleEtaLoading = useCallback((_stopCode: string, _loading: boolean) => {}, []);
   const handleStopEta = useCallback((_stopCode: string, _all: number[]) => {}, []);
-  // Bus dinámico persistente (sólo en memoria, una sesión):
-  //  - PRIMER bridge de la sesión: se crea UN bus por cada parada cuyo ETA ≤
-  //    SPAWN_THRESHOLD_MIN. Esa es la única vez que nacen buses.
-  //  - Bridges posteriores: cada bus existente se reubica al mínimo local más
-  //    cercano (recalibración por ETA real). No se crean buses nuevos.
-  //  - Entre bridges, el reloj avanza cada bus a velocidad media.
-  //  - Al cerrar la página/app, el estado se pierde (no se persiste).
-  const TYPICAL_SEG_MIN = 110 / 60;
-  const SPAWN_THRESHOLD_MIN = 1;
-  type DynamicBus = { busId: string; segmentIndex: number; segmentProgress: number };
-  const [predictedBusesByDir, setPredictedBusesByDir] = useState<
-    Record<1 | 2, DynamicBus[]>
-  >({ 1: [], 2: [] });
-  const busSeqRef = useRef(0);
-  const lastSnapshotKeyRef = useRef<string | null>(null);
-  const firstSpawnDoneRef = useRef(false);
-
-  useEffect(() => {
-    if (!realtime || firstSpawnDoneRef.current) return;
-
-    setPredictedBusesByDir((prev) => {
-      const next: Record<1 | 2, DynamicBus[]> = { 1: [...prev[1]], 2: [...prev[2]] };
-      let spawnedAny = false;
-
-      for (const dir of [1, 2] as const) {
-        const list = stopsByDir[dir];
-        if (list.length < 2) continue;
-        for (let i = 0; i < list.length; i++) {
-          const arr = etas[list[i].code];
-          const v = arr && arr.length > 0 ? arr[0] : null;
-          if (v == null || v > SPAWN_THRESHOLD_MIN) continue;
-          // Si la parada anterior también está ≤ umbral, forma parte del mismo
-          // tramo consecutivo: el bus pasa primero por aquella, no por ésta.
-          const prevArr = i > 0 ? etas[list[i - 1].code] : null;
-          const prevV = prevArr && prevArr.length > 0 ? prevArr[0] : null;
-          if (prevV != null && prevV <= SPAWN_THRESHOLD_MIN) continue;
-          const segmentIndex = Math.max(0, Math.min(list.length - 2, i > 0 ? i - 1 : 0));
-          const segmentProgress = i > 0 ? Math.max(0, Math.min(1, 1 - v / TYPICAL_SEG_MIN)) : 0;
-          busSeqRef.current += 1;
-          next[dir].push({
-            busId: `${dir}-b${busSeqRef.current}`,
-            segmentIndex,
-            segmentProgress,
-          });
-          spawnedAny = true;
-        }
-      }
-
-      if (!spawnedAny) return prev;
-      firstSpawnDoneRef.current = true;
-      return next;
-    });
-  }, [realtime, stopsByDir, etas]);
-
-  const lastRealtimeRef = useRef<typeof realtime | null>(null);
-  useEffect(() => {
-    if (!realtime || !firstSpawnDoneRef.current) return;
-    if (lastRealtimeRef.current === realtime) return;
-    lastRealtimeRef.current = realtime;
-
-    // Usar los ETAs CRUDOS del bridge (no decrementados por reloj) para recalibrar.
-    const rawByStop: Record<string, number | null> = {};
-    for (const s of realtime.stops) {
-      rawByStop[s.stopCode] = s.etaMinutes && s.etaMinutes.length > 0 ? s.etaMinutes[0] : null;
-    }
-
-    setPredictedBusesByDir((prev) => {
-      const next: Record<1 | 2, DynamicBus[]> = { 1: [], 2: [] };
-      for (const dir of [1, 2] as const) {
-        const list = stopsByDir[dir];
-        const vals: (number | null)[] = list.map((s) => rawByStop[s.code] ?? null);
-
-        // Bridges posteriores: sólo recalibrar buses existentes a los mínimos locales.
-        const candidates: { segmentIndex: number; segmentProgress: number }[] = [];
-        for (let i = 0; i < list.length; i++) {
-          const v = vals[i];
-          if (v == null) continue;
-          const p = i > 0 ? vals[i - 1] : null;
-          const n = i < list.length - 1 ? vals[i + 1] : null;
-          const isMin = (p == null || p > v) && (n == null || n >= v);
-          if (!isMin) continue;
-          const segmentIndex = Math.max(0, Math.min(list.length - 2, i > 0 ? i - 1 : 0));
-          const segmentProgress =
-            i > 0 ? Math.max(0, Math.min(1, 1 - v / TYPICAL_SEG_MIN)) : 0;
-          candidates.push({ segmentIndex, segmentProgress });
-        }
-
-        const existing = [...prev[dir]];
-        const usedCand = new Set<number>();
-        for (const b of existing) {
-          const bPos = b.segmentIndex + b.segmentProgress;
-          let bestIdx = -1;
-          let bestDist = Infinity;
-          for (let k = 0; k < candidates.length; k++) {
-            if (usedCand.has(k)) continue;
-            const c = candidates[k];
-            const cPos = c.segmentIndex + c.segmentProgress;
-            const d = Math.abs(cPos - bPos);
-            if (d < bestDist) {
-              bestDist = d;
-              bestIdx = k;
-            }
-          }
-          if (bestIdx >= 0 && bestDist <= 3) {
-            usedCand.add(bestIdx);
-            const c = candidates[bestIdx];
-            next[dir].push({
-              busId: b.busId,
-              segmentIndex: c.segmentIndex,
-              segmentProgress: c.segmentProgress,
-            });
-          } else {
-            // Sin candidato cercano → mantener posición rodada por reloj.
-            next[dir].push(b);
-          }
-        }
-      }
-      return next;
-    });
-  }, [realtime, stopsByDir]);
-
-
-
-  // Tick por reloj: avance continuo según velocidad media.
-  useEffect(() => {
-    setPredictedBusesByDir((prev) => {
-      const delta = 1 / (TYPICAL_SEG_MIN * 60); // progreso por segundo
-      const next: Record<1 | 2, DynamicBus[]> = { 1: [], 2: [] };
-      let changed = false;
-      for (const dir of [1, 2] as const) {
-        const stops = stopsByDir[dir];
-        const lastSeg = Math.max(0, stops.length - 2);
-        for (const b of prev[dir]) {
-          let segIdx = b.segmentIndex;
-          let prog = b.segmentProgress + delta;
-          while (prog >= 1 && segIdx < lastSeg) {
-            prog -= 1;
-            segIdx += 1;
-          }
-          if (segIdx >= lastSeg && prog >= 1) {
-            changed = true;
-            continue; // bus llega al final → retirado
-          }
-          if (segIdx !== b.segmentIndex || prog !== b.segmentProgress) changed = true;
-          next[dir].push({ busId: b.busId, segmentIndex: segIdx, segmentProgress: prog });
-        }
-      }
-      return changed ? next : prev;
-    });
-  }, [clock, stopsByDir]);
-
-
-
-
 
   const lineCategory = classifyLine(code);
   const catColor = lineCategory === "urban" ? "#EF4444" : "#3B82F6";
@@ -785,7 +589,7 @@ function BusDashboardPage() {
             onPickStop={handlePickStop}
             nearestList={nearestByDir[1]}
             geoStatus={geoStatus}
-            predictedBuses={predictedBusesByDir[1]}
+            predictedBuses={virtualBusesByDir[1]}
             disableLiveFetch={true}
           />
 
@@ -811,7 +615,7 @@ function BusDashboardPage() {
             onPickStop={handlePickStop}
             nearestList={nearestByDir[2]}
             geoStatus={geoStatus}
-            predictedBuses={predictedBusesByDir[2]}
+            predictedBuses={virtualBusesByDir[2]}
             disableLiveFetch={true}
           />
 
