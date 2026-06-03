@@ -56,8 +56,11 @@ export async function loadBusEngineSnapshot(): Promise<BusEngineSnapshot> {
       const out: T[] = [];
       let from = 0;
       while (true) {
-        const { data, error } = await supabaseAdmin
-          .from(table)
+        // Cast a any: el cliente tipado de Supabase exige literal del nombre de
+        // tabla; aquí necesitamos un helper genérico para paginar.
+        const { data, error } = await (supabaseAdmin.from(table as never) as unknown as {
+          select: (c: string) => { range: (a: number, b: number) => Promise<{ data: T[] | null; error: { message: string } | null }> };
+        })
           .select(columns)
           .range(from, from + pageSize - 1);
         if (error) throw new Error(`load ${table} failed: ${error.message}`);
@@ -68,6 +71,7 @@ export async function loadBusEngineSnapshot(): Promise<BusEngineSnapshot> {
       }
       return out;
     }
+
 
     const [stops, stopsMeta, segs, cycles, deps, sws] = await Promise.all([
       fetchAll<BusEngineSnapshot["stops"][number]>("bus_line_stops", "line_code,direction,seq,stop_code,stop_name"),
