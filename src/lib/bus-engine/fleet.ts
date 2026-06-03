@@ -210,7 +210,7 @@ export function buildLineFleetPlan(
   // (regla fija). Esto evita aplicar 07:00 a líneas que arrancan antes/después.
   const allDepsToday = [...idaDeps, ...vueltaDeps];
   const firstDepMin = allDepsToday.length > 0 ? Math.min(...allDepsToday) : null;
-  const serviceStartHHMM = firstDepMin != null ? minutesToHHMM(firstDepMin) : undefined;
+  const serviceStartHHMM = firstDepMin != null ? formatClock(firstDepMin) : undefined;
 
   const profileResult = applyProfileFleetTarget({
     lineCode,
