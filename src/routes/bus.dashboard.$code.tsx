@@ -395,17 +395,17 @@ function BusDashboardPage() {
       depTimelines.sort((a, b) => a - b);
 
       // === Ciclo de vida de buses virtuales ===
-      // Cada salida programada engendra UN bus virtual que:
-      //  - nace exactamente a su hora de salida desde la parada 0,
-      //  - rueda a stepMin por parada,
-      //  - desaparece cuando llega a la última parada (destino).
-      // Filtramos buses ya extintos (llegaron a destino antes de "ahora").
+      // Un bus virtual EXISTE únicamente entre:
+      //   - su hora de salida (nace en la parada 0), y
+      //   - su llegada a la última parada (muere/desaparece).
+      // Antes de la hora de salida NO hay bus (no se cuenta hacia atrás).
+      // Después de tocar destino se elimina.
       const lastIdx = stops.length - 1;
       const terminusOffset = lastIdx * stepMin;
-      const aliveOrFuture = depTimelines.filter(
-        (dep) => dep + terminusOffset >= nowMin - 0.0001,
+      const aliveBuses = depTimelines.filter(
+        (dep) => dep <= nowMin + 0.0001 && dep + terminusOffset >= nowMin - 0.0001,
       );
-      if (aliveOrFuture.length === 0) continue;
+      if (aliveBuses.length === 0) continue;
 
       for (let i = 0; i < stops.length; i++) {
         const offset = i * stepMin;
