@@ -3,8 +3,9 @@ import { createFileRoute } from '@tanstack/react-router'
 export const Route = createFileRoute('/api/public/test-vectalia')({
   server: {
     handlers: {
-      GET: async () => {
-        const url = 'https://qr.vectalia.es/Alicante/mapa.aspx?l=012&pl=38.350989692,%20-0.510041734&np=5110&p=1&pr=1'
+      GET: async ({ request }) => {
+        const u = new URL(request.url)
+        const url = u.searchParams.get('url') || 'https://qr.vectalia.es/Alicante/mapa.aspx?l=012&pl=38.350989692,%20-0.510041734&np=5110&p=1&pr=1'
         const results: any[] = []
         for (let i = 0; i < 3; i++) {
           const t0 = Date.now()
