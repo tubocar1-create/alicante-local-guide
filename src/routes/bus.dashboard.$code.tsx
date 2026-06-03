@@ -396,16 +396,13 @@ function BusDashboardPage() {
   // No-ops para conservar las props del componente hijo.
   const handleEtaLoading = useCallback((_stopCode: string, _loading: boolean) => {}, []);
   const handleStopEta = useCallback((_stopCode: string, _all: number[]) => {}, []);
-  // Bus dinámico persistente:
-  //  - Cada bus NACE cuando, en algún snapshot del bridge, el ETA de una
-  //    parada cae ≤ SPAWN_THRESHOLD_MIN (≈ 1 min). Hasta entonces no se
-  //    dibuja, aunque haya mínimos locales lejanos.
-  //  - Una vez nacido, avanza por el reloj a velocidad media (TYPICAL_SEG_MIN
-  //    por segmento). El reloj dispara un tick cada segundo.
-  //  - Cuando llega un nuevo bridge, cada bus existente se recalibra al
-  //    mínimo local más cercano (los ETAs reales mandan); los mínimos sin
-  //    bus asociado solo generan nuevo bus si cumplen el umbral de nacimiento.
-  //  - Al llegar al final del recorrido el bus se retira.
+  // Bus dinámico persistente (sólo en memoria, una sesión):
+  //  - PRIMER bridge de la sesión: se crea UN bus por cada parada cuyo ETA ≤
+  //    SPAWN_THRESHOLD_MIN. Esa es la única vez que nacen buses.
+  //  - Bridges posteriores: cada bus existente se reubica al mínimo local más
+  //    cercano (recalibración por ETA real). No se crean buses nuevos.
+  //  - Entre bridges, el reloj avanza cada bus a velocidad media.
+  //  - Al cerrar la página/app, el estado se pierde (no se persiste).
   const TYPICAL_SEG_MIN = 2;
   const SPAWN_THRESHOLD_MIN = 1;
   type DynamicBus = { busId: string; segmentIndex: number; segmentProgress: number };
@@ -414,8 +411,8 @@ function BusDashboardPage() {
   >({ 1: [], 2: [] });
   const busSeqRef = useRef(0);
   const lastSnapshotKeyRef = useRef<string | null>(null);
+  const firstSpawnDoneRef = useRef(false);
 
-  // Recalibración / nacimiento al recibir un snapshot nuevo del bridge.
   useEffect(() => {
     if (!realtime) return;
     const snapKey = realtime.capturedAt ?? realtime.fetchedAt ?? null;
@@ -430,8 +427,27 @@ function BusDashboardPage() {
           const arr = etas[s.code];
           return arr && arr.length > 0 ? arr[0] : null;
         });
-        // Mínimos locales = candidatos a posición real de bus.
-        const candidates: { segmentIndex: number; segmentProgress: number; eta: number }[] = [];
+
+        if (!firstSpawnDoneRef.current) {
+          // Primer bridge de la sesión: un bus por cada parada con ETA ≤ umbral.
+          for (let i = 0; i < list.length; i++) {
+            const v = vals[i];
+            if (v == null || v > SPAWN_THRESHOLD_MIN) continue;
+            const segmentIndex = i > 0 ? i - 1 : 0;
+            const segmentProgress =
+              i > 0 ? Math.max(0, Math.min(1, 1 - v / TYPICAL_SEG_MIN)) : 0;
+            busSeqRef.current += 1;
+            next[dir].push({
+              busId: `${dir}-b${busSeqRef.current}`,
+              segmentIndex,
+              segmentProgress,
+            });
+          }
+          continue;
+        }
+
+        // Bridges posteriores: sólo recalibrar buses existentes a los mínimos locales.
+        const candidates: { segmentIndex: number; segmentProgress: number }[] = [];
         for (let i = 0; i < list.length; i++) {
           const v = vals[i];
           if (v == null) continue;
@@ -442,47 +458,40 @@ function BusDashboardPage() {
           const segmentIndex = i > 0 ? i - 1 : 0;
           const segmentProgress =
             i > 0 ? Math.max(0, Math.min(1, 1 - v / TYPICAL_SEG_MIN)) : 0;
-          candidates.push({ segmentIndex, segmentProgress, eta: v });
+          candidates.push({ segmentIndex, segmentProgress });
         }
 
         const existing = [...prev[dir]];
-        const usedExisting = new Set<number>();
-        // Emparejar cada candidato con el bus existente más cercano (≤ 3 segmentos).
-        for (const c of candidates) {
-          const cPos = c.segmentIndex + c.segmentProgress;
+        const usedCand = new Set<number>();
+        for (const b of existing) {
+          const bPos = b.segmentIndex + b.segmentProgress;
           let bestIdx = -1;
           let bestDist = Infinity;
-          for (let j = 0; j < existing.length; j++) {
-            if (usedExisting.has(j)) continue;
-            const ePos = existing[j].segmentIndex + existing[j].segmentProgress;
-            const d = Math.abs(ePos - cPos);
+          for (let k = 0; k < candidates.length; k++) {
+            if (usedCand.has(k)) continue;
+            const c = candidates[k];
+            const cPos = c.segmentIndex + c.segmentProgress;
+            const d = Math.abs(cPos - bPos);
             if (d < bestDist) {
               bestDist = d;
-              bestIdx = j;
+              bestIdx = k;
             }
           }
           if (bestIdx >= 0 && bestDist <= 3) {
-            usedExisting.add(bestIdx);
+            usedCand.add(bestIdx);
+            const c = candidates[bestIdx];
             next[dir].push({
-              busId: existing[bestIdx].busId,
+              busId: b.busId,
               segmentIndex: c.segmentIndex,
               segmentProgress: c.segmentProgress,
             });
-          } else if (c.eta <= SPAWN_THRESHOLD_MIN) {
-            // Solo nacen buses cuando el ETA está al borde (regla del usuario).
-            busSeqRef.current += 1;
-            next[dir].push({
-              busId: `${dir}-b${busSeqRef.current}`,
-              segmentIndex: c.segmentIndex,
-              segmentProgress: c.segmentProgress,
-            });
+          } else {
+            // Sin candidato cercano → mantener posición rodada por reloj.
+            next[dir].push(b);
           }
         }
-        // Conservar buses existentes no emparejados: siguen rodando por reloj.
-        for (let j = 0; j < existing.length; j++) {
-          if (!usedExisting.has(j)) next[dir].push(existing[j]);
-        }
       }
+      firstSpawnDoneRef.current = true;
       return next;
     });
   }, [realtime, stopsByDir, etas]);
