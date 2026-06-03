@@ -224,6 +224,8 @@ function BusDashboardPage() {
   // Detección de línea nocturna y estimaciones por parada (sin tiempo real).
   const serviceRows = useBusServiceWindows();
   const departures = useBusLineDepartures();
+  // Snapshot completo del motor (incluye departures de TODAS las líneas).
+  const { data: engine } = useBusEngine();
 
   const isNightLine = useMemo(() => {
     const st = getServiceStatus(serviceRows, code, clock);
