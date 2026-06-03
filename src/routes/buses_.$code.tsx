@@ -38,17 +38,31 @@ const originQueryOptions = (code: string) =>
 
       const { data: routes, error: rErr } = await supabase
         .from("bus_ld_routes")
-        .select(
-          "id, destination_code, corridor, label, operators, is_popular, sort_order, destination:bus_ld_stations!bus_ld_routes_destination_code_fkey(city, station)"
-        )
+        .select("id, destination_code, corridor, label, operators, is_popular, sort_order")
         .eq("origin_code", code)
         .eq("is_active", true)
         .order("sort_order", { ascending: true });
       if (rErr) throw rErr;
 
-      return { origin: origin as Origin | null, routes: (routes ?? []) as RouteRow[] };
+      const destCodes = Array.from(new Set((routes ?? []).map((r) => r.destination_code)));
+      const { data: dests, error: dErr } = destCodes.length
+        ? await supabase
+            .from("bus_ld_stations")
+            .select("code, city, station")
+            .in("code", destCodes)
+        : { data: [], error: null };
+      if (dErr) throw dErr;
+
+      const destMap = new Map((dests ?? []).map((d) => [d.code, d]));
+      const enriched: RouteRow[] = (routes ?? []).map((r) => ({
+        ...r,
+        destination: destMap.get(r.destination_code) ?? null,
+      }));
+
+      return { origin: origin as Origin | null, routes: enriched };
     },
   });
+
 
 export const Route = createFileRoute("/buses_/$code")({
   loader: ({ params, context }) =>
