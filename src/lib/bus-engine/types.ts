@@ -59,6 +59,7 @@ export type ServiceWindow = {
   dayType: string;
   firstDepartureMin: number;
   lastDepartureMin: number;
+  terminalName: string | null;
 };
 
 export type BusEngineData = {
