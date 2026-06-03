@@ -3,11 +3,11 @@
 // === Arquitectura Bridge ===
 // El SCRAPING en vivo de SUBUS QR sólo se hace desde el PREVIEW
 // (dev.lovable.build, id-preview--*, *-dev.lovable.app, localhost).
-// El preview lee, parsea, ingesta a BBDD y refresca cada 30 s.
+// El preview lee, parsea, ingesta a BBDD y refresca cada 40 s.
 //
 // El sitio PUBLICADO (vamosalicante.com, *.lovable.app prod) NO hace
 // scraping: lee los snapshots ya ingestados por el preview desde la BBDD
-// (server fn `getLineRealtimeState`) cada 60 s. Entre lectura y lectura
+// (server fn `getLineRealtimeState`) cada 40 s. Entre lectura y lectura
 // el dashboard "modela" el movimiento decrementando los ETAs en local
 // según el `capturedAt` (ya implementado en el consumidor).
 //
@@ -25,8 +25,8 @@ import {
 } from "@/lib/bus-realtime.functions";
 import { fetchStopFromQR, normalizeLine } from "@/lib/bus-qr-client";
 
-const REFRESH_PREVIEW_MS = 30_000;
-const REFRESH_PUBLISHED_MS = 60_000;
+const REFRESH_PREVIEW_MS = 40_000;
+const REFRESH_PUBLISHED_MS = 40_000;
 const STALE_MS = 5 * 60 * 1000;
 const FROZEN_MS = 10 * 60 * 1000;
 const CONCURRENCY = 6;
