@@ -84,7 +84,7 @@ async function historicalActivationPattern(
   return aboveBase / data.length;
 }
 
-export async function tickLineInternal(lineCode: string) {
+async function tickLineInternal(lineCode: string) {
   const snap = await getBusEngineSnapshot();
   const engine = fromSnapshot(snap);
   const corrections = await loadPhaseCorrections(lineCode);
