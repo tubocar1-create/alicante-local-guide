@@ -128,12 +128,11 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
       const text = await r.text();
       try {
         const j = JSON.parse(text);
-        if (!j.horarios) {
-          console.warn("[cartelera] ADIF sin horarios", {
-            searchType, trafficType, numPage, status: r.status,
-            snippet: text.slice(0, 200),
-          });
-        }
+        const n = Array.isArray(j.horarios) ? j.horarios.length : -1;
+        console.log("[cartelera] ADIF", {
+          searchType, trafficType, numPage, status: r.status, n,
+          snippet: text.slice(0, 200),
+        });
         return j;
       } catch {
         console.warn("[cartelera] ADIF no-JSON", {
