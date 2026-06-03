@@ -145,14 +145,12 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
 
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-    // Reintenta una llamada hasta que devuelva horarios o se agoten los intentos
-    async function call(searchType: string, trafficType: string, numPage = 0, retries = 3) {
+    async function call(searchType: string, trafficType: string, numPage = 0, retries = 1) {
       for (let i = 0; i <= retries; i++) {
         const j = await callOnce(searchType, trafficType, numPage);
         if (j && Array.isArray(j.horarios) && j.horarios.length > 0) return j;
-        // Solo reintentamos la página 0 (las páginas posteriores sí pueden venir vacías legítimamente)
         if (numPage > 0) return j;
-        if (i < retries) await sleep(400 + i * 400);
+        if (i < retries) await sleep(300);
       }
       return { horarios: [] };
     }
@@ -164,19 +162,30 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
       ["proximasLlegadas", "avldmd", "LLEGADA"],
     ];
 
-    const salidas: CarteleraTrain[] = [];
-    const llegadas: CarteleraTrain[] = [];
-    const raw: CarteleraRaw[] = [];
-    for (const [s, t, dir] of ops) {
+    async function runOp(s: string, t: string, dir: "SALIDA" | "LLEGADA") {
+      const out: { n: CarteleraTrain; r: CarteleraRaw }[] = [];
       for (let p = 0; p < 3; p++) {
         const j = await call(s, t, p);
         if (!j.horarios || !j.horarios.length) break;
         for (const it of j.horarios) {
-          const n = norm(it, dir, t);
-          (dir === "SALIDA" ? salidas : llegadas).push(n);
-          raw.push({ ...it, direction: dir, trafficType: t });
+          out.push({ n: norm(it, dir, t), r: { ...it, direction: dir, trafficType: t } });
         }
         if (j.horarios.length < 10) break;
+      }
+      return out;
+    }
+
+    // Las 4 consultas ADIF en paralelo (antes eran secuenciales)
+    const results = await Promise.all(ops.map(([s, t, dir]) => runOp(s, t, dir)));
+
+    const salidas: CarteleraTrain[] = [];
+    const llegadas: CarteleraTrain[] = [];
+    const raw: CarteleraRaw[] = [];
+    for (let i = 0; i < results.length; i++) {
+      const dir = ops[i][2];
+      for (const { n, r } of results[i]) {
+        (dir === "SALIDA" ? salidas : llegadas).push(n);
+        raw.push(r);
       }
     }
 
@@ -189,7 +198,6 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
       return [...m.values()].sort((a, b) => a.estimated.localeCompare(b.estimated));
     };
 
-    // Orden cronológico del raw por hora (con fallback a horaEstado)
     const timeKey = (r: any) => {
       const h = (r.hora || r.horaEstado || "").trim();
       return h || "99:99";
