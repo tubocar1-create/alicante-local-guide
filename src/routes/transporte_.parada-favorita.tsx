@@ -523,7 +523,65 @@ function ParadaFavoritaPage() {
             ⓘ La hora de salida es la oficial de Vectalia desde {nightEstimate.originTerminal}; la llegada a tu parada se estima a partir del recorrido (velocidad media de madrugada).
           </p>
         )}
+
+        {/* Botón de consulta bajo demanda + cupo diario */}
+        {!outOfService && !isNightLine && (
+          <div className="mt-3 flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={handleRequestRealtime}
+              disabled={liveLoading || (quota?.remaining === 0 && !quota?.isAdmin)}
+              className={`flex w-full items-center justify-center gap-2 rounded-2xl px-3 py-2.5 text-sm font-extrabold shadow-sm transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
+                snapshot && !experienceEnded
+                  ? "bg-emerald-600 text-white"
+                  : "bg-[#0d3b8a] text-white"
+              }`}
+            >
+              {liveLoading ? (
+                <>
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                  Consultando…
+                </>
+              ) : snapshot && !experienceEnded ? (
+                <>
+                  <Zap className="h-4 w-4" />
+                  Consultando en directo…
+                </>
+              ) : (
+                <>
+                  <Zap className="h-4 w-4" />
+                  Consultar tiempo real
+                </>
+              )}
+            </button>
+
+            {quota && !quota.isAdmin && (
+              <p className="text-center text-[10px] font-semibold text-stone-500">
+                Te quedan <span className="font-extrabold text-stone-800">{quota.remaining}</span> de {quota.limit} llamadas promocionales hoy.
+              </p>
+            )}
+            {quota?.isAdmin && (
+              <p className="text-center text-[10px] font-semibold text-indigo-700">
+                Modo administrador · llamadas ilimitadas.
+              </p>
+            )}
+
+            {callError && (
+              <div className="flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 ring-1 ring-amber-200">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+                <p className="text-[11px] font-semibold leading-snug text-amber-900">{callError}</p>
+              </div>
+            )}
+
+            {experienceEnded && (
+              <p className="text-center text-[10px] font-semibold text-stone-500">
+                Experiencia finalizada. Pulsa el botón para una nueva consulta.
+              </p>
+            )}
+          </div>
+        )}
       </section>
+
 
 
       {/* Upcoming buses */}
