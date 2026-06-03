@@ -33,6 +33,18 @@ function todayMadrid(): string {
   return fmt.format(new Date());
 }
 
+function currentMadridMinutes(at: Date): number {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Madrid",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(at);
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0);
+  return get("hour") * 60 + get("minute") + get("second") / 60;
+}
+
 function hhmmssToMinutes(value: string | null | undefined): number {
   if (!value) return 0;
   const [h, m, s] = value.split(":").map((n) => Number(n));
