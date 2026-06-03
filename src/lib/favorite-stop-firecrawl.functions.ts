@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const BASE = "http://www.subus.es/QR/Alicante";
 const FIRECRAWL_URL = "https://api.firecrawl.dev/v2/scrape";
