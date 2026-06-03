@@ -1,9 +1,13 @@
-// Lectura del QR oficial de SUBUS a través de NUESTRO servidor (no del navegador).
-// El navegador no puede leer http://www.subus.es desde un origen https
-// (mixed content + CORS), así que proxyamos por nuestra ruta server:
-//   GET /api/public/bus-datos?stop=<p>  → { raw: <html consulta.aspx> }
-// NO usamos scraping externo (ScrapingBee/Firecrawl). NO usamos `datos.aspx`.
+// Lectura del QR oficial de SUBUS DIRECTAMENTE desde el navegador del preview.
+// El servidor (Cloudflare Worker) está bloqueado por Vectalia con 403, pero el
+// navegador del preview NO está bloqueado: hace la petición a la página oficial
+//   http://www.subus.es/QR/Alicante/consulta.aspx?p=<stop>
+// y parsea el HTML/JSON tal cual lo devuelve SUBUS. Sin proxy, sin server.
+//
+// Fallback: si el navegador no puede (mixed content/CORS en algún entorno),
+// se intenta el proxy /api/public/bus-datos como último recurso.
 
+const DIRECT_URL = "http://www.subus.es/QR/Alicante/consulta.aspx";
 const PROXY_URL = "/api/public/bus-datos";
 const ARRIVAL_RE = /Linea\s+(\d{1,3}[A-Za-z]?)\s+([^:]+?)\s*:\s*(\d+)\s*min/gi;
 const FETCH_TIMEOUT_MS = 8_000;
@@ -25,7 +29,7 @@ function parseArrivalText(raw: string): Map<string, { destination: string; minut
     const json = JSON.parse(raw) as { tiempos?: unknown };
     if (typeof json.tiempos === "string") text = json.tiempos;
   } catch {
-    // texto plano: úsalo tal cual
+    // texto plano/HTML: úsalo tal cual
   }
   const out = new Map<string, { destination: string; minutes: number[] }>();
   for (const m of text.matchAll(ARRIVAL_RE)) {
@@ -42,24 +46,53 @@ function parseArrivalText(raw: string): Map<string, { destination: string; minut
   return out;
 }
 
+async function fetchDirect(stopCode: string, signal: AbortSignal): Promise<string | null> {
+  const url = `${DIRECT_URL}?p=${encodeURIComponent(stopCode)}`;
+  const res = await fetch(url, {
+    method: "GET",
+    signal,
+    cache: "no-store",
+    credentials: "omit",
+    redirect: "follow",
+  });
+  if (!res.ok) return null;
+  const text = await res.text();
+  return text || null;
+}
+
+async function fetchViaProxy(stopCode: string, signal: AbortSignal): Promise<string | null> {
+  const res = await fetch(`${PROXY_URL}?stop=${encodeURIComponent(stopCode)}`, {
+    method: "GET",
+    signal,
+    cache: "no-store",
+  });
+  if (!res.ok) return null;
+  const json = (await res.json()) as { raw?: string; ok?: boolean };
+  if (!json.ok || typeof json.raw !== "string") return null;
+  return json.raw;
+}
+
 export async function fetchStopFromQR(stopCode: string, signal?: AbortSignal): Promise<StopQrResult | null> {
-  const url = `${PROXY_URL}?stop=${encodeURIComponent(stopCode)}`;
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   const linked = () => controller.abort();
   signal?.addEventListener("abort", linked);
   try {
-    const res = await fetch(url, {
-      method: "GET",
-      signal: controller.signal,
-      cache: "no-store",
-    });
-    if (!res.ok) return null;
-    const json = (await res.json()) as { raw?: string; ok?: boolean };
-    if (!json.ok || typeof json.raw !== "string") return null;
-    return { byLine: parseArrivalText(json.raw), fetchedAt: Date.now() };
-  } catch {
-    return null;
+    let raw: string | null = null;
+    try {
+      raw = await fetchDirect(stopCode, controller.signal);
+    } catch {
+      raw = null;
+    }
+    if (!raw) {
+      try {
+        raw = await fetchViaProxy(stopCode, controller.signal);
+      } catch {
+        raw = null;
+      }
+    }
+    if (!raw) return null;
+    return { byLine: parseArrivalText(raw), fetchedAt: Date.now() };
   } finally {
     clearTimeout(t);
     signal?.removeEventListener("abort", linked);
