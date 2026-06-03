@@ -37,6 +37,108 @@ function busColor(t: string | null): string {
   }
 }
 
+type StopKind = "origen" | "recogida" | "intermedia" | "destino";
+type ItinStop = { time: string; name: string; city: string; kind: StopKind };
+
+function hhmm(t: string): string {
+  return t.length >= 5 ? t.slice(0, 5) : t;
+}
+function toMin(t: string): number {
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + m;
+}
+
+function buildItinerary(item: {
+  direction: "S" | "L";
+  departure_time: string;
+  arrival_time: string;
+  origin_station: string;
+  destination_station: string;
+  observations: string[];
+}): ItinStop[] {
+  const dep = hhmm(item.departure_time);
+  const arr = hhmm(item.arrival_time);
+  const isIda = item.direction === "S";
+
+  const stops: ItinStop[] = [];
+  stops.push({
+    time: dep,
+    name: item.origin_station,
+    city: isIda ? "Alicante" : "Benidorm",
+    kind: "origen",
+  });
+
+  for (const obs of item.observations) {
+    if (/Última parada/i.test(obs)) continue;
+
+    const renfe = obs.match(/Para en (.+?) a las (\d{1,2}:\d{2})/i);
+    if (renfe) {
+      stops.push({
+        time: renfe[2],
+        name: renfe[1].trim(),
+        city: "Alicante",
+        kind: isIda ? "recogida" : "intermedia",
+      });
+      continue;
+    }
+
+    const colonIdx = obs.indexOf(":");
+    if (colonIdx < 0) continue;
+    // Mantenemos los HH:MM que vienen después: cortamos sólo el primer ":" si va seguido de letra/espacio
+    const headOk = /^[^:]+:\s/.test(obs);
+    if (!headOk) continue;
+    const tail = obs.slice(colonIdx + 1);
+    for (const chunk of tail.split("·")) {
+      const m = chunk.trim().match(/^(.+?)\s+(\d{1,2}:\d{2})$/);
+      if (!m) continue;
+      stops.push({
+        time: m[2],
+        name: m[1].trim(),
+        city: "Benidorm",
+        kind: isIda ? "intermedia" : "recogida",
+      });
+    }
+  }
+
+  stops.push({
+    time: arr,
+    name: item.destination_station,
+    city: isIda ? "Benidorm" : "Alicante",
+    kind: "destino",
+  });
+
+  const seen = new Set<string>();
+  const out: ItinStop[] = [];
+  for (const s of stops) {
+    const k = `${s.time}|${s.name.toLowerCase()}`;
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(s);
+  }
+
+  const depMin = toMin(dep);
+  out.sort((a, b) => {
+    if (a.kind === "origen") return -1;
+    if (b.kind === "origen") return 1;
+    if (a.kind === "destino") return 1;
+    if (b.kind === "destino") return -1;
+    const da = (toMin(a.time) - depMin + 24 * 60) % (24 * 60);
+    const db = (toMin(b.time) - depMin + 24 * 60) % (24 * 60);
+    return da - db;
+  });
+
+  return out;
+}
+
+function kindMeta(k: StopKind): { label: string; color: string } {
+  switch (k) {
+    case "origen":     return { label: "Origen",   color: "#34d399" };
+    case "recogida":   return { label: "Recogida", color: "#38bdf8" };
+    case "intermedia": return { label: "Parada",   color: "#94a3b8" };
+    case "destino":    return { label: "Destino",  color: "#f472b6" };
+  }
+}
+
 function BusDetail() {
   const { id } = Route.useParams();
   const numId = Number(id);
@@ -159,36 +261,57 @@ function BusDetail() {
               </div>
             </div>
 
-            {/* Paradas y variantes intermedias */}
+            {/* Itinerario completo */}
             <section className="mt-4">
               <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-white">
                 <MapPin className="h-4 w-4 text-sky-400" />
-                Paradas y variantes
+                Itinerario
               </h2>
-              {item.observations.length === 0 ? (
-                <p className="rounded-xl border border-slate-800 bg-slate-950/40 p-3 text-[12px] text-slate-400">
-                  Este servicio no tiene paradas intermedias registradas. Origen y destino arriba.
-                </p>
-              ) : (
-                <ul className="space-y-1.5">
-                  {item.observations.map((obs, i) => (
-                    <li
-                      key={i}
-                      className="flex items-start gap-2 rounded-xl border border-slate-800 bg-slate-950/40 px-3 py-2 text-[12px] leading-relaxed text-slate-300"
-                    >
-                      <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-sky-400/70" />
-                      <span>{obs}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              {(() => {
+                const itin = buildItinerary(item);
+                return (
+                  <ol className="relative ml-2 border-l border-slate-700/70 pl-4">
+                    {itin.map((s, i) => {
+                      const meta = kindMeta(s.kind);
+                      const isLast = i === itin.length - 1;
+                      return (
+                        <li key={`${s.time}-${s.name}-${i}`} className={isLast ? "" : "pb-3"}>
+                          <span
+                            className="absolute -left-[7px] grid h-3.5 w-3.5 place-items-center rounded-full ring-2 ring-slate-950"
+                            style={{ background: meta.color }}
+                          />
+                          <div className="flex items-baseline gap-2">
+                            <span className="font-mono text-sm font-bold tabular-nums text-slate-100">
+                              {s.time}
+                            </span>
+                            <span
+                              className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide"
+                              style={{ background: meta.color + "22", color: meta.color }}
+                            >
+                              {meta.label}
+                            </span>
+                          </div>
+                          <p className="mt-0.5 text-[12px] leading-snug text-slate-200">
+                            {s.name}
+                            <span className="ml-1 text-[10px] uppercase tracking-wider text-slate-500">
+                              · {s.city}
+                            </span>
+                          </p>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                );
+              })()}
             </section>
 
             <p className="mt-3 rounded-xl border border-slate-800 bg-slate-950/40 p-3 text-[11px] leading-relaxed text-slate-400">
-              Origen y destino mostrados corresponden al recorrido principal del bus. Las paradas
-              intermedias y variantes (recogidas adicionales u otras paradas en destino) se listan arriba
-              tal como las publica ALSA.
+              <span className="font-semibold text-slate-300">Origen / Destino</span> son las terminales
+              del recorrido. <span className="font-semibold text-sky-300">Recogida</span> = parada para
+              subir al bus. <span className="font-semibold text-pink-300">Destino</span> = última parada.
+              Las paradas intermedias permiten bajarse durante el trayecto.
             </p>
+
 
             <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
               <a
