@@ -150,51 +150,61 @@ function ParadaFavoritaPage() {
     setSearchLookupDone(!search.stop || searchMatchesCurrent);
   }, [search.stop, search.line, searchMatchesCurrent]);
 
-  // Una sola petición a Vectalia: trae todos los ETAs disponibles.
-  // Para líneas nocturnas no consultamos Vectalia (sin cobertura live) y
-  // usamos estimados horarios desde el terminal de origen.
-  useEffect(() => {
-    if (searchTargetPending || outOfService || isNightLine) {
-      setLiveAll([]);
-      setLiveLoading(false);
-      return;
-    }
-    let cancelled = false;
-    let controller: AbortController | null = null;
-    const fetchAll = async () => {
-      controller?.abort();
-      controller = new AbortController();
-      setLiveLoading(true);
-      try {
-        const r = await getClientStopRealtime({ stopId: stop.stopId, line: stop.line, signal: controller.signal });
-        const all = r.all.filter((n) => typeof n === "number");
-        if (!cancelled) {
-          setLiveAll(all);
-          setLiveUpdatedAt(r.fetchedAt);
-        }
-      } catch {
-        if (!cancelled) setLiveAll([]);
-      } finally {
-        if (!cancelled) setLiveLoading(false);
+  // Llamada bajo demanda a Vectalia (vía Firecrawl). Una sola petición por
+  // pulsación de botón. El usuario tiene 3 llamadas al día (admin: ilimitadas).
+  async function handleRequestRealtime() {
+    if (liveLoading || outOfService || isNightLine) return;
+    setLiveLoading(true);
+    setCallError(null);
+    try {
+      const res: FavoriteStopRealtimeResult = await requestRealtime({
+        data: { stopId: stop.stopId, line: stop.line },
+      });
+      setQuota({ remaining: res.remaining, isAdmin: res.isAdmin, limit: res.limit });
+      if (!res.ok) {
+        setCallError(res.message);
+        return;
       }
-    };
-    fetchAll();
-    const id = window.setInterval(fetchAll, 30_000);
-    return () => {
-      cancelled = true;
-      controller?.abort();
-      window.clearInterval(id);
-    };
-  }, [stop.stopId, stop.line, outOfService, isNightLine, searchTargetPending]);
+      if (res.etaMin == null) {
+        setCallError("No hay paso en vivo para esta línea ahora mismo.");
+        setSnapshot(null);
+        return;
+      }
+      setSnapshot({ etaMin: res.etaMin, fetchedAt: res.fetchedAt, destination: res.destination });
+      setExperienceEnded(false);
+    } catch (e) {
+      setCallError(e instanceof Error ? e.message : "Error al consultar Vectalia.");
+    } finally {
+      setLiveLoading(false);
+    }
+  }
 
-  const elapsedMin = Math.floor((Date.now() - liveUpdatedAt) / 60_000);
-  const liveMinutes = liveAll.length > 0 ? Math.max(0, liveAll[0] - elapsedMin) : null;
-  // Fuentes válidas: nocturno (horario Vectalia) o tiempo real Vectalia.
-  // Si no hay ninguna, mostramos n/d — NO inventamos estimación diurna.
+  // Reset al cambiar de parada/línea.
+  useEffect(() => {
+    setSnapshot(null);
+    setCallError(null);
+    setExperienceEnded(false);
+  }, [stop.stopId, stop.line]);
+
+  // Contador local: minutos restantes = etaMin - minutos transcurridos desde la llamada.
+  const liveMinutes: number | null = (() => {
+    if (!snapshot) return null;
+    const elapsed = Math.floor((Date.now() - snapshot.fetchedAt) / 60_000);
+    return Math.max(0, snapshot.etaMin - elapsed);
+  })();
+
+  // Cuando llega a 0, dejamos 60s en "llegando" y cerramos la experiencia.
+  useEffect(() => {
+    if (snapshot && liveMinutes === 0 && !experienceEnded) {
+      const t = window.setTimeout(() => setExperienceEnded(true), 60_000);
+      return () => window.clearTimeout(t);
+    }
+  }, [snapshot, liveMinutes, experienceEnded]);
+
   const nightFirst = nightEstimate?.upcoming[0];
   const minutes: number | null = nightFirst
     ? nightFirst.minutes
-    : (liveMinutes ?? null);
+    : (!experienceEnded && liveMinutes != null ? liveMinutes : null);
   const arrivalTime: string = nightFirst
     ? nightFirst.arrivalTime
     : minutes != null
@@ -203,7 +213,7 @@ function ParadaFavoritaPage() {
           return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
         })()
       : "n/d";
-  // Próximas llegadas: nocturno → horario oficial; diurno → solo live Vectalia.
+  // Próximas llegadas: solo nocturno aquí (diurno ya no usamos Vectalia en bucle).
   const upcoming = (() => {
     if (nightEstimate) {
       const atOrigin = nightEstimate.atOrigin;
@@ -213,19 +223,11 @@ function ParadaFavoritaPage() {
         live: false,
       }));
     }
-    const liveAdjusted = liveAll.map((m) => Math.max(0, m - elapsedMin)).sort((a, b) => a - b);
-    return liveAdjusted.slice(0, 4).map((m) => {
-      const d = new Date(Date.now() + m * 60_000);
-      return {
-        minutes: m,
-        arrivalTime: `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`,
-        live: true,
-      };
-    });
+    return [] as Array<{ minutes: number; arrivalTime: string; live: boolean }>;
   })();
   const isArriving = minutes != null && minutes <= 1 && !nightEstimate;
-  const hasLiveData = liveAll.length > 0 && !isNightLine;
-  const hasAnyData = nightFirst != null || liveMinutes != null;
+  const hasLiveData = snapshot != null && !experienceEnded && !isNightLine;
+  const hasAnyData = nightFirst != null || (snapshot != null && !experienceEnded);
 
 
 
