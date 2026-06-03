@@ -216,46 +216,55 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
 export const getCartelera = createServerFn({ method: "GET" }).handler(
   async (): Promise<CarteleraResponse & { cachedAt: string; nextRefreshAt: string }> => {
     const now = Date.now();
-    if (_cache && _cache.v === CACHE_VERSION && now - _cache.at < CACHE_TTL_MS) {
+    const fresh = _cache && _cache.v === CACHE_VERSION && now - _cache.at < CACHE_TTL_MS;
+
+    // Lanza el refresco si no hay inflight; reutiliza si ya hay uno
+    const triggerRefresh = () => {
+      if (_inflight) return _inflight;
+      _inflight = (async () => {
+        let last: CarteleraResponse | null = null;
+        try {
+          last = await fetchCartelera();
+        } catch (e) {
+          console.error("[cartelera] error fetch", e);
+        }
+        if (last) {
+          const fullyValid = last.salidas.length > 0 && last.llegadas.length > 0;
+          _cache = {
+            at: fullyValid ? Date.now() : Date.now() - (CACHE_TTL_MS - 30_000),
+            v: CACHE_VERSION,
+            data: last,
+          };
+        }
+        return last;
+      })().finally(() => {
+        _inflight = null;
+      }) as Promise<CarteleraResponse>;
+      return _inflight;
+    };
+
+    // Hay cache válida → devolver al instante
+    if (fresh && _cache) {
       return {
         ...(_cache.data as any),
         cachedAt: new Date(_cache.at).toISOString(),
         nextRefreshAt: new Date(_cache.at + CACHE_TTL_MS).toISOString(),
       };
     }
-    if (!_inflight) {
-      _inflight = (async () => {
-        // Reintenta el fetch completo si salidas o llegadas vienen vacías
-        let last: CarteleraResponse | null = null;
-        for (let attempt = 0; attempt < 3; attempt++) {
-          try {
-            const data = await fetchCartelera();
-            last = data;
-            if (data.salidas.length > 0 && data.llegadas.length > 0) break;
-            console.warn("[cartelera] respuesta incompleta, reintentando", {
-              attempt,
-              salidas: data.salidas.length,
-              llegadas: data.llegadas.length,
-            });
-          } catch (e) {
-            console.error("[cartelera] error fetch", attempt, e);
-          }
-          await new Promise((r) => setTimeout(r, 600 + attempt * 600));
-        }
-        if (!last) throw new Error("ADIF: sin respuesta tras reintentos");
-        // Sólo cacheamos si ambas direcciones tienen datos; si no, cache corto
-        const fullyValid = last.salidas.length > 0 && last.llegadas.length > 0;
-        _cache = {
-          at: fullyValid ? Date.now() : Date.now() - (CACHE_TTL_MS - 30_000),
-          v: CACHE_VERSION,
-          data: last,
-        };
-        return last;
-      })().finally(() => {
-        _inflight = null;
-      });
+
+    // Hay cache vieja → devolver vieja YA y refrescar en background (SWR)
+    if (_cache && _cache.v === CACHE_VERSION) {
+      triggerRefresh().catch(() => {});
+      return {
+        ...(_cache.data as any),
+        cachedAt: new Date(_cache.at).toISOString(),
+        nextRefreshAt: new Date(now + 30_000).toISOString(),
+      };
     }
-    const data = await _inflight;
+
+    // Primera carga: esperar
+    const data = await triggerRefresh();
+    if (!data) throw new Error("ADIF: sin respuesta");
     const at = _cache?.at ?? Date.now();
     return {
       ...(data as any),
