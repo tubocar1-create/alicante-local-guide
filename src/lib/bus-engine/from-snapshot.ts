@@ -18,11 +18,11 @@ function asDirection(n: number): Direction {
   return n === 2 || n === 0 ? 2 : 1;
 }
 
-// El esquema actual de bus_line_departures usa direction smallint (0/1).
-// Tratamos 0 como dirección 2 (vuelta) para alinear con bus_line_stops (1/2).
+// bus_line_departures usa direction smallint (0/1) donde
+// 0 = sale desde el terminal IDA (= dirección 1 en bus_line_stops)
+// 1 = sale desde el terminal VUELTA (= dirección 2 en bus_line_stops)
 function normalizeDirSmallint(n: number): Direction {
-  if (n === 1) return 1;
-  return 2;
+  return n === 0 ? 1 : 2;
 }
 
 export function fromSnapshot(snap: BusEngineSnapshot): BusEngineData {
