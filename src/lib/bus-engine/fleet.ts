@@ -388,27 +388,21 @@ export function generateActiveFleet(
     plan.officialDeparturesByDirection[1].length > 0 ||
     plan.officialDeparturesByDirection[2].length > 0;
   if (hasOfficial) {
-    // MODELO OPERACIONAL:
-    //   - Cada salida oficial = un bus virtual que NACE a su hora de salida.
-    //   - El bus AVANZA por su sentido. Al llegar a la parada final se queda
-    //     CLAMPADO en terminal (visible) hasta que el siguiente bus de ese
-    //     sentido lo reemplaza. Las desincorporaciones se tratan aparte.
-    //   - Mantenemos en pantalla los K últimos buses por sentido, donde
-    //     K = ceil(fleetSizeMax / 2), de modo que la flota visible coincide
-    //     con la realidad operativa (p.ej. línea 12 → 4 simultáneos).
-    const perDirCap = plan.fleetSizeMax > 0
-      ? Math.max(1, Math.ceil(plan.fleetSizeMax / 2))
-      : 2;
+    // MODELO OPERACIONAL PURO:
+    //   - Cada salida oficial = un bus virtual que NACE en su terminal a su
+    //     hora exacta de salida y MUERE al llegar a la última parada de su
+    //     sentido (tripDuration).
+    //   - No hay espera en terminal, no hay clamping, no hay reinyección.
+    //   - El número de buses simultáneos resulta naturalmente del horario.
+    //     Para la línea 12 esto produce 4 buses en operación plena.
     for (const dir of [1, 2] as Direction[]) {
       const dirPlan = dir === 1 ? plan.dirIda : plan.dirVuelta;
       if (!dirPlan) continue;
       const tripDuration = dirPlan.totalMin;
       if (tripDuration <= 0) continue;
       const deps = plan.officialDeparturesByDirection[dir]
-        .filter((d) => d <= now)
-        .sort((a, b) => b - a)   // más reciente primero
-        .slice(0, perDirCap)
-        .sort((a, b) => a - b);  // restauramos orden ascendente
+        .filter((d) => d <= now && now < d + tripDuration)
+        .sort((a, b) => a - b);
       for (const dep of deps) {
         const slotKey = `${dir}-${minutesToHHMM(dep)}`;
         const rawCorrection =
@@ -419,14 +413,15 @@ export function generateActiveFleet(
           -MAX_PHASE_CORRECTION_MIN,
           Math.min(MAX_PHASE_CORRECTION_MIN, rawCorrection),
         );
-        // Clamp: si ya pasó el trayecto, lo dejamos en la parada final.
-        const elapsed = Math.max(0, Math.min(tripDuration, now - dep + correction));
+        const elapsed = Math.max(0, now - dep + correction);
+        if (elapsed >= tripDuration) continue; // muerto: ya llegó a final
         const loc = locateInDirection(dirPlan, elapsed);
         const speed = estimateSpeedKmh(plan, loc);
         raw.push(makeBus(plan, slotKey, dep, elapsed, correction, loc, speed, true, dir));
       }
     }
   } else {
+
     // Fallback sintético (solo si NO hay salidas oficiales para esta línea/slot).
     const N = plan.fleetSizeExpected;
     if (N > 0) {
