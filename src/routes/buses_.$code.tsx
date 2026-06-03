@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
+import { useState } from "react";
 import { ArrowLeft, ArrowRight, Bus, Plane } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
