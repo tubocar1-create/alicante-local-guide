@@ -8,6 +8,7 @@ import {
   loadShowOnHome,
   saveFavoriteStop,
   saveShowOnHome,
+  saveFavoriteStopLiveSnapshot,
 } from "@/components/FavoriteStopWidget";
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { useBusServiceWindows, useBusLineDepartures, getServiceStatus, getNightLineEstimates } from "@/hooks/useBusServiceWindow";
@@ -53,7 +54,7 @@ function ParadaFavoritaPage() {
   // Snapshot devuelto por una llamada bajo demanda a Vectalia (vía Firecrawl).
   // No hay polling: el usuario solicita la llamada y aquí guardamos el
   // resultado para mostrar un contador decreciente hasta cero.
-  const [snapshot, setSnapshot] = useState<{ etaMin: number; fetchedAt: number; destination: string | null } | null>(null);
+  const [snapshot, setSnapshot] = useState<{ etaMin: number; all: number[]; fetchedAt: number; destination: string | null } | null>(null);
   const [liveLoading, setLiveLoading] = useState(false);
   const [callError, setCallError] = useState<string | null>(null);
   const [quota, setQuota] = useState<{ remaining: number; isAdmin: boolean; limit: number } | null>(null);
@@ -171,7 +172,15 @@ function ParadaFavoritaPage() {
         setSnapshot(null);
         return;
       }
-      setSnapshot({ etaMin: res.etaMin, fetchedAt: res.fetchedAt, destination: res.destination });
+      setSnapshot({ etaMin: res.etaMin, all: res.all, fetchedAt: res.fetchedAt, destination: res.destination });
+      saveFavoriteStopLiveSnapshot({
+        stopId: stop.stopId,
+        line: stop.line,
+        etaMin: res.etaMin,
+        all: res.all,
+        destination: res.destination,
+        fetchedAt: res.fetchedAt,
+      });
       setExperienceEnded(false);
     } catch (e) {
       let msg = "Error al consultar Vectalia.";
@@ -218,6 +227,10 @@ function ParadaFavoritaPage() {
         })()
       : "n/d";
   // Próximas llegadas: solo nocturno aquí (diurno ya no usamos Vectalia en bucle).
+  // Próximas llegadas:
+  //  - Nocturno: estimadas desde horario Vectalia + recorrido.
+  //  - Diurno con snapshot Vectalia activo: usamos `all` (devuelto en la
+  //    misma llamada) y aplicamos el mismo contador decreciente.
   const upcoming = (() => {
     if (nightEstimate) {
       const atOrigin = nightEstimate.atOrigin;
@@ -226,6 +239,20 @@ function ParadaFavoritaPage() {
         arrivalTime: atOrigin ? u.departureTime : u.arrivalTime,
         live: false,
       }));
+    }
+    if (snapshot && !experienceEnded) {
+      const elapsed = Math.floor((Date.now() - snapshot.fetchedAt) / 60_000);
+      return snapshot.all
+        .map((m) => Math.max(0, m - elapsed))
+        .filter((m, i) => i === 0 || m > 0)
+        .map((m) => {
+          const d = new Date(Date.now() + m * 60_000);
+          return {
+            minutes: m,
+            arrivalTime: `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`,
+            live: true,
+          };
+        });
     }
     return [] as Array<{ minutes: number; arrivalTime: string; live: boolean }>;
   })();
