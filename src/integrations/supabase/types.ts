@@ -930,6 +930,182 @@ export type Database = {
         }
         Relationships: []
       }
+      bus_ld_routes: {
+        Row: {
+          corridor: string | null
+          created_at: string
+          destination_code: string
+          id: string
+          is_active: boolean
+          is_popular: boolean
+          label: string | null
+          operators: string[]
+          origin_code: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          corridor?: string | null
+          created_at?: string
+          destination_code: string
+          id?: string
+          is_active?: boolean
+          is_popular?: boolean
+          label?: string | null
+          operators?: string[]
+          origin_code: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          corridor?: string | null
+          created_at?: string
+          destination_code?: string
+          id?: string
+          is_active?: boolean
+          is_popular?: boolean
+          label?: string | null
+          operators?: string[]
+          origin_code?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bus_ld_routes_destination_code_fkey"
+            columns: ["destination_code"]
+            isOneToOne: false
+            referencedRelation: "bus_ld_stations"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "bus_ld_routes_origin_code_fkey"
+            columns: ["origin_code"]
+            isOneToOne: false
+            referencedRelation: "bus_ld_stations"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      bus_ld_services: {
+        Row: {
+          arrival_time: string | null
+          booking_url: string | null
+          created_at: string
+          departure_time: string
+          destination_stop: string | null
+          duration_min: number | null
+          fetched_at: string | null
+          id: string
+          is_active: boolean
+          operator: string
+          origin_stop: string | null
+          price_from_eur: number | null
+          product: string | null
+          raw: Json | null
+          route_id: string
+          service_date: string
+          service_number: string | null
+          source: string | null
+          stops: Json
+          updated_at: string
+        }
+        Insert: {
+          arrival_time?: string | null
+          booking_url?: string | null
+          created_at?: string
+          departure_time: string
+          destination_stop?: string | null
+          duration_min?: number | null
+          fetched_at?: string | null
+          id?: string
+          is_active?: boolean
+          operator: string
+          origin_stop?: string | null
+          price_from_eur?: number | null
+          product?: string | null
+          raw?: Json | null
+          route_id: string
+          service_date: string
+          service_number?: string | null
+          source?: string | null
+          stops?: Json
+          updated_at?: string
+        }
+        Update: {
+          arrival_time?: string | null
+          booking_url?: string | null
+          created_at?: string
+          departure_time?: string
+          destination_stop?: string | null
+          duration_min?: number | null
+          fetched_at?: string | null
+          id?: string
+          is_active?: boolean
+          operator?: string
+          origin_stop?: string | null
+          price_from_eur?: number | null
+          product?: string | null
+          raw?: Json | null
+          route_id?: string
+          service_date?: string
+          service_number?: string | null
+          source?: string | null
+          stops?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bus_ld_services_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "bus_ld_routes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bus_ld_stations: {
+        Row: {
+          city: string
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          kind: string
+          lat: number | null
+          lng: number | null
+          operators: string[]
+          station: string
+          updated_at: string
+        }
+        Insert: {
+          city: string
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          kind?: string
+          lat?: number | null
+          lng?: number | null
+          operators?: string[]
+          station: string
+          updated_at?: string
+        }
+        Update: {
+          city?: string
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          kind?: string
+          lat?: number | null
+          lng?: number | null
+          operators?: string[]
+          station?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bus_line_departures: {
         Row: {
           created_at: string
