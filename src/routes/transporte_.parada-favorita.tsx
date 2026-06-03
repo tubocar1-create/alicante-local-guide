@@ -9,6 +9,7 @@ import {
   saveFavoriteStop,
   saveShowOnHome,
   saveFavoriteStopLiveSnapshot,
+  loadFavoriteStopLiveSnapshot,
 } from "@/components/FavoriteStopWidget";
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { useBusServiceWindows, useBusLineDepartures, getServiceStatus, getNightLineEstimates } from "@/hooks/useBusServiceWindow";
@@ -195,10 +196,33 @@ function ParadaFavoritaPage() {
     }
   }
 
-  // Reset al cambiar de parada/línea.
+  // Al cambiar de parada/línea: si hay un snapshot vivo guardado que coincide
+  // con la selección actual, lo restauramos para que la experiencia siga viva
+  // aunque el usuario haya navegado fuera y vuelto. Si no, reseteamos.
   useEffect(() => {
-    setSnapshot(null);
     setCallError(null);
+    const saved = loadFavoriteStopLiveSnapshot();
+    if (
+      saved &&
+      saved.stopId === stop.stopId &&
+      saved.line.toUpperCase() === stop.line.toUpperCase()
+    ) {
+      const totalSec = saved.etaMin * 60;
+      const elapsedSec = Math.floor((Date.now() - saved.fetchedAt) / 1000);
+      const secondsLeft = totalSec - elapsedSec;
+      // Vivo si aún quedan segundos, o si está en la ventana de 60s "llegando".
+      if (secondsLeft > -60) {
+        setSnapshot({
+          etaMin: saved.etaMin,
+          all: saved.all,
+          fetchedAt: saved.fetchedAt,
+          destination: saved.destination,
+        });
+        setExperienceEnded(secondsLeft <= -60);
+        return;
+      }
+    }
+    setSnapshot(null);
     setExperienceEnded(false);
   }, [stop.stopId, stop.line]);
 
