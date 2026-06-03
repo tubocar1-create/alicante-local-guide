@@ -59,6 +59,14 @@ const SECTORS: Sector[] = [
     Icon: TrainFront,
   },
   {
+    to: "/buses",
+    label: "Buses larga distancia",
+    description: "ALSA, Vectalia, Beniconnect desde Alicante",
+    accent: "#fcd34d",
+    accent2: "#f59e0b",
+    Icon: Bus,
+  },
+  {
     to: "/rent-a-car",
     label: "Rent a car",
     description: "Comparador de alquiler en el aeropuerto",
