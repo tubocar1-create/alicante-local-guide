@@ -49,10 +49,15 @@ function ParadaFavoritaPage() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [showOnHome, setShowOnHome] = useState<boolean>(() => loadShowOnHome());
-  // Real-time ETAs en minutos (lista completa devuelta por Vectalia).
-  const [liveAll, setLiveAll] = useState<number[]>([]);
+  // Snapshot devuelto por una llamada bajo demanda a Vectalia (vía Firecrawl).
+  // No hay polling: el usuario solicita la llamada y aquí guardamos el
+  // resultado para mostrar un contador decreciente hasta cero.
+  const [snapshot, setSnapshot] = useState<{ etaMin: number; fetchedAt: number; destination: string | null } | null>(null);
   const [liveLoading, setLiveLoading] = useState(false);
-  const [liveUpdatedAt, setLiveUpdatedAt] = useState<number>(Date.now());
+  const [callError, setCallError] = useState<string | null>(null);
+  const [quota, setQuota] = useState<{ remaining: number; isAdmin: boolean; limit: number } | null>(null);
+  const [experienceEnded, setExperienceEnded] = useState(false);
+  const requestRealtime = useServerFn(requestFavoriteStopRealtime);
 
   const serviceWindows = useBusServiceWindows();
   const lineDepartures = useBusLineDepartures();
