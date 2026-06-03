@@ -194,7 +194,29 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
 
 
       {step === "line" && (
-        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pr-1">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pr-1">
+          <a
+            href="/transporte/parada-favorita"
+            className="flex items-center gap-2.5 rounded-xl border border-amber-300/70 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2 shadow-sm transition active:scale-[0.99]"
+          >
+            <span
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-white shadow-sm"
+              style={{ backgroundColor: "#F59E0B" }}
+              aria-hidden
+            >
+              <Star className="h-5 w-5" strokeWidth={2.4} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[13px] font-extrabold leading-tight text-amber-900">
+                Mi parada favorita
+              </span>
+              <span className="block text-[10px] text-amber-700/80">
+                Acceso rápido a tu parada habitual
+              </span>
+            </span>
+            <ArrowLeft className="h-4 w-4 rotate-180 text-amber-700" />
+          </a>
+
           {loading && <p className="text-sm text-muted-foreground">Cargando líneas…</p>}
 
           {(["urban", "extraurban", "night"] as const).map((cat) => {
