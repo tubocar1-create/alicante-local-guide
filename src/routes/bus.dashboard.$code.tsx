@@ -345,7 +345,7 @@ function BusDashboardPage() {
 
 
   // === Realtime ===
-  // Fuente única: snapshot server-side Vectalia (useLineRealtime), cacheado 5 min.
+  // Fuente única: snapshot server-side SUBUS (useLineRealtime), cacheado 5 min.
   // Visualmente decrementamos los ETAs cada segundo según ageSec del snapshot,
   // y la query refetchea cada 60 s (sólo da datos frescos cuando expira el TTL).
   const { data: realtime, isLoading: realtimeLoading } = useLineRealtime(

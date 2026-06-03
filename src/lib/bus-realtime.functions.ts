@@ -119,7 +119,7 @@ export const ingestStopSnapshots = createServerFn({ method: "POST" })
       direction: null,
       eta_minutes: s.etaMinutes,
       captured_at: now,
-      source: "vectalia-client",
+      source: "subus-client",
     }));
     await supabaseAdmin
       .from("bus_realtime_snapshots")
@@ -320,7 +320,7 @@ export const getLineLive = createServerFn({ method: "GET" })
           direction: null,
           eta_minutes: mins,
           captured_at: fetchedAt,
-          source: "vectalia-worker",
+          source: "subus-worker",
         });
       }
     }
