@@ -83,32 +83,20 @@ export type FavoriteStopRealtimeResult =
     };
 
 export const requestFavoriteStopRealtime = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
     z
       .object({
         stopId: z.string().regex(/^\d{1,6}$/),
         line: z.string().min(1).max(8),
+        visitorId: z.string().min(8).max(128),
       })
       .parse(input),
   )
-  .handler(async ({ data, context }): Promise<FavoriteStopRealtimeResult> => {
-    const { supabase, userId } = context;
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  .handler(async ({ data }): Promise<FavoriteStopRealtimeResult> => {
+    const visitorId = data.visitorId;
 
-    // Admin bypass
-    const { data: adminRow } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "admin")
-      .maybeSingle();
-    const isAdmin = !!adminRow;
-
-    // Count today's calls (Europe/Madrid day)
+    // Start of the Madrid day in UTC
     const now = new Date();
-    // Madrid is UTC+1/+2; using simple "today since midnight Madrid" via SQL is cleaner.
-    // Compute the start of the Madrid day in UTC.
     const madridNow = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Madrid" }));
     const madridMidnight = new Date(
       madridNow.getFullYear(),
@@ -118,28 +106,25 @@ export const requestFavoriteStopRealtime = createServerFn({ method: "POST" })
       0,
       0,
     );
-    // Convert Madrid midnight back to UTC by offset diff.
     const offsetMin = (now.getTime() - madridNow.getTime()) / 60000;
     const startUtc = new Date(madridMidnight.getTime() + offsetMin * 60000);
 
-    let used = 0;
-    if (!isAdmin) {
-      const { count } = await supabaseAdmin
-        .from("firecrawl_call_log")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .gte("created_at", startUtc.toISOString());
-      used = count ?? 0;
-      if (used >= DAILY_LIMIT) {
-        return {
-          ok: false,
-          reason: "limit",
-          message: `Has alcanzado el límite promocional de ${DAILY_LIMIT} llamadas diarias.`,
-          remaining: 0,
-          isAdmin: false,
-          limit: DAILY_LIMIT,
-        };
-      }
+    // Count today's calls for this visitor (anonymous, by visitorId)
+    const { count } = await supabaseAdmin
+      .from("firecrawl_call_log")
+      .select("id", { count: "exact", head: true })
+      .eq("visitor_id", visitorId)
+      .gte("created_at", startUtc.toISOString());
+    const used = count ?? 0;
+    if (used >= DAILY_LIMIT) {
+      return {
+        ok: false,
+        reason: "limit",
+        message: `Has alcanzado el límite promocional de ${DAILY_LIMIT} llamadas diarias.`,
+        remaining: 0,
+        isAdmin: false,
+        limit: DAILY_LIMIT,
+      };
     }
 
     const apiKey = process.env.FIRECRAWL_API_KEY;
@@ -148,8 +133,8 @@ export const requestFavoriteStopRealtime = createServerFn({ method: "POST" })
         ok: false,
         reason: "config",
         message: "Servicio no configurado.",
-        remaining: isAdmin ? UNLIMITED : DAILY_LIMIT - used,
-        isAdmin,
+        remaining: DAILY_LIMIT - used,
+        isAdmin: false,
         limit: DAILY_LIMIT,
       };
     }
@@ -166,8 +151,8 @@ export const requestFavoriteStopRealtime = createServerFn({ method: "POST" })
         ok: false,
         reason: "firecrawl_error",
         message: "No se pudo consultar Vectalia en este momento.",
-        remaining: isAdmin ? UNLIMITED : DAILY_LIMIT - used,
-        isAdmin,
+        remaining: DAILY_LIMIT - used,
+        isAdmin: false,
         limit: DAILY_LIMIT,
       };
     }
@@ -179,9 +164,9 @@ export const requestFavoriteStopRealtime = createServerFn({ method: "POST" })
     const destination = forLine[0]?.destination ?? null;
     const etaMin = all[0] ?? null;
 
-    // Log the call (count it whether or not the line had a hit — Firecrawl was used)
     await supabaseAdmin.from("firecrawl_call_log").insert({
-      user_id: userId,
+      user_id: null,
+      visitor_id: visitorId,
       purpose: "favorite_stop",
       stop_id: data.stopId,
       line: wanted,
@@ -195,8 +180,8 @@ export const requestFavoriteStopRealtime = createServerFn({ method: "POST" })
       all,
       destination,
       fetchedAt: Date.now(),
-      remaining: isAdmin ? UNLIMITED : Math.max(0, DAILY_LIMIT - newUsed),
-      isAdmin,
+      remaining: Math.max(0, DAILY_LIMIT - newUsed),
+      isAdmin: false,
       limit: DAILY_LIMIT,
     };
   });
