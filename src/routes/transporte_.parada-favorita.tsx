@@ -155,15 +155,11 @@ function ParadaFavoritaPage() {
   // pulsación de botón. El usuario tiene 3 llamadas al día (admin: ilimitadas).
   async function handleRequestRealtime() {
     if (liveLoading || outOfService || isNightLine) return;
-    if (!isAuthed) {
-      setCallError("Inicia sesión para consultar el tiempo real (3 llamadas/día).");
-      return;
-    }
     setLiveLoading(true);
     setCallError(null);
     try {
       const res: FavoriteStopRealtimeResult = await requestRealtime({
-        data: { stopId: stop.stopId, line: stop.line },
+        data: { stopId: stop.stopId, line: stop.line, visitorId: getVisitorId() },
       });
       setQuota({ remaining: res.remaining, isAdmin: res.isAdmin, limit: res.limit });
       if (!res.ok) {
