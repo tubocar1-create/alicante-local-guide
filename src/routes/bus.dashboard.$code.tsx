@@ -18,6 +18,7 @@ import { getClientStopRealtime } from "@/lib/bus-realtime-client";
 import busAlicanteImg from "@/assets/bus-alicante.png";
 import { useLineRealtime, isPreviewHost } from "@/hooks/useLineRealtime";
 import { useBusEngine } from "@/hooks/useBusEngine";
+import { buildLineFleetPlan, deriveStopEtas, generateActiveFleet } from "@/lib/bus-engine/fleet";
 
 // Velocidad estándar del bus virtual: 110 segundos entre paradas consecutivas.
 const VIRTUAL_BUS_SEC_PER_STOP = 110;
@@ -362,113 +363,49 @@ function BusDashboardPage() {
   // salida programada (bus_line_departures) y rueda a VIRTUAL_BUS_SEC_PER_STOP
   // segundos por parada. ETA por parada = (salida - ahora) + i * paso.
   // Si una salida ya pasó la parada (ETA < 0), prueba la siguiente salida.
-  const virtualEtaByDir = useMemo(() => {
-    const out: Record<1 | 2, Map<string, { min: number; time: string }>> = {
+  const virtualFleetView = useMemo(() => {
+    const etasByDir: Record<1 | 2, Map<string, { min: number; time: string }>> = {
       1: new Map(),
       2: new Map(),
     };
-    if (!engine || isNightLine) return out;
-
-    const nowMin = clock.getHours() * 60 + clock.getMinutes();
-    const todayType = dayTypeOf(clock);
-    const yDayType = dayTypeOf(new Date(clock.getTime() - 24 * 60 * 60_000));
-    const stepMin = VIRTUAL_BUS_SEC_PER_STOP / 60;
-    const maxAlive = MAX_VIRTUAL_BUSES_BY_LINE[code] ?? DEFAULT_MAX_VIRTUAL_BUSES;
-
-    const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
-
-    // Primero recolectamos las salidas vivas de AMBOS sentidos para aplicar
-    // el tope global de la línea antes de calcular ETAs por parada.
-    const perDir: Record<1 | 2, { stops: typeof stopsByDir[1]; alive: number[] } | null> = {
-      1: null,
-      2: null,
+    const busesByDir: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]> = {
+      1: [],
+      2: [],
     };
+    if (!engine || isNightLine) return { etasByDir, busesByDir };
 
+    const nowMin = clock.getHours() * 60 + clock.getMinutes() + clock.getSeconds() / 60;
+    const plan = buildLineFleetPlan(engine, code, clock);
+    const { fleet } = generateActiveFleet(plan, clock);
+    const activeFleet = fleet.filter((bus) => bus.departureMin <= nowMin + 0.001 && bus.status === "moving");
 
-
-    for (const dir of [1, 2] as const) {
-      const stops = stopsByDir[dir];
-      if (stops.length === 0) continue;
-
-      // Determinar la dirección normalizada del engine que corresponde a este
-      // sentido visual, casando el terminal de origen con serviceWindows.
-      const originNorm = norm(stops[0].name);
-      const swMatch = engine.serviceWindows.find((w) => {
-        if (w.lineCode !== code || !w.terminalName) return false;
-        const a = norm(w.terminalName);
-        return a && (originNorm.includes(a) || a.includes(originNorm));
-      });
-      if (!swMatch) continue;
-      const engineDir = swMatch.direction;
-
-      const depTimelines: number[] = [];
-      for (const d of engine.departures) {
-        if (d.lineCode !== code || d.direction !== engineDir) continue;
-        const depMin = d.departureMin;
-        if (matchesDayType(d.dayType, todayType)) depTimelines.push(depMin);
-        if (matchesDayType(d.dayType, yDayType) && depMin >= 18 * 60) {
-          depTimelines.push(depMin - 24 * 60);
-        }
+    for (const bus of activeFleet) {
+      const stops = stopsByDir[bus.direction];
+      if (stops.length > 1 && bus.segmentIndex < stops.length - 1) {
+        busesByDir[bus.direction].push({
+          busId: bus.busId,
+          segmentIndex: Math.max(0, bus.segmentIndex),
+          segmentProgress: Math.max(0, Math.min(1, bus.segmentProgress)),
+        });
       }
-      if (depTimelines.length === 0) continue;
-      depTimelines.sort((a, b) => a - b);
-
-      // === Ciclo de vida de buses virtuales ===
-      // Un bus virtual EXISTE únicamente entre su hora de salida (nace en la
-      // parada 0) y su llegada a la última parada (muere/desaparece).
-      const lastIdx = stops.length - 1;
-      const terminusOffset = lastIdx * stepMin;
-      const aliveBuses = depTimelines.filter(
-        (dep) => dep <= nowMin + 0.0001 && dep + terminusOffset >= nowMin - 0.0001,
-      );
-      if (aliveBuses.length === 0) continue;
-
-      perDir[dir] = { stops, alive: aliveBuses };
-    }
-
-    // Tope global por línea: conservamos los N buses VIVOS más recientes
-    // (mayor `dep`). Los más antiguos —los más cerca de destino— se eliminan
-    // primero del dashboard, como si hubieran terminado su servicio antes.
-    const allAlive: Array<{ dir: 1 | 2; dep: number }> = [];
-    for (const dir of [1, 2] as const) {
-      const entry = perDir[dir];
-      if (!entry) continue;
-      for (const dep of entry.alive) allAlive.push({ dir, dep });
-    }
-    allAlive.sort((a, b) => b.dep - a.dep);
-    const kept = new Set(
-      allAlive.slice(0, maxAlive).map((b) => `${b.dir}:${b.dep}`),
-    );
-
-    for (const dir of [1, 2] as const) {
-      const entry = perDir[dir];
-      if (!entry) continue;
-      const aliveBuses = entry.alive.filter((dep) => kept.has(`${dir}:${dep}`));
-      if (aliveBuses.length === 0) continue;
-      const stops = entry.stops;
-
-      for (let i = 0; i < stops.length; i++) {
-        const offset = i * stepMin;
-        // Próximo bus virtual vivo cuya llegada a esta parada aún no ha pasado.
-        let bestArr: number | null = null;
-        for (const dep of aliveBuses) {
-          const arr = dep + offset;
-          if (arr < nowMin - 0.0001) continue; // este bus ya pasó esta parada
-          if (bestArr == null || arr < bestArr) bestArr = arr;
-        }
-        if (bestArr == null) continue;
-
-        const delta = Math.max(0, Math.round(bestArr - nowMin));
-        const abs = ((bestArr % 1440) + 1440) % 1440;
-        const hh = String(Math.floor(abs / 60)).padStart(2, "0");
-        const mm = String(Math.round(abs % 60)).padStart(2, "0");
-        out[dir].set(stops[i].code, { min: delta, time: `${hh}:${mm}` });
+      if (bus.segmentProgress <= 0.05) {
+        const currentStop = stops[bus.segmentIndex];
+        if (currentStop) etasByDir[bus.direction].set(currentStop.code, { min: 0, time: formatHHMM(clock) });
       }
     }
-    return out;
+
+    for (const eta of deriveStopEtas(plan, activeFleet, clock)) {
+      const prev = etasByDir[eta.direction].get(eta.stopCode);
+      if (!prev || eta.etaMin < prev.min) {
+        etasByDir[eta.direction].set(eta.stopCode, { min: eta.etaMin, time: eta.etaClock });
+      }
+    }
+    return { etasByDir, busesByDir };
 
   }, [engine, isNightLine, code, stopsByDir, clock]);
 
+  const virtualEtaByDir = virtualFleetView.etasByDir;
+  const virtualBusesByDir = virtualFleetView.busesByDir;
   const scheduleEtaByDir = isNightLine ? nightEtaByDir : virtualEtaByDir;
 
 
