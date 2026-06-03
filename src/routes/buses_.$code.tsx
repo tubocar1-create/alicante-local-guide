@@ -34,9 +34,9 @@ const CORRIDOR_META: Record<string, CorridorMeta> = {
     name: "Nacionales de alta demanda",
     product: "Alsa · Avanza · Socibus",
     tint: {
-      section: "bg-amber-500/[0.10]",
-      list: "bg-amber-950/30",
-      border: "border-amber-500/25",
+      section: "bg-sky-500/[0.10]",
+      list: "bg-sky-950/30",
+      border: "border-sky-500/25",
     },
   },
   "castilla-la-mancha": {
@@ -159,7 +159,7 @@ function BusOriginPage() {
       }}
     >
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-40 left-1/2 h-[28rem] w-[28rem] -translate-x-1/2 rounded-full bg-amber-500/[0.06] blur-3xl" />
+        <div className="absolute -top-40 left-1/2 h-[28rem] w-[28rem] -translate-x-1/2 rounded-full bg-sky-500/[0.06] blur-3xl" />
       </div>
 
       <div className="relative mx-auto max-w-3xl px-3 pb-10 pt-5 md:px-6">
