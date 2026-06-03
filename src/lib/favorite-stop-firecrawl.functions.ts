@@ -1,6 +1,29 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequestHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+async function checkIsAdmin(): Promise<boolean> {
+  try {
+    const auth = getRequestHeader("authorization") ?? getRequestHeader("Authorization");
+    if (!auth) return false;
+    const token = auth.replace(/^Bearer\s+/i, "").trim();
+    if (!token) return false;
+    const { data: userRes } = await supabaseAdmin.auth.getUser(token);
+    const uid = userRes?.user?.id;
+    if (!uid) return false;
+    const { data: role } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", uid)
+      .eq("role", "admin")
+      .maybeSingle();
+    return !!role;
+  } catch {
+    return false;
+  }
+}
+
 
 const BASE = "http://www.subus.es/QR/Alicante";
 const FIRECRAWL_URL = "https://api.firecrawl.dev/v2/scrape";
