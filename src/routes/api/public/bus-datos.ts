@@ -10,12 +10,6 @@ const TIMEOUT_MS = 8_000;
 
 const jsonHeaders = { "Content-Type": "application/json", "Cache-Control": "no-store" };
 
-function extractCookies(res: Response): string {
-  const anyHeaders = res.headers as unknown as { getSetCookie?: () => string[] };
-  const list = anyHeaders.getSetCookie?.() ?? [];
-  return list.map((c) => c.split(";")[0]).filter(Boolean).join("; ");
-}
-
 async function fetchWithTimeout(url: string, init: RequestInit = {}): Promise<Response> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
