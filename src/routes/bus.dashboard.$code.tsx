@@ -427,6 +427,11 @@ function BusDashboardPage() {
           const arr = etas[list[i].code];
           const v = arr && arr.length > 0 ? arr[0] : null;
           if (v == null || v > SPAWN_THRESHOLD_MIN) continue;
+          // Si la parada anterior también está ≤ umbral, forma parte del mismo
+          // tramo consecutivo: el bus pasa primero por aquella, no por ésta.
+          const prevArr = i > 0 ? etas[list[i - 1].code] : null;
+          const prevV = prevArr && prevArr.length > 0 ? prevArr[0] : null;
+          if (prevV != null && prevV <= SPAWN_THRESHOLD_MIN) continue;
           const segmentIndex = Math.max(0, Math.min(list.length - 2, i > 0 ? i - 1 : 0));
           const segmentProgress = i > 0 ? Math.max(0, Math.min(1, 1 - v / TYPICAL_SEG_MIN)) : 0;
           busSeqRef.current += 1;
