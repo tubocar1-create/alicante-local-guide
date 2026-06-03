@@ -202,20 +202,29 @@ function ParadaFavoritaPage() {
     setExperienceEnded(false);
   }, [stop.stopId, stop.line]);
 
-  // Contador local: minutos restantes = etaMin - minutos transcurridos desde la llamada.
-  const liveMinutes: number | null = (() => {
+  // Contador local en segundos para que el usuario lo vea decrecer en vivo.
+  const liveSecondsLeft: number | null = (() => {
     if (!snapshot) return null;
-    const elapsed = Math.floor((Date.now() - snapshot.fetchedAt) / 60_000);
-    return Math.max(0, snapshot.etaMin - elapsed);
+    const totalSec = snapshot.etaMin * 60;
+    const elapsedSec = Math.floor((Date.now() - snapshot.fetchedAt) / 1000);
+    return Math.max(0, totalSec - elapsedSec);
   })();
+  // Minutos para el número grande: redondeo hacia arriba para que baje
+  // inmediatamente tras el primer segundo (de N a N-1) y llegue a 0 al final.
+  const liveMinutes: number | null =
+    liveSecondsLeft == null ? null : Math.ceil(liveSecondsLeft / 60);
+  const liveMmSs: string | null =
+    liveSecondsLeft == null
+      ? null
+      : `${String(Math.floor(liveSecondsLeft / 60)).padStart(2, "0")}:${String(liveSecondsLeft % 60).padStart(2, "0")}`;
 
   // Cuando llega a 0, dejamos 60s en "llegando" y cerramos la experiencia.
   useEffect(() => {
-    if (snapshot && liveMinutes === 0 && !experienceEnded) {
+    if (snapshot && liveSecondsLeft === 0 && !experienceEnded) {
       const t = window.setTimeout(() => setExperienceEnded(true), 60_000);
       return () => window.clearTimeout(t);
     }
-  }, [snapshot, liveMinutes, experienceEnded]);
+  }, [snapshot, liveSecondsLeft, experienceEnded]);
 
   const nightFirst = nightEstimate?.upcoming[0];
   const minutes: number | null = nightFirst
