@@ -358,6 +358,9 @@ function BusDashboardPage() {
     const nowMs = clock.getTime();
     for (const s of realtime.stops) {
       if (!s.etaMinutes || s.etaMinutes.length === 0) continue;
+      // Si el snapshot de esta parada lleva >10 min sin refrescarse, congelamos:
+      // no inventamos un autobús que probablemente ya pasó. Cae a "n/d".
+      if (s.frozen) continue;
       const capturedMs = Date.parse(s.capturedAt);
       const elapsedMin = Number.isFinite(capturedMs)
         ? Math.max(0, (nowMs - capturedMs) / 60_000)
@@ -369,6 +372,7 @@ function BusDashboardPage() {
     }
     return out;
   }, [realtime, clock]);
+
 
   // Mientras carga el primer snapshot, marcamos todas las paradas como "cargando"
   // para no mostrar "n/d" durante el arranque.
@@ -476,6 +480,22 @@ function BusDashboardPage() {
             </span>
           </div>
         )}
+
+        {/* Antigüedad de los datos en vivo: badge "n/d" si lleva >5 min sin refresco. */}
+        {!isNightLine && realtime && realtime.ageSec != null && (realtime.stale || realtime.frozen) && (
+          <div className="mt-3 flex items-center gap-2 rounded-xl border border-amber-400/30 bg-amber-400/10 px-3 py-2">
+            <span className="font-sans text-[10px] font-black not-italic uppercase tracking-wider text-amber-300">
+              n/d
+            </span>
+            <span className="font-sans text-[11px] not-italic text-amber-100/80">
+              {realtime.frozen
+                ? `Datos en vivo congelados (sin actualizar hace ${Math.round(realtime.ageSec / 60)} min)`
+                : `Datos en vivo con ${Math.round(realtime.ageSec / 60)} min de antigüedad`}
+            </span>
+          </div>
+        )}
+
+
 
 
 
