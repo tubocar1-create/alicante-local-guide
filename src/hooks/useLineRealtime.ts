@@ -104,21 +104,32 @@ export function useLineRealtime(lineCode: string | null | undefined) {
         qrByStop.set(sc, r);
       });
 
+      const cachedState = await fetchLineFromCache({ data: { lineCode: code } });
+      const cachedByStop = new Map(cachedState.stops.map((s) => [s.stopCode, s]));
+
       const result = stops.map((s) => {
         const qr = qrByStop.get(s.stop_code);
         const mins = qr?.byLine.get(code)?.minutes ?? [];
+        const cached = cachedByStop.get(s.stop_code);
+        const etaMinutes = mins.length > 0 ? mins : (cached?.etaMinutes ?? []);
+        const capturedAt = mins.length > 0 ? fetchedAtIso : (cached?.capturedAt ?? fetchedAtIso);
         return {
           stopCode: s.stop_code,
           stopName: s.stop_name,
           direction: (s.direction === 2 ? 2 : 1) as 1 | 2,
           seq: s.seq,
-          etaMinutes: mins,
-          capturedAt: fetchedAtIso,
-          ageSec: 0,
-          stale: false,
-          frozen: false,
+          etaMinutes,
+          capturedAt,
+          ageSec: mins.length > 0 ? 0 : (cached?.ageSec ?? 0),
+          stale: mins.length > 0 ? false : (cached?.stale ?? true),
+          frozen: mins.length > 0 ? false : (cached?.frozen ?? true),
         };
       });
+
+      const hasAnyLiveEta = result.some((s) => s.etaMinutes.length > 0);
+      if (!hasAnyLiveEta && cachedState.stops.some((s) => s.etaMinutes.length > 0)) {
+        return cachedState;
+      }
 
       // Persistir TODAS las líneas vistas en cada parada → fuente del bridge.
       const snaps: Array<{ stopCode: string; lineCode: string; etaMinutes: number[] }> = [];
@@ -138,10 +149,10 @@ export function useLineRealtime(lineCode: string | null | undefined) {
       return {
         lineCode: code,
         fetchedAt: fetchedAtIso,
-        capturedAt: fetchedAtIso,
-        ageSec: 0,
-        stale: false,
-        frozen: false,
+        capturedAt: hasAnyLiveEta ? fetchedAtIso : cachedState.capturedAt,
+        ageSec: hasAnyLiveEta ? 0 : cachedState.ageSec,
+        stale: hasAnyLiveEta ? false : cachedState.stale,
+        frozen: hasAnyLiveEta ? false : cachedState.frozen,
         stops: result,
       };
     },
