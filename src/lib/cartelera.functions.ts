@@ -191,10 +191,18 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
 
     // ADIF bloquea ráfagas simultáneas desde producción; las consultas van seriadas.
     const results: Array<{ n: CarteleraTrain; r: CarteleraRaw }[]> = [];
+    let failedOps = 0;
     for (const [s, t, dir] of ops) {
-      results.push(await runOp(s, t, dir));
+      try {
+        results.push(await runOp(s, t, dir));
+      } catch (e) {
+        failedOps++;
+        console.warn("[cartelera] ADIF op fallida", { searchType: s, trafficType: t, error: String(e) });
+        results.push([]);
+      }
       await sleep(200);
     }
+    if (failedOps === ops.length) throw new Error("ADIF: acceso bloqueado temporalmente");
 
     const salidas: CarteleraTrain[] = [];
     const llegadas: CarteleraTrain[] = [];
@@ -257,7 +265,7 @@ export const getCartelera = createServerFn({ method: "GET" }).handler(
         return last;
       })().finally(() => {
         _inflight = null;
-      }) as Promise<CarteleraResponse>;
+      }) as Promise<CarteleraResponse | null>;
       return _inflight;
     };
 
