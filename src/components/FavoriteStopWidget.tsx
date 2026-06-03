@@ -197,7 +197,9 @@ export function FavoriteStopWidget() {
       setLiveMin(null);
       setLiveSource(null);
     }
-  }, [stop.stopId, stop.line, engine]);
+    // El tick (cada 30s + evento "vamos:favorite-stop-live") fuerza re-ejecución.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  });
 
 
   const lineColor =
