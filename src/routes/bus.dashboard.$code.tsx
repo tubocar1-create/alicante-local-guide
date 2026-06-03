@@ -394,11 +394,23 @@ function BusDashboardPage() {
     };
     if (!engine || isNightLine) return { etasByDir, busesByDir };
 
-    const nowMin = clock.getHours() * 60 + clock.getMinutes() + clock.getSeconds() / 60;
+    // CRÍTICO: nowMin DEBE ir en minutos de Madrid, igual que bus.departureMin.
+    // Si usamos clock.getHours() y el navegador (o el iframe del preview) está
+    // en UTC, descartamos todos los buses por desfase de 2h.
+    const madridParts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/Madrid",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    }).formatToParts(clock);
+    const mp = (t: string) => Number(madridParts.find((p) => p.type === t)?.value ?? 0);
+    const nowMin = mp("hour") * 60 + mp("minute") + mp("second") / 60;
     const alignedEngine = alignEngineScheduleDirections(engine, code, stopsByDir);
     const plan = buildLineFleetPlan(alignedEngine, code, clock);
     const { fleet } = generateActiveFleet(plan, clock);
     const activeFleet = fleet.filter((bus) => bus.departureMin <= nowMin + 0.001);
+
 
     for (const bus of activeFleet) {
       const stops = stopsByDir[bus.direction];
