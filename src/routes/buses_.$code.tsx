@@ -278,12 +278,10 @@ function BusOriginPage() {
                   </div>
 
                   <ul className={`border-t ${meta.tint.border} ${meta.tint.list} p-1.5`}>
-                    {items.map((r) => (
-                      <li key={r.id}>
-                        <button
-                          type="button"
-                          className="group flex w-full items-center gap-2 rounded-lg border border-slate-800/70 bg-slate-950/40 px-2.5 py-1.5 text-left transition hover:border-sky-500/40 hover:bg-sky-500/5"
-                        >
+                    {items.map((r) => {
+                      const isAlsaMadrid = r.destination_code === "MAD";
+                      const inner = (
+                        <>
                           <div className="min-w-0 flex-1">
                             <span className="truncate text-[12px] font-medium text-slate-200">
                               {r.destination?.station ?? r.destination?.city ?? r.destination_code}
@@ -310,9 +308,30 @@ function BusOriginPage() {
                             })}
                           </div>
                           <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-500 transition group-hover:translate-x-0.5 group-hover:text-sky-300" />
-                        </button>
-                      </li>
-                    ))}
+                        </>
+                      );
+                      return (
+                        <li key={r.id}>
+                          {isAlsaMadrid ? (
+                            <Link
+                              to="/buses_/alsa/$slug"
+                              params={{ slug: "alicante-madrid" }}
+                              search={{ dir: direction }}
+                              className="group flex w-full items-center gap-2 rounded-lg border border-slate-800/70 bg-slate-950/40 px-2.5 py-1.5 text-left transition hover:border-sky-500/40 hover:bg-sky-500/5"
+                            >
+                              {inner}
+                            </Link>
+                          ) : (
+                            <button
+                              type="button"
+                              className="group flex w-full items-center gap-2 rounded-lg border border-slate-800/70 bg-slate-950/40 px-2.5 py-1.5 text-left transition hover:border-sky-500/40 hover:bg-sky-500/5"
+                            >
+                              {inner}
+                            </button>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
                 </section>
               );
