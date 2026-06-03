@@ -47,8 +47,7 @@ export type BusEngineSnapshot = {
   fetchedAt: string;
 };
 
-export const getBusEngineSnapshot = createServerFn({ method: "GET" }).handler(
-  async (): Promise<BusEngineSnapshot> => {
+export async function loadBusEngineSnapshot(): Promise<BusEngineSnapshot> {
     const [stopsRes, stopsMetaRes, segRes, cycleRes, depRes, swRes] = await Promise.all([
       supabaseAdmin.from("bus_line_stops").select("line_code,direction,seq,stop_code,stop_name"),
       supabaseAdmin.from("bus_stops").select("code,name,lat,lng"),
@@ -73,5 +72,8 @@ export const getBusEngineSnapshot = createServerFn({ method: "GET" }).handler(
       serviceWindows: swRes.data ?? [],
       fetchedAt: new Date().toISOString(),
     };
-  },
+}
+
+export const getBusEngineSnapshot = createServerFn({ method: "GET" }).handler(
+  async (): Promise<BusEngineSnapshot> => loadBusEngineSnapshot(),
 );
