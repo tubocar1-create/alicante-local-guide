@@ -36,7 +36,6 @@ import {
 } from "./safe-mode";
 import {
   applyProfileFleetTarget,
-  getLineProfile,
   type FleetWindow,
 } from "./line-profiles";
 import { classifyDepartureWindow } from "./active-window";
