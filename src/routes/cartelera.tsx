@@ -320,9 +320,8 @@ function RawAdifTable({ rows, kind }: { rows: Array<Record<string, any>>; kind: 
     return "—";
   };
 
-  // ¿Ya salió pero ADIF aún no lo ha retirado? Solo salidas en hora.
+  // ¿Ya pasó pero ADIF aún no lo ha retirado? Aplica a salidas y llegadas en hora.
   const isDeparted = (r: Record<string, any>) => {
-    if (kind !== "SALIDA") return false;
     if (r.markupColor === "suppressed") return false;
     const hora = (r.hora || "").trim();
     const horaEst = (r.horaEstado || "").trim();
@@ -395,7 +394,7 @@ function RawAdifTable({ rows, kind }: { rows: Array<Record<string, any>>; kind: 
                   )}
                   {departed && !delayed && !cancelled && (
                     <div className="text-[9px] font-semibold uppercase tracking-wider text-slate-500 no-underline">
-                      Salido
+                      {kind === "SALIDA" ? "Salido" : "Llegado"}
                     </div>
                   )}
                 </td>
