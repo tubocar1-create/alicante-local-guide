@@ -373,8 +373,18 @@ function BusDashboardPage() {
     const todayType = dayTypeOf(clock);
     const yDayType = dayTypeOf(new Date(clock.getTime() - 24 * 60 * 60_000));
     const stepMin = VIRTUAL_BUS_SEC_PER_STOP / 60;
+    const maxAlive = MAX_VIRTUAL_BUSES_BY_LINE[code] ?? DEFAULT_MAX_VIRTUAL_BUSES;
 
     const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
+
+    // Primero recolectamos las salidas vivas de AMBOS sentidos para aplicar
+    // el tope global de la línea antes de calcular ETAs por parada.
+    const perDir: Record<1 | 2, { stops: typeof stopsByDir[1]; alive: number[] } | null> = {
+      1: null,
+      2: null,
+    };
+
+
 
     for (const dir of [1, 2] as const) {
       const stops = stopsByDir[dir];
