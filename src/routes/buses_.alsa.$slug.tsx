@@ -8,6 +8,7 @@ type Search = { dir?: "S" | "L" };
 
 const SLUG_META: Record<string, { from: string; to: string }> = {
   "alicante-madrid": { from: "Alicante", to: "Madrid" },
+  "alicante-benidorm": { from: "Alicante", to: "Benidorm" },
 };
 
 export const Route = createFileRoute("/buses_/alsa/$slug")({

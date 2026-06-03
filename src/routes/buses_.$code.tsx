@@ -70,6 +70,11 @@ const OPERATOR_COLORS: Record<string, string> = {
   ALACITY: "#06b6d4",
 };
 
+const ALSA_ROUTE_SLUGS: Record<string, string> = {
+  MAD: "alicante-madrid",
+  BDM: "alicante-benidorm",
+};
+
 const originQueryOptions = (code: string) =>
   queryOptions({
     queryKey: ["bus-ld-origin", code],
@@ -279,7 +284,7 @@ function BusOriginPage() {
 
                   <ul className={`border-t ${meta.tint.border} ${meta.tint.list} p-1.5`}>
                     {items.map((r) => {
-                      const isAlsaMadrid = r.destination_code === "MAD";
+                      const alsaSlug = ALSA_ROUTE_SLUGS[r.destination_code];
                       const inner = (
                         <>
                           <div className="min-w-0 flex-1">
@@ -312,10 +317,10 @@ function BusOriginPage() {
                       );
                       return (
                         <li key={r.id}>
-                          {isAlsaMadrid ? (
+                          {alsaSlug ? (
                             <Link
                               to="/buses/alsa/$slug"
-                              params={{ slug: "alicante-madrid" }}
+                              params={{ slug: alsaSlug }}
                               search={{ dir: direction }}
                               className="group flex w-full items-center gap-2 rounded-lg border border-slate-800/70 bg-slate-950/40 px-2.5 py-1.5 text-left transition hover:border-sky-500/40 hover:bg-sky-500/5"
                             >
