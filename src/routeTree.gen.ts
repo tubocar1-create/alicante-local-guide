@@ -72,6 +72,7 @@ import { Route as BusinessLoginRouteImport } from './routes/business.login'
 import { Route as BusinessIssuedRouteImport } from './routes/business.issued'
 import { Route as BusinessInboxRouteImport } from './routes/business.inbox'
 import { Route as BusinessBookingsRouteImport } from './routes/business.bookings'
+import { Route as BusesCodeRouteImport } from './routes/buses_.$code'
 import { Route as BusPlannerRouteImport } from './routes/bus.planner'
 import { Route as AuthVerifyEmailRouteImport } from './routes/auth.verify-email'
 import { Route as AuthSignupRouteImport } from './routes/auth.signup'
@@ -482,6 +483,11 @@ const BusinessBookingsRoute = BusinessBookingsRouteImport.update({
   id: '/bookings',
   path: '/bookings',
   getParentRoute: () => BusinessRoute,
+} as any)
+const BusesCodeRoute = BusesCodeRouteImport.update({
+  id: '/buses_/$code',
+  path: '/buses/$code',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const BusPlannerRoute = BusPlannerRouteImport.update({
   id: '/planner',
@@ -1031,6 +1037,7 @@ export interface FileRoutesByFullPath {
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/bus/planner': typeof BusPlannerRoute
+  '/buses/$code': typeof BusesCodeRoute
   '/business/bookings': typeof BusinessBookingsRoute
   '/business/inbox': typeof BusinessInboxRouteWithChildren
   '/business/issued': typeof BusinessIssuedRoute
@@ -1187,6 +1194,7 @@ export interface FileRoutesByTo {
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/bus/planner': typeof BusPlannerRoute
+  '/buses/$code': typeof BusesCodeRoute
   '/business/bookings': typeof BusinessBookingsRoute
   '/business/inbox': typeof BusinessInboxRouteWithChildren
   '/business/issued': typeof BusinessIssuedRoute
@@ -1347,6 +1355,7 @@ export interface FileRoutesById {
   '/auth/signup': typeof AuthSignupRoute
   '/auth/verify-email': typeof AuthVerifyEmailRoute
   '/bus/planner': typeof BusPlannerRoute
+  '/buses_/$code': typeof BusesCodeRoute
   '/business/bookings': typeof BusinessBookingsRoute
   '/business/inbox': typeof BusinessInboxRouteWithChildren
   '/business/issued': typeof BusinessIssuedRoute
@@ -1508,6 +1517,7 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/auth/verify-email'
     | '/bus/planner'
+    | '/buses/$code'
     | '/business/bookings'
     | '/business/inbox'
     | '/business/issued'
@@ -1664,6 +1674,7 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/auth/verify-email'
     | '/bus/planner'
+    | '/buses/$code'
     | '/business/bookings'
     | '/business/inbox'
     | '/business/issued'
@@ -1823,6 +1834,7 @@ export interface FileRouteTypes {
     | '/auth/signup'
     | '/auth/verify-email'
     | '/bus/planner'
+    | '/buses_/$code'
     | '/business/bookings'
     | '/business/inbox'
     | '/business/issued'
@@ -1961,6 +1973,7 @@ export interface RootRouteChildren {
   AuthResetPasswordRoute: typeof AuthResetPasswordRoute
   AuthSignupRoute: typeof AuthSignupRoute
   AuthVerifyEmailRoute: typeof AuthVerifyEmailRoute
+  BusesCodeRoute: typeof BusesCodeRoute
   ComprarSubsectorRoute: typeof ComprarSubsectorRoute
   HospitalesIdRoute: typeof HospitalesIdRoute
   HotelIdRoute: typeof HotelIdRoute
@@ -2463,6 +2476,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/business/bookings'
       preLoaderRoute: typeof BusinessBookingsRouteImport
       parentRoute: typeof BusinessRoute
+    }
+    '/buses_/$code': {
+      id: '/buses_/$code'
+      path: '/buses/$code'
+      fullPath: '/buses/$code'
+      preLoaderRoute: typeof BusesCodeRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/bus/planner': {
       id: '/bus/planner'
@@ -3398,6 +3418,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthResetPasswordRoute: AuthResetPasswordRoute,
   AuthSignupRoute: AuthSignupRoute,
   AuthVerifyEmailRoute: AuthVerifyEmailRoute,
+  BusesCodeRoute: BusesCodeRoute,
   ComprarSubsectorRoute: ComprarSubsectorRoute,
   HospitalesIdRoute: HospitalesIdRoute,
   HotelIdRoute: HotelIdRoute,
