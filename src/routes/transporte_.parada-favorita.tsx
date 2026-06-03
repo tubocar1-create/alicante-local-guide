@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, Bus, ChevronRight, Clock, Info, MapPin, Plane, RefreshCcw, Search, Star } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { ArrowLeft, ArrowRight, Bus, ChevronRight, Clock, Info, MapPin, Plane, RefreshCcw, Search, Star, Zap, AlertCircle } from "lucide-react";
 import {
   FavoriteStop,
   loadFavoriteStop,
@@ -11,7 +12,7 @@ import {
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { useBusServiceWindows, useBusLineDepartures, getServiceStatus, getNightLineEstimates } from "@/hooks/useBusServiceWindow";
 import { cumulativeMinutes, NIGHT_URBAN_KMH } from "@/lib/bus-eta";
-import { getClientStopRealtime } from "@/lib/bus-realtime-client";
+import { requestFavoriteStopRealtime, type FavoriteStopRealtimeResult } from "@/lib/favorite-stop-firecrawl.functions";
 
 export const Route = createFileRoute("/transporte_/parada-favorita")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -48,10 +49,15 @@ function ParadaFavoritaPage() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [showOnHome, setShowOnHome] = useState<boolean>(() => loadShowOnHome());
-  // Real-time ETAs en minutos (lista completa devuelta por Vectalia).
-  const [liveAll, setLiveAll] = useState<number[]>([]);
+  // Snapshot devuelto por una llamada bajo demanda a Vectalia (vía Firecrawl).
+  // No hay polling: el usuario solicita la llamada y aquí guardamos el
+  // resultado para mostrar un contador decreciente hasta cero.
+  const [snapshot, setSnapshot] = useState<{ etaMin: number; fetchedAt: number; destination: string | null } | null>(null);
   const [liveLoading, setLiveLoading] = useState(false);
-  const [liveUpdatedAt, setLiveUpdatedAt] = useState<number>(Date.now());
+  const [callError, setCallError] = useState<string | null>(null);
+  const [quota, setQuota] = useState<{ remaining: number; isAdmin: boolean; limit: number } | null>(null);
+  const [experienceEnded, setExperienceEnded] = useState(false);
+  const requestRealtime = useServerFn(requestFavoriteStopRealtime);
 
   const serviceWindows = useBusServiceWindows();
   const lineDepartures = useBusLineDepartures();
@@ -144,51 +150,61 @@ function ParadaFavoritaPage() {
     setSearchLookupDone(!search.stop || searchMatchesCurrent);
   }, [search.stop, search.line, searchMatchesCurrent]);
 
-  // Una sola petición a Vectalia: trae todos los ETAs disponibles.
-  // Para líneas nocturnas no consultamos Vectalia (sin cobertura live) y
-  // usamos estimados horarios desde el terminal de origen.
-  useEffect(() => {
-    if (searchTargetPending || outOfService || isNightLine) {
-      setLiveAll([]);
-      setLiveLoading(false);
-      return;
-    }
-    let cancelled = false;
-    let controller: AbortController | null = null;
-    const fetchAll = async () => {
-      controller?.abort();
-      controller = new AbortController();
-      setLiveLoading(true);
-      try {
-        const r = await getClientStopRealtime({ stopId: stop.stopId, line: stop.line, signal: controller.signal });
-        const all = r.all.filter((n) => typeof n === "number");
-        if (!cancelled) {
-          setLiveAll(all);
-          setLiveUpdatedAt(r.fetchedAt);
-        }
-      } catch {
-        if (!cancelled) setLiveAll([]);
-      } finally {
-        if (!cancelled) setLiveLoading(false);
+  // Llamada bajo demanda a Vectalia (vía Firecrawl). Una sola petición por
+  // pulsación de botón. El usuario tiene 3 llamadas al día (admin: ilimitadas).
+  async function handleRequestRealtime() {
+    if (liveLoading || outOfService || isNightLine) return;
+    setLiveLoading(true);
+    setCallError(null);
+    try {
+      const res: FavoriteStopRealtimeResult = await requestRealtime({
+        data: { stopId: stop.stopId, line: stop.line },
+      });
+      setQuota({ remaining: res.remaining, isAdmin: res.isAdmin, limit: res.limit });
+      if (!res.ok) {
+        setCallError(res.message);
+        return;
       }
-    };
-    fetchAll();
-    const id = window.setInterval(fetchAll, 30_000);
-    return () => {
-      cancelled = true;
-      controller?.abort();
-      window.clearInterval(id);
-    };
-  }, [stop.stopId, stop.line, outOfService, isNightLine, searchTargetPending]);
+      if (res.etaMin == null) {
+        setCallError("No hay paso en vivo para esta línea ahora mismo.");
+        setSnapshot(null);
+        return;
+      }
+      setSnapshot({ etaMin: res.etaMin, fetchedAt: res.fetchedAt, destination: res.destination });
+      setExperienceEnded(false);
+    } catch (e) {
+      setCallError(e instanceof Error ? e.message : "Error al consultar Vectalia.");
+    } finally {
+      setLiveLoading(false);
+    }
+  }
 
-  const elapsedMin = Math.floor((Date.now() - liveUpdatedAt) / 60_000);
-  const liveMinutes = liveAll.length > 0 ? Math.max(0, liveAll[0] - elapsedMin) : null;
-  // Fuentes válidas: nocturno (horario Vectalia) o tiempo real Vectalia.
-  // Si no hay ninguna, mostramos n/d — NO inventamos estimación diurna.
+  // Reset al cambiar de parada/línea.
+  useEffect(() => {
+    setSnapshot(null);
+    setCallError(null);
+    setExperienceEnded(false);
+  }, [stop.stopId, stop.line]);
+
+  // Contador local: minutos restantes = etaMin - minutos transcurridos desde la llamada.
+  const liveMinutes: number | null = (() => {
+    if (!snapshot) return null;
+    const elapsed = Math.floor((Date.now() - snapshot.fetchedAt) / 60_000);
+    return Math.max(0, snapshot.etaMin - elapsed);
+  })();
+
+  // Cuando llega a 0, dejamos 60s en "llegando" y cerramos la experiencia.
+  useEffect(() => {
+    if (snapshot && liveMinutes === 0 && !experienceEnded) {
+      const t = window.setTimeout(() => setExperienceEnded(true), 60_000);
+      return () => window.clearTimeout(t);
+    }
+  }, [snapshot, liveMinutes, experienceEnded]);
+
   const nightFirst = nightEstimate?.upcoming[0];
   const minutes: number | null = nightFirst
     ? nightFirst.minutes
-    : (liveMinutes ?? null);
+    : (!experienceEnded && liveMinutes != null ? liveMinutes : null);
   const arrivalTime: string = nightFirst
     ? nightFirst.arrivalTime
     : minutes != null
@@ -197,7 +213,7 @@ function ParadaFavoritaPage() {
           return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
         })()
       : "n/d";
-  // Próximas llegadas: nocturno → horario oficial; diurno → solo live Vectalia.
+  // Próximas llegadas: solo nocturno aquí (diurno ya no usamos Vectalia en bucle).
   const upcoming = (() => {
     if (nightEstimate) {
       const atOrigin = nightEstimate.atOrigin;
@@ -207,19 +223,11 @@ function ParadaFavoritaPage() {
         live: false,
       }));
     }
-    const liveAdjusted = liveAll.map((m) => Math.max(0, m - elapsedMin)).sort((a, b) => a - b);
-    return liveAdjusted.slice(0, 4).map((m) => {
-      const d = new Date(Date.now() + m * 60_000);
-      return {
-        minutes: m,
-        arrivalTime: `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`,
-        live: true,
-      };
-    });
+    return [] as Array<{ minutes: number; arrivalTime: string; live: boolean }>;
   })();
   const isArriving = minutes != null && minutes <= 1 && !nightEstimate;
-  const hasLiveData = liveAll.length > 0 && !isNightLine;
-  const hasAnyData = nightFirst != null || liveMinutes != null;
+  const hasLiveData = snapshot != null && !experienceEnded && !isNightLine;
+  void (nightFirst != null || (snapshot != null && !experienceEnded));
 
 
 
@@ -515,7 +523,65 @@ function ParadaFavoritaPage() {
             ⓘ La hora de salida es la oficial de Vectalia desde {nightEstimate.originTerminal}; la llegada a tu parada se estima a partir del recorrido (velocidad media de madrugada).
           </p>
         )}
+
+        {/* Botón de consulta bajo demanda + cupo diario */}
+        {!outOfService && !isNightLine && (
+          <div className="mt-3 flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={handleRequestRealtime}
+              disabled={liveLoading || (quota?.remaining === 0 && !quota?.isAdmin)}
+              className={`flex w-full items-center justify-center gap-2 rounded-2xl px-3 py-2.5 text-sm font-extrabold shadow-sm transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
+                snapshot && !experienceEnded
+                  ? "bg-emerald-600 text-white"
+                  : "bg-[#0d3b8a] text-white"
+              }`}
+            >
+              {liveLoading ? (
+                <>
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                  Consultando…
+                </>
+              ) : snapshot && !experienceEnded ? (
+                <>
+                  <Zap className="h-4 w-4" />
+                  Consultando en directo…
+                </>
+              ) : (
+                <>
+                  <Zap className="h-4 w-4" />
+                  Consultar tiempo real
+                </>
+              )}
+            </button>
+
+            {quota && !quota.isAdmin && (
+              <p className="text-center text-[10px] font-semibold text-stone-500">
+                Te quedan <span className="font-extrabold text-stone-800">{quota.remaining}</span> de {quota.limit} llamadas promocionales hoy.
+              </p>
+            )}
+            {quota?.isAdmin && (
+              <p className="text-center text-[10px] font-semibold text-indigo-700">
+                Modo administrador · llamadas ilimitadas.
+              </p>
+            )}
+
+            {callError && (
+              <div className="flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 ring-1 ring-amber-200">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+                <p className="text-[11px] font-semibold leading-snug text-amber-900">{callError}</p>
+              </div>
+            )}
+
+            {experienceEnded && (
+              <p className="text-center text-[10px] font-semibold text-stone-500">
+                Experiencia finalizada. Pulsa el botón para una nueva consulta.
+              </p>
+            )}
+          </div>
+        )}
       </section>
+
 
 
       {/* Upcoming buses */}

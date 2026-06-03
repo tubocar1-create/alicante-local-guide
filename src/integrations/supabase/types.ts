@@ -2251,6 +2251,36 @@ export type Database = {
         }
         Relationships: []
       }
+      firecrawl_call_log: {
+        Row: {
+          created_at: string
+          id: string
+          line: string | null
+          metadata: Json
+          purpose: string
+          stop_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          line?: string | null
+          metadata?: Json
+          purpose?: string
+          stop_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          line?: string | null
+          metadata?: Json
+          purpose?: string
+          stop_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       google_place_details_cache: {
         Row: {
           cache_key: string | null

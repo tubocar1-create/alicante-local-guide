@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { useBusEngine } from "@/hooks/useBusEngine";
 import { predictStopArrivals } from "@/lib/bus-engine/predict";
-import { getClientStopRealtime } from "@/lib/bus-realtime-client";
+
 
 // Servicio urbano: el último bus parte de la parada extrema a las 22:30 y
 // cada línea abre a una hora particular por la mañana. Como cota segura
@@ -121,49 +121,19 @@ export function FavoriteStopWidget() {
     };
   }, []);
 
-  // Primario: subus.es (mismo origen que /transporte/parada-favorita).
-  // Fallback: motor predictivo si subus tarda o devuelve vacío.
+  // No usamos Vectalia en el home (cada llamada cuesta 1 crédito Firecrawl y
+  // está limitada a 3/día por usuario). Mostramos predicción del motor; el
+  // usuario podrá pedir el tiempo real desde /transporte/parada-favorita.
   useEffect(() => {
-    let cancelled = false;
-    let controller: AbortController | null = null;
-    const run = async () => {
-      controller?.abort();
-      controller = new AbortController();
-      try {
-        const r = await getClientStopRealtime({
-          stopId: stop.stopId,
-          line: stop.line,
-          signal: controller.signal,
-        });
-        if (cancelled) return;
-        const elapsedMin = Math.floor((Date.now() - r.fetchedAt) / 60_000);
-        const first = r.all[0];
-        if (typeof first === "number") {
-          setLiveMin(Math.max(0, first - elapsedMin));
-          setLiveSource("realtime");
-          return;
-        }
-      } catch {
-        // ignore, fall through to engine
-      }
-      if (cancelled) return;
-      if (engine) {
-        const arrivals = predictStopArrivals(engine, stop.stopId);
-        const forLine = arrivals.filter((a) => a.line === stop.line);
-        setLiveMin(forLine[0]?.etaMin ?? null);
-        setLiveSource(forLine[0] ? "engine" : null);
-      } else {
-        setLiveMin(null);
-        setLiveSource(null);
-      }
-    };
-    run();
-    const id = window.setInterval(run, 30_000);
-    return () => {
-      cancelled = true;
-      controller?.abort();
-      window.clearInterval(id);
-    };
+    if (engine) {
+      const arrivals = predictStopArrivals(engine, stop.stopId);
+      const forLine = arrivals.filter((a) => a.line === stop.line);
+      setLiveMin(forLine[0]?.etaMin ?? null);
+      setLiveSource(forLine[0] ? "engine" : null);
+    } else {
+      setLiveMin(null);
+      setLiveSource(null);
+    }
   }, [stop.stopId, stop.line, engine]);
 
 
