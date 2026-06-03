@@ -164,6 +164,7 @@ import { Route as ApiPublicHooksEventosSyncRouteImport } from './routes/api/publ
 import { Route as ApiPublicHooksCleanupTrainSnapshotsRouteImport } from './routes/api/public/hooks/cleanup-train-snapshots'
 import { Route as ApiPublicHooksCinemasSyncRouteImport } from './routes/api/public/hooks/cinemas-sync'
 import { Route as ApiPublicHooksBusFleetTickRouteImport } from './routes/api/public/hooks/bus-fleet-tick'
+import { Route as ApiPublicHooksAlsaSyncRouteImport } from './routes/api/public/hooks/alsa-sync'
 import { Route as ApiPublicHooksAgenteLearnRouteImport } from './routes/api/public/hooks/agente-learn'
 import { Route as ApiPublicHooksAenaSyncRouteImport } from './routes/api/public/hooks/aena-sync'
 import { Route as ApiPublicGooglePhotoSplatRouteImport } from './routes/api/public/google-photo.$'
@@ -959,6 +960,11 @@ const ApiPublicHooksBusFleetTickRoute =
     path: '/api/public/hooks/bus-fleet-tick',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksAlsaSyncRoute = ApiPublicHooksAlsaSyncRouteImport.update({
+  id: '/api/public/hooks/alsa-sync',
+  path: '/api/public/hooks/alsa-sync',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksAgenteLearnRoute =
   ApiPublicHooksAgenteLearnRouteImport.update({
     id: '/api/public/hooks/agente-learn',
@@ -1115,6 +1121,7 @@ export interface FileRoutesByFullPath {
   '/api/public/google-photo/$': typeof ApiPublicGooglePhotoSplatRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
   '/api/public/hooks/agente-learn': typeof ApiPublicHooksAgenteLearnRoute
+  '/api/public/hooks/alsa-sync': typeof ApiPublicHooksAlsaSyncRoute
   '/api/public/hooks/bus-fleet-tick': typeof ApiPublicHooksBusFleetTickRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
   '/api/public/hooks/cleanup-train-snapshots': typeof ApiPublicHooksCleanupTrainSnapshotsRoute
@@ -1272,6 +1279,7 @@ export interface FileRoutesByTo {
   '/api/public/google-photo/$': typeof ApiPublicGooglePhotoSplatRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
   '/api/public/hooks/agente-learn': typeof ApiPublicHooksAgenteLearnRoute
+  '/api/public/hooks/alsa-sync': typeof ApiPublicHooksAlsaSyncRoute
   '/api/public/hooks/bus-fleet-tick': typeof ApiPublicHooksBusFleetTickRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
   '/api/public/hooks/cleanup-train-snapshots': typeof ApiPublicHooksCleanupTrainSnapshotsRoute
@@ -1433,6 +1441,7 @@ export interface FileRoutesById {
   '/api/public/google-photo/$': typeof ApiPublicGooglePhotoSplatRoute
   '/api/public/hooks/aena-sync': typeof ApiPublicHooksAenaSyncRoute
   '/api/public/hooks/agente-learn': typeof ApiPublicHooksAgenteLearnRoute
+  '/api/public/hooks/alsa-sync': typeof ApiPublicHooksAlsaSyncRoute
   '/api/public/hooks/bus-fleet-tick': typeof ApiPublicHooksBusFleetTickRoute
   '/api/public/hooks/cinemas-sync': typeof ApiPublicHooksCinemasSyncRoute
   '/api/public/hooks/cleanup-train-snapshots': typeof ApiPublicHooksCleanupTrainSnapshotsRoute
@@ -1595,6 +1604,7 @@ export interface FileRouteTypes {
     | '/api/public/google-photo/$'
     | '/api/public/hooks/aena-sync'
     | '/api/public/hooks/agente-learn'
+    | '/api/public/hooks/alsa-sync'
     | '/api/public/hooks/bus-fleet-tick'
     | '/api/public/hooks/cinemas-sync'
     | '/api/public/hooks/cleanup-train-snapshots'
@@ -1752,6 +1762,7 @@ export interface FileRouteTypes {
     | '/api/public/google-photo/$'
     | '/api/public/hooks/aena-sync'
     | '/api/public/hooks/agente-learn'
+    | '/api/public/hooks/alsa-sync'
     | '/api/public/hooks/bus-fleet-tick'
     | '/api/public/hooks/cinemas-sync'
     | '/api/public/hooks/cleanup-train-snapshots'
@@ -1912,6 +1923,7 @@ export interface FileRouteTypes {
     | '/api/public/google-photo/$'
     | '/api/public/hooks/aena-sync'
     | '/api/public/hooks/agente-learn'
+    | '/api/public/hooks/alsa-sync'
     | '/api/public/hooks/bus-fleet-tick'
     | '/api/public/hooks/cinemas-sync'
     | '/api/public/hooks/cleanup-train-snapshots'
@@ -2011,6 +2023,7 @@ export interface RootRouteChildren {
   ApiPublicGooglePhotoSplatRoute: typeof ApiPublicGooglePhotoSplatRoute
   ApiPublicHooksAenaSyncRoute: typeof ApiPublicHooksAenaSyncRoute
   ApiPublicHooksAgenteLearnRoute: typeof ApiPublicHooksAgenteLearnRoute
+  ApiPublicHooksAlsaSyncRoute: typeof ApiPublicHooksAlsaSyncRoute
   ApiPublicHooksBusFleetTickRoute: typeof ApiPublicHooksBusFleetTickRoute
   ApiPublicHooksCinemasSyncRoute: typeof ApiPublicHooksCinemasSyncRoute
   ApiPublicHooksCleanupTrainSnapshotsRoute: typeof ApiPublicHooksCleanupTrainSnapshotsRoute
@@ -3121,6 +3134,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksBusFleetTickRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/alsa-sync': {
+      id: '/api/public/hooks/alsa-sync'
+      path: '/api/public/hooks/alsa-sync'
+      fullPath: '/api/public/hooks/alsa-sync'
+      preLoaderRoute: typeof ApiPublicHooksAlsaSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/agente-learn': {
       id: '/api/public/hooks/agente-learn'
       path: '/api/public/hooks/agente-learn'
@@ -3456,6 +3476,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicGooglePhotoSplatRoute: ApiPublicGooglePhotoSplatRoute,
   ApiPublicHooksAenaSyncRoute: ApiPublicHooksAenaSyncRoute,
   ApiPublicHooksAgenteLearnRoute: ApiPublicHooksAgenteLearnRoute,
+  ApiPublicHooksAlsaSyncRoute: ApiPublicHooksAlsaSyncRoute,
   ApiPublicHooksBusFleetTickRoute: ApiPublicHooksBusFleetTickRoute,
   ApiPublicHooksCinemasSyncRoute: ApiPublicHooksCinemasSyncRoute,
   ApiPublicHooksCleanupTrainSnapshotsRoute:
