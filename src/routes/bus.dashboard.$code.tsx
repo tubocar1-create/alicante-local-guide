@@ -394,7 +394,7 @@ function BusDashboardPage() {
   //    cercano (recalibración por ETA real). No se crean buses nuevos.
   //  - Entre bridges, el reloj avanza cada bus a velocidad media.
   //  - Al cerrar la página/app, el estado se pierde (no se persiste).
-  const TYPICAL_SEG_MIN = 2;
+  const TYPICAL_SEG_MIN = 110 / 60;
   const SPAWN_THRESHOLD_MIN = 1;
   type DynamicBus = { busId: string; segmentIndex: number; segmentProgress: number };
   const [predictedBusesByDir, setPredictedBusesByDir] = useState<
