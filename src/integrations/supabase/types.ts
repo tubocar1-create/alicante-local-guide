@@ -606,6 +606,60 @@ export type Database = {
           },
         ]
       }
+      alsa_schedules: {
+        Row: {
+          arrival_time: string
+          bus_type: string | null
+          created_at: string
+          departure_time: string
+          destination_station: string
+          direction: string
+          duration_minutes: number
+          id: number
+          observations: Json | null
+          origin_station: string
+          price_from_eur: number | null
+          promo_price_eur: number | null
+          route_slug: string
+          service_date: string
+          source_date: string | null
+        }
+        Insert: {
+          arrival_time: string
+          bus_type?: string | null
+          created_at?: string
+          departure_time: string
+          destination_station: string
+          direction: string
+          duration_minutes: number
+          id?: number
+          observations?: Json | null
+          origin_station: string
+          price_from_eur?: number | null
+          promo_price_eur?: number | null
+          route_slug: string
+          service_date: string
+          source_date?: string | null
+        }
+        Update: {
+          arrival_time?: string
+          bus_type?: string | null
+          created_at?: string
+          departure_time?: string
+          destination_station?: string
+          direction?: string
+          duration_minutes?: number
+          id?: number
+          observations?: Json | null
+          origin_station?: string
+          price_from_eur?: number | null
+          promo_price_eur?: number | null
+          route_slug?: string
+          service_date?: string
+          source_date?: string | null
+        }
+        Relationships: []
+      }
       beach_covers: {
         Row: {
           attribution: string | null
