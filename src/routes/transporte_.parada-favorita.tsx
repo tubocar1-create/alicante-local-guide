@@ -58,22 +58,7 @@ function ParadaFavoritaPage() {
   const [callError, setCallError] = useState<string | null>(null);
   const [quota, setQuota] = useState<{ remaining: number; isAdmin: boolean; limit: number } | null>(null);
   const [experienceEnded, setExperienceEnded] = useState(false);
-  const [isAuthed, setIsAuthed] = useState<boolean | null>(null);
   const requestRealtime = useServerFn(requestFavoriteStopRealtime);
-
-  useEffect(() => {
-    let active = true;
-    supabase.auth.getSession().then(({ data }) => {
-      if (active) setIsAuthed(!!data.session);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      setIsAuthed(!!session);
-    });
-    return () => {
-      active = false;
-      sub.subscription.unsubscribe();
-    };
-  }, []);
 
   const serviceWindows = useBusServiceWindows();
   const lineDepartures = useBusLineDepartures();
