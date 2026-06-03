@@ -41,12 +41,12 @@ export function detectProfile(d: Date): TimeProfile {
 // Hora pico => más lento; noche => más rápido.
 export function profileSpeedFactor(p: TimeProfile): number {
   switch (p) {
-    case "morning_peak": return 1.25;
-    case "afternoon_peak": return 1.25;
-    case "midday": return 1.05;
-    case "evening": return 1.10;
+    case "morning_peak": return 1 / 1.10;
+    case "afternoon_peak": return 1 / 1.10;
+    case "midday": return 1 / 1.10;
+    case "evening": return 1 / 1.10;
     case "weekend": return 0.95;
     case "holiday": return 0.90;
-    case "night": return 0.70;
+    case "night": return 1 / 1.20;
   }
 }
