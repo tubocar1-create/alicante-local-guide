@@ -1,0 +1,2 @@
+DROP INDEX IF EXISTS public.uq_alsa_schedules_dedupe;
+CREATE UNIQUE INDEX uq_alsa_schedules_dedupe ON public.alsa_schedules (route_slug, direction, service_date, departure_time, origin_station, destination_station, arrival_time);
