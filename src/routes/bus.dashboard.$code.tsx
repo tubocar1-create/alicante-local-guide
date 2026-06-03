@@ -368,16 +368,34 @@ function BusDashboardPage() {
     for (const dir of [1, 2] as const) {
       const stops = stopsByDir[dir];
       if (stops.length === 0) continue;
-      // Convención Vectalia: stopsByDir[1] ↔ bus_line_departures.direction=0
-      //                     stopsByDir[2] ↔ bus_line_departures.direction=1
-      const dbDir = dir - 1;
+
+      // Determinar la dirección normalizada del engine que corresponde a este
+      // sentido visual, casando el terminal de origen con serviceWindows.
+      const originNorm = stops[0].name.toLowerCase().replace(/\s+/g, " ").trim();
+      const sw = engine.serviceWindows.find(
+        (w) =>
+          w.lineCode === code &&
+          w.dayType &&
+          originNorm.includes(w.dayType ? "" : "") && // placeholder, replaced below
+          false,
+      );
+      // Búsqueda real: por inclusión bidireccional del nombre del terminal.
+      const swMatch = engine.serviceWindows.find((w) => {
+        if (w.lineCode !== code) return false;
+        const t = ((engine.stopsMeta as unknown) ? "" : "") + "";
+        const term = (w as unknown as { terminalName?: string }).terminalName ?? "";
+        const a = term.toLowerCase().replace(/\s+/g, " ").trim();
+        return a && (originNorm.includes(a) || a.includes(originNorm));
+      });
+      const engineDir = (swMatch?.direction ?? sw?.direction ?? null) as 1 | 2 | null;
+      if (engineDir == null) continue;
 
       const depTimelines: number[] = [];
       for (const d of engine.departures) {
-        if (d.line_code !== code || d.direction !== dbDir) continue;
-        const depMin = toMinHM(d.departure_time);
-        if (matchesDayType(d.day_type, todayType)) depTimelines.push(depMin);
-        if (matchesDayType(d.day_type, yDayType) && depMin >= 18 * 60) {
+        if (d.lineCode !== code || d.direction !== engineDir) continue;
+        const depMin = d.departureMin;
+        if (matchesDayType(d.dayType, todayType)) depTimelines.push(depMin);
+        if (matchesDayType(d.dayType, yDayType) && depMin >= 18 * 60) {
           depTimelines.push(depMin - 24 * 60);
         }
       }
