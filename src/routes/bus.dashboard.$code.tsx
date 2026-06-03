@@ -357,24 +357,28 @@ function BusDashboardPage() {
 
   const etas = useMemo<Record<string, number[]>>(() => {
     if (!realtime) return {};
-    const out: Record<string, number[]> = {};
+    const out: Record<string, number[] > = {};
     const nowMs = clock.getTime();
     for (const s of realtime.stops) {
       if (!s.etaMinutes || s.etaMinutes.length === 0) continue;
-      // En producción, si una parada lleva >10 min sin refresco, no inventamos
-      // un bus que ya pasó. En preview no se aplica jamás.
-      if (!inPreview && s.frozen) continue;
+      // Modelamos el avance del bus desde el último snapshot conocido:
+      // el reloj local decrementa los minutos. Cuando llega a 0, el bus
+      // está sobre la parada. Si el bridge entrega un snapshot nuevo
+      // (preview ingesta cada 30 s, publicado refetch cada 60 s) los
+      // tiempos se recalibran automáticamente. No descartamos paradas
+      // por "frozen": preferimos seguir modelando que mostrar n/d.
       const capturedMs = Date.parse(s.capturedAt);
       const elapsedMin = Number.isFinite(capturedMs)
         ? Math.max(0, (nowMs - capturedMs) / 60_000)
         : 0;
       const decremented = s.etaMinutes
-        .map((m) => Math.max(0, Math.round(m - elapsedMin)))
+        .map((m) => Math.max(0, Math.floor(m - elapsedMin)))
         .slice(0, 1);
       out[s.stopCode] = decremented;
     }
     return out;
   }, [realtime, clock, inPreview]);
+
 
 
 
