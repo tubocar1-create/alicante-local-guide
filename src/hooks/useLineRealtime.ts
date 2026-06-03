@@ -1,17 +1,47 @@
-// Hook realtime de línea: el NAVEGADOR lee la página oficial SUBUS consulta.aspx
-// para cada parada de la línea, en paralelo (con concurrencia limitada).
-// Después de cada lectura, ingestamos los snapshots en BBDD para que otros
-// consumidores (mapa, dashboard) los reutilicen sin volver a pedir al QR.
+// Hook realtime de línea.
+//
+// === Arquitectura Bridge ===
+// El SCRAPING en vivo de SUBUS QR sólo se hace desde el PREVIEW
+// (dev.lovable.build, id-preview--*, *-dev.lovable.app, localhost).
+// El preview lee, parsea, ingesta a BBDD y refresca cada 30 s.
+//
+// El sitio PUBLICADO (vamosalicante.com, *.lovable.app prod) NO hace
+// scraping: lee los snapshots ya ingestados por el preview desde la BBDD
+// (server fn `getLineRealtimeState`) cada 60 s. Entre lectura y lectura
+// el dashboard "modela" el movimiento decrementando los ETAs en local
+// según el `capturedAt` (ya implementado en el consumidor).
+//
+// Esto crea un puente: la realidad medida en preview se replica en prod
+// con un tick local de 15 s (gestionado por el reloj 1 s del dashboard,
+// que produce decrementos visualmente continuos).
 
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getLineStops, ingestStopSnapshots, type RealtimeLineState } from "@/lib/bus-realtime.functions";
+import {
+  getLineStops,
+  getLineRealtimeState,
+  ingestStopSnapshots,
+  type RealtimeLineState,
+} from "@/lib/bus-realtime.functions";
 import { fetchStopFromQR, normalizeLine } from "@/lib/bus-qr-client";
 
-const REFRESH_INTERVAL_MS = 30_000; // refresco cada 30s
+const REFRESH_PREVIEW_MS = 30_000;
+const REFRESH_PUBLISHED_MS = 60_000;
 const STALE_MS = 5 * 60 * 1000;
 const FROZEN_MS = 10 * 60 * 1000;
 const CONCURRENCY = 6;
+
+function isPreviewHost(): boolean {
+  if (typeof window === "undefined") return false; // SSR → trátalo como publicado
+  const h = window.location.hostname;
+  return (
+    h === "localhost" ||
+    h === "127.0.0.1" ||
+    h.endsWith(".lovable.build") ||
+    h.endsWith("-dev.lovable.app") ||
+    h.startsWith("id-preview--")
+  );
+}
 
 async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
   const out: R[] = new Array(items.length);
@@ -30,16 +60,26 @@ async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promis
 export function useLineRealtime(lineCode: string | null | undefined) {
   const fetchLineStops = useServerFn(getLineStops);
   const ingest = useServerFn(ingestStopSnapshots);
+  const fetchLineFromCache = useServerFn(getLineRealtimeState);
+
+  const preview = isPreviewHost();
 
   return useQuery<RealtimeLineState>({
-    queryKey: ["bus-realtime-line", lineCode],
+    queryKey: ["bus-realtime-line", lineCode, preview ? "preview" : "published"],
     enabled: !!lineCode,
-    refetchInterval: REFRESH_INTERVAL_MS,
+    refetchInterval: preview ? REFRESH_PREVIEW_MS : REFRESH_PUBLISHED_MS,
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
     retry: 1,
     queryFn: async () => {
       const code = normalizeLine(lineCode!);
+
+      // === SITIO PUBLICADO: leer SOLO cache de BBDD (bridge desde preview). ===
+      if (!preview) {
+        return await fetchLineFromCache({ data: { lineCode: code } });
+      }
+
+      // === PREVIEW: scrapeo real desde el navegador + ingesta a BBDD. ===
       const fetchedAtIso = new Date().toISOString();
       const meta = await fetchLineStops({ data: { lineCode: code } });
       const stops = meta.stops;
@@ -62,7 +102,6 @@ export function useLineRealtime(lineCode: string | null | undefined) {
         qrByStop.set(sc, r);
       });
 
-      const now = Date.now();
       const result = stops.map((s) => {
         const qr = qrByStop.get(s.stop_code);
         const mins = qr?.byLine.get(code)?.minutes ?? [];
@@ -79,7 +118,7 @@ export function useLineRealtime(lineCode: string | null | undefined) {
         };
       });
 
-      // Persistir TODAS las líneas vistas en cada parada para reuso en BBDD.
+      // Persistir TODAS las líneas vistas en cada parada → fuente del bridge.
       const snaps: Array<{ stopCode: string; lineCode: string; etaMinutes: number[] }> = [];
       for (const [sc, qr] of qrByStop.entries()) {
         if (!qr) continue;
@@ -88,7 +127,6 @@ export function useLineRealtime(lineCode: string | null | undefined) {
         }
       }
       if (snaps.length > 0) {
-        // Fire-and-forget: no bloqueamos el render por la ingesta.
         for (let i = 0; i < snaps.length; i += 100) {
           const chunk = snaps.slice(i, i + 100);
           ingest({ data: { snapshots: chunk } }).catch(() => {});
