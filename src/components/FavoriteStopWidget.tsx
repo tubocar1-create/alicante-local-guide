@@ -62,6 +62,55 @@ export function saveShowOnHome(enabled: boolean) {
   window.dispatchEvent(new Event("vamos:favorite-stop-changed"));
 }
 
+// ---- Live snapshot compartido entre /transporte/parada-favorita y el widget ----
+const LIVE_SNAPSHOT_KEY = "vamos:favorite-stop-live-v1";
+
+export type FavoriteStopLiveSnapshot = {
+  stopId: string;
+  line: string;
+  etaMin: number;
+  all: number[];
+  destination: string | null;
+  fetchedAt: number;
+};
+
+export function saveFavoriteStopLiveSnapshot(snap: FavoriteStopLiveSnapshot) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(LIVE_SNAPSHOT_KEY, JSON.stringify(snap));
+  window.dispatchEvent(new Event("vamos:favorite-stop-live"));
+}
+
+export function loadFavoriteStopLiveSnapshot(): FavoriteStopLiveSnapshot | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(LIVE_SNAPSHOT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as FavoriteStopLiveSnapshot;
+    if (!parsed?.stopId || !parsed?.line || !Number.isFinite(parsed.etaMin)) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+/** Minutos restantes del snapshot si coincide stop+line y no ha caducado. */
+export function liveSnapshotRemaining(
+  snap: FavoriteStopLiveSnapshot | null,
+  stopId: string,
+  line: string,
+): { etaMin: number; all: number[] } | null {
+  if (!snap) return null;
+  if (snap.stopId !== stopId || snap.line.toUpperCase() !== line.toUpperCase()) return null;
+  const elapsed = Math.floor((Date.now() - snap.fetchedAt) / 60_000);
+  const eta = snap.etaMin - elapsed;
+  if (eta < -1) return null; // ~1 min de gracia tras llegar
+  const remaining = Math.max(0, eta);
+  const allRemaining = snap.all
+    .map((m) => Math.max(0, m - elapsed))
+    .filter((m, i) => i === 0 || m > 0);
+  return { etaMin: remaining, all: allRemaining };
+}
+
 export function computeNextArrival(stop: FavoriteStop): {
   minutes: number;
   arrivalTime: string;
