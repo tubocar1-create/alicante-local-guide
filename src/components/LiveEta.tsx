@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getClientStopRealtime } from "@/lib/bus-realtime-client";
+import { getVirtualStopArrivals } from "@/lib/bus-fleet.functions";
 
 interface Props {
   line: string;
@@ -50,15 +50,10 @@ export function LiveEta({
       controller = new AbortController();
       setLoading(true);
       try {
-        const r = await getClientStopRealtime({
-          stopId: stop,
-          line,
-          index,
-          minMin,
-          signal: controller.signal,
-        });
+        const r = await getVirtualStopArrivals({ data: { stopCode: stop, line } });
         if (!cancelled) {
-          setEta(typeof r.etaMin === "number" ? r.etaMin : null);
+          const all = typeof minMin === "number" ? r.all.filter((m) => m >= minMin) : r.all;
+          setEta(all[Math.min(index, Math.max(0, all.length - 1))] ?? null);
           setUpdatedAt(r.fetchedAt);
         }
       } catch {
