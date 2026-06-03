@@ -357,32 +357,18 @@ function BusDashboardPage() {
 
   const etas = useMemo<Record<string, number[]>>(() => {
     if (!realtime) return {};
-    const out: Record<string, number[] > = {};
-    const nowMs = clock.getTime();
+    const out: Record<string, number[]> = {};
+    // Mostramos los ETAs CRUDOS tal como los trae el Bridge. El Bridge se
+    // refresca 1 vez por minuto (publicado: 60 s; preview: 30 s) y esa es la
+    // única fuente de verdad. No decrementamos con el reloj local: si el
+    // Bridge dice "0 min", se queda en 0 hasta el siguiente snapshot, y
+    // entonces salta al valor real (p.ej. 5 min del próximo bus).
     for (const s of realtime.stops) {
       if (!s.etaMinutes || s.etaMinutes.length === 0) continue;
-      // Modelamos el avance del bus desde el último snapshot conocido:
-      // el reloj local decrementa los minutos. Cuando llega a 0, el bus
-      // está sobre la parada. Si el bridge entrega un snapshot nuevo
-      // (preview ingesta cada 30 s, publicado refetch cada 60 s) los
-      // tiempos se recalibran automáticamente. No descartamos paradas
-      // por "frozen": preferimos seguir modelando que mostrar n/d.
-      const capturedMs = Date.parse(s.capturedAt);
-      const elapsedMin = Number.isFinite(capturedMs)
-        ? Math.max(0, (nowMs - capturedMs) / 60_000)
-        : 0;
-      // Descartamos buses ya pasados (eta - elapsed < -0.5) y mostramos el
-      // siguiente. Sin esto, el primer ETA se quedaba clampado a 0 para
-      // siempre aunque hubiera un segundo bus en la cola (p.ej. {0,15}).
-      const decremented = s.etaMinutes
-        .map((m) => m - elapsedMin)
-        .filter((m) => m > -0.5)
-        .map((m) => Math.max(0, Math.floor(m)))
-        .slice(0, 1);
-      out[s.stopCode] = decremented;
+      out[s.stopCode] = s.etaMinutes.slice(0, 1);
     }
     return out;
-  }, [realtime, clock, inPreview]);
+  }, [realtime]);
 
 
 
