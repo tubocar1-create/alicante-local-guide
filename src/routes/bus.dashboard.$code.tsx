@@ -17,6 +17,10 @@ import { cumulativeMinutes, NIGHT_URBAN_KMH } from "@/lib/bus-eta";
 import { getClientStopRealtime } from "@/lib/bus-realtime-client";
 import busAlicanteImg from "@/assets/bus-alicante.png";
 import { useLineRealtime, isPreviewHost } from "@/hooks/useLineRealtime";
+import { useBusEngine } from "@/hooks/useBusEngine";
+
+// Velocidad estándar del bus virtual: 110 segundos entre paradas consecutivas.
+const VIRTUAL_BUS_SEC_PER_STOP = 110;
 
 
 
