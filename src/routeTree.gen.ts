@@ -117,6 +117,7 @@ import { Route as ComprarSubsectorSubsubsectorRouteImport } from './routes/compr
 import { Route as BusinessInboxIdRouteImport } from './routes/business.inbox.$id'
 import { Route as BusesAlsaSlugRouteImport } from './routes/buses_.alsa.$slug'
 import { Route as BusDashboardCodeRouteImport } from './routes/bus.dashboard.$code'
+import { Route as ApiPublicTestVectaliaRouteImport } from './routes/api/public/test-vectalia'
 import { Route as ApiPublicRefreshNewsRouteImport } from './routes/api/public/refresh-news'
 import { Route as ApiPublicRefreshIncidenciasRouteImport } from './routes/api/public/refresh-incidencias'
 import { Route as ApiPublicRefreshAlicantePressRouteImport } from './routes/api/public/refresh-alicante-press'
@@ -713,6 +714,11 @@ const BusDashboardCodeRoute = BusDashboardCodeRouteImport.update({
   path: '/dashboard/$code',
   getParentRoute: () => BusRoute,
 } as any)
+const ApiPublicTestVectaliaRoute = ApiPublicTestVectaliaRouteImport.update({
+  id: '/api/public/test-vectalia',
+  path: '/api/public/test-vectalia',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicRefreshNewsRoute = ApiPublicRefreshNewsRouteImport.update({
   id: '/api/public/refresh-news',
   path: '/api/public/refresh-news',
@@ -1114,6 +1120,7 @@ export interface FileRoutesByFullPath {
   '/api/public/refresh-alicante-press': typeof ApiPublicRefreshAlicantePressRoute
   '/api/public/refresh-incidencias': typeof ApiPublicRefreshIncidenciasRoute
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
+  '/api/public/test-vectalia': typeof ApiPublicTestVectaliaRoute
   '/bus/dashboard/$code': typeof BusDashboardCodeRoute
   '/buses/alsa/$slug': typeof BusesAlsaSlugRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
@@ -1274,6 +1281,7 @@ export interface FileRoutesByTo {
   '/api/public/refresh-alicante-press': typeof ApiPublicRefreshAlicantePressRoute
   '/api/public/refresh-incidencias': typeof ApiPublicRefreshIncidenciasRoute
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
+  '/api/public/test-vectalia': typeof ApiPublicTestVectaliaRoute
   '/bus/dashboard/$code': typeof BusDashboardCodeRoute
   '/buses/alsa/$slug': typeof BusesAlsaSlugRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
@@ -1438,6 +1446,7 @@ export interface FileRoutesById {
   '/api/public/refresh-alicante-press': typeof ApiPublicRefreshAlicantePressRoute
   '/api/public/refresh-incidencias': typeof ApiPublicRefreshIncidenciasRoute
   '/api/public/refresh-news': typeof ApiPublicRefreshNewsRoute
+  '/api/public/test-vectalia': typeof ApiPublicTestVectaliaRoute
   '/bus/dashboard/$code': typeof BusDashboardCodeRoute
   '/buses_/alsa/$slug': typeof BusesAlsaSlugRoute
   '/business/inbox/$id': typeof BusinessInboxIdRoute
@@ -1603,6 +1612,7 @@ export interface FileRouteTypes {
     | '/api/public/refresh-alicante-press'
     | '/api/public/refresh-incidencias'
     | '/api/public/refresh-news'
+    | '/api/public/test-vectalia'
     | '/bus/dashboard/$code'
     | '/buses/alsa/$slug'
     | '/business/inbox/$id'
@@ -1763,6 +1773,7 @@ export interface FileRouteTypes {
     | '/api/public/refresh-alicante-press'
     | '/api/public/refresh-incidencias'
     | '/api/public/refresh-news'
+    | '/api/public/test-vectalia'
     | '/bus/dashboard/$code'
     | '/buses/alsa/$slug'
     | '/business/inbox/$id'
@@ -1926,6 +1937,7 @@ export interface FileRouteTypes {
     | '/api/public/refresh-alicante-press'
     | '/api/public/refresh-incidencias'
     | '/api/public/refresh-news'
+    | '/api/public/test-vectalia'
     | '/bus/dashboard/$code'
     | '/buses_/alsa/$slug'
     | '/business/inbox/$id'
@@ -2035,6 +2047,7 @@ export interface RootRouteChildren {
   ApiPublicRefreshAlicantePressRoute: typeof ApiPublicRefreshAlicantePressRoute
   ApiPublicRefreshIncidenciasRoute: typeof ApiPublicRefreshIncidenciasRoute
   ApiPublicRefreshNewsRoute: typeof ApiPublicRefreshNewsRoute
+  ApiPublicTestVectaliaRoute: typeof ApiPublicTestVectaliaRoute
   BusesAlsaSlugRoute: typeof BusesAlsaSlugRoute
   ComprarSubsectorSubsubsectorRoute: typeof ComprarSubsectorSubsubsectorRoute
   ComprarSectorSectorRoute: typeof ComprarSectorSectorRoute
@@ -2831,6 +2844,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BusDashboardCodeRouteImport
       parentRoute: typeof BusRoute
     }
+    '/api/public/test-vectalia': {
+      id: '/api/public/test-vectalia'
+      path: '/api/public/test-vectalia'
+      fullPath: '/api/public/test-vectalia'
+      preLoaderRoute: typeof ApiPublicTestVectaliaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/refresh-news': {
       id: '/api/public/refresh-news'
       path: '/api/public/refresh-news'
@@ -3504,6 +3524,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicRefreshAlicantePressRoute: ApiPublicRefreshAlicantePressRoute,
   ApiPublicRefreshIncidenciasRoute: ApiPublicRefreshIncidenciasRoute,
   ApiPublicRefreshNewsRoute: ApiPublicRefreshNewsRoute,
+  ApiPublicTestVectaliaRoute: ApiPublicTestVectaliaRoute,
   BusesAlsaSlugRoute: BusesAlsaSlugRoute,
   ComprarSubsectorSubsubsectorRoute: ComprarSubsectorSubsubsectorRoute,
   ComprarSectorSectorRoute: ComprarSectorSectorRoute,
