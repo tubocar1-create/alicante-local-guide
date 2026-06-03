@@ -371,8 +371,13 @@ function BusDashboardPage() {
       const elapsedMin = Number.isFinite(capturedMs)
         ? Math.max(0, (nowMs - capturedMs) / 60_000)
         : 0;
+      // Descartamos buses ya pasados (eta - elapsed < -0.5) y mostramos el
+      // siguiente. Sin esto, el primer ETA se quedaba clampado a 0 para
+      // siempre aunque hubiera un segundo bus en la cola (p.ej. {0,15}).
       const decremented = s.etaMinutes
-        .map((m) => Math.max(0, Math.floor(m - elapsedMin)))
+        .map((m) => m - elapsedMin)
+        .filter((m) => m > -0.5)
+        .map((m) => Math.max(0, Math.floor(m)))
         .slice(0, 1);
       out[s.stopCode] = decremented;
     }
