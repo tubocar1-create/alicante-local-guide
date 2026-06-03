@@ -22,7 +22,7 @@ const cache = new Map<string, StopRealtimeResult>();
 const inFlight = new Map<string, Promise<StopRealtimeResult>>();
 const batchQueues = new Map<string, { ids: Set<string>; waiters: Map<string, (() => void)[]>; timer: ReturnType<typeof setTimeout> | null }>();
 
-// Lee el QR vía /api/public/bus-datos. El navegador no llama directo a Vectalia;
+// Lee el QR vía /api/public/bus-datos. El navegador no llama directo a SUBUS;
 // el servidor recibe el snapshot ya parseado para cachearlo en BBDD.
 async function fetchStop(stopId: string): Promise<StopRealtimeResult> {
   const valid = cache.get(stopId);
