@@ -145,14 +145,12 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
 
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-    // Reintenta una llamada hasta que devuelva horarios o se agoten los intentos
-    async function call(searchType: string, trafficType: string, numPage = 0, retries = 3) {
+    async function call(searchType: string, trafficType: string, numPage = 0, retries = 1) {
       for (let i = 0; i <= retries; i++) {
         const j = await callOnce(searchType, trafficType, numPage);
         if (j && Array.isArray(j.horarios) && j.horarios.length > 0) return j;
-        // Solo reintentamos la página 0 (las páginas posteriores sí pueden venir vacías legítimamente)
         if (numPage > 0) return j;
-        if (i < retries) await sleep(400 + i * 400);
+        if (i < retries) await sleep(300);
       }
       return { horarios: [] };
     }
@@ -164,19 +162,30 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
       ["proximasLlegadas", "avldmd", "LLEGADA"],
     ];
 
-    const salidas: CarteleraTrain[] = [];
-    const llegadas: CarteleraTrain[] = [];
-    const raw: CarteleraRaw[] = [];
-    for (const [s, t, dir] of ops) {
+    async function runOp(s: string, t: string, dir: "SALIDA" | "LLEGADA") {
+      const out: { n: CarteleraTrain; r: CarteleraRaw }[] = [];
       for (let p = 0; p < 3; p++) {
         const j = await call(s, t, p);
         if (!j.horarios || !j.horarios.length) break;
         for (const it of j.horarios) {
-          const n = norm(it, dir, t);
-          (dir === "SALIDA" ? salidas : llegadas).push(n);
-          raw.push({ ...it, direction: dir, trafficType: t });
+          out.push({ n: norm(it, dir, t), r: { ...it, direction: dir, trafficType: t } });
         }
         if (j.horarios.length < 10) break;
+      }
+      return out;
+    }
+
+    // Las 4 consultas ADIF en paralelo (antes eran secuenciales)
+    const results = await Promise.all(ops.map(([s, t, dir]) => runOp(s, t, dir)));
+
+    const salidas: CarteleraTrain[] = [];
+    const llegadas: CarteleraTrain[] = [];
+    const raw: CarteleraRaw[] = [];
+    for (let i = 0; i < results.length; i++) {
+      const dir = ops[i][2];
+      for (const { n, r } of results[i]) {
+        (dir === "SALIDA" ? salidas : llegadas).push(n);
+        raw.push(r);
       }
     }
 
@@ -189,7 +198,6 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
       return [...m.values()].sort((a, b) => a.estimated.localeCompare(b.estimated));
     };
 
-    // Orden cronológico del raw por hora (con fallback a horaEstado)
     const timeKey = (r: any) => {
       const h = (r.hora || r.horaEstado || "").trim();
       return h || "99:99";
@@ -208,46 +216,55 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
 export const getCartelera = createServerFn({ method: "GET" }).handler(
   async (): Promise<CarteleraResponse & { cachedAt: string; nextRefreshAt: string }> => {
     const now = Date.now();
-    if (_cache && _cache.v === CACHE_VERSION && now - _cache.at < CACHE_TTL_MS) {
+    const fresh = _cache && _cache.v === CACHE_VERSION && now - _cache.at < CACHE_TTL_MS;
+
+    // Lanza el refresco si no hay inflight; reutiliza si ya hay uno
+    const triggerRefresh = () => {
+      if (_inflight) return _inflight;
+      _inflight = (async () => {
+        let last: CarteleraResponse | null = null;
+        try {
+          last = await fetchCartelera();
+        } catch (e) {
+          console.error("[cartelera] error fetch", e);
+        }
+        if (last) {
+          const fullyValid = last.salidas.length > 0 && last.llegadas.length > 0;
+          _cache = {
+            at: fullyValid ? Date.now() : Date.now() - (CACHE_TTL_MS - 30_000),
+            v: CACHE_VERSION,
+            data: last,
+          };
+        }
+        return last;
+      })().finally(() => {
+        _inflight = null;
+      }) as Promise<CarteleraResponse>;
+      return _inflight;
+    };
+
+    // Hay cache válida → devolver al instante
+    if (fresh && _cache) {
       return {
         ...(_cache.data as any),
         cachedAt: new Date(_cache.at).toISOString(),
         nextRefreshAt: new Date(_cache.at + CACHE_TTL_MS).toISOString(),
       };
     }
-    if (!_inflight) {
-      _inflight = (async () => {
-        // Reintenta el fetch completo si salidas o llegadas vienen vacías
-        let last: CarteleraResponse | null = null;
-        for (let attempt = 0; attempt < 3; attempt++) {
-          try {
-            const data = await fetchCartelera();
-            last = data;
-            if (data.salidas.length > 0 && data.llegadas.length > 0) break;
-            console.warn("[cartelera] respuesta incompleta, reintentando", {
-              attempt,
-              salidas: data.salidas.length,
-              llegadas: data.llegadas.length,
-            });
-          } catch (e) {
-            console.error("[cartelera] error fetch", attempt, e);
-          }
-          await new Promise((r) => setTimeout(r, 600 + attempt * 600));
-        }
-        if (!last) throw new Error("ADIF: sin respuesta tras reintentos");
-        // Sólo cacheamos si ambas direcciones tienen datos; si no, cache corto
-        const fullyValid = last.salidas.length > 0 && last.llegadas.length > 0;
-        _cache = {
-          at: fullyValid ? Date.now() : Date.now() - (CACHE_TTL_MS - 30_000),
-          v: CACHE_VERSION,
-          data: last,
-        };
-        return last;
-      })().finally(() => {
-        _inflight = null;
-      });
+
+    // Hay cache vieja → devolver vieja YA y refrescar en background (SWR)
+    if (_cache && _cache.v === CACHE_VERSION) {
+      triggerRefresh().catch(() => {});
+      return {
+        ...(_cache.data as any),
+        cachedAt: new Date(_cache.at).toISOString(),
+        nextRefreshAt: new Date(now + 30_000).toISOString(),
+      };
     }
-    const data = await _inflight;
+
+    // Primera carga: esperar
+    const data = await triggerRefresh();
+    if (!data) throw new Error("ADIF: sin respuesta");
     const at = _cache?.at ?? Date.now();
     return {
       ...(data as any),
