@@ -414,17 +414,38 @@ function BusDashboardPage() {
       depTimelines.sort((a, b) => a - b);
 
       // === Ciclo de vida de buses virtuales ===
-      // Un bus virtual EXISTE únicamente entre:
-      //   - su hora de salida (nace en la parada 0), y
-      //   - su llegada a la última parada (muere/desaparece).
-      // Antes de la hora de salida NO hay bus (no se cuenta hacia atrás).
-      // Después de tocar destino se elimina.
+      // Un bus virtual EXISTE únicamente entre su hora de salida (nace en la
+      // parada 0) y su llegada a la última parada (muere/desaparece).
       const lastIdx = stops.length - 1;
       const terminusOffset = lastIdx * stepMin;
       const aliveBuses = depTimelines.filter(
         (dep) => dep <= nowMin + 0.0001 && dep + terminusOffset >= nowMin - 0.0001,
       );
       if (aliveBuses.length === 0) continue;
+
+      perDir[dir] = { stops, alive: aliveBuses };
+    }
+
+    // Tope global por línea: conservamos los N buses VIVOS más recientes
+    // (mayor `dep`). Los más antiguos —los más cerca de destino— se eliminan
+    // primero del dashboard, como si hubieran terminado su servicio antes.
+    const allAlive: Array<{ dir: 1 | 2; dep: number }> = [];
+    for (const dir of [1, 2] as const) {
+      const entry = perDir[dir];
+      if (!entry) continue;
+      for (const dep of entry.alive) allAlive.push({ dir, dep });
+    }
+    allAlive.sort((a, b) => b.dep - a.dep);
+    const kept = new Set(
+      allAlive.slice(0, maxAlive).map((b) => `${b.dir}:${b.dep}`),
+    );
+
+    for (const dir of [1, 2] as const) {
+      const entry = perDir[dir];
+      if (!entry) continue;
+      const aliveBuses = entry.alive.filter((dep) => kept.has(`${dir}:${dep}`));
+      if (aliveBuses.length === 0) continue;
+      const stops = entry.stops;
 
       for (let i = 0; i < stops.length; i++) {
         const offset = i * stepMin;
@@ -445,6 +466,7 @@ function BusDashboardPage() {
       }
     }
     return out;
+
   }, [engine, isNightLine, code, stopsByDir, clock]);
 
   const scheduleEtaByDir = isNightLine ? nightEtaByDir : virtualEtaByDir;
