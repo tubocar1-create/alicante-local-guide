@@ -172,7 +172,15 @@ function ParadaFavoritaPage() {
         setSnapshot(null);
         return;
       }
-      setSnapshot({ etaMin: res.etaMin, fetchedAt: res.fetchedAt, destination: res.destination });
+      setSnapshot({ etaMin: res.etaMin, all: res.all, fetchedAt: res.fetchedAt, destination: res.destination });
+      saveFavoriteStopLiveSnapshot({
+        stopId: stop.stopId,
+        line: stop.line,
+        etaMin: res.etaMin,
+        all: res.all,
+        destination: res.destination,
+        fetchedAt: res.fetchedAt,
+      });
       setExperienceEnded(false);
     } catch (e) {
       let msg = "Error al consultar Vectalia.";
