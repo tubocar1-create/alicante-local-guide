@@ -13,6 +13,7 @@ import { useBusGraph } from "@/hooks/useBusGraph";
 import { useBusServiceWindows, useBusLineDepartures, getServiceStatus, getNightLineEstimates } from "@/hooks/useBusServiceWindow";
 import { cumulativeMinutes, NIGHT_URBAN_KMH } from "@/lib/bus-eta";
 import { requestFavoriteStopRealtime, type FavoriteStopRealtimeResult } from "@/lib/favorite-stop-firecrawl.functions";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/transporte_/parada-favorita")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -57,7 +58,22 @@ function ParadaFavoritaPage() {
   const [callError, setCallError] = useState<string | null>(null);
   const [quota, setQuota] = useState<{ remaining: number; isAdmin: boolean; limit: number } | null>(null);
   const [experienceEnded, setExperienceEnded] = useState(false);
+  const [isAuthed, setIsAuthed] = useState<boolean | null>(null);
   const requestRealtime = useServerFn(requestFavoriteStopRealtime);
+
+  useEffect(() => {
+    let active = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (active) setIsAuthed(!!data.session);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setIsAuthed(!!session);
+    });
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
 
   const serviceWindows = useBusServiceWindows();
   const lineDepartures = useBusLineDepartures();
@@ -154,6 +170,10 @@ function ParadaFavoritaPage() {
   // pulsación de botón. El usuario tiene 3 llamadas al día (admin: ilimitadas).
   async function handleRequestRealtime() {
     if (liveLoading || outOfService || isNightLine) return;
+    if (!isAuthed) {
+      setCallError("Inicia sesión para consultar el tiempo real (3 llamadas/día).");
+      return;
+    }
     setLiveLoading(true);
     setCallError(null);
     try {
@@ -533,7 +553,7 @@ function ParadaFavoritaPage() {
             <button
               type="button"
               onClick={handleRequestRealtime}
-              disabled={liveLoading || (quota?.remaining === 0 && !quota?.isAdmin)}
+              disabled={liveLoading || isAuthed === false || (quota?.remaining === 0 && !quota?.isAdmin)}
               className={`flex w-full items-center justify-center gap-2 rounded-2xl px-3 py-2.5 text-sm font-extrabold shadow-sm transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
                 snapshot && !experienceEnded
                   ? "bg-emerald-600 text-white"
@@ -566,6 +586,11 @@ function ParadaFavoritaPage() {
             {quota?.isAdmin && (
               <p className="text-center text-[10px] font-semibold text-indigo-700">
                 Modo administrador · llamadas ilimitadas.
+              </p>
+            )}
+            {isAuthed === false && (
+              <p className="text-center text-[10px] font-semibold text-amber-700">
+                Inicia sesión para consultar el tiempo real (3 llamadas/día).
               </p>
             )}
 
