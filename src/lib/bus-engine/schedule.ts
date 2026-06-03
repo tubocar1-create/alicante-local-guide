@@ -1,5 +1,5 @@
-// Generador de buses virtuales a partir de salidas programadas.
-// Si no hay departures reales, sintetiza desde service_windows con headway por defecto.
+// Generador de buses virtuales a partir de salidas programadas reales.
+// Regla dura: sin departure oficial no hay nacimiento de bus virtual.
 
 import type { ScheduledDeparture, ServiceWindow, Direction } from "./types";
 
@@ -68,11 +68,6 @@ export function getDeparturesForLine(opts: {
       d.direction === opts.direction &&
       d.dayType === opts.dayType,
   );
-  if (real.length > 0) return real.sort((a, b) => a.departureMin - b.departureMin);
-  return synthesizeDepartures({
-    lineCode: opts.lineCode,
-    direction: opts.direction,
-    dayType: opts.dayType,
-    windows: opts.windows,
-  });
+  void opts.windows;
+  return real.sort((a, b) => a.departureMin - b.departureMin);
 }
