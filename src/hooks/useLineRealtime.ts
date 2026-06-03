@@ -25,8 +25,8 @@ import {
 } from "@/lib/bus-realtime.functions";
 import { fetchStopFromQR, normalizeLine } from "@/lib/bus-qr-client";
 
-const REFRESH_PREVIEW_MS = 30_000;
-const REFRESH_PUBLISHED_MS = 60_000;
+const REFRESH_PREVIEW_MS = 40_000;
+const REFRESH_PUBLISHED_MS = 40_000;
 const STALE_MS = 5 * 60 * 1000;
 const FROZEN_MS = 10 * 60 * 1000;
 const CONCURRENCY = 6;
