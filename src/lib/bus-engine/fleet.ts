@@ -41,7 +41,7 @@ import {
 } from "./line-profiles";
 import { classifyDepartureWindow } from "./active-window";
 import { validateTemporalConsistency } from "./temporal-consistency";
-import { simulateCarousel } from "./carousel";
+
 
 // Aprendizaje SOLO puede ajustar la fase del bus en ±MAX_PHASE_CORRECTION_MIN.
 // Nunca puede inventar un bus ni reposicionarlo libremente.
