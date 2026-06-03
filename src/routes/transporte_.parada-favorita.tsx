@@ -392,7 +392,10 @@ function ParadaFavoritaPage() {
       {/* Header */}
       <header className="flex items-center gap-3 px-4 pt-3 pb-2">
         <button
-          onClick={() => router.history.back()}
+          onClick={() => {
+            if (window.history.length > 1) router.history.back();
+            else router.navigate({ to: "/" });
+          }}
           aria-label="Volver"
           className="flex h-9 w-9 items-center justify-center rounded-full text-orange-500 active:scale-95"
         >
