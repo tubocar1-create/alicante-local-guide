@@ -414,7 +414,39 @@ function BusDashboardPage() {
   const firstSpawnDoneRef = useRef(false);
 
   useEffect(() => {
-    if (!realtime) return;
+    if (!realtime || firstSpawnDoneRef.current) return;
+
+    setPredictedBusesByDir((prev) => {
+      const next: Record<1 | 2, DynamicBus[]> = { 1: [...prev[1]], 2: [...prev[2]] };
+      let spawnedAny = false;
+
+      for (const dir of [1, 2] as const) {
+        const list = stopsByDir[dir];
+        if (list.length < 2) continue;
+        for (let i = 0; i < list.length; i++) {
+          const arr = etas[list[i].code];
+          const v = arr && arr.length > 0 ? arr[0] : null;
+          if (v == null || v > SPAWN_THRESHOLD_MIN) continue;
+          const segmentIndex = Math.max(0, Math.min(list.length - 2, i > 0 ? i - 1 : 0));
+          const segmentProgress = i > 0 ? Math.max(0, Math.min(1, 1 - v / TYPICAL_SEG_MIN)) : 0;
+          busSeqRef.current += 1;
+          next[dir].push({
+            busId: `${dir}-b${busSeqRef.current}`,
+            segmentIndex,
+            segmentProgress,
+          });
+          spawnedAny = true;
+        }
+      }
+
+      if (!spawnedAny) return prev;
+      firstSpawnDoneRef.current = true;
+      return next;
+    });
+  }, [realtime, stopsByDir, etas]);
+
+  useEffect(() => {
+    if (!realtime || !firstSpawnDoneRef.current) return;
     const snapKey = realtime.capturedAt ?? realtime.fetchedAt ?? null;
     if (!snapKey || snapKey === lastSnapshotKeyRef.current) return;
     lastSnapshotKeyRef.current = snapKey;
@@ -428,24 +460,6 @@ function BusDashboardPage() {
           return arr && arr.length > 0 ? arr[0] : null;
         });
 
-        if (!firstSpawnDoneRef.current) {
-          // Primer bridge de la sesión: un bus por cada parada con ETA ≤ umbral.
-          for (let i = 0; i < list.length; i++) {
-            const v = vals[i];
-            if (v == null || v > SPAWN_THRESHOLD_MIN) continue;
-            const segmentIndex = i > 0 ? i - 1 : 0;
-            const segmentProgress =
-              i > 0 ? Math.max(0, Math.min(1, 1 - v / TYPICAL_SEG_MIN)) : 0;
-            busSeqRef.current += 1;
-            next[dir].push({
-              busId: `${dir}-b${busSeqRef.current}`,
-              segmentIndex,
-              segmentProgress,
-            });
-          }
-          continue;
-        }
-
         // Bridges posteriores: sólo recalibrar buses existentes a los mínimos locales.
         const candidates: { segmentIndex: number; segmentProgress: number }[] = [];
         for (let i = 0; i < list.length; i++) {
@@ -455,7 +469,7 @@ function BusDashboardPage() {
           const n = i < list.length - 1 ? vals[i + 1] : null;
           const isMin = (p == null || p > v) && (n == null || n >= v);
           if (!isMin) continue;
-          const segmentIndex = i > 0 ? i - 1 : 0;
+          const segmentIndex = Math.max(0, Math.min(list.length - 2, i > 0 ? i - 1 : 0));
           const segmentProgress =
             i > 0 ? Math.max(0, Math.min(1, 1 - v / TYPICAL_SEG_MIN)) : 0;
           candidates.push({ segmentIndex, segmentProgress });
@@ -491,8 +505,6 @@ function BusDashboardPage() {
           }
         }
       }
-      const spawnedAny = next[1].length > 0 || next[2].length > 0;
-      if (!firstSpawnDoneRef.current && spawnedAny) firstSpawnDoneRef.current = true;
       return next;
     });
   }, [realtime, stopsByDir, etas]);
