@@ -1,9 +1,8 @@
 // Hook realtime de línea.
 //
 // === Arquitectura Bridge ===
-// El SCRAPING en vivo de SUBUS QR sólo se hace desde el PREVIEW
-// (dev.lovable.build, id-preview--*, *-dev.lovable.app, localhost).
-// El preview lee, parsea, ingesta a BBDD y refresca cada 40 s.
+// La lectura en vivo usa el bridge HTTPS /api/public/bus-datos.
+// En preview se consulta el bridge, se parsea, se ingesta a BBDD y refresca.
 //
 // El sitio PUBLICADO (vamosalicante.com, *.lovable.app prod) NO hace
 // scraping: lee los snapshots ya ingestados por el preview desde la BBDD
@@ -83,7 +82,7 @@ export function useLineRealtime(lineCode: string | null | undefined) {
         return await fetchLineFromCache({ data: { lineCode: code } });
       }
 
-      // === PREVIEW: scrapeo real desde el navegador + ingesta a BBDD. ===
+      // === PREVIEW: lectura real vía bridge + ingesta a BBDD. ===
       const fetchedAtIso = new Date().toISOString();
       const meta = await fetchLineStops({ data: { lineCode: code } });
       const stops = meta.stops;
