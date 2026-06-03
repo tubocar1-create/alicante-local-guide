@@ -1155,7 +1155,7 @@ function DirectionColumn({
                   >
                     {isLoadingEta ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : hasEta && eta1 === 0 ? (
+                    ) : hasEta && eta1 === 0 && isPreviewHost() ? (
                       <img
                         src={busAlicanteImg}
                         alt="Bus"
