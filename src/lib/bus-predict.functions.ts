@@ -42,6 +42,7 @@ export type BusEngineSnapshot = {
     day_type: string;
     first_departure: string;
     last_departure: string;
+    terminal_name: string | null;
   }>;
   fetchedAt: string;
 };
