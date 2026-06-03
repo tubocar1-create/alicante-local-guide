@@ -491,7 +491,8 @@ function BusDashboardPage() {
           }
         }
       }
-      firstSpawnDoneRef.current = true;
+      const spawnedAny = next[1].length > 0 || next[2].length > 0;
+      if (!firstSpawnDoneRef.current && spawnedAny) firstSpawnDoneRef.current = true;
       return next;
     });
   }, [realtime, stopsByDir, etas]);
