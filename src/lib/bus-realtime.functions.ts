@@ -196,6 +196,238 @@ export const getLineRealtimeState = createServerFn({ method: "GET" })
     };
   });
 
+// ---------- Server fn: estado LIVE de línea (worker → Vectalia, sin BBDD) ----------
+
+const LIVE_BASE = "https://qr.vectalia.es/Alicante";
+const LIVE_UA =
+  "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36";
+const LIVE_TIMEOUT_MS = 8_000;
+const LIVE_CONCURRENCY = 8;
+const LIVE_ARRIVAL_RE = /Linea\s+(\d{1,3}[A-Za-z]?)\s+([^:]+?)\s*:\s*(\d+)\s*min/gi;
+
+async function liveFetchStop(stopCode: string): Promise<number[] | null> {
+  const consultaUrl = `${LIVE_BASE}/consulta.aspx?p=${encodeURIComponent(stopCode)}`;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), LIVE_TIMEOUT_MS);
+  try {
+    const page = await fetch(consultaUrl, {
+      redirect: "follow",
+      signal: controller.signal,
+      headers: {
+        "User-Agent": LIVE_UA,
+        Accept: "text/html,application/xhtml+xml",
+        "Accept-Language": "es-ES,es;q=0.9",
+      },
+    });
+    if (!page.ok) return null;
+    const anyHeaders = page.headers as unknown as { getSetCookie?: () => string[] };
+    const cookie =
+      anyHeaders.getSetCookie?.().map((c) => c.split(";")[0]).filter(Boolean).join("; ") ?? "";
+    const finalConsultaUrl = page.url || consultaUrl;
+    const datosUrl = new URL("datos.aspx", finalConsultaUrl);
+    datosUrl.searchParams.set("p", stopCode);
+    const datos = await fetch(datosUrl.toString(), {
+      redirect: "follow",
+      signal: controller.signal,
+      headers: {
+        "User-Agent": LIVE_UA,
+        Accept: "application/json,text/plain,*/*",
+        "Accept-Language": "es-ES,es;q=0.9",
+        Referer: finalConsultaUrl,
+        "X-Vectalia-App": "qr-alicante",
+        ...(cookie ? { Cookie: cookie } : {}),
+      },
+    });
+    if (!datos.ok) return null;
+    const txt = await datos.text();
+    let body = txt;
+    try {
+      const j = JSON.parse(txt) as { tiempos?: unknown };
+      if (typeof j.tiempos === "string") body = j.tiempos;
+    } catch {
+      // texto plano
+    }
+    return [body] as unknown as number[]; // placeholder; replaced below
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function liveFetchStopByLine(
+  stopCode: string,
+): Promise<Map<string, number[]> | null> {
+  // Adaptación: liveFetchStop devuelve [body]; parseamos aquí por línea.
+  const raw = await liveFetchStop(stopCode);
+  if (!raw) return null;
+  const body = raw[0] as unknown as string;
+  const map = new Map<string, number[]>();
+  for (const m of body.matchAll(LIVE_ARRIVAL_RE)) {
+    const line = normalizeLine(m[1]);
+    const mins = parseInt(m[3], 10);
+    if (!Number.isFinite(mins)) continue;
+    const arr = map.get(line) ?? [];
+    arr.push(mins);
+    map.set(line, arr);
+  }
+  for (const arr of map.values()) arr.sort((a, b) => a - b);
+  return map;
+}
+
+async function liveMapLimit<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const out: R[] = new Array(items.length);
+  let i = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (true) {
+      const idx = i++;
+      if (idx >= items.length) return;
+      out[idx] = await fn(items[idx]);
+    }
+  });
+  await Promise.all(workers);
+  return out;
+}
+
+export const getLineLive = createServerFn({ method: "GET" })
+  .inputValidator((input: { lineCode: string }) =>
+    z.object({ lineCode: z.string().min(1).max(8).regex(/^[0-9A-Za-z]+$/) }).parse(input),
+  )
+  .handler(async ({ data }): Promise<RealtimeLineState> => {
+    const lineCode = normalizeLine(data.lineCode);
+    const fetchedAt = new Date().toISOString();
+
+    const { data: stopsRaw } = await supabaseAdmin
+      .from("bus_line_stops")
+      .select("line_code,direction,seq,stop_code,stop_name")
+      .eq("line_code", lineCode)
+      .order("direction")
+      .order("seq");
+
+    const stops = (stopsRaw ?? []).filter(
+      (s): s is { line_code: string; direction: number; seq: number; stop_code: string; stop_name: string } =>
+        typeof s.stop_code === "string" && s.stop_code.length > 0,
+    );
+    if (stops.length === 0) {
+      return { lineCode, fetchedAt, capturedAt: null, ageSec: null, stale: true, frozen: true, stops: [] };
+    }
+
+    const uniqueStopCodes = Array.from(new Set(stops.map((s) => s.stop_code)));
+    const liveByStop = new Map<string, Map<string, number[]> | null>();
+    await liveMapLimit(uniqueStopCodes, LIVE_CONCURRENCY, async (sc) => {
+      liveByStop.set(sc, await liveFetchStopByLine(sc));
+    });
+
+    // Persistir snapshots para cache de respaldo
+    const snapsToPersist: Array<{
+      stop_code: string;
+      line_code: string;
+      direction: null;
+      eta_minutes: number[];
+      captured_at: string;
+      source: string;
+    }> = [];
+    for (const [sc, byLine] of liveByStop.entries()) {
+      if (!byLine) continue;
+      for (const [lc, mins] of byLine.entries()) {
+        snapsToPersist.push({
+          stop_code: sc,
+          line_code: lc,
+          direction: null,
+          eta_minutes: mins,
+          captured_at: fetchedAt,
+          source: "vectalia-worker",
+        });
+      }
+    }
+    if (snapsToPersist.length > 0) {
+      void supabaseAdmin
+        .from("bus_realtime_snapshots")
+        .upsert(snapsToPersist, { onConflict: "stop_code,line_code" })
+        .then(() => undefined);
+    }
+
+    // Fallback: si una parada no respondió, lee snapshot cache
+    const missing = uniqueStopCodes.filter((c) => !liveByStop.get(c));
+    const cachedByStop = new Map<string, SnapRow>();
+    if (missing.length > 0) {
+      const { data: cachedRows } = await supabaseAdmin
+        .from("bus_realtime_snapshots")
+        .select("stop_code,line_code,direction,eta_minutes,captured_at")
+        .eq("line_code", lineCode)
+        .in("stop_code", missing);
+      for (const r of (cachedRows ?? []) as SnapRow[]) cachedByStop.set(r.stop_code, r);
+    }
+
+    const now = Date.now();
+    let oldestCapturedMs: number | null = null;
+    const result: RealtimeStopEta[] = stops.map((s) => {
+      const live = liveByStop.get(s.stop_code);
+      const mins = live?.get(lineCode);
+      if (live && mins !== undefined) {
+        return {
+          stopCode: s.stop_code,
+          stopName: s.stop_name,
+          direction: (s.direction === 2 ? 2 : 1) as 1 | 2,
+          seq: s.seq,
+          etaMinutes: mins,
+          capturedAt: fetchedAt,
+          ageSec: 0,
+          stale: false,
+          frozen: false,
+        };
+      }
+      if (live) {
+        // Llamada OK pero esta línea no aparece → no hay buses ahora
+        return {
+          stopCode: s.stop_code,
+          stopName: s.stop_name,
+          direction: (s.direction === 2 ? 2 : 1) as 1 | 2,
+          seq: s.seq,
+          etaMinutes: [],
+          capturedAt: fetchedAt,
+          ageSec: 0,
+          stale: false,
+          frozen: false,
+        };
+      }
+      // Fallback al snapshot cache
+      const snap = cachedByStop.get(s.stop_code);
+      const capturedAtIso = snap?.captured_at ?? fetchedAt;
+      const capturedMs = Date.parse(capturedAtIso);
+      if (snap && (oldestCapturedMs == null || capturedMs < oldestCapturedMs)) {
+        oldestCapturedMs = capturedMs;
+      }
+      const ageMs = now - capturedMs;
+      return {
+        stopCode: s.stop_code,
+        stopName: s.stop_name,
+        direction: (s.direction === 2 ? 2 : 1) as 1 | 2,
+        seq: s.seq,
+        etaMinutes: snap?.eta_minutes ?? [],
+        capturedAt: capturedAtIso,
+        ageSec: snap ? Math.max(0, Math.round(ageMs / 1000)) : 0,
+        stale: snap ? ageMs > STALE_MS : true,
+        frozen: snap ? ageMs > FROZEN_MS : true,
+      };
+    });
+
+    const liveOk = result.some((r) => r.ageSec === 0 && !r.stale);
+    return {
+      lineCode,
+      fetchedAt,
+      capturedAt: liveOk ? fetchedAt : oldestCapturedMs ? new Date(oldestCapturedMs).toISOString() : null,
+      ageSec: liveOk ? 0 : oldestCapturedMs ? Math.max(0, Math.round((now - oldestCapturedMs) / 1000)) : null,
+      stale: !liveOk,
+      frozen: !liveOk && (oldestCapturedMs == null || now - oldestCapturedMs > FROZEN_MS),
+      stops: result,
+    };
+  });
+
 // ---------- Compat: getStopRealtime / getStopsRealtimeBatch (solo cache) ----------
 
 type LegacyArrival = {
