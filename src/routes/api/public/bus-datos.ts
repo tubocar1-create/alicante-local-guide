@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 // Fuente oficial acordada para buses Alicante: SUBUS consulta.aspx.
-// No usar qr.vectalia.es/datos.aspx en este flujo.
 
 const BASE = "http://www.subus.es/QR/Alicante";
 const UA =
