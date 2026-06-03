@@ -94,7 +94,7 @@ const RECURSOS = [
   },
   {
     label: "Mapa interactivo de paradas",
-    url: "http://www.subus.es/QR/Alicante/mapa.aspx",
+    url: "https://qr.vectalia.es/Alicante/mapa.aspx",
     desc: "Encuentra paradas cercanas con QR",
   },
 ];
