@@ -51,7 +51,7 @@ function BusDetail() {
 
   const color = busColor(item?.bus_type ?? null);
   const label = item?.bus_type ?? "ALSA";
-  const backTo = item ? `/buses/alsa/${item.route_slug}?dir=${item.direction}` : "/buses/ALC-BUS";
+  const backHref = item ? `/buses/alsa/${item.route_slug}?dir=${item.direction}` : "/buses/ALC-BUS";
 
   return (
     <div
