@@ -36,7 +36,6 @@ import {
 } from "./safe-mode";
 import {
   applyProfileFleetTarget,
-  getLineProfile,
   type FleetWindow,
 } from "./line-profiles";
 import { classifyDepartureWindow } from "./active-window";
@@ -212,10 +211,11 @@ export function buildLineFleetPlan(
     activationScore: opts?.activationScore ?? 0,
     at,
   });
-  const profile = getLineProfile(lineCode);
-  const fleetSizeExpected = profile ? profileResult.target : fleetSizeInferred;
-  const fleetSizeMin = profile ? profileResult.min : 0;
-  const fleetSizeMax = profile ? profileResult.max : fleetSizeInferred + 1;
+  // Siempre usamos el resultado del perfil (con perfil por defecto = 4 buses
+  // para líneas sin perfil explícito).
+  const fleetSizeExpected = profileResult.target;
+  const fleetSizeMin = profileResult.min;
+  const fleetSizeMax = profileResult.max;
 
   // Salidas oficiales por terminal en la ventana operacional inmediata.
   const officialDeparturesMin = idaDeps

@@ -84,16 +84,17 @@ export function applyProfileFleetTarget(opts: {
   window: FleetWindow | "no_profile";
   reason: string;
 } {
-  const profile = getLineProfile(opts.lineCode);
-  if (!profile) {
-    return {
-      target: opts.inferred,
-      min: 0,
-      max: opts.inferred + 1,
-      window: "no_profile",
-      reason: "no_profile",
-    };
-  }
+  // Si la línea no tiene perfil explícito, aplicamos el PERFIL POR DEFECTO:
+  // 4 buses virtuales simultáneos como máximo, ventana 07:00–22:30.
+  const profile = getLineProfile(opts.lineCode) ?? {
+    lineCode: opts.lineCode,
+    baseBuses: 4,
+    maxBuses: 4,
+    serviceStartHHMM: "07:00",
+    eveningCutoffHHMM: "22:00",
+    lastServiceHHMM: "22:30",
+    extras: [],
+  };
   const window = classifyWindow(profile, opts.at ?? new Date());
 
   if (window === "before_service") {
