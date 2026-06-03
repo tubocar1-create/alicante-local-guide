@@ -202,7 +202,7 @@ const LIVE_BASE = "https://qr.vectalia.es/Alicante";
 const LIVE_UA =
   "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Mobile Safari/537.36";
 const LIVE_TIMEOUT_MS = 8_000;
-const LIVE_CONCURRENCY = 8;
+const LIVE_CONCURRENCY = 15;
 const LIVE_ARRIVAL_RE = /Linea\s+(\d{1,3}[A-Za-z]?)\s+([^:]+?)\s*:\s*(\d+)\s*min/gi;
 
 async function liveFetchStopBody(stopCode: string): Promise<string | null> {
