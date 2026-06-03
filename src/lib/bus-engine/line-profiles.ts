@@ -33,15 +33,14 @@ export type LineOperationalProfile = {
 const PROFILES: Record<string, LineOperationalProfile> = {
   "12": {
     lineCode: "12",
-    baseBuses: 2,
+    // Flota fija conforme al cronograma oficial: 4 buses girando en carrusel
+    // durante toda la ventana de servicio diurno.
+    baseBuses: 4,
     maxBuses: 4,
     serviceStartHHMM: "07:00",
     eveningCutoffHHMM: "22:00",
     lastServiceHHMM: "22:30",
-    extras: [
-      { label: "bus3", priority: "medium", minScoreToActivate: 0.45 },
-      { label: "bus4", priority: "high", minScoreToActivate: 0.7 },
-    ],
+    extras: [],
   },
 };
 
