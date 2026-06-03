@@ -261,36 +261,57 @@ function BusDetail() {
               </div>
             </div>
 
-            {/* Paradas y variantes intermedias */}
+            {/* Itinerario completo */}
             <section className="mt-4">
               <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-white">
                 <MapPin className="h-4 w-4 text-sky-400" />
-                Paradas y variantes
+                Itinerario
               </h2>
-              {item.observations.length === 0 ? (
-                <p className="rounded-xl border border-slate-800 bg-slate-950/40 p-3 text-[12px] text-slate-400">
-                  Este servicio no tiene paradas intermedias registradas. Origen y destino arriba.
-                </p>
-              ) : (
-                <ul className="space-y-1.5">
-                  {item.observations.map((obs, i) => (
-                    <li
-                      key={i}
-                      className="flex items-start gap-2 rounded-xl border border-slate-800 bg-slate-950/40 px-3 py-2 text-[12px] leading-relaxed text-slate-300"
-                    >
-                      <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-sky-400/70" />
-                      <span>{obs}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              {(() => {
+                const itin = buildItinerary(item);
+                return (
+                  <ol className="relative ml-2 border-l border-slate-700/70 pl-4">
+                    {itin.map((s, i) => {
+                      const meta = kindMeta(s.kind);
+                      const isLast = i === itin.length - 1;
+                      return (
+                        <li key={`${s.time}-${s.name}-${i}`} className={isLast ? "" : "pb-3"}>
+                          <span
+                            className="absolute -left-[7px] grid h-3.5 w-3.5 place-items-center rounded-full ring-2 ring-slate-950"
+                            style={{ background: meta.color }}
+                          />
+                          <div className="flex items-baseline gap-2">
+                            <span className="font-mono text-sm font-bold tabular-nums text-slate-100">
+                              {s.time}
+                            </span>
+                            <span
+                              className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide"
+                              style={{ background: meta.color + "22", color: meta.color }}
+                            >
+                              {meta.label}
+                            </span>
+                          </div>
+                          <p className="mt-0.5 text-[12px] leading-snug text-slate-200">
+                            {s.name}
+                            <span className="ml-1 text-[10px] uppercase tracking-wider text-slate-500">
+                              · {s.city}
+                            </span>
+                          </p>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                );
+              })()}
             </section>
 
             <p className="mt-3 rounded-xl border border-slate-800 bg-slate-950/40 p-3 text-[11px] leading-relaxed text-slate-400">
-              Origen y destino mostrados corresponden al recorrido principal del bus. Las paradas
-              intermedias y variantes (recogidas adicionales u otras paradas en destino) se listan arriba
-              tal como las publica ALSA.
+              <span className="font-semibold text-slate-300">Origen / Destino</span> son las terminales
+              del recorrido. <span className="font-semibold text-sky-300">Recogida</span> = parada para
+              subir al bus. <span className="font-semibold text-pink-300">Destino</span> = última parada.
+              Las paradas intermedias permiten bajarse durante el trayecto.
             </p>
+
 
             <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
               <a
