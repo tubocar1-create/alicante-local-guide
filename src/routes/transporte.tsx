@@ -59,6 +59,14 @@ const SECTORS: Sector[] = [
     Icon: TrainFront,
   },
   {
+    to: "/buses",
+    label: "Buses larga distancia",
+    description: "ALSA, Vectalia, Beniconnect desde Alicante",
+    accent: "#fcd34d",
+    accent2: "#f59e0b",
+    Icon: Bus,
+  },
+  {
     to: "/rent-a-car",
     label: "Rent a car",
     description: "Comparador de alquiler en el aeropuerto",
@@ -120,7 +128,7 @@ function TransporteHub() {
           </h1>
         </div>
 
-        <div className="grid min-h-0 flex-1 grid-rows-4 gap-2">
+        <div className="grid min-h-0 flex-1 grid-rows-5 gap-2">
           {SECTORS.map((s: Sector) => (
             <Link
               key={s.to}
