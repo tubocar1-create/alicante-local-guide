@@ -320,7 +320,7 @@ export const getLineLive = createServerFn({ method: "GET" })
           direction: null,
           eta_minutes: mins,
           captured_at: fetchedAt,
-          source: "vectalia-worker",
+          source: "subus-worker",
         });
       }
     }
