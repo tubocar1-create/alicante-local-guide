@@ -391,11 +391,9 @@ export function generateActiveFleet(
   lastObservationAgeSec: number | null = null,
 ): { fleet: VirtualBus[]; validatorReport: ValidatorReport } {
   if (plan.cycleMin <= 0) return { fleet: [], validatorReport: emptyReport() };
-  // PERFIL OPERACIONAL: si una línea está fuera de servicio (perfil dice
-  // target=0), no generamos NADA aunque haya salidas oficiales en el horario.
-  if (plan.fleetSizeExpected === 0 && plan.fleetWindow !== "no_profile") {
-    return { fleet: [], validatorReport: emptyReport() };
-  }
+  // Regla dura de buses virtuales: una salida oficial que ya nació sigue viva
+  // hasta llegar a su última parada, aunque la ventana de nuevas salidas ya
+  // haya cerrado. El perfil limita nacimientos/capacidad, NO mata viajes vivos.
   const now = currentMadridMinutes(at);
   let raw: VirtualBus[] = [];
 
