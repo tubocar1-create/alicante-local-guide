@@ -204,8 +204,10 @@ function AlsaSchedulePage() {
                       const color = busColor(t.bus_type);
                       const label = t.bus_type ?? "ALSA";
                       return (
-                        <div
+                        <Link
                           key={t.id}
+                          to="/buses/alsa/viaje/$id"
+                          params={{ id: String(t.id) }}
                           className="group relative block rounded-lg border border-slate-800 bg-slate-900/40 px-2.5 py-1.5 transition hover:border-sky-500/40 hover:bg-slate-900/70"
                         >
                           <div className="flex items-center gap-2.5">
@@ -252,7 +254,7 @@ function AlsaSchedulePage() {
                               {t.observations.join(" · ")}
                             </p>
                           )}
-                        </div>
+                        </Link>
                       );
                     })}
                   </div>

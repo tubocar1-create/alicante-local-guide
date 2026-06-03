@@ -146,6 +146,7 @@ import { Route as AdminAiAprendizajeRouteImport } from './routes/admin.ai.aprend
 import { Route as AdminAiAnalyticsRouteImport } from './routes/admin.ai.analytics'
 import { Route as OcioEventosVenueIdRouteImport } from './routes/ocio_.eventos_.venue.$id'
 import { Route as OcioCinesIdCarteleraRouteImport } from './routes/ocio_.cines_.$id.cartelera'
+import { Route as BusesAlsaViajeIdRouteImport } from './routes/buses_.alsa.viaje.$id'
 import { Route as ApiPublicTramValidOriginsRouteImport } from './routes/api/public/tram/valid-origins'
 import { Route as ApiPublicTramStationsRouteImport } from './routes/api/public/tram/stations'
 import { Route as ApiPublicTramPlanRouteImport } from './routes/api/public/tram/plan'
@@ -859,6 +860,11 @@ const OcioCinesIdCarteleraRoute = OcioCinesIdCarteleraRouteImport.update({
   path: '/ocio/cines/$id/cartelera',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BusesAlsaViajeIdRoute = BusesAlsaViajeIdRouteImport.update({
+  id: '/buses_/alsa/viaje/$id',
+  path: '/buses/alsa/viaje/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicTramValidOriginsRoute =
   ApiPublicTramValidOriginsRouteImport.update({
     id: '/api/public/tram/valid-origins',
@@ -1148,6 +1154,7 @@ export interface FileRoutesByFullPath {
   '/api/public/tram/plan': typeof ApiPublicTramPlanRoute
   '/api/public/tram/stations': typeof ApiPublicTramStationsRoute
   '/api/public/tram/valid-origins': typeof ApiPublicTramValidOriginsRoute
+  '/buses/alsa/viaje/$id': typeof BusesAlsaViajeIdRoute
   '/ocio/cines/$id/cartelera': typeof OcioCinesIdCarteleraRoute
   '/ocio/eventos/venue/$id': typeof OcioEventosVenueIdRoute
 }
@@ -1307,6 +1314,7 @@ export interface FileRoutesByTo {
   '/api/public/tram/plan': typeof ApiPublicTramPlanRoute
   '/api/public/tram/stations': typeof ApiPublicTramStationsRoute
   '/api/public/tram/valid-origins': typeof ApiPublicTramValidOriginsRoute
+  '/buses/alsa/viaje/$id': typeof BusesAlsaViajeIdRoute
   '/ocio/cines/$id/cartelera': typeof OcioCinesIdCarteleraRoute
   '/ocio/eventos/venue/$id': typeof OcioEventosVenueIdRoute
 }
@@ -1470,6 +1478,7 @@ export interface FileRoutesById {
   '/api/public/tram/plan': typeof ApiPublicTramPlanRoute
   '/api/public/tram/stations': typeof ApiPublicTramStationsRoute
   '/api/public/tram/valid-origins': typeof ApiPublicTramValidOriginsRoute
+  '/buses_/alsa/viaje/$id': typeof BusesAlsaViajeIdRoute
   '/ocio_/cines_/$id/cartelera': typeof OcioCinesIdCarteleraRoute
   '/ocio_/eventos_/venue/$id': typeof OcioEventosVenueIdRoute
 }
@@ -1634,6 +1643,7 @@ export interface FileRouteTypes {
     | '/api/public/tram/plan'
     | '/api/public/tram/stations'
     | '/api/public/tram/valid-origins'
+    | '/buses/alsa/viaje/$id'
     | '/ocio/cines/$id/cartelera'
     | '/ocio/eventos/venue/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -1793,6 +1803,7 @@ export interface FileRouteTypes {
     | '/api/public/tram/plan'
     | '/api/public/tram/stations'
     | '/api/public/tram/valid-origins'
+    | '/buses/alsa/viaje/$id'
     | '/ocio/cines/$id/cartelera'
     | '/ocio/eventos/venue/$id'
   id:
@@ -1955,6 +1966,7 @@ export interface FileRouteTypes {
     | '/api/public/tram/plan'
     | '/api/public/tram/stations'
     | '/api/public/tram/valid-origins'
+    | '/buses_/alsa/viaje/$id'
     | '/ocio_/cines_/$id/cartelera'
     | '/ocio_/eventos_/venue/$id'
   fileRoutesById: FileRoutesById
@@ -2056,6 +2068,7 @@ export interface RootRouteChildren {
   ApiPublicTramPlanRoute: typeof ApiPublicTramPlanRoute
   ApiPublicTramStationsRoute: typeof ApiPublicTramStationsRoute
   ApiPublicTramValidOriginsRoute: typeof ApiPublicTramValidOriginsRoute
+  BusesAlsaViajeIdRoute: typeof BusesAlsaViajeIdRoute
   OcioCinesIdCarteleraRoute: typeof OcioCinesIdCarteleraRoute
   OcioEventosVenueIdRoute: typeof OcioEventosVenueIdRoute
 }
@@ -3021,6 +3034,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OcioCinesIdCarteleraRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/buses_/alsa/viaje/$id': {
+      id: '/buses_/alsa/viaje/$id'
+      path: '/buses/alsa/viaje/$id'
+      fullPath: '/buses/alsa/viaje/$id'
+      preLoaderRoute: typeof BusesAlsaViajeIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/tram/valid-origins': {
       id: '/api/public/tram/valid-origins'
       path: '/api/public/tram/valid-origins'
@@ -3520,6 +3540,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicTramPlanRoute: ApiPublicTramPlanRoute,
   ApiPublicTramStationsRoute: ApiPublicTramStationsRoute,
   ApiPublicTramValidOriginsRoute: ApiPublicTramValidOriginsRoute,
+  BusesAlsaViajeIdRoute: BusesAlsaViajeIdRoute,
   OcioCinesIdCarteleraRoute: OcioCinesIdCarteleraRoute,
   OcioEventosVenueIdRoute: OcioEventosVenueIdRoute,
 }
