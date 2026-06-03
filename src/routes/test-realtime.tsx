@@ -5,7 +5,7 @@ export const Route = createFileRoute("/test-realtime")({
   component: TestRealtimePage,
 });
 
-const TARGET_URL = "http://www.subus.es/QR/Alicante/consulta.aspx?p=5110";
+const TARGET_URL = "/api/public/bus-datos?stop=5110";
 
 type Result = {
   ok: boolean;
@@ -67,12 +67,12 @@ function TestRealtimePage() {
   return (
     <main className="min-h-dvh bg-background p-6">
       <div className="mx-auto max-w-2xl space-y-4">
-        <h1 className="text-xl font-bold">Test realtime — fetch directo desde navegador</h1>
+        <h1 className="text-xl font-bold">Test realtime — bridge oficial</h1>
         <p className="text-sm text-muted-foreground break-all">
           URL: <code>{TARGET_URL}</code>
         </p>
         <p className="text-xs text-muted-foreground">
-          Sin backend, sin proxy, sin server functions. La petición sale del navegador del usuario.
+          La petición del navegador va al bridge HTTPS del proyecto, no directa a Vectalia.
         </p>
 
         <div className="flex flex-wrap gap-2">
@@ -139,9 +139,9 @@ function TestRealtimePage() {
         <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
           <p className="font-semibold">Notas:</p>
           <ul className="list-disc pl-4 space-y-1">
-            <li><code>mode: cors</code> — si Vectalia no envía cabeceras CORS, el navegador bloquea la respuesta y verás "Failed to fetch".</li>
-            <li><code>mode: no-cors</code> — la petición sale pero la respuesta es opaca (no se puede leer el body desde JS). Útil sólo para verificar que la red llega.</li>
-            <li>Abre DevTools → Network para ver el status HTTP real aunque CORS bloquee.</li>
+            <li><code>mode: cors</code> — debe poder leer JSON porque es mismo origen.</li>
+            <li><code>mode: no-cors</code> — no es necesario para este bridge; deja la respuesta opaca.</li>
+            <li>Abre DevTools → Network para ver el JSON devuelto por <code>/api/public/bus-datos</code>.</li>
           </ul>
         </div>
       </div>
