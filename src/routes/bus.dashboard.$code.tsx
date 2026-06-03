@@ -19,6 +19,7 @@ import busAlicanteImg from "@/assets/bus-alicante.png";
 import { useLineRealtime, isPreviewHost } from "@/hooks/useLineRealtime";
 import { useBusEngine } from "@/hooks/useBusEngine";
 import { buildLineFleetPlan, deriveStopEtas, generateActiveFleet } from "@/lib/bus-engine/fleet";
+import type { BusEngineData, Direction } from "@/lib/bus-engine/types";
 
 function haversineMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
   const R = 6371000;
@@ -75,6 +76,42 @@ function collapseConsecutiveDuplicateStops(stops: StopRow[]): StopRow[] {
     }
   }
   return collapsed;
+}
+
+function alignEngineScheduleDirections(
+  engine: BusEngineData,
+  lineCode: string,
+  stopsByDir: Record<1 | 2, StopRow[]>,
+): BusEngineData {
+  const directionMap = new Map<Direction, Direction>();
+  let changed = false;
+
+  for (const visualDir of [1, 2] as const) {
+    const origin = stopsByDir[visualDir][0]?.name;
+    if (!origin) continue;
+    const originNorm = normalizeStopLabel(origin);
+    const match = engine.serviceWindows.find((w) => {
+      if (w.lineCode !== lineCode || !w.terminalName) return false;
+      const terminalNorm = normalizeStopLabel(w.terminalName);
+      return terminalNorm && (originNorm.includes(terminalNorm) || terminalNorm.includes(originNorm));
+    });
+    if (!match) continue;
+    directionMap.set(match.direction, visualDir);
+    if (match.direction !== visualDir) changed = true;
+  }
+
+  if (!changed) return engine;
+
+  const remap = (dir: Direction) => directionMap.get(dir) ?? dir;
+  return {
+    ...engine,
+    departures: engine.departures.map((d) =>
+      d.lineCode === lineCode ? { ...d, direction: remap(d.direction) } : d,
+    ),
+    serviceWindows: engine.serviceWindows.map((w) =>
+      w.lineCode === lineCode ? { ...w, direction: remap(w.direction) } : w,
+    ),
+  };
 }
 
 function minutesFromHHMM(value: string): number {
