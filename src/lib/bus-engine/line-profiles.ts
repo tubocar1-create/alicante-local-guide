@@ -72,11 +72,16 @@ export function classifyWindow(
 
 // Devuelve el target de flota tras aplicar el perfil. Si no hay perfil,
 // retorna `inferred` sin tocar nada.
+//
+// `serviceStartHHMM` se pasa por línea desde el horario REAL (primera salida
+// del día). El cierre es fijo: último bus sale a las 22:30 de su base.
 export function applyProfileFleetTarget(opts: {
   lineCode: string;
   inferred: number;
   activationScore: number; // 0..1
   at?: Date;
+  serviceStartHHMM?: string; // override desde primera salida real
+  lastServiceHHMM?: string;  // override (por defecto 22:30)
 }): {
   target: number;
   min: number;
@@ -84,16 +89,17 @@ export function applyProfileFleetTarget(opts: {
   window: FleetWindow | "no_profile";
   reason: string;
 } {
-  // Si la línea no tiene perfil explícito, aplicamos el PERFIL POR DEFECTO:
-  // 4 buses virtuales simultáneos como máximo, ventana 07:00–22:30.
-  const profile = getLineProfile(opts.lineCode) ?? {
+  // PERFIL POR DEFECTO: 4 buses virtuales simultáneos. Ventana derivada del
+  // horario real de la línea (primera salida del día). Cierre fijo 22:30.
+  const explicit = getLineProfile(opts.lineCode);
+  const profile: LineOperationalProfile = {
     lineCode: opts.lineCode,
-    baseBuses: 4,
-    maxBuses: 4,
-    serviceStartHHMM: "07:00",
-    eveningCutoffHHMM: "22:00",
-    lastServiceHHMM: "22:30",
-    extras: [],
+    baseBuses: explicit?.baseBuses ?? 4,
+    maxBuses: explicit?.maxBuses ?? 4,
+    serviceStartHHMM: opts.serviceStartHHMM ?? explicit?.serviceStartHHMM ?? "06:00",
+    eveningCutoffHHMM: explicit?.eveningCutoffHHMM ?? "22:00",
+    lastServiceHHMM: opts.lastServiceHHMM ?? explicit?.lastServiceHHMM ?? "22:30",
+    extras: explicit?.extras ?? [],
   };
   const window = classifyWindow(profile, opts.at ?? new Date());
 
