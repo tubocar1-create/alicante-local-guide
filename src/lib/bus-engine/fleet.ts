@@ -388,20 +388,28 @@ export function generateActiveFleet(
     plan.officialDeparturesByDirection[1].length > 0 ||
     plan.officialDeparturesByDirection[2].length > 0;
   if (hasOfficial) {
-    // MODELO SIMPLE (sin carrusel):
+    // MODELO OPERACIONAL:
     //   - Cada salida oficial = un bus virtual que NACE a su hora de salida.
-    //   - El bus AVANZA por su sentido hasta la parada final y entonces MUERE.
-    //   - No hay regulación en terminal, no se reutilizan buses, no hay carrusel.
-    //   - El cap por perfil (`fleetSizeMax`) limita los buses simultáneos.
+    //   - El bus AVANZA por su sentido. Al llegar a la parada final se queda
+    //     CLAMPADO en terminal (visible) hasta que el siguiente bus de ese
+    //     sentido lo reemplaza. Las desincorporaciones se tratan aparte.
+    //   - Mantenemos en pantalla los K últimos buses por sentido, donde
+    //     K = ceil(fleetSizeMax / 2), de modo que la flota visible coincide
+    //     con la realidad operativa (p.ej. línea 12 → 4 simultáneos).
+    const perDirCap = plan.fleetSizeMax > 0
+      ? Math.max(1, Math.ceil(plan.fleetSizeMax / 2))
+      : 2;
     for (const dir of [1, 2] as Direction[]) {
       const dirPlan = dir === 1 ? plan.dirIda : plan.dirVuelta;
       if (!dirPlan) continue;
       const tripDuration = dirPlan.totalMin;
       if (tripDuration <= 0) continue;
-      const deps = plan.officialDeparturesByDirection[dir];
+      const deps = plan.officialDeparturesByDirection[dir]
+        .filter((d) => d <= now)
+        .sort((a, b) => b - a)   // más reciente primero
+        .slice(0, perDirCap)
+        .sort((a, b) => a - b);  // restauramos orden ascendente
       for (const dep of deps) {
-        if (dep > now) continue;                       // aún no ha nacido
-        if (dep + tripDuration <= now) continue;       // ya llegó a final → murió
         const slotKey = `${dir}-${minutesToHHMM(dep)}`;
         const rawCorrection =
           phaseCorrections?.get(slotKey) ??
@@ -411,6 +419,7 @@ export function generateActiveFleet(
           -MAX_PHASE_CORRECTION_MIN,
           Math.min(MAX_PHASE_CORRECTION_MIN, rawCorrection),
         );
+        // Clamp: si ya pasó el trayecto, lo dejamos en la parada final.
         const elapsed = Math.max(0, Math.min(tripDuration, now - dep + correction));
         const loc = locateInDirection(dirPlan, elapsed);
         const speed = estimateSpeedKmh(plan, loc);
