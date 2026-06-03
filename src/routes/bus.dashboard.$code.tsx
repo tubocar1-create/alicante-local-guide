@@ -20,21 +20,6 @@ import { useLineRealtime, isPreviewHost } from "@/hooks/useLineRealtime";
 import { useBusEngine } from "@/hooks/useBusEngine";
 import { buildLineFleetPlan, deriveStopEtas, generateActiveFleet } from "@/lib/bus-engine/fleet";
 
-// Velocidad estándar del bus virtual: 110 segundos entre paradas consecutivas.
-const VIRTUAL_BUS_SEC_PER_STOP = 110;
-
-// Máximo de buses virtuales VIVOS por línea (sumando ambos sentidos).
-// Si la flota natural excede este tope, se conservan los N más recientes
-// (los más cercanos a destino "mueren" antes para dejar hueco).
-const MAX_VIRTUAL_BUSES_BY_LINE: Record<string, number> = {
-  "12": 4,
-};
-const DEFAULT_MAX_VIRTUAL_BUSES = 8;
-
-
-
-
-
 function haversineMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
   const R = 6371000;
   const toRad = (x: number) => (x * Math.PI) / 180;
@@ -358,11 +343,9 @@ function BusDashboardPage() {
     return out;
   }, [isNightLine, serviceRows, departures, code, stopsByDir, stopCoords, clock]);
 
-  // === Estimación por BUS VIRTUAL (líneas diurnas) ===
-  // Para cada sentido genera UN bus virtual que sale del origen en la próxima
-  // salida programada (bus_line_departures) y rueda a VIRTUAL_BUS_SEC_PER_STOP
-  // segundos por parada. ETA por parada = (salida - ahora) + i * paso.
-  // Si una salida ya pasó la parada (ETA < 0), prueba la siguiente salida.
+  // === Estimación por BUSES VIRTUALES VIVOS (líneas diurnas) ===
+  // Se usa la misma flota virtual anclada a salidas oficiales que mueve los
+  // iconos: sólo buses ya nacidos, en ruta, y con ETA derivado de su posición.
   const virtualFleetView = useMemo(() => {
     const etasByDir: Record<1 | 2, Map<string, { min: number; time: string }>> = {
       1: new Map(),
