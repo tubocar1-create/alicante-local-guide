@@ -365,30 +365,22 @@ function BusDashboardPage() {
     const yDayType = dayTypeOf(new Date(clock.getTime() - 24 * 60 * 60_000));
     const stepMin = VIRTUAL_BUS_SEC_PER_STOP / 60;
 
+    const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
+
     for (const dir of [1, 2] as const) {
       const stops = stopsByDir[dir];
       if (stops.length === 0) continue;
 
       // Determinar la dirección normalizada del engine que corresponde a este
       // sentido visual, casando el terminal de origen con serviceWindows.
-      const originNorm = stops[0].name.toLowerCase().replace(/\s+/g, " ").trim();
-      const sw = engine.serviceWindows.find(
-        (w) =>
-          w.lineCode === code &&
-          w.dayType &&
-          originNorm.includes(w.dayType ? "" : "") && // placeholder, replaced below
-          false,
-      );
-      // Búsqueda real: por inclusión bidireccional del nombre del terminal.
+      const originNorm = norm(stops[0].name);
       const swMatch = engine.serviceWindows.find((w) => {
-        if (w.lineCode !== code) return false;
-        const t = ((engine.stopsMeta as unknown) ? "" : "") + "";
-        const term = (w as unknown as { terminalName?: string }).terminalName ?? "";
-        const a = term.toLowerCase().replace(/\s+/g, " ").trim();
+        if (w.lineCode !== code || !w.terminalName) return false;
+        const a = norm(w.terminalName);
         return a && (originNorm.includes(a) || a.includes(originNorm));
       });
-      const engineDir = (swMatch?.direction ?? sw?.direction ?? null) as 1 | 2 | null;
-      if (engineDir == null) continue;
+      if (!swMatch) continue;
+      const engineDir = swMatch.direction;
 
       const depTimelines: number[] = [];
       for (const d of engine.departures) {
@@ -401,6 +393,7 @@ function BusDashboardPage() {
       }
       if (depTimelines.length === 0) continue;
       depTimelines.sort((a, b) => a - b);
+
 
       for (let i = 0; i < stops.length; i++) {
         const offset = i * stepMin;
