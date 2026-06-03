@@ -347,7 +347,65 @@ function BusDashboardPage() {
 
     return out;
   }, [isNightLine, serviceRows, departures, code, stopsByDir, stopCoords, clock]);
-  const scheduleEtaByDir = nightEtaByDir;
+
+  // === Estimación por BUS VIRTUAL (líneas diurnas) ===
+  // Para cada sentido genera UN bus virtual que sale del origen en la próxima
+  // salida programada (bus_line_departures) y rueda a VIRTUAL_BUS_SEC_PER_STOP
+  // segundos por parada. ETA por parada = (salida - ahora) + i * paso.
+  // Si una salida ya pasó la parada (ETA < 0), prueba la siguiente salida.
+  const virtualEtaByDir = useMemo(() => {
+    const out: Record<1 | 2, Map<string, { min: number; time: string }>> = {
+      1: new Map(),
+      2: new Map(),
+    };
+    if (!engine || isNightLine) return out;
+
+    const nowMin = clock.getHours() * 60 + clock.getMinutes();
+    const todayType = dayTypeOf(clock);
+    const yDayType = dayTypeOf(new Date(clock.getTime() - 24 * 60 * 60_000));
+    const stepMin = VIRTUAL_BUS_SEC_PER_STOP / 60;
+
+    for (const dir of [1, 2] as const) {
+      const stops = stopsByDir[dir];
+      if (stops.length === 0) continue;
+      // Convención Vectalia: stopsByDir[1] ↔ bus_line_departures.direction=0
+      //                     stopsByDir[2] ↔ bus_line_departures.direction=1
+      const dbDir = dir - 1;
+
+      const depTimelines: number[] = [];
+      for (const d of engine.departures) {
+        if (d.line_code !== code || d.direction !== dbDir) continue;
+        const depMin = toMinHM(d.departure_time);
+        if (matchesDayType(d.day_type, todayType)) depTimelines.push(depMin);
+        if (matchesDayType(d.day_type, yDayType) && depMin >= 18 * 60) {
+          depTimelines.push(depMin - 24 * 60);
+        }
+      }
+      if (depTimelines.length === 0) continue;
+      depTimelines.sort((a, b) => a - b);
+
+      for (let i = 0; i < stops.length; i++) {
+        const offset = i * stepMin;
+        // Próxima llegada de cualquier salida candidata que aún no haya pasado.
+        let bestArr: number | null = null;
+        for (const dep of depTimelines) {
+          const arr = dep + offset;
+          if (arr - nowMin < -1) continue;
+          if (bestArr == null || arr < bestArr) bestArr = arr;
+        }
+        if (bestArr == null) continue;
+
+        const delta = Math.max(0, Math.round(bestArr - nowMin));
+        const abs = ((bestArr % 1440) + 1440) % 1440;
+        const hh = String(Math.floor(abs / 60)).padStart(2, "0");
+        const mm = String(Math.round(abs % 60)).padStart(2, "0");
+        out[dir].set(stops[i].code, { min: delta, time: `${hh}:${mm}` });
+      }
+    }
+    return out;
+  }, [engine, isNightLine, code, stopsByDir, clock]);
+
+  const scheduleEtaByDir = isNightLine ? nightEtaByDir : virtualEtaByDir;
 
 
   // === Realtime ===
