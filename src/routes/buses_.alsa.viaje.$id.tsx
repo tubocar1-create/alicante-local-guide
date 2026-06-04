@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Bus, ExternalLink, X, MapPin, Clock, CalendarDays } from "lucide-react";
-import { getAlsaScheduleItem } from "@/lib/alsa.functions";
+import { getAlsaScheduleItem, type AlsaScheduleItem, type AlsaScheduleResponse } from "@/lib/alsa.functions";
 
 export const Route = createFileRoute("/buses_/alsa/viaje/$id")({
   head: () => ({
@@ -52,17 +52,38 @@ function BusDetail() {
   const { id } = Route.useParams();
   const numId = Number(id);
   const fetchItem = useServerFn(getAlsaScheduleItem);
+  const queryClient = useQueryClient();
+
+  // Sembrar desde la cache de la lista (si el usuario llegó desde el listado)
+  // para evitar el spinner y mostrar el detalle al instante.
+  const seeded = (() => {
+    const caches = queryClient.getQueriesData<AlsaScheduleResponse>({ queryKey: ["alsa"] });
+    for (const [, resp] of caches) {
+      const hit = resp?.items.find((it) => it.id === numId);
+      if (hit) {
+        const meta = caches.find(([, r]) => r?.items.some((x) => x.id === numId));
+        const key = meta?.[0] as unknown[] | undefined;
+        const slug = (key?.[1] as string | undefined) ?? "";
+        const dir = (key?.[2] as "S" | "L" | undefined) ?? "S";
+        return { ...hit, route_slug: slug, direction: dir } as AlsaScheduleItem & { route_slug: string; direction: "S" | "L" };
+      }
+    }
+    return undefined;
+  })();
 
   const { data: item, isLoading, error } = useQuery({
     queryKey: ["alsa-item", numId],
     queryFn: () => fetchItem({ data: { id: numId } }),
     enabled: Number.isFinite(numId),
     staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    initialData: seeded,
   });
 
   const color = busColor(item?.bus_type ?? null);
   const label = item?.bus_type ?? "ALSA";
-  const backHref = item ? `/buses/alsa/${item.route_slug}?dir=${item.direction}` : "/buses/ALC-BUS";
+  const backSlug = item?.route_slug ?? "alicante-benidorm";
+  const backDir: "S" | "L" = item?.direction ?? "S";
 
   return (
     <div
@@ -74,20 +95,24 @@ function BusDetail() {
     >
       <div className="relative mx-auto max-w-2xl px-3 pb-10 pt-3 md:px-6">
         <header className="mb-3 flex items-center justify-between">
-          <a
-            href={backHref}
+          <Link
+            to="/buses_/alsa/$slug"
+            params={{ slug: backSlug }}
+            search={{ dir: backDir }}
             className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1 text-[11px] text-slate-300 transition hover:border-sky-500/50 hover:text-sky-300"
           >
             <ArrowLeft className="h-3 w-3" />
             Volver
-          </a>
-          <a
-            href={backHref}
+          </Link>
+          <Link
+            to="/buses_/alsa/$slug"
+            params={{ slug: backSlug }}
+            search={{ dir: backDir }}
             aria-label="Cerrar"
             className="rounded-full border border-slate-700 bg-slate-900/60 p-1.5 text-slate-400 hover:border-sky-500/50 hover:text-sky-300"
           >
             <X className="h-4 w-4" />
-          </a>
+          </Link>
         </header>
 
         {isLoading && (

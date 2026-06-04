@@ -68,6 +68,7 @@ function AlsaSchedulePage() {
     queryKey: ["alsa", slug, dir],
     queryFn: () => fetchSchedule({ data: { slug, direction: dir } }),
     staleTime: 10 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
   });
 
   const items = data?.items ?? [];
