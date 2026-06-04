@@ -196,7 +196,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
 
 
       {step === "line" && (
-        <div className="min-h-0 flex-1 space-y-1.5 overflow-hidden pr-0.5">
+        <div className="flex min-h-0 flex-1 flex-col justify-between gap-2 overflow-hidden pr-0.5">
           <a
             href="/transporte/parada-favorita"
             className="flex items-center gap-2 rounded-lg border border-amber-300/70 bg-gradient-to-r from-amber-50 to-yellow-50 px-2.5 py-1.5 shadow-sm transition active:scale-[0.99]"
