@@ -133,10 +133,15 @@ function buildDirectionPlan(
   for (let i = 1; i < stops.length; i++) {
     const a = stops[i - 1];
     const b = stops[i];
-    const distance =
+    const routedDistance = data.stopDistances.get(segmentKey(lineCode, direction, a.stopCode, b.stopCode));
+    const haversineDistance =
       a.lat != null && a.lng != null && b.lat != null && b.lng != null
         ? haversineMeters({ lat: a.lat, lng: a.lng }, { lat: b.lat, lng: b.lng })
         : 250;
+    // Preferimos distancia routed (calle por calle) sobre haversine: las líneas
+    // urbanas hacen curvas; haversine subestima ~40-50% el recorrido real y
+    // produce tripDuration corto → menos buses vivos simultáneos.
+    const distance = routedDistance && routedDistance > 0 ? routedDistance : haversineDistance;
     const stat = data.segmentStats.get(segmentKey(lineCode, direction, a.stopCode, b.stopCode));
     const seg = segmentMinutes({ stat, distanceM: distance, profile });
     segMinutes.push(seg.minutes);
