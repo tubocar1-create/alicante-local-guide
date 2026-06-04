@@ -448,7 +448,39 @@ export function generateActiveFleet(
     b.lastObservationSec = lastObservationAgeSec;
   }
 
-  // Validación de consistencia.
+  // AXIOMA DEL MODELO TEÓRICO:
+  //   Un bus virtual nacido de una salida oficial vive EXACTAMENTE tripDuration.
+  //   No se elimina por velocidad, ni por spacing, ni por cap. El horario
+  //   oficial es la única fuente de verdad y tripDuration ya se adapta a las
+  //   velocidades configuradas por el administrador.
+  //
+  // Si todos los buses están anclados a salidas oficiales (caso normal en
+  // este motor puramente teórico), sólo deduplicamos por busId y devolvemos.
+  const allAnchored = raw.every((b) => b.anchoredDeparture);
+  if (allAnchored) {
+    const seen = new Set<string>();
+    const dedup: VirtualBus[] = [];
+    for (const b of raw) {
+      if (seen.has(b.busId)) continue;
+      seen.add(b.busId);
+      dedup.push(b);
+    }
+    return {
+      fleet: dedup,
+      validatorReport: {
+        inputCount: raw.length,
+        outputCount: dedup.length,
+        removedDuplicates: raw.length - dedup.length,
+        removedBadSpacing: 0,
+        removedBadSpeed: 0,
+        removedCap: 0,
+        removedRatio: 0,
+      },
+    };
+  }
+
+  // Fallback: si hubiera buses no anclados (modelo degradado/sintético),
+  // aplicamos validador clásico.
   const speeds = new Map(raw.map((b) => [b.busId, b.speedKmh ?? 0]));
   const { fleet, report } = validateFleetConsistency({
     fleet: raw,
@@ -456,11 +488,6 @@ export function generateActiveFleet(
     headwayMin: plan.headwayMin,
     speeds,
   });
-
-  // CAP DURO por perfil operacional. Si el perfil define un máximo, jamás
-  // entregamos más buses que ese número. Si define un mínimo y vamos cortos,
-  // sólo añadimos buses sintéticos cuando NO hay anclaje oficial; con anclaje
-  // oficial respetamos la realidad (no inventamos buses sin salida válida).
   let capped = fleet;
   if (plan.fleetWindow !== "no_profile" && plan.fleetSizeMax > 0) {
     if (capped.length > plan.fleetSizeMax) {
@@ -469,7 +496,6 @@ export function generateActiveFleet(
         .slice(0, plan.fleetSizeMax);
     }
   }
-
   return { fleet: capped, validatorReport: report };
 }
 
