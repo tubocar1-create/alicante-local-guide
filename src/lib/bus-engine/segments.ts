@@ -29,9 +29,17 @@ export function segmentMinutes(opts: {
   const baseline = segmentBaselineMin(distanceM, profile);
 
   // Stats sin muestras o con valores absurdos son ruido: caer al baseline.
-  // Tope sano: 8 min por segmento urbano (>500 m a 4 km/h ya pasa de 8 min,
-  // cualquier cosa por encima es dato corrupto, no congestión real).
-  if (!stat || stat.samples <= 0 || stat.avgMinutes > 8) {
+  // Validamos por velocidad implícita: cualquier stat que implique
+  // < 10 km/h (urbano con paradas) es dato corrupto (snapshots con ruido,
+  // dwell mal atribuido, etc.) y se descarta. Tope absoluto adicional de
+  // 8 min/segmento por seguridad.
+  const implKmh = distanceM > 0 && stat ? (distanceM / 1000) / (stat.avgMinutes / 60) : null;
+  if (
+    !stat ||
+    stat.samples <= 0 ||
+    stat.avgMinutes > 8 ||
+    (implKmh != null && implKmh < 10)
+  ) {
     return { minutes: baseline, confidence: 0.3 };
   }
 
