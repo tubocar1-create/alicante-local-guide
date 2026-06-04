@@ -31,6 +31,8 @@ import {
   fmtTimeOnly,
 } from "@/lib/admin-shared";
 import { getVamosMetrics } from "@/lib/admin-metrics.functions";
+import { getFirecrawlCredits } from "@/lib/firecrawl-credits.functions";
+import { Flame } from "lucide-react";
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({ meta: [{ title: "Admin · VamosAlicante" }] }),
