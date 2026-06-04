@@ -562,43 +562,47 @@ export function deriveStopEtas(
   const now = currentMadridMinutes(at);
   const out: StopEta[] = [];
 
-  type ActiveBus = { bus: VirtualBus; tripElapsed: number };
+  type ActiveBus = { bus: VirtualBus; posTime: number };
   const byDir: Record<1 | 2, ActiveBus[]> = { 1: [], 2: [] };
   for (const bus of fleet) {
     if (bus.status === "finished" || bus.status === "inactive") continue;
     const dir = (bus.tripDirection ?? bus.direction) as Direction;
     const dirPlan = dir === 1 ? plan.dirIda : plan.dirVuelta;
     if (!dirPlan) continue;
-    const elapsed = bus.tripElapsedMin ?? bus.elapsedMin;
-    if (elapsed < 0 || elapsed >= dirPlan.totalMin) continue;
-    byDir[dir].push({ bus, tripElapsed: elapsed });
+    // POSICIÓN FÍSICA real (segmentIndex + segmentProgress) traducida a
+    // tiempo dentro del trip. Usar esto — y NO tripElapsed — porque el
+    // elapsed puede divergir de la posición real (bus rezagado/adelantado
+    // respecto al horario), y la propagación debe hacerse desde donde el
+    // bus realmente está, no desde donde "debería" estar según el reloj.
+    const segIdx = Math.max(0, Math.min(bus.segmentIndex ?? 0, dirPlan.segMinutes.length - 1));
+    const segProg = Math.max(0, Math.min(1, bus.segmentProgress ?? 0));
+    const segMin = dirPlan.segMinutes[segIdx] ?? 0;
+    const posTime = (dirPlan.cumTimes[segIdx] ?? 0) + segProg * segMin;
+    if (posTime < 0 || posTime >= dirPlan.totalMin) continue;
+    byDir[dir].push({ bus, posTime });
   }
 
   for (const dir of [1, 2] as Direction[]) {
     const dirPlan = dir === 1 ? plan.dirIda : plan.dirVuelta;
     if (!dirPlan) continue;
-    // ASC por tripElapsed: índice 0 = más atrasado; último = más adelantado.
-    const buses = byDir[dir].sort((a, b) => a.tripElapsed - b.tripElapsed);
-    // Índice de la parada justo detrás del bus más atrasado (paradas
-    // [0..earliestStopIdx] no las cubre ningún bus vivo → se rellenan
-    // con la(s) próxima(s) salida(s) oficial(es) desde el origen).
+    // ASC por posición física: índice 0 = más atrasado; último = más adelantado.
+    const buses = byDir[dir].sort((a, b) => a.posTime - b.posTime);
     let earliestStopIdx = -1;
     for (let bi = 0; bi < buses.length; bi++) {
-      const { bus, tripElapsed } = buses[bi];
-      // Tope de propagación: posición (cumTime) del siguiente bus por delante.
-      // Sin bus por delante → propaga hasta fin del trip.
-      const capCumTime =
-        bi + 1 < buses.length ? buses[bi + 1].tripElapsed : Number.POSITIVE_INFINITY;
-      // Próximo stop por delante de este bus.
+      const { bus, posTime } = buses[bi];
+      // Tope de propagación: posición física del siguiente bus por delante.
+      const capPosTime =
+        bi + 1 < buses.length ? buses[bi + 1].posTime : Number.POSITIVE_INFINITY;
+      // Próximo stop por delante de este bus (basado en posición física).
       let idx = 0;
-      while (idx < dirPlan.segMinutes.length && dirPlan.cumTimes[idx + 1] <= tripElapsed) idx++;
+      while (idx < dirPlan.segMinutes.length && dirPlan.cumTimes[idx + 1] <= posTime) idx++;
       if (bi === 0) earliestStopIdx = idx;
       for (let i = idx + 1; i < dirPlan.stops.length; i++) {
         const stopCum = dirPlan.cumTimes[i];
         // CORTE: si la parada ya está rebasada por el siguiente bus, deja
         // de ser responsabilidad de este bus.
-        if (stopCum > capCumTime) break;
-        const etaMin = stopCum - tripElapsed;
+        if (stopCum > capPosTime) break;
+        const etaMin = stopCum - posTime;
         if (etaMin > 90) break;
         out.push({
           lineCode: plan.lineCode,
