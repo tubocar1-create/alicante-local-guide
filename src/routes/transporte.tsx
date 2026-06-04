@@ -96,7 +96,7 @@ function TransporteHub() {
         <div className="absolute bottom-0 right-0 h-[24rem] w-[24rem] rounded-full bg-indigo-400/[0.10] blur-3xl" />
       </div>
 
-      <main className="relative mx-auto flex w-full max-w-3xl flex-1 min-h-0 flex-col gap-2 px-4 pb-4 pt-3">
+      <main className="relative mx-auto flex w-full max-w-3xl flex-1 min-h-0 flex-col gap-1.5 px-3 pb-3 pt-2">
         <header className="flex shrink-0 items-center justify-between">
           <Link
             to="/"
@@ -122,8 +122,8 @@ function TransporteHub() {
           </div>
         </header>
 
-        <div className="shrink-0 py-2">
-          <h1 className="font-display text-[26px] font-bold leading-[1.1] tracking-tight text-white md:text-[38px]">
+        <div className="shrink-0 py-1">
+          <h1 className="font-display text-[22px] font-bold leading-[1.1] tracking-tight text-white md:text-[34px]">
             Cómo moverte{" "}
             <span className="bg-gradient-to-r from-sky-300 via-white to-indigo-300 bg-clip-text text-transparent">
               por Alicante
@@ -131,7 +131,7 @@ function TransporteHub() {
           </h1>
         </div>
 
-        <div className="grid min-h-0 flex-1 grid-rows-5 gap-4">
+        <div className="grid min-h-0 flex-1 grid-rows-5 gap-2">
           {SECTORS.map((s: Sector) => (
             <Link
               key={s.to}
@@ -144,14 +144,14 @@ function TransporteHub() {
                   background: `linear-gradient(135deg, ${s.accent} 0%, ${s.accent2} 60%, ${s.accent} 100%)`,
                 }}
               />
-              <div className="relative flex h-full items-center gap-4 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.08] to-white/[0.03] px-4 py-3 backdrop-blur-xl transition-all group-hover:from-white/[0.12] group-hover:to-white/[0.05] active:scale-[0.98]">
+              <div className="relative flex h-full items-center gap-3 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.08] to-white/[0.03] px-3 py-2 backdrop-blur-xl transition-all group-hover:from-white/[0.12] group-hover:to-white/[0.05] active:scale-[0.98]">
                 <div className="relative shrink-0">
                   <div
                     className="absolute inset-0 rounded-xl blur-md"
                     style={{ background: s.accent, opacity: 0.35 }}
                   />
                   <div
-                    className="relative grid h-16 w-16 place-items-center rounded-2xl border"
+                    className="relative grid h-12 w-12 place-items-center rounded-2xl border"
                     style={{
                       background: `linear-gradient(135deg, ${s.accent}22, ${s.accent2}22)`,
                       borderColor: `${s.accent}88`,
@@ -159,7 +159,7 @@ function TransporteHub() {
                     }}
                   >
                     <s.Icon
-                      className="h-9 w-9 transition-transform duration-500 group-hover:scale-110"
+                      className="h-7 w-7 transition-transform duration-500 group-hover:scale-110"
                       strokeWidth={2.4}
                       style={{ color: "#ffffff" }}
                     />
@@ -181,16 +181,16 @@ function TransporteHub() {
                       </span>
                     </div>
                   )}
-                  <div className="mt-0.5 text-[20px] font-bold leading-tight tracking-tight text-white md:text-[22px]">
+                  <div className="text-[16px] font-bold leading-tight tracking-tight text-white md:text-[20px]">
                     {s.label}
                   </div>
-                  <div className="mt-1 text-[12px] leading-snug text-white/60">
+                  <div className="mt-0.5 text-[11px] leading-snug text-white/60">
                     {s.description}
                   </div>
                 </div>
 
                 <div className="shrink-0">
-                  <div className="grid h-9 w-9 place-items-center rounded-full border border-white/10 bg-white/[0.05] transition-all duration-500 group-hover:border-white/25 group-hover:bg-white/[0.10]">
+                  <div className="grid h-8 w-8 place-items-center rounded-full border border-white/10 bg-white/[0.05] transition-all duration-500 group-hover:border-white/25 group-hover:bg-white/[0.10]">
                     <ArrowRight
                       className="h-4 w-4 transition-transform duration-500 group-hover:translate-x-0.5"
                       style={{ color: s.accent }}
