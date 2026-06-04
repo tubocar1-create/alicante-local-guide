@@ -272,25 +272,25 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
             return (
               <div
                 key={cat}
-                className="rounded-2xl border p-3.5"
+                className="rounded-xl border p-2"
                 style={{ backgroundColor: palette.cardBg, borderColor: palette.cardBorder }}
               >
-                <div className="mb-3 flex items-center gap-3">
+                <div className="mb-1.5 flex items-center gap-2">
                   <span
-                    className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white shadow-sm"
+                    className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white shadow-sm"
                     style={{ backgroundColor: palette.iconBg }}
                     aria-hidden
                   >
-                    <IconCmp className="h-6 w-6" strokeWidth={2.4} />
+                    <IconCmp className="h-4 w-4" strokeWidth={2.4} />
                   </span>
                   <div className="min-w-0">
                     <div
-                      className="font-sans text-lg font-extrabold leading-tight not-italic"
+                      className="font-sans text-[13px] font-extrabold leading-tight not-italic"
                       style={{ color: palette.title }}
                     >
                       {label}
                     </div>
-                    <div className="font-sans text-[12px] not-italic text-slate-600">
+                    <div className="font-sans text-[10px] leading-tight not-italic text-slate-600">
                       {sublabel}
                     </div>
                   </div>
@@ -317,6 +317,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
           })}
         </div>
       )}
+
 
       {step === "direction" && line && (
         <div className="grid grid-cols-1 gap-2">
