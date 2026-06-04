@@ -4,8 +4,10 @@ import type { SegmentStat } from "./types";
 import type { TimeProfile } from "./peak-detector";
 import { profileSpeedFactor } from "./peak-detector";
 
-// Velocidades fallback (km/h). Sin red, sin estado.
-const URBAN_KMH_DAY = 16;
+// Velocidades estructurales (km/h). Aplican a TODAS las líneas por igual.
+// SOLO el administrador puede modificar estos valores — no hay override por
+// línea, ni aprendizaje, ni ajuste dinámico desde el cliente.
+const URBAN_KMH_DAY = 21;
 const URBAN_KMH_NIGHT = 28;
 const DWELL_MIN_PER_STOP = 0.25;
 
