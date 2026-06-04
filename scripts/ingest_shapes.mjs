@@ -50,14 +50,18 @@ function uniqueShapes(features) {
 }
 
 function snapStops(stops, coords) {
-  const projs = []; let lastCum = 0; let sumOff = 0; let maxOff = 0;
+  const projs = []; let lastCum = 0; let sumOff = 0; let maxOff = 0; let validCount = 0;
   for (const s of stops) {
+    if (!s.hasCoord) {
+      projs.push({ seq:s.seq, stop_code:s.stop_code, cum:lastCum, off:null });
+      continue;
+    }
     const p = projectOn({lat:s.lat,lng:s.lng}, coords);
     const cum = Math.max(p.d, lastCum);
     projs.push({ seq:s.seq, stop_code:s.stop_code, cum, off:p.off });
-    lastCum = cum; sumOff += p.off; if (p.off>maxOff) maxOff = p.off;
+    lastCum = cum; sumOff += p.off; if (p.off>maxOff) maxOff = p.off; validCount++;
   }
-  return { projs, sumOff, maxOff };
+  return { projs, sumOff: validCount ? sumOff : Infinity, maxOff, validCount };
 }
 
 async function getStops(code, dir) {
