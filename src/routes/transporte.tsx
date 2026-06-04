@@ -30,6 +30,7 @@ type Sector = {
   description: string;
   accent: string;
   accent2: string;
+  hasLiveData: boolean;
   Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties; strokeWidth?: number }>;
 };
 
@@ -40,6 +41,7 @@ const SECTORS: Sector[] = [
     description: "Paradas, líneas y tiempos en vivo",
     accent: "#7dd3fc",
     accent2: "#38bdf8",
+    hasLiveData: true,
     Icon: Bus,
   },
   {
@@ -48,6 +50,7 @@ const SECTORS: Sector[] = [
     description: "Líneas, estaciones y próximas salidas",
     accent: "#60a5fa",
     accent2: "#3b82f6",
+    hasLiveData: false,
     Icon: Train,
   },
   {
@@ -56,6 +59,7 @@ const SECTORS: Sector[] = [
     description: "Larga distancia desde Alicante-Terminal",
     accent: "#f0abfc",
     accent2: "#c026d3",
+    hasLiveData: true,
     Icon: TrainFront,
   },
   {
@@ -64,6 +68,7 @@ const SECTORS: Sector[] = [
     description: "ALSA, Vectalia, Beniconnect desde Alicante",
     accent: "#fcd34d",
     accent2: "#f59e0b",
+    hasLiveData: false,
     Icon: Bus,
   },
   {
@@ -72,6 +77,7 @@ const SECTORS: Sector[] = [
     description: "Comparador de alquiler en el aeropuerto",
     accent: "#818cf8",
     accent2: "#6366f1",
+    hasLiveData: false,
     Icon: SedanCar,
   },
 ];
@@ -117,10 +123,7 @@ function TransporteHub() {
         </header>
 
         <div className="shrink-0 py-2">
-          <p className="text-[11px] uppercase tracking-[0.3em] text-sky-300/90">
-            Dashboard de Transporte
-          </p>
-          <h1 className="mt-1.5 font-display text-[26px] font-bold leading-[1.1] tracking-tight text-white md:text-[38px]">
+          <h1 className="font-display text-[26px] font-bold leading-[1.1] tracking-tight text-white md:text-[38px]">
             Cómo moverte{" "}
             <span className="bg-gradient-to-r from-sky-300 via-white to-indigo-300 bg-clip-text text-transparent">
               por Alicante
@@ -164,18 +167,20 @@ function TransporteHub() {
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5">
-                    <span className="relative flex h-1.5 w-1.5">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-70" />
-                      <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-sky-300" />
-                    </span>
-                    <span
-                      className="text-[9px] font-bold uppercase tracking-[0.2em]"
-                      style={{ color: s.accent }}
-                    >
-                      En vivo
-                    </span>
-                  </div>
+                  {s.hasLiveData && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="relative flex h-1.5 w-1.5">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400 opacity-70" />
+                        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-sky-300" />
+                      </span>
+                      <span
+                        className="text-[9px] font-bold uppercase tracking-[0.2em]"
+                        style={{ color: s.accent }}
+                      >
+                        En vivo
+                      </span>
+                    </div>
+                  )}
                   <div className="mt-0.5 text-[19px] font-bold leading-tight tracking-tight text-white md:text-xl">
                     {s.label}
                   </div>
