@@ -150,11 +150,11 @@ function BusDetail() {
                 </div>
               </div>
               {(() => {
-                const itin = buildItinerary(item);
+                const itin = item.stops;
                 return (
                   <ol className="relative ml-2 border-l border-slate-700/70 pl-4">
-                    {itin.map((s, i) => {
-                      const meta = kindMeta(s.kind);
+                    {itin.map((s, i: number) => {
+                      const meta = kindMeta(s.kind as StopKind);
                       const isLast = i === itin.length - 1;
                       const emphasize = s.kind === "origen" || s.kind === "destino";
                       return (
@@ -180,9 +180,11 @@ function BusDetail() {
                             className={`mt-0.5 leading-snug text-slate-200 ${emphasize ? "text-[13px] font-semibold" : "text-[12px]"}`}
                           >
                             {s.name}
-                            <span className="ml-1 text-[10px] uppercase tracking-wider text-slate-500">
-                              · {s.city}
-                            </span>
+                            {s.province && (
+                              <span className="ml-1 text-[10px] uppercase tracking-wider text-slate-500">
+                                · {s.province}
+                              </span>
+                            )}
                           </p>
                         </li>
                       );
