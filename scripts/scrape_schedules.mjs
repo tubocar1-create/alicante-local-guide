@@ -67,7 +67,7 @@ function parseTable(tableHtml) {
 
 function findScheduleTables(html) {
   const tables = html.match(/<table[\s\S]*?<\/table>/g) || [];
-  return tables.filter(t => /HORARIO/i.test(t) && /\d:\d\d/.test(t));
+  return tables.filter(t => /(LABORABLE|SÁBADO|SABADO|DOMINGO|FESTIVO|VIERNES)/i.test(t) && /\d:\d\d/.test(t));
 }
 
 const TIME_RE = /^[0-2]?\d:[0-5]\d$/;
