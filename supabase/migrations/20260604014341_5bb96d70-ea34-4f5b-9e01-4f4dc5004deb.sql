@@ -1,0 +1,8 @@
+
+UPDATE public.alsa_schedules SET observations = '{"itinerary":[{"time":"00:30","stop":"Madrid Estación Sur","city":"Madrid","type":"Salida"},{"time":"03:20","stop":"Albacete","city":"Albacete","type":"Parada de pasajeros"},{"time":"05:20","stop":"Alicante Estación Autobús","city":"Alicante","type":"Llegada"}],"source":"user_screenshot_2026-06-04"}'::jsonb WHERE id = 17;
+
+UPDATE public.alsa_schedules SET observations = '{"itinerary":[{"time":"08:15","stop":"Madrid Estación Sur","city":"Madrid","type":"Salida"},{"time":"11:00-11:05","stop":"Albacete","city":"Albacete","type":"Parada de pasajeros"},{"time":"12:55","stop":"Alicante Estación Autobús","city":"Alicante","type":"Llegada"}],"source":"user_screenshot_2026-06-04"}'::jsonb WHERE id = 46;
+
+UPDATE public.alsa_schedules SET observations = '{"itinerary":[{"time":"09:30","stop":"Madrid Estación Sur","city":"Madrid","type":"Salida"},{"time":"12:15-12:25","stop":"Albacete","city":"Albacete","type":"Parada de pasajeros"},{"time":"14:10","stop":"Elche","city":"Alicante","type":"Parada de pasajeros"},{"time":"14:35","stop":"Alicante Estación Autobús","city":"Alicante","type":"Llegada"}],"source":"user_screenshot_2026-06-04"}'::jsonb WHERE id = 75;
+
+UPDATE public.alsa_schedules SET observations = '{"itinerary":[{"time":"23:45","stop":"Aeropuerto Madrid - Barajas T4","city":"Madrid","type":"Salida"},{"time":"00:00-00:30","stop":"Madrid Estación Sur","city":"Madrid","type":"Parada de pasajeros"},{"time":"03:20","stop":"Albacete","city":"Albacete","type":"Parada de pasajeros"},{"time":"05:20","stop":"Alicante Estación Autobús","city":"Alicante","type":"Llegada"}],"source":"user_screenshot_2026-06-04"}'::jsonb WHERE id = 191;
