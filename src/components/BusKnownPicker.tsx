@@ -154,7 +154,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
     <div
       className={
         embedded
-          ? "flex min-h-[calc(100dvh-3.5rem)] w-full flex-col bg-white p-3 text-foreground"
+          ? "flex h-full w-full flex-col bg-white p-2 text-foreground"
           : [
               "rounded-2xl border border-border bg-black p-2.5 shadow-soft",
               isExpanded
@@ -163,7 +163,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
             ].join(" ")
       }
     >
-      <div className="mb-3 flex shrink-0 items-center justify-between">
+      <div className="mb-1.5 flex shrink-0 items-center justify-between">
         <div className="flex items-center gap-2">
           {step !== "line" && (
             <button
@@ -194,27 +194,27 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
 
 
       {step === "line" && (
-        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pr-1">
+        <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-hidden pr-0.5">
           <a
             href="/transporte/parada-favorita"
-            className="flex items-center gap-2.5 rounded-xl border border-amber-300/70 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2 shadow-sm transition active:scale-[0.99]"
+            className="flex shrink-0 items-center gap-2 rounded-lg border border-amber-300/70 bg-gradient-to-r from-amber-50 to-yellow-50 px-2.5 py-1.5 shadow-sm transition active:scale-[0.99]"
           >
             <span
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-white shadow-sm"
+              className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-white shadow-sm"
               style={{ backgroundColor: "#F59E0B" }}
               aria-hidden
             >
-              <Star className="h-5 w-5" strokeWidth={2.4} />
+              <Star className="h-4 w-4" strokeWidth={2.4} />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-[13px] font-extrabold leading-tight text-amber-900">
+              <span className="block text-[12px] font-extrabold leading-tight text-amber-900">
                 Mi parada favorita
               </span>
-              <span className="block text-[10px] text-amber-700/80">
+              <span className="block text-[10px] leading-tight text-amber-700/80">
                 Acceso rápido a tu parada habitual
               </span>
             </span>
-            <ArrowLeft className="h-4 w-4 rotate-180 text-amber-700" />
+            <ArrowLeft className="h-3.5 w-3.5 rotate-180 text-amber-700" />
           </a>
 
           {loading && <p className="text-sm text-muted-foreground">Cargando líneas…</p>}
@@ -269,42 +269,42 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
             return (
               <div
                 key={cat}
-                className="rounded-2xl border p-3.5"
+                className="flex min-h-0 flex-1 flex-col rounded-xl border p-2"
                 style={{ backgroundColor: palette.cardBg, borderColor: palette.cardBorder }}
               >
-                <div className="mb-3 flex items-center gap-3">
+                <div className="mb-1.5 flex shrink-0 items-center gap-2">
                   <span
-                    className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white shadow-sm"
+                    className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white shadow-sm"
                     style={{ backgroundColor: palette.iconBg }}
                     aria-hidden
                   >
-                    <IconCmp className="h-6 w-6" strokeWidth={2.4} />
+                    <IconCmp className="h-4 w-4" strokeWidth={2.4} />
                   </span>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div
-                      className="font-sans text-lg font-extrabold leading-tight not-italic"
+                      className="font-sans text-[14px] font-extrabold leading-tight not-italic"
                       style={{ color: palette.title }}
                     >
                       {label}
                     </div>
-                    <div className="font-sans text-[12px] not-italic text-slate-600">
+                    <div className="font-sans text-[10px] leading-tight not-italic text-slate-600">
                       {sublabel}
                     </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-4 gap-2.5">
+                <div className="grid min-h-0 flex-1 auto-rows-fr grid-cols-4 gap-1.5">
                   {lines.map((l) => (
                     <a
                       key={l.code}
                       href={`/bus/dashboard/${encodeURIComponent(l.code)}`}
                       title={l.name}
-                      className="flex h-14 items-center justify-center gap-0.5 font-sans text-[17px] font-extrabold not-italic text-white no-underline shadow-sm transition active:scale-95"
+                      className="flex min-h-0 items-center justify-center gap-0.5 font-sans text-[15px] font-extrabold not-italic text-white no-underline shadow-sm transition active:scale-95"
                       style={{
                         background: `linear-gradient(160deg, ${palette.btnFrom} 0%, ${palette.btnTo} 100%)`,
-                        borderRadius: 12,
+                        borderRadius: 10,
                       }}
                     >
-                      {cat === "night" && <MoonStar className="h-3.5 w-3.5" aria-hidden />}
+                      {cat === "night" && <MoonStar className="h-3 w-3" aria-hidden />}
                       <span>{l.code}</span>
                     </a>
                   ))}
