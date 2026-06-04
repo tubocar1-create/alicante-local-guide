@@ -579,6 +579,10 @@ export function deriveStopEtas(
     if (!dirPlan) continue;
     // ASC por tripElapsed: índice 0 = más atrasado; último = más adelantado.
     const buses = byDir[dir].sort((a, b) => a.tripElapsed - b.tripElapsed);
+    // Índice de la parada justo detrás del bus más atrasado (paradas
+    // [0..earliestStopIdx] no las cubre ningún bus vivo → se rellenan
+    // con la(s) próxima(s) salida(s) oficial(es) desde el origen).
+    let earliestStopIdx = -1;
     for (let bi = 0; bi < buses.length; bi++) {
       const { bus, tripElapsed } = buses[bi];
       // Tope de propagación: posición (cumTime) del siguiente bus por delante.
@@ -588,6 +592,7 @@ export function deriveStopEtas(
       // Próximo stop por delante de este bus.
       let idx = 0;
       while (idx < dirPlan.segMinutes.length && dirPlan.cumTimes[idx + 1] <= tripElapsed) idx++;
+      if (bi === 0) earliestStopIdx = idx;
       for (let i = idx + 1; i < dirPlan.stops.length; i++) {
         const stopCum = dirPlan.cumTimes[i];
         // CORTE: si la parada ya está rebasada por el siguiente bus, deja
@@ -607,6 +612,40 @@ export function deriveStopEtas(
         });
       }
     }
+
+    // RELLENO DE HUECO UPSTREAM: paradas [0..earliestStopIdx] no las cubre
+    // ningún bus vivo (el más atrasado ya las ha rebasado, y aún no ha
+    // nacido el siguiente). Calculamos ETA = (próxima_salida - now) +
+    // cumTime[i] para esas paradas usando las próximas salidas oficiales
+    // desde origen. Cuando nazca el nuevo bus, su propagación reemplazará
+    // estos ETAs automáticamente (mismo busId virtual `${line}_origin_<HHMM>`
+    // no se materializa: el tick los sustituye al instanciar el bus).
+    const upstreamCount = buses.length === 0
+      ? dirPlan.stops.length  // sin buses vivos en este sentido: todo es hueco
+      : earliestStopIdx + 1;  // paradas 0..earliestStopIdx
+    if (upstreamCount > 0) {
+      const futureDeps = (plan.officialDeparturesByDirection[dir] ?? [])
+        .filter((d) => d >= now - 0.5)
+        .sort((a, b) => a - b)
+        .slice(0, 3);
+      for (const depMin of futureDeps) {
+        const waitMin = depMin - now;
+        for (let i = 0; i < upstreamCount; i++) {
+          const etaMin = waitMin + dirPlan.cumTimes[i];
+          if (etaMin < 0 || etaMin > 90) continue;
+          out.push({
+            lineCode: plan.lineCode,
+            direction: dirPlan.direction,
+            busId: `${plan.lineCode}_origin_${Math.round(depMin)}`,
+            stopCode: dirPlan.stops[i].stopCode,
+            stopSeq: dirPlan.stops[i].seq,
+            etaMin: Math.max(0, Math.round(etaMin)),
+            etaClock: formatClock(now + etaMin),
+            confidence: 0.55,
+          });
+        }
+      }
+    }
   }
 
   // Por parada quedarnos con las próximas 3 ETAs ASC.
@@ -622,6 +661,7 @@ export function deriveStopEtas(
     for (let i = 0; i < Math.min(3, arr.length); i++) result.push(arr[i]);
   }
   return result.sort((a, b) => a.etaMin - b.etaMin);
+
 }
 
 function addStopsFromOffset(
