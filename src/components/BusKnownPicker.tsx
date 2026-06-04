@@ -154,7 +154,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
     <div
       className={
         embedded
-          ? "flex min-h-[calc(100dvh-3.5rem)] w-full flex-col bg-white p-3 text-foreground"
+          ? "flex h-[calc(100dvh-3.5rem)] w-full flex-col bg-white px-3 pb-2 pt-2 text-foreground"
           : [
               "rounded-2xl border border-border bg-black p-2.5 shadow-soft",
               isExpanded
@@ -163,7 +163,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
             ].join(" ")
       }
     >
-      <div className="mb-3 flex shrink-0 items-center justify-between">
+      <div className="mb-1.5 flex shrink-0 items-center justify-between">
         <div className="flex items-center gap-2">
           {step !== "line" && (
             <button
@@ -177,7 +177,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
               <ArrowLeft className="h-5 w-5" />
             </button>
           )}
-          <h3 className={`font-sans text-base font-bold not-italic tracking-tight ${embedded ? "text-foreground" : "text-white"}`}>
+          <h3 className={`font-sans text-sm font-bold not-italic tracking-tight ${embedded ? "text-foreground" : "text-white"}`}>
             {step === "line" && "Elige tu línea"}
             {step === "direction" && `Línea ${line?.code} · ¿Hacia dónde?`}
             {step === "stop" && `Línea ${line?.code} · ¿Qué parada?`}
@@ -185,12 +185,14 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
         </div>
         <button
           onClick={onClose}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-muted/60 hover:bg-muted"
+          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-muted/60 hover:bg-muted"
           aria-label="Cerrar"
         >
           <X className="h-4 w-4" />
         </button>
       </div>
+
+
 
 
       {step === "line" && (
