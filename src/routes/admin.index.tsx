@@ -90,6 +90,19 @@ function AdminOverview() {
         </div>
       </header>
 
+      {/* Firecrawl créditos */}
+      <Section title="Firecrawl · créditos disponibles" icon={<Flame className="h-4 w-4" />}>
+        {fcQ.isLoading ? (
+          <p className="text-sm text-muted-foreground">Cargando…</p>
+        ) : fcQ.data?.ok ? (
+          <FirecrawlCredits data={fcQ.data} />
+        ) : (
+          <p className="text-sm text-destructive">
+            {fcQ.data && !fcQ.data.ok ? fcQ.data.error : "Sin datos"}
+          </p>
+        )}
+      </Section>
+
       {/* Usuarios */}
       <Section title="Usuarios reales" icon={<Users className="h-4 w-4" />}>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
