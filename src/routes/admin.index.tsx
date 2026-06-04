@@ -42,11 +42,18 @@ export const Route = createFileRoute("/admin/")({
 function AdminOverview() {
   const usersQ = useQuery(adminUsersQueryOptions());
   const fetchMetrics = useServerFn(getVamosMetrics);
+  const fetchFirecrawl = useServerFn(getFirecrawlCredits);
   const metricsQ = useQuery({
     queryKey: ["vamos-metrics"],
     queryFn: () => fetchMetrics({ data: { pin: ADMIN_PIN } }),
     refetchInterval: 10 * 60 * 1000,
     staleTime: 5 * 60 * 1000,
+  });
+  const fcQ = useQuery({
+    queryKey: ["firecrawl-credits"],
+    queryFn: () => fetchFirecrawl(),
+    refetchInterval: 5 * 60 * 1000,
+    staleTime: 2 * 60 * 1000,
   });
 
   const u = usersQ.data;
