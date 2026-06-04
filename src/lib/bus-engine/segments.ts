@@ -38,13 +38,10 @@ export function segmentMinutes(opts: {
   profile: TimeProfile;
 }): { minutes: number; confidence: number } {
   const { distanceM, profile } = opts;
-  const baseline = segmentBaselineMin(distanceM, profile);
-  const adjusted = baseline * (1 / profileSpeedFactor(profile));
-  // profileSpeedFactor ya invierte para hora punta (=1/1.10): aplicamos el
-  // factor sobre el tramo travel, no sobre dwell. Reconstruimos:
-  const kmh = profile === "night" ? 28 : 16;
-  const travelMin = (distanceM / 1000 / kmh) * 60 / profileSpeedFactor(profile);
-  const minutes = Math.max(0.3, travelMin + 0.25);
-  void adjusted;
+  // Velocidad estructural única por franja. NO se aplica multiplicador de
+  // hora punta sobre la velocidad base — el admin fija el valor y punto.
+  const kmh = profile === "night" ? URBAN_KMH_NIGHT : URBAN_KMH_DAY;
+  const travelMin = (distanceM / 1000 / kmh) * 60;
+  const minutes = Math.max(0.3, travelMin + DWELL_MIN_PER_STOP);
   return { minutes, confidence: 0.5 };
 }
