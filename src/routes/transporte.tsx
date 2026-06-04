@@ -148,15 +148,15 @@ function TransporteHub() {
                     style={{ background: s.accent, opacity: 0.35 }}
                   />
                   <div
-                    className="relative grid h-11 w-11 place-items-center rounded-xl border"
+                    className="relative grid h-14 w-14 place-items-center rounded-2xl border"
                     style={{
                       background: `linear-gradient(135deg, ${s.accent}22, ${s.accent2}22)`,
                       borderColor: `${s.accent}88`,
-                      boxShadow: `0 0 16px -4px ${s.accent}66`,
+                      boxShadow: `0 0 20px -4px ${s.accent}66`,
                     }}
                   >
                     <s.Icon
-                      className="h-6 w-6 transition-transform duration-500 group-hover:scale-110"
+                      className="h-8 w-8 transition-transform duration-500 group-hover:scale-110"
                       strokeWidth={2.4}
                       style={{ color: "#ffffff" }}
                     />
@@ -176,10 +176,10 @@ function TransporteHub() {
                       En vivo
                     </span>
                   </div>
-                  <div className="mt-0.5 text-[15px] font-bold leading-tight tracking-tight text-white">
+                  <div className="mt-0.5 text-[19px] font-bold leading-tight tracking-tight text-white md:text-xl">
                     {s.label}
                   </div>
-                  <div className="mt-0.5 text-[10px] leading-snug text-white/55">
+                  <div className="mt-1 text-[11px] leading-snug text-white/60">
                     {s.description}
                   </div>
                 </div>
