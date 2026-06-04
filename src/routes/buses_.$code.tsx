@@ -73,6 +73,12 @@ const OPERATOR_COLORS: Record<string, string> = {
 const ALSA_ROUTE_SLUGS: Record<string, string> = {
   MAD: "alicante-madrid",
   BDM: "alicante-benidorm",
+  BCN: "alicante-barcelona",
+  VLC: "alicante-valencia",
+  MUR: "alicante-murcia",
+  AGP: "alicante-malaga",
+  GRX: "alicante-granada",
+  LEI: "alicante-almeria",
 };
 
 const originQueryOptions = (code: string) =>
