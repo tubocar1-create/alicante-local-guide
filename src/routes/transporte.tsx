@@ -131,7 +131,7 @@ function TransporteHub() {
           </h1>
         </div>
 
-        <div className="grid min-h-0 flex-1 grid-rows-5 gap-2">
+        <div className="grid min-h-0 flex-1 grid-rows-5 gap-4">
           {SECTORS.map((s: Sector) => (
             <Link
               key={s.to}
@@ -144,14 +144,14 @@ function TransporteHub() {
                   background: `linear-gradient(135deg, ${s.accent} 0%, ${s.accent2} 60%, ${s.accent} 100%)`,
                 }}
               />
-              <div className="relative flex h-full items-center gap-3 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.08] to-white/[0.03] px-3 py-2 backdrop-blur-xl transition-all group-hover:from-white/[0.12] group-hover:to-white/[0.05] active:scale-[0.98]">
+              <div className="relative flex h-full items-center gap-4 rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.08] to-white/[0.03] px-4 py-3 backdrop-blur-xl transition-all group-hover:from-white/[0.12] group-hover:to-white/[0.05] active:scale-[0.98]">
                 <div className="relative shrink-0">
                   <div
                     className="absolute inset-0 rounded-xl blur-md"
                     style={{ background: s.accent, opacity: 0.35 }}
                   />
                   <div
-                    className="relative grid h-14 w-14 place-items-center rounded-2xl border"
+                    className="relative grid h-16 w-16 place-items-center rounded-2xl border"
                     style={{
                       background: `linear-gradient(135deg, ${s.accent}22, ${s.accent2}22)`,
                       borderColor: `${s.accent}88`,
@@ -159,7 +159,7 @@ function TransporteHub() {
                     }}
                   >
                     <s.Icon
-                      className="h-8 w-8 transition-transform duration-500 group-hover:scale-110"
+                      className="h-9 w-9 transition-transform duration-500 group-hover:scale-110"
                       strokeWidth={2.4}
                       style={{ color: "#ffffff" }}
                     />
@@ -181,16 +181,16 @@ function TransporteHub() {
                       </span>
                     </div>
                   )}
-                  <div className="mt-0.5 text-[19px] font-bold leading-tight tracking-tight text-white md:text-xl">
+                  <div className="mt-0.5 text-[20px] font-bold leading-tight tracking-tight text-white md:text-[22px]">
                     {s.label}
                   </div>
-                  <div className="mt-1 text-[11px] leading-snug text-white/60">
+                  <div className="mt-1 text-[12px] leading-snug text-white/60">
                     {s.description}
                   </div>
                 </div>
 
                 <div className="shrink-0">
-                  <div className="grid h-8 w-8 place-items-center rounded-full border border-white/10 bg-white/[0.05] transition-all duration-500 group-hover:border-white/25 group-hover:bg-white/[0.10]">
+                  <div className="grid h-9 w-9 place-items-center rounded-full border border-white/10 bg-white/[0.05] transition-all duration-500 group-hover:border-white/25 group-hover:bg-white/[0.10]">
                     <ArrowRight
                       className="h-4 w-4 transition-transform duration-500 group-hover:translate-x-0.5"
                       style={{ color: s.accent }}
