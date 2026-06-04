@@ -121,8 +121,17 @@ async function main() {
     for (const [dir, pickIdx, stops] of [[1,pick1,stops1],[2,pick2,stops2]]) {
       if (pickIdx === null || !stops.length) { dirReport[dir] = "sin asignación"; continue; }
       const sh = candidates[pickIdx];
-      const totalLen = polylineLength(sh.coords);
-      const { projs, maxOff } = snapStops(stops, sh.coords);
+      // Detectar si el shape va en sentido opuesto a los stops y revertirlo
+      let coords = sh.coords;
+      const validStops = stops.filter(s=>s.hasCoord);
+      if (validStops.length >= 2) {
+        const first = validStops[0], last = validStops[validStops.length-1];
+        const pf = projectOn({lat:first.lat,lng:first.lng}, coords);
+        const pl = projectOn({lat:last.lat,lng:last.lng}, coords);
+        if (pf.d > pl.d) coords = [...coords].reverse();
+      }
+      const totalLen = polylineLength(coords);
+      const { projs, maxOff } = snapStops(stops, coords);
 
       const { error: e1 } = await supa.from("bus_line_shapes").upsert({
         line_code: code, direction: dir, source: "vectalia_kmz",
