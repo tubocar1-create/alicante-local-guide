@@ -269,42 +269,42 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
             return (
               <div
                 key={cat}
-                className="rounded-2xl border p-2.5"
+                className="rounded-2xl border p-3.5"
                 style={{ backgroundColor: palette.cardBg, borderColor: palette.cardBorder }}
               >
-                <div className="mb-2 flex items-center gap-2.5">
+                <div className="mb-3 flex items-center gap-3">
                   <span
-                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white shadow-sm"
+                    className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white shadow-sm"
                     style={{ backgroundColor: palette.iconBg }}
                     aria-hidden
                   >
-                    <IconCmp className="h-5 w-5" strokeWidth={2.4} />
+                    <IconCmp className="h-6 w-6" strokeWidth={2.4} />
                   </span>
                   <div className="min-w-0">
                     <div
-                      className="font-sans text-base font-extrabold leading-tight not-italic"
+                      className="font-sans text-lg font-extrabold leading-tight not-italic"
                       style={{ color: palette.title }}
                     >
                       {label}
                     </div>
-                    <div className="font-sans text-[11px] not-italic text-slate-600">
+                    <div className="font-sans text-[12px] not-italic text-slate-600">
                       {sublabel}
                     </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-4 gap-1.5">
+                <div className="grid grid-cols-4 gap-2.5">
                   {lines.map((l) => (
                     <a
                       key={l.code}
                       href={`/bus/dashboard/${encodeURIComponent(l.code)}`}
                       title={l.name}
-                      className="flex h-11 items-center justify-center gap-0.5 font-sans text-[15px] font-extrabold not-italic text-white no-underline shadow-sm transition active:scale-95"
+                      className="flex h-14 items-center justify-center gap-0.5 font-sans text-[17px] font-extrabold not-italic text-white no-underline shadow-sm transition active:scale-95"
                       style={{
                         background: `linear-gradient(160deg, ${palette.btnFrom} 0%, ${palette.btnTo} 100%)`,
-                        borderRadius: 10,
+                        borderRadius: 12,
                       }}
                     >
-                      {cat === "night" && <MoonStar className="h-3 w-3" aria-hidden />}
+                      {cat === "night" && <MoonStar className="h-3.5 w-3.5" aria-hidden />}
                       <span>{l.code}</span>
                     </a>
                   ))}
