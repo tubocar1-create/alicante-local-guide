@@ -62,10 +62,14 @@ function snapStops(stops, coords) {
 
 async function getStops(code, dir) {
   const { data, error } = await supa.from("bus_line_stops")
-    .select("seq, stop_code, bus_stops!inner(lat,lng)")
+    .select("seq, stop_code, bus_stops(lat,lng)")
     .eq("line_code", code).eq("direction", dir).order("seq");
   if (error) throw error;
-  return (data||[]).map(s=>({ seq:s.seq, stop_code:s.stop_code, lat:s.bus_stops.lat, lng:s.bus_stops.lng }));
+  return (data||[]).map(s=>({
+    seq:s.seq, stop_code:s.stop_code,
+    lat:s.bus_stops?.lat ?? null, lng:s.bus_stops?.lng ?? null,
+    hasCoord: s.bus_stops?.lat != null && s.bus_stops?.lng != null,
+  }));
 }
 
 async function main() {
