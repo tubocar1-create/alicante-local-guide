@@ -116,11 +116,11 @@ function TransporteHub() {
           </div>
         </header>
 
-        <div className="shrink-0">
-          <p className="text-[9px] uppercase tracking-[0.3em] text-sky-300/90">
+        <div className="shrink-0 py-2">
+          <p className="text-[11px] uppercase tracking-[0.3em] text-sky-300/90">
             Dashboard de Transporte
           </p>
-          <h1 className="mt-0.5 font-display text-xl font-bold tracking-tight text-white md:text-3xl">
+          <h1 className="mt-1.5 font-display text-[26px] font-bold leading-[1.1] tracking-tight text-white md:text-[38px]">
             Cómo moverte{" "}
             <span className="bg-gradient-to-r from-sky-300 via-white to-indigo-300 bg-clip-text text-transparent">
               por Alicante
