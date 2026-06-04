@@ -136,9 +136,9 @@ async function main() {
       const { error: e1 } = await supa.from("bus_line_shapes").upsert({
         line_code: code, direction: dir, source: "vectalia_kmz",
         source_line_id: sh.sourceId ?? null,
-        geometry: { type:"LineString", coordinates: sh.coords },
+        geometry: { type:"LineString", coordinates: coords },
         total_length_m: Math.round(totalLen),
-        point_count: sh.coords.length,
+        point_count: coords.length,
         fetched_at: new Date().toISOString(),
       }, { onConflict: "line_code,direction" });
       if (e1) { dirReport[dir] = `ERR shape: ${e1.message}`; continue; }
