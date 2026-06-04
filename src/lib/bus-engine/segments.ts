@@ -19,46 +19,30 @@ export function segmentBaselineMin(distanceM: number, profile: TimeProfile): num
   return travelMin + DWELL_MIN_PER_STOP;
 }
 
-// Devuelve el tiempo estimado del segmento aplicando perfil horario y stats aprendidos.
+// Tiempo estimado de segmento. ESTRUCTURAL y simétrico para TODAS las líneas:
+// en este modelo no hay snapshots, ni fotos, ni Bridge, ni llamadas externas;
+// por tanto `bus_segment_stats` (avg_minutes/rush/night aprendidos) NO es una
+// fuente válida — está contaminado por una ingesta histórica que ya no existe.
+//
+// El cálculo único:
+//   tiempo = distancia_routed / velocidad_baseline · factor_perfil + dwell
+//
+// `stat` se acepta en la firma sólo por compatibilidad con call-sites; se
+// IGNORA por completo. Así línea 12 y cualquier otra usan exactamente la
+// misma física.
 export function segmentMinutes(opts: {
   stat: SegmentStat | undefined;
   distanceM: number;
   profile: TimeProfile;
 }): { minutes: number; confidence: number } {
-  const { stat, distanceM, profile } = opts;
+  const { distanceM, profile } = opts;
   const baseline = segmentBaselineMin(distanceM, profile);
-
-  // Stats sin muestras o con valores absurdos son ruido: caer al baseline.
-  // Validamos por velocidad implícita: cualquier stat que implique
-  // < 10 km/h (urbano con paradas) es dato corrupto (snapshots con ruido,
-  // dwell mal atribuido, etc.) y se descarta. Tope absoluto adicional de
-  // 8 min/segmento por seguridad.
-  // Velocidad implícita del stat aprendido. Cualquier valor fuera del rango
-  // urbano realista (10..40 km/h) es ruido: el segmento se evaluará con la
-  // baseline pura, sin tocar el horario oficial.
-  const implKmh = distanceM > 0 && stat ? (distanceM / 1000) / (stat.avgMinutes / 60) : null;
-  if (
-    !stat ||
-    stat.samples <= 0 ||
-    stat.avgMinutes > 8 ||
-    (implKmh != null && (implKmh < 10 || implKmh > 40))
-  ) {
-    return { minutes: baseline, confidence: 0.3 };
-  }
-
-  // Selección por perfil si hay valor específico, si no avgMinutes ajustado por factor.
-  let base = stat.avgMinutes;
-  if (profile === "morning_peak" || profile === "afternoon_peak") {
-    base = stat.rushMinutes ?? stat.avgMinutes * profileSpeedFactor(profile);
-  } else if (profile === "night") {
-    base = stat.nightMinutes ?? stat.avgMinutes * profileSpeedFactor(profile);
-  } else if (profile === "weekend") {
-    base = stat.weekendMinutes ?? stat.avgMinutes * profileSpeedFactor(profile);
-  } else if (profile === "holiday") {
-    base = stat.holidayMinutes ?? stat.avgMinutes * profileSpeedFactor(profile);
-  } else {
-    base = stat.avgMinutes * profileSpeedFactor(profile);
-  }
-
-  return { minutes: Math.max(0.3, base), confidence: stat.confidence };
+  const adjusted = baseline * (1 / profileSpeedFactor(profile));
+  // profileSpeedFactor ya invierte para hora punta (=1/1.10): aplicamos el
+  // factor sobre el tramo travel, no sobre dwell. Reconstruimos:
+  const kmh = profile === "night" ? 28 : 16;
+  const travelMin = (distanceM / 1000 / kmh) * 60 / profileSpeedFactor(profile);
+  const minutes = Math.max(0.3, travelMin + 0.25);
+  void adjusted;
+  return { minutes, confidence: 0.5 };
 }
