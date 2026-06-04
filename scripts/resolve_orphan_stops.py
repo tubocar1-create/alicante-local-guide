@@ -178,18 +178,15 @@ for (lc, d), stops in line_stops.items():
             da, sd, _ = project_point_on_polyline((s["lat"], s["lng"]), poly, cum)
             projections[(lc, d, s["seq"])] = (da, sd)
 
-for lc, ds, seq, name, code in orphans:
-    d = int(ds); seq = int(seq)
+def resolve_one(lc, d, seq, name, code, allow_fallback=False):
     rec = {"line":lc, "dir":d, "seq":seq, "code":code, "name":name,
            "new_lat":None, "new_lng":None, "source":None, "conf":0.0, "warn":""}
-
     # Phase 2: name match
     m = find_name_match(name)
     if m:
         rec["new_lat"], rec["new_lng"], rec["source"], rec["conf"], _ = m
-        results.append(rec); continue
-
-    # Phase 3: shape interpolation (with virtual endpoints for terminals)
+        return rec
+    # Phase 3: shape interpolation
     poly = shapes.get((lc, d))
     if poly:
         cum = cum_distances(poly)
@@ -199,20 +196,17 @@ for lc, ds, seq, name, code in orphans:
         for s in stops:
             if s["seq"] < seq and s["lat"] is not None: prev_known = s
             if s["seq"] > seq and s["lat"] is not None and next_known is None: next_known = s
-
-        # Virtual endpoints for terminals or missing-anchor cases
         pa_seq = pa_dist = pb_seq = pb_dist = None
         if prev_known:
             p = projections.get((lc, d, prev_known["seq"]))
             if p: pa_seq, pa_dist = prev_known["seq"], p[0]
-        if not pa_dist and seq == 1:
+        if pa_dist is None and seq == 1:
             pa_seq, pa_dist = 0, 0.0
         if next_known:
             p = projections.get((lc, d, next_known["seq"]))
             if p: pb_seq, pb_dist = next_known["seq"], p[0]
         if pb_dist is None and seq == max_seq:
             pb_seq, pb_dist = max_seq+1, cum[-1]
-
         if pa_dist is not None and pb_dist is not None and pb_dist > pa_dist and pb_seq > pa_seq:
             ratio = (seq - pa_seq) / (pb_seq - pa_seq)
             target = pa_dist + ratio*(pb_dist-pa_dist)
@@ -226,29 +220,64 @@ for lc, ds, seq, name, code in orphans:
                     gap = hav(pt, (nb["lat"], nb["lng"]))
                     if gap < 30: rec["warn"] = (rec["warn"]+" neighbor<30m").strip()
                     elif gap > 1200: rec["warn"] = (rec["warn"]+f" gap{int(gap)}m").strip()
-            results.append(rec); continue
-        # Phase 4: fallback — use nearest known of any seq
-        nearest = None
-        best_dseq = 1e9
-        for s in stops:
-            if s["lat"] is not None and abs(s["seq"]-seq) < best_dseq:
-                best_dseq = abs(s["seq"]-seq); nearest = s
-        if nearest:
-            # snap their point and step along shape proportional to seq delta
-            pa = projections.get((lc, d, nearest["seq"]))
-            if pa:
-                # assume avg 250m between consecutive stops
-                offset = (seq - nearest["seq"]) * 250
-                target = max(0, min(cum[-1], pa[0] + offset))
-                pt = point_at_distance(poly, cum, target)
-                rec["new_lat"], rec["new_lng"] = pt
-                rec["source"] = "fallback_shape"
-                rec["conf"] = 0.55
-                rec["warn"] = "single-anchor fallback"
-                results.append(rec); continue
-    # Nothing worked
-    rec["source"] = "unresolved"; rec["warn"] = "no shape/anchors"
-    results.append(rec)
+            return rec
+        if allow_fallback:
+            nearest = None; best_dseq = 1e9
+            for s in stops:
+                if s["lat"] is not None and abs(s["seq"]-seq) < best_dseq:
+                    best_dseq = abs(s["seq"]-seq); nearest = s
+            if nearest:
+                pa = projections.get((lc, d, nearest["seq"]))
+                if pa:
+                    offset = (seq - nearest["seq"]) * 250
+                    target = max(0, min(cum[-1], pa[0] + offset))
+                    pt = point_at_distance(poly, cum, target)
+                    rec["new_lat"], rec["new_lng"] = pt
+                    rec["source"] = "fallback_shape"; rec["conf"] = 0.55
+                    rec["warn"] = "single-anchor fallback"
+                    return rec
+    if allow_fallback:
+        rec["source"] = "unresolved"; rec["warn"] = "no shape/anchors"
+    return rec
+
+# Iterative passes: each newly-resolved stop becomes an anchor for the next pass.
+pending = [(lc, int(d), int(seq), name, code) for lc, d, seq, name, code in orphans]
+resolved_map = {}  # (lc, d, seq) -> rec
+for pass_num in range(1, 5):
+    progressed = False
+    still_pending = []
+    for tup in pending:
+        lc, d, seq, name, code = tup
+        rec = resolve_one(lc, d, seq, name, code, allow_fallback=False)
+        if rec["new_lat"] is not None:
+            resolved_map[(lc, d, seq)] = rec
+            # promote into anchors for the next pass
+            for s in line_stops[(lc, d)]:
+                if s["seq"] == seq:
+                    s["lat"], s["lng"] = rec["new_lat"], rec["new_lng"]
+                    projections[(lc, d, seq)] = (
+                        project_point_on_polyline((s["lat"], s["lng"]),
+                                                  shapes[(lc, d)],
+                                                  cum_distances(shapes[(lc, d)]))[0],
+                        0
+                    )
+                    break
+            progressed = True
+        else:
+            still_pending.append(tup)
+    pending = still_pending
+    print(f"Pass {pass_num}: resolved={len(resolved_map)} pending={len(pending)}", file=sys.stderr)
+    if not progressed: break
+
+# Final pass with fallback for anything left
+for tup in pending:
+    lc, d, seq, name, code = tup
+    rec = resolve_one(lc, d, seq, name, code, allow_fallback=True)
+    resolved_map[(lc, d, seq)] = rec
+
+# Re-emit in original orphan order
+results = [resolved_map[(lc, int(d), int(seq))] for lc, d, seq, _, _ in orphans]
+
 
 # ---------- 7. Report ----------
 print(f"\n{'CODE':<10}{'LINE':<6}{'DIR':<5}{'SEQ':<5}{'SOURCE':<24}{'CONF':<6}{'WARN':<24}{'NAME'}")
