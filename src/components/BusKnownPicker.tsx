@@ -269,42 +269,42 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
             return (
               <div
                 key={cat}
-                className="rounded-2xl border p-3.5"
+                className="flex min-h-0 flex-1 flex-col rounded-xl border p-2"
                 style={{ backgroundColor: palette.cardBg, borderColor: palette.cardBorder }}
               >
-                <div className="mb-3 flex items-center gap-3">
+                <div className="mb-1.5 flex shrink-0 items-center gap-2">
                   <span
-                    className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white shadow-sm"
+                    className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white shadow-sm"
                     style={{ backgroundColor: palette.iconBg }}
                     aria-hidden
                   >
-                    <IconCmp className="h-6 w-6" strokeWidth={2.4} />
+                    <IconCmp className="h-4 w-4" strokeWidth={2.4} />
                   </span>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div
-                      className="font-sans text-lg font-extrabold leading-tight not-italic"
+                      className="font-sans text-[14px] font-extrabold leading-tight not-italic"
                       style={{ color: palette.title }}
                     >
                       {label}
                     </div>
-                    <div className="font-sans text-[12px] not-italic text-slate-600">
+                    <div className="font-sans text-[10px] leading-tight not-italic text-slate-600">
                       {sublabel}
                     </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-4 gap-2.5">
+                <div className="grid min-h-0 flex-1 auto-rows-fr grid-cols-4 gap-1.5">
                   {lines.map((l) => (
                     <a
                       key={l.code}
                       href={`/bus/dashboard/${encodeURIComponent(l.code)}`}
                       title={l.name}
-                      className="flex h-14 items-center justify-center gap-0.5 font-sans text-[17px] font-extrabold not-italic text-white no-underline shadow-sm transition active:scale-95"
+                      className="flex min-h-0 items-center justify-center gap-0.5 font-sans text-[15px] font-extrabold not-italic text-white no-underline shadow-sm transition active:scale-95"
                       style={{
                         background: `linear-gradient(160deg, ${palette.btnFrom} 0%, ${palette.btnTo} 100%)`,
-                        borderRadius: 12,
+                        borderRadius: 10,
                       }}
                     >
-                      {cat === "night" && <MoonStar className="h-3.5 w-3.5" aria-hidden />}
+                      {cat === "night" && <MoonStar className="h-3 w-3" aria-hidden />}
                       <span>{l.code}</span>
                     </a>
                   ))}
