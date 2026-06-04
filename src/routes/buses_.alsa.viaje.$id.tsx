@@ -52,17 +52,38 @@ function BusDetail() {
   const { id } = Route.useParams();
   const numId = Number(id);
   const fetchItem = useServerFn(getAlsaScheduleItem);
+  const queryClient = useQueryClient();
+
+  // Sembrar desde la cache de la lista (si el usuario llegó desde el listado)
+  // para evitar el spinner y mostrar el detalle al instante.
+  const seeded = (() => {
+    const caches = queryClient.getQueriesData<AlsaScheduleResponse>({ queryKey: ["alsa"] });
+    for (const [, resp] of caches) {
+      const hit = resp?.items.find((it) => it.id === numId);
+      if (hit) {
+        const meta = caches.find(([, r]) => r?.items.some((x) => x.id === numId));
+        const key = meta?.[0] as unknown[] | undefined;
+        const slug = (key?.[1] as string | undefined) ?? "";
+        const dir = (key?.[2] as "S" | "L" | undefined) ?? "S";
+        return { ...hit, route_slug: slug, direction: dir } as AlsaScheduleItem & { route_slug: string; direction: "S" | "L" };
+      }
+    }
+    return undefined;
+  })();
 
   const { data: item, isLoading, error } = useQuery({
     queryKey: ["alsa-item", numId],
     queryFn: () => fetchItem({ data: { id: numId } }),
     enabled: Number.isFinite(numId),
     staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    initialData: seeded,
   });
 
   const color = busColor(item?.bus_type ?? null);
   const label = item?.bus_type ?? "ALSA";
-  const backHref = item ? `/buses/alsa/${item.route_slug}?dir=${item.direction}` : "/buses/ALC-BUS";
+  const backSlug = item?.route_slug ?? "alicante-benidorm";
+  const backDir: "S" | "L" = item?.direction ?? "S";
 
   return (
     <div
