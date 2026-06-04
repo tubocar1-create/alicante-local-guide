@@ -143,7 +143,7 @@ function buildDirectionPlan(
     // produce tripDuration corto → menos buses vivos simultáneos.
     const distance = routedDistance && routedDistance > 0 ? routedDistance : haversineDistance;
     const stat = data.segmentStats.get(segmentKey(lineCode, direction, a.stopCode, b.stopCode));
-    const seg = segmentMinutes({ stat, distanceM: distance, profile });
+    const seg = segmentMinutes({ stat, distanceM: distance, profile, lineCode, direction, fromStopCode: a.stopCode, toStopCode: b.stopCode });
     segMinutes.push(seg.minutes);
     segConf.push(seg.confidence);
     cumTimes.push(cumTimes[i - 1] + seg.minutes);
