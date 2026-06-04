@@ -10,7 +10,7 @@ export type AlsaScheduleItem = {
   origin_station: string;
   destination_station: string;
   bus_type: string | null;
-  observations: string[];
+  observations: unknown;
 };
 
 export type AlsaScheduleResponse = {
