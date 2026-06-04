@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Bus, ExternalLink, X, MapPin, Clock, CalendarDays } from "lucide-react";
-import { getAlsaScheduleItem } from "@/lib/alsa.functions";
+import { getAlsaScheduleItem, type AlsaScheduleItem, type AlsaScheduleResponse } from "@/lib/alsa.functions";
 
 export const Route = createFileRoute("/buses_/alsa/viaje/$id")({
   head: () => ({
