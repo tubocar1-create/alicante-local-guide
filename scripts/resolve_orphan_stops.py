@@ -189,34 +189,44 @@ for lc, ds, seq, name, code in orphans:
         rec["new_lat"], rec["new_lng"], rec["source"], rec["conf"], _ = m
         results.append(rec); continue
 
-    # Phase 3: shape interpolation
+    # Phase 3: shape interpolation (with virtual endpoints for terminals)
     poly = shapes.get((lc, d))
     if poly:
         cum = cum_distances(poly)
         stops = line_stops[(lc, d)]
-        # find nearest known before and after
+        max_seq = max(s["seq"] for s in stops)
         prev_known = next_known = None
         for s in stops:
             if s["seq"] < seq and s["lat"] is not None: prev_known = s
             if s["seq"] > seq and s["lat"] is not None and next_known is None: next_known = s
-        if prev_known and next_known:
-            pa = projections.get((lc, d, prev_known["seq"]))
-            pb = projections.get((lc, d, next_known["seq"]))
-            if pa and pb and pb[0] > pa[0]:
-                # sequence-based ratio between prev and next
-                ratio = (seq - prev_known["seq"]) / (next_known["seq"] - prev_known["seq"])
-                target_dist = pa[0] + ratio*(pb[0]-pa[0])
-                pt = point_at_distance(poly, cum, target_dist)
-                rec["new_lat"], rec["new_lng"] = pt
-                rec["source"] = "interpolated_shape"
-                rec["conf"] = 0.75
-                # Warnings
-                # check distance from neighbor
-                if prev_known["lat"]:
-                    gap_prev = hav(pt, (prev_known["lat"], prev_known["lng"]))
-                    if gap_prev < 30: rec["warn"] = "prev_too_close<30m"
-                    elif gap_prev > 1200: rec["warn"] = f"prev_gap>{int(gap_prev)}m"
-                results.append(rec); continue
+
+        # Virtual endpoints for terminals or missing-anchor cases
+        pa_seq = pa_dist = pb_seq = pb_dist = None
+        if prev_known:
+            p = projections.get((lc, d, prev_known["seq"]))
+            if p: pa_seq, pa_dist = prev_known["seq"], p[0]
+        if not pa_dist and seq == 1:
+            pa_seq, pa_dist = 0, 0.0
+        if next_known:
+            p = projections.get((lc, d, next_known["seq"]))
+            if p: pb_seq, pb_dist = next_known["seq"], p[0]
+        if pb_dist is None and seq == max_seq:
+            pb_seq, pb_dist = max_seq+1, cum[-1]
+
+        if pa_dist is not None and pb_dist is not None and pb_dist > pa_dist and pb_seq > pa_seq:
+            ratio = (seq - pa_seq) / (pb_seq - pa_seq)
+            target = pa_dist + ratio*(pb_dist-pa_dist)
+            pt = point_at_distance(poly, cum, target)
+            rec["new_lat"], rec["new_lng"] = pt
+            is_terminal = (seq == 1 and not prev_known) or (seq == max_seq and not next_known)
+            rec["source"] = "shape_terminal" if is_terminal else "interpolated_shape"
+            rec["conf"] = 0.90 if is_terminal else 0.80
+            for nb in [prev_known, next_known]:
+                if nb and nb["lat"]:
+                    gap = hav(pt, (nb["lat"], nb["lng"]))
+                    if gap < 30: rec["warn"] = (rec["warn"]+" neighbor<30m").strip()
+                    elif gap > 1200: rec["warn"] = (rec["warn"]+f" gap{int(gap)}m").strip()
+            results.append(rec); continue
         # Phase 4: fallback — use nearest known of any seq
         nearest = None
         best_dseq = 1e9
