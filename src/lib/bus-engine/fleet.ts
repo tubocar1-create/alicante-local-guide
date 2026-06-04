@@ -546,8 +546,14 @@ function emptyReport(): ValidatorReport {
 }
 
 
-// Deriva ETAs por parada desde la flota: para cada parada futura en la trayectoria
-// del bus, calcula el tiempo hasta alcanzarla siguiendo el ciclo.
+// Deriva ETAs por parada desde la flota.
+//
+// REGLA ESTRUCTURAL (válida para TODAS las líneas):
+// Cada bus propaga ETAs desde su posición hacia adelante en su trip actual.
+// La propagación SE CORTA cuando alcanza la posición del siguiente bus en
+// la misma (línea, dirección). A partir de ahí es ese siguiente bus quien
+// propaga. Así, cada parada futura es servida por el bus inmediatamente
+// detrás de ella, no por la mezcla "todos contra todos" + sort global.
 export function deriveStopEtas(
   plan: LineFleetPlan,
   fleet: VirtualBus[],
@@ -556,12 +562,54 @@ export function deriveStopEtas(
   const now = currentMadridMinutes(at);
   const out: StopEta[] = [];
 
+  type ActiveBus = { bus: VirtualBus; tripElapsed: number };
+  const byDir: Record<1 | 2, ActiveBus[]> = { 1: [], 2: [] };
   for (const bus of fleet) {
     if (bus.status === "finished" || bus.status === "inactive") continue;
-    addStopsForActiveTrip(plan, bus, now, out, 90);
+    const dir = (bus.tripDirection ?? bus.direction) as Direction;
+    const dirPlan = dir === 1 ? plan.dirIda : plan.dirVuelta;
+    if (!dirPlan) continue;
+    const elapsed = bus.tripElapsedMin ?? bus.elapsedMin;
+    if (elapsed < 0 || elapsed >= dirPlan.totalMin) continue;
+    byDir[dir].push({ bus, tripElapsed: elapsed });
   }
 
-  // Por parada+linea+dirección quedarnos con las próximas 3 ETAs (orden ascendente).
+  for (const dir of [1, 2] as Direction[]) {
+    const dirPlan = dir === 1 ? plan.dirIda : plan.dirVuelta;
+    if (!dirPlan) continue;
+    // ASC por tripElapsed: índice 0 = más atrasado; último = más adelantado.
+    const buses = byDir[dir].sort((a, b) => a.tripElapsed - b.tripElapsed);
+    for (let bi = 0; bi < buses.length; bi++) {
+      const { bus, tripElapsed } = buses[bi];
+      // Tope de propagación: posición (cumTime) del siguiente bus por delante.
+      // Sin bus por delante → propaga hasta fin del trip.
+      const capCumTime =
+        bi + 1 < buses.length ? buses[bi + 1].tripElapsed : Number.POSITIVE_INFINITY;
+      // Próximo stop por delante de este bus.
+      let idx = 0;
+      while (idx < dirPlan.segMinutes.length && dirPlan.cumTimes[idx + 1] <= tripElapsed) idx++;
+      for (let i = idx + 1; i < dirPlan.stops.length; i++) {
+        const stopCum = dirPlan.cumTimes[i];
+        // CORTE: si la parada ya está rebasada por el siguiente bus, deja
+        // de ser responsabilidad de este bus.
+        if (stopCum > capCumTime) break;
+        const etaMin = stopCum - tripElapsed;
+        if (etaMin > 90) break;
+        out.push({
+          lineCode: plan.lineCode,
+          direction: dirPlan.direction,
+          busId: bus.busId,
+          stopCode: dirPlan.stops[i].stopCode,
+          stopSeq: dirPlan.stops[i].seq,
+          etaMin: Math.max(0, Math.round(etaMin)),
+          etaClock: formatClock(now + etaMin),
+          confidence: bus.confidence,
+        });
+      }
+    }
+  }
+
+  // Por parada quedarnos con las próximas 3 ETAs ASC.
   const byKey = new Map<string, StopEta[]>();
   for (const e of out) {
     const k = `${e.lineCode}|${e.direction}|${e.stopCode}`;
@@ -574,36 +622,6 @@ export function deriveStopEtas(
     for (let i = 0; i < Math.min(3, arr.length); i++) result.push(arr[i]);
   }
   return result.sort((a, b) => a.etaMin - b.etaMin);
-}
-
-function addStopsForActiveTrip(
-  plan: LineFleetPlan,
-  bus: VirtualBus,
-  now: number,
-  out: StopEta[],
-  horizonMin: number,
-): void {
-  const dir = bus.tripDirection ?? bus.direction;
-  const dirPlan = dir === 1 ? plan.dirIda : plan.dirVuelta;
-  if (!dirPlan) return;
-  const elapsed = bus.tripElapsedMin ?? bus.elapsedMin;
-  if (elapsed < 0 || elapsed >= dirPlan.totalMin) return;
-  let idx = 0;
-  while (idx < dirPlan.segMinutes.length && dirPlan.cumTimes[idx + 1] <= elapsed) idx++;
-  for (let i = idx + 1; i < dirPlan.stops.length; i++) {
-    const etaMin = dirPlan.cumTimes[i] - elapsed;
-    if (etaMin > horizonMin) return;
-    out.push({
-      lineCode: plan.lineCode,
-      direction: dirPlan.direction,
-      busId: bus.busId,
-      stopCode: dirPlan.stops[i].stopCode,
-      stopSeq: dirPlan.stops[i].seq,
-      etaMin: Math.max(0, Math.round(etaMin)),
-      etaClock: formatClock(now + etaMin),
-      confidence: bus.confidence,
-    });
-  }
 }
 
 function addStopsFromOffset(
