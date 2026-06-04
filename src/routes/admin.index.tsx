@@ -31,6 +31,8 @@ import {
   fmtTimeOnly,
 } from "@/lib/admin-shared";
 import { getVamosMetrics } from "@/lib/admin-metrics.functions";
+import { getFirecrawlCredits } from "@/lib/firecrawl-credits.functions";
+import { Flame } from "lucide-react";
 
 export const Route = createFileRoute("/admin/")({
   head: () => ({ meta: [{ title: "Admin · VamosAlicante" }] }),
@@ -40,11 +42,18 @@ export const Route = createFileRoute("/admin/")({
 function AdminOverview() {
   const usersQ = useQuery(adminUsersQueryOptions());
   const fetchMetrics = useServerFn(getVamosMetrics);
+  const fetchFirecrawl = useServerFn(getFirecrawlCredits);
   const metricsQ = useQuery({
     queryKey: ["vamos-metrics"],
     queryFn: () => fetchMetrics({ data: { pin: ADMIN_PIN } }),
     refetchInterval: 10 * 60 * 1000,
     staleTime: 5 * 60 * 1000,
+  });
+  const fcQ = useQuery({
+    queryKey: ["firecrawl-credits"],
+    queryFn: () => fetchFirecrawl(),
+    refetchInterval: 5 * 60 * 1000,
+    staleTime: 2 * 60 * 1000,
   });
 
   const u = usersQ.data;
@@ -80,6 +89,19 @@ function AdminOverview() {
           </Button>
         </div>
       </header>
+
+      {/* Firecrawl créditos */}
+      <Section title="Firecrawl · créditos disponibles" icon={<Flame className="h-4 w-4" />}>
+        {fcQ.isLoading ? (
+          <p className="text-sm text-muted-foreground">Cargando…</p>
+        ) : fcQ.data?.ok ? (
+          <FirecrawlCredits data={fcQ.data} />
+        ) : (
+          <p className="text-sm text-destructive">
+            {fcQ.data && !fcQ.data.ok ? fcQ.data.error : "Sin datos"}
+          </p>
+        )}
+      </Section>
 
       {/* Usuarios */}
       <Section title="Usuarios reales" icon={<Users className="h-4 w-4" />}>
@@ -260,6 +282,49 @@ function QuickLink({ to, title, desc }: { to: string; title: string; desc: strin
       </div>
       <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
     </Link>
+  );
+}
+
+function FirecrawlCredits({
+  data,
+}: {
+  data: {
+    remaining: number;
+    planCredits: number;
+    periodStart: string;
+    periodEnd: string;
+  };
+}) {
+  const used = Math.max(0, data.planCredits - data.remaining);
+  const pct = data.planCredits > 0
+    ? Math.min(100, Math.max(0, (data.remaining / data.planCredits) * 100))
+    : 0;
+  const low = pct < 15;
+  const end = data.periodEnd ? new Date(data.periodEnd) : null;
+  const daysLeft = end
+    ? Math.max(0, Math.ceil((end.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : null;
+  return (
+    <div className="space-y-3">
+      <div className="flex items-end gap-3 flex-wrap">
+        <div className={"text-3xl font-bold " + (low ? "text-destructive" : "")}>
+          {data.remaining.toLocaleString()}
+        </div>
+        <div className="text-xs text-muted-foreground pb-1">
+          de {data.planCredits.toLocaleString()} · usados {used.toLocaleString()}
+        </div>
+      </div>
+      <div className="h-2 rounded-full bg-muted overflow-hidden">
+        <div
+          className={"h-full transition-all " + (low ? "bg-destructive" : "bg-primary")}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <p className="text-[11px] text-muted-foreground">
+        Periodo {end ? end.toLocaleDateString("es-ES") : "—"}
+        {daysLeft !== null ? ` · quedan ${daysLeft} días` : ""}
+      </p>
+    </div>
   );
 }
 
