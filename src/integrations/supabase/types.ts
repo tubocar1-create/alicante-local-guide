@@ -1358,6 +1358,90 @@ export type Database = {
         }
         Relationships: []
       }
+      bus_line_shapes: {
+        Row: {
+          created_at: string
+          direction: number
+          fetched_at: string
+          geometry: Json
+          id: string
+          line_code: string
+          point_count: number
+          source: string
+          source_line_id: string | null
+          total_length_m: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          direction: number
+          fetched_at?: string
+          geometry: Json
+          id?: string
+          line_code: string
+          point_count: number
+          source?: string
+          source_line_id?: string | null
+          total_length_m: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          direction?: number
+          fetched_at?: string
+          geometry?: Json
+          id?: string
+          line_code?: string
+          point_count?: number
+          source?: string
+          source_line_id?: string | null
+          total_length_m?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      bus_line_stop_distances: {
+        Row: {
+          computed_at: string
+          cumulative_m: number
+          direction: number
+          distance_m: number
+          from_seq: number
+          from_stop_code: string | null
+          line_code: string
+          snap_offset_from_m: number | null
+          snap_offset_to_m: number | null
+          to_seq: number
+          to_stop_code: string | null
+        }
+        Insert: {
+          computed_at?: string
+          cumulative_m: number
+          direction: number
+          distance_m: number
+          from_seq: number
+          from_stop_code?: string | null
+          line_code: string
+          snap_offset_from_m?: number | null
+          snap_offset_to_m?: number | null
+          to_seq: number
+          to_stop_code?: string | null
+        }
+        Update: {
+          computed_at?: string
+          cumulative_m?: number
+          direction?: number
+          distance_m?: number
+          from_seq?: number
+          from_stop_code?: string | null
+          line_code?: string
+          snap_offset_from_m?: number | null
+          snap_offset_to_m?: number | null
+          to_seq?: number
+          to_stop_code?: string | null
+        }
+        Relationships: []
+      }
       bus_line_stops: {
         Row: {
           created_at: string
