@@ -154,7 +154,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
     <div
       className={
         embedded
-          ? "flex min-h-[calc(100dvh-3.5rem)] w-full flex-col bg-white p-3 text-foreground"
+          ? "flex h-[calc(100dvh-3.5rem)] w-full flex-col bg-white px-3 pb-2 pt-2 text-foreground"
           : [
               "rounded-2xl border border-border bg-black p-2.5 shadow-soft",
               isExpanded
@@ -163,7 +163,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
             ].join(" ")
       }
     >
-      <div className="mb-3 flex shrink-0 items-center justify-between">
+      <div className="mb-1.5 flex shrink-0 items-center justify-between">
         <div className="flex items-center gap-2">
           {step !== "line" && (
             <button
@@ -177,7 +177,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
               <ArrowLeft className="h-5 w-5" />
             </button>
           )}
-          <h3 className={`font-sans text-base font-bold not-italic tracking-tight ${embedded ? "text-foreground" : "text-white"}`}>
+          <h3 className={`font-sans text-sm font-bold not-italic tracking-tight ${embedded ? "text-foreground" : "text-white"}`}>
             {step === "line" && "Elige tu línea"}
             {step === "direction" && `Línea ${line?.code} · ¿Hacia dónde?`}
             {step === "stop" && `Línea ${line?.code} · ¿Qué parada?`}
@@ -185,7 +185,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
         </div>
         <button
           onClick={onClose}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-muted/60 hover:bg-muted"
+          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-muted/60 hover:bg-muted"
           aria-label="Cerrar"
         >
           <X className="h-4 w-4" />
@@ -193,31 +193,34 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
       </div>
 
 
+
+
       {step === "line" && (
-        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain pr-1">
+        <div className="min-h-0 flex-1 space-y-1.5 overflow-hidden pr-0.5">
           <a
             href="/transporte/parada-favorita"
-            className="flex items-center gap-2.5 rounded-xl border border-amber-300/70 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2 shadow-sm transition active:scale-[0.99]"
+            className="flex items-center gap-2 rounded-lg border border-amber-300/70 bg-gradient-to-r from-amber-50 to-yellow-50 px-2.5 py-1.5 shadow-sm transition active:scale-[0.99]"
           >
             <span
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-white shadow-sm"
+              className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-white shadow-sm"
               style={{ backgroundColor: "#F59E0B" }}
               aria-hidden
             >
-              <Star className="h-5 w-5" strokeWidth={2.4} />
+              <Star className="h-4 w-4" strokeWidth={2.4} />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-[13px] font-extrabold leading-tight text-amber-900">
+              <span className="block text-[12px] font-extrabold leading-tight text-amber-900">
                 Mi parada favorita
               </span>
-              <span className="block text-[10px] text-amber-700/80">
+              <span className="block text-[9px] leading-tight text-amber-700/80">
                 Acceso rápido a tu parada habitual
               </span>
             </span>
-            <ArrowLeft className="h-4 w-4 rotate-180 text-amber-700" />
+            <ArrowLeft className="h-3.5 w-3.5 rotate-180 text-amber-700" />
           </a>
 
           {loading && <p className="text-sm text-muted-foreground">Cargando líneas…</p>}
+
 
           {(["urban", "extraurban", "night"] as const).map((cat) => {
             const lines = (data?.lines ?? [])
@@ -269,25 +272,25 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
             return (
               <div
                 key={cat}
-                className="rounded-2xl border p-3.5"
+                className="rounded-xl border p-2"
                 style={{ backgroundColor: palette.cardBg, borderColor: palette.cardBorder }}
               >
-                <div className="mb-3 flex items-center gap-3">
+                <div className="mb-1.5 flex items-center gap-2">
                   <span
-                    className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white shadow-sm"
+                    className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white shadow-sm"
                     style={{ backgroundColor: palette.iconBg }}
                     aria-hidden
                   >
-                    <IconCmp className="h-6 w-6" strokeWidth={2.4} />
+                    <IconCmp className="h-4 w-4" strokeWidth={2.4} />
                   </span>
                   <div className="min-w-0">
                     <div
-                      className="font-sans text-lg font-extrabold leading-tight not-italic"
+                      className="font-sans text-[13px] font-extrabold leading-tight not-italic"
                       style={{ color: palette.title }}
                     >
                       {label}
                     </div>
-                    <div className="font-sans text-[12px] not-italic text-slate-600">
+                    <div className="font-sans text-[10px] leading-tight not-italic text-slate-600">
                       {sublabel}
                     </div>
                   </div>
@@ -314,6 +317,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
           })}
         </div>
       )}
+
 
       {step === "direction" && line && (
         <div className="grid grid-cols-1 gap-2">
