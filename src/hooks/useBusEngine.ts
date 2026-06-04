@@ -11,9 +11,9 @@ export function useBusEngine(): { data: BusEngineData | null; loading: boolean }
   const { data: snap, isLoading } = useQuery({
     queryKey: ["bus-engine-snapshot"],
     queryFn: () => getBusEngineSnapshot(),
-    staleTime: 10 * 60 * 1000, // 10 min
-    gcTime: 30 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    gcTime: 60 * 1000,
+    refetchOnWindowFocus: true,
   });
   const data = useMemo(() => (snap ? fromSnapshot(snap) : null), [snap]);
   return { data, loading: isLoading };
