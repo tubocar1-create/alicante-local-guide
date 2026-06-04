@@ -4,17 +4,6 @@ import { unzipSync, strFromU8 } from 'fflate';
 const FC_KEY = process.env.FIRECRAWL_API_KEY;
 const BASE = 'https://alicante.vectalia.es';
 
-async function fcScrape(url, body) {
-  const r = await fetch('https://api.firecrawl.dev/v2/scrape', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${FC_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url, ...body }),
-  });
-  if (!r.ok) throw new Error(`FC ${r.status}: ${await r.text()}`);
-  const j = await r.json();
-  return j.data || j;
-}
-
 const LINES = [
   ['1','linea-01-san-gabriel-ciudad-elegida'],
   ['2','linea-02-la-florida-sagrada-familia'],
@@ -54,78 +43,95 @@ function parseKml(kml) {
   }
   return shapes;
 }
-
 function haversine(a,b){
   const R=6371000, toR=d=>d*Math.PI/180;
   const dLat=toR(b[1]-a[1]), dLng=toR(b[0]-a[0]);
   const s=Math.sin(dLat/2)**2+Math.cos(toR(a[1]))*Math.cos(toR(b[1]))*Math.sin(dLng/2)**2;
   return 2*R*Math.asin(Math.sqrt(s));
 }
-function lengthM(coords){ let t=0; for(let i=1;i<coords.length;i++) t+=haversine(coords[i-1],coords[i]); return t; }
+function lengthM(c){ let t=0; for(let i=1;i<c.length;i++) t+=haversine(c[i-1],c[i]); return t; }
+
+async function fcScrape(url, body) {
+  const r = await fetch('https://api.firecrawl.dev/v2/scrape', {
+    method:'POST',
+    headers:{ 'Authorization':`Bearer ${FC_KEY}`,'Content-Type':'application/json' },
+    body: JSON.stringify({ url, ...body }),
+  });
+  if (!r.ok) throw new Error(`FC ${r.status}: ${(await r.text()).slice(0,200)}`);
+  return (await r.json()).data || {};
+}
 
 const summary = [];
 
 for (const [code, slug] of LINES) {
-  const url = `${BASE}/linea/${slug}/`;
+  const pageUrl = `${BASE}/linea/${slug}/`;
+  console.log(`\n=== Línea ${code} ===`);
   try {
-    console.log(`\n=== Línea ${code} ===`);
-    const scraped = await fcScrape(url, { formats: ['html'], onlyMainContent: false });
-    const html = scraped.html || '';
-    const m = html.match(/line-kml[^"']*[?&]id=(\d+)/);
-    if (!m) { console.log('  NO id KML'); summary.push({code, ok:false, err:'no_id'}); continue; }
-    const lineId = m[1];
-    const kmzUrl = `${BASE}/wp-content/plugins/vectalia/inc/line-kml.kmz.php?id=${lineId}`;
-    console.log(`  id=${lineId}`);
-
-    // Try direct fetch
-    let kmzBuf = null;
-    try {
-      const r = await fetch(kmzUrl, { headers: {'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36'} });
-      if (r.ok) {
-        const ab = await r.arrayBuffer();
-        if (ab.byteLength > 500) kmzBuf = Buffer.from(ab);
+    // Step 1: load page, extract ids, then fetch each KMZ from inside the browser as base64
+    const js = `
+      const html = document.documentElement.outerHTML;
+      const ids = [...new Set([...html.matchAll(/line-kml[^"']*?id%3D(\\d+)/g)].map(m=>m[1]))];
+      const results = [];
+      for (const id of ids) {
+        const u = '/ajax/data/line-kml?lang=es&__internal__=1&type=line&id='+id+'&_=1&idx=0&vrs=5.7.593';
+        try {
+          const r = await fetch(u, {credentials:'include'});
+          const ab = await r.arrayBuffer();
+          const u8 = new Uint8Array(ab);
+          let s=''; for(let i=0;i<u8.length;i++) s+=String.fromCharCode(u8[i]);
+          results.push({id, status:r.status, b64: btoa(s)});
+        } catch(e) { results.push({id, err: String(e)}); }
       }
-    } catch {}
-
-    // Fallback: Firecrawl executeJavascript
-    if (!kmzBuf) {
-      const js = `const r=await fetch(${JSON.stringify(kmzUrl)});const ab=await r.arrayBuffer();const u=new Uint8Array(ab);let s='';for(let i=0;i<u.length;i++)s+=String.fromCharCode(u[i]);document.body.innerText=btoa(s);`;
-      const ex = await fcScrape(BASE, {
-        formats: ['markdown'],
-        actions: [{ type:'executeJavascript', script: js }, { type:'wait', milliseconds: 800 }],
-      });
-      const md = (ex.markdown || '').replace(/\s/g,'');
-      if (md.length > 100) {
-        try { kmzBuf = Buffer.from(md, 'base64'); } catch {}
+      document.body.innerText = '###JSON###'+JSON.stringify({ids, results});
+    `;
+    const ex = await fcScrape(pageUrl, {
+      formats: ['markdown'],
+      onlyMainContent: false,
+      actions: [
+        { type:'wait', milliseconds: 1500 },
+        { type:'executeJavascript', script: js },
+        { type:'wait', milliseconds: 500 },
+      ],
+    });
+    const md = ex.markdown || '';
+    const i = md.indexOf('###JSON###');
+    if (i < 0) { console.log('  no JSON output'); summary.push({code, ok:false, err:'no_js_output'}); continue; }
+    const payload = JSON.parse(md.slice(i+10));
+    console.log('  ids:', payload.ids);
+    const shapes = [];
+    for (const r of payload.results) {
+      if (!r.b64) { console.log(`  id ${r.id}: ${r.err||r.status}`); continue; }
+      const buf = Buffer.from(r.b64, 'base64');
+      try {
+        const files = unzipSync(new Uint8Array(buf));
+        const kmlName = Object.keys(files).find(n => n.toLowerCase().endsWith('.kml'));
+        if (!kmlName) { console.log(`  id ${r.id}: sin .kml`); continue; }
+        const kml = strFromU8(files[kmlName]);
+        const sh = parseKml(kml);
+        for (const s of sh) shapes.push({ ...s, sourceId: r.id });
+      } catch (e) {
+        console.log(`  id ${r.id} unzip err:`, e.message);
       }
     }
-
-    if (!kmzBuf || kmzBuf.length < 500) { console.log('  KMZ vacío'); summary.push({code, ok:false, err:'empty_kmz'}); continue; }
-
-    const files = unzipSync(new Uint8Array(kmzBuf));
-    const kmlName = Object.keys(files).find(n => n.toLowerCase().endsWith('.kml'));
-    if (!kmlName) { console.log('  sin KML'); summary.push({code, ok:false, err:'no_kml'}); continue; }
-    const kml = strFromU8(files[kmlName]);
-    const shapes = parseKml(kml);
-    if (shapes.length === 0) { console.log('  sin LineString'); summary.push({code, ok:false, err:'no_linestring'}); continue; }
+    if (shapes.length === 0) { console.log('  sin shapes'); summary.push({code, ok:false, err:'no_shapes'}); continue; }
 
     const geojson = {
-      type: 'FeatureCollection',
-      meta: { lineCode: code, lineId, source: 'vectalia_kmz', fetched_at: new Date().toISOString() },
-      features: shapes.map((s,i) => ({
+      type:'FeatureCollection',
+      meta:{ lineCode: code, sourceIds: payload.ids, source:'vectalia_kml', fetched_at: new Date().toISOString() },
+      features: shapes.map((s,i)=>({
         type:'Feature',
-        properties:{ name: s.name, direction: i===0?'IDA':'VUELTA', length_m: Math.round(lengthM(s.coords)), point_count: s.coords.length },
+        properties:{ name: s.name, sourceId: s.sourceId, direction: i===0?'IDA':'VUELTA', length_m: Math.round(lengthM(s.coords)), point_count: s.coords.length },
         geometry:{ type:'LineString', coordinates: s.coords },
       })),
     };
     const path = `/mnt/documents/bus-shapes/linea-${code}.geojson`;
     writeFileSync(path, JSON.stringify(geojson));
-    const lens = geojson.features.map(f => (f.properties.length_m/1000).toFixed(2)+'km');
+    const lens = geojson.features.map(f=>(f.properties.length_m/1000).toFixed(2)+'km');
     console.log(`  OK ${shapes.length} shapes (${lens.join(' / ')})`);
     summary.push({code, ok:true, shapes: shapes.length, lengths: lens.join(' / ')});
   } catch (e) {
     console.log('  ERROR:', e.message.slice(0,200));
-    summary.push({code, ok:false, err: e.message.slice(0,100)});
+    summary.push({code, ok:false, err: e.message.slice(0,120)});
   }
 }
 
