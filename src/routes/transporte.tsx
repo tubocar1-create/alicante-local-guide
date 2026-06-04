@@ -30,6 +30,7 @@ type Sector = {
   description: string;
   accent: string;
   accent2: string;
+  hasLiveData: boolean;
   Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties; strokeWidth?: number }>;
 };
 
@@ -40,6 +41,7 @@ const SECTORS: Sector[] = [
     description: "Paradas, líneas y tiempos en vivo",
     accent: "#7dd3fc",
     accent2: "#38bdf8",
+    hasLiveData: true,
     Icon: Bus,
   },
   {
@@ -48,6 +50,7 @@ const SECTORS: Sector[] = [
     description: "Líneas, estaciones y próximas salidas",
     accent: "#60a5fa",
     accent2: "#3b82f6",
+    hasLiveData: false,
     Icon: Train,
   },
   {
@@ -56,6 +59,7 @@ const SECTORS: Sector[] = [
     description: "Larga distancia desde Alicante-Terminal",
     accent: "#f0abfc",
     accent2: "#c026d3",
+    hasLiveData: true,
     Icon: TrainFront,
   },
   {
@@ -64,6 +68,7 @@ const SECTORS: Sector[] = [
     description: "ALSA, Vectalia, Beniconnect desde Alicante",
     accent: "#fcd34d",
     accent2: "#f59e0b",
+    hasLiveData: false,
     Icon: Bus,
   },
   {
@@ -72,6 +77,7 @@ const SECTORS: Sector[] = [
     description: "Comparador de alquiler en el aeropuerto",
     accent: "#818cf8",
     accent2: "#6366f1",
+    hasLiveData: false,
     Icon: SedanCar,
   },
 ];
