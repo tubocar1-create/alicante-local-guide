@@ -80,7 +80,7 @@ export async function loadBusEngineSnapshot(): Promise<BusEngineSnapshot> {
     }
 
 
-    const [stops, stopsMeta, segs, cycles, deps, sws] = await Promise.all([
+    const [stops, stopsMeta, segs, cycles, deps, sws, dists] = await Promise.all([
       fetchAll<BusEngineSnapshot["stops"][number]>("bus_line_stops", "line_code,direction,seq,stop_code,stop_name"),
       fetchAll<BusEngineSnapshot["stopsMeta"][number]>("bus_stops", "code,name,lat,lng"),
       fetchAll<BusEngineSnapshot["segmentStats"][number]>(
@@ -96,6 +96,10 @@ export async function loadBusEngineSnapshot(): Promise<BusEngineSnapshot> {
         "bus_line_service_windows",
         "line_code,direction,day_type,first_departure,last_departure,terminal_name",
       ),
+      fetchAll<BusEngineSnapshot["stopDistances"][number]>(
+        "bus_line_stop_distances",
+        "line_code,direction,from_stop_code,to_stop_code,distance_m",
+      ),
     ]);
 
     return {
@@ -105,6 +109,7 @@ export async function loadBusEngineSnapshot(): Promise<BusEngineSnapshot> {
       cycleStats: cycles,
       departures: deps,
       serviceWindows: sws,
+      stopDistances: dists,
       fetchedAt: new Date().toISOString(),
     };
 }
