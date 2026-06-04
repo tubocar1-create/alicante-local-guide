@@ -163,7 +163,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
             ].join(" ")
       }
     >
-      <div className="mb-3 flex shrink-0 items-center justify-between">
+      <div className="mb-1.5 flex shrink-0 items-center justify-between">
         <div className="flex items-center gap-2">
           {step !== "line" && (
             <button
