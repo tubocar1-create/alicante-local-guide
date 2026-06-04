@@ -285,5 +285,48 @@ function QuickLink({ to, title, desc }: { to: string; title: string; desc: strin
   );
 }
 
+function FirecrawlCredits({
+  data,
+}: {
+  data: {
+    remaining: number;
+    planCredits: number;
+    periodStart: string;
+    periodEnd: string;
+  };
+}) {
+  const used = Math.max(0, data.planCredits - data.remaining);
+  const pct = data.planCredits > 0
+    ? Math.min(100, Math.max(0, (data.remaining / data.planCredits) * 100))
+    : 0;
+  const low = pct < 15;
+  const end = data.periodEnd ? new Date(data.periodEnd) : null;
+  const daysLeft = end
+    ? Math.max(0, Math.ceil((end.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : null;
+  return (
+    <div className="space-y-3">
+      <div className="flex items-end gap-3 flex-wrap">
+        <div className={"text-3xl font-bold " + (low ? "text-destructive" : "")}>
+          {data.remaining.toLocaleString()}
+        </div>
+        <div className="text-xs text-muted-foreground pb-1">
+          de {data.planCredits.toLocaleString()} · usados {used.toLocaleString()}
+        </div>
+      </div>
+      <div className="h-2 rounded-full bg-muted overflow-hidden">
+        <div
+          className={"h-full transition-all " + (low ? "bg-destructive" : "bg-primary")}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <p className="text-[11px] text-muted-foreground">
+        Periodo {end ? end.toLocaleDateString("es-ES") : "—"}
+        {daysLeft !== null ? ` · quedan ${daysLeft} días` : ""}
+      </p>
+    </div>
+  );
+}
+
 // silence unused imports for icons referenced indirectly via Stat icon prop
 void UserPlus;
