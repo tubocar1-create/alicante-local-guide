@@ -44,6 +44,13 @@ export type BusEngineSnapshot = {
     last_departure: string;
     terminal_name: string | null;
   }>;
+  stopDistances: Array<{
+    line_code: string;
+    direction: number;
+    from_stop_code: string;
+    to_stop_code: string;
+    distance_m: number | null;
+  }>;
   fetchedAt: string;
 };
 
