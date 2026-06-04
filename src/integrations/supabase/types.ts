@@ -606,6 +606,66 @@ export type Database = {
           },
         ]
       }
+      alsa_schedule_patterns: {
+        Row: {
+          active: boolean
+          arrival_time: string
+          bus_type: string | null
+          created_at: string
+          departure_time: string
+          destination_station: string
+          direction: string
+          dow_mask: number[]
+          duration_minutes: number
+          id: number
+          notes: string | null
+          observations: Json
+          origin_station: string
+          price_from_eur: number | null
+          promo_price_eur: number | null
+          route_slug: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          arrival_time: string
+          bus_type?: string | null
+          created_at?: string
+          departure_time: string
+          destination_station: string
+          direction: string
+          dow_mask: number[]
+          duration_minutes: number
+          id?: number
+          notes?: string | null
+          observations?: Json
+          origin_station: string
+          price_from_eur?: number | null
+          promo_price_eur?: number | null
+          route_slug: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          arrival_time?: string
+          bus_type?: string | null
+          created_at?: string
+          departure_time?: string
+          destination_station?: string
+          direction?: string
+          dow_mask?: number[]
+          duration_minutes?: number
+          id?: number
+          notes?: string | null
+          observations?: Json
+          origin_station?: string
+          price_from_eur?: number | null
+          promo_price_eur?: number | null
+          route_slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       alsa_schedules: {
         Row: {
           arrival_time: string
@@ -4387,6 +4447,7 @@ export type Database = {
     }
     Functions: {
       agente_normalize: { Args: { input: string }; Returns: string }
+      ensure_alsa_pattern_window: { Args: { p_days?: number }; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
