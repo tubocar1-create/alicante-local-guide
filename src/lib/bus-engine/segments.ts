@@ -2,10 +2,12 @@
 
 import type { SegmentStat } from "./types";
 import type { TimeProfile } from "./peak-detector";
-import { profileSpeedFactor } from "./peak-detector";
 
-// Velocidades fallback (km/h). Sin red, sin estado.
-const URBAN_KMH_DAY = 16;
+
+// Velocidades estructurales (km/h). Aplican a TODAS las líneas por igual.
+// SOLO el administrador puede modificar estos valores — no hay override por
+// línea, ni aprendizaje, ni ajuste dinámico desde el cliente.
+const URBAN_KMH_DAY = 21;
 const URBAN_KMH_NIGHT = 28;
 const DWELL_MIN_PER_STOP = 0.25;
 
@@ -36,13 +38,10 @@ export function segmentMinutes(opts: {
   profile: TimeProfile;
 }): { minutes: number; confidence: number } {
   const { distanceM, profile } = opts;
-  const baseline = segmentBaselineMin(distanceM, profile);
-  const adjusted = baseline * (1 / profileSpeedFactor(profile));
-  // profileSpeedFactor ya invierte para hora punta (=1/1.10): aplicamos el
-  // factor sobre el tramo travel, no sobre dwell. Reconstruimos:
-  const kmh = profile === "night" ? 28 : 16;
-  const travelMin = (distanceM / 1000 / kmh) * 60 / profileSpeedFactor(profile);
-  const minutes = Math.max(0.3, travelMin + 0.25);
-  void adjusted;
+  // Velocidad estructural única por franja. NO se aplica multiplicador de
+  // hora punta sobre la velocidad base — el admin fija el valor y punto.
+  const kmh = profile === "night" ? URBAN_KMH_NIGHT : URBAN_KMH_DAY;
+  const travelMin = (distanceM / 1000 / kmh) * 60;
+  const minutes = Math.max(0.3, travelMin + DWELL_MIN_PER_STOP);
   return { minutes, confidence: 0.5 };
 }
