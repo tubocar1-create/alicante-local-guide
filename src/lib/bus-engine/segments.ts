@@ -2,7 +2,7 @@
 
 import type { SegmentStat } from "./types";
 import type { TimeProfile } from "./peak-detector";
-import { profileSpeedFactor } from "./peak-detector";
+
 
 // Velocidades estructurales (km/h). Aplican a TODAS las líneas por igual.
 // SOLO el administrador puede modificar estos valores — no hay override por
