@@ -1,20 +1,18 @@
 #!/usr/bin/env node
-// Lee /mnt/documents/bus-shapes/linea-*.geojson, dedupe por geometría,
-// elige la ruta canónica (más corta) por dirección, upsert a bus_line_shapes
-// y recalcula bus_line_stop_distances.
+// Ingesta v2: asigna shapes a direcciones por COSTE de snap a paradas
+// (ignora etiqueta IDA/VUELTA del KMZ, que no coincide con nuestro convenio).
 import fs from "node:fs";
 import path from "node:path";
 import { createClient } from "@supabase/supabase-js";
 
 const SHAPES_DIR = "/mnt/documents/bus-shapes";
-const SKIP_CODES = new Set(["12"]); // ya procesada antes
+const SKIP_CODES = new Set(["12"]);
 
 const url = process.env.SUPABASE_URL || "https://htzatsqihojttrwsawis.supabase.co";
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!key) { console.error("Falta SUPABASE_SERVICE_ROLE_KEY"); process.exit(1); }
 const supa = createClient(url, key);
 
-// ---------- geometría ----------
 function haversine(a, b) {
   const R = 6371000, toRad = (d) => d * Math.PI / 180;
   const dLat = toRad(b.lat - a.lat), dLng = toRad(b.lng - a.lng);
@@ -39,91 +37,98 @@ function projectOn(point, poly) {
   }
   return best;
 }
+function hashCoords(c) { const a=c[0],b=c[c.length-1]; return `${c.length}|${a[0].toFixed(5)},${a[1].toFixed(5)}|${b[0].toFixed(5)},${b[1].toFixed(5)}`; }
 
-// ---------- dedupe + canónica ----------
-function hashCoords(coords) {
-  // hash rápido: primer/último/largo
-  const a = coords[0], b = coords[coords.length-1];
-  return `${coords.length}|${a[0].toFixed(5)},${a[1].toFixed(5)}|${b[0].toFixed(5)},${b[1].toFixed(5)}`;
-}
-function canonicalShapes(features) {
-  // dedupe
+function uniqueShapes(features) {
   const seen = new Map();
   for (const f of features) {
     const h = hashCoords(f.geometry.coordinates);
-    if (!seen.has(h)) seen.set(h, f);
+    if (!seen.has(h)) seen.set(h, { coords: f.geometry.coordinates, len: f.properties.length_m, sourceId: f.properties.sourceId });
   }
-  const unique = [...seen.values()];
-  // agrupar por dirección
-  const byDir = { 1: [], 2: [] };
-  for (const f of unique) {
-    const dir = f.properties.direction === "IDA" ? 1 : 2;
-    byDir[dir].push(f);
-  }
-  // canónica = la más corta por dirección
-  const out = {};
-  for (const dir of [1,2]) {
-    if (byDir[dir].length === 0) continue;
-    byDir[dir].sort((a,b)=>a.properties.length_m - b.properties.length_m);
-    out[dir] = byDir[dir][0];
-  }
-  return out;
+  // ordenar por longitud (ascendente) — preferimos rutas base
+  return [...seen.values()].sort((a,b)=>a.len-b.len);
 }
 
-// ---------- main ----------
+function snapStops(stops, coords) {
+  const projs = []; let lastCum = 0; let sumOff = 0; let maxOff = 0;
+  for (const s of stops) {
+    const p = projectOn({lat:s.lat,lng:s.lng}, coords);
+    const cum = Math.max(p.d, lastCum);
+    projs.push({ seq:s.seq, stop_code:s.stop_code, cum, off:p.off });
+    lastCum = cum; sumOff += p.off; if (p.off>maxOff) maxOff = p.off;
+  }
+  return { projs, sumOff, maxOff };
+}
+
+async function getStops(code, dir) {
+  const { data, error } = await supa.from("bus_line_stops")
+    .select("seq, stop_code, bus_stops!inner(lat,lng)")
+    .eq("line_code", code).eq("direction", dir).order("seq");
+  if (error) throw error;
+  return (data||[]).map(s=>({ seq:s.seq, stop_code:s.stop_code, lat:s.bus_stops.lat, lng:s.bus_stops.lng }));
+}
+
 async function main() {
   const files = fs.readdirSync(SHAPES_DIR).filter(f=>f.startsWith("linea-")&&f.endsWith(".geojson"));
   const report = [];
+
   for (const file of files.sort()) {
     const code = file.replace("linea-","").replace(".geojson","");
-    if (SKIP_CODES.has(code)) { report.push({code, skipped:"línea 12 ya procesada"}); continue; }
+    if (SKIP_CODES.has(code)) { report.push({code, skipped:true}); continue; }
     const fc = JSON.parse(fs.readFileSync(path.join(SHAPES_DIR,file),"utf8"));
-    const canon = canonicalShapes(fc.features);
-    const lineReport = { code, dirs: {} };
+    const shapes = uniqueShapes(fc.features);
+    if (shapes.length === 0) { report.push({code, error:"sin shapes"}); continue; }
 
-    for (const dirStr of ["1","2"]) {
-      const dir = Number(dirStr);
-      const f = canon[dir];
-      if (!f) { lineReport.dirs[dir] = "sin shape"; continue; }
-      const coords = f.geometry.coordinates;
-      const totalLen = polylineLength(coords);
+    const stops1 = await getStops(code, 1);
+    const stops2 = await getStops(code, 2);
 
-      // upsert shape
+    // Calcular coste de cada shape para cada dirección (sólo top-2 más cortos para velocidad)
+    const candidates = shapes.slice(0, Math.min(4, shapes.length));
+    const cost = candidates.map((sh,idx)=>({
+      idx,
+      c1: stops1.length ? snapStops(stops1, sh.coords).sumOff/stops1.length : Infinity,
+      c2: stops2.length ? snapStops(stops2, sh.coords).sumOff/stops2.length : Infinity,
+    }));
+
+    // Asignación: para dir 1 y 2 elegir shape con menor coste, evitando colisión
+    let pick1 = null, pick2 = null;
+    if (stops1.length && stops2.length) {
+      // probar todas las combinaciones (i,j) i!=j
+      let best = { score: Infinity };
+      for (const a of cost) for (const b of cost) {
+        if (a.idx===b.idx) continue;
+        const s = a.c1 + b.c2;
+        if (s < best.score) best = { score:s, i1:a.idx, i2:b.idx };
+      }
+      // también permitir mismo shape si solo hay 1
+      if (candidates.length === 1) { pick1 = pick2 = 0; }
+      else { pick1 = best.i1; pick2 = best.i2; }
+    } else if (stops1.length) {
+      pick1 = cost.sort((a,b)=>a.c1-b.c1)[0].idx;
+    } else if (stops2.length) {
+      pick2 = cost.sort((a,b)=>a.c2-b.c2)[0].idx;
+    }
+
+    const dirReport = {};
+    for (const [dir, pickIdx, stops] of [[1,pick1,stops1],[2,pick2,stops2]]) {
+      if (pickIdx === null || !stops.length) { dirReport[dir] = "sin asignación"; continue; }
+      const sh = candidates[pickIdx];
+      const totalLen = polylineLength(sh.coords);
+      const { projs, maxOff } = snapStops(stops, sh.coords);
+
       const { error: e1 } = await supa.from("bus_line_shapes").upsert({
-        line_code: code,
-        direction: dir,
-        source: "vectalia_kmz",
-        source_line_id: f.properties.sourceId ?? null,
-        geometry: { type:"LineString", coordinates: coords },
+        line_code: code, direction: dir, source: "vectalia_kmz",
+        source_line_id: sh.sourceId ?? null,
+        geometry: { type:"LineString", coordinates: sh.coords },
         total_length_m: Math.round(totalLen),
-        point_count: coords.length,
+        point_count: sh.coords.length,
         fetched_at: new Date().toISOString(),
       }, { onConflict: "line_code,direction" });
-      if (e1) { lineReport.dirs[dir] = `ERROR shape: ${e1.message}`; continue; }
+      if (e1) { dirReport[dir] = `ERR shape: ${e1.message}`; continue; }
 
-      // paradas
-      const { data: stops, error: e2 } = await supa
-        .from("bus_line_stops")
-        .select("seq, stop_code, stop_name, bus_stops!inner(lat,lng)")
-        .eq("line_code", code).eq("direction", dir).order("seq");
-      if (e2) { lineReport.dirs[dir] = `ERROR stops: ${e2.message}`; continue; }
-      if (!stops || stops.length < 2) { lineReport.dirs[dir] = `paradas insuficientes (${stops?.length||0})`; continue; }
-
-      // proyectar
-      const projs = [];
-      let lastCum = 0;
-      for (const s of stops) {
-        const p = projectOn({lat:s.bus_stops.lat,lng:s.bus_stops.lng}, coords);
-        const cum = Math.max(p.d, lastCum);
-        projs.push({ seq:s.seq, stop_code:s.stop_code, cum, off:p.off });
-        lastCum = cum;
-      }
-
-      // construir filas de distancia entre paradas consecutivas
-      const rows = [];
-      let cumulative = 0;
+      const rows = []; let cumulative = 0;
       for (let i=0;i<projs.length-1;i++) {
-        const a = projs[i], b = projs[i+1];
+        const a=projs[i], b=projs[i+1];
         const dist = Math.max(0, b.cum - a.cum);
         cumulative += dist;
         rows.push({
@@ -136,20 +141,17 @@ async function main() {
           snap_offset_to_m: Math.round(b.off*100)/100,
         });
       }
-      // borrar y reinsertar
       await supa.from("bus_line_stop_distances").delete().eq("line_code",code).eq("direction",dir);
       if (rows.length) {
         const { error: e3 } = await supa.from("bus_line_stop_distances").insert(rows);
-        if (e3) { lineReport.dirs[dir] = `ERROR dist: ${e3.message}`; continue; }
+        if (e3) { dirReport[dir] = `ERR dist: ${e3.message}`; continue; }
       }
-
-      const maxOff = Math.max(...projs.map(p=>p.off));
-      lineReport.dirs[dir] = `OK len=${(totalLen/1000).toFixed(2)}km pts=${coords.length} stops=${stops.length} cum=${(cumulative/1000).toFixed(2)}km maxOff=${maxOff.toFixed(0)}m`;
+      dirReport[dir] = `OK ${(totalLen/1000).toFixed(2)}km pts=${sh.coords.length} stops=${stops.length} cum=${(cumulative/1000).toFixed(2)}km maxOff=${maxOff.toFixed(0)}m`;
     }
-    report.push(lineReport);
-    console.log(JSON.stringify(lineReport));
+    const out = { code, candidates: candidates.length, dirs: dirReport };
+    report.push(out);
+    console.log(JSON.stringify(out));
   }
-  fs.writeFileSync("/mnt/documents/bus-shapes/_ingest_report.json", JSON.stringify(report,null,2));
-  console.log("\nReporte completo escrito en /mnt/documents/bus-shapes/_ingest_report.json");
+  fs.writeFileSync("/mnt/documents/bus-shapes/_ingest_report_v2.json", JSON.stringify(report,null,2));
 }
 main().catch(e=>{console.error(e);process.exit(1);});
