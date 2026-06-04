@@ -30,11 +30,40 @@ export type LineOperationalProfile = {
   }>;
 };
 
+// Topes operacionales por línea = "buses pico" calculados a partir de
+// ciclo / headway en hora punta. La línea 12 es el único dato REAL conocido
+// (4 buses confirmados por cronograma oficial); el resto son inferidos.
+//
+// Política de incorporación: GRADUAL. baseBuses = 1 para que la flota nazca
+// progresivamente — cada salida oficial cuyo terminal esté libre incorpora
+// un bus nuevo, hasta llegar al tope `maxBuses`. El cap duro se aplica en
+// fleet.ts (fleetSizeMax).
+function peakProfile(lineCode: string, peak: number): LineOperationalProfile {
+  return {
+    lineCode,
+    baseBuses: 1,
+    maxBuses: peak,
+    serviceStartHHMM: "06:00",
+    eveningCutoffHHMM: "22:00",
+    lastServiceHHMM: "22:30",
+    extras: [],
+  };
+}
+
 const PROFILES: Record<string, LineOperationalProfile> = {
+  // Diurnas: tope = buses pico inferidos
+  "1":  peakProfile("1", 9),
+  "2":  peakProfile("2", 7),
+  "3":  peakProfile("3", 7),
+  "4":  peakProfile("4", 7),
+  "5":  peakProfile("5", 5),
+  "6":  peakProfile("6", 7),
+  "7":  peakProfile("7", 2),
+  "8A": peakProfile("8A", 4),
+  "9":  peakProfile("9", 4),
+  // L12: dato REAL confirmado, 4 buses en carrusel
   "12": {
     lineCode: "12",
-    // Flota fija conforme al cronograma oficial: 4 buses girando en carrusel
-    // durante toda la ventana de servicio diurno.
     baseBuses: 4,
     maxBuses: 4,
     serviceStartHHMM: "07:00",
@@ -42,6 +71,17 @@ const PROFILES: Record<string, LineOperationalProfile> = {
     lastServiceHHMM: "22:30",
     extras: [],
   },
+  "13": peakProfile("13", 4),
+  "14": peakProfile("14", 3),
+  "22": peakProfile("22", 8),
+  "24": peakProfile("24", 4),
+  "27": peakProfile("27", 5),
+  "28": peakProfile("28", 3),
+  "39": peakProfile("39", 2),
+  // Nocturnas: 1 bus por línea
+  "3N":  peakProfile("3N", 1),
+  "13N": peakProfile("13N", 1),
+  "22N": peakProfile("22N", 1),
 };
 
 export function getLineProfile(lineCode: string): LineOperationalProfile | null {
