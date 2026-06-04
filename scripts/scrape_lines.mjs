@@ -96,7 +96,7 @@ for (const [code, slug] of LINES) {
     const md = ex.markdown || '';
     const i = md.indexOf('###JSON###');
     if (i < 0) { console.log('  no JSON output'); summary.push({code, ok:false, err:'no_js_output'}); continue; }
-    const payload = JSON.parse(md.slice(i+10).replace(/\([\[\]_*()\\])/g, '$1'));
+    const cleaned = md.slice(i+10).replace(/\\([\[\]_*()\\])/g, '$1'); const payload = JSON.parse(cleaned);
     console.log('  ids:', payload.ids);
     const shapes = [];
     for (const r of payload.results) {
