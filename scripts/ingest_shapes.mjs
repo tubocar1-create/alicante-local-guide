@@ -134,9 +134,10 @@ async function main() {
       }, { onConflict: "line_code,direction" });
       if (e1) { dirReport[dir] = `ERR shape: ${e1.message}`; continue; }
 
-      const rows = []; let cumulative = 0;
+      const rows = []; let cumulative = 0; let skipped = 0;
       for (let i=0;i<projs.length-1;i++) {
         const a=projs[i], b=projs[i+1];
+        if (a.off == null || b.off == null) { skipped++; continue; }
         const dist = Math.max(0, b.cum - a.cum);
         cumulative += dist;
         rows.push({
