@@ -68,7 +68,7 @@ for (const [code, slug] of LINES) {
   console.log(`\n=== Línea ${code} ===`);
   try {
     // Step 1: load page, extract ids, then fetch each KMZ from inside the browser as base64
-    const js = `
+    const js = `(async()=>{
       const html = document.documentElement.outerHTML;
       const ids = [...new Set([...html.matchAll(/line-kml[^"']*?id%3D(\\d+)/g)].map(m=>m[1]))];
       const results = [];
@@ -82,7 +82,7 @@ for (const [code, slug] of LINES) {
           results.push({id, status:r.status, b64: btoa(s)});
         } catch(e) { results.push({id, err: String(e)}); }
       }
-      document.body.innerText = '###JSON###'+JSON.stringify({ids, results});
+      document.body.innerText='###JSON###'+JSON.stringify({ids,results});})();
     `;
     const ex = await fcScrape(pageUrl, {
       formats: ['markdown'],
