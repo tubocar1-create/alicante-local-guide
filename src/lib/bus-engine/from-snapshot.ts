@@ -96,10 +96,18 @@ export function fromSnapshot(snap: BusEngineSnapshot): BusEngineData {
     terminalName: w.terminal_name ?? null,
   }));
 
+  const stopDistances = new Map<string, number>();
+  for (const d of snap.stopDistances ?? []) {
+    if (d.distance_m == null) continue;
+    const dir = asDirection(d.direction);
+    stopDistances.set(segmentKey(d.line_code, dir, d.from_stop_code, d.to_stop_code), Number(d.distance_m));
+  }
+
   return {
     stops,
     stopsMeta,
     segmentStats,
+    stopDistances,
     cycleStats,
     departures,
     serviceWindows,
