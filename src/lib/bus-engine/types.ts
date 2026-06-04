@@ -66,6 +66,7 @@ export type BusEngineData = {
   stops: LineStop[];
   stopsMeta: Map<string, StopMeta>;
   segmentStats: Map<string, SegmentStat>; // key = `${line}|${dir}|${from}|${to}`
+  stopDistances: Map<string, number>; // key = `${line}|${dir}|${from}|${to}` → metros routed reales
   cycleStats: Map<string, CycleStat>; // key = lineCode
   departures: ScheduledDeparture[];
   serviceWindows: ServiceWindow[];
