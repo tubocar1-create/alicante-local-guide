@@ -96,7 +96,7 @@ function BusDetail() {
       <div className="relative mx-auto max-w-2xl px-3 pb-10 pt-3 md:px-6">
         <header className="mb-3 flex items-center justify-between">
           <Link
-            to="/buses_/alsa/$slug"
+            to="/buses/alsa/$slug"
             params={{ slug: backSlug }}
             search={{ dir: backDir }}
             className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1 text-[11px] text-slate-300 transition hover:border-sky-500/50 hover:text-sky-300"
@@ -105,7 +105,7 @@ function BusDetail() {
             Volver
           </Link>
           <Link
-            to="/buses_/alsa/$slug"
+            to="/buses/alsa/$slug"
             params={{ slug: backSlug }}
             search={{ dir: backDir }}
             aria-label="Cerrar"
