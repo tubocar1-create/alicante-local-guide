@@ -154,7 +154,7 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
     <div
       className={
         embedded
-          ? "flex min-h-[calc(100dvh-3.5rem)] w-full flex-col bg-white p-3 text-foreground"
+          ? "flex h-full w-full flex-col bg-white p-2 text-foreground"
           : [
               "rounded-2xl border border-border bg-black p-2.5 shadow-soft",
               isExpanded
