@@ -155,7 +155,7 @@ async function main() {
         const { error: e3 } = await supa.from("bus_line_stop_distances").insert(rows);
         if (e3) { dirReport[dir] = `ERR dist: ${e3.message}`; continue; }
       }
-      dirReport[dir] = `OK ${(totalLen/1000).toFixed(2)}km pts=${sh.coords.length} stops=${stops.length} cum=${(cumulative/1000).toFixed(2)}km maxOff=${maxOff.toFixed(0)}m`;
+      dirReport[dir] = `OK ${(totalLen/1000).toFixed(2)}km pts=${sh.coords.length} stops=${stops.length} rows=${rows.length} skipped=${skipped} cum=${(cumulative/1000).toFixed(2)}km maxOff=${maxOff.toFixed(0)}m`;
     }
     const out = { code, candidates: candidates.length, dirs: dirReport };
     report.push(out);
