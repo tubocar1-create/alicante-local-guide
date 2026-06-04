@@ -33,12 +33,15 @@ export function segmentMinutes(opts: {
   // < 10 km/h (urbano con paradas) es dato corrupto (snapshots con ruido,
   // dwell mal atribuido, etc.) y se descarta. Tope absoluto adicional de
   // 8 min/segmento por seguridad.
+  // Velocidad implícita del stat aprendido. Cualquier valor fuera del rango
+  // urbano realista (10..40 km/h) es ruido: el segmento se evaluará con la
+  // baseline pura, sin tocar el horario oficial.
   const implKmh = distanceM > 0 && stat ? (distanceM / 1000) / (stat.avgMinutes / 60) : null;
   if (
     !stat ||
     stat.samples <= 0 ||
     stat.avgMinutes > 8 ||
-    (implKmh != null && implKmh < 10)
+    (implKmh != null && (implKmh < 10 || implKmh > 40))
   ) {
     return { minutes: baseline, confidence: 0.3 };
   }
