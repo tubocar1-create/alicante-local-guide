@@ -124,19 +124,19 @@ function SelectorDeComidasPage() {
           </button>
         </header>
 
-        <section className="flex-1 grid grid-cols-2 gap-2 auto-rows-fr">
+        <section className="flex-1 grid grid-cols-2 gap-1.5 auto-rows-fr">
           {CATEGORIES.map((it) => (
             <CategoryButton key={it.label} item={it} onPick={goWithPrompt} />
           ))}
         </section>
 
-        <section className="mt-3">
+        <section className="mt-2">
           {populares.length === 0 ? (
             <div className="flex gap-2 overflow-x-auto pb-1 -mx-3 px-3 no-scrollbar">
               {Array.from({ length: 8 }).map((_, i) => (
                 <div
                   key={i}
-                  className="shrink-0 w-24 h-24 rounded-xl bg-muted animate-pulse"
+                  className="shrink-0 w-32 h-32 rounded-xl bg-muted animate-pulse"
                 />
               ))}
             </div>
@@ -149,9 +149,9 @@ function SelectorDeComidasPage() {
                     key={r.id}
                     type="button"
                     onClick={() => goRestaurant(r)}
-                    className="shrink-0 w-24 snap-start text-left rounded-xl border bg-card overflow-hidden hover:shadow-md active:scale-[0.98] transition"
+                    className="shrink-0 w-32 h-32 snap-start text-left rounded-xl border bg-card overflow-hidden hover:shadow-md active:scale-[0.98] transition"
                   >
-                    <div className="w-full h-14 bg-muted overflow-hidden">
+                    <div className="w-full h-20 bg-muted overflow-hidden">
                       <img
                         src={r.cover_photo}
                         alt={r.name}
@@ -159,11 +159,11 @@ function SelectorDeComidasPage() {
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <div className="p-1">
-                      <div className="text-[10px] font-semibold leading-tight line-clamp-1">
+                    <div className="p-1.5">
+                      <div className="text-xs font-semibold leading-tight line-clamp-1">
                         {r.name}
                       </div>
-                      <div className="text-[9px] text-muted-foreground mt-0.5">
+                      <div className="text-[10px] text-muted-foreground mt-0.5">
                         {km < 10 ? `${km.toFixed(1)} km` : `${Math.round(km)} km`}
                       </div>
                     </div>
@@ -189,10 +189,10 @@ function CategoryButton({
     <button
       type="button"
       onClick={() => item.prompt && onPick(item.prompt)}
-      className="flex flex-col items-center justify-center gap-1 px-2 py-3 rounded-2xl border bg-card hover:bg-accent/40 active:scale-[0.97] text-center shadow-sm w-full h-full"
+      className="flex flex-col items-center justify-center gap-0.5 px-2 py-2 rounded-2xl border bg-card hover:bg-accent/40 active:scale-[0.97] text-center shadow-sm w-full h-full"
     >
-      <span className="text-4xl leading-none">{item.emoji}</span>
-      <span className="text-xs font-semibold leading-tight">{item.label}</span>
+      <span className="text-3xl leading-none">{item.emoji}</span>
+      <span className="text-[11px] font-semibold leading-tight">{item.label}</span>
     </button>
   );
 }
