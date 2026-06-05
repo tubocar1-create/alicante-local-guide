@@ -127,7 +127,7 @@ export default function FoodSelector({
             <div className="flex gap-2 overflow-x-auto pb-1 -mx-3 px-3 no-scrollbar snap-x">
               {populares.map((r) => {
                 const km = distanceKm(origin, { lat: r.lat, lng: r.lng });
-                const cat = matchBadge(r.cuisine, badgeCategories);
+                const cat = matchBadge(r.tags ?? [], badgeCategories);
                 return (
                   <button
                     key={r.id}
