@@ -156,7 +156,7 @@ function SelectorDeComidasPage() {
               {Array.from({ length: 8 }).map((_, i) => (
                 <div
                   key={i}
-                  className="shrink-0 w-44 h-44 bg-white/10 animate-pulse"
+                  className="shrink-0 w-44 h-44 bg-black/10 animate-pulse"
                 />
               ))}
             </div>
