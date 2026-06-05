@@ -128,45 +128,6 @@ const AIRLINE_COLORS: Record<string, string> = {
 };
 const PALETTE = ["#22D3EE", "#A78BFA", "#F472B6", "#34D399", "#FBBF24", "#F87171"];
 
-const AIRLINE_URLS: Record<string, string> = {
-  FR: "https://www.ryanair.com",
-  VY: "https://www.vueling.com",
-  IB: "https://www.iberia.com",
-  I2: "https://www.iberiaexpress.com",
-  UX: "https://www.aireuropa.com",
-  U2: "https://www.easyjet.com",
-  EJU: "https://www.easyjet.com",
-  W6: "https://wizzair.com",
-  HV: "https://www.transavia.com",
-  TO: "https://www.transavia.com",
-  KL: "https://www.klm.com",
-  AF: "https://www.airfrance.com",
-  LH: "https://www.lufthansa.com",
-  EW: "https://www.eurowings.com",
-  BA: "https://www.britishairways.com",
-  AY: "https://www.finnair.com",
-  SK: "https://www.flysas.com",
-  DY: "https://www.norwegian.com",
-  TP: "https://www.flytap.com",
-  AZ: "https://www.ita-airways.com",
-  LX: "https://www.swiss.com",
-  OS: "https://www.austrian.com",
-  TK: "https://www.turkishairlines.com",
-  EI: "https://www.aerlingus.com",
-  PC: "https://www.flypgs.com",
-  XQ: "https://www.sunexpress.com",
-  LS: "https://www.jet2.com",
-  BY: "https://www.tui.com",
-  QR: "https://www.qatarairways.com",
-};
-
-function airlineUrl(code: string) {
-  return (
-    AIRLINE_URLS[code] ??
-    `https://www.google.com/search?q=${encodeURIComponent(airlineName(code) + " vuelos")}`
-  );
-}
-
 function colorFor(code: string, idx: number) {
   return AIRLINE_COLORS[code] ?? PALETTE[idx % PALETTE.length];
 }
