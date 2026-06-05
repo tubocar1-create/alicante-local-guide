@@ -1490,41 +1490,62 @@ function CityDetail({
             {aiError && <p className="text-rose-300">No se pudo cargar el comentario.</p>}
             {!aiLoading && !aiError && <p>{aiText}</p>}
           </div>
-          <a
-            href={(() => {
-              const dates = Array.from(city.days)
-                .filter((d) => /^\d{2}\/\d{2}\/\d{4}$/.test(d))
-                .sort((a, b) => {
-                  const pa = a.split("/"), pb = b.split("/");
-                  return (
-                    new Date(+pa[2], +pa[1] - 1, +pa[0]).getTime() -
-                    new Date(+pb[2], +pb[1] - 1, +pb[0]).getTime()
-                  );
-                });
-              const today = new Date(); today.setHours(0, 0, 0, 0);
-              const next = dates.find((d) => {
-                const p = d.split("/");
-                return new Date(+p[2], +p[1] - 1, +p[0]).getTime() >= today.getTime();
-              }) ?? dates[0];
-              if (next) {
-                const dd = next.slice(0, 2);
-                const mm = next.slice(3, 5);
-                const yyyy = next.slice(6, 10);
-                const origin = flightType === "L" ? city.iata : "ALC";
-                const dest = flightType === "L" ? "ALC" : city.iata;
-                const inner = `https://www.aviasales.com/search/${origin}${dd}${mm}${dest}1`;
-                return `https://tp.media/r?marker=732656&p=4114&u=${encodeURIComponent(inner)}&campaign_id=100`;
-              }
-              return "https://aviasales.tpo.mx/RkEQT2AP";
-            })()}
-            target="_blank"
-            rel="noopener noreferrer sponsored"
-            className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-amber-500 px-3 py-2.5 text-[13px] font-semibold text-slate-900 transition hover:bg-amber-400"
-          >
-            <Plane className="h-4 w-4" />
-            {flightType === "L" ? `Buscar ${city.iata} → ALC` : `Buscar ALC → ${city.iata}`}
-            <ExternalLink className="h-3 w-3 opacity-70" />
-          </a>
+          {(() => {
+            const dates = Array.from(city.days)
+              .filter((d) => /^\d{2}\/\d{2}\/\d{4}$/.test(d))
+              .sort((a, b) => {
+                const pa = a.split("/"), pb = b.split("/");
+                return (
+                  new Date(+pa[2], +pa[1] - 1, +pa[0]).getTime() -
+                  new Date(+pb[2], +pb[1] - 1, +pb[0]).getTime()
+                );
+              });
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+            const next = dates.find((d) => {
+              const p = d.split("/");
+              return new Date(+p[2], +p[1] - 1, +p[0]).getTime() >= today.getTime();
+            }) ?? dates[0];
+            const origin = flightType === "L" ? city.iata : "ALC";
+            const dest = flightType === "L" ? "ALC" : city.iata;
+            const isUK = IATA_COUNTRY[origin] === "GB" || IATA_COUNTRY[dest] === "GB";
+            let aviasalesUrl = "https://aviasales.tpo.mx/RkEQT2AP";
+            let kiwiUrl = "https://kiwi.tpo.mx/mlF5nkj9";
+            if (next) {
+              const dd = next.slice(0, 2);
+              const mm = next.slice(3, 5);
+              const yyyy = next.slice(6, 10);
+              const inner = `https://www.aviasales.com/search/${origin}${dd}${mm}${dest}1`;
+              aviasalesUrl = `https://tp.media/r?marker=732656&p=4114&u=${encodeURIComponent(inner)}&campaign_id=100`;
+              const params = new URLSearchParams({ from: origin, to: dest, departure: `${yyyy}-${mm}-${dd}` });
+              kiwiUrl = `https://kiwi.tpo.mx/mlF5nkj9?${params.toString()}`;
+            }
+            return (
+              <>
+                <a
+                  href={aviasalesUrl}
+                  target="_blank"
+                  rel="noopener noreferrer sponsored"
+                  className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-amber-500 px-3 py-2.5 text-[13px] font-semibold text-slate-900 transition hover:bg-amber-400"
+                >
+                  <Plane className="h-4 w-4" />
+                  {flightType === "L" ? `Buscar ${city.iata} → ALC` : `Buscar ALC → ${city.iata}`}
+                  <ExternalLink className="h-3 w-3 opacity-70" />
+                </a>
+                {isUK && (
+                  <a
+                    href={kiwiUrl}
+                    target="_blank"
+                    rel="noopener noreferrer sponsored"
+                    className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-violet-500 px-3 py-2.5 text-[13px] font-semibold text-white transition hover:bg-violet-400"
+                  >
+                    <Plane className="h-4 w-4" />
+                    Buscar también en Kiwi (UK)
+                    <ExternalLink className="h-3 w-3 opacity-70" />
+                  </a>
+                )}
+              </>
+            );
+          })()}
         </div>
 
         {perDay.length > 1 && (
