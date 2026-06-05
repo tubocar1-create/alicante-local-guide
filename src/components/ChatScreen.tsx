@@ -2333,12 +2333,12 @@ function AsianTableInner({ ranked, loading, originLabel, onClose }: {
           <button
             type="button"
             onClick={() => {
-              window.dispatchEvent(new Event("comer:back-to-menu"));
               onClose();
+              navigate({ to: "/selectordecomidas" });
             }}
             className="text-[11px] uppercase tracking-[0.25em] text-slate-500 transition hover:text-cyan-300"
           >
-            ← Volver al menú
+            ← Volver al selector
           </button>
           <div className="flex items-center gap-2">
             <span className="relative flex h-2 w-2">
@@ -2351,8 +2351,8 @@ function AsianTableInner({ ranked, loading, originLabel, onClose }: {
             <button
               type="button"
               onClick={() => {
-                window.dispatchEvent(new Event("comer:back-to-menu"));
                 onClose();
+                navigate({ to: "/selectordecomidas" });
               }}
               aria-label="Cerrar"
               className="ml-2 rounded-full border border-slate-700 p-1.5 text-slate-400 hover:border-cyan-500/50 hover:text-cyan-300"
@@ -3763,12 +3763,14 @@ function CategoryTableInner({
   onClose,
   theme,
   originLabel,
+  closeHref,
 }: {
   ranked: { c: PlaceCardData; d: number }[];
   loading: boolean;
   onClose: () => void;
   theme: (typeof CATEGORY_THEMES)[keyof typeof CATEGORY_THEMES];
   originLabel: CategoryTableOriginLabel;
+  closeHref: string;
 }) {
   const navigate = useNavigate();
 
@@ -3815,12 +3817,12 @@ function CategoryTableInner({
           <button
             type="button"
             onClick={() => {
-              window.dispatchEvent(new Event("comer:back-to-menu"));
               onClose();
+              navigate({ to: closeHref });
             }}
             className={`text-[11px] uppercase tracking-[0.25em] ${theme.accentText} transition ${theme.borderHover}`}
           >
-            ← Volver al menú
+            ← Volver al selector
           </button>
           <div className="flex items-center gap-2">
             <span className="relative flex h-2 w-2">
@@ -3833,8 +3835,8 @@ function CategoryTableInner({
             <button
               type="button"
               onClick={() => {
-                window.dispatchEvent(new Event("comer:back-to-menu"));
                 onClose();
+                navigate({ to: closeHref });
               }}
               aria-label="Cerrar"
               className={`ml-2 rounded-full border p-1.5 ${theme.borderBtn}`}
@@ -4187,7 +4189,10 @@ function CategoryTable({
     );
   }
 
-  return <CategoryTableInner ranked={ranked} loading={loading} onClose={() => setOpen(false)} theme={theme} originLabel={originLabel} />;
+  const FAST_FOOD_CATS: ExtendedCategory[] = ["fast_food", "burgers", "pizzas", "montaditos", "kebab", "fried_chicken", "mexican"];
+  const closeHref = FAST_FOOD_CATS.includes(category) ? "/selectordecomidas/comida-rapida" : "/selectordecomidas";
+
+  return <CategoryTableInner ranked={ranked} loading={loading} onClose={() => setOpen(false)} theme={theme} originLabel={originLabel} closeHref={closeHref} />;
 }
 
 function TypicalTable({ cards }: { cards: PlaceCardData[] }) {
