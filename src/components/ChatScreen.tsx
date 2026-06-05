@@ -3795,17 +3795,19 @@ function CategoryTableInner({
     }
   };
 
+  const carouselPlaces = useMemo(
+    () => ranked.filter((r) => r.c.placeId && r.c.coverPhoto).slice(0, 60),
+    [ranked],
+  );
+
   return (
     <div
-      className="fixed inset-0 z-[60] overflow-y-auto"
+      className="fixed inset-0 z-[60] flex flex-col overflow-hidden"
       style={{ background: theme.bgGradient }}
     >
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className={`absolute -top-40 left-1/2 h-[28rem] w-[28rem] -translate-x-1/2 rounded-full ${theme.glow1} blur-3xl`} />
         <div className={`absolute bottom-0 right-0 h-[24rem] w-[24rem] rounded-full ${theme.glow2} blur-3xl`} />
-      </div>
-
-      <div className="relative mx-auto max-w-5xl px-4 pb-10 pt-5 md:px-6">
         <header className="mb-5 flex items-center justify-between">
           <button
             type="button"
