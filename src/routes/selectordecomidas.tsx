@@ -228,20 +228,20 @@ function CategoryButton({
       <button
         type="button"
         onClick={() => item.prompt && onPick(item.prompt)}
-        className="flex items-center gap-2 px-3 py-3 rounded-2xl border bg-card hover:bg-accent/40 active:scale-[0.98] text-left"
+        className="flex flex-col items-center justify-center gap-2 px-3 py-5 rounded-2xl border-2 bg-card hover:bg-accent/40 active:scale-[0.97] text-center shadow-sm min-h-[120px]"
       >
-        <span className="text-xl leading-none">{item.emoji}</span>
-        <span className="text-sm font-medium leading-tight">{item.label}</span>
+        <span className="text-5xl leading-none">{item.emoji}</span>
+        <span className="text-sm font-bold leading-tight">{item.label}</span>
       </button>
     );
   }
 
   return (
-    <details className="col-span-2 rounded-2xl border bg-card overflow-hidden">
-      <summary className="flex items-center justify-between px-3 py-3 cursor-pointer list-none">
-        <span className="flex items-center gap-2">
-          <span className="text-xl leading-none">{item.emoji}</span>
-          <span className="text-sm font-medium leading-tight">{item.label}</span>
+    <details className="col-span-2 rounded-2xl border-2 bg-card overflow-hidden shadow-sm">
+      <summary className="flex items-center justify-between px-4 py-4 cursor-pointer list-none">
+        <span className="flex items-center gap-3">
+          <span className="text-5xl leading-none">{item.emoji}</span>
+          <span className="text-base font-bold leading-tight">{item.label}</span>
         </span>
         <span className="text-xs text-muted-foreground">Ver opciones ▾</span>
       </summary>
@@ -251,9 +251,9 @@ function CategoryButton({
             key={sub.label}
             type="button"
             onClick={() => onPick(sub.prompt)}
-            className="flex items-center gap-2 px-3 py-3 rounded-xl border bg-background hover:bg-accent/40 active:scale-[0.98] text-left"
+            className="flex items-center gap-2 px-3 py-4 rounded-xl border bg-background hover:bg-accent/40 active:scale-[0.97] text-left"
           >
-            <span className="text-sm font-medium leading-tight">{sub.label}</span>
+            <span className="text-base font-semibold leading-tight">{sub.label}</span>
           </button>
         ))}
       </div>
