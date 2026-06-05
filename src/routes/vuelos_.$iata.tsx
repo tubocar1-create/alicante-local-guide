@@ -12,6 +12,8 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { getDestinationComment } from "@/lib/destination-comment.functions";
+import kiwiLogo from "@/assets/kiwi-logo.png.asset.json";
+import aviasalesLogo from "@/assets/aviasales-logo.png.asset.json";
 
 // ---------- Tipos ----------
 type Flight = {
