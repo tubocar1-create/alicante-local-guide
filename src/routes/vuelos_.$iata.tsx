@@ -810,6 +810,23 @@ function DestinationPopup({
     return "https://aviasales.tpo.mx/RkEQT2AP";
   })();
 
+  const isUK = IATA_COUNTRY[iata] === "GB" || IATA_COUNTRY[originIata] === "GB";
+  const kiwiUrl = (() => {
+    const f = flight?.fecha; // dd/mm/yyyy
+    if (f && /^\d{2}\/\d{2}\/\d{4}$/.test(f)) {
+      const dd = f.slice(0, 2);
+      const mm = f.slice(3, 5);
+      const yyyy = f.slice(6, 10);
+      const params = new URLSearchParams({
+        from: originIata,
+        to: iata,
+        departure: `${yyyy}-${mm}-${dd}`,
+      });
+      return `https://kiwi.tpo.mx/mlF5nkj9?${params.toString()}`;
+    }
+    return "https://kiwi.tpo.mx/mlF5nkj9";
+  })();
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
@@ -897,6 +914,19 @@ function DestinationPopup({
           {flight ? `Buscar ${originIata} → ${iata} el ${flight.fechaLabel}` : "Buscar y comparar vuelos"}
           <ExternalLink className="h-3 w-3 opacity-70" />
         </a>
+
+        {isUK && (
+          <a
+            href={kiwiUrl}
+            target="_blank"
+            rel="noopener noreferrer sponsored"
+            className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-violet-500 px-3 py-2.5 text-[13px] font-semibold text-white transition hover:bg-violet-400"
+          >
+            <Plane className="h-4 w-4" />
+            Buscar también en Kiwi (UK)
+            <ExternalLink className="h-3 w-3 opacity-70" />
+          </a>
+        )}
       </div>
     </div>
   );
