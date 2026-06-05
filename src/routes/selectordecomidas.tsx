@@ -38,6 +38,22 @@ const CATEGORIES: Item[] = [
   { label: "Internacional", emoji: "🌍", prompt: "Quiero comida internacional (hindú, libanés, peruano, mexicano, latino, árabe…), ¿dónde voy ahora?" },
 ];
 
+// Map a free-text cuisine string to one of the 10 selector categories
+function matchCategory(cuisine: string | null): { label: string; emoji: string } {
+  const c = (cuisine ?? "").toLowerCase();
+  const has = (...keys: string[]) => keys.some((k) => c.includes(k));
+  if (has("paella", "arroz", "rice", "seafood", "fish", "pescado", "marisco")) return CATEGORIES[1];
+  if (has("italian", "pizza", "pasta")) return CATEGORIES[2];
+  if (has("japan", "sushi", "ramen", "asian", "chinese", "thai", "korean", "vietnam")) return CATEGORIES[3];
+  if (has("vegan", "vegetarian", "healthy", "salad", "saludable")) return CATEGORIES[4];
+  if (has("breakfast", "brunch", "desayuno")) return CATEGORIES[5];
+  if (has("burger", "fast", "kebab", "kebap", "hot dog", "fried chicken")) return CATEGORIES[6];
+  if (has("dessert", "ice cream", "cafe", "coffee", "bakery", "postre", "pasteler", "heladeria", "heladería")) return CATEGORIES[7];
+  if (has("indian", "lebanese", "mexican", "peruvian", "arab", "turkish", "moroccan", "latin")) return CATEGORIES[9];
+  if (has("spanish", "tapas", "mediterranean", "alicant")) return CATEGORIES[0];
+  return CATEGORIES[0];
+}
+
 // Imagen representativa por cocina (Unsplash, optimizado)
 const CUISINE_IMAGE: Record<string, string> = {
   italian: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=400&q=70",
@@ -112,9 +128,9 @@ function SelectorDeComidasPage() {
   };
 
   return (
-    <div className="min-h-dvh bg-background text-foreground flex flex-col">
-      <div className="mx-auto w-full max-w-2xl px-3 pt-2 pb-3 flex-1 flex flex-col">
-        <header className="flex justify-end mb-2">
+    <div className="h-dvh bg-background text-foreground flex flex-col overflow-hidden">
+      <div className="mx-auto w-full max-w-2xl px-3 pt-2 pb-2 flex-1 flex flex-col min-h-0">
+        <header className="flex justify-end mb-1">
           <button
             type="button"
             onClick={() => navigate({ to: "/" })}
@@ -124,19 +140,19 @@ function SelectorDeComidasPage() {
           </button>
         </header>
 
-        <section className="flex-1 grid grid-cols-2 gap-1.5 auto-rows-fr">
+        <section className="flex-1 min-h-0 grid grid-cols-2 gap-1.5 auto-rows-fr">
           {CATEGORIES.map((it) => (
             <CategoryButton key={it.label} item={it} onPick={goWithPrompt} />
           ))}
         </section>
 
-        <section className="mt-2">
+        <section className="mt-2 shrink-0">
           {populares.length === 0 ? (
             <div className="flex gap-2 overflow-x-auto pb-1 -mx-3 px-3 no-scrollbar">
               {Array.from({ length: 8 }).map((_, i) => (
                 <div
                   key={i}
-                  className="shrink-0 w-32 h-32 rounded-xl bg-muted animate-pulse"
+                  className="shrink-0 w-44 h-44 rounded-2xl bg-muted animate-pulse"
                 />
               ))}
             </div>
@@ -144,26 +160,29 @@ function SelectorDeComidasPage() {
             <div className="flex gap-2 overflow-x-auto pb-1 -mx-3 px-3 no-scrollbar snap-x">
               {populares.map((r) => {
                 const km = distanceKm(origin, { lat: r.lat, lng: r.lng });
+                const cat = matchCategory(r.cuisine);
                 return (
                   <button
                     key={r.id}
                     type="button"
                     onClick={() => goRestaurant(r)}
-                    className="shrink-0 w-32 h-32 snap-start text-left rounded-xl border bg-card overflow-hidden hover:shadow-md active:scale-[0.98] transition"
+                    className="relative shrink-0 w-44 h-44 snap-start text-left rounded-2xl border bg-card overflow-hidden hover:shadow-md active:scale-[0.98] transition"
                   >
-                    <div className="w-full h-20 bg-muted overflow-hidden">
-                      <img
-                        src={r.cover_photo}
-                        alt={r.name}
-                        loading="lazy"
-                        className="w-full h-full object-cover"
-                      />
+                    <img
+                      src={r.cover_photo}
+                      alt={r.name}
+                      loading="lazy"
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                    <div className="absolute top-1.5 left-1.5 flex items-center gap-1 px-2 py-0.5 rounded-full bg-background/85 backdrop-blur text-[10px] font-semibold shadow-sm">
+                      <span className="text-sm leading-none">{cat.emoji}</span>
+                      <span className="line-clamp-1">{cat.label}</span>
                     </div>
-                    <div className="p-1.5">
-                      <div className="text-xs font-semibold leading-tight line-clamp-1">
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-2 pt-6 text-white">
+                      <div className="text-sm font-semibold leading-tight line-clamp-2">
                         {r.name}
                       </div>
-                      <div className="text-[10px] text-muted-foreground mt-0.5">
+                      <div className="text-[11px] opacity-90 mt-0.5">
                         {km < 10 ? `${km.toFixed(1)} km` : `${Math.round(km)} km`}
                       </div>
                     </div>
@@ -189,10 +208,17 @@ function CategoryButton({
     <button
       type="button"
       onClick={() => item.prompt && onPick(item.prompt)}
-      className="flex flex-col items-center justify-center gap-0.5 px-2 py-2 rounded-2xl border bg-card hover:bg-accent/40 active:scale-[0.97] text-center shadow-sm w-full h-full"
+      className="relative flex flex-col items-center justify-center rounded-2xl border bg-card hover:bg-accent/40 active:scale-[0.97] text-center shadow-sm w-full h-full overflow-hidden p-1"
     >
-      <span className="text-3xl leading-none">{item.emoji}</span>
-      <span className="text-[11px] font-semibold leading-tight">{item.label}</span>
+      <span
+        className="leading-none"
+        style={{ fontSize: "min(60%, 4.5rem)", lineHeight: 1 }}
+      >
+        <span style={{ fontSize: "clamp(2.5rem, 11vw, 5rem)" }}>{item.emoji}</span>
+      </span>
+      <span className="absolute bottom-1 left-1 right-1 text-[10px] font-semibold leading-tight truncate">
+        {item.label}
+      </span>
     </button>
   );
 }
