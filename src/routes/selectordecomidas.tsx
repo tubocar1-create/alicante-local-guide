@@ -125,11 +125,11 @@ function SelectorDeComidasPage() {
   };
 
   const goRestaurant = (r: RandomRestaurant) => {
-    goWithPrompt(`Cuéntame sobre el restaurante "${r.name}" en Alicante y cómo llegar ahora`);
+    navigate({ to: "/restaurants/$placeId", params: { placeId: r.id } });
   };
 
   return (
-    <div className="h-dvh bg-[#c9a96e] text-[#2c1810] flex flex-col overflow-hidden">
+    <div className="h-dvh bg-[#d9bd87] text-[#2c1810] flex flex-col overflow-hidden">
       <div className="mx-auto w-full max-w-2xl px-3 pt-2 pb-2 flex-1 flex flex-col min-h-0">
         <header className="flex items-center justify-between gap-2 mb-1">
           <h1 className="text-sm sm:text-base font-semibold leading-tight text-[#2c1810]">
