@@ -174,7 +174,7 @@ function SelectorDeComidasPage() {
           ) : (
             <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 no-scrollbar snap-x">
               {populares.map((r) => {
-                const km = distanceKm(origin, { lat: r.lat, lng: r.lon });
+                const km = distanceKm(origin, { lat: r.lat, lng: r.lng });
                 return (
                   <button
                     key={r.id}
@@ -184,7 +184,7 @@ function SelectorDeComidasPage() {
                   >
                     <div className="w-full h-24 bg-muted overflow-hidden">
                       <img
-                        src={pickImage(r.cuisine)}
+                        src={r.cover_photo}
                         alt={r.name}
                         loading="lazy"
                         className="w-full h-full object-cover"
