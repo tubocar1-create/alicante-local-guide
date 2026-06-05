@@ -51,6 +51,7 @@ import { Route as TramMapaRouteImport } from './routes/tram.mapa'
 import { Route as TramFavoritosRouteImport } from './routes/tram.favoritos'
 import { Route as TramEstacionesRouteImport } from './routes/tram.estaciones'
 import { Route as ThreadsIdRouteImport } from './routes/threads.$id'
+import { Route as SelectordecomidasComidaRapidaRouteImport } from './routes/selectordecomidas.comida-rapida'
 import { Route as SaludCategoriaRouteImport } from './routes/salud_.$categoria'
 import { Route as RestaurantsPlaceIdRouteImport } from './routes/restaurants.$placeId'
 import { Route as PlayasMapaRouteImport } from './routes/playas.mapa'
@@ -383,6 +384,12 @@ const ThreadsIdRoute = ThreadsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => ThreadsRoute,
 } as any)
+const SelectordecomidasComidaRapidaRoute =
+  SelectordecomidasComidaRapidaRouteImport.update({
+    id: '/comida-rapida',
+    path: '/comida-rapida',
+    getParentRoute: () => SelectordecomidasRoute,
+  } as any)
 const SaludCategoriaRoute = SaludCategoriaRouteImport.update({
   id: '/salud_/$categoria',
   path: '/salud/$categoria',
@@ -1024,7 +1031,7 @@ export interface FileRoutesByFullPath {
   '/repo': typeof RepoRoute
   '/restaurants': typeof RestaurantsRouteWithChildren
   '/salud': typeof SaludRoute
-  '/selectordecomidas': typeof SelectordecomidasRoute
+  '/selectordecomidas': typeof SelectordecomidasRouteWithChildren
   '/sistema-sanitario': typeof SistemaSanitarioRoute
   '/stay': typeof StayRoute
   '/test-realtime': typeof TestRealtimeRoute
@@ -1085,6 +1092,7 @@ export interface FileRoutesByFullPath {
   '/playas/mapa': typeof PlayasMapaRoute
   '/restaurants/$placeId': typeof RestaurantsPlaceIdRoute
   '/salud/$categoria': typeof SaludCategoriaRouteWithChildren
+  '/selectordecomidas/comida-rapida': typeof SelectordecomidasComidaRapidaRoute
   '/threads/$id': typeof ThreadsIdRoute
   '/tram/estaciones': typeof TramEstacionesRoute
   '/tram/favoritos': typeof TramFavoritosRoute
@@ -1186,7 +1194,7 @@ export interface FileRoutesByTo {
   '/repo': typeof RepoRoute
   '/restaurants': typeof RestaurantsRouteWithChildren
   '/salud': typeof SaludRoute
-  '/selectordecomidas': typeof SelectordecomidasRoute
+  '/selectordecomidas': typeof SelectordecomidasRouteWithChildren
   '/sistema-sanitario': typeof SistemaSanitarioRoute
   '/stay': typeof StayRoute
   '/test-realtime': typeof TestRealtimeRoute
@@ -1246,6 +1254,7 @@ export interface FileRoutesByTo {
   '/playas/mapa': typeof PlayasMapaRoute
   '/restaurants/$placeId': typeof RestaurantsPlaceIdRoute
   '/salud/$categoria': typeof SaludCategoriaRouteWithChildren
+  '/selectordecomidas/comida-rapida': typeof SelectordecomidasComidaRapidaRoute
   '/threads/$id': typeof ThreadsIdRoute
   '/tram/estaciones': typeof TramEstacionesRoute
   '/tram/favoritos': typeof TramFavoritosRoute
@@ -1350,7 +1359,7 @@ export interface FileRoutesById {
   '/repo': typeof RepoRoute
   '/restaurants': typeof RestaurantsRouteWithChildren
   '/salud': typeof SaludRoute
-  '/selectordecomidas': typeof SelectordecomidasRoute
+  '/selectordecomidas': typeof SelectordecomidasRouteWithChildren
   '/sistema-sanitario': typeof SistemaSanitarioRoute
   '/stay': typeof StayRoute
   '/test-realtime': typeof TestRealtimeRoute
@@ -1411,6 +1420,7 @@ export interface FileRoutesById {
   '/playas/mapa': typeof PlayasMapaRoute
   '/restaurants/$placeId': typeof RestaurantsPlaceIdRoute
   '/salud_/$categoria': typeof SaludCategoriaRouteWithChildren
+  '/selectordecomidas/comida-rapida': typeof SelectordecomidasComidaRapidaRoute
   '/threads/$id': typeof ThreadsIdRoute
   '/tram/estaciones': typeof TramEstacionesRoute
   '/tram/favoritos': typeof TramFavoritosRoute
@@ -1577,6 +1587,7 @@ export interface FileRouteTypes {
     | '/playas/mapa'
     | '/restaurants/$placeId'
     | '/salud/$categoria'
+    | '/selectordecomidas/comida-rapida'
     | '/threads/$id'
     | '/tram/estaciones'
     | '/tram/favoritos'
@@ -1738,6 +1749,7 @@ export interface FileRouteTypes {
     | '/playas/mapa'
     | '/restaurants/$placeId'
     | '/salud/$categoria'
+    | '/selectordecomidas/comida-rapida'
     | '/threads/$id'
     | '/tram/estaciones'
     | '/tram/favoritos'
@@ -1902,6 +1914,7 @@ export interface FileRouteTypes {
     | '/playas/mapa'
     | '/restaurants/$placeId'
     | '/salud_/$categoria'
+    | '/selectordecomidas/comida-rapida'
     | '/threads/$id'
     | '/tram/estaciones'
     | '/tram/favoritos'
@@ -2006,7 +2019,7 @@ export interface RootRouteChildren {
   RepoRoute: typeof RepoRoute
   RestaurantsRoute: typeof RestaurantsRouteWithChildren
   SaludRoute: typeof SaludRoute
-  SelectordecomidasRoute: typeof SelectordecomidasRoute
+  SelectordecomidasRoute: typeof SelectordecomidasRouteWithChildren
   SistemaSanitarioRoute: typeof SistemaSanitarioRoute
   StayRoute: typeof StayRoute
   TestRealtimeRoute: typeof TestRealtimeRoute
@@ -2381,6 +2394,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/threads/$id'
       preLoaderRoute: typeof ThreadsIdRouteImport
       parentRoute: typeof ThreadsRoute
+    }
+    '/selectordecomidas/comida-rapida': {
+      id: '/selectordecomidas/comida-rapida'
+      path: '/comida-rapida'
+      fullPath: '/selectordecomidas/comida-rapida'
+      preLoaderRoute: typeof SelectordecomidasComidaRapidaRouteImport
+      parentRoute: typeof SelectordecomidasRoute
     }
     '/salud_/$categoria': {
       id: '/salud_/$categoria'
@@ -3407,6 +3427,17 @@ const RestaurantsRouteWithChildren = RestaurantsRoute._addFileChildren(
   RestaurantsRouteChildren,
 )
 
+interface SelectordecomidasRouteChildren {
+  SelectordecomidasComidaRapidaRoute: typeof SelectordecomidasComidaRapidaRoute
+}
+
+const SelectordecomidasRouteChildren: SelectordecomidasRouteChildren = {
+  SelectordecomidasComidaRapidaRoute: SelectordecomidasComidaRapidaRoute,
+}
+
+const SelectordecomidasRouteWithChildren =
+  SelectordecomidasRoute._addFileChildren(SelectordecomidasRouteChildren)
+
 interface ThreadsRouteChildren {
   ThreadsIdRoute: typeof ThreadsIdRoute
 }
@@ -3483,7 +3514,7 @@ const rootRouteChildren: RootRouteChildren = {
   RepoRoute: RepoRoute,
   RestaurantsRoute: RestaurantsRouteWithChildren,
   SaludRoute: SaludRoute,
-  SelectordecomidasRoute: SelectordecomidasRoute,
+  SelectordecomidasRoute: SelectordecomidasRouteWithChildren,
   SistemaSanitarioRoute: SistemaSanitarioRoute,
   StayRoute: StayRoute,
   TestRealtimeRoute: TestRealtimeRoute,
