@@ -193,6 +193,7 @@ const SUGGESTIONS: Suggestion[] = [
   },
   {
     label: "✈️ Vuelos",
+    href: "/selector-vuelos",
     submenu: [
       { label: "🛫 Vuelos de salida", href: "/vuelos?type=S" },
       { label: "🛬 Vuelos de llegada", href: "/vuelos?type=L" },
