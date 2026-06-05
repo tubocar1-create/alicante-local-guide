@@ -4095,6 +4095,7 @@ function CategoryTableInner({
             </div>
           );
         })()}
+        </div>
       </div>
     </div>
   );
