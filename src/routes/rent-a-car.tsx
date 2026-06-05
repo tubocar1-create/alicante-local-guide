@@ -175,6 +175,17 @@ function RentACarPage() {
             ))}
           </ul>
         </section>
+
+        <footer className="mt-10 border-t border-white/10 pt-6 pb-4 text-center">
+          <a
+            href="https://economybookings.tpo.mx/DBI7Eqlc"
+            target="_blank"
+            rel="noopener noreferrer sponsored"
+            className="inline-block text-sm text-sky-300 underline-offset-4 hover:text-sky-200 hover:underline"
+          >
+            Reservar coche con EconomyBookings →
+          </a>
+        </footer>
       </main>
     </div>
   );
