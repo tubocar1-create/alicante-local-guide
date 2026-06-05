@@ -20,7 +20,7 @@ export const getRandomRestaurantsWithPhotos = createServerFn({ method: "GET" }).
       .not("cover_photo", "is", null)
       .neq("cover_photo", "")
       .or("category.eq.restaurant,primary_type.eq.restaurant")
-      .limit(200);
+      .limit(400);
 
     if (error) throw new Error(error.message);
 
@@ -34,7 +34,7 @@ export const getRandomRestaurantsWithPhotos = createServerFn({ method: "GET" }).
       [rows[i], rows[j]] = [rows[j], rows[i]];
     }
 
-    return rows.slice(0, 10).map((r) => ({
+    return rows.slice(0, 20).map((r) => ({
       id: String(r.id),
       name: r.name as string,
       cuisine: (r.cuisine as string | null) ?? null,
