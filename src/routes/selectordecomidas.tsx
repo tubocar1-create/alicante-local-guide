@@ -220,32 +220,32 @@ function CategoryButton({
       <button
         type="button"
         onClick={() => item.prompt && onPick(item.prompt)}
-        className="flex flex-col items-center justify-center gap-2 px-3 py-5 rounded-2xl border-2 bg-card hover:bg-accent/40 active:scale-[0.97] text-center shadow-sm min-h-[120px]"
+        className="flex flex-col items-center justify-center gap-0.5 px-1 py-2 rounded-xl border bg-card hover:bg-accent/40 active:scale-[0.97] text-center shadow-sm"
       >
-        <span className="text-5xl leading-none">{item.emoji}</span>
-        <span className="text-sm font-bold leading-tight">{item.label}</span>
+        <span className="text-3xl leading-none">{item.emoji}</span>
+        <span className="text-[10px] font-semibold leading-tight">{item.label}</span>
       </button>
     );
   }
 
   return (
-    <details className="col-span-2 rounded-2xl border-2 bg-card overflow-hidden shadow-sm">
-      <summary className="flex items-center justify-between px-4 py-4 cursor-pointer list-none">
-        <span className="flex items-center gap-3">
-          <span className="text-5xl leading-none">{item.emoji}</span>
-          <span className="text-base font-bold leading-tight">{item.label}</span>
+    <details className="col-span-3 rounded-xl border bg-card overflow-hidden shadow-sm">
+      <summary className="flex items-center justify-between px-3 py-2 cursor-pointer list-none">
+        <span className="flex items-center gap-2">
+          <span className="text-3xl leading-none">{item.emoji}</span>
+          <span className="text-sm font-bold leading-tight">{item.label}</span>
         </span>
-        <span className="text-xs text-muted-foreground">Ver opciones ▾</span>
+        <span className="text-[10px] text-muted-foreground">Ver opciones ▾</span>
       </summary>
-      <div className="grid grid-cols-2 gap-2 p-2 border-t bg-muted/30">
+      <div className="grid grid-cols-3 gap-1.5 p-1.5 border-t bg-muted/30">
         {item.submenu!.map((sub) => (
           <button
             key={sub.label}
             type="button"
             onClick={() => onPick(sub.prompt)}
-            className="flex items-center gap-2 px-3 py-4 rounded-xl border bg-background hover:bg-accent/40 active:scale-[0.97] text-left"
+            className="flex items-center justify-center gap-1 px-1 py-2 rounded-lg border bg-background hover:bg-accent/40 active:scale-[0.97] text-center"
           >
-            <span className="text-base font-semibold leading-tight">{sub.label}</span>
+            <span className="text-[10px] font-semibold leading-tight">{sub.label}</span>
           </button>
         ))}
       </div>
