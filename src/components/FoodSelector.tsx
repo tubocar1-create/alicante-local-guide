@@ -20,6 +20,8 @@ type Props = {
   backTo?: string;
   /** Categories used to label each carousel card */
   badgeCategories?: { keys: string[]; label: string; emoji: string }[];
+  /** Tailwind bg class for page background */
+  bgClass?: string;
 };
 
 const ALICANTE_CENTER = { lat: 38.3414, lng: -0.481 };
@@ -45,6 +47,7 @@ export default function FoodSelector({
   cuisineKeys,
   backTo = "/",
   badgeCategories,
+  bgClass = "bg-[#d9bd87]",
 }: Props) {
   const navigate = useNavigate();
   const { state } = useUserLocation();
@@ -90,7 +93,7 @@ export default function FoodSelector({
   };
 
   return (
-    <div className="h-dvh bg-[#d9bd87] text-[#2c1810] flex flex-col overflow-hidden">
+    <div className={`h-dvh ${bgClass} text-[#2c1810] flex flex-col overflow-hidden`}>
       <div className="mx-auto w-full max-w-2xl px-3 pt-2 pb-2 flex-1 flex flex-col min-h-0">
         <header className="flex items-center justify-between gap-2 mb-1">
           <h1 className="text-sm sm:text-base font-semibold leading-tight text-[#2c1810]">

@@ -40,8 +40,8 @@ export const getRandomRestaurantsWithPhotos = createServerFn({ method: "GET" })
       .not("cover_photo", "is", null)
       .neq("cover_photo", "")
       .not("google_place_id", "is", null)
-      .or("category.eq.restaurant,primary_type.eq.restaurant")
-      .limit(600);
+      .or("category.eq.restaurant,primary_type.eq.restaurant,primary_type.ilike.%restaurant%,primary_type.eq.meal_takeaway,primary_type.eq.meal_delivery")
+      .limit(800);
 
     if (error) throw new Error(error.message);
 
@@ -49,16 +49,16 @@ export const getRandomRestaurantsWithPhotos = createServerFn({ method: "GET" })
       (r) => r.name && r.lat != null && r.lng != null && r.cover_photo && r.google_place_id,
     );
 
-    // Optional cuisine filter (any key substring matches)
+    // Optional filter: match keys against cuisine OR primary_type
     if (data.cuisineKeys && data.cuisineKeys.length) {
       const keys = data.cuisineKeys.map((k) => k.toLowerCase());
       rows = rows.filter((r) => {
         const c = ((r.cuisine as string | null) ?? "").toLowerCase();
-        return keys.some((k) => c.includes(k));
+        const t = ((r.primary_type as string | null) ?? "").toLowerCase();
+        return keys.some((k) => c.includes(k) || t.includes(k));
       });
     }
 
-    // Prioritize by proximity: take the closest N then shuffle that subset
     if (data.lat != null && data.lng != null) {
       const origin = { lat: data.lat, lng: data.lng };
       rows.sort(
@@ -74,12 +74,17 @@ export const getRandomRestaurantsWithPhotos = createServerFn({ method: "GET" })
       [rows[i], rows[j]] = [rows[j], rows[i]];
     }
 
-    return rows.slice(0, 20).map((r) => ({
-      id: String(r.google_place_id),
-      name: r.name as string,
-      cuisine: (r.cuisine as string | null) ?? null,
-      lat: Number(r.lat),
-      lng: Number(r.lng),
-      cover_photo: r.cover_photo as string,
-    }));
+    return rows.slice(0, 20).map((r) => {
+      const t = (r.primary_type as string | null) ?? null;
+      const c = (r.cuisine as string | null) ?? null;
+      const label = t && t !== "restaurant" ? t : c;
+      return {
+        id: String(r.google_place_id),
+        name: r.name as string,
+        cuisine: label,
+        lat: Number(r.lat),
+        lng: Number(r.lng),
+        cover_photo: r.cover_photo as string,
+      };
+    });
   });

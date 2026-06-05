@@ -29,20 +29,27 @@ const CATEGORIES: FoodItem[] = [
 ];
 
 const FAST_KEYS = [
-  "burger", "hamburg", "fast", "rápida", "rapida", "kebab", "kebap", "doner",
-  "hot dog", "fried chicken", "pollo frito", "pizza", "pizzer", "mexican", "mejican",
-  "taco", "wok", "poke", "ramen", "bocadill", "montadit", "sandwich",
+  "burger", "hamburg", "hamburger_restaurant", "fast_food", "fast", "rápida", "rapida",
+  "kebab", "kebap", "doner",
+  "hot_dog", "hot dog",
+  "fried_chicken", "fried chicken", "pollo frito", "chicken_restaurant",
+  "pizza", "pizzer", "pizza_restaurant", "pizza_delivery",
+  "mexican", "mejican", "taco", "mexican_restaurant",
+  "wok", "poke", "ramen", "ramen_restaurant", "asian_restaurant",
+  "bocadill", "montadit", "sandwich", "sandwich_shop",
+  "meal_takeaway", "meal_delivery",
 ];
 
 const BADGES = [
   { keys: ["burger", "hamburg"], label: "Hamburguesas", emoji: "🍔" },
   { keys: ["pizza", "pizzer"], label: "Pizza", emoji: "🍕" },
   { keys: ["kebab", "kebap", "doner"], label: "Kebab", emoji: "🌯" },
-  { keys: ["pollo frito", "fried chicken"], label: "Pollo frito", emoji: "🍗" },
+  { keys: ["pollo frito", "fried chicken", "fried_chicken", "chicken"], label: "Pollo frito", emoji: "🍗" },
   { keys: ["mexican", "mejican", "taco"], label: "Mexicano", emoji: "🌮" },
   { keys: ["bocadill", "montadit", "sandwich"], label: "Bocadillos", emoji: "🥖" },
-  { keys: ["hot dog"], label: "Hot dogs", emoji: "🌭" },
+  { keys: ["hot dog", "hot_dog"], label: "Hot dogs", emoji: "🌭" },
   { keys: ["wok", "poke", "ramen", "asian", "asiát", "asiat"], label: "Asiático rápido", emoji: "🍜" },
+  { keys: ["fast_food", "meal_takeaway", "meal_delivery"], label: "Comida rápida", emoji: "🍟" },
 ];
 
 function ComidaRapidaPage() {
@@ -53,6 +60,7 @@ function ComidaRapidaPage() {
       cuisineKeys={FAST_KEYS}
       badgeCategories={BADGES}
       backTo="/selectordecomidas"
+      bgClass="bg-[#f3e3c2]"
     />
   );
 }
