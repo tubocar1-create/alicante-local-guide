@@ -20,6 +20,8 @@ type Props = {
   backTo?: string;
   /** Categories used to label each carousel card */
   badgeCategories?: { keys: string[]; label: string; emoji: string }[];
+  /** Tailwind bg class for page background */
+  bgClass?: string;
 };
 
 const ALICANTE_CENTER = { lat: 38.3414, lng: -0.481 };
