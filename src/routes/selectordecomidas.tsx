@@ -1,7 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { fetchListings, type Listing } from "@/lib/overpass-listings";
 import { useUserLocation, distanceKm } from "@/hooks/useUserLocation";
+import {
+  getRandomRestaurantsWithPhotos,
+  type RandomRestaurant,
+} from "@/lib/restaurants.functions";
 
 export const Route = createFileRoute("/selectordecomidas")({
   head: () => ({
@@ -92,27 +95,21 @@ function SelectorDeComidasPage() {
   const me = state.status === "ready" ? state.coords : null;
   const origin = me ?? ALICANTE_CENTER;
 
-  const [populares, setPopulares] = useState<Listing[]>([]);
+  const [populares, setPopulares] = useState<RandomRestaurant[]>([]);
 
   useEffect(() => {
     let cancel = false;
-    fetchListings([{ tag: "amenity", value: "restaurant" }], { center: origin, radiusMeters: 3000 })
+    // Random each page load: server returns a fresh shuffle.
+    getRandomRestaurantsWithPhotos()
       .then((items) => {
         if (cancel) return;
-        const ranked = items
-          .filter((i) => i.name && i.cuisine)
-          .map((i) => ({ i, d: distanceKm(origin, { lat: i.lat, lng: i.lon }) }))
-          .sort((a, b) => a.d - b.d)
-          .slice(0, 10)
-          .map((x) => x.i);
-        setPopulares(ranked);
+        setPopulares(items);
       })
       .catch(() => {});
     return () => {
       cancel = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [me?.lat, me?.lng]);
+  }, []);
 
   const goWithPrompt = (prompt: string) => {
     try {
@@ -121,7 +118,7 @@ function SelectorDeComidasPage() {
     navigate({ to: "/" });
   };
 
-  const goRestaurant = (r: Listing) => {
+  const goRestaurant = (r: RandomRestaurant) => {
     goWithPrompt(`Cuéntame sobre el restaurante "${r.name}" en Alicante y cómo llegar ahora`);
   };
 
@@ -177,7 +174,7 @@ function SelectorDeComidasPage() {
           ) : (
             <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 no-scrollbar snap-x">
               {populares.map((r) => {
-                const km = distanceKm(origin, { lat: r.lat, lng: r.lon });
+                const km = distanceKm(origin, { lat: r.lat, lng: r.lng });
                 return (
                   <button
                     key={r.id}
@@ -187,7 +184,7 @@ function SelectorDeComidasPage() {
                   >
                     <div className="w-full h-24 bg-muted overflow-hidden">
                       <img
-                        src={pickImage(r.cuisine)}
+                        src={r.cover_photo}
                         alt={r.name}
                         loading="lazy"
                         className="w-full h-full object-cover"
