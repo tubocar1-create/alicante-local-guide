@@ -952,16 +952,18 @@ function DestinationPopup({
                 destination_iata: iata,
                 depart_date: iso,
                 oneway: "1",
+                one_way: "true",
                 adults: "1",
                 children: "0",
                 infants: "0",
                 trip_class: "0",
                 currency: "EUR",
+                language: "es",
                 locale: "es",
                 marker: "732656",
                 with_request: "true",
               });
-              return `https://www.aviasales.com/?${params.toString()}`;
+              return `https://search.aviasales.com/flights/?${params.toString()}`;
             }
             return "https://aviasales.tpo.mx/RkEQT2AP";
           })()}
