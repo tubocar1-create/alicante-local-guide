@@ -126,7 +126,7 @@ function DondeDormirPage() {
           </div>
         </header>
 
-        <div className="mb-5">
+        <div className="mb-2 shrink-0">
           <p className="text-[10px] uppercase tracking-[0.3em] text-amber-400/80">
             Dashboard nocturno
           </p>
