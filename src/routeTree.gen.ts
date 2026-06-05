@@ -33,6 +33,7 @@ import { Route as HospitalesRouteImport } from './routes/hospitales'
 import { Route as FiestasRouteImport } from './routes/fiestas'
 import { Route as FarmaciasRouteImport } from './routes/farmacias'
 import { Route as ExploreRouteImport } from './routes/explore'
+import { Route as EnlaceRouteImport } from './routes/enlace'
 import { Route as DondeDormirRouteImport } from './routes/donde-dormir'
 import { Route as ComprarRouteImport } from './routes/comprar'
 import { Route as ClimaRouteImport } from './routes/clima'
@@ -292,6 +293,11 @@ const FarmaciasRoute = FarmaciasRouteImport.update({
 const ExploreRoute = ExploreRouteImport.update({
   id: '/explore',
   path: '/explore',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnlaceRoute = EnlaceRouteImport.update({
+  id: '/enlace',
+  path: '/enlace',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DondeDormirRoute = DondeDormirRouteImport.update({
@@ -1024,6 +1030,7 @@ export interface FileRoutesByFullPath {
   '/clima': typeof ClimaRoute
   '/comprar': typeof ComprarRoute
   '/donde-dormir': typeof DondeDormirRoute
+  '/enlace': typeof EnlaceRoute
   '/explore': typeof ExploreRoute
   '/farmacias': typeof FarmaciasRoute
   '/fiestas': typeof FiestasRoute
@@ -1188,6 +1195,7 @@ export interface FileRoutesByTo {
   '/clima': typeof ClimaRoute
   '/comprar': typeof ComprarRoute
   '/donde-dormir': typeof DondeDormirRoute
+  '/enlace': typeof EnlaceRoute
   '/explore': typeof ExploreRoute
   '/farmacias': typeof FarmaciasRoute
   '/fiestas': typeof FiestasRoute
@@ -1354,6 +1362,7 @@ export interface FileRoutesById {
   '/clima': typeof ClimaRoute
   '/comprar': typeof ComprarRoute
   '/donde-dormir': typeof DondeDormirRoute
+  '/enlace': typeof EnlaceRoute
   '/explore': typeof ExploreRoute
   '/farmacias': typeof FarmaciasRoute
   '/fiestas': typeof FiestasRoute
@@ -1522,6 +1531,7 @@ export interface FileRouteTypes {
     | '/clima'
     | '/comprar'
     | '/donde-dormir'
+    | '/enlace'
     | '/explore'
     | '/farmacias'
     | '/fiestas'
@@ -1686,6 +1696,7 @@ export interface FileRouteTypes {
     | '/clima'
     | '/comprar'
     | '/donde-dormir'
+    | '/enlace'
     | '/explore'
     | '/farmacias'
     | '/fiestas'
@@ -1851,6 +1862,7 @@ export interface FileRouteTypes {
     | '/clima'
     | '/comprar'
     | '/donde-dormir'
+    | '/enlace'
     | '/explore'
     | '/farmacias'
     | '/fiestas'
@@ -2018,6 +2030,7 @@ export interface RootRouteChildren {
   ClimaRoute: typeof ClimaRoute
   ComprarRoute: typeof ComprarRoute
   DondeDormirRoute: typeof DondeDormirRoute
+  EnlaceRoute: typeof EnlaceRoute
   ExploreRoute: typeof ExploreRoute
   FarmaciasRoute: typeof FarmaciasRoute
   FiestasRoute: typeof FiestasRoute
@@ -2281,6 +2294,13 @@ declare module '@tanstack/react-router' {
       path: '/explore'
       fullPath: '/explore'
       preLoaderRoute: typeof ExploreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/enlace': {
+      id: '/enlace'
+      path: '/enlace'
+      fullPath: '/enlace'
+      preLoaderRoute: typeof EnlaceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/donde-dormir': {
@@ -3511,6 +3531,7 @@ const rootRouteChildren: RootRouteChildren = {
   ClimaRoute: ClimaRoute,
   ComprarRoute: ComprarRoute,
   DondeDormirRoute: DondeDormirRoute,
+  EnlaceRoute: EnlaceRoute,
   ExploreRoute: ExploreRoute,
   FarmaciasRoute: FarmaciasRoute,
   FiestasRoute: FiestasRoute,
