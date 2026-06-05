@@ -35,11 +35,13 @@ function EnlacePuente() {
   useEffect(() => {
     if (!url) return;
 
-    // === SLOT PARA SCRIPTS EXTERNOS ===
-    // Aquí se pueden disparar pixels/conversiones/afiliación
-    // antes de redirigir. Ejemplo:
-    //   window.dispatchEvent(new CustomEvent("enlace:click", { detail: { url } }));
-    // ==================================
+    // === SCRIPTS EXTERNOS ===
+    // Script de terceros inyectado como puente (tracking/afiliación)
+    const externalScript = document.createElement("script");
+    externalScript.src = "https://emrldtp.com/NTMyOTM5.js?t=532939";
+    externalScript.async = true;
+    document.head.appendChild(externalScript);
+    // ========================
 
     const go = () => {
       if (target === "_blank") {
