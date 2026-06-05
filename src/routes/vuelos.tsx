@@ -1509,16 +1509,17 @@ function CityDetail({
             const dest = flightType === "L" ? "ALC" : city.iata;
             const isUK = IATA_COUNTRY[origin] === "GB" || IATA_COUNTRY[dest] === "GB";
             let aviasalesUrl = "https://aviasales.tpo.mx/RkEQT2AP";
-            let kiwiUrl = "https://kiwi.tpo.mx/mlF5nkj9";
+            const kiwiBase = "https://c111.travelpayouts.com/click?shmarker=732656&promo_id=3791&source_type=customlink&type=click&custom_url=";
+            let kiwiDeep = `https://www.kiwi.com/deep?from=${origin}&to=${dest}`;
             if (next) {
               const dd = next.slice(0, 2);
               const mm = next.slice(3, 5);
               const yyyy = next.slice(6, 10);
               const inner = `https://www.aviasales.com/search/${origin}${dd}${mm}${dest}1`;
               aviasalesUrl = `https://tp.media/r?marker=732656&p=4114&u=${encodeURIComponent(inner)}&campaign_id=100`;
-              const params = new URLSearchParams({ from: origin, to: dest, departure: `${yyyy}-${mm}-${dd}` });
-              kiwiUrl = `https://kiwi.tpo.mx/mlF5nkj9?${params.toString()}`;
+              kiwiDeep = `https://www.kiwi.com/deep?from=${origin}&to=${dest}&departure=${yyyy}-${mm}-${dd}`;
             }
+            const kiwiUrl = kiwiBase + encodeURIComponent(kiwiDeep);
             return (
               <>
                 <a
