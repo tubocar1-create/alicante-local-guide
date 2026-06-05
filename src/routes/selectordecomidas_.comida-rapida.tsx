@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import FoodSelector, { type FoodItem } from "@/components/FoodSelector";
 
-export const Route = createFileRoute("/selectordecomidas/comida-rapida")({
+export const Route = createFileRoute("/selectordecomidas_/comida-rapida")({
   head: () => ({
     meta: [
       { title: "Comida rápida — Alicante Friend" },
