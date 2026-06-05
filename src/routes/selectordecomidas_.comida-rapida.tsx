@@ -18,14 +18,14 @@ export const Route = createFileRoute("/selectordecomidas_/comida-rapida")({
 });
 
 const CATEGORIES: FoodItem[] = [
-  { label: "Hamburguesas", emoji: "🍔", to: "/restaurants/categoria/fast_food:burger" },
-  { label: "Pizza", emoji: "🍕", to: "/restaurants/categoria/fast_food:pizza" },
-  { label: "Kebab / Doner", emoji: "🌯", to: "/restaurants/categoria/fast_food:kebab" },
-  { label: "Pollo frito", emoji: "🍗", to: "/restaurants/categoria/fast_food:chicken" },
-  { label: "Mexicano", emoji: "🌮", to: "/restaurants/categoria/fast_food:mexican" },
-  { label: "Bocadillos / Montaditos", emoji: "🥖", to: "/restaurants/categoria/fast_food:montaditos" },
-  { label: "Hot dogs", emoji: "🌭", to: "/restaurants/categoria/fast_food:hotdog" },
-  { label: "Asiático rápido", emoji: "🍜", to: "/restaurants/categoria/fast_food:asian" },
+  { label: "Hamburguesas", emoji: "🍔", prompt: "Una hamburguesería abierta ahora (Goiko, Five Guys, TGB, smash burger…)" },
+  { label: "Pizza", emoji: "🍕", prompt: "Una pizzería abierta ahora (Telepizza, Domino's…)" },
+  { label: "Kebab / Doner", emoji: "🌯", prompt: "Un kebab o döner abierto ahora" },
+  { label: "Pollo frito", emoji: "🍗", prompt: "Pollo frito abierto ahora (KFC, Popeyes, pollos asados…)" },
+  { label: "Mexicano", emoji: "🌮", prompt: "Un mexicano abierto ahora (Taco Bell, tacos, burritos…)" },
+  { label: "Bocadillos / Montaditos", emoji: "🥖", prompt: "Bocadillos o montaditos abiertos ahora (100 Montaditos, Lizarrán…)" },
+  { label: "Hot dogs", emoji: "🌭", prompt: "Hot dogs abiertos ahora en Alicante" },
+  { label: "Asiático rápido", emoji: "🍜", prompt: "Un asiático rápido abierto ahora (ramen, wok, sushi para llevar…)" },
 ];
 
 const FAST_KEYS = [
