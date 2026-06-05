@@ -1533,6 +1533,16 @@ function CityDetail({
               <ExternalLink className="h-3 w-3 opacity-70" />
             </a>
           </div>
+          <a
+            href="https://aviasales.tpo.mx/RkEQT2AP"
+            target="_blank"
+            rel="noopener noreferrer sponsored"
+            className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-amber-500 px-3 py-2 text-[11px] font-semibold text-slate-900 transition hover:bg-amber-400"
+          >
+            <Plane className="h-3 w-3" />
+            Buscar y comparar vuelos
+            <ExternalLink className="h-3 w-3 opacity-70" />
+          </a>
         </div>
 
         {perDay.length > 1 && (
