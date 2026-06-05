@@ -150,7 +150,7 @@ function SelectorDeComidasPage() {
           ))}
         </section>
 
-        <section className="mt-2 shrink-0">
+        <section className="mt-5 shrink-0">
           {populares.length === 0 ? (
             <div className="flex gap-2 overflow-x-auto pb-1 -mx-3 px-3 no-scrollbar">
               {Array.from({ length: 8 }).map((_, i) => (
