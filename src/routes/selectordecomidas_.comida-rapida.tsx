@@ -18,14 +18,14 @@ export const Route = createFileRoute("/selectordecomidas_/comida-rapida")({
 });
 
 const CATEGORIES: FoodItem[] = [
-  { label: "Hamburguesas", emoji: "🍔", prompt: "Quiero una buena hamburguesa abierta ahora en Alicante" },
-  { label: "Pizza", emoji: "🍕", prompt: "Quiero pizza abierta ahora en Alicante" },
-  { label: "Kebab / Doner", emoji: "🌯", prompt: "Quiero kebab o doner abierto ahora en Alicante" },
-  { label: "Pollo frito", emoji: "🍗", prompt: "Quiero pollo frito abierto ahora en Alicante" },
-  { label: "Mexicano", emoji: "🌮", prompt: "Quiero mexicano (tacos, burritos) abierto ahora en Alicante" },
-  { label: "Bocadillos / Montaditos", emoji: "🥖", prompt: "Quiero bocadillos o montaditos abiertos ahora en Alicante" },
-  { label: "Hot dogs", emoji: "🌭", prompt: "Quiero hot dogs abiertos ahora en Alicante" },
-  { label: "Asiático rápido", emoji: "🍜", prompt: "Quiero asiático rápido (wok, poke, ramen) abierto ahora en Alicante" },
+  { label: "Hamburguesas", emoji: "🍔", to: "/restaurants_/categoria/fast_food:burger" },
+  { label: "Pizza", emoji: "🍕", to: "/restaurants_/categoria/fast_food:pizza" },
+  { label: "Kebab / Doner", emoji: "🌯", to: "/restaurants_/categoria/fast_food:kebab" },
+  { label: "Pollo frito", emoji: "🍗", to: "/restaurants_/categoria/fast_food:chicken" },
+  { label: "Mexicano", emoji: "🌮", to: "/restaurants_/categoria/fast_food:mexican" },
+  { label: "Bocadillos / Montaditos", emoji: "🥖", to: "/restaurants_/categoria/fast_food:montaditos" },
+  { label: "Hot dogs", emoji: "🌭", to: "/restaurants_/categoria/fast_food:hotdog" },
+  { label: "Asiático rápido", emoji: "🍜", to: "/restaurants_/categoria/fast_food:asian" },
 ];
 
 const FAST_KEYS = [

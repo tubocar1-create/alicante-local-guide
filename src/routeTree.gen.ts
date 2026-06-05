@@ -108,6 +108,7 @@ import { Route as TrenesRutaNumRouteImport } from './routes/trenes_.ruta.$num'
 import { Route as TramParadaStopIdRouteImport } from './routes/tram.parada.$stopId'
 import { Route as TramLineaLineIdRouteImport } from './routes/tram.linea.$lineId'
 import { Route as SaludCategoriaIdRouteImport } from './routes/salud_.$categoria.$id'
+import { Route as RestaurantsCategoriaTagRouteImport } from './routes/restaurants_.categoria.$tag'
 import { Route as OcioPeliculaIdRouteImport } from './routes/ocio_.pelicula.$id'
 import { Route as OcioEventosCarteleraRouteImport } from './routes/ocio_.eventos_.cartelera'
 import { Route as OcioEventosAgendaRouteImport } from './routes/ocio_.eventos_.agenda'
@@ -670,6 +671,11 @@ const SaludCategoriaIdRoute = SaludCategoriaIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => SaludCategoriaRoute,
 } as any)
+const RestaurantsCategoriaTagRoute = RestaurantsCategoriaTagRouteImport.update({
+  id: '/restaurants_/categoria/$tag',
+  path: '/restaurants/categoria/$tag',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OcioPeliculaIdRoute = OcioPeliculaIdRouteImport.update({
   id: '/ocio_/pelicula/$id',
   path: '/ocio/pelicula/$id',
@@ -1140,6 +1146,7 @@ export interface FileRoutesByFullPath {
   '/ocio/eventos/agenda': typeof OcioEventosAgendaRoute
   '/ocio/eventos/cartelera': typeof OcioEventosCarteleraRoute
   '/ocio/pelicula/$id': typeof OcioPeliculaIdRoute
+  '/restaurants/categoria/$tag': typeof RestaurantsCategoriaTagRoute
   '/salud/$categoria/$id': typeof SaludCategoriaIdRoute
   '/tram/linea/$lineId': typeof TramLineaLineIdRoute
   '/tram/parada/$stopId': typeof TramParadaStopIdRoute
@@ -1302,6 +1309,7 @@ export interface FileRoutesByTo {
   '/ocio/eventos/agenda': typeof OcioEventosAgendaRoute
   '/ocio/eventos/cartelera': typeof OcioEventosCarteleraRoute
   '/ocio/pelicula/$id': typeof OcioPeliculaIdRoute
+  '/restaurants/categoria/$tag': typeof RestaurantsCategoriaTagRoute
   '/salud/$categoria/$id': typeof SaludCategoriaIdRoute
   '/tram/linea/$lineId': typeof TramLineaLineIdRoute
   '/tram/parada/$stopId': typeof TramParadaStopIdRoute
@@ -1468,6 +1476,7 @@ export interface FileRoutesById {
   '/ocio_/eventos_/agenda': typeof OcioEventosAgendaRoute
   '/ocio_/eventos_/cartelera': typeof OcioEventosCarteleraRoute
   '/ocio_/pelicula/$id': typeof OcioPeliculaIdRoute
+  '/restaurants_/categoria/$tag': typeof RestaurantsCategoriaTagRoute
   '/salud_/$categoria/$id': typeof SaludCategoriaIdRoute
   '/tram/linea/$lineId': typeof TramLineaLineIdRoute
   '/tram/parada/$stopId': typeof TramParadaStopIdRoute
@@ -1635,6 +1644,7 @@ export interface FileRouteTypes {
     | '/ocio/eventos/agenda'
     | '/ocio/eventos/cartelera'
     | '/ocio/pelicula/$id'
+    | '/restaurants/categoria/$tag'
     | '/salud/$categoria/$id'
     | '/tram/linea/$lineId'
     | '/tram/parada/$stopId'
@@ -1797,6 +1807,7 @@ export interface FileRouteTypes {
     | '/ocio/eventos/agenda'
     | '/ocio/eventos/cartelera'
     | '/ocio/pelicula/$id'
+    | '/restaurants/categoria/$tag'
     | '/salud/$categoria/$id'
     | '/tram/linea/$lineId'
     | '/tram/parada/$stopId'
@@ -1962,6 +1973,7 @@ export interface FileRouteTypes {
     | '/ocio_/eventos_/agenda'
     | '/ocio_/eventos_/cartelera'
     | '/ocio_/pelicula/$id'
+    | '/restaurants_/categoria/$tag'
     | '/salud_/$categoria/$id'
     | '/tram/linea/$lineId'
     | '/tram/parada/$stopId'
@@ -2070,6 +2082,7 @@ export interface RootRouteChildren {
   OcioEventosAgendaRoute: typeof OcioEventosAgendaRoute
   OcioEventosCarteleraRoute: typeof OcioEventosCarteleraRoute
   OcioPeliculaIdRoute: typeof OcioPeliculaIdRoute
+  RestaurantsCategoriaTagRoute: typeof RestaurantsCategoriaTagRoute
   TrenesRutaNumRoute: typeof TrenesRutaNumRoute
   TrenesViajeIdRoute: typeof TrenesViajeIdRoute
   ApiPublicGooglePhotoSplatRoute: typeof ApiPublicGooglePhotoSplatRoute
@@ -2794,6 +2807,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/salud/$categoria/$id'
       preLoaderRoute: typeof SaludCategoriaIdRouteImport
       parentRoute: typeof SaludCategoriaRoute
+    }
+    '/restaurants_/categoria/$tag': {
+      id: '/restaurants_/categoria/$tag'
+      path: '/restaurants/categoria/$tag'
+      fullPath: '/restaurants/categoria/$tag'
+      preLoaderRoute: typeof RestaurantsCategoriaTagRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/ocio_/pelicula/$id': {
       id: '/ocio_/pelicula/$id'
@@ -3555,6 +3575,7 @@ const rootRouteChildren: RootRouteChildren = {
   OcioEventosAgendaRoute: OcioEventosAgendaRoute,
   OcioEventosCarteleraRoute: OcioEventosCarteleraRoute,
   OcioPeliculaIdRoute: OcioPeliculaIdRoute,
+  RestaurantsCategoriaTagRoute: RestaurantsCategoriaTagRoute,
   TrenesRutaNumRoute: TrenesRutaNumRoute,
   TrenesViajeIdRoute: TrenesViajeIdRoute,
   ApiPublicGooglePhotoSplatRoute: ApiPublicGooglePhotoSplatRoute,
@@ -3590,13 +3611,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
