@@ -3789,17 +3789,128 @@ function CategoryTableInner({
           </p>
         </div>
 
-        <div className={`rounded-2xl border ${theme.cardBorder} ${theme.cardBg} p-2 backdrop-blur-xl md:p-4`}>
-          <div className="mb-2 flex items-baseline justify-between gap-2">
-            <p className={`text-[12px] font-semibold ${theme.countText}`}>
-              {loading ? "Cargando…" : `${ranked.length} sitios`}
-            </p>
-            <p className={`text-[9px] uppercase tracking-[0.18em] ${theme.hint}`}>
-              estado · cierre · precio · dist.
-            </p>
-          </div>
+        {(() => {
+          const opens: typeof ranked = [];
+          const rest: typeof ranked = [];
+          for (const r of ranked) {
+            const status = resolveOpeningStatus(r.c.openingHours ?? undefined);
+            const isOpen =
+              status.status === "open" ||
+              (status.status === "unknown" && r.c.openNow === true);
+            if (isOpen) opens.push(r);
+            else rest.push(r);
+          }
+          const renderRow = ({ c, d }: typeof ranked[number], i: number) => {
+            const status = resolveOpeningStatus(c.openingHours ?? undefined);
+            const closesAt =
+              (status.status === "open" ? status.closesAt : null) ??
+              getTodayClosingTime(c.openingHours ?? undefined) ??
+              c.closesAt ??
+              null;
+            const isOpen =
+              status.status === "open" ||
+              (status.status === "unknown" && c.openNow === true);
+            const isClosed =
+              status.status === "closed" ||
+              (status.status === "unknown" && c.openNow === false);
+            const price = priceLabel(c.priceLevel);
+            const priceFromRange =
+              c.priceRangeMin && c.priceRangeMax
+                ? `${c.priceRangeMin}–${c.priceRangeMax} €`
+                : c.priceRangeMin
+                  ? `~${c.priceRangeMin} €`
+                  : null;
+            const priceAvg =
+              priceFromRange ??
+              (price.avg !== "s/d" ? price.avg : theme.guessPrice(c));
+            const priceShort = priceAvg.replace(/[~\s€]/g, "").replace("–", "-") + "€";
+            const meters = Number.isFinite(d) ? Math.round(d * 1000) : null;
+            const distLabel =
+              meters == null
+                ? "—"
+                : meters >= 1000
+                  ? `${(meters / 1000).toFixed(1)}km`
+                  : `${meters}m`;
 
-          <table className={`w-full table-fixed border-separate border-spacing-y-0.5 text-left text-[11px] ${theme.rowText}`}>
+            const nameNode = (
+              <span className={`flex items-center gap-1 ${theme.hoverName}`}>
+                <span className="text-[13px] leading-none">{theme.emoji(c)}</span>
+                <span className="min-w-0 truncate text-[11px] font-medium">
+                  {c.name}
+                </span>
+              </span>
+            );
+            return (
+              <tr
+                key={i}
+                role="button"
+                tabIndex={0}
+                aria-label={`Abrir ficha de ${c.name}`}
+                onClick={() => openDashboard(c)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    openDashboard(c);
+                  }
+                }}
+                className="cursor-pointer bg-white/[0.02] transition hover:bg-white/[0.06] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+              >
+                <td className="rounded-l-md px-1.5 py-1 align-middle">
+                  {c.placeId ? (
+                    <Link
+                      to="/restaurants/$placeId"
+                      params={{ placeId: c.placeId }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        markRestaurantReturn();
+                        stashRestaurantPreview(c);
+                      }}
+                      className="block"
+                    >
+                      {nameNode}
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openDashboard(c);
+                      }}
+                      disabled
+                      className="block w-full cursor-not-allowed text-left opacity-60"
+                    >
+                      {nameNode}
+                    </button>
+                  )}
+                </td>
+                <td className="px-1 py-1 align-middle">
+                  {isOpen ? (
+                    <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500/15 px-1 py-0.5 text-[9px] font-semibold text-emerald-300">
+                      ● Abre
+                    </span>
+                  ) : isClosed ? (
+                    <span className="inline-flex items-center gap-0.5 rounded-full bg-rose-500/15 px-1 py-0.5 text-[9px] font-semibold text-rose-300">
+                      ● Cerr
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-0.5 rounded-full bg-slate-500/15 px-1 py-0.5 text-[9px] font-semibold text-slate-400">
+                      s/d
+                    </span>
+                  )}
+                </td>
+                <td className={`px-1 py-1 text-center align-middle font-mono text-[10px] ${theme.closesText}`}>
+                  {closesAt ?? "—"}
+                </td>
+                <td className={`px-1 py-1 text-right align-middle font-mono text-[10px] ${theme.priceText}`}>
+                  {priceShort}
+                </td>
+                <td className={`rounded-r-md px-1 py-1 text-right align-middle font-mono text-[11px] font-semibold tabular-nums ${theme.distText}`}>
+                  {distLabel}
+                </td>
+              </tr>
+            );
+          };
+          const colgroup = (
             <colgroup>
               <col />
               <col className="w-[58px]" />
@@ -3807,6 +3918,8 @@ function CategoryTableInner({
               <col className="w-[46px]" />
               <col className="w-[54px]" />
             </colgroup>
+          );
+          const thead = (
             <thead>
               <tr className={`text-[9px] uppercase tracking-[0.12em] ${theme.thText}`}>
                 <th className="px-1 py-1 font-medium">{theme.rowLabelText}</th>
@@ -3816,127 +3929,53 @@ function CategoryTableInner({
                 <th className="px-1 py-1 text-right font-medium">Dist.</th>
               </tr>
             </thead>
-            <tbody>
-              {ranked.map(({ c, d }, i) => {
-                const status = resolveOpeningStatus(c.openingHours ?? undefined);
-                const closesAt =
-                  (status.status === "open" ? status.closesAt : null) ??
-                  getTodayClosingTime(c.openingHours ?? undefined) ??
-                  c.closesAt ??
-                  null;
-                const isOpen =
-                  status.status === "open" ||
-                  (status.status === "unknown" && c.openNow === true);
-                const isClosed =
-                  status.status === "closed" ||
-                  (status.status === "unknown" && c.openNow === false);
-                const price = priceLabel(c.priceLevel);
-                const priceFromRange =
-                  c.priceRangeMin && c.priceRangeMax
-                    ? `${c.priceRangeMin}–${c.priceRangeMax} €`
-                    : c.priceRangeMin
-                      ? `~${c.priceRangeMin} €`
-                      : null;
-                const priceAvg =
-                  priceFromRange ??
-                  (price.avg !== "s/d" ? price.avg : theme.guessPrice(c));
-                const priceShort = priceAvg.replace(/[~\s€]/g, "").replace("–", "-") + "€";
-                const meters = Number.isFinite(d) ? Math.round(d * 1000) : null;
-                const distLabel =
-                  meters == null
-                    ? "—"
-                    : meters >= 1000
-                      ? `${(meters / 1000).toFixed(1)}km`
-                      : `${meters}m`;
+          );
+          return (
+            <div className={`rounded-2xl border ${theme.cardBorder} ${theme.cardBg} p-2 backdrop-blur-xl md:p-4`}>
+              <div className="mb-2 flex items-baseline justify-between gap-2">
+                <p className={`text-[12px] font-semibold ${theme.countText}`}>
+                  {loading
+                    ? "Cargando…"
+                    : `${opens.length} abiertos · ${ranked.length} totales`}
+                </p>
+                <p className={`text-[9px] uppercase tracking-[0.18em] ${theme.hint}`}>
+                  estado · cierre · precio · dist.
+                </p>
+              </div>
 
-                const nameNode = (
-                  <span className={`flex items-center gap-1 ${theme.hoverName}`}>
-                    <span className="text-[13px] leading-none">{theme.emoji(c)}</span>
-                    <span className="min-w-0 truncate text-[11px] font-medium">
-                      {c.name}
-                    </span>
-                  </span>
-                );
-                return (
-                  <tr
-                    key={i}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`Abrir ficha de ${c.name}`}
-                    onClick={() => openDashboard(c)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        openDashboard(c);
-                      }
-                    }}
-                    className="cursor-pointer bg-white/[0.02] transition hover:bg-white/[0.06] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
-                  >
-                    <td className="rounded-l-md px-1.5 py-1 align-middle">
-                      {c.placeId ? (
-                        <Link
-                          to="/restaurants/$placeId"
-                          params={{ placeId: c.placeId }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            markRestaurantReturn();
-                            stashRestaurantPreview(c);
-                          }}
-                          className="block"
-                        >
-                          {nameNode}
-                        </Link>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openDashboard(c);
-                          }}
-                          disabled
-                          className="block w-full cursor-not-allowed text-left opacity-60"
-                        >
-                          {nameNode}
-                        </button>
-                      )}
-                    </td>
-                    <td className="px-1 py-1 align-middle">
-                      {isOpen ? (
-                        <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500/15 px-1 py-0.5 text-[9px] font-semibold text-emerald-300">
-                          ● Abre
-                        </span>
-                      ) : isClosed ? (
-                        <span className="inline-flex items-center gap-0.5 rounded-full bg-rose-500/15 px-1 py-0.5 text-[9px] font-semibold text-rose-300">
-                          ● Cerr
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-0.5 rounded-full bg-slate-500/15 px-1 py-0.5 text-[9px] font-semibold text-slate-400">
-                          s/d
-                        </span>
-                      )}
-                    </td>
-                    <td className={`px-1 py-1 text-center align-middle font-mono text-[10px] ${theme.closesText}`}>
-                      {closesAt ?? "—"}
-                    </td>
-                    <td className={`px-1 py-1 text-right align-middle font-mono text-[10px] ${theme.priceText}`}>
-                      {priceShort}
-                    </td>
-                    <td className={`rounded-r-md px-1 py-1 text-right align-middle font-mono text-[11px] font-semibold tabular-nums ${theme.distText}`}>
-                      {distLabel}
-                    </td>
-                  </tr>
-                );
-              })}
-              {!loading && ranked.length === 0 && (
-                <tr>
-                  <td colSpan={5} className={`px-2 py-4 text-center text-xs ${theme.emptyText}`}>
-                    Sin datos disponibles.
-                  </td>
-                </tr>
+              <table className={`w-full table-fixed border-separate border-spacing-y-0.5 text-left text-[11px] ${theme.rowText}`}>
+                {colgroup}
+                {thead}
+                <tbody>
+                  {opens.map(renderRow)}
+                  {!loading && opens.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className={`px-2 py-4 text-center text-xs ${theme.emptyText}`}>
+                        Ninguno abierto ahora mismo.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+
+              {rest.length > 0 && (
+                <details className="mt-3 group">
+                  <summary className={`cursor-pointer list-none rounded-md border ${theme.cardBorder} bg-white/[0.03] px-3 py-2 text-[11px] font-semibold ${theme.countText} hover:bg-white/[0.06] flex items-center justify-between`}>
+                    <span>Cerrados ahora / sin datos · {rest.length}</span>
+                    <span className={`text-[10px] ${theme.hint} group-open:rotate-180 transition-transform`}>▾</span>
+                  </summary>
+                  <div className="mt-2 max-h-[50vh] overflow-y-auto rounded-md">
+                    <table className={`w-full table-fixed border-separate border-spacing-y-0.5 text-left text-[11px] ${theme.rowText} opacity-80`}>
+                      {colgroup}
+                      {thead}
+                      <tbody>{rest.map(renderRow)}</tbody>
+                    </table>
+                  </div>
+                </details>
               )}
-            </tbody>
-          </table>
-        </div>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
