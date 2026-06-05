@@ -100,7 +100,7 @@ function DondeDormirPage() {
       </div>
 
 
-      <div className="relative mx-auto max-w-5xl px-4 pb-10 pt-5 md:px-6">
+      <div className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col overflow-hidden px-4 pt-3 pb-2 md:px-6 lg:overflow-visible">
         <header className="mb-5 flex items-center justify-between">
           <Link
             to="/"
