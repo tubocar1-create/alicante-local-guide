@@ -39,19 +39,20 @@ const CATEGORIES: Item[] = [
 ];
 
 // Map a free-text cuisine string to one of the 10 selector categories
-function matchCategory(cuisine: string | null): { label: string; emoji: string } {
-  const c = (cuisine ?? "").toLowerCase();
+function matchCategory(cuisine: string | null): { label: string; emoji: string } | null {
+  const c = (cuisine ?? "").toLowerCase().trim();
+  if (!c) return null;
   const has = (...keys: string[]) => keys.some((k) => c.includes(k));
-  if (has("paella", "arroz", "rice", "seafood", "fish", "pescado", "marisco")) return CATEGORIES[1];
-  if (has("italian", "pizza", "pasta")) return CATEGORIES[2];
-  if (has("japan", "sushi", "ramen", "asian", "chinese", "thai", "korean", "vietnam")) return CATEGORIES[3];
-  if (has("vegan", "vegetarian", "healthy", "salad", "saludable")) return CATEGORIES[4];
-  if (has("breakfast", "brunch", "desayuno")) return CATEGORIES[5];
-  if (has("burger", "fast", "kebab", "kebap", "hot dog", "fried chicken")) return CATEGORIES[6];
-  if (has("dessert", "ice cream", "cafe", "coffee", "bakery", "postre", "pasteler", "heladeria", "heladería")) return CATEGORIES[7];
-  if (has("indian", "lebanese", "mexican", "peruvian", "arab", "turkish", "moroccan", "latin")) return CATEGORIES[9];
-  if (has("spanish", "tapas", "mediterranean", "alicant")) return CATEGORIES[0];
-  return CATEGORIES[0];
+  if (has("paella", "arroz", "arrocer", "rice", "seafood", "fish", "pescado", "marisco", "marisquer")) return CATEGORIES[1];
+  if (has("italian", "italiano", "pizza", "pizzer", "pasta")) return CATEGORIES[2];
+  if (has("japan", "japon", "sushi", "ramen", "asian", "asiát", "asiat", "chin", "thai", "tailan", "korean", "corean", "vietnam", "wok", "poke")) return CATEGORIES[3];
+  if (has("vegan", "vegetarian", "healthy", "salad", "ensalad", "saludable", "bowl")) return CATEGORIES[4];
+  if (has("breakfast", "brunch", "desayuno", "tosta")) return CATEGORIES[5];
+  if (has("burger", "hamburg", "fast", "rápida", "rapida", "kebab", "kebap", "doner", "hot dog", "fried chicken", "pollo frito")) return CATEGORIES[6];
+  if (has("dessert", "postre", "ice cream", "helad", "cafe", "café", "coffee", "cafeter", "bakery", "pasteler", "panader", "chocolat", "gofre", "crep")) return CATEGORIES[7];
+  if (has("indian", "hindú", "hindu", "lebanese", "líban", "liban", "mexican", "mejican", "peruvian", "peruan", "arab", "árab", "turkish", "turco", "moroccan", "marroqu", "latin", "latino", "venezolan", "argentin", "colomb", "cuban", "brasil")) return CATEGORIES[9];
+  if (has("spanish", "español", "espanol", "tapas", "tapeo", "mediterran", "alicant", "valencian", "tradicional", "típica", "tipica", "casera", "tabern", "bodega", "asador", "parrilla", "brasa", "jamón", "jamon", "embutid")) return CATEGORIES[0];
+  return null;
 }
 
 // Imagen representativa por cocina (Unsplash, optimizado)
@@ -128,13 +129,16 @@ function SelectorDeComidasPage() {
   };
 
   return (
-    <div className="h-dvh bg-background text-foreground flex flex-col overflow-hidden">
+    <div className="h-dvh bg-[#3b2a1f] text-[#f5ead8] flex flex-col overflow-hidden">
       <div className="mx-auto w-full max-w-2xl px-3 pt-2 pb-2 flex-1 flex flex-col min-h-0">
-        <header className="flex justify-end mb-1">
+        <header className="flex items-center justify-between gap-2 mb-1">
+          <h1 className="text-sm sm:text-base font-semibold leading-tight text-[#f5ead8]">
+            Disfruta la experiencia de comer en Alicante
+          </h1>
           <button
             type="button"
             onClick={() => navigate({ to: "/" })}
-            className="text-xs text-primary underline underline-offset-2"
+            className="text-xs text-[#f5ead8]/80 underline underline-offset-2 shrink-0"
           >
             ← Volver
           </button>
@@ -152,7 +156,7 @@ function SelectorDeComidasPage() {
               {Array.from({ length: 8 }).map((_, i) => (
                 <div
                   key={i}
-                  className="shrink-0 w-44 h-44 rounded-2xl bg-muted animate-pulse"
+                  className="shrink-0 w-44 h-44 bg-white/10 animate-pulse"
                 />
               ))}
             </div>
@@ -166,7 +170,7 @@ function SelectorDeComidasPage() {
                     key={r.id}
                     type="button"
                     onClick={() => goRestaurant(r)}
-                    className="relative shrink-0 w-44 h-44 snap-start text-left rounded-2xl border bg-card overflow-hidden hover:shadow-md active:scale-[0.98] transition"
+                    className="relative shrink-0 w-44 h-44 snap-start text-left bg-black/30 overflow-hidden hover:shadow-md active:scale-[0.98] transition"
                   >
                     <img
                       src={r.cover_photo}
@@ -174,10 +178,12 @@ function SelectorDeComidasPage() {
                       loading="lazy"
                       className="absolute inset-0 w-full h-full object-cover"
                     />
-                    <div className="absolute top-1.5 left-1.5 flex items-center gap-1 px-2 py-0.5 rounded-full bg-background/85 backdrop-blur text-[10px] font-semibold shadow-sm">
-                      <span className="text-sm leading-none">{cat.emoji}</span>
-                      <span className="line-clamp-1">{cat.label}</span>
-                    </div>
+                    {cat && (
+                      <div className="absolute top-1.5 left-1.5 flex items-center gap-1 px-2 py-0.5 bg-black/70 text-white text-[10px] font-semibold shadow-sm">
+                        <span className="text-sm leading-none">{cat.emoji}</span>
+                        <span className="line-clamp-1">{cat.label}</span>
+                      </div>
+                    )}
                     <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-2 pt-6 text-white">
                       <div className="text-sm font-semibold leading-tight line-clamp-2">
                         {r.name}
