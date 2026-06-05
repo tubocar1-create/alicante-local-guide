@@ -31,15 +31,16 @@ const CATEGORIES: FoodItem[] = [
 ];
 
 const BADGES = [
-  { keys: ["paella", "arroz", "arrocer", "rice", "seafood", "fish", "pescado", "marisco", "marisquer"], label: "Arroces y pescado", emoji: "🍤" },
-  { keys: ["italian", "italiano", "pizza", "pizzer", "pasta"], label: "Italiano", emoji: "🍕" },
-  { keys: ["japan", "japon", "sushi", "ramen", "asian", "asiát", "asiat", "chin", "thai", "tailan", "korean", "corean", "vietnam", "wok", "poke"], label: "Japonés / Asiático", emoji: "🍣" },
-  { keys: ["vegan", "vegetarian", "healthy", "salad", "ensalad", "saludable", "bowl"], label: "Vegano / Saludable", emoji: "🌱" },
-  { keys: ["breakfast", "brunch", "desayuno", "tosta"], label: "Desayuno / Brunch", emoji: "🥐" },
-  { keys: ["burger", "hamburg", "fast", "rápida", "rapida", "kebab", "kebap", "doner", "hot dog", "fried chicken", "pollo frito"], label: "Comida rápida", emoji: "🍔" },
-  { keys: ["dessert", "postre", "ice cream", "helad", "cafe", "café", "coffee", "cafeter", "bakery", "pasteler", "panader", "chocolat", "gofre", "crep"], label: "Postres / Cafetería", emoji: "🍰" },
-  { keys: ["indian", "hindú", "hindu", "lebanese", "líban", "liban", "mexican", "mejican", "peruvian", "peruan", "arab", "árab", "turkish", "turco", "moroccan", "marroqu", "latin", "latino", "venezolan", "argentin", "colomb", "cuban", "brasil"], label: "Internacional", emoji: "🌍" },
-  { keys: ["spanish", "español", "espanol", "tapas", "tapeo", "mediterran", "alicant", "valencian", "tradicional", "típica", "tipica", "casera", "tabern", "bodega", "asador", "parrilla", "brasa", "jamón", "jamon", "embutid"], label: "Cocina típica", emoji: "🥘" },
+  { keys: ["typical"], label: "Cocina típica", emoji: "🥘" },
+  { keys: ["rice_fish"], label: "Arroces y pescado", emoji: "🍤" },
+  { keys: ["italian", "pizzas"], label: "Italiano", emoji: "🍕" },
+  { keys: ["asian"], label: "Japonés / Asiático", emoji: "🍣" },
+  { keys: ["vegan"], label: "Vegano / Saludable", emoji: "🌱" },
+  { keys: ["brunch"], label: "Desayuno / Brunch", emoji: "🥐" },
+  { keys: ["fast_food", "fast_food:burger", "fast_food:pizza", "fast_food:kebab", "fast_food:chicken", "fast_food:mexican", "fast_food:montaditos"], label: "Comida rápida", emoji: "🍔" },
+  { keys: ["desserts"], label: "Postres / Cafetería", emoji: "🍰" },
+  { keys: ["cheap"], label: "Barato y rico", emoji: "💸" },
+  { keys: ["international"], label: "Internacional", emoji: "🌍" },
 ];
 
 function SelectorDeComidasPage() {
