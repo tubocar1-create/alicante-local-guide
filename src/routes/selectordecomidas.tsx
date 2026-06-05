@@ -1,7 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { fetchListings, type Listing } from "@/lib/overpass-listings";
 import { useUserLocation, distanceKm } from "@/hooks/useUserLocation";
+import {
+  getRandomRestaurantsWithPhotos,
+  type RandomRestaurant,
+} from "@/lib/restaurants.functions";
 
 export const Route = createFileRoute("/selectordecomidas")({
   head: () => ({
