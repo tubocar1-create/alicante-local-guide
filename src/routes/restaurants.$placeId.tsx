@@ -192,12 +192,12 @@ function RestaurantDashboard() {
   const heroClosesAt = heroOpeningStatus?.status === "open" ? heroOpeningStatus.closesAt : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100">
-      <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-white/10 bg-slate-950/80 px-4 py-3 backdrop-blur">
+    <div className="flex h-[100dvh] flex-col bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-slate-100">
+      <header className="z-10 flex shrink-0 items-center gap-3 border-b border-white/10 bg-slate-950/80 px-4 py-3 backdrop-blur">
         <Link
-          to="/"
+          to="/selectordecomidas"
           className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 hover:bg-white/10"
-          aria-label="Volver al listado"
+          aria-label="Volver al selector"
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>
@@ -206,7 +206,7 @@ function RestaurantDashboard() {
         </h1>
       </header>
 
-      <main className="w-full px-4 py-5">
+      <main className="flex-1 overflow-y-auto px-4 py-5">
         {!place && (
           <p className="text-sm text-slate-400">No se encontró este restaurante en la base.</p>
         )}
