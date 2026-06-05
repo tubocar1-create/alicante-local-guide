@@ -12,6 +12,8 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { getDestinationComment } from "@/lib/destination-comment.functions";
+import kiwiLogo from "@/assets/kiwi-logo.png.asset.json";
+import aviasalesLogo from "@/assets/aviasales-logo.png.asset.json";
 
 // ---------- Tipos ----------
 type Flight = {
@@ -906,11 +908,10 @@ function DestinationPopup({
           href={aviasalesUrl}
           target="_blank"
           rel="noopener noreferrer sponsored"
-          className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-amber-500 px-3 py-2.5 text-[13px] font-semibold text-slate-900 transition hover:bg-amber-400"
+          className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-white px-3 py-2.5 text-[13px] font-semibold text-slate-900 shadow-sm transition hover:bg-slate-100"
         >
-          <Plane className="h-4 w-4" />
-          {flight ? `Buscar ${originIata} → ${iata} el ${flight.fechaLabel}` : "Buscar y comparar vuelos"}
-          <ExternalLink className="h-3 w-3 opacity-70" />
+          <span>Reservar por</span>
+          <img src={aviasalesLogo.url} alt="Aviasales" className="h-5 w-auto object-contain" />
         </a>
 
         {isUK && (
@@ -918,11 +919,10 @@ function DestinationPopup({
             href={kiwiUrl}
             target="_blank"
             rel="noopener noreferrer sponsored"
-            className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-violet-500 px-3 py-2.5 text-[13px] font-semibold text-white transition hover:bg-violet-400"
+            className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-white px-3 py-2.5 text-[13px] font-semibold text-slate-900 shadow-sm transition hover:bg-slate-100"
           >
-            <Plane className="h-4 w-4" />
-            Buscar también en Kiwi (UK)
-            <ExternalLink className="h-3 w-3 opacity-70" />
+            <span>Reservar por</span>
+            <img src={kiwiLogo.url} alt="Kiwi.com" className="h-5 w-auto object-contain" />
           </a>
         )}
       </div>
