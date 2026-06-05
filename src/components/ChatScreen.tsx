@@ -3763,12 +3763,14 @@ function CategoryTableInner({
   onClose,
   theme,
   originLabel,
+  closeHref,
 }: {
   ranked: { c: PlaceCardData; d: number }[];
   loading: boolean;
   onClose: () => void;
   theme: (typeof CATEGORY_THEMES)[keyof typeof CATEGORY_THEMES];
   originLabel: CategoryTableOriginLabel;
+  closeHref: string;
 }) {
   const navigate = useNavigate();
 
