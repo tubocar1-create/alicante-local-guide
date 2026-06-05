@@ -838,8 +838,15 @@ function DestinationPopup({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  const skyUrl = `https://www.skyscanner.es/transporte/vuelos/${originIata.toLowerCase()}/${iata.toLowerCase()}/?adultsv2=1&cabinclass=economy&childrenv2=&ref=home&rtn=0&preferdirects=false&outboundaltsenabled=false&inboundaltsenabled=false`;
-  const airUrl = airlineUrl(airlineCode);
+  const aviasalesUrl = (() => {
+    const f = flight?.fecha; // dd/mm/yyyy
+    if (f && /^\d{2}\/\d{2}\/\d{4}$/.test(f)) {
+      const dd = f.slice(0, 2);
+      const mm = f.slice(3, 5);
+      return `https://www.aviasales.com/search/${originIata}${dd}${mm}${iata}1?marker=732656`;
+    }
+    return "https://aviasales.tpo.mx/RkEQT2AP";
+  })();
 
   return (
     <div
@@ -918,44 +925,13 @@ function DestinationPopup({
           {!loading && !error && <p>{text}</p>}
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <a
-            href={airUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-slate-900 transition hover:opacity-90"
-            style={{ background: colorFor(airlineCode, 0) }}
-          >
-            <Plane className="h-3.5 w-3.5" />
-            {airlineName(airlineCode)}
-            <ExternalLink className="h-3 w-3 opacity-70" />
-          </a>
-          <a
-            href={skyUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-sky-600 px-3 py-2 text-[12px] font-semibold text-white transition hover:bg-sky-500"
-          >
-            Skyscanner
-            <ExternalLink className="h-3 w-3 opacity-70" />
-          </a>
-        </div>
         <a
-          href={(() => {
-            const f = flight?.fecha; // dd/mm/yyyy
-            if (f && /^\d{2}\/\d{2}\/\d{4}$/.test(f)) {
-              const dd = f.slice(0, 2);
-              const mm = f.slice(3, 5);
-              const yyyy = f.slice(6, 10);
-              return `https://www.aviasales.com/search/${originIata}${dd}${mm}${iata}1?marker=732656`;
-            }
-            return "https://aviasales.tpo.mx/RkEQT2AP";
-          })()}
+          href={aviasalesUrl}
           target="_blank"
           rel="noopener noreferrer sponsored"
-          className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-amber-500 px-3 py-2 text-[12px] font-semibold text-slate-900 transition hover:bg-amber-400"
+          className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-amber-500 px-3 py-2.5 text-[13px] font-semibold text-slate-900 transition hover:bg-amber-400"
         >
-          <Plane className="h-3.5 w-3.5" />
+          <Plane className="h-4 w-4" />
           {flight ? `Buscar ${originIata} → ${iata} el ${flight.fechaLabel}` : "Buscar y comparar vuelos"}
           <ExternalLink className="h-3 w-3 opacity-70" />
         </a>
