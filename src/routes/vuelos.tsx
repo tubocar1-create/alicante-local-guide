@@ -10,6 +10,8 @@ import type { Feature, FeatureCollection, Geometry } from "geojson";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { Plus, Maximize2 } from "lucide-react";
 import { trackPageView } from "@/lib/gtag";
+import kiwiLogo from "@/assets/kiwi-logo.png.asset.json";
+import aviasalesLogo from "@/assets/aviasales-logo.png.asset.json";
 
 
 export const Route = createFileRoute("/vuelos")({
