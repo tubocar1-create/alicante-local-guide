@@ -133,7 +133,7 @@ export default function FoodSelector({
                     key={r.id}
                     type="button"
                     onClick={() => goRestaurant(r)}
-                    className="relative shrink-0 w-44 h-44 snap-start text-left bg-black/30 overflow-hidden hover:shadow-md active:scale-[0.98] transition"
+                    className="relative shrink-0 w-44 h-44 snap-start text-left bg-black/30 overflow-hidden hover:shadow-md active:scale-[0.98] transition border-2 border-[#2c1810]"
                   >
                     <img
                       src={r.cover_photo}
@@ -177,7 +177,7 @@ function CategoryButton({
     <button
       type="button"
       onClick={() => onPick(item)}
-      className="relative flex flex-col items-center justify-center rounded-2xl border bg-card hover:bg-accent/40 active:scale-[0.97] text-center shadow-sm w-full h-full overflow-hidden p-1"
+      className="relative flex flex-col items-center justify-center rounded-2xl border-2 border-[#2c1810] bg-card hover:bg-accent/40 active:scale-[0.97] text-center shadow-sm w-full h-full overflow-hidden p-1"
     >
       <span className="leading-none" style={{ lineHeight: 1 }}>
         <span style={{ fontSize: "clamp(2.5rem, 11vw, 5rem)" }}>{item.emoji}</span>
