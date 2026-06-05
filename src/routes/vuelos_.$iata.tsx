@@ -810,6 +810,23 @@ function DestinationPopup({
     return "https://aviasales.tpo.mx/RkEQT2AP";
   })();
 
+  const isUK = IATA_COUNTRY[iata] === "GB" || IATA_COUNTRY[originIata] === "GB";
+  const kiwiUrl = (() => {
+    const f = flight?.fecha; // dd/mm/yyyy
+    if (f && /^\d{2}\/\d{2}\/\d{4}$/.test(f)) {
+      const dd = f.slice(0, 2);
+      const mm = f.slice(3, 5);
+      const yyyy = f.slice(6, 10);
+      const params = new URLSearchParams({
+        from: originIata,
+        to: iata,
+        departure: `${yyyy}-${mm}-${dd}`,
+      });
+      return `https://kiwi.tpo.mx/mlF5nkj9?${params.toString()}`;
+    }
+    return "https://kiwi.tpo.mx/mlF5nkj9";
+  })();
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
