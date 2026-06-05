@@ -55,7 +55,7 @@ function ComidaRapidaPage() {
       cuisineKeys={FAST_KEYS}
       badgeCategories={BADGES}
       backTo="/selectordecomidas"
-      bgClass="bg-[#f3e3c2]"
+      bgClass="bg-[#e6f4fb]"
     />
   );
 }

@@ -46,7 +46,7 @@ export default function FoodSelector({
   cuisineKeys,
   backTo = "/",
   badgeCategories,
-  bgClass = "bg-[#d9bd87]",
+  bgClass = "bg-[#e6f4fb]",
 }: Props) {
   const navigate = useNavigate();
   const { state } = useUserLocation();
@@ -107,13 +107,13 @@ export default function FoodSelector({
           </button>
         </header>
 
-        <section className="mb-3 shrink-0">
+        <section className="mb-6 shrink-0">
           {populares.length === 0 ? (
             <div className="flex gap-2 overflow-x-auto pb-1 -mx-3 px-3 no-scrollbar">
               {Array.from({ length: 8 }).map((_, i) => (
                 <div
                   key={i}
-                  className="shrink-0 w-44 h-44 bg-black/10 animate-pulse"
+                  className="shrink-0 w-40 h-40 bg-black/10 animate-pulse rounded-2xl"
                 />
               ))}
             </div>
@@ -127,7 +127,7 @@ export default function FoodSelector({
                     key={r.id}
                     type="button"
                     onClick={() => goRestaurant(r)}
-                    className="relative shrink-0 w-44 h-44 snap-start text-left bg-black/30 overflow-hidden hover:shadow-md active:scale-[0.98] transition border-2 border-[#2c1810]"
+                    className="relative shrink-0 w-40 h-40 snap-start text-left bg-black/30 overflow-hidden hover:shadow-md active:scale-[0.98] transition border-2 border-[#2c1810] rounded-2xl"
                   >
                     <img
                       src={r.cover_photo}
@@ -136,7 +136,7 @@ export default function FoodSelector({
                       className="absolute inset-0 w-full h-full object-cover"
                     />
                     {cat && (
-                      <div className="absolute top-1.5 left-1.5 flex items-center gap-1 px-2 py-0.5 bg-black/70 text-white text-[10px] font-semibold shadow-sm">
+                      <div className="absolute top-1.5 left-1.5 flex items-center gap-1 px-2 py-0.5 bg-black/70 text-white text-[10px] font-semibold shadow-sm rounded-full">
                         <span className="text-sm leading-none">{cat.emoji}</span>
                         <span className="line-clamp-1">{cat.label}</span>
                       </div>
@@ -181,7 +181,7 @@ function CategoryButton({
       className="relative flex flex-col items-center justify-center rounded-2xl border-2 border-[#2c1810] bg-card hover:bg-accent/40 active:scale-[0.97] text-center shadow-sm w-full h-full overflow-hidden p-1"
     >
       <span className="leading-none" style={{ lineHeight: 1 }}>
-        <span style={{ fontSize: "clamp(2.5rem, 11vw, 5rem)" }}>{item.emoji}</span>
+        <span style={{ fontSize: "clamp(1.5rem, 7vw, 2.75rem)" }}>{item.emoji}</span>
       </span>
       <span className="absolute bottom-1 left-1 right-1 text-[10px] font-semibold leading-tight truncate">
         {item.label}
