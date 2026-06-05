@@ -943,8 +943,22 @@ function DestinationPopup({
           href={(() => {
             const f = flight?.fecha; // dd/mm/yyyy
             if (f && /^\d{2}\/\d{2}\/\d{4}$/.test(f)) {
-              const ddmm = `${f.slice(0, 2)}${f.slice(3, 5)}`;
-              return `https://www.aviasales.com/search/${originIata}${ddmm}${iata}1?marker=732656`;
+              const dd = f.slice(0, 2);
+              const mm = f.slice(3, 5);
+              const yyyy = f.slice(6, 10);
+              const iso = `${yyyy}-${mm}-${dd}`;
+              const params = new URLSearchParams({
+                origin_iata: originIata,
+                destination_iata: iata,
+                depart_date: iso,
+                adults: "1",
+                children: "0",
+                infants: "0",
+                trip_class: "Y",
+                marker: "732656",
+                with_request: "true",
+              });
+              return `https://www.aviasales.com/search?${params.toString()}`;
             }
             return "https://aviasales.tpo.mx/RkEQT2AP";
           })()}
