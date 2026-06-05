@@ -940,13 +940,20 @@ function DestinationPopup({
           </a>
         </div>
         <a
-          href="https://aviasales.tpo.mx/RkEQT2AP"
+          href={(() => {
+            const f = flight?.fecha; // dd/mm/yyyy
+            if (f && /^\d{2}\/\d{2}\/\d{4}$/.test(f)) {
+              const ddmm = `${f.slice(0, 2)}${f.slice(3, 5)}`;
+              return `https://www.aviasales.com/search/${originIata}${ddmm}${iata}1?marker=732656`;
+            }
+            return "https://aviasales.tpo.mx/RkEQT2AP";
+          })()}
           target="_blank"
           rel="noopener noreferrer sponsored"
           className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-amber-500 px-3 py-2 text-[12px] font-semibold text-slate-900 transition hover:bg-amber-400"
         >
           <Plane className="h-3.5 w-3.5" />
-          Buscar y comparar vuelos
+          {flight ? `Buscar ${originIata} → ${iata} el ${flight.fecha.slice(0, 5)}` : "Buscar y comparar vuelos"}
           <ExternalLink className="h-3 w-3 opacity-70" />
         </a>
       </div>

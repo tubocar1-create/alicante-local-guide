@@ -1534,13 +1534,35 @@ function CityDetail({
             </a>
           </div>
           <a
-            href="https://aviasales.tpo.mx/RkEQT2AP"
+            href={(() => {
+              const dates = Array.from(city.days)
+                .filter((d) => /^\d{2}\/\d{2}\/\d{4}$/.test(d))
+                .sort((a, b) => {
+                  const pa = a.split("/"), pb = b.split("/");
+                  return (
+                    new Date(+pa[2], +pa[1] - 1, +pa[0]).getTime() -
+                    new Date(+pb[2], +pb[1] - 1, +pb[0]).getTime()
+                  );
+                });
+              const today = new Date(); today.setHours(0, 0, 0, 0);
+              const next = dates.find((d) => {
+                const p = d.split("/");
+                return new Date(+p[2], +p[1] - 1, +p[0]).getTime() >= today.getTime();
+              }) ?? dates[0];
+              if (next) {
+                const ddmm = `${next.slice(0, 2)}${next.slice(3, 5)}`;
+                const origin = flightType === "L" ? city.iata : "ALC";
+                const dest = flightType === "L" ? "ALC" : city.iata;
+                return `https://www.aviasales.com/search/${origin}${ddmm}${dest}1?marker=732656`;
+              }
+              return "https://aviasales.tpo.mx/RkEQT2AP";
+            })()}
             target="_blank"
             rel="noopener noreferrer sponsored"
             className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-amber-500 px-3 py-2 text-[11px] font-semibold text-slate-900 transition hover:bg-amber-400"
           >
             <Plane className="h-3 w-3" />
-            Buscar y comparar vuelos
+            {flightType === "L" ? `Buscar ${city.iata} → ALC` : `Buscar ALC → ${city.iata}`}
             <ExternalLink className="h-3 w-3 opacity-70" />
           </a>
         </div>
