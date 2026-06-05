@@ -1550,10 +1550,24 @@ function CityDetail({
                 return new Date(+p[2], +p[1] - 1, +p[0]).getTime() >= today.getTime();
               }) ?? dates[0];
               if (next) {
-                const ddmm = `${next.slice(0, 2)}${next.slice(3, 5)}`;
+                const dd = next.slice(0, 2);
+                const mm = next.slice(3, 5);
+                const yyyy = next.slice(6, 10);
+                const iso = `${yyyy}-${mm}-${dd}`;
                 const origin = flightType === "L" ? city.iata : "ALC";
                 const dest = flightType === "L" ? "ALC" : city.iata;
-                return `https://www.aviasales.com/search/${origin}${ddmm}${dest}1?marker=732656`;
+                const params = new URLSearchParams({
+                  origin_iata: origin,
+                  destination_iata: dest,
+                  depart_date: iso,
+                  adults: "1",
+                  children: "0",
+                  infants: "0",
+                  trip_class: "Y",
+                  marker: "732656",
+                  with_request: "true",
+                });
+                return `https://www.aviasales.com/search?${params.toString()}`;
               }
               return "https://aviasales.tpo.mx/RkEQT2AP";
             })()}
