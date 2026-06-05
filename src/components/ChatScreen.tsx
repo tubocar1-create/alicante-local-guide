@@ -2647,9 +2647,14 @@ function DrinksTableInner({ ranked, loading, originLabel, onClose }: {
     }
   };
 
+  const carouselPlaces = useMemo(
+    () => ranked.filter((r) => r.c.placeId && r.c.coverPhoto).slice(0, 60),
+    [ranked],
+  );
+
   return (
     <div
-      className="fixed inset-0 z-[60] overflow-y-auto text-amber-50"
+      className="fixed inset-0 z-[60] flex flex-col overflow-hidden text-amber-50"
       style={{
         background:
           "linear-gradient(180deg, #1a0f05 0%, #2a1607 50%, #120800 100%)",
@@ -2660,8 +2665,8 @@ function DrinksTableInner({ ranked, loading, originLabel, onClose }: {
         <div className="absolute bottom-0 right-0 h-[24rem] w-[24rem] rounded-full bg-rose-500/[0.06] blur-3xl" />
       </div>
 
-      <div className="relative mx-auto max-w-5xl px-4 pb-10 pt-5 md:px-6">
-        <header className="mb-5 flex items-center justify-between">
+      <div className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col overflow-hidden px-4 pt-5 pb-2 md:px-6">
+        <header className="mb-2 flex shrink-0 items-center justify-between">
           <button
             type="button"
             onClick={onClose}
@@ -2688,7 +2693,7 @@ function DrinksTableInner({ ranked, loading, originLabel, onClose }: {
           </div>
         </header>
 
-        <div className="mb-5">
+        <div className="mb-2 shrink-0">
           <p className="text-[10px] uppercase tracking-[0.3em] text-amber-400/80">
             Dashboard nocturno
           </p>
@@ -2703,193 +2708,239 @@ function DrinksTableInner({ ranked, loading, originLabel, onClose }: {
           </p>
         </div>
 
-        {(() => {
-          const opens: typeof ranked = [];
-          const rest: typeof ranked = [];
-          for (const r of ranked) {
-            const status = resolveOpeningStatus(r.c.openingHours ?? undefined);
-            const isOpen =
-              status.status === "open" ||
-              (status.status === "unknown" && r.c.openNow === true);
-            if (isOpen) opens.push(r);
-            else rest.push(r);
-          }
-          const renderRow = ({ c, d }: typeof ranked[number], i: number) => {
-            const status = resolveOpeningStatus(c.openingHours ?? undefined);
-            const closesAt =
-              (status.status === "open" ? status.closesAt : null) ??
-              getTodayClosingTime(c.openingHours ?? undefined) ??
-              c.closesAt ??
-              null;
-            const isOpen =
-              status.status === "open" ||
-              (status.status === "unknown" && c.openNow === true);
-            const isClosed =
-              status.status === "closed" ||
-              (status.status === "unknown" && c.openNow === false);
-            const price = priceLabel(c.priceLevel);
-            const priceFromRange =
-              c.priceRangeMin && c.priceRangeMax
-                ? `${c.priceRangeMin}–${c.priceRangeMax} €`
-                : c.priceRangeMin
-                  ? `~${c.priceRangeMin} €`
-                  : null;
-            const priceAvg =
-              priceFromRange ??
-              (price.avg !== "s/d" ? price.avg : guessDrinksPrice(c));
-            const priceShort = priceAvg.replace(/[~\s€]/g, "").replace("–", "-") + "€";
-            const meters = Number.isFinite(d) ? Math.round(d * 1000) : null;
-            const distLabel =
-              meters == null
-                ? "—"
-                : meters >= 1000
-                  ? `${(meters / 1000).toFixed(1)}km`
-                  : `${meters}m`;
+        {carouselPlaces.length > 0 && (
+          <section className="mb-3 shrink-0">
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 md:-mx-6 md:px-6 no-scrollbar snap-x">
+              {carouselPlaces.map(({ c }) => {
+                const price = priceLabel(c.priceLevel);
+                const priceFromRange =
+                  c.priceRangeMin && c.priceRangeMax
+                    ? `${c.priceRangeMin}–${c.priceRangeMax} €`
+                    : c.priceRangeMin
+                      ? `~${c.priceRangeMin} €`
+                      : null;
+                const priceAvg =
+                  priceFromRange ??
+                  (price.avg !== "s/d" ? price.avg : guessDrinksPrice(c));
+                return (
+                  <Link
+                    key={c.placeId}
+                    to="/restaurants/$placeId"
+                    params={{ placeId: c.placeId! }}
+                    className="relative shrink-0 w-44 h-44 snap-start text-left bg-black/30 overflow-hidden hover:shadow-md active:scale-[0.98] transition border-2 border-amber-100/20 rounded-md"
+                  >
+                    <img
+                      src={c.coverPhoto!}
+                      alt={c.name}
+                      loading="lazy"
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-2 pt-6 text-white">
+                      <div className="text-sm font-semibold leading-tight line-clamp-2">
+                        {c.name}
+                      </div>
+                      {priceAvg && (
+                        <div className="text-[11px] opacity-90 mt-0.5">
+                          {priceAvg}
+                        </div>
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
-            const nameNode = (
-              <span className="flex items-center gap-1 text-amber-50 hover:text-amber-300">
-                <span className="text-[13px] leading-none">{drinksEmoji(c)}</span>
-                <span className="min-w-0 truncate text-[11px] font-medium">
-                  {c.name}
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto rounded-2xl border border-amber-100/[0.08] bg-[rgba(20,10,4,0.7)] p-2 backdrop-blur-xl md:p-4">
+          {(() => {
+            const opens: typeof ranked = [];
+            const rest: typeof ranked = [];
+            for (const r of ranked) {
+              const status = resolveOpeningStatus(r.c.openingHours ?? undefined);
+              const isOpen =
+                status.status === "open" ||
+                (status.status === "unknown" && r.c.openNow === true);
+              if (isOpen) opens.push(r);
+              else rest.push(r);
+            }
+            const renderRow = ({ c, d }: typeof ranked[number], i: number) => {
+              const status = resolveOpeningStatus(c.openingHours ?? undefined);
+              const closesAt =
+                (status.status === "open" ? status.closesAt : null) ??
+                getTodayClosingTime(c.openingHours ?? undefined) ??
+                c.closesAt ??
+                null;
+              const isOpen =
+                status.status === "open" ||
+                (status.status === "unknown" && c.openNow === true);
+              const isClosed =
+                status.status === "closed" ||
+                (status.status === "unknown" && c.openNow === false);
+              const price = priceLabel(c.priceLevel);
+              const priceFromRange =
+                c.priceRangeMin && c.priceRangeMax
+                  ? `${c.priceRangeMin}–${c.priceRangeMax} €`
+                  : c.priceRangeMin
+                    ? `~${c.priceRangeMin} €`
+                    : null;
+              const priceAvg =
+                priceFromRange ??
+                (price.avg !== "s/d" ? price.avg : guessDrinksPrice(c));
+              const priceShort = priceAvg.replace(/[~\s€]/g, "").replace("–", "-") + "€";
+              const meters = Number.isFinite(d) ? Math.round(d * 1000) : null;
+              const distLabel =
+                meters == null
+                  ? "—"
+                  : meters >= 1000
+                    ? `${(meters / 1000).toFixed(1)}km`
+                    : `${meters}m`;
+
+              const nameNode = (
+                <span className="flex items-center gap-1 text-amber-50 hover:text-amber-300">
+                  <span className="text-[13px] leading-none">{drinksEmoji(c)}</span>
+                  <span className="min-w-0 truncate text-[11px] font-medium">
+                    {c.name}
+                  </span>
                 </span>
-              </span>
+              );
+              return (
+                <tr
+                  key={i}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Abrir ficha de ${c.name}`}
+                  onClick={() => openDashboard(c)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      openDashboard(c);
+                    }
+                  }}
+                  className="cursor-pointer bg-white/[0.02] transition hover:bg-white/[0.06] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+                >
+                  <td className="rounded-l-md px-1.5 py-1 align-middle">
+                    {c.placeId ? (
+                      <Link
+                        to="/restaurants/$placeId"
+                        params={{ placeId: c.placeId }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          markRestaurantReturn();
+                          stashRestaurantPreview(c);
+                        }}
+                        className="block"
+                      >
+                        {nameNode}
+                      </Link>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openDashboard(c);
+                        }}
+                        disabled
+                        className="block w-full cursor-not-allowed text-left opacity-60"
+                      >
+                        {nameNode}
+                      </button>
+                    )}
+                  </td>
+                  <td className="px-1 py-1 align-middle">
+                    {isOpen ? (
+                      <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500/15 px-1 py-0.5 text-[9px] font-semibold text-emerald-300">
+                        ● Abre
+                      </span>
+                    ) : isClosed ? (
+                      <span className="inline-flex items-center gap-0.5 rounded-full bg-rose-500/15 px-1 py-0.5 text-[9px] font-semibold text-rose-300">
+                        ● Cerr
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/15 px-1 py-0.5 text-[9px] font-semibold text-amber-300/80">
+                        s/d
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-1 py-1 text-center align-middle font-mono text-[10px] text-amber-100/80">
+                    {closesAt ?? "—"}
+                  </td>
+                  <td className="px-1 py-1 text-right align-middle font-mono text-[10px] text-amber-50">
+                    {priceShort}
+                  </td>
+                  <td className="rounded-r-md px-1 py-1 text-right align-middle font-mono text-[11px] font-semibold tabular-nums text-amber-50">
+                    {distLabel}
+                  </td>
+                </tr>
+              );
+            };
+            const colgroup = (
+              <colgroup>
+                <col />
+                <col className="w-[58px]" />
+                <col className="w-[42px]" />
+                <col className="w-[46px]" />
+                <col className="w-[54px]" />
+              </colgroup>
+            );
+            const thead = (
+              <thead>
+                <tr className="text-[9px] uppercase tracking-[0.12em] text-amber-200/50">
+                  <th className="px-1 py-1 font-medium">Local</th>
+                  <th className="px-1 py-1 font-medium">Estado</th>
+                  <th className="px-1 py-1 font-medium">Cierra</th>
+                  <th className="px-1 py-1 text-right font-medium">€/copa</th>
+                  <th className="px-1 py-1 text-right font-medium">Dist.</th>
+                </tr>
+              </thead>
             );
             return (
-              <tr
-                key={i}
-                role="button"
-                tabIndex={0}
-                aria-label={`Abrir ficha de ${c.name}`}
-                onClick={() => openDashboard(c)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    openDashboard(c);
-                  }
-                }}
-                className="cursor-pointer bg-white/[0.02] transition hover:bg-white/[0.06] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
-              >
-                <td className="rounded-l-md px-1.5 py-1 align-middle">
-                  {c.placeId ? (
-                    <Link
-                      to="/restaurants/$placeId"
-                      params={{ placeId: c.placeId }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        markRestaurantReturn();
-                        stashRestaurantPreview(c);
-                      }}
-                      className="block"
-                    >
-                      {nameNode}
-                    </Link>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openDashboard(c);
-                      }}
-                      disabled
-                      className="block w-full cursor-not-allowed text-left opacity-60"
-                    >
-                      {nameNode}
-                    </button>
-                  )}
-                </td>
-                <td className="px-1 py-1 align-middle">
-                  {isOpen ? (
-                    <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-500/15 px-1 py-0.5 text-[9px] font-semibold text-emerald-300">
-                      ● Abre
-                    </span>
-                  ) : isClosed ? (
-                    <span className="inline-flex items-center gap-0.5 rounded-full bg-rose-500/15 px-1 py-0.5 text-[9px] font-semibold text-rose-300">
-                      ● Cerr
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/15 px-1 py-0.5 text-[9px] font-semibold text-amber-300/80">
-                      s/d
-                    </span>
-                  )}
-                </td>
-                <td className="px-1 py-1 text-center align-middle font-mono text-[10px] text-amber-100/80">
-                  {closesAt ?? "—"}
-                </td>
-                <td className="px-1 py-1 text-right align-middle font-mono text-[10px] text-amber-50">
-                  {priceShort}
-                </td>
-                <td className="rounded-r-md px-1 py-1 text-right align-middle font-mono text-[11px] font-semibold tabular-nums text-amber-50">
-                  {distLabel}
-                </td>
-              </tr>
-            );
-          };
-          const colgroup = (
-            <colgroup>
-              <col />
-              <col className="w-[58px]" />
-              <col className="w-[42px]" />
-              <col className="w-[46px]" />
-              <col className="w-[54px]" />
-            </colgroup>
-          );
-          const thead = (
-            <thead>
-              <tr className="text-[9px] uppercase tracking-[0.12em] text-amber-200/50">
-                <th className="px-1 py-1 font-medium">Local</th>
-                <th className="px-1 py-1 font-medium">Estado</th>
-                <th className="px-1 py-1 font-medium">Cierra</th>
-                <th className="px-1 py-1 text-right font-medium">€/copa</th>
-                <th className="px-1 py-1 text-right font-medium">Dist.</th>
-              </tr>
-            </thead>
-          );
-          return (
-            <div className="rounded-2xl border border-amber-100/[0.08] bg-[rgba(20,10,4,0.7)] p-2 backdrop-blur-xl md:p-4">
-              <div className="mb-2 flex items-baseline justify-between gap-2">
-                <p className="text-[12px] font-semibold text-amber-50">
-                  {loading
-                    ? "Cargando…"
-                    : `${opens.length} abiertos · ${ranked.length} totales`}
-                </p>
-                <p className="text-[9px] uppercase tracking-[0.18em] text-amber-400/70">
-                  estado · cierre · precio · dist.
-                </p>
+              <div>
+                <div className="mb-2 flex items-baseline justify-between gap-2">
+                  <p className="text-[12px] font-semibold text-amber-50">
+                    {loading
+                      ? "Cargando…"
+                      : `${opens.length} abiertos · ${ranked.length} totales`}
+                  </p>
+                  <p className="text-[9px] uppercase tracking-[0.18em] text-amber-400/70">
+                    estado · cierre · precio · dist.
+                  </p>
+                </div>
+
+                <table className="w-full table-fixed border-separate border-spacing-y-0.5 text-left text-[11px] text-amber-50">
+                  {colgroup}
+                  {thead}
+                  <tbody>
+                    {opens.map(renderRow)}
+                    {!loading && opens.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="px-2 py-4 text-center text-xs text-amber-200/50">
+                          Ninguno abierto ahora mismo.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+
+                {rest.length > 0 && (
+                  <details className="mt-3 group">
+                    <summary className="cursor-pointer list-none rounded-md border border-amber-100/[0.08] bg-white/[0.03] px-3 py-2 text-[11px] font-semibold text-amber-200/80 hover:bg-white/[0.06] flex items-center justify-between">
+                      <span>Cerrados ahora / sin datos · {rest.length}</span>
+                      <span className="text-[10px] text-amber-300/60 group-open:rotate-180 transition-transform">▾</span>
+                    </summary>
+                    <div className="mt-2 max-h-[50vh] overflow-y-auto rounded-md">
+                      <table className="w-full table-fixed border-separate border-spacing-y-0.5 text-left text-[11px] text-amber-50/80">
+                        {colgroup}
+                        {thead}
+                        <tbody>{rest.map(renderRow)}</tbody>
+                      </table>
+                    </div>
+                  </details>
+                )}
               </div>
-
-              <table className="w-full table-fixed border-separate border-spacing-y-0.5 text-left text-[11px] text-amber-50">
-                {colgroup}
-                {thead}
-                <tbody>
-                  {opens.map(renderRow)}
-                  {!loading && opens.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="px-2 py-4 text-center text-xs text-amber-200/50">
-                        Ninguno abierto ahora mismo.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-
-              {rest.length > 0 && (
-                <details className="mt-3 group">
-                  <summary className="cursor-pointer list-none rounded-md border border-amber-100/[0.08] bg-white/[0.03] px-3 py-2 text-[11px] font-semibold text-amber-200/80 hover:bg-white/[0.06] flex items-center justify-between">
-                    <span>Cerrados ahora / sin datos · {rest.length}</span>
-                    <span className="text-[10px] text-amber-300/60 group-open:rotate-180 transition-transform">▾</span>
-                  </summary>
-                  <div className="mt-2 max-h-[50vh] overflow-y-auto rounded-md">
-                    <table className="w-full table-fixed border-separate border-spacing-y-0.5 text-left text-[11px] text-amber-50/80">
-                      {colgroup}
-                      {thead}
-                      <tbody>{rest.map(renderRow)}</tbody>
-                    </table>
-                  </div>
-                </details>
-              )}
-            </div>
-          );
-        })()}
+            );
+          })()}
+        </div>
       </div>
     </div>
   );
