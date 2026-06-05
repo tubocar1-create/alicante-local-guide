@@ -4,6 +4,7 @@ export type RandomRestaurant = {
   id: string;
   name: string;
   cuisine: string | null;
+  tags: string[];
   lat: number;
   lng: number;
   cover_photo: string;
@@ -22,12 +23,14 @@ function distKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }
 
 export const getRandomRestaurantsWithPhotos = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => {
-    const o = (d ?? {}) as { lat?: number; lng?: number; cuisineKeys?: string[] };
+    const o = (d ?? {}) as { lat?: number; lng?: number; tagKeys?: string[]; cuisineKeys?: string[] };
+    // cuisineKeys kept for backwards compatibility but treated as tagKeys
+    const tk = Array.isArray(o.tagKeys) ? o.tagKeys : o.cuisineKeys;
     return {
       lat: typeof o.lat === "number" ? o.lat : null,
       lng: typeof o.lng === "number" ? o.lng : null,
-      cuisineKeys: Array.isArray(o.cuisineKeys)
-        ? o.cuisineKeys.filter((s) => typeof s === "string").slice(0, 20)
+      tagKeys: Array.isArray(tk)
+        ? tk.filter((s) => typeof s === "string").slice(0, 30)
         : null,
     };
   })
@@ -36,12 +39,12 @@ export const getRandomRestaurantsWithPhotos = createServerFn({ method: "GET" })
 
     const { data: rowsRaw, error } = await supabaseAdmin
       .from("places")
-      .select("id,google_place_id,name,cuisine,lat,lng,cover_photo,category,primary_type")
+      .select("id,google_place_id,name,cuisine,lat,lng,cover_photo,category,primary_type,ai_tags")
       .not("cover_photo", "is", null)
       .neq("cover_photo", "")
       .not("google_place_id", "is", null)
       .or("category.eq.restaurant,primary_type.eq.restaurant,primary_type.ilike.%restaurant%,primary_type.eq.meal_takeaway,primary_type.eq.meal_delivery")
-      .limit(800);
+      .limit(1000);
 
     if (error) throw new Error(error.message);
 
@@ -49,13 +52,12 @@ export const getRandomRestaurantsWithPhotos = createServerFn({ method: "GET" })
       (r) => r.name && r.lat != null && r.lng != null && r.cover_photo && r.google_place_id,
     );
 
-    // Optional filter: match keys against cuisine OR primary_type
-    if (data.cuisineKeys && data.cuisineKeys.length) {
-      const keys = data.cuisineKeys.map((k) => k.toLowerCase());
+    // Filter by ai_tags (exact match against any of the provided keys)
+    if (data.tagKeys && data.tagKeys.length) {
+      const keys = data.tagKeys.map((k) => k.toLowerCase());
       rows = rows.filter((r) => {
-        const c = ((r.cuisine as string | null) ?? "").toLowerCase();
-        const t = ((r.primary_type as string | null) ?? "").toLowerCase();
-        return keys.some((k) => c.includes(k) || t.includes(k));
+        const tags = (r.ai_tags as string[] | null) ?? [];
+        return tags.some((t) => keys.includes(String(t).toLowerCase()));
       });
     }
 
@@ -74,17 +76,13 @@ export const getRandomRestaurantsWithPhotos = createServerFn({ method: "GET" })
       [rows[i], rows[j]] = [rows[j], rows[i]];
     }
 
-    return rows.slice(0, 20).map((r) => {
-      const t = (r.primary_type as string | null) ?? null;
-      const c = (r.cuisine as string | null) ?? null;
-      const label = t && t !== "restaurant" ? t : c;
-      return {
-        id: String(r.google_place_id),
-        name: r.name as string,
-        cuisine: label,
-        lat: Number(r.lat),
-        lng: Number(r.lng),
-        cover_photo: r.cover_photo as string,
-      };
-    });
+    return rows.slice(0, 20).map((r) => ({
+      id: String(r.google_place_id),
+      name: r.name as string,
+      cuisine: (r.cuisine as string | null) ?? null,
+      tags: ((r.ai_tags as string[] | null) ?? []).map(String),
+      lat: Number(r.lat),
+      lng: Number(r.lng),
+      cover_photo: r.cover_photo as string,
+    }));
   });
