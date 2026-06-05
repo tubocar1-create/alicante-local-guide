@@ -38,6 +38,22 @@ const CATEGORIES: Item[] = [
   { label: "Internacional", emoji: "🌍", prompt: "Quiero comida internacional (hindú, libanés, peruano, mexicano, latino, árabe…), ¿dónde voy ahora?" },
 ];
 
+// Map a free-text cuisine string to one of the 10 selector categories
+function matchCategory(cuisine: string | null): { label: string; emoji: string } {
+  const c = (cuisine ?? "").toLowerCase();
+  const has = (...keys: string[]) => keys.some((k) => c.includes(k));
+  if (has("paella", "arroz", "rice", "seafood", "fish", "pescado", "marisco")) return CATEGORIES[1];
+  if (has("italian", "pizza", "pasta")) return CATEGORIES[2];
+  if (has("japan", "sushi", "ramen", "asian", "chinese", "thai", "korean", "vietnam")) return CATEGORIES[3];
+  if (has("vegan", "vegetarian", "healthy", "salad", "saludable")) return CATEGORIES[4];
+  if (has("breakfast", "brunch", "desayuno")) return CATEGORIES[5];
+  if (has("burger", "fast", "kebab", "kebap", "hot dog", "fried chicken")) return CATEGORIES[6];
+  if (has("dessert", "ice cream", "cafe", "coffee", "bakery", "postre", "pasteler", "heladeria", "heladería")) return CATEGORIES[7];
+  if (has("indian", "lebanese", "mexican", "peruvian", "arab", "turkish", "moroccan", "latin")) return CATEGORIES[9];
+  if (has("spanish", "tapas", "mediterranean", "alicant")) return CATEGORIES[0];
+  return CATEGORIES[0];
+}
+
 // Imagen representativa por cocina (Unsplash, optimizado)
 const CUISINE_IMAGE: Record<string, string> = {
   italian: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=400&q=70",
