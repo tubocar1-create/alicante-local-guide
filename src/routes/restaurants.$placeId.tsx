@@ -390,10 +390,10 @@ function RestaurantDashboard() {
                 </a>
               )}
               <Link
-                to="/"
+                to="/selectordecomidas"
                 className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-center text-sm font-semibold text-slate-200 hover:bg-white/10"
               >
-                Volver al listado
+                Volver al selector
               </Link>
             </section>
 
