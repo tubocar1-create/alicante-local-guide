@@ -124,55 +124,52 @@ function SelectorDeComidasPage() {
 
   return (
     <div className="min-h-dvh bg-background text-foreground">
-      <div className="mx-auto max-w-2xl px-4 py-5">
-        <header className="flex items-start justify-between mb-4">
+      <div className="mx-auto max-w-2xl px-3 py-3">
+        <header className="flex items-center justify-between mb-2">
           <div>
-            <h1 className="text-2xl font-bold leading-tight">🍽️ Comer</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              ¿Qué te apetece ahora mismo en Alicante?
+            <h1 className="text-lg font-bold leading-tight">🍽️ Comer</h1>
+            <p className="text-[11px] text-muted-foreground">
+              ¿Qué te apetece ahora en Alicante?
             </p>
           </div>
           <button
             type="button"
             onClick={() => navigate({ to: "/" })}
-            className="text-sm text-primary underline underline-offset-2 shrink-0"
+            className="text-xs text-primary underline underline-offset-2 shrink-0"
           >
             ← Volver
           </button>
         </header>
 
         <section>
-          <h2 className="text-sm font-semibold mb-2 text-muted-foreground uppercase tracking-wide">
-            Explora por categoría
-          </h2>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-1.5">
             {CATEGORIES.map((it) => (
               <CategoryButton key={it.label} item={it} onPick={goWithPrompt} />
             ))}
           </div>
         </section>
 
-        <section className="mt-6">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+        <section className="mt-3">
+          <div className="flex items-center justify-between mb-1.5">
+            <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
               Populares cerca de ti
             </h2>
             {populares.length > 0 && (
-              <span className="text-xs text-muted-foreground">{populares.length} sitios</span>
+              <span className="text-[10px] text-muted-foreground">{populares.length} sitios</span>
             )}
           </div>
 
           {populares.length === 0 ? (
-            <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 no-scrollbar">
-              {Array.from({ length: 6 }).map((_, i) => (
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-3 px-3 no-scrollbar">
+              {Array.from({ length: 8 }).map((_, i) => (
                 <div
                   key={i}
-                  className="shrink-0 w-40 h-44 rounded-2xl bg-muted animate-pulse"
+                  className="shrink-0 w-28 h-28 rounded-xl bg-muted animate-pulse"
                 />
               ))}
             </div>
           ) : (
-            <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 no-scrollbar snap-x">
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-3 px-3 no-scrollbar snap-x">
               {populares.map((r) => {
                 const km = distanceKm(origin, { lat: r.lat, lng: r.lng });
                 return (
@@ -180,9 +177,9 @@ function SelectorDeComidasPage() {
                     key={r.id}
                     type="button"
                     onClick={() => goRestaurant(r)}
-                    className="shrink-0 w-40 snap-start text-left rounded-2xl border bg-card overflow-hidden hover:shadow-md active:scale-[0.98] transition"
+                    className="shrink-0 w-28 snap-start text-left rounded-xl border bg-card overflow-hidden hover:shadow-md active:scale-[0.98] transition"
                   >
-                    <div className="w-full h-24 bg-muted overflow-hidden">
+                    <div className="w-full h-16 bg-muted overflow-hidden">
                       <img
                         src={r.cover_photo}
                         alt={r.name}
@@ -190,16 +187,11 @@ function SelectorDeComidasPage() {
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <div className="p-2">
-                      <div className="text-sm font-semibold leading-tight line-clamp-1">
+                    <div className="p-1.5">
+                      <div className="text-[11px] font-semibold leading-tight line-clamp-1">
                         {r.name}
                       </div>
-                      {r.cuisine && (
-                        <div className="text-[11px] text-muted-foreground line-clamp-1 capitalize mt-0.5">
-                          {r.cuisine.replace(/[_;]/g, " ")}
-                        </div>
-                      )}
-                      <div className="text-[11px] text-muted-foreground mt-1">
+                      <div className="text-[10px] text-muted-foreground mt-0.5">
                         {km < 10 ? `${km.toFixed(1)} km` : `${Math.round(km)} km`}
                       </div>
                     </div>
