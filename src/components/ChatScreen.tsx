@@ -151,6 +151,7 @@ function BeachScrollGallery() {
 const SUGGESTIONS: Suggestion[] = [
   {
     label: "🍽️ Comer",
+    href: "/selectordecomidas",
     submenu: [
       { label: "🥘 Cocina típica", prompt: "Recomiéndame un sitio de cocina típica alicantina tradicional abierto ahora" },
       { label: "🍤 Arroces y pescado", prompt: "Quiero un buen arroz, paella o pescado fresco, ¿dónde voy ahora?" },
