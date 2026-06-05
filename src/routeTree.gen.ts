@@ -20,6 +20,7 @@ import { Route as TestRealtimeRouteImport } from './routes/test-realtime'
 import { Route as StayRouteImport } from './routes/stay'
 import { Route as SistemaSanitarioRouteImport } from './routes/sistema-sanitario'
 import { Route as SelectordecomidasRouteImport } from './routes/selectordecomidas'
+import { Route as SelectorVuelosRouteImport } from './routes/selector-vuelos'
 import { Route as SaludRouteImport } from './routes/salud'
 import { Route as RestaurantsRouteImport } from './routes/restaurants'
 import { Route as RepoRouteImport } from './routes/repo'
@@ -228,6 +229,11 @@ const SistemaSanitarioRoute = SistemaSanitarioRouteImport.update({
 const SelectordecomidasRoute = SelectordecomidasRouteImport.update({
   id: '/selectordecomidas',
   path: '/selectordecomidas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SelectorVuelosRoute = SelectorVuelosRouteImport.update({
+  id: '/selector-vuelos',
+  path: '/selector-vuelos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SaludRoute = SaludRouteImport.update({
@@ -1044,6 +1050,7 @@ export interface FileRoutesByFullPath {
   '/repo': typeof RepoRoute
   '/restaurants': typeof RestaurantsRouteWithChildren
   '/salud': typeof SaludRoute
+  '/selector-vuelos': typeof SelectorVuelosRoute
   '/selectordecomidas': typeof SelectordecomidasRoute
   '/sistema-sanitario': typeof SistemaSanitarioRoute
   '/stay': typeof StayRoute
@@ -1209,6 +1216,7 @@ export interface FileRoutesByTo {
   '/repo': typeof RepoRoute
   '/restaurants': typeof RestaurantsRouteWithChildren
   '/salud': typeof SaludRoute
+  '/selector-vuelos': typeof SelectorVuelosRoute
   '/selectordecomidas': typeof SelectordecomidasRoute
   '/sistema-sanitario': typeof SistemaSanitarioRoute
   '/stay': typeof StayRoute
@@ -1376,6 +1384,7 @@ export interface FileRoutesById {
   '/repo': typeof RepoRoute
   '/restaurants': typeof RestaurantsRouteWithChildren
   '/salud': typeof SaludRoute
+  '/selector-vuelos': typeof SelectorVuelosRoute
   '/selectordecomidas': typeof SelectordecomidasRoute
   '/sistema-sanitario': typeof SistemaSanitarioRoute
   '/stay': typeof StayRoute
@@ -1545,6 +1554,7 @@ export interface FileRouteTypes {
     | '/repo'
     | '/restaurants'
     | '/salud'
+    | '/selector-vuelos'
     | '/selectordecomidas'
     | '/sistema-sanitario'
     | '/stay'
@@ -1710,6 +1720,7 @@ export interface FileRouteTypes {
     | '/repo'
     | '/restaurants'
     | '/salud'
+    | '/selector-vuelos'
     | '/selectordecomidas'
     | '/sistema-sanitario'
     | '/stay'
@@ -1876,6 +1887,7 @@ export interface FileRouteTypes {
     | '/repo'
     | '/restaurants'
     | '/salud'
+    | '/selector-vuelos'
     | '/selectordecomidas'
     | '/sistema-sanitario'
     | '/stay'
@@ -2044,6 +2056,7 @@ export interface RootRouteChildren {
   RepoRoute: typeof RepoRoute
   RestaurantsRoute: typeof RestaurantsRouteWithChildren
   SaludRoute: typeof SaludRoute
+  SelectorVuelosRoute: typeof SelectorVuelosRoute
   SelectordecomidasRoute: typeof SelectordecomidasRoute
   SistemaSanitarioRoute: typeof SistemaSanitarioRoute
   StayRoute: typeof StayRoute
@@ -2203,6 +2216,13 @@ declare module '@tanstack/react-router' {
       path: '/selectordecomidas'
       fullPath: '/selectordecomidas'
       preLoaderRoute: typeof SelectordecomidasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/selector-vuelos': {
+      id: '/selector-vuelos'
+      path: '/selector-vuelos'
+      fullPath: '/selector-vuelos'
+      preLoaderRoute: typeof SelectorVuelosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/salud': {
@@ -3545,6 +3565,7 @@ const rootRouteChildren: RootRouteChildren = {
   RepoRoute: RepoRoute,
   RestaurantsRoute: RestaurantsRouteWithChildren,
   SaludRoute: SaludRoute,
+  SelectorVuelosRoute: SelectorVuelosRoute,
   SelectordecomidasRoute: SelectordecomidasRoute,
   SistemaSanitarioRoute: SistemaSanitarioRoute,
   StayRoute: StayRoute,
