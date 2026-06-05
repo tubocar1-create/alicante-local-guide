@@ -914,6 +914,19 @@ function DestinationPopup({
           {flight ? `Buscar ${originIata} → ${iata} el ${flight.fechaLabel}` : "Buscar y comparar vuelos"}
           <ExternalLink className="h-3 w-3 opacity-70" />
         </a>
+
+        {isUK && (
+          <a
+            href={kiwiUrl}
+            target="_blank"
+            rel="noopener noreferrer sponsored"
+            className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-violet-500 px-3 py-2.5 text-[13px] font-semibold text-white transition hover:bg-violet-400"
+          >
+            <Plane className="h-4 w-4" />
+            Buscar también en Kiwi (UK)
+            <ExternalLink className="h-3 w-3 opacity-70" />
+          </a>
+        )}
       </div>
     </div>
   );
