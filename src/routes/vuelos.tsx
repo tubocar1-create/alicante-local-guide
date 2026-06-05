@@ -1512,7 +1512,8 @@ function CityDetail({
                 const yyyy = next.slice(6, 10);
                 const origin = flightType === "L" ? city.iata : "ALC";
                 const dest = flightType === "L" ? "ALC" : city.iata;
-                return `https://www.aviasales.com/search/${origin}${dd}${mm}${dest}1?marker=732656`;
+                const inner = `https://www.aviasales.com/search/${origin}${dd}${mm}${dest}1`;
+                return `https://tp.media/r?marker=732656&p=4114&u=${encodeURIComponent(inner)}&campaign_id=100`;
               }
               return "https://aviasales.tpo.mx/RkEQT2AP";
             })()}

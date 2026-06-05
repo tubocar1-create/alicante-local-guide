@@ -804,7 +804,8 @@ function DestinationPopup({
     if (f && /^\d{2}\/\d{2}\/\d{4}$/.test(f)) {
       const dd = f.slice(0, 2);
       const mm = f.slice(3, 5);
-      return `https://www.aviasales.com/search/${originIata}${dd}${mm}${iata}1?marker=732656`;
+      const inner = `https://www.aviasales.com/search/${originIata}${dd}${mm}${iata}1`;
+      return `https://tp.media/r?marker=732656&p=4114&u=${encodeURIComponent(inner)}&campaign_id=100`;
     }
     return "https://aviasales.tpo.mx/RkEQT2AP";
   })();
