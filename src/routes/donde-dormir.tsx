@@ -82,9 +82,14 @@ function DondeDormirPage() {
 
   const availableCount = ranked.filter((h: any) => h.dyn?.available).length;
 
+  const carouselHotels = useMemo(
+    () => ranked.filter((h: any) => h.main_image).slice(0, 30),
+    [ranked],
+  );
+
   return (
     <div
-      className="fixed inset-0 z-[60] lg:relative lg:inset-auto lg:z-auto lg:min-h-[60vh] overflow-y-auto text-amber-50"
+      className="fixed inset-0 z-[60] flex flex-col overflow-hidden text-amber-50 lg:relative lg:inset-auto lg:z-auto lg:h-auto lg:min-h-[60vh] lg:overflow-visible"
       style={{
         background: "linear-gradient(180deg, #050b1f 0%, #0a1638 50%, #03081a 100%)",
       }}
@@ -94,8 +99,9 @@ function DondeDormirPage() {
         <div className="absolute bottom-0 right-0 h-[24rem] w-[24rem] rounded-full bg-rose-500/[0.06] blur-3xl" />
       </div>
 
-      <div className="relative mx-auto max-w-5xl px-4 pb-10 pt-5 md:px-6">
-        <header className="mb-5 flex items-center justify-between">
+
+      <div className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col overflow-hidden px-4 pt-3 pb-2 md:px-6 lg:overflow-visible">
+        <header className="mb-2 flex shrink-0 items-center justify-between">
           <Link
             to="/"
             className="text-[11px] uppercase tracking-[0.25em] text-amber-200/60 transition hover:text-amber-300"
@@ -120,7 +126,7 @@ function DondeDormirPage() {
           </div>
         </header>
 
-        <div className="mb-5">
+        <div className="mb-2 shrink-0">
           <p className="text-[10px] uppercase tracking-[0.3em] text-amber-400/80">
             Dashboard nocturno
           </p>
@@ -138,7 +144,40 @@ function DondeDormirPage() {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-amber-100/[0.08] bg-[rgba(20,10,4,0.7)] p-2 backdrop-blur-xl md:p-4">
+        {carouselHotels.length > 0 && (
+          <section className="mb-3 shrink-0">
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 md:-mx-6 md:px-6 no-scrollbar snap-x">
+              {carouselHotels.map((h: any) => (
+                <Link
+                  key={h.id}
+                  to="/hotel/$id"
+                  params={{ id: h.id }}
+                  className="relative shrink-0 w-44 h-44 snap-start text-left bg-black/30 overflow-hidden hover:shadow-md active:scale-[0.98] transition border-2 border-amber-100/20 rounded-md"
+                >
+                  <img
+                    src={h.main_image}
+                    alt={h.name}
+                    loading="lazy"
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-2 pt-6 text-white">
+                    <div className="text-sm font-semibold leading-tight line-clamp-2">
+                      {h.name}
+                    </div>
+                    {h.dyn?.current_price != null && (
+                      <div className="text-[11px] opacity-90 mt-0.5">
+                        desde {Math.round(h.dyn.current_price)}€
+                      </div>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto rounded-2xl border border-amber-100/[0.08] bg-[rgba(20,10,4,0.7)] p-2 backdrop-blur-xl md:p-4 lg:overflow-visible">
+
           <h2 className="mb-2 text-sm font-semibold text-amber-50">Disponibilidad esta noche</h2>
           <div className="mb-2 flex items-baseline justify-between gap-2">
             <p className="text-[12px] font-semibold text-amber-50">
