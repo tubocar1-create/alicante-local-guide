@@ -129,13 +129,16 @@ function SelectorDeComidasPage() {
   };
 
   return (
-    <div className="h-dvh bg-background text-foreground flex flex-col overflow-hidden">
+    <div className="h-dvh bg-[#3b2a1f] text-[#f5ead8] flex flex-col overflow-hidden">
       <div className="mx-auto w-full max-w-2xl px-3 pt-2 pb-2 flex-1 flex flex-col min-h-0">
-        <header className="flex justify-end mb-1">
+        <header className="flex items-center justify-between gap-2 mb-1">
+          <h1 className="text-sm sm:text-base font-semibold leading-tight text-[#f5ead8]">
+            Disfruta la experiencia de comer en Alicante
+          </h1>
           <button
             type="button"
             onClick={() => navigate({ to: "/" })}
-            className="text-xs text-primary underline underline-offset-2"
+            className="text-xs text-[#f5ead8]/80 underline underline-offset-2 shrink-0"
           >
             ← Volver
           </button>
@@ -153,7 +156,7 @@ function SelectorDeComidasPage() {
               {Array.from({ length: 8 }).map((_, i) => (
                 <div
                   key={i}
-                  className="shrink-0 w-44 h-44 rounded-2xl bg-muted animate-pulse"
+                  className="shrink-0 w-44 h-44 bg-white/10 animate-pulse"
                 />
               ))}
             </div>
@@ -167,7 +170,7 @@ function SelectorDeComidasPage() {
                     key={r.id}
                     type="button"
                     onClick={() => goRestaurant(r)}
-                    className="relative shrink-0 w-44 h-44 snap-start text-left rounded-2xl border bg-card overflow-hidden hover:shadow-md active:scale-[0.98] transition"
+                    className="relative shrink-0 w-44 h-44 snap-start text-left bg-black/30 overflow-hidden hover:shadow-md active:scale-[0.98] transition"
                   >
                     <img
                       src={r.cover_photo}
@@ -175,10 +178,12 @@ function SelectorDeComidasPage() {
                       loading="lazy"
                       className="absolute inset-0 w-full h-full object-cover"
                     />
-                    <div className="absolute top-1.5 left-1.5 flex items-center gap-1 px-2 py-0.5 rounded-full bg-background/85 backdrop-blur text-[10px] font-semibold shadow-sm">
-                      <span className="text-sm leading-none">{cat.emoji}</span>
-                      <span className="line-clamp-1">{cat.label}</span>
-                    </div>
+                    {cat && (
+                      <div className="absolute top-1.5 left-1.5 flex items-center gap-1 px-2 py-0.5 bg-black/70 text-white text-[10px] font-semibold shadow-sm">
+                        <span className="text-sm leading-none">{cat.emoji}</span>
+                        <span className="line-clamp-1">{cat.label}</span>
+                      </div>
+                    )}
                     <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-2 pt-6 text-white">
                       <div className="text-sm font-semibold leading-tight line-clamp-2">
                         {r.name}
