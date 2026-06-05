@@ -1490,49 +1490,6 @@ function CityDetail({
             {aiError && <p className="text-rose-300">No se pudo cargar el comentario.</p>}
             {!aiLoading && !aiError && <p>{aiText}</p>}
           </div>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            {topAirline && (
-              <a
-                href={
-                  ({
-                    FR: "https://www.ryanair.com", VY: "https://www.vueling.com",
-                    IB: "https://www.iberia.com", I2: "https://www.iberiaexpress.com",
-                    UX: "https://www.aireuropa.com", U2: "https://www.easyjet.com",
-                    EJU: "https://www.easyjet.com", W6: "https://wizzair.com",
-                    HV: "https://www.transavia.com", TO: "https://www.transavia.com",
-                    KL: "https://www.klm.com", AF: "https://www.airfrance.com",
-                    LH: "https://www.lufthansa.com", EW: "https://www.eurowings.com",
-                    BA: "https://www.britishairways.com", AY: "https://www.finnair.com",
-                    SK: "https://www.flysas.com", DY: "https://www.norwegian.com",
-                    TP: "https://www.flytap.com", AZ: "https://www.ita-airways.com",
-                    LX: "https://www.swiss.com", OS: "https://www.austrian.com",
-                    TK: "https://www.turkishairlines.com", EI: "https://www.aerlingus.com",
-                    PC: "https://www.flypgs.com", XQ: "https://www.sunexpress.com",
-                    LS: "https://www.jet2.com", BY: "https://www.tui.com",
-                    QR: "https://www.qatarairways.com",
-                  } as Record<string, string>)[topAirline] ??
-                  `https://www.google.com/search?q=${encodeURIComponent(airlineName(topAirline) + " vuelos")}`
-                }
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-[11px] font-semibold text-slate-900 transition hover:opacity-90"
-                style={{ background: airlineColor(topAirline, 0) }}
-              >
-                <Plane className="h-3 w-3" />
-                {airlineName(topAirline)}
-                <ExternalLink className="h-3 w-3 opacity-70" />
-              </a>
-            )}
-            <a
-              href={`https://www.skyscanner.es/transporte/vuelos/alci/${city.iata.toLowerCase()}/?adultsv2=1&cabinclass=economy&childrenv2=&ref=home&rtn=0&preferdirects=false&outboundaltsenabled=false&inboundaltsenabled=false`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-sky-600 px-3 py-2 text-[11px] font-semibold text-white transition hover:bg-sky-500"
-            >
-              Skyscanner
-              <ExternalLink className="h-3 w-3 opacity-70" />
-            </a>
-          </div>
           <a
             href={(() => {
               const dates = Array.from(city.days)
@@ -1553,7 +1510,6 @@ function CityDetail({
                 const dd = next.slice(0, 2);
                 const mm = next.slice(3, 5);
                 const yyyy = next.slice(6, 10);
-                const iso = `${yyyy}-${mm}-${dd}`;
                 const origin = flightType === "L" ? city.iata : "ALC";
                 const dest = flightType === "L" ? "ALC" : city.iata;
                 return `https://www.aviasales.com/search/${origin}${dd}${mm}${dest}1?marker=732656`;
@@ -1562,9 +1518,9 @@ function CityDetail({
             })()}
             target="_blank"
             rel="noopener noreferrer sponsored"
-            className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-amber-500 px-3 py-2 text-[11px] font-semibold text-slate-900 transition hover:bg-amber-400"
+            className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-amber-500 px-3 py-2.5 text-[13px] font-semibold text-slate-900 transition hover:bg-amber-400"
           >
-            <Plane className="h-3 w-3" />
+            <Plane className="h-4 w-4" />
             {flightType === "L" ? `Buscar ${city.iata} → ALC` : `Buscar ALC → ${city.iata}`}
             <ExternalLink className="h-3 w-3 opacity-70" />
           </a>

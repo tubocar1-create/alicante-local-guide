@@ -128,45 +128,6 @@ const AIRLINE_COLORS: Record<string, string> = {
 };
 const PALETTE = ["#22D3EE", "#A78BFA", "#F472B6", "#34D399", "#FBBF24", "#F87171"];
 
-const AIRLINE_URLS: Record<string, string> = {
-  FR: "https://www.ryanair.com",
-  VY: "https://www.vueling.com",
-  IB: "https://www.iberia.com",
-  I2: "https://www.iberiaexpress.com",
-  UX: "https://www.aireuropa.com",
-  U2: "https://www.easyjet.com",
-  EJU: "https://www.easyjet.com",
-  W6: "https://wizzair.com",
-  HV: "https://www.transavia.com",
-  TO: "https://www.transavia.com",
-  KL: "https://www.klm.com",
-  AF: "https://www.airfrance.com",
-  LH: "https://www.lufthansa.com",
-  EW: "https://www.eurowings.com",
-  BA: "https://www.britishairways.com",
-  AY: "https://www.finnair.com",
-  SK: "https://www.flysas.com",
-  DY: "https://www.norwegian.com",
-  TP: "https://www.flytap.com",
-  AZ: "https://www.ita-airways.com",
-  LX: "https://www.swiss.com",
-  OS: "https://www.austrian.com",
-  TK: "https://www.turkishairlines.com",
-  EI: "https://www.aerlingus.com",
-  PC: "https://www.flypgs.com",
-  XQ: "https://www.sunexpress.com",
-  LS: "https://www.jet2.com",
-  BY: "https://www.tui.com",
-  QR: "https://www.qatarairways.com",
-};
-
-function airlineUrl(code: string) {
-  return (
-    AIRLINE_URLS[code] ??
-    `https://www.google.com/search?q=${encodeURIComponent(airlineName(code) + " vuelos")}`
-  );
-}
-
 function colorFor(code: string, idx: number) {
   return AIRLINE_COLORS[code] ?? PALETTE[idx % PALETTE.length];
 }
@@ -838,8 +799,15 @@ function DestinationPopup({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  const skyUrl = `https://www.skyscanner.es/transporte/vuelos/${originIata.toLowerCase()}/${iata.toLowerCase()}/?adultsv2=1&cabinclass=economy&childrenv2=&ref=home&rtn=0&preferdirects=false&outboundaltsenabled=false&inboundaltsenabled=false`;
-  const airUrl = airlineUrl(airlineCode);
+  const aviasalesUrl = (() => {
+    const f = flight?.fecha; // dd/mm/yyyy
+    if (f && /^\d{2}\/\d{2}\/\d{4}$/.test(f)) {
+      const dd = f.slice(0, 2);
+      const mm = f.slice(3, 5);
+      return `https://www.aviasales.com/search/${originIata}${dd}${mm}${iata}1?marker=732656`;
+    }
+    return "https://aviasales.tpo.mx/RkEQT2AP";
+  })();
 
   return (
     <div
@@ -918,44 +886,13 @@ function DestinationPopup({
           {!loading && !error && <p>{text}</p>}
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <a
-            href={airUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-slate-900 transition hover:opacity-90"
-            style={{ background: colorFor(airlineCode, 0) }}
-          >
-            <Plane className="h-3.5 w-3.5" />
-            {airlineName(airlineCode)}
-            <ExternalLink className="h-3 w-3 opacity-70" />
-          </a>
-          <a
-            href={skyUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-sky-600 px-3 py-2 text-[12px] font-semibold text-white transition hover:bg-sky-500"
-          >
-            Skyscanner
-            <ExternalLink className="h-3 w-3 opacity-70" />
-          </a>
-        </div>
         <a
-          href={(() => {
-            const f = flight?.fecha; // dd/mm/yyyy
-            if (f && /^\d{2}\/\d{2}\/\d{4}$/.test(f)) {
-              const dd = f.slice(0, 2);
-              const mm = f.slice(3, 5);
-              const yyyy = f.slice(6, 10);
-              return `https://www.aviasales.com/search/${originIata}${dd}${mm}${iata}1?marker=732656`;
-            }
-            return "https://aviasales.tpo.mx/RkEQT2AP";
-          })()}
+          href={aviasalesUrl}
           target="_blank"
           rel="noopener noreferrer sponsored"
-          className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-amber-500 px-3 py-2 text-[12px] font-semibold text-slate-900 transition hover:bg-amber-400"
+          className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-amber-500 px-3 py-2.5 text-[13px] font-semibold text-slate-900 transition hover:bg-amber-400"
         >
-          <Plane className="h-3.5 w-3.5" />
+          <Plane className="h-4 w-4" />
           {flight ? `Buscar ${originIata} → ${iata} el ${flight.fechaLabel}` : "Buscar y comparar vuelos"}
           <ExternalLink className="h-3 w-3 opacity-70" />
         </a>
