@@ -132,13 +132,13 @@ function SelectorDeComidasPage() {
     <div className="h-dvh bg-[#c9a96e] text-[#2c1810] flex flex-col overflow-hidden">
       <div className="mx-auto w-full max-w-2xl px-3 pt-2 pb-2 flex-1 flex flex-col min-h-0">
         <header className="flex items-center justify-between gap-2 mb-1">
-          <h1 className="text-sm sm:text-base font-semibold leading-tight text-[#f5ead8]">
+          <h1 className="text-sm sm:text-base font-semibold leading-tight text-[#2c1810]">
             Disfruta la experiencia de comer en Alicante
           </h1>
           <button
             type="button"
             onClick={() => navigate({ to: "/" })}
-            className="text-xs text-[#f5ead8]/80 underline underline-offset-2 shrink-0"
+            className="text-xs text-[#2c1810]/80 underline underline-offset-2 shrink-0"
           >
             ← Volver
           </button>
