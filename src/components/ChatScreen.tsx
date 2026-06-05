@@ -3795,9 +3795,14 @@ function CategoryTableInner({
     }
   };
 
+  const carouselPlaces = useMemo(
+    () => ranked.filter((r) => r.c.placeId && r.c.coverPhoto).slice(0, 60),
+    [ranked],
+  );
+
   return (
     <div
-      className="fixed inset-0 z-[60] overflow-y-auto"
+      className="fixed inset-0 z-[60] flex flex-col overflow-hidden"
       style={{ background: theme.bgGradient }}
     >
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -3805,8 +3810,8 @@ function CategoryTableInner({
         <div className={`absolute bottom-0 right-0 h-[24rem] w-[24rem] rounded-full ${theme.glow2} blur-3xl`} />
       </div>
 
-      <div className="relative mx-auto max-w-5xl px-4 pb-10 pt-5 md:px-6">
-        <header className="mb-5 flex items-center justify-between">
+      <div className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col overflow-hidden px-4 pt-5 pb-2 md:px-6">
+        <header className="mb-2 flex shrink-0 items-center justify-between">
           <button
             type="button"
             onClick={() => {
@@ -3839,7 +3844,7 @@ function CategoryTableInner({
           </div>
         </header>
 
-        <div className="mb-5">
+        <div className="mb-2 shrink-0">
           <p className={`text-[10px] uppercase tracking-[0.3em] ${theme.eyebrow}`}>
             {theme.eyebrowLabel}
           </p>
@@ -3854,6 +3859,55 @@ function CategoryTableInner({
           </p>
         </div>
 
+        {carouselPlaces.length > 0 && (
+          <section className="mb-3 shrink-0">
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 md:-mx-6 md:px-6 no-scrollbar snap-x">
+              {carouselPlaces.map(({ c }) => {
+                const price = priceLabel(c.priceLevel);
+                const priceFromRange =
+                  c.priceRangeMin && c.priceRangeMax
+                    ? `${c.priceRangeMin}–${c.priceRangeMax} €`
+                    : c.priceRangeMin
+                      ? `~${c.priceRangeMin} €`
+                      : null;
+                const priceAvg =
+                  priceFromRange ??
+                  (price.avg !== "s/d" ? price.avg : theme.guessPrice(c));
+                return (
+                  <Link
+                    key={c.placeId}
+                    to="/restaurants/$placeId"
+                    params={{ placeId: c.placeId! }}
+                    onClick={() => {
+                      markRestaurantReturn();
+                      stashRestaurantPreview(c);
+                    }}
+                    className="relative shrink-0 w-44 h-44 snap-start text-left bg-black/30 overflow-hidden hover:shadow-md active:scale-[0.98] transition border-2 border-white/10 rounded-md"
+                  >
+                    <img
+                      src={c.coverPhoto!}
+                      alt={c.name}
+                      loading="lazy"
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-2 pt-6 text-white">
+                      <div className="text-sm font-semibold leading-tight line-clamp-2">
+                        {c.name}
+                      </div>
+                      {priceAvg && (
+                        <div className="text-[11px] opacity-90 mt-0.5">
+                          {priceAvg}
+                        </div>
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         {(() => {
           const opens: typeof ranked = [];
           const rest: typeof ranked = [];
@@ -4041,6 +4095,7 @@ function CategoryTableInner({
             </div>
           );
         })()}
+        </div>
       </div>
     </div>
   );
