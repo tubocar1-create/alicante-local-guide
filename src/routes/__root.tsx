@@ -135,6 +135,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         src: "https://www.googletagmanager.com/gtag/js?id=AW-18186927022",
         async: true,
       },
+      {
+        // Travelpayouts Drive — verificación de instalación sitewide.
+        src: "https://emrldtp.com/NTMyOTM5.js?t=532939",
+        async: true,
+      },
     ],
   }),
 
