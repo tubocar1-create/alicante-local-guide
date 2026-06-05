@@ -479,6 +479,19 @@ export function ChatScreen() {
         });
       }
     } catch {}
+    // Consume prompt arriving from external pages (e.g. /selectordecomidas).
+    // Usa una key dedicada para no chocar con el flujo del agente.
+    try {
+      const pending = window.sessionStorage.getItem("afp:pendingFoodPrompt");
+      if (pending) {
+        window.sessionStorage.removeItem("afp:pendingFoodPrompt");
+        setTimeout(() => {
+          window.dispatchEvent(
+            new CustomEvent("afp:forward-prompt", { detail: { text: pending } }),
+          );
+        }, 0);
+      }
+    } catch {}
 
     return () => {
       window.removeEventListener("afp:forward-prompt", onForward);
