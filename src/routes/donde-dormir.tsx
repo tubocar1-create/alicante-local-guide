@@ -82,9 +82,14 @@ function DondeDormirPage() {
 
   const availableCount = ranked.filter((h: any) => h.dyn?.available).length;
 
+  const carouselHotels = useMemo(
+    () => ranked.filter((h: any) => h.main_image).slice(0, 30),
+    [ranked],
+  );
+
   return (
     <div
-      className="fixed inset-0 z-[60] lg:relative lg:inset-auto lg:z-auto lg:min-h-[60vh] overflow-y-auto text-amber-50"
+      className="fixed inset-0 z-[60] flex flex-col overflow-hidden text-amber-50 lg:relative lg:inset-auto lg:z-auto lg:h-auto lg:min-h-[60vh] lg:overflow-visible"
       style={{
         background: "linear-gradient(180deg, #050b1f 0%, #0a1638 50%, #03081a 100%)",
       }}
@@ -93,6 +98,7 @@ function DondeDormirPage() {
         <div className="absolute -top-40 left-1/2 h-[28rem] w-[28rem] -translate-x-1/2 rounded-full bg-amber-500/[0.08] blur-3xl" />
         <div className="absolute bottom-0 right-0 h-[24rem] w-[24rem] rounded-full bg-rose-500/[0.06] blur-3xl" />
       </div>
+
 
       <div className="relative mx-auto max-w-5xl px-4 pb-10 pt-5 md:px-6">
         <header className="mb-5 flex items-center justify-between">
