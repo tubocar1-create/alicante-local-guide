@@ -276,7 +276,7 @@ function DestinationDashboard() {
   const [flights, setFlights] = useState<Flight[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [popup, setPopup] = useState<{ airlineCode: string; flight?: { numVuelo: string; fecha: string; salida: string; llegada: string; duracion: string; ruta: string } } | null>(null);
+  const [popup, setPopup] = useState<{ airlineCode: string; flight?: { numVuelo: string; fecha: string; fechaLabel: string; salida: string; llegada: string; duracion: string; ruta: string } } | null>(null);
   const [visibleCount, setVisibleCount] = useState(15);
   const [isDesktop, setIsDesktop] = useState(false);
   useEffect(() => {
@@ -488,7 +488,8 @@ function DestinationDashboard() {
                         airlineCode: ac,
                         flight: {
                           numVuelo: f.numVuelo,
-                          fecha: day,
+                          fecha: f.fecha,
+                          fechaLabel: day,
                           salida,
                           llegada,
                           duracion: dur.label,
@@ -798,7 +799,7 @@ function DestinationPopup({
   country: string;
   airlineCode: string;
   originIata: string;
-  flight?: { numVuelo: string; fecha: string; salida: string; llegada: string; duracion: string; ruta: string };
+  flight?: { numVuelo: string; fecha: string; fechaLabel: string; salida: string; llegada: string; duracion: string; ruta: string };
   onClose: () => void;
 }) {
   const fetchComment = useServerFn(getDestinationComment);
@@ -881,7 +882,7 @@ function DestinationPopup({
             </div>
             <div>
               <p className="text-[9px] uppercase tracking-wider text-cyan-300/70">Fecha</p>
-              <p className="font-semibold text-white">{flight.fecha}</p>
+              <p className="font-semibold text-white">{flight.fechaLabel}</p>
             </div>
             <div>
               <p className="text-[9px] uppercase tracking-wider text-cyan-300/70">Aerolínea</p>
@@ -955,7 +956,7 @@ function DestinationPopup({
           className="mt-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-amber-500 px-3 py-2 text-[12px] font-semibold text-slate-900 transition hover:bg-amber-400"
         >
           <Plane className="h-3.5 w-3.5" />
-          {flight ? `Buscar ${originIata} → ${iata} el ${flight.fecha.slice(0, 5)}` : "Buscar y comparar vuelos"}
+          {flight ? `Buscar ${originIata} → ${iata} el ${flight.fechaLabel}` : "Buscar y comparar vuelos"}
           <ExternalLink className="h-3 w-3 opacity-70" />
         </a>
       </div>
