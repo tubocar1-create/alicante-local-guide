@@ -95,27 +95,21 @@ function SelectorDeComidasPage() {
   const me = state.status === "ready" ? state.coords : null;
   const origin = me ?? ALICANTE_CENTER;
 
-  const [populares, setPopulares] = useState<Listing[]>([]);
+  const [populares, setPopulares] = useState<RandomRestaurant[]>([]);
 
   useEffect(() => {
     let cancel = false;
-    fetchListings([{ tag: "amenity", value: "restaurant" }], { center: origin, radiusMeters: 3000 })
+    // Random each page load: server returns a fresh shuffle.
+    getRandomRestaurantsWithPhotos()
       .then((items) => {
         if (cancel) return;
-        const ranked = items
-          .filter((i) => i.name && i.cuisine)
-          .map((i) => ({ i, d: distanceKm(origin, { lat: i.lat, lng: i.lon }) }))
-          .sort((a, b) => a.d - b.d)
-          .slice(0, 10)
-          .map((x) => x.i);
-        setPopulares(ranked);
+        setPopulares(items);
       })
       .catch(() => {});
     return () => {
       cancel = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [me?.lat, me?.lng]);
+  }, []);
 
   const goWithPrompt = (prompt: string) => {
     try {
@@ -124,7 +118,7 @@ function SelectorDeComidasPage() {
     navigate({ to: "/" });
   };
 
-  const goRestaurant = (r: Listing) => {
+  const goRestaurant = (r: RandomRestaurant) => {
     goWithPrompt(`Cuéntame sobre el restaurante "${r.name}" en Alicante y cómo llegar ahora`);
   };
 
