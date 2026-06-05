@@ -112,48 +112,31 @@ function SelectorDeComidasPage() {
   };
 
   return (
-    <div className="min-h-dvh bg-background text-foreground">
-      <div className="mx-auto max-w-2xl px-3 py-3">
-        <header className="flex items-center justify-between mb-2">
-          <div>
-            <h1 className="text-lg font-bold leading-tight">🍽️ Comer</h1>
-            <p className="text-[11px] text-muted-foreground">
-              ¿Qué te apetece ahora en Alicante?
-            </p>
-          </div>
+    <div className="min-h-dvh bg-background text-foreground flex flex-col">
+      <div className="mx-auto w-full max-w-2xl px-3 pt-2 pb-3 flex-1 flex flex-col">
+        <header className="flex justify-end mb-2">
           <button
             type="button"
             onClick={() => navigate({ to: "/" })}
-            className="text-xs text-primary underline underline-offset-2 shrink-0"
+            className="text-xs text-primary underline underline-offset-2"
           >
             ← Volver
           </button>
         </header>
 
-        <section>
-          <div className="grid grid-cols-3 gap-1.5">
-            {CATEGORIES.map((it) => (
-              <CategoryButton key={it.label} item={it} onPick={goWithPrompt} />
-            ))}
-          </div>
+        <section className="flex-1 grid grid-cols-2 gap-2 auto-rows-fr">
+          {CATEGORIES.map((it) => (
+            <CategoryButton key={it.label} item={it} onPick={goWithPrompt} />
+          ))}
         </section>
 
         <section className="mt-3">
-          <div className="flex items-center justify-between mb-1.5">
-            <h2 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
-              Populares cerca de ti
-            </h2>
-            {populares.length > 0 && (
-              <span className="text-[10px] text-muted-foreground">{populares.length} sitios</span>
-            )}
-          </div>
-
           {populares.length === 0 ? (
             <div className="flex gap-2 overflow-x-auto pb-1 -mx-3 px-3 no-scrollbar">
               {Array.from({ length: 8 }).map((_, i) => (
                 <div
                   key={i}
-                  className="shrink-0 w-28 h-28 rounded-xl bg-muted animate-pulse"
+                  className="shrink-0 w-24 h-24 rounded-xl bg-muted animate-pulse"
                 />
               ))}
             </div>
@@ -166,9 +149,9 @@ function SelectorDeComidasPage() {
                     key={r.id}
                     type="button"
                     onClick={() => goRestaurant(r)}
-                    className="shrink-0 w-28 snap-start text-left rounded-xl border bg-card overflow-hidden hover:shadow-md active:scale-[0.98] transition"
+                    className="shrink-0 w-24 snap-start text-left rounded-xl border bg-card overflow-hidden hover:shadow-md active:scale-[0.98] transition"
                   >
-                    <div className="w-full h-16 bg-muted overflow-hidden">
+                    <div className="w-full h-14 bg-muted overflow-hidden">
                       <img
                         src={r.cover_photo}
                         alt={r.name}
@@ -176,11 +159,11 @@ function SelectorDeComidasPage() {
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <div className="p-1.5">
-                      <div className="text-[11px] font-semibold leading-tight line-clamp-1">
+                    <div className="p-1">
+                      <div className="text-[10px] font-semibold leading-tight line-clamp-1">
                         {r.name}
                       </div>
-                      <div className="text-[10px] text-muted-foreground mt-0.5">
+                      <div className="text-[9px] text-muted-foreground mt-0.5">
                         {km < 10 ? `${km.toFixed(1)} km` : `${Math.round(km)} km`}
                       </div>
                     </div>
@@ -202,42 +185,14 @@ function CategoryButton({
   item: Item;
   onPick: (prompt: string) => void;
 }) {
-  const hasSubmenu = !!item.submenu?.length;
-
-  if (!hasSubmenu) {
-    return (
-      <button
-        type="button"
-        onClick={() => item.prompt && onPick(item.prompt)}
-        className="flex flex-col items-center justify-center gap-0.5 px-1 py-2 rounded-xl border bg-card hover:bg-accent/40 active:scale-[0.97] text-center shadow-sm"
-      >
-        <span className="text-3xl leading-none">{item.emoji}</span>
-        <span className="text-[10px] font-semibold leading-tight">{item.label}</span>
-      </button>
-    );
-  }
-
   return (
-    <details className="col-span-3 rounded-xl border bg-card overflow-hidden shadow-sm">
-      <summary className="flex items-center justify-between px-3 py-2 cursor-pointer list-none">
-        <span className="flex items-center gap-2">
-          <span className="text-3xl leading-none">{item.emoji}</span>
-          <span className="text-sm font-bold leading-tight">{item.label}</span>
-        </span>
-        <span className="text-[10px] text-muted-foreground">Ver opciones ▾</span>
-      </summary>
-      <div className="grid grid-cols-3 gap-1.5 p-1.5 border-t bg-muted/30">
-        {item.submenu!.map((sub) => (
-          <button
-            key={sub.label}
-            type="button"
-            onClick={() => onPick(sub.prompt)}
-            className="flex items-center justify-center gap-1 px-1 py-2 rounded-lg border bg-background hover:bg-accent/40 active:scale-[0.97] text-center"
-          >
-            <span className="text-[10px] font-semibold leading-tight">{sub.label}</span>
-          </button>
-        ))}
-      </div>
-    </details>
+    <button
+      type="button"
+      onClick={() => item.prompt && onPick(item.prompt)}
+      className="flex flex-col items-center justify-center gap-1 px-2 py-3 rounded-2xl border bg-card hover:bg-accent/40 active:scale-[0.97] text-center shadow-sm w-full h-full"
+    >
+      <span className="text-4xl leading-none">{item.emoji}</span>
+      <span className="text-xs font-semibold leading-tight">{item.label}</span>
+    </button>
   );
 }
