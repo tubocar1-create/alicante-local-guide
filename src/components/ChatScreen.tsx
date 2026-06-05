@@ -4189,7 +4189,10 @@ function CategoryTable({
     );
   }
 
-  return <CategoryTableInner ranked={ranked} loading={loading} onClose={() => setOpen(false)} theme={theme} originLabel={originLabel} />;
+  const FAST_FOOD_CATS: ExtendedCategory[] = ["fast_food", "burgers", "pizzas", "montaditos", "kebab", "fried_chicken", "mexican"];
+  const closeHref = FAST_FOOD_CATS.includes(category) ? "/selectordecomidas/comida-rapida" : "/selectordecomidas";
+
+  return <CategoryTableInner ranked={ranked} loading={loading} onClose={() => setOpen(false)} theme={theme} originLabel={originLabel} closeHref={closeHref} />;
 }
 
 function TypicalTable({ cards }: { cards: PlaceCardData[] }) {
