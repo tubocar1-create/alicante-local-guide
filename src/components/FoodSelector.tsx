@@ -181,7 +181,7 @@ function CategoryButton({
       className="relative flex flex-col items-center justify-center rounded-2xl border-2 border-[#2c1810] bg-card hover:bg-accent/40 active:scale-[0.97] text-center shadow-sm w-full h-full overflow-hidden p-1"
     >
       <span className="leading-none" style={{ lineHeight: 1 }}>
-        <span style={{ fontSize: "clamp(2.5rem, 11vw, 5rem)" }}>{item.emoji}</span>
+        <span style={{ fontSize: "clamp(1.5rem, 7vw, 2.75rem)" }}>{item.emoji}</span>
       </span>
       <span className="absolute bottom-1 left-1 right-1 text-[10px] font-semibold leading-tight truncate">
         {item.label}
