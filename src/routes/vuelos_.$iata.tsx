@@ -276,7 +276,7 @@ function DestinationDashboard() {
   const [flights, setFlights] = useState<Flight[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [popup, setPopup] = useState<{ airlineCode: string; flight?: { numVuelo: string; fecha: string; salida: string; llegada: string; duracion: string; ruta: string } } | null>(null);
+  const [popup, setPopup] = useState<{ airlineCode: string; flight?: { numVuelo: string; fecha: string; fechaLabel: string; salida: string; llegada: string; duracion: string; ruta: string } } | null>(null);
   const [visibleCount, setVisibleCount] = useState(15);
   const [isDesktop, setIsDesktop] = useState(false);
   useEffect(() => {
@@ -488,7 +488,8 @@ function DestinationDashboard() {
                         airlineCode: ac,
                         flight: {
                           numVuelo: f.numVuelo,
-                          fecha: day,
+                          fecha: f.fecha,
+                          fechaLabel: day,
                           salida,
                           llegada,
                           duracion: dur.label,
@@ -798,7 +799,7 @@ function DestinationPopup({
   country: string;
   airlineCode: string;
   originIata: string;
-  flight?: { numVuelo: string; fecha: string; salida: string; llegada: string; duracion: string; ruta: string };
+  flight?: { numVuelo: string; fecha: string; fechaLabel: string; salida: string; llegada: string; duracion: string; ruta: string };
   onClose: () => void;
 }) {
   const fetchComment = useServerFn(getDestinationComment);
