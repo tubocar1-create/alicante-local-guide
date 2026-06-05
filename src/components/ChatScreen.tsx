@@ -3817,12 +3817,12 @@ function CategoryTableInner({
           <button
             type="button"
             onClick={() => {
-              window.dispatchEvent(new Event("comer:back-to-menu"));
               onClose();
+              navigate({ to: closeHref });
             }}
             className={`text-[11px] uppercase tracking-[0.25em] ${theme.accentText} transition ${theme.borderHover}`}
           >
-            ← Volver al menú
+            ← Volver al selector
           </button>
           <div className="flex items-center gap-2">
             <span className="relative flex h-2 w-2">
@@ -3835,8 +3835,8 @@ function CategoryTableInner({
             <button
               type="button"
               onClick={() => {
-                window.dispatchEvent(new Event("comer:back-to-menu"));
                 onClose();
+                navigate({ to: closeHref });
               }}
               aria-label="Cerrar"
               className={`ml-2 rounded-full border p-1.5 ${theme.borderBtn}`}
