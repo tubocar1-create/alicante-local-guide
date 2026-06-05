@@ -3808,7 +3808,10 @@ function CategoryTableInner({
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className={`absolute -top-40 left-1/2 h-[28rem] w-[28rem] -translate-x-1/2 rounded-full ${theme.glow1} blur-3xl`} />
         <div className={`absolute bottom-0 right-0 h-[24rem] w-[24rem] rounded-full ${theme.glow2} blur-3xl`} />
-        <header className="mb-5 flex items-center justify-between">
+      </div>
+
+      <div className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col overflow-hidden px-4 pt-5 pb-2 md:px-6">
+        <header className="mb-2 flex shrink-0 items-center justify-between">
           <button
             type="button"
             onClick={() => {
