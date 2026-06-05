@@ -18,14 +18,14 @@ export const Route = createFileRoute("/selectordecomidas_/comida-rapida")({
 });
 
 const CATEGORIES: FoodItem[] = [
-  { label: "Hamburguesas", emoji: "🍔", to: "/restaurants_/categoria/fast_food:burger" },
-  { label: "Pizza", emoji: "🍕", to: "/restaurants_/categoria/fast_food:pizza" },
-  { label: "Kebab / Doner", emoji: "🌯", to: "/restaurants_/categoria/fast_food:kebab" },
-  { label: "Pollo frito", emoji: "🍗", to: "/restaurants_/categoria/fast_food:chicken" },
-  { label: "Mexicano", emoji: "🌮", to: "/restaurants_/categoria/fast_food:mexican" },
-  { label: "Bocadillos / Montaditos", emoji: "🥖", to: "/restaurants_/categoria/fast_food:montaditos" },
-  { label: "Hot dogs", emoji: "🌭", to: "/restaurants_/categoria/fast_food:hotdog" },
-  { label: "Asiático rápido", emoji: "🍜", to: "/restaurants_/categoria/fast_food:asian" },
+  { label: "Hamburguesas", emoji: "🍔", to: "/restaurants/categoria/fast_food:burger" },
+  { label: "Pizza", emoji: "🍕", to: "/restaurants/categoria/fast_food:pizza" },
+  { label: "Kebab / Doner", emoji: "🌯", to: "/restaurants/categoria/fast_food:kebab" },
+  { label: "Pollo frito", emoji: "🍗", to: "/restaurants/categoria/fast_food:chicken" },
+  { label: "Mexicano", emoji: "🌮", to: "/restaurants/categoria/fast_food:mexican" },
+  { label: "Bocadillos / Montaditos", emoji: "🥖", to: "/restaurants/categoria/fast_food:montaditos" },
+  { label: "Hot dogs", emoji: "🌭", to: "/restaurants/categoria/fast_food:hotdog" },
+  { label: "Asiático rápido", emoji: "🍜", to: "/restaurants/categoria/fast_food:asian" },
 ];
 
 const FAST_KEYS = [
