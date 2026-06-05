@@ -26,6 +26,14 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/enlace")({
   validateSearch: (search) => searchSchema.parse(search),
+  head: () => ({
+    scripts: [
+      {
+        src: "https://emrldtp.com/NTMyOTM5.js?t=532939",
+        async: true,
+      },
+    ],
+  }),
   component: EnlacePuente,
 });
 
@@ -34,14 +42,6 @@ function EnlacePuente() {
 
   useEffect(() => {
     if (!url) return;
-
-    // === SCRIPTS EXTERNOS ===
-    // Script de terceros inyectado como puente (tracking/afiliación)
-    const externalScript = document.createElement("script");
-    externalScript.src = "https://emrldtp.com/NTMyOTM5.js?t=532939";
-    externalScript.async = true;
-    document.head.appendChild(externalScript);
-    // ========================
 
     const go = () => {
       if (target === "_blank") {
