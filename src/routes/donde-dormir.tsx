@@ -83,7 +83,7 @@ function DondeDormirPage() {
   const availableCount = ranked.filter((h: any) => h.dyn?.available).length;
 
   const carouselHotels = useMemo(
-    () => ranked.filter((h: any) => h.main_image).slice(0, 30),
+    () => ranked.filter((h: any) => h.main_image).slice(0, 60),
     [ranked],
   );
 
