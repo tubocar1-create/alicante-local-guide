@@ -27,14 +27,13 @@ type Props = {
 const ALICANTE_CENTER = { lat: 38.3414, lng: -0.481 };
 
 function matchBadge(
-  cuisine: string | null,
+  tags: string[],
   badges: Props["badgeCategories"],
 ): { label: string; emoji: string } | null {
-  if (!badges) return null;
-  const c = (cuisine ?? "").toLowerCase().trim();
-  if (!c) return null;
+  if (!badges || !tags.length) return null;
+  const lc = tags.map((t) => t.toLowerCase());
   for (const b of badges) {
-    if (b.keys.some((k) => c.includes(k.toLowerCase()))) {
+    if (b.keys.some((k) => lc.includes(k.toLowerCase()))) {
       return { label: b.label, emoji: b.emoji };
     }
   }
