@@ -361,8 +361,9 @@ function RestaurantDashboard() {
             <section className="flex flex-wrap gap-2 pt-2">
               <button
                 type="button"
-                onClick={() => setQrOpen(true)}
-                className="flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl gradient-warm px-4 py-3 text-sm font-bold text-primary-foreground shadow-lg ring-2 ring-white/40 hover:opacity-95"
+                disabled
+                aria-disabled="true"
+                className="flex flex-1 flex-col items-center justify-center gap-0.5 rounded-xl gradient-warm px-4 py-3 text-sm font-bold text-primary-foreground shadow-lg ring-2 ring-white/40 opacity-60 cursor-not-allowed"
               >
                 <span className="flex items-center gap-2">
                   <CalendarCheck className="h-4 w-4" />
@@ -374,8 +375,9 @@ function RestaurantDashboard() {
               </button>
               <button
                 type="button"
-                onClick={() => setBookingOpen(true)}
-                className="flex flex-1 items-center justify-center rounded-xl bg-emerald-500 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-emerald-400"
+                disabled
+                aria-disabled="true"
+                className="flex flex-1 items-center justify-center rounded-xl bg-emerald-500 px-4 py-2.5 text-center text-sm font-semibold text-white opacity-60 cursor-not-allowed"
               >
                 Reservar
               </button>
