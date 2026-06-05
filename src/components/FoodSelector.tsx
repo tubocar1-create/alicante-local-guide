@@ -107,13 +107,7 @@ export default function FoodSelector({
           </button>
         </header>
 
-        <section className="flex-1 min-h-0 grid grid-cols-2 gap-1.5 auto-rows-fr">
-          {categories.map((it) => (
-            <CategoryButton key={it.label} item={it} onPick={handlePick} />
-          ))}
-        </section>
-
-        <section className="mt-5 shrink-0">
+        <section className="mb-3 shrink-0">
           {populares.length === 0 ? (
             <div className="flex gap-2 overflow-x-auto pb-1 -mx-3 px-3 no-scrollbar">
               {Array.from({ length: 8 }).map((_, i) => (
@@ -161,6 +155,13 @@ export default function FoodSelector({
             </div>
           )}
         </section>
+
+        <section className="flex-1 min-h-0 grid grid-cols-2 gap-1.5 auto-rows-fr">
+          {categories.map((it) => (
+            <CategoryButton key={it.label} item={it} onPick={handlePick} />
+          ))}
+        </section>
+
       </div>
     </div>
   );
