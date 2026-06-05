@@ -47,6 +47,7 @@ export default function FoodSelector({
   cuisineKeys,
   backTo = "/",
   badgeCategories,
+  bgClass = "bg-[#d9bd87]",
 }: Props) {
   const navigate = useNavigate();
   const { state } = useUserLocation();
