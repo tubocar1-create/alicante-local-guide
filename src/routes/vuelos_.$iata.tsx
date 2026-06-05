@@ -813,18 +813,16 @@ function DestinationPopup({
   const isUK = IATA_COUNTRY[iata] === "GB" || IATA_COUNTRY[originIata] === "GB";
   const kiwiUrl = (() => {
     const f = flight?.fecha; // dd/mm/yyyy
+    const base = "https://c111.travelpayouts.com/click?shmarker=732656&promo_id=3791&source_type=customlink&type=click&custom_url=";
     if (f && /^\d{2}\/\d{2}\/\d{4}$/.test(f)) {
       const dd = f.slice(0, 2);
       const mm = f.slice(3, 5);
       const yyyy = f.slice(6, 10);
-      const params = new URLSearchParams({
-        from: originIata,
-        to: iata,
-        departure: `${yyyy}-${mm}-${dd}`,
-      });
-      return `https://kiwi.tpo.mx/mlF5nkj9?${params.toString()}`;
+      const deep = `https://www.kiwi.com/deep?from=${originIata}&to=${iata}&departure=${yyyy}-${mm}-${dd}`;
+      return base + encodeURIComponent(deep);
     }
-    return "https://kiwi.tpo.mx/mlF5nkj9";
+    const deep = `https://www.kiwi.com/deep?from=${originIata}&to=${iata}`;
+    return base + encodeURIComponent(deep);
   })();
 
   return (
