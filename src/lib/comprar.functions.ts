@@ -674,7 +674,7 @@ export const getRandomShopsWithPhotos = createServerFn({ method: "GET" })
       const j = Math.floor(Math.random() * (i + 1));
       [withPhoto[i], withPhoto[j]] = [withPhoto[j], withPhoto[i]];
     }
-    return withPhoto.slice(0, 20);
+    return withPhoto.slice(0, 60);
 
   },
 );
