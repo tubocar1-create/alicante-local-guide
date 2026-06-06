@@ -9,6 +9,10 @@ import {
   type RandomShop,
 } from "@/lib/comprar.functions";
 
+function shopPhotoUrl(ref: string, w: number) {
+  return /^https?:\/\//i.test(ref) ? ref : `/api/public/shop-photo/${ref}?w=${w}`;
+}
+
 export const Route = createFileRoute("/comprar")({
   head: () => ({
     meta: [
@@ -99,7 +103,7 @@ function ComprarPage() {
                   className="relative shrink-0 h-full w-[85vw] max-w-md snap-center text-left bg-black/30 overflow-hidden hover:shadow-md active:scale-[0.98] transition border-2 border-white/30 rounded-2xl"
                 >
                   <img
-                    src={`/api/public/shop-photo/${r.photo_ref}?w=1200`}
+                    src={shopPhotoUrl(r.photo_ref, 1200)}
                     alt={r.name}
                     loading="lazy"
                     className="absolute inset-0 w-full h-full object-cover"
