@@ -1,8 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Sparkles, Loader2, ShoppingBag } from "lucide-react";
-import { classifyShopIntent, getShopTree, type ShopTree } from "@/lib/comprar.functions";
+import { ShoppingBag } from "lucide-react";
+import {
+  getShopTree,
+  getRandomShopsWithPhotos,
+  type ShopTree,
+  type RandomShop,
+} from "@/lib/comprar.functions";
 
 export const Route = createFileRoute("/comprar")({
   head: () => ({
@@ -18,24 +23,10 @@ export const Route = createFileRoute("/comprar")({
       { property: "og:url", content: "https://vamosalicante.com/comprar" },
     ],
     links: [{ rel: "canonical", href: "https://vamosalicante.com/comprar" }],
-    scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "ItemList",
-          name: "Dónde comprar en Alicante",
-          description: "Listado de categorías y subsectores de tiendas en Alicante: moda, tecnología, hogar, mascotas y más.",
-          url: "https://vamosalicante.com/comprar",
-        }),
-      },
-    ],
   }),
   loader: () => getShopTree(),
   component: ComprarPage,
 });
-
-type Classification = Awaited<ReturnType<typeof classifyShopIntent>>;
 
 function ComprarPage() {
   const tree = Route.useLoaderData() as ShopTree;
@@ -47,81 +38,112 @@ function ComprarPage() {
     "alojamiento-turistico",
   ]);
   const subsectors = tree.sectors.flatMap((s) =>
-    s.subsectors
-      .filter((ss) => !HIDDEN_SUBSECTORS.has(ss.slug))
-      .map((ss) => ({ ...ss, sectorName: s.short_label || s.name })),
+    s.subsectors.filter((ss) => !HIDDEN_SUBSECTORS.has(ss.slug)),
   );
-  const classify = useServerFn(classifyShopIntent);
+
   const navigate = useNavigate();
+  const fetchRandom = useServerFn(getRandomShopsWithPhotos);
+  const [populares, setPopulares] = useState<RandomShop[]>([]);
 
-  const [query, setQuery] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [aiResult, setAiResult] = useState<Classification | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  async function ask() {
-    const q = query.trim();
-    if (!q || loading) return;
-    setLoading(true);
-    setError(null);
-    setAiResult(null);
-    try {
-      const r = await classify({ data: { query: q } });
-      setAiResult(r);
-      if (r.subsector?.slug && r.subsubsector?.slug) {
-        navigate({
-          to: "/comprar/$subsector/$subsubsector",
-          params: {
-            subsector: r.subsector.slug,
-            subsubsector: r.subsubsector.slug,
-          },
-        });
-      } else if (r.subsector?.slug) {
-        navigate({ to: "/comprar/$subsector", params: { subsector: r.subsector.slug } });
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Error inesperado");
-    } finally {
-      setLoading(false);
-    }
-  }
+  useEffect(() => {
+    let cancel = false;
+    fetchRandom()
+      .then((items) => {
+        if (!cancel) setPopulares(items);
+      })
+      .catch(() => {});
+    return () => {
+      cancel = true;
+    };
+  }, [fetchRandom]);
 
   if (subsectors.length === 0) return <div className="p-6">No hay sectores configurados.</div>;
 
   return (
-    <div className="flex h-full lg:h-auto lg:min-h-[80vh] flex-col overflow-hidden lg:overflow-visible bg-black lg:rounded-3xl text-white">
-      <header className="border-b border-white/10 bg-black">
-        <div className="mx-auto flex max-w-3xl items-center gap-2 px-3 py-2">
-          <Link to="/" className="rounded-full p-1.5 hover:bg-white/10" aria-label="Volver">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-          <div className="flex items-center gap-1.5">
-            <ShoppingBag className="h-4 w-4" />
-            <h1 className="text-sm font-semibold">Comprar en Alicante</h1>
+    <div className="h-dvh bg-[#0c2340] text-white flex flex-col overflow-hidden">
+      <div className="mx-auto w-full max-w-2xl px-3 pt-2 pb-2 flex-1 flex flex-col min-h-0">
+        <header className="flex items-center justify-between gap-2 mb-2">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <ShoppingBag className="h-4 w-4 shrink-0" />
+            <h1 className="text-sm sm:text-base font-semibold leading-tight truncate">
+              Comprar en Alicante
+            </h1>
           </div>
-        </div>
-      </header>
+          <Link
+            to="/"
+            className="text-xs text-white/80 underline underline-offset-2 shrink-0"
+          >
+            ← Volver
+          </Link>
+        </header>
 
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col overflow-hidden px-2 py-2">
-        <div className="grid min-h-0 flex-1 grid-cols-3 gap-1.5 sm:grid-cols-4 lg:grid-cols-6 lg:gap-3 xl:grid-cols-8">
+        <section className="mb-3 shrink-0">
+          {populares.length === 0 ? (
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-3 px-3 no-scrollbar">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="shrink-0 w-36 h-36 bg-white/10 animate-pulse rounded-2xl"
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-3 px-3 no-scrollbar snap-x">
+              {populares.map((r) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() =>
+                    navigate({ to: "/comprar/tienda/$id", params: { id: r.id } })
+                  }
+                  className="relative shrink-0 w-36 h-36 snap-start text-left bg-black/30 overflow-hidden hover:shadow-md active:scale-[0.98] transition border-2 border-white/30 rounded-2xl"
+                >
+                  <img
+                    src={`/api/public/shop-photo/${r.photo_ref}?w=600`}
+                    alt={r.name}
+                    loading="lazy"
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
+                  {r.subsector_name && (
+                    <div className="absolute top-1.5 left-1.5 flex items-center gap-1 px-2 py-0.5 bg-black/70 text-white text-[10px] font-semibold shadow-sm rounded-full">
+                      {r.subsector_emoji && (
+                        <span className="text-sm leading-none">{r.subsector_emoji}</span>
+                      )}
+                      <span className="line-clamp-1">{r.subsector_name}</span>
+                    </div>
+                  )}
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-2 pt-6 text-white">
+                    <div className="text-sm font-semibold leading-tight line-clamp-2">
+                      {r.name}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="flex-1 min-h-0 grid grid-cols-3 gap-1.5 auto-rows-fr">
           {subsectors.map((ss) => (
             <Link
               key={ss.id}
               to="/comprar/sector/$sector"
               params={{ sector: ss.slug }}
-              aria-label={`Abrir dashboard de ${ss.name}`}
-              className="flex min-h-0 flex-col items-center justify-center gap-1 rounded-xl border-2 border-white/30 bg-white/5 p-1 text-center shadow-sm transition hover:border-primary/60"
+              aria-label={`Abrir ${ss.name}`}
+              className="relative flex flex-col items-center justify-center rounded-2xl border-2 border-white/30 bg-white/5 hover:bg-white/10 active:scale-[0.97] text-center shadow-sm w-full h-full overflow-hidden p-1"
             >
-              <span className="text-5xl leading-none">{ss.emoji ?? "•"}</span>
-              <span className="text-[9px] font-semibold uppercase tracking-tight leading-[1.05] text-white/80 line-clamp-2 max-w-full">
+              <span className="leading-none" style={{ lineHeight: 1 }}>
+                <span style={{ fontSize: "clamp(1.4rem, 6.5vw, 2.5rem)" }}>
+                  {ss.emoji ?? "•"}
+                </span>
+              </span>
+              <span className="absolute bottom-1 left-1 right-1 text-[9px] font-semibold uppercase tracking-tight leading-[1.05] text-white/90 line-clamp-2">
                 {ss.name}
               </span>
             </Link>
           ))}
-        </div>
-      </main>
+        </section>
+      </div>
     </div>
   );
 }
-
-
