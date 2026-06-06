@@ -529,6 +529,7 @@ export type SectorDashboardItem = {
   id: string;
   name: string;
   address: string | null;
+  photo_ref: string | null;
   subsector_name: string;
   subsubsector_name: string;
   subsubsector_emoji: string | null;
@@ -591,7 +592,7 @@ export const getSectorDashboard = createServerFn({ method: "GET" })
     if (sssIds.length === 0) return { sector: header as any, items: [] };
     const { data: biz } = await sb
       .from("shop_businesses")
-      .select("id,name,address,opening_hours,lat,lng,subsubsector_id")
+      .select("id,name,address,opening_hours,photos,lat,lng,subsubsector_id")
       .in("subsubsector_id", sssIds)
       .neq("status", "duplicate")
       .limit(1000);
@@ -603,6 +604,7 @@ export const getSectorDashboard = createServerFn({ method: "GET" })
         id: b.id,
         name: b.name,
         address: b.address,
+        photo_ref: pickPhotoRef(b.photos),
         subsubsector_name: sx?.name ?? "",
         subsubsector_emoji: sx?.emoji ?? null,
         subsector_name: sx ? (subMap.get(sx.subsector_id) ?? "") : "",
