@@ -196,7 +196,7 @@ function ExtrasBlock({ data, beachName }: { data: BeachExtras; beachName: string
 function ViatorFooter({ beachSlug }: { beachSlug: string }) {
   const tours = getToursForBeach(beachSlug);
   const rawUrls = tours.map((t) => t.rawUrl);
-  const { data: details } = useQuery({
+  const { data: details } = useQuery<ViatorTourDetail[]>({
     queryKey: ["viator-tours", rawUrls],
     queryFn: async () => {
       if (rawUrls.length === 0) return [];
@@ -205,13 +205,14 @@ function ViatorFooter({ beachSlug }: { beachSlug: string }) {
         .select("url,title,description,price_text,image_url")
         .in("url", rawUrls);
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as ViatorTourDetail[];
     },
     staleTime: 1000 * 60 * 60,
     enabled: rawUrls.length > 0,
   });
   if (tours.length === 0) return null;
-  const byUrl = new Map((details ?? []).map((d) => [d.url, d]));
+  const byUrl = new Map<string, ViatorTourDetail>((details ?? []).map((d) => [d.url, d]));
+
   return (
     <section className="mt-10 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-sky-100">
       <div className="flex items-center gap-2 text-cyan-700">
