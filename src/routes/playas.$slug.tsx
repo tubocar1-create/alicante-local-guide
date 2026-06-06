@@ -1,9 +1,20 @@
 import { createFileRoute, Link, notFound, redirect, Await } from "@tanstack/react-router";
 import { Suspense } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, MapPin, Navigation, Sparkles, Star, Ticket } from "lucide-react";
 import { getBeachQuick, getBeachExtras, type BeachExtras } from "@/lib/playas-map.functions";
 import { getBeachBySlug } from "@/lib/playas-map-data";
 import { getToursForBeach } from "@/lib/viator-tours";
+import { supabase } from "@/integrations/supabase/client";
+
+type ViatorTourDetail = {
+  url: string;
+  title: string | null;
+  description: string | null;
+  price_text: string | null;
+  image_url: string | null;
+};
+
 
 export const Route = createFileRoute("/playas/$slug")({
   loader: async ({ params }) => {
