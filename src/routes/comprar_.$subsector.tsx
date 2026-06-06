@@ -106,7 +106,7 @@ function SubsectorPage() {
             <h2 className="mb-2 text-sm font-semibold text-muted-foreground">
               Tiendas destacadas
             </h2>
-            <div className="-mx-4 flex h-56 snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-1 no-scrollbar">
+            <div className="-mx-4 flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-1 no-scrollbar">
               {populares.map((r) => (
                 <button
                   key={r.id}
@@ -114,7 +114,7 @@ function SubsectorPage() {
                   onClick={() =>
                     navigate({ to: "/comprar/tienda/$id", params: { id: r.id } })
                   }
-                  className="relative aspect-[3/4] h-full shrink-0 snap-center overflow-hidden rounded-2xl border-2 border-border bg-black/30 text-left transition active:scale-[0.98] hover:shadow-md"
+                  className="relative h-64 w-64 shrink-0 snap-center overflow-hidden rounded-2xl border-2 border-border bg-black/30 text-left transition hover:shadow-md active:scale-[0.98]"
                 >
                   <img
                     src={shopPhotoUrl(r.photo_ref, 800)}
