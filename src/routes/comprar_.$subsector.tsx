@@ -1,6 +1,16 @@
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
-import { getSubsectorPage } from "@/lib/comprar.functions";
+import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import {
+  getSubsectorPage,
+  getRandomShopsWithPhotos,
+  type RandomShop,
+} from "@/lib/comprar.functions";
+
+function shopPhotoUrl(ref: string, w: number) {
+  return /^https?:\/\//i.test(ref) ? ref : `/api/public/shop-photo/${ref}?w=${w}`;
+}
 
 export const Route = createFileRoute("/comprar_/$subsector")({
   loader: ({ params }) => getSubsectorPage({ data: { slug: params.subsector } }),
@@ -38,6 +48,25 @@ export const Route = createFileRoute("/comprar_/$subsector")({
 
 function SubsectorPage() {
   const data = Route.useLoaderData();
+  const { subsector } = Route.useParams();
+  const navigate = useNavigate();
+  const fetchRandom = useServerFn(getRandomShopsWithPhotos);
+  const [populares, setPopulares] = useState<RandomShop[] | null>(null);
+
+  useEffect(() => {
+    let cancel = false;
+    fetchRandom({ data: { subsectorSlug: subsector } })
+      .then((items) => {
+        if (!cancel) setPopulares(items);
+      })
+      .catch(() => {
+        if (!cancel) setPopulares([]);
+      });
+    return () => {
+      cancel = true;
+    };
+  }, [fetchRandom, subsector]);
+
   if (!data) return <div className="p-6 text-sm">Categoría no encontrada.</div>;
 
   return (
@@ -53,7 +82,7 @@ function SubsectorPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl space-y-5 px-4 py-5">
+      <main className="mx-auto max-w-3xl space-y-5 px-4 py-4">
         <nav className="text-sm text-muted-foreground">
           <Link to="/comprar" className="hover:underline">
             {data.sector?.short_label || data.sector?.name || "Comprar"}
@@ -61,6 +90,48 @@ function SubsectorPage() {
           {" / "}
           <span className="text-foreground">{data.name}</span>
         </nav>
+
+        {/* Carrusel de tiendas destacadas del subsector */}
+        {populares === null ? (
+          <div className="-mx-4 flex h-56 gap-2 overflow-x-auto px-4 no-scrollbar">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="aspect-[3/4] h-full shrink-0 animate-pulse rounded-2xl bg-muted"
+              />
+            ))}
+          </div>
+        ) : populares.length > 0 ? (
+          <section>
+            <h2 className="mb-2 text-sm font-semibold text-muted-foreground">
+              Tiendas destacadas
+            </h2>
+            <div className="-mx-4 flex h-56 snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-1 no-scrollbar">
+              {populares.map((r) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() =>
+                    navigate({ to: "/comprar/tienda/$id", params: { id: r.id } })
+                  }
+                  className="relative aspect-[3/4] h-full shrink-0 snap-center overflow-hidden rounded-2xl border-2 border-border bg-black/30 text-left transition active:scale-[0.98] hover:shadow-md"
+                >
+                  <img
+                    src={shopPhotoUrl(r.photo_ref, 800)}
+                    alt={r.name}
+                    loading="lazy"
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-3 pt-10 text-white">
+                    <div className="line-clamp-2 text-sm font-semibold leading-tight">
+                      {r.name}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <h2 className="text-sm font-semibold text-muted-foreground">
           ¿Qué tipo de {data.name.toLowerCase()} buscas?
@@ -90,7 +161,6 @@ function SubsectorPage() {
               );
             })}
           </div>
-
         )}
       </main>
     </div>

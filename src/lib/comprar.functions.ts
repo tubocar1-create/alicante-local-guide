@@ -623,15 +623,35 @@ export type RandomShop = {
   subsector_emoji: string | null;
 };
 
-export const getRandomShopsWithPhotos = createServerFn({ method: "GET" }).handler(
-  async (): Promise<RandomShop[]> => {
+export const getRandomShopsWithPhotos = createServerFn({ method: "GET" })
+  .inputValidator((data: { subsectorSlug?: string } | undefined) =>
+    z.object({ subsectorSlug: z.string().min(1).max(120).optional() }).parse(data ?? {}),
+  )
+  .handler(async ({ data }): Promise<RandomShop[]> => {
     const sb = admin();
-    const { data: rows, error } = await sb
+    let subsubsectorIds: string[] | null = null;
+    if (data.subsectorSlug) {
+      const { data: ss } = await sb
+        .from("shop_subsectors")
+        .select("id")
+        .eq("slug", data.subsectorSlug)
+        .maybeSingle();
+      if (!ss) return [];
+      const { data: sxs } = await sb
+        .from("shop_subsubsectors")
+        .select("id")
+        .eq("subsector_id", ss.id);
+      subsubsectorIds = (sxs ?? []).map((x: any) => x.id);
+      if (subsubsectorIds.length === 0) return [];
+    }
+    let q = sb
       .from("shop_businesses")
       .select("id,name,photos,shop_subsubsectors(name,emoji,shop_subsectors(name,emoji))")
       .neq("status", "duplicate")
       .not("photos", "is", null)
       .limit(400);
+    if (subsubsectorIds) q = q.in("subsubsector_id", subsubsectorIds);
+    const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
     const withPhoto = (rows ?? [])
       .map((r: any) => {
@@ -653,5 +673,6 @@ export const getRandomShopsWithPhotos = createServerFn({ method: "GET" }).handle
       [withPhoto[i], withPhoto[j]] = [withPhoto[j], withPhoto[i]];
     }
     return withPhoto.slice(0, 20);
+
   },
 );
