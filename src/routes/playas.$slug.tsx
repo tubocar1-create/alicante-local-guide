@@ -184,7 +184,23 @@ function ExtrasBlock({ data, beachName }: { data: BeachExtras; beachName: string
 
 function ViatorFooter({ beachSlug }: { beachSlug: string }) {
   const tours = getToursForBeach(beachSlug);
+  const rawUrls = tours.map((t) => t.rawUrl);
+  const { data: details } = useQuery({
+    queryKey: ["viator-tours", rawUrls],
+    queryFn: async () => {
+      if (rawUrls.length === 0) return [];
+      const { data, error } = await supabase
+        .from("viator_tours")
+        .select("url,title,description,price_text,image_url")
+        .in("url", rawUrls);
+      if (error) throw error;
+      return data ?? [];
+    },
+    staleTime: 1000 * 60 * 60,
+    enabled: rawUrls.length > 0,
+  });
   if (tours.length === 0) return null;
+  const byUrl = new Map((details ?? []).map((d) => [d.url, d]));
   return (
     <section className="mt-10 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-sky-100">
       <div className="flex items-center gap-2 text-cyan-700">
@@ -192,25 +208,53 @@ function ViatorFooter({ beachSlug }: { beachSlug: string }) {
         <p className="text-[11px] font-black uppercase tracking-[0.2em]">Excursiones recomendadas</p>
       </div>
       <h2 className="mt-1 text-lg font-black text-slate-950">Planes y tours cerca</h2>
-      <ul className="mt-3 divide-y divide-sky-100">
-        {tours.map((t) => (
-          <li key={t.url}>
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        {tours.map((t) => {
+          const d = byUrl.get(t.rawUrl);
+          const title = d?.title ?? t.title;
+          return (
             <a
+              key={t.url}
               href={t.url}
               target="_blank"
               rel="sponsored noopener noreferrer"
-              className="flex items-center justify-between gap-3 py-2.5 text-sm font-semibold text-slate-800 hover:text-cyan-700"
+              className="group flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-sky-100 transition hover:shadow-md hover:ring-cyan-200"
             >
-              <span className="line-clamp-2">{t.title}</span>
-              <span className="shrink-0 text-[11px] font-black uppercase tracking-wider text-cyan-700">Reservar →</span>
+              {d?.image_url ? (
+                <img
+                  src={d.image_url}
+                  alt={title}
+                  loading="lazy"
+                  className="aspect-[16/10] w-full object-cover transition group-hover:scale-[1.02]"
+                />
+              ) : (
+                <div className="aspect-[16/10] w-full bg-gradient-to-br from-cyan-100 to-sky-200" />
+              )}
+              <div className="flex flex-1 flex-col gap-2 p-3">
+                <h3 className="line-clamp-2 text-sm font-black leading-snug text-slate-900">{title}</h3>
+                {d?.description && (
+                  <p className="line-clamp-3 text-xs text-slate-600">{d.description}</p>
+                )}
+                <div className="mt-auto flex items-center justify-between pt-1">
+                  {d?.price_text && (
+                    <span className="text-sm font-black text-cyan-700">{d.price_text}</span>
+                  )}
+                  <span className="text-[11px] font-black uppercase tracking-wider text-cyan-700">
+                    Reservar →
+                  </span>
+                </div>
+              </div>
             </a>
-          </li>
-        ))}
-      </ul>
-      <p className="mt-3 text-[10px] uppercase tracking-wider text-slate-400">Enlaces de afiliado · Viator</p>
+          );
+        })}
+      </div>
+      <p className="mt-4 text-[10px] uppercase tracking-wider text-slate-400">
+        Enlaces de afiliado · Viator
+      </p>
     </section>
   );
 }
+
 
 function BeachDetailPage() {
   const { quick, extras } = Route.useLoaderData();
