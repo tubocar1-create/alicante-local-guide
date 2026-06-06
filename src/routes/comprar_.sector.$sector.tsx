@@ -57,6 +57,10 @@ export const Route = createFileRoute("/comprar_/sector/$sector")({
 const ALICANTE: Coords = { lat: 38.3452, lng: -0.481 };
 const ACCENT = "#f6a734"; // ámbar cálido al estilo Tradición
 
+function shopPhotoUrl(ref: string, w: number) {
+  return /^https?:\/\//i.test(ref) ? ref : `/api/public/shop-photo/${ref}?w=${w}`;
+}
+
 function fmtDist(km: number | null): string {
   if (km == null || !Number.isFinite(km)) return "—";
   const m = Math.round(km * 1000);
@@ -106,6 +110,11 @@ function SectorDashboard() {
         return a.p.name.localeCompare(b.p.name);
       });
   }, [items, origin]);
+
+  const carouselItems = useMemo(
+    () => ranked.filter(({ p }) => p.photo_ref).slice(0, 60),
+    [ranked],
+  );
 
   return (
     <div
@@ -194,6 +203,35 @@ function SectorDashboard() {
             )}
           </p>
         </div>
+
+        {carouselItems.length > 0 && (
+          <section className="mb-3 shrink-0">
+            <div className="-mx-4 flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-1 no-scrollbar md:-mx-6 md:px-6">
+              {carouselItems.map(({ p, d }) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => navigate({ to: "/comprar/tienda/$id", params: { id: p.id } })}
+                  className="relative h-44 w-44 shrink-0 snap-start overflow-hidden rounded-md border-2 border-white/10 bg-black/30 text-left transition active:scale-[0.98] hover:shadow-md"
+                >
+                  <img
+                    src={shopPhotoUrl(p.photo_ref!, 800)}
+                    alt={p.name}
+                    loading="lazy"
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-2 pt-7 text-white">
+                    <div className="line-clamp-2 text-sm font-semibold leading-tight">{p.name}</div>
+                    <div className="mt-0.5 flex items-center justify-between gap-2 text-[10px] text-white/85">
+                      <span className="truncate">{p.subsubsector_emoji ?? "•"} {p.subsubsector_name}</span>
+                      <span className="shrink-0 font-mono">{fmtDist(d)}</span>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
 
         <div className="rounded-2xl border border-white/10 bg-black/30 p-2 backdrop-blur-xl md:p-4">
           <div className="mb-2 flex items-baseline justify-between gap-2">
