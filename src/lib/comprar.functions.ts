@@ -651,7 +651,7 @@ export const getRandomShopsWithPhotos = createServerFn({ method: "GET" })
       .select("id,name,photos,shop_subsubsectors(name,emoji,shop_subsectors(name,emoji))")
       .neq("status", "duplicate")
       .not("photos", "is", null)
-      .limit(400);
+      .limit(1000);
     if (subsubsectorIds) q = q.in("subsubsector_id", subsubsectorIds);
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
@@ -674,7 +674,7 @@ export const getRandomShopsWithPhotos = createServerFn({ method: "GET" })
       const j = Math.floor(Math.random() * (i + 1));
       [withPhoto[i], withPhoto[j]] = [withPhoto[j], withPhoto[i]];
     }
-    return withPhoto.slice(0, 20);
+    return withPhoto.slice(0, 60);
 
   },
 );
