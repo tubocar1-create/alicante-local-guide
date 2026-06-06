@@ -77,18 +77,18 @@ function ComprarPage() {
           </Link>
         </header>
 
-        <section className="mb-3 shrink-0">
+        <section className="flex-1 min-h-0 mb-2">
           {populares.length === 0 ? (
-            <div className="flex gap-2 overflow-x-auto pb-1 -mx-3 px-3 no-scrollbar">
-              {Array.from({ length: 8 }).map((_, i) => (
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-3 px-3 h-full no-scrollbar">
+              {Array.from({ length: 6 }).map((_, i) => (
                 <div
                   key={i}
-                  className="shrink-0 w-36 h-36 bg-white/10 animate-pulse rounded-2xl"
+                  className="shrink-0 h-full aspect-[3/4] bg-white/10 animate-pulse rounded-2xl"
                 />
               ))}
             </div>
           ) : (
-            <div className="flex gap-2 overflow-x-auto pb-1 -mx-3 px-3 no-scrollbar snap-x">
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-3 px-3 h-full no-scrollbar snap-x snap-mandatory">
               {populares.map((r) => (
                 <button
                   key={r.id}
@@ -96,24 +96,24 @@ function ComprarPage() {
                   onClick={() =>
                     navigate({ to: "/comprar/tienda/$id", params: { id: r.id } })
                   }
-                  className="relative shrink-0 w-36 h-36 snap-start text-left bg-black/30 overflow-hidden hover:shadow-md active:scale-[0.98] transition border-2 border-white/30 rounded-2xl"
+                  className="relative shrink-0 h-full w-[85vw] max-w-md snap-center text-left bg-black/30 overflow-hidden hover:shadow-md active:scale-[0.98] transition border-2 border-white/30 rounded-2xl"
                 >
                   <img
-                    src={`/api/public/shop-photo/${r.photo_ref}?w=600`}
+                    src={`/api/public/shop-photo/${r.photo_ref}?w=1200`}
                     alt={r.name}
                     loading="lazy"
                     className="absolute inset-0 w-full h-full object-cover"
                   />
                   {r.subsector_name && (
-                    <div className="absolute top-1.5 left-1.5 flex items-center gap-1 px-2 py-0.5 bg-black/70 text-white text-[10px] font-semibold shadow-sm rounded-full">
+                    <div className="absolute top-2 left-2 flex items-center gap-1 px-2.5 py-1 bg-black/70 text-white text-xs font-semibold shadow-sm rounded-full">
                       {r.subsector_emoji && (
-                        <span className="text-sm leading-none">{r.subsector_emoji}</span>
+                        <span className="text-base leading-none">{r.subsector_emoji}</span>
                       )}
                       <span className="line-clamp-1">{r.subsector_name}</span>
                     </div>
                   )}
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-2 pt-6 text-white">
-                    <div className="text-sm font-semibold leading-tight line-clamp-2">
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-3 pt-10 text-white">
+                    <div className="text-lg font-semibold leading-tight line-clamp-2">
                       {r.name}
                     </div>
                   </div>
@@ -123,21 +123,19 @@ function ComprarPage() {
           )}
         </section>
 
-        <section className="flex-1 min-h-0 grid grid-cols-3 gap-1.5 auto-rows-fr">
+        <section className="shrink-0 grid grid-cols-5 gap-1">
           {subsectors.map((ss) => (
             <Link
               key={ss.id}
               to="/comprar/sector/$sector"
               params={{ sector: ss.slug }}
               aria-label={`Abrir ${ss.name}`}
-              className="relative flex flex-col items-center justify-center rounded-2xl border-2 border-white/30 bg-white/5 hover:bg-white/10 active:scale-[0.97] text-center shadow-sm w-full h-full overflow-hidden p-1"
+              className="relative flex flex-col items-center justify-center rounded-xl border border-white/25 bg-white/5 hover:bg-white/10 active:scale-[0.97] text-center shadow-sm aspect-square p-0.5"
             >
-              <span className="leading-none" style={{ lineHeight: 1 }}>
-                <span style={{ fontSize: "clamp(1.4rem, 6.5vw, 2.5rem)" }}>
-                  {ss.emoji ?? "•"}
-                </span>
+              <span style={{ fontSize: "clamp(1rem, 4.5vw, 1.5rem)", lineHeight: 1 }}>
+                {ss.emoji ?? "•"}
               </span>
-              <span className="absolute bottom-1 left-1 right-1 text-[9px] font-semibold uppercase tracking-tight leading-[1.05] text-white/90 line-clamp-2">
+              <span className="mt-0.5 text-[8px] font-semibold uppercase tracking-tight leading-[1.05] text-white/90 line-clamp-2 px-0.5">
                 {ss.name}
               </span>
             </Link>
