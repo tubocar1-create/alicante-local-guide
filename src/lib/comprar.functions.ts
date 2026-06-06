@@ -613,3 +613,45 @@ export const getSectorDashboard = createServerFn({ method: "GET" })
     });
     return { sector: header as any, items };
   });
+
+// Random shop businesses with photos for the Comprar carousel.
+export type RandomShop = {
+  id: string;
+  name: string;
+  photo_ref: string;
+  subsector_name: string | null;
+  subsector_emoji: string | null;
+};
+
+export const getRandomShopsWithPhotos = createServerFn({ method: "GET" }).handler(
+  async (): Promise<RandomShop[]> => {
+    const sb = admin();
+    const { data: rows, error } = await sb
+      .from("shop_businesses")
+      .select("id,name,photos,shop_subsubsectors(name,emoji,shop_subsectors(name,emoji))")
+      .neq("status", "duplicate")
+      .not("photos", "is", null)
+      .limit(400);
+    if (error) throw new Error(error.message);
+    const withPhoto = (rows ?? [])
+      .map((r: any) => {
+        const ref = pickPhotoRef(r.photos);
+        if (!ref) return null;
+        const sss: any = r.shop_subsubsectors;
+        const sec: any = sss?.shop_subsectors;
+        return {
+          id: r.id,
+          name: r.name as string,
+          photo_ref: ref,
+          subsector_name: (sec?.name ?? sss?.name ?? null) as string | null,
+          subsector_emoji: (sec?.emoji ?? sss?.emoji ?? null) as string | null,
+        };
+      })
+      .filter(Boolean) as RandomShop[];
+    for (let i = withPhoto.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [withPhoto[i], withPhoto[j]] = [withPhoto[j], withPhoto[i]];
+    }
+    return withPhoto.slice(0, 20);
+  },
+);
