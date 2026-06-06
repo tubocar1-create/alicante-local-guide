@@ -182,6 +182,36 @@ function ExtrasBlock({ data, beachName }: { data: BeachExtras; beachName: string
   );
 }
 
+function ViatorFooter({ beachSlug }: { beachSlug: string }) {
+  const tours = getToursForBeach(beachSlug);
+  if (tours.length === 0) return null;
+  return (
+    <section className="mt-10 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-sky-100">
+      <div className="flex items-center gap-2 text-cyan-700">
+        <Ticket className="h-4 w-4" />
+        <p className="text-[11px] font-black uppercase tracking-[0.2em]">Excursiones recomendadas</p>
+      </div>
+      <h2 className="mt-1 text-lg font-black text-slate-950">Planes y tours cerca</h2>
+      <ul className="mt-3 divide-y divide-sky-100">
+        {tours.map((t) => (
+          <li key={t.url}>
+            <a
+              href={t.url}
+              target="_blank"
+              rel="sponsored noopener noreferrer"
+              className="flex items-center justify-between gap-3 py-2.5 text-sm font-semibold text-slate-800 hover:text-cyan-700"
+            >
+              <span className="line-clamp-2">{t.title}</span>
+              <span className="shrink-0 text-[11px] font-black uppercase tracking-wider text-cyan-700">Reservar →</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-3 text-[10px] uppercase tracking-wider text-slate-400">Enlaces de afiliado · Viator</p>
+    </section>
+  );
+}
+
 function BeachDetailPage() {
   const { quick, extras } = Route.useLoaderData();
   const { beach, cover, googleMapsUri } = quick;
