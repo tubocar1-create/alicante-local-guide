@@ -3885,7 +3885,7 @@ function CategoryTableInner({
                       markRestaurantReturn();
                       stashRestaurantPreview(c);
                     }}
-                    className="relative shrink-0 w-44 h-44 snap-start text-left bg-black/30 overflow-hidden hover:shadow-md active:scale-[0.98] transition border-2 border-white/10 rounded-md"
+                    className="relative shrink-0 w-64 h-64 snap-start text-left bg-black/30 overflow-hidden hover:shadow-md active:scale-[0.98] transition border-2 border-white/10 rounded-md"
                   >
                     <img
                       src={c.coverPhoto!}
