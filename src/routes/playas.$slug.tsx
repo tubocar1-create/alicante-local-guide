@@ -1,8 +1,9 @@
 import { createFileRoute, Link, notFound, redirect, Await } from "@tanstack/react-router";
 import { Suspense } from "react";
-import { ArrowLeft, MapPin, Navigation, Sparkles, Star } from "lucide-react";
+import { ArrowLeft, MapPin, Navigation, Sparkles, Star, Ticket } from "lucide-react";
 import { getBeachQuick, getBeachExtras, type BeachExtras } from "@/lib/playas-map.functions";
 import { getBeachBySlug } from "@/lib/playas-map-data";
+import { getToursForBeach } from "@/lib/viator-tours";
 
 export const Route = createFileRoute("/playas/$slug")({
   loader: async ({ params }) => {
@@ -237,6 +238,8 @@ function BeachDetailPage() {
             <MapPin className="h-4 w-4" /> Ver en el mapa
           </Link>
         </section>
+
+        <ViatorFooter beachSlug={beach.slug} />
       </main>
     </div>
   );
