@@ -50,22 +50,19 @@ const RAW_URLS: string[] = [
   "https://www.viator.com/tours/Alicante/Charming-villages-Villajoyosa-and-Altea/d23519-114883P2",
 ];
 
-export type ViatorTour = { title: string; url: string };
+export type ViatorTour = { title: string; url: string; rawUrl: string };
 
 function titleFromUrl(u: string): string {
-  // .../tours/Alicante/<Slug-Of-Title>/d23519-XXXXP1
   const m = u.match(/\/tours\/Alicante\/([^/]+)\//);
   if (!m) return "Excursión en Alicante";
   return decodeURIComponent(m[1])
     .replace(/-/g, " ")
     .replace(/\s+/g, " ")
     .trim()
-    // Capitalización suave: primera letra mayúscula, resto tal cual
     .replace(/^./, (c) => c.toUpperCase());
 }
 
 function withAffiliate(u: string): string {
-  // Eliminamos cualquier query existente y añadimos los 4 parámetros canónicos.
   const base = u.split("?")[0];
   return `${base}?${AFFILIATE_QS}`;
 }
@@ -73,7 +70,9 @@ function withAffiliate(u: string): string {
 export const VIATOR_TOURS: ViatorTour[] = RAW_URLS.map((u) => ({
   title: titleFromUrl(u),
   url: withAffiliate(u),
+  rawUrl: u,
 }));
+
 
 // Orden estable de slugs de playas (mismo que MAP_BEACHES). 17 playas, 43 tours.
 // Distribución round-robin: cada playa recibe 2-3 tours, todos distintos.
