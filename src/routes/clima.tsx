@@ -185,9 +185,33 @@ function ClimaPage() {
           </section>
         )}
 
+        {data?.hourly && data.hourly.length > 0 && (
+          <section className="rounded-2xl bg-white/80 ring-1 ring-border/60 p-3 shadow-soft">
+            <h2 className="px-2 py-1 text-sm font-bold">Hoy por horas</h2>
+            <div className="flex gap-2 overflow-x-auto pb-1 px-1 snap-x">
+              {data.hourly.map((h) => {
+                const I = iconFor(h.code, h.isDay);
+                return (
+                  <div
+                    key={h.time}
+                    className="snap-start shrink-0 w-16 rounded-xl bg-[oklch(0.97_0.02_85)] p-2 flex flex-col items-center gap-1"
+                  >
+                    <span className="text-[11px] text-muted-foreground">{hourLabel(h.time)}</span>
+                    <I className="h-5 w-5 text-[oklch(0.78_0.16_70)]" />
+                    <span className="text-sm font-semibold">{h.tempC}°</span>
+                    <span className="text-[10px] text-sky-700 min-h-3">
+                      {h.precipProb > 0 ? `${h.precipProb}%` : ""}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         {data?.daily && data.daily.length > 0 && (
           <section className="rounded-2xl bg-white/80 ring-1 ring-border/60 p-3 shadow-soft">
-            <h2 className="px-2 py-1 text-sm font-bold">Próximos días</h2>
+            <h2 className="px-2 py-1 text-sm font-bold">Próximos 7 días</h2>
             <ul className="divide-y divide-border/50">
               {data.daily.map((d) => {
                 const I = iconFor(d.code, true);
@@ -197,6 +221,9 @@ function ClimaPage() {
                     <I className="h-5 w-5 text-[oklch(0.78_0.16_70)]" />
                     <span className="flex-1 text-xs text-muted-foreground truncate">
                       {weatherLabel(d.code)}
+                      {d.precipProbMax > 0 && (
+                        <span className="ml-1 text-sky-700">· {d.precipProbMax}%</span>
+                      )}
                     </span>
                     {d.rainMm > 0 && (
                       <span className="text-[11px] text-sky-700">{d.rainMm.toFixed(1)} mm</span>
