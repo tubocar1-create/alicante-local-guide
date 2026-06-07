@@ -34,12 +34,24 @@ type Forecast = {
     humidity: number;
     windKmh: number;
   } | null;
+  hourly: Array<{
+    time: string;
+    tempC: number;
+    code: number;
+    precipProb: number;
+    isDay: boolean;
+  }>;
   daily: Array<{
     date: string;
     code: number;
     tMax: number;
     tMin: number;
     rainMm: number;
+    precipProbMax: number;
+    sunrise: string;
+    sunset: string;
+    uvMax: number;
+    windMax: number;
   }>;
 };
 
@@ -58,6 +70,11 @@ function dayName(dateStr: string) {
   return d.toLocaleDateString("es-ES", { weekday: "short", day: "numeric" });
 }
 
+function hourLabel(iso: string) {
+  const d = new Date(iso);
+  return d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+}
+
 function ClimaPage() {
   const [data, setData] = useState<Forecast | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -66,8 +83,9 @@ function ClimaPage() {
     const url =
       `https://api.open-meteo.com/v1/forecast?latitude=${ALICANTE.lat}&longitude=${ALICANTE.lon}` +
       `&current=temperature_2m,apparent_temperature,weather_code,is_day,relative_humidity_2m,wind_speed_10m` +
-      `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum` +
-      `&timezone=auto&forecast_days=7`;
+      `&hourly=temperature_2m,weather_code,precipitation_probability,is_day` +
+      `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,sunrise,sunset,uv_index_max,wind_speed_10m_max` +
+      `&timezone=auto&forecast_days=7&forecast_hours=24`;
     fetch(url)
       .then((r) => {
         if (!r.ok) throw new Error("Error de red");
@@ -75,6 +93,7 @@ function ClimaPage() {
       })
       .then((j) => {
         const c = j.current ?? {};
+        const h = j.hourly ?? {};
         const d = j.daily ?? {};
         setData({
           current: {
@@ -85,12 +104,24 @@ function ClimaPage() {
             humidity: Math.round(c.relative_humidity_2m),
             windKmh: Math.round(c.wind_speed_10m),
           },
+          hourly: (h.time ?? []).map((t: string, i: number) => ({
+            time: t,
+            tempC: Math.round(h.temperature_2m?.[i] ?? 0),
+            code: Number(h.weather_code?.[i] ?? 0),
+            precipProb: Number(h.precipitation_probability?.[i] ?? 0),
+            isDay: (h.is_day?.[i] ?? 1) === 1,
+          })),
           daily: (d.time ?? []).map((t: string, i: number) => ({
             date: t,
             code: Number(d.weather_code?.[i] ?? 0),
             tMax: Math.round(d.temperature_2m_max?.[i] ?? 0),
             tMin: Math.round(d.temperature_2m_min?.[i] ?? 0),
             rainMm: Number(d.precipitation_sum?.[i] ?? 0),
+            precipProbMax: Number(d.precipitation_probability_max?.[i] ?? 0),
+            sunrise: String(d.sunrise?.[i] ?? ""),
+            sunset: String(d.sunset?.[i] ?? ""),
+            uvMax: Number(d.uv_index_max?.[i] ?? 0),
+            windMax: Math.round(d.wind_speed_10m_max?.[i] ?? 0),
           })),
         });
       })
@@ -154,9 +185,33 @@ function ClimaPage() {
           </section>
         )}
 
+        {data?.hourly && data.hourly.length > 0 && (
+          <section className="rounded-2xl bg-white/80 ring-1 ring-border/60 p-3 shadow-soft">
+            <h2 className="px-2 py-1 text-sm font-bold">Hoy por horas</h2>
+            <div className="flex gap-2 overflow-x-auto pb-1 px-1 snap-x">
+              {data.hourly.map((h) => {
+                const I = iconFor(h.code, h.isDay);
+                return (
+                  <div
+                    key={h.time}
+                    className="snap-start shrink-0 w-16 rounded-xl bg-[oklch(0.97_0.02_85)] p-2 flex flex-col items-center gap-1"
+                  >
+                    <span className="text-[11px] text-muted-foreground">{hourLabel(h.time)}</span>
+                    <I className="h-5 w-5 text-[oklch(0.78_0.16_70)]" />
+                    <span className="text-sm font-semibold">{h.tempC}°</span>
+                    <span className="text-[10px] text-sky-700 min-h-3">
+                      {h.precipProb > 0 ? `${h.precipProb}%` : ""}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         {data?.daily && data.daily.length > 0 && (
           <section className="rounded-2xl bg-white/80 ring-1 ring-border/60 p-3 shadow-soft">
-            <h2 className="px-2 py-1 text-sm font-bold">Próximos días</h2>
+            <h2 className="px-2 py-1 text-sm font-bold">Próximos 7 días</h2>
             <ul className="divide-y divide-border/50">
               {data.daily.map((d) => {
                 const I = iconFor(d.code, true);
@@ -166,6 +221,9 @@ function ClimaPage() {
                     <I className="h-5 w-5 text-[oklch(0.78_0.16_70)]" />
                     <span className="flex-1 text-xs text-muted-foreground truncate">
                       {weatherLabel(d.code)}
+                      {d.precipProbMax > 0 && (
+                        <span className="ml-1 text-sky-700">· {d.precipProbMax}%</span>
+                      )}
                     </span>
                     {d.rainMm > 0 && (
                       <span className="text-[11px] text-sky-700">{d.rainMm.toFixed(1)} mm</span>
