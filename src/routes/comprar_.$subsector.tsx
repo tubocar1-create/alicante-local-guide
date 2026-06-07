@@ -114,7 +114,7 @@ function SubsectorPage() {
                   onClick={() =>
                     navigate({ to: "/comprar/tienda/$id", params: { id: r.id } })
                   }
-                  className="relative h-64 w-64 shrink-0 snap-center overflow-hidden rounded-2xl border-2 border-border bg-black/30 text-left transition hover:shadow-md active:scale-[0.98]"
+                  className="relative w-[85vw] h-[85vw] max-w-[420px] max-h-[420px] shrink-0 snap-center overflow-hidden rounded-2xl border-2 border-border bg-black/30 text-left transition hover:shadow-md active:scale-[0.98]"
                 >
                   <img
                     src={shopPhotoUrl(r.photo_ref, 800)}

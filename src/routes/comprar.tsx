@@ -100,7 +100,7 @@ function ComprarPage() {
                   onClick={() =>
                     navigate({ to: "/comprar/tienda/$id", params: { id: r.id } })
                   }
-                  className="relative shrink-0 w-64 h-64 snap-center text-left bg-black/30 overflow-hidden hover:shadow-md active:scale-[0.98] transition border-2 border-white/30 rounded-2xl"
+                  className="relative shrink-0 w-[85vw] h-[85vw] max-w-[420px] max-h-[420px] snap-center text-left bg-black/30 overflow-hidden hover:shadow-md active:scale-[0.98] transition border-2 border-white/30 rounded-2xl"
                 >
                   <img
                     src={shopPhotoUrl(r.photo_ref, 1200)}

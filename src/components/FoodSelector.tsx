@@ -113,7 +113,7 @@ export default function FoodSelector({
               {Array.from({ length: 8 }).map((_, i) => (
                 <div
                   key={i}
-                  className="shrink-0 w-64 h-64 bg-black/10 animate-pulse rounded-2xl"
+                  className="shrink-0 w-[85vw] h-[85vw] max-w-[420px] max-h-[420px] bg-black/10 animate-pulse rounded-2xl"
                 />
               ))}
             </div>
@@ -127,7 +127,7 @@ export default function FoodSelector({
                     key={r.id}
                     type="button"
                     onClick={() => goRestaurant(r)}
-                    className="relative shrink-0 w-64 h-64 snap-start text-left bg-black/30 overflow-hidden hover:shadow-md active:scale-[0.98] transition border-2 border-[#2c1810] rounded-2xl"
+                    className="relative shrink-0 w-[85vw] h-[85vw] max-w-[420px] max-h-[420px] snap-start text-left bg-black/30 overflow-hidden hover:shadow-md active:scale-[0.98] transition border-2 border-[#2c1810] rounded-2xl"
                   >
                     <img
                       src={r.cover_photo}
