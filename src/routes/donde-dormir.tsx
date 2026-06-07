@@ -152,7 +152,7 @@ function DondeDormirPage() {
                   key={h.id}
                   to="/hotel/$id"
                   params={{ id: h.id }}
-                  className="relative shrink-0 w-44 h-44 snap-start text-left bg-black/30 overflow-hidden hover:shadow-md active:scale-[0.98] transition border-2 border-amber-100/20 rounded-md"
+                  className="relative shrink-0 w-[85vw] h-[85vw] max-w-[420px] max-h-[420px] snap-start text-left bg-black/30 overflow-hidden hover:shadow-md active:scale-[0.98] transition border-2 border-amber-100/20 rounded-md"
                 >
                   <img
                     src={h.main_image}
