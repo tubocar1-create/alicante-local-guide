@@ -399,9 +399,9 @@ export function ParkingsButton() {
                 <p className="mt-0.5 flex items-center justify-center gap-1.5 text-[10px] text-slate-400">
                   <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_currentColor]" />
                   En tiempo real
-                  <span className="ml-0.5 flex items-center gap-0.5 rounded-full bg-emerald-400/10 px-1.5 py-0.5 text-emerald-300 ring-1 ring-emerald-400/20">
+                  <span className="ml-0.5 flex items-center gap-1 rounded-full bg-emerald-400/10 px-1.5 py-0.5 font-mono tabular-nums text-emerald-300 ring-1 ring-emerald-400/20">
                     <Clock className="h-3 w-3" />
-                    {secondsAgo != null ? `hace ${secondsAgo}s` : "ahora"}
+                    {clockText}
                   </span>
                 </p>
               </div>
