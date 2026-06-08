@@ -67,8 +67,9 @@ export const STATIONS: TrainStation[] = [
   { code: "MAD-CHA",  city: "Madrid",      station: "Chamartín — Clara Campoamor",          corridor: "MAD",  operators: ["RENFE"] },
 
   // ===== 🚄 Mediterráneo Norte =====
-  { code: "MED-VLCJ", city: "Valencia",   station: "Joaquín Sorolla",  corridor: "MEDN", operators: ["RENFE"] },
-  { code: "MED-VLCN", city: "Valencia",   station: "Nord",             corridor: "MEDN", operators: ["RENFE"] },
+  // Renfe Euromed / Intercity Alicante↔Valencia opera SIEMPRE por Estació del Nord.
+  // Joaquín Sorolla es estación AVE Madrid↔Valencia y NO recibe trenes desde Alicante.
+  { code: "MED-VLCN", city: "Valencia",   station: "Nord (Euromed / Intercity)", corridor: "MEDN", operators: ["RENFE"] },
   { code: "MED-XAT",  city: "Xàtiva",     station: "Xàtiva",           corridor: "MEDN", operators: ["RENFE"] },
   { code: "MED-CAS",  city: "Castelló",   station: "Castelló",         corridor: "MEDN", operators: ["RENFE"] },
   { code: "MED-TARC", city: "Tarragona",  station: "Camp de Tarragona", corridor: "MEDN", operators: ["RENFE"] },
