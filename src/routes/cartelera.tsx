@@ -161,10 +161,11 @@ function Board() {
           <ArrowLeft className="h-3.5 w-3.5" />
           Trenes
         </Link>
-        <div className="text-right text-[10px] text-slate-500">
-          Actualizado hace {updatedAgo}s
+        <div className="text-right text-[10px] text-slate-500" suppressHydrationWarning>
+          {updatedAgo !== null ? <>Actualizado hace {updatedAgo}s</> : <>Actualizando…</>}
           <RefreshCw className="inline h-3 w-3 ml-1" />
         </div>
+
       </header>
 
       {/* Salidas ADIF */}
