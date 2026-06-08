@@ -16,24 +16,55 @@ type Probe = {
   error?: string;
 };
 
-// Patrones para extraer URLs desde el HTML/JS de la página
-function extractCandidateUrls(html: string): string[] {
+// Patrones para extraer URLs candidatas desde HTML/JS
+function extractCandidateUrls(text: string, base: string): string[] {
   const out = new Set<string>();
   // URLs absolutas a movilidad.alicante.es
-  for (const m of html.matchAll(/https?:\/\/movilidad\.alicante\.es\/[^\s"'<>()]+/g)) {
+  for (const m of text.matchAll(/https?:\/\/movilidad\.alicante\.es\/[^\s"'`<>()]+/g)) {
     out.add(m[0]);
   }
-  // Rutas relativas tipo /asm..., /api/..., /paradas...
-  for (const m of html.matchAll(/["'`](\/(?:asm|api|paradas|stops|bus|tiempo|llegadas)[^\s"'`<>()]*)["'`]/gi)) {
+  // Rutas relativas API-ish entre comillas
+  for (const m of text.matchAll(
+    /["'`](\/(?:asm[a-z]*|api|paradas[a-z-]*|stops?|bus[a-z]*|tiempo[a-z]*|llegadas?|lineas?|rutas?|tam|subus|vectalia)[^\s"'`<>()]*)["'`]/gi
+  )) {
     try {
-      out.add(new URL(m[1], PAGE_URL).toString());
+      out.add(new URL(m[1], base).toString());
     } catch {}
   }
-  // Filtra basura (assets estáticos)
+  // .json endings
+  for (const m of text.matchAll(/["'`]([^"'`<>()\s]+\.json)["'`]/g)) {
+    try {
+      out.add(new URL(m[1], base).toString());
+    } catch {}
+  }
   return [...out].filter(
     (u) => !/\.(png|jpe?g|webp|svg|css|woff2?|ttf|ico|gif|mp4|map)(\?|$)/i.test(u)
   );
 }
+
+function extractScriptSrcs(html: string, base: string): string[] {
+  const out = new Set<string>();
+  for (const m of html.matchAll(/<script[^>]+src=["']([^"']+)["']/gi)) {
+    try {
+      out.add(new URL(m[1], base).toString());
+    } catch {}
+  }
+  return [...out];
+}
+
+const GUESS_ENDPOINTS = [
+  "https://movilidad.alicante.es/asmstops",
+  "https://movilidad.alicante.es/asmparadas",
+  "https://movilidad.alicante.es/asmbus",
+  "https://movilidad.alicante.es/asmbusstops",
+  "https://movilidad.alicante.es/asmlines",
+  "https://movilidad.alicante.es/asmlineas",
+  "https://movilidad.alicante.es/paradas.json",
+  "https://movilidad.alicante.es/api/paradas",
+  "https://movilidad.alicante.es/api/stops",
+  "https://movilidad.alicante.es/api/bus",
+];
+
 
 async function probe(url: string): Promise<Probe> {
   const t0 = performance.now();
