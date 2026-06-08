@@ -155,12 +155,21 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
       try {
         const j = JSON.parse(text);
         const n = Array.isArray(j.horarios) ? j.horarios.length : -1;
+        if (j && j.error === true) {
+          console.warn("[cartelera] ADIF error:true", {
+            searchType, trafficType, numPage, cookieLen: cookieHeader.length,
+            snippet: text.slice(0, 200),
+          });
+          throw new Error("ADIF error:true");
+        }
         console.log("[cartelera] ADIF", {
           searchType, trafficType, numPage, status: r.status, n,
           snippet: text.slice(0, 200),
         });
         return j;
-      } catch {
+      } catch (err) {
+        if (err instanceof Error && err.message === "ADIF error:true") throw err;
+
         console.warn("[cartelera] ADIF no-JSON", {
           searchType, trafficType, numPage, status: r.status,
           snippet: text.slice(0, 200),
