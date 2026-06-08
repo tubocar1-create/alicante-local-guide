@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { X, ArrowRight, PlaneTakeoff, PlaneLanding, Sparkles } from "lucide-react";
+import { X, ArrowRight, PlaneTakeoff, PlaneLanding, Sparkles, Globe, Wifi } from "lucide-react";
 import vuelosAvionIcon from "@/assets/vuelos-avion.png";
 
 const VIP_URL =
@@ -14,6 +14,30 @@ const VIP_PHOTOS = [
   "https://www.viplounges.com/wp-content/uploads/2025/03/790x541px-ALC-SalaVip-CostaBlanca-4.jpg",
   "https://www.viplounges.com/wp-content/uploads/2025/03/790x541px-ALC-SalaVip-CostaBlanca-5.jpg",
 ];
+
+const GLOBELY_URL =
+  "https://www.globely.com/?ref=zdbjzwyq&utm_source=leopoldocadavid&utm_medium=affiliate";
+
+const GLOBELY_PHOTOS = [
+  "https://www.globely.com/assets/home-animated-slider/place_1.webp",
+  "https://www.globely.com/assets/home-animated-slider/place_2.webp",
+  "https://www.globely.com/assets/home-animated-slider/place_3.webp",
+  "https://www.globely.com/assets/home-animated-slider/place_4.webp",
+  "https://www.globely.com/assets/images/globely-imagery-9-tourists.webp",
+  "https://www.globely.com/assets/images/globely-imagery-6-nomads.webp",
+  "https://www.globely.com/assets/images/globely-imagery-8-executives.webp",
+  "https://www.globely.com/assets/images/globely-imagery-7-students.webp",
+];
+
+const ROAMIC_URL =
+  "https://roamic.com/?ref=zdbjzwy5&utm_source=leopoldocadavid&utm_medium=affiliate";
+
+const ROAMIC_PHOTOS = [
+  "https://roamic.com/cdn/shop/files/roamic-hero_p.png?v=1779268534&width=717",
+  "https://roamic.com/cdn/shop/files/roamic-hero.png?v=1779268824&width=500",
+  "https://roamic.com/cdn/shop/files/Image_430x_36373837-f192-4b4b-9970-20935c757c92.webp?v=1766506730&width=492",
+];
+
 
 export const Route = createFileRoute("/selector-vuelos")({
   head: () => ({
