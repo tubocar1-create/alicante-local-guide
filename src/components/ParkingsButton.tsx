@@ -1,11 +1,33 @@
 import { useMemo, useState } from "react";
-import { Car, Loader2, RefreshCw, X, Footprints } from "lucide-react";
+import { Loader2, RefreshCw, X, Footprints, Clock, Navigation } from "lucide-react";
 import {
   useUserLocation,
   distanceKm,
   estimateMinutes,
   type Coords,
 } from "@/hooks/useUserLocation";
+
+// Official Spanish parking sign (S-17): blue rounded square with white "P".
+function ParkingSign({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
+      <rect x="4" y="4" width="92" height="92" rx="16" fill="#0a51c4" />
+      <rect x="4" y="4" width="92" height="92" rx="16" fill="none" stroke="#ffffff" strokeWidth="3" />
+      <text
+        x="50"
+        y="50"
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontFamily="Helvetica, Arial, sans-serif"
+        fontWeight="900"
+        fontSize="78"
+        fill="#ffffff"
+      >
+        P
+      </text>
+    </svg>
+  );
+}
 
 const ENDPOINT = "https://movilidad.alicante.es/asmpois";
 
@@ -334,10 +356,9 @@ export function ParkingsButton() {
       <button
         onClick={openAndLoad}
         aria-label="Parkings de Alicante"
-        className="flex h-9 items-center gap-1.5 rounded-full bg-white/70 px-2.5 ring-1 ring-border/60 active:scale-95 transition lg:h-10 lg:px-3"
+        className="flex h-9 w-9 items-center justify-center rounded-md active:scale-95 transition lg:h-10 lg:w-10"
       >
-        <Car className="h-4 w-4 text-[oklch(0.55_0.18_255)] lg:h-5 lg:w-5" />
-        <span className="text-[12px] font-bold leading-tight text-foreground lg:text-[14px]">P</span>
+        <ParkingSign className="h-8 w-8 lg:h-9 lg:w-9 drop-shadow-sm" />
       </button>
 
       {open && (
@@ -353,13 +374,18 @@ export function ParkingsButton() {
             <header className="relative flex items-center justify-center px-4 pt-3 pb-2 shrink-0">
               <div className="text-center">
                 <div className="flex items-center justify-center gap-1.5">
-                  <Car className="h-4 w-4 text-white" />
+                  <ParkingSign className="h-4 w-4" />
                   <h2 className="text-[15px] font-extrabold tracking-tight">Parkings Alicante</h2>
                 </div>
                 <p className="mt-0.5 flex items-center justify-center gap-1.5 text-[10px] text-slate-400">
                   <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_currentColor]" />
                   En tiempo real
-                  {secondsAgo != null && <span>· hace {secondsAgo}s</span>}
+                  {secondsAgo != null && (
+                    <span className="flex items-center gap-0.5">
+                      <Clock className="h-2.5 w-2.5" />
+                      hace {secondsAgo}s
+                    </span>
+                  )}
                 </p>
               </div>
               <div className="absolute right-2 top-2 flex items-center gap-0.5">
@@ -405,7 +431,7 @@ export function ParkingsButton() {
                       >
                         {/* P badge */}
                         <div
-                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${s.badgeBg} text-white font-extrabold text-[13px] shadow-md`}
+                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${s.badgeBg} text-white font-extrabold text-[13px] shadow-md`}
                         >
                           P
                         </div>
@@ -415,41 +441,54 @@ export function ParkingsButton() {
                           <p className="truncate text-[13px] font-extrabold leading-tight text-white">
                             {r.name}
                           </p>
-                          <div className="mt-0.5 flex items-center gap-2 text-[10px] text-slate-400">
+                          <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px] text-slate-400">
                             <span
                               className={`rounded px-1 py-[1px] text-[8.5px] font-extrabold tracking-wide ${s.pillBg} ${s.pillText}`}
                             >
-                              {s.label}
+                              {r.occupancyPct != null ? `${r.occupancyPct}% ocupado` : s.label}
                             </span>
                             {r.walkMin != null && (
                               <span className="flex items-center gap-0.5">
                                 <Footprints className="h-2.5 w-2.5" />
-                                {r.walkMin} min
+                                {r.walkMin}′
                               </span>
                             )}
                             <span className="font-mono text-slate-500">
                               {r.free ?? "—"}/{r.total ?? "—"}
                             </span>
                           </div>
-                          {/* mini progress bar */}
+                          {/* mini progress bar (ocupación) */}
                           <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-white/5">
                             <div
                               className={`h-full ${s.bar} transition-all`}
-                              style={{ width: `${r.availablePct ?? 0}%` }}
+                              style={{ width: `${r.occupancyPct ?? 0}%` }}
                             />
                           </div>
                         </div>
 
                         {/* Big number */}
                         <div className="flex shrink-0 flex-col items-end leading-none">
-                          <span className={`font-mono text-[22px] font-extrabold ${s.num}`}>
+                          <span className={`font-mono text-[20px] font-extrabold ${s.num}`}>
                             {r.free != null ? r.free : "—"}
                           </span>
                           <span className="text-[9px] text-slate-400">libres</span>
                         </div>
 
-                        {/* Donut */}
-                        <Donut pct={r.availablePct} status={r.status} />
+                        {/* Donut — % ocupación */}
+                        <Donut pct={r.occupancyPct} status={r.status} />
+
+                        {/* Cómo llegar en coche */}
+                        {r.coords && (
+                          <a
+                            href={`https://www.google.com/maps/dir/?api=1&destination=${r.coords.lat},${r.coords.lng}&travelmode=driving`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={`Cómo llegar en coche a ${r.name}`}
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-500/15 text-sky-300 ring-1 ring-sky-400/30 hover:bg-sky-500/25 active:scale-95 transition"
+                          >
+                            <Navigation className="h-3.5 w-3.5" />
+                          </a>
+                        )}
                       </li>
                     );
                   })}
