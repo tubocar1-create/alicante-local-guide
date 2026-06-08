@@ -1,11 +1,33 @@
 import { useMemo, useState } from "react";
-import { Car, Loader2, RefreshCw, X, Footprints } from "lucide-react";
+import { Loader2, RefreshCw, X, Footprints, Clock, Navigation } from "lucide-react";
 import {
   useUserLocation,
   distanceKm,
   estimateMinutes,
   type Coords,
 } from "@/hooks/useUserLocation";
+
+// Official Spanish parking sign (S-17): blue rounded square with white "P".
+function ParkingSign({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 100 100" className={className} aria-hidden="true">
+      <rect x="4" y="4" width="92" height="92" rx="16" fill="#0a51c4" />
+      <rect x="4" y="4" width="92" height="92" rx="16" fill="none" stroke="#ffffff" strokeWidth="3" />
+      <text
+        x="50"
+        y="50"
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontFamily="Helvetica, Arial, sans-serif"
+        fontWeight="900"
+        fontSize="78"
+        fill="#ffffff"
+      >
+        P
+      </text>
+    </svg>
+  );
+}
 
 const ENDPOINT = "https://movilidad.alicante.es/asmpois";
 
