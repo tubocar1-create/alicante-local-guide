@@ -121,7 +121,7 @@ function SelectorVuelos() {
           </h1>
         </div>
 
-        <div className="grid min-h-0 flex-1 grid-rows-2 gap-3">
+        <div className="grid shrink-0 grid-rows-2 gap-3" style={{ minHeight: "min(60vh, 480px)" }}>
           {SECTORS.map((s) => (
             <Link
               key={s.search.type}
