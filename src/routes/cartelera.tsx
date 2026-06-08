@@ -91,8 +91,11 @@ function Board() {
   const fetchFn = useServerFn(getCartelera);
   const { data } = useSuspenseQuery(carteleraOpts(() => fetchFn({}) as Promise<CarteleraResponse>));
   const [filter, setFilter] = useState<string>("TODAS");
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const todayLabel = useMemo(() => {
+    if (!mounted) return "";
     const d = new Date();
     return d.toLocaleDateString("es-ES", {
       weekday: "long",
@@ -100,7 +103,8 @@ function Board() {
       month: "long",
       year: "numeric",
     });
-  }, []);
+  }, [mounted]);
+
 
   const all = useMemo(() => [...data.salidas, ...data.llegadas], [data]);
 
