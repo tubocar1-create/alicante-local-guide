@@ -190,7 +190,53 @@ function SelectorVuelos() {
             </Link>
           ))}
         </div>
+
+        <section className="mt-2 shrink-0 rounded-2xl border border-amber-300/20 bg-gradient-to-br from-amber-500/[0.08] via-white/[0.03] to-amber-200/[0.05] p-3 backdrop-blur-xl">
+          <div className="mb-2 flex items-center gap-1.5">
+            <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+            <span className="text-[9px] font-bold uppercase tracking-[0.25em] text-amber-200/90">
+              Experiencia VIP · ALC
+            </span>
+          </div>
+          <div className="-mx-3 overflow-x-auto px-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex snap-x snap-mandatory gap-2 pb-1">
+              {VIP_PHOTOS.map((src, i) => (
+                <a
+                  key={src}
+                  href={VIP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer sponsored"
+                  className="group relative block shrink-0 snap-start overflow-hidden rounded-xl border border-white/10"
+                  style={{ width: "78vw", maxWidth: 320, aspectRatio: "16/10" }}
+                >
+                  <img
+                    src={src}
+                    alt={`Costa Blanca VIP Lounge · Aeropuerto Alicante-Elche (foto ${i + 1})`}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                </a>
+              ))}
+            </div>
+          </div>
+          <a
+            href={VIP_URL}
+            target="_blank"
+            rel="noopener noreferrer sponsored"
+            className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-amber-300/40 bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-200 px-4 py-3 text-slate-900 shadow-[0_8px_30px_-8px_rgba(251,191,36,0.6)] transition active:scale-[0.98]"
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Sparkles className="h-5 w-5 shrink-0" />
+              <span className="text-[13px] font-bold leading-tight md:text-[15px]">
+                Disfruta una experiencia VIP, en el Aeropuerto Alicante-Elche
+              </span>
+            </div>
+            <ArrowRight className="h-5 w-5 shrink-0" />
+          </a>
+        </section>
       </main>
+
     </div>
   );
 }
