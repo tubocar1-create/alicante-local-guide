@@ -133,6 +133,7 @@ import { Route as ApiPublicBusEtaRouteImport } from './routes/api/public/bus-eta
 import { Route as ApiPublicBusDatosRouteImport } from './routes/api/public/bus-datos'
 import { Route as ApiPublicBookingCreateRouteImport } from './routes/api/public/booking-create'
 import { Route as ApiPublicAuthEmailHookRouteImport } from './routes/api/public/auth-email-hook'
+import { Route as ApiPublicAsmpoisProbeRouteImport } from './routes/api/public/asmpois-probe'
 import { Route as ApiPublicAenaFlightsRouteImport } from './routes/api/public/aena-flights'
 import { Route as AdminVisitantesIdRouteImport } from './routes/admin.visitantes.$id'
 import { Route as AdminAiUnknownQueriesRouteImport } from './routes/admin.ai.unknown-queries'
@@ -802,6 +803,11 @@ const ApiPublicAuthEmailHookRoute = ApiPublicAuthEmailHookRouteImport.update({
   path: '/api/public/auth-email-hook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAsmpoisProbeRoute = ApiPublicAsmpoisProbeRouteImport.update({
+  id: '/api/public/asmpois-probe',
+  path: '/api/public/asmpois-probe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAenaFlightsRoute = ApiPublicAenaFlightsRouteImport.update({
   id: '/api/public/aena-flights',
   path: '/api/public/aena-flights',
@@ -1145,6 +1151,7 @@ export interface FileRoutesByFullPath {
   '/admin/ai/unknown-queries': typeof AdminAiUnknownQueriesRoute
   '/admin/visitantes/$id': typeof AdminVisitantesIdRoute
   '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
+  '/api/public/asmpois-probe': typeof ApiPublicAsmpoisProbeRoute
   '/api/public/auth-email-hook': typeof ApiPublicAuthEmailHookRoute
   '/api/public/booking-create': typeof ApiPublicBookingCreateRoute
   '/api/public/bus-datos': typeof ApiPublicBusDatosRoute
@@ -1311,6 +1318,7 @@ export interface FileRoutesByTo {
   '/admin/ai/unknown-queries': typeof AdminAiUnknownQueriesRoute
   '/admin/visitantes/$id': typeof AdminVisitantesIdRoute
   '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
+  '/api/public/asmpois-probe': typeof ApiPublicAsmpoisProbeRoute
   '/api/public/auth-email-hook': typeof ApiPublicAuthEmailHookRoute
   '/api/public/booking-create': typeof ApiPublicBookingCreateRoute
   '/api/public/bus-datos': typeof ApiPublicBusDatosRoute
@@ -1481,6 +1489,7 @@ export interface FileRoutesById {
   '/admin/ai/unknown-queries': typeof AdminAiUnknownQueriesRoute
   '/admin/visitantes/$id': typeof AdminVisitantesIdRoute
   '/api/public/aena-flights': typeof ApiPublicAenaFlightsRoute
+  '/api/public/asmpois-probe': typeof ApiPublicAsmpoisProbeRoute
   '/api/public/auth-email-hook': typeof ApiPublicAuthEmailHookRoute
   '/api/public/booking-create': typeof ApiPublicBookingCreateRoute
   '/api/public/bus-datos': typeof ApiPublicBusDatosRoute
@@ -1652,6 +1661,7 @@ export interface FileRouteTypes {
     | '/admin/ai/unknown-queries'
     | '/admin/visitantes/$id'
     | '/api/public/aena-flights'
+    | '/api/public/asmpois-probe'
     | '/api/public/auth-email-hook'
     | '/api/public/booking-create'
     | '/api/public/bus-datos'
@@ -1818,6 +1828,7 @@ export interface FileRouteTypes {
     | '/admin/ai/unknown-queries'
     | '/admin/visitantes/$id'
     | '/api/public/aena-flights'
+    | '/api/public/asmpois-probe'
     | '/api/public/auth-email-hook'
     | '/api/public/booking-create'
     | '/api/public/bus-datos'
@@ -1987,6 +1998,7 @@ export interface FileRouteTypes {
     | '/admin/ai/unknown-queries'
     | '/admin/visitantes/$id'
     | '/api/public/aena-flights'
+    | '/api/public/asmpois-probe'
     | '/api/public/auth-email-hook'
     | '/api/public/booking-create'
     | '/api/public/bus-datos'
@@ -2102,6 +2114,7 @@ export interface RootRouteChildren {
   TrenesCodeRoute: typeof TrenesCodeRoute
   VuelosIataRoute: typeof VuelosIataRoute
   ApiPublicAenaFlightsRoute: typeof ApiPublicAenaFlightsRoute
+  ApiPublicAsmpoisProbeRoute: typeof ApiPublicAsmpoisProbeRoute
   ApiPublicAuthEmailHookRoute: typeof ApiPublicAuthEmailHookRoute
   ApiPublicBookingCreateRoute: typeof ApiPublicBookingCreateRoute
   ApiPublicBusDatosRoute: typeof ApiPublicBusDatosRoute
@@ -3022,6 +3035,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAuthEmailHookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/asmpois-probe': {
+      id: '/api/public/asmpois-probe'
+      path: '/api/public/asmpois-probe'
+      fullPath: '/api/public/asmpois-probe'
+      preLoaderRoute: typeof ApiPublicAsmpoisProbeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/aena-flights': {
       id: '/api/public/aena-flights'
       path: '/api/public/aena-flights'
@@ -3619,6 +3639,7 @@ const rootRouteChildren: RootRouteChildren = {
   TrenesCodeRoute: TrenesCodeRoute,
   VuelosIataRoute: VuelosIataRoute,
   ApiPublicAenaFlightsRoute: ApiPublicAenaFlightsRoute,
+  ApiPublicAsmpoisProbeRoute: ApiPublicAsmpoisProbeRoute,
   ApiPublicAuthEmailHookRoute: ApiPublicAuthEmailHookRoute,
   ApiPublicBookingCreateRoute: ApiPublicBookingCreateRoute,
   ApiPublicBusDatosRoute: ApiPublicBusDatosRoute,
@@ -3674,13 +3695,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
