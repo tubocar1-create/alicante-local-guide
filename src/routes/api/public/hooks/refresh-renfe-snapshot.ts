@@ -1,17 +1,17 @@
 // Descarga el GTFS oficial de Renfe (NAP fichero 1098), filtra el corredor
-// Alicante-Terminal y construye un snapshot de 30 días (desde HOY) que se
-// persiste en `train_schedule_snapshot`. Pensado para correr a diario por
-// cron (04:00 Madrid) — cada ejecución reemplaza el snapshot completo, así
-// que si un día falla, el siguiente recupera el horizonte.
+// Alicante-Terminal y construye un snapshot de 30 días que se persiste en
+// `train_schedule_snapshot`. Cron diario (02:15 UTC ≈ 04:15 Madrid).
 //
-// IMPORTANTE: este worker corre en Cloudflare con ~128 MB de RAM. El GTFS
-// de Renfe (NAP 1098) tiene un stop_times.txt enorme; parsearlo a objetos
-// {trip_id, stop_id, ...} antes de filtrar reventaba memoria. Por eso aquí
-// hacemos streaming línea-a-línea sobre stop_times, descartando todo lo
-// que no sea parada relevante y conservando sólo trips que tocan terminal.
+// MEMORIA: el worker de Cloudflare tiene ~128 MB. El GTFS Renfe trae un
+// stop_times.txt de decenas de MB (en JS string llega a ~120 MB porque las
+// strings son UTF-16). Por eso aquí:
+//   1) Descomprimimos sólo los CSVs pequeños con unzipSync + filter.
+//   2) stop_times.txt se procesa con la API de streaming `Unzip` de fflate
+//      en chunks Uint8Array, parseando línea-a-línea sobre bytes (ASCII)
+//      sin materializar nunca el fichero entero.
 
 import { createFileRoute } from "@tanstack/react-router";
-import { unzipSync, strFromU8 } from "fflate";
+import { unzipSync, strFromU8, Unzip, UnzipInflate } from "fflate";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const NAP_URL = "https://nap.transportes.gob.es/api/Fichero/download/1098";
@@ -21,7 +21,6 @@ const SNAPSHOT_ID = "alicante";
 const norm = (s: string) =>
   (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-// Parser CSV row → objeto (sólo para tablas pequeñas: stops, routes, trips, calendar).
 function csv(u8: Uint8Array | undefined): Record<string, string>[] {
   if (!u8) return [];
   const txt = strFromU8(u8);
@@ -82,6 +81,106 @@ function parseGtfsDate(s: string) {
   return new Date(Date.UTC(+s.slice(0, 4), +s.slice(4, 6) - 1, +s.slice(6, 8)));
 }
 
+// ---- Streaming stop_times.txt: parser línea-a-línea sobre Uint8Array ----
+//
+// Renfe GTFS usa ASCII puro en stop_times. Procesamos byte-a-byte buscando
+// '\n' (0x0A). Para cada línea decodificamos sólo esos bytes a string
+// (poco coste) y aplicamos parseCsvLine. Mantenemos un buffer de "resto"
+// cuando un chunk corta una línea por la mitad.
+type Row = { id: string; seq: number; arr: string; dep: string };
+type StopTimesState = {
+  leftover: Uint8Array | null;
+  headerParsed: boolean;
+  iTrip: number; iSeq: number; iStop: number; iArr: number; iDep: number;
+  totalLines: number;
+  decoder: TextDecoder;
+};
+function newStopTimesState(): StopTimesState {
+  return {
+    leftover: null,
+    headerParsed: false,
+    iTrip: -1, iSeq: -1, iStop: -1, iArr: -1, iDep: -1,
+    totalLines: 0,
+    decoder: new TextDecoder("utf-8"),
+  };
+}
+function processChunk(
+  state: StopTimesState,
+  chunk: Uint8Array,
+  terminalIds: Set<string>,
+  relevantStops: Map<string, string>,
+  tripStops: Map<string, Row[]>,
+  tripHasTerminal: Set<string>,
+  flush: boolean,
+) {
+  // Combinar con leftover.
+  let buf: Uint8Array;
+  if (state.leftover && state.leftover.length) {
+    buf = new Uint8Array(state.leftover.length + chunk.length);
+    buf.set(state.leftover, 0);
+    buf.set(chunk, state.leftover.length);
+    state.leftover = null;
+  } else {
+    buf = chunk;
+  }
+  let start = 0;
+  for (let i = 0; i < buf.length; i++) {
+    if (buf[i] === 0x0a /* \n */) {
+      let end = i;
+      if (end > start && buf[end - 1] === 0x0d /* \r */) end--;
+      handleLine(state, buf.subarray(start, end), terminalIds, relevantStops, tripStops, tripHasTerminal);
+      start = i + 1;
+    }
+  }
+  if (start < buf.length) {
+    if (flush) {
+      handleLine(state, buf.subarray(start), terminalIds, relevantStops, tripStops, tripHasTerminal);
+    } else {
+      // Guardar resto para el próximo chunk.
+      state.leftover = buf.slice(start);
+    }
+  }
+}
+function handleLine(
+  state: StopTimesState,
+  bytes: Uint8Array,
+  terminalIds: Set<string>,
+  relevantStops: Map<string, string>,
+  tripStops: Map<string, Row[]>,
+  tripHasTerminal: Set<string>,
+) {
+  if (bytes.length === 0) return;
+  const line = state.decoder.decode(bytes);
+  if (!state.headerParsed) {
+    const head = line.replace(/^\uFEFF/, "").split(",").map((h) => h.trim());
+    const idx: Record<string, number> = {};
+    for (let i = 0; i < head.length; i++) idx[head[i]] = i;
+    state.iTrip = idx["trip_id"];
+    state.iSeq = idx["stop_sequence"];
+    state.iStop = idx["stop_id"];
+    state.iArr = idx["arrival_time"];
+    state.iDep = idx["departure_time"];
+    state.headerParsed = true;
+    return;
+  }
+  const cols = parseCsvLine(line);
+  const tripId = cols[state.iTrip];
+  const stopId = cols[state.iStop];
+  if (!tripId || !stopId) return;
+  if (terminalIds.has(stopId)) tripHasTerminal.add(tripId);
+  if (relevantStops.has(stopId)) {
+    let arr = tripStops.get(tripId);
+    if (!arr) { arr = []; tripStops.set(tripId, arr); }
+    arr.push({
+      id: stopId,
+      seq: Number(cols[state.iSeq]),
+      arr: (cols[state.iArr] || "").trim(),
+      dep: (cols[state.iDep] || "").trim(),
+    });
+  }
+  state.totalLines++;
+}
+
 async function buildSnapshot() {
   const KEY = process.env.NAP_API_KEY;
   if (!KEY) throw new Error("Falta NAP_API_KEY");
@@ -92,12 +191,22 @@ async function buildSnapshot() {
   const buf = new Uint8Array(await r.arrayBuffer());
   console.log(`[refresh-renfe] ${(buf.byteLength / 1024 / 1024).toFixed(2)} MB`);
 
-  const zip = unzipSync(buf);
-  const stops = csv(zip["stops.txt"]);
-  const routes = csv(zip["routes.txt"]);
-  const trips = csv(zip["trips.txt"]);
-  const calendar = csv(zip["calendar.txt"]);
-  const calDates = csv(zip["calendar_dates.txt"]);
+  // --- Paso 1: descomprimir SÓLO los CSVs pequeños ---
+  const small = unzipSync(buf, {
+    filter: (f) =>
+      f.name === "stops.txt" ||
+      f.name === "routes.txt" ||
+      f.name === "trips.txt" ||
+      f.name === "calendar.txt" ||
+      f.name === "calendar_dates.txt",
+  });
+  const stops = csv(small["stops.txt"]);
+  const routes = csv(small["routes.txt"]);
+  const trips = csv(small["trips.txt"]);
+  const calendar = csv(small["calendar.txt"]);
+  const calDates = csv(small["calendar_dates.txt"]);
+  // Liberar el dict.
+  for (const k of Object.keys(small)) delete (small as any)[k];
   console.log(`[refresh-renfe] stops=${stops.length} trips=${trips.length}`);
 
   const alicante = stops.filter((s) => {
@@ -117,61 +226,37 @@ async function buildSnapshot() {
   const tripsById = new Map(trips.map((t) => [t.trip_id, t]));
   const routesById = new Map(routes.map((r2) => [r2.route_id, r2]));
 
-  // ---- Streaming sobre stop_times.txt (descomprime sólo este fichero y libera) ----
-  const stopTimesU8 = zip["stop_times.txt"];
-  if (!stopTimesU8) throw new Error("Sin stop_times.txt");
-  const stRaw = strFromU8(stopTimesU8);
-  // Liberar el zip cuanto antes — los demás CSVs ya están en memoria como objetos.
-  for (const k of Object.keys(zip)) delete (zip as any)[k];
-
-  type Row = { id: string; seq: number; arr: string; dep: string };
+  // --- Paso 2: stream stop_times.txt en chunks (NO se carga entero) ---
   const tripStops = new Map<string, Row[]>();
   const tripHasTerminal = new Set<string>();
+  const state = newStopTimesState();
 
-  // Header
-  const nl1 = stRaw.indexOf("\n");
-  const headerLine = stRaw.slice(0, nl1).replace(/\r$/, "");
-  const head = headerLine.replace(/^\uFEFF/, "").split(",").map((h) => h.trim());
-  const idx: Record<string, number> = {};
-  for (let i = 0; i < head.length; i++) idx[head[i]] = i;
-  const iTrip = idx["trip_id"];
-  const iSeq = idx["stop_sequence"];
-  const iStop = idx["stop_id"];
-  const iArr = idx["arrival_time"];
-  const iDep = idx["departure_time"];
-
-  let lineStart = nl1 + 1;
-  const len = stRaw.length;
-  let totalLines = 0;
-  for (let i = lineStart; i <= len; i++) {
-    const cc = i < len ? stRaw.charCodeAt(i) : 10;
-    if (cc === 10 /* \n */ || cc === 13 /* \r */) {
-      if (i > lineStart) {
-        const line = stRaw.slice(lineStart, i);
-        const cols = parseCsvLine(line);
-        const tripId = cols[iTrip];
-        const stopId = cols[iStop];
-        if (tripId && stopId) {
-          if (terminalIds.has(stopId)) tripHasTerminal.add(tripId);
-          if (relevantStops.has(stopId)) {
-            let arr = tripStops.get(tripId);
-            if (!arr) { arr = []; tripStops.set(tripId, arr); }
-            arr.push({
-              id: stopId,
-              seq: Number(cols[iSeq]),
-              arr: (cols[iArr] || "").trim(),
-              dep: (cols[iDep] || "").trim(),
-            });
-          }
-          totalLines++;
+  await new Promise<void>((resolve, reject) => {
+    try {
+      const unzipper = new Unzip();
+      unzipper.register(UnzipInflate);
+      unzipper.onfile = (file) => {
+        if (file.name !== "stop_times.txt") {
+          // Saltar el resto: no llamamos a start(), por lo que fflate lo ignora.
+          return;
         }
-      }
-      if (cc === 13 && i + 1 < len && stRaw.charCodeAt(i + 1) === 10) i++;
-      lineStart = i + 1;
-    }
-  }
-  console.log(`[refresh-renfe] stop_times procesados=${totalLines} trips_terminal=${tripHasTerminal.size}`);
+        file.ondata = (err, chunk, final) => {
+          if (err) { reject(err); return; }
+          try {
+            processChunk(state, chunk, terminalIds, relevantStops, tripStops, tripHasTerminal, final);
+            if (final) resolve();
+          } catch (e) { reject(e as any); }
+        };
+        file.start();
+      };
+      // Alimentar el ZIP completo (es sólo 0.72 MB; el grande es el descomprimido).
+      unzipper.push(buf, true);
+    } catch (e) { reject(e as any); }
+  });
 
+  console.log(`[refresh-renfe] stop_times procesados=${state.totalLines} trips_terminal=${tripHasTerminal.size}`);
+
+  // --- Calendario + dates ---
   const calById = new Map(calendar.map((c) => [c.service_id, c]));
   const calDatesByService = new Map<string, Record<string, string>[]>();
   for (const c of calDates) {
