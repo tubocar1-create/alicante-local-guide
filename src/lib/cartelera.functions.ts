@@ -138,9 +138,12 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
           Origin: "https://www.adif.es",
           Referer: BASE,
           Cookie: cookieHeader,
+          "Cache-Control": "no-cache",
         },
         body,
+        cache: "no-store",
       });
+
       const text = await r.text();
       if (!r.ok) {
         console.warn("[cartelera] ADIF HTTP", {
