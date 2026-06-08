@@ -424,7 +424,6 @@ export function ParkingsButton() {
                 <ul className="grid h-full grid-rows-6 gap-1.5">
                   {displayed.map((r) => {
                     const s = STYLES[r.status];
-                    return (
                     const href = r.coords
                       ? `https://www.google.com/maps/dir/?api=1&destination=${r.coords.lat},${r.coords.lng}&travelmode=driving`
                       : undefined;
