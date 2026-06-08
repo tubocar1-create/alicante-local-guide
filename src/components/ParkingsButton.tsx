@@ -431,7 +431,7 @@ export function ParkingsButton() {
                       >
                         {/* P badge */}
                         <div
-                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${s.badgeBg} text-white font-extrabold text-[13px] shadow-md`}
+                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${s.badgeBg} text-white font-extrabold text-[13px] shadow-md`}
                         >
                           P
                         </div>
@@ -441,41 +441,54 @@ export function ParkingsButton() {
                           <p className="truncate text-[13px] font-extrabold leading-tight text-white">
                             {r.name}
                           </p>
-                          <div className="mt-0.5 flex items-center gap-2 text-[10px] text-slate-400">
+                          <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px] text-slate-400">
                             <span
                               className={`rounded px-1 py-[1px] text-[8.5px] font-extrabold tracking-wide ${s.pillBg} ${s.pillText}`}
                             >
-                              {s.label}
+                              {r.occupancyPct != null ? `${r.occupancyPct}% ocupado` : s.label}
                             </span>
                             {r.walkMin != null && (
                               <span className="flex items-center gap-0.5">
                                 <Footprints className="h-2.5 w-2.5" />
-                                {r.walkMin} min
+                                {r.walkMin}′
                               </span>
                             )}
                             <span className="font-mono text-slate-500">
                               {r.free ?? "—"}/{r.total ?? "—"}
                             </span>
                           </div>
-                          {/* mini progress bar */}
+                          {/* mini progress bar (ocupación) */}
                           <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-white/5">
                             <div
                               className={`h-full ${s.bar} transition-all`}
-                              style={{ width: `${r.availablePct ?? 0}%` }}
+                              style={{ width: `${r.occupancyPct ?? 0}%` }}
                             />
                           </div>
                         </div>
 
                         {/* Big number */}
                         <div className="flex shrink-0 flex-col items-end leading-none">
-                          <span className={`font-mono text-[22px] font-extrabold ${s.num}`}>
+                          <span className={`font-mono text-[20px] font-extrabold ${s.num}`}>
                             {r.free != null ? r.free : "—"}
                           </span>
                           <span className="text-[9px] text-slate-400">libres</span>
                         </div>
 
-                        {/* Donut */}
-                        <Donut pct={r.availablePct} status={r.status} />
+                        {/* Donut — % ocupación */}
+                        <Donut pct={r.occupancyPct} status={r.status} />
+
+                        {/* Cómo llegar en coche */}
+                        {r.coords && (
+                          <a
+                            href={`https://www.google.com/maps/dir/?api=1&destination=${r.coords.lat},${r.coords.lng}&travelmode=driving`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={`Cómo llegar en coche a ${r.name}`}
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-500/15 text-sky-300 ring-1 ring-sky-400/30 hover:bg-sky-500/25 active:scale-95 transition"
+                          >
+                            <Navigation className="h-3.5 w-3.5" />
+                          </a>
+                        )}
                       </li>
                     );
                   })}
