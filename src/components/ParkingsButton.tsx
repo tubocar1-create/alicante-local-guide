@@ -29,7 +29,7 @@ function ParkingSign({ className = "" }: { className?: string }) {
   );
 }
 
-const ENDPOINT = "/api/public/parkings-data";
+const ENDPOINT = "https://movilidad.alicante.es/asmpois";
 
 type RawPoi = Record<string, unknown> & {
   id?: string | number;
