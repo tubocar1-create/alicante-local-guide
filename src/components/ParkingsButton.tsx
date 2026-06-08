@@ -115,6 +115,26 @@ function extractCoords(p: RawPoi): Coords | undefined {
   );
 }
 
+function extractNameFromPopup(html: string, fallback: string): string {
+  if (!html) return fallback;
+  // Try headings / strong first
+  const h = html.match(/<h\d[^>]*>([\s\S]*?)<\/h\d>/i);
+  if (h) {
+    const t = htmlToText(h[1]);
+    if (t) return t;
+  }
+  const strong = html.match(/<strong[^>]*>([\s\S]*?)<\/strong>/i);
+  if (strong) {
+    const t = htmlToText(strong[1]);
+    if (t && !/^\d/.test(t)) return t;
+  }
+  // First non-empty line of plain text
+  const plain = htmlToText(html);
+  const first = plain.split(/[.·•\-–|]/)[0]?.trim();
+  if (first && first.length > 2 && first.length < 60 && !/^\d/.test(first)) return first;
+  return fallback;
+}
+
 function extractParkings(payload: unknown): ParkingRow[] {
   return flattenPois(payload)
     .filter((p) => String(p.content_type ?? "").toLowerCase().includes("parking"))
@@ -128,9 +148,11 @@ function extractParkings(payload: unknown): ParkingRow[] {
         availablePct = Math.max(0, Math.min(100, Math.round((free / total) * 100)));
         occupancyPct = 100 - availablePct;
       }
+      const fallbackName = String(p.title ?? p.name ?? "Parking");
+      const name = extractNameFromPopup(popupHtml, fallbackName);
       return {
-        id: String(p.id ?? p.title ?? Math.random()),
-        name: String(p.title ?? p.name ?? "Parking"),
+        id: String(p.id ?? name ?? Math.random()),
+        name,
         status: statusFromIcono(p.icono),
         free,
         total,
@@ -141,6 +163,7 @@ function extractParkings(payload: unknown): ParkingRow[] {
       };
     });
 }
+
 
 function statusFromPct(availablePct?: number, fallback: Status = "unknown"): Status {
   if (availablePct == null) return fallback;
