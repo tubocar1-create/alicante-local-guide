@@ -1,6 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { X, ArrowRight, PlaneTakeoff, PlaneLanding } from "lucide-react";
+import { X, ArrowRight, PlaneTakeoff, PlaneLanding, Sparkles } from "lucide-react";
 import vuelosAvionIcon from "@/assets/vuelos-avion.png";
+
+const VIP_URL =
+  "https://www.salasvip.com/?ref=zdbjzwya&utm_source=leopoldocadavid&utm_medium=affiliate";
+
+const VIP_PHOTOS = [
+  "https://www.viplounges.com/wp-content/uploads/2025/03/1420x500px-ALC-SalaVip-CostaBlanca.jpg",
+  "https://www.viplounges.com/wp-content/uploads/2025/03/costa-blanca-vip-lounge.jpg",
+  "https://www.viplounges.com/wp-content/uploads/2025/03/790x541px-ALC-SalaVip-CostaBlanca-1.jpg",
+  "https://www.viplounges.com/wp-content/uploads/2025/03/790x541px-ALC-SalaVip-CostaBlanca-2.jpg",
+  "https://www.viplounges.com/wp-content/uploads/2025/03/790x541px-ALC-SalaVip-CostaBlanca-3.jpg",
+  "https://www.viplounges.com/wp-content/uploads/2025/03/790x541px-ALC-SalaVip-CostaBlanca-4.jpg",
+  "https://www.viplounges.com/wp-content/uploads/2025/03/790x541px-ALC-SalaVip-CostaBlanca-5.jpg",
+];
 
 export const Route = createFileRoute("/selector-vuelos")({
   head: () => ({
