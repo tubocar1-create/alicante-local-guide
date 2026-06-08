@@ -47,6 +47,7 @@ import comprarTaconesIcon from "@/assets/comprar-tacones.png";
 import tomarCocktailIcon from "@/assets/tomar-cocktail.png";
 import asistenteIcon from "@/assets/asistente-icon.png";
 import { VamosWord } from "@/components/VamosWord";
+import { ParkingsButton } from "@/components/ParkingsButton";
 import { hablar, speakGreetingFromUserGesture } from "@/components/AgenteVamos";
 import { FavoriteStopWidget } from "@/components/FavoriteStopWidget";
 import { getClientStopRealtime } from "@/lib/bus-realtime-client";
