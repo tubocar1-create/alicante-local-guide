@@ -3,78 +3,113 @@ import { Car, Loader2, RefreshCw, X } from "lucide-react";
 
 const ENDPOINT = "https://movilidad.alicante.es/asmpois";
 
-// Los 6 parkings públicos de Alicante (Smart Parking municipal)
-const TARGET_PARKINGS = [
-  "Mercado",
-  "Plaza Mar",
-  "Cervantes",
-  "Séneca",
-  "Campoamor",
-  "Portal de Elche",
-];
-
 type RawPoi = Record<string, unknown> & {
-  name?: string;
+  id?: string;
   title?: string;
+  name?: string;
   content_type?: string;
-  type?: string;
-  free?: number | string;
-  total?: number | string;
-  occupation?: number | string;
+  icono?: string;
+  popup?: { content?: string };
 };
+
+type Status = "green" | "yellow" | "red" | "unknown";
 
 type ParkingRow = {
   raw: RawPoi;
+  id: string;
   name: string;
+  status: Status;
   free?: number;
   total?: number;
-  pct?: number;
+  popupText?: string;
 };
 
-function pickNumber(v: unknown): number | undefined {
-  if (typeof v === "number") return v;
-  if (typeof v === "string" && v.trim() !== "" && !isNaN(Number(v))) return Number(v);
-  return undefined;
-}
-
-function extractParkings(payload: unknown): ParkingRow[] {
-  // Encuentra array de POIs en cualquier nivel
-  const arrays: RawPoi[][] = [];
+function flattenPois(payload: unknown): RawPoi[] {
+  const out: RawPoi[] = [];
   const visit = (v: unknown) => {
-    if (Array.isArray(v)) {
-      if (v.length && typeof v[0] === "object" && v[0] !== null) arrays.push(v as RawPoi[]);
-      else v.forEach(visit);
-    } else if (v && typeof v === "object") {
-      Object.values(v as Record<string, unknown>).forEach(visit);
+    if (Array.isArray(v)) v.forEach(visit);
+    else if (v && typeof v === "object") {
+      const obj = v as Record<string, unknown>;
+      if ("content_type" in obj || "icono" in obj || "popup" in obj) out.push(obj as RawPoi);
+      Object.values(obj).forEach(visit);
     }
   };
   visit(payload);
-
-  const all: RawPoi[] = arrays.flat();
-  // Filtra los que parecen parking
-  const isParking = (p: RawPoi) => {
-    const blob = JSON.stringify(p).toLowerCase();
-    return (
-      blob.includes("parking") ||
-      blob.includes("aparcam") ||
-      blob.includes("smart_parking") ||
-      blob.includes("smartparking")
-    );
-  };
-  const parkings = all.filter(isParking);
-
-  // Mapea a filas
-  const rows: ParkingRow[] = parkings.map((p) => {
-    const name = String(p.name ?? p.title ?? "Parking");
-    const free = pickNumber(p.free) ?? pickNumber((p as any).libres) ?? pickNumber((p as any).available);
-    const total = pickNumber(p.total) ?? pickNumber((p as any).plazas) ?? pickNumber((p as any).capacity);
-    const pct =
-      free != null && total && total > 0 ? Math.round((free / total) * 100) : pickNumber((p as any).occupation);
-    return { raw: p, name, free, total, pct };
+  // dedupe by id
+  const seen = new Set<string>();
+  return out.filter((p) => {
+    const k = String(p.id ?? JSON.stringify(p).slice(0, 80));
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
   });
-
-  return rows;
 }
+
+function statusFromIcono(icono?: string): Status {
+  if (!icono) return "unknown";
+  const i = icono.toLowerCase();
+  if (i.includes("green")) return "green";
+  if (i.includes("yellow") || i.includes("amber") || i.includes("orange")) return "yellow";
+  if (i.includes("red")) return "red";
+  return "unknown";
+}
+
+function htmlToText(html: string): string {
+  return html
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extractFreeTotal(text: string): { free?: number; total?: number } {
+  // Patrones típicos: "123 libres", "Libres: 45", "45 / 200", "45 de 200"
+  const slash = text.match(/(\d{1,4})\s*\/\s*(\d{1,4})/);
+  if (slash) return { free: Number(slash[1]), total: Number(slash[2]) };
+  const de = text.match(/(\d{1,4})\s+de\s+(\d{1,4})/i);
+  if (de) return { free: Number(de[1]), total: Number(de[2]) };
+  const libres = text.match(/(?:libres?\s*[:\-]?\s*)(\d{1,4})/i) || text.match(/(\d{1,4})\s*libres?/i);
+  const total = text.match(/(?:total|plazas|capacidad)\s*[:\-]?\s*(\d{1,4})/i);
+  return {
+    free: libres ? Number(libres[1]) : undefined,
+    total: total ? Number(total[1]) : undefined,
+  };
+}
+
+function extractParkings(payload: unknown): ParkingRow[] {
+  return flattenPois(payload)
+    .filter((p) => String(p.content_type ?? "").toLowerCase().includes("parking"))
+    .map((p) => {
+      const popupHtml = p.popup?.content ?? "";
+      const popupText = htmlToText(popupHtml);
+      const { free, total } = extractFreeTotal(popupText);
+      return {
+        raw: p,
+        id: String(p.id ?? ""),
+        name: String(p.title ?? p.name ?? "Parking"),
+        status: statusFromIcono(p.icono),
+        free,
+        total,
+        popupText: popupText || undefined,
+      };
+    });
+}
+
+const STATUS_LABEL: Record<Status, string> = {
+  green: "Libre",
+  yellow: "Lleno parcial",
+  red: "Completo",
+  unknown: "—",
+};
+
+const STATUS_DOT: Record<Status, string> = {
+  green: "bg-green-500",
+  yellow: "bg-amber-500",
+  red: "bg-red-500",
+  unknown: "bg-muted-foreground/40",
+};
 
 export function ParkingsButton() {
   const [open, setOpen] = useState(false);
@@ -86,20 +121,13 @@ export function ParkingsButton() {
   async function load() {
     setLoading(true);
     setError(null);
-    setRows(null);
-    setMeta(null);
     const t0 = performance.now();
     try {
       const res = await fetch(ENDPOINT, { method: "GET", cache: "no-store" });
       const text = await res.text();
       const ms = Math.round(performance.now() - t0);
       const bytes = new Blob([text]).size;
-      let json: unknown;
-      try {
-        json = JSON.parse(text);
-      } catch {
-        throw new Error(`Respuesta no es JSON (HTTP ${res.status})`);
-      }
+      const json = JSON.parse(text);
       const all = extractParkings(json);
       setMeta({ ms, bytes, total: all.length });
       setRows(all);
@@ -156,12 +184,11 @@ export function ParkingsButton() {
             <div className="overflow-y-auto px-4 py-3" style={{ maxHeight: "calc(85vh - 56px)" }}>
               <p className="mb-2 text-[11px] text-muted-foreground">
                 Llamada directa desde tu navegador a <code className="font-mono">movilidad.alicante.es/asmpois</code>.
-                Sin proxy. Sin caché.
               </p>
 
               {meta && (
                 <div className="mb-3 rounded-lg bg-muted/60 px-3 py-2 text-[11px] text-muted-foreground">
-                  ⏱ {meta.ms} ms · 📦 {(meta.bytes / 1024).toFixed(1)} KB · 🅿️ {meta.total} parkings detectados
+                  ⏱ {meta.ms} ms · 📦 {(meta.bytes / 1024).toFixed(1)} KB · 🅿️ {meta.total} parkings
                 </div>
               )}
 
@@ -176,66 +203,47 @@ export function ParkingsButton() {
               )}
 
               {rows && (
-                <>
-                  {/* Resumen de los 6 objetivo */}
-                  <h3 className="mb-2 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-                    Los 6 parkings municipales
-                  </h3>
-                  <ul className="mb-4 space-y-1.5">
-                    {TARGET_PARKINGS.map((target) => {
-                      const match = rows.find((r) =>
-                        r.name.toLowerCase().includes(target.toLowerCase()),
-                      );
-                      return (
-                        <li
-                          key={target}
-                          className="flex items-center justify-between rounded-lg border border-border/60 bg-card px-3 py-2"
-                        >
-                          <span className="text-[13px] font-semibold">{target}</span>
-                          {match ? (
-                            <span className="text-[12px] font-mono tabular-nums">
-                              {match.free != null && match.total != null ? (
-                                <>
-                                  <span className="font-bold text-green-600">{match.free}</span>
-                                  <span className="text-muted-foreground">/{match.total}</span>
-                                </>
-                              ) : (
-                                <span className="text-muted-foreground">sin datos numéricos</span>
-                              )}
-                            </span>
-                          ) : (
-                            <span className="text-[11px] text-muted-foreground">no encontrado</span>
+                <ul className="space-y-2">
+                  {rows.map((r) => (
+                    <li key={r.id || r.name} className="rounded-xl border border-border/60 bg-card p-3">
+                      <div className="flex items-start gap-2">
+                        <span
+                          className={`mt-1 inline-block h-3 w-3 shrink-0 rounded-full ${STATUS_DOT[r.status]}`}
+                          aria-label={STATUS_LABEL[r.status]}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[13px] font-bold leading-tight">{r.name}</p>
+                          <p className="mt-0.5 text-[11px] text-muted-foreground">
+                            Estado: <b>{STATUS_LABEL[r.status]}</b>
+                            {r.free != null && (
+                              <>
+                                {" · "}
+                                <span className="font-mono tabular-nums">
+                                  <b className="text-green-600">{r.free}</b>
+                                  {r.total != null && <span>/{r.total}</span>} libres
+                                </span>
+                              </>
+                            )}
+                          </p>
+                          {r.popupText && (
+                            <details className="mt-1.5">
+                              <summary className="cursor-pointer text-[10px] text-muted-foreground">
+                                Texto del popup
+                              </summary>
+                              <p className="mt-1 text-[10px] leading-snug text-muted-foreground">{r.popupText}</p>
+                            </details>
                           )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-
-                  {/* Lista completa filtrada */}
-                  <h3 className="mb-2 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-                    Crudo ({rows.length})
-                  </h3>
-                  <ul className="space-y-2">
-                    {rows.map((r, i) => (
-                      <li key={i} className="rounded-lg bg-muted/40 px-3 py-2">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-[12px] font-semibold truncate">{r.name}</span>
-                          {r.free != null && r.total != null && (
-                            <span className="text-[11px] font-mono tabular-nums">
-                              {r.free}/{r.total}
-                            </span>
-                          )}
+                          <details className="mt-1">
+                            <summary className="cursor-pointer text-[10px] text-muted-foreground">Raw JSON</summary>
+                            <pre className="mt-1 overflow-x-auto rounded bg-muted/60 p-2 text-[10px] leading-tight">
+                              {JSON.stringify(r.raw, null, 2)}
+                            </pre>
+                          </details>
                         </div>
-                        <details className="mt-1">
-                          <summary className="cursor-pointer text-[10px] text-muted-foreground">Ver raw</summary>
-                          <pre className="mt-1 overflow-x-auto rounded bg-background/80 p-2 text-[10px] leading-tight">
-                            {JSON.stringify(r.raw, null, 2)}
-                          </pre>
-                        </details>
-                      </li>
-                    ))}
-                  </ul>
-                </>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               )}
             </div>
           </div>
