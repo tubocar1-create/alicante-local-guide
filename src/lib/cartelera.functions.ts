@@ -70,7 +70,7 @@ function norm(item: any, dir: "SALIDA" | "LLEGADA", tt: string): CarteleraTrain 
 }
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
-const CACHE_VERSION = 6;
+const CACHE_VERSION = 7;
 let _cache: { at: number; v: number; data: CarteleraResponse } | null = null;
 let _inflight: Promise<CarteleraResponse | null> | null = null;
 
@@ -203,13 +203,21 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
 
     async function runOp(s: string, t: string, dir: "SALIDA" | "LLEGADA") {
       const out: { n: CarteleraTrain; r: CarteleraRaw }[] = [];
-      for (let p = 0; p < 3; p++) {
+      const seen = new Set<string>();
+      for (let p = 0; p < 8; p++) {
         const j = await call(s, t, p);
         if (!j.horarios || !j.horarios.length) break;
+        let added = 0;
         for (const it of j.horarios) {
+          const k = `${(it.tren || "").replace(/<[^>]+>/g, "").trim()}|${(it.hora || "").trim()}|${(it.estacion || "").trim()}`;
+          if (seen.has(k)) continue;
+          seen.add(k);
+          added++;
           out.push({ n: norm(it, dir, t), r: { ...it, direction: dir, trafficType: t } });
         }
-        if (j.horarios.length < 10) break;
+        // Solo cortar si la página no aporta nada nuevo (ADIF a veces devuelve
+        // <10 pero todavía hay más páginas con datos)
+        if (added === 0) break;
       }
       return out;
     }
