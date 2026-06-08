@@ -29,7 +29,7 @@ function ParkingSign({ className = "" }: { className?: string }) {
   );
 }
 
-const ENDPOINT = "/api/public/parkings-data";
+const ENDPOINT = "https://movilidad.alicante.es/asmpois";
 
 type RawPoi = Record<string, unknown> & {
   id?: string | number;
@@ -311,9 +311,9 @@ export function ParkingsButton() {
     setError(null);
     try {
       const res = await fetch(ENDPOINT, { method: "GET", cache: "no-store" });
-      const json = (await res.json()) as { ok: boolean; rows?: ParkingRow[]; error?: string };
-      if (!json.ok) throw new Error(json.error || "No se pudieron cargar los parkings");
-      const next = json.rows ?? [];
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      const next = extractParkings(json);
       const now = Date.now();
       cache = { rows: next, updatedAt: now };
       setRows(next);
