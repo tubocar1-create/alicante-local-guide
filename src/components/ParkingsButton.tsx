@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Loader2, RefreshCw, X, Footprints, Clock, Navigation } from "lucide-react";
+import { Loader2, RefreshCw, X, Footprints, Clock } from "lucide-react";
 import {
   useUserLocation,
   distanceKm,
@@ -424,71 +424,66 @@ export function ParkingsButton() {
                 <ul className="grid h-full grid-rows-6 gap-1.5">
                   {displayed.map((r) => {
                     const s = STYLES[r.status];
+                    const href = r.coords
+                      ? `https://www.google.com/maps/dir/?api=1&destination=${r.coords.lat},${r.coords.lng}&travelmode=driving`
+                      : undefined;
                     return (
-                      <li
-                        key={r.id}
-                        className="flex items-center gap-2.5 rounded-xl bg-[#111a2e] px-2.5 py-2 ring-1 ring-white/5"
-                      >
-                        {/* P badge */}
-                        <div
-                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${s.badgeBg} text-white font-extrabold text-[13px] shadow-md`}
+                      <li key={r.id} className="contents">
+                        <a
+                          href={href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={href ? `Cómo llegar en coche a ${r.name}` : r.name}
+                          className="flex items-center gap-2.5 rounded-xl bg-[#111a2e] px-2.5 py-2 ring-1 ring-white/5 hover:bg-[#162041] hover:ring-sky-400/30 active:scale-[0.99] transition"
                         >
-                          P
-                        </div>
-
-                        {/* Name + status pill + meta */}
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-[13px] font-extrabold leading-tight text-white">
-                            {r.name}
-                          </p>
-                          <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px] text-slate-400">
-                            <span
-                              className={`rounded px-1 py-[1px] text-[8.5px] font-extrabold tracking-wide ${s.pillBg} ${s.pillText}`}
-                            >
-                              {r.occupancyPct != null ? `${r.occupancyPct}% ocupado` : s.label}
-                            </span>
-                            {r.walkMin != null && (
-                              <span className="flex items-center gap-0.5">
-                                <Footprints className="h-2.5 w-2.5" />
-                                {r.walkMin}′
-                              </span>
-                            )}
-                            <span className="font-mono text-slate-500">
-                              {r.free ?? "—"}/{r.total ?? "—"}
-                            </span>
-                          </div>
-                          {/* mini progress bar (ocupación) */}
-                          <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-white/5">
-                            <div
-                              className={`h-full ${s.bar} transition-all`}
-                              style={{ width: `${r.occupancyPct ?? 0}%` }}
-                            />
-                          </div>
-                        </div>
-
-                        {/* Big number */}
-                        <div className="flex shrink-0 flex-col items-end leading-none">
-                          <span className={`font-mono text-[20px] font-extrabold ${s.num}`}>
-                            {r.free != null ? r.free : "—"}
-                          </span>
-                          <span className="text-[9px] text-slate-400">libres</span>
-                        </div>
-
-                        {/* Donut — % ocupación */}
-                        <Donut pct={r.occupancyPct} status={r.status} />
-
-                        {/* Cómo llegar en coche */}
-                        {r.coords && (
-                          <a
-                            href={`https://www.google.com/maps/dir/?api=1&destination=${r.coords.lat},${r.coords.lng}&travelmode=driving`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label={`Cómo llegar en coche a ${r.name}`}
-                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-500/15 text-sky-300 ring-1 ring-sky-400/30 hover:bg-sky-500/25 active:scale-95 transition"
+                          {/* P badge */}
+                          <div
+                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${s.badgeBg} text-white font-extrabold text-[13px] shadow-md`}
                           >
-                            <Navigation className="h-3.5 w-3.5" />
-                          </a>
-                        )}
+                            P
+                          </div>
+
+                          {/* Name + status pill + meta */}
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-[13px] font-extrabold leading-tight text-white">
+                              {r.name}
+                            </p>
+                            <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px] text-slate-400">
+                              <span
+                                className={`rounded px-1 py-[1px] text-[8.5px] font-extrabold tracking-wide ${s.pillBg} ${s.pillText}`}
+                              >
+                                {r.occupancyPct != null ? `${r.occupancyPct}% ocupado` : s.label}
+                              </span>
+                              {r.walkMin != null && (
+                                <span className="flex items-center gap-0.5">
+                                  <Footprints className="h-2.5 w-2.5" />
+                                  {r.walkMin}′
+                                </span>
+                              )}
+                              <span className="font-mono text-slate-500">
+                                {r.free ?? "—"}/{r.total ?? "—"}
+                              </span>
+                            </div>
+                            {/* mini progress bar (ocupación) */}
+                            <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-white/5">
+                              <div
+                                className={`h-full ${s.bar} transition-all`}
+                                style={{ width: `${r.occupancyPct ?? 0}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Big number */}
+                          <div className="flex shrink-0 flex-col items-end leading-none">
+                            <span className={`font-mono text-[20px] font-extrabold ${s.num}`}>
+                              {r.free != null ? r.free : "—"}
+                            </span>
+                            <span className="text-[9px] text-slate-400">libres</span>
+                          </div>
+
+                          {/* Donut — % ocupación */}
+                          <Donut pct={r.occupancyPct} status={r.status} />
+                        </a>
                       </li>
                     );
                   })}
