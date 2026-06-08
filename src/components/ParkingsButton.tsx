@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Loader2, RefreshCw, X, Footprints, Clock } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Loader2, RefreshCw, X, Footprints, Clock, Car, CheckCircle2, AlertCircle, AlertOctagon } from "lucide-react";
 import {
   useUserLocation,
   distanceKm,
@@ -349,7 +349,26 @@ export function ParkingsButton() {
       .slice(0, 6);
   }, [enriched]);
 
-  const secondsAgo = updatedAt ? Math.max(0, Math.round((Date.now() - updatedAt) / 1000)) : null;
+  // Live wall clock
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    if (!open) return;
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, [open]);
+  const clockText = now.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+
+  // Status counts
+  const counts = useMemo(() => {
+    const c = { total: 0, green: 0, yellow: 0, red: 0 };
+    (displayed ?? []).forEach((r) => {
+      c.total++;
+      if (r.status === "green") c.green++;
+      else if (r.status === "yellow") c.yellow++;
+      else if (r.status === "red") c.red++;
+    });
+    return c;
+  }, [displayed]);
 
   return (
     <>
@@ -380,9 +399,9 @@ export function ParkingsButton() {
                 <p className="mt-0.5 flex items-center justify-center gap-1.5 text-[10px] text-slate-400">
                   <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_currentColor]" />
                   En tiempo real
-                  <span className="ml-0.5 flex items-center gap-0.5 rounded-full bg-emerald-400/10 px-1.5 py-0.5 text-emerald-300 ring-1 ring-emerald-400/20">
+                  <span className="ml-0.5 flex items-center gap-1 rounded-full bg-emerald-400/10 px-1.5 py-0.5 font-mono tabular-nums text-emerald-300 ring-1 ring-emerald-400/20">
                     <Clock className="h-3 w-3" />
-                    {secondsAgo != null ? `hace ${secondsAgo}s` : "ahora"}
+                    {clockText}
                   </span>
                 </p>
               </div>
@@ -405,7 +424,41 @@ export function ParkingsButton() {
               </div>
             </header>
 
-            <div className="flex-1 min-h-0 overflow-hidden px-3 pb-3">
+            <div className="flex-1 min-h-0 overflow-hidden px-3 pb-3 flex flex-col">
+              {/* Stats row — copies the screenshot header */}
+              {displayed && displayed.length > 0 && (
+                <div className="mb-2 grid grid-cols-4 gap-1.5 shrink-0">
+                  <div className="flex items-center gap-1.5 rounded-lg bg-[#111a2e] px-2 py-1.5 ring-1 ring-white/5">
+                    <Car className="h-3.5 w-3.5 text-emerald-400" />
+                    <div className="leading-none">
+                      <div className="text-[15px] font-extrabold text-emerald-400">{counts.total}</div>
+                      <div className="text-[9px] text-slate-400">Parkings</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 rounded-lg bg-[#111a2e] px-2 py-1.5 ring-1 ring-emerald-500/20">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                    <div className="leading-none">
+                      <div className="text-[15px] font-extrabold text-emerald-400">{counts.green}</div>
+                      <div className="text-[9px] text-slate-400">Fácil aparcar</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 rounded-lg bg-[#111a2e] px-2 py-1.5 ring-1 ring-amber-500/20">
+                    <AlertCircle className="h-3.5 w-3.5 text-amber-400" />
+                    <div className="leading-none">
+                      <div className="text-[15px] font-extrabold text-amber-400">{counts.yellow}</div>
+                      <div className="text-[9px] text-slate-400">Ocupación media</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 rounded-lg bg-[#111a2e] px-2 py-1.5 ring-1 ring-red-500/20">
+                    <AlertOctagon className="h-3.5 w-3.5 text-red-400" />
+                    <div className="leading-none">
+                      <div className="text-[15px] font-extrabold text-red-400">{counts.red}</div>
+                      <div className="text-[9px] text-slate-400">Casi lleno</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {error && (
                 <div className="mb-2 rounded-lg bg-red-500/10 px-3 py-1.5 text-[11px] text-red-300 ring-1 ring-red-500/30">
                   {error}
@@ -419,12 +472,17 @@ export function ParkingsButton() {
               )}
 
               {displayed && displayed.length > 0 && (
-                <ul className="grid h-full grid-rows-6 gap-1.5">
+                <ul className="grid flex-1 min-h-0 grid-rows-6 gap-1.5">
                   {displayed.map((r) => {
                     const s = STYLES[r.status];
                     const href = r.coords
                       ? `https://www.google.com/maps/dir/?api=1&destination=${r.coords.lat},${r.coords.lng}&travelmode=driving`
                       : undefined;
+                    const ringColor =
+                      r.status === "green" ? "ring-emerald-500/60"
+                      : r.status === "yellow" ? "ring-amber-500/60"
+                      : r.status === "red" ? "ring-red-500/60"
+                      : "ring-white/10";
                     return (
                       <li key={r.id} className="contents">
                         <a
@@ -434,11 +492,9 @@ export function ParkingsButton() {
                           aria-label={href ? `Cómo llegar en coche a ${r.name}` : r.name}
                           className="flex items-center gap-2 rounded-xl bg-[#111a2e] px-2 py-1.5 ring-1 ring-white/5 hover:bg-[#162041] hover:ring-sky-400/30 active:scale-[0.99] transition"
                         >
-                          {/* P badge */}
-                          <div
-                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${s.badgeBg} text-white font-extrabold text-[13px] shadow-md`}
-                          >
-                            P
+                          {/* Official blue P sign with status ring */}
+                          <div className={`shrink-0 rounded-md ring-2 ${ringColor}`}>
+                            <ParkingSign className="h-8 w-8" />
                           </div>
 
                           {/* Name + status pill + meta */}
