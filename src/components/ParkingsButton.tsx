@@ -238,33 +238,33 @@ const STYLES: Record<Status, StyleSet> = {
 
 function Donut({ pct, status }: { pct?: number; status: Status }) {
   const value = pct ?? 0;
-  const r = 26;
+  const r = 22;
   const c = 2 * Math.PI * r;
   const dash = (value / 100) * c;
   const s = STYLES[status];
   return (
-    <div className="relative h-[68px] w-[68px] shrink-0">
-      <svg viewBox="0 0 64 64" className="h-full w-full -rotate-90">
-        <circle cx="32" cy="32" r={r} stroke="currentColor" strokeWidth="6" className="text-white/10" fill="none" />
+    <div className="relative h-12 w-12 shrink-0">
+      <svg viewBox="0 0 56 56" className="h-full w-full -rotate-90">
+        <circle cx="28" cy="28" r={r} stroke="currentColor" strokeWidth="5" className="text-white/10" fill="none" />
         <circle
-          cx="32"
-          cy="32"
+          cx="28"
+          cy="28"
           r={r}
           stroke="currentColor"
-          strokeWidth="6"
+          strokeWidth="5"
           fill="none"
           strokeLinecap="round"
           strokeDasharray={`${dash} ${c}`}
           className={s.ring}
         />
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
-        <span className={`text-[14px] font-extrabold ${s.donutText}`}>{pct != null ? `${pct}%` : "—"}</span>
-        <span className="mt-0.5 text-[8px] text-white/50">disponible</span>
+      <div className="absolute inset-0 flex items-center justify-center leading-none">
+        <span className={`text-[11px] font-extrabold ${s.donutText}`}>{pct != null ? `${pct}%` : "—"}</span>
       </div>
     </div>
   );
 }
+
 
 // In-memory cache (single-use, brief). Persists across reopens within a few minutes.
 const CACHE_TTL_MS = 3 * 60 * 1000;
