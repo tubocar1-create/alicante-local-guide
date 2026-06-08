@@ -233,9 +233,25 @@ export function BusTestButton() {
             </header>
 
             <div className="overflow-y-auto px-4 py-3" style={{ maxHeight: "calc(90vh - 56px)" }}>
-              <p className="mb-2 text-[11px] text-muted-foreground">
-                Descarga <code className="font-mono">{PAGE_URL}</code>, extrae URLs candidatas y prueba cada una desde tu navegador.
-              </p>
+              <div className="mb-2 rounded-lg border border-border/60 p-2">
+                <label className="text-[10px] font-bold text-muted-foreground">URL de descubrimiento</label>
+                <div className="mt-1 flex items-center gap-1">
+                  <input
+                    value={discoverUrl}
+                    onChange={(e) => setDiscoverUrl(e.target.value)}
+                    placeholder={DEFAULT_PAGE_URL}
+                    className="min-w-0 flex-1 rounded border border-border bg-background px-2 py-1 text-[11px] font-mono"
+                  />
+                  <button
+                    onClick={discover}
+                    disabled={loading}
+                    className="flex h-7 items-center rounded bg-primary px-2 text-[11px] font-bold text-primary-foreground disabled:opacity-50"
+                  >
+                    SCAN
+                  </button>
+                </div>
+              </div>
+
 
               {pageMeta && (
                 <div className="mb-2 rounded-lg bg-muted/60 px-3 py-2 text-[11px] text-muted-foreground">
