@@ -1,6 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { X, ArrowRight, PlaneTakeoff, PlaneLanding } from "lucide-react";
+import { X, ArrowRight, PlaneTakeoff, PlaneLanding, Sparkles } from "lucide-react";
 import vuelosAvionIcon from "@/assets/vuelos-avion.png";
+
+const VIP_URL =
+  "https://www.salasvip.com/?ref=zdbjzwya&utm_source=leopoldocadavid&utm_medium=affiliate";
+
+const VIP_PHOTOS = [
+  "https://www.viplounges.com/wp-content/uploads/2025/03/1420x500px-ALC-SalaVip-CostaBlanca.jpg",
+  "https://www.viplounges.com/wp-content/uploads/2025/03/costa-blanca-vip-lounge.jpg",
+  "https://www.viplounges.com/wp-content/uploads/2025/03/790x541px-ALC-SalaVip-CostaBlanca-1.jpg",
+  "https://www.viplounges.com/wp-content/uploads/2025/03/790x541px-ALC-SalaVip-CostaBlanca-2.jpg",
+  "https://www.viplounges.com/wp-content/uploads/2025/03/790x541px-ALC-SalaVip-CostaBlanca-3.jpg",
+  "https://www.viplounges.com/wp-content/uploads/2025/03/790x541px-ALC-SalaVip-CostaBlanca-4.jpg",
+  "https://www.viplounges.com/wp-content/uploads/2025/03/790x541px-ALC-SalaVip-CostaBlanca-5.jpg",
+];
 
 export const Route = createFileRoute("/selector-vuelos")({
   head: () => ({
@@ -68,7 +81,7 @@ function SelectorVuelos() {
         <div className="absolute bottom-0 right-0 h-[24rem] w-[24rem] rounded-full bg-indigo-400/[0.10] blur-3xl" />
       </div>
 
-      <main className="relative mx-auto flex w-full max-w-3xl flex-1 min-h-0 flex-col gap-3 px-3 pb-3 pt-2">
+      <main className="relative mx-auto flex w-full max-w-3xl flex-1 min-h-0 flex-col gap-3 overflow-y-auto px-3 pb-3 pt-2">
         <header className="flex shrink-0 items-center justify-between">
           <Link
             to="/"
@@ -108,7 +121,7 @@ function SelectorVuelos() {
           </h1>
         </div>
 
-        <div className="grid min-h-0 flex-1 grid-rows-2 gap-3">
+        <div className="grid shrink-0 grid-rows-2 gap-3" style={{ minHeight: "min(60vh, 480px)" }}>
           {SECTORS.map((s) => (
             <Link
               key={s.search.type}
@@ -177,7 +190,53 @@ function SelectorVuelos() {
             </Link>
           ))}
         </div>
+
+        <section className="mt-2 shrink-0 rounded-2xl border border-amber-300/20 bg-gradient-to-br from-amber-500/[0.08] via-white/[0.03] to-amber-200/[0.05] p-3 backdrop-blur-xl">
+          <div className="mb-2 flex items-center gap-1.5">
+            <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+            <span className="text-[9px] font-bold uppercase tracking-[0.25em] text-amber-200/90">
+              Experiencia VIP · ALC
+            </span>
+          </div>
+          <div className="-mx-3 overflow-x-auto px-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex snap-x snap-mandatory gap-2 pb-1">
+              {VIP_PHOTOS.map((src, i) => (
+                <a
+                  key={src}
+                  href={VIP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer sponsored"
+                  className="group relative block shrink-0 snap-start overflow-hidden rounded-xl border border-white/10"
+                  style={{ width: "78vw", maxWidth: 320, aspectRatio: "16/10" }}
+                >
+                  <img
+                    src={src}
+                    alt={`Costa Blanca VIP Lounge · Aeropuerto Alicante-Elche (foto ${i + 1})`}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                </a>
+              ))}
+            </div>
+          </div>
+          <a
+            href={VIP_URL}
+            target="_blank"
+            rel="noopener noreferrer sponsored"
+            className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-amber-300/40 bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-200 px-4 py-3 text-slate-900 shadow-[0_8px_30px_-8px_rgba(251,191,36,0.6)] transition active:scale-[0.98]"
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Sparkles className="h-5 w-5 shrink-0" />
+              <span className="text-[13px] font-bold leading-tight md:text-[15px]">
+                Disfruta una experiencia VIP, en el Aeropuerto Alicante-Elche
+              </span>
+            </div>
+            <ArrowRight className="h-5 w-5 shrink-0" />
+          </a>
+        </section>
       </main>
+
     </div>
   );
 }
