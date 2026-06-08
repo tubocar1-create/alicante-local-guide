@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Car, Loader2, RefreshCw, X, MapPin, Navigation, Footprints, LayoutGrid, Crosshair } from "lucide-react";
+import { Car, Loader2, RefreshCw, X, Footprints } from "lucide-react";
 import {
   useUserLocation,
   distanceKm,
