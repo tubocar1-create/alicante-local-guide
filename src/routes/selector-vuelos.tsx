@@ -258,6 +258,93 @@ function SelectorVuelos() {
           </div>
         </section>
 
+        <section className="shrink-0 rounded-2xl border border-emerald-300/20 bg-gradient-to-br from-emerald-500/[0.08] via-white/[0.03] to-teal-200/[0.05] p-2.5 backdrop-blur-xl">
+          <div className="mb-1.5 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              <Globe className="h-3 w-3 text-emerald-300" />
+              <span className="text-[9px] font-bold uppercase tracking-[0.25em] text-emerald-200/90">
+                eSIM Globely · Conexión global
+              </span>
+            </div>
+            <span className="text-[9px] text-emerald-200/60">Toca una foto →</span>
+          </div>
+          <div className="-mx-2.5 overflow-x-auto px-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex snap-x snap-mandatory gap-2 pb-0.5">
+              {GLOBELY_PHOTOS.map((src, i) => (
+                <a
+                  key={src}
+                  href={GLOBELY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer sponsored"
+                  className="group relative block shrink-0 snap-start overflow-hidden rounded-xl border border-emerald-300/30"
+                  style={{ width: 200, aspectRatio: "16/9" }}
+                >
+                  <img
+                    src={src}
+                    alt={`eSIM Globely · Internet en tu viaje a Alicante (foto ${i + 1})`}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-2">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Globe className="h-3.5 w-3.5 shrink-0 text-emerald-300" />
+                      <span className="text-[11px] font-bold leading-tight text-white">
+                        Conéctate en Alicante con la eSIM global de Globely
+                      </span>
+                    </div>
+                    <ArrowRight className="h-3.5 w-3.5 shrink-0 text-emerald-300 transition-transform duration-300 group-hover:translate-x-0.5" />
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="shrink-0 rounded-2xl border border-violet-300/20 bg-gradient-to-br from-violet-500/[0.08] via-white/[0.03] to-fuchsia-200/[0.05] p-2.5 backdrop-blur-xl">
+          <div className="mb-1.5 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              <Wifi className="h-3 w-3 text-violet-300" />
+              <span className="text-[9px] font-bold uppercase tracking-[0.25em] text-violet-200/90">
+                eSIM Roamic · Datos sin roaming
+              </span>
+            </div>
+            <span className="text-[9px] text-violet-200/60">Toca una foto →</span>
+          </div>
+          <div className="-mx-2.5 overflow-x-auto px-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex snap-x snap-mandatory gap-2 pb-0.5">
+              {ROAMIC_PHOTOS.map((src, i) => (
+                <a
+                  key={src}
+                  href={ROAMIC_URL}
+                  target="_blank"
+                  rel="noopener noreferrer sponsored"
+                  className="group relative block shrink-0 snap-start overflow-hidden rounded-xl border border-violet-300/30"
+                  style={{ width: 200, aspectRatio: "16/9" }}
+                >
+                  <img
+                    src={src}
+                    alt={`eSIM Roamic · Datos al aterrizar en Alicante (foto ${i + 1})`}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-2">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Wifi className="h-3.5 w-3.5 shrink-0 text-violet-300" />
+                      <span className="text-[11px] font-bold leading-tight text-white">
+                        Activa tu eSIM Roamic antes de aterrizar en Alicante
+                      </span>
+                    </div>
+                    <ArrowRight className="h-3.5 w-3.5 shrink-0 text-violet-300 transition-transform duration-300 group-hover:translate-x-0.5" />
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+
+
       </main>
 
     </div>
