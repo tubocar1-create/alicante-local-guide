@@ -767,8 +767,8 @@ export function ChatScreen() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            <ParkingsButton />
             <BusTestButton />
+            <ParkingsButton />
             <WeatherChip />
             {isPreviewHost() && (
               <Link
