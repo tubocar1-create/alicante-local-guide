@@ -81,7 +81,7 @@ function SelectorVuelos() {
         <div className="absolute bottom-0 right-0 h-[24rem] w-[24rem] rounded-full bg-indigo-400/[0.10] blur-3xl" />
       </div>
 
-      <main className="relative mx-auto flex w-full max-w-3xl flex-1 min-h-0 flex-col gap-3 px-3 pb-3 pt-2">
+      <main className="relative mx-auto flex w-full max-w-3xl flex-1 min-h-0 flex-col gap-3 overflow-y-auto px-3 pb-3 pt-2">
         <header className="flex shrink-0 items-center justify-between">
           <Link
             to="/"
