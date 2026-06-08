@@ -130,6 +130,7 @@ import { Route as ApiPublicRefreshAlicantePressRouteImport } from './routes/api/
 import { Route as ApiPublicQrValidateRouteImport } from './routes/api/public/qr-validate'
 import { Route as ApiPublicQrIssueRouteImport } from './routes/api/public/qr-issue'
 import { Route as ApiPublicParkingsProbeRouteImport } from './routes/api/public/parkings-probe'
+import { Route as ApiPublicParkingsDataRouteImport } from './routes/api/public/parkings-data'
 import { Route as ApiPublicContactRouteImport } from './routes/api/public/contact'
 import { Route as ApiPublicBusEtaRouteImport } from './routes/api/public/bus-eta'
 import { Route as ApiPublicBusDatosRouteImport } from './routes/api/public/bus-datos'
@@ -790,6 +791,11 @@ const ApiPublicParkingsProbeRoute = ApiPublicParkingsProbeRouteImport.update({
   path: '/api/public/parkings-probe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicParkingsDataRoute = ApiPublicParkingsDataRouteImport.update({
+  id: '/api/public/parkings-data',
+  path: '/api/public/parkings-data',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicContactRoute = ApiPublicContactRouteImport.update({
   id: '/api/public/contact',
   path: '/api/public/contact',
@@ -1170,6 +1176,7 @@ export interface FileRoutesByFullPath {
   '/api/public/bus-datos': typeof ApiPublicBusDatosRoute
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
   '/api/public/contact': typeof ApiPublicContactRoute
+  '/api/public/parkings-data': typeof ApiPublicParkingsDataRoute
   '/api/public/parkings-probe': typeof ApiPublicParkingsProbeRoute
   '/api/public/qr-issue': typeof ApiPublicQrIssueRoute
   '/api/public/qr-validate': typeof ApiPublicQrValidateRoute
@@ -1339,6 +1346,7 @@ export interface FileRoutesByTo {
   '/api/public/bus-datos': typeof ApiPublicBusDatosRoute
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
   '/api/public/contact': typeof ApiPublicContactRoute
+  '/api/public/parkings-data': typeof ApiPublicParkingsDataRoute
   '/api/public/parkings-probe': typeof ApiPublicParkingsProbeRoute
   '/api/public/qr-issue': typeof ApiPublicQrIssueRoute
   '/api/public/qr-validate': typeof ApiPublicQrValidateRoute
@@ -1512,6 +1520,7 @@ export interface FileRoutesById {
   '/api/public/bus-datos': typeof ApiPublicBusDatosRoute
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
   '/api/public/contact': typeof ApiPublicContactRoute
+  '/api/public/parkings-data': typeof ApiPublicParkingsDataRoute
   '/api/public/parkings-probe': typeof ApiPublicParkingsProbeRoute
   '/api/public/qr-issue': typeof ApiPublicQrIssueRoute
   '/api/public/qr-validate': typeof ApiPublicQrValidateRoute
@@ -1686,6 +1695,7 @@ export interface FileRouteTypes {
     | '/api/public/bus-datos'
     | '/api/public/bus-eta'
     | '/api/public/contact'
+    | '/api/public/parkings-data'
     | '/api/public/parkings-probe'
     | '/api/public/qr-issue'
     | '/api/public/qr-validate'
@@ -1855,6 +1865,7 @@ export interface FileRouteTypes {
     | '/api/public/bus-datos'
     | '/api/public/bus-eta'
     | '/api/public/contact'
+    | '/api/public/parkings-data'
     | '/api/public/parkings-probe'
     | '/api/public/qr-issue'
     | '/api/public/qr-validate'
@@ -2027,6 +2038,7 @@ export interface FileRouteTypes {
     | '/api/public/bus-datos'
     | '/api/public/bus-eta'
     | '/api/public/contact'
+    | '/api/public/parkings-data'
     | '/api/public/parkings-probe'
     | '/api/public/qr-issue'
     | '/api/public/qr-validate'
@@ -2145,6 +2157,7 @@ export interface RootRouteChildren {
   ApiPublicBusDatosRoute: typeof ApiPublicBusDatosRoute
   ApiPublicBusEtaRoute: typeof ApiPublicBusEtaRoute
   ApiPublicContactRoute: typeof ApiPublicContactRoute
+  ApiPublicParkingsDataRoute: typeof ApiPublicParkingsDataRoute
   ApiPublicParkingsProbeRoute: typeof ApiPublicParkingsProbeRoute
   ApiPublicQrIssueRoute: typeof ApiPublicQrIssueRoute
   ApiPublicQrValidateRoute: typeof ApiPublicQrValidateRoute
@@ -3040,6 +3053,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicParkingsProbeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/parkings-data': {
+      id: '/api/public/parkings-data'
+      path: '/api/public/parkings-data'
+      fullPath: '/api/public/parkings-data'
+      preLoaderRoute: typeof ApiPublicParkingsDataRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/contact': {
       id: '/api/public/contact'
       path: '/api/public/contact'
@@ -3686,6 +3706,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicBusDatosRoute: ApiPublicBusDatosRoute,
   ApiPublicBusEtaRoute: ApiPublicBusEtaRoute,
   ApiPublicContactRoute: ApiPublicContactRoute,
+  ApiPublicParkingsDataRoute: ApiPublicParkingsDataRoute,
   ApiPublicParkingsProbeRoute: ApiPublicParkingsProbeRoute,
   ApiPublicQrIssueRoute: ApiPublicQrIssueRoute,
   ApiPublicQrValidateRoute: ApiPublicQrValidateRoute,
