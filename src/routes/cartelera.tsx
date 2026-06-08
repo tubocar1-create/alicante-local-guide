@@ -145,10 +145,10 @@ function Board() {
 
   const llegadas = data.llegadas;
 
-  const updatedAgo = Math.max(
-    0,
-    Math.round((Date.now() - new Date(data.generatedAt).getTime()) / 1000),
-  );
+  const updatedAgo = mounted
+    ? Math.max(0, Math.round((Date.now() - new Date(data.generatedAt).getTime()) / 1000))
+    : null;
+
 
   return (
     <div className="mx-auto max-w-3xl px-3 pb-2 pt-2 flex flex-col gap-2 h-[100dvh]">
