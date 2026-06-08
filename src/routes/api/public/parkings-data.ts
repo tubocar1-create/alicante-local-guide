@@ -172,7 +172,7 @@ export const Route = createFileRoute("/api/public/parkings-data")({
               Referer: "https://movilidad.alicante.es/",
               "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
             },
-            signal: AbortSignal.timeout(8000),
+            signal: AbortSignal.timeout(20000),
           });
           if (!r.ok) {
             return Response.json({ ok: false, error: `HTTP ${r.status}`, rows: [] }, { status: 200 });
