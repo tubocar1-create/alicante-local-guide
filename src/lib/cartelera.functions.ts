@@ -83,13 +83,26 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
         Accept:
           "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
+        "Cache-Control": "no-cache",
+        Pragma: "no-cache",
       },
+      cache: "no-store",
     });
     const setCookies = (r1.headers as any).getSetCookie
       ? (r1.headers as any).getSetCookie()
       : [r1.headers.get("set-cookie")].filter(Boolean);
-    const cookieHeader = (setCookies as string[]).map((c) => c.split(";")[0]).join("; ");
+    const cookieHeader = (setCookies as string[])
+      .map((c) => c.split(";")[0].trim())
+      .filter(Boolean)
+      .join("; ");
+    if (!cookieHeader) {
+      console.warn("[cartelera] ADIF sin Set-Cookie en GET inicial", {
+        status: r1.status,
+        keys: [...r1.headers.keys()],
+      });
+    }
     const html = await r1.text();
+
     const mAuth = html.match(/p_p_auth=([A-Za-z0-9]+)/);
     if (!mAuth) {
       console.error("[cartelera] ADIF no p_p_auth", {
