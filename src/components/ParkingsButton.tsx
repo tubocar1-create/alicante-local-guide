@@ -356,10 +356,9 @@ export function ParkingsButton() {
       <button
         onClick={openAndLoad}
         aria-label="Parkings de Alicante"
-        className="flex h-9 items-center gap-1.5 rounded-full bg-white/70 px-2.5 ring-1 ring-border/60 active:scale-95 transition lg:h-10 lg:px-3"
+        className="flex h-9 w-9 items-center justify-center rounded-md active:scale-95 transition lg:h-10 lg:w-10"
       >
-        <Car className="h-4 w-4 text-[oklch(0.55_0.18_255)] lg:h-5 lg:w-5" />
-        <span className="text-[12px] font-bold leading-tight text-foreground lg:text-[14px]">P</span>
+        <ParkingSign className="h-8 w-8 lg:h-9 lg:w-9 drop-shadow-sm" />
       </button>
 
       {open && (
@@ -375,13 +374,18 @@ export function ParkingsButton() {
             <header className="relative flex items-center justify-center px-4 pt-3 pb-2 shrink-0">
               <div className="text-center">
                 <div className="flex items-center justify-center gap-1.5">
-                  <Car className="h-4 w-4 text-white" />
+                  <ParkingSign className="h-4 w-4" />
                   <h2 className="text-[15px] font-extrabold tracking-tight">Parkings Alicante</h2>
                 </div>
                 <p className="mt-0.5 flex items-center justify-center gap-1.5 text-[10px] text-slate-400">
                   <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_currentColor]" />
                   En tiempo real
-                  {secondsAgo != null && <span>· hace {secondsAgo}s</span>}
+                  {secondsAgo != null && (
+                    <span className="flex items-center gap-0.5">
+                      <Clock className="h-2.5 w-2.5" />
+                      hace {secondsAgo}s
+                    </span>
+                  )}
                 </p>
               </div>
               <div className="absolute right-2 top-2 flex items-center gap-0.5">
