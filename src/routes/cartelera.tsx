@@ -91,8 +91,11 @@ function Board() {
   const fetchFn = useServerFn(getCartelera);
   const { data } = useSuspenseQuery(carteleraOpts(() => fetchFn({}) as Promise<CarteleraResponse>));
   const [filter, setFilter] = useState<string>("TODAS");
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const todayLabel = useMemo(() => {
+    if (!mounted) return "";
     const d = new Date();
     return d.toLocaleDateString("es-ES", {
       weekday: "long",
@@ -100,7 +103,8 @@ function Board() {
       month: "long",
       year: "numeric",
     });
-  }, []);
+  }, [mounted]);
+
 
   const all = useMemo(() => [...data.salidas, ...data.llegadas], [data]);
 
@@ -141,10 +145,10 @@ function Board() {
 
   const llegadas = data.llegadas;
 
-  const updatedAgo = Math.max(
-    0,
-    Math.round((Date.now() - new Date(data.generatedAt).getTime()) / 1000),
-  );
+  const updatedAgo = mounted
+    ? Math.max(0, Math.round((Date.now() - new Date(data.generatedAt).getTime()) / 1000))
+    : null;
+
 
   return (
     <div className="mx-auto max-w-3xl px-3 pb-2 pt-2 flex flex-col gap-2 h-[100dvh]">
@@ -157,10 +161,11 @@ function Board() {
           <ArrowLeft className="h-3.5 w-3.5" />
           Trenes
         </Link>
-        <div className="text-right text-[10px] text-slate-500">
-          Actualizado hace {updatedAgo}s
+        <div className="text-right text-[10px] text-slate-500" suppressHydrationWarning>
+          {updatedAgo !== null ? <>Actualizado hace {updatedAgo}s</> : <>Actualizando…</>}
           <RefreshCw className="inline h-3 w-3 ml-1" />
         </div>
+
       </header>
 
       {/* Salidas ADIF */}
@@ -257,11 +262,12 @@ function HeaderClock() {
   }, []);
   const hh = now.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   return (
-    <div className="flex items-center gap-1.5 rounded-md bg-slate-900 px-2 py-1 text-[11px] font-bold tabular-nums text-white">
+    <div className="flex items-center gap-1.5 rounded-md bg-slate-900 px-2 py-1 text-[11px] font-bold tabular-nums text-white" suppressHydrationWarning>
       <Clock className="h-3 w-3" />
       {hh}
     </div>
   );
+
 }
 
 function useNowHHMM() {
