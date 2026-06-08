@@ -70,7 +70,7 @@ function norm(item: any, dir: "SALIDA" | "LLEGADA", tt: string): CarteleraTrain 
 }
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
-const CACHE_VERSION = 5;
+const CACHE_VERSION = 6;
 let _cache: { at: number; v: number; data: CarteleraResponse } | null = null;
 let _inflight: Promise<CarteleraResponse | null> | null = null;
 
@@ -83,13 +83,26 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
         Accept:
           "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
+        "Cache-Control": "no-cache",
+        Pragma: "no-cache",
       },
+      cache: "no-store",
     });
     const setCookies = (r1.headers as any).getSetCookie
       ? (r1.headers as any).getSetCookie()
       : [r1.headers.get("set-cookie")].filter(Boolean);
-    const cookieHeader = (setCookies as string[]).map((c) => c.split(";")[0]).join("; ");
+    const cookieHeader = (setCookies as string[])
+      .map((c) => c.split(";")[0].trim())
+      .filter(Boolean)
+      .join("; ");
+    if (!cookieHeader) {
+      console.warn("[cartelera] ADIF sin Set-Cookie en GET inicial", {
+        status: r1.status,
+        keys: [...r1.headers.keys()],
+      });
+    }
     const html = await r1.text();
+
     const mAuth = html.match(/p_p_auth=([A-Za-z0-9]+)/);
     if (!mAuth) {
       console.error("[cartelera] ADIF no p_p_auth", {
@@ -125,9 +138,12 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
           Origin: "https://www.adif.es",
           Referer: BASE,
           Cookie: cookieHeader,
+          "Cache-Control": "no-cache",
         },
         body,
+        cache: "no-store",
       });
+
       const text = await r.text();
       if (!r.ok) {
         console.warn("[cartelera] ADIF HTTP", {
@@ -139,12 +155,21 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
       try {
         const j = JSON.parse(text);
         const n = Array.isArray(j.horarios) ? j.horarios.length : -1;
+        if (j && j.error === true) {
+          console.warn("[cartelera] ADIF error:true", {
+            searchType, trafficType, numPage, cookieLen: cookieHeader.length,
+            snippet: text.slice(0, 200),
+          });
+          throw new Error("ADIF error:true");
+        }
         console.log("[cartelera] ADIF", {
           searchType, trafficType, numPage, status: r.status, n,
           snippet: text.slice(0, 200),
         });
         return j;
-      } catch {
+      } catch (err) {
+        if (err instanceof Error && err.message === "ADIF error:true") throw err;
+
         console.warn("[cartelera] ADIF no-JSON", {
           searchType, trafficType, numPage, status: r.status,
           snippet: text.slice(0, 200),
