@@ -128,6 +128,7 @@ import { Route as ApiPublicRefreshIncidenciasRouteImport } from './routes/api/pu
 import { Route as ApiPublicRefreshAlicantePressRouteImport } from './routes/api/public/refresh-alicante-press'
 import { Route as ApiPublicQrValidateRouteImport } from './routes/api/public/qr-validate'
 import { Route as ApiPublicQrIssueRouteImport } from './routes/api/public/qr-issue'
+import { Route as ApiPublicParkingsProbeRouteImport } from './routes/api/public/parkings-probe'
 import { Route as ApiPublicContactRouteImport } from './routes/api/public/contact'
 import { Route as ApiPublicBusEtaRouteImport } from './routes/api/public/bus-eta'
 import { Route as ApiPublicBusDatosRouteImport } from './routes/api/public/bus-datos'
@@ -778,6 +779,11 @@ const ApiPublicQrIssueRoute = ApiPublicQrIssueRouteImport.update({
   path: '/api/public/qr-issue',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicParkingsProbeRoute = ApiPublicParkingsProbeRouteImport.update({
+  id: '/api/public/parkings-probe',
+  path: '/api/public/parkings-probe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicContactRoute = ApiPublicContactRouteImport.update({
   id: '/api/public/contact',
   path: '/api/public/contact',
@@ -1157,6 +1163,7 @@ export interface FileRoutesByFullPath {
   '/api/public/bus-datos': typeof ApiPublicBusDatosRoute
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
   '/api/public/contact': typeof ApiPublicContactRoute
+  '/api/public/parkings-probe': typeof ApiPublicParkingsProbeRoute
   '/api/public/qr-issue': typeof ApiPublicQrIssueRoute
   '/api/public/qr-validate': typeof ApiPublicQrValidateRoute
   '/api/public/refresh-alicante-press': typeof ApiPublicRefreshAlicantePressRoute
@@ -1324,6 +1331,7 @@ export interface FileRoutesByTo {
   '/api/public/bus-datos': typeof ApiPublicBusDatosRoute
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
   '/api/public/contact': typeof ApiPublicContactRoute
+  '/api/public/parkings-probe': typeof ApiPublicParkingsProbeRoute
   '/api/public/qr-issue': typeof ApiPublicQrIssueRoute
   '/api/public/qr-validate': typeof ApiPublicQrValidateRoute
   '/api/public/refresh-alicante-press': typeof ApiPublicRefreshAlicantePressRoute
@@ -1495,6 +1503,7 @@ export interface FileRoutesById {
   '/api/public/bus-datos': typeof ApiPublicBusDatosRoute
   '/api/public/bus-eta': typeof ApiPublicBusEtaRoute
   '/api/public/contact': typeof ApiPublicContactRoute
+  '/api/public/parkings-probe': typeof ApiPublicParkingsProbeRoute
   '/api/public/qr-issue': typeof ApiPublicQrIssueRoute
   '/api/public/qr-validate': typeof ApiPublicQrValidateRoute
   '/api/public/refresh-alicante-press': typeof ApiPublicRefreshAlicantePressRoute
@@ -1667,6 +1676,7 @@ export interface FileRouteTypes {
     | '/api/public/bus-datos'
     | '/api/public/bus-eta'
     | '/api/public/contact'
+    | '/api/public/parkings-probe'
     | '/api/public/qr-issue'
     | '/api/public/qr-validate'
     | '/api/public/refresh-alicante-press'
@@ -1834,6 +1844,7 @@ export interface FileRouteTypes {
     | '/api/public/bus-datos'
     | '/api/public/bus-eta'
     | '/api/public/contact'
+    | '/api/public/parkings-probe'
     | '/api/public/qr-issue'
     | '/api/public/qr-validate'
     | '/api/public/refresh-alicante-press'
@@ -2004,6 +2015,7 @@ export interface FileRouteTypes {
     | '/api/public/bus-datos'
     | '/api/public/bus-eta'
     | '/api/public/contact'
+    | '/api/public/parkings-probe'
     | '/api/public/qr-issue'
     | '/api/public/qr-validate'
     | '/api/public/refresh-alicante-press'
@@ -2120,6 +2132,7 @@ export interface RootRouteChildren {
   ApiPublicBusDatosRoute: typeof ApiPublicBusDatosRoute
   ApiPublicBusEtaRoute: typeof ApiPublicBusEtaRoute
   ApiPublicContactRoute: typeof ApiPublicContactRoute
+  ApiPublicParkingsProbeRoute: typeof ApiPublicParkingsProbeRoute
   ApiPublicQrIssueRoute: typeof ApiPublicQrIssueRoute
   ApiPublicQrValidateRoute: typeof ApiPublicQrValidateRoute
   ApiPublicRefreshAlicantePressRoute: typeof ApiPublicRefreshAlicantePressRoute
@@ -3000,6 +3013,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicQrIssueRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/parkings-probe': {
+      id: '/api/public/parkings-probe'
+      path: '/api/public/parkings-probe'
+      fullPath: '/api/public/parkings-probe'
+      preLoaderRoute: typeof ApiPublicParkingsProbeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/contact': {
       id: '/api/public/contact'
       path: '/api/public/contact'
@@ -3645,6 +3665,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicBusDatosRoute: ApiPublicBusDatosRoute,
   ApiPublicBusEtaRoute: ApiPublicBusEtaRoute,
   ApiPublicContactRoute: ApiPublicContactRoute,
+  ApiPublicParkingsProbeRoute: ApiPublicParkingsProbeRoute,
   ApiPublicQrIssueRoute: ApiPublicQrIssueRoute,
   ApiPublicQrValidateRoute: ApiPublicQrValidateRoute,
   ApiPublicRefreshAlicantePressRoute: ApiPublicRefreshAlicantePressRoute,
@@ -3695,13 +3716,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
