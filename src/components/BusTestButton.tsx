@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Bus, Loader2, RefreshCw, X, Search } from "lucide-react";
 
-const PAGE_URL = "https://movilidad.alicante.es/paradas-de-bus";
+const DEFAULT_PAGE_URL = "https://movilidad.alicante.es/paradas-de-bus?page=32";
 
 type Probe = {
   url: string;
@@ -115,26 +115,28 @@ export function BusTestButton() {
   const [candidates, setCandidates] = useState<string[] | null>(null);
   const [probes, setProbes] = useState<Probe[]>([]);
   const [customUrl, setCustomUrl] = useState<string>("");
+  const [discoverUrl, setDiscoverUrl] = useState<string>(DEFAULT_PAGE_URL);
 
   async function discover() {
+    const baseUrl = discoverUrl.trim() || DEFAULT_PAGE_URL;
     setLoading(true);
     setError(null);
     setProbes([]);
     setCandidates(null);
     setPageMeta(null);
     try {
-      setStage("Descargando /paradas-de-bus…");
+      setStage(`Descargando ${baseUrl}…`);
       const t0 = performance.now();
-      const res = await fetch(PAGE_URL, { cache: "no-store" });
+      const res = await fetch(baseUrl, { cache: "no-store" });
       const html = await res.text();
       const ms = Math.round(performance.now() - t0);
       setPageMeta({ ms, bytes: new Blob([html]).size, status: res.status });
 
       setStage("Extrayendo endpoints del HTML…");
-      const fromHtml = extractCandidateUrls(html, PAGE_URL);
+      const fromHtml = extractCandidateUrls(html, baseUrl);
 
       setStage("Descargando scripts de la página…");
-      const scriptSrcs = extractScriptSrcs(html, PAGE_URL).slice(0, 8);
+      const scriptSrcs = extractScriptSrcs(html, baseUrl).slice(0, 8);
       const fromScripts = new Set<string>();
       for (const src of scriptSrcs) {
         try {
@@ -145,8 +147,7 @@ export function BusTestButton() {
       }
 
       const all = new Set<string>([...fromHtml, ...fromScripts, ...GUESS_ENDPOINTS]);
-      // descartar la propia página
-      all.delete(PAGE_URL);
+      all.delete(baseUrl);
       const urls = [...all].slice(0, 40);
       setCandidates(urls);
 
@@ -162,7 +163,6 @@ export function BusTestButton() {
         results.push(p);
         setProbes([...results]);
       }
-      // ordena: JSON ok arriba, luego 2xx, luego resto
       results.sort((a, b) => {
         const sa = (a.isJson ? 0 : a.ok ? 1 : 2);
         const sb = (b.isJson ? 0 : b.ok ? 1 : 2);
@@ -192,6 +192,7 @@ export function BusTestButton() {
     setOpen(true);
     void discover();
   }
+
 
   return (
     <>
