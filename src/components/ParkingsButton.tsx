@@ -486,7 +486,6 @@ export function ParkingsButton() {
                         </a>
                       </li>
                     );
-                    );
                   })}
                 </ul>
               )}
