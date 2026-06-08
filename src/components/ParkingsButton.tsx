@@ -349,7 +349,26 @@ export function ParkingsButton() {
       .slice(0, 6);
   }, [enriched]);
 
-  const secondsAgo = updatedAt ? Math.max(0, Math.round((Date.now() - updatedAt) / 1000)) : null;
+  // Live wall clock
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    if (!open) return;
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, [open]);
+  const clockText = now.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+
+  // Status counts
+  const counts = useMemo(() => {
+    const c = { total: 0, green: 0, yellow: 0, red: 0 };
+    (displayed ?? []).forEach((r) => {
+      c.total++;
+      if (r.status === "green") c.green++;
+      else if (r.status === "yellow") c.yellow++;
+      else if (r.status === "red") c.red++;
+    });
+    return c;
+  }, [displayed]);
 
   return (
     <>
