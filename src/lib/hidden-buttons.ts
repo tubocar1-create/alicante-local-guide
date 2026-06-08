@@ -62,5 +62,12 @@ export const HIDDEN_BUTTONS: HiddenButton[] = [
     file: "src/routes/perfil.tsx",
     reason: "Sistema de QR en fase de validación, pendiente de lanzamiento.",
   },
+  {
+    id: "transporte-buses-test",
+    label: "Buses (test)",
+    location: "Pantalla principal · cabecera",
+    file: "src/components/ChatScreen.tsx",
+    reason: "Botón de descubrimiento/debug de endpoints de buses, solo visible en preview.",
+  },
 
 ];
