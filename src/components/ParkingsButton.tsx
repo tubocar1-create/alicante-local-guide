@@ -380,12 +380,10 @@ export function ParkingsButton() {
                 <p className="mt-0.5 flex items-center justify-center gap-1.5 text-[10px] text-slate-400">
                   <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_currentColor]" />
                   En tiempo real
-                  {secondsAgo != null && (
-                    <span className="flex items-center gap-0.5">
-                      <Clock className="h-2.5 w-2.5" />
-                      hace {secondsAgo}s
-                    </span>
-                  )}
+                  <span className="ml-0.5 flex items-center gap-0.5 rounded-full bg-emerald-400/10 px-1.5 py-0.5 text-emerald-300 ring-1 ring-emerald-400/20">
+                    <Clock className="h-3 w-3" />
+                    {secondsAgo != null ? `hace ${secondsAgo}s` : "ahora"}
+                  </span>
                 </p>
               </div>
               <div className="absolute right-2 top-2 flex items-center gap-0.5">
@@ -434,7 +432,7 @@ export function ParkingsButton() {
                           target="_blank"
                           rel="noopener noreferrer"
                           aria-label={href ? `Cómo llegar en coche a ${r.name}` : r.name}
-                          className="flex items-center gap-2.5 rounded-xl bg-[#111a2e] px-2.5 py-2 ring-1 ring-white/5 hover:bg-[#162041] hover:ring-sky-400/30 active:scale-[0.99] transition"
+                          className="flex items-center gap-2 rounded-xl bg-[#111a2e] px-2 py-1.5 ring-1 ring-white/5 hover:bg-[#162041] hover:ring-sky-400/30 active:scale-[0.99] transition"
                         >
                           {/* P badge */}
                           <div
@@ -450,9 +448,9 @@ export function ParkingsButton() {
                             </p>
                             <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[10px] text-slate-400">
                               <span
-                                className={`rounded px-1 py-[1px] text-[8.5px] font-extrabold tracking-wide ${s.pillBg} ${s.pillText}`}
+                                className={`rounded px-1.5 py-[1px] text-[10px] font-extrabold ${s.pillBg} ${s.pillText}`}
                               >
-                                {r.occupancyPct != null ? `${r.occupancyPct}% ocupado` : s.label}
+                                {r.occupancyPct != null ? `${r.occupancyPct}% OCUPADO` : s.label}
                               </span>
                               {r.walkMin != null && (
                                 <span className="flex items-center gap-0.5">
@@ -474,15 +472,16 @@ export function ParkingsButton() {
                           </div>
 
                           {/* Big number */}
-                          <div className="flex shrink-0 flex-col items-end leading-none">
-                            <span className={`font-mono text-[20px] font-extrabold ${s.num}`}>
+                          <div className="flex w-[54px] shrink-0 flex-col items-end leading-none">
+                            <span className={`font-mono text-[18px] font-extrabold ${s.num}`}>
                               {r.free != null ? r.free : "—"}
                             </span>
                             <span className="text-[9px] text-slate-400">libres</span>
+                            <span className={`mt-1 rounded px-1.5 py-0.5 font-mono text-[12px] font-black ${s.pillBg} ${s.pillText}`}>
+                              {r.occupancyPct != null ? `${r.occupancyPct}%` : "—"}
+                            </span>
+                            <span className="mt-0.5 text-[8px] uppercase text-slate-500">ocup.</span>
                           </div>
-
-                          {/* Donut — % ocupación */}
-                          <Donut pct={r.occupancyPct} status={r.status} />
                         </a>
                       </li>
                     );
