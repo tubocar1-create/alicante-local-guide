@@ -295,7 +295,7 @@ function TrenesIndex() {
                   <div className="grid grid-rows-3 gap-2">
                     {[
                       { code: "MAD-CHA", label: "Madrid" },
-                      { code: "MED-VLCJ", label: "Valencia" },
+                      { code: "MED-VLCN", label: "Valencia" },
                       { code: "MED-BCN", label: "Barcelona" },
                     ].map((d) => (
                       <Link
