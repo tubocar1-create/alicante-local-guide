@@ -765,6 +765,7 @@ export function ChatScreen() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            <ParkingsButton />
             <WeatherChip />
             {isPreviewHost() && (
               <Link
@@ -776,6 +777,7 @@ export function ChatScreen() {
               </Link>
             )}
           </div>
+
         </header>
       ) : (
         <header className="relative flex items-center justify-between gap-1.5 border-b border-border/60 bg-background/40 px-4 py-3 backdrop-blur">
