@@ -130,12 +130,28 @@ export function BusTestButton() {
       const ms = Math.round(performance.now() - t0);
       setPageMeta({ ms, bytes: new Blob([html]).size, status: res.status });
 
-      setStage("Buscando endpoints candidatos…");
-      const urls = extractCandidateUrls(html).slice(0, 25);
+      setStage("Extrayendo endpoints del HTML…");
+      const fromHtml = extractCandidateUrls(html, PAGE_URL);
+
+      setStage("Descargando scripts de la página…");
+      const scriptSrcs = extractScriptSrcs(html, PAGE_URL).slice(0, 8);
+      const fromScripts = new Set<string>();
+      for (const src of scriptSrcs) {
+        try {
+          const r = await fetch(src, { cache: "no-store" });
+          const t = await r.text();
+          for (const u of extractCandidateUrls(t, src)) fromScripts.add(u);
+        } catch {}
+      }
+
+      const all = new Set<string>([...fromHtml, ...fromScripts, ...GUESS_ENDPOINTS]);
+      // descartar la propia página
+      all.delete(PAGE_URL);
+      const urls = [...all].slice(0, 40);
       setCandidates(urls);
 
       if (urls.length === 0) {
-        setStage("Sin candidatos encontrados en el HTML.");
+        setStage("Sin candidatos.");
         return;
       }
 
@@ -146,7 +162,15 @@ export function BusTestButton() {
         results.push(p);
         setProbes([...results]);
       }
-      setStage("Listo.");
+      // ordena: JSON ok arriba, luego 2xx, luego resto
+      results.sort((a, b) => {
+        const sa = (a.isJson ? 0 : a.ok ? 1 : 2);
+        const sb = (b.isJson ? 0 : b.ok ? 1 : 2);
+        return sa - sb;
+      });
+      setProbes([...results]);
+      setStage(`Listo. ${results.filter((r) => r.isJson).length} JSON · ${results.filter((r) => r.ok).length} OK.`);
+
     } catch (e: any) {
       setError(e?.message ?? "Error desconocido");
     } finally {
