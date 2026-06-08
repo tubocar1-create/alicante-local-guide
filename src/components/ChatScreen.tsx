@@ -48,6 +48,7 @@ import tomarCocktailIcon from "@/assets/tomar-cocktail.png";
 import asistenteIcon from "@/assets/asistente-icon.png";
 import { VamosWord } from "@/components/VamosWord";
 import { ParkingsButton } from "@/components/ParkingsButton";
+import { BusTestButton } from "@/components/BusTestButton";
 import { hablar, speakGreetingFromUserGesture } from "@/components/AgenteVamos";
 import { FavoriteStopWidget } from "@/components/FavoriteStopWidget";
 import { getClientStopRealtime } from "@/lib/bus-realtime-client";
@@ -767,6 +768,7 @@ export function ChatScreen() {
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <ParkingsButton />
+            <BusTestButton />
             <WeatherChip />
             {isPreviewHost() && (
               <Link
