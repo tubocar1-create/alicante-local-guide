@@ -205,7 +205,19 @@ async function fetchCartelera(): Promise<CarteleraResponse> {
       const out: { n: CarteleraTrain; r: CarteleraRaw }[] = [];
       const seen = new Set<string>();
       for (let p = 0; p < 8; p++) {
-        const j = await call(s, t, p);
+        let j: any;
+        try {
+          j = await call(s, t, p);
+        } catch (e) {
+          // Si falla la página 0 propagamos para que se contabilice como op fallida.
+          // En páginas siguientes, ADIF a veces devuelve {"error":true} aunque
+          // las páginas previas hayan sido válidas: conservar lo acumulado.
+          if (p === 0) throw e;
+          console.warn("[cartelera] ADIF página fallida, conservando previas", {
+            searchType: s, trafficType: t, numPage: p, error: String(e),
+          });
+          break;
+        }
         if (!j.horarios || !j.horarios.length) break;
         let added = 0;
         for (const it of j.horarios) {
