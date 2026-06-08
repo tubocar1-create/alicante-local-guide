@@ -47,6 +47,7 @@ import comprarTaconesIcon from "@/assets/comprar-tacones.png";
 import tomarCocktailIcon from "@/assets/tomar-cocktail.png";
 import asistenteIcon from "@/assets/asistente-icon.png";
 import { VamosWord } from "@/components/VamosWord";
+import { ParkingsButton } from "@/components/ParkingsButton";
 import { hablar, speakGreetingFromUserGesture } from "@/components/AgenteVamos";
 import { FavoriteStopWidget } from "@/components/FavoriteStopWidget";
 import { getClientStopRealtime } from "@/lib/bus-realtime-client";
@@ -765,6 +766,7 @@ export function ChatScreen() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            <ParkingsButton />
             <WeatherChip />
             {isPreviewHost() && (
               <Link
@@ -776,6 +778,7 @@ export function ChatScreen() {
               </Link>
             )}
           </div>
+
         </header>
       ) : (
         <header className="relative flex items-center justify-between gap-1.5 border-b border-border/60 bg-background/40 px-4 py-3 backdrop-blur">
