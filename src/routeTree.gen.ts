@@ -53,6 +53,7 @@ import { Route as TramMapaRouteImport } from './routes/tram.mapa'
 import { Route as TramFavoritosRouteImport } from './routes/tram.favoritos'
 import { Route as TramEstacionesRouteImport } from './routes/tram.estaciones'
 import { Route as ThreadsIdRouteImport } from './routes/threads.$id'
+import { Route as TestParkingsRouteImport } from './routes/test.parkings'
 import { Route as SelectordecomidasComidaRapidaRouteImport } from './routes/selectordecomidas_.comida-rapida'
 import { Route as SaludCategoriaRouteImport } from './routes/salud_.$categoria'
 import { Route as RestaurantsPlaceIdRouteImport } from './routes/restaurants.$placeId'
@@ -399,6 +400,11 @@ const ThreadsIdRoute = ThreadsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => ThreadsRoute,
+} as any)
+const TestParkingsRoute = TestParkingsRouteImport.update({
+  id: '/test/parkings',
+  path: '/test/parkings',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const SelectordecomidasComidaRapidaRoute =
   SelectordecomidasComidaRapidaRouteImport.update({
@@ -1131,6 +1137,7 @@ export interface FileRoutesByFullPath {
   '/restaurants/$placeId': typeof RestaurantsPlaceIdRoute
   '/salud/$categoria': typeof SaludCategoriaRouteWithChildren
   '/selectordecomidas/comida-rapida': typeof SelectordecomidasComidaRapidaRoute
+  '/test/parkings': typeof TestParkingsRoute
   '/threads/$id': typeof ThreadsIdRoute
   '/tram/estaciones': typeof TramEstacionesRoute
   '/tram/favoritos': typeof TramFavoritosRoute
@@ -1299,6 +1306,7 @@ export interface FileRoutesByTo {
   '/restaurants/$placeId': typeof RestaurantsPlaceIdRoute
   '/salud/$categoria': typeof SaludCategoriaRouteWithChildren
   '/selectordecomidas/comida-rapida': typeof SelectordecomidasComidaRapidaRoute
+  '/test/parkings': typeof TestParkingsRoute
   '/threads/$id': typeof ThreadsIdRoute
   '/tram/estaciones': typeof TramEstacionesRoute
   '/tram/favoritos': typeof TramFavoritosRoute
@@ -1471,6 +1479,7 @@ export interface FileRoutesById {
   '/restaurants/$placeId': typeof RestaurantsPlaceIdRoute
   '/salud_/$categoria': typeof SaludCategoriaRouteWithChildren
   '/selectordecomidas_/comida-rapida': typeof SelectordecomidasComidaRapidaRoute
+  '/test/parkings': typeof TestParkingsRoute
   '/threads/$id': typeof ThreadsIdRoute
   '/tram/estaciones': typeof TramEstacionesRoute
   '/tram/favoritos': typeof TramFavoritosRoute
@@ -1644,6 +1653,7 @@ export interface FileRouteTypes {
     | '/restaurants/$placeId'
     | '/salud/$categoria'
     | '/selectordecomidas/comida-rapida'
+    | '/test/parkings'
     | '/threads/$id'
     | '/tram/estaciones'
     | '/tram/favoritos'
@@ -1812,6 +1822,7 @@ export interface FileRouteTypes {
     | '/restaurants/$placeId'
     | '/salud/$categoria'
     | '/selectordecomidas/comida-rapida'
+    | '/test/parkings'
     | '/threads/$id'
     | '/tram/estaciones'
     | '/tram/favoritos'
@@ -1983,6 +1994,7 @@ export interface FileRouteTypes {
     | '/restaurants/$placeId'
     | '/salud_/$categoria'
     | '/selectordecomidas_/comida-rapida'
+    | '/test/parkings'
     | '/threads/$id'
     | '/tram/estaciones'
     | '/tram/favoritos'
@@ -2122,6 +2134,7 @@ export interface RootRouteChildren {
   OcioTeatrosRoute: typeof OcioTeatrosRoute
   SaludCategoriaRoute: typeof SaludCategoriaRouteWithChildren
   SelectordecomidasComidaRapidaRoute: typeof SelectordecomidasComidaRapidaRoute
+  TestParkingsRoute: typeof TestParkingsRoute
   TransporteParadaFavoritaRoute: typeof TransporteParadaFavoritaRoute
   TrenesCodeRoute: typeof TrenesCodeRoute
   VuelosIataRoute: typeof VuelosIataRoute
@@ -2487,6 +2500,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/threads/$id'
       preLoaderRoute: typeof ThreadsIdRouteImport
       parentRoute: typeof ThreadsRoute
+    }
+    '/test/parkings': {
+      id: '/test/parkings'
+      path: '/test/parkings'
+      fullPath: '/test/parkings'
+      preLoaderRoute: typeof TestParkingsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/selectordecomidas_/comida-rapida': {
       id: '/selectordecomidas_/comida-rapida'
@@ -3655,6 +3675,7 @@ const rootRouteChildren: RootRouteChildren = {
   OcioTeatrosRoute: OcioTeatrosRoute,
   SaludCategoriaRoute: SaludCategoriaRouteWithChildren,
   SelectordecomidasComidaRapidaRoute: SelectordecomidasComidaRapidaRoute,
+  TestParkingsRoute: TestParkingsRoute,
   TransporteParadaFavoritaRoute: TransporteParadaFavoritaRoute,
   TrenesCodeRoute: TrenesCodeRoute,
   VuelosIataRoute: VuelosIataRoute,
@@ -3716,13 +3737,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
