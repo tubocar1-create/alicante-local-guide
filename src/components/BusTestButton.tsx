@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Bus, Loader2, RefreshCw, X, Search } from "lucide-react";
 
-const PAGE_URL = "https://movilidad.alicante.es/paradas-de-bus";
+const DEFAULT_PAGE_URL = "https://movilidad.alicante.es/paradas-de-bus?page=32";
 
 type Probe = {
   url: string;
@@ -115,26 +115,28 @@ export function BusTestButton() {
   const [candidates, setCandidates] = useState<string[] | null>(null);
   const [probes, setProbes] = useState<Probe[]>([]);
   const [customUrl, setCustomUrl] = useState<string>("");
+  const [discoverUrl, setDiscoverUrl] = useState<string>(DEFAULT_PAGE_URL);
 
   async function discover() {
+    const baseUrl = discoverUrl.trim() || DEFAULT_PAGE_URL;
     setLoading(true);
     setError(null);
     setProbes([]);
     setCandidates(null);
     setPageMeta(null);
     try {
-      setStage("Descargando /paradas-de-bus…");
+      setStage(`Descargando ${baseUrl}…`);
       const t0 = performance.now();
-      const res = await fetch(PAGE_URL, { cache: "no-store" });
+      const res = await fetch(baseUrl, { cache: "no-store" });
       const html = await res.text();
       const ms = Math.round(performance.now() - t0);
       setPageMeta({ ms, bytes: new Blob([html]).size, status: res.status });
 
       setStage("Extrayendo endpoints del HTML…");
-      const fromHtml = extractCandidateUrls(html, PAGE_URL);
+      const fromHtml = extractCandidateUrls(html, baseUrl);
 
       setStage("Descargando scripts de la página…");
-      const scriptSrcs = extractScriptSrcs(html, PAGE_URL).slice(0, 8);
+      const scriptSrcs = extractScriptSrcs(html, baseUrl).slice(0, 8);
       const fromScripts = new Set<string>();
       for (const src of scriptSrcs) {
         try {
@@ -145,8 +147,7 @@ export function BusTestButton() {
       }
 
       const all = new Set<string>([...fromHtml, ...fromScripts, ...GUESS_ENDPOINTS]);
-      // descartar la propia página
-      all.delete(PAGE_URL);
+      all.delete(baseUrl);
       const urls = [...all].slice(0, 40);
       setCandidates(urls);
 
@@ -162,7 +163,6 @@ export function BusTestButton() {
         results.push(p);
         setProbes([...results]);
       }
-      // ordena: JSON ok arriba, luego 2xx, luego resto
       results.sort((a, b) => {
         const sa = (a.isJson ? 0 : a.ok ? 1 : 2);
         const sb = (b.isJson ? 0 : b.ok ? 1 : 2);
@@ -192,6 +192,7 @@ export function BusTestButton() {
     setOpen(true);
     void discover();
   }
+
 
   return (
     <>
@@ -232,9 +233,25 @@ export function BusTestButton() {
             </header>
 
             <div className="overflow-y-auto px-4 py-3" style={{ maxHeight: "calc(90vh - 56px)" }}>
-              <p className="mb-2 text-[11px] text-muted-foreground">
-                Descarga <code className="font-mono">{PAGE_URL}</code>, extrae URLs candidatas y prueba cada una desde tu navegador.
-              </p>
+              <div className="mb-2 rounded-lg border border-border/60 p-2">
+                <label className="text-[10px] font-bold text-muted-foreground">URL de descubrimiento</label>
+                <div className="mt-1 flex items-center gap-1">
+                  <input
+                    value={discoverUrl}
+                    onChange={(e) => setDiscoverUrl(e.target.value)}
+                    placeholder={DEFAULT_PAGE_URL}
+                    className="min-w-0 flex-1 rounded border border-border bg-background px-2 py-1 text-[11px] font-mono"
+                  />
+                  <button
+                    onClick={discover}
+                    disabled={loading}
+                    className="flex h-7 items-center rounded bg-primary px-2 text-[11px] font-bold text-primary-foreground disabled:opacity-50"
+                  >
+                    SCAN
+                  </button>
+                </div>
+              </div>
+
 
               {pageMeta && (
                 <div className="mb-2 rounded-lg bg-muted/60 px-3 py-2 text-[11px] text-muted-foreground">
