@@ -70,7 +70,7 @@ function norm(item: any, dir: "SALIDA" | "LLEGADA", tt: string): CarteleraTrain 
 }
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
-const CACHE_VERSION = 7;
+const CACHE_VERSION = 8;
 let _cache: { at: number; v: number; data: CarteleraResponse } | null = null;
 let _inflight: Promise<CarteleraResponse | null> | null = null;
 
