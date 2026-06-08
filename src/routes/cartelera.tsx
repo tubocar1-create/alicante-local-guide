@@ -262,11 +262,12 @@ function HeaderClock() {
   }, []);
   const hh = now.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   return (
-    <div className="flex items-center gap-1.5 rounded-md bg-slate-900 px-2 py-1 text-[11px] font-bold tabular-nums text-white">
+    <div className="flex items-center gap-1.5 rounded-md bg-slate-900 px-2 py-1 text-[11px] font-bold tabular-nums text-white" suppressHydrationWarning>
       <Clock className="h-3 w-3" />
       {hh}
     </div>
   );
+
 }
 
 function useNowHHMM() {
