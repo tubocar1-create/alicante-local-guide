@@ -266,15 +266,20 @@ function Donut({ pct, status }: { pct?: number; status: Status }) {
   );
 }
 
-type Filter = "all" | "green" | "yellow" | "red" | "near";
+// In-memory cache (single-use, brief). Persists across reopens within a few minutes.
+const CACHE_TTL_MS = 3 * 60 * 1000;
+let cache: { rows: ParkingRow[]; updatedAt: number } | null = null;
 
 export function ParkingsButton() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [rows, setRows] = useState<ParkingRow[] | null>(null);
-  const [updatedAt, setUpdatedAt] = useState<number | null>(null);
-  const [filter, setFilter] = useState<Filter>("all");
+  const [rows, setRows] = useState<ParkingRow[] | null>(() =>
+    cache && Date.now() - cache.updatedAt < CACHE_TTL_MS ? cache.rows : null,
+  );
+  const [updatedAt, setUpdatedAt] = useState<number | null>(() =>
+    cache && Date.now() - cache.updatedAt < CACHE_TTL_MS ? cache.updatedAt : null,
+  );
 
   const { state: locState, request: requestLocation } = useUserLocation();
   const userCoords = locState.status === "ready" ? locState.coords : null;
@@ -286,8 +291,11 @@ export function ParkingsButton() {
       const res = await fetch(ENDPOINT, { method: "GET", cache: "no-store" });
       const text = await res.text();
       const json = JSON.parse(text);
-      setRows(extractParkings(json));
-      setUpdatedAt(Date.now());
+      const next = extractParkings(json);
+      const now = Date.now();
+      cache = { rows: next, updatedAt: now };
+      setRows(next);
+      setUpdatedAt(now);
     } catch (e: any) {
       setError(e?.message ?? "No se pudieron cargar los parkings");
     } finally {
@@ -297,7 +305,8 @@ export function ParkingsButton() {
 
   function openAndLoad() {
     setOpen(true);
-    if (!rows) void load();
+    const fresh = cache && Date.now() - cache.updatedAt < CACHE_TTL_MS;
+    if (!fresh) void load();
     if (locState.status === "idle") requestLocation();
   }
 
@@ -311,34 +320,11 @@ export function ParkingsButton() {
     });
   }, [rows, userCoords]);
 
-  const sorted = useMemo(() => {
+  const displayed = useMemo(() => {
     if (!enriched) return null;
-    return [...enriched].sort((a, b) => {
-      const da = a.dist ?? Number.POSITIVE_INFINITY;
-      const db = b.dist ?? Number.POSITIVE_INFINITY;
-      return da - db;
-    });
-  }, [enriched]);
-
-  const filtered = useMemo(() => {
-    if (!sorted) return null;
-    let list = sorted;
-    if (filter === "near") {
-      list = sorted.filter((r) => r.dist != null);
-    } else if (filter !== "all") {
-      list = sorted.filter((r) => r.status === filter);
-    }
-    return list.slice(0, 6);
-  }, [sorted, filter]);
-
-  const counts = useMemo(() => {
-    const c = { green: 0, yellow: 0, red: 0 };
-    enriched?.slice(0, 6).forEach((r) => {
-      if (r.status === "green") c.green++;
-      else if (r.status === "yellow") c.yellow++;
-      else if (r.status === "red") c.red++;
-    });
-    return c;
+    return [...enriched]
+      .sort((a, b) => (a.dist ?? Number.POSITIVE_INFINITY) - (b.dist ?? Number.POSITIVE_INFINITY))
+      .slice(0, 6);
   }, [enriched]);
 
   const secondsAgo = updatedAt ? Math.max(0, Math.round((Date.now() - updatedAt) / 1000)) : null;
@@ -360,183 +346,120 @@ export function ParkingsButton() {
           onClick={() => setOpen(false)}
         >
           <div
-            className="w-full max-w-md max-h-[92vh] overflow-hidden rounded-t-3xl bg-[#0b1220] text-slate-100 shadow-2xl ring-1 ring-white/5 sm:rounded-3xl"
+            className="w-full max-w-md max-h-[96vh] overflow-hidden rounded-t-3xl bg-[#0b1220] text-slate-100 shadow-2xl ring-1 ring-white/5 sm:rounded-3xl flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
-            <header className="flex items-center justify-between px-4 pt-4 pb-2">
-              <div className="flex-1">
-                <div className="flex items-center justify-center gap-2">
-                  <Car className="h-5 w-5 text-white" />
-                  <h2 className="text-[18px] font-extrabold tracking-tight">Parkings Alicante</h2>
+            {/* Header — compact */}
+            <header className="relative flex items-center justify-center px-4 pt-3 pb-2 shrink-0">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1.5">
+                  <Car className="h-4 w-4 text-white" />
+                  <h2 className="text-[15px] font-extrabold tracking-tight">Parkings Alicante</h2>
                 </div>
-                <p className="mt-1 flex items-center justify-center gap-1.5 text-[11px] text-slate-400">
+                <p className="mt-0.5 flex items-center justify-center gap-1.5 text-[10px] text-slate-400">
                   <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_currentColor]" />
                   En tiempo real
-                  {secondsAgo != null && <span>· Actualizado hace {secondsAgo} seg</span>}
+                  {secondsAgo != null && <span>· hace {secondsAgo}s</span>}
                 </p>
               </div>
-              <div className="absolute right-3 top-3 flex items-center gap-1">
+              <div className="absolute right-2 top-2 flex items-center gap-0.5">
                 <button
                   onClick={load}
                   disabled={loading}
                   aria-label="Recargar"
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-slate-300 hover:bg-white/10 disabled:opacity-50"
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-slate-300 hover:bg-white/10 disabled:opacity-50"
                 >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                  {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
                 </button>
                 <button
                   onClick={() => setOpen(false)}
                   aria-label="Cerrar"
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-slate-300 hover:bg-white/10"
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-slate-300 hover:bg-white/10"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-3.5 w-3.5" />
                 </button>
               </div>
             </header>
 
-            {/* Filter chips */}
-            <div className="flex gap-1.5 overflow-x-auto px-4 pb-3 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {([
-                { id: "all", label: "Todos", icon: LayoutGrid, color: "bg-emerald-500" },
-                { id: "green", label: "Libres", icon: null, color: "bg-emerald-500" },
-                { id: "yellow", label: "Medios", icon: null, color: "bg-amber-500" },
-                { id: "red", label: "Llenos", icon: null, color: "bg-red-500" },
-                { id: "near", label: "Cerca de mí", icon: Navigation, color: "bg-sky-500" },
-              ] as { id: Filter; label: string; icon: any; color: string }[]).map((f) => {
-                const active = filter === f.id;
-                return (
-                  <button
-                    key={f.id}
-                    onClick={() => setFilter(f.id)}
-                    className={[
-                      "flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold transition active:scale-95",
-                      active
-                        ? "bg-emerald-500 text-white shadow-[0_0_12px_rgba(16,185,129,0.4)]"
-                        : "bg-white/5 text-slate-300 ring-1 ring-white/10",
-                    ].join(" ")}
-                  >
-                    {f.icon ? (
-                      <f.icon className="h-3 w-3" />
-                    ) : (
-                      <span className={`inline-block h-2 w-2 rounded-full ${f.color}`} />
-                    )}
-                    {f.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="overflow-y-auto px-3 pb-4" style={{ maxHeight: "calc(92vh - 130px)" }}>
-              {locState.status !== "ready" && (
-                <button
-                  onClick={requestLocation}
-                  className="mb-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-sky-500/10 px-3 py-2 text-[11px] font-semibold text-sky-300 ring-1 ring-sky-500/30 active:scale-[0.99]"
-                >
-                  <MapPin className="h-3.5 w-3.5" />
-                  {locState.status === "loading" ? "Obteniendo tu ubicación…" : "Activar mi ubicación para ver distancias"}
-                </button>
-              )}
-
+            <div className="flex-1 min-h-0 overflow-hidden px-3 pb-3">
               {error && (
-                <div className="mb-3 rounded-xl bg-red-500/10 px-3 py-2 text-[12px] text-red-300 ring-1 ring-red-500/30">{error}</div>
+                <div className="mb-2 rounded-lg bg-red-500/10 px-3 py-1.5 text-[11px] text-red-300 ring-1 ring-red-500/30">
+                  {error}
+                </div>
               )}
 
               {loading && !rows && (
-                <div className="flex items-center justify-center py-10 text-slate-400">
+                <div className="flex h-full items-center justify-center text-slate-400">
                   <Loader2 className="h-6 w-6 animate-spin" />
                 </div>
               )}
 
-              {filtered && filtered.length > 0 && (
-                <ul className="space-y-2.5">
-                  {filtered.map((r) => {
+              {displayed && displayed.length > 0 && (
+                <ul className="grid h-full grid-rows-6 gap-1.5">
+                  {displayed.map((r) => {
                     const s = STYLES[r.status];
                     return (
                       <li
                         key={r.id}
-                        className="rounded-2xl bg-[#111a2e] p-3 ring-1 ring-white/5"
+                        className="flex items-center gap-2.5 rounded-xl bg-[#111a2e] px-2.5 py-2 ring-1 ring-white/5"
                       >
-                        <div className="flex items-start gap-3">
-                          {/* P badge */}
-                          <div
-                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${s.badgeBg} text-white font-extrabold text-[16px] shadow-lg`}
-                          >
-                            P
-                          </div>
+                        {/* P badge */}
+                        <div
+                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${s.badgeBg} text-white font-extrabold text-[13px] shadow-md`}
+                        >
+                          P
+                        </div>
 
-                          {/* Name + meta */}
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-[15px] font-extrabold leading-tight text-white">{r.name}</p>
-                            <div className="mt-1 flex items-center gap-3 text-[11px] text-slate-400">
-                              <span className="flex items-center gap-1">
-                                <MapPin className="h-3 w-3" />
-                                Alicante
-                              </span>
-                              {r.walkMin != null && (
-                                <span className="flex items-center gap-1">
-                                  <Footprints className="h-3 w-3" />
-                                  {r.walkMin} min andando
-                                </span>
-                              )}
-                            </div>
+                        {/* Name + status pill + meta */}
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[13px] font-extrabold leading-tight text-white">
+                            {r.name}
+                          </p>
+                          <div className="mt-0.5 flex items-center gap-2 text-[10px] text-slate-400">
                             <span
-                              className={`mt-1.5 inline-flex rounded-md px-1.5 py-0.5 text-[9px] font-extrabold tracking-wide ${s.pillBg} ${s.pillText}`}
+                              className={`rounded px-1 py-[1px] text-[8.5px] font-extrabold tracking-wide ${s.pillBg} ${s.pillText}`}
                             >
                               {s.label}
                             </span>
-                          </div>
-
-                          {/* Big number */}
-                          <div className="flex shrink-0 flex-col items-end leading-none">
-                            <span className={`font-mono text-[28px] font-extrabold ${s.num}`}>
-                              {r.free != null ? r.free : "—"}
+                            {r.walkMin != null && (
+                              <span className="flex items-center gap-0.5">
+                                <Footprints className="h-2.5 w-2.5" />
+                                {r.walkMin} min
+                              </span>
+                            )}
+                            <span className="font-mono text-slate-500">
+                              {r.free ?? "—"}/{r.total ?? "—"}
                             </span>
-                            <span className="mt-0.5 text-[10px] text-slate-400">libres</span>
                           </div>
-
-                          {/* Donut */}
-                          <Donut pct={r.availablePct} status={r.status} />
-                        </div>
-
-                        {/* Progress bar */}
-                        <div className="mt-2.5 flex items-center gap-2">
-                          <span className={`font-mono text-[11px] font-bold ${s.num}`}>
-                            {r.free ?? "—"}
-                          </span>
-                          <span className="text-[10px] text-slate-500">/ {r.total ?? "—"} plazas</span>
-                          <div className="ml-1 h-1.5 flex-1 overflow-hidden rounded-full bg-white/5">
+                          {/* mini progress bar */}
+                          <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-white/5">
                             <div
                               className={`h-full ${s.bar} transition-all`}
                               style={{ width: `${r.availablePct ?? 0}%` }}
                             />
                           </div>
                         </div>
+
+                        {/* Big number */}
+                        <div className="flex shrink-0 flex-col items-end leading-none">
+                          <span className={`font-mono text-[22px] font-extrabold ${s.num}`}>
+                            {r.free != null ? r.free : "—"}
+                          </span>
+                          <span className="text-[9px] text-slate-400">libres</span>
+                        </div>
+
+                        {/* Donut */}
+                        <Donut pct={r.availablePct} status={r.status} />
                       </li>
                     );
                   })}
                 </ul>
               )}
 
-              {filtered && filtered.length === 0 && (
+              {displayed && displayed.length === 0 && !loading && (
                 <p className="py-8 text-center text-[12px] text-slate-400">
-                  Ningún parking en este filtro.
+                  No hay parkings disponibles ahora mismo.
                 </p>
-              )}
-
-              {/* Summary footer */}
-              {enriched && enriched.length > 0 && (
-                <div className="mt-3 flex items-center gap-2 rounded-2xl bg-[#111a2e] px-3 py-2.5 ring-1 ring-white/5">
-                  <SummaryChip color="emerald" icon={<Car className="h-4 w-4 text-emerald-400" />} value={counts.green} label="Fáciles" />
-                  <SummaryChip color="amber" icon={<Car className="h-4 w-4 text-amber-400" />} value={counts.yellow} label="Medios" />
-                  <SummaryChip color="red" icon={<Car className="h-4 w-4 text-red-400" />} value={counts.red} label="Llenos" />
-                  {userCoords && (
-                    <div className="ml-auto flex items-center gap-1 text-[10px] text-slate-400">
-                      <Crosshair className="h-3 w-3 text-sky-400" />
-                      Tu ubicación
-                    </div>
-                  )}
-                </div>
               )}
             </div>
           </div>
@@ -546,14 +469,3 @@ export function ParkingsButton() {
   );
 }
 
-function SummaryChip({ icon, value, label }: { color: string; icon: React.ReactNode; value: number; label: string }) {
-  return (
-    <div className="flex flex-1 items-center gap-2 rounded-xl bg-white/5 px-2.5 py-1.5">
-      {icon}
-      <div className="leading-none">
-        <p className="font-mono text-[15px] font-extrabold text-white">{value}</p>
-        <p className="text-[9px] text-slate-400">{label}</p>
-      </div>
-    </div>
-  );
-}
