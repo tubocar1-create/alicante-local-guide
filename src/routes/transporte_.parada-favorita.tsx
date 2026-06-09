@@ -181,11 +181,12 @@ function ParadaFavoritaPage() {
         setCallError(res.debug.error ?? "No se pudo extraer la parada del HTML.");
         return;
       }
-      // Filtramos llegadas por línea (case-insensitive). Aceptamos también
-      // coincidencia por destino si el portal devuelve la línea en otro formato.
-      const lineUp = stop.line.toUpperCase();
+      // Filtramos llegadas por línea (case-insensitive). Normalizamos quitando
+      // ceros iniciales para que "1" coincida con "01".
+      const normLine = (s: string) => s.toUpperCase().replace(/^0+(?=\w)/, "");
+      const lineNorm = normLine(stop.line);
       const matches = res.stop.arrivals.filter(
-        (a) => a.line.toUpperCase() === lineUp && a.etaMinutes != null,
+        (a) => normLine(a.line) === lineNorm && a.etaMinutes != null,
       );
       if (matches.length === 0) {
         setCallError("No hay paso en vivo para esta línea ahora mismo.");
