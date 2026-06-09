@@ -17,7 +17,8 @@ import {
   toMinHM,
 } from "@/hooks/useBusServiceWindow";
 import { cumulativeMinutes, NIGHT_URBAN_KMH } from "@/lib/bus-eta";
-import { getClientStopRealtime, getClientStopsRealtimeBatch } from "@/lib/bus-realtime-client";
+import { parseStopFromHtml } from "@/lib/bus-stop-parser";
+import { supabase } from "@/integrations/supabase/client";
 import busAlicanteImg from "@/assets/bus-alicante.png";
 import { useLineRealtime, isPreviewHost } from "@/hooks/useLineRealtime";
 import { useBusEngine } from "@/hooks/useBusEngine";
@@ -456,34 +457,81 @@ function BusDashboardPage() {
   const inPreview = isPreviewHost();
 
   // === TEST PREVIEW (solo Línea 12): comparar predicción vs tiempo real ===
-  // Usamos el MISMO bridge que la parada favorita: /api/public/bus-datos
-  // (lectura del QR desde el navegador del usuario). Sin Firecrawl, sin Worker.
+  // EXACTAMENTE igual que "Mi parada favorita":
+  //   1) Resolvemos page_number / source_url en bus_stop_catalog (BBDD).
+  //   2) El NAVEGADOR del usuario descarga la página de movilidad.alicante.es.
+  //   3) Parseamos cada parada con parseStopFromHtml.
+  // Sin Firecrawl, sin Worker, sin coste.
   const compareTestEnabled = inPreview && String(code).toUpperCase() === "12";
   const compareStopCodes = useMemo(() => {
     if (!compareTestEnabled) return [] as string[];
     const all = [...stopsByDir[1], ...stopsByDir[2]].map((s) => s.code);
     return [...new Set(all)];
   }, [compareTestEnabled, stopsByDir]);
-  const liveCompareQuery = useQuery({
-    queryKey: ["dashboard-live-compare", code, compareStopCodes.join(",")],
+  const liveCompareQuery = useQuery<Record<string, number | null>>({
+    queryKey: ["dashboard-live-compare-movilidad", code, compareStopCodes.join(",")],
     enabled: compareTestEnabled && compareStopCodes.length > 0,
     refetchOnWindowFocus: false,
     staleTime: 0,
-    queryFn: () =>
-      getClientStopsRealtimeBatch({
-        stopIds: compareStopCodes,
-        line: String(code).toUpperCase(),
-      }),
+    queryFn: async () => {
+      const PAGE_BASE = "https://movilidad.alicante.es/paradas-de-bus?page=";
+      const lineNorm = String(code).toUpperCase().replace(/^0+(?=\w)/, "");
+      const ids = compareStopCodes.map((c) => c.trim()).filter(Boolean);
+      // 1) Resolver páginas en bus_stop_catalog para todas las paradas.
+      const { data: catalogRows, error } = await supabase
+        .from("bus_stop_catalog")
+        .select("stop_id, page_number, source_url")
+        .in("stop_id", ids);
+      if (error) throw new Error(error.message);
+      // Agrupar stop_ids por URL de página (una sola descarga por página).
+      const stopsByUrl = new Map<string, string[]>();
+      const urlByStop = new Map<string, string>();
+      for (const row of catalogRows ?? []) {
+        const url = row.source_url || `${PAGE_BASE}${row.page_number}`;
+        const sid = String(row.stop_id);
+        urlByStop.set(sid, url);
+        const list = stopsByUrl.get(url) ?? [];
+        list.push(sid);
+        stopsByUrl.set(url, list);
+      }
+      // 2) Descargar cada página desde el navegador (una vez) en paralelo.
+      const pageHtml = new Map<string, string>();
+      await Promise.all(
+        [...stopsByUrl.keys()].map(async (url) => {
+          try {
+            const r = await fetch(url, { cache: "no-store" });
+            if (!r.ok) return;
+            pageHtml.set(url, await r.text());
+          } catch {
+            /* página caída: omitimos */
+          }
+        }),
+      );
+      // 3) Para cada parada, parsear desde el HTML de SU página y filtrar por línea.
+      const out: Record<string, number | null> = {};
+      for (const sid of ids) {
+        const url = urlByStop.get(sid);
+        const html = url ? pageHtml.get(url) : null;
+        if (!html) {
+          out[sid] = null;
+          continue;
+        }
+        const parsed = parseStopFromHtml(html, Number(sid));
+        const minutes = (parsed?.arrivals ?? [])
+          .filter(
+            (a) =>
+              a.etaMinutes != null &&
+              a.line.toUpperCase().replace(/^0+(?=\w)/, "") === lineNorm,
+          )
+          .map((a) => a.etaMinutes as number)
+          .sort((a, b) => a - b);
+        out[sid] = minutes.length > 0 ? minutes[0] : null;
+      }
+      return out;
+    },
   });
-  const liveCompareByCode = useMemo<Record<string, number | null>>(() => {
-    const map: Record<string, number | null> = {};
-    const data = liveCompareQuery.data;
-    if (!data) return map;
-    for (const [stopCode, arr] of Object.entries(data)) {
-      map[stopCode] = typeof arr?.[0] === "number" ? arr[0] : null;
-    }
-    return map;
-  }, [liveCompareQuery.data]);
+  const liveCompareByCode = liveCompareQuery.data ?? {};
+
 
 
   const etas = useMemo<Record<string, number[]>>(() => {
@@ -863,8 +911,9 @@ function VisibleStopRealtime({
       controller = new AbortController();
       onLoading(stopCode, true);
       try {
-        const r = await getClientStopRealtime({ stopId: stopCode, line: lineCode, signal: controller.signal });
-        if (!cancelled) onEta(stopCode, r.all);
+        // Dead path: realtimeEnabled siempre es false en este dashboard.
+        if (!cancelled) onEta(stopCode, []);
+        void lineCode;
       } finally {
         if (!cancelled) onLoading(stopCode, false);
         clearTimer();
