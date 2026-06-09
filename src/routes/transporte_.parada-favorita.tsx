@@ -44,6 +44,26 @@ function normalize(s: string) {
     .trim();
 }
 
+function formatDestinationName(destination: string) {
+  const raw = destination.trim().replace(/\s+/g, " ");
+  const norm = normalize(raw);
+  if (norm === "ciudad de asis" || norm === "ciudad asis") return "Ciudad de Asís";
+  if (norm === "juan pablo ii" || norm === "plaza juan pablo ii") return "Juan Pablo II";
+  if (norm === "san agustin" || norm === "cp san agustin" || norm === "c.p. san agustin") return "San Agustín";
+  return raw.replace(/\p{L}+/gu, (word) => {
+    const lower = word.toLocaleLowerCase("es-ES");
+    if (["de", "del", "la", "las", "los", "y"].includes(lower)) return lower;
+    if (["i", "ii", "iii", "iv", "v", "vi"].includes(lower)) return lower.toUpperCase();
+    return lower.charAt(0).toLocaleUpperCase("es-ES") + lower.slice(1);
+  });
+}
+
+function formatDirectionLabel(destination: string | null | undefined) {
+  const raw = (destination || "").trim();
+  if (!raw) return "—";
+  return `Dirección ${formatDestinationName(raw)}`;
+}
+
 function ParadaFavoritaPage() {
   const router = useRouter();
   const search = Route.useSearch();
@@ -513,7 +533,7 @@ function ParadaFavoritaPage() {
                 <Bus className="h-4 w-4 shrink-0 text-[#0d3b8a]" />
                 <div className="min-w-0 flex-1">
                   <div className="text-[9px] font-bold uppercase tracking-wider text-stone-500">
-                    Dirección Ciudad Asís
+                    {formatDirectionLabel(stop.destination)}
                   </div>
                   <div className="flex items-center gap-1">
                     <span className="truncate text-sm font-extrabold text-stone-900">
@@ -742,15 +762,7 @@ function ParadaFavoritaPage() {
                             {etaLabel}
                           </span>
                           <span className="basis-full text-[11px] font-semibold leading-tight text-stone-700">
-                            {(() => {
-                              const d = (a.destination || "").toUpperCase();
-                              if (!d) return "—";
-                              if (d.includes("JUAN PABLO") || d.includes("ASIS") || d.includes("ASÍS"))
-                                return "Dirección Ciudad Asís";
-                              if (d.includes("AGUSTIN") || d.includes("AGUSTÍN"))
-                                return "Dirección San Agustín";
-                              return `Dirección ${a.destination}`;
-                            })()}
+                            {formatDirectionLabel(a.destination)}
                           </span>
                         </li>
                       );
