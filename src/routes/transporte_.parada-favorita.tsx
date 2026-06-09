@@ -684,16 +684,33 @@ function ParadaFavoritaPage() {
                 <ul className="space-y-1.5">
                   {allArrivals.items
                     .slice()
-                    .sort((a, b) => (a.etaMinutes ?? 9999) - (b.etaMinutes ?? 9999))
-                    .map((a, i) => {
+                    .map((a) => {
+                      // Sincronización con el countdown: calculamos los segundos
+                      // restantes a partir de fetchedAt + etaMinutes para que
+                      // cada línea decrezca en vivo igual que el contador grande.
+                      if (a.etaMinutes == null) return { a, liveSec: null as number | null };
+                      const totalSec = a.etaMinutes * 60;
+                      const elapsedSec = Math.floor((Date.now() - allArrivals.fetchedAt) / 1000);
+                      return { a, liveSec: Math.max(0, totalSec - elapsedSec) };
+                    })
+                    .sort((x, y) => (x.liveSec ?? 9_999_999) - (y.liveSec ?? 9_999_999))
+                    .map(({ a, liveSec }, i) => {
                       const normLine = (s: string) => s.toUpperCase().replace(/^0+(?=\w)/, "");
                       const isFav = normLine(a.line) === normLine(stop.line);
-                      const arrivalAt = a.etaMinutes != null
+                      // Hora de llegada absoluta = ahora + segundos restantes.
+                      // Así la hora y el countdown siempre coinciden.
+                      const arrivalAt = liveSec != null
                         ? (() => {
-                            const d = new Date(allArrivals.fetchedAt + a.etaMinutes * 60_000);
+                            const d = new Date(Date.now() + liveSec * 1000);
                             return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
                           })()
                         : null;
+                      const liveMin = liveSec != null ? Math.ceil(liveSec / 60) : null;
+                      const etaLabel = liveSec == null
+                        ? (a.etaText || "n/d")
+                        : liveSec === 0
+                          ? "Llegando"
+                          : `${liveMin} min`;
                       return (
                         <li
                           key={`${a.line}-${a.destination}-${i}`}
@@ -716,12 +733,14 @@ function ParadaFavoritaPage() {
                           </span>
                           <span
                             className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-extrabold tabular-nums ${
-                              a.etaMinutes != null
-                                ? "bg-emerald-50 text-emerald-700"
-                                : "bg-stone-100 text-stone-500"
+                              liveSec == null
+                                ? "bg-stone-100 text-stone-500"
+                                : liveSec === 0
+                                  ? "bg-orange-100 text-orange-700"
+                                  : "bg-emerald-50 text-emerald-700"
                             }`}
                           >
-                            {a.etaText || (a.etaMinutes != null ? `${a.etaMinutes} min` : "n/d")}
+                            {etaLabel}
                           </span>
                           <span className="basis-full text-[11px] font-semibold leading-tight text-stone-700">
                             → {a.destination || "—"}
