@@ -611,6 +611,49 @@ function BusDashboardPage() {
     return { liveCompareByCode: merged, liveInterpolatedCodes: interp };
   }, [liveCompareRaw, compareTestEnabled, stopsByDir, engine, code]);
 
+  // === BUSES VIRTUALES DESDE ETA REALES + INTERPOLADOS ===
+  // Solo en preview de Línea 12. Nacimiento: ETA en origen (parada 0) == 0.
+  // Muerte: ETA en terminal <= 3 min (el bus desaparece al llegar).
+  // Posición: el bus está en el segmento [i, i+1] cuando ETA[i] == 0 y ETA[i+1] > 0.
+  // Entre refrescos (40s) animamos el progreso linealmente con el reloj:
+  //   progress = elapsedMin / ETA[i+1]  (en minutos).
+  const liveDataUpdatedAt = liveCompareQuery.dataUpdatedAt;
+  const liveBusesByDir = useMemo<Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]>>(() => {
+    const out: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]> = { 1: [], 2: [] };
+    if (!compareTestEnabled || !liveDataUpdatedAt) return out;
+    const elapsedMin = Math.max(0, (clock.getTime() - liveDataUpdatedAt) / 60_000);
+    for (const dir of [1, 2] as const) {
+      const stops = stopsByDir[dir];
+      if (stops.length < 2) continue;
+      const etas = stops.map((s) => {
+        const v = liveCompareByCode[s.code];
+        return typeof v === "number" ? v : null;
+      });
+      // Muerte: si terminal ya está a ≤3 min, no dibujamos ese bus (está llegando/muriendo).
+      const lastIdx = stops.length - 1;
+      for (let i = 0; i < lastIdx; i++) {
+        const here = etas[i];
+        const next = etas[i + 1];
+        if (here === null || next === null) continue;
+        if (here > 0 || next <= 0) continue;
+        // Bus en segmento i → i+1. Si el siguiente segmento es el terminal y
+        // ETA terminal ≤ 3, lo dejamos pasar (muere visualmente al final).
+        const isTerminalNext = i + 1 === lastIdx;
+        if (isTerminalNext && next <= 3 && elapsedMin >= next - 0.5) continue;
+        const progress = next > 0 ? Math.min(1, elapsedMin / next) : 0;
+        out[dir].push({
+          busId: `live-${dir}-${i}`,
+          segmentIndex: i,
+          segmentProgress: progress,
+        });
+      }
+    }
+    return out;
+  }, [compareTestEnabled, liveCompareByCode, stopsByDir, clock, liveDataUpdatedAt]);
+
+
+
+
 
 
   const etas = useMemo<Record<string, number[]>>(() => {
