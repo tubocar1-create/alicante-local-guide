@@ -513,7 +513,7 @@ function ParadaFavoritaPage() {
                 <Bus className="h-4 w-4 shrink-0 text-[#0d3b8a]" />
                 <div className="min-w-0 flex-1">
                   <div className="text-[9px] font-bold uppercase tracking-wider text-stone-500">
-                    Dirección
+                    Ciudad de Asís
                   </div>
                   <div className="flex items-center gap-1">
                     <span className="truncate text-sm font-extrabold text-stone-900">
@@ -566,20 +566,15 @@ function ParadaFavoritaPage() {
               </div>
             ) : (
               <div
-                key={minutes}
+                key={liveMmSs}
                 className="flex w-full flex-col items-center animate-in fade-in zoom-in-95 duration-300"
               >
-                <span className="text-[96px] font-extrabold leading-none tabular-nums text-[#0d3b8a]">
-                  {minutes}
+                <span className="text-5xl font-extrabold leading-none tabular-nums text-[#0d3b8a]">
+                  {liveMmSs}
                 </span>
-                <span className="-mt-1 text-sm font-bold uppercase tracking-wider text-stone-600">
+                <span className="mt-1 text-sm font-bold uppercase tracking-wider text-stone-600">
                   Min
                 </span>
-                {hasLiveData && liveMmSs && (
-                  <span className="mt-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-extrabold tabular-nums text-emerald-700 ring-1 ring-emerald-200">
-                    ● {liveMmSs}
-                  </span>
-                )}
               </div>
             )}
             {!outOfService && (
