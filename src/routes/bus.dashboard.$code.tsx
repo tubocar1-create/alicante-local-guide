@@ -472,6 +472,9 @@ function BusDashboardPage() {
     queryKey: ["dashboard-live-compare-movilidad", code, compareStopCodes.join(",")],
     enabled: compareTestEnabled && compareStopCodes.length > 0,
     refetchOnWindowFocus: false,
+    refetchOnMount: "always",
+    refetchInterval: 40_000,
+    refetchIntervalInBackground: false,
     staleTime: 0,
     queryFn: async () => {
       const PAGE_BASE = "https://movilidad.alicante.es/paradas-de-bus?page=";
