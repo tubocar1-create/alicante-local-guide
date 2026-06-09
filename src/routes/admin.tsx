@@ -26,6 +26,7 @@ import {
   Cloud,
   Clock,
   ImageIcon,
+  Bus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -100,6 +101,7 @@ const HERRAMIENTAS = [
   { to: "/admin/auditoria", label: "Auditoría pre-lanzamiento", icon: ClipboardCheck },
   { to: "/admin/crones", label: "Crones programados", icon: Clock },
   { to: "/admin/auditoria-fotos", label: "Auditoría de fotos", icon: ImageIcon },
+  { to: "/admin/modelo-buses", label: "Modelo de buses (archivo)", icon: Bus },
   { to: "/admin/system", label: "Sistema", icon: Wrench },
 ] as const;
 
