@@ -694,20 +694,44 @@ function BusDashboardPage() {
       const stops = stopsByDir[dir];
       const lastIdx = stops.length - 1;
       if (lastIdx < 1) continue;
+      const modelMap = scheduleEtaByDir[dir];
       for (const bus of activeBusesRef.current[dir]) {
-        const sched = bus.schedule;
-        if (!sched.length) continue;
-        const t = (nowMs - bus.snapshotAt) / 60_000; // minutos desde el snapshot
-        // Encontrar el segmento del schedule que contiene t.
-        let a = { idx: sched[0].idx, eta: sched[0].eta };
+        const anchorIdx = bus.schedule[0]?.idx ?? 0;
+        // Reconstruimos el schedule en CADA frame con los ETAs reales
+        // actuales (fallback al modelo). Así el bus refleja siempre los
+        // tiempos reales vigentes, no los del snapshot original.
+        const fresh: { idx: number; eta: number }[] = [];
+        const readEta = (i: number): number | null => {
+          const code = stops[i]?.code;
+          if (!code) return null;
+          const r = liveCompareRaw[code];
+          if (typeof r === "number") return r;
+          const m = modelMap?.get(code)?.min;
+          return typeof m === "number" ? m : null;
+        };
+        const eta0 = readEta(anchorIdx);
+        if (eta0 === null) continue;
+        fresh.push({ idx: anchorIdx, eta: Math.max(0, eta0) });
+        for (let i = anchorIdx + 1; i <= lastIdx; i++) {
+          const last = fresh[fresh.length - 1];
+          const cand = readEta(i);
+          if (cand === null || cand <= last.eta) continue;
+          fresh.push({ idx: i, eta: cand });
+        }
+        if (!fresh.length) continue;
+
+        // El bus NUNCA debe pasar de la siguiente parada con ETA>0
+        // (esa es la parada "real" más cercana). Capamos t en ese eta.
+        const nextStop = fresh.find((p) => p.eta > 0);
+        const cap = nextStop ? nextStop.eta : 0;
+        const elapsed = (nowMs - bus.snapshotAt) / 60_000;
+        const t = Math.max(0, Math.min(elapsed, cap));
+
+        let a = fresh[0];
         let b: { idx: number; eta: number } | null = null;
-        for (let k = 0; k < sched.length; k++) {
-          if (sched[k].eta <= t) {
-            a = sched[k];
-          } else {
-            b = sched[k];
-            break;
-          }
+        for (let k = 0; k < fresh.length; k++) {
+          if (fresh[k].eta <= t) a = fresh[k];
+          else { b = fresh[k]; break; }
         }
         let virtPos: number;
         if (b) {
@@ -715,20 +739,16 @@ function BusDashboardPage() {
           const frac = dt > 0 ? Math.max(0, Math.min(1, (t - a.eta) / dt)) : 0;
           virtPos = a.idx + frac * (b.idx - a.idx);
         } else {
-          // Sin ancla futura: extrapolar a velocidad del último tramo conocido
-          // (o 1 parada/min como fallback).
-          const prev = sched.length >= 2 ? sched[sched.length - 2] : null;
-          const speed = prev && a.eta > prev.eta ? (a.idx - prev.idx) / (a.eta - prev.eta) : 1;
-          virtPos = a.idx + Math.max(0, t - a.eta) * speed;
+          virtPos = a.idx;
         }
-        if (virtPos >= lastIdx) continue; // bus ya terminó
+        if (virtPos >= lastIdx) continue;
         const segIdx = Math.max(0, Math.min(lastIdx - 1, Math.floor(virtPos)));
         const segProg = Math.max(0, Math.min(1, virtPos - segIdx));
         out[dir].push({ busId: bus.id, segmentIndex: segIdx, segmentProgress: segProg });
       }
     }
     return out;
-  }, [compareTestEnabled, stopsByDir, clock, busesVersion]);
+  }, [compareTestEnabled, stopsByDir, clock, busesVersion, liveCompareRaw, scheduleEtaByDir]);
 
 
 
