@@ -566,15 +566,20 @@ function ParadaFavoritaPage() {
               </div>
             ) : (
               <div
-                key={liveMmSs}
+                key={minutes}
                 className="flex w-full flex-col items-center animate-in fade-in zoom-in-95 duration-300"
               >
-                <span className="text-5xl font-extrabold leading-none tabular-nums text-[#0d3b8a]">
-                  {liveMmSs}
+                <span className="text-[96px] font-extrabold leading-none tabular-nums text-[#0d3b8a]">
+                  {minutes}
                 </span>
-                <span className="mt-1 text-sm font-bold uppercase tracking-wider text-stone-600">
+                <span className="-mt-1 text-sm font-bold uppercase tracking-wider text-stone-600">
                   Min
                 </span>
+                {hasLiveData && liveMmSs && (
+                  <span className="mt-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-extrabold tabular-nums text-emerald-700 ring-1 ring-emerald-200">
+                    ● {liveMmSs}
+                  </span>
+                )}
               </div>
             )}
             {!outOfService && (
