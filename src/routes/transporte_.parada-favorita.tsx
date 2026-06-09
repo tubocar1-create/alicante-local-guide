@@ -698,6 +698,59 @@ function ParadaFavoritaPage() {
               El servicio se reanuda {reopensDayLabel ? `el ${reopensLabel}` : `a las ${reopensAt}`}.{lastDeparture ? ` El último bus parte de la parada extrema a las ${lastDeparture}.` : ""}
             </span>
           </div>
+        ) : (allArrivals && allArrivals.items.length > 0 && !nightEstimate) ? (
+          <ul className="space-y-1.5">
+            {allArrivals.items
+              .slice()
+              .sort((a, b) => (a.etaMinutes ?? 9999) - (b.etaMinutes ?? 9999))
+              .map((a, i) => {
+                const normLine = (s: string) => s.toUpperCase().replace(/^0+(?=\w)/, "");
+                const isFav = normLine(a.line) === normLine(stop.line);
+                const arrivalAt = a.etaMinutes != null
+                  ? (() => {
+                      const d = new Date(allArrivals.fetchedAt + a.etaMinutes * 60_000);
+                      return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+                    })()
+                  : null;
+                return (
+                  <li
+                    key={`${a.line}-${a.destination}-${i}`}
+                    className={`flex items-center gap-2 rounded-2xl px-2.5 py-1.5 ring-1 ${
+                      isFav ? "bg-[#0d3b8a]/5 ring-[#0d3b8a]/30" : "bg-stone-50 ring-stone-100"
+                    }`}
+                  >
+                    <Bus className={`h-4 w-4 shrink-0 ${isFav ? "text-[#0d3b8a]" : "text-stone-400"}`} />
+                    {arrivalAt && (
+                      <span className="shrink-0 text-sm font-extrabold tabular-nums text-stone-900">
+                        {arrivalAt}
+                      </span>
+                    )}
+                    <span
+                      className={`flex h-6 min-w-[28px] shrink-0 items-center justify-center rounded-full px-1.5 text-[11px] font-extrabold ${
+                        isFav ? "bg-[#0d3b8a] text-white" : "bg-cyan-500 text-white"
+                      }`}
+                    >
+                      {a.line}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-xs font-semibold text-stone-800">
+                      {a.destination || "—"}
+                    </span>
+                    <span
+                      className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-extrabold tabular-nums ${
+                        a.etaMinutes != null
+                          ? "bg-emerald-50 text-emerald-700"
+                          : "bg-stone-100 text-stone-500"
+                      }`}
+                    >
+                      {a.etaText || (a.etaMinutes != null ? `${a.etaMinutes} min` : "n/d")}
+                    </span>
+                  </li>
+                );
+              })}
+            <li className="pt-1 text-[10px] text-stone-400">
+              Datos en vivo de movilidad.alicante.es · {new Date(allArrivals.fetchedAt).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}
+            </li>
+          </ul>
         ) : upcoming.length === 0 ? (
           <div className="flex flex-col items-center gap-1 py-4 text-center">
             <span className="text-sm font-extrabold text-stone-700">n/d</span>
@@ -732,59 +785,6 @@ function ParadaFavoritaPage() {
           </ul>
         )}
       </section>
-
-      {/* Todas las líneas que llegan a esta parada */}
-      {allArrivals && allArrivals.items.length > 0 && (
-        <section className="mx-3 mt-2 rounded-3xl bg-white p-3 shadow-[0_8px_24px_-12px_rgba(60,40,10,0.25)]">
-          <h3 className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-stone-500">
-            <span>Todas las líneas en esta parada</span>
-            <span className="normal-case text-stone-400">
-              {allArrivals.items.length} llegadas
-            </span>
-          </h3>
-          <ul className="space-y-1.5">
-            {allArrivals.items
-              .slice()
-              .sort((a, b) => (a.etaMinutes ?? 9999) - (b.etaMinutes ?? 9999))
-              .map((a, i) => {
-                const normLine = (s: string) => s.toUpperCase().replace(/^0+(?=\w)/, "");
-                const isFav = normLine(a.line) === normLine(stop.line);
-                return (
-                  <li
-                    key={`${a.line}-${a.destination}-${i}`}
-                    className={`flex items-center gap-2 rounded-2xl px-2.5 py-1.5 ring-1 ${
-                      isFav ? "bg-[#0d3b8a]/5 ring-[#0d3b8a]/30" : "bg-stone-50 ring-stone-100"
-                    }`}
-                  >
-                    <span
-                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-extrabold ${
-                        isFav ? "bg-[#0d3b8a] text-white" : "bg-cyan-500 text-white"
-                      }`}
-                    >
-                      {a.line}
-                    </span>
-                    <ArrowRight className="h-3 w-3 shrink-0 text-stone-400" />
-                    <span className="min-w-0 flex-1 truncate text-xs font-semibold text-stone-800">
-                      {a.destination || "—"}
-                    </span>
-                    <span
-                      className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-extrabold tabular-nums ${
-                        a.etaMinutes != null
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "bg-stone-100 text-stone-500"
-                      }`}
-                    >
-                      {a.etaText || (a.etaMinutes != null ? `${a.etaMinutes} min` : "n/d")}
-                    </span>
-                  </li>
-                );
-              })}
-          </ul>
-          <p className="mt-2 text-[10px] text-stone-400">
-            Datos en vivo de movilidad.alicante.es · {new Date(allArrivals.fetchedAt).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}
-          </p>
-        </section>
-      )}
 
 
 
