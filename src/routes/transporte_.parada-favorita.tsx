@@ -60,9 +60,7 @@ function ParadaFavoritaPage() {
   const [snapshot, setSnapshot] = useState<{ etaMin: number; all: number[]; fetchedAt: number; destination: string | null } | null>(null);
   const [liveLoading, setLiveLoading] = useState(false);
   const [callError, setCallError] = useState<string | null>(null);
-  const [quota, setQuota] = useState<{ remaining: number; isAdmin: boolean; limit: number } | null>(null);
   const [experienceEnded, setExperienceEnded] = useState(false);
-  const requestRealtime = useServerFn(requestFavoriteStopRealtime);
 
   const serviceWindows = useBusServiceWindows();
   const lineDepartures = useBusLineDepartures();
