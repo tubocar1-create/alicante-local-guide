@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Bus, Loader2, RefreshCw, X, Search } from "lucide-react";
 import { BusStopExtractor } from "./BusStopExtractor";
+import { BusStopsBrowser } from "./BusStopsBrowser";
 
 const DEFAULT_PAGE_URL = "https://movilidad.alicante.es/paradas-de-bus?page=32";
 
@@ -253,6 +254,7 @@ export function BusTestButton() {
                 </div>
               </div>
 
+              <BusStopsBrowser />
               <BusStopExtractor />
 
 

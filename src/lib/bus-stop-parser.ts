@@ -112,14 +112,47 @@ function extractArrivalsFromTable(table: HTMLTableElement): BusArrival[] {
   return arrivals;
 }
 
-export function parseStopFromHtml(html: string, stopId: number): BusStopData | null {
-  const doc = new DOMParser().parseFromString(html, "text/html");
+export type DetectedStop = { stopId: number; name: string };
+
+export function parseStopFromDoc(doc: Document, stopId: number): BusStopData | null {
   const block = findStopBlock(doc, stopId);
   if (!block) return null;
   const stopName = extractStopName(block, stopId);
   const table = block.querySelector("table") as HTMLTableElement | null;
   const arrivals = table ? extractArrivalsFromTable(table) : [];
   return { stopId, stopName, arrivals };
+}
+
+export function parseStopFromHtml(html: string, stopId: number): BusStopData | null {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  return parseStopFromDoc(doc, stopId);
+}
+
+/**
+ * Detecta todas las paradas visibles en el HTML de una página de
+ * movilidad.alicante.es buscando el patrón "NNNN : NOMBRE".
+ * Deduplica por stopId.
+ */
+export function detectStopsFromHtml(html: string): {
+  doc: Document;
+  stops: DetectedStop[];
+} {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const text = doc.body?.textContent ?? "";
+  const re = /\b(\d{3,5})\s*[:\-–]\s*([A-ZÁÉÍÓÚÑ0-9][^\n\r|·]{2,80})/g;
+  const seen = new Map<number, string>();
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text))) {
+    const id = parseInt(m[1], 10);
+    if (!Number.isFinite(id)) continue;
+    const name = m[2].trim().replace(/\s{2,}.*$/, "").replace(/\s+/g, " ");
+    if (!name || name.length < 3) continue;
+    if (!seen.has(id)) seen.set(id, name);
+  }
+  const stops: DetectedStop[] = [...seen.entries()]
+    .map(([stopId, name]) => ({ stopId, name }))
+    .sort((a, b) => a.stopId - b.stopId);
+  return { doc, stops };
 }
 
 export async function extractStopFromPage(
