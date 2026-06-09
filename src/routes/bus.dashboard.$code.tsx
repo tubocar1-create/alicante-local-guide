@@ -425,7 +425,10 @@ function BusDashboardPage() {
           segmentProgress: Math.max(0, Math.min(1, bus.segmentProgress)),
         });
       }
-      if (bus.segmentProgress <= 0.05) {
+      // No sobrescribimos el ETA de la parada de origen con "0/ahora": el
+      // origen siempre debe reflejar la próxima salida OFICIAL (la fija
+      // deriveStopEtas como invariante del modelo).
+      if (bus.segmentProgress <= 0.05 && bus.segmentIndex > 0) {
         const currentStop = stops[bus.segmentIndex];
         if (currentStop) etasByDir[bus.direction].set(currentStop.code, { min: 0, time: formatHHMM(clock) });
       }
@@ -436,29 +439,6 @@ function BusDashboardPage() {
       if (!prev || eta.etaMin < prev.min) {
         etasByDir[eta.direction].set(eta.stopCode, { min: eta.etaMin, time: eta.etaClock });
       }
-    }
-
-    // INVARIANTE DEL MODELO: el ETA del ORIGEN siempre debe ser la próxima
-    // salida oficial de la BD (no se admite ningún valor sintético — ni
-    // regulación de terminal, ni propagación de buses, ni headway inferido).
-    // Esto garantiza la regla: "el modelo nunca da un ETA de salida que no
-    // corresponda al horario oficial". El tiempo real (cuando exista) puede
-    // sobrescribir esto en una capa superior; aquí sólo cuidamos el modelo.
-    for (const dir of [1, 2] as const) {
-      const stops = stopsByDir[dir];
-      if (stops.length === 0) continue;
-      const originCode = stops[0].code;
-      const officialDeps = plan.officialDeparturesByDirection[dir] ?? [];
-      const nextDep = officialDeps.find((d) => d >= nowMin - 0.5);
-      if (nextDep == null) {
-        etasByDir[dir].delete(originCode);
-        continue;
-      }
-      const wait = Math.max(0, Math.round(nextDep - nowMin));
-      const abs = ((nextDep % 1440) + 1440) % 1440;
-      const hh = String(Math.floor(abs / 60)).padStart(2, "0");
-      const mm = String(Math.floor(abs % 60)).padStart(2, "0");
-      etasByDir[dir].set(originCode, { min: wait, time: `${hh}:${mm}` });
     }
     return { etasByDir, busesByDir };
 
