@@ -611,12 +611,13 @@ function BusDashboardPage() {
         return typeof v === "number" ? v : null;
       });
 
-      // Un único bus vivo por dirección, anclado al origen (idx 0) y
-      // extendido con los siguientes ETAs reales monotónicamente crecientes.
+      // Un bus vivo SOLO si el origen reporta eta ~0 (el bus está físicamente
+      // en la terminal a punto de salir). Un eta>0 en el origen significa que
+      // el próximo bus llegará en X min — todavía no existe sobre la ruta.
       const chains: { idx: number; eta: number }[][] = [];
       const originEta = etas[0];
-      if (originEta !== null && originEta >= 0) {
-        const chain: { idx: number; eta: number }[] = [{ idx: 0, eta: originEta }];
+      if (originEta !== null && originEta <= 1) {
+        const chain: { idx: number; eta: number }[] = [{ idx: 0, eta: Math.max(0, originEta) }];
         for (let i = 1; i <= lastIdx; i++) {
           const v = etas[i];
           if (v === null || v <= chain[chain.length - 1].eta) continue;
@@ -624,6 +625,7 @@ function BusDashboardPage() {
         }
         chains.push(chain);
       }
+
 
 
       // Cadenas ordenadas por ETA mínima ascendente → líder (terminal) primero.
