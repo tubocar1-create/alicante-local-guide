@@ -51,11 +51,13 @@ function parseEtaToMinutes(text: string): number | null {
   return total;
 }
 
-function findStopBlock(doc: Document, stopId: number): HTMLElement | null {
+function findStopBlocks(doc: Document, stopId: number): HTMLElement[] {
   const idStr = String(stopId);
   // Buscar nodos de texto que contengan "5110 :" o "5110:" o "5110 -"
   const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT);
   const re = new RegExp(`\\b${idStr}\\b\\s*[:\\-–]\\s*[A-ZÁÉÍÓÚÑ]`);
+  const blocks: HTMLElement[] = [];
+  const seen = new Set<HTMLElement>();
   let node: Node | null;
   while ((node = walker.nextNode())) {
     const txt = node.nodeValue ?? "";
@@ -63,14 +65,24 @@ function findStopBlock(doc: Document, stopId: number): HTMLElement | null {
       // Subir hasta encontrar un contenedor con una tabla dentro
       let el: HTMLElement | null = (node.parentElement as HTMLElement) ?? null;
       for (let i = 0; i < 10 && el; i++) {
-        if (el.querySelector("table")) return el;
+        if (el.querySelector("table")) {
+          if (!seen.has(el)) {
+            seen.add(el);
+            blocks.push(el);
+          }
+          break;
+        }
         el = el.parentElement;
       }
-      // fallback: devuelve el ancestro más cercano
-      return (node.parentElement as HTMLElement) ?? null;
+      // fallback: guarda el ancestro más cercano si todavía no hay tabla.
+      const fallback = (node.parentElement as HTMLElement) ?? null;
+      if (fallback && !seen.has(fallback)) {
+        seen.add(fallback);
+        blocks.push(fallback);
+      }
     }
   }
-  return null;
+  return blocks;
 }
 
 function extractStopName(block: HTMLElement, stopId: number): string {
@@ -115,11 +127,22 @@ function extractArrivalsFromTable(table: HTMLTableElement): BusArrival[] {
 export type DetectedStop = { stopId: number; name: string };
 
 export function parseStopFromDoc(doc: Document, stopId: number): BusStopData | null {
-  const block = findStopBlock(doc, stopId);
-  if (!block) return null;
-  const stopName = extractStopName(block, stopId);
-  const table = block.querySelector("table") as HTMLTableElement | null;
-  const arrivals = table ? extractArrivalsFromTable(table) : [];
+  const blocks = findStopBlocks(doc, stopId);
+  if (blocks.length === 0) return null;
+  const stopName = blocks.map((block) => extractStopName(block, stopId)).find(Boolean) ?? "";
+  const seenArrivals = new Set<string>();
+  const arrivals: BusArrival[] = [];
+  for (const block of blocks) {
+    const tables = Array.from(block.querySelectorAll("table")) as HTMLTableElement[];
+    for (const table of tables) {
+      for (const arrival of extractArrivalsFromTable(table)) {
+        const key = `${arrival.line}|${arrival.destination}|${arrival.etaText}`;
+        if (seenArrivals.has(key)) continue;
+        seenArrivals.add(key);
+        arrivals.push(arrival);
+      }
+    }
+  }
   return { stopId, stopName, arrivals };
 }
 
