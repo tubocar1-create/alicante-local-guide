@@ -1094,6 +1094,7 @@ function DirectionColumn({
   disableLiveFetch,
   compareLiveByCode,
   compareInterpolatedCodes,
+  useLiveAsPrimary,
 }: {
   label: string;
   direction: 1 | 2;
@@ -1115,6 +1116,7 @@ function DirectionColumn({
   disableLiveFetch?: boolean;
   compareLiveByCode?: Record<string, number | null> | null;
   compareInterpolatedCodes?: Set<string> | null;
+  useLiveAsPrimary?: boolean;
 }) {
 
   const now = new Date();
