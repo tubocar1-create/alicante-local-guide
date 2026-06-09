@@ -672,9 +672,101 @@ function ParadaFavoritaPage() {
                 Experiencia finalizada. Pulsa el botón para una nueva consulta.
               </p>
             )}
+
+            {allArrivals && allArrivals.items.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setArrivalsOpen(true)}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-3 py-2.5 text-sm font-extrabold text-[#0d3b8a] shadow-sm ring-1 ring-[#0d3b8a]/20 active:scale-[0.98]"
+              >
+                <Bus className="h-4 w-4" />
+                Ver todas las próximas llegadas ({allArrivals.items.length})
+              </button>
+            )}
           </div>
         )}
       </section>
+
+      {/* Dialog: todas las próximas llegadas */}
+      {arrivalsOpen && allArrivals && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 px-3 pb-3 pt-10"
+          onClick={() => setArrivalsOpen(false)}
+        >
+          <div
+            className="flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-stone-100 px-4 py-3">
+              <div>
+                <h3 className="text-sm font-extrabold text-stone-900">Próximas llegadas</h3>
+                <p className="text-[10px] text-stone-500">
+                  Parada {stop.stopId} · {new Date(allArrivals.fetchedAt).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setArrivalsOpen(false)}
+                className="rounded-full px-3 py-1 text-xs font-bold text-stone-600 ring-1 ring-stone-200 active:scale-95"
+              >
+                Cerrar
+              </button>
+            </div>
+            <ul className="flex-1 space-y-1.5 overflow-y-auto px-3 py-3">
+              {allArrivals.items
+                .slice()
+                .sort((a, b) => (a.etaMinutes ?? 9999) - (b.etaMinutes ?? 9999))
+                .map((a, i) => {
+                  const normLine = (s: string) => s.toUpperCase().replace(/^0+(?=\w)/, "");
+                  const isFav = normLine(a.line) === normLine(stop.line);
+                  const arrivalAt = a.etaMinutes != null
+                    ? (() => {
+                        const d = new Date(allArrivals.fetchedAt + a.etaMinutes * 60_000);
+                        return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+                      })()
+                    : null;
+                  return (
+                    <li
+                      key={`${a.line}-${a.destination}-${i}`}
+                      className={`flex flex-wrap items-center gap-x-2 gap-y-1 rounded-2xl px-2.5 py-2 ring-1 ${
+                        isFav ? "bg-[#0d3b8a]/5 ring-[#0d3b8a]/30" : "bg-stone-50 ring-stone-100"
+                      }`}
+                    >
+                      <Bus className={`h-4 w-4 shrink-0 ${isFav ? "text-[#0d3b8a]" : "text-stone-400"}`} />
+                      {arrivalAt && (
+                        <span className="shrink-0 text-sm font-extrabold tabular-nums text-stone-900">
+                          {arrivalAt}
+                        </span>
+                      )}
+                      <span
+                        className={`flex h-6 min-w-[32px] shrink-0 items-center justify-center rounded-full px-2 text-[11px] font-extrabold ${
+                          isFav ? "bg-[#0d3b8a] text-white" : "bg-cyan-500 text-white"
+                        }`}
+                      >
+                        {a.line}
+                      </span>
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-extrabold tabular-nums ${
+                          a.etaMinutes != null
+                            ? "bg-emerald-50 text-emerald-700"
+                            : "bg-stone-100 text-stone-500"
+                        }`}
+                      >
+                        {a.etaText || (a.etaMinutes != null ? `${a.etaMinutes} min` : "n/d")}
+                      </span>
+                      <span className="basis-full text-[11px] font-semibold leading-tight text-stone-700">
+                        → {a.destination || "—"}
+                      </span>
+                    </li>
+                  );
+                })}
+            </ul>
+            <p className="border-t border-stone-100 px-4 py-2 text-[10px] text-stone-400">
+              Datos en vivo de movilidad.alicante.es
+            </p>
+          </div>
+        </div>
+      )}
 
 
 
