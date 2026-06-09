@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, ArrowRight, Bus, ChevronRight, Clock, Info, MapPin, Plane, RefreshCcw, Search, Star, Zap, AlertCircle } from "lucide-react";
 import {
   FavoriteStop,
@@ -14,8 +13,11 @@ import {
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { useBusServiceWindows, useBusLineDepartures, getServiceStatus, getNightLineEstimates } from "@/hooks/useBusServiceWindow";
 import { cumulativeMinutes, NIGHT_URBAN_KMH } from "@/lib/bus-eta";
-import { requestFavoriteStopRealtime, type FavoriteStopRealtimeResult } from "@/lib/favorite-stop-firecrawl.functions";
-import { getVisitorId } from "@/lib/tracking/visitor";
+import { extractStopFromPage } from "@/lib/bus-stop-parser";
+import { supabase } from "@/integrations/supabase/client";
+
+const PAGE_BASE = "https://movilidad.alicante.es/paradas-de-bus?page=";
+
 
 export const Route = createFileRoute("/transporte_/parada-favorita")({
   validateSearch: (s: Record<string, unknown>) => ({
