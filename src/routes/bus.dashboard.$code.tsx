@@ -659,22 +659,12 @@ function BusDashboardPage() {
       // atrás en la ruta) puede buscar su próxima ETA>0.
       let upperBound = lastIdx + 1;
       for (const bus of prev) {
-        // Tiempo transcurrido desde el último refresh de este bus.
-        const elapsedMin = Math.max(0, (updatedAt - bus.updatedAt) / 60_000);
-        // ETA esperada en la próxima parada si NO la hubiera pasado.
-        const expectedNextEta = Math.max(0, bus.nextEta - elapsedMin);
-
-        // Buscar próxima parada con ETA>0 por delante. Si la primera candidata
-        // tiene ETA mucho mayor que la esperada (>+2 min), asumimos que el bus
-        // YA pasó esa parada (la ETA mostrada pertenece al siguiente bus) y
-        // seguimos buscando hacia adelante. Esto evita que el bus "vuelva atrás"
-        // cuando estaba a punto de llegar a una parada y en el refresh aparece
-        // un ETA grande porque corresponde al bus siguiente.
+        // Buscar próxima parada con ETA>0 por delante (acotada por upperBound
+        // para los buses que vienen detrás del líder).
         let newJ = -1;
         for (let j = bus.segmentIndex + 1; j < upperBound; j++) {
           const v = etas[j];
           if (v === null || v <= 0) continue;
-          if (v > expectedNextEta + 2) continue; // ETA pertenece al bus de atrás → saltar.
           newJ = j; break;
         }
         if (newJ === -1) {
