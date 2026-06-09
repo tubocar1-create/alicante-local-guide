@@ -1022,6 +1022,7 @@ function DirectionColumn({
   predictedBuses,
   disableLiveFetch,
   compareLiveByCode,
+  compareInterpolatedCodes,
 }: {
   label: string;
   direction: 1 | 2;
