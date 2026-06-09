@@ -463,8 +463,6 @@ function BusDashboardPage() {
     enabled: compareTestEnabled,
     refetchOnWindowFocus: false,
     staleTime: 0,
-    refetchInterval: 40_000,
-    refetchIntervalInBackground: true,
     queryFn: () => fetchLineLive({ data: { lineCode: String(code).toUpperCase() } }),
   });
   const liveCompareByCode = useMemo<Record<string, number | null>>(() => {
@@ -535,6 +533,21 @@ function BusDashboardPage() {
 
   return (
     <div className="h-[100dvh] overflow-y-auto overscroll-contain bg-black text-white">
+      {compareTestEnabled && (
+        <button
+          type="button"
+          onClick={() => liveCompareQuery.refetch()}
+          disabled={liveCompareQuery.isFetching}
+          aria-label="Refrescar tiempos reales"
+          className="fixed bottom-24 right-4 z-50 inline-flex h-12 w-12 items-center justify-center rounded-full border border-emerald-300/60 bg-black/80 text-emerald-300 shadow-lg backdrop-blur-sm hover:bg-black/90 disabled:opacity-60"
+        >
+          {liveCompareQuery.isFetching ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <RefreshCw className="h-5 w-5" />
+          )}
+        </button>
+      )}
       <div className="mx-auto max-w-3xl px-3 py-4">
         {/* HEADER */}
         <div className="flex items-start gap-3">
