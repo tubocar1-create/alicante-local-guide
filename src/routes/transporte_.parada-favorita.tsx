@@ -13,7 +13,7 @@ import {
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { useBusServiceWindows, useBusLineDepartures, getServiceStatus, getNightLineEstimates } from "@/hooks/useBusServiceWindow";
 import { cumulativeMinutes, NIGHT_URBAN_KMH } from "@/lib/bus-eta";
-import { extractStopFromPage } from "@/lib/bus-stop-parser";
+import { extractStopFromPage, type BusArrival } from "@/lib/bus-stop-parser";
 import { supabase } from "@/integrations/supabase/client";
 
 const PAGE_BASE = "https://movilidad.alicante.es/paradas-de-bus?page=";
