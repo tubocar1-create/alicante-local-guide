@@ -17,7 +17,8 @@ import {
   toMinHM,
 } from "@/hooks/useBusServiceWindow";
 import { cumulativeMinutes, NIGHT_URBAN_KMH } from "@/lib/bus-eta";
-import { getClientStopRealtime, getClientStopsRealtimeBatch } from "@/lib/bus-realtime-client";
+import { parseStopFromHtml } from "@/lib/bus-stop-parser";
+import { supabase } from "@/integrations/supabase/client";
 import busAlicanteImg from "@/assets/bus-alicante.png";
 import { useLineRealtime, isPreviewHost } from "@/hooks/useLineRealtime";
 import { useBusEngine } from "@/hooks/useBusEngine";
