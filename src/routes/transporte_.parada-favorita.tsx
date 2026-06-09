@@ -15,6 +15,17 @@ import { useBusServiceWindows, useBusLineDepartures, getServiceStatus, getNightL
 import { cumulativeMinutes, NIGHT_URBAN_KMH } from "@/lib/bus-eta";
 import { extractStopFromPage, type BusArrival } from "@/lib/bus-stop-parser";
 import { supabase } from "@/integrations/supabase/client";
+import { classifyLine } from "@/components/BusKnownPicker";
+
+// Colores por categoría (coherentes con el selector "Elige tu línea")
+const LINE_CATEGORY_COLOR: Record<"urban" | "extraurban" | "night", string> = {
+  urban: "#DC2626",      // rojo (Urbanas)
+  extraurban: "#2563EB", // azul (Interurbanas)
+  night: "#7C3AED",      // violeta (Nocturnas)
+};
+function lineColor(code: string): string {
+  return LINE_CATEGORY_COLOR[classifyLine(code)];
+}
 
 const PAGE_BASE = "https://movilidad.alicante.es/paradas-de-bus?page=";
 
