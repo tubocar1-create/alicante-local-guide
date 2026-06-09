@@ -113,6 +113,16 @@ export function BusStopExtractor() {
         </button>
       </div>
 
+      {resolvedPage != null && (
+        <div className="mt-2 text-[10px] text-cyan-300">
+          📄 Página resuelta: <span className="font-mono font-bold">{resolvedPage}</span>
+        </div>
+      )}
+      {resolveError && (
+        <div className="mt-2 rounded-lg bg-destructive/10 px-3 py-2 text-[11px] text-destructive">
+          {resolveError}
+        </div>
+      )}
       {dbg && (
         <div className="mt-2 text-[10px] text-muted-foreground">
           ⏱ {dbg.fetchMs}ms · 📦 {(dbg.htmlBytes / 1024).toFixed(1)}KB · 🚌 {dbg.arrivalsFound} llegadas
