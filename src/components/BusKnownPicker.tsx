@@ -184,11 +184,12 @@ export function BusKnownPicker({ onClose, onUnknown, onSelected, initialLineCode
           </h3>
         </div>
         <button
+          type="button"
           onClick={onClose}
-          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-muted/60 hover:bg-muted"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-muted/60 hover:bg-muted active:scale-95"
           aria-label="Cerrar"
         >
-          <X className="h-4 w-4" />
+          <X className="h-5 w-5" />
         </button>
       </div>
 

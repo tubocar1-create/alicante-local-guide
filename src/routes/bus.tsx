@@ -47,14 +47,22 @@ function BusRouteShell() {
 
   if (pathname !== "/bus") return <Outlet />;
 
+  const goBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      window.history.back();
+    } else {
+      navigate({ to: "/transporte" });
+    }
+  };
+
   return (
     <main className="min-h-dvh bg-background pb-24">
-      <header className="sticky top-0 z-10 flex items-center gap-2 border-b border-border/60 bg-background/90 px-3 py-2.5 backdrop-blur">
+      <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-border/60 bg-background/90 px-3 py-2.5 backdrop-blur">
         <button
           type="button"
-          onClick={() => navigate({ to: "/transporte" })}
-          className="flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium shadow-sm transition active:scale-95"
-          aria-label="Volver a Transporte"
+          onClick={goBack}
+          className="flex items-center gap-1 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium shadow-sm transition active:scale-95"
+          aria-label="Volver"
         >
           ← Volver
         </button>
@@ -63,8 +71,8 @@ function BusRouteShell() {
       <div className="w-full">
         <BusKnownPicker
           embedded
-          onClose={() => navigate({ to: "/transporte" })}
-          onUnknown={() => navigate({ to: "/transporte" })}
+          onClose={goBack}
+          onUnknown={goBack}
           onSelected={(pick: BusStopPick) => {
             navigate({
               to: "/transporte/parada-favorita",
