@@ -715,7 +715,7 @@ function ParadaFavoritaPage() {
                 return (
                   <li
                     key={`${a.line}-${a.destination}-${i}`}
-                    className={`flex items-center gap-2 rounded-2xl px-2.5 py-1.5 ring-1 ${
+                    className={`flex flex-wrap items-center gap-x-2 gap-y-1 rounded-2xl px-2.5 py-2 ring-1 ${
                       isFav ? "bg-[#0d3b8a]/5 ring-[#0d3b8a]/30" : "bg-stone-50 ring-stone-100"
                     }`}
                   >
@@ -726,14 +726,11 @@ function ParadaFavoritaPage() {
                       </span>
                     )}
                     <span
-                      className={`flex h-6 min-w-[28px] shrink-0 items-center justify-center rounded-full px-1.5 text-[11px] font-extrabold ${
+                      className={`flex h-6 min-w-[32px] shrink-0 items-center justify-center rounded-full px-2 text-[11px] font-extrabold ${
                         isFav ? "bg-[#0d3b8a] text-white" : "bg-cyan-500 text-white"
                       }`}
                     >
                       {a.line}
-                    </span>
-                    <span className="min-w-0 flex-1 truncate text-xs font-semibold text-stone-800">
-                      {a.destination || "—"}
                     </span>
                     <span
                       className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-extrabold tabular-nums ${
@@ -743,6 +740,9 @@ function ParadaFavoritaPage() {
                       }`}
                     >
                       {a.etaText || (a.etaMinutes != null ? `${a.etaMinutes} min` : "n/d")}
+                    </span>
+                    <span className="basis-full text-[11px] font-semibold leading-tight text-stone-700">
+                      → {a.destination || "—"}
                     </span>
                   </li>
                 );
