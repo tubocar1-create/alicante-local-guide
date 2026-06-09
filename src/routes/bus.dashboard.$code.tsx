@@ -650,17 +650,11 @@ function BusDashboardPage() {
       if (leadJ < 1) continue;
       pushBus(leadJ - 1, etas[leadJ] as number, "lead");
 
-      // 2) Buses adicionales: caídas bruscas (≥1 min) tras el líder.
-      let prev = etas[leadJ] as number;
-      let count = 1;
-      for (let j = leadJ + 1; j <= lastIdx; j++) {
-        const v = etas[j];
-        if (v === null) continue;
-        if (v + 1 <= prev) {
-          pushBus(j - 1, v, `b${count++}`);
-        }
-        prev = v;
-      }
+      // NOTA: dibujamos un único bus líder por dirección. Buses adicionales
+      // requerirán tracking con estado a través de refrescos (cada nacimiento
+      // ETA=0 en partida = un bus nuevo persistido). Las "caídas" de ETA río
+      // abajo NO son señal fiable de un nuevo bus (ruido / interpolación /
+      // ETAs del siguiente bus al fondo de la lista) y producían fantasmas.
     }
     return out;
   }, [compareTestEnabled, liveCompareByCode, stopsByDir, clock, liveDataUpdatedAt]);
