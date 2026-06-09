@@ -92,6 +92,7 @@ import { Route as AdminSaludRouteImport } from './routes/admin.salud'
 import { Route as AdminRefrescoGoogleRouteImport } from './routes/admin.refresco-google'
 import { Route as AdminPlacesRouteImport } from './routes/admin.places'
 import { Route as AdminOperationsRouteImport } from './routes/admin.operations'
+import { Route as AdminModeloBusesRouteImport } from './routes/admin.modelo-buses'
 import { Route as AdminMetricasInternasRouteImport } from './routes/admin.metricas-internas'
 import { Route as AdminMetricasExternasRouteImport } from './routes/admin.metricas-externas'
 import { Route as AdminIntegracionesRouteImport } from './routes/admin.integraciones'
@@ -596,6 +597,11 @@ const AdminPlacesRoute = AdminPlacesRouteImport.update({
 const AdminOperationsRoute = AdminOperationsRouteImport.update({
   id: '/operations',
   path: '/operations',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminModeloBusesRoute = AdminModeloBusesRouteImport.update({
+  id: '/modelo-buses',
+  path: '/modelo-buses',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminMetricasInternasRoute = AdminMetricasInternasRouteImport.update({
@@ -1105,6 +1111,7 @@ export interface FileRoutesByFullPath {
   '/admin/integraciones': typeof AdminIntegracionesRoute
   '/admin/metricas-externas': typeof AdminMetricasExternasRoute
   '/admin/metricas-internas': typeof AdminMetricasInternasRoute
+  '/admin/modelo-buses': typeof AdminModeloBusesRoute
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/places': typeof AdminPlacesRoute
   '/admin/refresco-google': typeof AdminRefrescoGoogleRoute
@@ -1275,6 +1282,7 @@ export interface FileRoutesByTo {
   '/admin/integraciones': typeof AdminIntegracionesRoute
   '/admin/metricas-externas': typeof AdminMetricasExternasRoute
   '/admin/metricas-internas': typeof AdminMetricasInternasRoute
+  '/admin/modelo-buses': typeof AdminModeloBusesRoute
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/places': typeof AdminPlacesRoute
   '/admin/refresco-google': typeof AdminRefrescoGoogleRoute
@@ -1449,6 +1457,7 @@ export interface FileRoutesById {
   '/admin/integraciones': typeof AdminIntegracionesRoute
   '/admin/metricas-externas': typeof AdminMetricasExternasRoute
   '/admin/metricas-internas': typeof AdminMetricasInternasRoute
+  '/admin/modelo-buses': typeof AdminModeloBusesRoute
   '/admin/operations': typeof AdminOperationsRoute
   '/admin/places': typeof AdminPlacesRoute
   '/admin/refresco-google': typeof AdminRefrescoGoogleRoute
@@ -1624,6 +1633,7 @@ export interface FileRouteTypes {
     | '/admin/integraciones'
     | '/admin/metricas-externas'
     | '/admin/metricas-internas'
+    | '/admin/modelo-buses'
     | '/admin/operations'
     | '/admin/places'
     | '/admin/refresco-google'
@@ -1794,6 +1804,7 @@ export interface FileRouteTypes {
     | '/admin/integraciones'
     | '/admin/metricas-externas'
     | '/admin/metricas-internas'
+    | '/admin/modelo-buses'
     | '/admin/operations'
     | '/admin/places'
     | '/admin/refresco-google'
@@ -1967,6 +1978,7 @@ export interface FileRouteTypes {
     | '/admin/integraciones'
     | '/admin/metricas-externas'
     | '/admin/metricas-internas'
+    | '/admin/modelo-buses'
     | '/admin/operations'
     | '/admin/places'
     | '/admin/refresco-google'
@@ -2787,6 +2799,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminOperationsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/modelo-buses': {
+      id: '/admin/modelo-buses'
+      path: '/modelo-buses'
+      fullPath: '/admin/modelo-buses'
+      preLoaderRoute: typeof AdminModeloBusesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/metricas-internas': {
       id: '/admin/metricas-internas'
       path: '/metricas-internas'
@@ -3473,6 +3492,7 @@ interface AdminRouteChildren {
   AdminIntegracionesRoute: typeof AdminIntegracionesRoute
   AdminMetricasExternasRoute: typeof AdminMetricasExternasRoute
   AdminMetricasInternasRoute: typeof AdminMetricasInternasRoute
+  AdminModeloBusesRoute: typeof AdminModeloBusesRoute
   AdminOperationsRoute: typeof AdminOperationsRoute
   AdminPlacesRoute: typeof AdminPlacesRoute
   AdminRefrescoGoogleRoute: typeof AdminRefrescoGoogleRoute
@@ -3498,6 +3518,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminIntegracionesRoute: AdminIntegracionesRoute,
   AdminMetricasExternasRoute: AdminMetricasExternasRoute,
   AdminMetricasInternasRoute: AdminMetricasInternasRoute,
+  AdminModeloBusesRoute: AdminModeloBusesRoute,
   AdminOperationsRoute: AdminOperationsRoute,
   AdminPlacesRoute: AdminPlacesRoute,
   AdminRefrescoGoogleRoute: AdminRefrescoGoogleRoute,
@@ -3758,13 +3779,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
