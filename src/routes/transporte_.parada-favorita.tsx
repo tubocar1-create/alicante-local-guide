@@ -302,15 +302,17 @@ function ParadaFavoritaPage() {
   // Auto-refresh cada 40s: una vez el usuario ha iniciado la experiencia
   // (existe snapshot activo), recargamos la información desde
   // movilidad.alicante.es ("Alicante se mueve") para reestablecer los
-  // contadores. Se detiene si la experiencia ha terminado, la línea está
-  // fuera de servicio, es nocturna o ya hay una carga en curso.
+  // contadores TANTO de la línea principal como de "Próximas llegadas".
+  // Usamos un ref a la última versión de handleRequestRealtime para evitar
+  // closures obsoletos dentro del setInterval.
+  const refreshRef = useRef<() => Promise<void>>(() => Promise.resolve());
+  refreshRef.current = handleRequestRealtime;
   useEffect(() => {
     if (!snapshot || experienceEnded || outOfService || isNightLine) return;
     const id = window.setInterval(() => {
-      if (!liveLoading) handleRequestRealtime();
+      refreshRef.current();
     }, 40_000);
     return () => window.clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [snapshot, experienceEnded, outOfService, isNightLine]);
 
   const nightFirst = nightEstimate?.upcoming[0];
