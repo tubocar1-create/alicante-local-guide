@@ -71,8 +71,20 @@ const ReviewSchema = z.object({
  * vía `trackOperationalEvent`. Nunca lanza al caller para no romper la UX.
  */
 export const logOperationalEvent = createServerFn({ method: "POST" })
-  .inputValidator((input) => TrackSchema.parse(input))
+  .inputValidator((input) => {
+    // Validación tolerante: si el payload no encaja con el schema, no
+    // queremos devolver 500 al cliente (es telemetría fire-and-forget).
+    // Pasamos un sentinel y el handler decide silenciosamente saltar el insert.
+    const parsed = TrackSchema.safeParse(input);
+    if (parsed.success) return parsed.data;
+    return { __invalid: true as const, __error: parsed.error.message } as unknown as z.infer<typeof TrackSchema>;
+  })
   .handler(async ({ data }) => {
+    if ((data as unknown as { __invalid?: boolean }).__invalid) {
+      console.debug("[operations.log] invalid payload, skipping",
+        (data as unknown as { __error?: string }).__error);
+      return { ok: false as const, skipped: true };
+    }
     try {
       let ipTrunc: string | null = null;
       let geo = { country: null as string | null, city: null as string | null, region: null as string | null };
