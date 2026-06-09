@@ -1214,18 +1214,23 @@ function DirectionColumn({
                 if (!hasInMap) return null;
                 const real = compareLiveByCode[s.code];
                 const hasReal = typeof real === "number";
+                const isInterp = !!compareInterpolatedCodes?.has(s.code);
                 const predicted = typeof eta1 === "number" ? eta1 : null;
-                const diff = hasReal && predicted !== null ? real! - predicted : null;
+                const diff = hasReal && !isInterp && predicted !== null ? real! - predicted : null;
+                const borderCls = isInterp ? "border-amber-300/60" : "border-emerald-300/60";
+                const labelCls = isInterp ? "text-amber-300" : "text-emerald-300";
+                const valueCls = isInterp ? "text-amber-200" : "text-emerald-200";
+                const labelText = isInterp ? "Aprox" : "Real";
                 return (
                   <div
                     aria-hidden
-                    className="pointer-events-none absolute right-1 top-1 z-30 flex items-center gap-1 rounded-md border border-emerald-300/60 bg-black/70 px-1.5 py-0.5 backdrop-blur-sm"
+                    className={`pointer-events-none absolute right-1 top-1 z-30 flex items-center gap-1 rounded-md border ${borderCls} bg-black/70 px-1.5 py-0.5 backdrop-blur-sm`}
                   >
-                    <span className="font-sans text-[8px] font-extrabold not-italic uppercase tracking-wide text-emerald-300">
-                      Real
+                    <span className={`font-sans text-[8px] font-extrabold not-italic uppercase tracking-wide ${labelCls}`}>
+                      {labelText}
                     </span>
-                    <span className="font-sans text-[11px] font-bold not-italic tabular-nums text-emerald-200">
-                      {hasReal ? `${real}m` : "—"}
+                    <span className={`font-sans text-[11px] font-bold not-italic tabular-nums ${valueCls}`}>
+                      {hasReal ? `${isInterp ? "≈" : ""}${real}m` : "—"}
                     </span>
                     {diff !== null && (
                       <span
