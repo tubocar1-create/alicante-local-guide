@@ -602,31 +602,44 @@ function BusDashboardPage() {
         continue;
       }
       const lastIdx = stops.length - 1;
-      // SOLO datos reales del feed para detectar buses vivos. El fallback al
-      // modelo se aplica para mostrar ETAs en la lista, pero NO para inferir
-      // buses (cada parada del modelo puede pertenecer a un bus distinto, lo
-      // que produciría una flota fantasma).
-      const etas = stops.map((s) => {
+      const modelMap = scheduleEtaByDir[dir];
+      // Datos reales del feed para detectar buses vivos. El modelo se usa
+      // solo para RELLENAR huecos del schedule entre/tras anclas reales, de
+      // forma que la posición animada siempre apunte a la parada cuyo ETA
+      // (real o modelado) se aproxima a cero.
+      const realEtas = stops.map((s) => {
         const v = liveCompareRaw[s.code];
         return typeof v === "number" ? v : null;
+      });
+      const modelEtas = stops.map((s) => {
+        const m = modelMap?.get(s.code);
+        return m && typeof m.min === "number" ? m.min : null;
       });
 
       // Un bus vivo SOLO si el origen reporta eta ~0 (el bus está físicamente
       // en la terminal a punto de salir). Un eta>0 en el origen significa que
       // el próximo bus llegará en X min — todavía no existe sobre la ruta.
       const chains: { idx: number; eta: number }[][] = [];
-      const originEta = etas[0];
+      const originEta = realEtas[0];
       if (originEta !== null && originEta <= 1) {
         const chain: { idx: number; eta: number }[] = [{ idx: 0, eta: Math.max(0, originEta) }];
         for (let i = 1; i <= lastIdx; i++) {
-          const v = etas[i];
-          if (v === null || v <= chain[chain.length - 1].eta) continue;
-          chain.push({ idx: i, eta: v });
+          const last = chain[chain.length - 1];
+          // Preferimos real; si no, usamos modelo para mantener una ancla
+          // monotónica en cada parada. Así el bus "toca" cada parada cuando
+          // su ETA llega a 0.
+          const real = realEtas[i];
+          let candidate: number | null = null;
+          if (real !== null && real > last.eta) candidate = real;
+          else {
+            const model = modelEtas[i];
+            if (model !== null && model > last.eta) candidate = model;
+          }
+          if (candidate === null) continue;
+          chain.push({ idx: i, eta: candidate });
         }
         chains.push(chain);
       }
-
-
 
       // Cadenas ordenadas por ETA mínima ascendente → líder (terminal) primero.
       chains.sort((a, b) => a[0].eta - b[0].eta);
@@ -642,7 +655,6 @@ function BusDashboardPage() {
         const chain = chains[ci];
         const match = prevByAnchor[ci]?.bus;
         if (match && chain[0].idx >= (match.schedule[0]?.idx ?? 0) - 0) {
-          // Mismo bus: actualizar snapshot y schedule.
           survivors.push({
             id: match.id,
             bornAt: match.bornAt,
@@ -650,7 +662,6 @@ function BusDashboardPage() {
             schedule: chain,
           });
         } else {
-          // Bus nuevo (no había previo o la cadena retrocedió).
           survivors.push({
             id: `bus-${dir}-${updatedAt}-${ci}`,
             bornAt: updatedAt,
@@ -663,7 +674,7 @@ function BusDashboardPage() {
       activeBusesRef.current[dir] = survivors;
     }
     setBusesVersion((v) => v + 1);
-  }, [liveDataUpdatedAt, compareTestEnabled, liveCompareRaw, stopsByDir]);
+  }, [liveDataUpdatedAt, compareTestEnabled, liveCompareRaw, stopsByDir, scheduleEtaByDir]);
 
   // Render: usa el ref + reloj para animar progreso entre refrescos.
   // Estrategia: el bus arranca en su anchor (schedule[0].idx) con t=0; al
