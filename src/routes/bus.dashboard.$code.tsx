@@ -1165,33 +1165,6 @@ function DirectionColumn({
                       estimado
                     </span>
                   </div>
-                  {compareLiveByCode && (() => {
-                    const real = compareLiveByCode[s.code];
-                    const hasReal = typeof real === "number";
-                    const hasInMap = Object.prototype.hasOwnProperty.call(compareLiveByCode, s.code);
-                    const predicted = typeof eta1 === "number" ? eta1 : null;
-                    const diff = hasReal && predicted !== null ? real! - predicted : null;
-                    return (
-                      <div className="mt-0.5 flex items-baseline gap-1.5">
-                        <span className="rounded bg-emerald-500/90 px-1 py-0.5 font-sans text-[9px] font-extrabold not-italic uppercase tracking-wide text-black">
-                          Real
-                        </span>
-                        <span className="font-sans text-[11px] font-bold not-italic tabular-nums text-emerald-300">
-                          {hasReal ? `${real} min` : hasInMap ? "n/d" : "—"}
-                        </span>
-                        {diff !== null && (
-                          <span
-                            className={[
-                              "font-sans text-[9px] font-semibold not-italic tabular-nums",
-                              diff > 0 ? "text-amber-300" : diff < 0 ? "text-sky-300" : "text-white/60",
-                            ].join(" ")}
-                          >
-                            {diff > 0 ? `+${diff}` : diff}
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })()}
                   <div className="flex items-center gap-1.5">
                     <span className="truncate font-sans text-[12px] font-semibold not-italic leading-snug text-white">
                       {s.name}
