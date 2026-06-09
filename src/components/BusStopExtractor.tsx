@@ -1,22 +1,49 @@
 import { useEffect, useRef, useState } from "react";
 import { Bus, Loader2, Play, RefreshCw } from "lucide-react";
 import { extractStopFromPage, type BusStopData, type ExtractResult } from "@/lib/bus-stop-parser";
+import { supabase } from "@/integrations/supabase/client";
 
-const PAGE_URL = "https://movilidad.alicante.es/paradas-de-bus?page=32";
+const PAGE_BASE = "https://movilidad.alicante.es/paradas-de-bus?page=";
 type EtaDelta = "up" | "down" | "same" | "new";
 
 export function BusStopExtractor() {
-  const [stopId, setStopId] = useState<number>(5110);
+  const [stopIdText, setStopIdText] = useState<string>("5110");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ExtractResult | null>(null);
+  const [resolvedPage, setResolvedPage] = useState<number | null>(null);
+  const [resolveError, setResolveError] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(false);
   const prevRef = useRef<BusStopData | null>(null);
   const [deltas, setDeltas] = useState<Record<string, EtaDelta>>({});
 
+  const stopId = stopIdText.trim();
+
   async function run() {
+    if (!stopId) return;
     setLoading(true);
-    const r = await extractStopFromPage(PAGE_URL, stopId);
-    // calcular deltas
+    setResolveError(null);
+    setResolvedPage(null);
+
+    const { data, error } = await supabase
+      .from("bus_stop_catalog")
+      .select("page_number, source_url")
+      .eq("stop_id", stopId)
+      .maybeSingle();
+
+    if (error || !data) {
+      setResolveError(
+        error?.message ??
+          `Parada ${stopId} no está en el catálogo. Indéxala primero con el constructor.`,
+      );
+      setResult(null);
+      setLoading(false);
+      return;
+    }
+
+    const pageUrl = data.source_url || `${PAGE_BASE}${data.page_number}`;
+    setResolvedPage(data.page_number);
+
+    const r = await extractStopFromPage(pageUrl, stopId);
     if (r.stop && prevRef.current && prevRef.current.stopId === r.stop.stopId) {
       const d: Record<string, EtaDelta> = {};
       r.stop.arrivals.forEach((a, i) => {
