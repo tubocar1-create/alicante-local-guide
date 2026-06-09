@@ -562,15 +562,44 @@ function BusDashboardPage() {
         cum.push(acc);
       }
       // Índices de anclas (paradas con ETA real numérico)
-      const anchors: { idx: number; eta: number }[] = [];
+      const rawAnchors: { idx: number; eta: number }[] = [];
       for (let i = 0; i < codes.length; i++) {
         const v = liveCompareRaw[codes[i]];
-        if (typeof v === "number") anchors.push({ idx: i, eta: v });
+        if (typeof v === "number") rawAnchors.push({ idx: i, eta: v });
       }
-      if (anchors.length === 0) continue;
+      if (rawAnchors.length === 0) continue;
+      // Filtrado: las ETAs del feed pueden mezclar buses distintos (p.ej. una
+      // parada cercana al origen tiene eta=0 por un bus que ya pasó, mientras
+      // que el origen tiene eta=35 por el próximo bus). Conservamos la
+      // cadena monotónica creciente más larga empezando por el origen, que
+      // representa el bus que vamos a renderizar.
+      // Algoritmo: barrido por LIS (longest increasing subsequence) simple
+      // sobre etas; para nuestro caso típico (orden por stop idx ascendente)
+      // basta con un greedy: añadir si eta >= último eta de la cadena.
+      let bestChain: { idx: number; eta: number }[] = [];
+      for (let start = 0; start < rawAnchors.length; start++) {
+        const chain: { idx: number; eta: number }[] = [rawAnchors[start]];
+        for (let j = start + 1; j < rawAnchors.length; j++) {
+          if (rawAnchors[j].eta >= chain[chain.length - 1].eta) {
+            chain.push(rawAnchors[j]);
+          }
+        }
+        if (chain.length > bestChain.length) bestChain = chain;
+      }
+      const anchors = bestChain;
+      const anchorIdxSet = new Set(anchors.map((a) => a.idx));
+      // Velocidad por defecto: ~18 km/h urbana → minutos por metro.
+      const DEFAULT_MIN_PER_M = 1 / (18_000 / 60); // 18km/h
+      // Marcar como interpoladas las anclas descartadas (vendrán recalculadas).
+      for (const ra of rawAnchors) {
+        if (!anchorIdxSet.has(ra.idx)) {
+          // las recalcularemos abajo
+        }
+      }
       for (let i = 0; i < codes.length; i++) {
         const c = codes[i];
-        if (typeof liveCompareRaw[c] === "number") continue;
+        // Si es ancla válida de la cadena, conservamos el valor real.
+        if (anchorIdxSet.has(i)) continue;
         let estimate: number | null = null;
         let prev: { idx: number; eta: number } | null = null;
         let next: { idx: number; eta: number } | null = null;
@@ -583,23 +612,24 @@ function BusDashboardPage() {
           const frac = span > 0 ? (cum[i] - cum[prev.idx]) / span : 0;
           estimate = prev.eta + frac * (next.eta - prev.eta);
         } else if (prev && next === null) {
-          // Extrapolar hacia adelante usando ritmo de la ancla previa anterior.
+          // Extrapolar hacia adelante: usar ritmo de la ancla previa anterior
+          // si existe, si no usar velocidad urbana por defecto.
           const ref = anchors[anchors.indexOf(prev) - 1] ?? null;
+          let minPerM = DEFAULT_MIN_PER_M;
           if (ref && cum[prev.idx] > cum[ref.idx]) {
-            const minPerM = (prev.eta - ref.eta) / (cum[prev.idx] - cum[ref.idx]);
-            estimate = prev.eta + minPerM * (cum[i] - cum[prev.idx]);
-          } else {
-            estimate = prev.eta;
+            minPerM = (prev.eta - ref.eta) / (cum[prev.idx] - cum[ref.idx]);
+            if (minPerM <= 0) minPerM = DEFAULT_MIN_PER_M;
           }
+          estimate = prev.eta + minPerM * (cum[i] - cum[prev.idx]);
         } else if (next && prev === null) {
-          // Extrapolar hacia atrás usando ritmo de las dos primeras anclas.
+          // Extrapolar hacia atrás: ritmo de las dos primeras anclas, o por defecto.
           const ref = anchors[anchors.indexOf(next) + 1] ?? null;
+          let minPerM = DEFAULT_MIN_PER_M;
           if (ref && cum[ref.idx] > cum[next.idx]) {
-            const minPerM = (ref.eta - next.eta) / (cum[ref.idx] - cum[next.idx]);
-            estimate = next.eta - minPerM * (cum[next.idx] - cum[i]);
-          } else {
-            estimate = next.eta;
+            minPerM = (ref.eta - next.eta) / (cum[ref.idx] - cum[next.idx]);
+            if (minPerM <= 0) minPerM = DEFAULT_MIN_PER_M;
           }
+          estimate = next.eta - minPerM * (cum[next.idx] - cum[i]);
         }
         if (estimate !== null) {
           const rounded = Math.max(0, Math.round(estimate));
