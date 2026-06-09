@@ -787,6 +787,10 @@ function BusDashboardPage() {
   // entre dos entradas consecutivas: virtPos = a.idx + (t-a.eta)/(b.eta-a.eta)*(b.idx-a.idx).
   const liveBusesByDir = useMemo<Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]>>(() => {
     const out: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]> = { 1: [], 2: [] };
+    // BUS OCULTO TEMPORALMENTE: estamos depurando los tiempos. Mantener el
+    // motor activo (refs, schedules) pero no renderizar iconos por ahora.
+    return out;
+    // eslint-disable-next-line no-unreachable
     if (!compareTestEnabled) return out;
     for (const dir of [1, 2] as const) {
       const stops = stopsByDir[dir];
