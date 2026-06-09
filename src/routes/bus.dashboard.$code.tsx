@@ -756,6 +756,7 @@ function BusDashboardPage() {
             predictedBuses={virtualBusesByDir[1]}
             disableLiveFetch={true}
             compareLiveByCode={compareTestEnabled ? liveCompareByCode : null}
+            compareInterpolatedCodes={compareTestEnabled ? liveInterpolatedCodes : null}
           />
 
           <DirectionColumn
