@@ -535,19 +535,29 @@ function BusDashboardPage() {
   // === INTERPOLACIÓN ===
   // Para cada parada SIN ETA real, deducimos un ETA aproximado por
   // interpolación lineal entre las anclas reales en el mismo sentido,
-  // usando como eje X los minutos acumulados entre paradas (distancia real
-  // calculada con haversine sobre stopCoords).
-  // - Entre dos anclas reales: interpolación lineal en cum-min.
+  // usando como eje X los METROS ACUMULADOS por polilínea routed real
+  // (engine.stopDistances: key = `${line}|${dir}|${from}|${to}`).
+  // - Entre dos anclas reales: interpolación lineal en metros.
   // - Antes de la primera ancla: extrapolación hacia atrás (clamp a 0).
   // - Después de la última: extrapolación hacia adelante.
   const { liveCompareByCode, liveInterpolatedCodes } = useMemo(() => {
     const merged: Record<string, number | null> = { ...liveCompareRaw };
     const interp = new Set<string>();
     if (!compareTestEnabled) return { liveCompareByCode: merged, liveInterpolatedCodes: interp };
+    const distMap = engine?.stopDistances ?? new Map<string, number>();
     for (const dir of [1, 2] as const) {
       const codes = stopsByDir[dir].map((s) => s.code);
       if (codes.length === 0) continue;
-      const cum = cumulativeMinutes(codes, stopCoords);
+      // Metros acumulados desde la primera parada usando polilínea routed.
+      const cum: number[] = [0];
+      let acc = 0;
+      for (let i = 1; i < codes.length; i++) {
+        const key = `${code}|${dir}|${codes[i - 1]}|${codes[i]}`;
+        const seg = distMap.get(key);
+        // Fallback: 1 unidad si no hay distancia routed (espaciado uniforme).
+        acc += typeof seg === "number" && seg > 0 ? seg : 1;
+        cum.push(acc);
+      }
       // Índices de anclas (paradas con ETA real numérico)
       const anchors: { idx: number; eta: number }[] = [];
       for (let i = 0; i < codes.length; i++) {
@@ -559,7 +569,6 @@ function BusDashboardPage() {
         const c = codes[i];
         if (typeof liveCompareRaw[c] === "number") continue;
         let estimate: number | null = null;
-        // Buscar anclas previa y siguiente
         let prev: { idx: number; eta: number } | null = null;
         let next: { idx: number; eta: number } | null = null;
         for (const a of anchors) {
@@ -570,10 +579,24 @@ function BusDashboardPage() {
           const span = cum[next.idx] - cum[prev.idx];
           const frac = span > 0 ? (cum[i] - cum[prev.idx]) / span : 0;
           estimate = prev.eta + frac * (next.eta - prev.eta);
-        } else if (prev) {
-          estimate = prev.eta + (cum[i] - cum[prev.idx]);
-        } else if (next) {
-          estimate = next.eta - (cum[next.idx] - cum[i]);
+        } else if (prev && next === null) {
+          // Extrapolar hacia adelante usando ritmo de la ancla previa anterior.
+          const ref = anchors[anchors.indexOf(prev) - 1] ?? null;
+          if (ref && cum[prev.idx] > cum[ref.idx]) {
+            const minPerM = (prev.eta - ref.eta) / (cum[prev.idx] - cum[ref.idx]);
+            estimate = prev.eta + minPerM * (cum[i] - cum[prev.idx]);
+          } else {
+            estimate = prev.eta;
+          }
+        } else if (next && prev === null) {
+          // Extrapolar hacia atrás usando ritmo de las dos primeras anclas.
+          const ref = anchors[anchors.indexOf(next) + 1] ?? null;
+          if (ref && cum[ref.idx] > cum[next.idx]) {
+            const minPerM = (ref.eta - next.eta) / (cum[ref.idx] - cum[next.idx]);
+            estimate = next.eta - minPerM * (cum[next.idx] - cum[i]);
+          } else {
+            estimate = next.eta;
+          }
         }
         if (estimate !== null) {
           const rounded = Math.max(0, Math.round(estimate));
@@ -583,7 +606,7 @@ function BusDashboardPage() {
       }
     }
     return { liveCompareByCode: merged, liveInterpolatedCodes: interp };
-  }, [liveCompareRaw, compareTestEnabled, stopsByDir, stopCoords]);
+  }, [liveCompareRaw, compareTestEnabled, stopsByDir, engine, code]);
 
 
 
