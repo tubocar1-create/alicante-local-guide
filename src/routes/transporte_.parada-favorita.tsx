@@ -44,10 +44,24 @@ function normalize(s: string) {
     .trim();
 }
 
+function formatDestinationName(destination: string) {
+  const raw = destination.trim().replace(/\s+/g, " ");
+  const norm = normalize(raw);
+  if (norm === "ciudad de asis" || norm === "ciudad asis") return "Ciudad de Asís";
+  if (norm === "juan pablo ii" || norm === "plaza juan pablo ii") return "Juan Pablo II";
+  if (norm === "san agustin" || norm === "cp san agustin" || norm === "c.p. san agustin") return "San Agustín";
+  return raw.replace(/\p{L}+/gu, (word) => {
+    const lower = word.toLocaleLowerCase("es-ES");
+    if (["de", "del", "la", "las", "los", "y"].includes(lower)) return lower;
+    if (["i", "ii", "iii", "iv", "v", "vi"].includes(lower)) return lower.toUpperCase();
+    return lower.charAt(0).toLocaleUpperCase("es-ES") + lower.slice(1);
+  });
+}
+
 function formatDirectionLabel(destination: string | null | undefined) {
   const raw = (destination || "").trim();
   if (!raw) return "—";
-  return `Dirección ${raw}`;
+  return `Dirección ${formatDestinationName(raw)}`;
 }
 
 function ParadaFavoritaPage() {
