@@ -786,60 +786,11 @@ function BusDashboardPage() {
   // virtual (en unidades de parada) se interpola linealmente en el tiempo
   // entre dos entradas consecutivas: virtPos = a.idx + (t-a.eta)/(b.eta-a.eta)*(b.idx-a.idx).
   const liveBusesByDir = useMemo<Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]>>(() => {
-    const out: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]> = { 1: [], 2: [] };
-    // BUS OCULTO TEMPORALMENTE: estamos depurando los tiempos. Mantener el
-    // motor activo (refs, schedules) pero no renderizar iconos por ahora.
-    return out;
-    // eslint-disable-next-line no-unreachable
-    if (!compareTestEnabled) return out;
-    for (const dir of [1, 2] as const) {
-      const stops = stopsByDir[dir];
-      const lastIdx = stops.length - 1;
-      for (const bus of activeBusesRef.current[dir]) {
-        const sched = bus.schedule;
-        if (sched.length === 0) continue;
-        const t = Math.max(0, (clock.getTime() - bus.snapshotAt) / 60_000);
-
-        // Punto ancla: si schedule[0] tiene eta>0, el bus venía de una parada
-        // anterior. Usamos schedule[0] como referencia y, si t<schedule[0].eta,
-        // interpolamos hacia atrás desde (idx-1, 0).
-        let a: { idx: number; eta: number };
-        let b: { idx: number; eta: number } | null;
-        if (t < sched[0].eta) {
-          // Antes de alcanzar la primera parada del schedule.
-          const first = sched[0];
-          a = { idx: Math.max(0, first.idx - 1), eta: 0 };
-          b = first;
-        } else {
-          // Buscar el último k con sched[k].eta <= t.
-          let k = 0;
-          while (k + 1 < sched.length && sched[k + 1].eta <= t) k++;
-          a = sched[k];
-          b = k + 1 < sched.length ? sched[k + 1] : null;
-        }
-
-        if (!b) {
-          // Bus pasó la última parada conocida del schedule.
-          if (a.idx >= lastIdx) continue; // muerte
-          // Extrapolar: sin más datos, asumimos 1 parada por (a.eta gap promedio).
-          // Conservador: mantener posición en a.idx.
-          out[dir].push({ busId: bus.id, segmentIndex: a.idx, segmentProgress: 0 });
-          continue;
-        }
-
-        const dt = Math.max(0.001, b.eta - a.eta);
-        const di = Math.max(1, b.idx - a.idx);
-        const virtPos = a.idx + ((t - a.eta) / dt) * di;
-        const clamped = Math.max(0, Math.min(lastIdx, virtPos));
-        if (clamped >= lastIdx) continue; // muerte
-        const segmentIndex = Math.floor(clamped);
-        const segmentProgress = Math.max(0, Math.min(1, clamped - segmentIndex));
-        out[dir].push({ busId: bus.id, segmentIndex, segmentProgress });
-      }
-    }
-    return out;
-    // busesVersion fuerza re-render cuando el ref cambia tras un refresh.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // BUS OCULTO TEMPORALMENTE: estamos depurando los tiempos. El motor de
+    // tracking sigue vivo (refs, schedules, refrescos), pero no renderizamos
+    // ningún icono móvil hasta que las ETAs estén afinadas.
+    void compareTestEnabled; void stopsByDir; void clock; void busesVersion;
+    return { 1: [], 2: [] };
   }, [compareTestEnabled, stopsByDir, clock, busesVersion]);
 
 
