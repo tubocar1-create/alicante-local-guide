@@ -1243,21 +1243,30 @@ function DirectionColumn({
           const arr = etas[s.code] ?? [];
           const liveEta = arr[0];
           const scheduleEta = nightEtaByCode?.get(s.code) ?? null;
-          // Día: prefer live; fallback a horario. Noche (no realtime): solo horario.
-          const eta1 = realtimeEnabled
-            ? (typeof liveEta === "number" ? liveEta : scheduleEta?.min)
-            : scheduleEta?.min;
+          // Línea 12 (useLiveAsPrimary): ETA real/interpolado de movilidad.alicante.es.
+          // Resto: live → horario.
+          const liveCompareVal = compareLiveByCode ? compareLiveByCode[s.code] : undefined;
+          const isInterp = !!compareInterpolatedCodes?.has(s.code);
+          const eta1 = useLiveAsPrimary
+            ? (typeof liveCompareVal === "number" ? liveCompareVal : undefined)
+            : realtimeEnabled
+              ? (typeof liveEta === "number" ? liveEta : scheduleEta?.min)
+              : scheduleEta?.min;
           const hasEta = typeof eta1 === "number";
-          const isLoadingEta = realtimeEnabled && loadingEtaStops.has(s.code) && !hasEta;
+          const isLoadingEta = realtimeEnabled && !useLiveAsPrimary && loadingEtaStops.has(s.code) && !hasEta;
           const isOrigin = i === 0;
           const isDest = i === stops.length - 1;
           const transfers = transferLines(s.code);
           const transferColor = transfers[0]?.color ?? null;
-          const etaTime = realtimeEnabled
-            ? (typeof liveEta === "number"
-                ? formatHHMM(new Date(now.getTime() + liveEta * 60_000))
-                : scheduleEta?.time ?? null)
-            : scheduleEta?.time ?? null;
+          const etaTime = useLiveAsPrimary
+            ? (typeof eta1 === "number"
+                ? formatHHMM(new Date(now.getTime() + eta1 * 60_000))
+                : null)
+            : realtimeEnabled
+              ? (typeof liveEta === "number"
+                  ? formatHHMM(new Date(now.getTime() + liveEta * 60_000))
+                  : scheduleEta?.time ?? null)
+              : scheduleEta?.time ?? null;
           
 
           const isNearest = nearestCodes.has(s.code);
@@ -1282,12 +1291,21 @@ function DirectionColumn({
                     : undefined,
               }}
             >
-              {compareLiveByCode && (() => {
+              {useLiveAsPrimary && hasEta && (
+                <div
+                  aria-hidden
+                  className={`pointer-events-none absolute right-1 top-1 z-30 rounded-md border ${isInterp ? "border-amber-300/60" : "border-emerald-300/60"} bg-black/70 px-1.5 py-0.5 backdrop-blur-sm`}
+                >
+                  <span className={`font-sans text-[8px] font-extrabold not-italic uppercase tracking-wide ${isInterp ? "text-amber-300" : "text-emerald-300"}`}>
+                    {isInterp ? "Aprox" : "Real"}
+                  </span>
+                </div>
+              )}
+              {!useLiveAsPrimary && compareLiveByCode && (() => {
                 const hasInMap = Object.prototype.hasOwnProperty.call(compareLiveByCode, s.code);
                 if (!hasInMap) return null;
                 const real = compareLiveByCode[s.code];
                 const hasReal = typeof real === "number";
-                const isInterp = !!compareInterpolatedCodes?.has(s.code);
                 const predicted = typeof eta1 === "number" ? eta1 : null;
                 const diff = hasReal && !isInterp && predicted !== null ? real! - predicted : null;
                 const borderCls = isInterp ? "border-amber-300/60" : "border-emerald-300/60";
