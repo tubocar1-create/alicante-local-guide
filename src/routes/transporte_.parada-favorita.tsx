@@ -741,7 +741,7 @@ function ParadaFavoritaPage() {
                       // cada línea decrezca en vivo igual que el contador grande.
                       if (a.etaMinutes == null) return { a, liveSec: null as number | null };
                       const totalSec = a.etaMinutes * 60;
-                      const elapsedSec = Math.floor((Date.now() - allArrivals.fetchedAt) / 1000);
+                      const elapsedSec = Math.floor((Date.now() - a.fetchedAt) / 1000);
                       return { a, liveSec: Math.max(0, totalSec - elapsedSec) };
                     })
                     .sort((x, y) => (x.liveSec ?? 9_999_999) - (y.liveSec ?? 9_999_999))
