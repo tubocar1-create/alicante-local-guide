@@ -62,6 +62,7 @@ function ParadaFavoritaPage() {
   const [liveLoading, setLiveLoading] = useState(false);
   const [callError, setCallError] = useState<string | null>(null);
   const [experienceEnded, setExperienceEnded] = useState(false);
+  const [arrivalsOpen, setArrivalsOpen] = useState(false);
 
   const serviceWindows = useBusServiceWindows();
   const lineDepartures = useBusLineDepartures();
