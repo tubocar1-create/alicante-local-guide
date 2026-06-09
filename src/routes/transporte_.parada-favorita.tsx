@@ -78,7 +78,7 @@ function ParadaFavoritaPage() {
   // No hay polling: el usuario solicita la llamada y aquí guardamos el
   // resultado para mostrar un contador decreciente hasta cero.
   const [snapshot, setSnapshot] = useState<{ etaMin: number; all: number[]; fetchedAt: number; destination: string | null } | null>(null);
-  const [allArrivals, setAllArrivals] = useState<{ items: BusArrival[]; fetchedAt: number } | null>(null);
+  const [allArrivals, setAllArrivals] = useState<{ items: Array<BusArrival & { fetchedAt: number }>; fetchedAt: number } | null>(null);
   const [liveLoading, setLiveLoading] = useState(false);
   const [callError, setCallError] = useState<string | null>(null);
   const [experienceEnded, setExperienceEnded] = useState(false);
@@ -203,17 +203,32 @@ function ParadaFavoritaPage() {
         return;
       }
       const fetchedAtAll = Date.now();
-      setAllArrivals({ items: res.stop.arrivals, fetchedAt: fetchedAtAll });
+      const normLine = (s: string) => s.toUpperCase().replace(/^0+(?=\w)/, "");
+      const keyOf = (a: { line: string; destination: string }) =>
+        `${normLine(a.line)}|${(a.destination || "").trim().toUpperCase()}`;
+      // Merge con el estado anterior: si una línea no reapareció en el
+      // refresh, conservamos su último valor (con su fetchedAt original) y
+      // esperamos al siguiente ciclo. Para el usuario es transparente.
+      const freshItems: Array<BusArrival & { fetchedAt: number }> = res.stop.arrivals.map(
+        (a) => ({ ...a, fetchedAt: fetchedAtAll }),
+      );
+      const freshKeys = new Set(freshItems.map(keyOf));
+      const carriedOver = (allArrivals?.items ?? []).filter((a) => !freshKeys.has(keyOf(a)));
+      const mergedItems = [...freshItems, ...carriedOver];
+      setAllArrivals({ items: mergedItems, fetchedAt: fetchedAtAll });
       // Filtramos llegadas por línea (case-insensitive). Normalizamos quitando
       // ceros iniciales para que "1" coincida con "01".
-      const normLine = (s: string) => s.toUpperCase().replace(/^0+(?=\w)/, "");
       const lineNorm = normLine(stop.line);
       const matches = res.stop.arrivals.filter(
         (a) => normLine(a.line) === lineNorm && a.etaMinutes != null,
       );
       if (matches.length === 0) {
-        setCallError("No hay paso en vivo para esta línea ahora mismo.");
-        setSnapshot(null);
+        // Fallback transparente: si ya teníamos snapshot vivo de la línea
+        // principal, lo mantenemos y esperamos al siguiente refresh. Solo
+        // limpiamos cuando no había nada previo.
+        if (!snapshot) {
+          setCallError("No hay paso en vivo para esta línea ahora mismo.");
+        }
         return;
       }
       const etas = matches.map((a) => a.etaMinutes!).sort((a, b) => a - b);
@@ -726,7 +741,7 @@ function ParadaFavoritaPage() {
                       // cada línea decrezca en vivo igual que el contador grande.
                       if (a.etaMinutes == null) return { a, liveSec: null as number | null };
                       const totalSec = a.etaMinutes * 60;
-                      const elapsedSec = Math.floor((Date.now() - allArrivals.fetchedAt) / 1000);
+                      const elapsedSec = Math.floor((Date.now() - a.fetchedAt) / 1000);
                       return { a, liveSec: Math.max(0, totalSec - elapsedSec) };
                     })
                     .sort((x, y) => (x.liveSec ?? 9_999_999) - (y.liveSec ?? 9_999_999))
