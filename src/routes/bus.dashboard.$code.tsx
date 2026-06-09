@@ -602,39 +602,6 @@ function BusDashboardPage() {
 
 
 
-        {/* TEST PREVIEW · Línea 12: comparar predicción vs tiempo real SUBUS */}
-        {compareTestEnabled && (
-          <div className="mt-3 flex items-center gap-2 rounded-xl border border-emerald-400/40 bg-emerald-400/10 px-3 py-2">
-            <Radio className="h-4 w-4 text-emerald-300" />
-            <div className="min-w-0 flex-1">
-              <div className="font-sans text-[11px] font-bold not-italic uppercase tracking-wide text-emerald-300">
-                Test preview · predicción vs real (Alicante se mueve)
-              </div>
-              <div className="font-sans text-[10px] not-italic text-emerald-200/80">
-                {liveCompareQuery.isFetching
-                  ? "Cargando tiempos reales…"
-                  : liveCompareQuery.data
-                    ? `Actualizado ${new Date(liveCompareQuery.data.fetchedAt).toLocaleTimeString("es-ES")}`
-                    : liveCompareQuery.isError
-                      ? "Error al obtener datos"
-                      : "Pulsa refrescar para comparar"}
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => liveCompareQuery.refetch()}
-              disabled={liveCompareQuery.isFetching}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300/40 bg-emerald-400/20 px-2.5 py-1.5 font-sans text-[11px] font-bold not-italic uppercase tracking-wide text-emerald-100 hover:bg-emerald-400/30 disabled:opacity-60"
-            >
-              {liveCompareQuery.isFetching ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <RefreshCw className="h-3.5 w-3.5" />
-              )}
-              Refrescar
-            </button>
-          </div>
-        )}
 
         {/* COLUMNAS IDA / VUELTA */}
         <div className="mt-4 grid grid-cols-2 divide-x divide-white/10 overflow-hidden rounded-2xl border border-white/10 p-2" style={{ background: "linear-gradient(to right, rgba(191,219,254,0.60) 0%, rgba(191,219,254,0.60) 50%, rgba(30,58,138,0.65) 50%, rgba(30,58,138,0.65) 100%)" }}>
