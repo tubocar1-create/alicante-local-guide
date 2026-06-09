@@ -1,22 +1,49 @@
 import { useEffect, useRef, useState } from "react";
 import { Bus, Loader2, Play, RefreshCw } from "lucide-react";
 import { extractStopFromPage, type BusStopData, type ExtractResult } from "@/lib/bus-stop-parser";
+import { supabase } from "@/integrations/supabase/client";
 
-const PAGE_URL = "https://movilidad.alicante.es/paradas-de-bus?page=32";
+const PAGE_BASE = "https://movilidad.alicante.es/paradas-de-bus?page=";
 type EtaDelta = "up" | "down" | "same" | "new";
 
 export function BusStopExtractor() {
-  const [stopId, setStopId] = useState<number>(5110);
+  const [stopIdText, setStopIdText] = useState<string>("5110");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ExtractResult | null>(null);
+  const [resolvedPage, setResolvedPage] = useState<number | null>(null);
+  const [resolveError, setResolveError] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(false);
   const prevRef = useRef<BusStopData | null>(null);
   const [deltas, setDeltas] = useState<Record<string, EtaDelta>>({});
 
+  const stopId = stopIdText.trim();
+
   async function run() {
+    if (!stopId) return;
     setLoading(true);
-    const r = await extractStopFromPage(PAGE_URL, stopId);
-    // calcular deltas
+    setResolveError(null);
+    setResolvedPage(null);
+
+    const { data, error } = await supabase
+      .from("bus_stop_catalog")
+      .select("page_number, source_url")
+      .eq("stop_id", stopId)
+      .maybeSingle();
+
+    if (error || !data) {
+      setResolveError(
+        error?.message ??
+          `Parada ${stopId} no está en el catálogo. Indéxala primero con el constructor.`,
+      );
+      setResult(null);
+      setLoading(false);
+      return;
+    }
+
+    const pageUrl = data.source_url || `${PAGE_BASE}${data.page_number}`;
+    setResolvedPage(data.page_number);
+
+    const r = await extractStopFromPage(pageUrl, Number(stopId));
     if (r.stop && prevRef.current && prevRef.current.stopId === r.stop.stopId) {
       const d: Record<string, EtaDelta> = {};
       r.stop.arrivals.forEach((a, i) => {
@@ -56,10 +83,11 @@ export function BusStopExtractor() {
 
       <div className="flex items-center gap-1">
         <input
-          type="number"
+          type="text"
           inputMode="numeric"
-          value={stopId}
-          onChange={(e) => setStopId(parseInt(e.target.value || "0", 10) || 0)}
+          pattern="[0-9]*"
+          value={stopIdText}
+          onChange={(e) => setStopIdText(e.target.value.replace(/[^0-9]/g, ""))}
           placeholder="5110"
           className="h-8 w-24 min-w-0 rounded-lg border border-cyan-500/30 bg-background/60 px-2 text-[12px] font-mono font-bold"
         />
@@ -85,6 +113,16 @@ export function BusStopExtractor() {
         </button>
       </div>
 
+      {resolvedPage != null && (
+        <div className="mt-2 text-[10px] text-cyan-300">
+          📄 Página resuelta: <span className="font-mono font-bold">{resolvedPage}</span>
+        </div>
+      )}
+      {resolveError && (
+        <div className="mt-2 rounded-lg bg-destructive/10 px-3 py-2 text-[11px] text-destructive">
+          {resolveError}
+        </div>
+      )}
       {dbg && (
         <div className="mt-2 text-[10px] text-muted-foreground">
           ⏱ {dbg.fetchMs}ms · 📦 {(dbg.htmlBytes / 1024).toFixed(1)}KB · 🚌 {dbg.arrivalsFound} llegadas
