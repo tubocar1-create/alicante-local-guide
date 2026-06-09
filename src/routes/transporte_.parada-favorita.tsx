@@ -513,7 +513,7 @@ function ParadaFavoritaPage() {
                 <Bus className="h-4 w-4 shrink-0 text-[#0d3b8a]" />
                 <div className="min-w-0 flex-1">
                   <div className="text-[9px] font-bold uppercase tracking-wider text-stone-500">
-                    Ciudad de Asís
+                    Dirección Ciudad Asís
                   </div>
                   <div className="flex items-center gap-1">
                     <span className="truncate text-sm font-extrabold text-stone-900">
