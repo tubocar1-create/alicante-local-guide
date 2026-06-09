@@ -299,6 +299,19 @@ function ParadaFavoritaPage() {
     }
   }, [snapshot, liveSecondsLeft, experienceEnded]);
 
+  // Auto-refresh cada 40s: una vez el usuario ha iniciado la experiencia
+  // (existe snapshot activo), recargamos la información desde Vectalia para
+  // reestablecer los contadores. Se detiene si la experiencia ha terminado,
+  // la línea está fuera de servicio, es nocturna o ya hay una carga en curso.
+  useEffect(() => {
+    if (!snapshot || experienceEnded || outOfService || isNightLine) return;
+    const id = window.setInterval(() => {
+      if (!liveLoading) handleRequestRealtime();
+    }, 40_000);
+    return () => window.clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [snapshot, experienceEnded, outOfService, isNightLine]);
+
   const nightFirst = nightEstimate?.upcoming[0];
   const minutes: number | null = nightFirst
     ? nightFirst.minutes
