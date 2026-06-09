@@ -237,18 +237,18 @@ export function FavoriteStopWidget() {
         </div>
         <div className="min-w-0">
           <div className="text-[7px] font-bold uppercase tracking-wider text-stone-400 leading-none">
-            Destino
+            Origen
           </div>
           <div className="truncate text-[10px] font-bold leading-tight text-stone-900">
-            {stop.destination}
+            {stop.stopName}
           </div>
         </div>
         <div className="min-w-0">
           <div className="text-[7px] font-bold uppercase tracking-wider text-stone-400 leading-none">
-            Origen
+            Destino
           </div>
           <div className="truncate text-[10px] font-semibold leading-tight text-stone-700">
-            {stop.stopName}
+            {stop.destination}
           </div>
         </div>
       </div>
