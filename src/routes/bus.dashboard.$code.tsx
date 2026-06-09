@@ -921,7 +921,7 @@ function BusDashboardPage() {
             onPickStop={handlePickStop}
             nearestList={nearestByDir[1]}
             geoStatus={geoStatus}
-            predictedBuses={compareTestEnabled && liveBusesByDir[1].length ? liveBusesByDir[1] : virtualBusesByDir[1]}
+            predictedBuses={compareTestEnabled ? liveBusesByDir[1] : virtualBusesByDir[1]}
             disableLiveFetch={true}
             compareLiveByCode={compareTestEnabled ? liveCompareByCode : null}
             compareInterpolatedCodes={compareTestEnabled ? liveInterpolatedCodes : null}
@@ -950,7 +950,7 @@ function BusDashboardPage() {
             onPickStop={handlePickStop}
             nearestList={nearestByDir[2]}
             geoStatus={geoStatus}
-            predictedBuses={compareTestEnabled && liveBusesByDir[2].length ? liveBusesByDir[2] : virtualBusesByDir[2]}
+            predictedBuses={compareTestEnabled ? liveBusesByDir[2] : virtualBusesByDir[2]}
             disableLiveFetch={true}
             compareLiveByCode={compareTestEnabled ? liveCompareByCode : null}
             compareInterpolatedCodes={compareTestEnabled ? liveInterpolatedCodes : null}
