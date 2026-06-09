@@ -705,12 +705,11 @@ function ParadaFavoritaPage() {
                             return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
                           })()
                         : null;
-                      const liveMin = liveSec != null ? Math.ceil(liveSec / 60) : null;
                       const etaLabel = liveSec == null
                         ? (a.etaText || "n/d")
                         : liveSec === 0
                           ? "Llegando"
-                          : `${liveMin} min`;
+                          : `${String(Math.floor(liveSec / 60)).padStart(2, "0")}:${String(liveSec % 60).padStart(2, "0")}`;
                       return (
                         <li
                           key={`${a.line}-${a.destination}-${i}`}
