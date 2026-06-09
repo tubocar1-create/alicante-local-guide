@@ -43,7 +43,7 @@ export function BusStopExtractor() {
     const pageUrl = data.source_url || `${PAGE_BASE}${data.page_number}`;
     setResolvedPage(data.page_number);
 
-    const r = await extractStopFromPage(pageUrl, stopId);
+    const r = await extractStopFromPage(pageUrl, Number(stopId));
     if (r.stop && prevRef.current && prevRef.current.stopId === r.stop.stopId) {
       const d: Record<string, EtaDelta> = {};
       r.stop.arrivals.forEach((a, i) => {
