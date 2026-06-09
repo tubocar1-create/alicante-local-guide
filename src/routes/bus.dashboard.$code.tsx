@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, ArrowDown, ArrowUp, Bus, ChevronDown, Radio, RefreshCw, Loader2, MapPin } from "lucide-react";
-import { getClientStopsRealtimeBatch } from "@/lib/bus-realtime-client";
+// getClientStopsRealtimeBatch importado desde bus-realtime-client (línea 20)
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { classifyLine } from "@/components/BusKnownPicker";
 import { saveFavoriteStop } from "@/components/FavoriteStopWidget";
