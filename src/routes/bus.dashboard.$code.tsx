@@ -1043,6 +1043,7 @@ function DirectionColumn({
   predictedBuses?: { busId: string; segmentIndex: number; segmentProgress: number }[];
   disableLiveFetch?: boolean;
   compareLiveByCode?: Record<string, number | null> | null;
+  compareInterpolatedCodes?: Set<string> | null;
 }) {
 
   const now = new Date();
