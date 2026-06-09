@@ -55,18 +55,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
 
   useEffect(() => {
-    const msg = String(error?.message ?? "");
-    const isChunkError =
-      /Failed to fetch dynamically imported module|Importing a module script failed|ChunkLoadError|Loading chunk \d+ failed/i.test(msg);
-    if (isChunkError && typeof window !== "undefined") {
-      const KEY = "vamos-chunk-reload-at";
-      const last = Number(sessionStorage.getItem(KEY) || 0);
-      if (Date.now() - last > 5000) {
-        sessionStorage.setItem(KEY, String(Date.now()));
-        window.location.reload();
-      }
-    }
+    // Auto-reload on chunk errors disabled by user request to preserve
+    // real-time UI state (e.g. "Parada favorita"). User can refresh manually.
   }, [error]);
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">

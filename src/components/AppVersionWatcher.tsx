@@ -29,44 +29,8 @@ async function fetchLatestVersion(signal?: AbortSignal): Promise<string | null> 
 }
 
 export function AppVersionWatcher() {
-  const { isAuthenticated } = useAppAuth();
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!isAuthenticated) return;
-
-    const current = getCurrentVersion();
-    if (!current) return;
-
-    let cancelled = false;
-    const ctrl = new AbortController();
-
-    const check = async () => {
-      if (cancelled || document.visibilityState !== "visible") return;
-      const latest = await fetchLatestVersion(ctrl.signal);
-      if (cancelled || !latest) return;
-      if (latest !== current) {
-        // Reload silently to pick up the new bundle.
-        window.location.reload();
-      }
-    };
-
-    // Check shortly after load, then on visibility/focus changes.
-    const t = window.setTimeout(check, 1500);
-    const onVis = () => {
-      if (document.visibilityState === "visible") check();
-    };
-    document.addEventListener("visibilitychange", onVis);
-    window.addEventListener("focus", onVis);
-
-    return () => {
-      cancelled = true;
-      ctrl.abort();
-      window.clearTimeout(t);
-      document.removeEventListener("visibilitychange", onVis);
-      window.removeEventListener("focus", onVis);
-    };
-  }, [isAuthenticated]);
-
+  // Disabled by user request: no automatic reload on version change.
+  // This prevented "Parada favorita" real-time state from being preserved.
   return null;
 }
+
