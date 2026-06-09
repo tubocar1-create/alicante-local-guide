@@ -851,10 +851,11 @@ function BusDashboardPage() {
             onPickStop={handlePickStop}
             nearestList={nearestByDir[2]}
             geoStatus={geoStatus}
-            predictedBuses={virtualBusesByDir[2]}
+            predictedBuses={compareTestEnabled ? liveBusesByDir[2] : virtualBusesByDir[2]}
             disableLiveFetch={true}
             compareLiveByCode={compareTestEnabled ? liveCompareByCode : null}
             compareInterpolatedCodes={compareTestEnabled ? liveInterpolatedCodes : null}
+            useLiveAsPrimary={compareTestEnabled}
           />
 
 
