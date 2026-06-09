@@ -629,7 +629,7 @@ function ParadaFavoritaPage() {
             <button
               type="button"
               onClick={handleRequestRealtime}
-              disabled={liveLoading || (quota?.remaining === 0 && !quota?.isAdmin)}
+              disabled={liveLoading}
               className={`flex w-full items-center justify-center gap-2 rounded-2xl px-3 py-2.5 text-sm font-extrabold shadow-sm transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${
                 snapshot && !experienceEnded
                   ? "bg-emerald-600 text-white"
