@@ -1819,6 +1819,30 @@ export type Database = {
         }
         Relationships: []
       }
+      bus_stop_catalog: {
+        Row: {
+          page_number: number
+          source_url: string
+          stop_id: string
+          stop_name: string
+          updated_at: string
+        }
+        Insert: {
+          page_number: number
+          source_url: string
+          stop_id: string
+          stop_name: string
+          updated_at?: string
+        }
+        Update: {
+          page_number?: number
+          source_url?: string
+          stop_id?: string
+          stop_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bus_stops: {
         Row: {
           code: string
