@@ -925,6 +925,7 @@ function DirectionColumn({
   geoStatus,
   predictedBuses,
   disableLiveFetch,
+  compareLiveByCode,
 }: {
   label: string;
   direction: 1 | 2;
@@ -944,6 +945,7 @@ function DirectionColumn({
   geoStatus: "idle" | "loading" | "ok" | "unavailable";
   predictedBuses?: { busId: string; segmentIndex: number; segmentProgress: number }[];
   disableLiveFetch?: boolean;
+  compareLiveByCode?: Record<string, number | null> | null;
 }) {
 
   const now = new Date();
