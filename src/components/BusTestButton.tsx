@@ -254,6 +254,7 @@ export function BusTestButton() {
                 </div>
               </div>
 
+              <BusStopsBrowser />
               <BusStopExtractor />
 
 
