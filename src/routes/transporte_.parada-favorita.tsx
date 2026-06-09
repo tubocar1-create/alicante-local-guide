@@ -156,45 +156,69 @@ function ParadaFavoritaPage() {
     setSearchLookupDone(!search.stop || searchMatchesCurrent);
   }, [search.stop, search.line, searchMatchesCurrent]);
 
-  // Llamada bajo demanda a Vectalia (vía Firecrawl). Una sola petición por
-  // pulsación de botón. El usuario tiene 3 llamadas al día (admin: ilimitadas).
+  // Consulta cliente-side: resolvemos la página de movilidad.alicante.es
+  // desde el catálogo (bus_stop_catalog), descargamos el HTML directamente
+  // desde el navegador del usuario y parseamos las llegadas. Sin cuotas:
+  // no hay coste de Firecrawl porque el navegador del usuario hace el fetch.
   async function handleRequestRealtime() {
     if (liveLoading || outOfService || isNightLine) return;
     setLiveLoading(true);
     setCallError(null);
     try {
-      const res: FavoriteStopRealtimeResult = await requestRealtime({
-        data: { stopId: stop.stopId, line: stop.line, visitorId: getVisitorId() },
-      });
-      setQuota({ remaining: res.remaining, isAdmin: res.isAdmin, limit: res.limit });
-      if (!res.ok) {
-        setCallError(res.message);
+      const { data: cat, error } = await supabase
+        .from("bus_stop_catalog")
+        .select("page_number, source_url")
+        .eq("stop_id", stop.stopId)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      if (!cat) {
+        setCallError("Parada no encontrada en el catálogo. Construye el catálogo desde el test de buses.");
         return;
       }
-      if (res.etaMin == null) {
+      const pageUrl = cat.source_url || `${PAGE_BASE}${cat.page_number}`;
+      const res = await extractStopFromPage(pageUrl, Number(stop.stopId));
+      if (!res.stop) {
+        setCallError(res.debug.error ?? "No se pudo extraer la parada del HTML.");
+        return;
+      }
+      // Filtramos llegadas por línea (case-insensitive). Aceptamos también
+      // coincidencia por destino si el portal devuelve la línea en otro formato.
+      const lineUp = stop.line.toUpperCase();
+      const matches = res.stop.arrivals.filter(
+        (a) => a.line.toUpperCase() === lineUp && a.etaMinutes != null,
+      );
+      if (matches.length === 0) {
         setCallError("No hay paso en vivo para esta línea ahora mismo.");
         setSnapshot(null);
         return;
       }
-      setSnapshot({ etaMin: res.etaMin, all: res.all, fetchedAt: res.fetchedAt, destination: res.destination });
+      const etas = matches.map((a) => a.etaMinutes!).sort((a, b) => a - b);
+      const fetchedAt = Date.now();
+      const destination = matches[0].destination || null;
+      const next = {
+        etaMin: etas[0],
+        all: etas,
+        fetchedAt,
+        destination,
+      };
+      setSnapshot(next);
       saveFavoriteStopLiveSnapshot({
         stopId: stop.stopId,
         line: stop.line,
-        etaMin: res.etaMin,
-        all: res.all,
-        destination: res.destination,
-        fetchedAt: res.fetchedAt,
+        etaMin: next.etaMin,
+        all: next.all,
+        destination,
+        fetchedAt,
       });
       setExperienceEnded(false);
     } catch (e) {
-      let msg = "Error al consultar Vectalia.";
-      if (e instanceof Response) msg = `Error ${e.status} al consultar Vectalia.`;
-      else if (e instanceof Error) msg = e.message;
+      const msg = e instanceof Error ? e.message : "Error al consultar movilidad.alicante.es.";
       setCallError(msg);
     } finally {
       setLiveLoading(false);
     }
   }
+
 
   // Al cambiar de parada/línea: si hay un snapshot vivo guardado que coincide
   // con la selección actual, lo restauramos para que la experiencia siga viva
