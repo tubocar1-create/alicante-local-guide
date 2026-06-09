@@ -1,6 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, ArrowDown, ArrowUp, Bus, ChevronDown, Radio, RefreshCw, Loader2, MapPin } from "lucide-react";
+import { getLineLive } from "@/lib/bus-realtime.functions";
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { classifyLine } from "@/components/BusKnownPicker";
 import { saveFavoriteStop } from "@/components/FavoriteStopWidget";
@@ -452,6 +455,27 @@ function BusDashboardPage() {
   // Preview NUNCA se toca: ahí ignoramos cualquier lógica de "congelado/n.d.".
   const inPreview = isPreviewHost();
 
+  // === TEST PREVIEW (solo Línea 12): comparar predicción vs tiempo real SUBUS ===
+  const compareTestEnabled = inPreview && String(code).toUpperCase() === "12";
+  const fetchLineLive = useServerFn(getLineLive);
+  const liveCompareQuery = useQuery({
+    queryKey: ["dashboard-live-compare", code],
+    enabled: compareTestEnabled,
+    refetchOnWindowFocus: false,
+    staleTime: 0,
+    queryFn: () => fetchLineLive({ data: { lineCode: String(code).toUpperCase() } }),
+  });
+  const liveCompareByCode = useMemo<Record<string, number | null>>(() => {
+    const map: Record<string, number | null> = {};
+    const stops = liveCompareQuery.data?.stops;
+    if (!stops) return map;
+    for (const s of stops) {
+      map[s.stopCode] = typeof s.etaMinutes?.[0] === "number" ? s.etaMinutes[0] : null;
+    }
+    return map;
+  }, [liveCompareQuery.data]);
+
+
   const etas = useMemo<Record<string, number[]>>(() => {
     if (!realtime) return {};
     const out: Record<string, number[]> = {};
@@ -577,6 +601,41 @@ function BusDashboardPage() {
 
 
 
+
+        {/* TEST PREVIEW · Línea 12: comparar predicción vs tiempo real SUBUS */}
+        {compareTestEnabled && (
+          <div className="mt-3 flex items-center gap-2 rounded-xl border border-emerald-400/40 bg-emerald-400/10 px-3 py-2">
+            <Radio className="h-4 w-4 text-emerald-300" />
+            <div className="min-w-0 flex-1">
+              <div className="font-sans text-[11px] font-bold not-italic uppercase tracking-wide text-emerald-300">
+                Test preview · predicción vs real (Alicante se mueve)
+              </div>
+              <div className="font-sans text-[10px] not-italic text-emerald-200/80">
+                {liveCompareQuery.isFetching
+                  ? "Cargando tiempos reales…"
+                  : liveCompareQuery.data
+                    ? `Actualizado ${new Date(liveCompareQuery.data.fetchedAt).toLocaleTimeString("es-ES")}`
+                    : liveCompareQuery.isError
+                      ? "Error al obtener datos"
+                      : "Pulsa refrescar para comparar"}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => liveCompareQuery.refetch()}
+              disabled={liveCompareQuery.isFetching}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300/40 bg-emerald-400/20 px-2.5 py-1.5 font-sans text-[11px] font-bold not-italic uppercase tracking-wide text-emerald-100 hover:bg-emerald-400/30 disabled:opacity-60"
+            >
+              {liveCompareQuery.isFetching ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3.5 w-3.5" />
+              )}
+              Refrescar
+            </button>
+          </div>
+        )}
+
         {/* COLUMNAS IDA / VUELTA */}
         <div className="mt-4 grid grid-cols-2 divide-x divide-white/10 overflow-hidden rounded-2xl border border-white/10 p-2" style={{ background: "linear-gradient(to right, rgba(191,219,254,0.60) 0%, rgba(191,219,254,0.60) 50%, rgba(30,58,138,0.65) 50%, rgba(30,58,138,0.65) 100%)" }}>
           <DirectionColumn
@@ -603,6 +662,7 @@ function BusDashboardPage() {
             geoStatus={geoStatus}
             predictedBuses={virtualBusesByDir[1]}
             disableLiveFetch={true}
+            compareLiveByCode={compareTestEnabled ? liveCompareByCode : null}
           />
 
           <DirectionColumn
@@ -629,7 +689,9 @@ function BusDashboardPage() {
             geoStatus={geoStatus}
             predictedBuses={virtualBusesByDir[2]}
             disableLiveFetch={true}
+            compareLiveByCode={compareTestEnabled ? liveCompareByCode : null}
           />
+
 
         </div>
 
@@ -863,6 +925,7 @@ function DirectionColumn({
   geoStatus,
   predictedBuses,
   disableLiveFetch,
+  compareLiveByCode,
 }: {
   label: string;
   direction: 1 | 2;
@@ -882,6 +945,7 @@ function DirectionColumn({
   geoStatus: "idle" | "loading" | "ok" | "unavailable";
   predictedBuses?: { busId: string; segmentIndex: number; segmentProgress: number }[];
   disableLiveFetch?: boolean;
+  compareLiveByCode?: Record<string, number | null> | null;
 }) {
 
   const now = new Date();
@@ -1132,6 +1196,33 @@ function DirectionColumn({
                       estimado
                     </span>
                   </div>
+                  {compareLiveByCode && (() => {
+                    const real = compareLiveByCode[s.code];
+                    const hasReal = typeof real === "number";
+                    const hasInMap = Object.prototype.hasOwnProperty.call(compareLiveByCode, s.code);
+                    const predicted = typeof eta1 === "number" ? eta1 : null;
+                    const diff = hasReal && predicted !== null ? real! - predicted : null;
+                    return (
+                      <div className="mt-0.5 flex items-baseline gap-1.5">
+                        <span className="rounded bg-emerald-500/90 px-1 py-0.5 font-sans text-[9px] font-extrabold not-italic uppercase tracking-wide text-black">
+                          Real
+                        </span>
+                        <span className="font-sans text-[11px] font-bold not-italic tabular-nums text-emerald-300">
+                          {hasReal ? `${real} min` : hasInMap ? "n/d" : "—"}
+                        </span>
+                        {diff !== null && (
+                          <span
+                            className={[
+                              "font-sans text-[9px] font-semibold not-italic tabular-nums",
+                              diff > 0 ? "text-amber-300" : diff < 0 ? "text-sky-300" : "text-white/60",
+                            ].join(" ")}
+                          >
+                            {diff > 0 ? `+${diff}` : diff}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
                   <div className="flex items-center gap-1.5">
                     <span className="truncate font-sans text-[12px] font-semibold not-italic leading-snug text-white">
                       {s.name}
