@@ -472,6 +472,9 @@ function BusDashboardPage() {
     queryKey: ["dashboard-live-compare-movilidad", code, compareStopCodes.join(",")],
     enabled: compareTestEnabled && compareStopCodes.length > 0,
     refetchOnWindowFocus: false,
+    refetchOnMount: "always",
+    refetchInterval: 40_000,
+    refetchIntervalInBackground: false,
     staleTime: 0,
     queryFn: async () => {
       const PAGE_BASE = "https://movilidad.alicante.es/paradas-de-bus?page=";
@@ -607,6 +610,49 @@ function BusDashboardPage() {
     }
     return { liveCompareByCode: merged, liveInterpolatedCodes: interp };
   }, [liveCompareRaw, compareTestEnabled, stopsByDir, engine, code]);
+
+  // === BUSES VIRTUALES DESDE ETA REALES + INTERPOLADOS ===
+  // Solo en preview de Línea 12. Nacimiento: ETA en origen (parada 0) == 0.
+  // Muerte: ETA en terminal <= 3 min (el bus desaparece al llegar).
+  // Posición: el bus está en el segmento [i, i+1] cuando ETA[i] == 0 y ETA[i+1] > 0.
+  // Entre refrescos (40s) animamos el progreso linealmente con el reloj:
+  //   progress = elapsedMin / ETA[i+1]  (en minutos).
+  const liveDataUpdatedAt = liveCompareQuery.dataUpdatedAt;
+  const liveBusesByDir = useMemo<Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]>>(() => {
+    const out: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]> = { 1: [], 2: [] };
+    if (!compareTestEnabled || !liveDataUpdatedAt) return out;
+    const elapsedMin = Math.max(0, (clock.getTime() - liveDataUpdatedAt) / 60_000);
+    for (const dir of [1, 2] as const) {
+      const stops = stopsByDir[dir];
+      if (stops.length < 2) continue;
+      const etas = stops.map((s) => {
+        const v = liveCompareByCode[s.code];
+        return typeof v === "number" ? v : null;
+      });
+      // Muerte: si terminal ya está a ≤3 min, no dibujamos ese bus (está llegando/muriendo).
+      const lastIdx = stops.length - 1;
+      for (let i = 0; i < lastIdx; i++) {
+        const here = etas[i];
+        const next = etas[i + 1];
+        if (here === null || next === null) continue;
+        if (here > 0 || next <= 0) continue;
+        // Bus en segmento i → i+1. Si el siguiente segmento es el terminal y
+        // ETA terminal ≤ 3, lo dejamos pasar (muere visualmente al final).
+        const isTerminalNext = i + 1 === lastIdx;
+        if (isTerminalNext && next <= 3 && elapsedMin >= next - 0.5) continue;
+        const progress = next > 0 ? Math.min(1, elapsedMin / next) : 0;
+        out[dir].push({
+          busId: `live-${dir}-${i}`,
+          segmentIndex: i,
+          segmentProgress: progress,
+        });
+      }
+    }
+    return out;
+  }, [compareTestEnabled, liveCompareByCode, stopsByDir, clock, liveDataUpdatedAt]);
+
+
+
 
 
 
@@ -776,10 +822,11 @@ function BusDashboardPage() {
             onPickStop={handlePickStop}
             nearestList={nearestByDir[1]}
             geoStatus={geoStatus}
-            predictedBuses={virtualBusesByDir[1]}
+            predictedBuses={compareTestEnabled ? liveBusesByDir[1] : virtualBusesByDir[1]}
             disableLiveFetch={true}
             compareLiveByCode={compareTestEnabled ? liveCompareByCode : null}
             compareInterpolatedCodes={compareTestEnabled ? liveInterpolatedCodes : null}
+            useLiveAsPrimary={compareTestEnabled}
           />
 
           <DirectionColumn
@@ -804,10 +851,11 @@ function BusDashboardPage() {
             onPickStop={handlePickStop}
             nearestList={nearestByDir[2]}
             geoStatus={geoStatus}
-            predictedBuses={virtualBusesByDir[2]}
+            predictedBuses={compareTestEnabled ? liveBusesByDir[2] : virtualBusesByDir[2]}
             disableLiveFetch={true}
             compareLiveByCode={compareTestEnabled ? liveCompareByCode : null}
             compareInterpolatedCodes={compareTestEnabled ? liveInterpolatedCodes : null}
+            useLiveAsPrimary={compareTestEnabled}
           />
 
 
@@ -1046,6 +1094,7 @@ function DirectionColumn({
   disableLiveFetch,
   compareLiveByCode,
   compareInterpolatedCodes,
+  useLiveAsPrimary,
 }: {
   label: string;
   direction: 1 | 2;
@@ -1067,6 +1116,7 @@ function DirectionColumn({
   disableLiveFetch?: boolean;
   compareLiveByCode?: Record<string, number | null> | null;
   compareInterpolatedCodes?: Set<string> | null;
+  useLiveAsPrimary?: boolean;
 }) {
 
   const now = new Date();
@@ -1193,21 +1243,30 @@ function DirectionColumn({
           const arr = etas[s.code] ?? [];
           const liveEta = arr[0];
           const scheduleEta = nightEtaByCode?.get(s.code) ?? null;
-          // Día: prefer live; fallback a horario. Noche (no realtime): solo horario.
-          const eta1 = realtimeEnabled
-            ? (typeof liveEta === "number" ? liveEta : scheduleEta?.min)
-            : scheduleEta?.min;
+          // Línea 12 (useLiveAsPrimary): ETA real/interpolado de movilidad.alicante.es.
+          // Resto: live → horario.
+          const liveCompareVal = compareLiveByCode ? compareLiveByCode[s.code] : undefined;
+          const isInterp = !!compareInterpolatedCodes?.has(s.code);
+          const eta1 = useLiveAsPrimary
+            ? (typeof liveCompareVal === "number" ? liveCompareVal : undefined)
+            : realtimeEnabled
+              ? (typeof liveEta === "number" ? liveEta : scheduleEta?.min)
+              : scheduleEta?.min;
           const hasEta = typeof eta1 === "number";
-          const isLoadingEta = realtimeEnabled && loadingEtaStops.has(s.code) && !hasEta;
+          const isLoadingEta = realtimeEnabled && !useLiveAsPrimary && loadingEtaStops.has(s.code) && !hasEta;
           const isOrigin = i === 0;
           const isDest = i === stops.length - 1;
           const transfers = transferLines(s.code);
           const transferColor = transfers[0]?.color ?? null;
-          const etaTime = realtimeEnabled
-            ? (typeof liveEta === "number"
-                ? formatHHMM(new Date(now.getTime() + liveEta * 60_000))
-                : scheduleEta?.time ?? null)
-            : scheduleEta?.time ?? null;
+          const etaTime = useLiveAsPrimary
+            ? (typeof eta1 === "number"
+                ? formatHHMM(new Date(now.getTime() + eta1 * 60_000))
+                : null)
+            : realtimeEnabled
+              ? (typeof liveEta === "number"
+                  ? formatHHMM(new Date(now.getTime() + liveEta * 60_000))
+                  : scheduleEta?.time ?? null)
+              : scheduleEta?.time ?? null;
           
 
           const isNearest = nearestCodes.has(s.code);
@@ -1232,12 +1291,21 @@ function DirectionColumn({
                     : undefined,
               }}
             >
-              {compareLiveByCode && (() => {
+              {useLiveAsPrimary && hasEta && (
+                <div
+                  aria-hidden
+                  className={`pointer-events-none absolute right-1 top-1 z-30 rounded-md border ${isInterp ? "border-amber-300/60" : "border-emerald-300/60"} bg-black/70 px-1.5 py-0.5 backdrop-blur-sm`}
+                >
+                  <span className={`font-sans text-[8px] font-extrabold not-italic uppercase tracking-wide ${isInterp ? "text-amber-300" : "text-emerald-300"}`}>
+                    {isInterp ? "Aprox" : "Real"}
+                  </span>
+                </div>
+              )}
+              {!useLiveAsPrimary && compareLiveByCode && (() => {
                 const hasInMap = Object.prototype.hasOwnProperty.call(compareLiveByCode, s.code);
                 if (!hasInMap) return null;
                 const real = compareLiveByCode[s.code];
                 const hasReal = typeof real === "number";
-                const isInterp = !!compareInterpolatedCodes?.has(s.code);
                 const predicted = typeof eta1 === "number" ? eta1 : null;
                 const diff = hasReal && !isInterp && predicted !== null ? real! - predicted : null;
                 const borderCls = isInterp ? "border-amber-300/60" : "border-emerald-300/60";
