@@ -463,8 +463,6 @@ function BusDashboardPage() {
     enabled: compareTestEnabled,
     refetchOnWindowFocus: false,
     staleTime: 0,
-    refetchInterval: 40_000,
-    refetchIntervalInBackground: true,
     queryFn: () => fetchLineLive({ data: { lineCode: String(code).toUpperCase() } }),
   });
   const liveCompareByCode = useMemo<Record<string, number | null>>(() => {
