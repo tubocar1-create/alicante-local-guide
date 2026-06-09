@@ -654,16 +654,8 @@ function ParadaFavoritaPage() {
               )}
             </button>
 
-            {quota && !quota.isAdmin && (
-              <p className="text-center text-[10px] font-semibold text-stone-500">
-                Te quedan <span className="font-extrabold text-stone-800">{quota.remaining}</span> de {quota.limit} llamadas promocionales hoy.
-              </p>
-            )}
-            {quota?.isAdmin && (
-              <p className="text-center text-[10px] font-semibold text-indigo-700">
-                Modo administrador · llamadas ilimitadas.
-              </p>
-            )}
+
+
 
             {callError && (
               <div className="flex items-start gap-2 rounded-xl bg-amber-50 px-3 py-2 ring-1 ring-amber-200">
