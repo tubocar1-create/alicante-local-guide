@@ -612,18 +612,25 @@ function BusDashboardPage() {
   }, [liveCompareRaw, compareTestEnabled, stopsByDir, engine, code]);
 
   // === BUSES VIRTUALES — TRACKING CON ESTADO ===
-  // Nacimiento: cuando en un refresh ETA[0] (parada de partida) === 0 y no hay
-  // otro bus ya posicionado en el segmento 0.
-  // Persistencia: cada bus tiene segmentIndex (parada que acaba de pasar) y
-  // nextEta (ETA a la siguiente parada). En cada refresh avanzamos cada bus
-  // buscando, hacia adelante desde su posición, la siguiente parada con ETA>0.
-  // Coexistencia: con N buses vivos, ordenamos por segmentIndex desc (líder
-  // primero). El líder se queda con la primera ETA>0 por delante; el siguiente
-  // bus busca su ETA>0 SÓLO entre su posición y la del líder; etc. Así los
-  // ETAs río arriba (que corresponden al bus de atrás) no contaminan al líder.
-  // Muerte: cuando segmentIndex alcanza la última parada (o el terminal queda
-  // a ≤3 min y el reloj ya alcanzó ese tiempo).
-  type ActiveBus = { id: string; segmentIndex: number; nextEta: number; bornAt: number; updatedAt: number };
+  // Cada bus guarda un "schedule": la lista de ETAs (en minutos) a cada parada
+  // futura, congelada en el momento del último refresh (snapshotAt). Entre
+  // refrescos avanzamos el bus por su schedule: a t minutos del snapshot, el
+  // bus ha pasado todas las paradas con eta<=t y está interpolando hacia la
+  // siguiente. La velocidad entre tramos se deriva de (eta[k+1]-eta[k]),
+  // respetando los tiempos reales del feed.
+  // Coexistencia: si los ETAs no son monotónicos (suben y luego bajan), se
+  // parten en cadenas; la cadena con ETAs más bajos es el líder.
+  // Nacimiento: una cadena que cubre el origen (idx 0 con ETA 0) crea un bus
+  // nuevo si nadie ya estaba ahí.
+  // Muerte: cuando el bus rebasa la última parada (eta agotada).
+  type ActiveBus = {
+    id: string;
+    bornAt: number;
+    snapshotAt: number;
+    // Paradas futuras con su ETA (min) en el momento del snapshot.
+    // schedule[0].idx puede ser 0 si el bus está en el origen (eta=0).
+    schedule: { idx: number; eta: number }[];
+  };
   const liveDataUpdatedAt = liveCompareQuery.dataUpdatedAt;
   const activeBusesRef = useRef<Record<1 | 2, ActiveBus[]>>({ 1: [], 2: [] });
   const [busesVersion, setBusesVersion] = useState(0);
@@ -645,57 +652,62 @@ function BusDashboardPage() {
         activeBusesRef.current[dir] = [];
         continue;
       }
+      const lastIdx = stops.length - 1;
       const etas = stops.map((s) => {
         const v = liveCompareByCode[s.code];
         return typeof v === "number" ? v : null;
       });
-      const lastIdx = stops.length - 1;
 
-      // Líder primero (más cerca del terminal).
-      const prev = [...activeBusesRef.current[dir]].sort((a, b) => b.segmentIndex - a.segmentIndex);
-      const survivors: ActiveBus[] = [];
-
-      // upperBound = índice exclusivo hasta el que el siguiente bus (más
-      // atrás en la ruta) puede buscar su próxima ETA>0.
-      let upperBound = lastIdx + 1;
-      for (const bus of prev) {
-        // Buscar próxima parada con ETA>0 por delante (acotada por upperBound
-        // para los buses que vienen detrás del líder).
-        let newJ = -1;
-        for (let j = bus.segmentIndex + 1; j < upperBound; j++) {
-          const v = etas[j];
-          if (v === null || v <= 0) continue;
-          newJ = j; break;
-        }
-        if (newJ === -1) {
-          if (bus.segmentIndex + 1 >= lastIdx) continue;
-          survivors.push({ ...bus, updatedAt });
-          upperBound = bus.segmentIndex + 1;
+      // Partir las paradas en cadenas monotónicamente crecientes (cada cadena
+      // = un bus). Una parada con eta=0 al inicio (origen) abre cadena nueva.
+      const chains: { idx: number; eta: number }[][] = [];
+      let current: { idx: number; eta: number }[] = [];
+      for (let i = 0; i <= lastIdx; i++) {
+        const v = etas[i];
+        if (v === null) continue;
+        if (i === 0 && v === 0) {
+          // Bus en el origen: arranca cadena nueva con (0,0).
+          if (current.length) chains.push(current);
+          current = [{ idx: 0, eta: 0 }];
           continue;
         }
-        const nextEta = etas[newJ] as number;
-        const newSeg = newJ - 1;
-        if (newJ === lastIdx && nextEta <= 0) continue;
-        survivors.push({ ...bus, segmentIndex: newSeg, nextEta, updatedAt });
-        upperBound = newJ;
-      }
-
-      // Nacimiento: ETA[0]===0 y no hay nadie ya en segmento 0.
-      const originEta = etas[0];
-      const someoneAtOrigin = survivors.some((b) => b.segmentIndex === 0);
-      if (originEta === 0 && !someoneAtOrigin) {
-        let j = -1;
-        for (let k = 1; k < upperBound; k++) {
-          const v = etas[k];
-          if (v !== null && v > 0) { j = k; break; }
+        if (v <= 0) continue;
+        if (current.length && v < current[current.length - 1].eta) {
+          chains.push(current);
+          current = [];
         }
-        if (j > 0) {
+        current.push({ idx: i, eta: v });
+      }
+      if (current.length) chains.push(current);
+
+      // Cadenas ordenadas por ETA mínima ascendente → líder (terminal) primero.
+      chains.sort((a, b) => a[0].eta - b[0].eta);
+
+      // Emparejar con buses previos (líder primero por anchorIdx descendente).
+      const prev = [...activeBusesRef.current[dir]];
+      const survivors: ActiveBus[] = [];
+      const prevByAnchor = prev
+        .map((b) => ({ bus: b, anchor: b.schedule[0]?.idx ?? 0 }))
+        .sort((a, b) => b.anchor - a.anchor);
+
+      for (let ci = 0; ci < chains.length; ci++) {
+        const chain = chains[ci];
+        const match = prevByAnchor[ci]?.bus;
+        if (match && chain[0].idx >= (match.schedule[0]?.idx ?? 0) - 0) {
+          // Mismo bus: actualizar snapshot y schedule.
           survivors.push({
-            id: `bus-${dir}-${updatedAt}`,
-            segmentIndex: j - 1,
-            nextEta: etas[j] as number,
+            id: match.id,
+            bornAt: match.bornAt,
+            snapshotAt: updatedAt,
+            schedule: chain,
+          });
+        } else {
+          // Bus nuevo (no había previo o la cadena retrocedió).
+          survivors.push({
+            id: `bus-${dir}-${updatedAt}-${ci}`,
             bornAt: updatedAt,
-            updatedAt,
+            snapshotAt: updatedAt,
+            schedule: chain,
           });
         }
       }
@@ -706,6 +718,10 @@ function BusDashboardPage() {
   }, [liveDataUpdatedAt, compareTestEnabled, liveCompareByCode, stopsByDir]);
 
   // Render: usa el ref + reloj para animar progreso entre refrescos.
+  // Estrategia: el bus arranca en su anchor (schedule[0].idx) con t=0; al
+  // pasar el tiempo, "consume" entradas del schedule cuyo eta <= t. La posición
+  // virtual (en unidades de parada) se interpola linealmente en el tiempo
+  // entre dos entradas consecutivas: virtPos = a.idx + (t-a.eta)/(b.eta-a.eta)*(b.idx-a.idx).
   const liveBusesByDir = useMemo<Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]>>(() => {
     const out: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]> = { 1: [], 2: [] };
     if (!compareTestEnabled) return out;
@@ -713,12 +729,45 @@ function BusDashboardPage() {
       const stops = stopsByDir[dir];
       const lastIdx = stops.length - 1;
       for (const bus of activeBusesRef.current[dir]) {
-        const elapsedMin = Math.max(0, (clock.getTime() - bus.updatedAt) / 60_000);
-        const isTerminalNext = bus.segmentIndex + 1 === lastIdx;
-        if (isTerminalNext && bus.nextEta <= 3 && elapsedMin >= bus.nextEta - 0.5) continue;
-        const denom = Math.max(0.1, bus.nextEta);
-        const progress = Math.min(1, elapsedMin / denom);
-        out[dir].push({ busId: bus.id, segmentIndex: bus.segmentIndex, segmentProgress: progress });
+        const sched = bus.schedule;
+        if (sched.length === 0) continue;
+        const t = Math.max(0, (clock.getTime() - bus.snapshotAt) / 60_000);
+
+        // Punto ancla: si schedule[0] tiene eta>0, el bus venía de una parada
+        // anterior. Usamos schedule[0] como referencia y, si t<schedule[0].eta,
+        // interpolamos hacia atrás desde (idx-1, 0).
+        let a: { idx: number; eta: number };
+        let b: { idx: number; eta: number } | null;
+        if (t < sched[0].eta) {
+          // Antes de alcanzar la primera parada del schedule.
+          const first = sched[0];
+          a = { idx: Math.max(0, first.idx - 1), eta: 0 };
+          b = first;
+        } else {
+          // Buscar el último k con sched[k].eta <= t.
+          let k = 0;
+          while (k + 1 < sched.length && sched[k + 1].eta <= t) k++;
+          a = sched[k];
+          b = k + 1 < sched.length ? sched[k + 1] : null;
+        }
+
+        if (!b) {
+          // Bus pasó la última parada conocida del schedule.
+          if (a.idx >= lastIdx) continue; // muerte
+          // Extrapolar: sin más datos, asumimos 1 parada por (a.eta gap promedio).
+          // Conservador: mantener posición en a.idx.
+          out[dir].push({ busId: bus.id, segmentIndex: a.idx, segmentProgress: 0 });
+          continue;
+        }
+
+        const dt = Math.max(0.001, b.eta - a.eta);
+        const di = Math.max(1, b.idx - a.idx);
+        const virtPos = a.idx + ((t - a.eta) / dt) * di;
+        const clamped = Math.max(0, Math.min(lastIdx, virtPos));
+        if (clamped >= lastIdx) continue; // muerte
+        const segmentIndex = Math.floor(clamped);
+        const segmentProgress = Math.max(0, Math.min(1, clamped - segmentIndex));
+        out[dir].push({ busId: bus.id, segmentIndex, segmentProgress });
       }
     }
     return out;
