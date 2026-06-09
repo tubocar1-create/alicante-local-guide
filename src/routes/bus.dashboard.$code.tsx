@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
+
 import { ArrowLeft, ArrowDown, ArrowUp, Bus, ChevronDown, Radio, RefreshCw, Loader2, MapPin } from "lucide-react";
-import { getLineLive } from "@/lib/bus-realtime.functions";
+// getClientStopsRealtimeBatch importado desde bus-realtime-client (línea 20)
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { classifyLine } from "@/components/BusKnownPicker";
 import { saveFavoriteStop } from "@/components/FavoriteStopWidget";
@@ -17,7 +17,7 @@ import {
   toMinHM,
 } from "@/hooks/useBusServiceWindow";
 import { cumulativeMinutes, NIGHT_URBAN_KMH } from "@/lib/bus-eta";
-import { getClientStopRealtime } from "@/lib/bus-realtime-client";
+import { getClientStopRealtime, getClientStopsRealtimeBatch } from "@/lib/bus-realtime-client";
 import busAlicanteImg from "@/assets/bus-alicante.png";
 import { useLineRealtime, isPreviewHost } from "@/hooks/useLineRealtime";
 import { useBusEngine } from "@/hooks/useBusEngine";
@@ -455,22 +455,32 @@ function BusDashboardPage() {
   // Preview NUNCA se toca: ahí ignoramos cualquier lógica de "congelado/n.d.".
   const inPreview = isPreviewHost();
 
-  // === TEST PREVIEW (solo Línea 12): comparar predicción vs tiempo real SUBUS ===
+  // === TEST PREVIEW (solo Línea 12): comparar predicción vs tiempo real ===
+  // Usamos el MISMO bridge que la parada favorita: /api/public/bus-datos
+  // (lectura del QR desde el navegador del usuario). Sin Firecrawl, sin Worker.
   const compareTestEnabled = inPreview && String(code).toUpperCase() === "12";
-  const fetchLineLive = useServerFn(getLineLive);
+  const compareStopCodes = useMemo(() => {
+    if (!compareTestEnabled) return [] as string[];
+    const all = [...stopsByDir[1], ...stopsByDir[2]].map((s) => s.code);
+    return [...new Set(all)];
+  }, [compareTestEnabled, stopsByDir]);
   const liveCompareQuery = useQuery({
-    queryKey: ["dashboard-live-compare", code],
-    enabled: compareTestEnabled,
+    queryKey: ["dashboard-live-compare", code, compareStopCodes.join(",")],
+    enabled: compareTestEnabled && compareStopCodes.length > 0,
     refetchOnWindowFocus: false,
     staleTime: 0,
-    queryFn: () => fetchLineLive({ data: { lineCode: String(code).toUpperCase() } }),
+    queryFn: () =>
+      getClientStopsRealtimeBatch({
+        stopIds: compareStopCodes,
+        line: String(code).toUpperCase(),
+      }),
   });
   const liveCompareByCode = useMemo<Record<string, number | null>>(() => {
     const map: Record<string, number | null> = {};
-    const stops = liveCompareQuery.data?.stops;
-    if (!stops) return map;
-    for (const s of stops) {
-      map[s.stopCode] = typeof s.etaMinutes?.[0] === "number" ? s.etaMinutes[0] : null;
+    const data = liveCompareQuery.data;
+    if (!data) return map;
+    for (const [stopCode, arr] of Object.entries(data)) {
+      map[stopCode] = typeof arr?.[0] === "number" ? arr[0] : null;
     }
     return map;
   }, [liveCompareQuery.data]);
