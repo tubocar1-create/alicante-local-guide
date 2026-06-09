@@ -502,15 +502,22 @@ function BusDashboardPage() {
         stopsByUrl.set(url, list);
       }
       // 2) Descargar cada página desde el navegador (una vez) en paralelo.
+      // IMPORTANTE: cada fetch lleva timeout propio (AbortController). Sin él,
+      // un fetch colgado dejaría la query con isFetching=true para siempre y
+      // el refetchInterval no volvería a dispararse (autorefresh "pegado").
       const pageHtml = new Map<string, string>();
       await Promise.all(
         [...stopsByUrl.keys()].map(async (url) => {
+          const ctrl = new AbortController();
+          const timer = setTimeout(() => ctrl.abort(), 15_000);
           try {
-            const r = await fetch(url, { cache: "no-store" });
+            const r = await fetch(url, { cache: "no-store", signal: ctrl.signal });
             if (!r.ok) return;
             pageHtml.set(url, await r.text());
           } catch {
-            /* página caída: omitimos */
+            /* página caída o timeout: omitimos */
+          } finally {
+            clearTimeout(timer);
           }
         }),
       );
