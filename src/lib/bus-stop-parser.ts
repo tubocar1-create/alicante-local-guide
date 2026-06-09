@@ -180,11 +180,15 @@ export function detectStopsFromHtml(html: string): {
 
 export async function extractStopFromPage(
   pageUrl: string,
-  stopId: number
+  stopId: number,
+  opts?: { timeoutMs?: number }
 ): Promise<ExtractResult> {
   const t0 = performance.now();
+  const timeoutMs = opts?.timeoutMs ?? 20_000;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    const res = await fetch(pageUrl, { cache: "no-store" });
+    const res = await fetch(pageUrl, { cache: "no-store", signal: ctrl.signal });
     const html = await res.text();
     const fetchMs = Math.round(performance.now() - t0);
     const htmlBytes = new Blob([html]).size;
@@ -196,9 +200,11 @@ export async function extractStopFromPage(
         htmlBytes,
         blocksFound: stop ? 1 : 0,
         arrivalsFound: stop?.arrivals.length ?? 0,
+        error: !res.ok ? `HTTP ${res.status}` : undefined,
       },
     };
   } catch (e) {
+    const aborted = (e as Error)?.name === "AbortError";
     return {
       stop: null,
       debug: {
@@ -206,8 +212,12 @@ export async function extractStopFromPage(
         htmlBytes: 0,
         blocksFound: 0,
         arrivalsFound: 0,
-        error: e instanceof Error ? e.message : String(e),
+        error: aborted
+          ? `Timeout tras ${Math.round(timeoutMs / 1000)}s (movilidad.alicante.es no respondió)`
+          : e instanceof Error ? e.message : String(e),
       },
     };
+  } finally {
+    clearTimeout(timer);
   }
 }
