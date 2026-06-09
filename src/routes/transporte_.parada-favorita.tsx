@@ -13,7 +13,7 @@ import {
 import { useBusGraph } from "@/hooks/useBusGraph";
 import { useBusServiceWindows, useBusLineDepartures, getServiceStatus, getNightLineEstimates } from "@/hooks/useBusServiceWindow";
 import { cumulativeMinutes, NIGHT_URBAN_KMH } from "@/lib/bus-eta";
-import { extractStopFromPage } from "@/lib/bus-stop-parser";
+import { extractStopFromPage, type BusArrival } from "@/lib/bus-stop-parser";
 import { supabase } from "@/integrations/supabase/client";
 
 const PAGE_BASE = "https://movilidad.alicante.es/paradas-de-bus?page=";
@@ -58,6 +58,7 @@ function ParadaFavoritaPage() {
   // No hay polling: el usuario solicita la llamada y aquí guardamos el
   // resultado para mostrar un contador decreciente hasta cero.
   const [snapshot, setSnapshot] = useState<{ etaMin: number; all: number[]; fetchedAt: number; destination: string | null } | null>(null);
+  const [allArrivals, setAllArrivals] = useState<{ items: BusArrival[]; fetchedAt: number } | null>(null);
   const [liveLoading, setLiveLoading] = useState(false);
   const [callError, setCallError] = useState<string | null>(null);
   const [experienceEnded, setExperienceEnded] = useState(false);
@@ -181,6 +182,8 @@ function ParadaFavoritaPage() {
         setCallError(res.debug.error ?? "No se pudo extraer la parada del HTML.");
         return;
       }
+      const fetchedAtAll = Date.now();
+      setAllArrivals({ items: res.stop.arrivals, fetchedAt: fetchedAtAll });
       // Filtramos llegadas por línea (case-insensitive). Normalizamos quitando
       // ceros iniciales para que "1" coincida con "01".
       const normLine = (s: string) => s.toUpperCase().replace(/^0+(?=\w)/, "");
@@ -248,6 +251,7 @@ function ParadaFavoritaPage() {
       }
     }
     setSnapshot(null);
+    setAllArrivals(null);
     setExperienceEnded(false);
   }, [stop.stopId, stop.line]);
 
@@ -728,6 +732,59 @@ function ParadaFavoritaPage() {
           </ul>
         )}
       </section>
+
+      {/* Todas las líneas que llegan a esta parada */}
+      {allArrivals && allArrivals.items.length > 0 && (
+        <section className="mx-3 mt-2 rounded-3xl bg-white p-3 shadow-[0_8px_24px_-12px_rgba(60,40,10,0.25)]">
+          <h3 className="mb-2 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-stone-500">
+            <span>Todas las líneas en esta parada</span>
+            <span className="normal-case text-stone-400">
+              {allArrivals.items.length} llegadas
+            </span>
+          </h3>
+          <ul className="space-y-1.5">
+            {allArrivals.items
+              .slice()
+              .sort((a, b) => (a.etaMinutes ?? 9999) - (b.etaMinutes ?? 9999))
+              .map((a, i) => {
+                const normLine = (s: string) => s.toUpperCase().replace(/^0+(?=\w)/, "");
+                const isFav = normLine(a.line) === normLine(stop.line);
+                return (
+                  <li
+                    key={`${a.line}-${a.destination}-${i}`}
+                    className={`flex items-center gap-2 rounded-2xl px-2.5 py-1.5 ring-1 ${
+                      isFav ? "bg-[#0d3b8a]/5 ring-[#0d3b8a]/30" : "bg-stone-50 ring-stone-100"
+                    }`}
+                  >
+                    <span
+                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-extrabold ${
+                        isFav ? "bg-[#0d3b8a] text-white" : "bg-cyan-500 text-white"
+                      }`}
+                    >
+                      {a.line}
+                    </span>
+                    <ArrowRight className="h-3 w-3 shrink-0 text-stone-400" />
+                    <span className="min-w-0 flex-1 truncate text-xs font-semibold text-stone-800">
+                      {a.destination || "—"}
+                    </span>
+                    <span
+                      className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-extrabold tabular-nums ${
+                        a.etaMinutes != null
+                          ? "bg-emerald-50 text-emerald-700"
+                          : "bg-stone-100 text-stone-500"
+                      }`}
+                    >
+                      {a.etaText || (a.etaMinutes != null ? `${a.etaMinutes} min` : "n/d")}
+                    </span>
+                  </li>
+                );
+              })}
+          </ul>
+          <p className="mt-2 text-[10px] text-stone-400">
+            Datos en vivo de movilidad.alicante.es · {new Date(allArrivals.fetchedAt).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}
+          </p>
+        </section>
+      )}
 
 
 
