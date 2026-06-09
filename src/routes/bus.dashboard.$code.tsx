@@ -620,11 +620,13 @@ function BusDashboardPage() {
         return m && typeof m.min === "number" ? m.min : null;
       });
 
-      // Un bus vivo SOLO si el origen reporta eta ~0 (el bus está físicamente
-      // en la terminal a punto de salir). Un eta>0 en el origen significa que
-      // el próximo bus llegará en X min — todavía no existe sobre la ruta.
+      // Nacimiento: prioridad TIEMPO REAL en origen; si no hay real, fallback
+      // al MODELO (horario oficial). Un bus nace cuando el ETA del origen
+      // (real o, en su defecto, modelo) es ≤ 1 min.
       const chains: { idx: number; eta: number }[][] = [];
-      const originEta = realEtas[0];
+      const originReal = realEtas[0];
+      const originModel = modelEtas[0];
+      const originEta = originReal !== null ? originReal : originModel;
       if (originEta !== null && originEta <= 1) {
         const chain: { idx: number; eta: number }[] = [{ idx: 0, eta: Math.max(0, originEta) }];
         for (let i = 1; i <= lastIdx; i++) {
