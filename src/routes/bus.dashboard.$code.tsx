@@ -455,6 +455,27 @@ function BusDashboardPage() {
   // Preview NUNCA se toca: ahí ignoramos cualquier lógica de "congelado/n.d.".
   const inPreview = isPreviewHost();
 
+  // === TEST PREVIEW (solo Línea 12): comparar predicción vs tiempo real SUBUS ===
+  const compareTestEnabled = inPreview && String(code).toUpperCase() === "12";
+  const fetchLineLive = useServerFn(getLineLive);
+  const liveCompareQuery = useQuery({
+    queryKey: ["dashboard-live-compare", code],
+    enabled: compareTestEnabled,
+    refetchOnWindowFocus: false,
+    staleTime: 0,
+    queryFn: () => fetchLineLive({ data: { lineCode: String(code).toUpperCase() } }),
+  });
+  const liveCompareByCode = useMemo<Record<string, number | null>>(() => {
+    const map: Record<string, number | null> = {};
+    const stops = liveCompareQuery.data?.stops;
+    if (!stops) return map;
+    for (const s of stops) {
+      map[s.stopCode] = typeof s.etaMinutes?.[0] === "number" ? s.etaMinutes[0] : null;
+    }
+    return map;
+  }, [liveCompareQuery.data]);
+
+
   const etas = useMemo<Record<string, number[]>>(() => {
     if (!realtime) return {};
     const out: Record<string, number[]> = {};
