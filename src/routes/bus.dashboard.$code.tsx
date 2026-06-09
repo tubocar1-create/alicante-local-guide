@@ -1080,6 +1080,37 @@ function DirectionColumn({
                     : undefined,
               }}
             >
+              {compareLiveByCode && (() => {
+                const hasInMap = Object.prototype.hasOwnProperty.call(compareLiveByCode, s.code);
+                if (!hasInMap) return null;
+                const real = compareLiveByCode[s.code];
+                const hasReal = typeof real === "number";
+                const predicted = typeof eta1 === "number" ? eta1 : null;
+                const diff = hasReal && predicted !== null ? real! - predicted : null;
+                return (
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute right-1 top-1 z-30 flex items-center gap-1 rounded-md border border-emerald-300/60 bg-black/70 px-1.5 py-0.5 backdrop-blur-sm"
+                  >
+                    <span className="font-sans text-[8px] font-extrabold not-italic uppercase tracking-wide text-emerald-300">
+                      Real
+                    </span>
+                    <span className="font-sans text-[11px] font-bold not-italic tabular-nums text-emerald-200">
+                      {hasReal ? `${real}m` : "—"}
+                    </span>
+                    {diff !== null && (
+                      <span
+                        className={[
+                          "font-sans text-[9px] font-semibold not-italic tabular-nums",
+                          diff > 0 ? "text-amber-300" : diff < 0 ? "text-sky-300" : "text-white/70",
+                        ].join(" ")}
+                      >
+                        {diff > 0 ? `+${diff}` : diff}
+                      </span>
+                    )}
+                  </div>
+                );
+              })()}
               {!isDest && (
                 <ChevronDown
                   aria-hidden
