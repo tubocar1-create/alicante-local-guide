@@ -548,6 +548,33 @@ function BusDashboardPage() {
     const interp = new Set<string>();
     if (!compareTestEnabled) return { liveCompareByCode: merged, liveInterpolatedCodes: interp };
     const distMap = engine?.stopDistances ?? new Map<string, number>();
+    const nowMin = clock.getHours() * 60 + clock.getMinutes();
+    const todayType = dayTypeOf(clock);
+    const yesterdayType = dayTypeOf(new Date(clock.getTime() - 24 * 60 * 60_000));
+
+    // Próxima salida oficial de Vectalia desde el origen de un sentido visual.
+    // Se usa como ancla sintética en idx=0 cuando el feed no devuelve ETA real
+    // en la parada base (regla: "tu mejor estimación es la hora oficial").
+    const originDepartureEta = (originName: string): number | null => {
+      if (!serviceRows || !departures) return null;
+      const sw = serviceRows.find(
+        (r) =>
+          r.line_code === code &&
+          r.terminal_name === originName &&
+          (matchesDayType(r.day_type, todayType) || matchesDayType(r.day_type, yesterdayType)),
+      );
+      if (!sw) return null;
+      let best: number | null = null;
+      for (const d of departures) {
+        if (d.line_code !== code || d.direction !== sw.direction) continue;
+        if (!matchesDayType(d.day_type, todayType)) continue;
+        const depMin = toMinHM(d.departure_time);
+        if (depMin < nowMin - 1) continue;
+        if (best == null || depMin < best) best = depMin;
+      }
+      return best == null ? null : Math.max(0, best - nowMin);
+    };
+
     for (const dir of [1, 2] as const) {
       const codes = stopsByDir[dir].map((s) => s.code);
       if (codes.length === 0) continue;
@@ -557,25 +584,16 @@ function BusDashboardPage() {
       for (let i = 1; i < codes.length; i++) {
         const key = `${code}|${dir}|${codes[i - 1]}|${codes[i]}`;
         const seg = distMap.get(key);
-        // Fallback: 1 unidad si no hay distancia routed (espaciado uniforme).
         acc += typeof seg === "number" && seg > 0 ? seg : 1;
         cum.push(acc);
       }
-      // Índices de anclas (paradas con ETA real numérico)
+      // Anclas reales: paradas con ETA numérico del feed.
       const rawAnchors: { idx: number; eta: number }[] = [];
       for (let i = 0; i < codes.length; i++) {
         const v = liveCompareRaw[codes[i]];
         if (typeof v === "number") rawAnchors.push({ idx: i, eta: v });
       }
-      if (rawAnchors.length === 0) continue;
-      // Filtrado: las ETAs del feed pueden mezclar buses distintos (p.ej. una
-      // parada cercana al origen tiene eta=0 por un bus que ya pasó, mientras
-      // que el origen tiene eta=35 por el próximo bus). Conservamos la
-      // cadena monotónica creciente más larga empezando por el origen, que
-      // representa el bus que vamos a renderizar.
-      // Algoritmo: barrido por LIS (longest increasing subsequence) simple
-      // sobre etas; para nuestro caso típico (orden por stop idx ascendente)
-      // basta con un greedy: añadir si eta >= último eta de la cadena.
+      // Cadena monotónica más larga (descartar ETAs de otros buses).
       let bestChain: { idx: number; eta: number }[] = [];
       for (let start = 0; start < rawAnchors.length; start++) {
         const chain: { idx: number; eta: number }[] = [rawAnchors[start]];
@@ -586,20 +604,38 @@ function BusDashboardPage() {
         }
         if (chain.length > bestChain.length) bestChain = chain;
       }
-      const anchors = bestChain;
-      const anchorIdxSet = new Set(anchors.map((a) => a.idx));
-      // Velocidad por defecto: ~18 km/h urbana → minutos por metro.
-      const DEFAULT_MIN_PER_M = 1 / (18_000 / 60); // 18km/h
-      // Marcar como interpoladas las anclas descartadas (vendrán recalculadas).
-      for (const ra of rawAnchors) {
-        if (!anchorIdxSet.has(ra.idx)) {
-          // las recalcularemos abajo
+      const anchors = [...bestChain];
+
+      // FALLBACK ORIGEN: si la cadena no cubre el origen (idx=0), inyectamos
+      // un ancla sintética con la próxima hora oficial de salida de Vectalia.
+      // Así siempre tenemos por dónde propagar hacia adelante.
+      const hasOriginAnchor = anchors.length > 0 && anchors[0].idx === 0;
+      if (!hasOriginAnchor) {
+        const originName = stopsByDir[dir][0]?.name ?? "";
+        const officialEta = originDepartureEta(originName);
+        if (officialEta != null) {
+          // Sólo si encaja con el resto de la cadena (eta <= primera ancla real).
+          if (anchors.length === 0 || officialEta <= anchors[0].eta) {
+            anchors.unshift({ idx: 0, eta: officialEta });
+            merged[codes[0]] = officialEta;
+            interp.add(codes[0]);
+          }
         }
       }
+
+      if (anchors.length === 0) continue;
+      const anchorIdxSet = new Set(anchors.map((a) => a.idx));
+      const DEFAULT_MIN_PER_M = 1 / (18_000 / 60); // ~18 km/h urbana
+
+      // Propagación: para cada parada sin ancla, interpolar entre anclas
+      // adyacentes o extrapolar hacia adelante / atrás hasta destino.
       for (let i = 0; i < codes.length; i++) {
         const c = codes[i];
-        // Si es ancla válida de la cadena, conservamos el valor real.
-        if (anchorIdxSet.has(i)) continue;
+        if (anchorIdxSet.has(i)) {
+          // Si era ancla sintética del origen, ya está marcada arriba.
+          if (i === 0 && !hasOriginAnchor) continue;
+          continue;
+        }
         let estimate: number | null = null;
         let prev: { idx: number; eta: number } | null = null;
         let next: { idx: number; eta: number } | null = null;
@@ -612,8 +648,6 @@ function BusDashboardPage() {
           const frac = span > 0 ? (cum[i] - cum[prev.idx]) / span : 0;
           estimate = prev.eta + frac * (next.eta - prev.eta);
         } else if (prev && next === null) {
-          // Extrapolar hacia adelante: usar ritmo de la ancla previa anterior
-          // si existe, si no usar velocidad urbana por defecto.
           const ref = anchors[anchors.indexOf(prev) - 1] ?? null;
           let minPerM = DEFAULT_MIN_PER_M;
           if (ref && cum[prev.idx] > cum[ref.idx]) {
@@ -622,7 +656,6 @@ function BusDashboardPage() {
           }
           estimate = prev.eta + minPerM * (cum[i] - cum[prev.idx]);
         } else if (next && prev === null) {
-          // Extrapolar hacia atrás: ritmo de las dos primeras anclas, o por defecto.
           const ref = anchors[anchors.indexOf(next) + 1] ?? null;
           let minPerM = DEFAULT_MIN_PER_M;
           if (ref && cum[ref.idx] > cum[next.idx]) {
@@ -639,7 +672,7 @@ function BusDashboardPage() {
       }
     }
     return { liveCompareByCode: merged, liveInterpolatedCodes: interp };
-  }, [liveCompareRaw, compareTestEnabled, stopsByDir, engine, code]);
+  }, [liveCompareRaw, compareTestEnabled, stopsByDir, engine, code, serviceRows, departures, clock]);
 
   // === BUSES VIRTUALES — TRACKING CON ESTADO ===
   // Cada bus guarda un "schedule": la lista de ETAs (en minutos) a cada parada
