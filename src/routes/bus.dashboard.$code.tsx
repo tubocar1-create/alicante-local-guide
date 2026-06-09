@@ -661,7 +661,7 @@ function BusDashboardPage() {
       activeBusesRef.current[dir] = survivors;
     }
     setBusesVersion((v) => v + 1);
-  }, [liveDataUpdatedAt, compareTestEnabled, liveCompareByCode, stopsByDir]);
+  }, [liveDataUpdatedAt, compareTestEnabled, liveCompareRaw, stopsByDir]);
 
   // Render: usa el ref + reloj para animar progreso entre refrescos.
   // Estrategia: el bus arranca en su anchor (schedule[0].idx) con t=0; al
