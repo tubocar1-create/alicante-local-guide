@@ -530,7 +530,60 @@ function BusDashboardPage() {
       return out;
     },
   });
-  const liveCompareByCode = liveCompareQuery.data ?? {};
+  const liveCompareRaw = liveCompareQuery.data ?? {};
+
+  // === INTERPOLACIÓN ===
+  // Para cada parada SIN ETA real, deducimos un ETA aproximado por
+  // interpolación lineal entre las anclas reales en el mismo sentido,
+  // usando como eje X los minutos acumulados entre paradas (distancia real
+  // calculada con haversine sobre stopCoords).
+  // - Entre dos anclas reales: interpolación lineal en cum-min.
+  // - Antes de la primera ancla: extrapolación hacia atrás (clamp a 0).
+  // - Después de la última: extrapolación hacia adelante.
+  const { liveCompareByCode, liveInterpolatedCodes } = useMemo(() => {
+    const merged: Record<string, number | null> = { ...liveCompareRaw };
+    const interp = new Set<string>();
+    if (!compareTestEnabled) return { liveCompareByCode: merged, liveInterpolatedCodes: interp };
+    for (const dir of [1, 2] as const) {
+      const codes = stopsByDir[dir].map((s) => s.code);
+      if (codes.length === 0) continue;
+      const cum = cumulativeMinutes(codes, stopCoords);
+      // Índices de anclas (paradas con ETA real numérico)
+      const anchors: { idx: number; eta: number }[] = [];
+      for (let i = 0; i < codes.length; i++) {
+        const v = liveCompareRaw[codes[i]];
+        if (typeof v === "number") anchors.push({ idx: i, eta: v });
+      }
+      if (anchors.length === 0) continue;
+      for (let i = 0; i < codes.length; i++) {
+        const c = codes[i];
+        if (typeof liveCompareRaw[c] === "number") continue;
+        let estimate: number | null = null;
+        // Buscar anclas previa y siguiente
+        let prev: { idx: number; eta: number } | null = null;
+        let next: { idx: number; eta: number } | null = null;
+        for (const a of anchors) {
+          if (a.idx <= i) prev = a;
+          if (a.idx >= i && next === null) next = a;
+        }
+        if (prev && next && prev.idx !== next.idx) {
+          const span = cum[next.idx] - cum[prev.idx];
+          const frac = span > 0 ? (cum[i] - cum[prev.idx]) / span : 0;
+          estimate = prev.eta + frac * (next.eta - prev.eta);
+        } else if (prev) {
+          estimate = prev.eta + (cum[i] - cum[prev.idx]);
+        } else if (next) {
+          estimate = next.eta - (cum[next.idx] - cum[i]);
+        }
+        if (estimate !== null) {
+          const rounded = Math.max(0, Math.round(estimate));
+          merged[c] = rounded;
+          interp.add(c);
+        }
+      }
+    }
+    return { liveCompareByCode: merged, liveInterpolatedCodes: interp };
+  }, [liveCompareRaw, compareTestEnabled, stopsByDir, stopCoords]);
 
 
 
