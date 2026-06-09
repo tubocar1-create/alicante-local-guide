@@ -672,11 +672,48 @@ function BusDashboardPage() {
   // virtual (en unidades de parada) se interpola linealmente en el tiempo
   // entre dos entradas consecutivas: virtPos = a.idx + (t-a.eta)/(b.eta-a.eta)*(b.idx-a.idx).
   const liveBusesByDir = useMemo<Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]>>(() => {
-    // BUS OCULTO TEMPORALMENTE: estamos depurando los tiempos. El motor de
-    // tracking sigue vivo (refs, schedules, refrescos), pero no renderizamos
-    // ningún icono móvil hasta que las ETAs estén afinadas.
-    void compareTestEnabled; void stopsByDir; void clock; void busesVersion;
-    return { 1: [], 2: [] };
+    void busesVersion;
+    const out: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]> = { 1: [], 2: [] };
+    if (!compareTestEnabled) return out;
+    const nowMs = clock.getTime();
+    for (const dir of [1, 2] as const) {
+      const stops = stopsByDir[dir];
+      const lastIdx = stops.length - 1;
+      if (lastIdx < 1) continue;
+      for (const bus of activeBusesRef.current[dir]) {
+        const sched = bus.schedule;
+        if (!sched.length) continue;
+        const t = (nowMs - bus.snapshotAt) / 60_000; // minutos desde el snapshot
+        // Encontrar el segmento del schedule que contiene t.
+        let a = { idx: sched[0].idx, eta: sched[0].eta };
+        let b: { idx: number; eta: number } | null = null;
+        for (let k = 0; k < sched.length; k++) {
+          if (sched[k].eta <= t) {
+            a = sched[k];
+          } else {
+            b = sched[k];
+            break;
+          }
+        }
+        let virtPos: number;
+        if (b) {
+          const dt = b.eta - a.eta;
+          const frac = dt > 0 ? Math.max(0, Math.min(1, (t - a.eta) / dt)) : 0;
+          virtPos = a.idx + frac * (b.idx - a.idx);
+        } else {
+          // Sin ancla futura: extrapolar a velocidad del último tramo conocido
+          // (o 1 parada/min como fallback).
+          const prev = sched.length >= 2 ? sched[sched.length - 2] : null;
+          const speed = prev && a.eta > prev.eta ? (a.idx - prev.idx) / (a.eta - prev.eta) : 1;
+          virtPos = a.idx + Math.max(0, t - a.eta) * speed;
+        }
+        if (virtPos >= lastIdx) continue; // bus ya terminó
+        const segIdx = Math.max(0, Math.min(lastIdx - 1, Math.floor(virtPos)));
+        const segProg = Math.max(0, Math.min(1, virtPos - segIdx));
+        out[dir].push({ busId: bus.id, segmentIndex: segIdx, segmentProgress: segProg });
+      }
+    }
+    return out;
   }, [compareTestEnabled, stopsByDir, clock, busesVersion]);
 
 
@@ -850,7 +887,7 @@ function BusDashboardPage() {
             onPickStop={handlePickStop}
             nearestList={nearestByDir[1]}
             geoStatus={geoStatus}
-            predictedBuses={virtualBusesByDir[1]}
+            predictedBuses={compareTestEnabled ? liveBusesByDir[1] : virtualBusesByDir[1]}
             disableLiveFetch={true}
             compareLiveByCode={compareTestEnabled ? liveCompareByCode : null}
             compareInterpolatedCodes={compareTestEnabled ? liveInterpolatedCodes : null}
@@ -879,7 +916,7 @@ function BusDashboardPage() {
             onPickStop={handlePickStop}
             nearestList={nearestByDir[2]}
             geoStatus={geoStatus}
-            predictedBuses={virtualBusesByDir[2]}
+            predictedBuses={compareTestEnabled ? liveBusesByDir[2] : virtualBusesByDir[2]}
             disableLiveFetch={true}
             compareLiveByCode={compareTestEnabled ? liveCompareByCode : null}
             compareInterpolatedCodes={compareTestEnabled ? liveInterpolatedCodes : null}
