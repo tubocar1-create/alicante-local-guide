@@ -454,7 +454,11 @@ function BusDashboardPage() {
   const { data: realtime, isLoading: realtimeLoading } = useLineRealtime(null);
 
   // Preview NUNCA se toca: ahí ignoramos cualquier lógica de "congelado/n.d.".
-  const inPreview = isPreviewHost();
+  // `inPreview` se calcula tras hidratar para evitar mismatch SSR↔cliente
+  // (el host solo se conoce en el navegador).
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => { setHydrated(true); }, []);
+  const inPreview = hydrated && isPreviewHost();
 
   // === TEST PREVIEW (solo Línea 12): comparar predicción vs tiempo real ===
   // EXACTAMENTE igual que "Mi parada favorita":
