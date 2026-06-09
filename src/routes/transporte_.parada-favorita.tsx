@@ -789,9 +789,8 @@ function ParadaFavoritaPage() {
                             </span>
                           )}
                           <span
-                            className={`flex h-6 min-w-[32px] shrink-0 items-center justify-center rounded-full px-2 text-[11px] font-extrabold ${
-                              isFav ? "bg-[#0d3b8a] text-white" : "bg-cyan-500 text-white"
-                            }`}
+                            className="flex h-6 min-w-[32px] shrink-0 items-center justify-center rounded-full px-2 text-[11px] font-extrabold text-white"
+                            style={{ backgroundColor: lineColor(a.line) }}
                           >
                             {a.line}
                           </span>
