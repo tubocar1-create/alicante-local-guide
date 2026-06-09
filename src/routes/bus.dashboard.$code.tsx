@@ -864,8 +864,9 @@ function VisibleStopRealtime({
       controller = new AbortController();
       onLoading(stopCode, true);
       try {
-        const r = await getClientStopRealtime({ stopId: stopCode, line: lineCode, signal: controller.signal });
-        if (!cancelled) onEta(stopCode, r.all);
+        // Dead path: realtimeEnabled siempre es false en este dashboard.
+        if (!cancelled) onEta(stopCode, []);
+        void lineCode;
       } finally {
         if (!cancelled) onLoading(stopCode, false);
         clearTimer();
