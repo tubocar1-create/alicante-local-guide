@@ -543,7 +543,10 @@ function ParadaFavoritaPage() {
               </span>
             </div>
             <div className="mb-2 flex items-center gap-2">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0d3b8a] text-base font-extrabold text-white">
+              <span
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-base font-extrabold text-white"
+                style={{ backgroundColor: lineColor(stop.line) }}
+              >
                 {stop.line}
               </span>
               <span className="truncate text-[10px] font-bold uppercase tracking-wider text-stone-500">
