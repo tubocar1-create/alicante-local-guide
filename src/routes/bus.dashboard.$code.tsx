@@ -612,11 +612,13 @@ function BusDashboardPage() {
   }, [liveCompareRaw, compareTestEnabled, stopsByDir, engine, code]);
 
   // === BUSES VIRTUALES DESDE ETA REALES + INTERPOLADOS ===
-  // Solo en preview de Línea 12. Nacimiento: ETA en origen (parada 0) == 0.
-  // Muerte: ETA en terminal <= 3 min (el bus desaparece al llegar).
-  // Posición: el bus está en el segmento [i, i+1] cuando ETA[i] == 0 y ETA[i+1] > 0.
-  // Entre refrescos (40s) animamos el progreso linealmente con el reloj:
-  //   progress = elapsedMin / ETA[i+1]  (en minutos).
+  // Posición del bus LÍDER: la parada con menor ETA>0. Las paradas anteriores
+  // ya fueron pasadas por este bus (su ETA puede ser 0 o null). Esto evita
+  // que el bus "muera a mitad de recorrido" cuando entre refrescos de 40s
+  // pasa varias paradas y ninguna queda con ETA=0.
+  // Buses adicionales: tras el líder, una caída brusca en la secuencia de
+  // ETAs (eta[j] < eta[j-1] - 1) indica que ahí empieza el siguiente bus.
+  // Muerte: cuando el ETA al terminal es ≤3 min y el reloj alcanza ese tiempo.
   const liveDataUpdatedAt = liveCompareQuery.dataUpdatedAt;
   const liveBusesByDir = useMemo<Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]>>(() => {
     const out: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]> = { 1: [], 2: [] };
@@ -629,23 +631,35 @@ function BusDashboardPage() {
         const v = liveCompareByCode[s.code];
         return typeof v === "number" ? v : null;
       });
-      // Muerte: si terminal ya está a ≤3 min, no dibujamos ese bus (está llegando/muriendo).
       const lastIdx = stops.length - 1;
-      for (let i = 0; i < lastIdx; i++) {
-        const here = etas[i];
-        const next = etas[i + 1];
-        if (here === null || next === null) continue;
-        if (here > 0 || next <= 0) continue;
-        // Bus en segmento i → i+1. Si el siguiente segmento es el terminal y
-        // ETA terminal ≤ 3, lo dejamos pasar (muere visualmente al final).
-        const isTerminalNext = i + 1 === lastIdx;
-        if (isTerminalNext && next <= 3 && elapsedMin >= next - 0.5) continue;
-        const progress = next > 0 ? Math.min(1, elapsedMin / next) : 0;
-        out[dir].push({
-          busId: `live-${dir}-${i}`,
-          segmentIndex: i,
-          segmentProgress: progress,
-        });
+
+      const pushBus = (segI: number, nextEta: number, tag: string) => {
+        const isTerminalNext = segI + 1 === lastIdx;
+        if (isTerminalNext && nextEta <= 3 && elapsedMin >= nextEta - 0.5) return;
+        const denom = Math.max(0.1, nextEta);
+        const progress = Math.min(1, elapsedMin / denom);
+        out[dir].push({ busId: `live-${dir}-${tag}`, segmentIndex: segI, segmentProgress: progress });
+      };
+
+      // 1) Bus líder: primera parada con ETA > 0.
+      let leadJ = -1;
+      for (let j = 1; j <= lastIdx; j++) {
+        const v = etas[j];
+        if (v !== null && v > 0) { leadJ = j; break; }
+      }
+      if (leadJ < 1) continue;
+      pushBus(leadJ - 1, etas[leadJ] as number, "lead");
+
+      // 2) Buses adicionales: caídas bruscas (≥1 min) tras el líder.
+      let prev = etas[leadJ] as number;
+      let count = 1;
+      for (let j = leadJ + 1; j <= lastIdx; j++) {
+        const v = etas[j];
+        if (v === null) continue;
+        if (v + 1 <= prev) {
+          pushBus(j - 1, v, `b${count++}`);
+        }
+        prev = v;
       }
     }
     return out;
