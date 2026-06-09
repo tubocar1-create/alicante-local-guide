@@ -611,53 +611,122 @@ function BusDashboardPage() {
     return { liveCompareByCode: merged, liveInterpolatedCodes: interp };
   }, [liveCompareRaw, compareTestEnabled, stopsByDir, engine, code]);
 
-  // === BUSES VIRTUALES DESDE ETA REALES + INTERPOLADOS ===
-  // Posición del bus LÍDER: la parada con menor ETA>0. Las paradas anteriores
-  // ya fueron pasadas por este bus (su ETA puede ser 0 o null). Esto evita
-  // que el bus "muera a mitad de recorrido" cuando entre refrescos de 40s
-  // pasa varias paradas y ninguna queda con ETA=0.
-  // Buses adicionales: tras el líder, una caída brusca en la secuencia de
-  // ETAs (eta[j] < eta[j-1] - 1) indica que ahí empieza el siguiente bus.
-  // Muerte: cuando el ETA al terminal es ≤3 min y el reloj alcanza ese tiempo.
+  // === BUSES VIRTUALES — TRACKING CON ESTADO ===
+  // Nacimiento: cuando en un refresh ETA[0] (parada de partida) === 0 y no hay
+  // otro bus ya posicionado en el segmento 0.
+  // Persistencia: cada bus tiene segmentIndex (parada que acaba de pasar) y
+  // nextEta (ETA a la siguiente parada). En cada refresh avanzamos cada bus
+  // buscando, hacia adelante desde su posición, la siguiente parada con ETA>0.
+  // Coexistencia: con N buses vivos, ordenamos por segmentIndex desc (líder
+  // primero). El líder se queda con la primera ETA>0 por delante; el siguiente
+  // bus busca su ETA>0 SÓLO entre su posición y la del líder; etc. Así los
+  // ETAs río arriba (que corresponden al bus de atrás) no contaminan al líder.
+  // Muerte: cuando segmentIndex alcanza la última parada (o el terminal queda
+  // a ≤3 min y el reloj ya alcanzó ese tiempo).
+  type ActiveBus = { id: string; segmentIndex: number; nextEta: number; bornAt: number; updatedAt: number };
   const liveDataUpdatedAt = liveCompareQuery.dataUpdatedAt;
-  const liveBusesByDir = useMemo<Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]>>(() => {
-    const out: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]> = { 1: [], 2: [] };
-    if (!compareTestEnabled || !liveDataUpdatedAt) return out;
-    const elapsedMin = Math.max(0, (clock.getTime() - liveDataUpdatedAt) / 60_000);
+  const activeBusesRef = useRef<Record<1 | 2, ActiveBus[]>>({ 1: [], 2: [] });
+  const [busesVersion, setBusesVersion] = useState(0);
+
+  // Reset cuando se desactiva el modo test (cambio de línea, etc.).
+  useEffect(() => {
+    if (!compareTestEnabled) {
+      activeBusesRef.current = { 1: [], 2: [] };
+      setBusesVersion((v) => v + 1);
+    }
+  }, [compareTestEnabled]);
+
+  useEffect(() => {
+    if (!compareTestEnabled || !liveDataUpdatedAt) return;
+    const updatedAt = liveDataUpdatedAt;
     for (const dir of [1, 2] as const) {
       const stops = stopsByDir[dir];
-      if (stops.length < 2) continue;
+      if (stops.length < 2) {
+        activeBusesRef.current[dir] = [];
+        continue;
+      }
       const etas = stops.map((s) => {
         const v = liveCompareByCode[s.code];
         return typeof v === "number" ? v : null;
       });
       const lastIdx = stops.length - 1;
 
-      const pushBus = (segI: number, nextEta: number, tag: string) => {
-        const isTerminalNext = segI + 1 === lastIdx;
-        if (isTerminalNext && nextEta <= 3 && elapsedMin >= nextEta - 0.5) return;
-        const denom = Math.max(0.1, nextEta);
-        const progress = Math.min(1, elapsedMin / denom);
-        out[dir].push({ busId: `live-${dir}-${tag}`, segmentIndex: segI, segmentProgress: progress });
-      };
+      // Líder primero (más cerca del terminal).
+      const prev = [...activeBusesRef.current[dir]].sort((a, b) => b.segmentIndex - a.segmentIndex);
+      const survivors: ActiveBus[] = [];
 
-      // 1) Bus líder: primera parada con ETA > 0.
-      let leadJ = -1;
-      for (let j = 1; j <= lastIdx; j++) {
-        const v = etas[j];
-        if (v !== null && v > 0) { leadJ = j; break; }
+      // upperBound = índice exclusivo hasta el que el siguiente bus (más
+      // atrás en la ruta) puede buscar su próxima ETA>0.
+      let upperBound = lastIdx + 1;
+      for (const bus of prev) {
+        // Buscar próxima parada con ETA>0 estrictamente por delante.
+        let newJ = -1;
+        for (let j = bus.segmentIndex + 1; j < upperBound; j++) {
+          const v = etas[j];
+          if (v !== null && v > 0) { newJ = j; break; }
+        }
+        if (newJ === -1) {
+          // No quedan paradas con ETA>0 por delante de este bus.
+          // Si ya estaba próximo al terminal, muere. Si no, lo dejamos en su
+          // posición (puede que sólo haya nulls; sobrevivirá al siguiente refresh).
+          if (bus.segmentIndex + 1 >= lastIdx) continue;
+          survivors.push({ ...bus, updatedAt });
+          upperBound = bus.segmentIndex + 1;
+          continue;
+        }
+        const nextEta = etas[newJ] as number;
+        const newSeg = newJ - 1;
+        // Muerte: llegó (o está a <3 min) del terminal.
+        if (newJ === lastIdx && nextEta <= 0) continue;
+        survivors.push({ ...bus, segmentIndex: newSeg, nextEta, updatedAt });
+        upperBound = newJ; // el siguiente bus (atrás) busca antes de newJ.
       }
-      if (leadJ < 1) continue;
-      pushBus(leadJ - 1, etas[leadJ] as number, "lead");
 
-      // NOTA: dibujamos un único bus líder por dirección. Buses adicionales
-      // requerirán tracking con estado a través de refrescos (cada nacimiento
-      // ETA=0 en partida = un bus nuevo persistido). Las "caídas" de ETA río
-      // abajo NO son señal fiable de un nuevo bus (ruido / interpolación /
-      // ETAs del siguiente bus al fondo de la lista) y producían fantasmas.
+      // Nacimiento: ETA[0]===0 y no hay nadie ya en segmento 0.
+      const originEta = etas[0];
+      const someoneAtOrigin = survivors.some((b) => b.segmentIndex === 0);
+      if (originEta === 0 && !someoneAtOrigin) {
+        let j = -1;
+        for (let k = 1; k < upperBound; k++) {
+          const v = etas[k];
+          if (v !== null && v > 0) { j = k; break; }
+        }
+        if (j > 0) {
+          survivors.push({
+            id: `bus-${dir}-${updatedAt}`,
+            segmentIndex: j - 1,
+            nextEta: etas[j] as number,
+            bornAt: updatedAt,
+            updatedAt,
+          });
+        }
+      }
+
+      activeBusesRef.current[dir] = survivors;
+    }
+    setBusesVersion((v) => v + 1);
+  }, [liveDataUpdatedAt, compareTestEnabled, liveCompareByCode, stopsByDir]);
+
+  // Render: usa el ref + reloj para animar progreso entre refrescos.
+  const liveBusesByDir = useMemo<Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]>>(() => {
+    const out: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]> = { 1: [], 2: [] };
+    if (!compareTestEnabled) return out;
+    for (const dir of [1, 2] as const) {
+      const stops = stopsByDir[dir];
+      const lastIdx = stops.length - 1;
+      for (const bus of activeBusesRef.current[dir]) {
+        const elapsedMin = Math.max(0, (clock.getTime() - bus.updatedAt) / 60_000);
+        const isTerminalNext = bus.segmentIndex + 1 === lastIdx;
+        if (isTerminalNext && bus.nextEta <= 3 && elapsedMin >= bus.nextEta - 0.5) continue;
+        const denom = Math.max(0.1, bus.nextEta);
+        const progress = Math.min(1, elapsedMin / denom);
+        out[dir].push({ busId: bus.id, segmentIndex: bus.segmentIndex, segmentProgress: progress });
+      }
     }
     return out;
-  }, [compareTestEnabled, liveCompareByCode, stopsByDir, clock, liveDataUpdatedAt]);
+    // busesVersion fuerza re-render cuando el ref cambia tras un refresh.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [compareTestEnabled, stopsByDir, clock, busesVersion]);
 
 
 
