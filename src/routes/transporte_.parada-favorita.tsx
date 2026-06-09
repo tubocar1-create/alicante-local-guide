@@ -742,7 +742,15 @@ function ParadaFavoritaPage() {
                             {etaLabel}
                           </span>
                           <span className="basis-full text-[11px] font-semibold leading-tight text-stone-700">
-                            → {a.destination || "—"}
+                            {(() => {
+                              const d = (a.destination || "").toUpperCase();
+                              if (!d) return "—";
+                              if (d.includes("JUAN PABLO") || d.includes("ASIS") || d.includes("ASÍS"))
+                                return "Dirección Ciudad Asís";
+                              if (d.includes("AGUSTIN") || d.includes("AGUSTÍN"))
+                                return "Dirección San Agustín";
+                              return `Dirección ${a.destination}`;
+                            })()}
                           </span>
                         </li>
                       );
