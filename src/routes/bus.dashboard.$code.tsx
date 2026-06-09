@@ -602,32 +602,29 @@ function BusDashboardPage() {
         continue;
       }
       const lastIdx = stops.length - 1;
+      // SOLO datos reales del feed para detectar buses vivos. El fallback al
+      // modelo se aplica para mostrar ETAs en la lista, pero NO para inferir
+      // buses (cada parada del modelo puede pertenecer a un bus distinto, lo
+      // que produciría una flota fantasma).
       const etas = stops.map((s) => {
-        const v = liveCompareByCode[s.code];
+        const v = liveCompareRaw[s.code];
         return typeof v === "number" ? v : null;
       });
 
-      // Partir las paradas en cadenas monotónicamente crecientes (cada cadena
-      // = un bus). Una parada con eta=0 al inicio (origen) abre cadena nueva.
+      // Un único bus vivo por dirección, anclado al origen (idx 0) y
+      // extendido con los siguientes ETAs reales monotónicamente crecientes.
       const chains: { idx: number; eta: number }[][] = [];
-      let current: { idx: number; eta: number }[] = [];
-      for (let i = 0; i <= lastIdx; i++) {
-        const v = etas[i];
-        if (v === null) continue;
-        if (i === 0 && v === 0) {
-          // Bus en el origen: arranca cadena nueva con (0,0).
-          if (current.length) chains.push(current);
-          current = [{ idx: 0, eta: 0 }];
-          continue;
+      const originEta = etas[0];
+      if (originEta !== null && originEta >= 0) {
+        const chain: { idx: number; eta: number }[] = [{ idx: 0, eta: originEta }];
+        for (let i = 1; i <= lastIdx; i++) {
+          const v = etas[i];
+          if (v === null || v <= chain[chain.length - 1].eta) continue;
+          chain.push({ idx: i, eta: v });
         }
-        if (v <= 0) continue;
-        if (current.length && v < current[current.length - 1].eta) {
-          chains.push(current);
-          current = [];
-        }
-        current.push({ idx: i, eta: v });
+        chains.push(chain);
       }
-      if (current.length) chains.push(current);
+
 
       // Cadenas ordenadas por ETA mínima ascendente → líder (terminal) primero.
       chains.sort((a, b) => a[0].eta - b[0].eta);
