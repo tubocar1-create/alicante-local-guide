@@ -83,10 +83,11 @@ export function BusStopExtractor() {
 
       <div className="flex items-center gap-1">
         <input
-          type="number"
+          type="text"
           inputMode="numeric"
-          value={stopId}
-          onChange={(e) => setStopId(parseInt(e.target.value || "0", 10) || 0)}
+          pattern="[0-9]*"
+          value={stopIdText}
+          onChange={(e) => setStopIdText(e.target.value.replace(/[^0-9]/g, ""))}
           placeholder="5110"
           className="h-8 w-24 min-w-0 rounded-lg border border-cyan-500/30 bg-background/60 px-2 text-[12px] font-mono font-bold"
         />
