@@ -678,6 +678,44 @@ export function deriveStopEtas(
     }
   }
 
+
+  // INVARIANTE DEL MODELO: el ETA de la PARADA DE ORIGEN de cada sentido
+  // SIEMPRE es la próxima salida oficial de esa terminal (BD). Nunca puede
+  // venir de propagación de buses vivos, regulación, ni ningún cálculo
+  // sintético. Esto garantiza la regla: "el modelo no devuelve un ETA de
+  // salida que no corresponda al horario oficial". El tiempo real, si existe,
+  // se aplica fuera del modelo (capa de presentación).
+  for (const dir of [1, 2] as Direction[]) {
+    const dirPlan = dir === 1 ? plan.dirIda : plan.dirVuelta;
+    if (!dirPlan || dirPlan.stops.length === 0) continue;
+    const originCode = dirPlan.stops[0].stopCode;
+    const originSeq = dirPlan.stops[0].seq;
+    // Quitamos cualquier ETA previo del origen (sea de propagación o filler).
+    for (let i = out.length - 1; i >= 0; i--) {
+      if (out[i].direction === dir && out[i].stopCode === originCode) {
+        out.splice(i, 1);
+      }
+    }
+    // Reinyectamos sólo las próximas salidas oficiales como ETAs del origen.
+    const futureDeps = (plan.officialDeparturesByDirection[dir] ?? [])
+      .filter((d) => d >= now - 0.5)
+      .sort((a, b) => a - b)
+      .slice(0, 3);
+    for (const depMin of futureDeps) {
+      const etaMin = Math.max(0, Math.round(depMin - now));
+      out.push({
+        lineCode: plan.lineCode,
+        direction: dir,
+        busId: `${plan.lineCode}_origin_${Math.round(depMin)}`,
+        stopCode: originCode,
+        stopSeq: originSeq,
+        etaMin,
+        etaClock: formatClock(now + etaMin),
+        confidence: 0.6,
+      });
+    }
+  }
+
   // Por parada quedarnos con las próximas 3 ETAs ASC.
   const byKey = new Map<string, StopEta[]>();
   for (const e of out) {
