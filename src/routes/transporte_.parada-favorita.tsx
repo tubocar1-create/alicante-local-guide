@@ -736,15 +736,9 @@ function ParadaFavoritaPage() {
                 </p>
               </div>
             )}
-
-
-
-
-
-
-
-
-
+          </div>
+        )}
+      </section>
 
       {/* Change favorite */}
       <section className="mx-3 mt-2 flex items-center gap-2 rounded-2xl bg-white p-2.5 shadow-sm ring-1 ring-stone-200">
