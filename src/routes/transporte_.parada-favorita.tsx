@@ -44,6 +44,12 @@ function normalize(s: string) {
     .trim();
 }
 
+function formatDirectionLabel(destination: string | null | undefined) {
+  const raw = (destination || "").trim();
+  if (!raw) return "—";
+  return `Dirección ${raw}`;
+}
+
 function ParadaFavoritaPage() {
   const router = useRouter();
   const search = Route.useSearch();
@@ -513,7 +519,7 @@ function ParadaFavoritaPage() {
                 <Bus className="h-4 w-4 shrink-0 text-[#0d3b8a]" />
                 <div className="min-w-0 flex-1">
                   <div className="text-[9px] font-bold uppercase tracking-wider text-stone-500">
-                    Dirección Ciudad Asís
+                    {formatDirectionLabel(stop.destination)}
                   </div>
                   <div className="flex items-center gap-1">
                     <span className="truncate text-sm font-extrabold text-stone-900">
@@ -742,15 +748,7 @@ function ParadaFavoritaPage() {
                             {etaLabel}
                           </span>
                           <span className="basis-full text-[11px] font-semibold leading-tight text-stone-700">
-                            {(() => {
-                              const d = (a.destination || "").toUpperCase();
-                              if (!d) return "—";
-                              if (d.includes("JUAN PABLO") || d.includes("ASIS") || d.includes("ASÍS"))
-                                return "Dirección Ciudad Asís";
-                              if (d.includes("AGUSTIN") || d.includes("AGUSTÍN"))
-                                return "Dirección San Agustín";
-                              return `Dirección ${a.destination}`;
-                            })()}
+                            {formatDirectionLabel(a.destination)}
                           </span>
                         </li>
                       );
