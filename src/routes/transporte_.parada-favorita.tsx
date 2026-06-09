@@ -251,6 +251,7 @@ function ParadaFavoritaPage() {
       }
     }
     setSnapshot(null);
+    setAllArrivals(null);
     setExperienceEnded(false);
   }, [stop.stopId, stop.line]);
 
