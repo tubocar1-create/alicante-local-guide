@@ -15,6 +15,17 @@ import { useBusServiceWindows, useBusLineDepartures, getServiceStatus, getNightL
 import { cumulativeMinutes, NIGHT_URBAN_KMH } from "@/lib/bus-eta";
 import { extractStopFromPage, type BusArrival } from "@/lib/bus-stop-parser";
 import { supabase } from "@/integrations/supabase/client";
+import { classifyLine } from "@/components/BusKnownPicker";
+
+// Colores por categoría (coherentes con el selector "Elige tu línea")
+const LINE_CATEGORY_COLOR: Record<"urban" | "extraurban" | "night", string> = {
+  urban: "#DC2626",      // rojo (Urbanas)
+  extraurban: "#2563EB", // azul (Interurbanas)
+  night: "#7C3AED",      // violeta (Nocturnas)
+};
+function lineColor(code: string): string {
+  return LINE_CATEGORY_COLOR[classifyLine(code)];
+}
 
 const PAGE_BASE = "https://movilidad.alicante.es/paradas-de-bus?page=";
 
@@ -532,7 +543,10 @@ function ParadaFavoritaPage() {
               </span>
             </div>
             <div className="mb-2 flex items-center gap-2">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0d3b8a] text-base font-extrabold text-white">
+              <span
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-base font-extrabold text-white"
+                style={{ backgroundColor: lineColor(stop.line) }}
+              >
                 {stop.line}
               </span>
               <span className="truncate text-[10px] font-bold uppercase tracking-wider text-stone-500">
@@ -775,9 +789,8 @@ function ParadaFavoritaPage() {
                             </span>
                           )}
                           <span
-                            className={`flex h-6 min-w-[32px] shrink-0 items-center justify-center rounded-full px-2 text-[11px] font-extrabold ${
-                              isFav ? "bg-[#0d3b8a] text-white" : "bg-cyan-500 text-white"
-                            }`}
+                            className="flex h-6 min-w-[32px] shrink-0 items-center justify-center rounded-full px-2 text-[11px] font-extrabold text-white"
+                            style={{ backgroundColor: lineColor(a.line) }}
                           >
                             {a.line}
                           </span>
