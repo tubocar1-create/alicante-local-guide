@@ -182,6 +182,8 @@ function ParadaFavoritaPage() {
         setCallError(res.debug.error ?? "No se pudo extraer la parada del HTML.");
         return;
       }
+      const fetchedAtAll = Date.now();
+      setAllArrivals({ items: res.stop.arrivals, fetchedAt: fetchedAtAll });
       // Filtramos llegadas por línea (case-insensitive). Normalizamos quitando
       // ceros iniciales para que "1" coincida con "01".
       const normLine = (s: string) => s.toUpperCase().replace(/^0+(?=\w)/, "");
