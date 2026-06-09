@@ -78,7 +78,7 @@ function ParadaFavoritaPage() {
   // No hay polling: el usuario solicita la llamada y aquí guardamos el
   // resultado para mostrar un contador decreciente hasta cero.
   const [snapshot, setSnapshot] = useState<{ etaMin: number; all: number[]; fetchedAt: number; destination: string | null } | null>(null);
-  const [allArrivals, setAllArrivals] = useState<{ items: BusArrival[]; fetchedAt: number } | null>(null);
+  const [allArrivals, setAllArrivals] = useState<{ items: Array<BusArrival & { fetchedAt: number }>; fetchedAt: number } | null>(null);
   const [liveLoading, setLiveLoading] = useState(false);
   const [callError, setCallError] = useState<string | null>(null);
   const [experienceEnded, setExperienceEnded] = useState(false);
