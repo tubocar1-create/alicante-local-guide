@@ -826,8 +826,16 @@ function BusDashboardPage() {
             let completed = false;
             while (idx < lastIdx) {
               const dist = distances[idx] ?? 250;
-              const modelE = modelEtas[idx + 1] ?? null;
-              const segMin = Math.max(0.5, modelE ?? (dist / 400)); // 400 m/min ~ 24 km/h fallback
+              // modelEtas[i] = ETA acumulado desde el origen al stop i.
+              // Duración del tramo idx→idx+1 = modelEtas[idx+1] - modelEtas[idx].
+              const eNext = modelEtas[idx + 1];
+              const eHere = modelEtas[idx];
+              let segMin: number;
+              if (typeof eNext === "number" && typeof eHere === "number" && eNext > eHere) {
+                segMin = Math.max(0.25, eNext - eHere);
+              } else {
+                segMin = Math.max(0.25, dist / 400); // ~24 km/h fallback
+              }
               lastSegMin = segMin;
               lastSpeed = dist / segMin;
               if (remaining < segMin) break;
@@ -837,7 +845,7 @@ function BusDashboardPage() {
             }
             if (completed) continue;
             const dist = distances[idx] ?? 250;
-            const segMin = lastSegMin > 0 ? lastSegMin : Math.max(0.5, modelEtas[idx + 1] ?? 2);
+            const segMin = lastSegMin > 0 ? lastSegMin : Math.max(0.25, dist / 400);
             const speed = lastSpeed > 0 ? lastSpeed : dist / segMin;
             const anchorAtVirtual = nowMs - remaining * 60_000;
             const newBus: ActiveBus = {
