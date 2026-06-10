@@ -950,10 +950,14 @@ function BusDashboardPage() {
           </div>
 
           <div className="shrink-0 self-start rounded-lg border border-white/15 bg-white/5 px-2 py-1 text-right">
-            <div className="font-mono text-lg font-bold tabular-nums leading-tight text-white" suppressHydrationWarning>
-              {String(clock.getHours()).padStart(2, "0")}:
-              {String(clock.getMinutes()).padStart(2, "0")}:
-              {String(clock.getSeconds()).padStart(2, "0")}
+            <div className="font-mono text-lg font-bold tabular-nums leading-tight text-white">
+              {new Intl.DateTimeFormat("es-ES", {
+                timeZone: "Europe/Madrid",
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: false,
+              }).format(clock)}
             </div>
           </div>
         </div>
