@@ -636,9 +636,9 @@ function BusDashboardPage() {
     const nowMadridMin = mp("hour") * 60 + mp("minute") + mp("second") / 60;
     const madridDayKey = `${mp("year")}-${mp("month")}-${mp("day")}`;
     const prevMadridMin = lastCheckMadridMinRef.current;
-    lastCheckMadridMinRef.current = nowMadridMin;
     // Plan oficial (solo cuando hay engine y no es nocturna).
     let officialDeparturesByDir: Record<1 | 2, number[]> = { 1: [], 2: [] };
+    let planReady = false;
     if (engine && !isNightLine) {
       try {
         const aligned = alignEngineScheduleDirections(engine, code, stopsByDir);
@@ -649,8 +649,16 @@ function BusDashboardPage() {
             1: Array.isArray(o[1]) ? o[1] : [],
             2: Array.isArray(o[2]) ? o[2] : [],
           };
+          planReady = true;
         }
       } catch { /* noop */ }
+    }
+    // Solo marcamos el tick como "visto" cuando el plan oficial ya está
+    // disponible. Si engine aún no cargó, mantenemos prevMadridMin=null para
+    // que el próximo tick (con engine listo) pueda sembrar las salidas
+    // pasadas y los buses aparezcan en mitad del trayecto.
+    if (planReady || isNightLine) {
+      lastCheckMadridMinRef.current = nowMadridMin;
     }
     // Countdown LOCAL en segundos desde el último snapshot del Bridge.
     // El feed publica minutos+segundos (parseEtaToMinutes ya devuelve
