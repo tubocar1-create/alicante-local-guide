@@ -424,6 +424,7 @@ function BusDashboardPage() {
           busId: bus.busId,
           segmentIndex: Math.max(0, bus.segmentIndex),
           segmentProgress: Math.max(0, Math.min(1, bus.segmentProgress)),
+          speedMetersPerMin: (bus.speedKmh ?? 20) * 1000 / 60,
         });
       }
       // No sobrescribimos el ETA de la parada de origen con "0/ahora": el
