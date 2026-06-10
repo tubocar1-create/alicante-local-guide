@@ -598,11 +598,18 @@ function BusDashboardPage() {
     speedMetersPerMin: number; // última velocidad calculada (m/min)
   };
   const activeBusesRef = useRef<Record<1 | 2, ActiveBus[]>>({ 1: [], 2: [] });
+  // Edge-crossing: minuto-de-día de Madrid en la última evaluación.
+  // Permite disparar el nacimiento aunque el tick exacto se pierda (tab
+  // throttled, snapshot de datos cada 30 s, etc.).
+  const lastCheckMadridMinRef = useRef<number | null>(null);
+  const spawnedDeparturesRef = useRef<Set<string>>(new Set());
 
   // Reset cuando se desactiva el modo test (cambio de línea, etc.).
   useEffect(() => {
     if (!compareTestEnabled) {
       activeBusesRef.current = { 1: [], 2: [] };
+      lastCheckMadridMinRef.current = null;
+      spawnedDeparturesRef.current = new Set();
     }
   }, [compareTestEnabled]);
 
@@ -613,6 +620,8 @@ function BusDashboardPage() {
     const out: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]> = { 1: [], 2: [] };
     if (!compareTestEnabled) {
       activeBusesRef.current = { 1: [], 2: [] };
+      lastCheckMadridMinRef.current = null;
+      spawnedDeparturesRef.current = new Set();
       return out;
     }
     const nowMs = clock.getTime();
