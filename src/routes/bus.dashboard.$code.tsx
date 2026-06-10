@@ -794,9 +794,52 @@ function BusDashboardPage() {
         const key = `${madridDayKey}:${dir}:${dep.toFixed(3)}`;
         if (spawnedDeparturesRef.current.has(key)) continue;
 
-        // Primer tick: marcar pasadas como consumidas, no spawnear.
+        // Primer tick: para salidas pasadas, avanzar virtualmente el bus por
+        // los segmentos consumiendo los minutos transcurridos. Si todavía no
+        // ha completado el recorrido, nace EN MEDIO (donde tocaría estar).
+        // Si ya completó, se marca como consumida sin spawnear.
         if (prevMadridMin === null) {
-          if (dep <= nowMadridMin) spawnedDeparturesRef.current.add(key);
+          if (dep <= nowMadridMin) {
+            spawnedDeparturesRef.current.add(key);
+            let elapsedMin = nowMadridMin - dep;
+            // Rollover: si dep > now por wrap (no debería pasar aquí, dep<=now), ignorar.
+            if (elapsedMin < 0) elapsedMin += 24 * 60;
+            // Evitar duplicar si ya hay un bus reciente en el primer segmento.
+            if (alive.some((b) => b.anchorIdx === 0 && (nowMs - b.bornAt) < 60_000)) continue;
+            let idx = 0;
+            let remaining = elapsedMin;
+            let lastSegMin = 0;
+            let lastSpeed = 0;
+            let completed = false;
+            while (idx < lastIdx) {
+              const dist = distances[idx] ?? 250;
+              const realE = idx === 0 ? realEtas[1] : null; // solo el primer segmento puede usar real desde origen
+              const modelE = modelEtas[idx + 1] ?? null;
+              const segMin = Math.max(0.5, realE ?? modelE ?? (dist / 400)); // 400 m/min ~ 24 km/h fallback
+              lastSegMin = segMin;
+              lastSpeed = dist / segMin;
+              if (remaining < segMin) break;
+              remaining -= segMin;
+              idx += 1;
+              if (idx >= lastIdx) { completed = true; break; }
+            }
+            if (completed) continue;
+            const dist = distances[idx] ?? 250;
+            const segMin = lastSegMin > 0 ? lastSegMin : Math.max(0.5, modelEtas[idx + 1] ?? 2);
+            const speed = lastSpeed > 0 ? lastSpeed : dist / segMin;
+            const anchorAtVirtual = nowMs - remaining * 60_000;
+            const newBus: ActiveBus = {
+              id: `bus-${dir}-${madridDayKey}-${dep.toFixed(3)}`,
+              bornAt: nowMs - elapsedMin * 60_000,
+              anchorIdx: idx,
+              anchorAt: anchorAtVirtual,
+              segmentMin: segMin,
+              speedMetersPerMin: speed,
+            };
+            alive.push(newBus);
+            const segProg = Math.max(0, Math.min(1, remaining / Math.max(0.05, segMin)));
+            out[dir].push({ busId: newBus.id, segmentIndex: idx, segmentProgress: segProg });
+          }
           continue;
         }
 
