@@ -727,7 +727,7 @@ function BusDashboardPage() {
       activeBusesRef.current[dir] = alive;
     }
     return out;
-  }, [compareTestEnabled, stopsByDir, clock, liveCompareRaw, scheduleEtaByDir, stopCoords]);
+  }, [compareTestEnabled, stopsByDir, clock, liveCompareRaw, scheduleEtaByDir, stopCoords, engine, code]);
 
 
 
