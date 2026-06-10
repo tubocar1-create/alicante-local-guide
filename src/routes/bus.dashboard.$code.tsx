@@ -23,6 +23,7 @@ import busAlicanteImg from "@/assets/bus-alicante.png";
 import { useLineRealtime, isPreviewHost } from "@/hooks/useLineRealtime";
 import { useBusEngine } from "@/hooks/useBusEngine";
 import { buildLineFleetPlan, deriveStopEtas, generateActiveFleet } from "@/lib/bus-engine/fleet";
+import { segmentKey } from "@/lib/bus-engine/segments";
 import type { BusEngineData, Direction } from "@/lib/bus-engine/types";
 
 function haversineMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
@@ -629,8 +630,17 @@ function BusDashboardPage() {
         const m = modelMap?.get(s.code);
         return m && typeof m.min === "number" ? m.min : null;
       });
+      // Distancia REAL routed (polilínea calle por calle) entre paradas
+      // consecutivas. Solo si no existe, fallback a haversine (línea recta).
       const distances: number[] = [];
       for (let i = 0; i < lastIdx; i++) {
+        const routed = engine?.stopDistances.get(
+          segmentKey(code, dir, stops[i].code, stops[i + 1].code),
+        );
+        if (typeof routed === "number" && routed > 0) {
+          distances.push(routed);
+          continue;
+        }
         const a = stopCoords.get(stops[i].code);
         const b = stopCoords.get(stops[i + 1].code);
         distances.push(a && b ? haversineMeters(a, b) : 250);
@@ -717,7 +727,7 @@ function BusDashboardPage() {
       activeBusesRef.current[dir] = alive;
     }
     return out;
-  }, [compareTestEnabled, stopsByDir, clock, liveCompareRaw, scheduleEtaByDir, stopCoords]);
+  }, [compareTestEnabled, stopsByDir, clock, liveCompareRaw, scheduleEtaByDir, stopCoords, engine, code]);
 
 
 
