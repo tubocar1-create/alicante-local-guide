@@ -708,21 +708,20 @@ function BusDashboardPage() {
         let { anchorIdx, anchorAt, segmentMin, speedMetersPerMin } = bus;
         if (anchorIdx >= lastIdx) continue;
 
-        // (a) RESTRICCIÓN TEMPORAL: el bus NUNCA puede estar ubicado en una
-        // parada cuyo ETA real > 0 (eso sería estar en el futuro). Su posición
-        // temporal no puede superar la hora actual. Por tanto, su anchor debe
-        // estar en una parada YA pasada (ETA real ≤ 0 o sin dato), y la
-        // siguiente parada con ETA real define su velocidad hacia ella.
-        //
-        //  Si la ETA real del próximo stop por delante es ≥ 10 min, recalibrar:
-        //   1) buscar el primer stop futuro (más cercano por índice) con ETA
-        //      real > 0 ⇒ bestJ.
-        //   2) anclar el bus en la parada inmediatamente ANTERIOR (bestJ - 1),
-        //      que es la última ya pasada según el feed.
-        //   3) velocidad = distancia(anchor→bestJ) / bestEta. Avanzar con esa
-        //      velocidad hasta el próximo tick.
+        // (a) CONVERGENCIA A ETA REAL = 0.
+        // La ubicación temporal del bus debe coincidir con "ahora": el punto
+        // del trayecto donde el ETA real interpolado es 0. No puede adelantarse
+        // (estar en una parada con ETA real > 0) ni atrasarse (quedarse en una
+        // parada ya pasada). Recalibrar en cada tick si el próximo stop futuro
+        // con ETA real ≥ 10 min:
+        //   1) bestJ = primer stop futuro con ETA real > 0 ⇒ bestEta.
+        //   2) prevEta = ETA real en bestJ-1 (≤ 0 si existe).
+        //   3) anchor = bestJ-1; segmentMin = bestEta - prevEta (duración real
+        //      del tramo). Posicionar el bus en el instante ETA=0 ⇒
+        //      elapsed = -prevEta. Velocidad = distancia / segmentMin.
+        //   4) Si prevEta no es real, fallback: anchor en bestJ-1, segmentMin =
+        //      bestEta, elapsed=0 (el bus avanzará hasta bestJ en bestEta min).
         {
-          // primer stop futuro con ETA real > 0
           let bestJ = -1;
           let bestEta = Infinity;
           for (let j = anchorIdx + 1; j <= lastIdx; j++) {
@@ -730,15 +729,18 @@ function BusDashboardPage() {
             if (e !== null && e > 0) { bestEta = e; bestJ = j; break; }
           }
           if (bestJ !== -1 && bestEta >= 10) {
-            // anclar en la parada anterior (la última ya pasada)
             const newAnchor = Math.max(0, bestJ - 1);
             anchorIdx = newAnchor;
-            anchorAt = nowMs;
             if (anchorIdx >= lastIdx) continue;
             const segDist = distances[anchorIdx] ?? 0;
-            if (segDist > 0 && bestEta > 0) {
-              speedMetersPerMin = segDist / bestEta;
-              segmentMin = Math.max(0.05, bestEta);
+            const prevEta = realEtas[anchorIdx];
+            const hasPrev = prevEta !== null && prevEta <= 0;
+            const segMin = hasPrev ? Math.max(0.05, bestEta - prevEta!) : Math.max(0.05, bestEta);
+            const elapsed = hasPrev ? Math.max(0, -prevEta!) : 0;
+            anchorAt = nowMs - elapsed * 60_000;
+            segmentMin = segMin;
+            if (segDist > 0 && segMin > 0) {
+              speedMetersPerMin = segDist / segMin;
             }
           }
         }
