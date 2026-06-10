@@ -630,25 +630,24 @@ function BusDashboardPage() {
         const m = modelMap?.get(s.code);
         return m && typeof m.min === "number" ? m.min : null;
       });
-      // SPEC: distancia entre paradas SIEMPRE polilínea routed
-      // (engine.stopDistances). Haversine queda prohibido aquí.
-      // Si falta el dato routed para algún tramo, abortamos el sentido —
-      // preferimos no mover el bus a moverlo con distancia falsa.
+      // SPEC: distancia entre paradas = polilínea routed (prioridad).
+      // Fallback haversine SOLO si falta el dato routed de ese tramo.
       const distances: number[] = [];
-      let missingRouted = false;
       for (let i = 0; i < lastIdx; i++) {
         const routed = engine?.stopDistances.get(
           segmentKey(code, dir, stops[i].code, stops[i + 1].code),
         );
-        if (typeof routed !== "number" || routed <= 0) {
-          missingRouted = true;
-          break;
+        if (typeof routed === "number" && routed > 0) {
+          distances.push(routed);
+        } else {
+          const a = engine?.stopsMeta.get(stops[i].code);
+          const b = engine?.stopsMeta.get(stops[i + 1].code);
+          if (a && b && a.lat != null && a.lng != null && b.lat != null && b.lng != null) {
+            distances.push(haversineMeters({ lat: a.lat, lng: a.lng }, { lat: b.lat, lng: b.lng }) || 250);
+          } else {
+            distances.push(250);
+          }
         }
-        distances.push(routed);
-      }
-      if (missingRouted) {
-        activeBusesRef.current[dir] = [];
-        continue;
       }
 
       const alive: ActiveBus[] = [];
