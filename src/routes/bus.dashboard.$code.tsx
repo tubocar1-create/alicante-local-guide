@@ -598,11 +598,18 @@ function BusDashboardPage() {
     speedMetersPerMin: number; // última velocidad calculada (m/min)
   };
   const activeBusesRef = useRef<Record<1 | 2, ActiveBus[]>>({ 1: [], 2: [] });
+  // Edge-crossing: minuto-de-día de Madrid en la última evaluación.
+  // Permite disparar el nacimiento aunque el tick exacto se pierda (tab
+  // throttled, snapshot de datos cada 30 s, etc.).
+  const lastCheckMadridMinRef = useRef<number | null>(null);
+  const spawnedDeparturesRef = useRef<Set<string>>(new Set());
 
   // Reset cuando se desactiva el modo test (cambio de línea, etc.).
   useEffect(() => {
     if (!compareTestEnabled) {
       activeBusesRef.current = { 1: [], 2: [] };
+      lastCheckMadridMinRef.current = null;
+      spawnedDeparturesRef.current = new Set();
     }
   }, [compareTestEnabled]);
 
@@ -613,9 +620,38 @@ function BusDashboardPage() {
     const out: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]> = { 1: [], 2: [] };
     if (!compareTestEnabled) {
       activeBusesRef.current = { 1: [], 2: [] };
+      lastCheckMadridMinRef.current = null;
+      spawnedDeparturesRef.current = new Set();
       return out;
     }
     const nowMs = clock.getTime();
+    // Minuto-de-día en Madrid (mismo cálculo que virtualFleetView).
+    const madridParts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/Madrid",
+      year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", second: "2-digit",
+      hour12: false,
+    }).formatToParts(clock);
+    const mp = (t: string) => Number(madridParts.find((p) => p.type === t)?.value ?? 0);
+    const nowMadridMin = mp("hour") * 60 + mp("minute") + mp("second") / 60;
+    const madridDayKey = `${mp("year")}-${mp("month")}-${mp("day")}`;
+    const prevMadridMin = lastCheckMadridMinRef.current;
+    lastCheckMadridMinRef.current = nowMadridMin;
+    // Plan oficial (solo cuando hay engine y no es nocturna).
+    let officialDeparturesByDir: Record<1 | 2, number[]> = { 1: [], 2: [] };
+    if (engine && !isNightLine) {
+      try {
+        const aligned = alignEngineScheduleDirections(engine, code, stopsByDir);
+        const plan = buildLineFleetPlan(aligned, code, clock);
+        const o = plan?.officialDeparturesByDirection;
+        if (o) {
+          officialDeparturesByDir = {
+            1: Array.isArray(o[1]) ? o[1] : [],
+            2: Array.isArray(o[2]) ? o[2] : [],
+          };
+        }
+      } catch { /* noop */ }
+    }
     // Countdown LOCAL en segundos desde el último snapshot del Bridge.
     // El feed publica minutos+segundos (parseEtaToMinutes ya devuelve
     // fracciones de minuto). Entre snapshots (30–60 s) restamos el tiempo
@@ -739,6 +775,51 @@ function BusDashboardPage() {
         };
         alive.push(newBus);
         out[dir].push({ busId: newBus.id, segmentIndex: 0, segmentProgress: 0 });
+      }
+
+      // (e) NACIMIENTO POR CRUCE DE HORARIO OFICIAL.
+      // Si entre prev y now una salida oficial cayó dentro de la ventana,
+      // forzamos el spawn (independientemente del umbral de 5 s). Esto cubre
+      // saltos de tick (tab throttle, refetch cada 30 s) y los casos en que
+      // el modelo ya avanzó al siguiente bus sin que el actual nazca.
+      const departures = officialDeparturesByDir[dir] ?? [];
+      if (departures.length && prevMadridMin !== null) {
+        // Soporte para rollover de día.
+        const lower = prevMadridMin;
+        const upper = nowMadridMin;
+        for (const dep of departures) {
+          const fired = upper >= lower
+            ? (dep > lower && dep <= upper)
+            : (dep > lower || dep <= upper);
+          if (!fired) continue;
+          const key = `${madridDayKey}:${dir}:${dep.toFixed(3)}`;
+          if (spawnedDeparturesRef.current.has(key)) continue;
+          spawnedDeparturesRef.current.add(key);
+          // Si ya hay un bus muy cercano al origen (≤ 30 s), no dupliques.
+          const dupe = alive.some(
+            (b) => b.anchorIdx === 0 && ((nowMs - b.anchorAt) / 60_000) < 0.5,
+          );
+          if (dupe) continue;
+          const realNext = realEtas[1];
+          const modelNext = modelEtas[1];
+          const seg = Math.max(0.5, realNext ?? modelNext ?? 2);
+          const dist = distances[0] ?? 250;
+          const speed = dist / seg;
+          // Anclamos al instante exacto de la salida oficial para que la
+          // posición refleje los segundos ya transcurridos desde el horario.
+          const offsetMin = Math.max(0, nowMadridMin - dep);
+          const anchorAt = nowMs - offsetMin * 60_000;
+          const newBus: ActiveBus = {
+            id: `bus-${dir}-${madridDayKey}-${dep.toFixed(3)}`,
+            bornAt: anchorAt,
+            anchorIdx: 0,
+            anchorAt,
+            segmentMin: seg,
+            speedMetersPerMin: speed,
+          };
+          alive.push(newBus);
+          out[dir].push({ busId: newBus.id, segmentIndex: 0, segmentProgress: Math.min(1, offsetMin / seg) });
+        }
       }
 
       activeBusesRef.current[dir] = alive;
