@@ -1360,7 +1360,7 @@ function DirectionColumn({
   onPickStop: (stopCode: string, stopName: string, destination: string) => void;
   nearestList: { code: string; distance: number }[];
   geoStatus: "idle" | "loading" | "ok" | "unavailable";
-  predictedBuses?: { busId: string; segmentIndex: number; segmentProgress: number }[];
+  predictedBuses?: { busId: string; segmentIndex: number; segmentProgress: number; speedMetersPerMin: number }[];
   disableLiveFetch?: boolean;
   compareLiveByCode?: Record<string, number | null> | null;
   compareInterpolatedCodes?: Set<string> | null;
