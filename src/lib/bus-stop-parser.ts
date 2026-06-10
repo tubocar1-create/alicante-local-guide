@@ -39,8 +39,10 @@ function parseEtaToMinutes(text: string): number | null {
   }
   const secMatch = t.match(/(\d+)\s*seg/);
   if (secMatch) {
-    // se redondea hacia arriba si hay segundos relevantes
-    total += parseInt(secMatch[1], 10) >= 30 ? 1 : 0;
+    // Preservamos los segundos como fracción de minuto. El motor opera con
+    // segundos (countdown local entre snapshots) y solo redondeamos al
+    // mostrar al usuario.
+    total += parseInt(secMatch[1], 10) / 60;
     matched = true;
   }
   if (!matched) {
