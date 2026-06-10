@@ -708,9 +708,11 @@ function BusDashboardPage() {
         let { anchorIdx, anchorAt, segmentMin, speedMetersPerMin } = bus;
         if (anchorIdx >= lastIdx) continue;
 
-        // (a) En cada tick: ubicar el bus en la parada inmediatamente
-        // anterior al stop futuro con ETA real más cercano a cero, y fijar
-        // la velocidad para cubrir ese tramo exactamente en ese ETA.
+        // (a) En cada tick:
+        //  1) buscar el stop futuro con ETA real más cercano a cero,
+        //  2) ubicar el bus EN esa parada,
+        //  3) recalcular velocidad = distancia(tramo siguiente) / ETA real
+        //     del siguiente stop con dato real por delante.
         {
           let bestJ = -1;
           let bestEta = Infinity;
@@ -718,39 +720,48 @@ function BusDashboardPage() {
             const e = realEtas[j];
             if (e !== null && e > 0 && e < bestEta) { bestEta = e; bestJ = j; }
           }
-          if (bestJ !== -1 && bestEta > 0) {
-            const snapIdx = bestJ - 1;
-            const segDist = distances[snapIdx] ?? 0;
-            if (segDist > 0) {
-              const newSpeed = segDist / bestEta; // m/min
-              speedMetersPerMin = newSpeed;
-              segmentMin = Math.max(0.05, bestEta);
-              anchorIdx = snapIdx;
-              anchorAt = nowMs; // recién en la parada snapIdx
+          if (bestJ !== -1) {
+            anchorIdx = bestJ;
+            anchorAt = nowMs;
+            if (anchorIdx >= lastIdx) continue; // murió en terminal
+            // buscar siguiente stop con ETA real por delante de bestJ
+            let nextJ = -1;
+            let nextEta = Infinity;
+            for (let j = anchorIdx + 1; j <= lastIdx; j++) {
+              const e = realEtas[j];
+              if (e !== null && e > 0 && e < nextEta) { nextEta = e; nextJ = j; }
+            }
+            const segDist = distances[anchorIdx] ?? 0;
+            if (nextJ !== -1 && nextEta > 0) {
+              // distancia desde anchorIdx hasta nextJ (puede abarcar varios tramos)
+              let forwardDist = 0;
+              for (let k = anchorIdx; k < nextJ; k++) forwardDist += distances[k] ?? 0;
+              if (forwardDist > 0) {
+                speedMetersPerMin = forwardDist / nextEta;
+                if (segDist > 0 && speedMetersPerMin > 0) {
+                  segmentMin = Math.max(0.05, segDist / speedMetersPerMin);
+                }
+              }
+            } else if (segDist > 0 && speedMetersPerMin > 0) {
+              // sin más ETAs reales: conservar velocidad
+              segmentMin = Math.max(0.05, segDist / speedMetersPerMin);
             }
           }
         }
 
-
-        // (b) Avanzar a través de paradas completadas. Al cruzar de tramo
-        // NUNCA se usa el ETA real (ese ETA describe al próximo bus, que en
-        // el nuevo tramo puede no ser éste). Se conserva la velocidad actual.
+        // (b) Avanzar a través de paradas completadas entre ticks. Se
+        // conserva la velocidad actual (política del motor).
         let elapsed = (nowMs - anchorAt) / 60_000;
         let dead = false;
-        let crossed = false;
         while (elapsed >= segmentMin) {
           const overshoot = elapsed - segmentMin;
           anchorIdx += 1;
           anchorAt = nowMs - overshoot * 60_000;
-          crossed = true;
           if (anchorIdx >= lastIdx) { dead = true; break; }
           const dist = distances[anchorIdx];
           if (speedMetersPerMin > 0 && dist > 0) {
-            // Conservar velocidad — política del motor.
             segmentMin = dist / speedMetersPerMin + overshoot;
           } else {
-            // Caso degenerado (sin velocidad previa): fallback modelo SOLO
-            // para inicializar tiempo de segmento.
             const m = modelEtas[anchorIdx + 1];
             const base = Math.max(0.5, m ?? 2);
             segmentMin = base + overshoot;
@@ -760,34 +771,6 @@ function BusDashboardPage() {
         }
         if (dead || anchorIdx >= lastIdx) continue;
 
-        // (b.bis) Tras cruzar paradas, re-aplicar el esquema parada por
-        // parada: buscar el nuevo ETA real más cercano a cero por delante
-        // y recalibrar velocidad/segmento como en (a).
-        if (crossed) {
-          let bestJ = -1;
-          let bestEta = Infinity;
-          for (let j = anchorIdx + 1; j <= lastIdx; j++) {
-            const e = realEtas[j];
-            if (e !== null && e > 0 && e < bestEta) { bestEta = e; bestJ = j; }
-          }
-          if (bestJ !== -1) {
-            const elapsedNow = Math.max(0, (nowMs - anchorAt) / 60_000);
-            const segDist = distances[anchorIdx] ?? 0;
-            const progress = segmentMin > 0 ? Math.min(1, elapsedNow / segmentMin) : 0;
-            const remainingInSeg = segDist * (1 - progress);
-            let forwardDist = remainingInSeg;
-            for (let k = anchorIdx + 1; k < bestJ; k++) forwardDist += distances[k] ?? 0;
-            if (forwardDist > 0 && bestEta > 0) {
-              const newSpeed = forwardDist / bestEta;
-              speedMetersPerMin = newSpeed;
-              if (segDist > 0) {
-                const newSegMin = segDist / newSpeed;
-                anchorAt = nowMs - progress * newSegMin * 60_000;
-                segmentMin = Math.max(0.05, newSegMin);
-              }
-            }
-          }
-        }
 
         // (c) La muerte del bus ocurre por su propia trayectoria al cruzar el
         // terminal. No se mata un bus solo porque el feed anuncie otro bus.
