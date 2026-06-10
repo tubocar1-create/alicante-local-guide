@@ -1478,7 +1478,7 @@ function DirectionColumn({
                     ) : (
                       <>
                         <span className="font-sans text-[12px] font-extrabold not-italic tabular-nums">
-                          {hasEta ? eta1 : hasRealtimeResult ? "n/d" : "—"}
+                          {hasEta ? Math.max(0, Math.round(eta1 as number)) : hasRealtimeResult ? "n/d" : "—"}
                         </span>
                         <span className="font-sans text-[8px] font-bold not-italic">
                           {hasEta ? "min" : ""}
