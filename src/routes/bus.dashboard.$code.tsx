@@ -758,7 +758,7 @@ function BusDashboardPage() {
 
         const segProg = Math.max(0, Math.min(1, ((nowMs - anchorAt) / 60_000) / Math.max(0.05, segmentMin)));
         alive.push({ id: bus.id, bornAt: bus.bornAt, anchorIdx, anchorAt, segmentMin, speedMetersPerMin });
-        out[dir].push({ busId: bus.id, segmentIndex: anchorIdx, segmentProgress: segProg });
+        out[dir].push({ busId: bus.id, segmentIndex: anchorIdx, segmentProgress: segProg, speedMetersPerMin });
       }
 
       // (d) NACIMIENTO POR TIEMPO REAL.
@@ -783,7 +783,7 @@ function BusDashboardPage() {
           speedMetersPerMin: speed,
         };
         alive.push(newBus);
-        out[dir].push({ busId: newBus.id, segmentIndex: 0, segmentProgress: 0 });
+        out[dir].push({ busId: newBus.id, segmentIndex: 0, segmentProgress: 0, speedMetersPerMin: speed });
         // Marcamos como consumida la salida oficial más cercana para evitar
         // duplicar via fallback.
         const departures = officialDeparturesByDir[dir] ?? [];
@@ -859,7 +859,7 @@ function BusDashboardPage() {
             };
             alive.push(newBus);
             const segProg = Math.max(0, Math.min(1, remaining / Math.max(0.05, segMin)));
-            out[dir].push({ busId: newBus.id, segmentIndex: idx, segmentProgress: segProg });
+            out[dir].push({ busId: newBus.id, segmentIndex: idx, segmentProgress: segProg, speedMetersPerMin: speed });
           }
           continue;
         }
@@ -892,7 +892,7 @@ function BusDashboardPage() {
           speedMetersPerMin: speed,
         };
         alive.push(newBus);
-        out[dir].push({ busId: newBus.id, segmentIndex: 0, segmentProgress: 0 });
+        out[dir].push({ busId: newBus.id, segmentIndex: 0, segmentProgress: 0, speedMetersPerMin: speed });
       }
 
       activeBusesRef.current[dir] = alive;
