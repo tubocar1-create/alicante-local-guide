@@ -393,7 +393,7 @@ function BusDashboardPage() {
       1: new Map(),
       2: new Map(),
     };
-    const busesByDir: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]> = {
+    const busesByDir: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number; speedMetersPerMin: number }[]> = {
       1: [],
       2: [],
     };
@@ -424,6 +424,7 @@ function BusDashboardPage() {
           busId: bus.busId,
           segmentIndex: Math.max(0, bus.segmentIndex),
           segmentProgress: Math.max(0, Math.min(1, bus.segmentProgress)),
+          speedMetersPerMin: (bus.speedKmh ?? 20) * 1000 / 60,
         });
       }
       // No sobrescribimos el ETA de la parada de origen con "0/ahora": el
@@ -616,8 +617,8 @@ function BusDashboardPage() {
   const BIRTH_THRESHOLD_MIN = 5 / 60;   // 5 s
   const DEATH_THRESHOLD_MIN = 5 / 60;   // 5 s
 
-  const liveBusesByDir = useMemo<Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]>>(() => {
-    const out: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]> = { 1: [], 2: [] };
+  const liveBusesByDir = useMemo<Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number; speedMetersPerMin: number }[]>>(() => {
+    const out: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number; speedMetersPerMin: number }[]> = { 1: [], 2: [] };
     if (!compareTestEnabled) {
       activeBusesRef.current = { 1: [], 2: [] };
       lastCheckMadridMinRef.current = null;
@@ -757,7 +758,7 @@ function BusDashboardPage() {
 
         const segProg = Math.max(0, Math.min(1, ((nowMs - anchorAt) / 60_000) / Math.max(0.05, segmentMin)));
         alive.push({ id: bus.id, bornAt: bus.bornAt, anchorIdx, anchorAt, segmentMin, speedMetersPerMin });
-        out[dir].push({ busId: bus.id, segmentIndex: anchorIdx, segmentProgress: segProg });
+        out[dir].push({ busId: bus.id, segmentIndex: anchorIdx, segmentProgress: segProg, speedMetersPerMin });
       }
 
       // (d) NACIMIENTO POR TIEMPO REAL.
@@ -782,7 +783,7 @@ function BusDashboardPage() {
           speedMetersPerMin: speed,
         };
         alive.push(newBus);
-        out[dir].push({ busId: newBus.id, segmentIndex: 0, segmentProgress: 0 });
+        out[dir].push({ busId: newBus.id, segmentIndex: 0, segmentProgress: 0, speedMetersPerMin: speed });
         // Marcamos como consumida la salida oficial más cercana para evitar
         // duplicar via fallback.
         const departures = officialDeparturesByDir[dir] ?? [];
@@ -858,7 +859,7 @@ function BusDashboardPage() {
             };
             alive.push(newBus);
             const segProg = Math.max(0, Math.min(1, remaining / Math.max(0.05, segMin)));
-            out[dir].push({ busId: newBus.id, segmentIndex: idx, segmentProgress: segProg });
+            out[dir].push({ busId: newBus.id, segmentIndex: idx, segmentProgress: segProg, speedMetersPerMin: speed });
           }
           continue;
         }
@@ -891,7 +892,7 @@ function BusDashboardPage() {
           speedMetersPerMin: speed,
         };
         alive.push(newBus);
-        out[dir].push({ busId: newBus.id, segmentIndex: 0, segmentProgress: 0 });
+        out[dir].push({ busId: newBus.id, segmentIndex: 0, segmentProgress: 0, speedMetersPerMin: speed });
       }
 
       activeBusesRef.current[dir] = alive;
@@ -1359,7 +1360,7 @@ function DirectionColumn({
   onPickStop: (stopCode: string, stopName: string, destination: string) => void;
   nearestList: { code: string; distance: number }[];
   geoStatus: "idle" | "loading" | "ok" | "unavailable";
-  predictedBuses?: { busId: string; segmentIndex: number; segmentProgress: number }[];
+  predictedBuses?: { busId: string; segmentIndex: number; segmentProgress: number; speedMetersPerMin: number }[];
   disableLiveFetch?: boolean;
   compareLiveByCode?: Record<string, number | null> | null;
   compareInterpolatedCodes?: Set<string> | null;
@@ -1378,7 +1379,7 @@ function DirectionColumn({
   // Refs por parada para poder calcular posiciones Y del bus overlay.
   const stopRefs = useRef<(HTMLLIElement | null)[]>([]);
   const olRef = useRef<HTMLOListElement | null>(null);
-  const [busPositions, setBusPositions] = useState<{ busId: string; top: number }[]>([]);
+  const [busPositions, setBusPositions] = useState<{ busId: string; top: number; speedMetersPerMin: number }[]>([]);
 
   useEffect(() => {
     if (!predictedBuses || predictedBuses.length === 0) {
@@ -1388,7 +1389,7 @@ function DirectionColumn({
     const ol = olRef.current;
     if (!ol) return;
     const olTop = ol.getBoundingClientRect().top;
-    const positions: { busId: string; top: number }[] = [];
+    const positions: { busId: string; top: number; speedMetersPerMin: number }[] = [];
     for (const b of predictedBuses) {
       const a = stopRefs.current[b.segmentIndex];
       const c = stopRefs.current[b.segmentIndex + 1];
@@ -1399,7 +1400,7 @@ function DirectionColumn({
       const aY = aRect.top - olTop + 18;
       const cY = cRect.top - olTop + 18;
       const y = aY + (cY - aY) * b.segmentProgress;
-      positions.push({ busId: b.busId, top: y });
+      positions.push({ busId: b.busId, top: y, speedMetersPerMin: b.speedMetersPerMin ?? 0 });
     }
     setBusPositions(positions);
   }, [predictedBuses, stops]);
@@ -1471,18 +1472,27 @@ function DirectionColumn({
         )}
         {/* Overlay: buses predichos deslizándose entre paradas */}
         {busPositions.map((bp) => (
-          <img
+          <div
             key={bp.busId}
-            src={busAlicanteImg}
-            alt=""
-            aria-hidden
-            className="pointer-events-none absolute z-30 h-8 w-8 -translate-x-1/2 -translate-y-1/2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]"
+            className="pointer-events-none absolute z-30 -translate-x-1/2 -translate-y-1/2"
             style={{
               left: "24px",
               top: `${bp.top}px`,
               transition: "top 400ms linear",
             }}
-          />
+          >
+            <img
+              src={busAlicanteImg}
+              alt=""
+              aria-hidden
+              className="h-8 w-8 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]"
+            />
+            <span
+              className="absolute -bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/80 px-1 font-sans text-[9px] font-bold text-white shadow"
+            >
+              {Math.round(bp.speedMetersPerMin * 60)} m/h
+            </span>
+          </div>
         ))}
 
         {stops.map((s, i) => {
