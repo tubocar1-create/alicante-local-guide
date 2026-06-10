@@ -955,7 +955,8 @@ function BusDashboardPage() {
             </div>
             <div className="font-mono text-lg font-bold tabular-nums leading-tight text-white">
               {String(clock.getHours()).padStart(2, "0")}:
-              {String(clock.getMinutes()).padStart(2, "0")}
+              {String(clock.getMinutes()).padStart(2, "0")}:
+              {String(clock.getSeconds()).padStart(2, "0")}
             </div>
           </div>
         </div>
