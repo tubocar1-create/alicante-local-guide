@@ -23,6 +23,7 @@ import busAlicanteImg from "@/assets/bus-alicante.png";
 import { useLineRealtime, isPreviewHost } from "@/hooks/useLineRealtime";
 import { useBusEngine } from "@/hooks/useBusEngine";
 import { buildLineFleetPlan, deriveStopEtas, generateActiveFleet } from "@/lib/bus-engine/fleet";
+import { segmentKey } from "@/lib/bus-engine/segments";
 import type { BusEngineData, Direction } from "@/lib/bus-engine/types";
 
 function haversineMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
