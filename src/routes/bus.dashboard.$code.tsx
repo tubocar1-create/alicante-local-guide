@@ -425,10 +425,9 @@ function BusDashboardPage() {
           segmentProgress: Math.max(0, Math.min(1, bus.segmentProgress)),
         });
       }
-      // No sobrescribimos el ETA de la parada de origen con "0/ahora": el
-      // origen siempre debe reflejar la próxima salida OFICIAL (la fija
-      // deriveStopEtas como invariante del modelo).
-      if (bus.segmentProgress <= 0.05 && bus.segmentIndex > 0) {
+      // Si el bus está prácticamente en la parada (progreso ≤5%), marcamos
+      // ETA=0 en esa parada para que la flota virtual "toque" cada parada.
+      if (bus.segmentProgress <= 0.05) {
         const currentStop = stops[bus.segmentIndex];
         if (currentStop) etasByDir[bus.direction].set(currentStop.code, { min: 0, time: formatHHMM(clock) });
       }
