@@ -708,44 +708,54 @@ function BusDashboardPage() {
         let { anchorIdx, anchorAt, segmentMin, speedMetersPerMin } = bus;
         if (anchorIdx >= lastIdx) continue;
 
-        // (a) En cada tick, SOLO si el ETA real más cercano hacia adelante
-        //  es ≥ 10 min (bus "atrasado" respecto al feed real):
-        //  1) buscar el stop futuro con ETA real más cercano a cero,
-        //  2) ubicar el bus EN esa parada,
-        //  3) recalcular velocidad = distancia(tramo siguiente) / ETA real
-        //     del siguiente stop con dato real por delante.
+        // (a) En cada tick:
+        //  Si la posición del bus (ETA real del próximo stop con dato real
+        //  por delante) es ≥ 10 min, entonces:
+        //   1) buscar el stop futuro con ETA real más cercano a cero,
+        //   2) ubicar el bus EN esa parada,
+        //   3) recalcular velocidad = distancia(tramo) / ETA real del
+        //      siguiente stop con dato real por delante, y avanzar con esa
+        //      velocidad hasta el próximo tick.
         {
-          let bestJ = -1;
-          let bestEta = Infinity;
+          // ETA real de la posición actual = primer stop futuro con dato real
+          let posJ = -1;
+          let posEta = Infinity;
           for (let j = anchorIdx + 1; j <= lastIdx; j++) {
             const e = realEtas[j];
-            if (e !== null && e > 0 && e < bestEta) { bestEta = e; bestJ = j; }
+            if (e !== null && e > 0) { posJ = j; posEta = e; break; }
           }
-          if (bestJ !== -1 && bestEta >= 10) {
-            anchorIdx = bestJ;
-            anchorAt = nowMs;
-            if (anchorIdx >= lastIdx) continue; // murió en terminal
-            // buscar siguiente stop con ETA real por delante de bestJ
-            let nextJ = -1;
-            let nextEta = Infinity;
+          if (posJ !== -1 && posEta >= 10) {
+            // stop futuro con ETA real más cercano a cero
+            let bestJ = -1;
+            let bestEta = Infinity;
             for (let j = anchorIdx + 1; j <= lastIdx; j++) {
               const e = realEtas[j];
-              if (e !== null && e > 0 && e < nextEta) { nextEta = e; nextJ = j; }
+              if (e !== null && e > 0 && e < bestEta) { bestEta = e; bestJ = j; }
             }
-            const segDist = distances[anchorIdx] ?? 0;
-            if (nextJ !== -1 && nextEta > 0) {
-              // distancia desde anchorIdx hasta nextJ (puede abarcar varios tramos)
-              let forwardDist = 0;
-              for (let k = anchorIdx; k < nextJ; k++) forwardDist += distances[k] ?? 0;
-              if (forwardDist > 0) {
-                speedMetersPerMin = forwardDist / nextEta;
-                if (segDist > 0 && speedMetersPerMin > 0) {
-                  segmentMin = Math.max(0.05, segDist / speedMetersPerMin);
-                }
+            if (bestJ !== -1) {
+              anchorIdx = bestJ;
+              anchorAt = nowMs;
+              if (anchorIdx >= lastIdx) continue; // murió en terminal
+              // siguiente stop con ETA real por delante del nuevo anchor
+              let nextJ = -1;
+              let nextEta = Infinity;
+              for (let j = anchorIdx + 1; j <= lastIdx; j++) {
+                const e = realEtas[j];
+                if (e !== null && e > 0 && e < nextEta) { nextEta = e; nextJ = j; }
               }
-            } else if (segDist > 0 && speedMetersPerMin > 0) {
-              // sin más ETAs reales: conservar velocidad
-              segmentMin = Math.max(0.05, segDist / speedMetersPerMin);
+              const segDist = distances[anchorIdx] ?? 0;
+              if (nextJ !== -1 && nextEta > 0) {
+                let forwardDist = 0;
+                for (let k = anchorIdx; k < nextJ; k++) forwardDist += distances[k] ?? 0;
+                if (forwardDist > 0) {
+                  speedMetersPerMin = forwardDist / nextEta;
+                  if (segDist > 0 && speedMetersPerMin > 0) {
+                    segmentMin = Math.max(0.05, segDist / speedMetersPerMin);
+                  }
+                }
+              } else if (segDist > 0 && speedMetersPerMin > 0) {
+                segmentMin = Math.max(0.05, segDist / speedMetersPerMin);
+              }
             }
           }
         }
