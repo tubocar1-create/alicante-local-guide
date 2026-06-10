@@ -1472,18 +1472,27 @@ function DirectionColumn({
         )}
         {/* Overlay: buses predichos deslizándose entre paradas */}
         {busPositions.map((bp) => (
-          <img
+          <div
             key={bp.busId}
-            src={busAlicanteImg}
-            alt=""
-            aria-hidden
-            className="pointer-events-none absolute z-30 h-8 w-8 -translate-x-1/2 -translate-y-1/2 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]"
+            className="pointer-events-none absolute z-30 -translate-x-1/2 -translate-y-1/2"
             style={{
               left: "24px",
               top: `${bp.top}px`,
               transition: "top 400ms linear",
             }}
-          />
+          >
+            <img
+              src={busAlicanteImg}
+              alt=""
+              aria-hidden
+              className="h-8 w-8 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]"
+            />
+            <span
+              className="absolute -bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/80 px-1 font-sans text-[9px] font-bold text-white shadow"
+            >
+              {Math.round(bp.speedMetersPerMin * 60)} m/h
+            </span>
+          </div>
         ))}
 
         {stops.map((s, i) => {
