@@ -1379,7 +1379,7 @@ function DirectionColumn({
   // Refs por parada para poder calcular posiciones Y del bus overlay.
   const stopRefs = useRef<(HTMLLIElement | null)[]>([]);
   const olRef = useRef<HTMLOListElement | null>(null);
-  const [busPositions, setBusPositions] = useState<{ busId: string; top: number }[]>([]);
+  const [busPositions, setBusPositions] = useState<{ busId: string; top: number; speedMetersPerMin: number }[]>([]);
 
   useEffect(() => {
     if (!predictedBuses || predictedBuses.length === 0) {
