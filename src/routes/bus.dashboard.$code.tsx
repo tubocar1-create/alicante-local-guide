@@ -616,6 +616,13 @@ function BusDashboardPage() {
       return out;
     }
     const nowMs = clock.getTime();
+    // Countdown LOCAL en segundos desde el último snapshot del Bridge.
+    // El feed publica minutos+segundos (parseEtaToMinutes ya devuelve
+    // fracciones de minuto). Entre snapshots (30–60 s) restamos el tiempo
+    // transcurrido para que los ETA reales bajen continuamente y crucen la
+    // ventana de 5 s de nacimiento/muerte.
+    const snapshotAt = liveCompareQuery.dataUpdatedAt || nowMs;
+    const decayMin = Math.max(0, (nowMs - snapshotAt) / 60_000);
     for (const dir of [1, 2] as const) {
       const stops = stopsByDir[dir];
       const lastIdx = stops.length - 1;
@@ -624,7 +631,8 @@ function BusDashboardPage() {
       const modelMap = scheduleEtaByDir[dir];
       const realEtas = stops.map((s) => {
         const v = liveCompareRaw[s.code];
-        return typeof v === "number" ? v : null;
+        if (typeof v !== "number") return null;
+        return Math.max(0, v - decayMin);
       });
       const modelEtas = stops.map((s) => {
         const m = modelMap?.get(s.code);
