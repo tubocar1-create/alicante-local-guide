@@ -574,53 +574,53 @@ function BusDashboardPage() {
     return { liveCompareByCode: merged, liveInterpolatedCodes: interp };
   }, [liveCompareRaw, compareTestEnabled, stopsByDir, scheduleEtaByDir]);
 
-  // === BUSES VIRTUALES — TRACKING CON ESTADO ===
-  // Cada bus guarda un "schedule": la lista de ETAs (en minutos) a cada parada
-  // futura, congelada en el momento del último refresh (snapshotAt). Entre
-  // refrescos avanzamos el bus por su schedule: a t minutos del snapshot, el
-  // bus ha pasado todas las paradas con eta<=t y está interpolando hacia la
-  // siguiente. La velocidad entre tramos se deriva de (eta[k+1]-eta[k]),
-  // respetando los tiempos reales del feed.
-  // Coexistencia: si los ETAs no son monotónicos (suben y luego bajan), se
-  // parten en cadenas; la cadena con ETAs más bajos es el líder.
-  // Nacimiento: una cadena que cubre el origen (idx 0 con ETA 0) crea un bus
-  // nuevo si nadie ya estaba ahí.
-  // Muerte: cuando el bus rebasa la última parada (eta agotada).
+  // === BUSES VIRTUALES PERSISTENTES — RODAJE A VELOCIDAD REAL ===
+  // Reglas (línea 12):
+  //   1. El bus NACE en el terminal de origen (idx 0) cuando ETA(origen) ≤ 5 s.
+  //      Prioridad: tiempo real. Fallback: modelo (horario oficial).
+  //   2. Entre paradas avanza a VELOCIDAD = distancia(haversine) / tiempo entre
+  //      paradas. El tiempo se recalcula con cada snapshot de ETAs reales del
+  //      siguiente stop. Si no hay datos reales, mantiene la última velocidad
+  //      calculada (no vuelve al modelo).
+  //   3. Cuando alcanza la siguiente parada (elapsed ≥ segmentMin), avanza
+  //      el ancla; recalcula segmentMin/velocidad con el ETA real del nuevo
+  //      siguiente stop (si lo hay) o conserva velocidad y deriva el tiempo
+  //      del nuevo segmento desde distancia/velocidad.
+  //   4. El bus MUERE al llegar a la última parada (idx = lastIdx), es decir,
+  //      cuando su ETA al destino cae a ≤ 5 s.
   type ActiveBus = {
     id: string;
-    bornAt: number;
-    snapshotAt: number;
-    // Paradas futuras con su ETA (min) en el momento del snapshot.
-    // schedule[0].idx puede ser 0 si el bus está en el origen (eta=0).
-    schedule: { idx: number; eta: number }[];
+    bornAt: number;            // ms epoch
+    anchorIdx: number;         // última parada alcanzada
+    anchorAt: number;          // ms al entrar al segmento actual
+    segmentMin: number;        // duración estimada del segmento actual (anchor → anchor+1)
+    speedMetersPerMin: number; // última velocidad calculada (m/min)
   };
-  const liveDataUpdatedAt = liveCompareQuery.dataUpdatedAt;
   const activeBusesRef = useRef<Record<1 | 2, ActiveBus[]>>({ 1: [], 2: [] });
-  const [busesVersion, setBusesVersion] = useState(0);
 
   // Reset cuando se desactiva el modo test (cambio de línea, etc.).
   useEffect(() => {
     if (!compareTestEnabled) {
       activeBusesRef.current = { 1: [], 2: [] };
-      setBusesVersion((v) => v + 1);
     }
   }, [compareTestEnabled]);
 
-  useEffect(() => {
-    if (!compareTestEnabled || !liveDataUpdatedAt) return;
-    const updatedAt = liveDataUpdatedAt;
+  const BIRTH_THRESHOLD_MIN = 5 / 60;   // 5 s
+  const DEATH_THRESHOLD_MIN = 5 / 60;   // 5 s
+
+  const liveBusesByDir = useMemo<Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]>>(() => {
+    const out: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]> = { 1: [], 2: [] };
+    if (!compareTestEnabled) {
+      activeBusesRef.current = { 1: [], 2: [] };
+      return out;
+    }
+    const nowMs = clock.getTime();
     for (const dir of [1, 2] as const) {
       const stops = stopsByDir[dir];
-      if (stops.length < 2) {
-        activeBusesRef.current[dir] = [];
-        continue;
-      }
       const lastIdx = stops.length - 1;
+      if (lastIdx < 1) { activeBusesRef.current[dir] = []; continue; }
+
       const modelMap = scheduleEtaByDir[dir];
-      // Datos reales del feed para detectar buses vivos. El modelo se usa
-      // solo para RELLENAR huecos del schedule entre/tras anclas reales, de
-      // forma que la posición animada siempre apunte a la parada cuyo ETA
-      // (real o modelado) se aproxima a cero.
       const realEtas = stops.map((s) => {
         const v = liveCompareRaw[s.code];
         return typeof v === "number" ? v : null;
@@ -629,138 +629,95 @@ function BusDashboardPage() {
         const m = modelMap?.get(s.code);
         return m && typeof m.min === "number" ? m.min : null;
       });
+      const distances: number[] = [];
+      for (let i = 0; i < lastIdx; i++) {
+        const a = stopCoords.get(stops[i].code);
+        const b = stopCoords.get(stops[i + 1].code);
+        distances.push(a && b ? haversineMeters(a, b) : 250);
+      }
 
-      // Nacimiento: prioridad TIEMPO REAL en origen; si no hay real, fallback
-      // al MODELO (horario oficial). Un bus nace cuando el ETA del origen
-      // (real o, en su defecto, modelo) es ≤ 1 min.
-      const chains: { idx: number; eta: number }[][] = [];
+      const alive: ActiveBus[] = [];
+      for (const bus of activeBusesRef.current[dir]) {
+        let { anchorIdx, anchorAt, segmentMin, speedMetersPerMin } = bus;
+        if (anchorIdx >= lastIdx) continue;
+
+        // (a) Si llega un ETA real del siguiente stop, recalibrar tiempo y velocidad.
+        const realNext = realEtas[anchorIdx + 1];
+        if (realNext !== null && realNext > 0) {
+          const elapsedNow = (nowMs - anchorAt) / 60_000;
+          const newSegMin = Math.max(0.05, elapsedNow + realNext);
+          segmentMin = newSegMin;
+          const dist = distances[anchorIdx];
+          if (dist > 0) speedMetersPerMin = dist / newSegMin;
+        }
+
+        // (b) Avanzar a través de paradas completadas, recalculando segmento.
+        let elapsed = (nowMs - anchorAt) / 60_000;
+        let dead = false;
+        while (elapsed >= segmentMin) {
+          const overshoot = elapsed - segmentMin;
+          anchorIdx += 1;
+          anchorAt = nowMs - overshoot * 60_000;
+          if (anchorIdx >= lastIdx) { dead = true; break; }
+          const dist = distances[anchorIdx];
+          const realE = realEtas[anchorIdx + 1];
+          if (realE !== null && realE > 0) {
+            segmentMin = Math.max(0.05, realE) + overshoot;
+            if (dist > 0) speedMetersPerMin = dist / Math.max(0.05, realE);
+          } else if (speedMetersPerMin > 0 && dist > 0) {
+            // Sin tiempo real: conservar velocidad, derivar tiempo del segmento.
+            segmentMin = dist / speedMetersPerMin + overshoot;
+          } else {
+            // Caso degenerado: usar modelo solo como último recurso.
+            const m = modelEtas[anchorIdx + 1];
+            const base = Math.max(0.5, m ?? 2);
+            segmentMin = base + overshoot;
+            if (dist > 0) speedMetersPerMin = dist / base;
+          }
+          elapsed = (nowMs - anchorAt) / 60_000;
+        }
+        if (dead || anchorIdx >= lastIdx) continue;
+
+        // (c) Muerte anticipada: ETA al último stop ≤ 5 s.
+        if (anchorIdx === lastIdx - 1) {
+          const etaLast = realEtas[lastIdx] ?? modelEtas[lastIdx];
+          if (etaLast !== null && etaLast <= DEATH_THRESHOLD_MIN) continue;
+        }
+
+        const segProg = Math.max(0, Math.min(1, ((nowMs - anchorAt) / 60_000) / Math.max(0.05, segmentMin)));
+        alive.push({ id: bus.id, bornAt: bus.bornAt, anchorIdx, anchorAt, segmentMin, speedMetersPerMin });
+        out[dir].push({ busId: bus.id, segmentIndex: anchorIdx, segmentProgress: segProg });
+      }
+
+      // (d) NACIMIENTO en terminal de origen.
       const originReal = realEtas[0];
       const originModel = modelEtas[0];
       const originEta = originReal !== null ? originReal : originModel;
-      if (originEta !== null && originEta <= 1) {
-        const chain: { idx: number; eta: number }[] = [{ idx: 0, eta: Math.max(0, originEta) }];
-        for (let i = 1; i <= lastIdx; i++) {
-          const last = chain[chain.length - 1];
-          // Preferimos real; si no, usamos modelo para mantener una ancla
-          // monotónica en cada parada. Así el bus "toca" cada parada cuando
-          // su ETA llega a 0.
-          const real = realEtas[i];
-          let candidate: number | null = null;
-          if (real !== null && real > last.eta) candidate = real;
-          else {
-            const model = modelEtas[i];
-            if (model !== null && model > last.eta) candidate = model;
-          }
-          if (candidate === null) continue;
-          chain.push({ idx: i, eta: candidate });
-        }
-        chains.push(chain);
-      }
-
-      // Cadenas ordenadas por ETA mínima ascendente → líder (terminal) primero.
-      chains.sort((a, b) => a[0].eta - b[0].eta);
-
-      // Emparejar con buses previos (líder primero por anchorIdx descendente).
-      const prev = [...activeBusesRef.current[dir]];
-      const survivors: ActiveBus[] = [];
-      const prevByAnchor = prev
-        .map((b) => ({ bus: b, anchor: b.schedule[0]?.idx ?? 0 }))
-        .sort((a, b) => b.anchor - a.anchor);
-
-      for (let ci = 0; ci < chains.length; ci++) {
-        const chain = chains[ci];
-        const match = prevByAnchor[ci]?.bus;
-        if (match && chain[0].idx >= (match.schedule[0]?.idx ?? 0) - 0) {
-          survivors.push({
-            id: match.id,
-            bornAt: match.bornAt,
-            snapshotAt: updatedAt,
-            schedule: chain,
-          });
-        } else {
-          survivors.push({
-            id: `bus-${dir}-${updatedAt}-${ci}`,
-            bornAt: updatedAt,
-            snapshotAt: updatedAt,
-            schedule: chain,
-          });
-        }
-      }
-
-      activeBusesRef.current[dir] = survivors;
-    }
-    setBusesVersion((v) => v + 1);
-  }, [liveDataUpdatedAt, compareTestEnabled, liveCompareRaw, stopsByDir, scheduleEtaByDir]);
-
-  // Render: usa el ref + reloj para animar progreso entre refrescos.
-  // Estrategia: el bus arranca en su anchor (schedule[0].idx) con t=0; al
-  // pasar el tiempo, "consume" entradas del schedule cuyo eta <= t. La posición
-  // virtual (en unidades de parada) se interpola linealmente en el tiempo
-  // entre dos entradas consecutivas: virtPos = a.idx + (t-a.eta)/(b.eta-a.eta)*(b.idx-a.idx).
-  const liveBusesByDir = useMemo<Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]>>(() => {
-    void busesVersion;
-    const out: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]> = { 1: [], 2: [] };
-    if (!compareTestEnabled) return out;
-    const nowMs = clock.getTime();
-    for (const dir of [1, 2] as const) {
-      const stops = stopsByDir[dir];
-      const lastIdx = stops.length - 1;
-      if (lastIdx < 1) continue;
-      const modelMap = scheduleEtaByDir[dir];
-      for (const bus of activeBusesRef.current[dir]) {
-        const anchorIdx = bus.schedule[0]?.idx ?? 0;
-        // Reconstruimos el schedule en CADA frame con los ETAs reales
-        // actuales (fallback al modelo). Así el bus refleja siempre los
-        // tiempos reales vigentes, no los del snapshot original.
-        const fresh: { idx: number; eta: number }[] = [];
-        const readEta = (i: number): number | null => {
-          const code = stops[i]?.code;
-          if (!code) return null;
-          const r = liveCompareRaw[code];
-          if (typeof r === "number") return r;
-          const m = modelMap?.get(code)?.min;
-          return typeof m === "number" ? m : null;
+      const someoneInFirstSegment = alive.some(
+        (b) => b.anchorIdx === 0 && ((nowMs - b.anchorAt) / 60_000) < 0.5,
+      );
+      if (!someoneInFirstSegment && originEta !== null && originEta <= BIRTH_THRESHOLD_MIN) {
+        const realNext = realEtas[1];
+        const modelNext = modelEtas[1];
+        const seg = Math.max(0.5, realNext ?? modelNext ?? 2);
+        const dist = distances[0] ?? 250;
+        const speed = dist / seg;
+        const newBus: ActiveBus = {
+          id: `bus-${dir}-${nowMs}`,
+          bornAt: nowMs,
+          anchorIdx: 0,
+          anchorAt: nowMs,
+          segmentMin: seg,
+          speedMetersPerMin: speed,
         };
-        const eta0 = readEta(anchorIdx);
-        if (eta0 === null) continue;
-        fresh.push({ idx: anchorIdx, eta: Math.max(0, eta0) });
-        for (let i = anchorIdx + 1; i <= lastIdx; i++) {
-          const last = fresh[fresh.length - 1];
-          const cand = readEta(i);
-          if (cand === null || cand <= last.eta) continue;
-          fresh.push({ idx: i, eta: cand });
-        }
-        if (!fresh.length) continue;
-
-        // El bus NUNCA debe pasar de la siguiente parada con ETA>0
-        // (esa es la parada "real" más cercana). Capamos t en ese eta.
-        const nextStop = fresh.find((p) => p.eta > 0);
-        const cap = nextStop ? nextStop.eta : 0;
-        const elapsed = (nowMs - bus.snapshotAt) / 60_000;
-        const t = Math.max(0, Math.min(elapsed, cap));
-
-        let a = fresh[0];
-        let b: { idx: number; eta: number } | null = null;
-        for (let k = 0; k < fresh.length; k++) {
-          if (fresh[k].eta <= t) a = fresh[k];
-          else { b = fresh[k]; break; }
-        }
-        let virtPos: number;
-        if (b) {
-          const dt = b.eta - a.eta;
-          const frac = dt > 0 ? Math.max(0, Math.min(1, (t - a.eta) / dt)) : 0;
-          virtPos = a.idx + frac * (b.idx - a.idx);
-        } else {
-          virtPos = a.idx;
-        }
-        if (virtPos >= lastIdx) continue;
-        const segIdx = Math.max(0, Math.min(lastIdx - 1, Math.floor(virtPos)));
-        const segProg = Math.max(0, Math.min(1, virtPos - segIdx));
-        out[dir].push({ busId: bus.id, segmentIndex: segIdx, segmentProgress: segProg });
+        alive.push(newBus);
+        out[dir].push({ busId: newBus.id, segmentIndex: 0, segmentProgress: 0 });
       }
+
+      activeBusesRef.current[dir] = alive;
     }
     return out;
-  }, [compareTestEnabled, stopsByDir, clock, busesVersion, liveCompareRaw, scheduleEtaByDir]);
+  }, [compareTestEnabled, stopsByDir, clock, liveCompareRaw, scheduleEtaByDir, stopCoords]);
 
 
 
