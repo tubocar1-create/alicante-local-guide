@@ -640,7 +640,7 @@ function BusDashboardPage() {
         if (typeof routed === "number" && routed > 0) {
           distances.push(routed);
         } else {
-          distances.push(haversineMeters(stops[i], stops[i + 1]) || 250);
+          distances.push(haversineMeters({ lat: stops[i].lat, lng: stops[i].lng }, { lat: stops[i + 1].lat, lng: stops[i + 1].lng }) || 250);
         }
       }
 
