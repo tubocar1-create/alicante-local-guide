@@ -708,12 +708,9 @@ function BusDashboardPage() {
         let { anchorIdx, anchorAt, segmentMin, speedMetersPerMin } = bus;
         if (anchorIdx >= lastIdx) continue;
 
-        // (a) En cada refresh, recalibrar contra el ETA real MÁS CERCANO A
-        // CERO mirando hacia adelante desde la posición actual del bus.
-        // Buscamos el stop futuro j con menor ETA real (>0) y ajustamos la
-        // velocidad para que la distancia routed acumulada hasta j se cubra
-        // exactamente en ese tiempo. Se preserva la progresión actual dentro
-        // del segmento (no teletransportar).
+        // (a) En cada tick: ubicar el bus en la parada inmediatamente
+        // anterior al stop futuro con ETA real más cercano a cero, y fijar
+        // la velocidad para cubrir ese tramo exactamente en ese ETA.
         {
           let bestJ = -1;
           let bestEta = Infinity;
@@ -721,25 +718,19 @@ function BusDashboardPage() {
             const e = realEtas[j];
             if (e !== null && e > 0 && e < bestEta) { bestEta = e; bestJ = j; }
           }
-          if (bestJ !== -1) {
-            const elapsedNow = Math.max(0, (nowMs - anchorAt) / 60_000);
-            const segDist = distances[anchorIdx] ?? 0;
-            const progress = segmentMin > 0 ? Math.min(1, elapsedNow / segmentMin) : 0;
-            const remainingInSeg = segDist * (1 - progress);
-            let forwardDist = remainingInSeg;
-            for (let k = anchorIdx + 1; k < bestJ; k++) forwardDist += distances[k] ?? 0;
-            if (forwardDist > 0 && bestEta > 0) {
-              const newSpeed = forwardDist / bestEta; // m/min
+          if (bestJ !== -1 && bestEta > 0) {
+            const snapIdx = bestJ - 1;
+            const segDist = distances[snapIdx] ?? 0;
+            if (segDist > 0) {
+              const newSpeed = segDist / bestEta; // m/min
               speedMetersPerMin = newSpeed;
-              if (segDist > 0) {
-                const newSegMin = segDist / newSpeed;
-                // Preservar posición visual: anchorAt = now - progress*newSegMin
-                anchorAt = nowMs - progress * newSegMin * 60_000;
-                segmentMin = Math.max(0.05, newSegMin);
-              }
+              segmentMin = Math.max(0.05, bestEta);
+              anchorIdx = snapIdx;
+              anchorAt = nowMs; // recién en la parada snapIdx
             }
           }
         }
+
 
         // (b) Avanzar a través de paradas completadas. Al cruzar de tramo
         // NUNCA se usa el ETA real (ese ETA describe al próximo bus, que en
