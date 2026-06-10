@@ -393,7 +393,7 @@ function BusDashboardPage() {
       1: new Map(),
       2: new Map(),
     };
-    const busesByDir: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]> = {
+    const busesByDir: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number; speedMetersPerMin: number }[]> = {
       1: [],
       2: [],
     };
