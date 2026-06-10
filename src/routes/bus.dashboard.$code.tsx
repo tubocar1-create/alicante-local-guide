@@ -747,26 +747,21 @@ function BusDashboardPage() {
         out[dir].push({ busId: bus.id, segmentIndex: anchorIdx, segmentProgress: segProg });
       }
 
-      // (d) NACIMIENTO en terminal de origen.
-      // El feed real en la parada de origen suele reportar el ETA del próximo
-      // bus YA en ruta, no del que nace ahora según horario oficial. Por eso
-      // el nacimiento debe dispararse si CUALQUIERA (real o modelo) cruza el
-      // umbral — no solo el preferido. El modelo es la verdad de "nace ahora".
+      // (d) NACIMIENTO POR TIEMPO REAL.
+      // Si el feed real en el origen baja a ≤ 5 s, nace AHORA aunque la
+      // hora oficial aún no haya llegado (anticipo legítimo).
       const originReal = realEtas[0];
-      const originModel = modelEtas[0];
-      const candidates = [originReal, originModel].filter((v): v is number => v !== null);
-      const originEta = candidates.length ? Math.min(...candidates) : null;
       const someoneInFirstSegment = alive.some(
         (b) => b.anchorIdx === 0 && ((nowMs - b.anchorAt) / 60_000) < 0.5,
       );
-      if (!someoneInFirstSegment && originEta !== null && originEta <= BIRTH_THRESHOLD_MIN) {
+      if (!someoneInFirstSegment && originReal !== null && originReal <= BIRTH_THRESHOLD_MIN) {
         const realNext = realEtas[1];
         const modelNext = modelEtas[1];
         const seg = Math.max(0.5, realNext ?? modelNext ?? 2);
         const dist = distances[0] ?? 250;
         const speed = dist / seg;
         const newBus: ActiveBus = {
-          id: `bus-${dir}-${nowMs}`,
+          id: `bus-${dir}-real-${nowMs}`,
           bornAt: nowMs,
           anchorIdx: 0,
           anchorAt: nowMs,
@@ -775,51 +770,57 @@ function BusDashboardPage() {
         };
         alive.push(newBus);
         out[dir].push({ busId: newBus.id, segmentIndex: 0, segmentProgress: 0 });
+        // Marcamos como consumida la salida oficial más cercana para evitar
+        // duplicar via fallback.
+        const departures = officialDeparturesByDir[dir] ?? [];
+        let bestDep: number | null = null;
+        let bestDist = Infinity;
+        for (const dep of departures) {
+          const d = Math.abs(dep - nowMadridMin);
+          if (d < bestDist) { bestDist = d; bestDep = dep; }
+        }
+        if (bestDep !== null && bestDist <= 2) {
+          spawnedDeparturesRef.current.add(`${madridDayKey}:${dir}:${bestDep.toFixed(3)}`);
+        }
       }
 
-      // (e) NACIMIENTO POR CRUCE DE HORARIO OFICIAL.
-      // Si entre prev y now una salida oficial cayó dentro de la ventana,
-      // forzamos el spawn (independientemente del umbral de 5 s). Esto cubre
-      // saltos de tick (tab throttle, refetch cada 30 s) y los casos en que
-      // el modelo ya avanzó al siguiente bus sin que el actual nazca.
+      // (e) FALLBACK POR HORARIO OFICIAL.
+      // Cada salida oficial que ya ocurrió hoy y aún no se ha spawneado,
+      // nace AHORA (anclada al instante exacto de la salida). Sin umbrales,
+      // sin condiciones: la hora oficial es ley cuando no la anticipó el real.
+      const MAX_REPLAY_MIN = 60; // no resucitar buses con más de 1h
       const departures = officialDeparturesByDir[dir] ?? [];
-      if (departures.length && prevMadridMin !== null) {
-        // Soporte para rollover de día.
-        const lower = prevMadridMin;
-        const upper = nowMadridMin;
-        for (const dep of departures) {
-          const fired = upper >= lower
-            ? (dep > lower && dep <= upper)
-            : (dep > lower || dep <= upper);
-          if (!fired) continue;
-          const key = `${madridDayKey}:${dir}:${dep.toFixed(3)}`;
-          if (spawnedDeparturesRef.current.has(key)) continue;
-          spawnedDeparturesRef.current.add(key);
-          // Si ya hay un bus muy cercano al origen (≤ 30 s), no dupliques.
-          const dupe = alive.some(
-            (b) => b.anchorIdx === 0 && ((nowMs - b.anchorAt) / 60_000) < 0.5,
-          );
-          if (dupe) continue;
-          const realNext = realEtas[1];
-          const modelNext = modelEtas[1];
-          const seg = Math.max(0.5, realNext ?? modelNext ?? 2);
-          const dist = distances[0] ?? 250;
-          const speed = dist / seg;
-          // Anclamos al instante exacto de la salida oficial para que la
-          // posición refleje los segundos ya transcurridos desde el horario.
-          const offsetMin = Math.max(0, nowMadridMin - dep);
-          const anchorAt = nowMs - offsetMin * 60_000;
-          const newBus: ActiveBus = {
-            id: `bus-${dir}-${madridDayKey}-${dep.toFixed(3)}`,
-            bornAt: anchorAt,
-            anchorIdx: 0,
-            anchorAt,
-            segmentMin: seg,
-            speedMetersPerMin: speed,
-          };
-          alive.push(newBus);
-          out[dir].push({ busId: newBus.id, segmentIndex: 0, segmentProgress: Math.min(1, offsetMin / seg) });
-        }
+      for (const dep of departures) {
+        // Soporte mínimo de rollover: si dep > now por > 12h, asume día anterior.
+        let delta = nowMadridMin - dep;
+        if (delta < -12 * 60) delta += 24 * 60;
+        if (delta < 0 || delta > MAX_REPLAY_MIN) continue;
+        const key = `${madridDayKey}:${dir}:${dep.toFixed(3)}`;
+        if (spawnedDeparturesRef.current.has(key)) continue;
+        spawnedDeparturesRef.current.add(key);
+        const realNext = realEtas[1];
+        const modelNext = modelEtas[1];
+        const seg = Math.max(0.5, realNext ?? modelNext ?? 2);
+        const dist = distances[0] ?? 250;
+        const speed = dist / seg;
+        const offsetMin = delta; // minutos transcurridos desde la salida
+        const anchorAt = nowMs - offsetMin * 60_000;
+        // Si el bus ya debería haber pasado del primer segmento, lo dejamos
+        // que la fase (b) lo avance automáticamente en el próximo tick.
+        const newBus: ActiveBus = {
+          id: `bus-${dir}-${madridDayKey}-${dep.toFixed(3)}`,
+          bornAt: anchorAt,
+          anchorIdx: 0,
+          anchorAt,
+          segmentMin: seg,
+          speedMetersPerMin: speed,
+        };
+        alive.push(newBus);
+        out[dir].push({
+          busId: newBus.id,
+          segmentIndex: 0,
+          segmentProgress: Math.max(0, Math.min(1, offsetMin / seg)),
+        });
       }
 
       activeBusesRef.current[dir] = alive;
