@@ -818,9 +818,8 @@ function BusDashboardPage() {
             let completed = false;
             while (idx < lastIdx) {
               const dist = distances[idx] ?? 250;
-              const realE = idx === 0 ? realEtas[1] : null; // solo el primer segmento puede usar real desde origen
               const modelE = modelEtas[idx + 1] ?? null;
-              const segMin = Math.max(0.5, realE ?? modelE ?? (dist / 400)); // 400 m/min ~ 24 km/h fallback
+              const segMin = Math.max(0.5, modelE ?? (dist / 400)); // 400 m/min ~ 24 km/h fallback
               lastSegMin = segMin;
               lastSpeed = dist / segMin;
               if (remaining < segMin) break;
