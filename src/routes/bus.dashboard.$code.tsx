@@ -950,9 +950,6 @@ function BusDashboardPage() {
           </div>
 
           <div className="shrink-0 self-start rounded-lg border border-white/15 bg-white/5 px-2 py-1 text-right">
-            <div className="font-sans text-[9px] font-semibold not-italic uppercase tracking-wide text-white/50 leading-none">
-              Hora
-            </div>
             <div className="font-mono text-lg font-bold tabular-nums leading-tight text-white">
               {String(clock.getHours()).padStart(2, "0")}:
               {String(clock.getMinutes()).padStart(2, "0")}:
