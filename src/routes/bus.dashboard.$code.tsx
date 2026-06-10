@@ -784,43 +784,51 @@ function BusDashboardPage() {
         }
       }
 
-      // (e) FALLBACK POR HORARIO OFICIAL.
-      // Cada salida oficial que ya ocurrió hoy y aún no se ha spawneado,
-      // nace AHORA (anclada al instante exacto de la salida). Sin umbrales,
-      // sin condiciones: la hora oficial es ley cuando no la anticipó el real.
-      const MAX_REPLAY_MIN = 60; // no resucitar buses con más de 1h
+      // (e) FALLBACK POR HORARIO OFICIAL — EDGE CROSSING.
+      // Solo nace cuando la hora oficial CRUZA en este tick desde la última
+      // comprobación. Sin replays masivos: en el primer tick se siembran las
+      // salidas pasadas como ya consumidas (sin crear buses). A partir de ahí,
+      // cada salida nace exactamente al cruzar su hora oficial.
       const departures = officialDeparturesByDir[dir] ?? [];
       for (const dep of departures) {
-        // Soporte mínimo de rollover: si dep > now por > 12h, asume día anterior.
-        let delta = nowMadridMin - dep;
-        if (delta < -12 * 60) delta += 24 * 60;
-        if (delta < 0 || delta > MAX_REPLAY_MIN) continue;
         const key = `${madridDayKey}:${dir}:${dep.toFixed(3)}`;
         if (spawnedDeparturesRef.current.has(key)) continue;
+
+        // Primer tick: marcar pasadas como consumidas, no spawnear.
+        if (prevMadridMin === null) {
+          if (dep <= nowMadridMin) spawnedDeparturesRef.current.add(key);
+          continue;
+        }
+
+        // ¿La hora oficial cruzó entre prev y now? (con rollover de medianoche)
+        let crossed = false;
+        if (nowMadridMin >= prevMadridMin) {
+          crossed = dep > prevMadridMin && dep <= nowMadridMin;
+        } else {
+          // rollover día: ventana (prev, 24*60) ∪ [0, now]
+          crossed = dep > prevMadridMin || dep <= nowMadridMin;
+        }
+        if (!crossed) continue;
         spawnedDeparturesRef.current.add(key);
+
+        // Evitar duplicar si ya hay un bus en el primer segmento recién nacido.
+        if (alive.some((b) => b.anchorIdx === 0 && (nowMs - b.bornAt) < 60_000)) continue;
+
         const realNext = realEtas[1];
         const modelNext = modelEtas[1];
         const seg = Math.max(0.5, realNext ?? modelNext ?? 2);
         const dist = distances[0] ?? 250;
         const speed = dist / seg;
-        const offsetMin = delta; // minutos transcurridos desde la salida
-        const anchorAt = nowMs - offsetMin * 60_000;
-        // Si el bus ya debería haber pasado del primer segmento, lo dejamos
-        // que la fase (b) lo avance automáticamente en el próximo tick.
         const newBus: ActiveBus = {
           id: `bus-${dir}-${madridDayKey}-${dep.toFixed(3)}`,
-          bornAt: anchorAt,
+          bornAt: nowMs,
           anchorIdx: 0,
-          anchorAt,
+          anchorAt: nowMs,
           segmentMin: seg,
           speedMetersPerMin: speed,
         };
         alive.push(newBus);
-        out[dir].push({
-          busId: newBus.id,
-          segmentIndex: 0,
-          segmentProgress: Math.max(0, Math.min(1, offsetMin / seg)),
-        });
+        out[dir].push({ busId: newBus.id, segmentIndex: 0, segmentProgress: 0 });
       }
 
       activeBusesRef.current[dir] = alive;
