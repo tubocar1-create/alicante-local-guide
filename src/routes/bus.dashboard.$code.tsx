@@ -708,7 +708,8 @@ function BusDashboardPage() {
         let { anchorIdx, anchorAt, segmentMin, speedMetersPerMin } = bus;
         if (anchorIdx >= lastIdx) continue;
 
-        // (a) En cada tick:
+        // (a) En cada tick, SOLO si el ETA real más cercano hacia adelante
+        //  es ≥ 10 min (bus "atrasado" respecto al feed real):
         //  1) buscar el stop futuro con ETA real más cercano a cero,
         //  2) ubicar el bus EN esa parada,
         //  3) recalcular velocidad = distancia(tramo siguiente) / ETA real
@@ -720,7 +721,7 @@ function BusDashboardPage() {
             const e = realEtas[j];
             if (e !== null && e > 0 && e < bestEta) { bestEta = e; bestJ = j; }
           }
-          if (bestJ !== -1) {
+          if (bestJ !== -1 && bestEta >= 10) {
             anchorIdx = bestJ;
             anchorAt = nowMs;
             if (anchorIdx >= lastIdx) continue; // murió en terminal
@@ -748,6 +749,7 @@ function BusDashboardPage() {
             }
           }
         }
+
 
         // (b) Avanzar a través de paradas completadas entre ticks. Se
         // conserva la velocidad actual (política del motor).
