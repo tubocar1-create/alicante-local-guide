@@ -725,12 +725,12 @@ function BusDashboardPage() {
             if (e !== null && e > 0) { posJ = j; posEta = e; break; }
           }
           if (posJ !== -1 && posEta >= 10) {
-            // stop futuro con ETA real más cercano a cero
+            // primer stop futuro (más cercano por índice) con ETA real
             let bestJ = -1;
             let bestEta = Infinity;
             for (let j = anchorIdx + 1; j <= lastIdx; j++) {
               const e = realEtas[j];
-              if (e !== null && e > 0 && e < bestEta) { bestEta = e; bestJ = j; }
+              if (e !== null && e > 0) { bestEta = e; bestJ = j; break; }
             }
             if (bestJ !== -1) {
               anchorIdx = bestJ;
