@@ -1389,7 +1389,7 @@ function DirectionColumn({
     const ol = olRef.current;
     if (!ol) return;
     const olTop = ol.getBoundingClientRect().top;
-    const positions: { busId: string; top: number }[] = [];
+    const positions: { busId: string; top: number; speedMetersPerMin: number }[] = [];
     for (const b of predictedBuses) {
       const a = stopRefs.current[b.segmentIndex];
       const c = stopRefs.current[b.segmentIndex + 1];
@@ -1400,7 +1400,7 @@ function DirectionColumn({
       const aY = aRect.top - olTop + 18;
       const cY = cRect.top - olTop + 18;
       const y = aY + (cY - aY) * b.segmentProgress;
-      positions.push({ busId: b.busId, top: y });
+      positions.push({ busId: b.busId, top: y, speedMetersPerMin: b.speedMetersPerMin ?? 0 });
     }
     setBusPositions(positions);
   }, [predictedBuses, stops]);
