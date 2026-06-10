@@ -708,7 +708,7 @@ function BusDashboardPage() {
           const virtualRemaining = Math.max(0, segmentMin - elapsedNow);
           const etaIsCoherent =
             virtualRemaining <= 0.1 ||
-            realNext >= virtualRemaining * 0.45 ||
+            realNext >= virtualRemaining * 0.45 &&
             realNext <= virtualRemaining * 1.8;
           if (etaIsCoherent) {
             const newSegMin = Math.max(0.05, elapsedNow + realNext);
