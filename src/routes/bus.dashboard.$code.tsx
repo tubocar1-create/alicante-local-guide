@@ -708,22 +708,36 @@ function BusDashboardPage() {
         let { anchorIdx, anchorAt, segmentMin, speedMetersPerMin } = bus;
         if (anchorIdx >= lastIdx) continue;
 
-        // (a) Cada bus es independiente: si llega un ETA real coherente con
-        // SU tramo actual, recalibrar su velocidad. Si el ETA corresponde a
-        // otro bus, se ignora y este conserva su trayectoria/velocidad.
-        const realNext = realEtas[anchorIdx + 1];
-        if (realNext !== null && realNext > 0) {
-          const elapsedNow = Math.max(0, (nowMs - anchorAt) / 60_000);
-          const virtualRemaining = Math.max(0, segmentMin - elapsedNow);
-          const etaIsCoherent =
-            virtualRemaining <= 0.1 ||
-            realNext >= virtualRemaining * 0.45 &&
-            realNext <= virtualRemaining * 1.8;
-          if (etaIsCoherent) {
-            const newSegMin = Math.max(0.05, elapsedNow + realNext);
-            segmentMin = newSegMin;
-            const dist = distances[anchorIdx];
-            if (dist > 0) speedMetersPerMin = dist / newSegMin;
+        // (a) En cada refresh, recalibrar contra el ETA real MÁS CERCANO A
+        // CERO mirando hacia adelante desde la posición actual del bus.
+        // Buscamos el stop futuro j con menor ETA real (>0) y ajustamos la
+        // velocidad para que la distancia routed acumulada hasta j se cubra
+        // exactamente en ese tiempo. Se preserva la progresión actual dentro
+        // del segmento (no teletransportar).
+        {
+          let bestJ = -1;
+          let bestEta = Infinity;
+          for (let j = anchorIdx + 1; j <= lastIdx; j++) {
+            const e = realEtas[j];
+            if (e !== null && e > 0 && e < bestEta) { bestEta = e; bestJ = j; }
+          }
+          if (bestJ !== -1) {
+            const elapsedNow = Math.max(0, (nowMs - anchorAt) / 60_000);
+            const segDist = distances[anchorIdx] ?? 0;
+            const progress = segmentMin > 0 ? Math.min(1, elapsedNow / segmentMin) : 0;
+            const remainingInSeg = segDist * (1 - progress);
+            let forwardDist = remainingInSeg;
+            for (let k = anchorIdx + 1; k < bestJ; k++) forwardDist += distances[k] ?? 0;
+            if (forwardDist > 0 && bestEta > 0) {
+              const newSpeed = forwardDist / bestEta; // m/min
+              speedMetersPerMin = newSpeed;
+              if (segDist > 0) {
+                const newSegMin = segDist / newSpeed;
+                // Preservar posición visual: anchorAt = now - progress*newSegMin
+                anchorAt = nowMs - progress * newSegMin * 60_000;
+                segmentMin = Math.max(0.05, newSegMin);
+              }
+            }
           }
         }
 
