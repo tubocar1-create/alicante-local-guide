@@ -694,26 +694,23 @@ function BusDashboardPage() {
         }
       }
 
-      // El ETA real del feed describe al PRÓXIMO bus en llegar a cada parada.
-      // Por tanto, solo el bus LÍDER (mayor anchorIdx) de la dirección puede
-      // usar el ETA real para calibrar su velocidad. Los buses por detrás
-      // conservan su velocidad (jamás volver al modelo para velocidad).
-      const leaderAnchorIdx = activeBusesRef.current[dir].reduce(
-        (max, b) => (b.anchorIdx > max ? b.anchorIdx : max),
-        -1,
-      );
       const alive: ActiveBus[] = [];
       for (const bus of activeBusesRef.current[dir]) {
         let { anchorIdx, anchorAt, segmentMin, speedMetersPerMin } = bus;
         if (anchorIdx >= lastIdx) continue;
-        const isLeader = bus.anchorIdx === leaderAnchorIdx;
 
-        // (a) Si llega un ETA real del siguiente stop, recalibrar tiempo y
-        // velocidad — SOLO si este bus es el líder de la dirección.
-        if (isLeader) {
-          const realNext = realEtas[anchorIdx + 1];
-          if (realNext !== null && realNext > 0) {
-            const elapsedNow = (nowMs - anchorAt) / 60_000;
+        // (a) Cada bus es independiente: si llega un ETA real coherente con
+        // SU tramo actual, recalibrar su velocidad. Si el ETA corresponde a
+        // otro bus, se ignora y este conserva su trayectoria/velocidad.
+        const realNext = realEtas[anchorIdx + 1];
+        if (realNext !== null && realNext > 0) {
+          const elapsedNow = Math.max(0, (nowMs - anchorAt) / 60_000);
+          const virtualRemaining = Math.max(0, segmentMin - elapsedNow);
+          const etaIsCoherent =
+            virtualRemaining <= 0.1 ||
+            realNext >= virtualRemaining * 0.45 ||
+            realNext <= virtualRemaining * 1.8;
+          if (etaIsCoherent) {
             const newSegMin = Math.max(0.05, elapsedNow + realNext);
             segmentMin = newSegMin;
             const dist = distances[anchorIdx];
@@ -747,12 +744,8 @@ function BusDashboardPage() {
         }
         if (dead || anchorIdx >= lastIdx) continue;
 
-        // (c) Muerte anticipada: ETA al último stop ≤ 5 s. Solo aplica al
-        // líder (el ETA real al terminal describe al próximo bus en llegar).
-        if (isLeader && anchorIdx === lastIdx - 1) {
-          const etaLast = realEtas[lastIdx];
-          if (etaLast !== null && etaLast <= DEATH_THRESHOLD_MIN) continue;
-        }
+        // (c) La muerte del bus ocurre por su propia trayectoria al cruzar el
+        // terminal. No se mata un bus solo porque el feed anuncie otro bus.
 
         const segProg = Math.max(0, Math.min(1, ((nowMs - anchorAt) / 60_000) / Math.max(0.05, segmentMin)));
         alive.push({ id: bus.id, bornAt: bus.bornAt, anchorIdx, anchorAt, segmentMin, speedMetersPerMin });
