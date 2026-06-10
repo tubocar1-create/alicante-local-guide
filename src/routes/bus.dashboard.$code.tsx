@@ -625,6 +625,33 @@ function BusDashboardPage() {
       return out;
     }
     const nowMs = clock.getTime();
+    // Minuto-de-día en Madrid (mismo cálculo que virtualFleetView).
+    const madridParts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/Madrid",
+      year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", second: "2-digit",
+      hour12: false,
+    }).formatToParts(clock);
+    const mp = (t: string) => Number(madridParts.find((p) => p.type === t)?.value ?? 0);
+    const nowMadridMin = mp("hour") * 60 + mp("minute") + mp("second") / 60;
+    const madridDayKey = `${mp("year")}-${mp("month")}-${mp("day")}`;
+    const prevMadridMin = lastCheckMadridMinRef.current;
+    lastCheckMadridMinRef.current = nowMadridMin;
+    // Plan oficial (solo cuando hay engine y no es nocturna).
+    let officialDeparturesByDir: Record<1 | 2, number[]> = { 1: [], 2: [] };
+    if (engine && !isNightLine) {
+      try {
+        const aligned = alignEngineScheduleDirections(engine, code, stopsByDir);
+        const plan = buildLineFleetPlan(aligned, code, clock);
+        const o = plan?.officialDeparturesByDirection;
+        if (o) {
+          officialDeparturesByDir = {
+            1: Array.isArray(o[1]) ? o[1] : [],
+            2: Array.isArray(o[2]) ? o[2] : [],
+          };
+        }
+      } catch { /* noop */ }
+    }
     // Countdown LOCAL en segundos desde el último snapshot del Bridge.
     // El feed publica minutos+segundos (parseEtaToMinutes ya devuelve
     // fracciones de minuto). Entre snapshots (30–60 s) restamos el tiempo
