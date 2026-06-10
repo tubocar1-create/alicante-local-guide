@@ -694,22 +694,36 @@ function BusDashboardPage() {
         }
       }
 
+      // El ETA real del feed describe al PRÓXIMO bus en llegar a cada parada.
+      // Por tanto, solo el bus LÍDER (mayor anchorIdx) de la dirección puede
+      // usar el ETA real para calibrar su velocidad. Los buses por detrás
+      // conservan su velocidad (jamás volver al modelo para velocidad).
+      const leaderAnchorIdx = activeBusesRef.current[dir].reduce(
+        (max, b) => (b.anchorIdx > max ? b.anchorIdx : max),
+        -1,
+      );
       const alive: ActiveBus[] = [];
       for (const bus of activeBusesRef.current[dir]) {
         let { anchorIdx, anchorAt, segmentMin, speedMetersPerMin } = bus;
         if (anchorIdx >= lastIdx) continue;
+        const isLeader = bus.anchorIdx === leaderAnchorIdx;
 
-        // (a) Si llega un ETA real del siguiente stop, recalibrar tiempo y velocidad.
-        const realNext = realEtas[anchorIdx + 1];
-        if (realNext !== null && realNext > 0) {
-          const elapsedNow = (nowMs - anchorAt) / 60_000;
-          const newSegMin = Math.max(0.05, elapsedNow + realNext);
-          segmentMin = newSegMin;
-          const dist = distances[anchorIdx];
-          if (dist > 0) speedMetersPerMin = dist / newSegMin;
+        // (a) Si llega un ETA real del siguiente stop, recalibrar tiempo y
+        // velocidad — SOLO si este bus es el líder de la dirección.
+        if (isLeader) {
+          const realNext = realEtas[anchorIdx + 1];
+          if (realNext !== null && realNext > 0) {
+            const elapsedNow = (nowMs - anchorAt) / 60_000;
+            const newSegMin = Math.max(0.05, elapsedNow + realNext);
+            segmentMin = newSegMin;
+            const dist = distances[anchorIdx];
+            if (dist > 0) speedMetersPerMin = dist / newSegMin;
+          }
         }
 
-        // (b) Avanzar a través de paradas completadas, recalculando segmento.
+        // (b) Avanzar a través de paradas completadas. Al cruzar de tramo
+        // NUNCA se usa el ETA real (ese ETA describe al próximo bus, que en
+        // el nuevo tramo puede no ser éste). Se conserva la velocidad actual.
         let elapsed = (nowMs - anchorAt) / 60_000;
         let dead = false;
         while (elapsed >= segmentMin) {
@@ -718,15 +732,12 @@ function BusDashboardPage() {
           anchorAt = nowMs - overshoot * 60_000;
           if (anchorIdx >= lastIdx) { dead = true; break; }
           const dist = distances[anchorIdx];
-          const realE = realEtas[anchorIdx + 1];
-          if (realE !== null && realE > 0) {
-            segmentMin = Math.max(0.05, realE) + overshoot;
-            if (dist > 0) speedMetersPerMin = dist / Math.max(0.05, realE);
-          } else if (speedMetersPerMin > 0 && dist > 0) {
-            // Sin tiempo real: conservar velocidad, derivar tiempo del segmento.
+          if (speedMetersPerMin > 0 && dist > 0) {
+            // Conservar velocidad — política del motor.
             segmentMin = dist / speedMetersPerMin + overshoot;
           } else {
-            // Caso degenerado: usar modelo solo como último recurso.
+            // Caso degenerado (sin velocidad previa): fallback modelo SOLO
+            // para inicializar tiempo de segmento.
             const m = modelEtas[anchorIdx + 1];
             const base = Math.max(0.5, m ?? 2);
             segmentMin = base + overshoot;
@@ -736,9 +747,10 @@ function BusDashboardPage() {
         }
         if (dead || anchorIdx >= lastIdx) continue;
 
-        // (c) Muerte anticipada: ETA al último stop ≤ 5 s.
-        if (anchorIdx === lastIdx - 1) {
-          const etaLast = realEtas[lastIdx] ?? modelEtas[lastIdx];
+        // (c) Muerte anticipada: ETA al último stop ≤ 5 s. Solo aplica al
+        // líder (el ETA real al terminal describe al próximo bus en llegar).
+        if (isLeader && anchorIdx === lastIdx - 1) {
+          const etaLast = realEtas[lastIdx];
           if (etaLast !== null && etaLast <= DEATH_THRESHOLD_MIN) continue;
         }
 
