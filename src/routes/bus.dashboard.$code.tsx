@@ -861,9 +861,6 @@ function BusDashboardPage() {
             <div className="font-mono text-lg font-bold tabular-nums leading-tight text-white">
               {String(clock.getHours()).padStart(2, "0")}:
               {String(clock.getMinutes()).padStart(2, "0")}
-              <span className="text-white/50">
-                :{String(clock.getSeconds()).padStart(2, "0")}
-              </span>
             </div>
           </div>
         </div>
