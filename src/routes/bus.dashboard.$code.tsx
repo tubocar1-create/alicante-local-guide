@@ -818,8 +818,9 @@ function BusDashboardPage() {
             let elapsedMin = nowMadridMin - dep;
             // Rollover: si dep > now por wrap (no debería pasar aquí, dep<=now), ignorar.
             if (elapsedMin < 0) elapsedMin += 24 * 60;
-            // Evitar duplicar si ya hay un bus reciente en el primer segmento.
-            if (alive.some((b) => b.anchorIdx === 0 && (nowMs - b.bornAt) < 60_000)) continue;
+            // Evitar duplicar: nunca dos buses en el mismo tramo simultáneamente.
+            // (la siembra procesa salidas más antiguas primero; las más recientes
+            // se descartan si caerían en un tramo ya ocupado).
             let idx = 0;
             let remaining = elapsedMin;
             let lastSegMin = 0;
@@ -845,6 +846,8 @@ function BusDashboardPage() {
               if (idx >= lastIdx) { completed = true; break; }
             }
             if (completed) continue;
+            // Dedupe por posición: nunca dos buses en el mismo tramo a la vez.
+            if (alive.some((b) => b.anchorIdx === idx)) continue;
             const dist = distances[idx] ?? 250;
             const segMin = lastSegMin > 0 ? lastSegMin : Math.max(0.25, dist / 400);
             const speed = lastSpeed > 0 ? lastSpeed : dist / segMin;
