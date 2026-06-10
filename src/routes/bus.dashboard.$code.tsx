@@ -765,9 +765,7 @@ function BusDashboardPage() {
       // Si el feed real en el origen baja a ≤ 5 s, nace AHORA aunque la
       // hora oficial aún no haya llegado (anticipo legítimo).
       const originReal = realEtas[0];
-      const someoneInFirstSegment = alive.some(
-        (b) => b.anchorIdx === 0 && ((nowMs - b.anchorAt) / 60_000) < 0.5,
-      );
+      const someoneInFirstSegment = alive.some((b) => b.anchorIdx === 0);
       if (!someoneInFirstSegment && originReal !== null && originReal <= BIRTH_THRESHOLD_MIN) {
         const realNext = realEtas[1];
         const modelNext = modelEtas[1];
@@ -878,8 +876,8 @@ function BusDashboardPage() {
         if (!crossed) continue;
         spawnedDeparturesRef.current.add(key);
 
-        // Evitar duplicar si ya hay un bus en el primer segmento recién nacido.
-        if (alive.some((b) => b.anchorIdx === 0 && (nowMs - b.bornAt) < 60_000)) continue;
+        // Evitar duplicar: nunca nace otro bus si el primer tramo sigue ocupado.
+        if (alive.some((b) => b.anchorIdx === 0)) continue;
 
         const realNext = realEtas[1];
         const modelNext = modelEtas[1];
