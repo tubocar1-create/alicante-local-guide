@@ -746,10 +746,12 @@ function BusDashboardPage() {
         // el nuevo tramo puede no ser éste). Se conserva la velocidad actual.
         let elapsed = (nowMs - anchorAt) / 60_000;
         let dead = false;
+        let crossed = false;
         while (elapsed >= segmentMin) {
           const overshoot = elapsed - segmentMin;
           anchorIdx += 1;
           anchorAt = nowMs - overshoot * 60_000;
+          crossed = true;
           if (anchorIdx >= lastIdx) { dead = true; break; }
           const dist = distances[anchorIdx];
           if (speedMetersPerMin > 0 && dist > 0) {
@@ -766,6 +768,35 @@ function BusDashboardPage() {
           elapsed = (nowMs - anchorAt) / 60_000;
         }
         if (dead || anchorIdx >= lastIdx) continue;
+
+        // (b.bis) Tras cruzar paradas, re-aplicar el esquema parada por
+        // parada: buscar el nuevo ETA real más cercano a cero por delante
+        // y recalibrar velocidad/segmento como en (a).
+        if (crossed) {
+          let bestJ = -1;
+          let bestEta = Infinity;
+          for (let j = anchorIdx + 1; j <= lastIdx; j++) {
+            const e = realEtas[j];
+            if (e !== null && e > 0 && e < bestEta) { bestEta = e; bestJ = j; }
+          }
+          if (bestJ !== -1) {
+            const elapsedNow = Math.max(0, (nowMs - anchorAt) / 60_000);
+            const segDist = distances[anchorIdx] ?? 0;
+            const progress = segmentMin > 0 ? Math.min(1, elapsedNow / segmentMin) : 0;
+            const remainingInSeg = segDist * (1 - progress);
+            let forwardDist = remainingInSeg;
+            for (let k = anchorIdx + 1; k < bestJ; k++) forwardDist += distances[k] ?? 0;
+            if (forwardDist > 0 && bestEta > 0) {
+              const newSpeed = forwardDist / bestEta;
+              speedMetersPerMin = newSpeed;
+              if (segDist > 0) {
+                const newSegMin = segDist / newSpeed;
+                anchorAt = nowMs - progress * newSegMin * 60_000;
+                segmentMin = Math.max(0.05, newSegMin);
+              }
+            }
+          }
+        }
 
         // (c) La muerte del bus ocurre por su propia trayectoria al cruzar el
         // terminal. No se mata un bus solo porque el feed anuncie otro bus.
