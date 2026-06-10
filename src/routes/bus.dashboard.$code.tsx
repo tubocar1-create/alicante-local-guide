@@ -640,7 +640,13 @@ function BusDashboardPage() {
         if (typeof routed === "number" && routed > 0) {
           distances.push(routed);
         } else {
-          distances.push(haversineMeters({ lat: stops[i].lat, lng: stops[i].lng }, { lat: stops[i + 1].lat, lng: stops[i + 1].lng }) || 250);
+          const a = engine?.stopsMeta.get(stops[i].code);
+          const b = engine?.stopsMeta.get(stops[i + 1].code);
+          if (a && b && a.lat != null && a.lng != null && b.lat != null && b.lng != null) {
+            distances.push(haversineMeters({ lat: a.lat, lng: a.lng }, { lat: b.lat, lng: b.lng }) || 250);
+          } else {
+            distances.push(250);
+          }
         }
       }
 
