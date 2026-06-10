@@ -618,7 +618,7 @@ function BusDashboardPage() {
   const DEATH_THRESHOLD_MIN = 5 / 60;   // 5 s
 
   const liveBusesByDir = useMemo<Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number; speedMetersPerMin: number }[]>>(() => {
-    const out: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number }[]> = { 1: [], 2: [] };
+    const out: Record<1 | 2, { busId: string; segmentIndex: number; segmentProgress: number; speedMetersPerMin: number }[]> = { 1: [], 2: [] };
     if (!compareTestEnabled) {
       activeBusesRef.current = { 1: [], 2: [] };
       lastCheckMadridMinRef.current = null;
