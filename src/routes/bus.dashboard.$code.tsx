@@ -846,6 +846,8 @@ function BusDashboardPage() {
               if (idx >= lastIdx) { completed = true; break; }
             }
             if (completed) continue;
+            // Dedupe por posición: nunca dos buses en el mismo tramo a la vez.
+            if (alive.some((b) => b.anchorIdx === idx)) continue;
             const dist = distances[idx] ?? 250;
             const segMin = lastSegMin > 0 ? lastSegMin : Math.max(0.25, dist / 400);
             const speed = lastSpeed > 0 ? lastSpeed : dist / segMin;
