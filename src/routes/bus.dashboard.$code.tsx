@@ -712,9 +712,14 @@ function BusDashboardPage() {
       }
 
       // (d) NACIMIENTO en terminal de origen.
+      // El feed real en la parada de origen suele reportar el ETA del próximo
+      // bus YA en ruta, no del que nace ahora según horario oficial. Por eso
+      // el nacimiento debe dispararse si CUALQUIERA (real o modelo) cruza el
+      // umbral — no solo el preferido. El modelo es la verdad de "nace ahora".
       const originReal = realEtas[0];
       const originModel = modelEtas[0];
-      const originEta = originReal !== null ? originReal : originModel;
+      const candidates = [originReal, originModel].filter((v): v is number => v !== null);
+      const originEta = candidates.length ? Math.min(...candidates) : null;
       const someoneInFirstSegment = alive.some(
         (b) => b.anchorIdx === 0 && ((nowMs - b.anchorAt) / 60_000) < 0.5,
       );
